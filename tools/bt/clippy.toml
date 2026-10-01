@@ -1,6 +1,9 @@
-# A copy of community/build/dev-dist-tools/clippy.toml until a sync script writes it.
-# The clippy configuration of both dev-dist workspaces. `build/dev-dist-tools/.cargo/config.toml` points `cargo clippy`
-# of the ultimate workspace here, and `community/.bazelrc` points the Bazel clippy aspect here.
+# Generated from community/build/rust-tools/clippy.toml by sync.mjs. Edit that file.
+# The clippy configuration of every Rust tool workspace. `sync.mjs` copies this file into each workspace that
+# `README.md` lists, where `cargo clippy` finds it. `community/.bazelrc` gives this file to the Bazel clippy aspect of
+# the community root. Edit here, then run `bun community/build/rust-tools/sync.mjs`.
+#
+# A site that needs a banned call says why with `#[expect(clippy::disallowed_methods, reason = "...")]`.
 
 disallowed-methods = [
   # On Windows the result carries the `\\?\` prefix, and the tools refuse such a path. `fscopy::resolve_links` removes it.

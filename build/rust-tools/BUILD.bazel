@@ -1,0 +1,27 @@
+# The shared configuration of the Rust tool workspaces. `README.md` is the spec: what every workspace has and the
+# commands that check it. `lints.toml`, `rustfmt.toml` and `clippy.toml` are the sources, `sync.mjs` writes the copies,
+# and `defs.bzl` holds the rules that apply them under Bazel.
+
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load(":defs.bzl", "COMMUNITY_WORKSPACE_LINTS", "rust_lints_equal_check")
+
+# `community/.bazelrc` gives `clippy.toml` to the Bazel clippy aspect as `@rules_rust//rust/settings:clippy.toml`.
+exports_files(
+    [
+        "clippy.toml",
+        "lints.toml",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# The lint tables of the community workspaces, as Bazel reads them. `//build/dev-dist-tools:lints_equal_check` of the
+# ultimate root adds the Air UI-lane workspace. The test makes `bazel test --build_tests_only` analyze the check too.
+rust_lints_equal_check(
+    name = "lints_equal_check",
+    targets = COMMUNITY_WORKSPACE_LINTS,
+)
+
+build_test(
+    name = "lints_equal_test",
+    targets = [":lints_equal_check"],
+)

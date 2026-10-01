@@ -104,10 +104,11 @@ JDK answer for every glob of the corpus. A plan author who needs a new shape cha
   Git and Bazel ignore that directory.
 - Two cargo runs on one target directory wait for its lock. Set `CARGO_TARGET_DIR` to another directory under `out/`
   for a second run at the same time.
+- `[workspace.lints]` of `Cargo.toml`, `rustfmt.toml` and `clippy.toml` of both workspaces are copies of the
+  sources in [`community/build/rust-tools`](../rust-tools/README.md), the shared configuration of the Rust tool
+  workspaces. Edit a source there, then run `bun community/build/rust-tools/sync.mjs`.
 - `rustfmt.toml` sets the width to 140 columns. Format with `cargo fmt` before a commit.
-- `[workspace.lints]` of `Cargo.toml` is a copy of [`community/build/rust-lints/lints.toml`](../rust-lints/README.md),
-  the one lint policy of the build tools. Edit the policy there, then run `bun community/build/rust-lints/sync.mjs`.
-  Bazel applies the same table through `@ddt` and `:lints`, and the `<crate>-clippy` test of each crate fails on any
+- Bazel applies the lint table through `@ddt` and `:lints`, and the `<crate>-clippy` test of each crate fails on any
   clippy warning. `cargo clippy --all-targets` shows the same findings in the edit loop. A site-local exception is
   `#[expect(lint, reason = "...")]`.
 - A test reads `testdata/` from `DDT_TESTDATA_DIR` under Bazel, and from the run-time `CARGO_MANIFEST_DIR` under

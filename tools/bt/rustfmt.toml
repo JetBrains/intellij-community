@@ -1,3 +1,5 @@
-# A copy of community/build/dev-dist-tools/rustfmt.toml until a sync script writes it.
+# Generated from community/build/rust-tools/rustfmt.toml by sync.mjs. Edit that file.
+# The format of every Rust tool workspace: the repository width of 140 columns. `sync.mjs` copies this file into
+# each workspace that `README.md` lists. Edit here, then run `bun community/build/rust-tools/sync.mjs`.
 edition = "2024"
 max_width = 140

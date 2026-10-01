@@ -1,7 +1,0 @@
-# The Rust lint policy of the build tools. `lints.toml` is the source, `sync.mjs` writes the copies, and `defs.bzl`
-# holds the rules that apply it under Bazel. See `README.md`.
-
-exports_files(
-    ["lints.toml"],
-    visibility = ["//visibility:public"],
-)

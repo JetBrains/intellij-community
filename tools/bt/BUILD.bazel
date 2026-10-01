@@ -3,7 +3,7 @@
 # The crate map is `README.md`.
 
 load("@rules_rust//rust:defs.bzl", "rust_clippy_test")
-load("//build/rust-lints:defs.bzl", "rust_lints_as_errors")
+load("//build/rust-tools:defs.bzl", "rust_lints_as_errors")
 load(":defs.bzl", "optimized_binary")
 
 # The lint policy of every crate: `[workspace.lints]` of `Cargo.toml` as `@bt` renders it, with every clippy warning

@@ -21,7 +21,7 @@ ultimate root.
   blocks the change. The known failures come from Unix modes, `/` separators, Unix-only tools, and link targets
   longer than `MAX_PATH` in the test fixtures.
 - **Do not call a banned method.** `clippy.toml` bans `fs::canonicalize` and the tempfile calls that fail past
-  `MAX_PATH`, and names the replacement of each.
+  `MAX_PATH`, and names the replacement of each. Its source is `community/build/rust-tools/clippy.toml`.
 - **Follow the lint policy.** `cargo clippy --all-targets` must print no warning in both workspaces before a commit.
-  The policy is `community/build/rust-lints/lints.toml`; change it there, then run
-  `bun community/build/rust-lints/sync.mjs --check`. A site-local exception is `#[expect(lint, reason = "...")]`.
+  The policy is `community/build/rust-tools/lints.toml`; change it there, run `bun community/build/rust-tools/sync.mjs`,
+  then run it again with `--check`. A site-local exception is `#[expect(lint, reason = "...")]`.

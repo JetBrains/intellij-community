@@ -10,9 +10,14 @@ import {
   applyBlock,
   beginMarker,
   checkFailedExitCode,
+  configFiles,
+  copyHeader,
   detectRoots,
   endMarker,
+  manifestPaths,
+  optedOutManifests,
   renderBlock,
+  renderCopy,
   resolveManifests,
   runCli,
   usageExitCode,
@@ -31,6 +36,11 @@ const lintsToml = [
 ].join("\n")
 
 const block = renderBlock(lintsToml)
+
+const sources = {
+  "rustfmt.toml": "# The format.\nmax_width = 140\n",
+  "clippy.toml": "# The bans.\ndisallowed-methods = []\n",
+}
 
 function manifestWith(inner) {
   const head = ["[workspace]", "members = [\"crates/*\"]", ""]
@@ -71,7 +81,26 @@ describe("applyBlock", () => {
   })
 
   it("refuses a manifest without markers", () => {
-    throws(() => applyBlock("[workspace]\n", block), /no rust-lints markers/)
+    throws(() => applyBlock("[workspace]\n", block), /no rust-tools markers/)
+  })
+})
+
+describe("renderCopy", () => {
+  it("puts the header line before the source bytes", () => {
+    equal(renderCopy("rustfmt.toml", sources["rustfmt.toml"]), `${copyHeader("rustfmt.toml")}\n# The format.\nmax_width = 140\n`)
+    match(copyHeader("clippy.toml"), /^# Generated from community\/build\/rust-tools\/clippy.toml by sync.mjs/)
+  })
+
+  it("covers the format and the clippy configuration", () => {
+    deepEqual(configFiles, ["rustfmt.toml", "clippy.toml"])
+  })
+})
+
+describe("optedOutManifests", () => {
+  it("names a manifest that manifestPaths does not list", () => {
+    for (const path of Object.keys(optedOutManifests)) {
+      equal(manifestPaths.includes(path), false)
+    }
   })
 })
 
@@ -94,48 +123,73 @@ describe("detectRoots and resolveManifests", () => {
 
 describe("runCli", () => {
   async function withCheckout(run) {
-    const root = await mkdtemp(join(tmpdir(), "rust-lints-sync-test-"))
+    const root = await mkdtemp(join(tmpdir(), "rust-tools-sync-test-"))
     try {
       const community = join(root, "community")
       writeFile(join(root, "MODULE.bazel"), "")
       writeFile(join(root, "bazel.cmd"), "")
-      const lintsPath = join(community, "build/rust-lints/lints.toml")
-      writeFile(lintsPath, lintsToml)
-      const communityManifest = join(community, "build/dev-dist-tools/Cargo.toml")
-      const ultimateManifest = join(root, "build/dev-dist-tools/Cargo.toml")
+      const sourceDir = join(community, "build/rust-tools")
+      writeFile(join(sourceDir, "lints.toml"), lintsToml)
+      for (const [name, text] of Object.entries(sources)) {
+        writeFile(join(sourceDir, name), text)
+      }
+      // The community workspace has a stale table, a drifted rustfmt.toml and no clippy.toml. The ultimate one is in sync.
+      const communityDir = join(community, "build/dev-dist-tools")
+      const ultimateDir = join(root, "build/dev-dist-tools")
+      const communityManifest = join(communityDir, "Cargo.toml")
+      const ultimateManifest = join(ultimateDir, "Cargo.toml")
       writeFile(communityManifest, manifestWith(["stale = \"allow\""]))
+      writeFile(join(communityDir, "rustfmt.toml"), "max_width = 100\n")
       writeFile(ultimateManifest, manifestWith(block.split("\n").slice(1, -1)))
+      for (const [name, text] of Object.entries(sources)) {
+        writeFile(join(ultimateDir, name), renderCopy(name, text))
+      }
       const roots = {community, ultimate: root}
-      await run({roots, lintsPath, communityManifest, ultimateManifest})
+      await run({roots, sourceDir, communityDir, communityManifest, ultimateManifest})
     } finally {
       await rm(root, {recursive: true, force: true})
     }
   }
 
-  it("check names the copy that differs and writes nothing", async () => {
-    await withCheckout(({roots, lintsPath, communityManifest}) => {
+  it("check names each copy that differs or is missing and writes nothing", async () => {
+    await withCheckout(({roots, sourceDir, communityDir, communityManifest}) => {
       const {io, err} = createIo()
       const before = readFileSync(communityManifest, "utf8")
-      equal(runCli(["--check"], {io, roots, lintsPath}), checkFailedExitCode)
+      equal(runCli(["--check"], {io, roots, sourceDir}), checkFailedExitCode)
       equal(readFileSync(communityManifest, "utf8"), before)
-      match(err.join("\n"), /community\/build\/dev-dist-tools\/Cargo.toml differs/)
-      match(err.join("\n"), /skipped plugins\/air/)
+      equal(readFileSync(join(communityDir, "rustfmt.toml"), "utf8"), "max_width = 100\n")
+      equal(existsSync(join(communityDir, "clippy.toml")), false)
+      const text = err.join("\n")
+      match(text, /community\/build\/dev-dist-tools\/Cargo.toml differs from lints.toml/)
+      match(text, /community\/build\/dev-dist-tools\/rustfmt.toml differs from rustfmt.toml/)
+      match(text, /community\/build\/dev-dist-tools\/clippy.toml is missing/)
+      match(text, /skipped plugins\/air\/tests\/integration\/vm-lane\/Cargo.toml: opted out/)
+      match(text, /3 file\(s\) differ/)
+      // The ultimate workspace is in sync, so no line names it.
+      equal(err.some((line) => line.startsWith("build/")), false)
     })
   })
 
-  it("write updates the differing copy only, then check is clean", async () => {
-    await withCheckout(({roots, lintsPath, communityManifest, ultimateManifest}) => {
+  it("write updates the differing copies only, then check is clean", async () => {
+    await withCheckout(({roots, sourceDir, communityDir, communityManifest, ultimateManifest}) => {
       const {io, out} = createIo()
-      equal(runCli([], {io, roots, lintsPath}), 0)
-      deepEqual(out, ["updated community/build/dev-dist-tools/Cargo.toml"])
+      equal(runCli([], {io, roots, sourceDir}), 0)
+      deepEqual(out, [
+        "updated community/build/dev-dist-tools/Cargo.toml",
+        "updated community/build/dev-dist-tools/rustfmt.toml",
+        "updated community/build/dev-dist-tools/clippy.toml",
+      ])
       equal(readFileSync(communityManifest, "utf8"), manifestWith(block.split("\n").slice(1, -1)))
+      for (const [name, text] of Object.entries(sources)) {
+        equal(readFileSync(join(communityDir, name), "utf8"), renderCopy(name, text))
+      }
       equal(existsSync(ultimateManifest), true)
-      equal(runCli(["--check"], {io: createIo().io, roots, lintsPath}), 0)
+      equal(runCli(["--check"], {io: createIo().io, roots, sourceDir}), 0)
     })
   })
 
   it("rejects an unknown argument", () => {
     const {io} = createIo()
-    equal(runCli(["--fix"], {io, roots: {community: "/none", ultimate: null}, lintsPath: "/none/lints.toml"}), usageExitCode)
+    equal(runCli(["--fix"], {io, roots: {community: "/none", ultimate: null}, sourceDir: "/none"}), usageExitCode)
   })
 })

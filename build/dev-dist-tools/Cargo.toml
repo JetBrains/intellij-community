@@ -13,7 +13,7 @@ rust-version = "1.93"
 publish = false
 license = "Apache-2.0"
 
-# BEGIN rust-lints: generated from community/build/rust-lints/lints.toml by sync.mjs. Edit that file.
+# BEGIN rust-tools: generated from community/build/rust-tools/lints.toml by sync.mjs. Edit that file.
 [workspace.lints.rust]
 rust_2018_idioms = { level = "warn", priority = -1 }
 meta_variable_misuse = "warn"
@@ -120,7 +120,7 @@ unnecessary_safety_comment = "warn"
 unnecessary_safety_doc = "warn"
 unused_result_ok = "warn"
 verbose_file_reads = "warn"
-# END rust-lints
+# END rust-tools
 
 [workspace.dependencies]
 anyhow = "1.0.104"

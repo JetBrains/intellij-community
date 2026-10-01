@@ -1,4 +1,3 @@
-# Generated from community/build/rust-tools/rustfmt.toml by sync.mjs. Edit that file.
 # The format of every Rust tool workspace: the repository width of 140 columns. `sync.mjs` copies this file into
 # each workspace that `README.md` lists. Edit here, then run `bun community/build/rust-tools/sync.mjs`.
 edition = "2024"

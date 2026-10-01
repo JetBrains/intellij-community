@@ -1,4 +1,4 @@
-"""The Rust lint policy of the build tools under Bazel. `README.md` names what is shared and what is copied."""
+"""The shared Bazel rules of the Rust tool workspaces. `README.md` is the spec that names what each workspace has."""
 
 # No public file exports `LintsInfo`; rules_rs `cargo_lints.bzl` loads it from here too.
 load("@rules_rust//rust/private:providers.bzl", "LintsInfo")
@@ -35,6 +35,13 @@ rust_lints_as_errors = rule(
     },
 )
 
+# The rendered `[workspace.lints]` of the community workspaces: the dev-dist tools (`@ddt`) and BT (`@bt`). A `Label`
+# resolves each hub through the repository mapping of this module, so the ultimate root can name them too.
+COMMUNITY_WORKSPACE_LINTS = [
+    Label("@ddt//:workspace_cargo_lints"),
+    Label("@bt//:workspace_cargo_lints"),
+]
+
 _LINT_FIELDS = ["rustc_lint_flags", "clippy_lint_flags", "rustdoc_lint_flags"]
 
 def _rust_lints_equal_check_impl(ctx):
@@ -42,7 +49,7 @@ def _rust_lints_equal_check_impl(ctx):
     for target in ctx.attr.targets[1:]:
         for field in _LINT_FIELDS:
             if getattr(first[LintsInfo], field) != getattr(target[LintsInfo], field):
-                fail("{} and {} differ in {}. Run `bun community/build/rust-lints/sync.mjs`.".format(first.label, target.label, field))
+                fail("{} and {} differ in {}. Run `bun community/build/rust-tools/sync.mjs`.".format(first.label, target.label, field))
     marker = ctx.actions.declare_file(ctx.label.name + ".ok")
     ctx.actions.write(marker, "")
     return [DefaultInfo(files = depset([marker]))]

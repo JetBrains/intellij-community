@@ -1,5 +1,5 @@
 # The Rust lint policy of the build tools. `sync.mjs` copies these two tables into the `[workspace.lints]` of every
-# workspace that `README.md` lists. Edit here, then run `bun community/build/rust-lints/sync.mjs`.
+# workspace that `README.md` lists. Edit here, then run `bun community/build/rust-tools/sync.mjs`.
 #
 # Every group other than `pedantic` is opted into lint by lint: `nursery` and `restriction` change between clippy
 # releases, the Bazel toolchain and a local cargo can differ by a few lints, and an unknown lint name under
