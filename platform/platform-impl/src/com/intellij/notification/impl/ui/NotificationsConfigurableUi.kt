@@ -3,6 +3,8 @@ package com.intellij.notification.impl.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.soundSignals.PendingSoundSignals
+import com.intellij.ide.soundSignals.isSoundSignalsFeatureEnabled
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationLocation
 import com.intellij.notification.impl.NotificationsConfigurationImpl
@@ -11,6 +13,7 @@ import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.NaturalComparator
+import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBList
@@ -30,6 +33,7 @@ import javax.accessibility.AccessibleContext
 import javax.swing.Icon
 import javax.swing.JCheckBox
 import javax.swing.ListSelectionModel
+import javax.swing.event.AncestorEvent
 
 /**
  * @author Konstantin Bulenkov
@@ -52,6 +56,7 @@ internal class NotificationsConfigurableUi(settings: NotificationsConfigurationI
   private lateinit var useSystemNotifications: JCheckBox
   private lateinit var notificationSettings: NotificationSettingsUi
   private val myDoNotAskConfigurableUi = DoNotAskConfigurableUi()
+  private val soundSignals = if (isSoundSignalsFeatureEnabled()) PendingSoundSignals() else null
 
   init {
     speedSearch.setupListeners()
@@ -82,7 +87,7 @@ internal class NotificationsConfigurableUi(settings: NotificationsConfigurationI
         }).bindItem(settings::getNotificationLocation) { settings.notificationLocation = it ?: NotificationLocation.getDefaultLocation() }
       }
       row {
-        notificationSettings = NotificationSettingsUi(notificationList.model.getElementAt(0), useBalloonNotifications.selected)
+        notificationSettings = NotificationSettingsUi(notificationList.model.getElementAt(0), useBalloonNotifications.selected, soundSignals)
         scrollCell(notificationList)
         cell(notificationSettings.ui)
           .align(AlignY.TOP)
@@ -95,6 +100,12 @@ internal class NotificationsConfigurableUi(settings: NotificationsConfigurationI
         .resizableRow()
     }
     ScrollingUtil.ensureSelectionExists(notificationList)
+    soundSignals?.let { soundSignals ->
+      soundSignals.view { notificationSettings.renderPlaySound() }
+      ui.addAncestorListener(object : AncestorListenerAdapter() {
+        override fun ancestorAdded(event: AncestorEvent) = soundSignals.render()
+      })
+    }
   }
 
   private fun notificationLocationIcon(location: NotificationLocation): Icon =
@@ -143,10 +154,11 @@ internal class NotificationsConfigurableUi(settings: NotificationsConfigurationI
     notificationList.selectedIndex = selectedIndex
     notificationSettings.updateUi(notificationList.selectedValue)
     myDoNotAskConfigurableUi.reset()
+    soundSignals?.reset()
   }
 
   override fun isModified(settings: NotificationsConfigurationImpl): Boolean {
-    return ui.isModified() || isNotificationsModified() || myDoNotAskConfigurableUi.isModified()
+    return ui.isModified() || isNotificationsModified() || myDoNotAskConfigurableUi.isModified() || soundSignals?.isModified() == true
   }
 
   private fun isNotificationsModified(): Boolean {
@@ -173,6 +185,7 @@ internal class NotificationsConfigurableUi(settings: NotificationsConfigurationI
       }
     }
     myDoNotAskConfigurableUi.apply()
+    soundSignals?.apply()
   }
 
   override fun getComponent(): DialogPanel = ui

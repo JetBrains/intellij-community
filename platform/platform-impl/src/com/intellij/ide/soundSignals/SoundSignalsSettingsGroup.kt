@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.soundSignals
 
-import com.intellij.accessibility.AccessibilitySettings
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.components.service
+import com.intellij.notification.impl.boundGroupIds
 import com.intellij.openapi.observable.util.whenFocusGained
+import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.actionListener
@@ -13,16 +13,17 @@ import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.Nls
 import java.awt.event.FocusEvent
 import javax.swing.JCheckBox
+import javax.swing.event.AncestorEvent
 
 private const val SIGNAL_ROW_GAP = 3
 private const val SIGNAL_SECTION_GAP = 8
 
 internal fun Panel.soundSignalsGroup(screenReaderSupportCheckbox: JCheckBox) {
   if (!isSoundSignalsFeatureEnabled()) return
-  val pending = PendingSoundSignals(screenReaderSupportCheckbox)
+  val pending = PendingSoundSignals(screenReaderSupportCheckbox::isSelected)
 
   group(IdeBundle.message("sound.signals.group.title")) {
-    val signals = getSoundSignals()
+    val signals = getSoundSignals().filter(::isShownInSettings)
     for ((index, signal) in signals.distinctBy { it.group ?: it }.withIndex()) {
       val topGap = if (index == 0) SIGNAL_ROW_GAP else SIGNAL_ROW_GAP + SIGNAL_SECTION_GAP
       val group = signal.group
@@ -34,6 +35,9 @@ internal fun Panel.soundSignalsGroup(screenReaderSupportCheckbox: JCheckBox) {
     }
 
     screenReaderSupportCheckbox.addItemListener { pending.render() }
+    screenReaderSupportCheckbox.addAncestorListener(object : AncestorListenerAdapter() {
+      override fun ancestorAdded(event: AncestorEvent) = pending.render()
+    })
     pending.render()
 
     onReset { pending.reset() }
@@ -42,38 +46,8 @@ internal fun Panel.soundSignalsGroup(screenReaderSupportCheckbox: JCheckBox) {
   }
 }
 
-private class PendingSoundSignals(private val screenReader: JCheckBox) {
-  private val settings = service<AccessibilitySettings>()
-  private val views = ArrayList<(SoundSignalsPolicy) -> Unit>()
-  private var state = settings.state.soundSignals
-
-  fun policy(): SoundSignalsPolicy = SoundSignalsPolicy(screenReader.isSelected, state)
-
-  fun view(render: (SoundSignalsPolicy) -> Unit) {
-    views += render
-  }
-
-  fun render() {
-    val policy = policy()
-    for (view in views) view(policy)
-  }
-
-  fun edit(transform: (SoundSignalsSettingsState) -> SoundSignalsSettingsState) {
-    state = transform(state)
-    render()
-  }
-
-  fun reset() {
-    state = settings.state.soundSignals
-    render()
-  }
-
-  fun isModified(): Boolean = state != settings.state.soundSignals
-
-  fun apply() {
-    settings.update { it.copy(soundSignals = state) }
-  }
-}
+private fun isShownInSettings(signal: SoundSignal): Boolean =
+  signal.group !== IdeSoundSignals.EVENTS_GROUP || boundGroupIds(signal.id).isNotEmpty()
 
 private fun Panel.groupCheckBoxes(group: SoundSignalGroup, signals: List<SoundSignal>, pending: PendingSoundSignals, topGap: Int) {
   lateinit var groupCheckBox: SoundSignalGroupCheckBox
@@ -83,7 +57,7 @@ private fun Panel.groupCheckBoxes(group: SoundSignalGroup, signals: List<SoundSi
       .accessibleDescription(IdeBundle.message("sound.signals.group.accessible.description"))
       .actionListener { _, component ->
         val selected = component.state == ThreeStateCheckBox.State.SELECTED
-        pending.edit { it.copy(signals = it.signals + signals.associate { signal -> signal.id to selected }) }
+        pending.choose(signals.associate { it.id to selected })
       }
       .component
   }.customize(UnscaledGapsY(top = topGap))
@@ -122,7 +96,7 @@ private fun Panel.signalCheckBox(
         accessibleGroup?.let { accessibleDescription(IdeBundle.message("sound.signals.group.member.accessible.description", it.title)) }
       }
       .actionListener { _, component ->
-        pending.edit { it.copy(signals = it.signals + signals.associate { signal -> signal.id to component.isSelected }) }
+        pending.choose(signals.associate { it.id to component.isSelected })
         player.preview(previewSignal)
       }
       .applyToComponent {

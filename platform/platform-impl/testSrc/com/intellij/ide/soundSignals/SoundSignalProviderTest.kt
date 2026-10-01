@@ -2,6 +2,7 @@
 package com.intellij.ide.soundSignals
 
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
+import com.intellij.notification.impl.NotificationSoundEP
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.testFramework.junit5.TestApplication
@@ -35,8 +36,17 @@ class SoundSignalProviderTest {
     val ideIds = IdeSoundSignalProvider().soundSignals.map { it.id }.toSet()
 
     assertThat(getSoundSignals().map { it.id }.filter { it in ideIds })
-      .containsExactly("progress.indeterminate", "progress.determinate.stage.1", "progress.determinate.stage.2",
+      .containsExactly("build.finished", "test.results", "progress.indeterminate", "progress.determinate.stage.1", "progress.determinate.stage.2",
                        "progress.determinate.stage.3", "error.line", "error.caret", "warning.line", "warning.caret", "folded.line", "folded.caret")
+  }
+
+  @Test
+  fun `every notification group binding names a registered signal and every group has one binding`() {
+    val bindings = NotificationSoundEP.EP_NAME.extensionList
+
+    assertThat(bindings.mapNotNull { it.soundSignal }).isNotEmpty()
+    assertThat(bindings.mapNotNull { it.soundSignal }).allMatch { findSoundSignal(it) != null }
+    assertThat(bindings.groupingBy { it.group }.eachCount().filterValues { it > 1 }).isEmpty()
   }
 
   @Test

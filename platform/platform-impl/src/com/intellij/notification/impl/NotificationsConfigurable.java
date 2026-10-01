@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
+import com.intellij.accessibility.AccessibilitySettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.impl.ui.NotificationsConfigurableUi;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.options.BackedByPersistentState;
 import com.intellij.openapi.options.ConfigurableBase;
@@ -28,7 +30,7 @@ public final class NotificationsConfigurable extends ConfigurableBase<Notificati
   @ApiStatus.Internal
   @Override
   public @NotNull Collection<PersistentStateComponent<?>> getBackingComponents() {
-    return List.of(NotificationsConfigurationImpl.getInstanceImpl());
+    return List.of(NotificationsConfigurationImpl.getInstanceImpl(), ApplicationManager.getApplication().getService(AccessibilitySettings.class));
   }
 
   public static @NotNull @NlsContexts.ConfigurableName String displayName() {

@@ -3,10 +3,13 @@ package com.intellij.ide.soundSignals
 
 import com.intellij.accessibility.AccessibilitySettings
 import com.intellij.ide.IdeBundle
+import com.intellij.notification.impl.NotificationSoundEP
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -159,6 +162,53 @@ class SoundSignalsSettingsGroupTest {
     assertThat(service<AccessibilitySettings>().soundSignals.signals).containsExactlyInAnyOrderEntriesOf(PROGRESS_SIGNALS.associate { it.id to true })
   }
 
+  @Test
+  fun `an Events signal shows only while a notification group is bound to it`() {
+    val signal = registerEventSignal()
+    playingTest { page -> assertThat(page.hasCheckBox(signal.title)).isFalse() }
+
+    bindGroup(signal)
+    playingTest { page ->
+      assertThat(page.checkBox(signal.title).isSelected).isTrue()
+      assertThat(page.group(IdeSoundSignals.EVENTS_GROUP).text).isEqualTo(IdeSoundSignals.EVENTS_GROUP.title)
+    }
+  }
+
+  @Test
+  fun `an apply keeps a choice that the Notifications page applied meanwhile`() {
+    val signal = registerEventSignal()
+    bindGroup(signal)
+
+    groupTest(SoundSignalsSettingsState()) { page ->
+      page.signal(IdeSoundSignals.ERROR_LINE).doClick()
+      service<AccessibilitySettings>().setSignal(signal, true)
+
+      page.panel.apply()
+      assertThat(service<AccessibilitySettings>().soundSignals.signals)
+        .containsExactlyInAnyOrderEntriesOf(mapOf(IdeSoundSignals.ERROR_LINE.id to true, signal.id to true))
+
+      page.panel.reset()
+      assertThat(page.checkBox(signal.title).isSelected).isTrue()
+      assertThat(page.panel.isModified()).isFalse()
+    }
+  }
+
+  private fun registerEventSignal(): SoundSignal {
+    val signal = SoundSignal("test.event", { "Test event" }, "sounds/notification_info.wav", IdeSoundSignals::class.java, 0, IdeSoundSignals.EVENTS_GROUP)
+    SoundSignalProvider.EP_NAME.point.registerExtension(object : SoundSignalProvider {
+      override val soundSignals: Collection<SoundSignal> = listOf(signal)
+    }, DefaultPluginDescriptor("com.example.soundSignals"), disposable)
+    return signal
+  }
+
+  private fun bindGroup(signal: SoundSignal) {
+    val ep = NotificationSoundEP().apply {
+      group = "Test event group"
+      soundSignal = signal.id
+    }
+    ExtensionTestUtil.addExtensions(NotificationSoundEP.EP_NAME, listOf(ep), disposable)
+  }
+
   private lateinit var player: RecordingPlayer
 
   private fun playingState(disabled: List<SoundSignal> = emptyList()): SoundSignalsSettingsState =
@@ -188,6 +238,9 @@ class SoundSignalsSettingsGroupTest {
 
     fun checkBox(title: String): JBCheckBox =
       UIUtil.findComponentsOfType(panel, JBCheckBox::class.java).single { it.text == title }
+
+    fun hasCheckBox(title: String): Boolean =
+      UIUtil.findComponentsOfType(panel, JBCheckBox::class.java).any { it.text == title }
   }
 
   private fun focusByTab(component: JComponent) {

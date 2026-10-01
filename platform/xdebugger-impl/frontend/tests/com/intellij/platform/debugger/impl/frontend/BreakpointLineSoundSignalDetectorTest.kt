@@ -36,10 +36,10 @@ class BreakpointLineSoundSignalDetectorTest {
   lateinit var testDisposable: Disposable
 
   @Test
-  fun `the debugger provider publishes a valid signal`() {
+  fun `the debugger provider publishes valid signals`() {
     val signals = DebuggerSoundSignalProvider().soundSignals
 
-    assertEquals(listOf("breakpoint.line"), signals.map { it.id })
+    assertEquals(listOf("breakpoint.hit", "breakpoint.line"), signals.map { it.id })
     for (signal in signals) {
       assertTrue(signal.title.isNotBlank())
       val sound = checkNotNull(signal.ownerClass.classLoader.getResourceAsStream(signal.resourcePath)) { "No sound for '${signal.id}'" }

@@ -49,6 +49,7 @@
     <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
     <iconProvider implementation="com.intellij.execution.testframework.TestIconProvider" id="testIcons"/>
     <notificationGroup id="Test Runner" displayType="NONE" bundle="messages.TestRunnerBundle" key="notification.group.test.runner"/>
+    <notificationSound group="Test Runner" soundSignal="test.results"/>
     <projectService serviceImplementation="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
     <projectSettings service="com.intellij.execution.testframework.autotest.AutoTestManager"/>
     <projectSettings service="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
