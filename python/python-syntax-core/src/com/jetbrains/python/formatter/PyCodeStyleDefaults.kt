@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.formatter
 
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.jetbrains.python.PythonLanguage
@@ -12,11 +13,11 @@ import com.jetbrains.python.PythonLanguage
 const val PY_NEW_FORMATTER_DEFAULTS_ENABLED_KEY: String = "python.formatter.new.defaults.enabled"
 
 /**
- * Per-installation rollout state (flag 2): whether this installation actually uses the new defaults.
- * Managed by `PyCodeStyleMigrationActivity` — on for fresh installs, off for upgrades until the user
- * accepts the switch balloon. Only has an effect while the master switch ([PY_NEW_FORMATTER_DEFAULTS_ENABLED_KEY]) is on.
+ * The advanced setting that holds the per-installation rollout state (flag 2): whether this installation uses
+ * the new defaults. The rollout turns it on for a new installation, and for an upgrade when the user accepts
+ * the switch balloon. It has an effect only while the master switch ([PY_NEW_FORMATTER_DEFAULTS_ENABLED_KEY]) is on.
  */
-const val PY_NEW_FORMATTER_DEFAULTS_ACTIVE_KEY: String = "python.formatter.new.defaults"
+const val PY_NEW_FORMATTER_DEFAULTS_SETTING_ID: String = "python.formatter.use.new.defaults"
 
 /** The master switch (flag 1): whether the new-defaults feature is enabled at all. */
 fun isPyNewFormatterDefaultsFeatureEnabled(): Boolean = Registry.`is`(PY_NEW_FORMATTER_DEFAULTS_ENABLED_KEY, false)
@@ -26,7 +27,7 @@ fun isPyNewFormatterDefaultsFeatureEnabled(): Boolean = Registry.`is`(PY_NEW_FOR
  * and the per-installation rollout state (flag 2) are both on.
  */
 fun isPyNewFormatterDefaultsActive(): Boolean =
-  isPyNewFormatterDefaultsFeatureEnabled() && Registry.`is`(PY_NEW_FORMATTER_DEFAULTS_ACTIVE_KEY, false)
+  isPyNewFormatterDefaultsFeatureEnabled() && AdvancedSettings.getBoolean(PY_NEW_FORMATTER_DEFAULTS_SETTING_ID)
 
 /**
  * The profile a fresh Python scheme defaults to: the modern [PyDefaultStyleGuide] when the new defaults

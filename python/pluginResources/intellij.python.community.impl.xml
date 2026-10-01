@@ -162,12 +162,9 @@
     <registryKey defaultValue="true"
                  description="Show non-python modules(different type, no python facet) in Python configurable when they have base dir"
                  key="python.show.modules.with.base.dir" restartRequired="true"/>
-    <registryKey defaultValue="false"
+    <registryKey defaultValue="true"
                  description="Master switch for the new Python formatter defaults (PY-85946). When off, the feature is fully disabled: classic formatting everywhere, no migration, no balloon."
                  key="python.formatter.new.defaults.enabled" restartRequired="true"/>
-    <registryKey defaultValue="false"
-                 description="Whether this installation uses the new Python formatter defaults (PY-85946). Set automatically per installation (on for new installs, off for upgrades until the user switches); requires the master switch python.formatter.new.defaults.enabled."
-                 key="python.formatter.new.defaults" restartRequired="true"/>
     <fileType name="PyTyped"
               implementationClass="com.jetbrains.python.codeInsight.typing.PyTypedFileType"
               fieldName="INSTANCE"
@@ -321,6 +318,8 @@
   <applicationListeners>
     <listener class="com.jetbrains.python.sdk.PySdkTransferredRootsListener"
               topic="com.jetbrains.python.sdk.PySdkListener"/>
+    <listener class="com.jetbrains.python.formatter.PyNewFormatterDefaultsReformatListener"
+              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -442,6 +441,8 @@
     <advancedSetting id="python.type.ignore.suppress.include.code" default="true" groupKey="group.advanced.settings.python"/>
     <advancedSetting id="python.type.ignore.suppress.pycharm.namespace" default="false" groupKey="group.advanced.settings.python"/>
     <advancedSetting id="python.typing.strict.unions" default="true" groupKey="group.advanced.settings.python"/>
+    <advancedSetting id="python.formatter.use.new.defaults" default="false" groupKey="group.advanced.settings.python"
+                     service="com.jetbrains.python.formatter.PyNewFormatterDefaultsSettings" property="useNewDefaults"/>
     <runLineMarkerContributor language="Python"
                               implementationClass="com.jetbrains.python.testing.PyTestLineMarkerContributor"/>
     <toolWindow id="Python Console" anchor="right" icon="com.jetbrains.python.icons.PythonIcons.Python.PythonConsoleToolWindow"
