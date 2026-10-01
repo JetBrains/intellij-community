@@ -296,13 +296,61 @@ fun essential(): ModuleSet = moduleSet("essential") {
 
 ## Creating a New Module Set
 
-See `/create-module-set` slash command for detailed instructions on creating a new module set.
+A module set is a Kotlin function. The generator writes the XML from it. Never write the XML by hand.
+Read the two decision sections above before you add a set.
 
-**Quick checklist:**
-1. Add function to appropriate file (`CommunityModuleSets.kt` or `UltimateModuleSets.kt`)
-2. Write comprehensive KDoc (see existing examples)
-3. Run `bazel run //platform/buildScripts:plugin-model-tool` to create XML, or the "Generate Product Layouts" run configuration
-4. Reference from products via `moduleSet(yourSet())`
+1. Add a public function that returns `ModuleSet` to the provider object. Pick the file from
+   [Module Set Locations](#module-set-locations). The generator finds the function by reflection.
+   A private function or another return type is not found.
+
+   ```kotlin
+   /**
+    * What the set holds. Which set nests it. Which lean product adds it itself.
+    */
+   fun externalSystem(): ModuleSet = moduleSet("externalSystem") {
+     module("intellij.platform.externalSystem")
+     embeddedModule("intellij.platform.example")  // only for a module that the core classloader must load
+     moduleSet(otherSet())                        // nest a set instead of repeating its modules
+   }
+   ```
+
+   Name the set after the function. Pass `alias` only when a plugin must depend on the set as a module.
+   An alias must be unique.
+
+2. Reference the set. Call `moduleSet(yourSet())` in the set that nests it, or
+   `moduleSet(CommunityModuleSets.yourSet())` in `getProductContentDescriptor()` of each product that needs it.
+   Remove the modules from every place that listed them directly. A module reaches a product once.
+
+3. Regenerate from the repository root. The first generator run writes the new XML. The converter then adds
+   it to the `exports_files` list of its `BUILD.bazel`. The second generator run reads that export into the
+   dev-dist descriptor files. The check fails without the second run.
+
+   ```bash
+   bazel run //platform/buildScripts:plugin-model-tool
+   ./build/jpsModelToBazel.cmd
+   bazel run //platform/buildScripts:plugin-model-tool
+   bazel run //platform/buildScripts:plugin-model-tool -- --check
+   bazel run //:format.check
+   (cd community && bazel run //:format.check)
+   ```
+
+   The generator writes `intellij.moduleSets.<name>.xml` under `community/platform/platform-resources/generated/META-INF/`,
+   or under `licenseCommon/generated/META-INF/` for an ultimate set. It also writes the product descriptors and
+   the dev-dist `.bzl` files. Read `git status`. Every changed file must be one you expected. Stop on a surprise.
+
+4. Run the tests:
+
+   ```bash
+   ./tests.cmd --module intellij.platform.buildScripts.productDsl.tests --test "org.jetbrains.intellij.build.productLayout.*"
+   ```
+
+5. Commit the Kotlin edit and the generated output together.
+
+Do not:
+
+- edit a generated `intellij.moduleSets.*.xml`, a product descriptor, or a `dev_dist_*.bzl` file by hand;
+- add a `module-content.yaml`, because the generator derives the jar of a content module;
+- add an `xi:include` for a module set by hand, because the generator writes it from `moduleSet()`.
 
 ## Discovering Available Module Sets
 
