@@ -40,4 +40,23 @@ class AdvancedSettingsTest : LightPlatformTestCase() {
     Disposer.dispose(disposable)
   }
 
+  fun testProductReplacesDefault() {
+    AdvancedSettingDefaultBean.EP_NAME.point.registerExtension(AdvancedSettingDefaultBean().apply {
+      id = "replaced.default.id"
+      defaultValue = "false"
+    }, testRootDisposable)
+    AdvancedSettingBean.EP_NAME.point.registerExtension(AdvancedSettingBean().apply {
+      id = "replaced.default.id"
+      defaultValue = "true"
+    }, testRootDisposable)
+
+    val advancedSettings = AdvancedSettings.getInstance() as AdvancedSettingsImpl
+    assertFalse(AdvancedSettings.getBoolean("replaced.default.id"))
+    assertEquals(false, AdvancedSettings.getDefaultBoolean("replaced.default.id"))
+
+    AdvancedSettings.setBoolean("replaced.default.id", true)
+    assertTrue(advancedSettings.isNonDefault("replaced.default.id"))
+    AdvancedSettings.setBoolean("replaced.default.id", false)
+    assertFalse(advancedSettings.isNonDefault("replaced.default.id"))
+  }
 }

@@ -205,7 +205,8 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
   fun valueToString(value: Any): String =
     if (type() == AdvancedSettingType.Enum) (value as Enum<*>).name else value.toString()
 
-  val defaultValueObject: Any by lazy { valueFromString(defaultValue) }
+  /** The [defaultValue], unless a product replaces it with [AdvancedSettingDefaultBean]. */
+  val defaultValueObject: Any by lazy { valueFromString(AdvancedSettingDefaultBean.find(id) ?: defaultValue) }
 
   private fun findBundle(): ResourceBundle? {
     val bundleName = bundle.nullize()
@@ -265,6 +266,30 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
   override fun getKey(): String = id
 
   override fun getInstance(): AdvancedSettingBean = this
+}
+
+/**
+ * Replaces the default value of the advanced setting [id] declared elsewhere, for example, in a product customization.
+ * The setting keeps its type, its UI, and the value a user stored; only the default and "Reset" change.
+ */
+@ApiStatus.Internal
+class AdvancedSettingDefaultBean {
+  companion object {
+    @JvmField
+    val EP_NAME: ExtensionPointName<AdvancedSettingDefaultBean> = ExtensionPointName("com.intellij.advancedSettingDefault")
+
+    internal fun find(id: String): String? = EP_NAME.findFirstSafe { it.id == id }?.defaultValue
+  }
+
+  @Attribute("id")
+  @RequiredElement
+  @JvmField
+  var id: String = ""
+
+  @Attribute("default")
+  @RequiredElement
+  @JvmField
+  var defaultValue: String = ""
 }
 
 private val logger = logger<AdvancedSettingsImpl>()

@@ -340,6 +340,8 @@
     <extensionPoint qualifiedName="com.intellij.settingsEntryPointIconCustomizer" interface="com.intellij.ide.actions.SettingsEntryPointAction$IconCustomizer" dynamic="true"/>
     <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.advancedSetting" beanClass="com.intellij.openapi.options.advanced.AdvancedSettingBean" dynamic="true"/>
+    <!-- Defaults are cached on first read, so a replaced default needs a restart -->
+    <extensionPoint qualifiedName="com.intellij.advancedSettingDefault" beanClass="com.intellij.openapi.options.advanced.AdvancedSettingDefaultBean"/>
     <extensionPoint qualifiedName="com.intellij.dependencyCollector" beanClass="com.intellij.ide.plugins.DependencyCollectorBean" dynamic="true">
       <with attribute="implementation" implements="com.intellij.ide.plugins.DependencyCollector"/>
     </extensionPoint>
