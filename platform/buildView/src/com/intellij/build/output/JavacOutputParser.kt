@@ -2,10 +2,10 @@
 package com.intellij.build.output
 
 import com.intellij.build.FilePosition
-import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.StartId
+import com.intellij.build.output.BuildOutputInstantReaderImpl.BuildOutputLineParserBridge
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
@@ -13,7 +13,6 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.util.LinkedList
-import java.util.function.Consumer
 import kotlin.io.path.extension
 import kotlin.io.path.pathString
 
@@ -21,63 +20,69 @@ import kotlin.io.path.pathString
  * Parses javac's output.
  */
 @ApiStatus.Internal
-class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutputParser {
+class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutputLineParserBridge() {
 
   constructor() : this("java")
 
-  override fun parse(line: String, reader: BuildOutputInstantReader, messageConsumer: Consumer<in BuildEvent>): Boolean {
-    var colonIndex1 = line.indexOf(COLON)
+  override suspend fun parse(
+    line: BuildOutputText,
+    reader: BuildOutputReplayableLineReader,
+    taskId: StartId,
+    multicaster: BuildOutputMulticaster,
+    isSingleFlow: Boolean,
+  ): Boolean {
+    var colonIndex1 = line.text.indexOf(COLON)
     if (colonIndex1 == 1) { // drive letter
-      colonIndex1 = line.indexOf(COLON, colonIndex1 + 1)
+      colonIndex1 = line.text.indexOf(COLON, colonIndex1 + 1)
     }
 
     if (colonIndex1 >= 0) { // looks like found something like a file path.
-      val part1 = line.substring(0, colonIndex1).trim()
+      val part1 = line.text.substring(0, colonIndex1).trim()
       if (part1.equals("error", ignoreCase = true) /* jikes */ || part1.equals("Caused by", ignoreCase = true)) {
         // +1 so we don't include the colon
-        val text = line.substring(colonIndex1 + 1).trim()
-        messageConsumer.accept(
+        val text = line.text.substring(colonIndex1 + 1).trim()
+        multicaster.notifyBuildEvent(
           MessageEvent.builder(text, MessageEvent.Kind.ERROR)
-            .withParentId(reader.parentEventId)
+            .withParentId(taskId)
             .withGroup(COMPILER_MESSAGES_GROUP)
-            .withDescription(line)
+            .withDescription(line.text)
             .build()
         )
         return true
       }
       if (part1.equals("warning", ignoreCase = true)) {
         // +1 so we don't include the colon
-        val text = line.substring(colonIndex1 + 1).trim()
-        messageConsumer.accept(
+        val text = line.text.substring(colonIndex1 + 1).trim()
+        multicaster.notifyBuildEvent(
           MessageEvent.builder(text, MessageEvent.Kind.WARNING)
-            .withParentId(reader.parentEventId)
+            .withParentId(taskId)
             .withGroup(COMPILER_MESSAGES_GROUP)
-            .withDescription(line)
+            .withDescription(line.text)
             .build()
         )
         return true
       }
       if (part1.equals("javac", ignoreCase = true)) {
-        messageConsumer.accept(
-          MessageEvent.builder(line, MessageEvent.Kind.ERROR)
-            .withParentId(reader.parentEventId)
+        multicaster.notifyBuildEvent(
+          MessageEvent.builder(line.text, MessageEvent.Kind.ERROR)
+            .withParentId(taskId)
             .withGroup(COMPILER_MESSAGES_GROUP)
-            .withDescription(line)
+            .withDescription(line.text)
             .build()
         )
         return true
       }
       if (part1.equals("Note", ignoreCase = true)) {
-        val note = line.substring(colonIndex1 + 1).trim()
+        val note = line.text.substring(colonIndex1 + 1).trim()
         val javaFileExtensionIndex = note.indexOf(JAVA_EXTENSION)
         if (javaFileExtensionIndex > 0) {
           val path = note.substring(0, javaFileExtensionIndex + JAVA_EXTENSION.length).toNioPathOrNull()
           if (path != null && Files.isRegularFile(path)) {
             val message = note.substring(javaFileExtensionIndex + JAVA_EXTENSION.length + 1)
             val detailedMessage = amendNextInfoLinesIfNeeded("${path.pathString}:\n$message", reader)
-            messageConsumer.accept(
+            multicaster.notifyBuildEvent(
               MessageEvent.builder(message, MessageEvent.Kind.INFO)
-                .withParentId(reader.parentEventId)
+                .withParentId(taskId)
                 .withGroup(COMPILER_MESSAGES_GROUP)
                 .withDescription(detailedMessage)
                 .withFilePosition(FilePosition(path, 0, 0))
@@ -88,16 +93,16 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
         }
       }
 
-      val colonIndex2 = line.indexOf(COLON, colonIndex1 + 1)
+      val colonIndex2 = line.text.indexOf(COLON, colonIndex1 + 1)
       if (colonIndex2 >= 0) {
         val path = part1.toNioPathOrNull() ?: return false
         if (!Files.isRegularFile(path)) {
           // the part one is not a file path.
           return false
         }
-        val lineNumber = line.substring(colonIndex1 + 1, colonIndex2).trim().toIntOrNull() // 1-based.
+        val lineNumber = line.text.substring(colonIndex1 + 1, colonIndex2).trim().toIntOrNull() // 1-based.
         if (lineNumber != null) {
-          var text = line.substring(colonIndex2 + 1).trim()
+          var text = line.text.substring(colonIndex2 + 1).trim()
           var kind = MessageEvent.Kind.ERROR
 
           if (text.startsWith(WARNING_PREFIX, ignoreCase = true)) {
@@ -123,18 +128,18 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
           var column: Int // 0-based.
           var prevLine: String? = null
           while (true) {
-            val nextLine = outputCollector.readLine() ?: return false
+            val nextLine = outputCollector.readLine()?.text ?: return false
             if (nextLine.trim() == "^") {
               column = nextLine.indexOf('^')
-              var messageEnd = outputCollector.readLine()
+              var messageEnd = outputCollector.readLine()?.text
 
               while (messageEnd != null && messageEnd.isMessageEnd()) {
                 messageList.add(messageEnd.trim())
-                messageEnd = outputCollector.readLine()
+                messageEnd = outputCollector.readLine()?.text
               }
 
               if (messageEnd != null) {
-                outputCollector.pushBack()
+                outputCollector.pushBack(1)
               }
               break
             }
@@ -146,10 +151,10 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
 
           if (column >= 0) {
             val message = convertMessages(messageList).joinToString("\n")
-            val detailedMessage = "$line\n${outputCollector.getOutput()}".trimIndent()
-            messageConsumer.accept(
+            val detailedMessage = "${line.text}\n${outputCollector.getOutput()}".trimIndent()
+            multicaster.notifyBuildEvent(
               MessageEvent.builder(message, kind)
-                .withParentId(reader.parentEventId)
+                .withParentId(taskId)
                 .withGroup(COMPILER_MESSAGES_GROUP)
                 .withDescription(detailedMessage)
                 .withFilePosition(FilePosition(path, lineNumber - 1, column))
@@ -161,12 +166,12 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
       }
     }
 
-    if (line.endsWith("java.lang.OutOfMemoryError")) {
-      messageConsumer.accept(
+    if (line.text.endsWith("java.lang.OutOfMemoryError")) {
+      multicaster.notifyBuildEvent(
         MessageEvent.builder(LangBundle.message("build.event.message.out.memory"), MessageEvent.Kind.ERROR)
-          .withParentId(reader.parentEventId)
+          .withParentId(taskId)
           .withGroup(COMPILER_MESSAGES_GROUP)
-          .withDescription(line)
+          .withDescription(line.text)
           .build()
       )
       return true
@@ -175,19 +180,16 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
     return false
   }
 
-  private class BuildOutputCollector(private val reader: BuildOutputInstantReader) : BuildOutputInstantReader {
-    private val readLines = LinkedList<String>()
-    override fun getParentEventId(): StartId = reader.parentEventId
+  private class BuildOutputCollector(
+    private val reader: BuildOutputReplayableLineReader,
+  ) : BuildOutputReplayableLineReader {
 
-    override fun readLine(): String? {
+    private val readLines = LinkedList<BuildOutputText>()
+
+    override suspend fun readLine(): BuildOutputText? {
       val line = reader.readLine() ?: return null
       readLines.add(line)
       return line
-    }
-
-    override fun pushBack() {
-      reader.pushBack()
-      readLines.pollLast()
     }
 
     override fun pushBack(numberOfLines: Int) {
@@ -195,7 +197,7 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
       repeat(numberOfLines) { readLines.pollLast() ?: return@repeat }
     }
 
-    fun getOutput(): @NlsSafe String = readLines.joinToString(separator = "\n")
+    fun getOutput(): @NlsSafe String = readLines.joinToString(separator = "\n") { it.text }
   }
 
   private companion object {
@@ -211,16 +213,16 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
     private val COMPILER_MESSAGES_GROUP: @BuildEventsNls.Title String
       get() = LangBundle.message("build.event.title.compiler")
 
-    private fun amendNextInfoLinesIfNeeded(str: String, reader: BuildOutputInstantReader): @NlsSafe String = buildString {
+    private suspend fun amendNextInfoLinesIfNeeded(str: String, reader: BuildOutputReplayableLineReader): @NlsSafe String = buildString {
       append(str)
-      var nextLine = reader.readLine()
+      var nextLine = reader.readLine()?.text
       while (nextLine != null) {
         if (nextLine.startsWith(NOTE_LINE_PREFIX) && !nextLine.contains(JAVA_EXTENSION)) {
           append("\n").append(nextLine.substring(NOTE_LINE_PREFIX.length))
-          nextLine = reader.readLine()
+          nextLine = reader.readLine()?.text
           continue
         }
-        reader.pushBack()
+        reader.pushBack(1)
         break
       }
     }
