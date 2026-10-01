@@ -3,7 +3,6 @@ package com.jetbrains.python.testing.pyMock
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.PyInspection
@@ -13,11 +12,15 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Reports a mismatch between the number of `@patch`/`@patch.object` decorators (that inject
- * mock parameters) and the number of extra parameters in the decorated function.
+ * Reports a mismatch between the mocks that the `@patch` and `@patch.object` decorators inject and the parameters of the function.
  *
- * A decorator injects a parameter unless it has an explicit `new` argument (keyword or positional).
- * Functions with `*args` or `**kwargs` are skipped since they accept arbitrary parameters.
+ * The inspection reports too few positional parameters for the mocks.
+ * It reports extra parameters only in a test method or a setUp or tearDown method of a `unittest` `TestCase`.
+ * `unittest` gives no other arguments to these methods.
+ * pytest gives fixtures to the extra parameters, and other callers can give their own arguments.
+ * The inspection skips a function with `*args` or `**kwargs`, because the function accepts any arguments.
+ *
+ * @see PyPatchInjection
  */
 @ApiStatus.Internal
 class PyMockPatchArgumentCountInspection : PyInspection() {
@@ -26,41 +29,24 @@ class PyMockPatchArgumentCountInspection : PyInspection() {
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
   ): PsiElementVisitor = object : PyInspectionVisitor(holder, getContext(session)) {
-    override fun visitElement(element: PsiElement) {
-      if (element !is PyFunction) return
-      checkPatchArgumentCount(element, holder, myTypeEvalContext)
+    override fun visitPyFunction(node: PyFunction) {
+      checkPatchArgumentCount(node, holder, myTypeEvalContext)
     }
   }
 }
 
 private fun checkPatchArgumentCount(func: PyFunction, holder: ProblemsHolder, context: TypeEvalContext) {
-  val decorators = func.decoratorList?.decorators ?: return
-
-  val injectingCount = decorators.count { dec ->
-    isPatchOrPatchObjectCall(dec, context) && !hasNewArgument(dec, context)
-  }
-  if (injectingCount == 0) return
-
-  val params = func.parameterList.parameters
-
-  // Skip if any parameter uses *args or **kwargs — they absorb arbitrary arguments
-  val namedParams = params.mapNotNull { it.asNamed }
+  val namedParams = func.parameterList.parameters.mapNotNull { it.asNamed }
   if (namedParams.any { it.isPositionalContainer || it.isKeywordContainer }) return
+  val injection = PyPatchInjection.of(func, context) ?: return
 
-  // Count non-self parameters; these are the ones that should match injecting decorators
-  val extraParamCount = params.count { !it.isSelf }
-
-  val diff = injectingCount - extraParamCount
-  if (diff > 0) {
-    holder.registerProblem(
-      func.parameterList,
-      PyPsiBundle.message("INSP.mock.patch.too.few.params", diff),
-    )
+  val missing = injection.missingParameterCount
+  if (missing > 0) {
+    holder.registerProblem(func.parameterList, PyPsiBundle.message("INSP.mock.patch.too.few.params", missing))
+    return
   }
-  else if (diff < 0) {
-    holder.registerProblem(
-      func.parameterList,
-      PyPsiBundle.message("INSP.mock.patch.too.many.params", -diff),
-    )
+  val extra = injection.extraParameterCount
+  if (extra > 0) {
+    holder.registerProblem(func.parameterList, PyPsiBundle.message("INSP.mock.patch.too.many.params", extra))
   }
 }
