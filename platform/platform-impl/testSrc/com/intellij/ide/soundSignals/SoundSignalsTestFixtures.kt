@@ -31,10 +31,6 @@ internal fun AccessibilitySettings.loadSoundSignals(state: SoundSignalsSettingsS
   loadState(this.state.copy(soundSignals = state))
 }
 
-internal fun AccessibilitySettings.setPlaySignals(value: Boolean) {
-  update { it.copy(soundSignals = it.soundSignals.copy(playSignals = value)) }
-}
-
 internal fun AccessibilitySettings.setSignal(id: String, enabled: Boolean) {
   update { it.copy(soundSignals = it.soundSignals.copy(signals = it.soundSignals.signals + (id to enabled))) }
 }

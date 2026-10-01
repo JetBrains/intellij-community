@@ -242,9 +242,8 @@ class ProgressSoundSignalTrackerTest {
   }
 
   @Test
-  fun `no tracker while Play sound signals is off`() = trackerTest { _, _ ->
-    service<AccessibilitySettings>().setPlaySignals(false)
-
+  @RegistryKey(key = SOUND_SIGNALS_ENABLED_REGISTRY_KEY, value = "false")
+  fun `no tracker while the feature is off`() = trackerTest { _, _ ->
     assertThat(ProgressSoundSignalTracker.getInstanceIfEnabled()).isNull()
   }
 
@@ -268,8 +267,6 @@ class ProgressSoundSignalTrackerTest {
     withSoundSignalsSettings { settings ->
       val trackerScope = childScope("ProgressSoundSignalTracker under test")
       try {
-        // An explicit On: the calculated value follows the screen reader setting, which is off in a test
-        settings.setPlaySignals(true)
         for (signal in PROGRESS_SIGNALS) settings.setSignal(signal, !muteProgress)
         ApplicationManager.getApplication().replaceService(SoundSignalPlayer::class.java, player, disposable)
 

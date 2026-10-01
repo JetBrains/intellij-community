@@ -5,14 +5,10 @@ import com.intellij.accessibility.AccessibilitySettings
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.util.whenFocusGained
-import com.intellij.openapi.observable.util.whenItemSelected
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.actionListener
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
-import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
-import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.Nls
 import java.awt.event.FocusEvent
@@ -26,29 +22,16 @@ internal fun Panel.soundSignalsGroup(screenReaderSupportCheckbox: JCheckBox) {
   val pending = PendingSoundSignals(screenReaderSupportCheckbox)
 
   group(IdeBundle.message("sound.signals.group.title")) {
-    lateinit var playSignals: ComboBox<Boolean>
-    row(IdeBundle.message("sound.signals.play.label")) {
-      playSignals = comboBox(listOf(true, false), textListCellRenderer("") {
-        IdeBundle.message(if (it) "sound.signals.play.on" else "sound.signals.play.off")
-      }).component
-    }
-    pending.view { playSignals.selectedItem = it.isPlaySignalsOn }
-    playSignals.whenItemSelected { on ->
-      // a render selects the calculated value, so only a user edit selects another one
-      if (on != pending.policy().isPlaySignalsOn) pending.edit { it.copy(playSignals = on) }
-    }
-    rowsRange {
-      val signals = getSoundSignals()
-      for ((index, signal) in signals.distinctBy { it.group ?: it }.withIndex()) {
-        val topGap = if (index == 0) SIGNAL_ROW_GAP else SIGNAL_ROW_GAP + SIGNAL_SECTION_GAP
-        val group = signal.group
-        when {
-          group == null -> signalCheckBox(signal.title, listOf(signal), pending, topGap)
-          group.collapsed -> signalCheckBox(group.title, signals.filter { it.group === group }, pending, topGap)
-          else -> groupCheckBoxes(group, signals.filter { it.group === group }, pending, topGap)
-        }
+    val signals = getSoundSignals()
+    for ((index, signal) in signals.distinctBy { it.group ?: it }.withIndex()) {
+      val topGap = if (index == 0) SIGNAL_ROW_GAP else SIGNAL_ROW_GAP + SIGNAL_SECTION_GAP
+      val group = signal.group
+      when {
+        group == null -> signalCheckBox(signal.title, listOf(signal), pending, topGap)
+        group.collapsed -> signalCheckBox(group.title, signals.filter { it.group === group }, pending, topGap)
+        else -> groupCheckBoxes(group, signals.filter { it.group === group }, pending, topGap)
       }
-    }.enabledIf(playSignals.selectedValueMatches { it == true })
+    }
 
     screenReaderSupportCheckbox.addItemListener { pending.render() }
     pending.render()

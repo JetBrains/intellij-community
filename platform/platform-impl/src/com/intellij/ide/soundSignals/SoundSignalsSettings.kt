@@ -4,22 +4,16 @@ package com.intellij.ide.soundSignals
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.util.registry.RegistryManager
-import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.ApiStatus
 
-internal fun isSoundSignalOn(signal: SoundSignal): Boolean {
-  if (!isSoundSignalsFeatureEnabled()) return false
-  val policy = appliedSoundSignalsPolicy()
-  return policy.isPlaySignalsOn && policy.isSignalOn(signal.id)
-}
+internal fun isSoundSignalOn(signal: SoundSignal): Boolean =
+  isSoundSignalsFeatureEnabled() && appliedSoundSignalsPolicy().isSignalOn(signal.id)
 
 internal fun refreshSoundSignalsState() {
   serviceIfCreated<EditorSoundSignalsManager>()?.updateListenersState()
 }
-
-internal fun isSoundSignalsOn(): Boolean = isSoundSignalsFeatureEnabled() && appliedSoundSignalsPolicy().isPlaySignalsOn
 
 internal const val SOUND_SIGNALS_ENABLED_REGISTRY_KEY: String = "ide.sound.signals.enabled"
 
@@ -33,7 +27,6 @@ internal fun isSoundSignalsFeatureEnabled(): Boolean {
 @ApiStatus.Internal
 @Tag("soundSignals")
 data class SoundSignalsSettingsState(
-  @JvmField @OptionTag val playSignals: Boolean? = null,
   @JvmField @XMap(propertyElementName = "signals", entryTagName = "signal", keyAttributeName = "id", valueAttributeName = "enabled")
   val signals: Map<String, Boolean> = emptyMap(),
 )

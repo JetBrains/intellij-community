@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
@@ -29,15 +28,12 @@ class SoundSignalsSettingsGroupTest {
   private lateinit var disposable: Disposable
 
   @Test
-  fun `the combo box offers only On and Off and shows the effective value`() = groupTest(SoundSignalsSettingsState()) { page ->
-    assertThat((0 until page.playSignals.itemCount).map(page.playSignals::getItemAt)).containsExactly(true, false)
-    assertThat(page.playSignals.item).isFalse()
-    assertThat(page.signal(IdeSoundSignals.ERROR_LINE).isSelected).isTrue()
-    assertThat(page.signal(IdeSoundSignals.ERROR_LINE).isEnabled).isFalse()
+  fun `a signal without a choice follows the pending screen reader support`() = groupTest(SoundSignalsSettingsState()) { page ->
+    assertThat(page.signal(IdeSoundSignals.ERROR_LINE).isSelected).isFalse()
+    assertThat(page.signal(IdeSoundSignals.ERROR_LINE).isEnabled).isTrue()
 
     page.screenReader.isSelected = true
-    assertThat(page.playSignals.item).isTrue()
-    assertThat(page.signal(IdeSoundSignals.ERROR_LINE).isEnabled).isTrue()
+    assertThat(page.signal(IdeSoundSignals.ERROR_LINE).isSelected).isTrue()
 
     assertThat(page.panel.isModified()).isFalse()
     assertThat(player.previewed).isEmpty()
@@ -54,31 +50,17 @@ class SoundSignalsSettingsGroupTest {
   }
 
   @Test
-  fun `a combo box edit records an explicit value`() = groupTest(SoundSignalsSettingsState()) { page ->
-    page.screenReader.isSelected = true
-    page.playSignals.selectedItem = false
-    assertThat(page.panel.isModified()).isTrue()
-
-    page.panel.apply()
-    assertThat(service<AccessibilitySettings>().soundSignals).isEqualTo(SoundSignalsSettingsState(playSignals = false))
-
-    page.playSignals.selectedItem = true
-    page.panel.apply()
-    assertThat(service<AccessibilitySettings>().soundSignals).isEqualTo(SoundSignalsSettingsState(playSignals = true))
-  }
-
-  @Test
   fun `an explicit child survives a screen reader toggle`() = groupTest(SoundSignalsSettingsState()) { page ->
     page.screenReader.isSelected = true
     page.signal(IdeSoundSignals.ERROR_LINE).doClick()
 
     page.screenReader.isSelected = false
-    assertThat(page.playSignals.item).isFalse()
     assertThat(page.signal(IdeSoundSignals.ERROR_LINE).isSelected).isFalse()
-    assertThat(page.signal(IdeSoundSignals.ERROR_CARET).isSelected).isTrue()
+    assertThat(page.signal(IdeSoundSignals.ERROR_CARET).isSelected).isFalse()
 
     page.screenReader.isSelected = true
     assertThat(page.signal(IdeSoundSignals.ERROR_LINE).isSelected).isFalse()
+    assertThat(page.signal(IdeSoundSignals.ERROR_CARET).isSelected).isTrue()
 
     page.panel.apply()
     assertThat(service<AccessibilitySettings>().soundSignals).isEqualTo(SoundSignalsSettingsState(signals = mapOf("error.line" to false)))
@@ -86,7 +68,7 @@ class SoundSignalsSettingsGroupTest {
 
   @Test
   fun `a choice of an id with no declaration survives an apply`() = groupTest(
-    playingState().copy(signals = mapOf("plugin.only.signal" to false)),
+    SoundSignalsSettingsState(signals = mapOf("plugin.only.signal" to false)), screenReaderSupport = true,
   ) { page ->
     page.signal(IdeSoundSignals.ERROR_LINE).doClick()
     page.panel.apply()
@@ -96,8 +78,8 @@ class SoundSignalsSettingsGroupTest {
   }
 
   @Test
-  fun `a group state follows its children`() = groupTest(
-    playingState(disabled = listOf(IdeSoundSignals.ERROR_LINE, IdeSoundSignals.FOLDED_LINE, IdeSoundSignals.FOLDED_CARET)),
+  fun `a group state follows its children`() = playingTest(
+    listOf(IdeSoundSignals.ERROR_LINE, IdeSoundSignals.FOLDED_LINE, IdeSoundSignals.FOLDED_CARET),
   ) { page ->
     assertThat(page.group(IdeSoundSignals.CODE_HIGHLIGHTING_GROUP).state).isEqualTo(State.DONT_CARE)
     assertThat(page.group(IdeSoundSignals.FOLDING_GROUP).state).isEqualTo(State.NOT_SELECTED)
@@ -112,8 +94,8 @@ class SoundSignalsSettingsGroupTest {
   }
 
   @Test
-  fun `a group click toggles every child, stores explicit per-signal values and plays no preview, a child plays its preview`() = groupTest(
-    playingState(disabled = listOf(IdeSoundSignals.WARNING_CARET)),
+  fun `a group click toggles every child, stores explicit per-signal values and plays no preview, a child plays its preview`() = playingTest(
+    listOf(IdeSoundSignals.WARNING_CARET),
   ) { page ->
     val group = page.group(IdeSoundSignals.CODE_HIGHLIGHTING_GROUP)
     val children = CODE_HIGHLIGHTING_SIGNALS.map(page::signal)
@@ -139,7 +121,7 @@ class SoundSignalsSettingsGroupTest {
   }
 
   @Test
-  fun `a child names its group in the accessible description`() = groupTest(playingState()) { page ->
+  fun `a child names its group in the accessible description`() = playingTest { page ->
     assertThat(page.signal(IdeSoundSignals.ERROR_LINE).accessibleContext.accessibleDescription)
       .isEqualTo("${IdeSoundSignals.CODE_HIGHLIGHTING_GROUP.title} group")
     assertThat(page.group(IdeSoundSignals.CODE_HIGHLIGHTING_GROUP).accessibleContext.accessibleDescription)
@@ -147,7 +129,7 @@ class SoundSignalsSettingsGroupTest {
   }
 
   @Test
-  fun `a collapsed group has one checkbox, stores every signal and previews only the first`() = groupTest(playingState()) { page ->
+  fun `a collapsed group has one checkbox, stores every signal and previews only the first`() = playingTest { page ->
     val progress = page.checkBox(IdeSoundSignals.PROGRESS_GROUP.title)
     assertThat(UIUtil.findComponentsOfType(page.panel, ThreeStateCheckBox::class.java))
       .noneMatch { it.text == IdeSoundSignals.PROGRESS_GROUP.title }
@@ -165,8 +147,8 @@ class SoundSignalsSettingsGroupTest {
   }
 
   @Test
-  fun `a collapsed group is selected only while every signal is on`() = groupTest(
-    playingState(disabled = listOf(IdeSoundSignals.PROGRESS_DETERMINATE_STAGE_2)),
+  fun `a collapsed group is selected only while every signal is on`() = playingTest(
+    listOf(IdeSoundSignals.PROGRESS_DETERMINATE_STAGE_2),
   ) { page ->
     val progress = page.checkBox(IdeSoundSignals.PROGRESS_GROUP.title)
     assertThat(progress.isSelected).isFalse()
@@ -180,14 +162,18 @@ class SoundSignalsSettingsGroupTest {
   private lateinit var player: RecordingPlayer
 
   private fun playingState(disabled: List<SoundSignal> = emptyList()): SoundSignalsSettingsState =
-    SoundSignalsSettingsState(playSignals = true, signals = disabled.associate { it.id to false })
+    SoundSignalsSettingsState(signals = disabled.associate { it.id to false })
 
-  private fun groupTest(state: SoundSignalsSettingsState, body: (Page) -> Unit) {
+  /** With a screen reader every signal without a choice is on. */
+  private fun playingTest(disabled: List<SoundSignal> = emptyList(), body: (Page) -> Unit): Unit =
+    groupTest(playingState(disabled), screenReaderSupport = true, body)
+
+  private fun groupTest(state: SoundSignalsSettingsState, screenReaderSupport: Boolean = false, body: (Page) -> Unit) {
     player = RecordingPlayer()
     ApplicationManager.getApplication().replaceService(SoundSignalPlayer::class.java, player, disposable)
     withSoundSignalsSettings { settings ->
       settings.loadSoundSignals(state)
-      val screenReader = JBCheckBox("Support screen readers")
+      val screenReader = JBCheckBox("Support screen readers", screenReaderSupport)
       val panel = panel { soundSignalsGroup(screenReader) }
       panel.reset()
       body(Page(panel, screenReader))
@@ -195,9 +181,6 @@ class SoundSignalsSettingsGroupTest {
   }
 
   private class Page(val panel: DialogPanel, val screenReader: JBCheckBox) {
-    @Suppress("UNCHECKED_CAST")
-    val playSignals: ComboBox<Boolean> = UIUtil.findComponentsOfType(panel, ComboBox::class.java).single() as ComboBox<Boolean>
-
     fun group(group: SoundSignalGroup): ThreeStateCheckBox =
       UIUtil.findComponentsOfType(panel, ThreeStateCheckBox::class.java).single { it.text == group.title }
 

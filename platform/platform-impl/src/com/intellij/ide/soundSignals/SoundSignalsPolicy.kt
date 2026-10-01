@@ -5,14 +5,12 @@ import com.intellij.accessibility.AccessibilitySettings
 import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.components.service
 
+/** A signal without a choice follows the screen reader support. */
 internal class SoundSignalsPolicy(
   private val supportScreenReaders: Boolean,
   private val state: SoundSignalsSettingsState,
 ) {
-  val isPlaySignalsOn: Boolean
-    get() = state.playSignals ?: supportScreenReaders
-
-  fun isSignalOn(id: String): Boolean = state.signals[id] ?: true
+  fun isSignalOn(id: String): Boolean = state.signals[id] ?: supportScreenReaders
 }
 
 internal fun appliedSoundSignalsPolicy(): SoundSignalsPolicy = SoundSignalsPolicy(

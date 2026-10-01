@@ -109,7 +109,7 @@ private val PROGRESS_SIGNALS = listOf(
   IdeSoundSignals.PROGRESS_DETERMINATE_STAGE_3,
 )
 
-private fun isProgressSignalOn(): Boolean = isSoundSignalsOn() && PROGRESS_SIGNALS.any(::isSoundSignalOn)
+private fun isProgressSignalOn(): Boolean = PROGRESS_SIGNALS.any(::isSoundSignalOn)
 
 private fun registryValue(key: String, defaultValue: Int): Duration =
   RegistryManager.getInstance().intValue(key, defaultValue).coerceAtLeast(0).milliseconds

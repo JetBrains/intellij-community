@@ -143,7 +143,7 @@ class EditorSoundSignalsManager internal constructor(
 
   @Synchronized
   private fun updateListenersDisposable(): Disposable? {
-    if (!managerJob.isActive || !isSoundSignalsOn() || EditorSoundSignalDetector.EP_NAME.findFirstSafe { it.hasEnabledSignal() } == null) {
+    if (!managerJob.isActive || !isSoundSignalsFeatureEnabled() || EditorSoundSignalDetector.EP_NAME.findFirstSafe { it.hasEnabledSignal() } == null) {
       return listenersDisposable.also { listenersDisposable = null }
     }
     if (listenersDisposable != null) return null
