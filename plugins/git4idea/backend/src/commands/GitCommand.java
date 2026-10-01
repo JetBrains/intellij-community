@@ -25,6 +25,7 @@ public final class GitCommand {
   public static final GitCommand BLAME = read("blame");
   public static final GitCommand BRANCH = read("branch");
   public static final GitCommand FOR_EACH_REF = read("for-each-ref");
+  public static final GitCommand FSMONITOR_DAEMON = read("fsmonitor--daemon");
   public static final GitCommand CAT_FILE = read("cat-file");
   public static final GitCommand CHECKOUT = write("checkout");
   public static final GitCommand SPARSE_CHECKOUT = write("sparse-checkout");
