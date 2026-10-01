@@ -5,11 +5,15 @@ idioms: the error model, the command line, the crate rule, the subset rule, the 
 methods. These rules apply to both workspaces, this one and `build/dev-dist-tools` in the ultimate root.
 
 - **Name no implementation language in a spec or in the guide.** Write "the packer", "the composer", "the collector",
-  "the launcher", "the descriptor writer". The language belongs in ADR 0020 only.
+  "the launcher", "the descriptor writer". The language belongs in the ADRs only.
 - **Pass the two gates.** Run `./build/dev-dist.cmd jars` and
   `./bazel.cmd test @community//build/dev-dist-tools/... //build/dev-dist-tools/...` from the ultimate root, then
   `./bazel.cmd test //build/dev-dist-tools/...` in `community/`. The clippy tests of the community crates run only
   there: the clippy aspect skips a target of an external repository.
+- **Treat a closure change as a choice.** A new crate in the `closure.txt` of an action tool reruns every action of
+  that tool at each change of the crate. State the reason in the commit message, and regenerate the file with the
+  commands of the README. [ADR 0043](../../../build/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md)
+  records the crate rule.
 - **Refresh the Bazel lockfiles after a change of `Cargo.lock`.** Run the two commands of the README, in `community/`
   and in the ultimate root.
 - **Pass the Windows gate after a change of file-system code.** Run the two `clippy-windows-*` tests and the

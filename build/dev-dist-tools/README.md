@@ -1,8 +1,9 @@
 # dev-dist-tools
 
 This Cargo workspace holds the tools that build the split dev distribution. Each binary under `bins/` is one Bazel
-tool. Each crate under `crates/` holds one concern that several tools share. Bazel builds every binary through
-`rules_rs`, and `cargo` serves the edit-test loop and rust-analyzer.
+tool. A crate under `crates/` exists when two tools share it, or when it is the frozen-bytes engine of one tool with its
+own goldens. Code that one tool uses lives in that tool. Bazel builds every binary through `rules_rs`, and `cargo`
+serves the edit-test loop and rust-analyzer.
 
 The ultimate tools `dev-dist` and `content-report` are a second workspace, `build/dev-dist-tools` in the ultimate root.
 They use the crates of this workspace through path dependencies.
@@ -10,6 +11,8 @@ They use the crates of this workspace through path dependencies.
 The contracts are in the specs under `build/spec/` of the ultimate root. The guide
 [`dev-build-architecture.md`](../../../build/dev-build-architecture.md) names each tool by its Bazel label.
 [ADR 0020](../../../build/decisions/0020-the-dev-dist-tools-are-rust.md) records why the tools are Rust.
+[ADR 0043](../../../build/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md) records the crate rule
+and the closure test.
 [ADR 0027](../../../build/decisions/0027-four-jvm-tools-stay-on-the-distribution-path.md) lists the JVM tools that a
 distribution still runs. They are not in this workspace.
 
@@ -26,12 +29,12 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `crates/distpath` | The slash-path rules: the path inside a distribution, the jar entry name, the link target, and the Go `path` functions. | `@community//build/dev-dist-tools/crates/distpath:distpath_test` |
 | `crates/filemeta` | Inventory JSON version 1, the hash of a link target, and the directory creation with the mode 0755. | `@community//build/dev-dist-tools/crates/filemeta:filemeta_test` |
 | `crates/fscopy` | The copy that clones where the volume supports it, the mode helpers, and the path helpers. | `@community//build/dev-dist-tools/crates/fscopy:fscopy_test` |
-| `crates/jarpack` | The packer core: the jar merge, the `__index__`, and the native tree of a presigned library. | `@community//build/dev-dist-tools/crates/jarpack:jarpack_test` |
+| `crates/jarpack` | The frozen-bytes engine of the packer: the jar reader and writer, the merge, the `__index__`, and the native tree of a presigned library. The remainder packer merges through it, and the descriptor writer reads library jars through its reader. | `@community//build/dev-dist-tools/crates/jarpack:jarpack_test` |
 | `crates/javaglob` | The `java.nio` glob subset that the plan files use. | `@community//build/dev-dist-tools/crates/javaglob:javaglob_test` |
 | `crates/planfile` | The plan file, the remainder contract, the plugin classpath record, and the asset and link-graph rules that the remainder packer and the collector share. | `@community//build/dev-dist-tools/crates/planfile:planfile_test` |
-| `crates/pluginpack` | The plan and the execution of a plugin remainder, for the remainder packer. | `@community//build/dev-dist-tools/crates/pluginpack:pluginpack_test` |
+| `crates/pluginpack` | The remainder engine: the plan and the execution of a plugin remainder, with the Kotlin goldens. Only the remainder packer links it. | `@community//build/dev-dist-tools/crates/pluginpack:pluginpack_test` |
 | `crates/testkit` | The helpers that the tests of several crates share: the `testdata/` lookup, a temporary directory with a real path, the working directory of one test, and the file, mode and link helpers. Only `[dev-dependencies]` name it, so no tool links it. | `@community//build/dev-dist-tools/crates/testkit:testkit_test` |
-| `crates/trace` | The span API of the traced tools and the Jaeger span file of `--trace-file`. | `@community//build/dev-dist-tools/crates/trace:trace_test` |
+| `crates/trace` | The span API of the traced tools and the Jaeger span file of `--trace-file`. The API is written by hand, so no tool links the `tracing` crates. | `@community//build/dev-dist-tools/crates/trace:trace_test` |
 | `crates/xxh3` | The hash4j xxh3 hashes: the two hashes of the `__index__` keys, and the content hash of a file or a stream in blocks of 256 KiB. | `@community//build/dev-dist-tools/crates/xxh3:xxh3_test` |
 | `bins/content-module-packer` | The packer and the inventory of each packed jar. | `@community//build/dev-dist-tools/bins/content-module-packer:content-module-packer_test` |
 | `bins/dev-dist-collector` | The collector: the inventory of a component and the plugin classpath record. | `@community//build/dev-dist-tools/bins/dev-dist-collector:dev-dist-collector_test` |
@@ -65,7 +68,18 @@ cd community && ./bazel.cmd test //build/dev-dist-tools/...
   of an external repository, and from the ultimate root this module is one. There the tests are incompatible, and
   `bazel test` reports them as skipped. The clippy tests of the ultimate tools run from the ultimate root.
 - The fingerprint of `//build:idea_air_dist` and `./build/dev-dist.cmd snapshot diff` guard a change of the composed
-  bytes. The validation spec states them.
+  bytes. The validation spec states them. Run them after a change that can move a composed byte:
+
+```sh
+./bazel.cmd build //build:idea_air_dist && cat out/bazel-bin/build/idea_air_dist.dist/fingerprint.txt
+./build/dev-dist.cmd snapshot take //build:idea_air_dist out/dev-dist-snapshots/<name>.json
+./build/dev-dist.cmd snapshot diff out/dev-dist-snapshots/<baseline>.json out/dev-dist-snapshots/<name>.json
+```
+
+- A change of a tool that a rule test runs, such as the descriptor writer or the remainder packer, also passes
+  `./bazel.cmd test @community//platform/build-scripts/bazel-rules:bazel_rules_tests`.
+- Before a commit, run `cargo fmt --check` and `cargo clippy --all-targets` in this directory and in
+  `build/dev-dist-tools`, and `bun community/build/rust-tools/sync.mjs --check` from the ultimate root.
 - `./build/dev-dist.cmd` runs `//build/dev-dist-tools/bins/dev-dist:dev-dist_opt`, the binary built in `opt`. A row
   launcher and `PreBuiltDevMain` run `bins/dev-launcher:dev-launcher_opt`, and `replay` runs
   `bins/content-module-packer:content-module-packer_opt`. The unit test of each binary stays on the `rust_binary`.

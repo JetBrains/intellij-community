@@ -1,7 +1,9 @@
 # appinfo
 
-Reads, merges and writes the application info of a product. The descriptor writer and the product files tool use it.
-The descriptor writer reads the facts for the stamps of a plugin descriptor too.
+Reads, merges and writes the application info of a product, and holds the one descriptor XML reader and writer. The
+descriptor writer and the product files tool use the application info. The descriptor writer reads the facts for the
+stamps of a plugin descriptor too. The runtime layout tool and `dev-dist` read descriptors through
+`descriptorxml::read`.
 
 ## Dependency
 
