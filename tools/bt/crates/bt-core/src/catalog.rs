@@ -11,11 +11,12 @@
 
 use std::collections::BTreeSet;
 
+use refusal::Refusal;
 use serde::Deserialize;
 
 use crate::areas::Area;
+use crate::exit::fail_infra;
 use crate::lanes::{Catalog, Lanes};
-use crate::refusal::{Refusal, fail_infra};
 use crate::runtime::{Runtime, par_map, repo_file};
 use crate::suites::ScenarioFlows;
 

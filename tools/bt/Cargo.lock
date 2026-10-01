@@ -114,6 +114,7 @@ dependencies = [
  "bt-junit",
  "percent-encoding",
  "pretty_assertions",
+ "refusal",
  "regex",
  "serde",
  "serde_json",
@@ -525,6 +526,10 @@ checksum = "513962919efc330f829edb2535844d1b912b0fbe2ca165d613e4e8788bb05a5a"
 dependencies = [
  "rand_core",
 ]
+
+[[package]]
+name = "refusal"
+version = "0.1.0"
 
 [[package]]
 name = "regex"

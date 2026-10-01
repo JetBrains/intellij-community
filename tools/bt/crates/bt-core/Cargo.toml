@@ -16,6 +16,7 @@ workspace = true
 [dependencies]
 bt-junit = { path = "../bt-junit" }
 percent-encoding = "2.3.2"
+refusal = { path = "../refusal" }
 regex = "1.13.1"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"

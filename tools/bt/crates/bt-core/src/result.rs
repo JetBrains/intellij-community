@@ -8,7 +8,7 @@ use bt_junit::{self as junit, TestCase};
 use serde::{Deserialize, Serialize};
 
 use crate::bep::{BepAttempt, BepSummary};
-use crate::refusal::exit;
+use crate::exit;
 use crate::runtime::Runtime;
 
 /// The verdict a run gets. It pairs one-for-one with an exit code, and [`classify_run`] is the only place that

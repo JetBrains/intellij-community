@@ -29,13 +29,15 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use bt_junit::simple_class_name_pattern;
+use refusal::Refusal;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::areas::Area;
 use crate::catalog::{SuiteDocument, read_suite_documents};
+use crate::details::WithDetails;
+use crate::exit::{self, fail_infra, fail_usage};
 use crate::lanes::Catalog;
-use crate::refusal::{Refusal, exit, fail_infra, fail_usage};
 use crate::regex;
 use crate::runtime::{Runtime, repo_file};
 use crate::selector::{Resolution, Selector, SelectorKind, is_flow_id, suggest_names};

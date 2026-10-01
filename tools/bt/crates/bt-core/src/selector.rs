@@ -4,8 +4,10 @@ use std::collections::HashMap;
 use std::fmt;
 use std::str::FromStr;
 
+use refusal::Refusal;
+
 use crate::areas::AREAS_FILE;
-use crate::refusal::{Refusal, fail_usage};
+use crate::exit::fail_usage;
 use crate::runtime::{Platform, Runtime};
 use crate::scan::{Candidate, Index, ResolutionInputs, TestRoot, derive_package, read_dir_or_none, read_text};
 use crate::suites::{AffectedSuite, resolve_suite_run};

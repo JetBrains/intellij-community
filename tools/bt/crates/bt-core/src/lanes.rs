@@ -7,10 +7,11 @@ use std::collections::BTreeMap;
 use std::ffi::OsString;
 use std::path::Path;
 
+use refusal::Refusal;
 use serde::{Deserialize, Deserializer};
 
 use crate::areas::Areas;
-use crate::refusal::{Refusal, fail_infra};
+use crate::exit::fail_infra;
 use crate::runtime::{Platform, Runtime, repo_file};
 use crate::selector::Resolution;
 

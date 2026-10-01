@@ -27,6 +27,13 @@ fn argv_of(resolution: &Resolution) -> Vec<String> {
     })
 }
 
+/// The details of a refusal, parsed from their JSON text.
+fn parsed_details(failure: &Refusal) -> Option<serde_json::Value> {
+    failure
+        .details_json_text()
+        .map(|text| serde_json::from_str(text).expect("the details are JSON text"))
+}
+
 fn suites_of(resolution: &Resolution) -> Vec<String> {
     resolution
         .suites
@@ -193,7 +200,7 @@ fn an_unknown_id_names_the_nearest_and_an_uncovered_flow_says_no_suite_tests_it(
         failure.message
     );
     assert_eq!(
-        failure.details,
+        parsed_details(&failure),
         Some(json!({"flow": "flow-java-to-kotlin", "reason": REASON_NO_SUITE_TESTS_FLOW}))
     );
 }
@@ -259,7 +266,7 @@ fn the_no_suite_refusal_names_the_first_paths_and_counts_the_rest() {
     assert!(failure.message.contains("and 3 more"), "{}", failure.message);
     assert!(!failure.message.contains("N12.kt"), "{}", failure.message);
     assert!(failure.message.contains("[@test]"), "{}", failure.message);
-    let details = failure.details.expect("the details carry the answer");
+    let details = parsed_details(&failure).expect("the details carry the answer");
     assert_eq!(details["affected"]["unmapped"].as_array().map(Vec::len), Some(13));
 }
 

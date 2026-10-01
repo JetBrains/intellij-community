@@ -10,8 +10,9 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 
 | Crate | Content | Bazel test target |
 |---|---|---|
-| `crates/bt-core` | The areas of `bt.json` and their lane tables, selector resolution, the suite catalog, the bazel command line, and BEP and `test.xml` reading. `fake` is the in-memory runtime the tests share. | `@community//tools/bt/crates/bt-core:bt-core_test` |
+| `crates/bt-core` | The areas of `bt.json` and their lane tables, selector resolution, the suite catalog, the bazel command line, BEP and `test.xml` reading, and the exit codes of `bt`. `fake` is the in-memory runtime the tests share. | `@community//tools/bt/crates/bt-core:bt-core_test` |
 | `crates/bt-junit` | The JUnit XML reader: a scanner that keeps the cases of a truncated `test.xml`, and the simple-name class pattern. | `@community//tools/bt/crates/bt-junit:bt-junit_test` |
+| `crates/refusal` | The refusal of a person- or agent-facing CLI: a stable code, a message, the exit code, and the details as JSON text. It has no dependency, and each tool keeps its own exit codes. | `@community//tools/bt/crates/refusal:refusal_test` |
 | `bins/bt` | The binary: the command line and the help, one invocation end to end, the text digest, the `--json` payload, and the process boundary. | `@community//tools/bt/bins/bt:bt_test` |
 
 `bt_rust_crate` in `defs.bzl` declares each crate: its library or binary, its `<crate>_test` and its `<crate>-clippy`.
@@ -37,9 +38,10 @@ refuses. The ultimate checkout names `plugins/air`, with its lane table `plugins
 
 The Air UI-lane workspace, `plugins/air/tests/integration/vm-lane`, links crates of this workspace through path
 dependencies. `avl.bzl` there maps each such crate to its label in this module (`_CROSS_MODULE_CRATES`), so Bazel
-builds it once. rules_rs reads the `[package]` and `[dependencies]` of such a crate without this workspace, so the
-crate spells each `[package]` field and each normal dependency inline. Keep the values equal to `[workspace.package]`
-and `[workspace.dependencies]`.
+builds it once. rules_rs reads the `[package]` and `[dependencies]` of such a crate without this workspace. The same
+holds for a crate of this workspace that such a crate links, such as `refusal`. So each of these crates spells each
+`[package]` field and each normal dependency inline. Keep the values equal to `[workspace.package]` and
+`[workspace.dependencies]`.
 
 That build links this workspace's `serde`, `serde_json` and `regex`, which are other crates than the ones the Air
 workspace links. Cargo unifies them, so only Bazel shows the difference. A public API of a linked crate therefore

@@ -24,11 +24,12 @@
 pub mod areas;
 pub mod bep;
 pub mod catalog;
+pub mod details;
+pub mod exit;
 pub mod fake;
 pub mod lanes;
 pub mod os_runtime;
 pub mod paths;
-pub mod refusal;
 pub mod result;
 pub mod runtime;
 pub mod scan;
@@ -51,9 +52,11 @@ macro_rules! regex {
 pub use regex as __regex;
 
 pub use areas::{AREAS_FILE, Area, Areas};
+pub use details::WithDetails;
+pub use exit::{fail_infra, fail_usage};
 pub use lanes::{LaneSpec, Lanes, bazel_command};
 pub use os_runtime::{OsRuntime, Spawner};
-pub use refusal::{Refusal, exit, fail_infra, fail_usage};
+pub use refusal::Refusal;
 pub use runtime::{Platform, Runtime};
 pub use scan::ResolutionInputs;
 pub use selector::{Selector, SelectorKind, resolve_selector};

@@ -17,10 +17,11 @@
 //! A checkout without `bt.json` has no area. A label and a pattern still resolve there, since they name their
 //! targets themselves.
 
+use refusal::Refusal;
 use serde::Deserialize;
 
+use crate::exit::{fail_infra, fail_usage};
 use crate::lanes::{Catalog, LaneSpec, Lanes};
-use crate::refusal::{Refusal, fail_infra, fail_usage};
 use crate::runtime::{Runtime, repo_file};
 
 /// The file that lists the areas, relative to the repository root.

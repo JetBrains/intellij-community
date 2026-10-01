@@ -38,8 +38,9 @@ fn main() -> ExitCode {
 codes. `bins/runtime-layout/src/main.rs` of the dev-dist tools shows the shape.
 
 A person- or agent-facing CLI answers a `Refusal { code, message, exit, details }`. The code is the stable half that a
-caller automates against. `community/tools/bt/crates/bt-core/src/refusal.rs` holds the type and the exit codes 0 to 6.
-One shared `refusal` crate replaces the copies.
+caller automates against. The shared crate `community/tools/bt/crates/refusal` holds the type, with the details as JSON
+text. Each tool keeps its own exit codes. `community/tools/bt/crates/bt-core/src/exit.rs` holds the codes 0 to 6 of
+`bt`. The Air UI-lane tooling keeps its own copy of the type until its rework.
 
 ## 2. Two command line grammars
 

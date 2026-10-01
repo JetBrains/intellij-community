@@ -13,9 +13,10 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::{LazyLock, Mutex, MutexGuard};
 
+use refusal::Refusal;
+
 use crate::areas::{AREAS_FILE, Area, Areas};
 use crate::lanes::Lanes;
-use crate::refusal::Refusal;
 use crate::runtime::{DirEntry, Heartbeat, Platform, Runtime, SpawnResult};
 
 pub const REPO_ROOT: &str = "/repo";

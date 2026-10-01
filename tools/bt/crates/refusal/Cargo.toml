@@ -1,0 +1,14 @@
+# Inline rather than `.workspace = true`: the Air UI-lane workspace links this crate through the path dependency
+# `bt-core`, and rules_rs reads the `[package]` of such a crate without its workspace. Keep the values equal to
+# `[workspace.package]`.
+[package]
+name = "refusal"
+description = "An expected failure of a person- or agent-facing CLI: a stable code, a message, the exit code and the details as JSON text."
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.93"
+publish = false
+license = "Apache-2.0"
+
+[lints]
+workspace = true

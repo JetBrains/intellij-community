@@ -13,10 +13,11 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::OnceLock;
 
+use refusal::Refusal;
 use regex::Regex;
 
 use crate::areas::{AREAS_FILE, Areas};
-use crate::refusal::{Refusal, fail_infra, fail_usage};
+use crate::exit::{fail_infra, fail_usage};
 use crate::regex;
 use crate::runtime::{DirEntry, Runtime, par_map, repo_file};
 
