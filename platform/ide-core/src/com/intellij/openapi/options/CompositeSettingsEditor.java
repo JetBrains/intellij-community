@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.Alarm;
@@ -25,7 +24,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
   private SynchronizationController mySyncController;
   private boolean myIsDisposed;
 
-  public CompositeSettingsEditor() {}
+  public CompositeSettingsEditor() { }
 
   public CompositeSettingsEditor(@Nullable Factory<? extends Settings> factory) {
     super(factory);
@@ -40,32 +39,19 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
   @Override
   public void resetEditorFrom(@NotNull Settings settings) {
     for (SettingsEditor<Settings> myEditor : myEditors) {
-      try {
-        myEditor.resetEditorFrom(settings);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+      myEditor.resetEditorFrom(settings);
     }
   }
 
   @Override
   public void applyEditorTo(@NotNull Settings settings) throws ConfigurationException {
     for (final SettingsEditor<Settings> myEditor : myEditors) {
-      try {
-        myEditor.applyTo(settings);
-      }
-      catch (ConfigurationException | ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+      myEditor.applyTo(settings);
     }
   }
 
   @Override
-  public void uninstallWatcher() {
+  public final void uninstallWatcher() {
     for (SettingsEditor<Settings> editor : myEditors) {
       editor.removeSettingsEditorListener(myChildSettingsListener);
     }

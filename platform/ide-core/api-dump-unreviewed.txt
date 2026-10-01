@@ -750,7 +750,7 @@ a:com.intellij.openapi.options.CompositeSettingsEditor
 - a:getBuilder():com.intellij.openapi.options.CompositeSettingsBuilder
 - installWatcher(javax.swing.JComponent):V
 - resetEditorFrom(java.lang.Object):V
-- uninstallWatcher():V
+- f:uninstallWatcher():V
 com.intellij.openapi.options.Configurable$Promo
 - a:getPromoIcon():javax.swing.Icon
 com.intellij.openapi.options.Configurable$SingleEditorConfiguration
