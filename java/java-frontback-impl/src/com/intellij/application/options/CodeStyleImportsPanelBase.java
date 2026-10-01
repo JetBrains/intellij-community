@@ -24,9 +24,8 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
   protected final ImportLayoutPanel myImportLayoutPanel;
 
   public CodeStyleImportsPanelBase() {
-    myImportLayoutPanel = new ImportLayoutPanel(isShowLayoutOnDemandImportFromSamePackageFirstCheckbox(),
-                                                isShowKeepBlankLinesBetweenImportsCheckbox(),
-                                                isSupportModule()) {
+    myImportLayoutPanel =
+      new ImportLayoutPanel(isShowLayoutOnDemandImportFromSamePackageFirstCheckbox(), isShowKeepBlankLinesBetweenImportsCheckbox()) {
       @Override
       public void refresh() {
         refreshTable(myPackageTable, myPackageList);
@@ -35,7 +34,6 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
     };
 
     myPackageTable = ImportLayoutPanel.createTableForPackageEntries(myPackageList, myImportLayoutPanel);
-
     kotlinUI = createKotlinUI(PackagePanel.createPackagesPanel(myPackageTable, myPackageList), myImportLayoutPanel);
 
     setLayout(new BorderLayout());
@@ -56,7 +54,7 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
     return result;
   }
 
-  private void refreshTable(final JBTable table, final PackageEntryTable packageTable) {
+  private void refreshTable(JBTable table, PackageEntryTable packageTable) {
     AbstractTableModel model = (AbstractTableModel)table.getModel();
     table.createDefaultColumnsFromModel();
     model.fireTableDataChanged();
@@ -148,10 +146,6 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
   }
 
   protected boolean isShowKeepBlankLinesBetweenImportsCheckbox() {
-    return false;
-  }
-
-  protected boolean isSupportModule() {
     return false;
   }
 }

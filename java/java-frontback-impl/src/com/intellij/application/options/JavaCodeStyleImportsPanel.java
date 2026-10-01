@@ -31,21 +31,17 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
   private static final ColumnInfo<?, ?>[] INNER_CLASS_COLUMNS = {
     new MyColumnInfo(JavaFrontbackBundle.message("do.not.import.inner.classes.for")) {
       @Override
-      public String valueOf(final InnerClassItem innerClass) {
+      public String valueOf(InnerClassItem innerClass) {
         return innerClass.getName();
       }
 
       @Override
-      public void setValue(final InnerClassItem innerClass, final String name) {
+      public void setValue(InnerClassItem innerClass, String name) {
         innerClass.setName(name);
       }
     },
   };
-  private TableView<InnerClassItem> mydoNotInsertInnerTable;
-
-  JavaCodeStyleImportsPanel() {
-    super();
-  }
+  private TableView<InnerClassItem> myDoNotInsertInnerTable;
 
   @Override
   protected CodeStyleImportsBaseUI createKotlinUI(JComponent packages, JComponent importLayout) {
@@ -53,8 +49,8 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     myCbPreserveModuleImports = new JBCheckBox(JavaFrontbackBundle.message("checkbox.no.separate.module.import"));
     myCbDeleteUnusedModuleImports = new JBCheckBox(JavaFrontbackBundle.message("checkbox.delete.unused.module.import"));
     myFqnInJavadocOption = new FullyQualifiedNamesInJavadocOptionProvider();
-    JavaCodeStyleImportsUI result =
-      new JavaCodeStyleImportsUI(packages, importLayout, mydoNotInsertInnerTable, myCbPreserveModuleImports, myCbDeleteUnusedModuleImports, myFqnInJavadocOption.getPanel());
+    JavaCodeStyleImportsUI result = new JavaCodeStyleImportsUI(packages, importLayout, myDoNotInsertInnerTable, myCbPreserveModuleImports,
+                                                               myCbDeleteUnusedModuleImports, myFqnInJavadocOption.getPanel());
     result.init();
     return result;
   }
@@ -91,7 +87,9 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     if (cbDeleteUnusedModuleImports != null) cbDeleteUnusedModuleImports.setSelected(javaSettings.isDeleteUnusedModuleImports());
 
     JBCheckBox cbLayoutOnDemandImportsFromSamePackageFirst = myImportLayoutPanel.getCbLayoutOnDemandImportsFromSamePackageFirst();
-    if (cbLayoutOnDemandImportsFromSamePackageFirst != null) cbLayoutOnDemandImportsFromSamePackageFirst.setSelected(javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
+    if (cbLayoutOnDemandImportsFromSamePackageFirst != null) {
+      cbLayoutOnDemandImportsFromSamePackageFirst.setSelected(javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
+    }
 
     JBCheckBox cbKeepBlankLinesBetweenImports = myImportLayoutPanel.getCbKeepBlankLinesBetweenImports();
     if (cbKeepBlankLinesBetweenImports != null) cbKeepBlankLinesBetweenImports.setSelected(javaSettings.isKeepBlankLinesBetweenImports());
@@ -105,16 +103,24 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     isModified |= !javaSettings.getDoNotImportInner().equals(getInnerClassesNames());
 
     JCheckBox cbPreserveModuleImports = myCbPreserveModuleImports;
-    if (cbPreserveModuleImports != null) isModified |= isModified(cbPreserveModuleImports, javaSettings.isPreserveModuleImports());
+    if (cbPreserveModuleImports != null) {
+      isModified |= isModified(cbPreserveModuleImports, javaSettings.isPreserveModuleImports());
+    }
 
     JCheckBox cbDeleteUnusedModuleImports = myCbDeleteUnusedModuleImports;
-    if (cbDeleteUnusedModuleImports != null) isModified |= isModified(cbDeleteUnusedModuleImports, javaSettings.isDeleteUnusedModuleImports());
+    if (cbDeleteUnusedModuleImports != null) {
+      isModified |= isModified(cbDeleteUnusedModuleImports, javaSettings.isDeleteUnusedModuleImports());
+    }
 
     JBCheckBox cbLayoutOnDemandImportsFromSamePackageFirst = myImportLayoutPanel.getCbLayoutOnDemandImportsFromSamePackageFirst();
-    if (cbLayoutOnDemandImportsFromSamePackageFirst != null) isModified |= isModified(cbLayoutOnDemandImportsFromSamePackageFirst, javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
+    if (cbLayoutOnDemandImportsFromSamePackageFirst != null) {
+      isModified |= isModified(cbLayoutOnDemandImportsFromSamePackageFirst, javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
+    }
 
     JBCheckBox cbKeepBlankLinesBetweenImports = myImportLayoutPanel.getCbKeepBlankLinesBetweenImports();
-    if (cbKeepBlankLinesBetweenImports != null) isModified |= isModified(cbKeepBlankLinesBetweenImports, javaSettings.isKeepBlankLinesBetweenImports());
+    if (cbKeepBlankLinesBetweenImports != null) {
+      isModified |= isModified(cbKeepBlankLinesBetweenImports, javaSettings.isKeepBlankLinesBetweenImports());
+    }
     return isModified;
   }
 
@@ -124,9 +130,9 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
 
   private void createDoNotImportInnerList() {
     doNotInsertInnerListModel = new ListTableModel<>(INNER_CLASS_COLUMNS);
-    mydoNotInsertInnerTable = new TableView<>(doNotInsertInnerListModel);
-    mydoNotInsertInnerTable.setShowGrid(false);
-    mydoNotInsertInnerTable.getEmptyText().setText(JavaFrontbackBundle.message("do.not.import.inner.classes.no.classes"));
+    myDoNotInsertInnerTable = new TableView<>(doNotInsertInnerListModel);
+    myDoNotInsertInnerTable.setShowGrid(false);
+    myDoNotInsertInnerTable.getEmptyText().setText(JavaFrontbackBundle.message("do.not.import.inner.classes.no.classes"));
   }
 
   private List<String> getInnerClassesNames() {
@@ -151,25 +157,20 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     return true;
   }
 
-  @Override
-  protected boolean isSupportModule() {
-    return true;
-  }
-
   private abstract static class MyColumnInfo extends ColumnInfo<InnerClassItem, String> {
-    MyColumnInfo(final @NlsContexts.ColumnName String name) {
+    MyColumnInfo(@NlsContexts.ColumnName String name) {
       super(name);
     }
 
     @Override
-    public TableCellEditor getEditor(final InnerClassItem item) {
+    public TableCellEditor getEditor(InnerClassItem item) {
       final JTextField textField = new JTextField();
       textField.setBorder(BorderFactory.createLineBorder(JBColor.BLACK));
       return new DefaultCellEditor(textField);
     }
 
     @Override
-    public boolean isCellEditable(final InnerClassItem innerClass) {
+    public boolean isCellEditable(InnerClassItem innerClass) {
       return true;
     }
   }

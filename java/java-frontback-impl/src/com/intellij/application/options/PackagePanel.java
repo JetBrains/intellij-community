@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.psi.codeStyle.PackageEntry;
@@ -14,7 +14,7 @@ import static com.intellij.application.options.PackagePanelUIKt.doCreatePackages
 /**
  * @author Max Medvedev
  */
-public final class PackagePanel {
+final class PackagePanel {
 
   static void addPackageToPackages(JBTable table, PackageEntryTable list) {
     int selected = table.getSelectedRow() + 1;
@@ -41,7 +41,7 @@ public final class PackagePanel {
     }
   }
 
-  public static JPanel createPackagesPanel(final JBTable packageTable, final PackageEntryTable packageList) {
+  public static JPanel createPackagesPanel(JBTable packageTable, PackageEntryTable packageList) {
     return doCreatePackagesPanel(packageTable, packageList);
   }
 }

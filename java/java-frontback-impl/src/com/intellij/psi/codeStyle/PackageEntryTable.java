@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.Comparing;
@@ -44,10 +44,9 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
 
   @Override
   public int hashCode() {
-    if (!myEntries.isEmpty() && myEntries.get(0) != null) {
-      return myEntries.get(0).hashCode();
-    }
-    return 0;
+    if (myEntries.isEmpty()) return 0;
+    PackageEntry entry = myEntries.getFirst();
+    return entry != null ? entry.hashCode() : 0;
   }
 
   @Override
@@ -103,7 +102,7 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
     boolean checkCompatibilityEnabled = Registry.is("code.style.package.entry.table.check.compatibility", false);
     myEntries.clear();
     List<Element> children = element.getChildren();
-    for (final Element e : children) {
+    for (Element e : children) {
       @NonNls String name = e.getName();
       if ("package".equals(name)) {
         if (checkCompatibilityEnabled && !isCompatible(e)) {
@@ -164,8 +163,8 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
         element.setAttribute(NAME, entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY ||
                                      entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY ||
                                      entry == PackageEntry.ALL_MODULE_IMPORTS ? "": packageName);
-        element.setAttribute(SUBPACKAGES, entry.isWithSubpackages() ? "true" : "false");
-        element.setAttribute(STATIC, entry.isStatic() ? "true" : "false");
+        element.setAttribute(SUBPACKAGES, Boolean.toString(entry.isWithSubpackages()));
+        element.setAttribute(STATIC, Boolean.toString(entry.isStatic()));
         if (entry == PackageEntry.ALL_MODULE_IMPORTS) {
           element.setAttribute(MODULE, "true");
         }
