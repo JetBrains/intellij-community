@@ -678,9 +678,9 @@ name = "runtime-layout"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "appinfo",
  "cli",
  "planfile",
- "quick-xml",
  "serde",
  "serde_json",
  "tempfile",

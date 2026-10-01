@@ -1,4 +1,5 @@
 anyhow
+appinfo
 cli
 distpath
 equivalent

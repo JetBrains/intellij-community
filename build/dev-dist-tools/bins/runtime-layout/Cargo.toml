@@ -10,10 +10,10 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+appinfo.workspace = true
 planfile.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-quick-xml.workspace = true
 cli.workspace = true
 anyhow.workspace = true
 
