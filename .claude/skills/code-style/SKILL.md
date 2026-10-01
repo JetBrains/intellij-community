@@ -24,6 +24,7 @@ Follow the IntelliJ Coding Guidelines with these IntelliJ-specific rules.
 
 - Before you list several subtypes in a `when` branch, an `is` check, or a `catch`, open the declaration of the type.
 - If a common supertype covers exactly those subtypes, use the supertype. It stays correct when someone adds a new subtype.
+- Check the value of a sealed type or an enum with an exhaustive `when`. Do not use an `is` check, an `as?` cast, an `==` comparison, or `else`. In Eel and IJent code, this is a rule, also for a `private` type. See `community/platform/eel/docs/api/exhaustive-when.md`.
 
 ## Formatting
 

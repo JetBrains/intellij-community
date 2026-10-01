@@ -15,7 +15,7 @@ Read [docs/agents/README.md](docs/agents/README.md) first. It holds the key rule
 
 Before you compare `EelDescriptor` values or convert one into an `EelMachine` or `EelApi`, read [Descriptor and Machine Identity](docs/api/eel-descriptor-and-machine.md).
 
-Before you write `if (x is Something)`, `if (x == Enum.Case)`, or `else ->` on a sealed type or an enum, read [Exhaustive `when`](docs/api/exhaustive-when.md). This covers `SafeDeferred.State`, `EelOsFamily`, and `EelPlatform`.
+Before you write `if (x is Something)`, `x as? Something`, `if (x == Enum.Case)`, or `else ->` on a sealed type or an enum, read [Exhaustive `when`](docs/api/exhaustive-when.md). This covers `SafeDeferred.State`, `EelOsFamily`, `EelPlatform`, and every `private` or `internal` sealed type in Eel and IJent code.
 
 The IJent internals are documented in `platform/ijent/docs/` in an ultimate checkout.
 

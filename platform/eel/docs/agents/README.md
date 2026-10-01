@@ -8,7 +8,7 @@ Read this page before you edit a file under `community/platform/eel*/` or write 
 2. **Use `EelApi.exec` for process execution, not `ProcessBuilder`.** The process then runs in the correct environment.
 3. **Use `EelPlatform` for OS detection, not `SystemInfo`.** `SystemInfo` reflects the IDE host machine, not the target environment.
 4. **`localEel` always represents the IDE host machine.** Use it only when you need the local environment. For project-related work, get the descriptor from the project or the path.
-5. **Use an exhaustive `when` for a sealed type or an enum.** Do not use `if (x == SomeEnum.SomeCase)`, `if (x is SomeSealed.SomeCase)`, or `else` in a `when`. A helper next to the type, such as `EelOsFamily.isWindows`, is correct. See [Exhaustive `when`](../api/exhaustive-when.md).
+5. **Use an exhaustive `when` for a sealed type or an enum.** This includes a `private` or an `internal` type. Do not use `if (x == SomeEnum.SomeCase)`, `if (x is SomeSealed.SomeCase)`, `x as? SomeSealed.SomeCase`, or `else` in a `when`. A helper next to the type, such as `EelOsFamily.isWindows`, is correct. See [Exhaustive `when`](../api/exhaustive-when.md).
 6. **Separate descriptor identity from machine identity.** Read [Descriptor and Machine Identity](../api/eel-descriptor-and-machine.md) before you compare descriptors or convert one into a machine or an API.
 
 The [Quick Reference](../api/quick-reference.md) shows the calls for each rule.

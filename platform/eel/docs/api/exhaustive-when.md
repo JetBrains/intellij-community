@@ -1,21 +1,31 @@
 # Checking a Sealed Type or an Enum: Use an Exhaustive `when`
 
-Read this page when you are about to write one of these:
+**Summary:** check the value of a sealed type or an enum with an exhaustive `when`. Do not use an `is` check, an `as?` cast, an `==` comparison, or an `else` branch.
 
-- `if (x is Something)` or `if (x !is Something)` on a sealed type.
+This rule covers every sealed type and every enum in Eel and IJent code. It also covers a `private` or an `internal` type, such as the state of a private state machine. The rule is not only for code that calls the Eel API.
+
+This page is for everyone who writes Eel or IJent code: API users, Eel and IJent developers, and AI agents.
+
+Read this page when you are about to write one of these on a sealed type or an enum:
+
+- `if (x is Something)` or `if (x !is Something)`.
+- `x as? Something` or `x as Something`. Examples are `(x as? A)?.foo` and `x as? A ?: return`.
+- `x.takeIf { it is Something }`.
 - `if (x == Enum.Case)` or `x != Enum.Case`.
-- `else ->` in a `when` over a sealed type or an enum.
+- `else ->` in a `when`.
 - A check of `SafeDeferred.State`, `EelOsFamily`, `EelPlatform`, `EelPlatform.Arch`, `EnvironmentVariablesOptions.Mode`, or a sealed Eel API interface.
-
-This page is for everyone who writes code against Eel: API users, Eel and IJent developers, and AI agents.
 
 ## Checklist
 
+This checklist is also the list of rules for AI agents.
+
 1. Write `when (x) { ... }` with a subject.
 2. List every case. Do not write `else`.
-3. If only one case needs an action, write `-> Unit` for the other cases.
-4. Before you write a new check, look for a helper next to the type, such as `EelOsFamily.isWindows`.
-5. When you edit code that has an `if` check or an `else` branch on such a type, replace it.
+3. If only one case needs an action, write `-> Unit` for the other cases. If the `when` returns a value, write `-> null` or another default value for them.
+4. Do not cast to a subtype. A branch of the `when` gives a smart cast. This also applies to a platform-specific method, such as `EelProcessManagementPosixApi.terminate`.
+5. Before you write a new check, look for a helper next to the type, such as `EelOsFamily.isWindows`.
+6. If a `when` has too many cases, use a sealed parent for a group of cases. Do not use `else`.
+7. When you edit code that has such a check or an `else` branch, replace it with an exhaustive `when`.
 
 The [Rewrites](#rewrites) and [Common Traps](#common-traps) sections show the patterns.
 
@@ -35,11 +45,12 @@ The Eel API uses sealed classes, sealed interfaces, and enums in many places. Ex
 | An exhaustive `when` with a subject that lists every case and has no `else` branch | Correct |
 | A helper next to the type, such as `val EelOsFamily.isWindows: Boolean` | Correct |
 | `if (x == SomeEnum.SomeCase)`, `if (x is SomeSealed.SomeCase)`, or `x != SomeEnum.SomeCase` | Incorrect |
+| `x as? SomeSealed.SomeCase`, `x as SomeSealed.SomeCase`, or `x.takeIf { it is SomeSealed.SomeCase }` | Incorrect |
 | A `when` with an `else` branch | Incorrect |
 
 ## Why
 
-The compiler checks an exhaustive `when`. It stops the build when the `when` does not cover a case. An `if` check and an `else` branch disable this check.
+The compiler checks an exhaustive `when`. It stops the build when the `when` does not cover a case. An `if` check, a cast, and an `else` branch disable this check.
 
 The type hierarchy can change in these ways:
 
@@ -49,7 +60,7 @@ The type hierarchy can change in these ways:
 
 After such a change, an exhaustive `when` does not compile. The author of the change sees every place to update.
 
-An `if` check or an `else` branch continues to compile. It silently goes into the wrong branch. An `is` check against a type that the value can no longer have is always `false`.
+An `if` check, a cast, or an `else` branch continues to compile. It silently goes into the wrong branch. An `is` check against a type that the value can no longer have is always `false`. An `as?` cast to such a type always gives `null`.
 
 The result is a bug at runtime, not an error at compile time. Eel code runs on the local machine, in WSL, in Docker, and on SSH hosts. The wrong branch often runs only in one of these environments, or only on one OS. A test on the developer machine does not find it. Such a bug can take days to find.
 
@@ -87,6 +98,10 @@ The compiler then shows each place where the code must handle the other platform
 | `if (os == EelOsFamily.Windows) f()` | `if (os.isWindows) f()` or `when (os) { EelOsFamily.Windows -> f(); EelOsFamily.Posix -> Unit }` |
 | `if (d.deferred.isCompleted) d.await()` | `when (d.deferred.state) { State.Active -> null; is State.Finished -> d.await() }` |
 | `when (x) { is A -> f(); else -> g() }` | `when (x) { is A -> f(); is B, is C -> g() }` |
+| `(x as? A)?.foo` | `when (x) { is A -> x.foo; is B, is C -> null }` |
+| `val a = x as? A ?: return` | `val a = when (x) { is A -> x; is B, is C -> return }` |
+| `x.takeIf { it is A }` | `when (x) { is A -> x; is B, is C -> null }` |
+| `(x as A).foo` | `when (x) { is A -> x.foo; is B, is C -> error("Unexpected: $x") }` |
 
 ## Common Traps
 
@@ -95,6 +110,8 @@ The compiler then shows each place where the code must handle the other platform
 - **A check on a sealed parent.** `is State.Finished` is correct as a branch of an exhaustive `when`. It is incorrect as a lone `if` condition.
 - **A negated check.** `x !is A` and `x != Enum.Case` have the same problem as the positive form.
 - **A shorter `when` with `else`.** Use a sealed parent branch, not `else`.
+- **A cast.** `(x as? A)?.foo` is a short form of an `is` check. It gives `null` for a new subtype, and the compiler does not report it.
+- **A small private hierarchy.** A `private sealed interface State` in an `AtomicReference` is still a sealed type. A new state is exactly the change where the compiler must show every reader. Write the readers and the compare-and-set loops with an exhaustive `when`.
 
 ## Examples
 
@@ -147,6 +164,32 @@ deferred.invokeWhenCompleted { state ->
       -> Unit
   }
 }
+```
+
+Correct. A private state machine. A new state outside `Pending` stops the build here:
+
+```kotlin
+private sealed interface State {
+  sealed interface Pending : State
+  class Active : Pending
+  class Destroying : Pending
+  class Destroyed(val exitReason: Exception) : State
+}
+
+private val state = AtomicReference<State>(State.Active())
+
+val exitReasonOrNull: Exception?
+  get() = when (val current = state.get()) {
+    is State.Destroyed -> current.exitReason
+    is State.Pending -> null
+  }
+```
+
+Incorrect. The same reader with a cast. A new final state gives `null`, and the build does not stop:
+
+```kotlin
+val exitReasonOrNull: Exception?
+  get() = (state.get() as? State.Destroyed)?.exitReason
 ```
 
 Incorrect. These checks compile after a change in the type hierarchy, but they give a wrong result:
@@ -211,15 +254,8 @@ A helper such as `val EelOsFamily.isPosix: Boolean` or `val EelPlatform.isMac: B
 
 Add a new helper to the file that declares the type, not to the call site. A private helper in a plugin file does not give this protection.
 
+A `private` or an `internal` type can have a private helper next to its declaration, such as `exitReasonOrNull` in the example above. The helper itself uses an exhaustive `when`.
+
 ## Java
 
-In Java, use a `switch` expression over the sealed type or the enum without a `default` branch. The compiler then checks the cases in the same way.
-
-## For AI Agents
-
-- Do not write `if (x == SomeEnum.SomeCase)`, `if (x is SomeSealed.SomeCase)`, or `else` in a `when` over a sealed type or an enum. This includes `SafeDeferred.State`.
-- If only one case needs an action, list the other cases with `-> Unit`.
-- Use an exhaustive `when` with a subject, or an existing helper next to the type.
-- To get a platform-specific method, such as `EelProcessManagementPosixApi.terminate`, use an exhaustive `when` over the sealed interface. Do not cast.
-- When a `when` has too many cases, use a sealed parent interface for a group of cases. Do not use `else`.
-- When you see such an `if` check or `else` branch in code that you change, replace it with an exhaustive `when`.
+In Java, use a `switch` expression over the sealed type or the enum without a `default` branch. The compiler then checks the cases in the same way. Do not use `instanceof` or a cast on such a type.
