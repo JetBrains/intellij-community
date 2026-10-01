@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.encoding;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -11,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -19,39 +19,55 @@ import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Alarm;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.LazyInitializer.LazyValue;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlin.Unit;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import java.awt.event.MouseEvent;
 
-@ApiStatus.Internal
-public class LargeFileEncodingWidget extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
+import static com.intellij.ide.HelpTooltipKt.setToolTipText;
+import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
+import static kotlinx.coroutines.CoroutineScopeKt.cancel;
+
+class LargeFileEncodingWidget extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
   public static final String WIDGET_ID = "largeFileEncodingWidget";
 
   private static final Logger logger = Logger.getInstance(LargeFileEncodingWidget.class);
 
+  protected final CoroutineScope myParentScope;
+
+  private final CoroutineScope myScope;
   private final LazyValue<TextPanel> myComponent;
-  private final Alarm myUpdateAlarm = new Alarm(this);
+  private final UpdateQueue<Unit> myUpdateQueue;
 
   private boolean myActionEnabled;
 
-  LargeFileEncodingWidget(final @NotNull Project project) {
+  LargeFileEncodingWidget(@NotNull Project project, @NotNull CoroutineScope parentScope) {
     super(project);
+
+    myScope = childScope(parentScope, "LargeFileEncodingWidget", EmptyCoroutineContext.INSTANCE, true);
+    myParentScope = parentScope;
     myComponent = LazyInitializer.create(() -> {
       var result = new TextPanel.WithIconAndArrows();
       result.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border());
       return result;
     });
+    myUpdateQueue = DebouncedUpdates.<Unit>forScope(myScope, "LargeFileEncodingWidget", 250)
+      .runLatest(_ -> update());
   }
 
   @Override
   public @NotNull StatusBarWidget copy() {
-    return new LargeFileEncodingWidget(getProject());
+    return new LargeFileEncodingWidget(getProject(), myParentScope);
   }
 
   @Override
@@ -88,7 +104,8 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
         return true;
       }
     }.installOn(myComponent.get(), true);
-    update();
+
+    requestUpdate();
   }
 
   private void tryShowPopup() {
@@ -115,47 +132,59 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
   }
 
   public void requestUpdate() {
-    if (myUpdateAlarm.isDisposed()) return;
-
-    myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(() -> update(), 200, ModalityState.any());
+    myUpdateQueue.queue(Unit.INSTANCE);
   }
 
-  protected void update() {
-    if (isDisposed()) return;
+  @RequiresBackgroundThread
+  private void update() {
+    var largeFileEditorAccess = LargeFileEditorAccessor.getAccess(myStatusBar);
 
-    LargeFileEditorAccess largeFileEditorAccess = LargeFileEditorAccessor.getAccess(myStatusBar);
-
-    myActionEnabled = false;
+    boolean actionEnabled;
     @NlsSafe String charsetName;
     String toolTipText;
+    boolean visible;
 
-    var myComponent = this.myComponent.get();
     if (largeFileEditorAccess == null) {
       toolTipText = "";
       charsetName = "";
-      myComponent.setVisible(false);
+      visible = false;
+      actionEnabled = false;
     }
     else {
-      myActionEnabled = true;
+      actionEnabled = true;
       charsetName = largeFileEditorAccess.getCharsetName();
       toolTipText = EditorBundle.message("large.file.editor.tooltip.file.encoding.is.some", charsetName);
-      myComponent.setVisible(true);
+      visible = true;
     }
 
-    myComponent.setToolTipText(toolTipText);
-    myComponent.setText(charsetName);
+    SwingUtilities.invokeLater(() -> {
+      if (isDisposed()) return;
 
-    if (myStatusBar != null) {
-      myStatusBar.updateWidget(ID());
-    }
-    else {
-      logger.warn("[LargeFileEditorSubsystem] LargeFileEncodingWidget.requestUpdate(): myStatusBar is null!!!)");
-    }
+      myActionEnabled = actionEnabled;
+      var myComponent = this.myComponent.get();
+      myComponent.setVisible(visible);
+      setToolTipText(myComponent, HtmlChunk.text(toolTipText));
+      myComponent.setText(charsetName);
+
+      StatusBar statusBar = myStatusBar;
+      if (statusBar != null) {
+        statusBar.updateWidget(ID());
+      }
+      else {
+        logger.warn("[LargeFileEditorSubsystem] LargeFileEncodingWidget.requestUpdate(): myStatusBar is null!!!)");
+      }
+    });
   }
 
   @Override
   public JComponent getComponent() {
     return myComponent.get();
+  }
+
+  @Override
+  public void dispose() {
+    cancel(myScope, null);
+
+    super.dispose();
   }
 }

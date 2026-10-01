@@ -7,17 +7,22 @@ import com.intellij.ide.lightEdit.LightEditorListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated to be removed with light edit altogether
+ */
+@Deprecated(forRemoval = true)
 @ApiStatus.Internal
-public final class LightEditLargeFileEncodingWidget extends LargeFileEncodingWidget implements LightEditorListener {
+final class LightEditLargeFileEncodingWidget extends LargeFileEncodingWidget implements LightEditorListener {
 
   public static final String WIDGET_ID = "light.edit.large.file.encoding.widget";
 
-  public LightEditLargeFileEncodingWidget(@NotNull Project project) {
-    super(project);
+  public LightEditLargeFileEncodingWidget(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
+    super(project, coroutineScope);
   }
 
   @Override
@@ -33,16 +38,16 @@ public final class LightEditLargeFileEncodingWidget extends LargeFileEncodingWid
 
   @Override
   public @NotNull StatusBarWidget copy() {
-    return new LightEditLargeFileEncodingWidget(getProject());
+    return new LightEditLargeFileEncodingWidget(getProject(), myParentScope);
   }
 
   @Override
   public void afterCreate(@NotNull LightEditorInfo editorInfo) {
-    update();
+    requestUpdate();
   }
 
   @Override
   public void afterSelect(@Nullable LightEditorInfo editorInfo) {
-    update();
+    requestUpdate();
   }
 }

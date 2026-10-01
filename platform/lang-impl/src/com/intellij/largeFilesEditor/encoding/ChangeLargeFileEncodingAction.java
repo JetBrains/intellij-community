@@ -44,8 +44,8 @@ final class ChangeLargeFileEncodingAction extends ChangeFileEncodingAction {
 
   private void updateWidget() {
     StatusBarWidget widget = statusBar.getWidget(LargeFileEncodingWidget.WIDGET_ID);
-    if (widget instanceof LargeFileEncodingWidget) {
-      ((LargeFileEncodingWidget)widget).requestUpdate();
+    if (widget instanceof LargeFileEncodingWidget encodingWidget) {
+      encodingWidget.requestUpdate();
     }
     else {
       logger.warn("[LargeFileEditorSubsystem] ChangeFileEncodingAction.updateWidget(): "

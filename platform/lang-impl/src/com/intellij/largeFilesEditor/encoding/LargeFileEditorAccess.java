@@ -3,6 +3,7 @@ package com.intellij.largeFilesEditor.encoding;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
@@ -20,5 +21,6 @@ public interface LargeFileEditorAccess {
    */
   boolean tryChangeEncoding(@NotNull Charset charset);
 
+  @RequiresBackgroundThread
   String getCharsetName();
 }

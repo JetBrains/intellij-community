@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
 final class LightEditLargeFileEncodingWidgetFactory extends StatusBarEditorBasedWidgetFactory implements LightEditCompatible {
@@ -33,8 +34,8 @@ final class LightEditLargeFileEncodingWidgetFactory extends StatusBarEditorBased
   }
 
   @Override
-  public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
-    return new LightEditLargeFileEncodingWidget(project);
+  public @NotNull StatusBarWidget createWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
+    return new LightEditLargeFileEncodingWidget(project, scope);
   }
 
   @Override

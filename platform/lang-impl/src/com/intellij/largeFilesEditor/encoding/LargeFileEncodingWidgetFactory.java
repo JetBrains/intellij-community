@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
 final class LargeFileEncodingWidgetFactory extends StatusBarEditorBasedWidgetFactory {
@@ -26,8 +27,8 @@ final class LargeFileEncodingWidgetFactory extends StatusBarEditorBasedWidgetFac
   }
 
   @Override
-  public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
-    return new LargeFileEncodingWidget(project);
+  public @NotNull StatusBarWidget createWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
+    return new LargeFileEncodingWidget(project, scope);
   }
 
   @Override
