@@ -4,12 +4,14 @@ package org.jetbrains.intellij.build
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.model.JpsElementFactory
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaLibraryType
 import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
@@ -18,16 +20,17 @@ internal class JarPackagerDependencyHelperTest {
   fun `recognizes a selectively enabled test plugin module`() {
     val project = JpsElementFactory.getInstance().createModel().project
     val module = project.addModule("intellij.sample.tests", JpsJavaModuleType.INSTANCE)
+    module.addSourceRoot(JpsPathUtil.pathToUrl("x/tests/testSrc"), JavaSourceRootType.TEST_SOURCE)
     val helper = newDependencyHelper(SelectiveTestOutputProvider(module))
 
     assertThat(helper.isTestPluginModule(module.name, module)).isTrue()
-    assertThat(helper.isTestPluginModule(module.name, null)).isTrue()
   }
 
   @Test
   fun `descriptor search reads only the test output of a test-only module`() {
     val project = JpsElementFactory.getInstance().createModel().project
     val module = project.addModule("intellij.sample.tests", JpsJavaModuleType.INSTANCE)
+    module.addSourceRoot(JpsPathUtil.pathToUrl("x/tests/testSrc"), JavaSourceRootType.TEST_SOURCE)
     val provider = RecordingOutputProvider(module = module, testCompilationOutputEnabled = true, testOutput = DESCRIPTOR)
 
     val content = runBlocking {

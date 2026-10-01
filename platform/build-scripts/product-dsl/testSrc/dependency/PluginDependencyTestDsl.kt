@@ -44,6 +44,7 @@ import org.jetbrains.intellij.build.productLayout.util.GeneratedArtifactWritePol
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaLibraryType
@@ -744,6 +745,23 @@ private fun isTestPluginByName(pluginName: String): Boolean {
   return pluginName.endsWith(".testFramework") ||
          pluginName.contains(".testFramework.") ||
          pluginName.contains(".test.framework")
+}
+
+/** The planner resolves a content module with `findRequiredModule`, so a stub provider that resolves nothing cannot drive it. */
+internal fun jpsModuleOutputProvider(
+  tempDir: Path,
+  productionModules: List<String> = emptyList(),
+  testModules: List<String> = emptyList(),
+): ModuleOutputProvider {
+  val project = JpsElementFactory.getInstance().createModel().project
+  for ((names, rootType) in listOf(productionModules to JavaSourceRootType.SOURCE, testModules to JavaSourceRootType.TEST_SOURCE)) {
+    for (name in names) {
+      val module = project.addModule(name, JpsJavaModuleType.INSTANCE)
+      val root = Files.createDirectories(tempDir.resolve("jps-modules/${name.replace('.', '/')}/${if (rootType.isForTests) "testSrc" else "src"}"))
+      module.addSourceRoot(JpsPathUtil.pathToUrl(root.toString()), rootType)
+    }
+  }
+  return createTestModuleOutputProvider(project)
 }
 
 internal fun createTestModuleOutputProvider(project: JpsProject): ModuleOutputProvider {

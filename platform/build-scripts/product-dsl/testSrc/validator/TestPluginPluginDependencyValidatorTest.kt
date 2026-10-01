@@ -10,6 +10,7 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
+import org.jetbrains.intellij.build.productLayout.dependency.jpsModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.dependency.pluginGraph
 import org.jetbrains.intellij.build.productLayout.dependency.runValidationRule
 import org.jetbrains.intellij.build.productLayout.dependency.testGenerationModel
@@ -71,7 +72,7 @@ class TestPluginPluginDependencyValidatorTest {
 
     writePluginXml(tempDir, spec.pluginXmlPath, pluginXml("test.plugin"))
 
-    val model = testGenerationModel(graph, fileUpdater = DeferredFileUpdater(tempDir), owner = owner).copy(
+    val model = testGenerationModel(graph, outputProvider = jpsModuleOutputProvider(tempDir, productionModules = listOf("consumer.module")), fileUpdater = DeferredFileUpdater(tempDir), owner = owner).copy(
       projectRoot = tempDir,
       dslTestPluginsByProduct = mapOf("TestProduct" to listOf(spec)),
     )

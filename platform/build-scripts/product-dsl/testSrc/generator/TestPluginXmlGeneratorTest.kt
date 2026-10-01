@@ -9,6 +9,7 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
+import org.jetbrains.intellij.build.productLayout.dependency.jpsModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.dependency.pluginGraph
 import org.jetbrains.intellij.build.productLayout.dependency.testGenerationModel
 import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlan
@@ -619,7 +620,7 @@ class TestPluginXmlGeneratorTest {
       )
 
       val fileUpdater = DeferredFileUpdater(tempDir)
-      val baseModel = testGenerationModel(graph, fileUpdater = fileUpdater, owner = owner)
+      val baseModel = testGenerationModel(graph, outputProvider = jpsModuleOutputProvider(tempDir, testModules = listOf("intellij.consumer.tests")), fileUpdater = fileUpdater, owner = owner)
       val discovery = baseModel.discovery.copy(
         products = listOf(
           DiscoveredProduct(
@@ -693,7 +694,7 @@ class TestPluginXmlGeneratorTest {
       )
 
       val fileUpdater = DeferredFileUpdater(tempDir)
-      val baseModel = testGenerationModel(graph, fileUpdater = fileUpdater, owner = owner)
+      val baseModel = testGenerationModel(graph, outputProvider = jpsModuleOutputProvider(tempDir, testModules = listOf("intellij.consumer.tests")), fileUpdater = fileUpdater, owner = owner)
       val discovery = baseModel.discovery.copy(
         products = listOf(
           DiscoveredProduct(

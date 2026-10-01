@@ -24,7 +24,9 @@ import org.jetbrains.intellij.build.impl.PluginVersionEvaluatorResult
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.SuffixedPluginVersion
 import org.jetbrains.jps.model.JpsElementFactory
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaModuleType
+import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
@@ -327,6 +329,7 @@ class DevDistUnplannablePluginsTest {
       project.addModule(name, JpsJavaModuleType.INSTANCE)
     }
     val modules = project.modules.associateBy { it.name }
+    modules.getValue("intellij.x.tests").addSourceRoot(JpsPathUtil.pathToUrl(dir.resolve("x/tests/testSrc").toString()), JavaSourceRootType.TEST_SOURCE)
 
     val registryPlugins = devDistRegistryPlugins(
       population = listOf("intellij.x.tests", "intellij.bundled", "intellij.auto", "intellij.unplaced", "intellij.noModule", "intellij.spec"),

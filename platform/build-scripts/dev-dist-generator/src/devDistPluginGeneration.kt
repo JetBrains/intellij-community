@@ -32,7 +32,7 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.frontendIncompatibleRootModuleNames
 import org.jetbrains.intellij.build.impl.getLibNameBySourceFile
-import org.jetbrains.intellij.build.isTestOnlyPluginModuleName
+import org.jetbrains.intellij.build.isTestModule
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
@@ -481,7 +481,7 @@ private fun pluginRequestInputs(
 /**
  * Selects the JPS modules of a Product DSL test plugin that are packed from test output.
  *
- * The main module joins by the rule of [isTestOnlyPluginModuleName], as the reference packager applies it.
+ * The main module joins by the rule of [isTestModule], as the reference packager applies it.
  * A content module joins when the plan reads its descriptor from test output. The main module's own descriptor states
  * where the plan reads it, not what is packed, so it adds nothing here.
  */
@@ -494,7 +494,7 @@ internal fun testOutputModules(
 
   val mainModule = request.layout.mainModule
   val result = LinkedHashSet<String>()
-  if (isTestOnlyPluginModuleName(moduleName = mainModule, module = outputProvider.findRequiredModule(mainModule))) {
+  if (outputProvider.findRequiredModule(mainModule).isTestModule()) {
     result.add(mainModule)
   }
   for (descriptor in entry.descriptors) {
@@ -826,7 +826,7 @@ internal fun enumerateGeneratedDevDistPluginRequests(
  *
  * A registry plugin needs a JPS module, see [findModule], and a Bazel package, see [isPlaced]. The descriptor plan cannot
  * place a plugin without a package. A test plugin is planned only when a run configuration names it. A test plugin is a
- * module that [isTestOnlyPluginModuleName] matches, or a module of [testPluginModules], which match a Product DSL test
+ * module that [isTestModule] matches, or a module of [testPluginModules], which match a Product DSL test
  * plugin, see [resolveDevDistTestPlugins].
  */
 internal fun devDistRegistryPlugins(
@@ -844,7 +844,7 @@ internal fun devDistRegistryPlugins(
       return@filter false
     }
     val module = findModule(mainModule) ?: return@filter false
-    !isTestOnlyPluginModuleName(moduleName = mainModule, module = module)
+    !module.isTestModule()
   }
 }
 

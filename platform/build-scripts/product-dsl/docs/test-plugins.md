@@ -175,16 +175,17 @@ For dependencies declared directly on the DSL test plugin main target, `RUNTIME`
 
 ### Test-Only Content Modules Never Add a New `<plugin>` Dependency
 
-Content modules whose name ends with `.tests` are **test-only**: their JPS dependencies are test-runtime-only. When such
-a module is the *sole* reason a plugin would be pulled in, the generator drops that plugin from the generated test plugin
-descriptor instead of writing `<plugin id="..."/>` — otherwise a single test module drags in a whole plugin and duplicates
-its test roots (IJPL-241684). A `<plugin>` dependency already declared in the descriptor is always kept, and a plugin
-required by at least one non-`.tests` content module is written as usual.
+Content modules whose JPS module has a test source root or a test resource root are **test-only**: their JPS
+dependencies are test-runtime-only. When such a module is the *sole* reason a plugin would be pulled in, the generator
+drops that plugin from the generated test plugin descriptor instead of writing `<plugin id="..."/>` — otherwise a single
+test module drags in a whole plugin and duplicates its test roots (IJPL-241684). A `<plugin>` dependency already declared
+in the descriptor is always kept, and a plugin required by at least one content module with production roots is written
+as usual.
 
-This suffix check (`isTestOnlyContentModule` in `TestPluginDependencyPlanner`) is the only place where the `.tests`
-*name* matters. The same *policy* — never introduce a new `<plugin>` gate — also applies to a `*.tests.xml` module
-descriptor's own `<dependencies>`, but there it is keyed on the descriptor being generated with test scope (its location
-under a test source root), not on the name suffix — see
+This check (`isTestOnlyContentModule` in `TestPluginDependencyPlanner`) reads the module roots through `isTestModule`;
+the module name plays no part. The same *policy* — never introduce a new `<plugin>` gate — also applies to a `*.tests.xml`
+module descriptor's own `<dependencies>`, but there it is keyed on the descriptor being generated with test scope (its
+location under a test source root) — see
 [dependency_generation.md](dependency_generation.md#testsxml-is-an-ordinary-descriptor).
 
 ### Source of Truth and Transitive Closure

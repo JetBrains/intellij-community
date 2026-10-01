@@ -9,6 +9,8 @@ import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetDependencyScope
 import com.intellij.platform.pluginGraph.TargetName
+import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.isTestModule
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.buildContentBlocksAndChainMapping
@@ -68,6 +70,7 @@ internal object TestPluginDependencyPlanner : PipelineNode {
     val plans = testPluginsWithSource.map { (spec, productClass, productName) ->
       buildTestPluginDependencyPlan(
         graph = model.pluginGraph,
+        outputProvider = model.outputProvider,
         resolutionContext = resolutionContext,
         spec = spec,
         productName = productName,
@@ -98,6 +101,7 @@ private enum class ModuleDependencyDeclarationPolicy {
 
 private fun buildTestPluginDependencyPlan(
   graph: PluginGraph,
+  outputProvider: ModuleOutputProvider,
   resolutionContext: DependencyResolutionContext,
   spec: TestPluginSpec,
   productName: String,
@@ -217,7 +221,7 @@ private fun buildTestPluginDependencyPlan(
 
   val filteredRequiredByPlugin = requiredByPlugin
     .filter { (pluginId, modules) ->
-      pluginId in existingPluginDependencies || modules.any { !isTestOnlyContentModule(it) }
+      pluginId in existingPluginDependencies || modules.any { !isTestOnlyContentModule(it, outputProvider) }
     }
     .mapValues { it.value.toSet() }
   val computedPluginDependencies = LinkedHashSet<PluginId>().apply {
@@ -274,11 +278,13 @@ private fun buildTestPluginDependencyPlan(
 }
 
 /**
- * Test-only content modules (`*.tests`) must not, on their own, introduce a *new* `<plugin>` dependency into a generated
- * DSL test plugin descriptor: their JPS deps are test-runtime-only, and pulling in whole plugins duplicates test roots
+ * A test-only content module must not, on its own, introduce a *new* `<plugin>` dependency into a generated
+ * DSL test plugin descriptor: its JPS deps are test-runtime-only, and pulling in whole plugins duplicates test roots
  * (IJPL-241684). Plugin dependencies already declared in the descriptor are kept regardless.
  */
-private fun isTestOnlyContentModule(moduleName: ContentModuleName): Boolean = moduleName.value.endsWith(".tests")
+private fun isTestOnlyContentModule(moduleName: ContentModuleName, outputProvider: ModuleOutputProvider): Boolean {
+  return outputProvider.findRequiredModule(moduleName.value).isTestModule()
+}
 
 private fun collectTargetDependencies(
   graph: PluginGraph,
