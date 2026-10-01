@@ -317,11 +317,12 @@ class ToolWindowEditorTabManager(
    * Starts the synchronization of [file] with its backend mirror on the scope of this service.
    *
    * The synchronization sends an RPC request, so it must not run on the caller thread. The caller is
-   * [ToolWindowEditorTabBackendMirrorSyncListener], which runs on the EDT inside the file-open event.
+   * the frontend file-open listener, which runs on the EDT inside the file-open event.
    *
-   * @param editorWithProvider the editor of [file] and the provider that created it
+   * @param editorsWithProviders the editors of [file] and the providers that created them
    */
-  internal fun scheduleBackendMirrorSync(file: ToolWindowEditorTabFile, editorWithProvider: FileEditorWithProvider) {
+  fun scheduleBackendMirrorSync(file: ToolWindowEditorTabFile, editorsWithProviders: List<FileEditorWithProvider>) {
+    val editorWithProvider = editorsWithProviders.firstOrNull { it.fileEditor is ToolWindowEditorTabFileEditor } ?: return
     coroutineScope.launch {
       syncToolWindowEditorTabWithBackendMirror(project, file, editorWithProvider)
     }
