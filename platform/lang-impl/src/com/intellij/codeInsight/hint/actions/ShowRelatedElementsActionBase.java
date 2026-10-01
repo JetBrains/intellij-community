@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiAwareObject;
 import com.intellij.psi.util.PsiUtilCore;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
@@ -87,6 +88,9 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
     }
     if (lookupItemObject instanceof PsiItemWithSimilarity<?> itemWithSimilarity)  {
       lookupItemObject = itemWithSimilarity.getValue();
+    }
+    if (lookupItemObject instanceof PsiAwareObject psiAwareObject) {
+      lookupItemObject = psiAwareObject.findElement(session.getProject());
     }
     ImplementationViewSessionFactory currentFactory = session.getFactory();
     ImplementationViewSession newSession = createNewSession(currentFactory, session, lookupItemObject);
