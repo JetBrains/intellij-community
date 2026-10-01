@@ -6,6 +6,7 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -41,7 +42,7 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
 
   @Override
   public void apply() throws ConfigurationException {
-    myPanel.content.apply();
+    WriteIntentReadAction.run(() -> myPanel.content.apply());
   }
 
   @Override
@@ -51,7 +52,7 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
 
   @Override
   public void reset() {
-    myPanel.content.reset();
+    WriteIntentReadAction.run(() -> myPanel.content.reset());
   }
 
   @Override
