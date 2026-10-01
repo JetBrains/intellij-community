@@ -26,7 +26,7 @@ _HUB = rust_tool_hub(
     dep_data = DEP_DATA,
 )
 
-def bt_rust_crate(name, compile_data = [], testdata_env = None):
+def bt_rust_crate(name, compile_data = []):
     """Declares the crate `<name>` of this workspace with `rust_tool_crate` of `community/build/rust-tools/defs.bzl`.
 
     The targets are the library or the binary, `<name>_test` and `<name>-clippy`. A crate under `bins/` is a binary.
@@ -37,7 +37,6 @@ def bt_rust_crate(name, compile_data = [], testdata_env = None):
     Args:
       name: the directory name. `@bt` names a local crate by its package label.
       compile_data: files the crate reads at compile time (`include_str!`).
-      testdata_env: the environment variable that gives a test the path of `testdata/`, such as `BT_TESTDATA_DIR`.
     """
     rust_tool_crate(
         name = name,
@@ -47,5 +46,4 @@ def bt_rust_crate(name, compile_data = [], testdata_env = None):
         cross_module_crates = _CROSS_MODULE_CRATES,
         compile_data = compile_data,
         test_sharding = True,
-        testdata_env = testdata_env,
     )
