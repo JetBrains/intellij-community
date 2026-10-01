@@ -949,6 +949,8 @@
                         serviceImplementation="com.intellij.openapi.options.advanced.AdvancedSettingsImpl"/>
     <!--    <projectService serviceImplementation="com.intellij.ide.actions.DirectoryPathMatcherService"/>-->
         <projectService serviceImplementation="com.intellij.ide.impl.ProjectUtilService" open="true"/>
+    <projectFrameCapabilitiesProvider
+      implementation="com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFrameCapabilitiesProvider"/>
     <welcomeFrameProvider implementation="com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrameProvider"/>
     <welcomeTabFactory id="ProjectsWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory"/>
     <statistics.counterUsagesCollector

@@ -17,12 +17,15 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 private val LOG = logger<RecentProjectsService>()
 
@@ -45,7 +48,9 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
   private val projectManager = ProjectManagerEx.getInstanceEx()
   private val taskTracker = RecentProjectTaskTracker.getInstance()
   private val loadMutex = Mutex()
-  private val heldProjects = mutableMapOf<Path, HeldProject>()
+
+  // Concurrent because [isFramelessRecentProject] reads it from the project that is initializing, while the load still holds [loadMutex].
+  private val heldProjects: MutableMap<Path, HeldProject> = ConcurrentHashMap()
 
   /**
    * A held project and the scope that runs its operations. The scope is a child of the service scope. [owned] is true when the service loaded
@@ -87,8 +92,19 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
       findOpenProject(projectPath)?.let { return hold(projectPath, it, owned = false) }
       LOG.info("Recent project $projectPath: loading it without a frame")
       val project = projectManager.loadProject(projectPath)
-      initLoadedProject(project)
-      return hold(projectPath, project, owned = true)
+      // Held before the project is initialized, because the init activities ask whether it is one of these and the answer is cached from the
+      // first time it is asked.
+      val held = hold(projectPath, project, owned = true)
+      try {
+        initLoadedProject(project)
+      }
+      catch (e: Throwable) {
+        // The project is loaded by now, so a failed initialization has to close it: it is out of the map, and nothing else would.
+        heldProjects.remove(projectPath)
+        withContext(NonCancellable) { dispose(held) }
+        throw e
+      }
+      return held
     }
   }
 
@@ -128,6 +144,10 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
     return held
   }
 
+  /** Whether [project] is one the service loaded without a frame, which has no use for the activities a frame's project runs. */
+  internal fun isFramelessRecentProject(project: Project): Boolean =
+    heldProjects.values.any { it.owned && it.project === project }
+
   // An already-open project for the same location. IntelliJ does not support two live projects for one location: loading a second instance
   // collides on the project storages (for example the VCS user storage), so the open one is reused instead.
   private fun findOpenProject(projectPath: Path): Project? {
@@ -138,6 +158,17 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
       }
       val basePath = project.basePath
       basePath != null && FileUtil.pathsEqual(basePath, target)
+    }
+  }
+
+  /**
+   * Cancels the operations of [held] and closes its project, so an in-flight operation never runs on a disposed project. Closes only a project
+   * the service loaded: an already-open project is owned by its own frame. The caller forgets it first, so nothing finds it while it goes.
+   */
+  private suspend fun dispose(held: HeldProject) {
+    held.scope.coroutineContext.job.cancelAndJoin()
+    if (held.owned) {
+      projectManager.forceCloseProjectAsync(held.project)
     }
   }
 
@@ -153,13 +184,7 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
       heldProjects.clear()
       copy
     }
-    held.values.forEach { heldProject ->
-      heldProject.scope.coroutineContext.job.cancelAndJoin()
-      // Close only a project the service loaded. An already-open project is owned by its own frame.
-      if (heldProject.owned) {
-        projectManager.forceCloseProjectAsync(heldProject.project)
-      }
-    }
+    held.values.forEach { dispose(it) }
   }
 
   /**
