@@ -1,7 +1,9 @@
 //! A refusal: the expected failure of a person- or agent-facing CLI.
 //!
 //! A refusal has a stable code, a message, the exit code and optional details. A caller automates against the code
-//! and the exit code. Each tool defines its own exit codes, and `bt_core::exit` holds the codes of `bt`.
+//! and the exit code. Each tool defines its own exit codes: the type parameter of [`Refusal`] is the exit vocabulary of
+//! the tool. `bt` uses the default `u8`, and `bt_core::exit` holds its codes. The Air UI-lane controller and its guest
+//! agent each use a type of their own.
 //!
 //! The details are JSON text, so this crate has no dependency. A caller that links another build of `serde_json`
 //! parses the text with its own build. The Air UI-lane controller converts a refusal of `bt_core` into its own type
@@ -11,20 +13,23 @@ use std::borrow::Cow;
 use std::fmt;
 
 /// An expected failure: a stable code, a readable message, the exit code, and optional details as JSON text.
+///
+/// `E` is the exit vocabulary of the tool. A tool that converts a refusal of another tool maps the exit by its meaning,
+/// because two tools can give one number two meanings.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Refusal {
+pub struct Refusal<E = u8> {
     /// The half that a caller automates against, with [`Refusal::exit`]: `usage`, `bt_infra`, `no_affected_suite`.
     pub code: Cow<'static, str>,
     /// The text for a person.
     pub message: String,
-    /// The exit code of the process. The tool defines the codes.
-    pub exit: u8,
+    /// The exit code of the process, in the vocabulary of the tool.
+    pub exit: E,
     details: Option<String>,
 }
 
-impl Refusal {
+impl<E> Refusal<E> {
     /// A refusal without details.
-    pub fn new(code: impl Into<Cow<'static, str>>, exit: u8, message: impl Into<String>) -> Self {
+    pub fn new(code: impl Into<Cow<'static, str>>, exit: E, message: impl Into<String>) -> Self {
         Self {
             code: code.into(),
             message: message.into(),
@@ -46,13 +51,13 @@ impl Refusal {
     }
 }
 
-impl fmt::Display for Refusal {
+impl<E> fmt::Display for Refusal<E> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(&self.message)
     }
 }
 
-impl std::error::Error for Refusal {}
+impl<E: fmt::Debug> std::error::Error for Refusal<E> {}
 
 #[cfg(test)]
 mod tests;

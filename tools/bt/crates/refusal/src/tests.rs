@@ -22,3 +22,15 @@ fn the_details_are_the_given_json_text() {
     let refused = Refusal::new("no_affected_suite", 2, "nothing").with_details_json_text(r#"{"flow":"flow-x","lanes":["ui"]}"#);
     assert_eq!(refused.details_json_text(), Some(r#"{"flow":"flow-x","lanes":["ui"]}"#));
 }
+
+/// A tool can name its exit codes with a type of its own.
+#[test]
+fn a_tool_can_name_its_exit_codes_with_its_own_type() {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum Exit {
+        Usage,
+    }
+    let refused = Refusal::new("usage", Exit::Usage, "Unknown option: --nope");
+    assert_eq!(refused.exit, Exit::Usage);
+    assert_eq!(refused.to_string(), "Unknown option: --nope");
+}
