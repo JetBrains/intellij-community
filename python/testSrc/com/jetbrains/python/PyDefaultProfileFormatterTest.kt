@@ -4,9 +4,14 @@ package com.jetbrains.python
 import com.intellij.application.options.CodeStyle
 import com.intellij.idea.TestFor
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
@@ -14,6 +19,8 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.formatter.PY_NEW_FORMATTER_DEFAULTS_ENABLED_KEY
+import com.jetbrains.python.formatter.PY_NEW_FORMATTER_DEFAULTS_SETTING_ID
 import com.jetbrains.python.formatter.PyClassicStyleGuide
 import com.jetbrains.python.formatter.PyCodeStylePropertyAccessor
 import com.jetbrains.python.formatter.PyCodeStyleSettings
@@ -262,6 +269,99 @@ class PyDefaultProfileFormatterTest {
     assertNotNull(restored.pyCommonSettings)
     assertEquals(PyClassicStyleGuide.CODE_STYLE_ID, restored.pyCommonSettings!!.CODE_STYLE_PROFILE)
     assertEquals(PyClassicStyleGuide.CODE_STYLE_ID, restored.pyCodeStyleProfile())
+  }
+
+  /**
+   * A scheme from an IDE without the profile id stores its differences from the classic values.
+   * While the new defaults are active, it still reads as classic plus its differences.
+   */
+  @Test
+  @TestFor(issues = ["PY-92100"])
+  fun `legacy scheme reads as classic while the new defaults are active`() {
+    val legacy = CodeStyle.createTestSettings()
+    legacy.getCommonSettings(PythonLanguage.getInstance()).RIGHT_MARGIN = 100
+    val element = Element("code_scheme")
+    legacy.writeExternal(element)
+    assertFalse(JDOMUtil.writeElement(element).contains("CODE_STYLE_PROFILE"))
+
+    withNewDefaultsActive {
+      val restored = CodeStyle.createTestSettings()
+      restored.readExternal(element)
+
+      assertEquals(PyClassicStyleGuide.CODE_STYLE_ID, restored.pyCodeStyleProfile())
+      assertEquals(legacy.pyCustomSettings.LIST_WRAPPING, restored.pyCustomSettings.LIST_WRAPPING)
+      val common = restored.getCommonSettings(PythonLanguage.getInstance())
+      assertEquals(100, common.RIGHT_MARGIN)
+      assertEquals(legacy.getCommonSettings(PythonLanguage.getInstance()).METHOD_PARAMETERS_WRAP, common.METHOD_PARAMETERS_WRAP)
+    }
+  }
+
+  /**
+   * While the new defaults are active, an unchanged scheme equals the baseline. It must still store the
+   * profile id, or it would read back as a legacy classic scheme.
+   */
+  @Test
+  @TestFor(issues = ["PY-92100"])
+  fun `unchanged default scheme keeps its profile while the new defaults are active`() {
+    withNewDefaultsActive {
+      val source = CodeStyle.createTestSettings()
+      assertEquals(PyDefaultStyleGuide.CODE_STYLE_ID, source.pyCodeStyleProfile())
+      val element = Element("code_scheme")
+      source.writeExternal(element)
+
+      val restored = CodeStyle.createTestSettings()
+      restored.readExternal(element)
+
+      assertEquals(PyDefaultStyleGuide.CODE_STYLE_ID, restored.pyCodeStyleProfile())
+      assertEquals(PyCodeStyleSettings.CHOP_DOWN_IF_LONG, restored.pyCustomSettings.LIST_WRAPPING)
+    }
+  }
+
+  /**
+   * A legacy scheme loaded before the user turns the new defaults on is saved after it, still without a
+   * profile. The save must compare against the classic values, or every value matching a modern one is
+   * dropped and comes back classic on the next start.
+   */
+  @Test
+  @TestFor(issues = ["PY-92100"])
+  fun `legacy scheme written while the new defaults are active keeps its values`() {
+    val legacy = CodeStyle.createTestSettings()
+    legacy.pyCustomSettings.LIST_WRAPPING = PyCodeStyleSettings.CHOP_DOWN_IF_LONG
+    legacy.getCommonSettings(PythonLanguage.getInstance()).RIGHT_MARGIN = 88
+    val stored = Element("code_scheme")
+    legacy.writeExternal(stored)
+
+    val loaded = CodeStyle.createTestSettings()
+    loaded.readExternal(stored)
+    assertNull(loaded.pyCodeStyleProfile())
+
+    withNewDefaultsActive {
+      val resaved = Element("code_scheme")
+      loaded.writeExternal(resaved)
+
+      val restored = CodeStyle.createTestSettings()
+      restored.readExternal(resaved)
+
+      assertEquals(PyCodeStyleSettings.CHOP_DOWN_IF_LONG, restored.pyCustomSettings.LIST_WRAPPING)
+      assertEquals(88, restored.getCommonSettings(PythonLanguage.getInstance()).RIGHT_MARGIN)
+    }
+  }
+
+  private fun withNewDefaultsActive(action: () -> Unit) {
+    CodeStyleSettings.getDefaults()  // Create the shared defaults before the flags change the baseline.
+    val disposable = Disposer.newDisposable()
+    try {
+      // While the master switch is off, the setting does not change the IDE-level Default scheme. The disposable
+      // reverts in reverse order, so the master switch is off again when the setting reverts.
+      val masterSwitch = Registry.get(PY_NEW_FORMATTER_DEFAULTS_ENABLED_KEY)
+      masterSwitch.setValue(false, disposable)
+      (AdvancedSettings.getInstance() as AdvancedSettingsImpl).setSetting(PY_NEW_FORMATTER_DEFAULTS_SETTING_ID, true, disposable)
+      masterSwitch.setValue(true, disposable)
+      action()
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
   }
 
   private fun assertReformatted(

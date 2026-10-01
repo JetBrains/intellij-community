@@ -200,29 +200,39 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
     // Discover the stored profile first, apply it as the baseline, then read the actual diffs on top.
     PyCodeStyleSettings tempSettings = createForTempDeserialize(getContainer());
     tempSettings.readExternal(parentElement);
-    applyPyCodeStyle(tempSettings.CODE_STYLE_PROFILE, this, true);
+    applyPyCodeStyle(storedOrLegacyProfile(tempSettings.CODE_STYLE_PROFILE), this, true);
 
     super.readExternal(parentElement);
   }
 
   @Override
   public void writeExternal(Element parentElement, @NotNull CustomCodeStyleSettings parentSettings) throws WriteExternalException {
-    if (CODE_STYLE_PROFILE != null) {
-      // Apply the chosen profile to the baseline that diffs are computed against, so only real
-      // deviations from the profile are serialized.
-      PyCodeStyleSettings baseline = (PyCodeStyleSettings)parentSettings.clone();
-      applyPyCodeStyle(CODE_STYLE_PROFILE, baseline, false);
-      super.writeExternal(parentElement, baseline);
-    }
-    else {
-      super.writeExternal(parentElement, parentSettings);
-    }
+    // Diff against the profile, so only real deviations from it are serialized. parentSettings follows the
+    // active defaults, which is the wrong baseline for a legacy scheme (see storedOrLegacyProfile).
+    PyCodeStyleSettings baseline = (PyCodeStyleSettings)parentSettings.clone();
+    applyPyCodeStyle(storedOrLegacyProfile(CODE_STYLE_PROFILE), baseline, false);
+    // Always write the profile, so that a scheme without it is a legacy scheme.
+    baseline.CODE_STYLE_PROFILE = null;
+    super.writeExternal(parentElement, baseline);
   }
 
   @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof PyCodeStyleSettings)) return false;
     return PyCodeStyleReflectionUtil.comparePublicNonFinalFieldsWithSkip(this, obj);
+  }
+
+  /**
+   * Returns the profile a scheme is both read against and written against. A legacy scheme has no stored
+   * profile and stores its differences from the classic values, so it gets the classic profile while the
+   * new defaults are active; otherwise the baseline already is classic. Reading and writing must agree,
+   * or a legacy scheme saved while the new defaults are active loses every value matching a modern one.
+   */
+  static @Nullable String storedOrLegacyProfile(@Nullable String storedProfile) {
+    if (storedProfile == null && PyCodeStyleDefaultsKt.isPyNewFormatterDefaultsActive()) {
+      return PyClassicStyleGuide.CODE_STYLE_ID;
+    }
+    return storedProfile;
   }
 
   private static void applyPyCodeStyle(@Nullable String codeStyleId, @NotNull PyCodeStyleSettings settings, boolean modifyCodeStyle) {

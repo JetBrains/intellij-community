@@ -63,7 +63,7 @@ class PyCommonCodeStyleSettings private constructor(private val isTempForDeseria
     val tempDeserialize: PyCommonCodeStyleSettings = createForTempDeserialize()
     tempDeserialize.readExternal(element)
 
-    applyPyCodeStyle(tempDeserialize.CODE_STYLE_PROFILE, this, true)
+    applyPyCodeStyle(PyCodeStyleSettings.storedOrLegacyProfile(tempDeserialize.CODE_STYLE_PROFILE), this, true)
 
     super.readExternal(element)
   }
@@ -71,8 +71,10 @@ class PyCommonCodeStyleSettings private constructor(private val isTempForDeseria
   override fun writeExternal(element: Element, provider: LanguageCodeStyleProvider) {
     val defaultSettings = provider.getDefaultCommonSettings()
 
-    // Apply the chosen profile to the comparison baseline so only real deviations are serialized.
-    applyPyCodeStyle(CODE_STYLE_PROFILE, defaultSettings, false)
+    // Diff against the profile the scheme is also read against (see storedOrLegacyProfile).
+    applyPyCodeStyle(PyCodeStyleSettings.storedOrLegacyProfile(CODE_STYLE_PROFILE), defaultSettings, false)
+    // Always write the profile, so that a scheme without it is a legacy scheme.
+    (defaultSettings as? PyCommonCodeStyleSettings)?.CODE_STYLE_PROFILE = null
 
     writeExternalBase(element, defaultSettings, provider)
   }
