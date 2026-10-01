@@ -17,6 +17,7 @@
 [
   {kind: "moduleId", id: "intellij.platform.monolith", moduleKind: "monolith"},
 
+  {kind: "moduleId", id: "intellij.frontend.split.customization", moduleKind: "frontend"},
   {kind: "moduleId", id: "intellij.platform.frontend", moduleKind: "frontend"},
   {kind: "moduleId", id: "intellij.platform.frontend.split", moduleKind: "frontend"},
   {kind: "moduleId", id: "intellij.platform.plugins.frontend.split", moduleKind: "frontend"},
