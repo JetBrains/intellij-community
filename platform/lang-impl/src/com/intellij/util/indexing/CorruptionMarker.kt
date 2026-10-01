@@ -8,6 +8,7 @@ import com.intellij.psi.stubs.SerializationManagerEx
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.impl.storage.IndexLayoutPersistentSettings
+import com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.write
 import org.jetbrains.annotations.ApiStatus
@@ -83,7 +84,15 @@ object CorruptionMarker {
     //FIXME RC: drop after proved
     MMappedFileStorage.DEBUG_INDEXES_WAS_DROPPED = true
 
+    for (providerBean in IndexStorageLayoutLocator.supportedLayoutProviders) {
+      providerBean.layoutProvider.closeAndClearData()
+    }
+
     if (Files.exists(indexRoot)) {
+      //Ideally, .closeAndClearData() must already remove all the indexes' data.
+      // But not all the data in {indexDir} belongs to the IndexLayoutProviders -- there are some accessory files, like
+      // indexingFlags, that belong to indexing pipeline infrastructure. And also: not all the providers are good enough
+      // in following .closeAndClearData() contract. So, lets clean the mess anyway:
       val filesToBeIgnored = FileBasedIndexInfrastructureExtension.EP_NAME.extensionList.mapNotNull { it.persistentStateRoot }.toSet() +
                              ID.INDICES_ENUM_FILE +
                              IndexLayoutPersistentSettings.INDICES_LAYOUT_FILE

@@ -54,4 +54,11 @@ public interface FileBasedIndexLayoutProvider extends Closeable {
    * All the storage layouts returned by this provider must be closed before this method is called. */
   @Override
   default void close() throws IOException { }
+
+  /**
+   * Closes shared storage and clears the data owned by this provider.
+   * All the storage layouts returned by {@link #getLayout(FileBasedIndexExtension, Iterable)} must be closed _before_ invoking
+   * this method.
+   */
+  default void closeAndClearData() throws IOException { }
 }

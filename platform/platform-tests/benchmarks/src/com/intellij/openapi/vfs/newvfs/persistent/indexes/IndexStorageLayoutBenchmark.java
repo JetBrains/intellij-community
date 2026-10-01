@@ -115,10 +115,13 @@ public class IndexStorageLayoutBenchmark {
     })
     private String storageLayoutProviderClassName;
 
-    @Param({"disabled", "persistent"})
+    /// Introduced to test WAL effect on DefaultIndexStorageLayoutProvider -- useless for mmapped providers
+    @Param({/*"disabled", */"persistent"})
     public String walMode;
 
-    @Param({"none", "write_200us", "write_1ms_force_2ms", "write_200us_p99_50ms"})
+    /// Introduced to test WAL effect on DefaultIndexStorageLayoutProvider -- useless for mmapped providers since mmapped
+    /// buffer writes bypass anything we could inject from java
+    @Param({"none"/*, "write_200us", "write_1ms_force_2ms", "write_200us_p99_50ms"*/})
     public String ioDelayProfile;
 
     private FileBasedIndexLayoutProvider storageLayoutProviderToTest;
@@ -182,12 +185,13 @@ public class IndexStorageLayoutBenchmark {
         indexStorage.close();
         indexStorage = null;
       }
-      if (storageLayoutProviderToTest instanceof AutoCloseable) {
-        ((AutoCloseable)storageLayoutProviderToTest).close();
-      }
       if (storageLayout != null) {
         storageLayout.clearIndexData();
         storageLayout = null;
+      }
+
+      if (storageLayoutProviderToTest != null) {
+        storageLayoutProviderToTest.close();
       }
     }
 

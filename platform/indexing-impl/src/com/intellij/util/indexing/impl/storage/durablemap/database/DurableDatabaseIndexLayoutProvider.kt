@@ -3,6 +3,7 @@ package com.intellij.util.indexing.impl.storage.durablemap.database
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.util.io.storages.database.DurableDatabase
 import com.intellij.platform.util.io.storages.database.DurableDatabaseFactory
 import com.intellij.util.indexing.FileBasedIndexExtension
@@ -12,6 +13,7 @@ import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
 import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Predicate
 
@@ -37,7 +39,9 @@ private val LOG = logger<DurableDatabaseIndexLayoutProvider>()
 class DurableDatabaseIndexLayoutProvider(
   private val databasePath: Path = PathManager.getIndexRoot().resolve(DATABASE_DIRECTORY_NAME)
 ) : FileBasedIndexLayoutProvider {
-  private val lazyDatabaseHolder: Lazy<DurableDatabase> = lazy {
+  private var lazyDatabaseHolder: Lazy<DurableDatabase> = newDatabaseHolder()
+
+  private fun newDatabaseHolder(): Lazy<DurableDatabase> = lazy {
     DurableDatabaseFactory.withDefaults().open(databasePath)
   }
 
@@ -66,6 +70,7 @@ class DurableDatabaseIndexLayoutProvider(
   override fun isApplicable(extension: FileBasedIndexExtension<*, *>): Boolean =
     applicableIndexIds.test(extension.name.name)
 
+  @Synchronized
   override fun <K, V> getLayout(
     extension: FileBasedIndexExtension<K, V>,
     otherApplicableProviders: Iterable<FileBasedIndexLayoutProvider>,
@@ -88,9 +93,20 @@ class DurableDatabaseIndexLayoutProvider(
     }
   }
 
+  @Synchronized
+  @Throws(IOException::class)
+  override fun closeAndClearData() {
+    closeDatabase()
+    if (Files.exists(databasePath) && !FileUtil.deleteWithRenaming(databasePath)) {
+      throw IOException("Cannot delete database at $databasePath")
+    }
+    lazyDatabaseHolder = newDatabaseHolder()
+  }
+
   @Throws(IOException::class)
   override fun close(): Unit = closeDatabase()
 
+  @Synchronized
   @Throws(IOException::class)
   private fun closeDatabase() {
     if (lazyDatabaseHolder.isInitialized()) {
