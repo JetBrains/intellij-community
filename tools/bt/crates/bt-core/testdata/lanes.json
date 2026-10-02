@@ -22,6 +22,7 @@
     "//plugins/air/tests/integration/headless/codex:codex_test_lib",
     "//plugins/air/tests/integration/headless/junie:junie_test_lib",
     "//plugins/air/tests/integration/headless/pi:pi_test_lib",
+    "//plugins/air/tests/integration/ui-live:ui-live_test_lib",
     "//plugins/air/tests/integration/ui-real:ui-real_test_lib",
     "//plugins/air/tests/integration/ui:ui_test_lib",
     "//plugins/air/tests/property/acp:air-backend-acp-property-tests_test_lib",
@@ -85,6 +86,26 @@
       "catalogLane": "UI_REAL",
       "testLabel": "//plugins/air/tests/integration/ui-real:ui-real_test",
       "junitTag": "air-flow-ui-real"
+    },
+    {
+      "name": "ui-live",
+      "description": "real agents on real accounts, explicit-only (spends billed turns; the target is manual, and no --changed, suites, shard or flake picks it; a guest run is vm.cmd run --lane ui-live)",
+      "target": "//plugins/air/tests/integration/ui-live:ui-live_test",
+      "extra": [
+        "--test_env=AIR_LIVE_CREDENTIALS",
+        "--test_env=AIR_LIVE_REUSE_HOST_HOMES",
+        "--test_env=ANTHROPIC_API_KEY",
+        "--test_env=CLAUDE_BIN",
+        "--test_env=JUNIE_API_KEY",
+        "--test_env=JUNIE_BIN",
+        "--test_env=NODE_BIN",
+        "--test_env=NPM_BIN",
+        "--test_env=OPENAI_API_KEY"
+      ],
+      "shards": 1,
+      "integrationTag": "air-integration-ui-live",
+      "testLabel": "//plugins/air/tests/integration/ui-live:ui-live_test",
+      "junitTag": "air-flow-ui-live"
     },
     {
       "name": "gui-chat",
