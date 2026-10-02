@@ -23,8 +23,8 @@ def dev_dist_packed_labels(fragment_inputs, module_sets, product, product_mode):
     list and, for each walked set, the `packed` label of each member that the set names in `module_system_loaded`. The
     plan generator splits it the same way (`shareModuleSystemLoadedLabels`). A name without a `packed` label fails.
 
-    A set name that `module_sets` does not have is skipped with a warning. Then its labels are not in the result, as a
-    lost module name is not. The generator of the tables reports the stale name.
+    A set name that `module_sets` does not have fails, and the message names the product and the sets. One generator
+    run writes both tables, so the bootstrap tolerance of the bridge does not apply here.
     """
     inputs = fragment_inputs.get(product)
     if inputs == None:
@@ -67,5 +67,5 @@ def dev_dist_packed_labels(fragment_inputs, module_sets, product, product_mode):
     if frontier:
         fail("Module set nesting did not settle for the '%s' payload of product '%s'" % (_PLATFORM_LIB_FRAGMENT, product))
     if stale:
-        print("The dev-distribution plan of '%s' references unknown module sets, which are skipped: %s" % (product, ", ".join(sorted(stale))))
+        fail("The dev-distribution plan of '%s' references unknown module sets: %s. Regenerate the dev-distribution tables." % (product, ", ".join(sorted(stale))))
     return struct(packed = sorted(packed.keys()), module_system_loaded = sorted(module_system_loaded.keys()))
