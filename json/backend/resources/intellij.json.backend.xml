@@ -46,7 +46,6 @@
     <module name="intellij.platform.syntax.util"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>
-    <module name="intellij.spellchecker"/>
   </dependencies>
   <!-- endregion -->
   
@@ -99,8 +98,6 @@
     <liveTemplateContext contextId="JSON" implementation="com.intellij.json.liveTemplates.JsonContextType"/>
     <liveTemplateContext contextId="JSON_STRING_VALUES" baseContextId="JSON" implementation="com.intellij.json.liveTemplates.JsonInLiteralsContextType"/>
     <liveTemplateContext contextId="JSON_PROPERTY_KEYS" baseContextId="JSON" implementation="com.intellij.json.liveTemplates.JsonInPropertyKeysContextType"/>
-
-    <spellchecker.support language="JSON" implementationClass="com.intellij.json.JsonSpellcheckerStrategy"/>
 
     <!-- Inspections -->
     <localInspection language="JSON" shortName="JsonStandardCompliance"

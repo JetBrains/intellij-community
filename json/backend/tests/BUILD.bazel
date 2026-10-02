@@ -82,6 +82,8 @@ jvm_library(
         "//json/structureView:structureView_test_lib",
         "//json/backend/regexp",
         "//json/backend/regexp:regexp_test_lib",
+        "//json/backend/spellchecker",
+        "//json/backend/spellchecker:spellchecker_test_lib",
         "//spellchecker",
         "//spellchecker:spellchecker_test_lib",
         "//libraries/lucene.common",

@@ -22,6 +22,7 @@ dev_dist_plugin_descriptor(
         "intellij.json",
         "intellij.json.backend",
         "intellij.json.backend.regexp",
+        "intellij.json.backend.spellchecker",
         "intellij.json.networknt.wrapper",
         "intellij.json.structureView",
         "intellij.json.syntax",
@@ -35,6 +36,7 @@ dev_dist_plugin_descriptor(
             "intellij.json.backend",
             "intellij.json.networknt.wrapper",
             "intellij.json.backend.regexp",
+            "intellij.json.backend.spellchecker",
             "intellij.json.structureView",
         ],
     },
@@ -47,6 +49,7 @@ dev_plugin(
     name = "intellij.json_dev_plugin",
     content_module_jars = [
         "//json/backend/regexp:regexp_content_module_jar",
+        "//json/backend/spellchecker:spellchecker_content_module_jar",
         "//json/backend:backend_content_module_jar",
         "//json/networknt.wrapper:networknt.wrapper_content_module_jar",
         "//json/structureView:structureView_content_module_jar",

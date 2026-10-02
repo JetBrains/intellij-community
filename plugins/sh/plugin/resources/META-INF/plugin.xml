@@ -13,6 +13,7 @@
     <module name="intellij.sh.copyright"/>
     <module name="intellij.sh.markdown"/>
     <module name="intellij.sh.python"/>
+    <module name="intellij.sh.spellchecker"/>
   </content>
 
   <dependencies>

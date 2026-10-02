@@ -12,6 +12,7 @@ dev_dist_plugin(
         "intellij.sh.copyright",
         "intellij.sh.markdown",
         "intellij.sh.python",
+        "intellij.sh.spellchecker",
     ],
     main_module = "intellij.sh.plugin",
 )
@@ -73,6 +74,7 @@ jvm_library(
         "//plugins/sh/copyright",
         "//plugins/sh/markdown",
         "//plugins/sh/python",
+        "//plugins/sh/spellchecker",
     ],
 )
 
@@ -95,6 +97,7 @@ jvm_library(
         "//plugins/sh/copyright:copyright_test_lib",
         "//plugins/sh/markdown:markdown_test_lib",
         "//plugins/sh/python:python_test_lib",
+        "//plugins/sh/spellchecker:spellchecker_test_lib",
     ],
 )
 ### auto-generated section `build intellij.sh.plugin.main` end

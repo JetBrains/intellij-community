@@ -11,6 +11,7 @@ dev_dist_plugin(
         "intellij.json.backend",
         "intellij.json.networknt.wrapper",
         "intellij.json.backend.regexp",
+        "intellij.json.backend.spellchecker",
         "intellij.json.structureView",
         "intellij.json.syntax",
         "intellij.libraries.jsonSchemaValidator",

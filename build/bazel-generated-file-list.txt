@@ -386,6 +386,7 @@ jps/standalone-builder
 json
 json/backend
 json/backend/regexp
+json/backend/spellchecker
 json/backend/tests
 json/networknt.wrapper
 json/networknt.wrapper/tests
@@ -1758,6 +1759,7 @@ plugins/sh/core
 plugins/sh/markdown
 plugins/sh/plugin
 plugins/sh/python
+plugins/sh/spellchecker
 plugins/sh/terminal
 plugins/sh/terminal/frontend
 plugins/space/jps-plugin

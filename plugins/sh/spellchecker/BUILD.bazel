@@ -1,0 +1,66 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.sh.spellchecker` start
+content_module_jar(module = ":spellchecker")
+### auto-generated section `dev intellij.sh.spellchecker` end
+
+### auto-generated section `build intellij.sh.spellchecker` start
+jvm_library(
+    name = "spellchecker",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.sh.spellchecker",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
+    deps = [
+        # do not sort,
+        "//libraries/jetbrains/annotations",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//plugins/sh/core",
+        "//spellchecker",
+    ],
+)
+
+jvm_library(
+    name = "spellchecker_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.sh.spellchecker",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":spellchecker",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//plugins/sh/core:core_test_lib",
+        "//spellchecker:spellchecker_test_lib",
+        "//platform/backend:backend_test_lib",
+    ],
+)
+### auto-generated section `build intellij.sh.spellchecker` end
+
+### auto-generated section `iml intellij.sh.spellchecker` start
+exports_files(
+    [
+        "intellij.sh.spellchecker.iml",
+        "resources/intellij.sh.spellchecker.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.sh.spellchecker` end

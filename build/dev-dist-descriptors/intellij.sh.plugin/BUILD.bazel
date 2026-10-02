@@ -24,6 +24,7 @@ dev_dist_plugin_descriptor(
         "intellij.sh.core",
         "intellij.sh.markdown",
         "intellij.sh.python",
+        "intellij.sh.spellchecker",
         "intellij.sh.terminal",
         "intellij.sh.terminal.frontend",
     ],
@@ -34,6 +35,7 @@ dev_dist_plugin_descriptor(
             "intellij.sh.backend",
             "intellij.sh.copyright",
             "intellij.sh.python",
+            "intellij.sh.spellchecker",
         ],
     },
     refused_content_modules = [
@@ -49,6 +51,7 @@ dev_plugin(
         "//plugins/sh/core:core_content_module_jar",
         "//plugins/sh/markdown:markdown_content_module_jar",
         "//plugins/sh/python:python_content_module_jar",
+        "//plugins/sh/spellchecker:spellchecker_content_module_jar",
         "//plugins/sh/terminal/frontend:frontend_content_module_jar",
         "//plugins/sh/terminal:terminal_content_module_jar",
     ],

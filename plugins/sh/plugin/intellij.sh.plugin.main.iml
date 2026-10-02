@@ -11,5 +11,6 @@
     <orderEntry type="module" module-name="intellij.sh.copyright" />
     <orderEntry type="module" module-name="intellij.sh.markdown" />
     <orderEntry type="module" module-name="intellij.sh.python" />
+    <orderEntry type="module" module-name="intellij.sh.spellchecker" scope="RUNTIME" />
   </component>
 </module>
