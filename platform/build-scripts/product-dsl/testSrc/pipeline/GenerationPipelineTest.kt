@@ -21,6 +21,9 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Tests for [GenerationPipeline] orchestration logic.
@@ -151,6 +154,64 @@ class GenerationPipelineTest {
   }
 
   @Test
+  fun `a node starts when its producers end, not when its level ends`(@TempDir tempDir: Path) {
+    val slotRoot = DataSlot<String>("slot-root")
+    val slotSlow = DataSlot<String>("slot-slow")
+    val slotFast = DataSlot<String>("slot-fast")
+    val independentStarted = CountDownLatch(1)
+    val slowSawIndependent = AtomicBoolean()
+    val events = CopyOnWriteArrayList<String>()
+    // A diamond: root -> (slow, fast) -> join. The independent node needs only the fast branch.
+    val pipeline = GenerationPipeline(listOf(
+      ActionNode("root", producesSlots = setOf(slotRoot)) { ctx -> ctx.publish(slotRoot, "root") },
+      ActionNode("slow", requiresSlots = setOf(slotRoot), producesSlots = setOf(slotSlow)) { ctx ->
+        slowSawIndependent.set(independentStarted.await(30, TimeUnit.SECONDS))
+        events.add("slow end")
+        ctx.publish(slotSlow, ctx.get(slotRoot) + "-slow")
+      },
+      ActionNode("fast", requiresSlots = setOf(slotRoot), producesSlots = setOf(slotFast)) { ctx ->
+        ctx.publish(slotFast, ctx.get(slotRoot) + "-fast")
+      },
+      ActionNode("join", requiresSlots = setOf(slotSlow, slotFast)) { ctx ->
+        events.add("join " + ctx.get(slotSlow) + " " + ctx.get(slotFast))
+      },
+      ActionNode("independent", requiresSlots = setOf(slotFast)) { ctx ->
+        events.add("independent " + ctx.get(slotFast))
+        independentStarted.countDown()
+      },
+    ))
+
+    pipeline.execute(testConfig(tempDir), commitChanges = false)
+
+    assertThat(slowSawIndependent.get()).isTrue()
+    assertThat(events).containsExactly("independent root-fast", "slow end", "join root-slow root-fast")
+  }
+
+  @Test
+  fun `a failed node fails the run and its consumers do not run`(@TempDir tempDir: Path) {
+    val slotA = DataSlot<String>("slot-a")
+    val consumerRan = AtomicBoolean()
+    val pipeline = GenerationPipeline(listOf(
+      ActionNode("producer", producesSlots = setOf(slotA)) { throw IllegalStateException("producer failed") },
+      ActionNode("consumer", requiresSlots = setOf(slotA)) { consumerRan.set(true) },
+    ))
+
+    assertThatThrownBy { pipeline.execute(testConfig(tempDir), commitChanges = false) }
+      .hasRootCauseMessage("producer failed")
+    assertThat(consumerRan.get()).isFalse()
+  }
+
+  private fun testConfig(tempDir: Path): ModuleSetGenerationConfig {
+    val jps = jpsProject(tempDir) {}
+    return ModuleSetGenerationConfig(
+      moduleSetSources = emptyMap(),
+      discoveredProducts = emptyList(),
+      projectRoot = tempDir,
+      outputProvider = createTestModuleOutputProvider(jps.project),
+    )
+  }
+
+  @Test
   fun `a run without a tracer records nothing`() {
     assertThat(buildSpan("probe") { it.isRecording }).isFalse()
   }
@@ -194,6 +255,21 @@ class GenerationPipelineTest {
     override val produces: Set<DataSlot<*>> = producesSlots
     override fun execute(ctx: ComputeContext) {
       // No-op for testing
+    }
+  }
+
+  /** A [PipelineNode] that runs [action]. */
+  private class ActionNode(
+    nodeId: String,
+    requiresSlots: Set<DataSlot<*>> = emptySet(),
+    producesSlots: Set<DataSlot<*>> = emptySet(),
+    private val action: (ComputeContext) -> Unit,
+  ) : PipelineNode {
+    override val id = NodeId(nodeId, NodeCategory.GENERATION)
+    override val requires: Set<DataSlot<*>> = requiresSlots
+    override val produces: Set<DataSlot<*>> = producesSlots
+    override fun execute(ctx: ComputeContext) {
+      action(ctx)
     }
   }
 }

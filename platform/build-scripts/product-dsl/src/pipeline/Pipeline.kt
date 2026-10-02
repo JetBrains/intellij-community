@@ -4,6 +4,8 @@
 package org.jetbrains.intellij.build.productLayout.pipeline
 
 import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
+import com.intellij.platform.buildScripts.concurrency.Subtask
+import com.intellij.platform.buildScripts.concurrency.taskScope
 import org.jetbrains.intellij.build.productLayout.cleanupOrphanedModuleSetFiles
 import org.jetbrains.intellij.build.productLayout.discovery.GenerationResult
 import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationConfig
@@ -51,7 +53,6 @@ import org.jetbrains.intellij.build.productLayout.validator.TestPluginPluginDepe
 import org.jetbrains.intellij.build.productLayout.validator.UnusedEmbeddedLibraryModuleValidator
 import org.jetbrains.intellij.build.productLayout.validator.UnusedSharedLibraryModuleValidator
 import org.jetbrains.intellij.build.buildSpan
-import org.jetbrains.intellij.build.forEachConcurrent
 import java.nio.file.Path
 
 /**
@@ -199,8 +200,8 @@ internal class GenerationPipeline(
   /**
    * Stage 3: Executes compute nodes in dependency order with maximum parallelism.
    *
-   * Uses slot dependencies to determine execution order. Nodes with no required slots
-   * run immediately (level 0). A node starts when all its required slots are published.
+   * Every active node gets its own task. A node starts when all its active producers end.
+   * A producer that the [validationFilter] removes does not hold back the node.
    *
    * @param model The shared generation model
    * @param validationFilter If non-null, only runs validation nodes with matching names.
@@ -211,35 +212,49 @@ internal class GenerationPipeline(
     model: GenerationModel,
     validationFilter: Set<String>?,
   ): ComputeContextImpl {
-    return run {
-      // Filter nodes based on validationFilter
-      val activeNodes = nodes.filter { node ->
-        node.id.category != NodeCategory.VALIDATION ||
-        validationFilter == null ||
-        node.id.name in validationFilter
-      }
+    // Filter nodes based on validationFilter
+    val activeNodes = nodes.filter { node ->
+      node.id.category != NodeCategory.VALIDATION ||
+      validationFilter == null ||
+      node.id.name in validationFilter
+    }
 
-      // Create context and initialize all slots
-      val ctx = ComputeContextImpl(model)
-      initializeSlots(ctx, activeNodes)
+    // Create context and initialize all slots
+    val ctx = ComputeContextImpl(model)
+    initializeSlots(ctx, activeNodes)
 
-      val sorted = topologicalSort(activeNodes)
+    val sorted = topologicalSort(activeNodes)
+    val activeIds = activeNodes.mapTo(HashSet()) { it.id }
 
-      // Group nodes by "level" (nodes at same level can run in parallel)
-      val levels = computeLevels(sorted)
-
-      for (level in levels) {
-        // Run all nodes at this level in parallel
-        level.forEachConcurrent { node ->
+    taskScope {
+      val tasks = HashMap<NodeId, Subtask<Unit>>()
+      for (node in sorted) {
+        val producers = node.requires.mapNotNullTo(LinkedHashSet()) { slot -> producerOf(slot)?.takeIf { it in activeIds } }
+        val producerTasks = producers.map { producerId ->
+          checkNotNull(tasks.get(producerId)) { "Node '${node.id.name}' is forked before its producer '${producerId.name}'" }
+        }
+        tasks.put(node.id, fork(node.id.name) {
+          for (producerTask in producerTasks) {
+            producerTask.await()
+          }
           buildSpan(node.id.name) { span ->
             span.setAttribute("category", node.id.category.name)
             node.execute(ctx.forNode(node.id))
           }
           ctx.finalizeNodeErrors(node.id)
-        }
+        })
       }
+      join()
+    }
 
-      ctx
+    return ctx
+  }
+
+  /** Returns the ID of the node that produces [slot], or null when no node produces it. */
+  private fun producerOf(slot: DataSlot<*>): NodeId? {
+    return when (slot) {
+      is ErrorSlot -> slot.generatorId
+      else -> slotProducers.get(slot)?.id
     }
   }
 
@@ -263,35 +278,6 @@ internal class GenerationPipeline(
   }
 
   /**
-   * Computes execution levels for parallel execution.
-   * Nodes at the same level have no dependencies on each other.
-   */
-  private fun computeLevels(sorted: List<PipelineNode>): List<List<PipelineNode>> {
-    val levels = ArrayList<ArrayList<PipelineNode>>()
-    val nodeLevels = HashMap<NodeId, Int>()
-
-    for (node in sorted) {
-      // Find max level of dependencies
-      val depLevel = node.requires.maxOfOrNull { slot ->
-        when (slot) {
-          is ErrorSlot -> nodeLevels.get(slot.generatorId) ?: 0
-          else -> slotProducers.get(slot)?.let { nodeLevels.get(it.id) } ?: 0
-        }
-      } ?: -1
-
-      val myLevel = depLevel + 1
-      nodeLevels.put(node.id, myLevel)
-
-      while (levels.size <= myLevel) {
-        levels.add(ArrayList())
-      }
-      levels.get(myLevel).add(node)
-    }
-
-    return levels
-  }
-
-  /**
    * Topological sort of nodes based on slot dependencies.
    * @param nodesToSort List of nodes to sort (maybe filtered)
    * @throws IllegalStateException if circular dependency detected
@@ -312,10 +298,7 @@ internal class GenerationPipeline(
 
       // Visit dependencies (nodes that produce required slots)
       for (slot in node.requires) {
-        val depNode = when (slot) {
-          is ErrorSlot -> nodeMap.get(slot.generatorId)
-          else -> slotProducers.get(slot)?.let { nodeMap.get(it.id) }
-        }
+        val depNode = producerOf(slot)?.let { nodeMap.get(it) }
         if (depNode != null) {
           visit(depNode)
         }
@@ -519,8 +502,7 @@ internal class GenerationPipeline(
      * Creates a pipeline with the default set of compute nodes.
      *
      * Execution order is inferred from [PipelineNode.requires] and [PipelineNode.produces].
-     * Nodes with no requirements run first (level 0). Nodes run as soon as their
-     * required slots are published.
+     * Nodes with no requirements run first. A node runs as soon as its producers end.
      */
     fun default(): GenerationPipeline {
       return GenerationPipeline(

@@ -106,9 +106,9 @@ internal interface ComputeContext {
  * - Executes via [execute] with access to [ComputeContext]
  *
  * **Execution model:**
- * - Nodes with no [requires] run immediately (level 0)
- * - Nodes wait for all [requires] slots to be published before running
- * - Nodes at the same dependency level run in parallel
+ * - Nodes with no [requires] run immediately
+ * - A node waits until the producers of all its [requires] slots end
+ * - Independent nodes run in parallel
  * - The pipeline infers execution order from slot dependencies
  *
  * **Design principles:**
