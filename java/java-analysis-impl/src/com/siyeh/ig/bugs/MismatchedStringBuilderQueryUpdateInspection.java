@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -8,6 +8,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiArrayInitializerExpression;
 import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiCallExpression;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiConditionalExpression;
@@ -363,7 +364,7 @@ public final class MismatchedStringBuilderQueryUpdateInspection extends BaseInsp
         PsiElement parent = PsiTreeUtil.getParentOfType(expression, PsiStatement.class, PsiLambdaExpression.class);
         if (parent instanceof PsiStatement &&
             !SideEffectChecker.mayHaveSideEffects(
-              parent, e -> e instanceof PsiMethodCallExpression && isSideEffectFreeBuilderMethodCall((PsiMethodCallExpression)e))) {
+              parent, e -> e instanceof PsiMethodCallExpression call && isSideEffectFreeBuilderMethodCall(call))) {
           return;
         }
         queried = true;
@@ -394,22 +395,17 @@ public final class MismatchedStringBuilderQueryUpdateInspection extends BaseInsp
       if (parent instanceof PsiReturnStatement) {
         return true;
       }
-      if (parent instanceof PsiExpressionList) {
-        final PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof PsiMethodCallExpression) {
-          return true;
-        }
-      }
-      else if (parent instanceof PsiArrayInitializerExpression) {
+      if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression) {
         return true;
       }
-      else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
-        final PsiExpression rhs = assignmentExpression.getRExpression();
-        return expression.equals(rhs);
+      if (parent instanceof PsiArrayInitializerExpression) {
+        return true;
       }
-      else if (parent instanceof PsiVariable variable) {
-        final PsiExpression initializer = variable.getInitializer();
-        return expression.equals(initializer);
+      if (parent instanceof PsiAssignmentExpression assignmentExpression) {
+        return expression.equals(assignmentExpression.getRExpression());
+      }
+      if (parent instanceof PsiVariable variable) {
+        return expression.equals(variable.getInitializer());
       }
       return false;
     }
@@ -430,8 +426,7 @@ public final class MismatchedStringBuilderQueryUpdateInspection extends BaseInsp
       return referenceExpression.isReferenceTo(variable);
     }
     else if (element instanceof PsiParenthesizedExpression parenthesizedExpression) {
-      final PsiExpression expression = parenthesizedExpression.getExpression();
-      return hasReferenceToVariable(variable, expression, type);
+      return hasReferenceToVariable(variable, parenthesizedExpression.getExpression(), type);
     }
     else if (element instanceof PsiMethodCallExpression methodCallExpression) {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
@@ -441,12 +436,8 @@ public final class MismatchedStringBuilderQueryUpdateInspection extends BaseInsp
       }
     }
     else if (element instanceof PsiConditionalExpression conditionalExpression) {
-      final PsiExpression thenExpression = conditionalExpression.getThenExpression();
-      if (hasReferenceToVariable(variable, thenExpression, type)) {
-        return true;
-      }
-      final PsiExpression elseExpression = conditionalExpression.getElseExpression();
-      return hasReferenceToVariable(variable, elseExpression, type);
+      return hasReferenceToVariable(variable, conditionalExpression.getThenExpression(), type) 
+             || hasReferenceToVariable(variable, conditionalExpression.getElseExpression(), type);
     }
     return false;
   }

@@ -75,6 +75,15 @@ public class MismatchedStringBuilderQueryUpdate {
     return null;
   }
 
+  public static void andrey(String[] args) {
+    StringBuilder sb = new StringBuilder();
+    for (String arg : args) {
+      sb.append(arg);
+    }
+    sb.append(";");
+    throw new RuntimeException("Got arguments: " + sb.append(";"));
+  }
+
   static String testQueryWithSideEffect(java.util.List<String> list) {
     StringBuilder sb = new StringBuilder();
     for (String s : list) {
