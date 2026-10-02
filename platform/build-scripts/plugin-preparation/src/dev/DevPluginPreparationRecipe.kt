@@ -78,7 +78,7 @@ fun validateDevPluginLayoutAssetConsumers(operation: DevPluginPreparationOperati
 fun validatePreparationOperation(operation: DevPluginPreparationOperation, version: Int = DEV_PLUGIN_PREPARATION_FORMAT) {
   require(isPackerExecutedOperation(operation)) { "No packer operation executes '${operation.id}' of kind '${operation.kind}'" }
   require(operation.kind == "layout-assets" || operation.layoutAssets == null) { "Only a layout-assets operation may declare layout assets" }
-  require(operation.manifest in setOf("keep", "drop", "coverage-agent", "rewrite-boot-class-path")) {
+  require(operation.manifest in setOf("keep", "drop")) {
     "Unknown preparation manifest policy '${operation.manifest}'"
   }
   val references = operation.sourceReferences()

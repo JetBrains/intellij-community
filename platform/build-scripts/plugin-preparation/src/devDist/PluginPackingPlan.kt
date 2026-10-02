@@ -23,7 +23,7 @@ data class PreparedSourceManifestRecipe(
   init {
     require(version == 1) { "Unsupported prepared manifest version '$version'" }
     require(originalMeaningfulSourceCount == null || originalMeaningfulSourceCount >= 0) { "Invalid prepared source count" }
-    require(sourceManifestPolicies.all { it in setOf("keep", "drop", "coverage-agent", "rewrite-boot-class-path", "single-meaningful-source") }) {
+    require(sourceManifestPolicies.all { it in setOf("keep", "drop", "single-meaningful-source") }) {
       "Unsupported prepared manifest policies: $sourceManifestPolicies"
     }
     require(originalMeaningfulSourceCount != null || sourceManifestPolicies == listOf("keep")) {
@@ -56,8 +56,6 @@ data class JarSourceRecipe(
 data class JarWriterRecipe(
   @JvmField val manifest: String = "single-meaningful-source",
   @JvmField val mergeEntities: Boolean = false,
-  @JvmField val rewriteBootClassPath: Boolean = false,
-  @JvmField val outputName: String = "",
   /**
    * The presigned native library whose native entries the jar leaves out, or empty. A jar with it and a jar without it
    * differ, so a plugin reuses a natives jar only with a recipe that states the same library.
@@ -75,10 +73,6 @@ data class CanonicalJarRecipe(
     require(sources.isNotEmpty()) { "A jar recipe requires ordered sources" }
     require(sources.all { it.input.isNotEmpty() && it.kind.isNotEmpty() && it.filter.isNotEmpty() }) {
       "A jar source requires an input, a root kind, and a filter"
-    }
-    require(!writer.rewriteBootClassPath || writer.outputName.isNotEmpty()) { "A manifest rewrite requires the output name" }
-    require(sources.none { "manifest=rewrite-boot-class-path" in it.options } || writer.outputName.isNotEmpty()) {
-      "An explicit manifest rewrite requires the output name"
     }
   }
 }

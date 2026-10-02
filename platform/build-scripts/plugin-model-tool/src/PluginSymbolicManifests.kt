@@ -21,7 +21,7 @@ data class PluginSymbolicPreparedSourceManifest(
 ) {
   init {
     require(originalMeaningfulSourceCount == null || originalMeaningfulSourceCount >= 0) { "An original meaningful-source count cannot be negative" }
-    require(sourceManifestPolicies.all { it in setOf("keep", "drop", "coverage-agent", "rewrite-boot-class-path", "single-meaningful-source") }) {
+    require(sourceManifestPolicies.all { it in setOf("keep", "drop", "single-meaningful-source") }) {
       "Prepared sources require concrete source-specific manifest policies"
     }
     require(originalMeaningfulSourceCount != null || sourceManifestPolicies == listOf("keep")) { "Module patches require the keep policy" }

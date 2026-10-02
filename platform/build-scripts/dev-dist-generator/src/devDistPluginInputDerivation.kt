@@ -112,7 +112,7 @@ internal fun deriveDevDistPluginRemainderInputs(
         use(input)
       }
       asset.kind == "directory" || asset.symlinkTarget != null -> Unit
-      recipe != null -> deriveJarInputs(recipe, inputs, prepared, asset.destination, ::use)
+      recipe != null -> deriveJarInputs(recipe, inputs, prepared, ::use)
       else -> {
         require(asset.inputs.size == 1) { "Completed asset '${asset.destination}' requires one declared file" }
         val input = asset.inputs.single()
@@ -130,21 +130,14 @@ private fun deriveJarInputs(
   recipe: CanonicalJarRecipe,
   inputs: DevDistPluginInputKinds,
   prepared: Map<String, DevPluginPreparationOperation>,
-  destination: String,
   use: (String) -> Unit,
 ) {
-  require(recipe.writer.outputName.isEmpty() || recipe.writer.outputName == destination.substringAfterLast('/')) {
-    "The writer output name does not match '$destination'"
-  }
   require(recipe.writer.manifest in setOf("single-meaningful-source", "keep", "drop")) {
     "Unknown manifest policy '${recipe.writer.manifest}'"
   }
-  require(!recipe.writer.rewriteBootClassPath || destination.substringAfterLast('/').contains("intellij.platform.coverage.agent")) {
-    "Coverage manifest rewriting requires the coverage agent destination"
-  }
   for (source in recipe.sources) {
     require(source.options.size == source.options.toSet().size && source.options.all {
-      it in setOf("patch", "lib-module", "manifest=keep", "manifest=drop", "manifest=coverage-agent", "manifest=rewrite-boot-class-path")
+      it in setOf("patch", "lib-module", "manifest=keep", "manifest=drop")
     }) { "Source '${source.input}' requires an unsupported preparation option: ${source.options}" }
     require(source.options.count { it.startsWith("manifest=") } <= 1) { "Source '${source.input}' has conflicting manifest policies" }
     if (source.kind == "prepared") {

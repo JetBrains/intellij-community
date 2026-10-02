@@ -176,7 +176,6 @@ internal class ContentModuleJarTarget(
   @JvmField val libraryTargetLabels: List<String>,
   @JvmField val modulesBefore: List<String>,
   @JvmField val modulesAfter: List<String>,
-  moduleName: String,
   sources: List<JarSourceRecipe>,
   @JvmField val nativeLib: String? = null,
   @JvmField val nativeLibDir: String? = null,
@@ -185,8 +184,6 @@ internal class ContentModuleJarTarget(
     sources = sources,
     writer = JarWriterRecipe(
       mergeEntities = true,
-      rewriteBootClassPath = moduleName.contains(BOOT_CLASS_PATH_MODULE),
-      outputName = if (moduleName.contains(BOOT_CLASS_PATH_MODULE)) "$moduleName.jar" else "",
       nativeLib = nativeLib ?: "",
     ),
   )
@@ -278,7 +275,7 @@ internal class ContentModuleJarStatements(
       rules = MergeRules.PLATFORM
     }
     else {
-      if (moduleName == BOOT_CLASS_PATH_MODULE || !hasReadableDescriptor(module)) {
+      if (!hasReadableDescriptor(module)) {
         return null
       }
       rules = MergeRules.PLUGIN
@@ -322,7 +319,6 @@ internal class ContentModuleJarStatements(
       libraryTargetLabels = libraryTargetLabels,
       modulesBefore = candidate.modulesBefore.map { memberLabel(member = it, owner = moduleName) },
       modulesAfter = candidate.modulesAfter.map { memberLabel(member = it, owner = moduleName) },
-      moduleName = moduleName,
       // The order `pack_jar` writes: the module outputs, then the libraries.
       sources = packedModuleNames.map {
         JarSourceRecipe(input = it, kind = "module", filter = "module-v1")
@@ -481,9 +477,6 @@ private const val CONTENT_MODULE_JAR_SYMBOL: String = "content_module_jar"
 
 /** The `.bzl` file of the macro, without the repository part. */
 internal const val CONTENT_MODULE_JAR_BZL: String = "//platform/build-scripts/bazel-rules:content_module_jar.bzl"
-
-/** The one module whose jar gets its `Boot-Class-Path` rewritten. It never hands its jar to a plugin. */
-private const val BOOT_CLASS_PATH_MODULE: String = "intellij.platform.coverage.agent"
 
 /**
  * Project libraries the platform layout packs itself, so no content module may merge a second copy.

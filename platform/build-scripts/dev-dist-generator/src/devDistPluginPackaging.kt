@@ -96,7 +96,7 @@ internal fun isLabelToken(token: String): Boolean = "//" in token
 /** The plugin directory the descriptor rule derives when the layout states none. */
 internal fun derivedPluginDirectoryName(mainModule: String): String = mainModule.removePrefix("intellij.").replace('.', '-')
 
-/** The writer every dev-distribution jar takes: entities merged, a manifest kept only for one meaningful source. */
+/** The writer every dev-distribution jar takes: entities merged, and a library manifest kept only for one meaningful source. */
 private val DEFAULT_WRITER = JarWriterRecipe(mergeEntities = true)
 
 /**

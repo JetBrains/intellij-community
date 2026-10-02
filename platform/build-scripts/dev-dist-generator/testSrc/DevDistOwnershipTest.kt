@@ -80,7 +80,6 @@ class DevDistOwnershipTest {
       libraryTargetLabels = listOf("//libraries/x", "@lib//:y"),
       modulesBefore = listOf("//platform/core"),
       modulesAfter = emptyList(),
-      moduleName = communityPlugin,
       sources = listOf(JarSourceRecipe(input = communityPlugin, kind = "module", filter = "module-v1")),
     )
 
