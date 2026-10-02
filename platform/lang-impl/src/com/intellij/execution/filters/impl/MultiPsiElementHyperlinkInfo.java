@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters.impl;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.HyperlinkInfoBase;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -65,7 +65,7 @@ public final class MultiPsiElementHyperlinkInfo extends HyperlinkInfoBase {
     int width = frame != null ? frame.getSize().width : 200;
     JBPopup popup = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(ContainerUtil.map(myMap.values(), ptr -> ptr.getContainingFile()))
-      .setTitle(ExecutionBundle.message("popup.title.choose.target.file"))
+      .setTitle(LangBundle.message("popup.title.choose.target.file"))
       .setRenderer(new GotoFileCellRenderer(width))
       .setItemChosenCallback(selectedValue -> {
         VirtualFile file = selectedValue.getVirtualFile();

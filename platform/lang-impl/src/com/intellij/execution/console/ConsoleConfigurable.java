@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -50,8 +50,8 @@ public class ConsoleConfigurable extends BoundCompositeSearchableConfigurable<Co
   private final ConsoleFoldingSettings mySettings = ConsoleFoldingSettings.getSettings();
 
   public ConsoleConfigurable() {
-    super(ExecutionBundle.message("configurable.ConsoleConfigurable.display.name"), "reference.idesettings.console.folding",
-          ExecutionBundle.message("configurable.ConsoleConfigurable.display.name"));
+    super(LangBundle.message("configurable.ConsoleConfigurable.display.name"), "reference.idesettings.console.folding",
+          LangBundle.message("configurable.ConsoleConfigurable.display.name"));
   }
 
   @ApiStatus.Internal
@@ -217,7 +217,7 @@ public class ConsoleConfigurable extends BoundCompositeSearchableConfigurable<Co
     }
 
     private @Nullable String showEditDialog(final String initialValue) {
-      return Messages.showInputDialog(this, myQuery, ExecutionBundle.message("dialog.title.folding.pattern"), Messages.getQuestionIcon(),
+      return Messages.showInputDialog(this, myQuery, LangBundle.message("dialog.title.folding.pattern"), Messages.getQuestionIcon(),
                                       initialValue, new InputValidatorEx() {
           @Override
           public boolean checkInput(String inputString) {
@@ -232,7 +232,7 @@ public class ConsoleConfigurable extends BoundCompositeSearchableConfigurable<Co
           @Override
           public @NlsContexts.DetailedDescription @Nullable String getErrorText(String inputString) {
             if (!checkInput(inputString)) {
-              return ExecutionBundle.message("message.console.folding.rule.string.cannot.be.empty");
+              return LangBundle.message("message.console.folding.rule.string.cannot.be.empty");
             }
             return null;
           }

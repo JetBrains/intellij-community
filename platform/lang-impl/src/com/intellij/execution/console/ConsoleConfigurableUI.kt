@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console
 
-import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.impl.ConsoleBuffer
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.vfs.limits.FileSizeLimit.Companion.getDefaultContentLoadLimit
 import com.intellij.ui.DocumentAdapter
@@ -62,7 +62,7 @@ internal class ConsoleConfigurableUI(
               }
             })
           }.component
-        label(ExecutionBundle.message("settings.console.kb"))
+        label(LangBundle.message("settings.console.kb"))
         consoleBufferSizeWarningLabel = label("")
           .visibleIf(cbOverrideConsoleCycleBufferSize.selected)
           .applyToComponent {

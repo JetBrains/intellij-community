@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.ClearConsoleAction;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -11,6 +10,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -305,7 +305,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   private final class SwitchDuplexConsoleViewAction extends ToggleAction implements DumbAware {
 
     SwitchDuplexConsoleViewAction() {
-      super(ExecutionBundle.messagePointer("run.configuration.show.command.line.action.name"), AllIcons.Debugger.Console);
+      super(LangBundle.messagePointer("run.configuration.show.command.line.action.name"), AllIcons.Debugger.Console);
     }
 
     @Override

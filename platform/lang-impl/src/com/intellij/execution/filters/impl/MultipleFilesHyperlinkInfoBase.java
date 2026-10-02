@@ -2,12 +2,12 @@
 package com.intellij.execution.filters.impl;
 
 import com.intellij.codeInsight.navigation.PsiTargetNavigator;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkInfoBase;
 import com.intellij.execution.filters.HyperlinkInfoFactory;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
@@ -58,9 +58,9 @@ public abstract class MultipleFilesHyperlinkInfoBase extends HyperlinkInfoBase i
     GotoFileCellRenderer renderer = new GotoFileCellRenderer(width);
 
     boolean navigated = new PsiTargetNavigator<>(() -> getFiles(project))
-      .title(ExecutionBundle.message("popup.title.choose.target.file"))
+      .title(LangBundle.message("popup.title.choose.target.file"))
       .presentationProvider(element -> renderer.computePresentation(element))
-      .navigate(hyperlinkLocationPoint, ExecutionBundle.message("popup.title.choose.target.file"), project, file -> {
+      .navigate(hyperlinkLocationPoint, LangBundle.message("popup.title.choose.target.file"), project, file -> {
         open(file.getVirtualFile(), originalEditor);
         return true;
       });
