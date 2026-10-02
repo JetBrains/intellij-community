@@ -40,15 +40,20 @@ internal interface NativeFileHandler {
   fun sign(name: String, dataSupplier: () -> ByteBuffer): Path?
 }
 
-fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false) {
-  buildJar(targetFile = targetFile, sources = sources, nativeFileHandler = null, compress = compress)
+fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false, jarName: String = targetFile.fileName.toString()) {
+  buildJar(targetFile = targetFile, sources = sources, nativeFileHandler = null, compress = compress, jarName = jarName)
 }
 
+/**
+ * Writes the jar [targetFile] from [sources]. [jarName] is the file name the jar has in the distribution. It differs
+ * from the name of [targetFile] when a jar cache writes the jar into a temporary sibling file first.
+ */
 internal fun buildJar(
   targetFile: Path,
   sources: Collection<Source>,
   nativeFileHandler: NativeFileHandler?,
   compress: Boolean = false,
+  jarName: String = targetFile.fileName.toString(),
 ) {
   val packageIndexBuilder = if (compress) null else PackageIndexBuilder(AddDirEntriesMode.NONE)
   Files.createDirectories(targetFile.parent)
@@ -57,7 +62,7 @@ internal fun buildJar(
     deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null,
   ).use { zipCreator ->
     val uniqueNames = HashMap<String, Path>()
-    val moduleManifestCheck = ModuleManifestCheck(targetFile)
+    val moduleManifestCheck = ModuleManifestCheck(targetFile = targetFile, jarName = jarName)
 
     val filesToMerge = mutableListOf<CharSequence>()
 
@@ -294,9 +299,10 @@ private fun isLibModuleSource(source: Source): Boolean {
  * Checks the manifests of the module outputs in one jar.
  *
  * The jar keeps at most one module manifest.
- * If that manifest has the `Boot-Class-Path` main attribute, the value must be the file name of [targetFile].
+ * If that manifest has the `Boot-Class-Path` main attribute, the value must be [jarName], the name of the jar in the
+ * distribution. [targetFile] names the jar in a message only, because a jar cache can write a temporary sibling file.
  */
-private class ModuleManifestCheck(private val targetFile: Path) {
+private class ModuleManifestCheck(private val targetFile: Path, private val jarName: String) {
   private var manifestSource: Source? = null
 
   fun check(source: Source, data: ByteBuffer) {
@@ -307,7 +313,6 @@ private class ModuleManifestCheck(private val targetFile: Path) {
     manifestSource = source
 
     val bootClassPath = readMainAttribute(Charsets.UTF_8.decode(data.duplicate()), "Boot-Class-Path") ?: return
-    val jarName = targetFile.fileName.toString()
     if (bootClassPath != jarName) {
       error("$targetFile gets a module manifest from $source with Boot-Class-Path '$bootClassPath'. The value must be '$jarName'.")
     }

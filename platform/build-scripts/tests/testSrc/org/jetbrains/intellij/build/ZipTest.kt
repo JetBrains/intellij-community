@@ -747,6 +747,16 @@ class ZipTest {
       .hasMessageContaining("other-jar")
       .hasMessageContaining("other.jar")
 
+    // A jar cache writes a temporary sibling file first. The check takes the name of the jar in the distribution.
+    val agentDir = writeManifest(tempDir.resolve("agent"), "Manifest-Version: 1.0\nBoot-Class-Path: agent.jar\n")
+    val temporaryJar = tempDir.resolve("cache/agent.jar.tmp.abc-123")
+    buildJar(temporaryJar, listOf(DirSource(agentDir, moduleName = "test.agent")), jarName = "agent.jar")
+    assertThat(readManifest(temporaryJar)).isEqualTo("Manifest-Version: 1.0\nBoot-Class-Path: agent.jar\n")
+    assertThatThrownBy {
+      buildJar(tempDir.resolve("cache/unnamed.jar.tmp.abc-123"), listOf(DirSource(agentDir, moduleName = "test.agent")))
+    }
+      .hasMessageContaining("unnamed.jar.tmp.abc-123")
+
     // The value continues on the next line.
     val continuedManifest = "Manifest-Version: 1.0\r\nBoot-Class-Path: age\r\n nt.jar\r\n"
     val continuedDir = writeManifest(tempDir.resolve("continued"), continuedManifest)
