@@ -3241,7 +3241,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestFor(issues = ["PY-37876"])
+    @TestFor(issues = ["PY-37876", "PY-92229"])
     fun `generic parameter of expected callable mapped by other argument`() = test("""
       from typing import Callable, TypeVar
 
@@ -3253,10 +3253,8 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def accepts_anything(x: str) -> None:
           pass
 
-      # Bug: Expected error.
-      # `Callable[[str], None]` is assignable to `Callable[[int | str], None]`.
-      # Thus, substitution `T` -> `int | str` is considered valid.
       func(42, accepts_anything)
+      #        ^^^^^^^^^^^^^^^^ WARNING Expected type '(int) -> None' (matched generic type '(T) -> None'), got '(x: str) -> None' instead
       """.trimIndent())
 
     @Test
