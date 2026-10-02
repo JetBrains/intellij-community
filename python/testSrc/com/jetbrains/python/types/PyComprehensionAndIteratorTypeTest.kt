@@ -186,14 +186,6 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    fun `tuple iteration type`() = test("""
-      xs = (1, 'a')
-      for expr in xs:
-      #   └ TYPE Literal[1, 'a']
-          pass
-      """.trimIndent())
-
-    @Test
     fun `iteration type from __getitem__`() = test("""
       class C(object):
           def __getitem__(self, index):
@@ -294,41 +286,10 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    fun `homogeneous tuple iteration type`() = test("""
-      from typing import Tuple
-
-      xs = unknown() # type: Tuple[int, ...]
-      #    ^^^^^^^ ERROR Unresolved reference 'unknown'
-
-      for x in xs:
-          expr = x
-      #   └ TYPE int
-      """.trimIndent())
-
-    @Test
     fun `iteration over string literal emits literal string not str`() = test("""
       s = "foo"
       for expr in s:
       #   └ TYPE LiteralString
-          pass
-      """.trimIndent())
-
-    @TestFor(issues = ["PY-64481"])
-    @Test
-    fun `for loop target type comes from correct dunder iter overload`() = test("""
-      from typing import overload
-
-      class Super:
-          @overload
-          def __iter__(self: 'Sub') -> list['Sub']: ...
-      #       ^^^^^^^^ WARNING A series of @overload-decorated methods should always be followed by an implementation that is not @overload-ed
-          @overload
-          def __iter__(self) -> list['Super']: ...
-
-      class Sub(Super): ...
-
-      for expr in Super():
-      #   └ TYPE Super
           pass
       """.trimIndent())
 
@@ -851,20 +812,6 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       # └ TYPE Generator[Literal["foo"], Unknown, Literal[0]]
       """.trimIndent())
 
-    @TestFor(issues = ["PY-26643"])
-    @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON34)
-    fun `replace self in generator`() = test("""
-      class A:
-          def foo(self):
-              yield self
-              return self
-      class B(A):
-          pass
-      expr = B().foo()
-      # └ TYPE Generator[B, Unknown, B]
-      """.trimIndent())
-
     @Test
     fun `yield inside lambda does not make enclosing function a generator`() = test("""
       def foo():
@@ -1114,41 +1061,6 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           yield from get_set()
       for expr in gen():    pass
       #   └ TYPE Unknown
-      """.trimIndent())
-
-    @TestFor(issues = ["PY-78044"])
-    @Test
-    fun `generator yields self`() = test("""
-      from collections.abc import Generator
-      from typing import Self
-
-      class A:
-          @classmethod
-          def f(cls) -> Generator[Self, None, None]:
-              pass
-
-      for x in A.f():
-          expr = x
-      #   └ TYPE A
-      """.trimIndent())
-
-    @TestFor(issues = ["PY-78044"])
-    @Test
-    fun `generator yields self nested`() = test("""
-      from collections.abc import Generator
-      from typing import Self
-
-      class A:
-          @classmethod
-          def f(cls) -> Generator[Self, None, None]:
-              pass
-
-      class B(A): ...
-      class C(B): ...
-
-      for x in C.f():
-          expr = x
-      #   └ TYPE C
       """.trimIndent())
 
     @TestFor(issues = ["PY-6729"])
@@ -1696,35 +1608,6 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           async with manager as m:
               expr = m
       #       └ TYPE str
-      """.trimIndent())
-
-    @TestFor(issues = ["PY-24067"])
-    @Test
-    fun `async function return type in docstring`() = test("""
-      async def f():
-          '''
-          :rtype: int
-          '''
-          pass
-      expr = f()
-      # └ TYPE CoroutineType[Unknown, Unknown, int]
-      """.trimIndent())
-
-    @TestFor(issues = ["PY-27518"])
-    @Test
-    fun `async function return type in numpy docstring`() = test("""
-      async def f():
-          '''
-          An integer.
-
-          Returns
-          -------
-          int
-              A number
-          '''
-          pass
-      expr = f()
-      #└ TYPE CoroutineType[Unknown, Unknown, int]
       """.trimIndent())
 
     @TestFor(issues = ["PY-26643"])

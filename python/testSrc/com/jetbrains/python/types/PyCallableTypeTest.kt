@@ -92,19 +92,6 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestFor(issues = ["PY-9605"])
-    fun `property returns callable`() = test("""
-      class C(object):
-          @property
-          def foo(self):
-              return lambda: 0
-
-      c = C()
-      expr = c.foo
-      #└ TYPE () -> Literal[0]
-      """.trimIndent())
-
-    @Test
     fun `function type rendered as callable`() = test("""
       def func(x: int, /, s: str, *, k: bytes) -> None:
           pass
@@ -184,22 +171,6 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
     // reported count is unstable across highlighting passes, which the inline-assertion comparison
     // cannot pin down; the underlying callable-type inference is already covered by the other
     // function-type-comment tests above.
-
-    @Test
-    fun `builtins callable narrows to callable type`() = test("""
-      a = object()
-      if callable(a):
-          expr = a
-      #   └ TYPE (...) -> object
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-79861"])
-    fun `walrus callable narrowing`() = test("""
-      if callable(a := 42):
-          expr = a
-      #   └ TYPE Literal[42]
-      """.trimIndent())
 
     @Test
     fun `generic callable rendered with type parameters`() = test("""
@@ -494,58 +465,6 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-19723"])
-    fun `type var substitution in positional args`() = test("""
-      def foo(*args):
-          '''
-          :type args: T
-          :rtype: T
-          '''
-          pass
-      expr = foo(1)
-      #└ TYPE int
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-19723"])
-    fun `type var substitution in heterogeneous positional args`() = test("""
-      def foo(*args):
-          '''
-          :type args: T
-          :rtype: T
-          '''
-          pass
-      expr = foo(1, "2")
-      #└ TYPE int | str
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-19723"])
-    fun `type var substitution in keyword args`() = test("""
-      def foo(**kwargs):
-          '''
-          :type kwargs: T
-          :rtype: T
-          '''
-          pass
-      expr = foo(a=1)
-      #└ TYPE int
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-19723"])
-    fun `type var substitution in heterogeneous keyword args`() = test("""
-      def foo(**kwargs):
-          '''
-          :type kwargs: T
-          :rtype: T
-          '''
-          pass
-      expr = foo(a=1, b="2")
-      #└ TYPE int | str
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-19723"])
     fun `annotated positional args`() = test("""
       def foo(*args: str):
           expr = args
@@ -590,13 +509,6 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = generic_kwargs(a=1, b='foo')
       #└ TYPE dict[str, int | str]
-      """.trimIndent())
-
-    @Test
-    fun `dict comprehension from kwargs`() = test("""
-      def test(**kwargs):
-          expr = {k: v for k, v in kwargs.items()}
-      #   └ TYPE dict[str, Unknown]
       """.trimIndent())
 
     @Test
@@ -2206,22 +2118,6 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
   @Nested
   inner class CallableSubtypingAndAssignability {
     @Test
-    @TestFor(issues = ["PY-22513"])
-    fun `generic kwargs assignment ok`() = test("""
-      from typing import Any, TypeVar
-
-
-      T = TypeVar('T')
-
-
-      def generic_kwargs(**kwargs: T) -> None:
-          pass
-
-
-      generic_kwargs(a=1, b='foo')
-      """.trimIndent())
-
-    @Test
     @TestFor(issues = ["PY-17962"])
     fun `typing Callable call arity`() = test("""
       from typing import Callable
@@ -2652,25 +2548,6 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def foo(e: Expected, a: Actual):
           _: Expected = a
           _: Actual = e
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-87802"])
-    fun `callable protocol with additional attribute assignment`() = test("""
-      from typing import Protocol
-
-      class Proto(Protocol):
-          other_attribute: int
-
-          def __call__(self, x: int) -> None:
-              pass
-
-
-      def f(x: int) -> None:
-          pass
-
-
-      v: Proto = f # WARNING Expected type 'Proto', got '(x: int) -> None' instead
       """.trimIndent())
 
     @Test

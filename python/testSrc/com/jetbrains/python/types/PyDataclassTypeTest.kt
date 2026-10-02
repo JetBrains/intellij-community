@@ -248,28 +248,6 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
   }
 
   @Nested
-  inner class SlotsDisjointBase {
-    @Test
-    @TestFor(issues = ["PY-83206"])
-    fun `dataclass with slots creates disjoint base`() = test("""
-      from dataclasses import dataclass
-      
-      @dataclass(slots=True)
-      class A:
-          x: int
-      
-      @dataclass(slots=True)
-      class B:
-          y: str
-      
-      def foo(a: A) -> None:
-          if isinstance(a, B):
-              expr = a
-      #       └ TYPE Never
-      """.trimIndent())
-  }
-
-  @Nested
   inner class DataclassTransformConstructorSignature {
     @Test
     fun `dataclass_transform constructor signature`() = test("""

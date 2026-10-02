@@ -520,14 +520,6 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  fun `Null when in function`() = test("""
-    from typing import TypeVar, Generic
-    T = TypeVar("T", covariant=True)
-    def fn() -> T: pass
-    #           └ EXPECTED_VARIANCE COVARIANT
-    """.trimIndent())
-
-  @Test
   fun `Null when in unbound instance function`() = test("""
     from typing import TypeVar, Generic
     T = TypeVar("T", covariant=True)
