@@ -45,5 +45,5 @@ internal suspend fun saveSettingsBatch(componentManagers: List<ComponentManager>
 private suspend fun saveConversionResult(project: Project) {
   val descriptor = project.stateStore.storeDescriptor
   val path = if (descriptor.dotIdea == null) descriptor.presentableUrl else descriptor.historicalProjectBasePath
-  (project as ComponentManagerEx).getServiceAsyncIfDefined(ConversionService::class.java)?.saveConversionResult(path)
+  (ApplicationManager.getApplication() as ComponentManagerEx).getServiceAsyncIfDefined(ConversionService::class.java)?.saveConversionResult(path)
 }
