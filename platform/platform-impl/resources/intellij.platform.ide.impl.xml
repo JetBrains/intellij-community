@@ -1713,6 +1713,7 @@
     <backgroundPostStartupActivity implementation="com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializationActivity"/>
     <registryKey key="update.source.initialization.enabled" defaultValue="true"
                  description="Enable initialization of update plugin update sources once for an IDE" />
+    <troubleInfoCollector implementation="com.intellij.ide.plugins.CustomPluginRepositoriesTroubleInfoCollector"/>
     <universalFileChooserContributor implementation="com.intellij.openapi.fileChooser.universal.LocalFileChooserContributor"/>
     <projectSettings service="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
     <projectSettings service="com.intellij.externalDependencies.impl.ExternalDependenciesManagerImpl"/>

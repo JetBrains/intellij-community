@@ -49,6 +49,10 @@ import java.util.Set;
 
 import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
 import static com.intellij.ide.plugins.PluginManagerCore.ULTIMATE_PLUGIN_ID;
+import static com.intellij.ide.plugins.RepositoryHelper.CustomPluginRepositorySource.CUSTOM_BUILT_IN_REPOSITORY_PROPERTY;
+import static com.intellij.ide.plugins.RepositoryHelper.CustomPluginRepositorySource.IDEA_PLUGIN_HOSTS_PROPERTY;
+import static com.intellij.ide.plugins.RepositoryHelper.CustomPluginRepositorySource.STORED_SETTINGS;
+import static com.intellij.ide.plugins.RepositoryHelper.CustomPluginRepositorySource.UPDATE_SETTINGS_PROVIDERS;
 import static com.intellij.ide.plugins.marketplace.utils.MarketplaceUrlsKt.buildOsParameter;
 
 public final class RepositoryHelper {
@@ -60,20 +64,13 @@ public final class RepositoryHelper {
 
   /// Returns a list of configured custom plugin repository hosts.
   public static @NotNull List<@NotNull String> getCustomPluginRepositoryHosts() {
-    var hosts = new ArrayList<>(UpdateSettings.getInstance().getStoredPluginHosts());
-
-    var pluginHosts = System.getProperty("idea.plugin.hosts");
-    if (pluginHosts != null) {
-      ContainerUtil.addAll(hosts, pluginHosts.split(";"));
+    var hosts = new ArrayList<String>();
+    var sources = new CustomPluginRepositorySource[]{
+      STORED_SETTINGS, IDEA_PLUGIN_HOSTS_PROPERTY, UPDATE_SETTINGS_PROVIDERS, CUSTOM_BUILT_IN_REPOSITORY_PROPERTY
+    };
+    for (var source : sources) {
+      hosts.addAll(source.getRepositoryUrls());
     }
-
-    hosts.addAll(UpdateSettingsProvider.getRepositoriesFromProviders());
-
-    var pluginsUrl = System.getProperty(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY);
-    if (pluginsUrl != null) {
-      hosts.addAll(Arrays.asList(pluginsUrl.split(",")));
-    }
-
     ContainerUtil.removeDuplicates(hosts);
     return hosts;
   }
@@ -324,5 +321,36 @@ public final class RepositoryHelper {
       newHosts = hosts + ";" + newHosts;
     }
     System.setProperty("idea.plugin.hosts", newHosts);
+  }
+
+  enum CustomPluginRepositorySource {
+    STORED_SETTINGS {
+      @Override
+      public @NotNull List<String> getRepositoryUrls() {
+        return UpdateSettings.getInstance().getStoredPluginHosts();
+      }
+    },
+    IDEA_PLUGIN_HOSTS_PROPERTY {
+      @Override
+      public @NotNull List<String> getRepositoryUrls() {
+        var pluginHosts = System.getProperty("idea.plugin.hosts");
+        return pluginHosts == null ? List.of() : Arrays.asList(pluginHosts.split(";"));
+      }
+    },
+    UPDATE_SETTINGS_PROVIDERS {
+      @Override
+      public @NotNull List<String> getRepositoryUrls() {
+        return UpdateSettingsProvider.getRepositoriesFromProviders();
+      }
+    },
+    CUSTOM_BUILT_IN_REPOSITORY_PROPERTY {
+      @Override
+      public @NotNull List<String> getRepositoryUrls() {
+        var pluginsUrl = System.getProperty(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY);
+        return pluginsUrl == null ? List.of() : Arrays.asList(pluginsUrl.split(","));
+      }
+    };
+
+    public abstract @NotNull List<String> getRepositoryUrls();
   }
 }
