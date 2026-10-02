@@ -93,8 +93,8 @@ another link, so `validate_link_graph` does not check it again.
 
 ## JSON (`planfile::json`)
 
-`json::read` and `json::from_slice` read the plan file, the catalogue and the asset rows. Both are
-`serde_json::from_slice`. With a `deny_unknown_fields` type, it refuses an unknown key, a repeated key, trailing data
+The tools read their JSON documents through `planfile::json`. Examples are the plan file, the catalogue and the asset
+rows. `json::read` and `json::from_slice` are both `serde_json::from_slice`. With a `deny_unknown_fields` type, it refuses an unknown key, a repeated key, trailing data
 and invalid UTF-8. A key must match its field exactly. `null` for an `Option` field is the same as an absent key. `null`
 for any other field is an error. Errors state the line and the column. `json::read` adds the path as the context of an
 error.

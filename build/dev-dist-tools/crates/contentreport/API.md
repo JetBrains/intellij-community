@@ -87,6 +87,7 @@ of a distribution build now, and a plan has no `module` key on an entry.
 
 The `replay` command of `dev-dist` reads a plan through `read_recipes`. The crate states an absent string field as
 `None`, and `as_deref().unwrap_or("")` gives the empty text. The former replay compared an absent field with `""`.
+The column "Former access" states how the former replay read each field.
 
 | Former access | Crate access |
 | --- | --- |

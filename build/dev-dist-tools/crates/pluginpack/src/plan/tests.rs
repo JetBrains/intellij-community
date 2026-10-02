@@ -375,10 +375,10 @@ fn plan_rejects_unsafe_directory_references() {
     }
 }
 
-/// The Go test planned symlink operations. The typed recipe has none, so the port checks the same graphs through the
+/// The former test planned symlink operations. The typed recipe has none, so this test checks the same graphs through the
 /// link check of a tree: `distpath::validate_links`, then `planfile::validate::validate_link_graph`. `distpath` refuses a link chain,
 /// so a graph where one link resolves through another is refused, and a cycle is a chain. It also refuses an empty
-/// segment in a target, so the former case of the exact spelling `./dir///` is a refusal.
+/// segment in a target, so the former test case of the exact spelling `./dir///` is a refusal.
 #[test]
 fn link_graph_uses_raw_components_and_known_directories() {
     type Case<'a> = (&'a str, &'a [&'a str], &'a [(&'a str, &'a str)], &'a str);

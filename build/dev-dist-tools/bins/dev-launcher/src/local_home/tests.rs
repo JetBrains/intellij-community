@@ -413,8 +413,9 @@ fn local_home_refuses_existing_contents() {
     assert_eq!(read_text(&file), "keep", "existing content changed");
 }
 
-// The reader refuses a missing key, a `null` value of a field that is not optional, an unknown key, an unknown variant
-// and trailing data. The composer writes every key but `kind`, so a valid layout never hits these refusals.
+// The reader refuses a missing required key such as `files`, a `null` value of a field that is not optional, an unknown
+// key, an unknown variant and trailing data. A missing `runfile`, `symlinkTarget` or `mode` is `None`. The composer
+// writes every key but `kind`, so a valid layout never hits these refusals.
 #[test]
 fn local_home_decodes_the_composer_bytes_and_refuses_other_forms() {
     let layouts = TempDir::new();

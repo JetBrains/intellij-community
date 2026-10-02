@@ -44,7 +44,7 @@ fn detect_os_family_follows_the_kotlin_regexes() {
         ("icudtl.dat", Some((Family::Windows, ""))),
         ("libfoo.so", None),
         // The former test had none of the cases below. They pin the leftmost match, the order of the alternatives and
-        // the ASCII case folding. The case-insensitive match of the former test also folded U+017F to `s`, and
+        // the ASCII case folding. The case-insensitive match of the former detector also folded U+017F to `s`, and
         // `select` refuses a name that is not ASCII.
         ("/linux/libx.so", Some((Family::Linux, "/"))),
         ("-linux/libx.so", Some((Family::Linux, "-"))),

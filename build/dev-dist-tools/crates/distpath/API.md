@@ -31,7 +31,7 @@ empty segment.
 
 ## Public items
 
-| Item | Former name | Description |
+| Item | Former counterpart | Description |
 |---|---|---|
 | `validate_path(&str) -> Result<()>` | `filemetadata.ValidatePath` | Accepts a relative slash path with no empty, `.` or `..` segment and no `\`, `:` or NUL. Refuses text outside the supported subset. |
 | `check_supported_text(&str) -> Result<()>` | | Refuses text that is not ASCII or that holds `<`, `>` or `&`. |
