@@ -437,8 +437,20 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     if (psiFile == null) {
       return template;
     }
+    return substituteTemplate(template, new TemplateSubstitutionContext(myProject, editor.asModNavigator()));
+  }
+
+  /**
+   * Applies all the {@link TemplateSubstitutor} extensions to the template.
+   *
+   * @param template template to substitute
+   * @param context context of the template insertion
+   * @return the substituted template, or the original template if no substitutor changed it
+   */
+  @ApiStatus.Internal
+  public static @NotNull TemplateImpl substituteTemplate(@NotNull TemplateImpl template, @NotNull TemplateSubstitutionContext context) {
     for (TemplateSubstitutor substitutor : TemplateSubstitutor.EP_NAME.getExtensionList()) {
-      TemplateImpl substituted = substitutor.substituteTemplate(new TemplateSubstitutionContext(myProject, editor), template);
+      TemplateImpl substituted = substitutor.substituteTemplate(context, template);
       if (substituted != null) {
         template = substituted;
       }
