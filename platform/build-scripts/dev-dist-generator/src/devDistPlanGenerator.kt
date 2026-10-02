@@ -24,6 +24,7 @@ import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.PRESIGNED_NATIVE_LIBS
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.SignNativeFileMode
+import org.jetbrains.intellij.build.buildSpan
 import org.jetbrains.intellij.build.classPath.contentModuleJarCoreClasspathEntries
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
 import org.jetbrains.intellij.build.devDist.isNativeTreeAsset
@@ -295,34 +296,52 @@ internal fun computeDevDistPluginExecutions(
   sections.requireDescriptorDeclarationsUnchanged()
   // A simple plugin has no plan file: its own section or its cross-half package declares the packaging.
   val planFileRecords = sections.pluginPlanRecords.filterKeys { sections.simplePackaging(it.plugin) == null }
+  val half = sections.half
+  // Both collections read one set of texts, so the run encodes and folds every record once.
+  val planTexts = buildSpan("plugin executions: encode and fold plan texts") {
+    DevDistPluginPlanTexts.prepare(planFileRecords, half.splitProducts)
+  }
   fun collect(reusedUpstream: Set<String> = emptySet()): DevDistPluginPlanFiles {
     return collectDevDistPluginPlanFiles(
       projectRoot = sections.index.projectRoot,
       records = planFileRecords,
       index = sections.index,
-      half = sections.half,
+      half = half,
+      productOrder = half.splitProducts,
       ownHome = { plugin, _ -> if (plugin in reusedUpstream) checkNotNull(upstreamPackagePlans).upstreamHome(plugin) else null },
+      planTexts = planTexts,
     )
   }
-  var files = collect()
-  var rendering = renderGeneratedDevDistPluginExecutions(sections, files)
+  val firstFiles = buildSpan("plugin executions: collect plan files") { collect() }
+  val firstRendering = buildSpan("plugin executions: render calls") { renderGeneratedDevDistPluginExecutions(sections, firstFiles) }
+  var files = firstFiles
+  var rendering = firstRendering
   if (upstreamPackagePlans != null) {
-    val reused = files.homes.keys.filterTo(TreeSet()) { plugin ->
-      val home = files.home(plugin)
-      val planTexts = files.files.entries
-        .filter { (path, _) -> path.substringBeforeLast('/', missingDelimiterValue = "") == home.directory }
-        .associate { (path, text) -> path.substringAfterLast('/') to text }
-      home.callIsCrossHalf && upstreamPackagePlans.acceptsUpstreamPlans(plugin, planTexts, rendering.calls.get(plugin)?.crossHalfText)
+    val reused = buildSpan("plugin executions: decide upstream reuse") {
+      // The plan files keyed by directory, then by file name, in path order.
+      val filesByDirectory = HashMap<String, LinkedHashMap<String, String>>()
+      for ((path, text) in firstFiles.files) {
+        filesByDirectory.computeIfAbsent(path.substringBeforeLast('/', missingDelimiterValue = "")) { LinkedHashMap() }.put(path.substringAfterLast('/'), text)
+      }
+      firstFiles.homes.keys.filterTo(TreeSet()) { plugin ->
+        val home = firstFiles.home(plugin)
+        home.callIsCrossHalf && upstreamPackagePlans.acceptsUpstreamPlans(
+          plugin,
+          LinkedHashMap(filesByDirectory.get(home.directory).orEmpty()),
+          firstRendering.calls.get(plugin)?.crossHalfText,
+        )
+      }
     }
-    for (plugin in files.homes.keys) {
+    for (plugin in firstFiles.homes.keys) {
       when {
         plugin in reused -> println("reused the plan files and the calls of $plugin in its community package")
         upstreamPackagePlans.hasHome(plugin) -> println("kept the plan files of $plugin in its product package: the community half states other plan texts or calls")
       }
     }
     if (reused.isNotEmpty()) {
-      files = collect(reusedUpstream = reused)
-      rendering = renderGeneratedDevDistPluginExecutions(sections, files)
+      val reusedFiles = buildSpan("plugin executions: collect reused plan files") { collect(reusedUpstream = reused) }
+      files = reusedFiles
+      rendering = buildSpan("plugin executions: render reused calls") { renderGeneratedDevDistPluginExecutions(sections, reusedFiles) }
       for (plugin in reused) {
         val calls = rendering.calls.getValue(plugin)
         check(calls.sectionText != null && upstreamPackagePlans.acceptsCalls(plugin, calls)) {
@@ -332,8 +351,10 @@ internal fun computeDevDistPluginExecutions(
       }
     }
   }
-  sections.bindPluginExecutions(rendering, files)
-  return DevDistPluginExecutions(files = files, rendering = rendering)
+  val boundFiles = files
+  val boundRendering = rendering
+  buildSpan("plugin executions: bind") { sections.bindPluginExecutions(boundRendering, boundFiles) }
+  return DevDistPluginExecutions(files = boundFiles, rendering = boundRendering)
 }
 
 /**
@@ -379,19 +400,21 @@ internal fun computeDevDistPlan(
   val projectRoot = index.projectRoot
   val splitProducts = half.registrySplitProducts(products.map { it.name })
   val runConfigurations = runConfigurationRows
-  val collected = collectDescriptorFiles(
-    half = half,
-    index = index,
-    outputProvider = outputProvider,
-    products = products,
-    walk = walk,
-    verdicts = verdicts,
-    pluginDescriptorPlans = sections.descriptorPlans,
-    pluginRequests = sections.pluginRequests,
-    platformTable = sections.platformJars,
-    targets = targets,
-    runtimeModuleRepositoryProducts = devDistRuntimeModuleRepositoryProducts(runConfigurations, splitProducts),
-  )
+  val collected = buildSpan("dev-distribution plan: collect descriptor files") {
+    collectDescriptorFiles(
+      half = half,
+      index = index,
+      outputProvider = outputProvider,
+      products = products,
+      walk = walk,
+      verdicts = verdicts,
+      pluginDescriptorPlans = sections.descriptorPlans,
+      pluginRequests = sections.pluginRequests,
+      platformTable = sections.platformJars,
+      targets = targets,
+      runtimeModuleRepositoryProducts = devDistRuntimeModuleRepositoryProducts(runConfigurations, splitProducts),
+    )
+  }
   val sortedProducts = collected.products.sortedBy(ProductFragmentPlan::platformPrefix)
   requireHalfCapabilities(
     half = half,
@@ -427,61 +450,69 @@ internal fun computeDevDistPlan(
     val path = product.launchModelRelativePath
     product.platformPrefix to "$COMMUNITY_REPOSITORY_PREFIX${path.substringBeforeLast('/')}:${path.substringAfterLast('/')}"
   }
-  val fileContents = buildList {
-    add(DEV_DIST_DESCRIPTORS_RELATIVE_PATH to renderDescriptors(collected.files, half))
-    add(DEV_DIST_PRODUCT_INFO_RELATIVE_PATH to renderProductInfo(collected.pluginDescriptorPlans, half))
-    add(DEV_DIST_PLAN_RELATIVE_PATH to renderPartition(sortedProducts, half, reusedLaunchModelLabels))
-    if (DevDistCapability.REFERENCE_PLAN in half.capabilities) {
-      add(DEV_DIST_REFERENCE_PLAN_RELATIVE_PATH to renderReferencePlan(sortedProducts, half))
-    }
-    add(DEV_DIST_FRAGMENT_INPUTS_RELATIVE_PATH to renderFragmentInputs(sortedProducts, half))
-    add(DEV_DIST_MODULE_SETS_RELATIVE_PATH to renderModuleSets(collected.moduleSets, half))
-    add(DEV_DIST_CONTENT_SETS_RELATIVE_PATH to renderContentSets(pluginExecutions, half))
-    add(DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH to renderDevServerRunConfigurations(runConfigurations, splitProducts, half.macrosBzl, half.refusedRowProperties, half.generatedByHeader))
-    addAll(crossHalfDescriptorPackages.files(crossHalfPluginTargets, crossHalfPluginCalls).toList())
-    productDescriptorFiles.entries.mapTo(this) { it.key to it.value }
-    collected.platformPatches?.renderPackage()?.entries?.mapTo(this) { it.key to it.value }
-    relocatedContentModuleJarPackage?.let { add(relocatedContentModuleJarPackagePath to it) }
-    for (product in sortedProducts) {
-      if (product.platformPrefix !in reusedLaunchModels) {
-        add(product.launchModelRelativePath to launchModels.getValue(product.platformPrefix).text)
+  val fileContents = buildSpan("dev-distribution plan: render files") { renderSpan ->
+    val contents = buildList {
+      add(DEV_DIST_DESCRIPTORS_RELATIVE_PATH to renderDescriptors(collected.files, half))
+      add(DEV_DIST_PRODUCT_INFO_RELATIVE_PATH to renderProductInfo(collected.pluginDescriptorPlans, half))
+      add(DEV_DIST_PLAN_RELATIVE_PATH to renderPartition(sortedProducts, half, reusedLaunchModelLabels))
+      if (DevDistCapability.REFERENCE_PLAN in half.capabilities) {
+        add(DEV_DIST_REFERENCE_PLAN_RELATIVE_PATH to renderReferencePlan(sortedProducts, half))
+      }
+      add(DEV_DIST_FRAGMENT_INPUTS_RELATIVE_PATH to renderFragmentInputs(sortedProducts, half))
+      add(DEV_DIST_MODULE_SETS_RELATIVE_PATH to renderModuleSets(collected.moduleSets, half))
+      add(DEV_DIST_CONTENT_SETS_RELATIVE_PATH to renderContentSets(pluginExecutions, half))
+      add(DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH to renderDevServerRunConfigurations(runConfigurations, splitProducts, half.macrosBzl, half.refusedRowProperties, half.generatedByHeader))
+      addAll(crossHalfDescriptorPackages.files(crossHalfPluginTargets, crossHalfPluginCalls).toList())
+      productDescriptorFiles.entries.mapTo(this) { it.key to it.value }
+      collected.platformPatches?.renderPackage()?.entries?.mapTo(this) { it.key to it.value }
+      relocatedContentModuleJarPackage?.let { add(relocatedContentModuleJarPackagePath to it) }
+      for (product in sortedProducts) {
+        if (product.platformPrefix !in reusedLaunchModels) {
+          add(product.launchModelRelativePath to launchModels.getValue(product.platformPrefix).text)
+        }
       }
     }
+    renderSpan.setAttribute("files", contents.size.toLong())
+    contents
   }
   // A half writes only into its own packages, see `DevDistHalf.ownsPackage`.
-  val files = fileContents.map { (relativePath, newContent) ->
-    half.requireWritable(relativePath)
-    DevDistPlanFileResult(
-      relativePath = relativePath,
-      status = updater.updateIfChanged(path = projectRoot.resolve(relativePath), newContent = newContent),
-    )
+  val files = buildSpan("dev-distribution plan: compare files") {
+    fileContents.map { (relativePath, newContent) ->
+      half.requireWritable(relativePath)
+      DevDistPlanFileResult(
+        relativePath = relativePath,
+        status = updater.updateIfChanged(path = projectRoot.resolve(relativePath), newContent = newContent),
+      )
+    }
   }
   pluginPlans.updates.results.forEach { half.requireWritable(it.relativePath) }
-  // The run deletes every descriptor package on disk that it does not write, see `CrossHalfDescriptorPackages.stale`.
-  val stalePackages = crossHalfDescriptorPackages.stale(projectRoot, crossHalfPluginTargets, crossHalfPluginCalls)
-  for (relativePath in stalePackages) {
-    updater.delete(projectRoot.resolve(relativePath))
-  }
-  // A run without a relocated call leaves no package of relocated calls behind. Only the ultimate half writes one.
-  if (relocatedContentModuleJarPackage == null && !half.writesCommunityPackages && Files.exists(projectRoot.resolve(relocatedContentModuleJarPackagePath))) {
-    updater.delete(projectRoot.resolve(relocatedContentModuleJarPackagePath))
-  }
-  // A product that leaves the split path, or whose model the community half now states, leaves its launch model behind.
-  val launchModelPaths = sortedProducts.filter { it.platformPrefix !in reusedLaunchModels }.mapTo(HashSet()) { it.launchModelRelativePath }
-  for (relativePath in listLaunchModels(projectRoot)) {
-    if (relativePath !in launchModelPaths) {
+  buildSpan("dev-distribution plan: sweep stale files") {
+    // The run deletes every descriptor package on disk that it does not write, see `CrossHalfDescriptorPackages.stale`.
+    val stalePackages = crossHalfDescriptorPackages.stale(projectRoot, crossHalfPluginTargets, crossHalfPluginCalls)
+    for (relativePath in stalePackages) {
       updater.delete(projectRoot.resolve(relativePath))
     }
-  }
-  // The descriptor actions compose the content from the module-set table, so an embedded descriptor file is stale.
-  half.embeddedFrontend?.let { embeddedFrontend ->
-    for (relativePath in embeddedFrontend.staleDescriptors(projectRoot)) {
+    // A run without a relocated call leaves no package of relocated calls behind. Only the ultimate half writes one.
+    if (relocatedContentModuleJarPackage == null && !half.writesCommunityPackages && Files.exists(projectRoot.resolve(relocatedContentModuleJarPackagePath))) {
+      updater.delete(projectRoot.resolve(relocatedContentModuleJarPackagePath))
+    }
+    // A product that leaves the split path, or whose model the community half now states, leaves its launch model behind.
+    val launchModelPaths = sortedProducts.filter { it.platformPrefix !in reusedLaunchModels }.mapTo(HashSet()) { it.launchModelRelativePath }
+    for (relativePath in listLaunchModels(projectRoot)) {
+      if (relativePath !in launchModelPaths) {
+        updater.delete(projectRoot.resolve(relativePath))
+      }
+    }
+    // The descriptor actions compose the content from the module-set table, so an embedded descriptor file is stale.
+    half.embeddedFrontend?.let { embeddedFrontend ->
+      for (relativePath in embeddedFrontend.staleDescriptors(projectRoot)) {
+        updater.delete(projectRoot.resolve(relativePath))
+      }
+    }
+    // The product descriptor actions compose the content from the module-set table, so a product content file is stale.
+    for (relativePath in staleProductDescriptorSources(projectRoot)) {
       updater.delete(projectRoot.resolve(relativePath))
     }
-  }
-  // The product descriptor actions compose the content from the module-set table, so a product content file is stale.
-  for (relativePath in staleProductDescriptorSources(projectRoot)) {
-    updater.delete(projectRoot.resolve(relativePath))
   }
   return DevDistPlanCompute(
     updater = updater,
@@ -918,13 +949,6 @@ internal fun walkDescriptors(
   generatedModuleSetDescriptors: Map<String, String>,
 ): DescriptorWalk {
   val collector = DescriptorCollector(projectRoot = projectRoot, outputProvider = outputProvider)
-  fun additionalFrontendOnlyPluginModules(properties: ProductProperties): List<String> {
-    val frontendProperties = properties.embeddedFrontendProperties?.invoke() ?: return emptyList()
-    val bundledPluginModules = getBundledPluginModules(properties, outputProvider)
-    val frontendBundledPluginModules = getBundledPluginModules(frontendProperties, outputProvider)
-    return frontendBundledPluginModules.filterNot { it in bundledPluginModules.toSet() }
-  }
-
   for ((relativeRoot, moduleName) in generatedModuleSetDescriptors) {
     collector.collectGeneratedModuleSetDescriptors(relativeRoot = relativeRoot, moduleName = moduleName)
   }
@@ -935,20 +959,42 @@ internal fun walkDescriptors(
   // the collector needs that list before it starts following includes.
   // The products that drop each unresolved content module, for the census below.
   val droppedModules = TreeMap<String, MutableList<String>>()
-  val contentByProduct = products.map { product ->
-    val spec = product.spec ?: return@map null
-    val content = buildProductContentXml(
-      spec = spec,
-      outputProvider = null,
-      inlineXmlIncludes = false,
-      inlineModuleSets = true,
-      metadataBuilder = {},
-    )
-    val dropped = unresolvedContentModules(product = product, content = content, outputProvider = outputProvider)
+  val builtContent = buildSpan("walk descriptors: product content") {
+    products.mapConcurrent { product ->
+      val spec = product.spec ?: return@mapConcurrent null
+      val content = buildProductContentXml(
+        spec = spec,
+        outputProvider = null,
+        inlineXmlIncludes = false,
+        inlineModuleSets = true,
+        metadataBuilder = {},
+      )
+      content to unresolvedContentModules(product = product, content = content, outputProvider = outputProvider)
+    }
+  }
+  val contentByProduct = products.mapIndexed { index, product ->
+    val (content, dropped) = builtContent.get(index) ?: return@mapIndexed null
     for (module in dropped) {
       droppedModules.computeIfAbsent(module) { ArrayList() }.add(product.name)
     }
     if (dropped.isEmpty()) content else content.withoutModules(dropped)
+  }
+  // The bundled plugins of every product with content, and the extra plugins of its embedded frontend.
+  val pluginModulesByProduct = buildSpan("walk descriptors: bundled plugins") {
+    products.withIndex().toList().mapConcurrent { (index, product) ->
+      if (contentByProduct.get(index) == null) return@mapConcurrent null
+      val properties = product.properties as? ProductProperties ?: return@mapConcurrent null
+      val bundledPluginModules = getBundledPluginModules(properties, outputProvider)
+      val frontendProperties = properties.embeddedFrontendProperties?.invoke()
+      val frontendOnlyPluginModules = if (frontendProperties == null) {
+        emptyList()
+      }
+      else {
+        val bundled = bundledPluginModules.toHashSet()
+        getBundledPluginModules(frontendProperties, outputProvider).filterNot { it in bundled }
+      }
+      bundledPluginModules to frontendOnlyPluginModules
+    }
   }
   for ((module, droppingProducts) in droppedModules) {
     println(
@@ -960,12 +1006,42 @@ internal fun walkDescriptors(
     val content = contentByProduct[index] ?: continue
     content.contentBlocks.flatMap { it.modules }.map { it.moduleId.name }.forEach(collector::addToSearchScope)
     product.spec?.deprecatedXmlIncludes?.forEach { collector.addToSearchScope(it.contentModuleName.value) }
-    (product.properties as? ProductProperties)?.let { properties ->
-      getBundledPluginModules(properties, outputProvider).forEach(collector::addToSearchScope)
-      additionalFrontendOnlyPluginModules(properties).forEach(collector::addToSearchScope)
+    pluginModulesByProduct.get(index)?.let { (bundledPluginModules, frontendOnlyPluginModules) ->
+      bundledPluginModules.forEach(collector::addToSearchScope)
+      frontendOnlyPluginModules.forEach(collector::addToSearchScope)
     }
   }
 
+  // The walk below reads the same files in the same order, and the prefetch only fills the memos of the collector.
+  buildSpan("walk descriptors: prefetch") {
+    val roots = ArrayList<DescriptorCollector.PrefetchRoot>()
+    for ((index, product) in products.withIndex()) {
+      val content = contentByProduct.get(index) ?: continue
+      for (contentModule in content.contentBlocks.flatMap { it.modules }.map { it.moduleId.name }) {
+        roots.add(DescriptorCollector.PrefetchRoot.contentModule(contentModule))
+      }
+      product.spec?.deprecatedXmlIncludes?.forEach { include ->
+        roots.add(DescriptorCollector.PrefetchRoot(moduleName = include.contentModuleName.value, relativePath = include.resourcePath, isInclude = true))
+      }
+      val (bundledPluginModules, frontendOnlyPluginModules) = pluginModulesByProduct.get(index) ?: continue
+      for (mainModule in bundledPluginModules + frontendOnlyPluginModules) {
+        roots.add(DescriptorCollector.PrefetchRoot(moduleName = mainModule, relativePath = PLUGIN_XML_RELATIVE_PATH, isInclude = false))
+      }
+    }
+    collector.prefetch(roots)
+  }
+
+  buildSpan("walk descriptors: collect") { collectFlatWalk(collector, products, contentByProduct, pluginModulesByProduct) }
+  return DescriptorWalk(collector = collector, contentByProduct = contentByProduct)
+}
+
+/** The sequential flat walk of [walkDescriptors]. [pluginModulesByProduct] holds the bundled and the frontend-only plugins by product index. */
+private fun collectFlatWalk(
+  collector: DescriptorCollector,
+  products: List<DiscoveredProduct>,
+  contentByProduct: List<ProductContentBuildResult?>,
+  pluginModulesByProduct: List<Pair<List<String>, List<String>>?>,
+) {
   for ((index, product) in products.withIndex()) {
     val content = contentByProduct[index] ?: continue
     for (contentModule in content.contentBlocks.flatMap { it.modules }.map { it.moduleId.name }) {
@@ -986,14 +1062,14 @@ internal fun walkDescriptors(
 
     // The `use-idea-classloader` scan reads every bundled plugin's descriptor, whether or not the product packs
     // anything of that plugin in this fragment.
-    for (mainModule in getBundledPluginModules(properties, outputProvider)) {
+    val (bundledPluginModules, frontendOnlyPluginModules) = checkNotNull(pluginModulesByProduct.get(index))
+    for (mainModule in bundledPluginModules) {
       collector.collect(moduleName = mainModule, relativePath = PLUGIN_XML_RELATIVE_PATH)
     }
-    for (mainModule in additionalFrontendOnlyPluginModules(properties)) {
+    for (mainModule in frontendOnlyPluginModules) {
       collector.collect(moduleName = mainModule, relativePath = PLUGIN_XML_RELATIVE_PATH)
     }
   }
-  return DescriptorWalk(collector = collector, contentByProduct = contentByProduct)
 }
 
 /**
@@ -2533,6 +2609,65 @@ internal class DescriptorCollector(
         return
       }
     }
+  }
+
+  /**
+   * A start point of [prefetch]. [isInclude] is true for an `xi:include`, which [collectInclude] resolves across the
+   * search scope when [moduleName] does not have it.
+   */
+  class PrefetchRoot(@JvmField val moduleName: String, @JvmField val relativePath: String, @JvmField val isInclude: Boolean) {
+    companion object {
+      /** The root that [collectContentModule] walks for [contentModuleName]. */
+      fun contentModule(contentModuleName: String): PrefetchRoot {
+        return PrefetchRoot(
+          moduleName = contentModuleName.substringBeforeLast('/'),
+          relativePath = contentModuleName.replace('/', '.') + ".xml",
+          isInclude = false,
+        )
+      }
+    }
+  }
+
+  /**
+   * Finds and parses the files that a walk from [roots] reads, on concurrent threads, one level of includes at a time.
+   *
+   * The prefetch fills only the memos of file lookups and parses. It changes no walk state, so a later walk gives the
+   * same result. When the declaring module lacks an include, the prefetch resolves it like [collectInclude].
+   * It takes the first search-scope module with the file, then the first of all modules with it.
+   * Call it after the search scope is complete.
+   */
+  fun prefetch(roots: Collection<PrefetchRoot>) {
+    val seen = HashSet<String>()
+    fun admit(root: PrefetchRoot): Boolean = seen.add("${root.isInclude}:${root.moduleName}/${root.relativePath}")
+    var level = roots.filter(::admit)
+    while (level.isNotEmpty()) {
+      val next = ArrayList<PrefetchRoot>()
+      val found: List<Pair<String, ContentParseResult>?> = level.mapConcurrent { root -> prefetchRoot(root) }
+      for (answer in found) {
+        val (owner, parsed) = answer ?: continue
+        for (include in parsed.xIncludePaths) {
+          next.add(PrefetchRoot(moduleName = owner, relativePath = include, isInclude = true))
+        }
+        for (contentModule in parsed.contentModules) {
+          next.add(PrefetchRoot.contentModule(contentModule.name))
+        }
+      }
+      level = next.filter(::admit)
+    }
+  }
+
+  /** The module that answers [root] for the walk and its parsed file, or `null`. */
+  private fun prefetchRoot(root: PrefetchRoot): Pair<String, ContentParseResult>? {
+    val loadPath = root.relativePath
+    fun hasFile(candidate: String): Boolean {
+      return candidate != root.moduleName && findProductionSourceFile(moduleName = candidate, loadPath = loadPath) != null
+    }
+    val owner = when {
+      findProductionSourceFile(moduleName = root.moduleName, loadPath = loadPath) != null -> root.moduleName
+      root.isInclude -> searchScope.firstOrNull(::hasFile) ?: allModulesWith(loadPath).firstOrNull(::hasFile) ?: return null
+      else -> return null
+    }
+    return owner to parse(checkNotNull(findProductionSourceFile(moduleName = owner, loadPath = loadPath)))
   }
 
   /** Whether [moduleName] has [relativePath] in its production sources; its includes and content are walked if so. */

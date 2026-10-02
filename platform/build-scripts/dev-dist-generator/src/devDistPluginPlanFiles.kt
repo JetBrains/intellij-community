@@ -138,6 +138,8 @@ internal class DevDistPluginPlanFiles private constructor(
      * [ownHome] gives the home of a plugin whose own package already holds its baseline files, or `null`. It gets the
      * baseline files with their text, keyed by file name. The run writes no file into such a home and sweeps
      * none there, because another pass owns the files, see [DevDistOwnPackagePlans].
+     *
+     * [planTexts] holds the encoded and folded texts of [records]. A caller that collects twice passes one instance.
      */
     fun collect(
       projectRoot: Path,
@@ -146,7 +148,9 @@ internal class DevDistPluginPlanFiles private constructor(
       half: DevDistHalf,
       productOrder: Collection<String> = half.splitProducts,
       ownHome: (plugin: String, baselineFiles: Map<String, String>) -> DevDistPluginPlanHome? = { _, _ -> null },
+      planTexts: DevDistPluginPlanTexts = DevDistPluginPlanTexts.prepare(records, productOrder),
     ): DevDistPluginPlanFiles {
+      require(planTexts.records === records && planTexts.productOrder == productOrder.toList()) { "The plan texts belong to other records or another product order" }
       val files = TreeMap<String, String>()
       val bindings = HashMap<DevDistPluginPlanKey, EmittedRecord>()
       val homes = TreeMap<String, DevDistPluginPlanHome>()
@@ -154,14 +158,8 @@ internal class DevDistPluginPlanFiles private constructor(
       val reusedHomes = TreeMap<String, DevDistPluginPlanHome>()
       val identities = HashMap<List<String>, DevDistPluginPlanKey>()
       val paths = HashMap<String, DevDistPluginPlanKey>()
-      val rank = productOrder.withIndex().associate { (index, product) -> product to index }
-      // The sort puts the products of one plugin together, the baseline product first. The platform records of one
-      // product follow each other in the alphabetical order, which is `HOST_PLATFORMS` order.
-      val groups = LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<DevDistPluginPlanKey, DevDistPluginPlanRecord>>>()
-      val sorted = records.entries.sortedWith(
-        compareBy({ it.key.plugin }, { rank.get(it.key.product) ?: Int.MAX_VALUE }, { it.key.product }, { it.key.variant })
-      )
-      for ((key, record) in sorted) {
+      for ((position, entry) in planTexts.sorted.withIndex()) {
+        val key = entry.key
         val components = listOf(half.caseSafeProductName(key.product), key.plugin, key.variant)
         validatePlanIdentity(key.product)
         validatePlanIdentity(components.first())
@@ -169,16 +167,15 @@ internal class DevDistPluginPlanFiles private constructor(
         if (key.variant.isNotEmpty()) validatePlanIdentity(key.variant)
         val previous = identities.putIfAbsent(components.map(::devBuildPathIdentity), key)
         if (previous != null) {
-          require(records.getValue(previous).graphContent() == record.graphContent()) { "Plugin plan identities collide: $previous and $key" }
+          require(planTexts.text(previous) == planTexts.text(key)) { "Plugin plan identities collide: $previous and $key" }
         }
-        validateRecord(key, record)
-        groups.computeIfAbsent(key.plugin) { LinkedHashMap() }.computeIfAbsent(key.product) { LinkedHashMap() }.put(key, record)
+        planTexts.rethrowValidationFailure(position)
       }
-      for ((plugin, byProduct) in groups) {
+      for ((plugin, byProduct) in planTexts.groups) {
         // The texts of every product come first, because the home reads every label of every text.
         val textsByProduct = LinkedHashMap<String, ProductPlanTexts>()
-        for ((product, group) in byProduct) {
-          textsByProduct.put(product, productPlanTexts(product, plugin, group))
+        for (product in byProduct.keys) {
+          textsByProduct.put(product, planTexts.reportProductTexts(plugin, product))
         }
         val baselineFiles = textsByProduct.values.first().files.entries.associateTo(TreeMap()) { (suffix, text) ->
           "$plugin$suffix$PLAN_FILE_SUFFIX" to text
@@ -233,7 +230,7 @@ internal class DevDistPluginPlanFiles private constructor(
               val stem = planFileStem(key, planClass)
               val fileName = "$stem$PLAN_FILE_SUFFIX"
               val path = planHome.path(fileName)
-              val text = record.graphContent()
+              val text = planTexts.text(key)
               checkPlanTextHoldsNoToken(text, stem)
               if (!shared) {
                 require(paths.putIfAbsent(devBuildPathIdentity(path), key) == null) { "Plugin projection paths collide at '$path'" }
@@ -300,40 +297,52 @@ private fun planSweepDirectories(projectRoot: Path, index: DevDistBazelIndex, ho
  * the empty string for a neutral or folded file, and `.<platform>` for a kept platform record. Two products whose maps
  * are equal share the baseline's files. [fold] is the fold of the platform records, or `null` when they keep their files.
  */
-private class ProductPlanTexts(
+internal class ProductPlanTexts(
   @JvmField val files: Map<String, String>,
   @JvmField val fold: DevDistPluginPlanFold.Folded?,
 )
 
-private fun productPlanTexts(product: String, plugin: String, group: Map<DevDistPluginPlanKey, DevDistPluginPlanRecord>): ProductPlanTexts {
+/** [texts] holds the plan text of every key of [group]. The census lines of the fold go to [census]. */
+private fun productPlanTexts(
+  product: String,
+  plugin: String,
+  group: Map<DevDistPluginPlanKey, DevDistPluginPlanRecord>,
+  texts: Map<DevDistPluginPlanKey, PreparedPlanText>,
+  census: MutableList<String>,
+): ProductPlanTexts {
   val platformTexts = LinkedHashMap<String, String>()
-  for ((key, record) in group) {
-    if (key.variant.isNotEmpty()) platformTexts.put(key.variant, record.graphContent())
+  for (key in group.keys) {
+    if (key.variant.isNotEmpty()) platformTexts.put(key.variant, texts.getValue(key).get())
   }
-  val fold = foldPlatformRecords(product, plugin, platformTexts)
+  val fold = foldPlatformRecords(product, plugin, platformTexts, census)
   val files = LinkedHashMap<String, String>()
   if (fold != null) {
     files.put("", fold.body)
   }
-  for ((key, record) in group) {
+  for (key in group.keys) {
     if (fold == null || key.variant.isEmpty()) {
-      files.put(if (key.variant.isEmpty()) "" else ".${key.variant}", record.graphContent())
+      files.put(if (key.variant.isEmpty()) "" else ".${key.variant}", texts.getValue(key).get())
     }
   }
   return ProductPlanTexts(files = files, fold = fold)
 }
 
 /**
- * Folds the platform records of one plugin and prints its census line. `folded` names the slots when one tokenized
- * body resolves to every record; the fold proves the resolution and fails the run on a mismatch. `kept` names the
- * first differing path when the records differ in shape, or the one platform record. A folded plan can have no slot.
- * Returns null when the records keep their per-platform files.
+ * Folds the platform records of one plugin and adds its census line to [census]. `folded` names the slots when one
+ * tokenized body resolves to every record; the fold proves the resolution and fails the run on a mismatch. `kept`
+ * names the first differing path when the records differ in shape, or the one platform record. A folded plan can have
+ * no slot. Returns null when the records keep their per-platform files.
  */
-private fun foldPlatformRecords(product: String, plugin: String, textsByPlatform: LinkedHashMap<String, String>): DevDistPluginPlanFold.Folded? {
+private fun foldPlatformRecords(
+  product: String,
+  plugin: String,
+  textsByPlatform: LinkedHashMap<String, String>,
+  census: MutableList<String>,
+): DevDistPluginPlanFold.Folded? {
   if (textsByPlatform.isEmpty()) return null
   val platforms = textsByPlatform.keys.joinToString(", ")
   if (textsByPlatform.size < 2) {
-    println("kept $plugin: one platform record ($platforms)")
+    census.add("kept $plugin: one platform record ($platforms)")
     return null
   }
   val fold = try {
@@ -344,11 +353,11 @@ private fun foldPlatformRecords(product: String, plugin: String, textsByPlatform
   }
   return when (fold) {
     is DevDistPluginPlanFold.Folded -> {
-      println("folded $plugin platforms=[$platforms] slots=[${fold.slotNames.joinToString(", ")}] proof=resolved ${textsByPlatform.size} of ${textsByPlatform.size} records")
+      census.add("folded $plugin platforms=[$platforms] slots=[${fold.slotNames.joinToString(", ")}] proof=resolved ${textsByPlatform.size} of ${textsByPlatform.size} records")
       fold
     }
     is DevDistPluginPlanFold.Refused -> {
-      println("kept $plugin at ${fold.path}: ${fold.reason} (${fold.platformA} vs ${fold.platformB})")
+      census.add("kept $plugin at ${fold.path}: ${fold.reason} (${fold.platformA} vs ${fold.platformB})")
       null
     }
   }
@@ -382,8 +391,119 @@ internal fun collectDevDistPluginPlanFiles(
   half: DevDistHalf,
   productOrder: Collection<String> = half.splitProducts,
   ownHome: (plugin: String, baselineFiles: Map<String, String>) -> DevDistPluginPlanHome? = { _, _ -> null },
+  planTexts: DevDistPluginPlanTexts = DevDistPluginPlanTexts.prepare(records, productOrder),
 ): DevDistPluginPlanFiles {
-  return DevDistPluginPlanFiles.collect(projectRoot, records, index, half, productOrder, ownHome)
+  return DevDistPluginPlanFiles.collect(projectRoot, records, index, half, productOrder, ownHome, planTexts)
+}
+
+/**
+ * The plan texts of [records] in [productOrder], encoded and folded once on concurrent threads.
+ *
+ * [DevDistPluginPlanFiles.collect] reads them, so two collections of the same records encode and fold only once.
+ * A collection reports a kept failure and the census lines at the place a sequential run reaches them.
+ * So the output and the first failure do not depend on the thread schedule.
+ */
+internal class DevDistPluginPlanTexts private constructor(
+  @JvmField val records: Map<DevDistPluginPlanKey, DevDistPluginPlanRecord>,
+  @JvmField val productOrder: List<String>,
+  /** The records sorted by plugin, then by product rank, product and variant. */
+  @JvmField val sorted: List<Map.Entry<DevDistPluginPlanKey, DevDistPluginPlanRecord>>,
+  /** The records of [sorted], grouped by plugin and then by product, in the order of [sorted]. */
+  @JvmField val groups: Map<String, Map<String, Map<DevDistPluginPlanKey, DevDistPluginPlanRecord>>>,
+  private val texts: Map<DevDistPluginPlanKey, PreparedPlanText>,
+  private val validationFailures: List<RuntimeException?>,
+  private val productTexts: Map<Pair<String, String>, PreparedProductTexts>,
+) {
+  /** The text of the one plan file of the record of [key]. Throws the encoding failure of the record, if it has one. */
+  fun text(key: DevDistPluginPlanKey): String = texts.getValue(key).get()
+
+  /** Throws the validation failure of the record at [position] in [sorted], if the record has one. */
+  fun rethrowValidationFailure(position: Int) {
+    validationFailures.get(position)?.let { throw it }
+  }
+
+  /** Prints the census lines of the fold of [plugin] for [product], then throws its failure or returns its texts. */
+  fun reportProductTexts(plugin: String, product: String): ProductPlanTexts {
+    val prepared = productTexts.getValue(plugin to product)
+    for (line in prepared.census) {
+      println(line)
+    }
+    prepared.failure?.let { throw it }
+    return checkNotNull(prepared.texts)
+  }
+
+  private class PreparedProductTexts(
+    @JvmField val texts: ProductPlanTexts?,
+    @JvmField val census: List<String>,
+    @JvmField val failure: RuntimeException?,
+  )
+
+  companion object {
+    fun prepare(records: Map<DevDistPluginPlanKey, DevDistPluginPlanRecord>, productOrder: Collection<String>): DevDistPluginPlanTexts {
+      val order = productOrder.toList()
+      val rank = order.withIndex().associate { (index, product) -> product to index }
+      // The sort puts the products of one plugin together, the baseline product first. The platform records of one
+      // product follow each other in the alphabetical order, which is `HOST_PLATFORMS` order.
+      val sorted = records.entries.sortedWith(
+        compareBy({ it.key.plugin }, { rank.get(it.key.product) ?: Int.MAX_VALUE }, { it.key.product }, { it.key.variant })
+      )
+      val groups = LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<DevDistPluginPlanKey, DevDistPluginPlanRecord>>>()
+      for ((key, record) in sorted) {
+        groups.computeIfAbsent(key.plugin) { LinkedHashMap() }.computeIfAbsent(key.product) { LinkedHashMap() }.put(key, record)
+      }
+      val prepared = sorted.mapConcurrent { (key, record) ->
+        var text: String? = null
+        val textFailure = captureFailure { text = record.graphContent() }
+        PreparedPlanText(text = text, failure = textFailure) to captureFailure { validateRecord(key, record) }
+      }
+      val texts = HashMap<DevDistPluginPlanKey, PreparedPlanText>(sorted.size)
+      for ((position, entry) in sorted.withIndex()) {
+        texts.put(entry.key, prepared.get(position).first)
+      }
+      val productGroups = groups.flatMap { (plugin, byProduct) -> byProduct.map { (product, group) -> Triple(plugin, product, group) } }
+      val productTexts = productGroups.mapConcurrent { (plugin, product, group) ->
+        val census = ArrayList<String>()
+        var result: ProductPlanTexts? = null
+        val failure = captureFailure { result = productPlanTexts(product, plugin, group, texts, census) }
+        PreparedProductTexts(texts = result, census = census, failure = failure)
+      }
+      val productTextsByKey = HashMap<Pair<String, String>, PreparedProductTexts>(productGroups.size)
+      for ((position, group) in productGroups.withIndex()) {
+        productTextsByKey.put(group.first to group.second, productTexts.get(position))
+      }
+      return DevDistPluginPlanTexts(
+        records = records,
+        productOrder = order,
+        sorted = sorted,
+        groups = groups,
+        texts = texts,
+        validationFailures = prepared.map { it.second },
+        productTexts = productTextsByKey,
+      )
+    }
+  }
+}
+
+/** The encoded plan text of one record, or the failure of its encoding. */
+private class PreparedPlanText(
+  private val text: String?,
+  private val failure: RuntimeException?,
+) {
+  fun get(): String {
+    failure?.let { throw it }
+    return checkNotNull(text)
+  }
+}
+
+/** Runs [action] and returns its runtime failure, or `null`. An error or a checked exception propagates. */
+private inline fun captureFailure(action: () -> Unit): RuntimeException? {
+  try {
+    action()
+    return null
+  }
+  catch (e: RuntimeException) {
+    return e
+  }
 }
 
 private fun validatePlanIdentity(value: String) {
