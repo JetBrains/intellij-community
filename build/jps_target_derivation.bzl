@@ -72,6 +72,7 @@ def parse_iml(iml_content, iml_path):
       - content_root_urls: list of $MODULE_DIR$-relative content root paths
       - has_production_sources: bool
       - has_test_sources: bool
+      - has_test_resources: bool, true when the module has a `java-test-resource` root
       - module_libraries: list of structs with jar_urls
       - project_library_refs: list of project-level library names referenced by this module
       - module_deps: names of the modules this one depends on outside test scope
@@ -82,6 +83,7 @@ def parse_iml(iml_content, iml_path):
     content_root_urls = []
     has_production = False
     has_test = False
+    has_test_resources = False
     module_libraries = []
     project_library_refs = []
     module_deps = []
@@ -106,6 +108,8 @@ def parse_iml(iml_content, iml_path):
                 for sf in xml.find_elements_by_tag_name(child, "sourceFolder"):
                     is_test_attr = xml.get_attribute(sf, "isTestSource")
                     sf_type = xml.get_attribute(sf, "type") or ""
+                    if sf_type == "java-test-resource":
+                        has_test_resources = True
                     if is_test_attr == "true" or sf_type.startswith("java-test"):
                         has_test = True
                     else:
@@ -145,6 +149,7 @@ def parse_iml(iml_content, iml_path):
         content_root_urls = content_root_urls,
         has_production_sources = has_production,
         has_test_sources = has_test,
+        has_test_resources = has_test_resources,
         module_libraries = module_libraries,
         project_library_refs = project_library_refs,
         module_deps = module_deps,
