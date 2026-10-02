@@ -140,7 +140,7 @@ class GhosttyTerminalSession internal constructor(
   private val projector = TerminalEmulatorOutputProjector(emulator)
 
   // Encode AWT key/mouse events into PTY bytes through the emulator; call only under
-  // [lock].
+  // [emulatorLock].
   private val keyEncoder = TerminalEmulatorKeyEventEncoder(emulator, settings)
   private val mouseEncoder = TerminalEmulatorMouseEventEncoder(emulator, settings)
 
@@ -148,7 +148,7 @@ class GhosttyTerminalSession internal constructor(
    * The emulator is not thread-safe: serialize the read loop and the resize/input
    * handler.
    */
-  private val lock = ReentrantLock()
+  private val emulatorLock = ReentrantLock()
 
   private val inputChannel = Channel<TerminalInputEvent>(Channel.UNLIMITED)
 
@@ -159,7 +159,7 @@ class GhosttyTerminalSession internal constructor(
   //
   // SUSPEND, not DROP_OLDEST: output events are incremental deltas, so a collector
   // missing one would desync from every update after it. Emissions wait for room — and
-  // for a collector to exist at all (see tryEmitOutput) — while holding [lock], which
+  // for a collector to exist at all (see tryEmitOutput) — while holding [emulatorLock], which
   // stalls the read loop and pushes the backpressure into the PTY. Emitting under the
   // lock also serializes the emitters, so a projection cannot overtake an earlier one.
   private val outputFlow = MutableSharedFlow<List<TerminalOutputEvent>>(
@@ -168,20 +168,20 @@ class GhosttyTerminalSession internal constructor(
     onBufferOverflow = BufferOverflow.SUSPEND,
   )
 
-  // Diffing state (guarded by lock).
+  // Diffing state (guarded by emulatorLock).
   private var lastScrollbackRows = -1
   private var lastCursorLine = -1L
   private var lastCursorColumn = -1
   private var lastState: TerminalStateDto? = null
 
   // Whether anything projection reads (emulator content, modes, the working
-  // directory) may have changed since the last projection; guarded by lock. Lets the
+  // directory) may have changed since the last projection; guarded by emulatorLock. Lets the
   // polling job skip idle ticks outright — otherwise every tick of an idle session
   // pays the FFI dirty poll, state snapshot, and cursor row reads. Starts true so the
   // first tick after a collector appears emits the initial frame.
   private var changedSinceLastProjection = true
 
-  // Synchronized-output (DEC 2026) deferral state, guarded by lock: the watchdog
+  // Synchronized-output (DEC 2026) deferral state, guarded by emulatorLock: the watchdog
   // bounding the currently open block (null when none is armed), and the force-paint
   // it requests when the block overstays — consumed by the next projection. See
   // isDeferringForSyncOutputLocked().
@@ -193,17 +193,17 @@ class GhosttyTerminalSession internal constructor(
   private val pendingEvents = ArrayList<TerminalOutputEvent>()
 
   // Emulator replies to host queries (DSR, DA, OSC reports) and color scheme reports, collected during a write
-  // or a color scheme change and written to the PTY by [flushResponses] *after* [lock] is released. They must
+  // or a color scheme change and written to the PTY by [flushResponses] *after* [emulatorLock] is released. They must
   // not be written inline: the write-pty effect fires synchronously inside
   // emulator.write, so a full PTY buffer would park the read thread both inside
   // ghostty's vt_write (see terminal.h: effects "must not block for too long ... they
-  // are blocking further IO processing") and while holding [lock] — freezing resize
+  // are blocking further IO processing") and while holding [emulatorLock] — freezing resize
   // along with it.
   private val pendingResponses = ArrayList<ByteArray>()
 
   // The working directory reported in the session state: starts at the requested
   // startup directory and is kept fresh by the working-directory tracker (see
-  // createGhosttyTerminalSession). Guarded by lock; the next projection reports the
+  // createGhosttyTerminalSession). Guarded by emulatorLock; the next projection reports the
   // new value.
   private var currentDirectory: String? = initialWorkingDirectory
 
@@ -253,7 +253,7 @@ class GhosttyTerminalSession internal constructor(
    * projection tick.
    */
   fun updateCurrentDirectory(directory: String) {
-    lock.withLock {
+    emulatorLock.withLock {
       currentDirectory = directory
       changedSinceLastProjection = true
     }
@@ -262,21 +262,21 @@ class GhosttyTerminalSession internal constructor(
   @OptIn(AwaitCancellationAndInvoke::class)
   fun start() {
     emulator.listener = object : TerminalListener {
-      // Fires synchronously inside emulator.write (or emulator.setColorScheme), i.e. under [lock].
+      // Fires synchronously inside emulator.write (or emulator.setColorScheme), i.e. under [emulatorLock].
       // Queue only: the actual pty write happens in flushResponses(), once the lock is
       // released. See [pendingResponses].
       override fun onRespondToHost(data: ByteArray) {
         pendingResponses.add(data)
       }
 
-      // Fires synchronously inside emulator.write, i.e. under [lock] on the read thread.
+      // Fires synchronously inside emulator.write, i.e. under [emulatorLock] on the read thread.
       override fun onBell() {
         pendingEvents.add(TerminalBeepEvent)
       }
     }
 
     // OSC 1341 (JetBrains shell integration): the emulator's custom-command listener fires
-    // synchronously inside emulator.write, i.e. under [lock] on the read thread, and the controller
+    // synchronously inside emulator.write, i.e. under [emulatorLock] on the read thread, and the controller
     // delivers the parsed events on the same thread.
     // Commands force a projection to ensure that the event is delivered in order with other emulator changes.
     shellIntegrationController.addEventSink { event ->
@@ -311,7 +311,7 @@ class GhosttyTerminalSession internal constructor(
           val count = ttyConnector.read(buffer, 0, buffer.size)
           if (count <= 0) break // EOF
           var responses: List<ByteArray> = emptyList()
-          lock.withLock {
+          emulatorLock.withLock {
             if (disposed) break
             val input = String(buffer, 0, count)
             LOG.trace { "Writing to emulator: ${input.escapeControlCharactersForLog()}" }
@@ -333,7 +333,7 @@ class GhosttyTerminalSession internal constructor(
         // must not wait, or teardown would hang; the replay slot keeps the last one
         // on a best effort.
         val finalEvents = runCatching {
-          lock.withLock { if (disposed) emptyList() else syncLocked(bypassSyncOutputDeferral = true) }
+          emulatorLock.withLock { if (disposed) emptyList() else syncLocked(bypassSyncOutputDeferral = true) }
         }.getOrDefault(emptyList())
         if (finalEvents.isNotEmpty()) emitOutputBlocking(finalEvents, requireCollector = false)
         emitOutputBlocking(listOf(TerminalSessionTerminatedEvent), requireCollector = false)
@@ -357,7 +357,7 @@ class GhosttyTerminalSession internal constructor(
     // amount of output into bounded state, and each tick emits one coalesced delta, so
     // a program spamming output produces ~50 event batches per second instead of one
     // per PTY read. Dispatchers.IO because the emission deliberately blocks under
-    // [lock] while a slow collector catches up (see projectAndEmitLocked).
+    // [emulatorLock] while a slow collector catches up (see projectAndEmitLocked).
     coroutineScope.launch(Dispatchers.IO) {
       while (true) {
         delay(OUTPUT_POLL_INTERVAL)
@@ -366,7 +366,7 @@ class GhosttyTerminalSession internal constructor(
         // keeps feeding the emulator meanwhile, bounded by its history-eviction flush.
         if (outputFlow.subscriptionCount.value == 0) continue
         var responses: List<ByteArray> = emptyList()
-        lock.withLock {
+        emulatorLock.withLock {
           if (disposed) return@launch
           // An idle tick (nothing changed, no force paint pending) costs one lock
           // acquisition and nothing else — no FFI reads.
@@ -385,18 +385,18 @@ class GhosttyTerminalSession internal constructor(
     coroutineScope.awaitCancellationAndInvoke {
       disposed = true
       runCatching { ttyConnector.close() }
-      lock.withLock {
+      emulatorLock.withLock {
         runCatching { projector.close() }
         runCatching { emulator.close() }
       }
     }
   }
 
-  override fun processMouseEvent(e: MouseEvent, x: Int, y: Int): ByteArray? = lock.withLock {
+  override fun processMouseEvent(e: MouseEvent, x: Int, y: Int): ByteArray? = emulatorLock.withLock {
     if (disposed) null else mouseEncoder.encodeMouseEvent(e, x, y)
   }
 
-  override fun processKeyEvent(e: KeyEvent): KeyEventProcessingResultDto = lock.withLock {
+  override fun processKeyEvent(e: KeyEvent): KeyEventProcessingResultDto = emulatorLock.withLock {
     if (disposed) KeyEventProcessingResultDto.Unhandled else keyEncoder.encodeKeyEvent(e)
   }
 
@@ -427,7 +427,7 @@ class GhosttyTerminalSession internal constructor(
         .onFailure { if (!disposed) LOG.warn("Failed to write ${event.bytes.size} bytes to the PTY", it) }
       is TerminalResizeEvent -> {
         var responses: List<ByteArray> = emptyList()
-        lock.withLock {
+        emulatorLock.withLock {
           if (disposed) return
           emulator.resize(TerminalSize(event.newSize.columns, event.newSize.rows))
           changedSinceLastProjection = true
@@ -443,7 +443,7 @@ class GhosttyTerminalSession internal constructor(
       is TerminalClearBufferEvent -> handleClearBuffer()
       is TerminalCloseEvent -> runCatching { ttyConnector.close() }
       is TerminalSetColorSchemeEvent -> handleSetColorScheme(event.colorScheme)
-      is TerminalSetDefaultCursorShapeEvent -> lock.withLock {
+      is TerminalSetDefaultCursorShapeEvent -> emulatorLock.withLock {
         if (disposed) return
         emulator.setDefaultCursorShape(event.cursorShape.toEmulatorCursorShape())
         emulator.setDefaultCursorBlinking(event.cursorShape.toCursorShape().isBlinking)
@@ -454,7 +454,7 @@ class GhosttyTerminalSession internal constructor(
 
   private fun handleSetColorScheme(colorScheme: TerminalColorSchemeDto) {
     var responses: List<ByteArray> = emptyList()
-    lock.withLock {
+    emulatorLock.withLock {
       if (disposed) return
       emulator.setDefaultForegroundColor(colorScheme.foreground.toEmulatorColor())
       emulator.setDefaultBackgroundColor(colorScheme.background.toEmulatorColor())
@@ -469,7 +469,7 @@ class GhosttyTerminalSession internal constructor(
   private fun handleClearBuffer() {
     var responses: List<ByteArray> = emptyList()
     var wipedPrimaryScreen = false
-    lock.withLock {
+    emulatorLock.withLock {
       if (disposed) return
       // Emit VT sequence to clear both the screen and scrollback.
       // But skip the alternate buffer case: neither JediTerm's nor real Ghostty's own Cmd+K touches it.
@@ -489,7 +489,7 @@ class GhosttyTerminalSession internal constructor(
   }
 
   /**
-   * Must be called under [lock]: hands over the emulator replies queued by the write-pty
+   * Must be called under [emulatorLock]: hands over the emulator replies queued by the write-pty
    * effect since the last call, leaving [pendingResponses] empty. Allocates nothing on
    * the common path, where no query was answered.
    */
@@ -501,7 +501,7 @@ class GhosttyTerminalSession internal constructor(
   }
 
   /**
-   * Must be called *after* releasing [lock]: writes [responses] back to the pty, in the
+   * Must be called *after* releasing [emulatorLock]: writes [responses] back to the pty, in the
    * order the emulator produced them. Blocking here is fine — the emulator is no longer
    * mid-parse and no other thread is waiting on us to let go of the lock.
    */
@@ -528,7 +528,7 @@ class GhosttyTerminalSession internal constructor(
   /**
    * Emits [events] on [outputFlow], retrying with a short sleep until accepted and
    * bailing out only once torn down. Blocking rather than suspending is deliberate:
-   * the projection sites hold [lock] — a plain lock, which a coroutine must not
+   * the projection sites hold [emulatorLock] — a plain lock, which a coroutine must not
    * suspend under — and the read loop is not a coroutine to begin with. See the
    * [outputFlow] declaration for why dropping is not an option here.
    *
@@ -544,7 +544,7 @@ class GhosttyTerminalSession internal constructor(
   }
 
   /**
-   * Must be called under [lock]. Projects the current emulator state into output events.
+   * Must be called under [emulatorLock]. Projects the current emulator state into output events.
    *
    * [bypassSyncOutputDeferral] paints the mid-block state that
    * [isDeferringForSyncOutputLocked] would otherwise keep holding back. It is set for
@@ -617,7 +617,7 @@ class GhosttyTerminalSession internal constructor(
   }
 
   /**
-   * Must be called under [lock]. Projects the emulator state now and emits it together with the events queued so far.
+   * Must be called under [emulatorLock]. Projects the emulator state now and emits it together with the events queued so far.
    */
   private fun flushPendingEventsLocked(bypassSyncOutputDeferral: Boolean) {
     val events = syncLocked(bypassSyncOutputDeferral)
@@ -627,7 +627,7 @@ class GhosttyTerminalSession internal constructor(
   }
 
   /**
-   * Must be called under [lock]. Whether this frame has to be held back because the
+   * Must be called under [emulatorLock]. Whether this frame has to be held back because the
    * program is inside a synchronized-output block (DEC 2026), and maintains the
    * watchdog that bounds how long that can last.
    *
@@ -662,7 +662,7 @@ class GhosttyTerminalSession internal constructor(
   }
 
   /**
-   * Must be called under [lock]. Schedules the force-paint request that bounds an
+   * Must be called under [emulatorLock]. Schedules the force-paint request that bounds an
    * over-long synchronized-output block, unless one is already pending: the deadline
    * is measured from the first deferred frame since the previous paint, so a program
    * that keeps writing inside a block cannot push the deadline back indefinitely.
@@ -671,7 +671,7 @@ class GhosttyTerminalSession internal constructor(
     if (syncWatchdogJob != null) return
     syncWatchdogJob = coroutineScope.launch {
       delay(SYNC_OUTPUT_TIMEOUT)
-      lock.withLock {
+      emulatorLock.withLock {
         if (disposed) return@launch
         // Clear first, so the next deferred frame arms a fresh watchdog.
         syncWatchdogJob = null
@@ -682,7 +682,7 @@ class GhosttyTerminalSession internal constructor(
   }
 
   /**
-   * Must be called under [lock]. Whether the watchdog requested a force paint;
+   * Must be called under [emulatorLock]. Whether the watchdog requested a force paint;
    * consuming resets it, so one request paints one frame and cannot leak into
    * deferring the frames after it.
    */
@@ -692,7 +692,7 @@ class GhosttyTerminalSession internal constructor(
     return requested
   }
 
-  /** Must be called under [lock]. */
+  /** Must be called under [emulatorLock]. */
   private fun cancelSyncWatchdogLocked() {
     syncWatchdogJob?.cancel()
     syncWatchdogJob = null
