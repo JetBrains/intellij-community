@@ -628,8 +628,8 @@ private fun findRunfileByLabel(label: String): Path? {
 /**
  * The label of the resources sibling jar of [moduleTarget], or `null` when [moduleTarget] is not a jar label.
  *
- * The sibling of `<package>:<name>.jar` is `<package>:lib<name>_resources.jar`. The repository prefix stays.
- * The `lib` prefix goes before the last name element, as in the output of a `java_library`.
+ * The sibling of `<package>:<name>.jar` is `<package>:<name>_resource_jar.jar`. The repository prefix stays.
+ * The `jvm_library` macro declares the `<name>_resource_jar` target for every module.
  */
 internal fun resourcesSiblingLabel(moduleTarget: String): String? {
   val targetStart = moduleTarget.lastIndexOf(':') + 1
@@ -641,7 +641,7 @@ internal fun resourcesSiblingLabel(moduleTarget: String): String? {
   if (nameStart >= nameEnd) {
     return null
   }
-  return moduleTarget.substring(0, nameStart) + "lib" + moduleTarget.substring(nameStart, nameEnd) + "_resources.jar"
+  return moduleTarget.substring(0, nameEnd) + "_resource_jar.jar"
 }
 
 /**

@@ -104,6 +104,101 @@ _jvm_library_jps = rule(
     cfg = jvm_platform_transition,
 )
 
+def _prefix_path(prefix):
+    if prefix == None:
+        return ""
+    path = prefix if type(prefix) == "string" else prefix.path
+    return path.strip("/")
+
+def _tree_resource_entry(file):
+    return "%s:%s" % (file.path, file.tree_relative_path)
+
+def _jvm_resource_jar_impl(ctx):
+    groups = []
+    source_jars = []
+    if ctx.files.resources:
+        groups.append(struct(files = ctx.files.resources, strip_prefix = ctx.file.strip_prefix, add_prefix = ""))
+    for target in ctx.attr.resource_jars:
+        if ResourceGroupInfo in target:
+            groups.append(target[ResourceGroupInfo])
+        else:
+            source_jars.extend(target[_JavaInfo].runtime_output_jars)
+
+    entries = []
+    trees = []
+    inputs = list(source_jars)
+    for group in groups:
+        strip_prefix = _prefix_path(group.strip_prefix)
+        add_prefix = group.add_prefix.strip("/")
+        for file in group.files:
+            inputs.append(file)
+            if file.is_directory:
+                if strip_prefix != file.path or add_prefix:
+                    fail("%s: a resource directory must be its own strip prefix and have no add prefix" % file.path)
+                trees.append(file)
+                continue
+            path = file.path
+            if strip_prefix:
+                if not path.startswith(strip_prefix + "/"):
+                    # The module jar also skips a file outside the strip prefix.
+                    continue
+                path = path[len(strip_prefix) + 1:]
+            if add_prefix:
+                path = add_prefix + "/" + path
+            entries.append("%s:%s" % (file.path, path))
+
+    jar = ctx.actions.declare_file(ctx.label.name + ".jar")
+    args = ctx.actions.args()
+    args.use_param_file("@%s")
+
+    # A resource file name can hold a space, so the param file quotes each argument.
+    args.set_param_file_format("shell")
+    args.add("--output", jar)
+    args.add("--normalize")
+    args.add("--exclude_build_data")
+    args.add("--compression")
+    if source_jars:
+        args.add_all("--sources", source_jars)
+    if entries or trees:
+        args.add("--resources")
+        args.add_all(entries)
+        args.add_all(trees, map_each = _tree_resource_entry)
+    ctx.actions.run(
+        executable = ctx.executable._singlejar,
+        arguments = [args],
+        inputs = inputs,
+        outputs = [jar],
+        mnemonic = "JvmResourceJar",
+        progress_message = "Packing the resources of %{label}",
+    )
+    return [DefaultInfo(files = depset([jar]))]
+
+_jvm_resource_jar = rule(
+    doc = """Packs the resources of a `jvm_library` into a jar without classes. The entry names are the same as in the module jar.""",
+    implementation = _jvm_resource_jar_impl,
+    attrs = {
+        "resources": attr.label_list(
+            doc = "The resource files of the module jar.",
+            allow_files = True,
+        ),
+        "strip_prefix": attr.label(
+            doc = "The directory that the entry names of `resources` are relative to.",
+            allow_single_file = True,
+        ),
+        "resource_jars": attr.label_list(
+            doc = "The other resource groups. The rule repacks a `ResourceGroupInfo` group by path. It merges a plain `JavaInfo` resource jar whole.",
+            providers = [[ResourceGroupInfo], [_JavaInfo]],
+        ),
+        "_singlejar": attr.label(
+            default = Label("@rules_java//toolchains:singlejar"),
+            cfg = "exec",
+            allow_single_file = True,
+            executable = True,
+        ),
+    },
+    cfg = jvm_platform_transition,
+)
+
 def jvm_library(
         name,
         srcs = [],
@@ -126,6 +221,9 @@ def jvm_library(
         use_rules_kotlin_backend = USE_RULES_KOTLIN_BACKEND,
         **kwargs):
     """Macro that creates jvm_library using the configured backend.
+
+    The macro also declares `<name>_resource_jar`. Its output `<name>_resource_jar.jar` holds the resource entries
+    of the module jar and no classes. A target without resources gets a jar with only a manifest.
 
     Args:
         name: Target name
@@ -150,6 +248,18 @@ def jvm_library(
     """
 
     effective_kotlinc_opts = kotlinc_opts if kotlinc_opts != None else Label("//:default-kotlinc-opts")
+
+    # A reader of resources takes this jar and does not need the compiled classes.
+    # The target is always declared, so a reader can name it without a check of the resources.
+    _jvm_resource_jar(
+        name = name + "_resource_jar",
+        resources = resources,
+        strip_prefix = resource_strip_prefix,
+        resource_jars = resource_jars,
+        tags = ["manual"],
+        testonly = kwargs.get("testonly", False),
+        visibility = visibility,
+    )
 
     if use_rules_kotlin_backend:
         # rules_kotlin's kt_jvm_library only accepts .kt/.java/.srcjar in srcs. IntelliJ GUI

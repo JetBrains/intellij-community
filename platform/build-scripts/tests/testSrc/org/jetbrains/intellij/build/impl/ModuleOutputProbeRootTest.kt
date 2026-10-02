@@ -10,24 +10,24 @@ import java.nio.file.Path
 internal class ModuleOutputProbeRootTest {
   @Test
   fun `the sibling of an ultimate target`() {
-    assertThat(resourcesSiblingLabel("//platform/ide-impl:ide-impl.jar")).isEqualTo("//platform/ide-impl:libide-impl_resources.jar")
+    assertThat(resourcesSiblingLabel("//platform/ide-impl:ide-impl.jar")).isEqualTo("//platform/ide-impl:ide-impl_resource_jar.jar")
   }
 
   @Test
   fun `the sibling of a community target keeps the repository`() {
     assertThat(resourcesSiblingLabel("@community//plugins/env-files-support:dotenv.jar"))
-      .isEqualTo("@community//plugins/env-files-support:libdotenv_resources.jar")
+      .isEqualTo("@community//plugins/env-files-support:dotenv_resource_jar.jar")
   }
 
   @Test
   fun `the sibling of a test target`() {
     assertThat(resourcesSiblingLabel("@community//platform/core-api:core-api_test_lib.jar"))
-      .isEqualTo("@community//platform/core-api:libcore-api_test_lib_resources.jar")
+      .isEqualTo("@community//platform/core-api:core-api_test_lib_resource_jar.jar")
   }
 
   @Test
-  fun `the lib prefix goes before the last name element`() {
-    assertThat(resourcesSiblingLabel("//a/b:c/d.jar")).isEqualTo("//a/b:c/libd_resources.jar")
+  fun `a name with a slash keeps its directory`() {
+    assertThat(resourcesSiblingLabel("//a/b:c/d.jar")).isEqualTo("//a/b:c/d_resource_jar.jar")
   }
 
   @Test
@@ -73,4 +73,4 @@ internal class ModuleOutputProbeRootTest {
 }
 
 private const val MODULE_TARGET = "@community//plugins/env-files-support:dotenv.jar"
-private const val SIBLING_TARGET = "@community//plugins/env-files-support:libdotenv_resources.jar"
+private const val SIBLING_TARGET = "@community//plugins/env-files-support:dotenv_resource_jar.jar"
