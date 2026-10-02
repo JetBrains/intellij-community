@@ -79,6 +79,8 @@ fun derivePluginContentCandidacy(
   frontend: FrontendCompatibility,
   residue: PluginContentResidue,
   closure: WalkedContentModules?,
+  /** Reads a member's own descriptor; see [memberDescriptor]. */
+  readMemberDescriptor: (JpsModule) -> MemberDescriptorFacts? = ::memberDescriptor,
 ): DerivedPluginCandidacy {
   val offers = ArrayList<DerivedCandidacyOffer>()
   val vetoes = ArrayList<String>(residue.vetoedMembers)
@@ -110,6 +112,7 @@ fun derivePluginContentCandidacy(
       libraries = ::librariesOf,
       frontend = frontend,
       librariesKeptOut = member.name in residue.unmergedMembers,
+      readMemberDescriptor = readMemberDescriptor,
     )
     if (jar != null) {
       memberPaths.put(rawName, jar.relativeOutputFile)
@@ -141,6 +144,7 @@ fun derivePluginContentCandidacy(
       libraries = ::librariesOf,
       frontend = frontend,
       librariesKeptOut = member.name in residue.unmergedMembers,
+      readMemberDescriptor = readMemberDescriptor,
     )
     if (jar == null) {
       continue
@@ -287,8 +291,9 @@ private fun readMemberJar(
   libraries: (JpsModule) -> MergedMemberLibraries,
   frontend: FrontendCompatibility,
   librariesKeptOut: Boolean,
+  readMemberDescriptor: (JpsModule) -> MemberDescriptorFacts?,
 ): DerivedMemberJar? {
-  val descriptor = memberDescriptor(member) ?: return null
+  val descriptor = readMemberDescriptor(member) ?: return null
   val merged = libraries(member)
   return deriveMemberJar(
     hasModuleLibraries = hasOwnModuleLibraries(getProductionLibraryDependencies(member), librariesKeptOut),

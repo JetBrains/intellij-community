@@ -8,6 +8,8 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.impl.pluginDefaultJarName
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.LongAdder
 
 /**
  * One jar of a plugin, as the project model states it before any build runs.
@@ -75,6 +77,110 @@ class DerivedPluginPacking(
 )
 
 /**
+ * The time of each [derivePluginPacking] phase, summed over every plugin of one run.
+ *
+ * The workers of a run share one instance. Each field is a [LongAdder], so the workers do not contend.
+ * A layout variant packing is one phase, [variantNanos], and it adds to no other phase.
+ */
+@ApiStatus.Internal
+class PluginPackingStats {
+  /** The time of [derivePluginContentClosure]. */
+  @JvmField val closureNanos: LongAdder = LongAdder()
+  /** The time of the layout residue and of the co-packed members. */
+  @JvmField val residueNanos: LongAdder = LongAdder()
+  /** The time of [autoLayoutChildren] and of the `auto` residue. */
+  @JvmField val autoLayoutNanos: LongAdder = LongAdder()
+  /** The time of [derivePluginContentCandidacy]. */
+  @JvmField val candidacyNanos: LongAdder = LongAdder()
+  /** The time of [derivePluginContent]. */
+  @JvmField val contentNanos: LongAdder = LongAdder()
+  /** The time of the packings of the layout variants. */
+  @JvmField val variantNanos: LongAdder = LongAdder()
+  /** The time of [composeDerivedPluginJars]. */
+  @JvmField val composeNanos: LongAdder = LongAdder()
+  /** The number of layout variants. */
+  @JvmField val variantCount: LongAdder = LongAdder()
+  /** The number of layout variants that got a packing of their own. A variant equal to an earlier one gets none. */
+  @JvmField val packedVariantCount: LongAdder = LongAdder()
+  /** The whole time of each plugin, by main module. */
+  @JvmField val pluginNanos: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
+}
+
+/**
+ * The answers that every packing of one run shares, by module.
+ *
+ * A key is a [JpsModule] instance, so one instance can serve the modules of two projects. Concurrent packings may share it.
+ */
+@ApiStatus.Internal
+class PluginPackingCache {
+  private val closures = ConcurrentHashMap<ClosureKey, WalkedContentModules>()
+  private val memberDescriptors = ConcurrentHashMap<JpsModule, MemberDescriptorFacts>()
+
+  /** [derivePluginContentClosure] of [module], or [EMPTY_WALKED_CONTENT_MODULES] for a module with no descriptor. */
+  fun closure(module: JpsModule, findModule: (String) -> JpsModule?, layoutMembers: Collection<String>): WalkedContentModules {
+    val key = ClosureKey(module = module, layoutMembers = layoutMembers.toList())
+    closures.get(key)?.let {
+      return it
+    }
+    val closure = derivePluginContentClosure(module = module, findModule = findModule, layoutMembers = layoutMembers)
+                  ?: EMPTY_WALKED_CONTENT_MODULES
+    return closures.putIfAbsent(key, closure) ?: closure
+  }
+
+  /** [memberDescriptor] of [module]. */
+  fun memberDescriptorOf(module: JpsModule): MemberDescriptorFacts? {
+    val cached = memberDescriptors.get(module) ?: run {
+      val facts = memberDescriptor(module) ?: NO_MEMBER_DESCRIPTOR
+      memberDescriptors.putIfAbsent(module, facts) ?: facts
+    }
+    return if (cached === NO_MEMBER_DESCRIPTOR) null else cached
+  }
+
+  private data class ClosureKey(@JvmField val module: JpsModule, @JvmField val layoutMembers: List<String>)
+}
+
+/** The cached answer for a module with no descriptor of its own. */
+private val NO_MEMBER_DESCRIPTOR = MemberDescriptorFacts(hasPackageAttribute = false)
+
+/**
+ * Every fact of a layout variant, in iteration order, or `null` for a variant with variants of its own.
+ *
+ * Two variants with one key get one packing.
+ */
+private fun layoutVariantKey(facts: PluginLayoutFacts): List<Any?>? {
+  if (facts.layoutVariants.isNotEmpty()) {
+    return null
+  }
+  return listOf(
+    facts.directoryName,
+    facts.mainJarName,
+    facts.memberJars.entries.map { listOf(it.key, it.value.toList()) },
+    facts.unmergedMembers.toList(),
+    facts.excludedModuleLibraries.entries.map { listOf(it.key, it.value.toList()) },
+    facts.projectLibraries.entries.map { listOf(it.key, it.value) },
+    facts.moduleLibraries.map { listOf(it.moduleName, it.libraryName, it.relativeOutputPath) },
+    facts.generatorLibraries.toList(),
+    facts.noEmbedding,
+    facts.auto,
+    facts.layoutJarMembers.entries.map { listOf(it.key, it.value) },
+  )
+}
+
+/** Runs [block] and adds its time to [counter]. A `null` [counter] measures nothing. */
+private inline fun <T> timed(counter: LongAdder?, block: () -> T): T {
+  if (counter == null) {
+    return block()
+  }
+  val start = System.nanoTime()
+  try {
+    return block()
+  }
+  finally {
+    counter.add(System.nanoTime() - start)
+  }
+}
+
+/**
  * Every jar the plugin [mainModule] puts in its own directory, derived from the project model and [facts].
  *
  * Four derivations meet here:
@@ -94,6 +200,8 @@ class DerivedPluginPacking(
  *
  * [frontendRoots] are the modules a frontend-compatible module must not reach; see [FrontendCompatibility]. An empty
  * list is a product without an embedded frontend. [frontend] is the filter over them, which the plugins of one run can share.
+ *
+ * [stats] gets the time of each phase. A `null` [stats] measures nothing. [cache] holds the answers the packings of one run share.
  */
 @ApiStatus.Internal
 fun derivePluginPacking(
@@ -104,40 +212,54 @@ fun derivePluginPacking(
   frontendRoots: List<String>,
   isPackedElsewhere: (String) -> Boolean = { false },
   frontend: FrontendCompatibility = FrontendCompatibility(roots = frontendRoots.toSet(), findModule = project::findModuleByName),
+  stats: PluginPackingStats? = null,
+  cache: PluginPackingCache = PluginPackingCache(),
 ): DerivedPluginPacking? {
   require(frontend.roots == frontendRoots.toSet()) { "The frontend filter has other roots than $frontendRoots" }
   val module = outputProvider.findModule(mainModule) ?: return null
   val findModule: (String) -> JpsModule? = outputProvider::findModule
-  val closure = derivePluginContentClosure(module = module, findModule = findModule, layoutMembers = facts.memberJars.keys)
-                ?: EMPTY_WALKED_CONTENT_MODULES
+  val closure = timed(stats?.closureNanos) {
+    cache.closure(module = module, findModule = findModule, layoutMembers = facts.memberJars.keys)
+  }
   val closureMembers = closure.moduleNames.mapTo(HashSet()) { it.substringBeforeLast('/') }
-  var effectiveResidue = layoutResidueOf(mainModule = mainModule, facts = facts, closureMembers = closureMembers)
+  var effectiveResidue = timed(stats?.residueNanos) {
+    layoutResidueOf(mainModule = mainModule, facts = facts, closureMembers = closureMembers)
+  }
   if (facts.auto) {
-    // A `<content>` member and a layout member are packed already, so the rule leaves them where they are.
-    val packedByPlugin = closureMembers + facts.memberJars.keys
-    val children = autoLayoutChildren(module = module, isPackedElsewhere = { it in packedByPlugin || isPackedElsewhere(it) })
-    if (children.isNotEmpty()) {
-      effectiveResidue += autoLayoutResidue(mainModule = mainModule, mainJarName = facts.mainJarName, children = children, frontend = frontend)
+    timed(stats?.autoLayoutNanos) {
+      // A `<content>` member and a layout member are packed already, so the rule leaves them where they are.
+      val packedByPlugin = closureMembers + facts.memberJars.keys
+      val children = autoLayoutChildren(module = module, isPackedElsewhere = { it in packedByPlugin || isPackedElsewhere(it) })
+      if (children.isNotEmpty()) {
+        effectiveResidue += autoLayoutResidue(mainModule = mainModule, mainJarName = facts.mainJarName, children = children, frontend = frontend)
+      }
     }
   }
-  val coPacked = coPackedMembers(memberJars = effectiveResidue.memberJars, closureMembers = closureMembers)
-  if (coPacked.isNotEmpty()) {
-    effectiveResidue += PluginContentResidue(vetoedMembers = coPacked)
+  timed(stats?.residueNanos) {
+    val coPacked = coPackedMembers(memberJars = effectiveResidue.memberJars, closureMembers = closureMembers)
+    if (coPacked.isNotEmpty()) {
+      effectiveResidue += PluginContentResidue(vetoedMembers = coPacked)
+    }
   }
-  val candidacy = derivePluginContentCandidacy(
-    mainModule = mainModule,
-    mainJarName = facts.mainJarName,
-    findModule = findModule,
-    frontend = frontend,
-    residue = effectiveResidue,
-    closure = closure,
-  )
-  val content = derivePluginContent(
-    module = module,
-    closure = closure,
-    candidacy = candidacy,
-    residue = effectiveResidue,
-  )
+  val candidacy = timed(stats?.candidacyNanos) {
+    derivePluginContentCandidacy(
+      mainModule = mainModule,
+      mainJarName = facts.mainJarName,
+      findModule = findModule,
+      frontend = frontend,
+      residue = effectiveResidue,
+      closure = closure,
+      readMemberDescriptor = cache::memberDescriptorOf,
+    )
+  }
+  val content = timed(stats?.contentNanos) {
+    derivePluginContent(
+      module = module,
+      closure = closure,
+      candidacy = candidacy,
+      residue = effectiveResidue,
+    )
+  }
   // The jar of each member this project holds a module for.
   val derivedJars = LinkedHashMap<String, String>()
   for ((memberName, relativeOutputFile) in content.memberPaths) {
@@ -149,38 +271,51 @@ fun derivePluginPacking(
     facts.layoutJarMembers
   }
   else {
-    val orders = LinkedHashMap<String, MutableList<List<String>>>()
-    for (variant in facts.layoutVariants) {
-      val packing = requireNotNull(derivePluginPacking(
-        mainModule = mainModule,
-        facts = variant,
-        project = project,
-        outputProvider = outputProvider,
-        frontendRoots = frontendRoots,
-        isPackedElsewhere = isPackedElsewhere,
-        frontend = frontend,
-      ))
-      for (jar in packing.jars) {
-        if (jar.relativeOutputFile in facts.layoutJarMembers) {
-          orders.computeIfAbsent(jar.relativeOutputFile) { ArrayList() }.add(jar.members)
+    timed(stats?.variantNanos) {
+      stats?.variantCount?.add(facts.layoutVariants.size.toLong())
+      val orders = LinkedHashMap<String, MutableList<List<String>>>()
+      // A variant equal to an earlier one gets no packing.
+      val packedVariants = HashSet<List<Any?>>()
+      for (variant in facts.layoutVariants) {
+        val key = layoutVariantKey(variant)
+        if (key != null && !packedVariants.add(key)) {
+          continue
+        }
+        stats?.packedVariantCount?.increment()
+        val packing = requireNotNull(derivePluginPacking(
+          mainModule = mainModule,
+          facts = variant,
+          project = project,
+          outputProvider = outputProvider,
+          frontendRoots = frontendRoots,
+          isPackedElsewhere = isPackedElsewhere,
+          frontend = frontend,
+          cache = cache,
+        ))
+        for (jar in packing.jars) {
+          if (jar.relativeOutputFile in facts.layoutJarMembers) {
+            orders.computeIfAbsent(jar.relativeOutputFile) { ArrayList() }.add(jar.members)
+          }
         }
       }
+      mergeLayoutJarOrders(mainModule, orders)
     }
-    mergeLayoutJarOrders(mainModule, orders)
   }
-  val jars = composeDerivedPluginJars(
-    libDir = "plugins/${facts.directoryName}/lib/",
-    mainJarName = facts.mainJarName,
-    mainModule = mainModule,
-    // A member with a derived jar this project holds no module for gets no jar at all. Nothing can say who packs a
-    // path with no module behind it, and the plugin's main jar does not hold the member either.
-    memberNames = content.memberNames.filter { it !in content.memberPaths || it in derivedJars },
-    derivedJars = derivedJars,
-    closureMembers = content.closureMembers,
-    memberJars = effectiveResidue.memberJars,
-    mainModuleJar = content.mainModuleJar,
-    layoutJarMembers = layoutJarMembers,
-  )
+  val jars = timed(stats?.composeNanos) {
+    composeDerivedPluginJars(
+      libDir = "plugins/${facts.directoryName}/lib/",
+      mainJarName = facts.mainJarName,
+      mainModule = mainModule,
+      // A member with a derived jar this project holds no module for gets no jar at all. Nothing can say who packs a
+      // path with no module behind it, and the plugin's main jar does not hold the member either.
+      memberNames = content.memberNames.filter { it !in content.memberPaths || it in derivedJars },
+      derivedJars = derivedJars,
+      closureMembers = content.closureMembers,
+      memberJars = effectiveResidue.memberJars,
+      mainModuleJar = content.mainModuleJar,
+      layoutJarMembers = layoutJarMembers,
+    )
+  }
   return DerivedPluginPacking(jars = jars, content = content, candidacy = candidacy)
 }
 

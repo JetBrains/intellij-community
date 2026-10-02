@@ -19,10 +19,13 @@ import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.jps.model.JpsProject
+import java.time.Instant
 import java.util.TreeMap
 import java.util.TreeSet
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.LongAdder
 
 /**
  * The plugins the split dev distribution of IDEA Ultimate offers on demand without bundling them.
@@ -190,6 +193,42 @@ fun derivePluginPopulation(
 }
 
 /**
+ * Puts the phase times of [stats] on [span] as attributes, and adds one child span per phase.
+ *
+ * A child span starts at [start] and lasts the phase time summed over the workers. So a child span can last longer than [span].
+ */
+private fun reportPluginPackingStats(span: Span, start: Instant, stats: PluginPackingStats, autoPlugins: Long, closurePlugins: Long) {
+  val phases = listOf(
+    "closure" to stats.closureNanos,
+    "residue" to stats.residueNanos,
+    "auto layout" to stats.autoLayoutNanos,
+    "candidacy" to stats.candidacyNanos,
+    "content" to stats.contentNanos,
+    "layout variants" to stats.variantNanos,
+    "compose" to stats.composeNanos,
+  )
+  for ((phase, nanos) in phases) {
+    val total = nanos.sum()
+    span.setAttribute("${phase.replace(' ', '_')}Ms", total / 1_000_000)
+    spanBuilder("plugin jars: $phase")
+      .setStartTimestamp(start)
+      .setAttribute("sumOverWorkers", true)
+      .startSpan()
+      .end(start.plusNanos(total))
+  }
+  span.setAttribute("variantPackings", stats.variantCount.sum())
+  span.setAttribute("packedVariantPackings", stats.packedVariantCount.sum())
+  span.setAttribute("autoPlugins", autoPlugins)
+  span.setAttribute("closurePlugins", closurePlugins)
+  span.setAttribute("pluginSumMs", stats.pluginNanos.values.sum() / 1_000_000)
+  val slowest = stats.pluginNanos.entries
+    .sortedWith(compareByDescending<Map.Entry<String, Long>> { it.value }.thenBy { it.key })
+    .take(5)
+    .joinToString(separator = ", ") { "${it.key}=${it.value / 1_000_000}ms" }
+  span.setAttribute("slowestPlugins", slowest)
+}
+
+/**
  * Derives the packing of every plugin of the population; see [derivePluginPopulation].
  *
  * The layout facts of a plugin are the union over every layout of its main module in [products]. What the platform or
@@ -237,8 +276,15 @@ fun derivePluginJars(
   // complete before the first one starts.
   // One frontend filter per project serves every plugin, because its answers depend on the project alone.
   val frontends = ConcurrentHashMap<JpsProject, FrontendCompatibility>()
-  val plugins = spanBuilder("derive plugin jars").setAttribute("populationSize", population.size.toLong()).use {
-    population.toList().mapConcurrent { mainModule ->
+  val cache = PluginPackingCache()
+  val plugins = spanBuilder("derive plugin jars").setAttribute("populationSize", population.size.toLong()).use { span ->
+    // Only a recorded span gets the phase times.
+    val stats = if (span.isRecording) PluginPackingStats() else null
+    val autoPlugins = LongAdder()
+    val closurePlugins = LongAdder()
+    val start = Instant.now()
+    val result = population.toList().mapConcurrent { mainModule ->
+      val pluginStart = System.nanoTime()
       val facts = pluginLayoutFacts(mainModule = mainModule, layouts = layoutsByMainModule.get(mainModule).orEmpty())
       val project = outputProvider.findRequiredModule(mainModule).project
       val packing = derivePluginPacking(
@@ -249,9 +295,24 @@ fun derivePluginJars(
         frontendRoots = frontendRoots,
         isPackedElsewhere = { name -> name in platformMembers || layoutMemberOwners.get(name)?.any { it != mainModule } == true },
         frontend = frontends.computeIfAbsent(project) { FrontendCompatibility(roots = frontendRoots.toSet(), findModule = it::findModuleByName) },
+        stats = stats,
+        cache = cache,
       )
+      if (stats != null) {
+        stats.pluginNanos.put(mainModule, System.nanoTime() - pluginStart)
+        if (facts.auto) {
+          autoPlugins.increment()
+        }
+        if (packing != null && packing.content.closureMembers.isNotEmpty()) {
+          closurePlugins.increment()
+        }
+      }
       packing?.let { DerivedPlugin(mainModule = mainModule, facts = facts, packing = it) }
     }.filterNotNull()
+    if (stats != null) {
+      reportPluginPackingStats(span = span, start = start, stats = stats, autoPlugins = autoPlugins.sum(), closurePlugins = closurePlugins.sum())
+    }
+    result
   }
   val productPlugins = products.map { properties ->
     DerivedProductPlugins(
