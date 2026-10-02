@@ -49,7 +49,8 @@ fun WorkspaceFileIndexEx.nonIndexableRootsAsCacheAvoiding(fileSetFilter: (Worksp
   return roots
 }
 
-internal fun iterateNonIndexableFilesImpl(project: Project, inputFilter: VirtualFileFilter?, processor: ContentIterator): Boolean {
+@ApiStatus.Internal
+fun iterateNonIndexableFilesImpl(project: Project, inputFilter: VirtualFileFilter?, processor: ContentIterator): Boolean {
   val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
   val roots: Set<VirtualFile> =
     ReadAction.nonBlocking<Set<VirtualFile>> { workspaceFileIndex.nonIndexableRootsAsCacheAvoiding() }.executeSynchronously()

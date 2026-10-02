@@ -24,6 +24,7 @@ jvm_library(
         "//platform/util/storages",
         "//platform/indexing-impl",
         "//platform/lang-impl",
+        "//platform/lang-impl/backend",
     ],
 )
 
@@ -69,6 +70,8 @@ jvm_library(
         "//platform/indexing-impl:indexing-impl_test_lib",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/lang-impl/backend",
+        "//platform/lang-impl/backend:backend_test_lib",
         "//platform/util:util-tests",
         "//platform/util:util-tests_test_lib",
         "//platform/core-impl",

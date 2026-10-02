@@ -77,6 +77,8 @@ jvm_library(
         "//libraries/junit4:junit4_test_lib",
         "//platform/indexing-api:indexing",
         "//platform/indexing-api:indexing_test_lib",
+        "//platform/lang-impl/backend",
+        "//platform/lang-impl/backend:backend_test_lib",
         "//platform/lang-api:lang",
         "//platform/lang-api:lang_test_lib",
         "//platform/projectModel-api:projectModel",

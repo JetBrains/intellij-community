@@ -168,6 +168,7 @@
     <orderEntry type="module" module-name="intellij.libraries.maven.resolver.provider" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.syntax" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.syntax.scripts" scope="TEST" />
     <orderEntry type="module" module-name="intellij.grazie.core" scope="TEST" />

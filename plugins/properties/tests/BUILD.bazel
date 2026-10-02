@@ -77,6 +77,8 @@ jvm_library(
         "//platform/lang-core:lang-core_test_lib",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/lang-impl/backend",
+        "//platform/lang-impl/backend:backend_test_lib",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//platform/projectModel-api:projectModel",

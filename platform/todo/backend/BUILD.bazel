@@ -41,6 +41,7 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/util/concurrency",
         "//platform/lang-impl",
+        "//platform/lang-impl/backend",
         "//platform/core-impl",
     ],
 )
@@ -73,6 +74,7 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/lang-impl/backend:backend_test_lib",
         "//platform/core-impl:core-impl_test_lib",
     ],
 )

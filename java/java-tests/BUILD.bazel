@@ -411,6 +411,8 @@ jvm_library(
         "//java/java-syntax:syntax_test_lib",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/lang-impl/backend",
+        "//platform/lang-impl/backend:backend_test_lib",
         "//xml/impl",
         "//xml/impl:impl_test_lib",
         "//platform/syntax/syntax-scripts:scripts",

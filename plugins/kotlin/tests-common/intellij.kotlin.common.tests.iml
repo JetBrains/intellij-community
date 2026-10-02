@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinTest" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" />
     <orderEntry type="module" module-name="intellij.platform.indexing" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
