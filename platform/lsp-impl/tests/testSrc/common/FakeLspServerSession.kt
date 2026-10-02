@@ -85,6 +85,15 @@ internal abstract class FakeLspServerSession : ServerSessionProtocolScope(), Cor
     paramsBuilder: () -> Params,
   )
 
+  /** Writes [text] to the stderr of the fake server process. The IDE reads each call as one chunk. */
+  abstract fun writeErrorOutput(text: String)
+
+  /** Writes [text] to the stdout of the fake server process. Only a server that talks LSP over a socket has a free stdout. */
+  abstract fun writeStandardOutput(text: String)
+
+  /** Terminates the fake server process without the LSP shutdown, as a crash does. */
+  abstract fun terminateProcess()
+
   abstract suspend fun awaitExpected()
 }
 
@@ -110,6 +119,19 @@ private class FakeLspServerSessionImpl(
   private val pendingExpectations = mutableListOf<Deferred<Unit>>()
 
   override fun fileUri(file: VirtualFile): String = descriptor.getFileUri(file)
+
+  override fun writeErrorOutput(text: String) {
+    server.writeErrorOutput(text)
+  }
+
+  override fun writeStandardOutput(text: String) {
+    val socketServer = checkNotNull(server as? FakeSocketLspServer) { "The stdout of a server without a socket carries LSP" }
+    socketServer.writeStandardOutput(text)
+  }
+
+  override fun terminateProcess() {
+    server.destroy()
+  }
 
   override suspend fun <Params : Any, Response> awaitRequest(
     method: ClientToServerLspRequest<Params, Response>,

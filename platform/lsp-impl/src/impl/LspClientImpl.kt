@@ -92,7 +92,7 @@ class LspClientImpl internal constructor(
 
   private val errorOutputBuffer: StringBuilder = StringBuilder()
   internal val errorOutput: String?
-    get() = errorOutputBuffer.toString().nullize()
+    get() = synchronized(errorOutputBuffer) { errorOutputBuffer.toString() }.nullize()
 
   @get:ApiStatus.Internal
   val lsp4jServer: Lsp4jServer
@@ -301,6 +301,7 @@ class LspClientImpl internal constructor(
       documentSyncManager.shutdown()
       requestExecutor.shutdownNow()
       serverNotificationsHandler.cancelAllProgress()
+      serverNotificationsHandler.releasePendingMessageRequests()
 
       highlightingCacheRegistry.clearCache()
 
@@ -329,7 +330,7 @@ class LspClientImpl internal constructor(
     }
   }
 
-  internal fun appendServerErrorOutput(text: String) {
+  internal fun appendServerErrorOutput(text: String): Unit = synchronized(errorOutputBuffer) {
     if (!errorOutputBuffer.isEmpty()) errorOutputBuffer.append("\n")
     when {
       text.length > MAX_ERROR_OUTPUT_SIZE -> {

@@ -96,6 +96,7 @@ private class LspServerProcessListener(private val lspClient: LspClientImpl, pri
       }
     }
     else if (ProcessOutputType.isStderr(outputType)) {
+      printProcessOutputToConsole(event, outputType)
       val text = event.text.trimEnd().takeIf { it.isNotEmpty() } ?: return
       lspClient.logInfo("STDERR: ${text}")
       lspClient.appendServerErrorOutput(text)

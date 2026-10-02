@@ -1,3 +1,5 @@
+a:com.intellij.platform.lsp.api.LspClientDescriptor
+- *:getOfferServerLogInNotifications():Z
 *:com.intellij.platform.lsp.api.LspIntegrationSettingsProvider
 - *sf:Companion:com.intellij.platform.lsp.api.LspIntegrationSettingsProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

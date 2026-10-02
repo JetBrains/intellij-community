@@ -15,13 +15,18 @@ import org.eclipse.lsp4j.jsonrpc.services.ServiceEndpoints
 import org.eclipse.lsp4j.launch.LSPLauncher
 import org.eclipse.lsp4j.services.LanguageClient
 import org.eclipse.lsp4j.services.LanguageServer
+import java.io.IOException
 import java.io.InputStream
+import java.io.InterruptedIOException
 import java.io.OutputStream
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
+import java.net.ServerSocket
+import java.net.Socket
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG = logger<FakeLspServer>()
@@ -65,7 +70,8 @@ internal class ExpectationHolder {
   }
 }
 
-internal class FakeLspServer(configureServerCapabilities: (ServerCapabilities.() -> Unit)?) : Process(), SelfKiller {
+/** A fake LSP server process. It talks LSP over its stdin and stdout. */
+internal open class FakeLspServer(configureServerCapabilities: (ServerCapabilities.() -> Unit)?) : Process(), SelfKiller {
   private val serverName = "FakeLspServer"
 
   private val serverCapabilities = ServerCapabilities().apply {
@@ -80,8 +86,8 @@ internal class FakeLspServer(configureServerCapabilities: (ServerCapabilities.()
 
   fun getDidSaveNotificationCount(): Int = didSaveNotificationCount.get()
 
-  private val clientInputStream = PipedInputStream()
-  private val clientOutputStream = PipedOutputStream()
+  protected val clientInputStream: PipedInputStream = PipedInputStream()
+  protected val clientOutputStream: PipedOutputStream = PipedOutputStream()
   private val serverInputStream = PipedInputStream(clientOutputStream)
   private val serverOutputStream = PipedOutputStream(clientInputStream)
 
@@ -90,6 +96,8 @@ internal class FakeLspServer(configureServerCapabilities: (ServerCapabilities.()
   private val serverListening: Future<Void>
 
   private val processRunningLatch = CountDownLatch(1)
+
+  private val errorOutput = FakeProcessOutput()
 
   @Volatile
   var initialized: Boolean = false
@@ -117,9 +125,16 @@ internal class FakeLspServer(configureServerCapabilities: (ServerCapabilities.()
 
   override fun getOutputStream(): OutputStream = clientOutputStream
   override fun getInputStream(): InputStream = clientInputStream
-  override fun getErrorStream(): InputStream = InputStream.nullInputStream() // the error stream is not a part of LSP
+  override fun getErrorStream(): InputStream = errorOutput
+
+  /** The IDE reads each call as one chunk. */
+  fun writeErrorOutput(text: String) {
+    errorOutput.write(text.toByteArray())
+  }
 
   override fun exitValue(): Int = 0 // todo throw IllegalThreadStateException when still running
+
+  override fun isAlive(): Boolean = processRunningLatch.count > 0
 
   override fun waitFor(): Int {
     processRunningLatch.await()
@@ -132,6 +147,7 @@ internal class FakeLspServer(configureServerCapabilities: (ServerCapabilities.()
     clientOutputStream.close()
     serverInputStream.close()
     serverOutputStream.close()
+    errorOutput.close()
     processRunningLatch.countDown()
   }
 
@@ -175,5 +191,133 @@ internal class FakeLspServer(configureServerCapabilities: (ServerCapabilities.()
         }
       }
     }
+  }
+}
+
+/**
+ * A fake LSP server process that talks LSP over the first connection to [serverSocket].
+ * Its stdout is free, so a test can write to it.
+ */
+internal class FakeSocketLspServer(
+  configureServerCapabilities: (ServerCapabilities.() -> Unit)?,
+  private val serverSocket: ServerSocket,
+) : FakeLspServer(configureServerCapabilities) {
+  private val standardOutput = FakeProcessOutput()
+
+  @Volatile
+  private var socket: Socket? = null
+
+  init {
+    AppExecutorUtil.getAppExecutorService().execute { connectSocketToLauncher() }
+  }
+
+  /** Copies the bytes between the socket connection and the streams of the launcher, until [destroy]. */
+  private fun connectSocketToLauncher() {
+    val connection = try {
+      serverSocket.accept()
+    }
+    catch (_: IOException) {
+      return // destroyed before the client connected
+    }
+    socket = connection
+    AppExecutorUtil.getAppExecutorService().execute { copyQuietly(clientInputStream, connection.getOutputStream()) }
+    copyQuietly(connection.getInputStream(), clientOutputStream)
+  }
+
+  private fun copyQuietly(from: InputStream, to: OutputStream) {
+    try {
+      val buffer = ByteArray(8192)
+      while (true) {
+        val count = from.read(buffer)
+        if (count < 0) break
+        to.write(buffer, 0, count)
+        to.flush()
+      }
+    }
+    catch (_: IOException) {
+      // destroy() closes the streams
+    }
+  }
+
+  override fun getOutputStream(): OutputStream = OutputStream.nullOutputStream()
+  override fun getInputStream(): InputStream = standardOutput
+
+  /** The IDE reads each call as one chunk. */
+  fun writeStandardOutput(text: String) {
+    standardOutput.write(text.toByteArray())
+  }
+
+  override fun destroy() {
+    socket?.close()
+    serverSocket.close()
+    standardOutput.close()
+    super.destroy()
+  }
+}
+
+/**
+ * An output stream of [FakeLspServer] that a test writes to. The IDE reads it as the process output.
+ * The reader gets each [write] as one chunk, so a chunk never ends in the middle of the text that a test wrote.
+ * A read blocks until a test writes some bytes or the server is destroyed. After [close], every read returns the end of the stream.
+ */
+private class FakeProcessOutput : InputStream() {
+  private val chunks = LinkedBlockingQueue<ByteArray>()
+
+  @Volatile
+  private var closed = false
+
+  // Only the reader thread uses these fields
+  private var currentChunk = ByteArray(0)
+  private var position = 0
+  private var ended = false
+
+  fun write(data: ByteArray) {
+    if (!closed && data.isNotEmpty()) chunks.put(data)
+  }
+
+  override fun read(): Int {
+    val oneByte = ByteArray(1)
+    return if (read(oneByte, 0, 1) < 0) -1 else oneByte[0].toInt() and 0xFF
+  }
+
+  override fun read(b: ByteArray, off: Int, len: Int): Int {
+    if (len == 0) return 0
+    if (position == currentChunk.size) {
+      if (ended) return -1
+      // the process output reader logs an InterruptedException as an error, but it ignores an IOException
+      val next = try {
+        chunks.take()
+      }
+      catch (e: InterruptedException) {
+        Thread.currentThread().interrupt()
+        throw InterruptedIOException(e.message)
+      }
+      if (next === END_OF_STREAM) {
+        ended = true
+        return -1
+      }
+      currentChunk = next
+      position = 0
+    }
+    val count = minOf(len, currentChunk.size - position)
+    System.arraycopy(currentChunk, position, b, off, count)
+    position += count
+    return count
+  }
+
+  override fun available(): Int {
+    if (position < currentChunk.size) return currentChunk.size - position
+    val next = chunks.peek()
+    return if (next == null || next === END_OF_STREAM) 0 else next.size
+  }
+
+  override fun close() {
+    if (closed) return
+    closed = true
+    chunks.put(END_OF_STREAM)
+  }
+
+  private companion object {
+    val END_OF_STREAM = ByteArray(0)
   }
 }

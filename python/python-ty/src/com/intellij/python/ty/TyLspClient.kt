@@ -67,6 +67,9 @@ class TyLspClientDescriptor(
 
   override val usesExcludedRoots: Boolean get() = true
 
+  // ty says "Please refer to the logs for more details" and writes the details, such as a project load error, to stderr.
+  override val offerServerLogInNotifications: Boolean = true
+
   override fun createInitializationOptions(): Map<String, Any>? {
     // The platform builds these options on its connect pool thread, which holds no lock, so the roots
     // are read here. The `workspace/configuration` replies only reuse them, because they run on the

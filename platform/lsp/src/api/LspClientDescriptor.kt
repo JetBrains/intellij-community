@@ -417,6 +417,14 @@ abstract class LspClientDescriptor protected constructor(
   open val lspServerListener: LspServerListener? = null
 
   /**
+   * Return `true` if the server reports a problem with `window/showMessage` and writes the details only to its stderr.
+   * Then an error or a warning notification from `window/showMessage` or `window/showMessageRequest` gets a "Show server log" action.
+   * The action selects the console of the server in the Services tool window. The console shows the stderr of the server.
+   */
+  @get:ApiStatus.Experimental
+  open val offerServerLogInNotifications: Boolean = false
+
+  /**
    * Plugins may override the [LspCustomization] class and its properties to customize how different LSP features
    * are handled in the IDE, or disable them completely.
    */
