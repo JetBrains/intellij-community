@@ -170,6 +170,20 @@ public class ProjectSdksModel implements SdkModel {
     myInitialized = false;
   }
 
+  /**
+   * Returns the SDKs of this model.
+   * <p>
+   * A key is an original SDK. It is an SDK from {@link ProjectJdkTable}, or an SDK that {@link #doAdd(Sdk, java.util.function.Consumer)}
+   * added and {@link #apply()} did not write to the table yet.
+   * A value is the editable copy of its key. The UI changes only the copy. {@link #apply()} writes the copy to the table.
+   * <p>
+   * {@link #reset(Project)} and {@link #syncSdks(EelMachine)} fill the map from {@link ProjectJdkTable}.
+   * They skip the SDKs that do not match the eel machine.
+   * {@link #removeSdk(Sdk)} removes the SDK from the map.
+   * <p>
+   * The result is the internal map, not a copy. If you change it, you change the model,
+   * but the model does not send events and does not set {@link #isModified()}.
+   */
   public @NotNull HashMap<Sdk, Sdk> getProjectSdks() {
     return myProjectSdks;
   }
