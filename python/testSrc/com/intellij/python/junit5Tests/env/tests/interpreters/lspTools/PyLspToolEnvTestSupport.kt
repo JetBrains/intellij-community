@@ -16,16 +16,10 @@ import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.util.messageIfStringOrEmpty
-import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
-import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.python.test.env.junit5.LspToolVersions
 import com.intellij.python.test.env.junit5.installToolPackage
-import com.intellij.python.test.env.junit5.pyVenvFixture
-import com.intellij.python.junit5Tests.framework.pyModuleFixture
-import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
@@ -137,29 +131,6 @@ internal suspend fun stopLspClientsAndWait(project: Project, providerClass: Clas
       delay(50.milliseconds)
     }
   }
-}
-
-/**
- * Per-test-class fixtures shared by the LSP-tool env tests: a project with a Python module backed by a
- * real venv, plus a [com.intellij.testFramework.fixtures.CodeInsightTestFixture]. Bundling them here
- * keeps each test's `companion object` down to the delegated accessors it actually uses.
- *
- * Store it in a `companion object` (static) field so the project / module / venv are created once per
- * class and reused across the class's test methods, matching [toolInstalled]'s install-once semantics.
- */
-internal class PyLspToolEnvFixtures {
-  /** Guards the one-time tool install per test class; see [enableLspToolAndInstall]. */
-  val toolInstalled: AtomicBoolean = AtomicBoolean(false)
-
-  private val tempPathFixture = tempPathFixture()
-  val projectFixture = projectFixture(openAfterCreation = true)
-  val moduleFixture = projectFixture.pyModuleFixture(tempPathFixture, addPathToSourceRoot = true)
-  val venvFixture = pySdkFixture().pyVenvFixture(
-    where = tempPathFixture,
-    addToSdkTable = true,
-    moduleFixture = moduleFixture,
-  )
-  val codeInsightFixture = codeInsightFixture(projectFixture, tempPathFixture)
 }
 
 /**

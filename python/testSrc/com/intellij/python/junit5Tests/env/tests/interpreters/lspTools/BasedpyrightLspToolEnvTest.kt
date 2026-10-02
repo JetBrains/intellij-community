@@ -2,18 +2,25 @@
 package com.intellij.python.junit5Tests.env.tests.interpreters.lspTools
 
 import com.intellij.openapi.components.service
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
+import com.intellij.python.junit5Tests.framework.env.pySdkFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.python.pyright.BasedpyrightConfiguration
 import com.intellij.python.pyright.BasedpyrightPyTool
 import com.intellij.python.pyright.PyrightLspIntegrationProvider
+import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -32,7 +39,7 @@ class BasedpyrightLspToolEnvTest {
   private suspend fun enablePyrightAndInstall() = module.enableLspToolAndInstall(
     project = project,
     pyTool = BasedpyrightPyTool.getInstance(),
-    toolInstalled = fixtures.toolInstalled,
+    toolInstalled = toolInstalled,
   ) {
     project.service<BasedpyrightConfiguration>().apply {
       inspections = true
@@ -53,10 +60,17 @@ class BasedpyrightLspToolEnvTest {
   }
 
   companion object {
-    private val fixtures = PyLspToolEnvFixtures()
-    internal val project by fixtures.projectFixture
-    internal val module by fixtures.moduleFixture
-    internal val venv by fixtures.venvFixture
-    internal val codeInsightFixture by fixtures.codeInsightFixture
+    private val toolInstalled = AtomicBoolean(false)
+    private val tempPathFixture = tempPathFixture()
+    private val projectFixture = projectFixture(openAfterCreation = true)
+    internal val project by projectFixture
+    private val moduleFixture = projectFixture.pyModuleFixture(tempPathFixture, addPathToSourceRoot = true)
+    internal val module by moduleFixture
+    internal val venv by pySdkFixture().pyVenvFixture(
+      where = tempPathFixture,
+      addToSdkTable = true,
+      moduleFixture = moduleFixture,
+    )
+    internal val codeInsightFixture by codeInsightFixture(projectFixture, tempPathFixture)
   }
 }
