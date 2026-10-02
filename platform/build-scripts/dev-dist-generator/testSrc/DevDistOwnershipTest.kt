@@ -117,9 +117,12 @@ class DevDistOwnershipTest {
   @Test
   fun `the ultimate half keeps a complex plugin whose equal texts name a label outside the community call labels`() {
     val call = "dev_dist_complex_plugin(libraries = {\"@dev_launch_{platform}_jcef//:files\": \"x\"})\n"
-    val plans = communityPlans(planText = "{}\n", call = call)
+    val planText = "{\"input\": \"@ultimate_lib//:profiler\"}\n"
+    val plans = communityPlans(planText = planText, call = call)
 
-    assertThat(plans.acceptsUpstreamPlans(communityPlugin, mapOf("intellij.c.dev-plan.json" to "{}\n"), call)).isFalse()
+    assertThat(plans.acceptsUpstreamPlans(communityPlugin, mapOf("intellij.c.dev-plan.json" to planText), call)).isFalse()
+    // A download repository that the community calls name is a community call label.
+    assertThat(communityPlans(planText = "{}\n", call = call).acceptsUpstreamPlans(communityPlugin, mapOf("intellij.c.dev-plan.json" to "{}\n"), call)).isTrue()
   }
 
   @Test

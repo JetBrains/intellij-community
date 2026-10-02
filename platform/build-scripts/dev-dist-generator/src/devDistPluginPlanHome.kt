@@ -25,6 +25,12 @@ internal class DevDistPluginPlanHome(
   @JvmField val callIsCrossHalf: Boolean,
   /** Whether the plan files live in a community package while the call lives cross-half, so the `dev` section exports them. */
   @JvmField val exportsPlanFiles: Boolean,
+  /**
+   * The repositories that the community calls in this home name, with the platform token of a folded call. The ultimate
+   * half renders a reused call into this home, and that call can name them, see [isCommunityCallLabel]. Empty for
+   * every other home.
+   */
+  @JvmField val communityRepositories: Set<String> = emptySet(),
 ) {
   init {
     require(packageLabel.startsWith("//") || packageLabel.startsWith(COMMUNITY_REPOSITORY_PREFIX)) {

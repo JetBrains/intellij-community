@@ -5,6 +5,7 @@ package com.intellij.platform.buildScripts.devDistGenerator
 
 import java.util.Collections
 import java.util.TreeMap
+import java.util.TreeSet
 
 /** A quoted string that holds `//`: a label, including one with a `{platform}` token. */
 private val QUOTED_LABEL = Regex("\"([^\"\\s]*//[^\"\\s]*)\"")
@@ -44,16 +45,19 @@ internal class DevDistOwnPackagePlans(
    *
    * [planTexts] are the plan files of the ultimate half in its cross-half plugin package, keyed by file name, with
    * their ultimate spelling. [crossHalfCalls] are its calls there. The plan texts and the calls must name only community
-   * call labels, see [isCommunityCallLabel]. The plan texts with every `@community//` label spelled `//` must equal the
-   * community texts. The community calls with every `//` label spelled `@community//` must equal [crossHalfCalls]. A
-   * plan file and a call name no package of their own, so the text of either does not depend on its package.
+   * call labels, see [isCommunityCallLabel]. A repository that the community calls name counts as a community repository.
+   * The plan texts with every `@community//` label spelled `//` must equal the community texts. The community calls with
+   * every `//` label spelled `@community//` must equal [crossHalfCalls]. A plan file and a call name no package of their
+   * own, so the text of either does not depend on its package.
    */
   fun acceptsUpstreamPlans(mainModule: String, planTexts: Map<String, String>, crossHalfCalls: String?): Boolean {
     if (!homes.containsKey(mainModule) || crossHalfCalls == null) {
       return false
     }
     val communityCalls = sectionCalls.get(mainModule) ?: return false
-    if ((planTexts.values + crossHalfCalls).any { text -> QUOTED_LABEL.findAll(text).any { !isCommunityCallLabel(it.groupValues.get(1)) } }) {
+    val repositories = communityRepositories(communityCalls)
+    val labels = (planTexts.values + crossHalfCalls).asSequence().flatMap { QUOTED_LABEL.findAll(it) }.map { it.groupValues.get(1) }
+    if (labels.any { !isCommunityCallLabel(it, communityRepositories = repositories) }) {
       return false
     }
     val respelled = planTexts.mapValuesTo(TreeMap()) { (_, text) -> text.replace("\"$COMMUNITY_REPOSITORY_PREFIX", "\"//") }
@@ -68,7 +72,18 @@ internal class DevDistOwnPackagePlans(
   fun upstreamHome(mainModule: String): DevDistPluginPlanHome {
     val home = checkNotNull(homes.get(mainModule)) { "Plugin '$mainModule' has no plan home in its own package" }
     val directory = listOf(rootDirectory, home.directory).filter { it.isNotEmpty() }.joinToString("/")
-    return DevDistPluginPlanHome(directory = directory, packageLabel = home.packageLabel, callIsCrossHalf = false, exportsPlanFiles = false)
+    return DevDistPluginPlanHome(
+      directory = directory,
+      packageLabel = home.packageLabel,
+      callIsCrossHalf = false,
+      exportsPlanFiles = false,
+      communityRepositories = sectionCalls.get(mainModule)?.let(::communityRepositories).orEmpty(),
+    )
+  }
+
+  /** The repositories that the community calls [calls] name, sorted. A folded call keeps the platform token in a name. */
+  private fun communityRepositories(calls: String): Set<String> {
+    return QUOTED_LABEL.findAll(calls).mapNotNullTo(TreeSet()) { labelRepository(it.groupValues.get(1)) }
   }
 
   companion object {
