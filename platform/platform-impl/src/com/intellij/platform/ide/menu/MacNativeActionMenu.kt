@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.util.SuvorovProgress
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.icons.getMenuBarIcon
@@ -48,6 +49,11 @@ internal fun createMacNativeActionMenu(context: DataContext?,
   fun fillOrRetry(session: Menu.FillSession, attempt: Int) {
     var retryScheduled = false
     try {
+      if (SuvorovProgress.isOnStack()) {
+        // the EDT waits for a lock permit, and the event stealer dispatched this fill event.
+        // a write-intent acquisition here would nest a new SuvorovProgress and stop the EDT.
+        throw MenuCancelledControlFlowException()
+      }
       WriteIntentReadAction.run {
         Utils.fillMenu(uiKind = FrameMenuUiKind(frame, session.items),
                        group = groupRef.getAction(),
@@ -61,8 +67,9 @@ internal fun createMacNativeActionMenu(context: DataContext?,
     }
     catch (e: Throwable) {
       if (e is CancellationException || e is ControlFlowException) {
-        // JBR can pump the fill event while the EDT holds the tree lock or a write action is pending.
-        // fillMenu aborts in that state; retry with a regular event while the menu is still open.
+        // JBR can pump the fill event while the EDT holds the tree lock, waits for a lock permit, or has a pending write action.
+        // the fill aborts in that state.
+        // a retry runs with a regular event while the menu is still open.
         when {
           // a newer open runs its own fill chain; this one only logs
           menuPeer.openTimeNs != session.openTimeNs -> logger<Menu>().debug("menu fill is cancelled, a newer open owns the menu", e)

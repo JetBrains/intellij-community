@@ -165,6 +165,35 @@ class SuvorovProgressTest {
     assertThat(countOfSuccessfulEvents.get()).isEqualTo(totalEventsCount)
   }
 
+  // IJPL-257432: a client that the event stealer dispatches must see the progress and cancel its own lock acquisition
+  @Test
+  fun `suvorov progress is on the stack inside a stolen event`(): Unit = concurrencyTest {
+    val onStack = AtomicBoolean()
+    launch(Dispatchers.Default) {
+      backgroundWriteAction {
+        checkpoint(1)
+        checkpoint(6)
+        application.service<TransferredWriteActionService>().runOnEdtWithTransferredWriteActionAndWait {
+          onStack.set(SuvorovProgress.isOnStack())
+          checkpoint(7)
+        }
+      }
+    }
+    checkpoint(2)
+    launch(Dispatchers.UiWithModelAccess) {
+      checkpoint(3)
+      WriteIntentReadAction.run { checkpoint(9) }
+    }
+    checkpoint(4)
+    Thread.sleep(10)
+    checkpoint(5)
+    checkpoint(8)
+    assertThat(onStack.get()).isTrue
+    withContext(Dispatchers.EDT) {
+      assertThat(SuvorovProgress.isOnStack()).isFalse
+    }
+  }
+
   @Test
   fun `suvorov progress is resilient to exceptions`(): Unit = timeoutRunBlocking {
     val lockingSupport = NestedLocksThreadingSupport()
