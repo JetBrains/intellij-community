@@ -317,10 +317,11 @@ fn tree_fixture(root: &'static str, layout: LayoutAssets, inputs: Catalogue, pre
 }
 
 /// The layout-assets operations that the packer executes: one per transform, per archive reader rule, and per format.
-/// Three golden fixtures have no port. "strip and mapping selection with normalized tree modes": no plan file
+/// Four golden fixtures have no port. "strip and mapping selection with normalized tree modes": no plan file
 /// normalizes the modes of a tree, so the typed layout-tree operation has no mode. The two `tree-map` fixtures: the
-/// localization trees have the jar layout, so the transform is gone.
-const LAYOUT_PARITY_FIXTURES: [(&str, FixtureBuilder); 5] = [
+/// localization trees have the jar layout, so the transform is gone. "plain overlay of two trees": no plan file copies
+/// two trees onto one root without a mode.
+const LAYOUT_PARITY_FIXTURES: [(&str, FixtureBuilder); 4] = [
     ("archive-tree from a tar.gz keeps modes, a link, and an empty directory", |inputs| {
         // The link `latest` carries a trailing slash, which the Kotlin writer removed through Path.of.
         let archive = inputs.join("assets.tar.gz");
@@ -430,37 +431,6 @@ const LAYOUT_PARITY_FIXTURES: [(&str, FixtureBuilder); 5] = [
             vec!["terminal/libghostty.so", "terminal/libghostty.so.1"],
         )
     }),
-    ("plain overlay of two trees keeps the first claim and a relative link", |inputs| {
-        let (first, second) = (inputs.join("first"), inputs.join("second"));
-        write_file(first.join("shared.txt"), b"first");
-        write_file(first.join("a.txt"), b"a");
-        symlink("a.txt", &first.join("link.txt"));
-        write_file(first.join("sub/inner.txt"), b"inner");
-        write_file(second.join("shared.txt"), b"second");
-        write_file(second.join("b.txt"), b"b");
-        write_file(second.join("bin/tool"), b"tool");
-        chmod_tree(&first);
-        chmod_tree(&second);
-        chmod(&first.join("sub/inner.txt"), 0o600);
-        chmod(&first.join("sub"), 0o750);
-        chmod(&second.join("bin/tool"), 0o755);
-        tree_fixture(
-            "overlay",
-            layout(
-                &[Reference::artifact("first"), Reference::artifact("second")],
-                vec![layout_asset("", &[0], None), layout_asset("", &[1], None)],
-            ),
-            catalogue(vec![directory_artifact("first", &first), directory_artifact("second", &second)]),
-            vec![
-                "overlay/shared.txt",
-                "overlay/a.txt",
-                "overlay/link.txt",
-                "overlay/sub/inner.txt",
-                "overlay/b.txt",
-                "overlay/bin/tool",
-            ],
-        )
-    }),
     ("plain file copies inside a tree", |inputs| {
         let (launcher, tool) = (inputs.join("launcher"), inputs.join("tool.jar"));
         write_file(&launcher, b"launcher");
@@ -565,13 +535,14 @@ fn kotlin_layout_materialization_matches_the_transforms() {
         dropped,
         "tree-map entries keep the readdir order, the first source, and a transport link",
         "tree-map tree keeps source modes, the first source, and a transport link",
+        "plain overlay of two trees keeps the first claim and a relative link",
     ] {
         assert!(
             golden.fixture_names().contains(&name),
             "the golden lost the dropped fixture {name:?}"
         );
     }
-    assert_eq!(golden.fixture_names().len(), LAYOUT_PARITY_FIXTURES.len() + 3);
+    assert_eq!(golden.fixture_names().len(), LAYOUT_PARITY_FIXTURES.len() + 4);
     // The dropped fixture is a tree asset that normalizes the copied modes. `planfile` refuses that shape.
     let normalized_layout = layout(
         &[Reference::artifact("selected")],

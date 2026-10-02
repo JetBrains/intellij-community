@@ -116,6 +116,17 @@ internal val DEFAULT_CUSTOM_MODULES: Map<String, CustomModuleDescription> = list
  */
 internal val GZIP_RESOURCE_MODULES: Set<String> = setOf("intellij.database.dialects.minicat")
 
+/**
+ * The resource jars that join the module jar besides the resource roots of the module. A tree outside the module
+ * package joins the jar through a hand-written `resourcegroup` in the package of the tree.
+ */
+internal val EXTERNAL_RESOURCE_JARS: Map<String, List<String>> = listOf("ja", "ko", "zh").associate { language ->
+  "intellij.localization.$language" to listOf(
+    "//:localization_${language}_inspections_intentions",
+    "//:localization_${language}_properties",
+  )
+}
+
 internal enum class SnapshotLibraryMode {
   WRITE_TO_REPO,
   REUSE_GENERATED,
@@ -810,8 +821,9 @@ internal class BazelBuildFileGenerator(
       }
 
       if (customModule == null) {
-        if (resourceJarTargets.isNotEmpty()) {
-          option("resource_jars", resourceJarTargets.map { ":${it.label}" })
+        val resourceJars = resourceJarTargets.map { ":${it.label}" } + EXTERNAL_RESOURCE_JARS.get(module.name).orEmpty()
+        if (resourceJars.isNotEmpty()) {
+          option("resource_jars", resourceJars)
         }
         if (directResources != null) {
           option("resource_strip_prefix", directResources.stripPrefix)

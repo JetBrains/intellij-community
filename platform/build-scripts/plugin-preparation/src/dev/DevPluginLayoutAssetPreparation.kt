@@ -65,11 +65,6 @@ sealed interface DevPluginLayoutAssetSource {
     @JvmField val name: String,
   ) : DevPluginLayoutAssetSource
 
-  data class ExternalLocalizationTree(
-    @JvmField val folder: String,
-    @JvmField val language: String,
-  ) : DevPluginLayoutAssetSource
-
   /**
    * One CIDR dependency archive, as a `<name>-dependencies.json` file under `CIDR/` declares it for one platform and architecture.
    * [name] is the `name` of that configuration, such as `cmake` or `LLDBFrontend`. [platform] is a CIDR platform

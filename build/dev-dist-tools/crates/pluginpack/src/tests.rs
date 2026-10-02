@@ -40,19 +40,6 @@ pub(crate) fn chmod(path: &Path, mode: u32) {
     fscopy::set_mode(path, mode).unwrap();
 }
 
-/// Sets every directory of a source tree to 0755 and every regular file to 0644. The modes that a golden records are
-/// then fixture facts and not umask facts. A fixture applies its own modes after this call.
-pub(crate) fn chmod_tree(root: &Path) {
-    for entry in walkdir::WalkDir::new(root) {
-        let entry = entry.unwrap();
-        if entry.file_type().is_dir() {
-            chmod(entry.path(), 0o755);
-        } else if entry.file_type().is_file() {
-            chmod(entry.path(), 0o644);
-        }
-    }
-}
-
 pub(crate) fn symlink(target: impl AsRef<Path>, link: &Path) {
     let parent = link.parent().unwrap();
     fs::create_dir_all(parent).unwrap();

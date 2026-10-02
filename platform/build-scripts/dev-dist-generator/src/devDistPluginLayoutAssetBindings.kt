@@ -250,7 +250,6 @@ private class DevPluginLayoutAssetSourceResolver(
         is DevPluginLayoutAssetSource.BazelTarget -> resolveBazelTarget(sourceIndex, source)
         is DevPluginLayoutAssetSource.ProjectLibrary -> resolveProjectLibrary(source)
         is DevPluginLayoutAssetSource.ModuleLibrary -> resolveModuleLibrary(source)
-        is DevPluginLayoutAssetSource.ExternalLocalizationTree -> resolveExternalLocalizationTree(source)
         is DevPluginLayoutAssetSource.OptionalLocalDirectory -> resolveOptionalLocalDirectory(source)
         is DevPluginLayoutAssetSource.DebuggerEgg,
         is DevPluginLayoutAssetSource.JupyterFrontend,
@@ -383,25 +382,6 @@ private class DevPluginLayoutAssetSourceResolver(
     return ResolvedLayoutAssetReference(DevPluginReference(label), requireNotNull(roots.first().fileName).toString(), "archive", library = true)
   }
 
-  private fun resolveExternalLocalizationTree(source: DevPluginLayoutAssetSource.ExternalLocalizationTree): ResolvedLayoutAssetSource {
-    require(isSafeLayoutPath(source.folder) && isSafeLayoutPath(source.language)) {
-      "Layout callback '$key' has an invalid localization tree '${source.folder}/${source.language}'"
-    }
-    val id = "localization:${source.folder}/${source.language}"
-    registerRawInput(DevDistPluginRawInput(
-      id = id,
-      label = "//:dev_plugin_localization_resources",
-      kind = "directory",
-      fileName = source.language,
-      sourceTreePrefix = "localization/${source.folder}/${source.language}",
-    ))
-    return ResolvedLayoutAssetSource(listOf(ResolvedLayoutAssetReference(
-      reference = DevPluginReference(id),
-      fileName = source.language,
-      kind = "directory",
-    )))
-  }
-
   private fun validateFileName(fileName: String): String {
     require(fileName.isNotBlank() && fileName !in setOf(".", "..") && fileName.none { it in "/\\:\u0000" }) {
       "Layout callback '$key' has an invalid file name '$fileName'"
@@ -416,11 +396,6 @@ private class DevPluginLayoutAssetSourceResolver(
     val previousFacts = fileFacts.putIfAbsent(input.id, facts)
     require(previousFacts == null || previousFacts == facts) { "Layout callback '$key' has conflicting file facts for '${input.id}'" }
   }
-}
-
-private fun isSafeLayoutPath(path: String): Boolean {
-  return path.isNotEmpty() && path.none { it == '\\' || it == ':' || it == '\u0000' } &&
-         path.split('/').none { it.isEmpty() || it == "." || it == ".." }
 }
 
 private fun isDirectDeclaredFile(

@@ -734,24 +734,34 @@ fn a_layout_tree_keeps_the_source_modes() {
     assert_mode(&written.output.join("payload/bin/tool"), 0o775);
 }
 
+/// The shape of the Kotlin plugin plans: one archive extracted into jar entries.
 #[test]
 fn layout_entries_take_the_first_destination_skip_directories_and_refuse_a_link() {
     let root = temp();
-    let (first, second) = (root.path().join("first"), root.path().join("second"));
-    write_file(first.join("messages/Bundle.properties"), b"first");
-    write_file(second.join("messages/Bundle.properties"), b"second");
-    write_file(second.join("messages/Other.properties"), b"other");
-    let layout = layout(
-        &[Reference::artifact("first"), Reference::artifact("second")],
-        vec![layout_asset("", &[0], None), layout_asset("", &[1], None)],
+    let archive = root.path().join("assets.zip");
+    write_zip(
+        &archive,
+        &[
+            unix_zip_entry("a/messages/", "", 0o755, 3),
+            zip_entry("a/messages/Bundle.properties", "first"),
+            zip_entry("b/messages/Bundle.properties", "second"),
+            zip_entry("b/messages/Other.properties", "other"),
+        ],
     );
-    let catalogue = catalogue(vec![directory_artifact("first", &first), directory_artifact("second", &second)]);
-    let written = write_execution(&layout_jar_recipe(layout.clone()), &catalogue);
+    let recipe = layout_jar_recipe(one_archive(archive_tree(1, Vec::new())));
+    let written = write_execution(&recipe, &archive_catalogue(&archive));
     let (names, entries) = read_archive(&written.output.join("lib/layout.jar"));
     assert_eq!(names, ["messages/Bundle.properties", "messages/Other.properties", "__index__"]);
     assert_eq!(text(&entries["messages/Bundle.properties"]), "first");
-    symlink("Bundle.properties", &second.join("messages/Current.properties"));
-    expect_write_failure(&layout_jar_recipe(layout), &catalogue, "cannot contain the symbolic link");
+    let linked = root.path().join("linked.tar.gz");
+    write_tar_gz(
+        &linked,
+        &[
+            tar_file("a/messages/Bundle.properties", "first", 0o644),
+            tar_link("a/messages/Current.properties", "Bundle.properties"),
+        ],
+    );
+    expect_write_failure(&recipe, &archive_catalogue(&linked), "cannot contain the symbolic link");
 }
 
 #[test]
