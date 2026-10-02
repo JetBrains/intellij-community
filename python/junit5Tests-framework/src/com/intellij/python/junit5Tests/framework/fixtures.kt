@@ -14,13 +14,23 @@ import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyErrorDetail
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.UUID
+import kotlin.io.path.createDirectories
 
+/** A directory named [name] inside the path of this fixture. The parent fixture deletes the whole tree. */
+@TestOnly
+fun TestFixture<Path>.subdirectoryFixture(name: String): TestFixture<Path> = testFixture(name) {
+  val parent = this@subdirectoryFixture.init()
+  val path = withContext(Dispatchers.IO) { parent.resolve(name).createDirectories() }
+  initialized(path) {}
+}
 
 /**
  * [kotlinx.coroutines.CoroutineScope] that is limited by [com.intellij.openapi.application.Application]
