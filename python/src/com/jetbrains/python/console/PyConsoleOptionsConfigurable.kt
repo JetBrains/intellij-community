@@ -19,7 +19,7 @@ private const val CONSOLE_SETTINGS_HELP_REFERENCE: String = "reference.project.s
 
 
 @ApiStatus.Internal
-class PyConsoleOptionsConfigurable(private val myProject: Project) : SearchableConfigurable.Parent.Abstract() {
+class PyConsoleOptionsConfigurable(private val myProject: Project) : SearchableConfigurable.Parent.Abstract(), Configurable.NoScroll {
 
   enum class CodeCompletionOption {
     RUNTIME, STATIC;
