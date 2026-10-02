@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage.durablemap;
 
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.platform.util.io.storages.StorageFactory;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
@@ -20,18 +21,21 @@ import java.nio.file.Path;
 @ApiStatus.Internal
 public class DurableMapBasedForwardIndex implements ForwardIndex, MeasurableIndexStore {
 
-  private final StorageFactory<? extends DurableMap<Integer, ByteArraySequence>> factory;
-  private final @NotNull Path mapFile;
+  private final @NotNull ThrowableComputable<? extends DurableMap<Integer, ByteArraySequence>, ? extends IOException> mapOpener;
 
   private volatile @NotNull DurableMap<Integer, ByteArraySequence> durableMap;
 
 
   public DurableMapBasedForwardIndex(@NotNull Path mapFile,
                                      @NotNull StorageFactory<? extends DurableMap<Integer, ByteArraySequence>> factory) throws IOException {
-    this.factory = factory;
-    this.mapFile = mapFile;
+    this(() -> factory.open(mapFile));
+  }
 
-    durableMap = factory.open(mapFile);
+  public DurableMapBasedForwardIndex(
+    @NotNull ThrowableComputable<? extends DurableMap<Integer, ByteArraySequence>, ? extends IOException> mapOpener
+  ) throws IOException {
+    this.mapOpener = mapOpener;
+    durableMap = mapOpener.compute();
   }
 
   @Override
@@ -69,7 +73,7 @@ public class DurableMapBasedForwardIndex implements ForwardIndex, MeasurableInde
   @Override
   public void clear() throws IOException {
     durableMap.closeAndClean();
-    durableMap = factory.open(mapFile);
+    durableMap = mapOpener.compute();
   }
 
   @Override

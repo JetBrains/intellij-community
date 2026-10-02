@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.impl.storage.durablemap;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.StorageFactory;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
@@ -26,7 +27,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -41,8 +41,6 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
 
   private MapIndexStorageCache<Key, Value> cache;
 
-  private final Path baseStorageFile;
-
   private final int cacheSize;
 
   private final KeyDescriptorEx<Key> keyDescriptor;
@@ -54,7 +52,7 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
   /**
    * {@link com.intellij.util.indexing.FileBasedIndexExtension#keyIsUniqueForIndexedFile} and {@link com.intellij.util.indexing.SingleEntryFileBasedIndexExtension},
    * This field is true only then storage created from  {@link com.intellij.util.indexing.SingleEntryFileBasedIndexExtension}
-   * with help of {@link DurableSingleEntryStorageLayout}
+   * with a layout for a single-entry index
    */
   //MAYBE RC: If keyIsUniqueForIndexedFile=true -- it means ValueContainer could contain <=1 entry only.
   //          Why not make it explicit, by implementing SingleEntryValueContainer/SingleEntryChangeTrackingValueContainer?
@@ -63,7 +61,7 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
   private final boolean keyIsUniqueForIndexedFile;
   private final boolean readOnly;
 
-  private final @NotNull StorageFactory<? extends DurableMap<Key, UpdatableValueContainer<Value>>> durableMapFactory;
+  private final @NotNull ThrowableComputable<? extends DurableMap<Key, UpdatableValueContainer<Value>>, ? extends IOException> durableMapOpener;
 
   public DurableMapIndexStorage(@NotNull Path storageFile,
                                 @NotNull KeyDescriptorEx<Key> keyDescriptor,
@@ -71,15 +69,17 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
                                 int cacheSize,
                                 boolean keyIsUniqueForIndexedFile) throws IOException {
     this(
-      storageFile,
+      fileMapOpener(
+        storageFile,
+        DurableMapIndexStorageFactories.fileBasedMapFactory(keyDescriptor, valueExternalizer, keyIsUniqueForIndexedFile)
+      ),
       keyDescriptor,
       valueExternalizer,
       cacheSize,
       keyIsUniqueForIndexedFile,
       true,
       false,
-      null,
-      DurableMapIndexStorageFactories.fileBasedMapFactory(keyDescriptor, valueExternalizer, keyIsUniqueForIndexedFile)
+      null
     );
   }
 
@@ -89,7 +89,17 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
                                 int cacheSize,
                                 boolean keyIsUniqueForIndexedFile,
                                 @NotNull StorageFactory<? extends DurableMap<Key, UpdatableValueContainer<Value>>> durableMapFactory) throws IOException {
-    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, null, durableMapFactory);
+    this(fileMapOpener(storageFile, durableMapFactory), keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, null);
+  }
+
+  public DurableMapIndexStorage(
+    @NotNull ThrowableComputable<? extends DurableMap<Key, UpdatableValueContainer<Value>>, ? extends IOException> durableMapOpener,
+    @NotNull KeyDescriptorEx<Key> keyDescriptor,
+    @NotNull DataExternalizer<Value> valueExternalizer,
+    int cacheSize,
+    boolean keyIsUniqueForIndexedFile
+  ) throws IOException {
+    this(durableMapOpener, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, null);
   }
 
   public DurableMapIndexStorage(@NotNull Path storageFile,
@@ -101,29 +111,30 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
                                 boolean readOnly,
                                 @Nullable ValueContainerInputRemapping inputRemapping) throws IOException {
     this(
-      storageFile,
+      fileMapOpener(
+        storageFile,
+        DurableMapIndexStorageFactories.fileBasedMapFactory(keyDescriptor, valueExternalizer, keyIsUniqueForIndexedFile, inputRemapping)
+      ),
       keyDescriptor,
       valueExternalizer,
       cacheSize,
       keyIsUniqueForIndexedFile,
       initialize,
       readOnly,
-      inputRemapping,
-      DurableMapIndexStorageFactories.fileBasedMapFactory(keyDescriptor, valueExternalizer, keyIsUniqueForIndexedFile, inputRemapping)
+      inputRemapping
     );
   }
 
-  private DurableMapIndexStorage(@NotNull Path storageFile,
-                                 @NotNull KeyDescriptorEx<Key> keyDescriptor,
-                                 @NotNull DataExternalizer<Value> valueExternalizer,
-                                 int cacheSize,
-                                 boolean keyIsUniqueForIndexedFile,
-                                 boolean initialize,
-                                 boolean readOnly,
-                                 @Nullable ValueContainerInputRemapping inputRemapping,
-                                 @NotNull StorageFactory<? extends DurableMap<Key, UpdatableValueContainer<Value>>> durableMapFactory) throws IOException {
-    baseStorageFile = storageFile;
-
+  private DurableMapIndexStorage(
+    @NotNull ThrowableComputable<? extends DurableMap<Key, UpdatableValueContainer<Value>>, ? extends IOException> durableMapOpener,
+    @NotNull KeyDescriptorEx<Key> keyDescriptor,
+    @NotNull DataExternalizer<Value> valueExternalizer,
+    int cacheSize,
+    boolean keyIsUniqueForIndexedFile,
+    boolean initialize,
+    boolean readOnly,
+    @Nullable ValueContainerInputRemapping inputRemapping
+  ) throws IOException {
     this.keyDescriptor = keyDescriptor;
     this.valueExternalizer = valueExternalizer;
 
@@ -134,7 +145,7 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
     if (inputRemapping != null) {
       LOG.assertTrue(this.readOnly, "input remapping allowed only for read-only storage");
     }
-    this.durableMapFactory = durableMapFactory;
+    this.durableMapOpener = durableMapOpener;
 
     if (initialize) {
       initMapAndCache();
@@ -143,14 +154,25 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
 
   protected void initMapAndCache() throws IOException {
     withWriteLock(() -> {
-      ValueContainerDurableMap<Key, Value> map = createValueContainerMap();
-      cache = MapIndexStorageCacheProvider.Companion.getActualProvider().createCache(
-        map::getModifiableValueContainer,
-        this::onDropFromCache,
-        keyDescriptor,
-        cacheSize
-      );
-      durableMap = map;
+      var map = createValueContainerMap();
+      try {
+        cache = MapIndexStorageCacheProvider.Companion.getActualProvider().createCache(
+          map::getModifiableValueContainer,
+          this::onDropFromCache,
+          keyDescriptor,
+          cacheSize
+        );
+        durableMap = map;
+      }
+      catch (RuntimeException | Error e) {
+        try {
+          map.close();
+        }
+        catch (IOException closeError) {
+          e.addSuppressed(closeError);
+        }
+        throw e;
+      }
     });
   }
 
@@ -188,7 +210,7 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
   }
 
   private @NotNull ValueContainerDurableMap<Key, Value> createValueContainerMap() throws IOException {
-    DurableMap<Key, UpdatableValueContainer<Value>> durableMap = durableMapFactory.open(getStorageFile());
+    DurableMap<Key, UpdatableValueContainer<Value>> durableMap = durableMapOpener.compute();
     return new ValueContainerDurableMap<>(durableMap, valueExternalizer, keyIsUniqueForIndexedFile);
   }
 
@@ -268,10 +290,6 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
         throw new StorageException(e);
       }
     });
-  }
-
-  private @NotNull Path getStorageFile() {
-    return getIndexStorageFile(baseStorageFile);
   }
 
   @Override
@@ -453,6 +471,14 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
 
   public static @NotNull Path getIndexStorageFile(@NotNull Path baseFile) {
     return baseFile.resolveSibling(baseFile.getFileName() + ".storage");
+  }
+
+  private static <Key, Value> @NotNull ThrowableComputable<DurableMap<Key, UpdatableValueContainer<Value>>, IOException> fileMapOpener(
+    @NotNull Path storageFile,
+    @NotNull StorageFactory<? extends DurableMap<Key, UpdatableValueContainer<Value>>> durableMapFactory
+  ) {
+    Path indexStorageFile = getIndexStorageFile(storageFile);
+    return () -> durableMapFactory.open(indexStorageFile);
   }
 
   private static void assertKeyInputIdConsistency(@NotNull Object key, int inputId) {

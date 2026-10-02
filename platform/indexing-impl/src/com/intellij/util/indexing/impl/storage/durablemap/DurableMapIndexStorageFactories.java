@@ -15,15 +15,17 @@ import com.intellij.util.indexing.impl.ValueContainerInputRemapping;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.io.IOUtil.MiB;
 
-final class DurableMapIndexStorageFactories {
+@ApiStatus.Internal
+public final class DurableMapIndexStorageFactories {
   private DurableMapIndexStorageFactories() { }
 
-  static <Key, Value> @NotNull StorageFactory<? extends DurableMap<Key, UpdatableValueContainer<Value>>> fileBasedMapFactory(
+  public static <Key, Value> @NotNull StorageFactory<? extends DurableMap<Key, UpdatableValueContainer<Value>>> fileBasedMapFactory(
     @NotNull KeyDescriptorEx<Key> keyDescriptor,
     @NotNull DataExternalizer<Value> valueExternalizer,
     boolean keyIsUniqueForIndexedFile
@@ -31,7 +33,7 @@ final class DurableMapIndexStorageFactories {
     return fileBasedMapFactory(keyDescriptor, valueExternalizer, keyIsUniqueForIndexedFile, null);
   }
 
-  static <Key, Value> @NotNull StorageFactory<? extends DurableMap<Key, UpdatableValueContainer<Value>>> fileBasedMapFactory(
+  public static <Key, Value> @NotNull StorageFactory<? extends DurableMap<Key, UpdatableValueContainer<Value>>> fileBasedMapFactory(
     @NotNull KeyDescriptorEx<Key> keyDescriptor,
     @NotNull DataExternalizer<Value> valueExternalizer,
     boolean keyIsUniqueForIndexedFile,
