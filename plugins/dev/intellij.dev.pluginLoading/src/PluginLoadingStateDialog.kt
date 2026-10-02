@@ -5,10 +5,8 @@ import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.ContentModuleDescriptor
 import com.intellij.ide.plugins.DependsSubDescriptor
-import com.intellij.ide.plugins.DescriptorExclusionReason
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.ModuleLoadingRule
-import com.intellij.ide.plugins.PluginInitializationDiagnosticUtils
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginsSourceContext
@@ -219,7 +217,7 @@ internal class PluginLoadingStateDialog(
   }
 
   private fun describeDependency(node: DependencyNode): @NlsSafe String = buildString {
-    appendLine(dependencyText(node))
+    appendLine(node.label)
     appendLine("declared as: ${node.kind}")
     appendLine("optional: ${node.optional}")
     val target = node.target
@@ -246,7 +244,7 @@ internal class PluginLoadingStateDialog(
     ) {
       when (val userObject = (value as? DefaultMutableTreeNode)?.userObject) {
         is DescriptorNode -> renderDescriptor(userObject)
-        is GroupNode -> append("${groupTitle(userObject.group)} (${userObject.childCount})", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+        is GroupNode -> append(userObject.label, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
         is DependencyNode -> renderDependency(userObject)
         is ExclusionChainNode -> renderExclusionChainHop(userObject)
         is DescriptorReadErrorNode -> {
@@ -275,7 +273,7 @@ internal class PluginLoadingStateDialog(
 
     private fun renderDependency(node: DependencyNode) {
       icon = node.targetState?.let { stateIcon(it) } ?: AllIcons.General.Error
-      append(dependencyText(node))
+      append(node.label)
       if (node.optional) {
         append("  ${DevPluginLoadingBundle.message("plugin.loading.state.optional")}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
@@ -297,18 +295,6 @@ internal class PluginLoadingStateDialog(
   }
 }
 
-/**
- * The reason on one line.
- *
- * A dependency cycle message spans several lines, and a tree label shows only the first one.
- */
-private fun reasonLabel(reason: DescriptorExclusionReason): @NlsSafe String =
-  PluginInitializationDiagnosticUtils.getLogMessage(reason)
-    .lineSequence()
-    .map { it.trim() }
-    .filter { it.isNotEmpty() }
-    .joinToString(separator = " ")
-
 private fun stateIcon(state: DescriptorLoadState): Icon = when (state) {
   DescriptorLoadState.LOADED -> AllIcons.General.InspectionsOK
   DescriptorLoadState.RESOLVED_WITHOUT_CLASS_LOADER -> AllIcons.General.Warning
@@ -320,20 +306,6 @@ private fun descriptorTitle(descriptor: IdeaPluginDescriptorImpl): @NlsSafe Stri
   is PluginMainDescriptor -> descriptor.name
   is ContentModuleDescriptor -> descriptor.moduleId.name
   is DependsSubDescriptor -> descriptor.descriptorPath
-}
-
-private fun dependencyText(node: DependencyNode): @NlsSafe String = when (node.kind) {
-  DependencyKind.MODULE -> "module ${node.id} (${node.namespace})"
-  DependencyKind.PLUGIN -> "plugin ${node.id}"
-  DependencyKind.DEPENDS -> "<depends> ${node.id}"
-}
-
-private fun groupTitle(group: NodeGroup): String = when (group) {
-  NodeGroup.CONTENT_MODULES -> DevPluginLoadingBundle.message("plugin.loading.state.group.content.modules")
-  NodeGroup.DEPENDS_CONFIGS -> DevPluginLoadingBundle.message("plugin.loading.state.group.depends.configs")
-  NodeGroup.DEPENDENCIES -> DevPluginLoadingBundle.message("plugin.loading.state.group.dependencies")
-  NodeGroup.EXCLUSION_CHAIN -> DevPluginLoadingBundle.message("plugin.loading.state.group.exclusion.chain")
-  NodeGroup.DESCRIPTOR_READ_ERRORS -> DevPluginLoadingBundle.message("plugin.loading.state.group.read.errors")
 }
 
 private fun sourceName(source: PluginsSourceContext): @NlsSafe String = when (source) {
@@ -364,31 +336,17 @@ private fun descriptorSearchText(descriptor: IdeaPluginDescriptorImpl): String =
   is DependsSubDescriptor -> descriptor.descriptorPath
 }
 
-/** Renders the whole tree as indented text, so the report can go into an issue. */
+/**
+ * Renders the whole tree as indented text, so the report can go into an issue.
+ *
+ * Each line is the [PluginLoadingNode.toString] of one node, so the report and the copy action of the tree agree.
+ */
 private fun buildReport(root: DefaultMutableTreeNode): String = buildString {
   fun write(node: DefaultMutableTreeNode, indent: Int) {
     val userObject = node.userObject
     if (userObject != null) {
       repeat(indent) { append("  ") }
-      when (userObject) {
-        is DescriptorNode -> {
-          append("[${userObject.state}] ${userObject.descriptor.shortLogDescription}")
-          userObject.reason?.let { append(" -- ${PluginInitializationDiagnosticUtils.getLogMessage(it)}") }
-        }
-        is GroupNode -> append("${groupTitle(userObject.group)} (${userObject.childCount})")
-        is DependencyNode -> {
-          append(dependencyText(userObject))
-          append(" -> ${userObject.target?.shortLogDescription ?: "unresolved"}")
-          userObject.targetState?.let { append(" [$it]") }
-        }
-        is ExclusionChainNode -> {
-          append(PluginInitializationDiagnosticUtils.getLogMessage(userObject.reason))
-          if (userObject.isRootCause) append("   <-- root cause")
-        }
-        is DescriptorReadErrorNode -> append("read error: ${userObject.error.path}")
-        else -> append(userObject.toString())
-      }
-      appendLine()
+      appendLine(userObject.toString())
     }
     for (child in node.children()) {
       write(child as DefaultMutableTreeNode, if (userObject == null) indent else indent + 1)
