@@ -15,8 +15,8 @@ import org.junit.jupiter.api.Test
  * The parameters that get the mocks of `@patch` decorators, and the parameter count check.
  */
 @TestFor(issues = ["PY-91259"], classes = [PyMockPatchArgumentCountInspection::class])
-@Subsystems.TestRunner
-@Components.Unittest
+@Subsystems.CodeInsight
+@Components.Pytest
 @Layers.Functional
 class PyMockPatchArgumentCountTest : PyCodeInsightTestCase() {
   override val defaultInspections: Set<Class<out LocalInspectionTool>> = setOf(PyMockPatchArgumentCountInspection::class.java)
