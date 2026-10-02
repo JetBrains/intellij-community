@@ -189,7 +189,7 @@ private fun devRunConfigurationRow(
   }
   val conflicts = flagProperties.keys intersect envProperties.keys
   check(conflicts.isEmpty()) { "The VM options and the environment variables of $xmlFileName both set $conflicts" }
-  for (value in flagProperties.values + envProperties.values + vmOptions.jvmFlags) {
+  for (value in sequenceOf(flagProperties.values, envProperties.values, vmOptions.jvmFlags).flatten()) {
     check(!JPS_OUTPUT.containsMatchIn(value)) {
       "$xmlFileName: '$value' names a JPS output below \$PROJECT_DIR\$/out/, which a dev launch does not build." +
       " State a file of the distribution, such as -D$RUNTIME_MODULE_REPOSITORY_PROPERTY=true for the runtime module repository," +
