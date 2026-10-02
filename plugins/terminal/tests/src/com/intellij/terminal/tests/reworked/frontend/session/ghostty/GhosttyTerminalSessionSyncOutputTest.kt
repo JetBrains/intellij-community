@@ -4,12 +4,14 @@ package com.intellij.terminal.tests.reworked.frontend.session.ghostty
 import com.intellij.terminal.tests.reworked.util.LoopbackTtyConnector
 import com.intellij.terminal.tests.reworked.util.TerminalOutputEventCollector
 import com.intellij.terminal.tests.reworked.util.awaitEvent
+import com.intellij.terminal.tests.reworked.util.indexOfEvent
 import com.intellij.terminal.tests.reworked.util.promptStartedOsc
 import kotlinx.coroutines.delay
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.session.impl.TerminalBeepEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalPromptStartedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -33,8 +35,9 @@ import kotlin.time.Duration.Companion.milliseconds
  * kind escaping an open block; [the watchdog paints a block the program never closes] is the only one that
  * needs the timer to fire at all; [expiring one block does not stop the next one from deferring] is the only
  * one that sees a watchdog paint disable the deferral of what follows;
- * [a shell-integration command paints inside an open block] is the only one that states the exception to the
- * deferral. The three above it feed no OSC 1341, so they still catch an exception that grows too wide.
+ * [a shell-integration command paints inside an open block] and [the final frame at EOF paints a block that is still
+ * open] are the only ones that state the exceptions to the deferral. The three above them feed no OSC 1341 and do not
+ * end the output, so they still catch an exception that grows too wide.
  */
 internal class GhosttyTerminalSessionSyncOutputTest : GhosttyTerminalSessionTestCase() {
 
@@ -116,6 +119,22 @@ internal class GhosttyTerminalSessionSyncOutputTest : GhosttyTerminalSessionTest
       .doesNotContain("after")
     // The event has to follow that frame, not precede it.
     collector.awaitEvent<TerminalPromptStartedEvent>()
+  }
+
+  /**
+   * The other exception. A program that exits inside a block never closes it, and no watchdog runs after the end
+   * of the output. So the session paints the final frame before it reports the termination, or the last output is lost.
+   */
+  @Test
+  fun `the final frame at EOF paints a block that is still open`() = runSessionTest { _, connector, collector ->
+    connector.feedInsideOpenBlock(BEGIN + "last words")
+    connector.close()
+
+    collector.awaitEvent<TerminalSessionTerminatedEvent>()
+    assertThat(collector.indexOfEvent<TerminalContentUpdatedEvent> { it.text.contains("last words") })
+      .describedAs("the final frame must reach the collector before the termination event")
+      .isNotNegative()
+      .isLessThan(collector.indexOfEvent<TerminalSessionTerminatedEvent>())
   }
 
   /**
