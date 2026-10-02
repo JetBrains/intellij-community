@@ -316,6 +316,17 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
     return project.service<PyLspService>().restartMutex.withLock { restartStaleClientsLocked(project) }
   }
 
+  /**
+   * Checks the groups again once a new client runs, see [restartStaleClients].
+   *
+   * [fileOpened] builds a descriptor from the serve keys of that moment, and the platform registers the client only
+   * after [fileOpened] returns. A serve-key refresh that lands in between finds no client, so it restarts nothing.
+   */
+  internal fun checkGroupsOfNewClient(project: Project) {
+    if (!servesEveryModule) return
+    project.service<PyLspService>().cs.launch { restartStaleClients(project) }
+  }
+
   /** Restarts the servers with the wrong folders or modules, one at a time, see [restartStaleClients]. */
   private suspend fun restartStaleClientsLocked(project: Project): Boolean {
     val providerClass = this@PyLspToolIntegrationProvider::class.java
@@ -703,6 +714,7 @@ abstract class PyLspToolDescriptor(
     override fun serverInitialized(params: InitializeResult) {
       synchronized(commandActionsLock) { initializedServers++ }
       dropCachedTypeContexts()
+      if (this@PyLspToolDescriptor::supportProvider.isInitialized) supportProvider.checkGroupsOfNewClient(project)
       registerCommandActions(params)
     }
 

@@ -179,11 +179,12 @@ class RuffMultiModuleLspToolEnvTest {
   /** Opens [file], and checks that the Ruff server of [module] runs Ruff [expectedVersion] and reports the unused import. */
   private suspend fun assertRuffChecks(file: VirtualFile, module: Module, expectedVersion: String) {
     withContext(Dispatchers.EDT) { codeInsightFixture.configureFromExistingVirtualFile(file) }
-    awaitFileOpenedByLspTool(project, file)
-    // The package snapshot starts empty, so the first server can hold both modules until the versions are known.
+    // The package snapshot starts empty, so the first server can hold both modules until the versions are known. It
+    // restarts then, and a wait for the open file before that restart would fail on the shutdown.
     val client = awaitRuffClientOf(module, "the Ruff server of module '${module.name}' must run Ruff $expectedVersion") {
       it.ruffVersion == expectedVersion
     }
+    awaitFileOpenedByLspTool(project, file)
     awaitLspDiagnostics(client, file) { diagnostic -> diagnostic.code?.get()?.toString() == "F401" }
   }
 
