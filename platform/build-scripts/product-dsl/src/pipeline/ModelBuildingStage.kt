@@ -188,7 +188,7 @@ internal object ModelBuildingStage {
       .toSet()
 
     // Create descriptor cache
-    val descriptorCache = ModuleDescriptorCache(outputProvider = outputProvider, owner = owner)
+    val descriptorCache = ModuleDescriptorCache(outputProvider = outputProvider, owner = owner, skipXIncludePaths = config.skipXIncludePaths)
 
     // Build unified graph model for plugin/module/product relationships
     // Graph is the single source of truth - built DURING extraction

@@ -5,14 +5,17 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.bazel.runfiles.BazelLabel
 import com.intellij.platform.bazel.runfiles.BazelRunfiles
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.buildSpan
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.BitSet
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -345,14 +348,31 @@ class BazelModuleOutputProvider(
    * outputs this build declares; see [BazelBuildInputs.resolveIfDeclared].
    */
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    val key = if (forTests) module.name + ":test" else module.name
-    val roots = declaredOutputRoots.get(key) ?: getModuleOutputRootsImpl(module, forTests, declaredOnly = true).also {
-      declaredOutputRoots.putIfAbsent(key, it)
-    }
-    for (moduleOutput in roots) {
+    for (moduleOutput in getDeclaredOutputRoots(module, forTests)) {
       zipFilePool.getData(moduleOutput, relativePath)?.let { return it }
     }
     return null
+  }
+
+  private fun getDeclaredOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
+    val key = if (forTests) module.name + ":test" else module.name
+    return declaredOutputRoots.get(key) ?: getModuleOutputRootsImpl(module, forTests, declaredOnly = true).also {
+      declaredOutputRoots.putIfAbsent(key, it)
+    }
+  }
+
+  /**
+   * The index of the production outputs of every module for [findFileInAnyModuleOutput].
+   * The first search builds it, and the other searches wait for it.
+   */
+  private val outputEntryIndex by lazy {
+    ModuleOutputEntryIndex.build(modules = state.modules) { module ->
+      val names = ArrayList<String>()
+      for (root in getDeclaredOutputRoots(module, forTests = false)) {
+        names.addAll(zipFilePool.readEntryNames(root, ModuleOutputEntryIndex::isIndexedName) ?: return@build null)
+      }
+      names
+    }
   }
 
   override fun getAllModules(): List<JpsModule> = state.modules
@@ -520,7 +540,21 @@ class BazelModuleOutputProvider(
     }
   }
 
+  /**
+   * Answers from [ModuleOutputEntryIndex] when [ModuleOutputEntryIndex.isIndexedName] accepts [relativePath], and scans
+   * every module output otherwise. A build with an explicit input manifest always scans, because the index declares
+   * the outputs of all modules.
+   */
   override fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String?, processedModules: MutableSet<String>?): ByteArray? {
+    if (!BazelBuildInputs.isConfigured && ModuleOutputEntryIndex.isIndexedName(relativePath)) {
+      return outputEntryIndex.find(
+        relativePath = relativePath,
+        moduleNamePrefix = moduleNamePrefix,
+        processedModules = processedModules,
+      ) { module ->
+        readFileContentFromModuleOutput(module = module, relativePath = relativePath, forTests = false)
+      }
+    }
     return findFileInAnyModuleOutput(
       modules = state.modules,
       relativePath = relativePath,
@@ -596,3 +630,107 @@ internal fun findFileInAnyModuleOutput(
 }
 
 private const val ANY_MODULE_OUTPUT_SEARCH_CHUNK = 64
+
+/**
+ * Maps an entry name to the modules whose production outputs hold it.
+ *
+ * The index keeps only the names that [isIndexedName] accepts, because a descriptor search asks only for such names.
+ * A module whose outputs give no list of names is an unlisted module. A search reads an unlisted module directly.
+ */
+internal class ModuleOutputEntryIndex private constructor(
+  private val modules: List<JpsModule>,
+  /** The positions in [modules] of the modules that hold the name, in ascending order. */
+  private val positionsByName: Map<String, IntArray>,
+  private val unlistedPositions: BitSet,
+) {
+  /**
+   * Gives the same answer as the scan of [findFileInAnyModuleOutput] over [modules].
+   *
+   * The search adds every candidate to [processedModules] before it reads a module. It calls [read] for an unlisted
+   * candidate and for a candidate that holds [relativePath], in the order of [modules]. The first result that is
+   * not `null` is the answer, and the first failure of [read] stops the search.
+   */
+  fun find(
+    relativePath: String,
+    moduleNamePrefix: String?,
+    processedModules: MutableSet<String>?,
+    read: (JpsModule) -> ByteArray?,
+  ): ByteArray? {
+    val candidates = IntArrayList()
+    for ((position, module) in modules.withIndex()) {
+      val name = module.name
+      if (moduleNamePrefix != null && !name.startsWith(moduleNamePrefix)) {
+        continue
+      }
+      if (processedModules != null && !processedModules.add(name)) {
+        continue
+      }
+      candidates.add(position)
+    }
+
+    val holders = positionsByName.get(relativePath)
+    for (i in candidates.indices) {
+      val position = candidates.getInt(i)
+      if (unlistedPositions.get(position) || (holders != null && holders.binarySearch(position) >= 0)) {
+        read(modules.get(position))?.let { return it }
+      }
+    }
+    return null
+  }
+
+  companion object {
+    /** Accepts a relative path that ends with `.xml` and does not start with a slash. */
+    fun isIndexedName(name: String): Boolean = name.endsWith(".xml") && !name.startsWith('/')
+
+    /**
+     * Lists the names of every module in parallel. [listNames] returns `null` for an unlisted module.
+     * A failure of [listNames] also makes the module unlisted, so a search reads it and gets the same failure.
+     */
+    fun build(modules: List<JpsModule>, listNames: (JpsModule) -> List<String>?): ModuleOutputEntryIndex {
+      return buildSpan("index module outputs") { span ->
+        val namesByModule = modules.mapConcurrent { module ->
+          try {
+            listNames(module)
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: InterruptedException) {
+            throw e
+          }
+          catch (_: Exception) {
+            null
+          }
+        }
+
+        val positionLists = HashMap<String, IntArrayList>()
+        val unlistedPositions = BitSet()
+        var entryCount = 0L
+        for ((position, names) in namesByModule.withIndex()) {
+          if (names == null) {
+            unlistedPositions.set(position)
+            continue
+          }
+          for (name in names) {
+            val positions = positionLists.computeIfAbsent(name) { IntArrayList(1) }
+            // two output roots of one module can hold the same name
+            if (positions.isEmpty || positions.getInt(positions.size - 1) != position) {
+              positions.add(position)
+              entryCount++
+            }
+          }
+        }
+
+        val positionsByName = HashMap<String, IntArray>(positionLists.size)
+        for ((name, positions) in positionLists) {
+          positionsByName.put(name, positions.toIntArray())
+        }
+        span.setAttribute("moduleCount", modules.size.toLong())
+        span.setAttribute("entryCount", entryCount)
+        span.setAttribute("nameCount", positionsByName.size.toLong())
+        span.setAttribute("unlistedModuleCount", unlistedPositions.cardinality().toLong())
+        ModuleOutputEntryIndex(modules = modules, positionsByName = positionsByName, unlistedPositions = unlistedPositions)
+      }
+    }
+  }
+}

@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.buildScripts.concurrency.SharedCache
+import com.intellij.util.lang.EmptyZipFile
+import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.lang.ImmutableZipFile
 import com.intellij.util.lang.ZipFile
 import com.sun.management.HotSpotDiagnosticMXBean
@@ -64,6 +66,24 @@ class ModuleOutputZipFilePool(
     }
     catch (e: Exception) {
       throw IllegalStateException("Cannot read '$entryPath' from archived module output '$file'", e)
+    }
+  }
+
+  /**
+   * Returns the entry names of [file] that pass [filter], or `null` when the zip format does not give a list of names.
+   *
+   * The call loads [file] outside the cache and closes it again. A missing file has no entries.
+   * The list includes the directory names that a read of the file can find.
+   */
+  fun readEntryNames(file: Path, filter: (String) -> Boolean): List<String>? {
+    val zipFile = zipFileLoader(file) ?: return emptyList()
+    zipFile.use {
+      return when (zipFile) {
+        is ImmutableZipFile -> zipFile.getOrComputeNames().filter(filter)
+        is HashMapZipFile -> zipFile.rawNameSet.mapNotNull { entry -> entry?.name?.takeIf(filter) }
+        is EmptyZipFile -> emptyList()
+        else -> null
+      }
     }
   }
 

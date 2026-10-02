@@ -28,10 +28,13 @@ import java.nio.file.Path
  * See [docs/test-plugins.md](../../docs/test-plugins.md) for details.
  *
  * The cache analyzes each module once. A second caller for the same module waits for the first result.
+ *
+ * The analysis does not resolve an `xi:include` path that is in [skipXIncludePaths].
  */
 internal class ModuleDescriptorCache(
   private val outputProvider: ModuleOutputProvider,
   val owner: SharedTaskOwner,
+  private val skipXIncludePaths: Set<String> = emptySet(),
 ) {
   data class DescriptorInfo(
     @JvmField val descriptorPath: Path,
@@ -123,6 +126,10 @@ internal class ModuleDescriptorCache(
     while (pendingIncludePaths.isNotEmpty()) {
       val nextIncludePaths = ArrayList<String>()
       pendingIncludePaths.forEach { includePath ->
+        if (includePath in skipXIncludePaths) {
+          debug("descriptorXIncludes") { "xi:include '$includePath' skipped (in skipXIncludePaths) for module $moduleName ($descriptorPath)" }
+          return@forEach
+        }
         // includes from other modules' library jars are not reachable here (same limitation as plugin.xml extraction);
         // they cannot contribute action groups anyway, so skip instead of failing
         val includeData = resolveXIncludeBytes(path = includePath, module = jpsModule, outputProvider = outputProvider, prefix = null)
