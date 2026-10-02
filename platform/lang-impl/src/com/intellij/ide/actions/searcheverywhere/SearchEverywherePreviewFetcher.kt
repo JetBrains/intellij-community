@@ -71,7 +71,7 @@ class SearchEverywherePreviewFetcher(
 
   companion object {
     fun findFirstChild(selectedValue: Any, project: Project, disposableHandler: (Disposable) -> Unit = {}): UsageInfo? {
-      val psiElement = PSIPresentationBgRendererWrapper.toPsi(selectedValue)
+      val psiElement = PSIPresentationBgRendererWrapper.toPsi(selectedValue, project)
       if (psiElement == null || !psiElement.isValid) return null
 
       val psiFile = psiElement as? PsiFile
