@@ -265,7 +265,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
     }
   }
 
-  override fun ensureInitialized() {
+  private fun ensureInitialized() {
     if (!isInitialized) {
       val job = startInitializationJob()
       ProgressIndicatorUtils.awaitWithCheckCanceled(job.asCompletableFuture())
