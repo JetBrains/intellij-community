@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-resources-en:resources-en"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -68,6 +69,7 @@ jvm_library(
         "//platform/platform-api:ide_test_lib",
         "//platform/lvcs-api:lvcs_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/platform-resources-en:resources-en_test_lib",
         "//platform/util:util_test_lib",
         "//platform/util:util-ui_test_lib",
     ],
