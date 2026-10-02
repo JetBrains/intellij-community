@@ -11,4 +11,6 @@
     
   </content>
 
+  <content namespace="jetbrains"/>
+
 </idea-plugin>

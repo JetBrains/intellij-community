@@ -221,7 +221,8 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void annotateContentDescriptor(ContentDescriptor descriptor, DomElementAnnotationHolder holder) {
-    if (descriptor.getModuleEntry().isEmpty()) {
+    // An empty <content namespace="..."/> element sets the namespace of the plugin main module.
+    if (descriptor.getModuleEntry().isEmpty() && descriptor.getNamespace().getStringValue() == null) {
       holder.createProblem(descriptor, HighlightSeverity.ERROR, DevKitBundle.message("inspections.plugin.xml.module.descriptor.at.least.one.dependency"));
     }
   }
