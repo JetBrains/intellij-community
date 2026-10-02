@@ -607,6 +607,25 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     }
 
   @Test
+  fun `scroll position stays at the bottom when output is trimmed while following`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val editor = createEditor(rows = 3)
+    // Appending "\n777" trims "1\n2\n": two lines go away from the top, and only one line is added to the bottom.
+    val expected = TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 2 * editor.lineHeight
+    doTest(editor, expected, maxOutputLength = 11) {
+      updateText(0, outputPattern("""
+        1
+        2
+        3
+        4
+        5
+        6<cursor>
+      """.trimIndent()), screenTopLine = 3)
+
+      updateText(6, outputPattern("777<cursor>"), screenTopLine = 4)
+    }
+  }
+
+  @Test
   fun `page down at the bottom resumes following the cursor`() = timeoutRunBlocking(context = Dispatchers.EDT) {
     val editor = createEditor(rows = 3)
     // Page up unsticks, paging back down to the bottom resumes following, so the later output is followed again.
@@ -728,26 +747,23 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     }
 
   @Test
-  fun `scroll position recovers to the same high-water mark after a real line-count shrink without a screen top move`(): Unit =
+  fun `scroll position doesn't go up if line in the bottom is removed with Ghostty-style trimming`(): Unit =
     timeoutRunBlocking(context = Dispatchers.EDT) {
       val editor = createEditor(rows = 5)
       // The first three lines are hidden, the rest fully visible with the bottom inset - the usual steady state.
       val expected = TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 3 * editor.lineHeight
       doTest(editor, expected) {
         updateText(0, outputPattern("1\n2\n3\n4\n5\n6\n7\n8<cursor>"), screenTopLine = 3)
-        val highWaterMark = currentScrollOffset()
 
-        // A build tool rewrites its progress lines (e.g. bazel): the cursor briefly moves back as real content
-        // shrinks by one line, without the terminal's own screen top moving (unlike Ctrl+L / Terminal.ClearBuffer,
-        // this is not a reset, so lastScrollY must not be discarded here). The editor's own scrolling model can
-        // still auto-clamp its live offset down as a side effect of the shrink - the dip that leaks through from
-        // that, if any, must stay well under one line (nowhere near the multi-line, repeated oscillation this
-        // fixes), and must fully recover once content regrows, rather than leaving any lasting drift.
-        updateText(6, outputPattern("7<cursor>"))
-        assertThat(highWaterMark - currentScrollOffset()).isLessThan(editor.lineHeight)
+        // A build tool rewrites its progress lines (e.g. bazel): the content shrinks by one line, and the screen top
+        // stays. It is not a reset, so the scroll position must stay too.
+        updateTextWithoutWaiting(6, outputPattern("7<cursor>"))
+        // The editor clamps the scroll offset in the document change itself, before the deferred update.
+        assertThat(currentScrollOffset()).isEqualTo(expected)
+        awaitScrollPositionUpdate()
+        assertThat(currentScrollOffset()).isEqualTo(expected)
 
         updateText(6, outputPattern("7\n8<cursor>"))
-        assertThat(currentScrollOffset()).isEqualTo(highWaterMark)
       }
     }
 
@@ -858,6 +874,14 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     }
 
     fun currentScrollOffset(): Int = editor.scrollingModel.verticalScrollOffset
+
+    fun updateTextWithoutWaiting(absoluteLineIndex: Long, pattern: TerminalOutputPattern) {
+      outputModel.updateContent(absoluteLineIndex, pattern)
+    }
+
+    suspend fun awaitScrollPositionUpdate() {
+      scrollingModel.awaitEventProcessing()
+    }
 
     fun scrollToCursor(force: Boolean) {
       scrollingModel.scrollToCursor(force)
