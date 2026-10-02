@@ -13,7 +13,7 @@ it, and refetching means re-downloading hundreds of megabytes. The extension rea
 hands each group of artifacts a repository whose attributes carry only its own version, so a bump
 refetches exactly what it changed.
 
-A repository is per platform only where the artifact is: the JBR, JCEF, the Chatter binary and the
+A repository is per platform only where the artifact is: the JBR, JCEF, pyrefly, the Chatter binary and the
 Toolbox daemon are, while IJent, libwebp, libghostty-vt, the restart helper and the bundled Maven
 distribution ship every platform in one archive and are fetched once for all six.
 
@@ -134,6 +134,29 @@ _JSERIALCOMM_NATIVE_HASH = "9a7813435b79aa2e23c7f2a78f1b66b48c0504c4"
 
 def jserialcomm_url():
     return "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jSerialComm/%s/jSerialComm.zip" % _JSERIALCOMM_NATIVE_HASH
+
+# OsFamily.osName
+_PYREFLY_OS_NAMES = {
+    "darwin": "macOS",
+    "linux": "Linux",
+    "windows": "Windows",
+}
+
+# JvmArchitecture.archName
+_PYREFLY_ARCH_NAMES = {
+    "aarch64": "AArch64",
+    "x64": "X86_64",
+}
+
+def pyrefly_platform_directory(platform):
+    """`pyreflyPlatformDirName`: the directory of the binary in the archive and in the plugin, such as `macOS-AArch64`."""
+    parts = platform_parts(platform)
+    return "%s-%s" % (_PYREFLY_OS_NAMES[parts.os], _PYREFLY_ARCH_NAMES[parts.arch])
+
+# downloadPyrefly - `platform` is a [HOST_PLATFORMS] entry, or `None` for the license report archive
+def pyrefly_url(platform, version):
+    artifact = "pyrefly-" + (pyrefly_platform_directory(platform).lower() if platform else "license")
+    return maven_url(INTELLIJ_DEPENDENCIES_URL, "org.jetbrains.intellij.deps", artifact, version, "tar.gz")
 
 def _file_name(url):
     name = url.rpartition("/")[2]
@@ -433,6 +456,29 @@ def _dev_launch_deps_community_impl(module_ctx):
             pinned(community, _COMMUNITY_DEPENDENCIES, "bundledMavenTelemetryLibraries"),
         ),
     )
+
+    # downloadPyrefly - one archive per platform holds `<os>-<arch>/pyrefly`, and one archive holds the `license` tree.
+    # The Python community plugin layout copies files of the unpacked archives, so only `_extracted` is a plugin input.
+    pyrefly_build = pinned(community, _COMMUNITY_DEPENDENCIES, "pyreflyBuild")
+    pyrefly_license_url = pyrefly_url(None, pyrefly_build)
+    dev_launch_deps_repo(
+        name = "dev_launch_pyrefly_license",
+        urls = [pyrefly_license_url],
+    )
+    dev_launch_extracted_repo(
+        name = "dev_launch_pyrefly_license_extracted",
+        url = pyrefly_license_url,
+    )
+    for platform in HOST_PLATFORMS:
+        url = pyrefly_url(platform, pyrefly_build)
+        dev_launch_deps_repo(
+            name = "dev_launch_%s_pyrefly" % platform,
+            urls = [url],
+        )
+        dev_launch_extracted_repo(
+            name = "dev_launch_%s_pyrefly_extracted" % platform,
+            url = url,
+        )
 
     jcef_build = pinned(community, _COMMUNITY_DEPENDENCIES, "jcefBuild")
     runtime_build = pinned(community, _COMMUNITY_DEPENDENCIES, "runtimeBuild")

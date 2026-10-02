@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build
 
-import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
@@ -34,9 +33,7 @@ import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.io.defaultLibrarySourcesNamesFilter
 import org.jetbrains.intellij.build.kotlin.CommunityKotlinPluginBuilder
-import org.jetbrains.intellij.build.python.PYREFLY_BUNDLE_ENABLED_PROPERTY
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
-import org.jetbrains.intellij.build.python.isPyreflyBundlingEnabled
 import org.jetbrains.intellij.build.python.withBundledPyrefly
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -251,12 +248,7 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.withResourceFromModule("intellij.textmate", "lib/bundles", "lib/bundles")
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout { spec ->
-      if (isPyreflyBundlingEnabled()) {
-        spec.withBundledPyrefly()
-      }
-      else {
-        Span.current().addEvent("skip the Pyrefly bundling, because '$PYREFLY_BUNDLE_ENABLED_PROPERTY' is false")
-      }
+      spec.withBundledPyrefly()
     },
     androidDesignPlugin(),
     pluginAuto(listOf("intellij.completionMlRankingModels")) { spec ->

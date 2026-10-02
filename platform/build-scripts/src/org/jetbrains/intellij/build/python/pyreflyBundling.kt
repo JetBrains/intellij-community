@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.python
 
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -8,6 +9,8 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants.INTE
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.archiveCacheKey
 import org.jetbrains.intellij.build.dependencies.extractToCacheLocation
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
 import org.jetbrains.intellij.build.impl.DeclaredResourceGeneratorRun
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -33,17 +36,56 @@ private const val PYREFLY_DIR_NAME: String = "pyrefly"
 
 private const val PYREFLY_BINARY_NAME: String = "pyrefly"
 
-private val PYREFLY_DEV_SPEC: DevPluginLayoutAssetSpec = DevPluginLayoutAssetSpec.OMITTED
+/**
+ * The license report as the dev distribution copies it: the `license` tree of the unpacked license archive, which the
+ * dev-launch extension declares from the same `pyreflyBuild` value.
+ */
+private val PYREFLY_LICENSE_DEV_SPEC: DevPluginLayoutAssetSpec = DevPluginLayoutAssetSpec(
+  sources = listOf(DevPluginLayoutAssetSource.BazelTarget(
+    label = "@dev_launch_pyrefly_license_extracted//:files",
+    kind = "directory",
+    fileName = "license",
+    prefix = "license",
+  )),
+  assets = listOf(DevPluginLayoutAsset(destination = "$PYREFLY_DIR_NAME/license", sources = listOf(0))),
+)
 
+/** The binary of one platform as the dev distribution copies it, out of the unpacked platform archive. */
+private fun pyreflyBinaryDevSpec(os: OsFamily, arch: JvmArchitecture): DevPluginLayoutAssetSpec {
+  val platformDirName = pyreflyPlatformDirName(os, arch)
+  val binaryName = os.binaryName(PYREFLY_BINARY_NAME)
+  val hostPlatform = "${if (os == OsFamily.MACOS) "darwin" else os.osId}_${arch.name}"
+  return DevPluginLayoutAssetSpec(
+    sources = listOf(DevPluginLayoutAssetSource.BazelTarget(
+      label = "@dev_launch_${hostPlatform}_pyrefly_extracted//:$platformDirName/$binaryName",
+      kind = "file",
+      fileName = binaryName,
+    )),
+    assets = listOf(DevPluginLayoutAsset(
+      destination = "$PYREFLY_DIR_NAME/$platformDirName/$binaryName",
+      sources = listOf(0),
+      mode = 493,
+    )),
+  )
+}
+
+/**
+ * Declares pyrefly for every distribution. The dev distribution bundles it from these declarations. Production copies
+ * the files only when [isPyreflyBundlingEnabled] is true.
+ */
 fun PluginLayout.PluginLayoutSpec.withBundledPyrefly() {
-  withGeneratedResources(PYREFLY_DEV_SPEC, run = DeclaredResourceGeneratorRun.BUNDLED_AND_DEV) { targetDir, context ->
-    copyPyreflyLicenseReport(targetDir, context)
+  withGeneratedResources(PYREFLY_LICENSE_DEV_SPEC, run = DeclaredResourceGeneratorRun.BUNDLED_AND_DEV) { targetDir, context ->
+    if (isPyreflyStepEnabled()) {
+      copyPyreflyLicenseReport(targetDir, context)
+    }
   }
 
   for (platform in SUPPORTED_DISTRIBUTIONS) {
     val (os, arch) = platform
-    withGeneratedPlatformResources(platform, layoutAssetSpec = PYREFLY_DEV_SPEC, run = DeclaredResourceGeneratorRun.BUNDLED_AND_DEV) { targetDir, context ->
-      copyPyreflyBinary(targetDir, context, os, arch)
+    withGeneratedPlatformResources(platform, pyreflyBinaryDevSpec(os, arch), run = DeclaredResourceGeneratorRun.BUNDLED_AND_DEV) { targetDir, context ->
+      if (isPyreflyStepEnabled()) {
+        copyPyreflyBinary(targetDir, context, os, arch)
+      }
     }
 
     if (os != OsFamily.WINDOWS) {
@@ -54,13 +96,21 @@ fun PluginLayout.PluginLayoutSpec.withBundledPyrefly() {
 
 fun PluginLayout.PluginLayoutSpec.withPublishedPyrefly(dist: SupportedDistribution) {
   val (os, arch, _) = dist
-  withGeneratedResources(PYREFLY_DEV_SPEC) { targetDir, context ->
+  withGeneratedResources(DevPluginLayoutAssetSpec.OMITTED) { targetDir, context ->
     copyPyreflyLicenseReport(targetDir, context)
     copyPyreflyBinary(targetDir, context, os, arch)
   }
 }
 
 fun isPyreflyBundlingEnabled(): Boolean = System.getProperty(PYREFLY_BUNDLE_ENABLED_PROPERTY).toBoolean()
+
+private fun isPyreflyStepEnabled(): Boolean {
+  if (isPyreflyBundlingEnabled()) {
+    return true
+  }
+  Span.current().addEvent("skip the Pyrefly bundling, because '$PYREFLY_BUNDLE_ENABLED_PROPERTY' is false")
+  return false
+}
 
 private fun copyPyreflyLicenseReport(targetDir: Path, context: BuildContext) {
   val licenseDir = downloadPyrefly(context, PYREFLY_LICENSE_ARTIFACT_ID).resolve("license")

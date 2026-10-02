@@ -146,6 +146,8 @@ use_repo(
     "dev_launch_maven",
     "dev_launch_maven3_libraries",
     "dev_launch_maven_telemetry_libraries",
+    "dev_launch_pyrefly_license",
+    "dev_launch_pyrefly_license_extracted",
     "dev_launch_restarter",
     "dev_launch_restarter_extracted",
 )
@@ -156,6 +158,8 @@ use_repo(
 ) for platform in DEV_LAUNCH_HOST_PLATFORMS for group in [
     "jbr",
     "jcef",
+    "pyrefly",
+    "pyrefly_extracted",
 ]]
 
 # Use custom remote_java_tools_windows with vc_redist .dll files due to https://github.com/bazelbuild/rules_java/issues/316
