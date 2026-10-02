@@ -330,16 +330,16 @@ internal class DevDistBuildSections private constructor(
     get() = checkNotNull(resourceStatements) { "The resource statements render after the plugin plan entries are bound" }
 
   /**
-   * What the half that renders second reads of this half, see [DevDistUpstreamHalf]. [launchModels] and
+   * What the half that renders second reads of this half, see [DevDistUpstreamHalf]. [productClasses] and
    * [ownPackagePlans] come from the plan and the plugin executions over these sections.
    */
-  fun upstreamSummary(launchModels: Map<String, DevDistLaunchModel>, ownPackagePlans: DevDistOwnPackagePlans): DevDistUpstreamHalf {
+  fun upstreamSummary(productClasses: Map<String, String>, ownPackagePlans: DevDistOwnPackagePlans): DevDistUpstreamHalf {
     return DevDistUpstreamHalf(
       halfName = half.name,
       contentModuleJarCalls = contentModuleJarCalls,
       devSections = devSections,
       resourceStatements = renderedResourceStatements,
-      launchModels = launchModels,
+      productClasses = productClasses,
       ownPackagePlans = ownPackagePlans,
     )
   }

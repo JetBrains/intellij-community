@@ -2,6 +2,11 @@
 
 Each half of the repository calls `intellij_dev_dist_declarations` once with its own tables and re-exports the macros
 of the result. The code here reads no table directly, so it names no target of the other half.
+
+A community product is a key that both registries state with one product class. The community half plans it, and the
+ultimate half writes no row of it. A distribution of a community product in the ultimate checkout composes the
+community platform set and the community bundled plugins, with the additional plugins of its own rows. The ultimate
+tables name the community products and the community tables in `community`, see `_community_product`.
 """
 
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_platform_jar")
@@ -33,19 +38,56 @@ def _plugin_component_entries(platform_prefix, tier, entries):
 # The two tiers of `tables.plugin_components[product]`, in the order the catalogue reads them.
 _PLUGIN_COMPONENT_TIERS = ["bundled", "additional"]
 
-def _plugin_component_catalogue(tables, platform_prefix):
-    """Returns the generated component map of one product after checking it.
+def _community_product(tables, product):
+    """The community tables when the community half plans `product`, else `None`.
 
-    The map has two tiers, `bundled` and `additional`, each keyed by the plugin's main module. A plugin is in one tier
-    only. It has one component label that serves every platform, or one label per `HOST_PLATFORMS` entry that has
-    the plugin. The bundled tier is in composition order: a distribution composes its neutral entries in list order,
-    then its per-platform entries in list order.
+    `tables.community` is `None` for the community half. For the ultimate half it is a struct with these fields:
+
+    - `products`: the community products, `DEV_DIST_COMMUNITY_PRODUCTS` of the ultimate plan.
+    - `plans`: the community `DEV_DIST_PLANS`.
+    - `product(key)`: the community product entry, with its `platform_set`.
+    - `build_package`: the package of the community platform sets, `@community//build`.
+    - `bundled_components(product)`: the bundled tier of the community component map, with every label spelled for
+      the ultimate checkout.
+    - `product_info_label(product)`: the label of the community product info of `product`.
+    """
+    community = tables.community
+    if community == None or product not in community.products:
+        return None
+    if product in tables.plans:
+        fail("Product '%s' is a community product, and the plan of this half has a row of it; run plugin-model-tool" % product)
+    return community
+
+def _component_tiers(tables, platform_prefix):
+    """The two tiers of the component map of one product, before the checks of `_plugin_component_catalogue`.
+
+    For a community product, the bundled tier is the community one, and the own map states the additional tier only.
     """
     tiers = tables.plugin_components.get(platform_prefix)
     if tiers == None:
         fail("No generated dev-plugin components for product '%s'" % platform_prefix)
     if type(tiers) != "dict":
         fail("Generated dev-plugin components for '%s' must be a dict of tiers" % platform_prefix)
+    community = _community_product(tables, platform_prefix)
+    if community == None:
+        return tiers
+    if sorted(tiers.keys()) != ["additional"]:
+        fail("Generated dev-plugin components for the community product '%s' must have exactly the tier ['additional'], found %s" % (
+            platform_prefix,
+            sorted(tiers.keys()),
+        ))
+    return {"bundled": community.bundled_components(platform_prefix), "additional": tiers["additional"]}
+
+def _plugin_component_catalogue(tables, platform_prefix):
+    """Returns the generated component map of one product after checking it.
+
+    The map has two tiers, `bundled` and `additional`, each keyed by the plugin's main module. A plugin is in one tier
+    only. It has one component label that serves every platform, or one label per `HOST_PLATFORMS` entry that has
+    the plugin. The bundled tier is in composition order: a distribution composes its neutral entries in list order,
+    then its per-platform entries in list order. The bundled tier of a community product is the community one, see
+    `_component_tiers`.
+    """
+    tiers = _component_tiers(tables, platform_prefix)
     if sorted(tiers.keys()) != sorted(_PLUGIN_COMPONENT_TIERS):
         fail("Generated dev-plugin components for '%s' must have exactly the tiers %s, found %s" % (
             platform_prefix,
@@ -189,11 +231,19 @@ def _fragment_suffix(fragment_name):
     return fragment_name[len("platform_"):]
 
 def _plan(tables, product):
-    """The generated plan of `product`, or a failure that names the product."""
-    plan = tables.plans.get(product)
+    """The generated plan of `product`, or a failure that names the product. The plan of a community product is the community one."""
+    community = _community_product(tables, product)
+    plan = (community.plans if community != None else tables.plans).get(product)
     if plan == None:
         fail("No generated dev-distribution plan for product '%s'" % product)
     return plan
+
+def _product_info_label(tables, product):
+    """The label of the product info of `product`: the community one for a community product."""
+    community = _community_product(tables, product)
+    if community != None:
+        return community.product_info_label(product)
+    return tables.product_info_label(product)
 
 def _platform_fragment_layout(tables, product):
     """The ordered platform fragments of one product, as `struct(suffix, fragment_name)` entries.
@@ -227,26 +277,31 @@ def _platform_fragments(tables, product, runtime_module_repository = False):
     """The platform fragment labels of one split product, for a distribution declared outside the build package.
 
     Returns `struct(fragments, fragment_names)` in composition order, with absolute labels into `tables.build_package`.
-    The product's platform set must be declared there through the platform set macro. With `runtime_module_repository`,
-    or for a product the plan marks `modular_loader`, the list ends with the `platform_runtime_module_repository`
-    component; a product whose plan has none fails.
+    The product's platform set must be declared there through the platform set macro. For a community product, the
+    labels name the community platform set in the community build package. With `runtime_module_repository`, or for a
+    product the plan marks `modular_loader`, the list ends with the `platform_runtime_module_repository` component; a
+    product whose plan has none fails.
     """
-    platform_set = tables.product(product).platform_set
+    community = _community_product(tables, product)
+    build_package = community.build_package if community != None else tables.build_package
+    platform_set = (community.product if community != None else tables.product)(product).platform_set
     layout = _platform_fragment_layout(tables, product)
-    fragments = ["%s:%s_%s" % (tables.build_package, platform_set, entry.suffix) for entry in layout]
+    fragments = ["%s:%s_%s" % (build_package, platform_set, entry.suffix) for entry in layout]
     fragment_names = [entry.fragment_name for entry in layout]
     if runtime_module_repository or _modular_loader(tables, product):
         if not _has_runtime_module_repository(tables, product):
             fail("The generated dev-distribution plan of '%s' has no runtime module repository fragment: no run configuration of the product asks for one" % product)
-        fragments.append("%s:%s_%s" % (tables.build_package, platform_set, _fragment_suffix(tables.runtime_module_repository_fragment)))
+        fragments.append("%s:%s_%s" % (build_package, platform_set, _fragment_suffix(tables.runtime_module_repository_fragment)))
         fragment_names.append(tables.runtime_module_repository_fragment)
     return struct(
         fragments = fragments,
         fragment_names = fragment_names,
     )
 
-def _platform_set(tables, product, name, target_platform):
+def _platform_set(tables, product, name, target_platform, visibility):
     """The platform set of one split product. The factory result documents it as `platform_set`."""
+    if _community_product(tables, product) != None:
+        fail("Product '%s' is a community product, so the community half declares its platform set; compose it through platform_fragments" % product)
     name = name or tables.product(product).platform_set
     plan = _plan(tables, product)
 
@@ -319,6 +374,7 @@ def _platform_set(tables, product, name, target_platform):
         component = name + "_" + _fragment_suffix(tables.runtime_module_repository_fragment)
         intellij_dev_packed_jars_component(
             name = component,
+            visibility = visibility,
             tags = ["manual"],
             collector = tables.collector,
             component_name = tables.runtime_module_repository_fragment,
@@ -368,6 +424,7 @@ def _platform_set(tables, product, name, target_platform):
 
         intellij_dev_packed_jars_component(
             name = name + "_" + PACKED_JARS_COMPONENT,
+            visibility = visibility,
             collector = tables.collector,
             component_name = PACKED_JARS_COMPONENT,
             platform_prefix = product,
@@ -409,6 +466,7 @@ def _platform_set(tables, product, name, target_platform):
 
         intellij_dev_packed_jars_component(
             name = name + "_" + _fragment_suffix(_PLATFORM_RESOURCES_FRAGMENT),
+            visibility = visibility,
             tags = ["manual"],
             collector = tables.collector,
             component_name = _PLATFORM_RESOURCES_FRAGMENT,
@@ -429,6 +487,7 @@ def _platform_set(tables, product, name, target_platform):
 
         intellij_dev_packed_jars_component(
             name = name + "_assets",
+            visibility = visibility,
             tags = ["manual"],
             collector = tables.collector,
             component_name = PLATFORM_ASSETS_COMPONENT,
@@ -522,7 +581,7 @@ def _declare_fragments_dist(
             composer = tables.composer,
             fragments = fragments,
             plugin_components = plugin_components,
-            product_info = tables.product_info_label(product),
+            product_info = _product_info_label(tables, product),
             expect_fragments = expect_fragments,
             additional_modules = additional_modules,
             local_launch = local_launch,
@@ -532,12 +591,12 @@ def _check_plan(tables, name, product):
     """Fails when the generated plan cannot serve the launcher `name` of `product`.
 
     The one place a run configuration reads the generator's switch. The split distributions of a generator half
-    write a plan entry for a listed product and nothing for the others. The message names
-    the recipe: the map to edit and the tool run that writes the plan. The generator stops on a module that a run
-    configuration names and that it cannot plan. A module outside the plugin components of the product fails in the
-    distribution macro.
+    write a plan entry for a listed product and nothing for the others. A community product has its plan entry in the
+    community half. The message names the recipe: the map to edit and the tool run that writes the plan. The generator
+    stops on a module that a run configuration names and that it cannot plan. A module outside the plugin components of
+    the product fails in the distribution macro.
     """
-    if product not in tables.plans:
+    if _community_product(tables, product) == None and product not in tables.plans:
         fail("%s: product '%s' has no generated dev-distribution plan; add it to the split distributions of its generator half and run plugin-model-tool" % (name, product))
 
 def _distribution_name(names):
@@ -765,16 +824,19 @@ def intellij_dev_dist_declarations(tables):
     - `product_info_label(product)`: the label of the product info of `product`.
     - `launcher_jvm_flags(product, additional_modules, jvm_flags)`: the `jvm_flags` of a launcher, or `None`.
     - `before_run(name, jvm_flags, compile_clion_backend_before_run)`: the before-run step of a launcher, or `None`.
+    - `community`: the community products and the community tables that a distribution of one reads, or `None`.
+      See `_community_product` for the fields.
 
     Returns a struct of the macros and the helpers below.
     """
 
-    def platform_set(product, name = None, target_platform = ""):
+    def platform_set(product, name = None, target_platform = "", visibility = None):
         """The platform set of one split product: its components for one target platform, which its distributions share.
 
         `product` is the `build/dev-build.json` key and a product entry. The community rules take it as `platform_prefix`.
         `name` defaults to the entry's `platform_set`. A second set of the same product for another target platform
-        names it.
+        names it. `visibility` is the visibility of every component of the set. A community product fails: the
+        community half declares its set, and a distribution of it reads the set through `platform_fragments`.
 
         The set declares only what a distribution composes. A reference of a gate is declared elsewhere, with the same
         `product`, `name` and `target_platform`.
@@ -785,7 +847,7 @@ def intellij_dev_dist_declarations(tables):
         `modular_loader`. A set with a `target_platform` has none unless the product is `modular_loader`, because every
         row is a host row.
         """
-        return _platform_set(tables, product, name, target_platform)
+        return _platform_set(tables, product, name, target_platform, visibility)
 
     def platform_fragments(product, runtime_module_repository = False):
         """The platform fragment labels of one split product. See `_platform_fragments`."""

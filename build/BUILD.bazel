@@ -232,8 +232,14 @@ alias(
 # The platform set of every community split product. The distribution of every community run configuration comes from
 # `dev_server_run_configurations()` below and reads these components. `DEV_DIST_PRODUCTS` in
 # `build/dev_dist_products.bzl` is the one list of the products.
+#
+# Public: a distribution of a community product in the ultimate checkout composes these components too, see
+# `DEV_DIST_COMMUNITY_PRODUCTS` of the ultimate plan.
 [
-    intellij_dev_platform_set_community(product = product)
+    intellij_dev_platform_set_community(
+        product = product,
+        visibility = ["//visibility:public"],
+    )
     for product in DEV_DIST_PRODUCTS
 ]
 

@@ -172,7 +172,8 @@ internal class DevDistBazelComputes(
  *   package, see R2 and [foreignCommunitySections].
  * - [resourceStatements] are the declared resource statements. The ultimate half fails on a statement outside them,
  *   see R5 and [DevDistBuildSections.requireResourcesDeclaredBy].
- * - [launchModels] are the launch models, keyed by the `dev-build.json` key, see [sharedLaunchModels].
+ * - [productClasses] are the classes of the product properties of the planned products, keyed by the `dev-build.json`
+ *   key. They name the community products, see [devDistCommunityProducts].
  * - [ownPackagePlans] are the plan files and the calls of the own packages of community plugins, see R6.
  *
  * [halfName] is the name of the half, for a failure message.
@@ -182,7 +183,7 @@ internal class DevDistUpstreamHalf(
   @JvmField val contentModuleJarCalls: Map<String, String>,
   @JvmField val devSections: Map<String, String>,
   @JvmField val resourceStatements: DevDistResourceStatements,
-  @JvmField val launchModels: Map<String, DevDistLaunchModel>,
+  @JvmField val productClasses: Map<String, String>,
   @JvmField val ownPackagePlans: DevDistOwnPackagePlans,
 )
 
@@ -244,10 +245,17 @@ internal fun computeDevDistBazelFiles(
     if (upstream == null) DevDistBuildSections.fold(inputs, foreignSections = emptySet(), reuse = null) else computeUpstreamAwareSections(upstream, inputs)
   }
   upstream?.let(sections::requireResourcesDeclaredBy)
+  val communityProducts = if (upstream == null) {
+    emptySet()
+  }
+  else {
+    devDistCommunityProducts(devDistProductClasses(products).filterKeys { it in half.splitProducts }, upstream.productClasses)
+  }
   val executions = buildSpan("generate dev-distribution plugin executions") {
     computeDevDistPluginExecutions(
       sections = sections,
       upstreamPackagePlans = upstream?.ownPackagePlans,
+      communityProducts = communityProducts,
     )
   }
   val sectionFiles = buildSpan("write dev-distribution build sections") {
@@ -263,14 +271,14 @@ internal fun computeDevDistBazelFiles(
       executions = executions,
       targets = index.targets,
       runConfigurationRows = derivation.runConfigurations.rows,
-      upstreamLaunchModels = upstream?.launchModels,
+      communityProducts = communityProducts,
     )
   }
   return DevDistBazelComputes(
     sections = sectionFiles,
     plan = plan,
     upstream = sections.upstreamSummary(
-      launchModels = plan.launchModels,
+      productClasses = plan.productClasses,
       ownPackagePlans = DevDistOwnPackagePlans.of(executions.files, executions.rendering, half),
     ),
   )
@@ -314,36 +322,29 @@ internal fun requireForeignFixpoint(foreign: Set<String>, second: Set<String>) {
 }
 
 /**
- * The launch model of one product of one half: the class of its product properties and the encoded text. Two halves
- * render one text for a key that both registries name with one class.
+ * The community products of the half that renders second, sorted: the keys of [productClasses] that
+ * [upstreamProductClasses] states with the same class.
+ *
+ * One key with one product class in both registries is one product. The community half plans it, and the second half
+ * writes no row of it. A distribution of such a key composes the community platform set and the community bundled
+ * plugins, see `intellij_dev_dist_declarations`. [productClasses] maps each split product of the second half to the
+ * class of its product properties. [upstreamProductClasses] are the classes of the products that the community half
+ * planned, keyed by the `dev-build.json` key. A key with two classes, such as `AndroidStudio`, states two products, so
+ * it is no community product.
  */
-internal data class DevDistLaunchModel(@JvmField val productClass: String, @JvmField val text: String)
-
-/**
- * The keys of both registries with one product class and one launch model, so [half] reuses the model of the other
- * half. [launchModels] are the models of [half], and [otherLaunchModels] are the models of the other half. Both are
- * keyed by the `dev-build.json` key. A key with two classes, such as `AndroidStudio`, states two products, so its models
- * may differ, and neither half reuses. Fails for a key with one class and two texts. The message names the key and the
- * class.
- */
-internal fun sharedLaunchModels(
-  half: DevDistHalf,
-  launchModels: Map<String, DevDistLaunchModel>,
-  otherLaunchModels: Map<String, DevDistLaunchModel>,
-): Set<String> {
-  val shared = LinkedHashSet<String>()
-  for ((product, model) in launchModels) {
-    val other = otherLaunchModels.get(product) ?: continue
-    if (other.productClass != model.productClass) {
-      continue
+internal fun devDistCommunityProducts(productClasses: Map<String, String>, upstreamProductClasses: Map<String, String>): Set<String> {
+  val result = TreeSet<String>()
+  for ((product, productClass) in productClasses) {
+    if (upstreamProductClasses.get(product) == productClass) {
+      result.add(product)
     }
-    check(other.text == model.text) {
-      "The two halves render two launch models for '$product' of ${model.productClass}. The ${half.name} half renders:\n" +
-      model.text + "\nand the other half renders:\n" + other.text
-    }
-    shared.add(product)
   }
-  return shared
+  return result
+}
+
+/** The class of the product properties of each product of [products], keyed by its `dev-build.json` key. Empty for a product without properties. */
+internal fun devDistProductClasses(products: List<DiscoveredProduct>): Map<String, String> {
+  return products.associate { it.name to (it.properties?.javaClass?.name ?: "") }
 }
 
 /**

@@ -237,8 +237,8 @@ internal class DevDistPlanCompute(
   private val updater: DeferredFileUpdater,
   private val files: List<DevDistPlanFileResult>,
   private val pluginPlans: DevDistPluginPlanUpdates? = null,
-  /** The launch model of every split product of the plan, keyed by the `dev-build.json` key. Empty for the dev sections. */
-  @JvmField val launchModels: Map<String, DevDistLaunchModel> = emptyMap(),
+  /** The class of the product properties of every planned split product, keyed by the `dev-build.json` key. Empty for the dev sections. */
+  @JvmField val productClasses: Map<String, String> = emptyMap(),
 ) {
   /**
    * Writes the rendered files when [commitChanges], and otherwise reports them as diffs.
@@ -289,10 +289,12 @@ internal class DevDistPluginExecutions(
  * [upstreamPackagePlans] are the plans of the community half, which the ultimate half passes. The first collection
  * homes every community plugin in its cross-half plugin package. A plugin whose plan files and calls equal the community ones there reuses the community targets, see
  * [DevDistOwnPackagePlans.acceptsUpstreamPlans]. The run then collects and renders once more with the community home.
+ * [communityProducts] are the community products of the half, see [devDistCommunityProducts].
  */
 internal fun computeDevDistPluginExecutions(
   sections: DevDistBuildSections,
   upstreamPackagePlans: DevDistOwnPackagePlans? = null,
+  communityProducts: Set<String> = emptySet(),
 ): DevDistPluginExecutions {
   sections.requireDescriptorDeclarationsUnchanged()
   // A simple plugin has no plan file: its own section or its cross-half package declares the packaging.
@@ -314,7 +316,7 @@ internal fun computeDevDistPluginExecutions(
     )
   }
   val firstFiles = buildSpan("plugin executions: collect plan files") { collect() }
-  val firstRendering = buildSpan("plugin executions: render calls") { renderGeneratedDevDistPluginExecutions(sections, firstFiles) }
+  val firstRendering = buildSpan("plugin executions: render calls") { renderGeneratedDevDistPluginExecutions(sections, firstFiles, communityProducts = communityProducts) }
   var files = firstFiles
   var rendering = firstRendering
   if (upstreamPackagePlans != null) {
@@ -342,7 +344,7 @@ internal fun computeDevDistPluginExecutions(
     if (reused.isNotEmpty()) {
       val reusedFiles = buildSpan("plugin executions: collect reused plan files") { collect(reusedUpstream = reused) }
       files = reusedFiles
-      rendering = buildSpan("plugin executions: render reused calls") { renderGeneratedDevDistPluginExecutions(sections, reusedFiles) }
+      rendering = buildSpan("plugin executions: render reused calls") { renderGeneratedDevDistPluginExecutions(sections, reusedFiles, communityProducts = communityProducts) }
       for (plugin in reused) {
         val calls = rendering.calls.getValue(plugin)
         check(calls.sectionText != null && upstreamPackagePlans.acceptsCalls(plugin, calls)) {
@@ -372,9 +374,9 @@ internal fun computeDevDistPluginExecutions(
  * [sections]. A half writes the reference plan, the platform patches and the embedded descriptor actions only when it has
  * the capability, see [requireHalfCapabilities]. A half writes only into its own packages, see [DevDistHalf.ownsPackage].
  *
- * [upstreamLaunchModels] are the launch models of the community half, which the ultimate half passes. A key of both
- * registries with one product class and an equal text names the community file, see [sharedLaunchModels]. `null` for
- * the community half, which renders first.
+ * [communityProducts] are the community products of this half, see [devDistCommunityProducts]. The half collects no
+ * fragment plan of them, so it writes no row of them in the plan, the reference files, the fragment inputs, the module
+ * sets, the product info and the product descriptor package, and no launch model. Empty for the community half.
  */
 internal fun computeDevDistPlan(
   half: DevDistHalf,
@@ -385,7 +387,7 @@ internal fun computeDevDistPlan(
   executions: DevDistPluginExecutions,
   targets: BazelTargetsInfo.TargetsFile,
   runConfigurationRows: List<DevRunConfigurationRow>,
-  upstreamLaunchModels: Map<String, DevDistLaunchModel>? = null,
+  communityProducts: Set<String> = emptySet(),
 ): DevDistPlanCompute {
   sections.requireDescriptorDeclarationsUnchanged()
   val pluginPlans = executions.files
@@ -414,9 +416,13 @@ internal fun computeDevDistPlan(
       platformTable = sections.platformJars,
       targets = targets,
       runtimeModuleRepositoryProducts = devDistRuntimeModuleRepositoryProducts(runConfigurations, splitProducts),
+      communityProducts = communityProducts,
     )
   }
   val sortedProducts = collected.products.sortedBy(ProductFragmentPlan::platformPrefix)
+  for (product in communityProducts) {
+    println("community product $product: the community half plans it, so the ${half.name} half writes no row of it")
+  }
   requireHalfCapabilities(
     half = half,
     projectRoot = projectRoot,
@@ -439,23 +445,15 @@ internal fun computeDevDistPlan(
   val productDescriptorFiles = renderProductDescriptorPackage(sortedProducts.mapNotNull(ProductFragmentPlan::productDescriptor).distinct(), index, half)
   val relocatedContentModuleJarPackage = renderRelocatedContentModuleJarPackage(sections.relocatedContentModuleJarCalls, half)
   val relocatedContentModuleJarPackagePath = "$DEV_DIST_CONTENT_MODULE_JARS_PACKAGE/BUILD.bazel"
-  // One key of both registries with one product class states one product, so the two halves render one launch model.
-  // The half that renders second names the community file of such a key and writes no copy. The file name is the
-  // case-safe name of the key, which both halves state alike, see [checkSplitDistributionsExtend].
-  val productClasses = products.associate { it.name to (it.properties?.javaClass?.name ?: "") }
-  val launchModels = sortedProducts.associateTo(TreeMap()) { product ->
-    product.platformPrefix to DevDistLaunchModel(productClass = productClasses.get(product.platformPrefix).orEmpty(), text = encodeProductLaunchModel(product.launchModel))
-  }
-  val reusedLaunchModels = if (upstreamLaunchModels == null) emptySet() else sharedLaunchModels(half, launchModels, upstreamLaunchModels)
-  val reusedLaunchModelLabels = sortedProducts.filter { it.platformPrefix in reusedLaunchModels }.associate { product ->
-    val path = product.launchModelRelativePath
-    product.platformPrefix to "$COMMUNITY_REPOSITORY_PREFIX${path.substringBeforeLast('/')}:${path.substringAfterLast('/')}"
-  }
+  // The file name of a launch model is the case-safe name of the key, which both halves state alike, see
+  // [checkSplitDistributionsExtend].
+  val productClasses = devDistProductClasses(products)
+  val plannedProductClasses = sortedProducts.associateTo(TreeMap()) { it.platformPrefix to productClasses.get(it.platformPrefix).orEmpty() }
   val fileContents = buildSpan("dev-distribution plan: render files") { renderSpan ->
     val contents = buildList {
       add(DEV_DIST_DESCRIPTORS_RELATIVE_PATH to renderDescriptors(collected.files, half))
-      add(DEV_DIST_PRODUCT_INFO_RELATIVE_PATH to renderProductInfo(collected.pluginDescriptorPlans, half))
-      add(DEV_DIST_PLAN_RELATIVE_PATH to renderPartition(sortedProducts, half, reusedLaunchModelLabels))
+      add(DEV_DIST_PRODUCT_INFO_RELATIVE_PATH to renderProductInfo(collected.pluginDescriptorPlans.filter { it.platformPrefix !in communityProducts }, half))
+      add(DEV_DIST_PLAN_RELATIVE_PATH to renderPartition(sortedProducts, half, communityProducts))
       if (DevDistCapability.REFERENCE_PLAN in half.capabilities) {
         add(DEV_DIST_REFERENCE_PLAN_RELATIVE_PATH to renderReferencePlan(sortedProducts, half))
         val referenceInputs = buildSpan("dev-distribution plan: resolve reference inputs") {
@@ -476,9 +474,7 @@ internal fun computeDevDistPlan(
       collected.platformPatches?.renderPackage()?.entries?.mapTo(this) { it.key to it.value }
       relocatedContentModuleJarPackage?.let { add(relocatedContentModuleJarPackagePath to it) }
       for (product in sortedProducts) {
-        if (product.platformPrefix !in reusedLaunchModels) {
-          add(product.launchModelRelativePath to launchModels.getValue(product.platformPrefix).text)
-        }
+        add(product.launchModelRelativePath to encodeProductLaunchModel(product.launchModel))
       }
     }
     renderSpan.setAttribute("files", contents.size.toLong())
@@ -505,8 +501,8 @@ internal fun computeDevDistPlan(
     if (relocatedContentModuleJarPackage == null && !half.writesCommunityPackages && Files.exists(projectRoot.resolve(relocatedContentModuleJarPackagePath))) {
       updater.delete(projectRoot.resolve(relocatedContentModuleJarPackagePath))
     }
-    // A product that leaves the split path, or whose model the community half now states, leaves its launch model behind.
-    val launchModelPaths = sortedProducts.filter { it.platformPrefix !in reusedLaunchModels }.mapTo(HashSet()) { it.launchModelRelativePath }
+    // A product that leaves the split path, or that the community half now plans, leaves its launch model behind.
+    val launchModelPaths = sortedProducts.mapTo(HashSet()) { it.launchModelRelativePath }
     for (relativePath in listLaunchModels(projectRoot)) {
       if (relativePath !in launchModelPaths) {
         updater.delete(projectRoot.resolve(relativePath))
@@ -527,7 +523,7 @@ internal fun computeDevDistPlan(
     updater = updater,
     files = files + pluginPlans.updates.results,
     pluginPlans = pluginPlans.updates,
-    launchModels = launchModels,
+    productClasses = plannedProductClasses,
   )
 }
 
@@ -1122,7 +1118,9 @@ private fun ProductContentBuildResult.withoutModules(modules: Set<String>): Prod
  * plans. [pluginDescriptorPlans] are the entries the dev sections read, passed through unchanged. [pluginRequests]
  * are the plugins that get a component in this run, so a fragment plan can check that every bundled plugin has one.
  * [runtimeModuleRepositoryProducts] names the products whose plan gets the runtime module repository fragment, see
- * [devDistRuntimeModuleRepositoryProducts].
+ * [devDistRuntimeModuleRepositoryProducts]. [communityProducts] are the community products of [half], see
+ * [devDistCommunityProducts]. The community half plans them, so this half collects no fragment plan, no product
+ * descriptor and no module-set row of them.
  */
 private fun collectDescriptorFiles(
   half: DevDistHalf,
@@ -1136,13 +1134,14 @@ private fun collectDescriptorFiles(
   platformTable: DevDistPlatformJars,
   targets: BazelTargetsInfo.TargetsFile,
   runtimeModuleRepositoryProducts: Set<String>,
+  communityProducts: Set<String>,
 ): CollectedPlan {
   val contentByProduct = walk.contentByProduct
   // In the product order, so the first product of a group of equal plans names the shared action, as an embedded
   // descriptor class does.
   val plannedDescriptors = pluginDescriptorPlans.mapNotNull { plan -> plan.productDescriptor?.let { plan.platformPrefix to it } }.toMap()
   val productDescriptors = shareEqualProductDescriptors(
-    half.splitProducts.mapNotNull { product -> plannedDescriptors.get(product)?.let { product to it } }.toMap()
+    half.splitProducts.filterNot { it in communityProducts }.mapNotNull { product -> plannedDescriptors.get(product)?.let { product to it } }.toMap()
   )
 
   // The split product an embedded frontend is, by the class of its `ProductProperties`. A frontend debug wrapper
@@ -1165,10 +1164,12 @@ private fun collectDescriptorFiles(
   // payloads walk them, and the product descriptor rules compose the content from them.
   val moduleSets = TreeMap<String, ModuleSetData>()
   for (plan in pluginDescriptorPlans) {
+    if (plan.platformPrefix in communityProducts) continue
     mergeModuleSetRows(table = moduleSets, rows = plan.moduleSets, owner = "Product '${plan.platformPrefix}'")
   }
   val platformPatches = half.platformPatches?.newTargets()
   val fragmentPlans = products.withIndex().mapNotNull { (productIndex, product) ->
+    if (product.name in communityProducts) return@mapNotNull null
     val content = contentByProduct[productIndex] ?: return@mapNotNull null
     val moduleToSetChain = content.moduleToSetChainMapping.mapKeys { it.key.value }
     collectFragmentPlan(
@@ -3197,8 +3198,11 @@ private fun renderDescriptors(files: List<DescriptorFile>, half: DevDistHalf): S
   append("]\n")
 }
 
-/** [reusedLaunchModelLabels] names the community launch model of each product whose key the community half states alike. */
-private fun renderPartition(products: List<ProductFragmentPlan>, half: DevDistHalf, reusedLaunchModelLabels: Map<String, String>): String = buildString {
+/**
+ * [communityProducts] are the community products of [half], see [devDistCommunityProducts]. The half that renders second
+ * names them in `DEV_DIST_COMMUNITY_PRODUCTS`, so its binder composes the community rows for a distribution of one.
+ */
+private fun renderPartition(products: List<ProductFragmentPlan>, half: DevDistHalf, communityProducts: Set<String>): String = buildString {
   append(half.generatedByHeader)
   append("#\n")
   append("# The plan of every split product: the facts that its dev distribution reads. Bazel consumes this plan directly\n")
@@ -3239,6 +3243,22 @@ private fun renderPartition(products: List<ProductFragmentPlan>, half: DevDistHa
     }
     append(name).append(" = struct(\n").append(body).append(")\n\n")
   }
+  if (!half.writesCommunityPackages) {
+    append("# The community products: the keys that both registries state with one product class. The community half plans\n")
+    append("# them, so no table of this half has a row of them. A distribution of a community product composes the community\n")
+    append("# platform set and the community bundled plugins, see `intellij_dev_dist_declarations`.\n")
+    if (communityProducts.isEmpty()) {
+      append("DEV_DIST_COMMUNITY_PRODUCTS = []\n")
+    }
+    else {
+      append("DEV_DIST_COMMUNITY_PRODUCTS = [\n")
+      for (product in communityProducts) {
+        append("    \"").append(product).append("\",\n")
+      }
+      append("]\n")
+    }
+    append("\n")
+  }
   append("DEV_DIST_PLANS = {\n")
   for (product in products) {
     append("    \"").append(product.platformPrefix).append("\": ")
@@ -3255,14 +3275,10 @@ private fun renderPartition(products: List<ProductFragmentPlan>, half: DevDistHa
   append("# The launch model of every product, which its `platform_resources` component renders. A model file takes the\n")
   append("# case-safe name of its product, so two products never share one file on a case-insensitive disk. The map is\n")
   append("# apart from the plans, so products with equal launch facts still share one plan.\n")
-  if (reusedLaunchModelLabels.isNotEmpty()) {
-    append("# A model that the community half states alike for the same key is the community file, so this half writes no copy.\n")
-  }
   append("DEV_DIST_LAUNCH_MODELS = {\n")
   for (product in products) {
     val path = product.launchModelRelativePath
-    val label = reusedLaunchModelLabels.get(product.platformPrefix) ?: "//${path.substringBeforeLast('/')}:${path.substringAfterLast('/')}"
-    append("    \"").append(product.platformPrefix).append("\": \"").append(label).append("\",\n")
+    append("    \"").append(product.platformPrefix).append("\": \"//").append(path.substringBeforeLast('/')).append(':').append(path.substringAfterLast('/')).append("\",\n")
   }
   append("}\n")
   append("\n")

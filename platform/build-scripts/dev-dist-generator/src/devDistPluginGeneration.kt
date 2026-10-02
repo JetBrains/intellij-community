@@ -909,12 +909,14 @@ internal class DevDistPluginExecutionRendering(
  * plan file sits in another package than the call.
  *
  * A plugin with a simple packaging has no chain here. Its component is the `dev_plugin` target its own section or its
- * cross-half package declares, and the index names that label.
+ * cross-half package declares, and the index names that label. The component map states no bundled tier for a product
+ * of [communityProducts], see [devDistCommunityProducts].
  */
 internal fun renderGeneratedDevDistPluginExecutions(
   owner: DevDistBuildSections,
   files: DevDistPluginPlanFiles,
   productOrder: Collection<String> = owner.half.splitProducts,
+  communityProducts: Set<String> = emptySet(),
 ): DevDistPluginExecutionRendering {
   val plans = owner.descriptorPlans.associateBy(PluginDescriptorPlan::platformPrefix)
   val rank = productOrder.withIndex().associate { (index, product) -> product to index }
@@ -984,7 +986,9 @@ internal fun renderGeneratedDevDistPluginExecutions(
   checkComponentMembership(components)
   return DevDistPluginExecutionRendering(
     calls = Collections.unmodifiableMap(calls),
-    components = renderPluginComponents(components, planLabel = owner.index::planLabel) { product -> owner.half.compositionOrder(product) },
+    components = renderPluginComponents(components, planLabel = owner.index::planLabel, communityProducts = communityProducts) { product ->
+      owner.half.compositionOrder(product)
+    },
   )
 }
 
@@ -1187,16 +1191,23 @@ private fun checkComponentMembership(products: Map<String, Map<DevDistPluginTier
  * The composer writes `plugin-classpath.txt` in that order. The fingerprint hashes that file, so a re-sort is a
  * fingerprint change. A component keeps its label in the recorded form, and [planLabel] spells it for the package of the
  * table, see [DevDistBazelIndex.planLabel].
+ *
+ * A product of [communityProducts] states only its additional tier. Its distribution composes the bundled tier of the
+ * community half, see [devDistCommunityProducts].
  */
-private fun renderPluginComponents(
+internal fun renderPluginComponents(
   products: Map<String, Map<DevDistPluginTier, List<GeneratedPluginComponent>>>,
   planLabel: (String) -> String,
+  communityProducts: Set<String>,
   compositionOrder: (String) -> List<String>,
 ): String = buildString {
   append("DEV_DIST_PLUGIN_COMPONENTS = {\n")
   for ((product, tiers) in products) {
     append("    \"").append(product).append("\": {\n")
     for (tier in DEV_DIST_COMPONENT_TIERS) {
+      if (product in communityProducts && tier == DevDistPluginTier.BUNDLED) {
+        continue
+      }
       val components = tiers.getValue(tier)
       val ordered = if (tier == DevDistPluginTier.BUNDLED) composedBundledComponents(product, compositionOrder(product), components) else components
       append("        \"").append(tier.key).append("\": {\n")

@@ -66,6 +66,7 @@ _DECLARATIONS = intellij_dev_dist_declarations(struct(
     product_info_label = _product_info_label,
     launcher_jvm_flags = None,
     before_run = None,
+    community = None,
 ))
 
 # The platform set of one split product. See `platform_set` in `intellij_dev_dist_declarations.bzl`.
