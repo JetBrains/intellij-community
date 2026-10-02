@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -17,6 +18,8 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import javax.swing.Icon
@@ -27,35 +30,89 @@ internal class WelcomeScreenFeatureGridTest {
   private val project: Project get() = ProjectManager.getInstance().defaultProject
 
   @Test
-  fun aWithdrawnFeatureLosesItsKeyedButton(): Unit = timeoutRunBlocking {
-    val offeredFeatures = offeredFeatures(
-      project = project,
-      registeredFeatureIds = listOf(AGENT_SESSIONS, TERMINAL),
-      features = listOf(TestFeature(AGENT_SESSIONS, available = false), TestFeature(TERMINAL, available = true)),
+  fun aWithdrawnFeatureStatesNoSectionAndLosesItsKeyedButton(): Unit = timeoutRunBlocking {
+    val createContentCalled = CompletableDeferred<Unit>()
+    val features = listOf(
+      TestFeature(AGENT_SESSIONS, available = false) {
+        createContentCalled.complete(Unit)
+        Content(JPanel())
+      },
+      TestFeature(TERMINAL, available = true),
     )
+    withOwner { owner ->
+      val outcomes = prepareFeatures(project, features, registered(AGENT_SESSIONS, TERMINAL), owner)
 
-    val models = visibleFeatureButtonModels(
-      models = listOf(keyedButton(AGENT_SESSIONS), keyedButton(TERMINAL), NEW_FILE_BUTTON),
-      offeredFeatures = offeredFeatures,
-      sectionFeatureKeys = emptySet(),
-      featureKeysReplacingFeatureGrid = emptySet(),
-    )
+      assertNull(outcomes.single { it.featureKey == AGENT_SESSIONS }.section)
+      assertFalse(createContentCalled.isCompleted)
+      val models = visibleFeatureButtonModels(
+        models = listOf(keyedButton(AGENT_SESSIONS), keyedButton(TERMINAL), NEW_FILE_BUTTON),
+        offeredFeatures = offeredFeatures(outcomes, setOf(AGENT_SESSIONS, TERMINAL)),
+        sectionFeatureKeys = emptySet(),
+        featureKeysReplacingFeatureGrid = emptySet(),
+      )
+      assertEquals(listOf(TERMINAL, NEW_FILE), models.map { it.text })
+    }
+  }
 
-    assertEquals(listOf(TERMINAL, NEW_FILE), models.map { it.text })
+  @Test
+  fun anAlwaysAvailableFeatureIsOfferedWithoutAHandler(): Unit = timeoutRunBlocking {
+    val features = listOf(TestFeature(BANNER, isAlwaysAvailable = true) { Content(JPanel()) })
+    withOwner { owner ->
+      val outcomes = prepareFeatures(project, features, registered(), owner)
+
+      assertEquals(listOf(BANNER), outcomes.mapNotNull { it.section?.featureKey })
+      val offeredFeatures = offeredFeatures(outcomes, emptySet())
+      assertTrue(offeredFeatures.isOffered(BANNER, isAlwaysAvailable = true))
+      assertFalse(offeredFeatures.isOffered(BANNER, isAlwaysAvailable = false))
+    }
   }
 
   /** A withdrawn feature is not offered, even while it states that it needs no handler. */
   @Test
   fun aWithdrawnFeatureIsNotOfferedEvenWhenAlwaysAvailable(): Unit = timeoutRunBlocking {
-    val offeredFeatures = offeredFeatures(
-      project = project,
-      registeredFeatureIds = emptyList(),
-      features = listOf(TestFeature(AGENT_SESSIONS, available = false), TestFeature(BANNER, available = true)),
-    )
+    val features = listOf(TestFeature(AGENT_SESSIONS, available = false, isAlwaysAvailable = true) { Content(JPanel()) })
+    withOwner { owner ->
+      val outcomes = prepareFeatures(project, features, registered(), owner)
 
-    assertFalse(offeredFeatures.isOffered(AGENT_SESSIONS, isAlwaysAvailable = true))
-    assertTrue(offeredFeatures.isOffered(BANNER, isAlwaysAvailable = true))
-    assertFalse(offeredFeatures.isOffered(BANNER, isAlwaysAvailable = false))
+      assertNull(outcomes.single().section)
+      assertFalse(offeredFeatures(outcomes, emptySet()).isOffered(AGENT_SESSIONS, isAlwaysAvailable = true))
+    }
+  }
+
+  @Test
+  fun aFeatureWithoutAHandlerStatesNoSection(): Unit = timeoutRunBlocking {
+    val createContentCalled = CompletableDeferred<Unit>()
+    val features = listOf(
+      TestFeature(TERMINAL) {
+        createContentCalled.complete(Unit)
+        Content(JPanel())
+      },
+    )
+    withOwner { owner ->
+      val outcomes = prepareFeatures(project, features, registered(AGENT_SESSIONS), owner)
+
+      assertTrue(outcomes.single().isAvailable)
+      assertNull(outcomes.single().section)
+      assertFalse(createContentCalled.isCompleted)
+    }
+  }
+
+  /** The feature ids never come, so an always-available feature that waits for them would never finish. */
+  @Test
+  fun anAlwaysAvailableFeatureDoesNotWaitForTheFeatureIds(): Unit = timeoutRunBlocking {
+    val registeredFeatureIds = CompletableDeferred<Set<String>>()
+    val features = listOf(TestFeature(BANNER, isAlwaysAvailable = true) { Content(JPanel()) })
+    withOwner { owner ->
+      try {
+        val outcomes = prepareFeatures(project, features, registeredFeatureIds, owner)
+
+        assertNotNull(outcomes.single().section)
+        assertFalse(registeredFeatureIds.isCompleted)
+      }
+      finally {
+        registeredFeatureIds.cancel()
+      }
+    }
   }
 
   @Test
@@ -110,10 +167,11 @@ internal class WelcomeScreenFeatureGridTest {
         Content(JPanel())
       },
     )
+    withOwner { owner ->
+      val outcomes = prepareFeatures(project, features, registeredKeysOf(features), owner)
 
-    val sections = createFeatureSections(project, features, offerAll(features))
-
-    assertEquals(listOf(AGENT_SESSIONS, TERMINAL), sections.map { it.featureKey })
+      assertEquals(listOf(AGENT_SESSIONS, TERMINAL), outcomes.mapNotNull { it.section?.featureKey })
+    }
   }
 
   @Test
@@ -122,14 +180,20 @@ internal class WelcomeScreenFeatureGridTest {
       TestFeature(AGENT_SESSIONS, contentOrder = 1) { throw IllegalStateException("broken section") },
       TestFeature(TERMINAL, contentOrder = 2) { Content(JPanel()) },
     )
-    lateinit var sections: List<FeatureSection>
+    val owner = Disposer.newDisposable()
+    try {
+      lateinit var outcomes: List<FeatureOutcome>
 
-    val error = LoggedErrorProcessor.executeAndReturnLoggedError {
-      sections = timeoutRunBlocking { createFeatureSections(project, features, offerAll(features)) }
+      val error = LoggedErrorProcessor.executeAndReturnLoggedError {
+        outcomes = timeoutRunBlocking { prepareFeatures(project, features, registeredKeysOf(features), owner) }
+      }
+
+      assertEquals("broken section", error.message)
+      assertEquals(listOf(TERMINAL), outcomes.mapNotNull { it.section?.featureKey })
     }
-
-    assertEquals("broken section", error.message)
-    assertEquals(listOf(TERMINAL), sections.map { it.featureKey })
+    finally {
+      Disposer.dispose(owner)
+    }
   }
 
   /**
@@ -137,7 +201,7 @@ internal class WelcomeScreenFeatureGridTest {
    * feature does not suspend.
    */
   @Test
-  fun cancellationDisposesTheCreatedSections(): Unit = timeoutRunBlocking {
+  fun aCancelledPreparationLeavesTheReturnedSectionUnderTheOwner(): Unit = timeoutRunBlocking {
     val disposable = Disposer.newCheckedDisposable()
     val secondStarted = CompletableDeferred<Unit>()
     val features = listOf(
@@ -147,17 +211,42 @@ internal class WelcomeScreenFeatureGridTest {
         awaitCancellation()
       },
     )
+    withOwner { owner ->
+      val job = launch { prepareFeatures(project, features, registeredKeysOf(features), owner) }
+      secondStarted.await()
+      job.cancelAndJoin()
+      assertFalse(disposable.isDisposed)
 
-    val job = launch { createFeatureSections(project, features, offerAll(features)) }
-    secondStarted.await()
-    job.cancelAndJoin()
+      Disposer.dispose(owner)
 
-    assertTrue(disposable.isDisposed)
+      assertTrue(disposable.isDisposed)
+    }
   }
 }
 
-private fun offerAll(features: List<WelcomeScreenFeatureUI>): OfferedFeatures {
-  return OfferedFeatures(registeredFeatureIds = features.mapTo(HashSet()) { it.featureKey }, withdrawnFeatureKeys = emptySet())
+/** Runs [block] with a new owner, and disposes the owner after it. */
+private suspend fun <T> withOwner(block: suspend (owner: Disposable) -> T): T {
+  val owner = Disposer.newDisposable()
+  try {
+    return block(owner)
+  }
+  finally {
+    Disposer.dispose(owner)
+  }
+}
+
+private fun registered(vararg featureKeys: String): CompletableDeferred<Set<String>> = CompletableDeferred(featureKeys.toHashSet())
+
+private fun registeredKeysOf(features: List<WelcomeScreenFeatureUI>): CompletableDeferred<Set<String>> {
+  return CompletableDeferred(features.mapTo(HashSet()) { it.featureKey })
+}
+
+/** Builds the rule of the feature buttons from [outcomes], as `prepareDefaultBody` does. */
+private fun offeredFeatures(outcomes: List<FeatureOutcome>, registeredFeatureIds: Set<String>): OfferedFeatures {
+  return OfferedFeatures(
+    registeredFeatureIds = registeredFeatureIds,
+    withdrawnFeatureKeys = outcomes.filter { !it.isAvailable }.mapTo(HashSet()) { it.featureKey },
+  )
 }
 
 private const val AGENT_SESSIONS = "air.sessions"
@@ -177,6 +266,7 @@ private class TestFeature(
   override val featureKey: String,
   private val available: Boolean = true,
   override val contentOrder: Int = 0,
+  override val isAlwaysAvailable: Boolean = false,
   private val content: (suspend () -> Content?)? = null,
 ) : WelcomeScreenFeatureUI() {
   override val icon: Icon get() = EmptyIcon.ICON_16

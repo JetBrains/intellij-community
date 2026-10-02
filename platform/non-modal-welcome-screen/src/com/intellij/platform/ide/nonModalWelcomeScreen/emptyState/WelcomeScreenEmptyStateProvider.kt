@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.nonModalWelcomeScreen.emptyState
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -22,7 +23,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import javax.swing.JComponent
 
-private val COMPONENT_KEY = Key<WelcomeScreenRightTabImpl>("EMPTY_PROVIDER")
+private val TAB_KEY = Key<WelcomeScreenRightTabImpl>("EMPTY_PROVIDER")
 
 internal class WelcomeScreenEmptyStateProvider : EditorEmptyStateComponentProvider {
   override fun isAvailable(splitters: EditorsSplitters): Boolean {
@@ -43,42 +44,49 @@ internal class WelcomeScreenEmptyStateProvider : EditorEmptyStateComponentProvid
       return null
     }
 
-    return withContext(welcomeScreenStartupTracer.span("welcome right tab creating")) {
-      val provider = WelcomeRightTabContentProvider.getSingleExtension() ?: return@withContext null
-      val project = splitters.manager.project
-      val body = prepareDefaultBody(project, provider)
-      var tab: WelcomeScreenRightTabImpl? = null
-      try {
+    val provider = WelcomeRightTabContentProvider.getSingleExtension() ?: return null
+    val project = splitters.manager.project
+    // Owns every resource of the tab from the first one. The tab registers itself under it on the UI thread.
+    val owner = Disposer.newDisposable("welcome right tab")
+    var handedOver = false
+    try {
+      return withContext(welcomeScreenStartupTracer.span("welcome right tab creating")) {
+        val body = prepareDefaultBody(project, provider, owner)
         withContext(ModalityState.any().asContextElement()) {
           buildEditorEmptyStateComponentOnUiThread {
-            val newTab = WelcomeScreenRightTabImpl(project, provider, body)
-            tab = newTab
-            ClientProperty.put(newTab.component, COMPONENT_KEY, newTab)
-            newTab.component
+            val tab = WelcomeScreenRightTabImpl(project, provider, body, owner)
+            ClientProperty.put(tab.component, TAB_KEY, tab)
+            tab.component
           }
         }
-      }
-      catch (e: Throwable) {
-        // the tab owns the body once it exists
-        withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          val createdTab = tab
-          if (createdTab == null) {
-            body?.dispose()
-          }
-          else {
-            Disposer.dispose(createdTab)
-          }
-        }
-        throw e
+      }.also { handedOver = true }
+    }
+    finally {
+      if (!handedOver) {
+        disposeOnEdt(owner)
       }
     }
   }
 
   override fun disposeComponent(component: JComponent) {
-    ClientProperty.get(component, COMPONENT_KEY)?.let(Disposer::dispose)
+    ClientProperty.get(component, TAB_KEY)?.let { Disposer.dispose(it.owner) }
   }
 
   override fun getPreferredFocusedComponent(component: JComponent): JComponent? {
-    return ClientProperty.get(component, COMPONENT_KEY)?.getPreferredFocusedComponent()
+    return ClientProperty.get(component, TAB_KEY)?.getPreferredFocusedComponent()
+  }
+}
+
+/**
+ * Disposes [owner] on the EDT, also when the caller is cancelled.
+ *
+ * The function reads the EDT dispatcher inside [NonCancellable], because the first read creates a service.
+ * A cancelled coroutine cannot create a service.
+ */
+private suspend fun disposeOnEdt(owner: Disposable) {
+  withContext(NonCancellable) {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      Disposer.dispose(owner)
+    }
   }
 }
