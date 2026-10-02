@@ -1495,6 +1495,8 @@ jvm_library(
         "//platform/lsp:lsp_test_lib",
         "//platform/lsp-impl",
         "//platform/lsp-impl:lsp-impl_test_lib",
+        "//platform/lsp/testFramework",
+        "//platform/lsp/testFramework:testFramework_test_lib",
         "//python/python-ty:ty",
         "//python/python-ty:ty_test_lib",
         "//python/python-ruff:ruff",
