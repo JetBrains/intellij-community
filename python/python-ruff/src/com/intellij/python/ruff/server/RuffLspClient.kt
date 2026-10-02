@@ -151,6 +151,9 @@ class RuffLspClientDescriptor(
     return ruffInitializationOptions(fallback, configPath, ::getFileUri)
   }
 
+  // Ruff says "Please refer to the logs for more details" and writes the details, such as a TOML parse error, to stderr.
+  override val offerServerLogInNotifications: Boolean = true
+
   override val lspCustomization: PyLspToolCustomization = object : PyLspToolCustomization(toolConfig, pyTool, project) {
     // `Reformat Code` is delegated to the Ruff LSP server (`textDocument/formatting`), which keeps the long-lived
     // server in charge and avoids a per-format process spawn. The combined "sort imports when formatting" case cannot

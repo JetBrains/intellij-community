@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.Lsp4jClient
+import com.intellij.platform.lsp.api.LspCommunicationChannel
 import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspServerNotificationsHandler
 import com.intellij.platform.lsp.api.ProjectWideLspClientDescriptor
@@ -14,6 +15,8 @@ import com.intellij.testFramework.junit5.fixture.extensionPointFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import org.eclipse.lsp4j.ClientCapabilities
 import org.eclipse.lsp4j.ServerCapabilities
+import java.net.InetAddress
+import java.net.ServerSocket
 
 internal fun TestFixture<Project>.fakeLspIntegrationFixture(
   lspCustomization: LspCustomization = LspCustomization(),
@@ -21,6 +24,8 @@ internal fun TestFixture<Project>.fakeLspIntegrationFixture(
   configureServerCapabilities: (ServerCapabilities.() -> Unit)? = null,
   createLsp4jClient: ((LspServerNotificationsHandler) -> Lsp4jClient)? = null,
   isSupportedFile: ((VirtualFile) -> Boolean)? = null,
+  offerServerLogInNotifications: Boolean = false,
+  useSocket: Boolean = false,
 ): TestFixture<FakeLspIntegration> = testFixture { _ ->
   val projectFixture = this@fakeLspIntegrationFixture
   val project = projectFixture.init()
@@ -35,7 +40,8 @@ internal fun TestFixture<Project>.fakeLspIntegrationFixture(
   }.init()
 
   project.putUserData(FAKE_LSP_CONFIG_KEY, FakeLspConfig(lspCustomization, configureClientCapabilities, configureServerCapabilities,
-                                                          createLsp4jClient, isSupportedFile))
+                                                          createLsp4jClient, isSupportedFile, offerServerLogInNotifications,
+                                                          useSocket))
 
   initialized(FakeLspIntegration()) {
     project.putUserData(FAKE_LSP_CONFIG_KEY, null)
@@ -53,6 +59,8 @@ internal class FakeLspConfig(
   val configureServerCapabilities: (ServerCapabilities.() -> Unit)? = null,
   val createLsp4jClient: ((LspServerNotificationsHandler) -> Lsp4jClient)? = null,
   val isSupportedFile: ((VirtualFile) -> Boolean)? = null,
+  val offerServerLogInNotifications: Boolean = false,
+  val useSocket: Boolean = false,
 )
 
 private val FAKE_LSP_CONFIG_KEY = Key.create<FakeLspConfig>("FAKE_LSP_CONFIG_KEY")
@@ -60,18 +68,21 @@ private val FAKE_LSP_CONFIG_KEY = Key.create<FakeLspConfig>("FAKE_LSP_CONFIG_KEY
 internal class FakeLspIntegrationProvider : LspIntegrationProvider {
   override fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspIntegrationProvider.LspClientStarter) {
     val config = project.getUserData(FAKE_LSP_CONFIG_KEY) ?: FakeLspConfig()
-    clientStarter.ensureClientStarted(FakeLspClientDescriptor(project, config))
+    val descriptor = if (config.useSocket) FakeSocketLspClientDescriptor(project, config) else FakeLspClientDescriptor(project, config)
+    clientStarter.ensureClientStarted(descriptor)
   }
 }
 
 internal open class FakeLspClientDescriptor(
   project: Project,
-  private val config: FakeLspConfig = FakeLspConfig(),
+  protected val config: FakeLspConfig = FakeLspConfig(),
   presentableName: String = "FakeLspServer",
 ) : ProjectWideLspClientDescriptor(project, presentableName) {
   lateinit var server: FakeLspServer
 
   override val lspCustomization: LspCustomization = config.lspCustomization
+
+  override val offerServerLogInNotifications: Boolean = config.offerServerLogInNotifications
 
   override fun isSupportedFile(file: VirtualFile) = config.isSupportedFile?.invoke(file) ?: true
 
@@ -87,10 +98,23 @@ internal open class FakeLspClientDescriptor(
     /** command is usable for debugging **/
     return object : GeneralCommandLine("fake --lsp") {
       override fun startProcess(): Process {
-        val fakeServer = FakeLspServer(config.configureServerCapabilities)
+        val fakeServer = createServer()
         server = fakeServer
         return fakeServer
       }
     }
   }
+
+  protected open fun createServer(): FakeLspServer = FakeLspServer(config.configureServerCapabilities)
+}
+
+/** Talks LSP over a socket, so a test can write to the stdout of the server. */
+internal class FakeSocketLspClientDescriptor(project: Project, config: FakeLspConfig) : FakeLspClientDescriptor(project, config) {
+  // Lazy: the provider creates a descriptor for each opened file, but only the started one opens a socket. The server closes it.
+  private val serverSocket: ServerSocket by lazy { ServerSocket(0, 1, InetAddress.getLoopbackAddress()) }
+
+  override val lspCommunicationChannel: LspCommunicationChannel
+    get() = LspCommunicationChannel.Socket(serverSocket.localPort)
+
+  override fun createServer(): FakeLspServer = FakeSocketLspServer(config.configureServerCapabilities, serverSocket)
 }

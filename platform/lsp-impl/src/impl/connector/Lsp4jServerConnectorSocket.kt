@@ -31,6 +31,8 @@ internal class Lsp4jServerConnectorSocket(private val lspClient: LspClientImpl) 
       processHandler = lspClient.descriptor.startServerProcess()
       processHandler.addProcessListener(object : LspServerProcessListenerBase(lspClient) {
         override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+          // The server talks LSP over the socket, so both stdout and stderr are its log
+          printProcessOutputToConsole(event, outputType)
           val text = event.text.trimEnd().takeIf { it.isNotEmpty() } ?: return
           lspClient.logInfo("${if (ProcessOutputType.isStderr(outputType)) "STDERR" else "STDOUT"}: ${event.text}")
           if (ProcessOutputType.isStderr(outputType)) {

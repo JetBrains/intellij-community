@@ -61,8 +61,13 @@ private class OpenLspErrorOutputAction(
   private val lspClient: LspClientImpl,
 ) : AnAction(LspBundle.message("action.OpenLspErrorOutputAction.text"), null, AllIcons.General.Error), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    val fileName = LspBundle.message("server.error.output.editor.tab.name", lspClient.descriptor.presentableName)
-    val file = LightVirtualFile(fileName, PlainTextFileType.INSTANCE, lspClient.errorOutput ?: "")
-    FileEditorManager.getInstance(lspClient.project).openTextEditor(OpenFileDescriptor(lspClient.project, file), true)
+    openLspServerErrorOutput(lspClient)
   }
+}
+
+/** Opens the last part of the server error output (`stderr`) of [lspClient] in an editor tab. */
+internal fun openLspServerErrorOutput(lspClient: LspClientImpl) {
+  val fileName = LspBundle.message("server.error.output.editor.tab.name", lspClient.descriptor.presentableName)
+  val file = LightVirtualFile(fileName, PlainTextFileType.INSTANCE, lspClient.errorOutput ?: "")
+  FileEditorManager.getInstance(lspClient.project).openTextEditor(OpenFileDescriptor(lspClient.project, file), true)
 }

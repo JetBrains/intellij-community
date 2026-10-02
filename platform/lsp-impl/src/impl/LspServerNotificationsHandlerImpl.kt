@@ -26,6 +26,7 @@ import com.intellij.platform.lsp.impl.features.LspFeaturesRefreshing
 import com.intellij.platform.lsp.impl.features.executeCommandExpectingWorkspaceEdit
 import com.intellij.platform.lsp.impl.serviceView.LspClientConsole
 import com.intellij.platform.lsp.impl.serviceView.LspServiceViewSupport
+import com.intellij.platform.lsp.impl.serviceView.ShowLspServerLogAction
 import com.intellij.platform.lsp.impl.util.LspWorkspaceEditApplier
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.platform.util.progress.reportRawProgress
@@ -64,6 +65,7 @@ import java.util.Collections
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClientImpl) : LspServerNotificationsHandler {
@@ -77,6 +79,14 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
 
   private val progressTasks = ConcurrentHashMap<String, ProgressTask>()
   private val progressJobs = ConcurrentHashMap<String, Job>()
+
+  /**
+   * The responses to the `window/showMessageRequest` requests that the user has not answered yet.
+   * The Notifications tool window can keep a notification for a long time. Through the response, lsp4j holds the old client.
+   * So [releasePendingMessageRequests] clears these references when the client stops.
+   */
+  private val pendingMessageRequests: MutableSet<AtomicReference<CompletableFuture<MessageActionItem>?>> = ConcurrentHashMap.newKeySet()
+
   private val ansiDecoder = AnsiEscapeDecoder()
 
   /**
@@ -332,6 +342,12 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
     progressJobs.clear()
   }
 
+  /** Drops the responses to the unanswered `window/showMessageRequest` requests. The server is gone and cannot get them. */
+  internal fun releasePendingMessageRequests() {
+    pendingMessageRequests.forEach { it.set(null) }
+    pendingMessageRequests.clear()
+  }
+
   override fun refreshSemanticTokens(): CompletableFuture<Void> {
     if (!project.isDisposed) {
       lspClient.refreshSemanticTokens()
@@ -422,6 +438,16 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
     }
 
     val presentableMessage: @NlsSafe String = "${lspClient.descriptor.presentableName}: $cleanedMessage"
+    // The actions use only local values. A reference to this handler would keep the old client.
+    val pendingResult = AtomicReference<CompletableFuture<MessageActionItem>?>(result)
+    val pendingRequests = pendingMessageRequests
+    if (!actionItems.isNullOrEmpty()) {
+      pendingRequests.add(pendingResult)
+      // releasePendingMessageRequests() could have run before the add and missed this request
+      if (lspClient.state == LspServerState.ShutdownNormally || lspClient.state == LspServerState.ShutdownUnexpectedly) {
+        releasePendingMessageRequests()
+      }
+    }
     NotificationGroupManager.getInstance()
       .getNotificationGroup(notificationGroup)
       .createNotification(presentableMessage, type)
@@ -432,9 +458,13 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
           notification.addAction(object : AnAction(actionLabel) {
             override fun actionPerformed(e: AnActionEvent) {
               notification.expire()
-              result.complete(actionItem)
+              pendingRequests.remove(pendingResult)
+              pendingResult.getAndSet(null)?.complete(actionItem)
             }
           })
+        }
+        if (lspClient.descriptor.offerServerLogInNotifications && (type == NotificationType.ERROR || type == NotificationType.WARNING)) {
+          notification.addAction(ShowLspServerLogAction(lspClient))
         }
       }
       .notify(project)
