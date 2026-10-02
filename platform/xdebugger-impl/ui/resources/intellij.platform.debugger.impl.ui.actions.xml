@@ -198,7 +198,7 @@
       <reference ref="XDebugger.ValueGroup"/>
     </group>
 
-    <group id="XDebugger.Evaluate.Code.Fragment.Editor.Popup">
+    <group id="XDebugger.Evaluate.Code.Fragment.Editor.Popup" class="com.intellij.xdebugger.impl.ui.XDebuggerEvaluationEditorPopupGroup">
       <reference ref="BasicEditorPopupMenu"/>
       <reference ref="EditorToggleUseSoftWraps"/>
     </group>

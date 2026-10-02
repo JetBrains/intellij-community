@@ -1,0 +1,9 @@
+*:com.intellij.execution.impl.FilterApplyResult
+- a:getFilterResult():com.intellij.execution.filters.Filter$Result
+- a:getLineNumber():I
+*f:com.intellij.execution.impl.HyperlinksKt
+- *sf:applyToLineRange(com.intellij.execution.filters.Filter,com.intellij.execution.impl.HypertextInput,I,I,kotlin.jvm.functions.Function1):V
+*:com.intellij.execution.impl.HypertextInput
+- a:getLineCount():I
+- a:getLineStartOffset(I):I
+- a:getLineText(I):java.lang.String

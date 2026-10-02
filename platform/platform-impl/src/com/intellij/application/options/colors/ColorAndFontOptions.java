@@ -5,7 +5,7 @@ import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.codeHighlighting.RainbowHighlighter;
-import com.intellij.execution.impl.ConsoleViewUtil;
+import com.intellij.execution.impl.ConsoleColorSchemeKt;
 import com.intellij.ide.actions.QuickChangeColorSchemeAction;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
@@ -653,7 +653,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), true) {
         @Override
         protected EditorColorsScheme updateOptionsScheme(EditorColorsScheme selectedScheme) {
-          return ConsoleViewUtil.updateConsoleColorScheme(selectedScheme);
+          return ConsoleColorSchemeKt.createConsoleColorScheme(selectedScheme);
         }
       };
       return new NewColorAndFontPanel(new SchemesPanel(options, 0), new ConsoleFontOptions(options), previewPanel, ApplicationBundle.message("label.font.type"), null, null){

@@ -78,6 +78,7 @@
     <orderEntry type="module" module-name="intellij.java.rt" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.metadata" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.java.frontback.psi" />
   </component>

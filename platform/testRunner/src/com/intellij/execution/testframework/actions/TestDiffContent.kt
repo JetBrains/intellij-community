@@ -8,7 +8,6 @@ import com.intellij.diff.contents.DiffContentBase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.diff.DiffBundle
@@ -22,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.psi.util.startOffset
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.IntUnaryOperator
@@ -108,12 +106,12 @@ class TestDiffContent(
       val element = elemPtr.element ?: return null
       val document = PsiDocumentManager.getInstance(project).getDocument(element.containingFile) ?: return null
       val diffContent = DiffContentFactory.getInstance().create(project, document)
+      val elementMarker = document.createRangeMarker(element.textRange)
       return TestDiffContent(project, diffContent, text, elemPtr).apply {
         val originalLineConvertor = original.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR)
         putUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR, IntUnaryOperator { value ->
-          val valid = ReadAction.computeBlocking<Boolean, Throwable> { element.isValid }
-          if (!valid) return@IntUnaryOperator -1
-          val line = ReadAction.computeBlocking<Int, Throwable> { value + original.document.getLineNumber(element.startOffset) }
+          if (!elementMarker.isValid) return@IntUnaryOperator -1
+          val line = value + document.getLineNumber(elementMarker.startOffset)
           originalLineConvertor?.applyAsInt(line) ?: line
         })
       }

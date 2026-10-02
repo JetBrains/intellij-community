@@ -177,20 +177,24 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `generic protocol unification with generic implementation with generic superclass`() = test("""
-      from typing import Generic, Protocol
+      from typing import Generic, Protocol, TypeVar
 
-      class Fooable[T1](Protocol):
+      T1 = TypeVar('T1')
+      T2 = TypeVar('T2')
+
+      class Fooable(Protocol[T1]):
+      #                      ^^ WARNING This type variable is effectively covariant in this protocol, so it cannot be invariant here
           def foo(self) -> T1:
               ...
 
-      class Super[T2]:
+      class Super(Generic[T2]):
           def foo(self) -> T2:
               ...
 
-      class MyClass[T2](Super[T2]):
+      class MyClass(Super[T2]):
           pass
 
-      def f[T1](x: Fooable[T1]) -> T1:
+      def f(x: Fooable[T1]) -> T1:
           ...
 
       obj: MyClass[int]
@@ -583,32 +587,6 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       b = B()
       test(b)
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-32313"])
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON35)
-    fun `matching against multiple bound type var`() = test("""
-      from typing import Type, TypeVar
-
-      class A:
-          pass
-
-      class B(A):
-          pass
-
-      class C:
-          pass
-
-      T = TypeVar('T', A, B)
-
-      def f(cls: Type[T], arg: int) -> T:
-          pass
-
-      f(A, 1)
-      f(B, 2)
-      f(C, 3)
-      # └ WARNING Expected type 'Type[T ≤: Union[A, B]]', got 'Type[C]' instead
       """.trimIndent())
 
     @Test
@@ -1367,7 +1345,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestFor(issues = ["PY-87801"])
+    @TestFor(issues = ["PY-87801", "PY-87802"])
     fun `callable protocol with additional attribute rejects plain function`() = test("""
       from typing import Protocol
 
@@ -1767,32 +1745,6 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
             pass
 
     f(A)
-    """.trimIndent())
-
-  @Test
-  fun `structural types for nested calls`() = test("""
-    def f(x):
-        return x.foo + g(x)
-
-
-    def g(x):
-        return x.bar
-
-
-    def test():
-        f("string") # WARNING Type 'Literal["string"]' doesn't have expected attributes 'foo', 'bar'
-    """.trimIndent())
-
-  @Test
-  fun `comparison operators for numeric types`() = test("""
-    def f(x):
-        print(x < 0, x <= 0, x > 0, x >= 0, x != 0)
-        print(x.foo)
-
-
-    print(f(True)) # WARNING Type 'Literal[True]' doesn't have expected attribute 'foo'
-    print(f(0)) # WARNING Type 'Literal[0]' doesn't have expected attribute 'foo'
-    print(f(3.14)) # WARNING Type 'float' doesn't have expected attribute 'foo'
     """.trimIndent())
 
   @Test

@@ -50,6 +50,7 @@ jvm_library(
         "//platform/eel",
         "//fleet/rhizomedb",
         "//platform/util-class-loader:util-classLoader",
+        "//platform/consoleView",
     ],
 )
 
@@ -92,6 +93,7 @@ jvm_library(
         "//platform/eel:eel_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/util-class-loader:util-classLoader_test_lib",
+        "//platform/consoleView:consoleView_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.execution` end

@@ -742,24 +742,6 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    fun `is not None narrows (py3)`() = test("""
-      def test_1(self, c):
-          x = 1 if c else None
-          if x is not None:
-              expr = x
-      #       └ TYPE Literal[1]
-      """.trimIndent())
-
-    @Test
-    fun `is None narrows to None (py3)`() = test("""
-      def test_1(self, c):
-          x = 1 if c else None
-          if x is None:
-              expr = x
-      #       └ TYPE None
-      """.trimIndent())
-
-    @Test
     fun `issubclass inside list comprehension`() = test("""
       class A: pass
       expr = [e for e in [] if issubclass(e, A)]

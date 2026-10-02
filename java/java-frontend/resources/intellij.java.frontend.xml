@@ -11,5 +11,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.folding.impl.JavaFrontendFoldingBuilder"/>
+    <notificationSound group="Compiler" soundSignal="build.finished"/>
   </extensions>
 </idea-plugin>

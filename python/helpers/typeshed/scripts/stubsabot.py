@@ -863,8 +863,6 @@ def get_update_pr_body(update: Update, settings: StubtestSettings) -> str:
             If stubtest fails for this PR:
             - Leave this PR open (as a reminder, and to prevent stubsabot from opening another PR)
             - Fix stubtest failures in another PR, then close this PR
-
-            Note that you will need to close and re-open the PR in order to trigger CI
             """)
     else:
         body += textwrap.dedent(f"""

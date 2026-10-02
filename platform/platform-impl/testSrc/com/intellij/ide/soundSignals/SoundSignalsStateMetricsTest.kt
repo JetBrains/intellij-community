@@ -14,45 +14,20 @@ import org.junit.jupiter.api.Test
 @RegistryKey(key = SOUND_SIGNALS_ENABLED_REGISTRY_KEY, value = "true")
 class SoundSignalsStateMetricsTest {
   @Test
-  fun `the calculated play value is reported as not chosen`(): Unit = withSoundSignalsSettings {
-    setSupportScreenReaders(false)
-    assertThat(mode()).containsExactly(mapOf("enabled" to false, "explicit" to false))
-
+  fun `nothing is reported while no signal has a choice`(): Unit = withSoundSignalsSettings {
     setSupportScreenReaders(true)
-    assertThat(mode()).containsExactly(mapOf("enabled" to true, "explicit" to false))
+
+    assertThat(soundSignalEventIds()).isEmpty()
   }
 
   @Test
-  fun `an explicit play value is reported as chosen`(): Unit = withSoundSignalsSettings { settings ->
-    setSupportScreenReaders(true)
-    settings.setPlaySignals(false)
-    assertThat(mode()).containsExactly(mapOf("enabled" to false, "explicit" to true))
-
-    settings.setPlaySignals(true)
-    assertThat(mode()).containsExactly(mapOf("enabled" to true, "explicit" to true))
-  }
-
-  @Test
-  fun `nothing but the mode is reported while no signal is muted`(): Unit = withSoundSignalsSettings {
-    assertThat(soundSignalEventIds()).containsExactly("sound.signals.mode")
-  }
-
-  @Test
-  fun `every explicitly muted signal is reported by name`(): Unit = withSoundSignalsSettings { settings ->
+  fun `every explicit choice is reported by name`(): Unit = withSoundSignalsSettings { settings ->
     settings.setSignal(IdeSoundSignals.WARNING_CARET, false)
     settings.setSignal(IdeSoundSignals.FOLDED_CARET, false)
     settings.setSignal(IdeSoundSignals.ERROR_LINE, true)
     settings.setSignal("plugin.only.signal", false)
 
-    assertThat(disabledSignals()).containsExactlyInAnyOrder("warning.caret", "folded.caret")
-  }
-
-  @Test
-  fun `the muted set is reported even while play is off`(): Unit = withSoundSignalsSettings { settings ->
-    settings.setPlaySignals(false)
-    settings.setSignal(IdeSoundSignals.FOLDED_LINE, false)
-
-    assertThat(disabledSignals()).containsExactly("folded.line")
+    assertThat(choices()).containsExactlyInAnyOrder("warning.caret" to false, "folded.caret" to false, "error.line" to true)
   }
 
   @Test
@@ -69,9 +44,6 @@ class SoundSignalsStateMetricsTest {
 
   private fun soundSignalEventIds(): List<String> = collect().map { it.eventId }.filter { it.startsWith("sound.signal") }
 
-  private fun mode(): List<Map<String, Any?>> =
-    collect().filter { it.eventId == "sound.signals.mode" }.map { it.data.build().filterKeys { key -> key == "enabled" || key == "explicit" } }
-
-  private fun disabledSignals(): List<String?> =
-    collect().filter { it.eventId == "sound.signal.disabled" }.map { it.data.build()["signal"] as String? }
+  private fun choices(): List<Pair<String?, Any?>> =
+    collect().filter { it.eventId == "sound.signal.override" }.map { it.data.build().let { data -> data["signal"] as String? to data["enabled"] } }
 }

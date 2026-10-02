@@ -62,6 +62,7 @@ jvm_library(
         "//java/idea-ui:ui",
         "//platform/platform-impl:ide-impl",
         "//platform/execution",
+        "//platform/consoleView",
         "//platform/util:util-ui",
     ],
 )
@@ -107,6 +108,7 @@ jvm_library(
         "//java/idea-ui:ui_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/execution:execution_test_lib",
+        "//platform/consoleView:consoleView_test_lib",
         "//platform/util:util-ui_test_lib",
     ],
 )

@@ -52,6 +52,7 @@ jvm_library(
         "//platform/workspace/storage",
         "//platform/backend/workspace",
         "//platform/execution",
+        "//platform/consoleView",
         "//libraries/fastutil",
     ],
 )
@@ -97,6 +98,7 @@ jvm_library(
         "//platform/workspace/storage:storage_test_lib",
         "//platform/backend/workspace:workspace_test_lib",
         "//platform/execution:execution_test_lib",
+        "//platform/consoleView:consoleView_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
     ],
 )

@@ -3,13 +3,17 @@ package com.intellij.openapi.wm.impl.tabInEditor
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.RecentFileHistoryOrderListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +24,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -29,6 +34,9 @@ import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 class ToolWindowEditorTabFileTest {
+  @TestDisposable
+  private lateinit var disposable: Disposable
+
   private val projectFixture = projectFixture(
     openProjectTask = OpenProjectTask {
       beforeInitTasks += { it.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true) }
@@ -60,6 +68,19 @@ class ToolWindowEditorTabFileTest {
     return Channel<ToolWindowEditorTabPresentation>(capacity = Channel.UNLIMITED).also { it.trySend(initial) }
   }
 
+  /**
+   * Records the files that the sessions of this project report to Recent Files.
+   */
+  private fun recordRecentFileUpdates(): List<VirtualFile> {
+    val updatedFiles = mutableListOf<VirtualFile>()
+    project.messageBus.connect(disposable).subscribe(RecentFileHistoryOrderListener.TOPIC, object : RecentFileHistoryOrderListener {
+      override fun recentFileUpdated(file: VirtualFile) {
+        updatedFiles += file
+      }
+    })
+    return updatedFiles
+  }
+
   private suspend fun awaitPresentation(
     file: ToolWindowEditorTabFile,
     title: String,
@@ -80,6 +101,9 @@ class ToolWindowEditorTabFileTest {
 
     assertThat(file.tabTitle(project)).isEqualTo("Title")
     assertThat(file.tabIcon(project)).isEqualTo(AllIcons.General.Gear)
+    assertThat(file.isWritable).isFalse()
+    // A tab file stays read-only.
+    assertThatThrownBy { file.isWritable = true }.isInstanceOf(UnsupportedOperationException::class.java)
     assertThat(file.isWritable).isFalse()
     assertThat(file.isValid).isTrue()
     assertThat(file.isIncludedInEditorHistory(project)).isTrue()
@@ -114,7 +138,25 @@ class ToolWindowEditorTabFileTest {
     }
 
   @Test
-  fun `onEditorClosed invalidates the file`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+  fun `a persistent file belongs to the editor history of its own project only`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val ownFile = ToolWindowEditorTabFile(
+        toolWindowId = "TestToolWindow",
+        persistentPath = PersistentToolWindowEditorTabPath(project.locationHash, "TestToolWindow", "own-tab", "Own"),
+      )
+      val foreignFile = ToolWindowEditorTabFile(
+        toolWindowId = "TestToolWindow",
+        persistentPath = PersistentToolWindowEditorTabPath("other-project-hash", "TestToolWindow", "foreign-tab", "Foreign"),
+      )
+
+      assertThat(ownFile.isIncludedInEditorHistory(project)).isTrue()
+      assertThat(ownFile.isPersistedInEditorHistory()).isTrue()
+      // The application-level file system can resolve the tab of another project. Recent Files must not show it here.
+      assertThat(foreignFile.isIncludedInEditorHistory(project)).isFalse()
+    }
+
+  @Test
+  fun `closing the tab invalidates the file`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val file = createFile(ToolWindowEditorTabPresentation("Title"))
     assertThat(file.isValid).isTrue()
 
@@ -124,7 +166,7 @@ class ToolWindowEditorTabFileTest {
   }
 
   @Test
-  fun `onEditorClosed keeps the file valid when closing to reopen`(): Unit =
+  fun `closing the tab to reopen it keeps the file valid`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val file = createFile(ToolWindowEditorTabPresentation("Title"))
       // Set by the "return to tool window" path: the file is closed only to be moved, not invalidated.
@@ -136,7 +178,7 @@ class ToolWindowEditorTabFileTest {
     }
 
   @Test
-  fun `invalidateEditorTabFile marks the file invalid`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+  fun `invalidate marks the file invalid`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val file = createFile(ToolWindowEditorTabPresentation("Title"))
 
     file.invalidate()
@@ -175,6 +217,44 @@ class ToolWindowEditorTabFileTest {
       assertThat(file.tabTitle(project)).isEqualTo("Renamed title")
       // The icon is unchanged across the rename.
       assertThat(file.tabIcon(project)).isEqualTo(AllIcons.General.Gear)
+    }
+
+  @Test
+  fun `the session publishes a recent file update only for a changed presentation`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val updatedFiles = recordRecentFileUpdates()
+      val presentations = presentationChannel(ToolWindowEditorTabPresentation("Title", AllIcons.General.Gear))
+      val file = createFile(presentations.receiveAsFlow())
+      awaitPresentation(file, title = "Title", icon = AllIcons.General.Gear)
+
+      presentations.trySend(ToolWindowEditorTabPresentation("Title", AllIcons.General.Gear))
+      presentations.trySend(ToolWindowEditorTabPresentation("Renamed", AllIcons.General.Gear))
+      awaitPresentation(file, title = "Renamed", icon = AllIcons.General.Gear)
+
+      // The flow is ordered, so the equal presentation was handled before the rename. Only the initial
+      // presentation and the rename may reorder Recent Files.
+      assertThat(updatedFiles).containsExactly(file, file)
+    }
+
+  @Test
+  fun `a closed session ignores later presentations`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val updatedFiles = recordRecentFileUpdates()
+      val presentations = presentationChannel(ToolWindowEditorTabPresentation("Title", AllIcons.General.Gear))
+      val file = createFile(presentations.receiveAsFlow())
+      awaitPresentation(file, title = "Title", icon = AllIcons.General.Gear)
+      val updatesBeforeClose = updatedFiles.size
+
+      ToolWindowEditorTabManager.getInstance(project).closeEditorTabFile(file, releaseContent = true)
+      presentations.trySend(ToolWindowEditorTabPresentation("Renamed", AllIcons.General.Add))
+      repeat(5) {
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+        delay(20.milliseconds)
+      }
+
+      assertThat(file.name).isEqualTo("Title")
+      assertThat(file.lastKnownIcon).isEqualTo(AllIcons.General.Gear)
+      assertThat(updatedFiles).hasSize(updatesBeforeClose)
     }
 
   @Test

@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
@@ -23,7 +22,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +44,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 
 public final class MacrosDialog extends DialogWrapper {
   private final DefaultListModel<Item> myMacrosModel = new DefaultListModel<>();
@@ -368,32 +365,31 @@ public final class MacrosDialog extends DialogWrapper {
     return myMacrosList;
   }
 
+  /**
+   * @deprecated use {@link CommonMacroFilters} instead.
+   */
+  @Deprecated
   public static final class Filters {
     private Filters() { }
 
-    private static final Pattern CAMEL_HUMP_START_PATTERN = Pattern.compile("(?<=[\\p{Lower}\\p{Digit}])(?![\\p{Lower}\\p{Digit}])");
+    /** @deprecated use {@link CommonMacroFilters#ALL} instead. */
+    @Deprecated
+    public static final @NotNull Predicate<? super Macro> ALL = CommonMacroFilters.ALL;
 
-    public static final @NotNull Predicate<? super Macro> ALL = Predicates.alwaysTrue();
-    public static final @NotNull Predicate<? super Macro> NONE = Predicates.alwaysFalse();
+    /** @deprecated use {@link CommonMacroFilters#NONE} instead. */
+    @Deprecated
+    public static final @NotNull Predicate<? super Macro> NONE = CommonMacroFilters.NONE;
 
-    public static final @NotNull Predicate<? super Macro> ANY_PATH =
-      m -> nameContains(m, "File") ||
-           nameContains(m, "Dir") ||
-           m instanceof ContentRootMacro ||
-           m instanceof FilePromptMacro;
+    /** @deprecated use {@link CommonMacroFilters#ANY_PATH} instead. */
+    @Deprecated
+    public static final @NotNull Predicate<? super Macro> ANY_PATH = CommonMacroFilters.ANY_PATH;
 
-    public static final @NotNull Predicate<? super Macro> DIRECTORY_PATH =
-      m -> nameContains(m, "Dir") ||
-           m instanceof ContentRootMacro ||
-           m instanceof FilePromptMacro;
+    /** @deprecated use {@link CommonMacroFilters#DIRECTORY_PATH} instead. */
+    @Deprecated
+    public static final @NotNull Predicate<? super Macro> DIRECTORY_PATH = CommonMacroFilters.DIRECTORY_PATH;
 
-    public static final @NotNull Predicate<? super Macro> FILE_PATH =
-      m -> nameContains(m, "File") && !nameContains(m, "Dir") ||
-           m instanceof FilePromptMacro;
-
-    private static boolean nameContains(@NotNull Macro m, @NotNull String part) {
-      final String[] nameParts = CAMEL_HUMP_START_PATTERN.split(m.getName());
-      return ArrayUtil.contains(part, nameParts);
-    }
+    /** @deprecated use {@link CommonMacroFilters#FILE_PATH} instead. */
+    @Deprecated
+    public static final @NotNull Predicate<? super Macro> FILE_PATH = CommonMacroFilters.FILE_PATH;
   }
 }

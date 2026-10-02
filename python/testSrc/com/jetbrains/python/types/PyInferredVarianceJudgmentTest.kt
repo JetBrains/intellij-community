@@ -562,7 +562,6 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
     class D[U]:
     #       └ INFERRED_VARIANCE CONTRAVARIANT
         def method1(self, u: U): pass
-        @staticmethod
         def fn() -> U: pass # does not change the inferred variance
     """.trimIndent())
 

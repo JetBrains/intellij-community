@@ -4,8 +4,9 @@ package com.intellij.platform.lsp.impl.features.navigation
 import com.intellij.codeInsight.navigation.actions.GotoImplementationAction
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.QueryExecutorBase
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.lsp.api.customization.LspGoToImplementationSupport
@@ -41,9 +42,8 @@ import javax.swing.Icon
 internal class LspImplementationDeclarationSearcher : PomDeclarationSearcher() {
   override fun findDeclarationsAt(element: PsiElement, offsetInElement: Int, consumer: Consumer<in PomTarget>) {
     // This function is called for many features that need a named element at the offset.
-    // We care only about the "Go To Implementation" action.
-    val actionClass = service<CurrentActionHolder>().currentActionClass ?: return
-    if (!GotoImplementationAction::class.java.isAssignableFrom(actionClass)) return
+    // We care only about the "Go To Implementation" action, which the thread context names.
+    if (ActionUtil.getActionThreadContext()?.actionId != IdeActions.ACTION_GOTO_IMPLEMENTATION) return
 
     val psiFile = element.containingFile ?: return
     val project = psiFile.project

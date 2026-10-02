@@ -63,6 +63,9 @@ a:com.intellij.codeInsight.hint.HintManager
 - java.lang.annotation.Annotation
 @:com.intellij.codeInsight.hint.HintManager$PositionFlags
 - java.lang.annotation.Annotation
+a:com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase
+- com.intellij.openapi.editor.actionSystem.TypedActionHandlerEx
+- <init>(com.intellij.openapi.editor.actionSystem.TypedActionHandler):V
 c:com.intellij.execution.ExecutionFinishedException
 - com.intellij.execution.ExecutionException
 - <init>():V
@@ -11553,6 +11556,8 @@ f:com.intellij.util.net.ssl.ConfirmingTrustManager$MutableTrustManager
 - addCertificate(java.security.cert.X509Certificate):Z
 - addListener(com.intellij.util.net.ssl.CertificateListener):V
 - checkServerTrusted(java.security.cert.X509Certificate[],java.lang.String):V
+- checkServerTrusted(java.security.cert.X509Certificate[],java.lang.String,java.net.Socket):V
+- checkServerTrusted(java.security.cert.X509Certificate[],java.lang.String,javax.net.ssl.SSLEngine):V
 - containsCertificate(java.lang.String):Z
 - getAcceptedIssuers():java.security.cert.X509Certificate[]
 - getAliases():java.util.List

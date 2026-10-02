@@ -52,11 +52,10 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.frontend" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
-    <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" />
-    <orderEntry type="module" module-name="intellij.libraries.compose.swing" />
     <orderEntry type="module" module-name="intellij.platform.compose.swing" />
   </component>
 </module>

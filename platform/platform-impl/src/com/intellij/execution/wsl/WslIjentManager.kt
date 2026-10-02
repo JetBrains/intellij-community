@@ -7,8 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentSession
+import com.intellij.platform.ijent.IjentSessionState
+import com.intellij.platform.ijent.ParentOfIjentScopes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -45,6 +48,15 @@ interface WslIjentManager {
    * @return An initialized [IjentPosixApi] ready for interaction with the WSL environment.
    */
   suspend fun getIjentApi(descriptor: EelDescriptor?, wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi
+
+  fun getIjentSessionState(wslDistribution: WSLDistribution, rootUser: Boolean): StateFlow<IjentSessionState>
+
+  suspend fun getIjentSession(
+    wslDistribution: WSLDistribution,
+    project: Project?,
+    rootUser: Boolean,
+    sessionScope: ParentOfIjentScopes,
+  ): IjentSession.Posix
 
   fun isIjentInitialized(descriptor: EelDescriptor): Boolean
 

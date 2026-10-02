@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.platform.ide.impl.navigation.IncrementalSearchEditorData;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
@@ -58,7 +59,6 @@ import java.util.regex.PatternSyntaxException;
 
 @ApiStatus.Internal
 public final class IncrementalSearchHandler {
-  private static final Key<PerEditorSearchData> SEARCH_DATA_IN_EDITOR_VIEW_KEY = Key.create("IncrementalSearchHandler.SEARCH_DATA_IN_EDITOR_VIEW_KEY");
   private static final Key<PerHintSearchData> SEARCH_DATA_IN_HINT_KEY = Key.create("IncrementalSearchHandler.SEARCH_DATA_IN_HINT_KEY");
   private static final Logger LOG = Logger.getInstance(IncrementalSearchHandler.class);
 
@@ -76,16 +76,6 @@ public final class IncrementalSearchHandler {
       this.project = project;
       this.label = label;
     }
-  }
-
-  private static final class PerEditorSearchData {
-    LightweightHint hint;
-    @NlsContexts.Label String lastSearch;
-  }
-
-  public static boolean isHintVisible(final Editor editor) {
-    final PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
-    return data != null && data.hint != null && data.hint.isVisible();
   }
 
   public void invoke(Project project, final Editor editor) {
@@ -107,9 +97,9 @@ public final class IncrementalSearchHandler {
     String selection = editor.getSelectionModel().getSelectedText();
     JLabel label2 = new MyLabel(selection == null ? "" : selection);
 
-    PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+    IncrementalSearchEditorData data = editor.getUserData(IncrementalSearchEditorData.KEY);
     if (data == null) {
-      data = new PerEditorSearchData();
+      data = new IncrementalSearchEditorData();
     } else {
       if (data.hint != null) {
         if (data.lastSearch != null) {
@@ -147,7 +137,7 @@ public final class IncrementalSearchHandler {
         if (data.segmentHighlighter != null){
           data.segmentHighlighter.dispose();
         }
-        PerEditorSearchData editorData = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+        IncrementalSearchEditorData editorData = editor.getUserData(IncrementalSearchEditorData.KEY);
         editorData.hint = null;
         editorData.lastSearch = prefix;
 
@@ -196,7 +186,7 @@ public final class IncrementalSearchHandler {
     hint.putUserData(SEARCH_DATA_IN_HINT_KEY, hintData);
 
     data.hint = hint;
-    editor.putUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY, data);
+    editor.putUserData(IncrementalSearchEditorData.KEY, data);
 
     if (!hintData.label.getText().isEmpty()) {
       updatePosition(editor, hintData, true, false);
@@ -363,7 +353,7 @@ public final class IncrementalSearchHandler {
 
     @Override
     public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
-      PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+      IncrementalSearchEditorData data = editor.getUserData(IncrementalSearchEditorData.KEY);
       if (data == null || data.hint == null){
         if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
       }
@@ -394,7 +384,7 @@ public final class IncrementalSearchHandler {
 
     @Override
     public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
-      PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+      IncrementalSearchEditorData data = editor.getUserData(IncrementalSearchEditorData.KEY);
       if (data == null || data.hint == null){
         myOriginalHandler.execute(editor, caret, dataContext);
       }
@@ -421,7 +411,7 @@ public final class IncrementalSearchHandler {
 
     @Override
     public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
-      PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+      IncrementalSearchEditorData data = editor.getUserData(IncrementalSearchEditorData.KEY);
       if (data == null || data.hint == null){
         myOriginalHandler.execute(editor, caret, dataContext);
       }
@@ -440,7 +430,7 @@ public final class IncrementalSearchHandler {
 
     @Override
     public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+      IncrementalSearchEditorData data = editor.getUserData(IncrementalSearchEditorData.KEY);
       return data != null && data.hint != null || myOriginalHandler.isEnabled(editor, caret, dataContext);
     }
   }
@@ -455,7 +445,7 @@ public final class IncrementalSearchHandler {
 
     @Override
     public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
-      PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+      IncrementalSearchEditorData data = editor.getUserData(IncrementalSearchEditorData.KEY);
       if (data == null || data.hint == null){
         myOriginalHandler.execute(editor, caret, dataContext);
       }
@@ -474,7 +464,7 @@ public final class IncrementalSearchHandler {
 
     @Override
     public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+      IncrementalSearchEditorData data = editor.getUserData(IncrementalSearchEditorData.KEY);
       return data != null && data.hint != null || myOriginalHandler.isEnabled(editor, caret, dataContext);
     }
   }

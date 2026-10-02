@@ -5,7 +5,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.backend"/>
-    <module name="intellij.platform.vcs.shared"/>
     <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.fastutil"/>
@@ -25,6 +24,8 @@
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.codeStyle.impl"/>
     <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.consoleView"/>
+    <module name="intellij.platform.consoleView.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -35,6 +36,7 @@
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.core"/>
@@ -52,6 +54,7 @@
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.lvcs"/>
+    <module name="intellij.platform.polySymbols"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>

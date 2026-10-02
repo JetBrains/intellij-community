@@ -43,7 +43,7 @@ import javax.swing.SwingUtilities
  * A dock container that allows dragging a [ToolWindowEditorTabFile] from the editor
  * back into its original tool window.
  */
-internal class ToolWindowEditorTabDockContainer private constructor(
+internal class ToolWindowEditorTabDockContainer internal constructor(
   private val project: Project,
   private val toolWindowId: String,
   private val component: JComponent,

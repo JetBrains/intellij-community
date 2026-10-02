@@ -5,9 +5,12 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionGroupWrapper;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -15,7 +18,7 @@ import java.util.List;
  * @author gregsh
  */
 @ApiStatus.Internal
-public class EditorMousePopupActionGroup extends ActionGroupWrapper {
+public class EditorMousePopupActionGroup extends ActionGroupWrapper implements ActionRemoteBehaviorSpecification {
 
   private final EditorMouseEvent myEvent;
 
@@ -31,5 +34,13 @@ public class EditorMousePopupActionGroup extends ActionGroupWrapper {
 
   public @NotNull EditorMouseEvent getEvent() {
     return myEvent;
+  }
+
+  @Override
+  public @Nullable ActionRemoteBehavior getBehavior() {
+    if (getDelegate() instanceof ActionRemoteBehaviorSpecification specification) {
+      return specification.getBehavior();
+    }
+    return null;
   }
 }

@@ -17,8 +17,10 @@ import org.jetbrains.intellij.build.productLayout.LibraryModuleSets.librariesLsp
  * - **debugger**: Debugger platform
  * - **vcs**: Version control support
  * - **xml**: XML support
+ * - **externalSystem**: the external system platform, for a product that bundles a build-tool plugin
  * - **composeRuntime**: Compose runtime and Compose Swing, for a product that bundles the Compose plugin
  * - **spellchecker/settingsSync/ml**: one feature with the library it needs
+ * - **polySymbols**: the PolySymbols framework, for a product that bundles the XML or the VCS plugin
  * - **ideCommon**: Full IDE common modules
  *
  * Has a one-way dependency on CoreModuleSets (platform infrastructure, RPC) and LibraryModuleSets (library wrappers).
@@ -82,8 +84,8 @@ object CommunityModuleSets {
 
     module("intellij.platform.buildScripts.downloader")
 
-    embeddedModule("intellij.platform.credentialStore.ui")
-    embeddedModule("intellij.platform.credentialStore.impl")
+    module("intellij.platform.credentialStore.ui")
+    module("intellij.platform.credentialStore.impl")
 
     // Core platform backend/frontend split
     module("intellij.platform.settings.local")
@@ -150,18 +152,7 @@ object CommunityModuleSets {
     module("intellij.platform.completion.frontend")
     module("intellij.platform.completion.backend")
 
-    embeddedModule("intellij.platform.polySymbols")
-    module("intellij.platform.polySymbols.web")
-
-    // Platform language modules (moved from platformLangBase for consolidation)
-    // These provide core IDE functionality needed by all full IDE products
-    embeddedModule("intellij.platform.builtInServer.impl")
-    module("intellij.platform.externalSystem")
-    module("intellij.platform.externalSystem.dependencyUpdater")
-    module("intellij.platform.externalSystem.impl")
-    module("intellij.platform.externalProcessAuthHelper")
-
-    module("intellij.platform.util.commonsLangV2Shim")
+    moduleSet(builtInServer())
   }
 
   /**
@@ -186,6 +177,36 @@ object CommunityModuleSets {
   // region Feature Module Sets
 
   /**
+   * The built-in HTTP server and its REST services.
+   *
+   * The API module `intellij.platform.builtInServer` stays in [CoreModuleSets.coreLang], because the core
+   * resolves the server through it. The implementation loads in its own class loader.
+   *
+   * `intellij.platform.externalProcessAuthHelper` is the askpass bridge. The helper app that git, ssh, or sudo
+   * starts calls the IDE through a REST endpoint of this server, and the module registers that endpoint.
+   * Git4Idea, GitHub, Subversion, Docker SSH, the SSH plugin UI, and the split frontend depend on it.
+   */
+  fun builtInServer(): ModuleSet = moduleSet("builtInServer") {
+    module("intellij.platform.builtInServer.impl")
+    module("intellij.platform.externalProcessAuthHelper")
+  }
+
+  /**
+   * The external system platform: the API, the implementation, and the dependency updater.
+   * The build-tool plugins (Gradle, Maven, Amper), the Java and Kotlin plugins, Docker, and the
+   * split execution frontend depend on it.
+   *
+   * [ideCommon] nests this set. A lean product that bundles one of these plugins adds the set itself.
+   * `intellij.platform.externalProcessAuthHelper` is not part of this set. It is the askpass bridge,
+   * and it lives in [builtInServer].
+   */
+  fun externalSystem(): ModuleSet = moduleSet("externalSystem") {
+    module("intellij.platform.externalSystem")
+    module("intellij.platform.externalSystem.impl")
+    module("intellij.platform.externalSystem.dependencyUpdater")
+  }
+
+  /**
    * VCS (Version Control System) shared anchor modules.
    * Implementation, log, DVCS, and sqlite content is bundled via intellij.platform.vcs.plugin.
    * The microba date picker is a dependency of `intellij.platform.vcs.impl` in that plugin.
@@ -200,8 +221,8 @@ object CommunityModuleSets {
    * VCS shared modules (used by both frontend and backend).
    */
   fun vcsShared(): ModuleSet = moduleSet("vcs.shared") {
-    embeddedModule("intellij.platform.vcs.core")
-    embeddedModule("intellij.platform.vcs.shared")
+    module("intellij.platform.vcs.core")
+    module("intellij.platform.vcs.shared")
     module("intellij.platform.vcs.impl.shared")
     module("intellij.platform.vcs.dvcs.impl.shared")
   }
@@ -253,7 +274,7 @@ object CommunityModuleSets {
    * Duplicates analysis modules.
    */
   fun duplicates(): ModuleSet = moduleSet("duplicates") {
-    embeddedModule("intellij.platform.duplicates.analysis")
+    module("intellij.platform.duplicates.analysis")
   }
 
   /**
@@ -384,8 +405,22 @@ object CommunityModuleSets {
   }
 
   /**
+   * The PolySymbols framework: the API, the backend, and the web-types support.
+   * The XML plugin, the VCS plugin (`intellij.platform.vcs.impl` resolves issue links in a commit message),
+   * CSS, JavaScript and the web framework plugins depend on it.
+   *
+   * [ideCommon] nests this set. A lean product that bundles one of these plugins adds the set itself.
+   * No module is embedded: no embedded module depends on it, and every consumer declares the dependency.
+   */
+  fun polySymbols(): ModuleSet = moduleSet("polySymbols") {
+    module("intellij.platform.polySymbols")
+    module("intellij.platform.polySymbols.backend")
+    module("intellij.platform.polySymbols.web")
+  }
+
+  /**
    * IDE common modules.
-   * Nests essential, debugger, spellchecker, settings.sync, ml, vcs, lsp, duplicates, and the
+   * Nests essential, debugger, spellchecker, settings.sync, ml, externalSystem, polySymbols, vcs, lsp, duplicates, and the
    * libraries.ide.common and libraries.grpc sets from [LibraryModuleSets].
    * No Compose module is in this set. A product that bundles the plugin [COMPOSE_PLUGIN_MODULE] adds [composeRuntime].
    */
@@ -399,6 +434,8 @@ object CommunityModuleSets {
     moduleSet(spellchecker())
     moduleSet(settingsSync())
     moduleSet(ml())
+    moduleSet(externalSystem())
+    moduleSet(polySymbols())
 
     // Additional IDE-specific modules
     module("intellij.platform.lvcs.impl")
@@ -424,8 +461,6 @@ object CommunityModuleSets {
     module("intellij.emojipicker")
     module("intellij.platform.ide.impl.wsl")
     module("intellij.platform.diagnostic.telemetry.agent.extension")
-    // todo: move to essential modules when not embedded
-    module("intellij.platform.polySymbols.backend")
     module("intellij.regexp")
     module("intellij.platform.langInjection")
     module("intellij.platform.langInjection.backend")

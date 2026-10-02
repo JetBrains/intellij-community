@@ -203,6 +203,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-19723"])
     fun `type var substitution in positional args from docstring`() = test("""
       def foo(*args):
           '''
@@ -420,7 +421,6 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-32375"])
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON35)
     fun `matching return against bounded type var`() = test("""
       from typing import TypeVar
       F = TypeVar('F', bound=int)
@@ -1120,19 +1120,6 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    fun `generic kwargs`() = test("""
-      from typing import Any, Dict, TypeVar
-      
-      T = TypeVar('T')
-      
-      def generic_kwargs(**kwargs: T) -> Dict[str, T]:
-          pass
-      
-      expr = generic_kwargs(a=1, b='foo')
-      #└ TYPE dict[str, int | str]
-      """.trimIndent())
-
-    @Test
     @TestFor(issues = ["PY-27783"])
     fun `applying super substitution to generic class`() = test("""
       from typing import TypeVar, Generic, Dict, List
@@ -1172,7 +1159,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestFor(issues = ["PY-36008"])
+    @TestFor(issues = ["PY-36008", "PY-26061"])
     @TestCaseOptions(languageLevel = LanguageLevel.PYTHON36, assertRecursionPrevention = false)
     fun `unresolved generic replacement`() = test("""
       from typing import TypeVar, Generic
@@ -1328,7 +1315,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-33500"])
-    fun `implicit generic dunder call call on typed element`() = test("""
+    fun `implicit generic dunder call on typed element`() = test("""
       from typing import TypeVar, Generic
 
       _T = TypeVar('_T')
@@ -1944,17 +1931,6 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  @TestFor(issues = ["PY-32375"])
-  fun `returning str against bounded TypeVar return`() = test("""
-    from typing import TypeVar
-
-    F = TypeVar('F', bound=int)
-
-    def deco(func: F) -> F:
-        return "" # WARNING Expected type 'F ≤: int', got 'Literal[""]' instead
-    """.trimIndent())
-
-  @Test
   @TestFor(issues = ["PY-32313"])
   fun `matching against constrained TypeVar in type`() = test("""
     from typing import Type, TypeVar
@@ -1975,38 +1951,8 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
 
     f(A, 1)
     f(B, 2)
-    f(C, 3) # WARNING Expected type 'type[T ≤: A | B]', got 'type[C]' instead
-    """.trimIndent())
-
-  @Test
-  @TestFor(issues = ["PY-33500"])
-  fun `implicit generic dunder call on typed element`() = test("""
-    from typing import TypeVar, Generic
-
-    _T = TypeVar('_T')
-
-    class Callback(Generic[_T]):
-        def __call__(self, arg: _T):
-            pass
-
-    def foo(cb: Callback[int]):
-        cb("42") # WARNING Expected type 'int', got 'Literal["42"]' instead
-    """.trimIndent())
-
-  @Test
-  fun `generic callable parameter mapped by another argument`() = test("""
-    from typing import Callable, TypeVar
-
-    T = TypeVar('T')
-
-    def func(x: T, c: Callable[[T], None]) -> None:
-        pass
-
-    def accepts_anything(x: str) -> None:
-        pass
-
-    # FIXME PY-37876: an error is expected here but is not produced; documents current behavior.
-    func(42, accepts_anything)
+    f(C, 3)
+    # └ WARNING Expected type 'type[T ≤: A | B]', got 'type[C]' instead
     """.trimIndent())
 
 }

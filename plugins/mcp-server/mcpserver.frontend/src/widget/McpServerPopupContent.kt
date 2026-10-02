@@ -37,13 +37,14 @@ import org.jetbrains.compose.swing.components.Label
 import org.jetbrains.compose.swing.components.button.Button
 import org.jetbrains.compose.swing.components.button.CheckBox
 import org.jetbrains.compose.swing.components.button.RadioButton
-import org.jetbrains.compose.swing.components.layout.Alignment
-import org.jetbrains.compose.swing.components.layout.Arrangement
-import org.jetbrains.compose.swing.components.layout.Column
-import org.jetbrains.compose.swing.components.layout.ColumnScope
 import org.jetbrains.compose.swing.components.layout.Glue
-import org.jetbrains.compose.swing.components.layout.Row
 import org.jetbrains.compose.swing.components.layout.RigidArea
+import org.jetbrains.compose.swing.foundation.layout.Alignment
+import org.jetbrains.compose.swing.foundation.layout.Arrangement
+import org.jetbrains.compose.swing.foundation.layout.Column
+import org.jetbrains.compose.swing.foundation.layout.ColumnScope
+import org.jetbrains.compose.swing.foundation.layout.Row
+import org.jetbrains.compose.swing.foundation.layout.fillMaxWidth
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.appearance.background
 import org.jetbrains.compose.swing.modifier.appearance.emptyBorder
@@ -85,7 +86,7 @@ internal fun McpServerPopupContent(model: McpServerPopupModel, modifier: SwingMo
   Column(modifier.background(JBUI.CurrentTheme.Popup.BACKGROUND).opaque(true)) {
     if (isConsentRequired) {
       ConsentContent(
-        modifier = SwingModifier.fillWidth().popupPadding(),
+        modifier = SwingModifier.fillMaxWidth().popupPadding(),
         helpLink = model.helpLink,
         onConfirm = {
           model.enable()
@@ -97,7 +98,7 @@ internal fun McpServerPopupContent(model: McpServerPopupModel, modifier: SwingMo
     }
     else {
       HeaderRow(
-        modifier = SwingModifier.fillWidth().popupPadding(),
+        modifier = SwingModifier.fillMaxWidth().popupPadding(),
         onSettingsClick = model::onSettingsClick,
         isServerEnabled = isEnabled,
         onEnabledChange = { enable ->
@@ -110,22 +111,24 @@ internal fun McpServerPopupContent(model: McpServerPopupModel, modifier: SwingMo
         connectionCount = model.activeConnectionCount,
         onShowConnectionsClick = model::showInServiceView,
       )
-      if (isEnabled) EnabledMcpSettings(SwingModifier.fillWidth().popupPadding(), model)
-      else DisabledDescription(SwingModifier.fillWidth().popupPadding(), model)
+      if (isEnabled) EnabledMcpSettings(SwingModifier.fillMaxWidth().popupPadding(), model)
+      else DisabledDescription(SwingModifier.fillMaxWidth().popupPadding(), model)
     }
-    FooterRow(SwingModifier.fillWidth().background(UIUtil.getPanelBackground()).opaque(true).popupPadding(), model, isEnabled)
+    FooterRow(SwingModifier.fillMaxWidth().background(UIUtil.getPanelBackground()).opaque(true).popupPadding(), model, isEnabled)
   }
 }
 
 @Composable
 private fun ConsentContent(modifier: SwingModifier, helpLink: String, onConfirm: () -> Unit, onCancel: () -> Unit) {
-  Column(modifier.opaque(false), verticalArrangement = Arrangement.spacedBy(JBUI.scale(spacing.verticalMediumGap))) {
+  Column(modifier, verticalArrangement = Arrangement.spacedBy(JBUI.scale(spacing.verticalMediumGap))) {
     Label(McpServerBundle.message("dialog.title.mcp.server.consent"),
           SwingModifier.icon(AllIcons.General.Warning).font(JBFont.h4()))
-    PopupText(McpServerBundle.message("dialog.message.mcp.server.consent", helpLink), SwingModifier.fillWidth())
-    Row(SwingModifier.fillWidth().opaque(false), horizontalArrangement = Arrangement.End) {
+    PopupText(McpServerBundle.message("dialog.message.mcp.server.consent", helpLink), SwingModifier.fillMaxWidth())
+    Row(
+      SwingModifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.spacedBy(JBUI.scale(spacing.horizontalSmallGap), Alignment.End),
+    ) {
       Button(McpServerBundle.message("dialog.mcp.server.consent.cancel.button"), onClick = onCancel, modifier = SwingModifier.opaque(false))
-      RigidArea(width = JBUI.scale(spacing.horizontalSmallGap), height = 0)
       Button(McpServerBundle.message("dialog.mcp.server.consent.enable.button"),
              onClick = onConfirm,
              modifier = SwingModifier.defaultButton().initialFocus().opaque(false))
@@ -137,7 +140,7 @@ private fun ConsentContent(modifier: SwingModifier, helpLink: String, onConfirm:
 private fun ColumnScope.EnabledMcpSettings(modifier: SwingModifier, model: McpServerPopupModel) {
   var isBraveMode by remember(model) { mutableStateOf(model.braveMode) }
   val clients by produceState(emptyList(), model) { value = model.detectClients() }
-  Column(SwingModifier.fillWidth().opaque(false)) {
+  Column(SwingModifier.fillMaxWidth()) {
 
     PopupDivider()
 
@@ -146,7 +149,7 @@ private fun ColumnScope.EnabledMcpSettings(modifier: SwingModifier, model: McpSe
       PopupDivider()
     }
     Row(
-      modifier = modifier.opaque(false),
+      modifier = modifier,
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(JBUI.scale(spacing.horizontalSmallGap)),
     ) {
@@ -173,7 +176,7 @@ private fun HeaderRow(
   connectionCount: Int,
   onShowConnectionsClick: () -> Unit,
 ) {
-  Row(modifier.opaque(false), verticalAlignment = Alignment.CenterVertically) {
+  Row(modifier, verticalAlignment = Alignment.CenterVertically) {
     CheckBox(
       text = McpServerBundle.message("mcp.server.configurable.name"),
       checked = isServerEnabled,
@@ -206,10 +209,10 @@ private fun FooterRow(modifier: SwingModifier, model: McpServerPopupModel, isEna
 private fun DisabledDescription(modifier: SwingModifier, model: McpServerPopupModel) {
   @NlsSafe
   val clientNames by produceState(emptyList(), model) { value = model.detectClientNames() }
-  Column(modifier.opaque(false), verticalArrangement = Arrangement.spacedBy(JBUI.scale(spacing.verticalMediumGap))) {
+  Column(modifier, verticalArrangement = Arrangement.spacedBy(JBUI.scale(spacing.verticalMediumGap))) {
     PopupText(
       text = HtmlChunk.text(McpServerBundle.message("mcp.server.status.bar.popup.description")).toString(),
-      modifier = SwingModifier.fillWidth().font(JBFont.medium()),
+      modifier = SwingModifier.fillMaxWidth().font(JBFont.medium()),
     )
     if (clientNames.isNotEmpty()) {
       @Suppress("HardCodedStringLiteral")
@@ -217,7 +220,7 @@ private fun DisabledDescription(modifier: SwingModifier, model: McpServerPopupMo
       PopupText(
         text = HtmlChunk.text(McpServerBundle.message("mcp.server.status.bar.popup.clients.hint")).toString() + "<br>" +
                HtmlChunk.text(names),
-        modifier = SwingModifier.fillWidth().foreground(UIUtil.getContextHelpForeground()).font(JBFont.small()),
+        modifier = SwingModifier.fillMaxWidth().foreground(UIUtil.getContextHelpForeground()).font(JBFont.small()),
       )
     }
   }
@@ -289,17 +292,17 @@ private fun DetectedClientList(modifier: SwingModifier, clients: List<DetectedCl
         .foreground(UIUtil.getContextHelpForeground())
         .emptyBorder(JBUI.insets(spacing.verticalMediumGap, spacing.horizontalDefaultGap)),
     )
-    else -> Column(modifier.opaque(false), verticalArrangement = Arrangement.spacedBy(JBUI.scale(spacing.verticalSmallGap))) {
+    else -> Column(modifier, verticalArrangement = Arrangement.spacedBy(JBUI.scale(spacing.verticalSmallGap))) {
       pendingClients.take(MAX_SHOWN_CLIENTS).forEach { client ->
         key(client.id) {
           val buttonState = clientButtonStates[client.id] ?: ClientButtonState.Normal
           val currentError = clientErrors[client.id] ?: client.initialError
           Column(
-            modifier = SwingModifier.fillWidth().opaque(false),
+            modifier = SwingModifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(JBUI.scale(spacing.verticalComponentGap)),
           ) {
             Row(
-              modifier = SwingModifier.fillWidth().opaque(false),
+              modifier = SwingModifier.fillMaxWidth(),
               horizontalArrangement = Arrangement.SpaceBetween,
               verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -332,7 +335,7 @@ private fun DetectedClientList(modifier: SwingModifier, clients: List<DetectedCl
               )
             }
             if (currentError != null) Row(
-              modifier = SwingModifier.fillWidth().opaque(false),
+              modifier = SwingModifier.fillMaxWidth(),
               verticalAlignment = Alignment.CenterVertically,
               horizontalArrangement = Arrangement.spacedBy(JBUI.scale(spacing.horizontalSmallGap)),
             ) {
@@ -360,13 +363,13 @@ private fun PopupText(text: @NlsContexts.DetailedDescription String, modifier: S
 
 @Composable
 private fun ColumnScope.PopupDivider(modifier: SwingModifier = SwingModifier) {
-  Column(modifier.fillWidth().background(JBUI.CurrentTheme.Popup.separatorColor()).opaque(true)) {
+  Column(modifier.fillMaxWidth().background(JBUI.CurrentTheme.Popup.separatorColor()).opaque(true)) {
     RigidArea(0, 1)
   }
 }
 
 @Composable
-@Preview(widthPx = 450)
+@Preview(width = 450)
 @Suppress("unused")
 fun McpPanelPreview() {
   var previewResetKey by remember { mutableStateOf(0) }
@@ -410,7 +413,7 @@ fun McpPanelPreview() {
       McpServerPopupContent(
         model = remember { PreviewMcpServerPopupModel() },
         modifier = SwingModifier
-          .fillWidth()
+          .fillMaxWidth()
           .maximumSize(JBUI.scale(POPUP_WIDTH), Int.MAX_VALUE)
           .componentListener { event ->
             val size = event.component.size

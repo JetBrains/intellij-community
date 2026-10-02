@@ -93,6 +93,7 @@ _JWKOperationSupported: TypeAlias = Literal[
     "sign", "verify", "encrypt", "decrypt", "wrapKey", "unwrapKey", "deriveKey", "deriveBits"
 ]
 JWKOperationsRegistry: dict[_JWKOperationSupported, str]
+JWKOpAndUsePairs: dict[_JWKOperationSupported, _JWKUseSupported]
 JWKpycaCurveMap: dict[LiteralString, LiteralString]
 IANANamedInformationHashAlgorithmRegistry: dict[
     LiteralString,

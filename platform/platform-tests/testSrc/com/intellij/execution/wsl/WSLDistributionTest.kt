@@ -31,7 +31,10 @@ import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentProcessInfo
+import com.intellij.platform.ijent.IjentSession
+import com.intellij.platform.ijent.IjentSessionState
 import com.intellij.platform.ijent.IjentTunnelsPosixApi
+import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.platform.ijent.fs.IjentExecPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.testFramework.junit5.TestApplication
@@ -45,6 +48,8 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.SoftAssertions.assertSoftly
@@ -500,12 +505,27 @@ class WSLDistributionTest {
       ApplicationManager.getApplication().replaceService(
         WslIjentManager::class.java,
         object : WslIjentManager {
+          private val ijentSessionState = MutableStateFlow<IjentSessionState>(IjentSessionState.NotDeployed)
+
           @DelicateCoroutinesApi
           override val processAdapterScope: CoroutineScope = scope
 
           override suspend fun getIjentApi(descriptor: EelDescriptor?, wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
             require(wslDistribution == mockWslDistribution) { "$wslDistribution != $mockWslDistribution" }
             return MockIjentApi(adapter, rootUser)
+          }
+
+          override fun getIjentSessionState(wslDistribution: WSLDistribution, rootUser: Boolean): StateFlow<IjentSessionState> {
+            return ijentSessionState
+          }
+
+          override suspend fun getIjentSession(
+            wslDistribution: WSLDistribution,
+            project: Project?,
+            rootUser: Boolean,
+            sessionScope: ParentOfIjentScopes,
+          ): IjentSession.Posix {
+            error("The mock does not expose its IJent session")
           }
 
           override val isIjentAvailable: Boolean = true

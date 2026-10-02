@@ -7,6 +7,8 @@
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.consoleView"/>
+    <module name="intellij.platform.consoleView.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -58,7 +60,7 @@
     <gutterMarkPreprocessor implementation="com.intellij.platform.debugger.impl.frontend.breakpoints.BreakpointGutterIconMerge"/>
     <editorSoundSignalDetector implementation="com.intellij.platform.debugger.impl.frontend.BreakpointLineSoundSignalDetector"/>
     <soundSignalProvider implementation="com.intellij.platform.debugger.impl.frontend.DebuggerSoundSignalProvider"/>
-    <notificationSound group="Breakpoint hit" sound="sounds/breakpoint.wav"/>
+    <notificationSound group="Breakpoint hit" sound="sounds/breakpoint.wav" soundSignal="breakpoint.hit"/>
     <projectService serviceInterface="com.intellij.platform.debugger.impl.shared.CustomDescriptorStateManager"
                     serviceImplementation="com.intellij.platform.debugger.impl.frontend.FrontendCustomDescriptorStateManager"/>
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerInitializationProjectActivity"/>

@@ -76,6 +76,8 @@ class PyreflyLspClientDescriptor(
 
     override fun serverStopped(shutdownNormally: Boolean) {
       super.serverStopped(shutdownNormally)
+      // The platform can report the stop after the project is gone.
+      if (project.isDisposed) return
       if (!shutdownNormally && !initialized) {
         PyreflyUsageCollector.logServerStartup(success = false, sdk = module.pythonSdk)
       }

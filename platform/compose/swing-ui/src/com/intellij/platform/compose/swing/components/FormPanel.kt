@@ -12,8 +12,11 @@ import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.compose.swing.layout.LayoutScopeMarker
+import org.jetbrains.compose.swing.layout.ParentDataModifier
+import org.jetbrains.compose.swing.layout.ParentProtocol
+import org.jetbrains.compose.swing.layout.parentProtocolOf
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.layout.layoutConstraint
 import org.jetbrains.compose.swing.node.SwingNode
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -106,6 +109,7 @@ public fun FormPanel(
  * @see com.intellij.ui.dsl.builder.Panel
  */
 @ApiStatus.Experimental
+@LayoutScopeMarker
 public sealed interface FormScope {
   /**
    * A row of the form: an optional [label], the controls [content] emits, and an optional [comment] under
@@ -209,6 +213,7 @@ public enum class FormGap {
  * @see com.intellij.ui.dsl.builder.Row
  */
 @ApiStatus.Experimental
+@LayoutScopeMarker
 public sealed interface FormRowScope {
   /**
    * What this control asks of the cell it is given.
@@ -256,8 +261,8 @@ internal class FormGroupToken(val parent: FormGroupToken?, val indent: Int)
 
 /**
  * What a component the form itself emits says about the row it opens or closes. It travels as the
- * component's layout constraint, so the form reads its structure back off the panel and the grid is
- * rebuilt whenever any of it changes.
+ * component's parent data, so the form reads its structure back off the panel and the grid is rebuilt
+ * whenever any of it changes.
  *
  * A control the caller emits carries a [FormCellMark] or nothing at all, and belongs to whichever row is
  * open where it stands - which is what makes the panel's own child order, the order the components were
@@ -293,6 +298,22 @@ internal data class FormCellMark(
   val smallGapAfter: Boolean,
 ) : FormMark
 
+/** The parents a [FormMark] is declared for: the panel of a [FormPanel], and no other. */
+private val FormParentProtocol: ParentProtocol = parentProtocolOf("FormPanel row") { it.layout is FormGridLayout }
+
+/** Declares [mark] to the form the component stands in. A later mark on the same chain replaces an earlier one. */
+private fun SwingModifier.formMark(mark: FormMark): SwingModifier = this then FormMarkElement(mark)
+
+private data class FormMarkElement(private val mark: FormMark) : ParentDataModifier {
+  override val parentProtocol: ParentProtocol get() = FormParentProtocol
+
+  override val name: String get() = "formMark"
+
+  override val declaredValues: Map<String, Any?> get() = mapOf("mark" to mark)
+
+  override fun modifyParentData(parentData: Any?): Any = mark
+}
+
 private class FormScopeInstance(
   private val group: FormGroupToken?,
   private val indentLevel: Int,
@@ -308,16 +329,16 @@ private class FormScopeInstance(
   ) {
     val mark = FormRowMark(group, label != null, indentLevel, resizable, topGap, bottomGap)
 
-    FormRowStart(label, SwingModifier.layoutConstraint(mark))
+    FormRowStart(label, SwingModifier.formMark(mark))
     FormRowScopeInstance.content()
     if (comment != null) {
       Comment(
         comment,
-        modifier = SwingModifier.layoutConstraint(FormCommentMark),
+        modifier = SwingModifier.formMark(FormCommentMark),
         maxLineLength = DEFAULT_COMMENT_WIDTH,
       )
     }
-    FormRowBoundary(SwingModifier.layoutConstraint(FormRowEndMark))
+    FormRowBoundary(SwingModifier.formMark(FormRowEndMark))
   }
 
   @Composable
@@ -364,7 +385,7 @@ private class FormScopeInstance(
  */
 private object FormRowScopeInstance : FormRowScope {
   override fun SwingModifier.cell(fillWidth: Boolean, smallGapAfter: Boolean): SwingModifier =
-    layoutConstraint(FormCellMark(fillWidth, smallGapAfter))
+    formMark(FormCellMark(fillWidth, smallGapAfter))
 }
 
 // --- The components a form supplies itself ------------------------------------------------------

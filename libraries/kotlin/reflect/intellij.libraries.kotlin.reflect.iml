@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlin-reflect" type="repository">
-        <properties maven-id="org.jetbrains.kotlin:kotlin-reflect:2.4.20">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-reflect:2.4.21-RC">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.4.20/kotlin-reflect-2.4.20.jar">
-              <sha256sum>b4aac2a4686ffdc110602ce153e4a90ffd7f37fa86fcca9d3b3aa39c08f8c2fc</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.4.21-RC/kotlin-reflect-2.4.21-RC.jar">
+              <sha256sum>b48a382c9714a766bc68d3f4698b2b3a37e88e9a927f795606d37a0dccc077be</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -20,11 +20,11 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.4.20/kotlin-reflect-2.4.20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.4.21-RC/kotlin-reflect-2.4.21-RC.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.4.20/kotlin-reflect-2.4.20-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.4.21-RC/kotlin-reflect-2.4.21-RC-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

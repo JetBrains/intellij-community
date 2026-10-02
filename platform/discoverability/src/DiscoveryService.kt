@@ -21,7 +21,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.ide.BuiltInServerManager
-import org.jetbrains.io.BuiltInServer
 import tools.jackson.core.json.JsonFactory
 import tools.jackson.core.util.DefaultPrettyPrinter
 import java.io.OutputStream
@@ -55,8 +54,7 @@ internal class DiscoveryService(private val coroutineScope: CoroutineScope) {
         val serverManager = BuiltInServerManager.getInstance()
         serverManager.waitForStart()
 
-        val server = serverManager.serverDisposable as? BuiltInServer
-        if (server == null) {
+        if (serverManager.serverDisposable == null) {
           LOG.warn("Built-in server is not available; skipping discovery info")
           ready.completeExceptionally(IllegalStateException("Built-in server is not available"))
           return@launch
@@ -68,8 +66,9 @@ internal class DiscoveryService(private val coroutineScope: CoroutineScope) {
 
         val pid = ProcessHandle.current().pid()
         jsonFile = instanceDir.resolve("$pid$FILE_SUFFIX")
-        serverAddress = server.address
-        serverPort = server.port
+        // the built-in server binds to the loopback interface only
+        serverAddress = InetAddress.getLoopbackAddress()
+        serverPort = serverManager.port
 
         writeInstanceInfo(jsonFile, serverAddress, serverPort)
 

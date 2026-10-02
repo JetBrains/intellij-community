@@ -32,8 +32,15 @@ interface JvmHotSwapListener {
    *                        binary-name delimiters
    * @param reloadedClasses fully-qualified class names that were successfully redefined in the target VM, using Java binary-name
    *                        delimiters; this can be a subset of [classesToReload], or empty when no class was redefined
+   * @param notLoadedClasses fully-qualified class names that were selected for redefinition but have not yet been loaded by any
+   *                        class loader in the target VM, using Java binary-name delimiters
    */
-  fun afterHotSwap(session: DebuggerSession, classesToReload: Set<String>, reloadedClasses: Set<String>) {}
+  fun afterHotSwap(
+    session: DebuggerSession,
+    classesToReload: Set<String>,
+    reloadedClasses: Set<String>,
+    notLoadedClasses: Set<String>,
+  ) {}
 
   companion object {
     @JvmField

@@ -555,11 +555,25 @@ object EelFileSystemApiHelpers {
     private val owner: EelFileSystemApi,
     private var path: EelPath,
   ) : com.intellij.platform.eel.EelOwnedBuilder<EelResult<EelOpenedFile.Reader, EelFileSystemApi.FileReaderError>> {
+    private var autoCloseAfterEof: Boolean? = null
+
     private var autoCloseAfterLastChunk: Boolean = false
 
     private var closeImmediatelyIfFileBiggerThan: Long? = null
 
     private var readFirstChunkInto: ByteBuffer? = null
+
+    /**
+     * When enabled, the implementation closes its internal file descriptor as soon as a read reaches the end of the file.
+     * It reopens the file and restores the cursor position if the caller uses the file again.
+     * This differs from [autoCloseAfterLastChunk], which closes the descriptor and never reopens the file.
+     *
+     * `null` means that the caller did not specify the behavior, so the implementation uses its own default.
+     */
+    @EelDelicateApi
+    fun autoCloseAfterEof(arg: Boolean?): OpenForReading = apply {
+      this.autoCloseAfterEof = arg
+    }
 
     /**
      * When specified, the implementation closes its internal file descriptor
@@ -612,6 +626,7 @@ object EelFileSystemApiHelpers {
     override suspend fun eelIt(): EelResult<EelOpenedFile.Reader, EelFileSystemApi.FileReaderError> =
       owner.openForReading(
         OpenForReadingArgsImpl(
+          autoCloseAfterEof = autoCloseAfterEof,
           autoCloseAfterLastChunk = autoCloseAfterLastChunk,
           closeImmediatelyIfFileBiggerThan = closeImmediatelyIfFileBiggerThan,
           path = path,

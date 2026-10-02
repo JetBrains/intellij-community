@@ -8,7 +8,6 @@ import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -17,9 +16,6 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.registryKeyFixture
-import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
-import com.intellij.ui.content.ContentFactory
-import com.intellij.ui.content.ContentManager
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
@@ -61,9 +57,6 @@ class ToolWindowEditorTabPreCloseCheckTest {
     manager.closeAllFiles()
     ExtensionTestUtil.maskExtensions(ContentTabActionProvider.EP_NAME, emptyList(), disposable)
   }
-
-  private fun openTabFile(): ToolWindowEditorTabFile =
-    manager.openFiles.filterIsInstance<ToolWindowEditorTabFile>().single()
 
   @Test
   fun `non tab files can always be closed`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
@@ -118,7 +111,30 @@ class ToolWindowEditorTabPreCloseCheckTest {
       // The support must be asked once for the whole group, not once per tab.
       assertThat(support.filterTabsToCloseInvocations).hasSize(1)
       assertThat(support.filterTabsToCloseInvocations.single())
-        .containsExactly(tabFile1.attachedContent(project), tabFile2.attachedContent(project))
+        .containsExactlyInAnyOrder(tabFile1.attachedContent(project), tabFile2.attachedContent(project))
+    }
+
+  @Test
+  fun `tab files of different tool windows are checked by their own support`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val otherToolWindowId = "OtherToolWindow"
+      val support = FakeToolWindowEditorTabSupport(flowOf(ToolWindowEditorTabPresentation("Title")), canClose = true)
+      val otherSupport = FakeToolWindowEditorTabSupport(flowOf(ToolWindowEditorTabPresentation("Title")), canClose = false)
+      registerFakeToolWindowEditorTabSupport(toolWindowId, support, disposable)
+      registerFakeToolWindowEditorTabSupport(otherToolWindowId, otherSupport, disposable)
+      val tabFile = createDetachedTabFile()
+      val otherTabFile = createTabFile(
+        project = project,
+        toolWindowId = otherToolWindowId,
+        content = createTabContent(displayName = "other"),
+        presentationFlow = flowOf(ToolWindowEditorTabPresentation("Title")),
+      )
+      val check = ToolWindowEditorTabPreCloseCheck()
+
+      assertThat(check.filterFilesToClose(listOf(tabFile, otherTabFile))).containsExactly(tabFile)
+      // Each support sees only the tabs of its own tool window.
+      assertThat(support.filterTabsToCloseInvocations).containsExactly(listOf(requireNotNull(tabFile.attachedContent(project))))
+      assertThat(otherSupport.filterTabsToCloseInvocations).containsExactly(listOf(requireNotNull(otherTabFile.attachedContent(project))))
     }
 
   @Test
@@ -160,16 +176,10 @@ class ToolWindowEditorTabPreCloseCheckTest {
         canClose = false,
       )
       registerFakeToolWindowEditorTabSupport(blockedToolWindowId, support, disposable)
-      val contentManager = ContentFactory.getInstance().createContentManager(false, project)
-      Disposer.register(disposable, contentManager)
-      val toolWindow = object : ToolWindowHeadlessManagerImpl.MockToolWindow(project) {
-        override fun getId(): String = blockedToolWindowId
-        override fun getContentManager(): ContentManager = contentManager
-      }
-      val content = createTabContent()
-      toolWindow.contentManager.addContent(content)
+      val toolWindow = FakeToolWindow(project, blockedToolWindowId, disposable)
+      val content = toolWindow.addTabContent()
       controller.moveContentToEditor(toolWindow, content)
-      val tabFile = openTabFile()
+      val tabFile = manager.openTabFile()
       val window = manager.windows.single { it.getComposite(tabFile) != null }
       val closeTarget = window.tabbedPane.editorTabs as CloseTarget
 

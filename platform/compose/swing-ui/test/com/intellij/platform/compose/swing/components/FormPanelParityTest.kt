@@ -21,7 +21,6 @@ import org.jetbrains.compose.swing.test.screenshot.assertImagesPixelPerfect
 import org.jetbrains.compose.swing.test.screenshot.captureToImage
 import org.junit.jupiter.api.Test
 import java.awt.Component
-import java.awt.Container
 import java.awt.Dimension
 import java.awt.image.BufferedImage
 import javax.swing.JCheckBox
@@ -400,7 +399,9 @@ class FormPanelParityTest {
     }
 
     val formPanel = onNodeWithTag(FORM_TAG).fetch<JComponent>()
-    val dslPanel = panel(dsl)
+    // The stand-in peer a lightweight component gets, as the harness gives its own root one, so the reference
+    // is validated the way the form is.
+    val dslPanel = panel(dsl).apply { addNotify() }
 
     formPanel.border = margins
     dslPanel.border = margins
@@ -415,6 +416,7 @@ class FormPanelParityTest {
     val reference = dslPanel.captureToImage()
     assertWasDrawn(reference)
     assertImagesPixelPerfect(reference, formPanel.captureToImage())
+    dslPanel.removeNotify()
   }
 
   /**
@@ -429,18 +431,11 @@ class FormPanelParityTest {
 
   /**
    * Gives [panel] the width a settings page would give it and more height than it asks for, so a resizable
-   * row has space to take, then lays out the whole tree under it: a panel that was never realized in a
-   * window is laid out only when asked, and only one level at a time.
+   * row has space to take, then validates it as Swing validates a page.
    */
   private fun layOut(panel: JComponent) {
     panel.size = Dimension(WIDTH, panel.preferredSize.height + SPARE_HEIGHT)
-    layOutTree(panel)
-  }
-
-  private fun layOutTree(component: Component) {
-    if (component !is Container) return
-    component.doLayout()
-    component.components.forEach(::layOutTree)
+    panel.validate()
   }
 
   /**

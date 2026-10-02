@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
@@ -389,7 +390,7 @@ class EditorSoundSignalsPipelineTest {
   fun `disabling the feature detaches the listeners`() = pipelineTest { editor ->
     detector.returned = setOf(LINE_SIGNAL)
 
-    settings.setPlaySignals(false)
+    Registry.get(SOUND_SIGNALS_ENABLED_REGISTRY_KEY).setValue(false, disposable)
     // refreshSoundSignalsState() only reaches the manager *service*, which this test deliberately does not create
     manager.updateListenersState()
     moveCaret(editor, LINE_1_START)
@@ -467,9 +468,9 @@ class EditorSoundSignalsPipelineTest {
 
     // the edit-adjacent delay leaves room to detach before the request settles
     editThenMoveCaret(editor, LINE_1_START)
-    settings.setPlaySignals(false)
+    detector.signals.forEach { settings.setSignal(it, false) }
     manager.updateListenersState()
-    settings.setPlaySignals(true)
+    settings.setSignal(LINE_SIGNAL, true)
     manager.updateListenersState()
     delay(IDLE_WAIT_AFTER_EDIT)
 
@@ -550,8 +551,8 @@ class EditorSoundSignalsPipelineTest {
       settings = soundSignalsSettings
       val managerScope = childScope("EditorSoundSignalsManager under test")
       try {
-        // tests run without screen reader support, so the calculated default would silence everything
-        settings.setPlaySignals(true)
+        // every signal without a choice follows screen reader support
+        setSupportScreenReaders(true)
         ApplicationManager.getApplication().replaceService(SoundSignalPlayer::class.java, player, disposable)
         ExtensionTestUtil.maskExtensions(EditorSoundSignalDetector.EP_NAME, extraDetectors + detector, disposable)
 

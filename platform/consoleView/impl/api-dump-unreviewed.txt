@@ -1,0 +1,94 @@
+c:com.intellij.execution.actions.ClearConsoleAction
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.execution.filters.TextConsoleBuilderImpl
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):V
+- addFilter(com.intellij.execution.filters.Filter):V
+- p:getFilters():java.util.List
+f:com.intellij.execution.impl.ConsoleBuffer
+- <init>():V
+- s:getLegacyCycleBufferSize():I
+a:com.intellij.execution.impl.ConsoleState
+- <init>():V
+- a:attachTo(com.intellij.execution.impl.ConsoleViewImpl,com.intellij.execution.process.ProcessHandler):com.intellij.execution.impl.ConsoleState
+- a:dispose():com.intellij.execution.impl.ConsoleState
+- isCommandLine(java.lang.String):Z
+- isFinished():Z
+- isRunning():Z
+- sendUserInput(java.lang.String):V
+c:com.intellij.execution.impl.ConsoleViewImpl
+- sf:CONSOLE_VIEW_IN_EDITOR_VIEW:com.intellij.openapi.util.Key
+- sf:Companion:com.intellij.execution.impl.ConsoleViewImpl$Companion
+- sf:IS_CONSOLE_DOCUMENT:com.intellij.openapi.util.Key
+- p:predefinedFilters:java.util.List
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope,Z,com.intellij.execution.impl.ConsoleState,Z):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope,Z,Z):V
+- <init>(com.intellij.openapi.project.Project,Z):V
+- addChangeListener(com.intellij.execution.ui.ObservableConsoleView$ChangeListener,com.intellij.openapi.Disposable):V
+- f:addLayerToPane(javax.swing.JComponent):V
+- f:addNotificationComponent(javax.swing.JComponent):V
+- addNotify():V
+- p:calcNextOccurrence(I):com.intellij.ide.OccurenceNavigator$OccurenceInfo
+- canPause():Z
+- f:clearMessageFilters():V
+- p:createCenterComponent():javax.swing.JComponent
+- p:disposeEditor():V
+- pf:getMyCancelStickToEnd():Z
+- f:getState():com.intellij.execution.impl.ConsoleState
+- p:getStateForUpdate():com.intellij.openapi.application.ModalityState
+- f:invalidateFiltersExpirableTokens():V
+- isOutputPaused():Z
+- print(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
+- print(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType,com.intellij.execution.filters.HyperlinkInfo):V
+- printHyperlink(java.lang.String,com.intellij.execution.filters.HyperlinkInfo):V
+- removeNotify():V
+- f:setEmulateCarriageReturn(Z):V
+- pf:setMyCancelStickToEnd(Z):V
+- type(com.intellij.openapi.editor.Editor,java.lang.String):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+- p:updateFoldings(I,I):V
+- f:waitAllRequests():V
+f:com.intellij.execution.impl.ConsoleViewImpl$ClearAllAction
+- <init>():V
+f:com.intellij.execution.impl.ConsoleViewImpl$Companion
+- f:isStickingToEnd(com.intellij.openapi.editor.ex.EditorEx):Z
+f:com.intellij.execution.impl.ConsoleViewRunningState
+- <init>(com.intellij.execution.impl.ConsoleViewImpl,com.intellij.execution.process.ProcessHandler,com.intellij.execution.impl.ConsoleState,Z,Z):V
+- attachTo(com.intellij.execution.impl.ConsoleViewImpl,com.intellij.execution.process.ProcessHandler):com.intellij.execution.impl.ConsoleState
+- dispose():com.intellij.execution.impl.ConsoleState
+- isCommandLine(java.lang.String):Z
+- isFinished():Z
+- isRunning():Z
+- sendUserInput(java.lang.String):V
+f:com.intellij.execution.impl.ConsoleViewUtil
+- sf:EDITOR_IS_CONSOLE_HISTORY_VIEW:com.intellij.openapi.util.Key
+- <init>():V
+- s:computeConsoleFilters(com.intellij.execution.filters.ConsoleFilterProvider,com.intellij.openapi.project.Project,com.intellij.execution.ui.ConsoleView,com.intellij.psi.search.GlobalSearchScope):com.intellij.execution.filters.Filter[]
+- s:computeConsoleFilters(com.intellij.openapi.project.Project,com.intellij.execution.ui.ConsoleView,com.intellij.psi.search.GlobalSearchScope):java.util.List
+- s:computeInputFilter(com.intellij.execution.ui.ConsoleView,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):com.intellij.execution.filters.InputFilter
+- s:getContentTypeForToken(com.intellij.psi.tree.IElementType,com.intellij.openapi.fileTypes.SyntaxHighlighter):com.intellij.execution.ui.ConsoleViewContentType
+- s:isReplaceActionEnabledForConsoleViewEditor(com.intellij.openapi.editor.Editor):Z
+- s:printAsFileType(com.intellij.execution.ui.ConsoleView,java.lang.String,com.intellij.openapi.fileTypes.FileType):V
+- s:printWithHighlighting(com.intellij.execution.ui.ConsoleView,java.lang.String,com.intellij.openapi.fileTypes.SyntaxHighlighter):V
+- s:printWithHighlighting(com.intellij.execution.ui.ConsoleView,java.lang.String,com.intellij.openapi.fileTypes.SyntaxHighlighter,java.lang.Runnable):V
+- s:printWithHighlighting(java.util.function.BiConsumer,java.lang.String,com.intellij.openapi.fileTypes.SyntaxHighlighter,java.lang.Runnable):V
+- s:setupConsoleEditor(com.intellij.openapi.editor.ex.EditorEx,Z,Z):V
+- s:setupConsoleEditor(com.intellij.openapi.project.Project,Z,Z):com.intellij.openapi.editor.ex.EditorEx
+- s:setupLanguageConsoleEditor(com.intellij.openapi.editor.ex.EditorEx):V
+- s:updateConsoleColorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme,com.intellij.openapi.editor.ex.EditorEx):com.intellij.openapi.editor.colors.EditorColorsScheme
+f:com.intellij.execution.impl.DisposedPsiManagerCheck
+- <init>(com.intellij.openapi.project.Project):V
+- performCheck():V
+f:com.intellij.execution.impl.EditorHyperlinkSupport
+- <init>(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):V
+- addHighlighter(I,I,com.intellij.openapi.editor.markup.TextAttributes):V
+- addHighlighter(I,I,com.intellij.openapi.editor.markup.TextAttributes,I):V
+- createHyperlink(I,I,com.intellij.openapi.editor.markup.TextAttributes,com.intellij.execution.filters.HyperlinkInfo):com.intellij.openapi.editor.markup.RangeHighlighter
+- createHyperlink(com.intellij.openapi.editor.markup.RangeHighlighter,com.intellij.execution.filters.HyperlinkInfo):V
+- getHyperlinkInfoByLineAndCol(I,I):com.intellij.execution.filters.HyperlinkInfo
+- getHyperlinkInfoByPoint(java.awt.Point):com.intellij.execution.filters.HyperlinkInfo
+- s:getLineText(com.intellij.openapi.editor.Document,I,Z):java.lang.String
+- getLinkNavigationRunnable(com.intellij.openapi.editor.LogicalPosition):java.lang.Runnable
+- highlightHyperlinks(com.intellij.execution.filters.Filter,I,I):V
+- highlightHyperlinksLater(com.intellij.execution.filters.Filter,I,I,com.intellij.openapi.util.Expirable):V

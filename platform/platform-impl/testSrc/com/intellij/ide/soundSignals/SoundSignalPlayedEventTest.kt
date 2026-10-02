@@ -57,9 +57,8 @@ class SoundSignalPlayedEventTest {
   }
 
   @Test
-  fun `nothing is reported while the feature is off`() = collectorTest { settings ->
-    settings.setPlaySignals(false)
-
+  @RegistryKey(key = SOUND_SIGNALS_ENABLED_REGISTRY_KEY, value = "false")
+  fun `nothing is reported while the feature is off`() = collectorTest {
     val events = collect { SoundSignalPlayer.getInstance().play(IdeSoundSignals.ERROR_LINE) }
 
     assertThat(events).isEmpty()
@@ -80,7 +79,7 @@ class SoundSignalPlayedEventTest {
       .filter { it.group.id == "accessibility" && it.event.id == "sound.signal.played" }
 
   private fun collectorTest(body: (AccessibilitySettings) -> Unit) = withSoundSignalsSettings { settings ->
-    settings.setPlaySignals(true)
+    setSupportScreenReaders(true)
     ApplicationManager.getApplication().replaceService(SoundSignalPlayer::class.java, SilentPlayer(), disposable)
     body(settings)
   }

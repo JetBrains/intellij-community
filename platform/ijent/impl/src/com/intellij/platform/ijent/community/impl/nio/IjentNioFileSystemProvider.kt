@@ -14,7 +14,7 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.D
 import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.REPLACE_EVERYTHING
 import com.intellij.platform.eel.fs.EelFileSystemApiHelpers
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
-import com.intellij.platform.eel.fs.EelFsError
+import com.intellij.platform.eel.fs.EelNioOpenOption
 import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.fs.EelPosixFileInfo.Type.Symlink
 import com.intellij.platform.eel.fs.EelPosixFileInfoImpl
@@ -207,6 +207,9 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     require(!(READ in options && APPEND in options)) { "READ + APPEND not allowed" }
     require(!(APPEND in options && TRUNCATE_EXISTING in options)) { "APPEND + TRUNCATE_EXISTING not allowed" }
 
+    // A write open ignores the option. See `EelNioOpenOption.AutoClose`.
+    val autoCloseAfterEof = options.filterIsInstance<EelNioOpenOption.AutoClose>().lastOrNull()?.autoClose
+
     return if (WRITE in options || APPEND in options) {
       if (DELETE_ON_CLOSE in options) TODO("WRITE + CREATE_NEW")
       if (LinkOption.NOFOLLOW_LINKS in options) TODO("WRITE + NOFOLLOW_LINKS")
@@ -234,7 +237,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       if (DELETE_ON_CLOSE in options) TODO("READ + CREATE_NEW")
       if (LinkOption.NOFOLLOW_LINKS in options) TODO("READ + NOFOLLOW_LINKS")
 
-      IjentNioFileChannel.createReading(fs, path.eelPath)
+      IjentNioFileChannel.createReading(fs, path.eelPath, autoCloseAfterEof)
     }
   }
 

@@ -7,9 +7,27 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelPlatform
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.flow.StateFlow
+
+/**
+ * Describes the IJent deployment state for a machine.
+ *
+ * [Deployed] means that the machine has a cached session. Use [IjentSession.isRunning] to check if the session is running.
+ */
+sealed interface IjentSessionState {
+  data object NotDeployed : IjentSessionState
+  data object Deploying : IjentSessionState
+  data class Deployed(val session: IjentSession) : IjentSessionState
+  data class Failed(val cause: Throwable) : IjentSessionState
+}
+
+val IjentSessionState.runningIjentSessionOrNull: IjentSession? get() {
+  return (this as? IjentSessionState.Deployed)?.session?.takeIf { it.isRunning }
+}
 
 interface IjentMachine : EelMachine {
-  fun getCachedIjentSession(): IjentSession?
+  val ijentSessionState: StateFlow<IjentSessionState>
+  fun getCachedIjentSession(): IjentSession? = ijentSessionState.value.runningIjentSessionOrNull
   suspend fun getIjentSession(sessionScope: ParentOfIjentScopes): IjentSession
 
   /** `false` when the backend is known-gone and callers should skip remote operations that would otherwise spin up a session. */

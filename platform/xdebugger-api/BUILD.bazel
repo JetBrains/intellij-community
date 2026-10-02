@@ -38,6 +38,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
         "//platform/execution",
+        "//platform/consoleView",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
@@ -67,6 +68,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/execution:execution_test_lib",
+        "//platform/consoleView:consoleView_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     ],
 )

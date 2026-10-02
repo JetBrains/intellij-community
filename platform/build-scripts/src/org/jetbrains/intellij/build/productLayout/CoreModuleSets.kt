@@ -257,6 +257,8 @@ object CoreModuleSets {
     // consumed by intellij.platform.ide.bootstrap; also PROVIDED-depends on intellij.platform.ide.impl
     embeddedModule("intellij.platform.icons.impl.intellij")
 
+    embeddedModule("intellij.platform.consoleView")
+    embeddedModule("intellij.platform.consoleView.impl")
     embeddedModule("intellij.platform.execution")
     embeddedModule("intellij.platform.execution.impl")
 
@@ -299,11 +301,11 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.rd.community")
 
     embeddedModule("intellij.platform.remote.core")
-    embeddedModule("intellij.platform.ide.remote")
-    embeddedModule("intellij.platform.threadDumpParser")
-    embeddedModule("intellij.platform.ide.favoritesTreeView")
+    module("intellij.platform.ide.remote")
+    module("intellij.platform.threadDumpParser")
+    module("intellij.platform.ide.favoritesTreeView")
     // todo not used by platform - move to plugin
-    embeddedModule("intellij.platform.ide.designer")
+    module("intellij.platform.ide.designer")
 
     embeddedModule("intellij.platform.ide.bootstrap")
     embeddedModule("intellij.platform.bootstrap")
@@ -314,7 +316,7 @@ object CoreModuleSets {
     // Additional dependencies specific to lang.impl and ide.impl
     embeddedModule("intellij.platform.ide.concurrency")
     embeddedModule("intellij.platform.builtInServer")
-    embeddedModule("intellij.platform.discoverability")
+    module("intellij.platform.discoverability")
     embeddedModule("intellij.platform.eel.impl")
     embeddedModule("intellij.platform.eel.nioFs.impl")
     embeddedModule("intellij.platform.eel.impl.base")

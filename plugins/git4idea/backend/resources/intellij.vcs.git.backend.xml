@@ -28,6 +28,7 @@
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.collaborationTools"/>
     <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.consoleView"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -113,7 +114,8 @@
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction"/>
     <action id="Git.Squash.Commits" class="git4idea.rebase.log.squash.GitSquashLogAction"/>
     <action id="Git.Drop.Commits" class="git4idea.rebase.log.drop.GitDropLogAction"/>
-    <action id="Git.Show.WorkingTrees" class="git4idea.workingTrees.actions.ShowWorkingTreesAction">
+    <action id="Git.Show.WorkingTrees" class="git4idea.workingTrees.actions.ShowWorkingTreesAction"
+            icon="com.intellij.vcs.git.icons.GitIcons.Worktree">
       <add-to-group group-id="Vcs.Log.ToolWindow.TabActions.DropDown" relative-to-action="Vcs.ShowConsoleTab" anchor="after"/>
     </action>
     <action id="Git.CreateNewWorkingTree" class="git4idea.workingTrees.actions.GitCreateWorkingTreeAction"/>

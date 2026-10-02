@@ -6,12 +6,11 @@ import org.junit.jupiter.api.Test
 
 class SoundSignalsPolicyTest {
   @Test
-  fun `play follows screen reader support and signals are on`() {
+  fun `a signal without a choice follows screen reader support`() {
     for (screenReader in listOf(false, true)) {
-      val policy = SoundSignalsPolicy(screenReader, SoundSignalsSettingsState())
+      val policy = policy(screenReader, SoundSignalsSettingsState())
 
-      assertThat(policy.isPlaySignalsOn).isEqualTo(screenReader)
-      assertThat(policy.isSignalOn(ID)).isTrue()
+      assertThat(policy.isSignalOn(ID)).isEqualTo(screenReader)
     }
   }
 
@@ -19,10 +18,9 @@ class SoundSignalsPolicyTest {
   fun `explicit choices win over every calculated default`() {
     for (screenReader in listOf(false, true)) {
       for (value in listOf(false, true)) {
-        val state = SoundSignalsSettingsState(playSignals = value, signals = mapOf(ID to value))
-        val policy = SoundSignalsPolicy(screenReader, state)
+        val state = SoundSignalsSettingsState(signals = mapOf(ID to value))
+        val policy = policy(screenReader, state)
 
-        assertThat(policy.isPlaySignalsOn).isEqualTo(value)
         assertThat(policy.isSignalOn(ID)).isEqualTo(value)
       }
     }
@@ -30,13 +28,37 @@ class SoundSignalsPolicyTest {
 
   @Test
   fun `an explicit signal choice leaves the other signals inherited`() {
-    val policy = SoundSignalsPolicy(supportScreenReaders = false, SoundSignalsSettingsState(signals = mapOf(ID to false)))
+    for (screenReader in listOf(false, true)) {
+      val policy = policy(screenReader, SoundSignalsSettingsState(signals = mapOf(ID to !screenReader)))
 
-    assertThat(policy.isSignalOn(ID)).isFalse()
-    assertThat(policy.isSignalOn("other")).isTrue()
+      assertThat(policy.isSignalOn(ID)).isEqualTo(!screenReader)
+      assertThat(policy.isSignalOn("other")).isEqualTo(screenReader)
+    }
   }
+
+  @Test
+  fun `a legacy Play sound of a bound group plays only its signal`() {
+    val policy = policy(screenReader = false, SoundSignalsSettingsState(), stored = setOf(BUILD))
+
+    assertThat(policy.isSignalOn(BUILD)).isTrue()
+    assertThat(policy.isSignalOn(TESTS)).isFalse()
+    assertThat(policy.isSignalOn(ID)).isFalse()
+  }
+
+  @Test
+  fun `an explicit Off of a bound signal replaces the legacy Play sound`() {
+    val policy = policy(screenReader = true, SoundSignalsSettingsState(signals = mapOf(BUILD to false)), stored = setOf(BUILD))
+
+    assertThat(policy.isSignalOn(BUILD)).isFalse()
+    assertThat(policy.isSignalOn(ID)).isTrue()
+  }
+
+  private fun policy(screenReader: Boolean, state: SoundSignalsSettingsState, stored: Set<String> = emptySet()): SoundSignalsPolicy =
+    SoundSignalsPolicy(screenReader, state, playSoundStored = { it in stored })
 
   private companion object {
     const val ID = "error.line"
+    const val BUILD = "build.finished"
+    const val TESTS = "test.results"
   }
 }

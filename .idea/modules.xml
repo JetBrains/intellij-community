@@ -612,6 +612,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/intellij.groovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/intellij.groovy.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/ant/intellij.groovy.ant.iml" filepath="$PROJECT_DIR$/plugins/groovy/ant/intellij.groovy.ant.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/byteCodeViewer/intellij.groovy.byteCodeViewer.iml" filepath="$PROJECT_DIR$/plugins/groovy/byteCodeViewer/intellij.groovy.byteCodeViewer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/groovy/compiler-tests/intellij.groovy.compiler.tests.iml" filepath="$PROJECT_DIR$/plugins/groovy/compiler-tests/intellij.groovy.compiler.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/rt-constants/intellij.groovy.constants.rt.iml" filepath="$PROJECT_DIR$/plugins/groovy/rt-constants/intellij.groovy.constants.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/intellij.groovy.copyright/intellij.groovy.copyright.iml" filepath="$PROJECT_DIR$/plugins/groovy/intellij.groovy.copyright/intellij.groovy.copyright.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/dev/intellij.groovy.dev/intellij.groovy.dev.iml" filepath="$PROJECT_DIR$/plugins/dev/intellij.groovy.dev/intellij.groovy.dev.iml" />
@@ -1544,6 +1545,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/util/concurrency/intellij.platform.concurrency.tests.iml" filepath="$PROJECT_DIR$/platform/util/concurrency/intellij.platform.concurrency.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/configuration-store-impl/intellij.platform.configurationStore.impl.iml" filepath="$PROJECT_DIR$/platform/configuration-store-impl/intellij.platform.configurationStore.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/configuration-store-impl/intellij.platform.configurationStore.tests.iml" filepath="$PROJECT_DIR$/platform/configuration-store-impl/intellij.platform.configurationStore.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/consoleView/intellij.platform.consoleView.iml" filepath="$PROJECT_DIR$/platform/consoleView/intellij.platform.consoleView.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/consoleView/impl/intellij.platform.consoleView.impl.iml" filepath="$PROJECT_DIR$/platform/consoleView/impl/intellij.platform.consoleView.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/core-api/intellij.platform.core.iml" filepath="$PROJECT_DIR$/platform/core-api/intellij.platform.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/core-impl/intellij.platform.core.impl.iml" filepath="$PROJECT_DIR$/platform/core-impl/intellij.platform.core.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/core-impl/intellij.platform.core.impl.tests.iml" filepath="$PROJECT_DIR$/platform/core-impl/intellij.platform.core.impl.tests.iml" />
@@ -2319,6 +2322,7 @@
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.starter.product.goland/intellij.tools.ide.starter.product.goland.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.starter.product.goland/intellij.tools.ide.starter.product.goland.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.starter.product.idea.community/intellij.tools.ide.starter.product.idea.community.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.starter.product.idea.community/intellij.tools.ide.starter.product.idea.community.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.starter.product.idea.ultimate/intellij.tools.ide.starter.product.idea.ultimate.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.starter.product.idea.ultimate/intellij.tools.ide.starter.product.idea.ultimate.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.starter.product.jetbrains.light/intellij.tools.ide.starter.product.jetbrains.light.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.starter.product.jetbrains.light/intellij.tools.ide.starter.product.jetbrains.light.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.starter.product.phpstorm/intellij.tools.ide.starter.product.phpstorm.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.starter.product.phpstorm/intellij.tools.ide.starter.product.phpstorm.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.starter.product.pycharm/intellij.tools.ide.starter.product.pycharm.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.starter.product.pycharm/intellij.tools.ide.starter.product.pycharm.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.starter.product.pycharm.community/intellij.tools.ide.starter.product.pycharm.community.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.starter.product.pycharm.community/intellij.tools.ide.starter.product.pycharm.community.iml" />

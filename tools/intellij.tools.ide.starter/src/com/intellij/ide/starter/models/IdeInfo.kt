@@ -87,6 +87,7 @@ data class IdeInfo(
         "RD" -> "JetBrains.Rider"
         "WRS" -> "writerside"
         "GW" -> "gateway"
+        "JB" -> "ij-void"
         else -> error("Unknown product code: $productCode")
       }
 
@@ -97,6 +98,7 @@ data class IdeInfo(
       "RM" -> "rubymine"
       "PY" -> "pycharm"
       "RR" -> "RustRover"
+      "JB" -> "light"
       else -> installerFilePrefix
     }
 

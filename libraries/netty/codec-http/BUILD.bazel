@@ -26,6 +26,7 @@ jvm_library(
         # do not sort,
         "@lib//:libraries-netty-codec-http-netty-codec-http",
         "//libraries/netty/buffer",
+        "//libraries/netty/codec-compression:libraries-netty-codec-compression",
     ],
 )
 
@@ -44,6 +45,7 @@ jvm_library(
         # do not sort,
         ":libraries-netty-codec-http",
         "//libraries/netty/buffer:buffer_test_lib",
+        "//libraries/netty/codec-compression:libraries-netty-codec-compression_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.netty.codec.http` end

@@ -45,7 +45,6 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io",
         "//platform/platform-util-io-impl:ide-util-io-impl",
         "//platform/built-in-server-api:builtInServer",
-        "//platform/built-in-server:builtInServer-impl",
         "//libraries/jackson3/jackson:libraries-jackson3",
     ],
 )
@@ -72,7 +71,6 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/platform-util-io-impl:ide-util-io-impl_test_lib",
         "//platform/built-in-server-api:builtInServer_test_lib",
-        "//platform/built-in-server:builtInServer-impl_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
     ],
 )

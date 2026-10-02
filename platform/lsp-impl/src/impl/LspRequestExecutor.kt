@@ -14,6 +14,8 @@ import com.intellij.platform.lsp.impl.features.documentation.HoverResultCache
 import com.intellij.platform.lsp.impl.features.documentation.TextRangeAndMarkupContent
 import com.intellij.platform.lsp.impl.features.highlighting.LspDocumentHighlightCache
 import com.intellij.platform.lsp.impl.features.highlighting.TextRangeAndHighlightKind
+import com.intellij.platform.lsp.impl.features.navigation.LspDefinitionCache
+import com.intellij.platform.lsp.impl.features.navigation.TextRangeAndLocationLinks
 import com.intellij.platform.lsp.impl.features.workspaceSymbol.toWorkspaceSymbol
 import com.intellij.platform.lsp.impl.util.toLocationLink
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -48,6 +50,8 @@ class LspRequestExecutor(
   private val allCaches = mutableListOf<LspCache>()
 
   private val hoverResultCache = register(HoverResultCache(lspClient.project))
+  private val definitionCache = register(LspDefinitionCache(lspClient.project))
+  private val typeDefinitionCache = register(LspDefinitionCache(lspClient.project))
   private val workspaceSymbolCache = register(LspSingleSlotCache<String, List<WorkspaceSymbol>>(lspClient.project))
   // documentSymbol and selectionRange results depend only on the requested document,
   // so a change in another file must not evict them.
@@ -110,13 +114,15 @@ class LspRequestExecutor(
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getElementDefinitions(file: VirtualFile, offset: Int): List<LocationLink> {
-    return documentMapping.withDocumentAtFileOffset(file, offset) { lspDocument, position ->
-      val params = DefinitionParams(lspDocument.id, position)
-      val lsp4jResponse = sendRequestSync { it.textDocumentService.definition(params) }
-                          ?: return@withDocumentAtFileOffset emptyList()
-      val locationLinks = lsp4jResponse.map({ items -> items.map { it.toLocationLink() } }, { it })
-      locationLinks.map { documentMapping.findDocumentByUrl(it.targetUri)?.mapLocationLink(it) ?: it }.distinct()
-    } ?: emptyList()
+    return definitionCache.getOrCompute(file, offset) {
+      documentMapping.withDocumentAtFileOffset(file, offset) { lspDocument, position ->
+        val params = DefinitionParams(lspDocument.id, position)
+        val lsp4jResponse = sendRequestSync { it.textDocumentService.definition(params) }
+                            ?: return@withDocumentAtFileOffset null
+        val locationLinks = lsp4jResponse.map({ items -> items.map { it.toLocationLink() } }, { it })
+        toHostLocationLinks(locationLinks, file, offset)
+      }
+    }?.locationLinks ?: emptyList()
   }
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
@@ -131,13 +137,27 @@ class LspRequestExecutor(
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   internal fun getTypeDefinitions(file: VirtualFile, offset: Int): List<LocationLink> {
-    return documentMapping.withDocumentAtFileOffset(file, offset) { lspDocument, position ->
-      val params = TypeDefinitionParams(lspDocument.id, position)
-      val lsp4jResponse = sendRequestSync { it.textDocumentService.typeDefinition(params) }
-                          ?: return@withDocumentAtFileOffset emptyList()
-      val locationLinks = lsp4jResponse.map({ items -> items.map { it.toLocationLink() } }, { it })
-      locationLinks.map { documentMapping.findDocumentByUrl(it.targetUri)?.mapLocationLink(it) ?: it }.distinct()
-    } ?: emptyList()
+    return typeDefinitionCache.getOrCompute(file, offset) {
+      documentMapping.withDocumentAtFileOffset(file, offset) { lspDocument, position ->
+        val params = TypeDefinitionParams(lspDocument.id, position)
+        val lsp4jResponse = sendRequestSync { it.textDocumentService.typeDefinition(params) }
+                            ?: return@withDocumentAtFileOffset null
+        val locationLinks = lsp4jResponse.map({ items -> items.map { it.toLocationLink() } }, { it })
+        toHostLocationLinks(locationLinks, file, offset)
+      }
+    }?.locationLinks ?: emptyList()
+  }
+
+  /**
+   * Maps the targets of [locationLinks] to host-file coordinates and pairs them with the origin range reported by the server,
+   * which is what [LspDefinitionCache] matches subsequent lookups against.
+   */
+  private fun toHostLocationLinks(locationLinks: List<LocationLink>, file: VirtualFile, offset: Int): TextRangeAndLocationLinks {
+    val hostLocationLinks = locationLinks
+      .map { documentMapping.findDocumentByUrl(it.targetUri)?.mapLocationLink(it) ?: it }
+      .distinct()
+    val document = FileDocumentManager.getInstance().getDocument(file)
+    return TextRangeAndLocationLinks.fromLocationLinks(hostLocationLinks, document, offset)
   }
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)

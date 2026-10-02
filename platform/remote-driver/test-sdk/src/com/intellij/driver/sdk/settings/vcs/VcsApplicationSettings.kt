@@ -4,7 +4,7 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.RdTarget
 
-@Remote("com.intellij.openapi.vcs.VcsApplicationSettings", rdTarget = RdTarget.BACKEND)
+@Remote("com.intellij.openapi.vcs.VcsApplicationSettings", plugin = "com.intellij/intellij.platform.vcs.shared", rdTarget = RdTarget.BACKEND)
 interface VcsApplicationSettings {
   fun isCreateChangeListsAutomatically(): Boolean
 

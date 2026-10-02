@@ -7,7 +7,6 @@ import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -319,23 +318,6 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       type myType = str
       expr = myType
       #└ TYPE TypeAliasType
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-51329"])
-    fun `bitwise or operator overload union via type alias`() = test("""
-      from typing import Any
-
-      class MyMeta(type):
-          def __or__(self, other) -> Any:
-              return other
-
-      class Foo(metaclass=MyMeta):
-          ...
-
-      Alias = Foo | None
-      expr: Alias # WARNING Invalid type annotation
-      #└ TYPE Unknown
       """.trimIndent())
   }
 
@@ -1120,7 +1102,6 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false, enableWeakWarnings = false)
     @TestFor(issues = ["PY-53104"])
     fun `Self method called on union receiver`() = test("""
       from typing import Self
@@ -1137,6 +1118,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           x = C()
 
       expr = x.method()
+      #│       ^^^^^^ WEAK-WARNING Member 'Literal[42]' of 'Literal[42] | C' does not have attribute 'method'
       #└ TYPE C | Unknown
       """.trimIndent())
 
@@ -1305,129 +1287,6 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       for x in C.f():
           expr = x
       #   └ TYPE C
-      """.trimIndent())
-
-    @Test
-    fun `self annotated with type var on same class instance`() = test("""
-      from typing import TypeVar
-
-      T = TypeVar('T')
-
-      class C:
-          def method(self: T) -> T:
-              pass
-
-      expr = C().method()
-      #└ TYPE C
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-24990"])
-    fun `self annotated with type var on subclass instance`() = test("""
-      from typing import TypeVar
-
-      T = TypeVar('T')
-
-      class C:
-          def method(self: T) -> T:
-              pass
-
-      class D(C):
-          pass
-
-      expr = D().method()
-      #└ TYPE D
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-24990"])
-    fun `self annotated with type var receiver union type`() = test("""
-      from typing import TypeVar
-
-      T = TypeVar('T')
-
-      class Base:
-          def method(self: T) -> T:
-              pass
-
-      class A(Base):
-          pass
-
-      class B(Base): 
-          pass
-
-      expr = (A() or B()).method()
-      #└ TYPE A | B
-      """.trimIndent())
-
-    @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
-    @TestFor(issues = ["PY-24990"])
-    fun `self annotated instance method called on class object`() = test("""
-      from typing import TypeVar
-
-      T = TypeVar('T')
-
-      class C:
-          def method(self: T) -> T:
-              pass
-
-      class D(C):
-          pass
-
-      expr = C.method(D())
-      #└ TYPE D
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-24990"])
-    fun `self annotated in type comment on same class instance`() = test("""
-      from typing import TypeVar
-
-      T = TypeVar('T')
-
-      class C:
-          def method(self):
-              # type: (T) -> T
-              pass
-
-      expr = C().method()
-      #└ TYPE C
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-24990"])
-    fun `self annotated in type comment on subclass instance`() = test("""
-      from typing import TypeVar
-
-      T = TypeVar('T')
-
-      class C:
-          def method(self):
-              # type: (T) -> T
-              pass
-
-      class D(C):
-          pass
-
-      expr = D().method()
-      #└ TYPE D
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-33663"])
-    fun `annotated self return property`() = test("""
-      from typing import TypeVar
-
-      T = TypeVar("T")
-
-      class A:
-          @property
-          def foo(self: T) -> T:
-              pass
-
-      expr = A().foo
-      #└ TYPE A
       """.trimIndent())
 
     @Test

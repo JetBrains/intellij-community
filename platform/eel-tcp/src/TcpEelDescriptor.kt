@@ -26,4 +26,6 @@ abstract class TcpEelDescriptor(
   }
 
   override fun hashCode(): Int = rootPathString.hashCode()
+
+  override fun toString(): String = "${javaClass.simpleName}(osFamily=$osFamily, rootPathString='$rootPathString')"
 }

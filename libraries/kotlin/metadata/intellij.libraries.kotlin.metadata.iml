@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlin-metadata" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.20">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.21-RC">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.4.20/kotlin-metadata-jvm-2.4.20.jar">
-              <sha256sum>98d9b1847908adfde7a8b2d4cc35708d7ddccae0698cec56bcb506bcf9392595</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.4.21-RC/kotlin-metadata-jvm-2.4.21-RC.jar">
+              <sha256sum>ce7a0385fb0f803a887f64019b8bdd911ac803c31ff3d3eb54e1a913641679da</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.4.20/kotlin-metadata-jvm-2.4.20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.4.21-RC/kotlin-metadata-jvm-2.4.21-RC.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.4.20/kotlin-metadata-jvm-2.4.20-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.4.21-RC/kotlin-metadata-jvm-2.4.21-RC-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

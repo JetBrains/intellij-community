@@ -38,7 +38,7 @@ class FileHyperlinkNavigationTest {
     project.replaceService(NavigationService::class.java, navigationService, disposable)
     val descriptor = OpenFileDescriptor(project, LightVirtualFile("Main.txt", "hello"), 0)
 
-    val handled = navigateFileHyperlink(project, descriptor, useBrowser = true)
+    val handled = FileHyperlinkNavigation.getInstance().navigateFileHyperlink(project, descriptor, useBrowser = true)
 
     assertTrue(handled)
     assertEquals(0, navigationService.requestCalls)
@@ -53,7 +53,7 @@ class FileHyperlinkNavigationTest {
     val directory = sourceRoot.get().virtualFile
     val descriptor = OpenFileDescriptor(project, directory)
 
-    val handled = navigateFileHyperlink(project, descriptor, useBrowser = true)
+    val handled = FileHyperlinkNavigation.getInstance().navigateFileHyperlink(project, descriptor, useBrowser = true)
 
     assertTrue(handled)
     assertEquals(1, navigationService.requestCalls)
@@ -67,7 +67,7 @@ class FileHyperlinkNavigationTest {
     val descriptor = OpenFileDescriptor(project, directory)
 
     val handled = withContext(Dispatchers.EDT) {
-      navigateFileHyperlinkLegacy(project, descriptor, useBrowser = true)
+      FileHyperlinkNavigation.getInstance().navigateFileHyperlinkLegacy(project, descriptor, useBrowser = true)
     }
 
     assertTrue(handled)

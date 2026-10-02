@@ -622,54 +622,93 @@ abstract class PyLspToolDescriptor(
 
   lateinit var supportProvider: PyLspToolIntegrationProvider
 
-  private val registeredActionIds = mutableListOf<String>()
+  private val commandActionsLock = Any()
+
+  /**
+   * The owner of the application-wide command actions of the running server. The server stop disposes it, and so
+   * does [PythonPluginDisposable] of the project.
+   */
+  private var commandActions: Disposable? = null
+
+  /**
+   * The servers of this descriptor that initialized and did not stop yet. A restart can start the new server before
+   * the old one reports its stop, so only the stop of the last server may drop [commandActions].
+   */
+  private var initializedServers = 0
 
   override val lspServerListener: PyLspToolDescriptorLspServerListener = PyLspToolDescriptorLspServerListener()
 
   open inner class PyLspToolDescriptorLspServerListener : LspServerListener {
     override fun serverInitialized(params: InitializeResult) {
+      synchronized(commandActionsLock) { initializedServers++ }
       dropCachedTypeContexts()
-      val actionManager = ActionManager.getInstance()
-      val commandProvider = params.capabilities.executeCommandProvider
-
-      if (commandProvider == null) return
-      // workaround for IJPL-196574
-      commandProvider.commands.forEach { command ->
-        val actionId = "LSP.Command.$presentableName.$command"
-        if (actionManager.getAction(actionId) != null) {
-          // workaround for PY-86023
-          actionManager.unregisterAction(actionId)
-        }
-        if (command in commandDescriptions && commandDescriptions[command] == null) return@forEach
-        val text = "${params.serverInfo.name}: " + (commandDescriptions[command] ?: command)
-        val action = object : AnAction(text) {
-          override fun actionPerformed(e: AnActionEvent) {
-            val lspServerManager = LspClientManager.getInstance(project)
-
-            lspServerManager
-              .getClients(supportProvider::class.java)
-              .firstOrNull()
-              ?.let { server ->
-                project.service<PyLspService>().cs.launch {
-                  server.sendRequest {
-                    it.workspaceService.executeCommand(ExecuteCommandParams(command, null))
-                  }
-                }
-              }
-          }
-        }
-        actionManager.registerAction(actionId, action)
-        registeredActionIds.add(actionId)
-      }
+      registerCommandActions(params)
     }
 
     override fun serverStopped(shutdownNormally: Boolean) {
-      dropCachedTypeContexts()
-      val actionManager = ActionManager.getInstance()
-      registeredActionIds.forEach { actionId ->
-        actionManager.unregisterAction(actionId)
+      // A server that never initialized stops too, so the count does not go below zero.
+      val stale = synchronized(commandActionsLock) {
+        initializedServers = maxOf(0, initializedServers - 1)
+        if (initializedServers > 0) null else commandActions.also { commandActions = null }
       }
-      registeredActionIds.clear()
+      // The actions go before the project is read, because the stop can come after the project is gone.
+      stale?.let { Disposer.dispose(it) }
+      dropCachedTypeContexts()
+    }
+
+    // workaround for IJPL-196574
+    private fun registerCommandActions(params: InitializeResult) {
+      val commandProvider = params.capabilities.executeCommandProvider ?: return
+      if (project.isDisposed) return
+      val parentDisposable = PythonPluginDisposable.getInstance(project)
+      val actionManager = ActionManager.getInstance()
+      val registered = mutableListOf<Pair<String, AnAction>>()
+      // The owner gets its parent only after the loop, so no other thread disposes it while the list grows.
+      val registration = Disposer.newDisposable("$presentableName command actions")
+      Disposer.register(registration) {
+        for ((actionId, action) in registered) {
+          // Another server of this tool can have taken the ID since, see PY-86023.
+          if (actionManager.getAction(actionId) === action) actionManager.unregisterAction(actionId)
+        }
+        registered.clear()
+      }
+      var complete = false
+      try {
+        for (command in commandProvider.commands) {
+          val actionId = "LSP.Command.$presentableName.$command"
+          if (actionManager.getAction(actionId) != null) {
+            // workaround for PY-86023
+            actionManager.unregisterAction(actionId)
+          }
+          if (command in commandDescriptions && commandDescriptions[command] == null) continue
+          val text = "${params.serverInfo?.name ?: presentableName}: " + (commandDescriptions[command] ?: command)
+          val action = object : AnAction(text) {
+            override fun actionPerformed(e: AnActionEvent) {
+              val lspServerManager = LspClientManager.getInstance(project)
+
+              lspServerManager
+                .getClients(supportProvider::class.java)
+                .firstOrNull()
+                ?.let { server ->
+                  project.service<PyLspService>().cs.launch {
+                    server.sendRequest {
+                      it.workspaceService.executeCommand(ExecuteCommandParams(command, null))
+                    }
+                  }
+                }
+            }
+          }
+          actionManager.registerAction(actionId, action)
+          registered.add(actionId to action)
+        }
+        // `tryRegister` fails for a project that closes meanwhile, and then the actions go at once.
+        complete = Disposer.tryRegister(parentDisposable, registration) && !project.isDisposed
+      }
+      finally {
+        if (!complete) Disposer.dispose(registration)
+      }
+      val previous = synchronized(commandActionsLock) { commandActions.also { commandActions = registration } }
+      previous?.let { Disposer.dispose(it) }
     }
 
     /**
@@ -680,7 +719,7 @@ abstract class PyLspToolDescriptor(
      * caches, and runs the daemon again.
      */
     private fun dropCachedTypeContexts() {
-      if (!pyTool.isSelectedAsTypeEngine(project)) return
+      if (project.isDisposed || !pyTool.isSelectedAsTypeEngine(project)) return
       PyTypeEngineSettingsModificationTracker.getInstance(project).incModificationCount()
       // `dropPsiCaches` needs the EDT or a write action, and the server listener runs on a pooled thread.
       ApplicationManager.getApplication().invokeLater({

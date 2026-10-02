@@ -46,6 +46,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.resources.iml",
+        "generated/META-INF/intellij.moduleSets.builtInServer.xml",
         "generated/META-INF/intellij.moduleSets.compose.runtime.xml",
         "generated/META-INF/intellij.moduleSets.core.ide.xml",
         "generated/META-INF/intellij.moduleSets.core.lang.xml",
@@ -54,6 +55,7 @@ exports_files(
         "generated/META-INF/intellij.moduleSets.elevation.xml",
         "generated/META-INF/intellij.moduleSets.essential.minimal.xml",
         "generated/META-INF/intellij.moduleSets.essential.xml",
+        "generated/META-INF/intellij.moduleSets.externalSystem.xml",
         "generated/META-INF/intellij.moduleSets.fleet.xml",
         "generated/META-INF/intellij.moduleSets.ide.common.xml",
         "generated/META-INF/intellij.moduleSets.libraries.dap.xml",
@@ -63,6 +65,7 @@ exports_files(
         "generated/META-INF/intellij.moduleSets.libraries.jackson2.xml",
         "generated/META-INF/intellij.moduleSets.libraries.jackson3.xml",
         "generated/META-INF/intellij.moduleSets.libraries.ktor.xml",
+        "generated/META-INF/intellij.moduleSets.libraries.netty.xml",
         "generated/META-INF/intellij.moduleSets.libraries.opentelemetry.exporter.xml",
         "generated/META-INF/intellij.moduleSets.libraries.opentelemetry.xml",
         "generated/META-INF/intellij.moduleSets.libraries.platform.xml",
@@ -71,6 +74,7 @@ exports_files(
         "generated/META-INF/intellij.moduleSets.platform.resources.defaults.xml",
         "generated/META-INF/intellij.moduleSets.platform.testFrameworks.core.xml",
         "generated/META-INF/intellij.moduleSets.platform.testFrameworks.junit5.xml",
+        "generated/META-INF/intellij.moduleSets.polySymbols.xml",
         "generated/META-INF/intellij.moduleSets.rd.common.xml",
         "generated/META-INF/intellij.moduleSets.rpc.backend.extended.xml",
         "generated/META-INF/intellij.moduleSets.settings.sync.xml",

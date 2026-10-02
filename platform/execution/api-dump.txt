@@ -296,11 +296,6 @@ c:com.intellij.execution.actions.ConfigurationFromContextImpl
 - onFirstRun(com.intellij.execution.actions.ConfigurationContext,java.lang.Runnable):V
 - setConfigurationSettings(com.intellij.execution.RunnerAndConfigurationSettings):V
 - shouldReplace(com.intellij.execution.actions.ConfigurationFromContext):Z
-a:com.intellij.execution.actions.ConsoleActionsPostProcessor
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- <init>():V
-- postProcess(com.intellij.execution.ui.ConsoleView,com.intellij.openapi.actionSystem.AnAction[]):com.intellij.openapi.actionSystem.AnAction[]
-- postProcessPopupActions(com.intellij.execution.ui.ConsoleView,com.intellij.openapi.actionSystem.AnAction[]):com.intellij.openapi.actionSystem.AnAction[]
 a:com.intellij.execution.actions.LazyRunConfigurationProducer
 - com.intellij.execution.actions.RunConfigurationProducer
 - <init>():V
@@ -696,34 +691,6 @@ com.intellij.execution.executors.RunExecutorSettings
 - a:getStartActionText():java.lang.String
 - getStartActionText(java.lang.String):java.lang.String
 - a:isApplicable(com.intellij.openapi.project.Project):Z
-com.intellij.execution.filters.Filter
-- com.intellij.openapi.project.PossiblyDumbAware
-- sf:EMPTY_ARRAY:com.intellij.execution.filters.Filter[]
-- a:applyFilter(java.lang.String,I):com.intellij.execution.filters.Filter$Result
-e:com.intellij.execution.filters.Filter$NextAction
-- java.lang.Enum
-c:com.intellij.execution.filters.Filter$Result
-- com.intellij.execution.filters.Filter$ResultItem
-- <init>(java.util.List):V
-- getFirstHyperlinkInfo():com.intellij.execution.filters.HyperlinkInfo
-- getResultItems():java.util.List
-- setNextAction(com.intellij.execution.filters.Filter$NextAction):V
-c:com.intellij.execution.filters.Filter$ResultItem
-- getFollowedHyperlinkAttributes():com.intellij.openapi.editor.markup.TextAttributes
-- getHighlightAttributes():com.intellij.openapi.editor.markup.TextAttributes
-- getHighlightEndOffset():I
-- getHighlightStartOffset():I
-- getHyperlinkInfo():com.intellij.execution.filters.HyperlinkInfo
-a:com.intellij.execution.filters.TextConsoleBuilder
-- <init>():V
-- a:addFilter(com.intellij.execution.filters.Filter):V
-- filters(java.util.List):com.intellij.execution.filters.TextConsoleBuilder
-- filters(com.intellij.execution.filters.Filter[]):com.intellij.execution.filters.TextConsoleBuilder
-- a:getConsole():com.intellij.execution.ui.ConsoleView
-- a:setViewer(Z):V
-a:com.intellij.execution.filters.TextConsoleBuilderFactory
-- a:createBuilder(com.intellij.openapi.project.Project):com.intellij.execution.filters.TextConsoleBuilder
-- s:getInstance():com.intellij.execution.filters.TextConsoleBuilderFactory
 com.intellij.execution.impl.CheckableRunConfigurationEditor
 - a:checkEditorData(java.lang.Object):V
 a:com.intellij.execution.junit.RuntimeConfigurationProducer
@@ -997,42 +964,13 @@ com.intellij.execution.target.value.TargetValue
 - a:getLocalValue():org.jetbrains.concurrency.Promise
 - a:getTargetValue():org.jetbrains.concurrency.Promise
 - s:map(com.intellij.execution.target.value.TargetValue,com.intellij.util.Function):com.intellij.execution.target.value.TargetValue
-com.intellij.execution.ui.ConsoleView
-- com.intellij.execution.ui.ExecutionConsole
-- a:addMessageFilter(com.intellij.execution.filters.Filter):V
-- a:allowHeavyFilters():V
-- a:attachToProcess(com.intellij.execution.process.ProcessHandler):V
-- a:canPause():Z
-- a:clear():V
-- a:createConsoleActions():com.intellij.openapi.actionSystem.AnAction[]
-- a:getContentSize():I
-- getPlace():com.intellij.execution.ui.ConsoleViewPlace
-- a:hasDeferredOutput():Z
-- a:isOutputPaused():Z
-- a:performWhenNoDeferredOutput(java.lang.Runnable):V
-- a:print(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
-- a:printHyperlink(java.lang.String,com.intellij.execution.filters.HyperlinkInfo):V
-- requestScrollingToEnd():V
-- a:scrollTo(I):V
-- a:setHelpId(java.lang.String):V
-- a:setOutputPaused(Z):V
-c:com.intellij.execution.ui.ConsoleViewPlace
-- <init>(java.lang.String):V
 com.intellij.execution.ui.ConsoleViewWithDelegate
 - a:getDelegate():com.intellij.execution.ui.ConsoleView
-com.intellij.execution.ui.ExecutionConsole
-- com.intellij.openapi.ui.ComponentContainer
-- sf:CONSOLE_CONTENT_ID:java.lang.String
 com.intellij.execution.ui.ExecutionConsoleEx
 - com.intellij.execution.ui.ExecutionConsole
 - a:buildUi(com.intellij.execution.ui.RunnerLayoutUi):V
 - a:getExecutionConsoleId():java.lang.String
 com.intellij.execution.ui.NoStackTraceFoldingPanel
-com.intellij.execution.ui.ObservableConsoleView
-- a:addChangeListener(com.intellij.execution.ui.ObservableConsoleView$ChangeListener,com.intellij.openapi.Disposable):V
-com.intellij.execution.ui.ObservableConsoleView$ChangeListener
-- contentAdded(java.util.Collection):V
-- textAdded(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
 c:com.intellij.execution.ui.RunContentDescriptor
 - com.intellij.openapi.Disposable
 - dispose():V

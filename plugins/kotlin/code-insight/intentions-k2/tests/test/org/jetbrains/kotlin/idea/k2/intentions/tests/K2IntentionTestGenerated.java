@@ -13907,6 +13907,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/funFromCompanionObject.kt");
         }
 
+        @TestMetadata("inCompanionBlock.kt")
+        public void testInCompanionBlock() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/inCompanionBlock.kt");
+        }
+
         @TestMetadata("inObject.kt")
         public void testInObject() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/inObject.kt");

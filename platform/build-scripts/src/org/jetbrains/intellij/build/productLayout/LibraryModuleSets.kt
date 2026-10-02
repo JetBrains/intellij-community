@@ -10,7 +10,8 @@ package org.jetbrains.intellij.build.productLayout
  * [CommunityModuleSets], or the ultimate `UltimateModuleSets`, and nests a set from here.
  * This object depends on no other module set object.
  *
- * - **librariesPlatform**: universal utilities for every product; nests Jackson and Ktor
+ * - **librariesPlatform**: universal utilities for every product; nests Jackson, Ktor and Netty
+ * - **librariesNetty**: the Netty wrappers, embedded together because they share one class loader
  * - **librariesIde**: UI libraries for a product with a user interface
  * - **librariesOpenTelemetry / librariesOpenTelemetryExporter**: the OpenTelemetry API, SDK, and exporters
  * - **librariesLsp4j / librariesDap**: the Eclipse LSP4J wrappers for LSP and DAP
@@ -135,11 +136,7 @@ object LibraryModuleSets {
     embeddedModule("intellij.libraries.markdown")
     embeddedModule("intellij.libraries.mvstore")
 
-    embeddedModule("intellij.libraries.netty.buffer")
-    embeddedModule("intellij.libraries.netty.codec.compression")
-    embeddedModule("intellij.libraries.netty.codec.http")
-    embeddedModule("intellij.libraries.netty.codec.protobuf")
-    module("intellij.libraries.netty.handler.proxy")
+    moduleSet(librariesNetty())
 
     embeddedModule("intellij.libraries.oro.matcher")
     embeddedModule("intellij.libraries.protobuf")
@@ -157,6 +154,27 @@ object LibraryModuleSets {
     embeddedModule("intellij.libraries.velocity")
     embeddedModule("intellij.libraries.xtext.xbase")
     embeddedModule("intellij.libraries.xz")
+  }
+
+  /**
+   * Netty library wrappers.
+   *
+   * The wrappers of one family form a set of their own, so a reader reviews and bumps the family in one place.
+   * A netty jar references classes of its sibling jars directly, so the siblings must load in one class loader.
+   * The buffer and codec wrappers are embedded, because netty-codec-http is embedded.
+   * The proxy handler is not embedded, because only plugin content uses it.
+   *
+   * Nested in [librariesPlatform]. `intellij.libraries.netty.tcnative.boringssl` stays out, because only the
+   * build scripts use it, through a plain JPS dependency.
+   */
+  fun librariesNetty(): ModuleSet = moduleSet("libraries.netty") {
+    embeddedModule("intellij.libraries.netty.buffer")
+    // embedded: netty-codec-http is embedded and resolves the Brotli, Zstd and Snappy decoders of this jar through its own class loader.
+    // The netty-codec-http wrapper depends on this module, because its library excludes the netty-codec-compression artifact.
+    embeddedModule("intellij.libraries.netty.codec.compression")
+    embeddedModule("intellij.libraries.netty.codec.http")
+    embeddedModule("intellij.libraries.netty.codec.protobuf")
+    module("intellij.libraries.netty.handler.proxy")
   }
 
   /**

@@ -63,5 +63,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.codec.compression" />
   </component>
 </module>

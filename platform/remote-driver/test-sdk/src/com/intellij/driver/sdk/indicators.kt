@@ -65,31 +65,42 @@ fun Driver.waitForProjectOpen(timeout: Duration = 1.minutes) {
 
 /**
  * Method waits till a project is opened and there are no indicators for 10 seconds.
+ *
+ * [ignoreDumbMode] treats a project in dumb mode as idle. A product that holds a project in dumb mode on purpose,
+ * such as JetBrains Light, never leaves it, so a wait for smart mode there never ends.
  */
 @ManualWaitForIndicators
-fun Driver.waitForIndicators(project: Project, timeout: Duration, waitSmartLongEnough: Boolean = true) {
-  waitForIndicators({ project }, timeout, waitSmartLongEnough = waitSmartLongEnough)
+fun Driver.waitForIndicators(project: Project, timeout: Duration, waitSmartLongEnough: Boolean = true, ignoreDumbMode: Boolean = false) {
+  waitForIndicators({ project }, timeout, waitSmartLongEnough = waitSmartLongEnough, ignoreDumbMode = ignoreDumbMode)
 }
 
 /**
  * Method waits till a project is opened and there are no indicators for 10 seconds.
+ *
+ * [ignoreDumbMode] treats a project in dumb mode as idle. A product that holds a project in dumb mode on purpose,
+ * such as JetBrains Light, never leaves it, so a wait for smart mode there never ends.
  */
 @ManualWaitForIndicators
-fun Driver.waitForIndicators(timeout: Duration, waitSmartLongEnough: Boolean = true) {
+fun Driver.waitForIndicators(timeout: Duration, waitSmartLongEnough: Boolean = true, ignoreDumbMode: Boolean = false) {
   waitForProjectOpen(timeout)
-  waitForIndicators(::singleProject, timeout, waitSmartLongEnough = waitSmartLongEnough)
+  waitForIndicators(::singleProject, timeout, waitSmartLongEnough = waitSmartLongEnough, ignoreDumbMode = ignoreDumbMode)
 }
 
 /**
  * Method waits till a project is opened and there are no indicators for 10 seconds.
  */
-internal fun Driver.waitForIndicators(projectGet: () -> Project?, timeout: Duration, waitSmartLongEnough: Boolean = true) {
+internal fun Driver.waitForIndicators(
+  projectGet: () -> Project?,
+  timeout: Duration,
+  waitSmartLongEnough: Boolean = true,
+  ignoreDumbMode: Boolean = false,
+) {
   var smartLongEnoughStart: Instant? = null
 
-  waitFor("Indicators with waitSmartLongEnough=$waitSmartLongEnough", timeout) {
+  waitFor("Indicators with waitSmartLongEnough=$waitSmartLongEnough, ignoreDumbMode=$ignoreDumbMode", timeout) {
     val project = runCatching { projectGet.invoke() }.getOrNull()
     val projectReady = (project != null && isProjectOpened(project))
-    val indicatorsVisible = projectReady && if (isLightSession()) {
+    val indicatorsVisible = projectReady && if (ignoreDumbMode || isLightSession()) {
       indicatorsRunning(project)
     }
     else {

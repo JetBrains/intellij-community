@@ -513,34 +513,6 @@ f:com.intellij.diagnostic.logs.LogLevelConfigurationManager
 - <init>():V
 - sf:getInstance():com.intellij.diagnostic.logs.LogLevelConfigurationManager
 - noStateLoaded():V
-f:com.intellij.execution.impl.ConsoleViewUtil
-- sf:EDITOR_IS_CONSOLE_HISTORY_VIEW:com.intellij.openapi.util.Key
-- <init>():V
-- s:computeConsoleFilters(com.intellij.execution.filters.ConsoleFilterProvider,com.intellij.openapi.project.Project,com.intellij.execution.ui.ConsoleView,com.intellij.psi.search.GlobalSearchScope):com.intellij.execution.filters.Filter[]
-- s:computeConsoleFilters(com.intellij.openapi.project.Project,com.intellij.execution.ui.ConsoleView,com.intellij.psi.search.GlobalSearchScope):java.util.List
-- s:computeInputFilter(com.intellij.execution.ui.ConsoleView,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):com.intellij.execution.filters.InputFilter
-- s:getContentTypeForToken(com.intellij.psi.tree.IElementType,com.intellij.openapi.fileTypes.SyntaxHighlighter):com.intellij.execution.ui.ConsoleViewContentType
-- s:isReplaceActionEnabledForConsoleViewEditor(com.intellij.openapi.editor.Editor):Z
-- s:printAsFileType(com.intellij.execution.ui.ConsoleView,java.lang.String,com.intellij.openapi.fileTypes.FileType):V
-- s:printWithHighlighting(com.intellij.execution.ui.ConsoleView,java.lang.String,com.intellij.openapi.fileTypes.SyntaxHighlighter):V
-- s:printWithHighlighting(com.intellij.execution.ui.ConsoleView,java.lang.String,com.intellij.openapi.fileTypes.SyntaxHighlighter,java.lang.Runnable):V
-- s:printWithHighlighting(java.util.function.BiConsumer,java.lang.String,com.intellij.openapi.fileTypes.SyntaxHighlighter,java.lang.Runnable):V
-- s:setupConsoleEditor(com.intellij.openapi.editor.ex.EditorEx,Z,Z):V
-- s:setupConsoleEditor(com.intellij.openapi.project.Project,Z,Z):com.intellij.openapi.editor.ex.EditorEx
-- s:setupLanguageConsoleEditor(com.intellij.openapi.editor.ex.EditorEx):V
-- s:updateConsoleColorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme,com.intellij.openapi.editor.ex.EditorEx):com.intellij.openapi.editor.colors.EditorColorsScheme
-f:com.intellij.execution.impl.EditorHyperlinkSupport
-- <init>(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):V
-- addHighlighter(I,I,com.intellij.openapi.editor.markup.TextAttributes):V
-- addHighlighter(I,I,com.intellij.openapi.editor.markup.TextAttributes,I):V
-- createHyperlink(I,I,com.intellij.openapi.editor.markup.TextAttributes,com.intellij.execution.filters.HyperlinkInfo):com.intellij.openapi.editor.markup.RangeHighlighter
-- createHyperlink(com.intellij.openapi.editor.markup.RangeHighlighter,com.intellij.execution.filters.HyperlinkInfo):V
-- getHyperlinkInfoByLineAndCol(I,I):com.intellij.execution.filters.HyperlinkInfo
-- getHyperlinkInfoByPoint(java.awt.Point):com.intellij.execution.filters.HyperlinkInfo
-- s:getLineText(com.intellij.openapi.editor.Document,I,Z):java.lang.String
-- getLinkNavigationRunnable(com.intellij.openapi.editor.LogicalPosition):java.lang.Runnable
-- highlightHyperlinks(com.intellij.execution.filters.Filter,I,I):V
-- highlightHyperlinksLater(com.intellij.execution.filters.Filter,I,I,com.intellij.openapi.util.Expirable):V
 f:com.intellij.execution.process.ProcessHandlerFactoryImpl
 - <init>():V
 - createColoredProcessHandler(com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.process.OSProcessHandler
@@ -853,6 +825,34 @@ f:com.intellij.ide.actions.ActivateToolWindowAction$Manager
 a:com.intellij.ide.actions.BaseNavigateToSourceAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - p:getNavigatables(com.intellij.openapi.actionSystem.DataContext):com.intellij.pom.Navigatable[]
+a:com.intellij.ide.actions.BigPopupUI
+- p:myHint:com.intellij.openapi.ui.popup.JBPopup
+- p:myHintLabel:com.intellij.util.ui.Advertiser
+- pf:myProject:com.intellij.openapi.project.Project
+- p:myResultsList:com.intellij.ui.components.JBList
+- p:mySearchField:com.intellij.ui.components.fields.ExtendableTextField
+- p:myViewType:com.intellij.ide.actions.BigPopupUI$ViewType
+- pf:myViewTypeListeners:java.util.List
+- p:searchFinishedHandler:java.lang.Runnable
+- p:suggestionsPanel:javax.swing.JPanel
+- pa:createCellRenderer():javax.swing.ListCellRenderer
+- p:createFooterPanel(javax.swing.JPanel):javax.swing.JPanel
+- pa:createHeader():javax.swing.JComponent
+- a:createList():com.intellij.ui.components.JBList
+- p:createListPane():javax.swing.JScrollPane
+- p:createSearchField():com.intellij.ui.components.fields.ExtendableTextField
+- p:createSuggestionsPanel():javax.swing.JPanel
+- pa:getAccessibleName():java.lang.String
+- getExpandedSize():java.awt.Dimension
+- p:getInitialHint():java.lang.String
+- p:getInitialHints():java.lang.String[]
+- p:getSearchPattern():java.lang.String
+- p:installScrollingActions():V
+e:com.intellij.ide.actions.BigPopupUI$ViewType
+- sf:FULL:com.intellij.ide.actions.BigPopupUI$ViewType
+- sf:SHORT:com.intellij.ide.actions.BigPopupUI$ViewType
+- s:valueOf(java.lang.String):com.intellij.ide.actions.BigPopupUI$ViewType
+- s:values():com.intellij.ide.actions.BigPopupUI$ViewType[]
 c:com.intellij.ide.actions.CloseAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 a:com.intellij.ide.actions.CloseEditorsActionBase
@@ -1091,6 +1091,14 @@ a:com.intellij.ide.actions.UndoRedoAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - pa:isAvailable(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.command.undo.UndoManager):Z
 - pa:perform(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.command.undo.UndoManager):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+a:com.intellij.ide.actions.bigPopup.ShowFilterAction
+- pa:createChooser():com.intellij.ide.util.ElementsChooser
+- getDimensionServiceKey():java.lang.String
+- pa:isActive():Z
+- pa:isEnabled():Z
+- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.ide.actionsOnSave.ActionOnSaveBackedByOwnConfigurable
 - <init>(com.intellij.ide.actionsOnSave.ActionOnSaveContext,java.lang.String,java.lang.Class):V
@@ -7363,6 +7371,12 @@ c:com.intellij.util.textCompletion.TextFieldWithCompletion
 - <init>(com.intellij.openapi.project.Project,com.intellij.util.textCompletion.TextCompletionProvider,java.lang.String,Z,Z,Z):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.util.textCompletion.TextCompletionProvider,java.lang.String,Z,Z,Z,Z):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.util.textCompletion.TextCompletionProvider,java.lang.String,Z,Z,Z,Z,Z):V
+c:com.intellij.util.ui.Advertiser
+- p:adFont():java.awt.Font
+- addAdvertisement(java.lang.String,javax.swing.Icon):V
+- clearAdvertisements():V
+- getAdvertisements():java.util.List
+- showRandomText():V
 c:com.intellij.util.ui.ButtonlessScrollBarUI
 - p:adjustColor(java.awt.Color):java.awt.Color
 - p:alwaysPaintThumb():Z

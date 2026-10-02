@@ -3,7 +3,12 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 
 ### auto-generated section `dev intellij.libraries.compose.swing` start
 content_module_jar(
-    libraries = ["@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui"],
+    libraries = [
+        # do not sort,
+        "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui",
+        "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-foundation",
+        "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-animation",
+    ],
     module = ":compose-swing",
 )
 ### auto-generated section `dev intellij.libraries.compose.swing` end
@@ -24,11 +29,16 @@ jvm_library(
     exports = [
         # do not sort,
         "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui",
+        "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-foundation",
+        "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-animation",
         "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-test",
+        "//libraries/compose-runtime-desktop",
     ],
     runtime_deps = [
         # do not sort,
         "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui",
+        "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-foundation",
+        "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-animation",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/compose-runtime-desktop",
     ],
@@ -46,7 +56,11 @@ jvm_library(
     exports = [
         # do not sort,
         "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui",
+        "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-foundation",
+        "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-animation",
         "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-test",
+        "//libraries/compose-runtime-desktop",
+        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
     ],
     runtime_deps = [
         # do not sort,

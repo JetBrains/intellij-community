@@ -10,7 +10,9 @@ import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.modcompletion.PsiUpdateCompletionItem;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.MarkupText;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNullByDefault;
 
@@ -43,8 +45,11 @@ final class LiveTemplateModCompletionItemProvider implements ModCompletionItemPr
 
     @Override
     public void update(ActionContext actionContext, InsertionContext insertionContext, ModPsiUpdater updater) {
-      updater.getDocument().deleteString(actionContext.selection().getStartOffset(), actionContext.selection().getEndOffset());
-      TemplateManagerImpl.updateTemplate(contextObject(), updater);
+      Document document = updater.getDocument();
+      document.deleteString(actionContext.selection().getStartOffset(), actionContext.selection().getEndOffset());
+      PsiDocumentManager.getInstance(updater.getProject()).commitDocument(document);
+      TemplateSubstitutionContext substitutionContext = new TemplateSubstitutionContext(updater.getProject(), updater);
+      TemplateManagerImpl.updateTemplate(TemplateManagerImpl.substituteTemplate(contextObject(), substitutionContext), updater);
     }
 
     @Override

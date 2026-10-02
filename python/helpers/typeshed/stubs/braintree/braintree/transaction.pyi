@@ -40,6 +40,10 @@ from braintree.venmo_account import VenmoAccount
 from braintree.visa_checkout_card import VisaCheckoutCard
 
 class Transaction(Resource):
+    class AchType:
+        SameDay: Final = "same_day"
+        Standard: Final = "standard"
+
     class CreatedUsing:
         FullInformation: Final = "full_information"
         Token: Final = "token"

@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.isFromCompanionBlock
 
 internal class MoveMemberToCompanionBlockIntention : MoveMemberIntention(
     textGetter = KotlinBundle.messagePointer("move.to.companion.block")
@@ -20,6 +21,7 @@ internal class MoveMemberToCompanionBlockIntention : MoveMemberIntention(
     override fun applicabilityRange(element: KtNamedDeclaration): TextRange? {
         if (!element.kaModule(null).languageVersionSettings.supportsFeature(LanguageFeature.CompanionBlocks)) return null
         if (element is KtClassOrObject) return null
+        if (element.isFromCompanionBlock) return null
         if (!isApplicableForMoveMember(element)) return null
         val containingClassOrObject = element.containingClassOrObject
         if (containingClassOrObject is KtObjectDeclaration && !containingClassOrObject.isCompanion()) return null

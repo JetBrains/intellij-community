@@ -1,8 +1,9 @@
 from _typeshed import Incomplete, StrPath
-from typing import Final
+from typing import IO, Final
 from typing_extensions import deprecated
 
 from docutils import SettingsSpec, nodes
+from docutils.frontend import Values
 from docutils.io import Input, Output
 from docutils.parsers import Parser
 from docutils.readers import Reader
@@ -144,16 +145,16 @@ def publish_parts(
     enable_exit_status: bool = False,
 ) -> _WriterParts: ...
 def publish_doctree(
-    source,
+    source: str | bytes | IO[str] | IO[bytes] | None,
     source_path: StrPath | None = None,
     source_class: type[Input[Incomplete]] = ...,
-    reader=None,
+    reader: Reader[Incomplete] | str | None = None,
     reader_name: str | None = None,
-    parser=None,
+    parser: Parser | str | None = None,
     parser_name: str | None = None,
-    settings=None,
-    settings_spec=None,
-    settings_overrides=None,
+    settings: Values | None = None,
+    settings_spec: SettingsSpec | type[SettingsSpec] | None = None,
+    settings_overrides: dict[str, Incomplete] | None = None,
     config_section: str | None = None,
     enable_exit_status: bool = False,
 ) -> nodes.document: ...

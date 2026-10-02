@@ -421,6 +421,8 @@ private val externalNonBundledPluginCompatibilityDependencies = listOf(
  * plugin alias for compatibility.
  */
 private val vcsApiContentModules = arrayOf(
+  "intellij.platform.vcs.core",
+  "intellij.platform.vcs.shared",
   "intellij.platform.vcs",
   "intellij.platform.vcs.impl",
   "intellij.platform.vcs.dvcs",
@@ -484,12 +486,16 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.xml.psi.impl",
   "intellij.xml.syntax",
   "intellij.xml.ui.common",
+  "intellij.platform.webide",
   "intellij.platform.webide.impl",
   "intellij.platform.wsl.impl",
+  "intellij.platform.ide.favoritesTreeView",
   "intellij.platform.ssh",
   "intellij.platform.ssh.core",
   "intellij.platform.ssh.core.ui",
   "intellij.platform.ssh.attach",
+  "intellij.platform.graph",
+  "intellij.platform.graph.impl",
 ).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
 
 /**

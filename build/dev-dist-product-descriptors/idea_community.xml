@@ -42,7 +42,6 @@
     <module name="intellij.emojipicker"/>
     <module name="intellij.platform.ide.impl.wsl"/>
     <module name="intellij.platform.diagnostic.telemetry.agent.extension"/>
-    <module name="intellij.platform.polySymbols.backend"/>
     <module name="intellij.regexp"/>
     <module name="intellij.platform.langInjection"/>
     <module name="intellij.platform.langInjection.backend"/>
@@ -72,22 +71,14 @@
     <module name="intellij.platform.completion.common"/>
     <module name="intellij.platform.completion.frontend"/>
     <module name="intellij.platform.completion.backend"/>
-    <module name="intellij.platform.polySymbols" loading="embedded"/>
-    <module name="intellij.platform.polySymbols.web"/>
-    <module name="intellij.platform.builtInServer.impl" loading="embedded"/>
-    <module name="intellij.platform.externalSystem"/>
-    <module name="intellij.platform.externalSystem.dependencyUpdater"/>
-    <module name="intellij.platform.externalSystem.impl"/>
-    <module name="intellij.platform.externalProcessAuthHelper"/>
-    <module name="intellij.platform.util.commonsLangV2Shim"/>
     <!-- endregion -->
 
     <!-- region essential.minimal -->
     <module name="intellij.libraries.download.pgp.verifier" loading="embedded"/>
     <module name="intellij.remoteDev.util" loading="embedded"/>
     <module name="intellij.platform.buildScripts.downloader"/>
-    <module name="intellij.platform.credentialStore.ui" loading="embedded"/>
-    <module name="intellij.platform.credentialStore.impl" loading="embedded"/>
+    <module name="intellij.platform.credentialStore.ui"/>
+    <module name="intellij.platform.credentialStore.impl"/>
     <module name="intellij.platform.settings.local"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.project.backend"/>
@@ -112,6 +103,8 @@
     <module name="intellij.platform.usageView.impl" loading="embedded"/>
     <module name="intellij.platform.welcomeScreen.impl" loading="embedded"/>
     <module name="intellij.platform.icons.impl.intellij" loading="embedded"/>
+    <module name="intellij.platform.consoleView" loading="embedded"/>
+    <module name="intellij.platform.consoleView.impl" loading="embedded"/>
     <module name="intellij.platform.execution" loading="embedded"/>
     <module name="intellij.platform.execution.impl" loading="embedded"/>
     <module name="intellij.platform.lvcs" loading="embedded"/>
@@ -142,16 +135,16 @@
     <module name="intellij.libraries.zip.signer"/>
     <module name="intellij.platform.rd.community" loading="embedded"/>
     <module name="intellij.platform.remote.core" loading="embedded"/>
-    <module name="intellij.platform.ide.remote" loading="embedded"/>
-    <module name="intellij.platform.threadDumpParser" loading="embedded"/>
-    <module name="intellij.platform.ide.favoritesTreeView" loading="embedded"/>
-    <module name="intellij.platform.ide.designer" loading="embedded"/>
+    <module name="intellij.platform.ide.remote"/>
+    <module name="intellij.platform.threadDumpParser"/>
+    <module name="intellij.platform.ide.favoritesTreeView"/>
+    <module name="intellij.platform.ide.designer"/>
     <module name="intellij.platform.ide.bootstrap" loading="embedded"/>
     <module name="intellij.platform.bootstrap" loading="embedded"/>
     <module name="intellij.platform.backend.workspace.impl"/>
     <module name="intellij.platform.ide.concurrency" loading="embedded"/>
     <module name="intellij.platform.builtInServer" loading="embedded"/>
-    <module name="intellij.platform.discoverability" loading="embedded"/>
+    <module name="intellij.platform.discoverability"/>
     <module name="intellij.platform.eel.impl" loading="embedded"/>
     <module name="intellij.platform.eel.nioFs.impl" loading="embedded"/>
     <module name="intellij.platform.eel.impl.base" loading="embedded"/>
@@ -297,11 +290,6 @@
     <module name="intellij.libraries.lz4" loading="embedded"/>
     <module name="intellij.libraries.markdown" loading="embedded"/>
     <module name="intellij.libraries.mvstore" loading="embedded"/>
-    <module name="intellij.libraries.netty.buffer" loading="embedded"/>
-    <module name="intellij.libraries.netty.codec.compression" loading="embedded"/>
-    <module name="intellij.libraries.netty.codec.http" loading="embedded"/>
-    <module name="intellij.libraries.netty.codec.protobuf" loading="embedded"/>
-    <module name="intellij.libraries.netty.handler.proxy"/>
     <module name="intellij.libraries.oro.matcher" loading="embedded"/>
     <module name="intellij.libraries.protobuf" loading="embedded"/>
     <module name="intellij.libraries.protobuf.kotlin"/>
@@ -348,6 +336,14 @@
     <module name="intellij.libraries.ktor.client" loading="embedded"/>
     <module name="intellij.libraries.ktor.client.cio"/>
     <module name="intellij.libraries.ktor.server.cio"/>
+    <!-- endregion -->
+
+    <!-- region libraries.netty -->
+    <module name="intellij.libraries.netty.buffer" loading="embedded"/>
+    <module name="intellij.libraries.netty.codec.compression" loading="embedded"/>
+    <module name="intellij.libraries.netty.codec.http" loading="embedded"/>
+    <module name="intellij.libraries.netty.codec.protobuf" loading="embedded"/>
+    <module name="intellij.libraries.netty.handler.proxy"/>
     <!-- endregion -->
 
     <!-- region libraries.dap -->
@@ -427,6 +423,11 @@
     <module name="intellij.platform.rpc.topics.frontend"/>
     <!-- endregion -->
 
+    <!-- region builtInServer -->
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.platform.externalProcessAuthHelper"/>
+    <!-- endregion -->
+
     <!-- region debugger -->
     <module name="intellij.platform.debugger.impl.frontend"/>
     <module name="intellij.platform.debugger.impl.backend"/>
@@ -467,13 +468,25 @@
     <module name="intellij.platform.ml.impl"/>
     <!-- endregion -->
 
+    <!-- region externalSystem -->
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.externalSystem.dependencyUpdater"/>
+    <!-- endregion -->
+
+    <!-- region polySymbols -->
+    <module name="intellij.platform.polySymbols"/>
+    <module name="intellij.platform.polySymbols.backend"/>
+    <module name="intellij.platform.polySymbols.web"/>
+    <!-- endregion -->
+
     <!-- region vcs -->
     <module name="intellij.libraries.microba"/>
     <!-- endregion -->
 
     <!-- region vcs.shared -->
-    <module name="intellij.platform.vcs.core" loading="embedded"/>
-    <module name="intellij.platform.vcs.shared" loading="embedded"/>
+    <module name="intellij.platform.vcs.core"/>
+    <module name="intellij.platform.vcs.shared"/>
     <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
     <!-- endregion -->
@@ -490,7 +503,7 @@
     <!-- endregion -->
 
     <!-- region duplicates -->
-    <module name="intellij.platform.duplicates.analysis" loading="embedded"/>
+    <module name="intellij.platform.duplicates.analysis"/>
     <!-- endregion -->
 
     <!-- region compose.runtime -->

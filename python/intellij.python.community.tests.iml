@@ -126,6 +126,8 @@
     <orderEntry type="module" module-name="intellij.python.syntax" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jetcheck" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.python.test.env.common" />

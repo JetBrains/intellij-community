@@ -427,30 +427,6 @@ a:com.intellij.execution.executors.ExecutorGroup
 - pf:unregisterSettings(com.intellij.execution.executors.RunExecutorSettings):V
 f:com.intellij.execution.executors.ExecutorGroup$Companion
 - f:getGroupIfProxy(com.intellij.execution.Executor):com.intellij.execution.executors.ExecutorGroup
-e:com.intellij.execution.filters.Filter$NextAction
-- sf:CONTINUE_FILTERING:com.intellij.execution.filters.Filter$NextAction
-- sf:EXIT:com.intellij.execution.filters.Filter$NextAction
-- s:valueOf(java.lang.String):com.intellij.execution.filters.Filter$NextAction
-- s:values():com.intellij.execution.filters.Filter$NextAction[]
-c:com.intellij.execution.filters.Filter$Result
-- <init>(I,I,com.intellij.execution.filters.HyperlinkInfo):V
-- <init>(I,I,com.intellij.execution.filters.HyperlinkInfo,com.intellij.openapi.editor.markup.TextAttributes):V
-- <init>(I,I,com.intellij.execution.filters.HyperlinkInfo,com.intellij.openapi.editor.markup.TextAttributes,com.intellij.openapi.editor.markup.TextAttributes):V
-- <init>(I,I,com.intellij.execution.filters.HyperlinkInfo,Z):V
-- getHighlightAttributes():com.intellij.openapi.editor.markup.TextAttributes
-- getHighlightEndOffset():I
-- getHighlightStartOffset():I
-- getHyperlinkInfo():com.intellij.execution.filters.HyperlinkInfo
-- getNextAction():com.intellij.execution.filters.Filter$NextAction
-c:com.intellij.execution.filters.Filter$ResultItem
-- <init>(I,I,com.intellij.execution.filters.HyperlinkInfo):V
-- <init>(I,I,com.intellij.execution.filters.HyperlinkInfo,com.intellij.openapi.editor.markup.TextAttributes):V
-- <init>(I,I,com.intellij.execution.filters.HyperlinkInfo,com.intellij.openapi.editor.markup.TextAttributes,com.intellij.openapi.editor.markup.TextAttributes):V
-- <init>(I,I,com.intellij.execution.filters.HyperlinkInfo,Z):V
-- getHighlighterLayer():I
-a:com.intellij.execution.filters.TextConsoleBuilderFactory
-- <init>():V
-- a:createBuilder(com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):com.intellij.execution.filters.TextConsoleBuilder
 f:com.intellij.execution.processTools.ExecutionResult
 - <init>(I,B[],B[]):V
 - f:getStdErr():B[]
@@ -994,8 +970,6 @@ f:com.intellij.execution.target.value.TargetEnvironmentFunctions
 - sf:plus(java.util.function.Function,java.util.function.Function):java.util.function.Function
 - sf:toLinkedSetFunction(java.lang.Iterable):java.util.function.Function
 - sf:tryMapToSynchronizedVolume(java.util.List,java.nio.file.Path,com.intellij.execution.target.TargetPlatform):java.lang.String
-c:com.intellij.execution.ui.ConsoleViewPlace
-- sf:UNKNOWN:com.intellij.execution.ui.ConsoleViewPlace
 c:com.intellij.execution.ui.RunContentDescriptor
 - sf:CONTENT_TOOL_WINDOW_ID_KEY:com.intellij.openapi.util.Key
 - sf:DESCRIPTOR_KEY:com.intellij.openapi.util.Key
@@ -1079,7 +1053,6 @@ com.intellij.execution.ui.layout.ViewContext
 - com.intellij.openapi.Disposable
 - sf:CELL_POPUP_PLACE:java.lang.String
 - sf:CELL_TOOLBAR_PLACE:java.lang.String
-- sf:CONTENT_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:CONTEXT_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:TAB_POPUP_PLACE:java.lang.String
 - sf:TAB_TOOLBAR_PLACE:java.lang.String

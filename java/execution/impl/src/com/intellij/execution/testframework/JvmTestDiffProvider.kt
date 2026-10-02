@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiLiteralUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.startOffset
@@ -78,6 +79,8 @@ open class JvmTestDiffProvider : TestDiffProvider {
    *    1. The reference resolved to a field declaration. Here we look at the initializer and check whether it is the expected value.
    *    2. The reference resolved to a parameter of the method. We go further down the stack trace and repeat step 2 with the next call
    *    as the entry point. A frame of a compiler-generated bridge holds no call, so we step over it (see [isSyntheticBridge]).
+   *    A frame whose call goes to another method does not pass the parameter on, so we step over it too (see [canCall]).
+   *    An example is a helper that invokes a lambda between the call of the method and its body.
    *    3. The reference resolved to a local variable that a parameter of the method initializes, such as `val text = param`, or
    *    `val text = param.trimIndent()` in Kotlin (see [unwrapExpected]). The local is in the frame of the current call, so it does not
    *    move the walk along the stack trace. We track `param` instead of the local and continue as in option 2.
@@ -107,9 +110,10 @@ open class JvmTestDiffProvider : TestDiffProvider {
       expectedArgCandidates.addAll(failedCall.valueArguments.mapNotNull { diffProvider.getExpectedElement(it, expected) })
       if (expectedParam != null) { // precise tracking don't need to look through whole stack trace
         val containingMethod = expectedParam.getContainingUMethod() ?: return null
+        if (!failedCall.canCall(containingMethod)) continue
 
         val expectedArg = failedCall.getArgumentForParameter(containingMethod.uastParameters.indexOf(expectedParam))
-                          ?: return null
+                          ?: continue
         diffProvider.getExpectedElement(expectedArg, expected)?.let { return it }
         if (expectedArg is UReferenceExpression) {
           if (expectedArg.sourcePsi?.isValid == true) {
@@ -146,6 +150,18 @@ open class JvmTestDiffProvider : TestDiffProvider {
     if (element !is UParameter) return null
     val method = element.uastParent.asSafely<UMethod>() ?: return null
     return if (method.isConstructor) null else element
+  }
+
+  /**
+   * Returns false when this call goes to a method other than [method], so its arguments do not carry the parameters of [method].
+   *
+   * Such a call is in a frame between the call of [method] and its body, for example a helper that invokes a lambda.
+   * The call of [method] is in a frame further down the stack trace.
+   */
+  private fun UCallExpression.canCall(method: UMethod): Boolean {
+    val callee = resolveToUElementOfType<UMethod>() ?: return true
+    if (callee.sourcePsi?.isEquivalentTo(method.sourcePsi) == true) return true
+    return MethodSignatureUtil.isSuperMethod(callee.javaPsi, method.javaPsi)
   }
 
   private data class ExpectedEntryPoint(val stackTrace: String, val param: UParameter)

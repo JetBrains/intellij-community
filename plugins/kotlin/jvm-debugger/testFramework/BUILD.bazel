@@ -118,6 +118,8 @@ jvm_library(
         "//platform/xdebugger-testFramework:debugger-testFramework_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
+        "//platform/consoleView",
+        "//platform/consoleView:consoleView_test_lib",
         "//platform/external-system-api:externalSystem",
         "//platform/external-system-api:externalSystem_test_lib",
         "//platform/platform-util-io:ide-util-io",

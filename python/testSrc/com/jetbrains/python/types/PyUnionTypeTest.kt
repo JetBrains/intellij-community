@@ -346,16 +346,6 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       #       └ TYPE int | None
           pass
       """.trimIndent())
-
-    @Test
-    fun `explicit None attribute`() = test("""
-      class A:
-          x: None
-      
-      def f(a: A):
-          expr = a.x
-      #   └ TYPE None
-      """.trimIndent())
   }
 
   @Nested
@@ -376,15 +366,6 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def foo(expr: Union[int, Union[str, list]]):
       #       └ TYPE int | str | list[Unknown]
           pass
-      """.trimIndent())
-
-    @Test
-    fun `union of class object types`() = test("""
-      from typing import Type, Union
-      
-      def f(x: Type[Union[int, str]]):
-          expr = x
-      #   └ TYPE type[int | str]
       """.trimIndent())
 
     @Test

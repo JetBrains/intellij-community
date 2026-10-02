@@ -136,5 +136,7 @@
       <reference ref="Stop"/>
     </group>
     <group id="RunTestGroup"/>
+    <action id="RunAnything" icon="AllIcons.Actions.RunAnything" class="com.intellij.ide.actions.runAnything.RunAnythingAction"/>
+    <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup"/>
   </actions>
 </idea-plugin>

@@ -1,6 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl
 
+import com.intellij.accessibility.AccessibilityUsageTrackerCollector
+import com.intellij.ide.soundSignals.SoundSignal
+import com.intellij.ide.soundSignals.findSoundSignal
+import com.intellij.ide.soundSignals.isSoundSignalOn
+import com.intellij.ide.soundSignals.isSoundSignalsFeatureEnabled
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -20,22 +25,28 @@ internal class NotificationsBeeper: Notifications {
   override fun notify(notification: Notification) {
     if (playsSound(NotificationsConfigurationImpl.getSettings(notification.groupId))) {
       service<NotificationSoundPlayer>().play(notification)
+      boundSoundSignal(notification.groupId)?.let { AccessibilityUsageTrackerCollector.SOUND_SIGNAL_PLAYED.log(it.id) }
     }
   }
 }
 
-internal fun playsSound(settings: NotificationSettings): Boolean = isSoundEnabled() && settings.isPlaySound
+internal fun playsSound(settings: NotificationSettings): Boolean =
+  isSoundEnabled() && (boundSoundSignal(settings.groupId)?.let(::isSoundSignalOn) ?: settings.isPlaySound)
+
+private fun boundSoundSignal(groupId: String): SoundSignal? =
+  if (isSoundSignalsFeatureEnabled()) soundSignalIdOf(groupId)?.let(::findSoundSignal) else null
 
 @Service
 private class NotificationSoundPlayer(private val scope: CoroutineScope) {
   fun play(notification: Notification) {
-    val ep = NotificationSoundEP.EP_NAME.extensionList.firstOrNull { it.group == notification.groupId }
-    val path = ep?.sound ?: when (notification.type) {
+    val ep = findNotificationSound(notification.groupId)
+    val sound = ep?.sound
+    val path = sound ?: when (notification.type) {
       NotificationType.INFORMATION, NotificationType.IDE_UPDATE -> "sounds/notification_info.wav"
       NotificationType.WARNING -> "sounds/notification_warning.wav"
       NotificationType.ERROR -> "sounds/notification_error.wav"
     }
-    val url = (if (ep == null) javaClass.classLoader else ep.pluginDescriptor?.pluginClassLoader)?.getResource(path)
+    val url = (if (sound == null) javaClass.classLoader else ep.pluginDescriptor?.pluginClassLoader)?.getResource(path)
     scope.launch {
       runCatching {
         playSound { checkNotNull(url) { "Sound resource not found: $path" }.openStream() }

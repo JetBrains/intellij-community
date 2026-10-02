@@ -118,6 +118,8 @@ jvm_library(
         "//java/execution/openapi:java-execution_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
+        "//platform/consoleView",
+        "//platform/consoleView:consoleView_test_lib",
         "//java/idea-ui:ui",
         "//java/idea-ui:ui_test_lib",
         "//java/java-syntax:syntax",

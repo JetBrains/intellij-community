@@ -6,12 +6,14 @@
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
-    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.collaborationTools.shared"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.credentialStore"/>
+    <module name="intellij.platform.credentialStore.impl"/>
+    <module name="intellij.platform.credentialStore.ui"/>
     <module name="intellij.platform.diff"/>
     <module name="intellij.platform.diff.impl"/>
     <module name="intellij.platform.editor.ex"/>

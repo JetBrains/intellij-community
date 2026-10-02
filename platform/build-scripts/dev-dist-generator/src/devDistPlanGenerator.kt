@@ -44,6 +44,7 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductLaunchModel
 import org.jetbrains.intellij.build.impl.productInfo.computeDevProductLaunchModel
 import org.jetbrains.intellij.build.impl.productInfo.encodeProductLaunchModel
 import org.jetbrains.intellij.build.impl.productInfo.vmOptionsFileName
+import org.jetbrains.intellij.build.isTestModule
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.productLayout.JNA_NATIVE_DIR
 import org.jetbrains.intellij.build.productLayout.JNA_PLUGIN_MODULE
@@ -1630,7 +1631,7 @@ private fun collectFragmentPlan(
           !destination.endsWith(".jar") -> cannotPack("not a jar")
           items.any { it.moduleName in layout.getModuleExcludesModuleNames() } -> cannotPack("a member has a module exclude")
           memberNames.any { index.location(it) == null } -> cannotPack("a member has no Bazel target")
-          memberNames.any { it.endsWith(".tests") || it.contains(".test.") } -> cannotPack("a member is test output")
+          memberNames.any { outputProvider.findRequiredModule(it).isTestModule() } -> cannotPack("a member is test output")
           memberNames.any { member -> layout.includedModules.count { it.moduleName == member } != 1 } -> cannotPack("a member belongs to several jars")
         }
         // The application-info module carries the generated product descriptor. Two actions write it and the stamped

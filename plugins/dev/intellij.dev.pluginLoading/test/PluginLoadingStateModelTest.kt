@@ -160,6 +160,41 @@ internal class PluginLoadingStateModelTest {
     assertThat(dependency.targetState).isNull()
   }
 
+  /** The copy action of the tree and the report print each node with `toString`. */
+  @Test
+  fun `a node prints one readable line`() {
+    plugin("dep") {}.installAt(pluginsDirPath)
+    plugin("main") {
+      dependencies { plugin("dep") }
+    }.installAt(pluginsDirPath)
+
+    val tree = buildTree(withDisabledPlugins = arrayOf("dep"))
+
+    val main = tree.pluginNode("main")
+    assertThat(main.toString())
+      .startsWith("[EXCLUDED] plugin 'main' (main, ")
+      .contains(" -- plugin 'main' (main, ")
+      .endsWith(" exclusion")
+      .doesNotContain("\n")
+
+    val dependency = tree.dependencyNodes(main).single()
+    assertThat(dependency.toString())
+      .startsWith("plugin dep -> plugin 'dep' (dep, ")
+      .contains(") [EXCLUDED] -- plugin 'dep' (dep, ")
+      .endsWith(" is marked disabled")
+
+    val chain = tree.chainNodes(main)
+    assertThat(chain.first().toString()).endsWith(" exclusion")
+    assertThat(chain.last().toString()).endsWith(" is marked disabled   <-- root cause")
+
+    val groups = tree.nodeByDescriptor.getValue(main.descriptor).children().asSequence()
+      .filterIsInstance<DefaultMutableTreeNode>()
+      .mapNotNull { it.userObject as? GroupNode }
+      .map { it.toString() }
+      .toList()
+    assertThat(groups).containsExactly("Dependencies (1)", "Not loaded because (2)")
+  }
+
   @Test
   fun `problemsOnly drops a plugin that loaded`() {
     plugin("good") {}.installAt(pluginsDirPath)

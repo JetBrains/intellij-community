@@ -1,0 +1,146 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.impl;
+
+import com.intellij.execution.ConsoleViewBundle;
+import com.intellij.execution.process.BaseProcessHandler;
+import com.intellij.execution.process.LocalProcessService;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputType;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
+
+public final class ConsoleViewRunningState extends ConsoleState {
+  private static final char LF = '\n';
+  private final ConsoleViewImpl myConsole;
+  private final ProcessHandler myProcessHandler;
+  private final ConsoleState myFinishedStated;
+  private final Writer myUserInputWriter;
+  private final ProcessStreamsSynchronizer myStreamsSynchronizer;
+
+  private final ProcessListener myProcessListener = new ProcessListener() {
+    @Override
+    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+      if (outputType instanceof ProcessOutputType) {
+        myStreamsSynchronizer.doWhenStreamsSynchronized(event.getText(), (ProcessOutputType)outputType, () -> print(event.getText(), outputType));
+      }
+      else {
+        print(event.getText(), outputType);
+      }
+    }
+  };
+
+  public ConsoleViewRunningState(@NotNull ConsoleViewImpl console,
+                                 @NotNull ProcessHandler processHandler,
+                                 @NotNull ConsoleState finishedStated,
+                                 boolean attachToStdOut,
+                                 boolean attachToStdIn) {
+    myConsole = console;
+    myProcessHandler = processHandler;
+    myFinishedStated = finishedStated;
+    myStreamsSynchronizer = attachToStdOut ? new ProcessStreamsSynchronizer(console) : null;
+
+    // attach to process stdout
+    if (attachToStdOut) {
+      processHandler.addProcessListener(myProcessListener);
+    }
+
+    // attach to process stdin
+    if (attachToStdIn) {
+      OutputStream processInput = myProcessHandler.getProcessInput();
+      myUserInputWriter = processInput == null ? null : createOutputStreamWriter(processInput, processHandler);
+    }
+    else {
+      myUserInputWriter = null;
+    }
+  }
+
+  private static OutputStreamWriter createOutputStreamWriter(OutputStream processInput, ProcessHandler processHandler) {
+    Charset charset = null;
+    if (processHandler instanceof OSProcessHandler) {
+      charset = ((OSProcessHandler)processHandler).getCharset();
+    }
+    if (charset == null) {
+      charset = EncodingManager.getInstance().getDefaultCharset();
+    }
+    return new OutputStreamWriter(processInput, charset);
+  }
+
+  private void print(@NotNull String text, @NotNull Key<?> outputType) {
+    myConsole.print(text, ConsoleViewContentType.getConsoleViewType(outputType));
+  }
+
+  @Override
+  public @NotNull ConsoleState dispose() {
+    if (myProcessHandler != null) {
+      myProcessHandler.removeProcessListener(myProcessListener);
+    }
+    return myFinishedStated;
+  }
+
+  @Override
+  public boolean isCommandLine(@NotNull String line) {
+    return myProcessHandler instanceof BaseProcessHandler && line.equals(((BaseProcessHandler<?>)myProcessHandler).getCommandLineForLog());
+  }
+
+  @Override
+  public boolean isFinished() {
+    return myProcessHandler == null || myProcessHandler.isProcessTerminated();
+  }
+
+  @Override
+  public boolean isRunning() {
+    return myProcessHandler != null && !myProcessHandler.isProcessTerminated();
+  }
+
+  @Override
+  public void sendUserInput(@NotNull String input) throws IOException {
+    if (myUserInputWriter == null) {
+      throw new IOException(ConsoleViewBundle.message("no.user.process.input.error.message"));
+    }
+    char enterKeyCode = getEnterKeyCode();
+    String inputToSend = input.replace(LF, enterKeyCode);
+    myUserInputWriter.write(inputToSend);
+    myUserInputWriter.flush();
+  }
+
+  private char getEnterKeyCode() {
+    if (myProcessHandler instanceof BaseProcessHandler<?> baseProcessHandler) {
+      var control = LocalProcessService.getInstance().getPtyControl(baseProcessHandler.getProcess());
+      var enterKeyCode = control == null ? null : control.getEnterKeyCode();
+      if (enterKeyCode != null) {
+        return (char)enterKeyCode.byteValue();
+      }
+    }
+    return LF;
+  }
+
+  @Override
+  public @NotNull ConsoleState attachTo(@NotNull ConsoleViewImpl console, @NotNull ProcessHandler processHandler) {
+    return dispose().attachTo(console, processHandler);
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public @Nullable ProcessStreamsSynchronizer getStreamsSynchronizer() {
+    return myStreamsSynchronizer;
+  }
+
+  @Override
+  public String toString() {
+    return "Running state";
+  }
+}

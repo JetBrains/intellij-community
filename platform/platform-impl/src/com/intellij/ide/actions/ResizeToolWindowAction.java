@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -10,6 +9,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.FusAwareAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -44,7 +44,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     Project project = e.getProject();
     Editor editor = e.getData(CommonDataKeys.HOST_EDITOR);
     if (editor == null) editor = e.getData(CommonDataKeys.EDITOR);
-    boolean isActiveEditorPresented = editor != null && !ConsoleViewUtil.isConsoleViewEditor(editor) && !editor.isViewer();
+    boolean isActiveEditorPresented = editor != null && editor.getEditorKind() != EditorKind.CONSOLE && !editor.isViewer();
     if (project == null || isActiveEditorPresented) {
       e.getPresentation().setEnabledAndVisible(false);
       return;

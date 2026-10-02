@@ -457,6 +457,7 @@ class ErrorCodes:
             IdToRemoveIsInvalid: Final = "92025"
 
     class Transaction:
+        OriginalTransactionNotSurcharged: Final = "97605"
         AmountCannotBeNegative: Final = "81501"
         AmountDoesNotMatch3DSecureAmount: Final = "91585"
         AmountIsInvalid: Final = "81503"
