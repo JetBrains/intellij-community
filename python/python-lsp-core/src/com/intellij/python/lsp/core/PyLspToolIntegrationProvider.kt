@@ -200,10 +200,11 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
   /**
    * Whether one server of this tool holds every served module.
    *
-   * Only a tool whose server keeps one workspace for each folder, with its own interpreter, may set
-   * this. [getDescriptor] of such a tool builds its descriptor from [pyLspModulesToServeWith]. A tool
-   * that gives every folder the same interpreter keeps `false` and runs one server for each module,
-   * and its servers never need a restart for a change of the folder set.
+   * Only a tool whose server keeps one workspace for each folder may set this. The server must give
+   * each folder its own interpreter, as ty and pyrefly do, or need no interpreter, as Ruff does.
+   * [getDescriptor] of such a tool builds its descriptor from [pyLspModulesToServeWith]. A tool that
+   * gives every folder the same interpreter keeps `false` and runs one server for each module, and
+   * its servers never need a restart for a change of the folder set.
    */
   open val servesEveryModule: Boolean get() = false
 
@@ -273,6 +274,9 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
    *
    * The Project Structure dialog, the SDK table and a new project interpreter fire only `rootsChanged`,
    * not [PySdkListener].
+   *
+   * A new interpreter can also move a module to another group, see [restartStaleClients]. That
+   * restart gives every client a new binary, so no other restart follows it.
    */
   inner class LspInterpreterChangeListener(
     private val project: Project,
@@ -284,6 +288,7 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
       if (clientManager.getClients(providerClass).isEmpty()) return
       // `rootsChanged` runs inside a write action, and the interpreters are read after it.
       project.service<PyLspService>().cs.launch {
+        if (restartStaleClients(project)) return@launch
         val changed = readAction {
           clientManager.getClients(providerClass).any { (it.descriptor as? PyLspToolDescriptor)?.interpreterChanged() == true }
         }

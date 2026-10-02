@@ -12,6 +12,7 @@ import com.intellij.python.lsp.core.PyLspTool
 import com.intellij.python.lsp.core.PyLspToolCustomization
 import com.intellij.python.lsp.core.PyLspToolIntegrationProvider
 import com.intellij.python.lsp.core.PyLspToolDescriptor
+import com.intellij.python.lsp.core.pyLspModulesToServeWith
 import com.intellij.python.ruff.RuffBundle
 import com.intellij.python.ruff.RuffConfiguration
 import com.intellij.python.ruff.RuffPyTool
@@ -26,13 +27,25 @@ import org.eclipse.lsp4j.InitializeResult
 import org.jetbrains.annotations.Nls
 
 class RuffLspIntegrationProvider : PyLspToolIntegrationProvider() {
-  override fun getDescriptor(module: Module): RuffLspClientDescriptor =
-    RuffLspClientDescriptor(module)
+  /**
+   * Ruff keeps one workspace for each folder and finds the configuration file of each file itself. It needs no
+   * interpreter, so one server answers for every module that runs the same Ruff. A module whose environment pins
+   * another Ruff version gets a server of its own, because one server runs one binary.
+   */
+  override fun getDescriptor(module: Module): RuffLspClientDescriptor {
+    val servedModules = pyLspModulesToServeWith(module, RuffPyTool.getInstance())
+    return RuffLspClientDescriptor(servedModules.first(), servedModules)
+  }
 
   override fun pyTool(project: Project): PyLspTool<*> = RuffPyTool.getInstance()
+
+  override val servesEveryModule: Boolean get() = true
 }
 
-class RuffLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, RuffPyTool.getInstance()) {
+class RuffLspClientDescriptor(
+  module: Module,
+  servedModules: List<Module> = listOf(module),
+) : PyLspToolDescriptor(module, RuffPyTool.getInstance(), servedModules) {
   override val toolConfig: RuffSettings
     get() = project.service<RuffConfiguration>()
 

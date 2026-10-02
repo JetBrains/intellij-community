@@ -24,7 +24,7 @@ import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.junit5Tests.framework.subdirectoryFixture
-import com.intellij.python.lsp.core.PyLspToolDescriptor
+import com.intellij.python.lsp.core.pyServedModules
 import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.python.ruff.RuffPyTool
 import com.intellij.python.ruff.server.RuffLspIntegrationProvider
@@ -72,6 +72,9 @@ private const val UNUSED_IMPORT_SNIPPET = "import os\n"
  * The root module inherits the project interpreter. The nested `service` module has an interpreter of its own, with
  * another Ruff version in it. The module interpreter has priority over the project interpreter. So each module must
  * get a Ruff server that runs the Ruff of its own interpreter.
+ *
+ * Modules that run the same Ruff share one server, see [RuffLspIntegrationProvider.getDescriptor]. So when both
+ * modules get one interpreter, one server must answer for both.
  */
 @Subsystems.LspTools
 @Layers.Functional
@@ -105,33 +108,48 @@ class RuffMultiModuleLspToolEnvTest {
 
     assertRuffChecks(serviceFile, serviceModule, SERVICE_RUFF_VERSION)
     assertRuffChecks(rootFile, rootModule, pinnedRuffVersion)
+    val clients = LspClientManager.getInstance(project).getClients<RuffLspIntegrationProvider>()
+    assertEquals(2, clients.size, "two Ruff versions need two servers, got ${clients.map { it.pyServedModules }}")
+  }
+
+  @Test
+  fun `modules with one interpreter share one server`(): Unit = timeoutRunBlocking(12.minutes) {
+    val (rootFile, serviceFile) = setUpModules(oneInterpreter = true)
+
+    assertRuffChecks(serviceFile, serviceModule, pinnedRuffVersion)
+    assertRuffChecks(rootFile, rootModule, pinnedRuffVersion)
+    awaitOneRuffServer(pinnedRuffVersion)
   }
 
   /** The Project Structure dialog changes the module model directly, and it fires no `PySdkListener` event. */
   @Test
-  fun `a new module interpreter from the project model restarts the server of the module`(): Unit = timeoutRunBlocking(12.minutes) {
-    val (_, serviceFile) = setUpModules()
-    assertRuffChecks(serviceFile, serviceModule, SERVICE_RUFF_VERSION)
+  fun `a new module interpreter from the project model moves the module to the server of that interpreter`(): Unit =
+    timeoutRunBlocking(12.minutes) {
+      val (rootFile, serviceFile) = setUpModules()
+      assertRuffChecks(serviceFile, serviceModule, SERVICE_RUFF_VERSION)
 
-    ModuleRootModificationUtil.setModuleSdk(serviceModule, projectSdk)
+      ModuleRootModificationUtil.setModuleSdk(serviceModule, projectSdk)
 
-    awaitRuffClientOf(serviceModule, "the Ruff server of module 'service' did not restart with Ruff $pinnedRuffVersion") {
-      it.initializeResult?.serverInfo?.version?.substringBefore(' ') == pinnedRuffVersion
+      val client = awaitOneRuffServer(pinnedRuffVersion)
+      awaitLspDiagnostics(client, serviceFile) { it.code?.get()?.toString() == "F401" }
+      assertRuffChecks(rootFile, rootModule, pinnedRuffVersion)
+      awaitOneRuffServer(pinnedRuffVersion)
     }
-  }
 
   /** A new project interpreter is also a new interpreter of each module that inherits it, and it fires only `rootsChanged`. */
   @Test
-  fun `a new project interpreter restarts the server of a module that inherits it`(): Unit = timeoutRunBlocking(12.minutes) {
-    val (rootFile, _) = setUpModules()
-    assertRuffChecks(rootFile, rootModule, pinnedRuffVersion)
+  fun `a new project interpreter moves a module that inherits it to the server of that interpreter`(): Unit =
+    timeoutRunBlocking(12.minutes) {
+      val (rootFile, serviceFile) = setUpModules()
+      assertRuffChecks(rootFile, rootModule, pinnedRuffVersion)
 
-    edtWriteAction { ProjectRootManager.getInstance(project).projectSdk = serviceSdkFixture.get() }
+      edtWriteAction { ProjectRootManager.getInstance(project).projectSdk = serviceSdkFixture.get() }
 
-    awaitRuffClientOf(rootModule, "the Ruff server of the root module did not restart with Ruff $SERVICE_RUFF_VERSION") {
-      it.initializeResult?.serverInfo?.version?.substringBefore(' ') == SERVICE_RUFF_VERSION
+      val client = awaitOneRuffServer(SERVICE_RUFF_VERSION)
+      awaitLspDiagnostics(client, rootFile) { it.code?.get()?.toString() == "F401" }
+      assertRuffChecks(serviceFile, serviceModule, SERVICE_RUFF_VERSION)
+      awaitOneRuffServer(SERVICE_RUFF_VERSION)
     }
-  }
 
   @AfterEach
   fun tearDownTool(): Unit = timeoutRunBlocking {
@@ -140,18 +158,21 @@ class RuffMultiModuleLspToolEnvTest {
 
   /**
    * Makes the project interpreter the interpreter of the root module, enables Ruff, and installs one Ruff version into
-   * each interpreter. Answers the files of the root module and of the service module.
+   * each interpreter. With [oneInterpreter], the service module also inherits the project interpreter. Answers the
+   * files of the root module and of the service module.
    */
-  private suspend fun setUpModules(): Pair<VirtualFile, VirtualFile> {
+  private suspend fun setUpModules(oneInterpreter: Boolean = false): Pair<VirtualFile, VirtualFile> {
     assertNotEquals(pinnedRuffVersion, SERVICE_RUFF_VERSION, "the two interpreters must hold different Ruff versions")
     assertEquals(serviceSdkFixture.get(), serviceModule.pythonSdk, "the service module must have its own interpreter")
     edtWriteAction {
       ProjectRootManager.getInstance(project).projectSdk = projectSdk
       ModuleRootModificationUtil.setSdkInherited(rootModule)
+      if (oneInterpreter) ModuleRootModificationUtil.setSdkInherited(serviceModule)
     }
     PyToolsState.getInstance(project).setEnabled(RuffPyTool.getInstance(), true)
     rootPyProject.installToolPackage("ruff==$pinnedRuffVersion")
-    servicePyProject.installToolPackage("ruff==$SERVICE_RUFF_VERSION")
+    // The service module of [oneInterpreter] runs the project interpreter, which must keep the pinned Ruff.
+    if (!oneInterpreter) servicePyProject.installToolPackage("ruff==$SERVICE_RUFF_VERSION")
     return writeModuleFile(projectPath.get(), rootModule) to writeModuleFile(servicePath.get(), serviceModule)
   }
 
@@ -159,15 +180,26 @@ class RuffMultiModuleLspToolEnvTest {
   private suspend fun assertRuffChecks(file: VirtualFile, module: Module, expectedVersion: String) {
     withContext(Dispatchers.EDT) { codeInsightFixture.configureFromExistingVirtualFile(file) }
     awaitFileOpenedByLspTool(project, file)
-    val client = awaitRuffClientOf(module)
-    assertEquals(expectedVersion, client.initializeResult?.serverInfo?.version?.substringBefore(' '),
-                 "the Ruff server of module '${module.name}' must run the Ruff of its own interpreter")
+    // The package snapshot starts empty, so the first server can hold both modules until the versions are known.
+    val client = awaitRuffClientOf(module, "the Ruff server of module '${module.name}' must run Ruff $expectedVersion") {
+      it.ruffVersion == expectedVersion
+    }
     awaitLspDiagnostics(client, file) { diagnostic -> diagnostic.code?.get()?.toString() == "F401" }
   }
 
+  /** The one Ruff client of the project, once it runs Ruff [version] and serves both modules. */
+  private suspend fun awaitOneRuffServer(version: String): LspClient =
+    awaitRuffClientOf(rootModule, "no single Ruff $version server serves both modules") { client ->
+      client.ruffVersion == version &&
+      client.pyServedModules.toSet() == setOf(rootModule, serviceModule) &&
+      LspClientManager.getInstance(project).getClients<RuffLspIntegrationProvider>().size == 1
+    }
+
+  private val LspClient.ruffVersion: String? get() = initializeResult?.serverInfo?.version?.substringBefore(' ')
+
   /**
-   * The running Ruff client whose primary module is [module], once [condition] holds for it. Fails with
-   * [failure] when no such client comes in time.
+   * The running Ruff client that serves [module], once [condition] holds for it. Fails with [failure] when no such
+   * client comes in time.
    */
   private suspend fun awaitRuffClientOf(
     module: Module,
@@ -179,7 +211,7 @@ class RuffMultiModuleLspToolEnvTest {
       var found: LspClient? = null
       while (found == null) {
         found = manager.getClients<RuffLspIntegrationProvider>().firstOrNull {
-          (it.descriptor as? PyLspToolDescriptor)?.module == module && it.state == LspServerState.Running && condition(it)
+          module in it.pyServedModules && it.state == LspServerState.Running && condition(it)
         }
         if (found == null) delay(200.milliseconds)
       }
