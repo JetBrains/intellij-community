@@ -5,6 +5,7 @@ package com.jetbrains.python.module
 //import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
@@ -57,7 +58,7 @@ internal class PyModuleServiceImpl(val project: Project, coroutineScope: Corouti
 
   override suspend fun findPythonSdkWaitingForProjectModel(module: Module): Sdk? {
     isJpsProjectLoaded.await()
-    return findPythonSdk(module)
+    return readAction { if (module.isDisposed) null else findPythonSdk(module) }
   }
 
   override fun findPythonSdk(module: Module): Sdk? {
