@@ -251,6 +251,7 @@ public final class MixedResultsSearcher implements SESearcher {
         boolean repeat;
         do {
           ProgressIndicator wrapperIndicator = new SensitiveProgressWrapper(myIndicator);
+          SearchEverywhereElementsLimit.set(wrapperIndicator, myAccumulator.limitFor(myContributor));
           try {
             if (myContributor instanceof CorrectionWrapper) {
                 ((CorrectionWrapper<Item>)myContributor).fetchWeightedElements(myPattern, wrapperIndicator,
@@ -367,6 +368,14 @@ public final class MixedResultsSearcher implements SESearcher {
 
       sectionsLimits = new HashMap<>(contributorsAndLimits);
       conditionsMap = contributorsAndLimits.keySet().stream().collect(Collectors.toMap(Function.identity(), c -> lock.newCondition()));
+    }
+
+    /**
+     * The total number of items the contributor's section takes, or 0 when the contributor has no section.
+     */
+    public int limitFor(SearchEverywhereContributor<?> contributor) {
+      Integer limit = sectionsLimits.get(contributor);
+      return limit == null ? 0 : limit;
     }
 
     public void setContributorHasMore(SearchEverywhereContributor<?> contributor, boolean hasMore) {

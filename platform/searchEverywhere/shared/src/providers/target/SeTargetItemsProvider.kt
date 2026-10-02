@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.providers.target
 
 import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
+import com.intellij.ide.actions.searcheverywhere.GotoLimitedRuns
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
@@ -160,17 +161,27 @@ class SeTargetItemsProvider<T> private constructor(
 
   /**
    * Runs the search of [params] and sends every result to [collector].
+   *
+   * The search runs with a result limit, so a contributor that honors [FindSymbolParameters.getLimit] computes only the
+   * first page. When the collector took every item and a contributor was cut, the search runs again with a bigger limit.
+   * See [GotoLimitedRuns].
    */
   suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector): Unit = coroutineScope {
     val inputQuery = normalizeQuery(params.inputQuery)
     val inputQueryHasNoExtension = !inputQuery.contains('.')
 
-    getItemsFlow(params, presentationProvider = { fetchPresentation(it, inputQuery, inputQueryHasNoExtension) })
-      .buffer(capacity = 0, onBufferOverflow = BufferOverflow.SUSPEND)
-      .takeWhile {
-        collector.put(it)
-      }
-      .collect()
+    val runs = GotoLimitedRuns(FIRST_RUN_LIMIT)
+    runs.collect { limit ->
+      LOG.debug { "$label: run ${runs.runNumber}, limit=$limit" }
+      var accepted = true
+      getItemsFlow(rawItemsFlow(params, runs), presentationProvider = { fetchPresentation(it, inputQuery, inputQueryHasNoExtension) })
+        .buffer(capacity = 0, onBufferOverflow = BufferOverflow.SUSPEND)
+        .takeWhile {
+          collector.put(it).also { accepted = it }
+        }
+        .collect()
+      accepted
+    }
   }
 
   private suspend fun fetchPresentation(
@@ -202,14 +213,21 @@ class SeTargetItemsProvider<T> private constructor(
     )
   }
 
+  /** Runs the search of [params] without a result limit and computes the presentation of every result. */
+  fun getItemsFlow(params: SeParams, presentationProvider: suspend (SeTargetRawItem) -> SeTargetPresentableItem): Flow<SeTargetPresentableItem> =
+    getItemsFlow(rawItemsFlow(params, runs = null), presentationProvider)
+
   @OptIn(ExperimentalCoroutinesApi::class)
-  fun getItemsFlow(params: SeParams, presentationProvider: suspend (SeTargetRawItem) -> SeTargetPresentableItem): Flow<SeTargetPresentableItem> {
+  private fun getItemsFlow(
+    rawItems: Flow<SeTargetRawItem>,
+    presentationProvider: suspend (SeTargetRawItem) -> SeTargetPresentableItem,
+  ): Flow<SeTargetPresentableItem> {
     val stats = SeFetchStats(LOG.isDebugEnabled)
     val presentationNanos = AtomicLong(0)
     val presentedCount = AtomicInteger(0)
     val startedAtNano = System.nanoTime()
 
-    return getItemsFlow(params)
+    return rawItems
       .buffer(capacity = RAW_ITEMS_BUFFER)              // let the search run ahead
       .flatMapMerge(concurrency = PRESENTATION_CONCURRENCY) { rawItem ->
         flow {
@@ -228,7 +246,15 @@ class SeTargetItemsProvider<T> private constructor(
       }
   }
 
-  fun getItemsFlow(params: SeParams): Flow<SeTargetRawItem> = channelFlow {
+  /** Runs the search of [params] without a result limit. */
+  fun getItemsFlow(params: SeParams): Flow<SeTargetRawItem> = rawItemsFlow(params, runs = null)
+
+  /**
+   * Runs the search of [params]. With [runs], the search asks for [GotoLimitedRuns.limit] items and skips the items that
+   * were sent already: by an earlier run, an earlier attempt of this run, or another contributor. Without it, the search
+   * has no limit.
+   */
+  private fun rawItemsFlow(params: SeParams, runs: GotoLimitedRuns?): Flow<SeTargetRawItem> = channelFlow {
     // The counters live outside the read action, because `readAction` restarts the block after a write action.
     val attemptCount = AtomicInteger(0)
     val stats = SeFetchStats(LOG.isDebugEnabled)
@@ -264,7 +290,7 @@ class SeTargetItemsProvider<T> private constructor(
         val attempt = attemptCount.incrementAndGet()
         if (attempt > 1) {
           LOG.debug {
-            "$label: read action restarted, attempt=$attempt, ${sentCount.get()} items are re-sent"
+            "$label: read action restarted, attempt=$attempt, ${sentCount.get()} items were sent"
           }
         }
 
@@ -286,6 +312,7 @@ class SeTargetItemsProvider<T> private constructor(
         val context = psiContext?.element
         val provider = ChooseByNameModelEx.getItemProvider(model, context)
         val isEverywhere = scope.isSearchInLibraries
+        runs?.startAttempt()
         val viewModel = MyViewModel(project, model, acceptsBlankQuery)
         val defaultMatchers = createDefaultMatchers(pattern, model)
 
@@ -302,24 +329,25 @@ class SeTargetItemsProvider<T> private constructor(
           stats.measure(stats.modelSearchNanos) {
             when (provider) {
               is ChooseByNameInScopeItemProvider -> {
-                val parameters = FindSymbolParameters.wrap(pattern, scope)
+                // The limit goes only with the cut sink, so a cut always reaches the runs. The other providers search without a limit.
+                val parameters = FindSymbolParameters.wrap(pattern, scope).let { if (runs != null) it.withLimit(runs.limit, runs::markCut) else it }
                 provider.filterElementsWithWeights(viewModel, parameters, progressIndicator
                 ) { item: FoundItemDescriptor<*> ->
                   fromModelCount.incrementAndGet()
-                  processElement(progressIndicator, model, item.item, item.weight, item.composedWeight, defaultMatchers, stats, startedAtNano)
+                  processElement(progressIndicator, model, item.item, item.weight, item.composedWeight, defaultMatchers, runs, stats, startedAtNano)
                 }
               }
               is ChooseByNameWeightedItemProvider -> {
                 provider.filterElementsWithWeights(viewModel, pattern, isEverywhere, progressIndicator
                 ) { item: FoundItemDescriptor<*> ->
                   fromModelCount.incrementAndGet()
-                  processElement(progressIndicator, model, item.item, item.weight, item.composedWeight, defaultMatchers, stats, startedAtNano)
+                  processElement(progressIndicator, model, item.item, item.weight, item.composedWeight, defaultMatchers, runs, stats, startedAtNano)
                 }
               }
               else -> {
                 provider.filterElements(viewModel, pattern, isEverywhere, progressIndicator) { element: Any ->
                   fromModelCount.incrementAndGet()
-                  processElement(progressIndicator, model, element, null, null, defaultMatchers, stats, startedAtNano)
+                  processElement(progressIndicator, model, element, null, null, defaultMatchers, runs, stats, startedAtNano)
                 }
               }
             }
@@ -347,6 +375,7 @@ class SeTargetItemsProvider<T> private constructor(
     weight: Int?,
     composedWeight: SeComposedWeight?,
     defaultMatchers: ItemMatchers,
+    runs: GotoLimitedRuns?,
     stats: SeFetchStats,
     startedAtNano: Long,
   ): Boolean {
@@ -360,15 +389,27 @@ class SeTargetItemsProvider<T> private constructor(
       LOG.error("SeTargetItemsProvider($label): null returned from $model")
       return true
     }
+    // An item that was sent already, with the same or a better weight. A provider without weights sends each item once.
+    val sentWeight = weight ?: 0
+    if (runs != null && !runs.accept(element, sentWeight)) return true
 
-    runBlockingCancellable {
-      LOG.debug {
-        "$label: emitting ${element.toString().split('\n').firstOrNull()}, weight=$weight"
+    // A write action cancels a `send` that waits for the consumer, and the read action restarts: that attempt must send the item.
+    var delivered = false
+    try {
+      runBlockingCancellable {
+        LOG.debug {
+          "$label: emitting ${element.toString().split('\n').firstOrNull()}, weight=$weight"
+        }
+        // `send` waits for the consumer while the read lock is held, so the wait goes into the log.
+        stats.measure(stats.blockedInSendNanos) {
+          send(SeTargetRawItem(element, weight, itemMatchers(defaultMatchers, model, element), composedWeight))
+        }
+        delivered = true
       }
-      // `send` waits for the consumer while the read lock is held, so the wait goes into the log.
-      stats.measure(stats.blockedInSendNanos) {
-        send(SeTargetRawItem(element, weight, itemMatchers(defaultMatchers, model, element), composedWeight))
-      }
+    }
+    catch (e: CancellationException) {
+      if (!delivered) runs?.forget(element, sentWeight)
+      throw e
     }
     stats.sentCount.incrementAndGet()
     stats.recordFirstItem(startedAtNano)
@@ -637,6 +678,9 @@ class SeTargetItemsProvider<T> private constructor(
 
     /** How many presentations compute at once. */
     private const val PRESENTATION_CONCURRENCY = 10
+
+    /** The limit of the first run of [collectItems]: the frontend asks for 50 items at a time. */
+    private const val FIRST_RUN_LIMIT = 50
 
     suspend fun isCoroutineBasedGotoEnabled(legacyContributor: SearchEverywhereContributor<Any>, providerId: String): Boolean {
       if (!RegistryManager.getInstanceAsync().`is`(COROUTINE_BASED_GOTO_KEY)) return false
