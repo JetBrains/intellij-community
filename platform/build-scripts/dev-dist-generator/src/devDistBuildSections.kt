@@ -20,6 +20,7 @@ import org.jetbrains.intellij.build.dev.DevPluginPreparationRecipe
 import org.jetbrains.intellij.build.dev.DevPluginResourceExclusions
 import org.jetbrains.intellij.build.devDist.ReusableJarArtifact
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
 import org.jetbrains.intellij.build.productLayout.stats.DevDistPlanFileResult
@@ -961,18 +962,33 @@ internal class DevDistSectionInputs private constructor(
       val pendingSections = TreeMap<String, PendingDevSection>()
       val sectionOutcomes = LinkedHashMap<String, DevSectionOutcome>()
       buildSpan("dev sections: plugin sections") {
-        for (plugin in derivation.plugins) {
-          val mainModule = plugin.mainModule
-          if (index.location(mainModule) == null || mainModule in unplannedRegistryLayouts) {
-            continue
+        val sectionPlugins = derivation.plugins.filter { plugin ->
+          index.location(plugin.mainModule) != null && plugin.mainModule !in unplannedRegistryLayouts
+        }
+        // Phase one computes the sections beside each other. Phase two merges them, prints the warnings and throws
+        // the first failure in plugin order.
+        val computedSections = sectionPlugins.mapConcurrent { plugin ->
+          val warnings = DevSectionWarnings()
+          try {
+            val outcome = computeDevSection(
+              mainModule = plugin.mainModule,
+              packing = plugin.packing,
+              descriptorEntries = descriptorEntries.get(plugin.mainModule).orEmpty(),
+              index = index,
+              outputProvider = outputProvider,
+              warn = warnings,
+            )
+            ComputedDevSection(outcome = outcome, failure = null, warnings = warnings)
           }
-          val outcome = computeDevSection(
-            mainModule = mainModule,
-            packing = plugin.packing,
-            descriptorEntries = descriptorEntries.get(mainModule).orEmpty(),
-            index = index,
-            outputProvider = outputProvider,
-          )
+          catch (e: RuntimeException) {
+            ComputedDevSection(outcome = null, failure = e, warnings = warnings)
+          }
+        }
+        for ((plugin, computed) in sectionPlugins.zip(computedSections)) {
+          val mainModule = plugin.mainModule
+          computed.warnings.flush()
+          computed.failure?.let { throw it }
+          val outcome = checkNotNull(computed.outcome)
           check(sectionOutcomes.put(mainModule, outcome) == null) { "Duplicate plugin declaration '$mainModule'" }
           val draft = outcome.draft ?: continue
           pendingSections.put(mainModule, draft)
@@ -1003,6 +1019,36 @@ internal class DevDistSectionInputs private constructor(
         renderedFrontendRootDescriptorJars = embeddedClasses.renderFrontendRootDescriptorJars(),
       )
     }
+  }
+}
+
+/** The section outcome or the failure of one plugin, with the warnings of its computation. */
+private class ComputedDevSection(
+  @JvmField val outcome: DevSectionOutcome?,
+  @JvmField val failure: RuntimeException?,
+  @JvmField val warnings: DevSectionWarnings,
+)
+
+/**
+ * The warnings of one plugin section. They are kept until [flush] prints them in their order.
+ * After [flush], a warning is printed at once.
+ */
+private class DevSectionWarnings : (String) -> Unit {
+  private var kept: ArrayList<String>? = ArrayList()
+
+  override fun invoke(line: String) {
+    val lines = kept
+    if (lines == null) {
+      println(line)
+    }
+    else {
+      lines.add(line)
+    }
+  }
+
+  fun flush() {
+    checkNotNull(kept) { "The warnings are already printed" }.forEach(::println)
+    kept = null
   }
 }
 
