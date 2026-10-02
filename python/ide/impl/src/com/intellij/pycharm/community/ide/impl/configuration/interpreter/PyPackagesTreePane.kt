@@ -330,19 +330,18 @@ internal class PyPackagesTreePane(
   /**
    * Re-runs the async load for the SDK currently displayed. Called from the packaging-event listener
    * so the tree reflects install / uninstall / change-version outcomes that the user triggered from
-   * inline row actions. Cache is invalidated first so uv / poetry re-scan `uv tree` instead of
+   * inline row actions. [loadSdk] invalidates the cache first so uv / poetry re-scan `uv tree` instead of
    * returning the pre-op snapshot.
    *
    * `treeProvider?.invalidateCache()` uses a safe call because a manager without a tree provider
-   * still drives this pane (via the flat-list fallback path in [setSdk]); there is nothing to
+   * still drives this pane (via the flat-list fallback path); there is nothing to
    * invalidate on that side, so the safe call is intentional, not defensive.
    */
   private fun reloadCurrentSdk() {
     val sdk = currentSdk ?: return
-    currentManager?.treeProvider?.invalidateCache()
     currentSdk = null
     currentManager = null
-    setSdk(sdk)
+    loadSdk(sdk, invalidateCache = true)
   }
 
   /**
@@ -358,12 +357,23 @@ internal class PyPackagesTreePane(
 
   fun setSdk(sdk: Sdk?) {
     if (currentSdk === sdk) return
-    currentSdk = sdk
     if (sdk == null) {
+      currentSdk = null
       currentManager = null
       applyUiState(PackageTreeUiState.noSdk())
       return
     }
+    loadSdk(sdk, invalidateCache = false)
+  }
+
+  /**
+   * Shows "loading", then the packages of [sdk]. Stops as soon as the user selects another SDK.
+   *
+   * The interpreter is detected here, so the manager is known only inside the coroutine. That is why a reload
+   * invalidates the cache of the manager it gets here, and not of [currentManager], which is `null` during detection.
+   */
+  private fun loadSdk(sdk: Sdk, invalidateCache: Boolean) {
+    currentSdk = sdk
     currentManager = null
     applyUiState(PackageTreeUiState.loading())
 
@@ -371,12 +381,15 @@ internal class PyPackagesTreePane(
       // The settings hold an editable copy of the SDK, so the interpreter is detected here and not read from the
       // project structure.
       val manager = PythonPackageManager.forPythonInterpreter(project, sdk.pythonInterpreterAsync())
-      withContext(Dispatchers.EDT) {
-        if (currentSdk !== sdk) return@withContext
+      if (invalidateCache) manager.treeProvider?.invalidateCache()
+      val stillCurrent = withContext(Dispatchers.EDT) {
+        if (currentSdk !== sdk) return@withContext false
         currentManager = manager
         // Paint the cached snapshot first, so the tab is not blank while the tree loader runs.
         applyUiState(snapshotUiState(manager))
+        true
       }
+      if (!stillCurrent) return@launch
       val uiState = safeLoadPackageTree(manager)
       withContext(Dispatchers.EDT) {
         if (currentSdk !== sdk) return@withContext
