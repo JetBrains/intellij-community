@@ -53,7 +53,7 @@
   </extensions>
 
   <actions resource-bundle="messages.McpServerBundle">
-    <action id="com.intellij.mcpserver.actions.ShowMcpToolsAction" class="com.intellij.mcpserver.frontend.actions.ShowMcpToolsAction">
+    <action id="ShowMcpTools" class="com.intellij.mcpserver.frontend.actions.ShowMcpToolsAction">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
   </actions>

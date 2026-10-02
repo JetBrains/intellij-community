@@ -38,7 +38,7 @@ import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import kotlin.io.path.writeText
 
-class ShowMcpToolsAction : AnAction() {
+internal class ShowMcpToolsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     // Building the tool list is reflection-heavy and must not run on the EDT (IJPL-251556)

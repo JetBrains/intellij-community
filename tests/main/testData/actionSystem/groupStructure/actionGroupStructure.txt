@@ -993,7 +993,7 @@
       AddAntBuildFile
     ExternalToolsGroup
     ShowPluginLoadingState
-    com.intellij.mcpserver.actions.ShowMcpToolsAction
+    ShowMcpTools
     com.jetbrains.python.console.RunPythonOrDebugConsoleAction
     PyPackagingMenu
       CreateSetupPy
@@ -3115,7 +3115,7 @@
   ToolsXmlGroup
   ExternalToolsGroup
   ShowPluginLoadingState
-  com.intellij.mcpserver.actions.ShowMcpToolsAction
+  ShowMcpTools
   com.jetbrains.python.console.RunPythonOrDebugConsoleAction
   PyPackagingMenu
   DevKit.Bootstrap
