@@ -33,6 +33,10 @@
       "codeQualityCategory": "Code Style"
     },
     {
+      "id": "LombokConstructorMayBeUsed",
+      "codeQualityCategory": "Code Style"
+    },
+    {
       "id": "RedundantModifiersValueLombok",
       "codeQualityCategory": "Code Style"
     },
