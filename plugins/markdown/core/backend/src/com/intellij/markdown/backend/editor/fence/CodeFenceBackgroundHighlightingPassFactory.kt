@@ -9,9 +9,6 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.markup.CustomHighlighterOrder
-import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -22,15 +19,13 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import org.intellij.plugins.markdown.editor.fence.MarkdownCodeFenceBackgroundRenderer
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
-import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Color
-import java.awt.Graphics
 
 private val CODE_FENCE_BACKGROUND_HIGHLIGHTERS = Key.create<List<RangeHighlighter>>("markdown.code.fence.background.highlighters")
 
@@ -74,8 +69,12 @@ internal class CodeFenceBackgroundHighlightingPassFactory :
       myEditor.getUserData(CODE_FENCE_BACKGROUND_HIGHLIGHTERS)?.forEach(myEditor.markupModel::removeHighlighter)
       val highlighters = backgrounds.map { background ->
         myEditor.markupModel.addRangeHighlighter(
-          null, background.startOffset, background.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, HighlighterTargetArea.EXACT_RANGE,
-        ).also { it.customRenderer = CodeFenceBackgroundRenderer(background) }
+          MarkdownHighlighterColors.CODE_FENCE_BACKGROUND,
+          background.codeOffset,
+          background.endOffset,
+          HighlighterLayer.ADDITIONAL_SYNTAX,
+          HighlighterTargetArea.EXACT_RANGE,
+        ).also { it.customRenderer = MarkdownCodeFenceBackgroundRenderer() }
       }
       myEditor.putUserData(CODE_FENCE_BACKGROUND_HIGHLIGHTERS, highlighters)
     }
@@ -86,13 +85,11 @@ internal class CodeFenceBackgroundHighlightingPassFactory :
  * The geometry of the background of one fence.
  *
  * @param codeOffset an offset in the column of the code, which gives the left side
- * @param startOffset the start of the first line of the code
  * @param endOffset the end of the last line of the code
  */
 @ApiStatus.Internal
 data class CodeFenceBackground(
   val codeOffset: Int,
-  val startOffset: Int,
   val endOffset: Int,
 )
 
@@ -112,39 +109,6 @@ fun collectCodeFenceBackground(fence: MarkdownCodeFence, document: Document): Co
   val codeOffset = opening.textRange.startOffset + MarkdownCodeFenceUtils.getIndentationInfo(opening.text).length
   return CodeFenceBackground(
     codeOffset = codeOffset,
-    startOffset = document.getLineStartOffset(firstLine),
     endOffset = document.getLineEndOffset(lastLine),
   )
-}
-
-private class CodeFenceBackgroundRenderer(private val background: CodeFenceBackground) : CustomHighlighterRenderer {
-  override fun getOrder(): CustomHighlighterOrder = CustomHighlighterOrder.BEFORE_BACKGROUND
-
-  override fun paint(editor: Editor, highlighter: RangeHighlighter, graphics: Graphics) {
-    val color = backgroundColor(editor) ?: return
-    // offsetToXY maps every offset of a collapsed region to the line of its placeholder. A fence that
-    // a region hides completely therefore paints as a single row over that placeholder, so skip it. A
-    // fence that a region hides only in part keeps its paint, because such a placeholder is itself a
-    // line of the code. An expanded region hides nothing, so it needs no check.
-    val collapsed = editor.foldingModel.getCollapsedRegionAtOffset(background.codeOffset)
-    if (collapsed != null && collapsed.endOffset >= background.endOffset) return
-    val left = editor.offsetToXY(background.codeOffset).x
-    val width = editor.contentComponent.width - left
-    if (width <= 0) return
-    val top = editor.offsetToXY(background.startOffset).y
-    val bottom = editor.offsetToXY(background.endOffset).y
-    graphics.color = color
-    var y = top
-    while (y <= bottom) {
-      graphics.fillRect(left, y, width, editor.lineHeight)
-      y += editor.lineHeight
-    }
-  }
-
-  private fun backgroundColor(editor: Editor): Color? {
-    val scheme = editor.colorsScheme
-    scheme.getAttributes(MarkdownHighlighterColors.CODE_FENCE)?.backgroundColor?.let { return it }
-    val injectedKey = EditorColors.createInjectedLanguageFragmentKey(MarkdownLanguage.INSTANCE)
-    return scheme.getAttributes(injectedKey)?.backgroundColor
-  }
 }

@@ -4,6 +4,7 @@ package org.intellij.plugins.markdown.highlighting;
 import com.intellij.execution.process.ConsoleHighlighter;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import org.jetbrains.annotations.ApiStatus;
 
 import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.CONSTANT;
 import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.KEYWORD;
@@ -42,6 +43,8 @@ public final class MarkdownHighlighterColors {
   public static final TextAttributesKey CODE_BLOCK = createTextAttributesKey("MARKDOWN_CODE_BLOCK", STRING);
 
   public static final TextAttributesKey CODE_FENCE = createTextAttributesKey("MARKDOWN_CODE_FENCE", STRING);
+  @ApiStatus.Internal
+  public static final TextAttributesKey CODE_FENCE_BACKGROUND = createTextAttributesKey("MARKDOWN_CODE_FENCE_BACKGROUND");
   public static final TextAttributesKey CODE_FENCE_MARKER = createTextAttributesKey("MARKDOWN_CODE_FENCE_MARKER", KEYWORD);
   public static final TextAttributesKey CODE_FENCE_LANGUAGE = createTextAttributesKey("MARKDOWN_CODE_FENCE_LANGUAGE", CONSTANT);
 

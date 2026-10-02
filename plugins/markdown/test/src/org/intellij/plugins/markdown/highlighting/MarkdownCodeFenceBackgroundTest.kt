@@ -28,8 +28,7 @@ class MarkdownCodeFenceBackgroundTest : BasePlatformTestCase() {
   fun `test the background of a top-level fence covers the lines of the code`() {
     val (background, document) = collect("```python\na\n\nbbbb\n```")
 
-    assertEquals(0, column(background, document))
-    assertEquals(document.getLineStartOffset(1), background.startOffset)
+    assertEquals(document.getLineStartOffset(0), background.codeOffset)
     assertEquals(document.getLineEndOffset(3), background.endOffset)
   }
 
@@ -37,7 +36,6 @@ class MarkdownCodeFenceBackgroundTest : BasePlatformTestCase() {
     val (background, document) = collect("- ```python\n  a\n\n  bbbb\n  ```")
 
     assertEquals(2, column(background, document))
-    assertEquals(document.getLineStartOffset(1), background.startOffset)
     assertEquals(document.getLineEndOffset(3), background.endOffset)
   }
 
@@ -63,7 +61,6 @@ class MarkdownCodeFenceBackgroundTest : BasePlatformTestCase() {
     val (background, document) = collect("    ```python\n    \n    ```")
 
     assertEquals(4, column(background, document))
-    assertEquals(1, document.getLineNumber(background.startOffset))
     assertEquals(1, document.getLineNumber(background.endOffset))
   }
 
@@ -71,7 +68,7 @@ class MarkdownCodeFenceBackgroundTest : BasePlatformTestCase() {
     val (background, document) = collect("```python\na\n")
 
     assertEquals(0, column(background, document))
-    assertEquals(document.getLineStartOffset(1), background.startOffset)
+    assertEquals(1, document.getLineNumber(background.endOffset))
   }
 
   private fun collect(text: String): Pair<CodeFenceBackground, Document> {
