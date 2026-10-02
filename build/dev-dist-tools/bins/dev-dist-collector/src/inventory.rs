@@ -90,6 +90,7 @@ pub(crate) struct ManifestHeader {
 ///
 /// A file with an inventory entry takes the hash, the type and the mode of that entry. The collector reads nothing
 /// from its source. Any other file must be a regular file, and the inventory hashes it once per absolute source path.
+/// Such a file keeps the mode that it states, if any.
 pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, InventoryStats)> {
     // `filemeta::merge` accepts two equal entries at one destination, so a repeated destination needs its own check.
     // It runs first, so that a conflict reads no payload.
@@ -156,12 +157,17 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
             byte_count += source_metadata.len();
             hash
         };
+        // A copied tree file states the mode of its source. A conventional mode is not written, as above.
+        let mode = file
+            .mode
+            .map(manifest::logical_component_mode)
+            .filter(|&mode| mode != manifest::conventional_mode(file.executable));
         entries.push(ComponentEntry::ComponentFile {
             relative_path,
             hash,
             executable: file.executable,
             source: file.source_text()?,
-            mode: None,
+            mode,
         });
     }
     // One check of all entries together: the paths, the modes, the spellings, the ancestors and the link graph.

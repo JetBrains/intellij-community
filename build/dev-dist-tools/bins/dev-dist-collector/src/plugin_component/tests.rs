@@ -1038,3 +1038,168 @@ fn a_spec_takes_only_the_keys_of_its_shape() {
     );
     run_collector(&plugin_component_args()).assert_error("unknown field");
 }
+
+/// The spec of a packed plugin with one copied tree, `tree/web` at `web`.
+fn tree_spec() -> Value {
+    let mut spec = packed_spec(false);
+    spec["files"] = json!([{"destination": "web", "source": "tree/web", "tree": true}]);
+    spec
+}
+
+/// A tree with a nested file, as a Bazel action leaves it: read-only files, one of them a program, and one file with
+/// a mode of its own.
+#[cfg(unix)]
+fn write_tree_fixture() {
+    use std::os::unix::fs::PermissionsExt;
+
+    write_packed_fixture(&tree_spec());
+    for (name, text, mode) in [
+        ("tree/web/index.html", "<html/>\n", 0o444),
+        ("tree/web/assets/app.js", "app\n", 0o600),
+        ("tree/web/bin/run.sh", "#!/bin/sh\n", 0o555),
+    ] {
+        write_file(name, text);
+        std::fs::set_permissions(name, std::fs::Permissions::from_mode(mode)).unwrap();
+    }
+    for (name, mode) in [("tree/web/assets", 0o700), ("tree/web/bin", 0o555), ("tree/web", 0o755)] {
+        std::fs::set_permissions(name, std::fs::Permissions::from_mode(mode)).unwrap();
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn packed_component_walks_a_copied_tree_and_keeps_the_modes() {
+    let _directory = WorkingDirectory::enter();
+    write_tree_fixture();
+    run_collector(&plugin_component_args()).assert_success();
+    let hash = |name: &str| xxh3::hash_file(Path::new(name)).unwrap();
+    let entries = manifest_entries("component.json");
+    let copied: Vec<&Value> = entries
+        .iter()
+        .filter(|(path, _)| path.starts_with("plugins/json/web"))
+        .map(|(_, entry)| entry)
+        .collect();
+    // A directory keeps its mode too. The manifest maps the read-only 0o555 of a Bazel output to 0o755.
+    assert_eq!(
+        copied,
+        [
+            &json!({"relativePath": "plugins/json/web", "type": "directory", "mode": 0o755}),
+            &json!({"relativePath": "plugins/json/web/assets", "type": "directory", "mode": 0o700}),
+            &json!({"relativePath": "plugins/json/web/assets/app.js", "type": "component-file", "hash": hash("tree/web/assets/app.js"), "source": "tree/web/assets/app.js", "mode": 0o600}),
+            &json!({"relativePath": "plugins/json/web/bin", "type": "directory", "mode": 0o755}),
+            &json!({"relativePath": "plugins/json/web/bin/run.sh", "type": "component-file", "hash": hash("tree/web/bin/run.sh"), "executable": true, "source": "tree/web/bin/run.sh"}),
+            &json!({"relativePath": "plugins/json/web/index.html", "type": "component-file", "hash": hash("tree/web/index.html"), "source": "tree/web/index.html"}),
+        ]
+    );
+    // A copied file is not on the classpath.
+    assert_class_path_part(&class_path_fixture("json", &["lib/json.jar", "lib/json-rpc-1.0.jar"]));
+}
+
+#[test]
+fn packed_component_places_only_the_root_of_an_empty_tree() {
+    let _directory = WorkingDirectory::enter();
+    write_packed_fixture(&tree_spec());
+    std::fs::create_dir_all("tree/web").unwrap();
+    run_collector(&plugin_component_args()).assert_success();
+    let entries = manifest_entries("component.json");
+    let copied: Vec<&String> = entries.keys().filter(|path| path.starts_with("plugins/json/web")).collect();
+    assert_eq!(copied, ["plugins/json/web"]);
+    assert_eq!(entries["plugins/json/web"]["type"], json!("directory"));
+}
+
+/// A Bazel sandbox stages each file of an input tree as an absolute link to the same path in the output tree. The
+/// collector follows such a link, and the manifest names the staged path.
+#[cfg(unix)]
+#[test]
+fn packed_component_follows_a_staging_link_of_a_copied_tree() {
+    let _directory = WorkingDirectory::enter();
+    write_packed_fixture(&tree_spec());
+    write_file("output/tree/web/index.html", "<html/>\n");
+    std::fs::create_dir_all("tree/web").unwrap();
+    let target = std::env::current_dir().unwrap().join("output/tree/web/index.html");
+    std::os::unix::fs::symlink(&target, "tree/web/index.html").unwrap();
+    run_collector(&plugin_component_args()).assert_success();
+    let entries = manifest_entries("component.json");
+    assert_eq!(
+        entries["plugins/json/web/index.html"],
+        json!({"relativePath": "plugins/json/web/index.html", "type": "component-file", "hash": xxh3::hash_file(&target).unwrap(), "source": "tree/web/index.html"})
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn packed_component_refuses_a_link_in_a_copied_tree() {
+    let output = |name: &str| std::env::current_dir().unwrap().join(name);
+    type Link = fn(&dyn Fn(&str) -> std::path::PathBuf) -> std::path::PathBuf;
+    let scenarios: [(&str, Link, &str); 3] = [
+        ("relative link", |_| "index.html".into(), "holds the link link.html to index.html"),
+        (
+            "link to another path",
+            |output| output("output/elsewhere.html"),
+            "holds the link link.html to ",
+        ),
+        (
+            "link to a directory",
+            |output| output("output/tree/web/link.html"),
+            "holds the link link.html to ",
+        ),
+    ];
+    for (name, link, message) in scenarios {
+        let _directory = WorkingDirectory::enter();
+        write_tree_fixture();
+        write_file("output/elsewhere.html", "<html/>\n");
+        std::fs::create_dir_all("output/tree/web/link.html").unwrap();
+        std::os::unix::fs::symlink(link(&output), "tree/web/link.html").unwrap();
+        let outcome = run_collector(&plugin_component_args());
+        assert!(
+            outcome.code != 0 && outcome.errors.contains("copied tree plugins/json/web") && outcome.errors.contains(message),
+            "{name}: exit {}, error {:?}, expected {message:?}",
+            outcome.code,
+            outcome.errors
+        );
+        assert_no_outputs();
+    }
+}
+
+#[test]
+fn packed_component_refuses_an_invalid_tree_copy() {
+    type Change = fn(&mut Value);
+    let scenarios: [(&str, Change, &str); 4] = [
+        (
+            "tree with a mode",
+            |spec| spec["files"][0]["executable"] = json!(false),
+            "copied file web must state either executable or tree, and not both",
+        ),
+        (
+            "file without a mode",
+            |spec| spec["files"][0]["tree"] = json!(false),
+            "copied file web must state either executable or tree, and not both",
+        ),
+        (
+            "tree of a file",
+            |spec| spec["files"][0]["source"] = json!("resources/helper.sh"),
+            "copied tree web is not a directory: resources/helper.sh",
+        ),
+        (
+            "missing tree",
+            |spec| spec["files"][0]["source"] = json!("tree/missing"),
+            "copied tree web is not a directory: tree/missing",
+        ),
+    ];
+    for (name, change, message) in scenarios {
+        let _directory = WorkingDirectory::enter();
+        let mut spec = tree_spec();
+        write_packed_fixture(&spec);
+        std::fs::create_dir_all("tree/web").unwrap();
+        change(&mut spec);
+        write_json("component-spec.json", &spec);
+        let outcome = run_collector(&plugin_component_args());
+        assert!(
+            outcome.code != 0 && outcome.errors.contains(message),
+            "{name}: exit {}, error {:?}, expected {message:?}",
+            outcome.code,
+            outcome.errors
+        );
+        assert_no_outputs();
+    }
+}

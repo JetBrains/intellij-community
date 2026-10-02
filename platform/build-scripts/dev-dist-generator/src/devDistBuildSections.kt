@@ -1030,6 +1030,7 @@ private fun packagingDifference(first: DevDistSimplePackaging, second: DevDistSi
     Triple("files", first.files, second.files),
     Triple("filePrefixes", first.filePrefixes, second.filePrefixes),
     Triple("executableFiles", first.executableFiles, second.executableFiles),
+    Triple("treeFiles", first.treeFiles, second.treeFiles),
   )
   val (name, a, b) = facts.firstOrNull { (_, a, b) -> a != b } ?: return null
   return "$name: $a vs $b"

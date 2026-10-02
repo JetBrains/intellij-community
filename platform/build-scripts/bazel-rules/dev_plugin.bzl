@@ -1,11 +1,12 @@
 """Packs one simple plugin of a dev distribution directly, with no plan file and no Kotlin preparation.
 
 A simple plugin is a plugin whose every asset is a jar or a plain copy. Each jar merges module outputs, library jars and,
-for the jar of the main module, the patched descriptor. A plain copy places one file, or every file of a directory, at a
-destination as it is. The plugin's own `BUILD.bazel` states the jars on `dev_dist_plugin(jars = ...)` and the copies on
-`dev_dist_plugin(files = ...)`. This file packs the jars with the same packer `content_module_jar` uses, and it names the
-copied files to the collector, which hashes them; the composer copies their bytes once, into the distribution. A plugin
-with any other asset keeps the plan driven chain of `dev_plugin_remainder.bzl`.
+for the jar of the main module, the patched descriptor. A plain copy places one file, every file of a source tree, or
+every file of one directory artifact at a destination as it is. The plugin's own `BUILD.bazel` states the jars on
+`dev_dist_plugin(jars = ...)` and the copies on `dev_dist_plugin(files = ...)`. This file packs the jars with the same
+packer `content_module_jar` uses, and it names the copied files to the collector, which hashes them; the composer copies
+their bytes once, into the distribution. The collector walks a directory artifact when it runs, because analysis cannot
+list its files. A plugin with any other asset keeps the plan driven chain of `dev_plugin_remainder.bzl`.
 
 Two rules, because of the product configuration. The consumer reaches `_dev_plugin` in the product's configuration, so
 the descriptor it packs is stamped for that product. The module jars and the copied files must not follow: they are the
@@ -45,7 +46,8 @@ DevPluginInputsInfo = provider(
         "libraries": "dict of library token to `struct(label, jars)`. The token is the label string the plugin's `BUILD.bazel` writes.",
         "content_jars": """dict of JPS module name to `struct(jar, metadata, member_modules, library_jars)`: the jar a
         `content_module_jar` target packed, and what it merges, see `ContentModuleJarInfo`.""",
-        "files": "dict of label token to the tuple of regular `File`s the label produces. The token is the label string `files` names.",
+        "files": """dict of label token to the tuple of `File`s the label produces: regular files, or one directory artifact
+        alone. The token is the label string `files` names.""",
         "content": "`DevDistContentInfo`: every raw module jar and library the plugin merges, the members of a reused content module jar included.",
     },
 )
@@ -106,9 +108,10 @@ def _dev_plugin_inputs_impl(ctx):
         if token in files:
             fail("file token '%s' is named twice" % token, attr = "file_targets")
         listed = target[DefaultInfo].files.to_list()
-        for file in listed:
-            if file.is_directory:
-                fail("%s produces directory %s, and a copy takes regular files only" % (target.label, file.path), attr = "file_targets")
+        if len(listed) != 1:
+            for file in listed:
+                if file.is_directory:
+                    fail("%s produces directory %s, and a copy takes regular files only, or one directory alone" % (target.label, file.path), attr = "file_targets")
         files[token] = tuple(listed)
 
     return [
@@ -185,8 +188,8 @@ def _parents(destination):
     return ["/".join(parts[:size]) for size in range(1, len(parts))]
 
 # Every destination of the plugin, so a jar and a copy never meet. `owned` maps a file destination to the words that say
-# where it comes from; `directories` holds every directory a destination implies, and `copied` every directory a `files`
-# entry copies as a whole.
+# where it comes from; `directories` holds every directory a destination implies, and `copied` maps every directory a
+# `files` entry copies as a whole to the attribute that states the copy.
 def _new_destinations():
     return struct(owned = {}, directories = {}, copied = {})
 
@@ -203,44 +206,54 @@ def _claim_destination(destinations, destination, owner, attr, directory = None)
         if parent in destinations.owned:
             fail("'%s' is below '%s', which is %s" % (destination, parent, destinations.owned[parent]), attr = attr)
         if parent in destinations.copied and parent != directory:
-            fail("'%s' is below '%s', which `file_prefixes` copies as a whole" % (destination, parent), attr = attr)
+            fail("'%s' is below '%s', which `%s` copies as a whole" % (destination, parent, destinations.copied[parent]), attr = attr)
         destinations.directories[parent] = True
     destinations.owned[destination] = owner
 
-def _claim_copied_directory(destinations, destination):
+def _claim_copied_directory(destinations, destination, attr):
+    """Owns the directory `destination` as a whole. `attr` is the attribute that states the copy."""
     if destination in destinations.owned:
-        fail("'%s' is both %s and copied as a whole" % (destination, destinations.owned[destination]), attr = "file_prefixes")
+        fail("'%s' is both %s and copied as a whole" % (destination, destinations.owned[destination]), attr = attr)
     if destination in destinations.directories:
-        fail("'%s' is a directory of another destination" % destination, attr = "file_prefixes")
+        fail("'%s' is a directory of another destination" % destination, attr = attr)
     for parent in _parents(destination):
         if parent in destinations.owned:
-            fail("'%s' is below '%s', which is %s" % (destination, parent, destinations.owned[parent]), attr = "file_prefixes")
+            fail("'%s' is below '%s', which is %s" % (destination, parent, destinations.owned[parent]), attr = attr)
         if parent in destinations.copied:
-            fail("'%s' is below '%s', which `file_prefixes` also copies as a whole" % (destination, parent), attr = "file_prefixes")
-    destinations.copied[destination] = True
+            fail("'%s' is below '%s', which `%s` also copies as a whole" % (destination, parent, destinations.copied[parent]), attr = attr)
+    destinations.copied[destination] = attr
 
 _STATED_IN_JARS = "stated in `jars`"
 _REUSED = "reused from a content module jar"
 _COPIED = "copied by `files`"
 
 def _copies(ctx, inputs, destinations):
-    """The copied files as `struct(destination, file, executable)`, sorted by destination.
+    """The copied files as `struct(destination, file, executable, tree)`, sorted by destination.
 
     A destination in `file_prefixes` is a directory copy: every file of the label below the prefix lands at
-    `<destination>/<entry>`. Any other destination copies the one file its label produces.
+    `<destination>/<entry>`. A destination in `tree_files` copies the one directory artifact of its label, and the
+    collector walks it. Any other destination copies the one file its label produces.
     """
     for destination in ctx.attr.file_prefixes:
         if destination not in ctx.attr.files:
             fail("file_prefixes names '%s', which `files` does not copy" % destination, attr = "file_prefixes")
+    for destination in ctx.attr.tree_files:
+        if destination not in ctx.attr.files:
+            fail("tree_files names '%s', which `files` does not copy" % destination, attr = "tree_files")
+        if destination in ctx.attr.file_prefixes:
+            fail("tree_files names '%s', which `file_prefixes` also names; a copy takes one directory or one source tree" % destination, attr = "tree_files")
     for destination in ctx.attr.executable_files:
         if destination not in ctx.attr.files:
             fail("executable_files names '%s', which `files` does not copy" % destination, attr = "executable_files")
-        if destination in ctx.attr.file_prefixes:
+        if destination in ctx.attr.file_prefixes or destination in ctx.attr.tree_files:
             fail("executable_files names '%s', which is a directory copy; the mode of a copied directory is not stated" % destination, attr = "executable_files")
 
     for destination in ctx.attr.file_prefixes:
         _check_destination(destination, attr = "file_prefixes", jar = False)
-        _claim_copied_directory(destinations, destination)
+        _claim_copied_directory(destinations, destination, "file_prefixes")
+    for destination in ctx.attr.tree_files:
+        _check_destination(destination, attr = "tree_files", jar = False)
+        _claim_copied_directory(destinations, destination, "tree_files")
 
     copies = []
     for destination in sorted(ctx.attr.files):
@@ -248,19 +261,27 @@ def _copies(ctx, inputs, destinations):
         sources = inputs.files.get(token)
         if sources == None:
             fail("'%s' names %s, which `file_targets` does not declare" % (destination, token), attr = "files")
+        directory = len(sources) == 1 and sources[0].is_directory
+        if destination in ctx.attr.tree_files:
+            if not directory:
+                fail("tree_files names '%s', and %s produces no single directory" % (destination, token), attr = "tree_files")
+            copies.append(struct(destination = destination, file = sources[0], executable = False, tree = True))
+            continue
+        if directory:
+            fail("'%s' copies directory %s of %s; state the destination in `tree_files`" % (destination, sources[0].path, token), attr = "files")
         prefix = ctx.attr.file_prefixes.get(destination)
         if prefix == None:
             _check_destination(destination, attr = "files", jar = False)
             if len(sources) != 1:
                 fail("'%s' copies one file, and %s produces %d files; state a directory copy in `file_prefixes`" % (destination, token, len(sources)), attr = "files")
             _claim_destination(destinations, destination, _COPIED, "files")
-            copies.append(struct(destination = destination, file = sources[0], executable = destination in ctx.attr.executable_files))
+            copies.append(struct(destination = destination, file = sources[0], executable = destination in ctx.attr.executable_files, tree = False))
             continue
         entries = source_tree_entries(sources, source_tree_prefix(prefix, destination), destination, token)
         for entry in sorted(entries):
             path = destination + "/" + entry
             _claim_destination(destinations, path, _COPIED, "files", directory = destination)
-            copies.append(struct(destination = path, file = entries[entry], executable = False))
+            copies.append(struct(destination = path, file = entries[entry], executable = False, tree = False))
     return copies
 
 def _dev_plugin_impl(ctx):
@@ -400,10 +421,11 @@ def _dev_plugin_impl(ctx):
         ],
     }
 
-    # Absent, and not empty, for a plugin without a copy: the spec of every jar-only plugin stays byte-identical.
+    # Absent, and not empty, for a plugin without a copy: the spec of every jar-only plugin stays byte-identical. A tree
+    # states no mode: the collector keeps the mode of each file it finds.
     if copies:
         spec_content["files"] = [
-            {"destination": copy.destination, "source": copy.file.path, "executable": copy.executable}
+            {"destination": copy.destination, "source": copy.file.path, "tree": True} if copy.tree else {"destination": copy.destination, "source": copy.file.path, "executable": copy.executable}
             for copy in copies
         ]
     ctx.actions.write(spec, json.encode(spec_content) + "\n")
@@ -496,8 +518,9 @@ reused content module jars in `content_module_jars` order.""",
         ),
         "files": attr.string_dict(
             doc = """The plain copies, keyed by destination relative to the plugin directory and valued by the label token of
-the source. A destination `file_prefixes` names copies every file of the label below the prefix; any other destination
-copies the one file the label produces. A copied file is not on the plugin classpath.""",
+the source. A destination `file_prefixes` names copies every file of the label below the prefix. A destination
+`tree_files` names copies every file of the one directory artifact the label produces. Any other destination copies the
+one file the label produces. A copied file is not on the plugin classpath.""",
         ),
         "file_prefixes": attr.string_dict(
             doc = """The repository-relative prefix of each directory copy in `files`, keyed by destination. A file of the label
@@ -505,6 +528,11 @@ at `<prefix>/<entry>` lands at `<destination>/<entry>`.""",
         ),
         "executable_files": attr.string_list(
             doc = "The single-file destinations of `files` the distribution marks executable, as `withResource*` does with mode 493.",
+        ),
+        "tree_files": attr.string_list(
+            doc = """The destinations of `files` whose label produces one directory artifact. The collector walks the directory
+when it runs. Each directory and regular file keeps its mode and lands at `<destination>/<relative path>`. A link is
+refused.""",
         ),
         "_collector": attr.label(default = "//platform/build-scripts/bazel-rules:dev_dist_collector", executable = True, cfg = "exec"),
         "_packer": attr.label(default = "//platform/build-scripts/bazel-rules:content_module_packer", executable = True, cfg = "exec"),
@@ -532,6 +560,7 @@ def dev_plugin(
         files = {},
         file_prefixes = {},
         executable_files = [],
+        tree_files = [],
         tags = [],
         visibility = ["//visibility:public"],
         **kwargs):
@@ -552,9 +581,10 @@ def dev_plugin(
         classpath_jars: the classpath order of every jar, when the default order is not the plan's order. The default
             order is the `jars` keys, then the reused content module jars in `content_module_jars` order.
         files: destination to the label of a plain copy, see `_dev_plugin`. The label is a source file, a filegroup or
-            another target that produces regular files.
-        file_prefixes: destination to repository-relative prefix, for every entry of `files` that copies a directory.
+            another target that produces regular files, or a target that produces one directory artifact.
+        file_prefixes: destination to repository-relative prefix, for every entry of `files` that copies a source tree.
         executable_files: the single-file destinations of `files` that are executable.
+        tree_files: the destinations of `files` that copy one directory artifact.
         tags: extra tags. `manual` is added.
         visibility: the component's visibility, public by default because the product's dist is in another package.
             The inputs target is private.
@@ -586,6 +616,7 @@ def dev_plugin(
         files = files,
         file_prefixes = file_prefixes,
         executable_files = executable_files,
+        tree_files = tree_files,
         tags = tags + ["manual"],
         **kwargs
     )

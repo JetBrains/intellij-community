@@ -5,6 +5,9 @@
 //! that Bazel packed and the files that the plugin copies. A top-level `jars` key selects the packed shape, and then
 //! the collector writes the classpath record itself.
 //!
+//! A copied file of the packed shape can be a tree: one directory artifact that the collector walks when it runs. Each
+//! directory and each regular file of it keeps its mode.
+//!
 //! A prepared spec can name `refusedModules`: the content modules that the product mode of the component refuses. The
 //! packer omitted every asset whose modules are all refused, so the collector drops the reused jars of those modules
 //! from `independent` and expects no row for them. The packed shape lists only the placed jars, so it has no such key.
@@ -72,13 +75,16 @@ pub(crate) struct PackedJar {
     pub(crate) metadata: String,
 }
 
-/// One file that a packed plugin copies. No packer writes metadata for it, so the inventory hashes the source.
+/// One file or one tree that a packed plugin copies. No packer writes metadata for it, so the inventory hashes the
+/// source. A file states `executable`. A tree states `tree` and no mode, because each of its files keeps its own.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct PackedFile {
     pub(crate) destination: String,
     pub(crate) source: String,
-    pub(crate) executable: bool,
+    pub(crate) executable: Option<bool>,
+    #[serde(default)]
+    pub(crate) tree: bool,
 }
 
 #[derive(Debug)]
@@ -198,6 +204,12 @@ impl PluginComponentSpec {
             payload.push(jar.source.as_str());
         }
         for copied in &spec.files {
+            if copied.tree == copied.executable.is_some() {
+                bail!(
+                    "copied file {} must state either executable or tree, and not both",
+                    copied.destination
+                );
+            }
             destinations.push(copied.destination.as_str());
             payload.push(copied.source.as_str());
         }
@@ -705,7 +717,8 @@ fn tree_file(source: String, relative_path: String, entry: &Entry) -> SourcedFil
 }
 
 /// The jars of a packed plugin in their declared order, then its copied files. It reads only the metadata of the jars.
-/// A copied file has no metadata, so the inventory hashes its source.
+/// A copied file has no metadata, so the inventory hashes its source. A copied tree expands to its directories and
+/// its regular files.
 fn collect_packed(spec: &PackedSpec) -> anyhow::Result<Vec<SourcedFile>> {
     let mut files = Vec::with_capacity(spec.jars.len() + spec.files.len());
     for jar in &spec.jars {
@@ -722,12 +735,121 @@ fn collect_packed(spec: &PackedSpec) -> anyhow::Result<Vec<SourcedFile>> {
         });
     }
     for copied in &spec.files {
+        let destination = format!("{}/{}", spec.plugin_directory, copied.destination);
+        if copied.tree {
+            let tree = CopiedTree {
+                source: &copied.source,
+                destination: &destination,
+                name: copied.source.rsplit('/').next().unwrap_or_default(),
+            };
+            // A Bazel sandbox can stage the root as a link to the directory, so the check follows a link.
+            let root = Path::new(&copied.source);
+            let Some(metadata) = std::fs::metadata(root).ok().filter(std::fs::Metadata::is_dir) else {
+                bail!("copied tree {} is not a directory: {}", copied.destination, copied.source);
+            };
+            files.push(CopiedTree::directory(&copied.source, &destination, &metadata));
+            tree.walk(root, "", &mut files)?;
+            continue;
+        }
         files.push(SourcedFile {
-            executable: copied.executable,
-            ..SourcedFile::new(&copied.source, format!("{}/{}", spec.plugin_directory, copied.destination))
+            executable: copied.executable.unwrap_or_default(),
+            ..SourcedFile::new(&copied.source, destination)
         });
     }
     Ok(files)
+}
+
+/// One copied tree of a packed plugin. `name` is the last name of the source, which a staging link repeats.
+struct CopiedTree<'a> {
+    source: &'a str,
+    destination: &'a str,
+    name: &'a str,
+}
+
+impl CopiedTree<'_> {
+    /// Adds one entry per directory and per regular file below `directory`, in byte order of the names. Each entry
+    /// keeps its mode, as a tree of a prepared plugin does. The inventory hashes each file.
+    fn walk(&self, directory: &Path, relative: &str, files: &mut Vec<SourcedFile>) -> anyhow::Result<()> {
+        let mut entries = std::fs::read_dir(directory)
+            .and_then(Iterator::collect::<std::io::Result<Vec<_>>>)
+            .with_context(|| format!("read tree directory {}", directory.display()))?;
+        entries.sort_by_key(std::fs::DirEntry::file_name);
+        for entry in entries {
+            let name = entry.file_name();
+            let Some(name) = name.to_str() else {
+                bail!(
+                    "copied tree {} holds a name that is not UTF-8: {}",
+                    self.destination,
+                    entry.path().display()
+                );
+            };
+            let relative = if relative.is_empty() {
+                name.to_owned()
+            } else {
+                format!("{relative}/{name}")
+            };
+            let path = entry.path();
+            let file_type = entry.file_type().with_context(|| path.display().to_string())?;
+            if file_type.is_dir() {
+                let metadata = entry.metadata().with_context(|| path.display().to_string())?;
+                files.push(Self::directory(
+                    &format!("{}/{relative}", self.source),
+                    &format!("{}/{relative}", self.destination),
+                    &metadata,
+                ));
+                self.walk(&path, &relative, files)?;
+                continue;
+            }
+            let metadata = if file_type.is_symlink() {
+                self.staged_file(&path, &relative)?
+            } else {
+                entry.metadata().with_context(|| path.display().to_string())?
+            };
+            if !metadata.is_file() {
+                bail!(
+                    "copied tree {} holds an entry that is not a regular file: {relative}",
+                    self.destination
+                );
+            }
+            let mode = filemeta::permissions(&metadata);
+            files.push(SourcedFile {
+                executable: mode & 0o111 != 0,
+                mode: Some(mode),
+                ..SourcedFile::new(format!("{}/{relative}", self.source), format!("{}/{relative}", self.destination))
+            });
+        }
+        Ok(())
+    }
+
+    /// The entry of one directory of the tree, with its mode.
+    fn directory(source: &str, destination: &str, metadata: &std::fs::Metadata) -> SourcedFile {
+        let entry = Entry {
+            relative_path: destination.to_owned(),
+            entry_type: EntryType::Directory,
+            mode: filemeta::permissions(metadata),
+            ..Entry::default()
+        };
+        SourcedFile {
+            metadata: Some(entry),
+            ..SourcedFile::new(source, destination)
+        }
+    }
+
+    /// The metadata of the file that a staging link names. A Bazel sandbox stages each file of an input tree as an
+    /// absolute link to the same path in the output tree. Every other link belongs to the tree, and a copy refuses it.
+    fn staged_file(&self, path: &Path, relative: &str) -> anyhow::Result<std::fs::Metadata> {
+        let target = filemeta::read_link_target(path).with_context(|| path.display().to_string())?;
+        let staged = Path::new(&target).is_absolute()
+            && Path::new(&target).ends_with(Path::new(self.name).join(component::paths::from_slash(relative).as_ref()));
+        let metadata = staged.then(|| std::fs::symlink_metadata(&target).ok()).flatten();
+        match metadata {
+            Some(metadata) if metadata.is_file() => Ok(metadata),
+            _ => bail!(
+                "copied tree {} holds the link {relative} to {target}, and a copied tree takes regular files only",
+                self.destination
+            ),
+        }
+    }
 }
 
 /// Reads the one-file inventory that the packer wrote beside the jar. The packer names the entry after the jar file,

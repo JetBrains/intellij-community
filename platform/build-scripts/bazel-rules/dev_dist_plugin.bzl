@@ -56,6 +56,7 @@ def dev_dist_plugin(
         files = {},
         file_prefixes = {},
         executable_files = [],
+        tree_files = [],
         directory_name = "",
         **descriptor_attrs):
     """Declare plugin modules and derive their build targets.
@@ -81,13 +82,16 @@ def dev_dist_plugin(
         classpath_jars: The classpath order of every jar of a simple plugin, when the default order is not the plan's
             order. The default order is the `jars` keys, then the reused content module jars in `content_modules` order.
         files: The plain copies of a simple plugin, keyed by destination relative to the plugin directory and valued by
-            the label of the source: a source file, the package's `:dev_dist_resources` filegroup or another target that
-            produces regular files. A destination `file_prefixes` names copies every file of the label below the prefix
-            to `<destination>/<relative path>`; any other destination copies the one file the label produces. A copied
-            file is not on the plugin classpath. Requires `jars`.
-        file_prefixes: The repository-relative prefix of each directory copy in `files`, keyed by destination.
+            the label of the source: a source file, the package's `:dev_dist_resources` filegroup, another target that
+            produces regular files, or a target that produces one directory artifact. A destination `file_prefixes`
+            names copies every file of the label below the prefix to `<destination>/<relative path>`. A destination
+            `tree_files` names copies every file of the directory artifact in the same way. Any other destination copies
+            the one file the label produces. A copied file is not on the plugin classpath. Requires `jars`.
+        file_prefixes: The repository-relative prefix of each source tree copy in `files`, keyed by destination.
         executable_files: The single-file destinations of `files` the distribution marks executable. This is the mode
             `withResource*` gives a file.
+        tree_files: The destinations of `files` whose label produces one directory artifact. Each copied file keeps the
+            mode it has in the directory.
         frontend_application_info: The application info template of the embedded frontend. Stated together with the other
             `frontend_` label by the plugin that packs the JetBrains Client, and empty for every other plugin. A
             standalone `dev_dist_embedded_product_descriptor` call declares the embedded descriptor of that plugin.
@@ -108,11 +112,14 @@ def dev_dist_plugin(
         fail("dev_dist_plugin: %s states jars and layout variants, and a packed plugin has one layout" % main_module)
     if jars and not descriptor:
         fail("dev_dist_plugin: %s states jars and no descriptor" % main_module)
-    if (files or file_prefixes or executable_files) and not jars:
+    if (files or file_prefixes or executable_files or tree_files) and not jars:
         fail("dev_dist_plugin: %s states copied files and no jars, and a copy belongs to a packed plugin" % main_module)
     for destination in file_prefixes:
         if destination not in files:
             fail("dev_dist_plugin: %s states a file prefix for '%s', which `files` does not copy" % (main_module, destination))
+    for destination in tree_files:
+        if destination not in files or destination in file_prefixes:
+            fail("dev_dist_plugin: %s names '%s' in `tree_files`, which `files` does not copy as one directory" % (main_module, destination))
     jar_tokens = [token for tokens in jars.values() for token in tokens]
     for module in content_module_jar_labels:
         if module not in content_modules or module in jar_tokens:
@@ -120,7 +127,7 @@ def dev_dist_plugin(
     for destination in executable_files:
         if destination not in files:
             fail("dev_dist_plugin: %s marks '%s' executable, which `files` does not copy" % (main_module, destination))
-        if destination in file_prefixes:
+        if destination in file_prefixes or destination in tree_files:
             fail("dev_dist_plugin: %s marks the directory copy '%s' executable, and only a single file has a stated mode" % (main_module, destination))
 
     if not descriptor:
@@ -189,6 +196,7 @@ def dev_dist_plugin(
             files = files,
             file_prefixes = file_prefixes,
             executable_files = executable_files,
+            tree_files = tree_files,
             visibility = ["//visibility:public"],
         )
     if frontend_application_info:

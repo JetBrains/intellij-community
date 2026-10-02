@@ -402,6 +402,7 @@ internal fun renderCrossHalfDevPluginTarget(
       index.planLabel(jar)
     },
   )
+  appendStarlarkStringList(name = "tree_files", values = packaging.treeFiles.sorted())
   append(")\n")
 }
 

@@ -467,6 +467,7 @@ private fun renderBody(
     call.option("retain_product_descriptor", true)
   }
   descriptor?.separateJar?.ifNotEmpty { call.option("separate_jar", it) }
+  declaredPackaging?.treeFiles?.ifNotEmpty { call.option("tree_files", it.sorted()) }
   descriptors.map { it.variant }.filter { it.isNotEmpty() }.ifNotEmpty { call.option("variants", it) }
   descriptor?.versionSuffix?.ifNotEmpty { call.option("version_suffix", it) }
 

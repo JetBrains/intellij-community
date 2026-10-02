@@ -322,10 +322,21 @@ class DevDistSimplePackagingTest {
   }
 
   @Test
-  fun `a tree over an input without a prefix keeps the plan tier`() {
+  fun `a tree over one directory artifact gives tree_files`() {
     val input = DevDistPluginRawInput(id = "jupyter-frontend:x", label = "//plugins/x:frontend", kind = "directory", fileName = "frontend")
+    val packaging: DevDistSimplePackaging = requireSimple(planEntry(assets = listOf(mainJar(), treeCopy("frontend", input.id)), inputs = listOf(input)))
 
-    assertKeepsPlanTier(planEntry(assets = listOf(mainJar(), treeCopy("frontend", input.id)), inputs = listOf(input)))
+    assertThat(packaging.files).containsExactly(entry("frontend", "//plugins/x:frontend"))
+    assertThat(packaging.filePrefixes).isEmpty()
+    assertThat(packaging.treeFiles).containsExactly("frontend")
+    assertThat(packaging.executableFiles).isEmpty()
+  }
+
+  @Test
+  fun `a tree over an optional source tree keeps the plan tier`() {
+    val input = treeInput("optional-local-directory:out/bundle-plugins/x", "out/bundle-plugins/x").copy(optionalSourceTree = true)
+
+    assertKeepsPlanTier(planEntry(assets = listOf(mainJar(), treeCopy("x", input.id)), inputs = listOf(input)))
   }
 
   @Test
@@ -379,13 +390,15 @@ class DevDistSimplePackagingTest {
       fileName = "helpers",
       sourceTreePrefix = "community/plugins/c/helpers",
     )
+    val web = DevDistPluginRawInput(id = "layout-source:resource-generator:0:0", label = "@dev_launch_air_openui_renderer//:web", kind = "directory", fileName = "web")
     val assets = listOf(
       mainJar(communityPlugin),
+      treeCopy("web", web.id),
       treeCopy("helpers", tree.id),
       fileCopy("openui/air-openui-renderer.zip", archive.id, mode = 420),
       fileCopy("bin/helper.sh", script.id),
     )
-    val packaging: DevDistSimplePackaging = requireSimple(planEntry(assets = assets, inputs = listOf(script, archive, tree), plugin = communityPlugin))
+    val packaging: DevDistSimplePackaging = requireSimple(planEntry(assets = assets, inputs = listOf(script, archive, tree, web), plugin = communityPlugin))
     assertThat(packaging.crossHalf).isTrue()
 
     val target = renderCrossHalfDevPluginTarget(packaging, descriptorLabel = "//build/dev-dist-descriptors/intellij.c:intellij.c_dev_descriptor", index = index)
@@ -405,6 +418,7 @@ class DevDistSimplePackagingTest {
               "bin/helper.sh": "@community//plugins/c:helper.sh",
               "helpers": "@community//plugins/c:dev_dist_resources",
               "openui/air-openui-renderer.zip": "@dev_launch_air_openui_renderer//:files",
+              "web": "@dev_launch_air_openui_renderer//:web",
           },
           jars = {
               "lib/c.jar": [
@@ -416,6 +430,9 @@ class DevDistSimplePackagingTest {
               "@community//plugins/c": "intellij.c",
           },
           plugin_directory = "plugins/c",
+          tree_files = [
+              "web",
+          ],
       )
       """.trimIndent() + "\n",
     )

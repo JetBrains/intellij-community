@@ -433,17 +433,17 @@
             }
         },
         {
-            "destination": "pyrefly/license",
+            "destination": "helpers",
             "inputs": [
-                "layout-assets:resource-generator:1:output"
+                "module-resource:resource-generator:0:0:source"
             ],
             "kind": "tree",
             "classPath": false
         },
         {
-            "destination": "helpers",
+            "destination": "pyrefly/license",
             "inputs": [
-                "module-resource:resource-generator:0:0:source"
+                "layout-source:resource-generator:1:0"
             ],
             "kind": "tree",
             "classPath": false
@@ -455,31 +455,6 @@
             ],
             "mode": 493,
             "classPath": false
-        }
-    ],
-    "operations": [
-        {
-            "id": "layout-assets:resource-generator:1",
-            "kind": "layout-assets",
-            "inputs": [
-                {
-                    "artifact": "layout-source:resource-generator:1:0"
-                }
-            ],
-            "output": "layout-assets:resource-generator:1:output",
-            "manifest": "keep",
-            "layoutAssets": {
-                "format": "tree",
-                "root": "pyrefly/license",
-                "assets": [
-                    {
-                        "destination": "",
-                        "sources": [
-                            0
-                        ]
-                    }
-                ]
-            }
         }
     ]
 }

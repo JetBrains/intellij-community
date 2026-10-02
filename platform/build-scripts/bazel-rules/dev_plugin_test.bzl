@@ -83,6 +83,38 @@ def _fixture_resources_impl(ctx):
 
 _fixture_resources = rule(implementation = _fixture_resources_impl)
 
+def _fixture_tree_impl(ctx):
+    """`count` directory artifacts, as an action such as the Jupyter frontend writes one, and `extra_file` beside them."""
+
+    # A Windows build agent has no bash, so each tree is an empty archive that the zipper extracts.
+    archive = ctx.actions.declare_file(ctx.label.name + ".empty.zip")
+    ctx.actions.write(archive, _EMPTY_JAR)
+    outputs = []
+    for index in range(ctx.attr.count):
+        tree = ctx.actions.declare_directory(ctx.label.name + "/tree-%d" % index)
+        ctx.actions.run(
+            executable = ctx.executable._zipper,
+            arguments = ["x", archive.path, "-d", tree.path],
+            inputs = [archive],
+            outputs = [tree],
+            mnemonic = "FixtureTree",
+        )
+        outputs.append(tree)
+    if ctx.attr.extra_file:
+        extra = ctx.actions.declare_file(ctx.label.name + ".extra.txt")
+        ctx.actions.write(extra, "")
+        outputs.append(extra)
+    return [DefaultInfo(files = depset(outputs))]
+
+_fixture_tree = rule(
+    implementation = _fixture_tree_impl,
+    attrs = {
+        "count": attr.int(default = 1),
+        "extra_file": attr.bool(),
+        "_zipper": attr.label(default = "@bazel_tools//tools/zip:zipper", executable = True, cfg = "exec"),
+    },
+)
+
 def _with_short_path(argument, inputs):
     """A `library=` or `module=` flag with the file's short path, so two configurations of one jar compare equal."""
     if not argument.startswith("library=") and not argument.startswith("module="):
@@ -278,6 +310,37 @@ _dev_plugin_spans_test = analysistest.make(
     config_settings = {_PRODUCT_INFO_FLAG: _PRODUCT_INFO, _TRACE_SPANS: True},
 )
 
+def _tree_test_impl(ctx):
+    """A destination in `tree_files` copies the one directory artifact of its label, and the collector walks it.
+
+    The spec names the directory with `tree` and no mode. The directory is an input of the collector and part of the
+    payload. No action of the component copies or lists it.
+    """
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    actions = analysistest.target_actions(env)
+    specs = [action for action in actions if [file for file in action.outputs.to_list() if file.basename.endswith(".packed.json")]]
+    asserts.equals(env, 1, len(specs))
+    copies = json.decode(specs[0].content)["files"]
+    tree = ctx.attr.tree[DefaultInfo].files.to_list()[0]
+    asserts.equals(env, ["bin/helper.sh", "web"], [copy["destination"] for copy in copies])
+    asserts.equals(env, {"destination": "web", "source": copies[1]["source"], "tree": True}, copies[1])
+    asserts.true(env, copies[1]["source"].endswith("/" + tree.short_path.removeprefix("../")), copies[1]["source"])
+    asserts.equals(env, True, copies[0]["executable"])
+    collects = [action for action in actions if action.mnemonic == "CollectDevPluginComponent"]
+    asserts.equals(env, 1, len(collects))
+    directories = [file for file in collects[0].inputs.to_list() if file.is_directory]
+    asserts.equals(env, [copies[1]["source"]], [file.path for file in directories])
+    payload = target[IntellijDevFragmentInfo].payload.to_list()
+    asserts.equals(env, [copies[1]["source"]], [file.path for file in payload if file.is_directory])
+    return analysistest.end(env)
+
+_tree_test = analysistest.make(
+    _tree_test_impl,
+    attrs = {"tree": attr.label(mandatory = True)},
+    config_settings = {_PRODUCT_INFO_FLAG: _PRODUCT_INFO},
+)
+
 def _mode_test_impl(ctx):
     """Under a frontend product the distribution places no jar of a module the leaf refuses for that mode.
 
@@ -367,16 +430,17 @@ def _stale_macro_test(name):
     )
     return test
 
-def _copies_macro_test(name, helper_token, resources_token, resources_prefix):
-    """`dev_dist_plugin` forwards `files`, `file_prefixes` and `executable_files` to the component it declares."""
+def _copies_macro_test(name, helper_token, resources_token, resources_prefix, tree_token):
+    """`dev_dist_plugin` forwards `files`, `file_prefixes`, `executable_files` and `tree_files` to the component it declares."""
     main_module = "intellij.test.copied"
     copied_owner = name + "_copied_owner"
     copied_source = name + "_copied_descriptor"
     _fixture_module(name = copied_owner, module_name = main_module)
     _fixture_xml(name = copied_source)
-    files = {"bin/helper.sh": helper_token, "helpers": resources_token}
+    files = {"bin/helper.sh": helper_token, "helpers": resources_token, "web": tree_token}
     file_prefixes = {"helpers": resources_prefix}
     executable_files = ["bin/helper.sh"]
+    tree_files = ["web"]
     dev_dist_plugin(
         main_module = main_module,
         module_targets = {main_module: [":" + copied_owner + ".jar"]},
@@ -385,13 +449,14 @@ def _copies_macro_test(name, helper_token, resources_token, resources_prefix):
         files = files,
         file_prefixes = file_prefixes,
         executable_files = executable_files,
+        tree_files = tree_files,
     )
     component = native.existing_rule(dev_dist_plugin_component_target_name(main_module))
     test = name + "_copies_macro_test"
     _declaration_test(
         name = test,
-        actual = json.encode([component["files"], component["file_prefixes"], component["executable_files"]]),
-        expected = json.encode([files, file_prefixes, executable_files]),
+        actual = json.encode([component["files"], component["file_prefixes"], component["executable_files"], component["tree_files"]]),
+        expected = json.encode([files, file_prefixes, executable_files, tree_files]),
     )
     return test
 
@@ -462,6 +527,15 @@ def dev_plugin_test_suite(name):
     native.filegroup(name = resources, srcs = [":" + resource_files])
     resources_token = _PACKAGE + ":" + resources
     resources_prefix = native.package_name() + "/" + resource_files + ".source-root"
+
+    # One directory artifact, two of them, and one with a regular file beside it.
+    tree = name + "_tree"
+    _fixture_tree(name = tree)
+    tree_token = _PACKAGE + ":" + tree
+    two_trees = name + "_two_trees"
+    _fixture_tree(name = two_trees, count = 2)
+    mixed_tree = name + "_mixed_tree"
+    _fixture_tree(name = mixed_tree, extra_file = True)
 
     component = name + "_component"
     dev_plugin(
@@ -570,8 +644,51 @@ def dev_plugin_test_suite(name):
         tests.append(failing + "_test")
         _failure_test(name = tests[-1], target_under_test = ":" + failing, expected_message = message)
 
+    # A directory artifact is a copy only in `tree_files`. It is refused as a source tree, beside another file or
+    # directory, and with a stated mode. `tree_files` refuses a destination whose label is a regular file.
+    tree_component = name + "_tree_component"
+    dev_plugin(
+        name = tree_component,
+        main_module = _MAIN_MODULE,
+        descriptor = descriptor,
+        plugin_directory = "plugins/dev-plugin",
+        modules = modules,
+        jars = {"lib/x.jar": [_MAIN_MODULE]},
+        files = {"bin/helper.sh": helper_token, "web": tree_token},
+        executable_files = ["bin/helper.sh"],
+        tree_files = ["web"],
+    )
+    tests.append(tree_component + "_test")
+    _tree_test(name = tests[-1], target_under_test = ":" + tree_component, tree = ":" + tree)
+    for case, files, file_prefixes, executable_files, tree_files, message in [
+        ("tree_without_tree_files", {"web": tree_token}, {}, [], [], "state the destination in `tree_files`"),
+        ("tree_as_source_tree", {"web": tree_token}, {"web": "nowhere"}, [], [], "state the destination in `tree_files`"),
+        ("tree_files_and_prefix", {"web": tree_token}, {"web": "nowhere"}, [], ["web"], "which `file_prefixes` also names"),
+        ("two_trees", {"web": _PACKAGE + ":" + two_trees}, {}, [], ["web"], "and a copy takes regular files only, or one directory alone"),
+        ("mixed_tree", {"web": _PACKAGE + ":" + mixed_tree}, {}, [], ["web"], "and a copy takes regular files only, or one directory alone"),
+        ("tree_of_a_file", {"bin/helper.sh": helper_token}, {}, [], ["bin/helper.sh"], "produces no single directory"),
+        ("unknown_tree", {"bin/helper.sh": helper_token}, {}, [], ["web"], "tree_files names 'web', which `files` does not copy"),
+        ("executable_tree", {"web": tree_token}, {}, ["web"], ["web"], "which is a directory copy"),
+        ("file_under_tree", {"web": tree_token, "web/extra.txt": helper_token}, {}, [], ["web"], "is below 'web', which `tree_files` copies as a whole"),
+    ]:
+        failing = name + "_failing_" + case
+        dev_plugin(
+            name = failing,
+            main_module = _MAIN_MODULE,
+            descriptor = descriptor,
+            plugin_directory = "plugins/dev-plugin",
+            modules = modules,
+            jars = {"lib/x.jar": [_MAIN_MODULE]},
+            files = files,
+            file_prefixes = file_prefixes,
+            executable_files = executable_files,
+            tree_files = tree_files,
+        )
+        tests.append(failing + "_test")
+        _failure_test(name = tests[-1], target_under_test = ":" + failing, expected_message = message)
+
     tests.append(_stale_macro_test(name))
-    tests.append(_copies_macro_test(name, helper_token, resources_token, resources_prefix))
+    tests.append(_copies_macro_test(name, helper_token, resources_token, resources_prefix, tree_token))
 
     # One leaf serves a frontend product: it names the split module and the member as refused there. The distribution
     # packs the mixed `lib/mode.jar` whole, packs no `lib/split.jar`, and places no reused member jar.

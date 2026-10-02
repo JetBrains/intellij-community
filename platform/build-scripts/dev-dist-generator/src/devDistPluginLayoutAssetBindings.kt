@@ -111,6 +111,20 @@ fun generateDevPluginLayoutAssetBindings(
     )
   }
 
+  if (isDirectDeclaredTree(requestedFormat, concreteAssets, operationInputs, libraryInputs, resolver::rawInput)) {
+    val asset = concreteAssets.single().asset
+    return GeneratedDevPluginLayoutAssetBindings(
+      facts = PluginSymbolicPreparationFacts(declaredAssets = mapOf(key to listOf(PluginPackingAsset(
+        destination = asset.destination,
+        inputs = listOf(operationInputs.single().artifact),
+        kind = "tree",
+        classPath = false,
+      )))),
+      catalogueFacts = resolver.catalogueFacts(),
+      operations = emptyList(),
+    )
+  }
+
   val root = when (requestedFormat) {
     "entries" -> ""
     "tree" -> commonLayoutRoot(concreteAssets)
@@ -260,6 +274,8 @@ private class DevPluginLayoutAssetSourceResolver(
     }
   }
 
+  fun rawInput(id: String): DevDistPluginRawInput? = rawInputs.get(id)
+
   fun catalogueFacts(): DevDistPluginCatalogueFacts {
     return DevDistPluginCatalogueFacts(
       additionalInputs = rawInputs.values.toList(),
@@ -405,6 +421,29 @@ private fun isDirectDeclaredFile(
 ): Boolean {
   return requestedFormat == "tree" && assets.size == 1 && inputs.size == 1 &&
          assets.single().asset.transform == null && !assets.single().directory
+}
+
+/**
+ * Whether the callback copies one whole directory as it is: one tree asset with a named destination and the source modes,
+ * no transform, and one complete raw directory. The section then copies the directory, and no operation stands behind it.
+ * An optional local directory stays an operation, because the simple tier has no optional copy.
+ */
+private fun isDirectDeclaredTree(
+  requestedFormat: String,
+  assets: List<ConcreteLayoutAsset>,
+  inputs: List<DevPluginReference>,
+  libraryInputs: Set<Int>,
+  rawInput: (String) -> DevDistPluginRawInput?,
+): Boolean {
+  if (requestedFormat != "tree" || assets.size != 1 || inputs.size != 1 || 0 in libraryInputs) {
+    return false
+  }
+  val concrete = assets.single()
+  val asset = concrete.asset
+  val reference = inputs.single()
+  val input = rawInput(reference.artifact) ?: return false
+  return concrete.directory && asset.transform == null && asset.mode == 0 && asset.destination.isNotEmpty() &&
+         reference.path.isEmpty() && input.kind == "directory" && !input.optionalSourceTree
 }
 
 private fun commonLayoutRoot(assets: List<ConcreteLayoutAsset>): String {

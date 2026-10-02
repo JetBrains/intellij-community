@@ -48,8 +48,9 @@ internal class DevDistPluginPlanEntry(
  * `content_module_jar` jar the plugin takes as is.
  *
  * [files] maps the destination of each verbatim copy to the label of its source, in the ultimate spelling. A destination
- * in [filePrefixes] is a directory copy, and the value is the repository-relative prefix of the source tree. Every other
- * destination is a single file, and [executableFiles] names the ones of mode 493.
+ * in [filePrefixes] is a directory copy, and the value is the repository-relative prefix of the source tree. A destination
+ * in [treeFiles] copies the one directory artifact of its label with the source modes. Every other destination is a
+ * single file, and [executableFiles] names the ones of mode 493.
  */
 internal class DevDistSimplePackaging(
   @JvmField val mainModule: String,
@@ -72,6 +73,7 @@ internal class DevDistSimplePackaging(
   @JvmField val files: Map<String, String>,
   @JvmField val filePrefixes: Map<String, String>,
   @JvmField val executableFiles: List<String>,
+  @JvmField val treeFiles: List<String>,
   /**
    * The module tokens that name a test-only module, in token order. The jar of such a module is its `_test_lib.jar`
    * output.
@@ -106,7 +108,7 @@ private val DEFAULT_WRITER = JarWriterRecipe(mergeEntities = true)
  * default writer, sources that are single-root modules, library containers, single archives and one descriptor patch,
  * and a reuse set that covers the section's content modules minus the modules the jars name. The last rule lets the
  * macro infer reuse from `content_modules` without a second list. A plugin that reuses more is declared cross-half.
- * A plain copy is a `withResource*` file or directory, or a one-file layout callback, see [plainCopy].
+ * A plain copy is a `withResource*` file or directory, or a layout callback of one file or one directory, see [plainCopy].
  * No destination sits below another, because the rule refuses a copy that overlaps a jar or another copy.
  *
  * A jar can merge a test-only module of the catalogue. The index must name the test jar of that module. A plugin with
@@ -149,6 +151,7 @@ internal fun classifySimplePluginPackaging(
   val files = LinkedHashMap<String, String>()
   val filePrefixes = LinkedHashMap<String, String>()
   val executableFiles = ArrayList<String>()
+  val treeFiles = ArrayList<String>()
   val rawInputs = plan.requiredRawInputs.associateBy { it.id }
   var descriptorJars = 0
   for (planned in plan.selectedPlan().assets) {
@@ -159,6 +162,7 @@ internal fun classifySimplePluginPackaging(
       files.put(copy.destination, copy.label)
       copy.prefix?.let { filePrefixes.put(copy.destination, it) }
       if (copy.executable) executableFiles.add(copy.destination)
+      if (copy.tree) treeFiles.add(copy.destination)
       continue
     }
     if (asset.kind != "file" || asset.mode != 420 || asset.symlinkTarget != null || !asset.classPath) return null
@@ -265,24 +269,28 @@ internal fun classifySimplePluginPackaging(
     files = Collections.unmodifiableMap(files),
     filePrefixes = Collections.unmodifiableMap(filePrefixes),
     executableFiles = java.util.List.copyOf(executableFiles),
+    treeFiles = java.util.List.copyOf(treeFiles),
     testModules = java.util.List.copyOf(declaredTestModules),
   )
 }
 
-/** One verbatim copy of a simple plugin. [prefix] is set for a directory copy. */
+/** One verbatim copy of a simple plugin. [prefix] is set for a directory copy of a source tree, and [tree] for a directory artifact. */
 private class PlainCopy(
   @JvmField val destination: String,
   @JvmField val label: String,
   @JvmField val prefix: String?,
   @JvmField val executable: Boolean,
+  @JvmField val tree: Boolean = false,
 )
 
 /**
  * The copy a recipe-free asset states, or `null` when the packer must resolve the asset.
  *
  * A plain file copy is a file of mode 420 or 493 over one raw input that is one file, an archive included, without a
- * prefix. A plain tree copy is a tree that keeps the source modes over one raw directory input with a prefix. A symlink,
- * a transform output and an overlay of two trees are not plain, because a preparation or the packer resolves them.
+ * prefix. A plain tree copy is a tree that keeps the source modes over one raw directory input. With a prefix, the input
+ * is a source tree, and the rule copies each of its files. Without a prefix, the input is one directory artifact, and the
+ * collector walks it. An optional source tree, a symlink, a transform output and an overlay of two trees are not plain,
+ * because a preparation or the packer resolves them.
  */
 private fun plainCopy(asset: PluginPackingAsset, rawInputs: Map<String, DevDistPluginRawInput>): PlainCopy? {
   if (asset.recipe != null || asset.symlinkTarget != null || asset.classPath || asset.destination.isEmpty()) {
@@ -296,8 +304,8 @@ private fun plainCopy(asset: PluginPackingAsset, rawInputs: Map<String, DevDistP
       PlainCopy(destination = asset.destination, label = input.label, prefix = null, executable = asset.mode == 493)
     }
     "tree" -> {
-      if (asset.normalizeTreeModes || input.kind != "directory" || prefix == null) return null
-      PlainCopy(destination = asset.destination, label = input.label, prefix = prefix, executable = false)
+      if (asset.normalizeTreeModes || input.kind != "directory" || input.optionalSourceTree) return null
+      PlainCopy(destination = asset.destination, label = input.label, prefix = prefix, executable = false, tree = prefix == null)
     }
     else -> null
   }
