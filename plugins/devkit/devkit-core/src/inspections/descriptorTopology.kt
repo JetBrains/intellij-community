@@ -10,16 +10,16 @@ import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
-import com.intellij.util.PathUtil
 import com.intellij.util.xml.DomUtil
-import com.intellij.xml.util.XmlUtil
 import org.jetbrains.idea.devkit.dom.ContentDescriptor.ModuleDescriptor.ModuleLoadingRule
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
+import org.jetbrains.idea.devkit.dom.index.PluginXIncludeIndex
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 
 internal fun isInProductionRoots(file: VirtualFile?, project: Project): Boolean {
@@ -99,9 +99,9 @@ internal data class ProductionXIncludeEdge(val includer: XmlFile, val mergesWhol
 
 /**
  * Cached per file: the reachability walks re-enter this for every file of the include graph on every checked
- * reference. Includer candidates come from [PluginIdDependenciesIndex] by target file name and are verified by
- * resolving their `xi:include` hrefs; a reference search would scan every text occurrence of the file name in the
- * project — for a file named `plugin.xml` that is most of the monorepo.
+ * reference. Includer candidates come from [PluginXIncludeIndex] by target file name and are verified by resolving
+ * their indexed hrefs, so no includer tree is loaded; a reference search would scan every text occurrence of the file
+ * name in the project — for a file named `plugin.xml` that is most of the monorepo.
  */
 internal fun findProductionXIncludeEdges(file: XmlFile): List<ProductionXIncludeEdge> {
   return CachedValuesManager.getCachedValue(file) {
@@ -114,47 +114,38 @@ internal fun findProductionXIncludeEdges(file: XmlFile): List<ProductionXInclude
 
 private fun computeProductionXIncludeEdges(file: XmlFile): List<ProductionXIncludeEdge> {
   val virtualFile = file.virtualFile ?: return emptyList()
-  val candidates = PluginIdDependenciesIndex.findFilesWithXIncludeOf(file.project, virtualFile.name)
-  return productionXmlFiles(candidates - virtualFile, file).flatMap { includer ->
-    findXIncludeTags(includer, virtualFile.name)
-      .filter { resolveXIncludeTargetFile(it)?.virtualFile == virtualFile }
-      .map { ProductionXIncludeEdge(includer, mergesWholeDescriptor(it)) }
+  val includes = PluginXIncludeIndex.getIncludes(virtualFile.name, GlobalSearchScope.projectScope(file.project))
+  return productionXmlFiles(includes.keys - virtualFile, file).flatMap { includer ->
+    includes[includer.virtualFile].orEmpty()
+      .filter { resolveXIncludeHref(includer, it.href) == virtualFile }
+      .map { ProductionXIncludeEdge(includer, it.mergesWholeDescriptor) }
   }.distinct()
 }
 
 /**
- * XML files in [scope] with an `xi:include` that resolves to [file]. Candidates come from [PluginIdDependenciesIndex]
+ * XML files in [scope] with an `xi:include` that resolves to [file]. Candidates come from [PluginXIncludeIndex]
  * by target file name (same-named descriptors in other directories are candidates too), so each is confirmed by
- * resolving its `xi:include` hrefs.
+ * resolving its indexed hrefs.
  */
 internal fun findXIncludingFiles(file: XmlFile, scope: GlobalSearchScope): Sequence<XmlFile> {
   val virtualFile = file.virtualFile ?: return emptySequence()
-  return PluginIdDependenciesIndex.findFilesWithXIncludeOf(virtualFile.name, scope)
+  return PluginXIncludeIndex.getIncludes(virtualFile.name, scope)
     .asSequence()
-    .filter { it != virtualFile }
-    .mapNotNull { file.manager.findFile(it) as? XmlFile }
-    .filter { includer -> findXIncludeTags(includer, virtualFile.name).any { resolveXIncludeTargetFile(it)?.virtualFile == virtualFile } }
-}
-
-private fun findXIncludeTags(file: XmlFile, targetFileName: String): List<XmlTag> {
-  val tagsByFileName = CachedValuesManager.getCachedValue(file) {
-    CachedValueProvider.Result.create(computeXIncludeTags(file), file)
-  }
-  return tagsByFileName[targetFileName].orEmpty()
-}
-
-private fun computeXIncludeTags(file: XmlFile): Map<String, List<XmlTag>> {
-  val result = HashMap<String, MutableList<XmlTag>>()
-  fun visit(tag: XmlTag) {
-    if (tag.localName == "include" && tag.namespace == XmlUtil.XINCLUDE_URI) {
-      val href = tag.getAttributeValue("href")
-      if (!href.isNullOrBlank()) result.getOrPut(PathUtil.getFileName(href)) { ArrayList() }.add(tag)
+    .filter { (candidate, _) -> candidate != virtualFile }
+    .mapNotNull { (candidate, entries) ->
+      val includer = file.manager.findFile(candidate) as? XmlFile ?: return@mapNotNull null
+      includer.takeIf { entries.any { resolveXIncludeHref(includer, it.href) == virtualFile } }
     }
-    // physical children: getSubTags substitutes the included content for every resolvable xi:include tag
-    tag.children.forEach { if (it is XmlTag) visit(it) }
-  }
-  file.rootTag?.let(::visit)
-  return result
+}
+
+/**
+ * Resolves an indexed `xi:include` [href] as the tag in [includer] would, without loading the includer tree: the
+ * file reference contexts come from the includer's virtual file, like `FileIncludeManagerImpl` resolves include infos.
+ */
+private fun resolveXIncludeHref(includer: XmlFile, href: String): VirtualFile? {
+  return object : FileReferenceSet(href, includer, 0, null, true) {
+    override fun useIncludingFileAsContext(): Boolean = false
+  }.resolve()?.virtualFile
 }
 
 internal fun resolveXIncludeTargetFile(includeTag: XmlTag): XmlFile? {
@@ -199,8 +190,13 @@ private fun productionXmlFiles(candidates: Collection<VirtualFile>, context: Xml
  * section merges that section only.
  */
 internal fun mergesWholeDescriptor(includeTag: XmlTag): Boolean {
-  if (includeTag.parentTag != (includeTag.containingFile as? XmlFile)?.rootTag) return false
-  val xpointer = includeTag.getAttributeValue("xpointer") ?: return true
+  return mergesWholeDescriptor(includeTag.parentTag == (includeTag.containingFile as? XmlFile)?.rootTag,
+                               includeTag.getAttributeValue("xpointer"))
+}
+
+internal fun mergesWholeDescriptor(atRoot: Boolean, xpointer: String?): Boolean {
+  if (!atRoot) return false
+  if (xpointer == null) return true
   val pointer = JDOMUtil.XPOINTER_PATTERN.matcher(xpointer).takeIf { it.matches() }?.group(1) ?: return false
   val children = JDOMUtil.CHILDREN_PATTERN.matcher(pointer)
   return children.matches() && children.group(2) == null

@@ -102,7 +102,7 @@ public final class ExtensionImplementationIndex extends PluginXmlIndexBase<Strin
 
   @Override
   public int getVersion() {
-    return BASE_INDEX_VERSION + 3;
+    return BASE_INDEX_VERSION + 4;
   }
 
   @Override
@@ -110,6 +110,7 @@ public final class ExtensionImplementationIndex extends PluginXmlIndexBase<Strin
     Map<String, IntList> result = new HashMap<>();
     for (Extensions extensions : plugin.getExtensions()) {
       for (XmlTag extensionTag : extensions.getXmlTag().getSubTags()) {
+        if (PluginXIncludeIndex.isXIncludeTag(extensionTag)) continue;
         var offset = extensionTag.getTextOffset();
         addKey(result, EP_NAME_KEY_PREFIX + StringUtil.getShortName(extensionTag.getLocalName()), offset, false);
         collectKeys(extensionTag, offset, result);
@@ -129,6 +130,8 @@ public final class ExtensionImplementationIndex extends PluginXmlIndexBase<Strin
       return;
     }
     for (XmlTag subTag : subTags) {
+      // getValue of an xi:include tag processes the include, which is not allowed during indexing
+      if (PluginXIncludeIndex.isXIncludeTag(subTag)) continue;
       collectKeys(subTag, offset, result);
     }
   }

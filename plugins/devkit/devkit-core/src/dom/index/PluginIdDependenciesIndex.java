@@ -5,10 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,8 +16,6 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.VoidDataExternalizer;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,8 +43,6 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
   private static final @NonNls String PLUGIN_ID_KEY_PREFIX = "___PLUGIN_ID___";
 
   private static final @NonNls String CONTENT_KEY_PREFIX = "___CONTENT_ID___";
-
-  private static final @NonNls String XINCLUDE_TARGET_KEY_PREFIX = "___XINCLUDE___";
 
   @Override
   public @NotNull KeyDescriptor<String> getKeyDescriptor() {
@@ -103,40 +97,12 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
       }
     }
 
-    final XmlTag rootTag = DomUtil.getFile(plugin).getRootTag();
-    if (rootTag != null) {
-      addXIncludeTargetKeys(rootTag, ids);
-    }
-
     return ContainerUtil.newHashMap(ids, Collections.nCopies(ids.size(), null));
-  }
-
-  // indexing only <idea-plugin> files loses no edges: the runtime consumes included content as descriptor
-  // elements, so every legal includer in the descriptor graph is itself an <idea-plugin> file
-  private static void addXIncludeTargetKeys(XmlTag tag, List<String> ids) {
-    if (isXIncludeTag(tag)) {
-      final String href = tag.getAttributeValue("href");
-      if (!StringUtil.isEmptyOrSpaces(href)) {
-        ids.add(getXIncludeIndexingKey(PathUtil.getFileName(href)));
-      }
-    }
-    // physical children: getSubTags substitutes the included content for every resolvable xi:include tag
-    for (PsiElement child : tag.getChildren()) {
-      if (child instanceof XmlTag) {
-        addXIncludeTargetKeys((XmlTag)child, ids);
-      }
-    }
-  }
-
-  // index PSI may not resolve the xi: prefix, so match the prefix too; lookups verify every candidate tag
-  private static boolean isXIncludeTag(XmlTag tag) {
-    return "include".equals(tag.getLocalName()) &&
-           (XmlUtil.XINCLUDE_URI.equals(tag.getNamespace()) || "xi".equals(tag.getNamespacePrefix()));
   }
 
   @Override
   public int getVersion() {
-    return BASE_INDEX_VERSION + 7;
+    return BASE_INDEX_VERSION + 8;
   }
 
   public static Set<String> getPluginAndDependsIds(Project project, Set<VirtualFile> files) {
@@ -149,8 +115,7 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
       ids.addAll(ContainerUtil.filter(keys, s ->
         !StringUtil.startsWith(s, PLUGIN_ID_KEY_PREFIX) &&
         !StringUtil.startsWith(s, FILENAME_KEY_PREFIX) &&
-        !StringUtil.startsWith(s, CONTENT_KEY_PREFIX) &&
-        !StringUtil.startsWith(s, XINCLUDE_TARGET_KEY_PREFIX)));
+        !StringUtil.startsWith(s, CONTENT_KEY_PREFIX)));
     }
     return ids;
   }
@@ -182,18 +147,6 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
                                                            GlobalSearchScope.projectScope(project));
   }
 
-  public static Collection<VirtualFile> findFilesWithXIncludeOf(Project project, String targetFileName) {
-    return findFilesWithXIncludeOf(targetFileName, GlobalSearchScope.projectScope(project));
-  }
-
-  /**
-   * Files in {@code scope} with an {@code xi:include} whose href file name is {@code targetFileName}.
-   * The key is the file name only; callers resolve the href to tell apart same-named descriptors.
-   */
-  public static Collection<VirtualFile> findFilesWithXIncludeOf(String targetFileName, GlobalSearchScope scope) {
-    return FileBasedIndex.getInstance().getContainingFiles(NAME, getXIncludeIndexingKey(targetFileName), scope);
-  }
-
   public static Collection<VirtualFile> findDescriptorsWithReferenceInDependenciesTag(GlobalSearchScope scope, String moduleNameOrPluginId) {
     return FileBasedIndex.getInstance().getContainingFiles(NAME, moduleNameOrPluginId, scope);
   }
@@ -212,9 +165,5 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
 
   private static String getContentIndexingKey(@NotNull String value) {
     return CONTENT_KEY_PREFIX + value;
-  }
-
-  private static String getXIncludeIndexingKey(@NotNull String targetFileName) {
-    return XINCLUDE_TARGET_KEY_PREFIX + targetFileName;
   }
 }

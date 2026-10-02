@@ -21,27 +21,24 @@ import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.notification.impl.NotificationGroupEP;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.impl.include.FileIncludeInfo;
-import com.intellij.psi.impl.include.FileIncludeManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -51,13 +48,10 @@ import com.intellij.ui.components.JBList;
 import com.intellij.usageView.UsageViewNodeTextLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.PathUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
 
@@ -278,33 +272,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     doHighlightingTest();
   }
 
-  // the language server has no FileIncludeIndex, so its FileIncludeManager finds no includers
   public void testExtensionsInheritDependenciesThroughXInclude() throws IOException {
-    ServiceContainerUtil.replaceService(getProject(), FileIncludeManager.class, new FileIncludeManager() {
-      @Override
-      public VirtualFile[] getIncludedFiles(@NotNull VirtualFile file, boolean compileTimeOnly) {
-        return VirtualFile.EMPTY_ARRAY;
-      }
-
-      @Override
-      public VirtualFile[] getIncludedFiles(@NotNull VirtualFile file, boolean compileTimeOnly, boolean recursively) {
-        return VirtualFile.EMPTY_ARRAY;
-      }
-
-      @Override
-      public VirtualFile[] getIncludingFiles(@NotNull VirtualFile file, boolean compileTimeOnly) {
-        return VirtualFile.EMPTY_ARRAY;
-      }
-
-      @Override
-      public void processIncludingFiles(PsiFile context, Processor<? super Pair<VirtualFile, FileIncludeInfo>> processor) {
-      }
-
-      @Override
-      public @Nullable PsiFileSystemItem resolveFileInclude(@NotNull FileIncludeInfo info, @NotNull PsiFile context) {
-        return null;
-      }
-    }, getTestRootDisposable());
     addPluginXml("q", """
       <id>q</id>
       <extensionPoints>
@@ -330,6 +298,42 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     );
 
     myFixture.configureFromExistingVirtualFile(extraFile);
+    doHighlightingTest();
+  }
+
+  public void testExtensionsInheritDependenciesAfterXIncludeIsAdded() throws IOException {
+    addPluginXml("q", """
+      <id>q</id>
+      <extensionPoints>
+        <extensionPoint name="ep" interface="java.lang.Runnable"/>
+      </extensionPoints>
+      """);
+    var pluginXml = myTempDirFixture.createFile("main/META-INF/plugin.xml", """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <id>main</id>
+        <depends>q</depends>
+      </idea-plugin>
+      """);
+    var extraFile = myTempDirFixture.createFile("main/META-INF/extra.xml", """
+      <idea-plugin>
+        <extensions defaultExtensionNs="q">
+          <ep implementation="java.lang.Thread"/>
+        </extensions>
+      </idea-plugin>
+      """);
+    ApplicationManager.getApplication().runWriteAction(
+      (Computable<SourceFolder>)() -> PsiTestUtil.addSourceContentToRoots(getModule(), myTempDirFixture.getFile("main"))
+    );
+
+    myFixture.configureFromExistingVirtualFile(extraFile);
+    assertTrue(ContainerUtil.exists(myFixture.doHighlighting(), info -> "Missing dependency declaration for using extension point 'q.ep'".equals(info.getDescription())));
+
+    var document = FileDocumentManager.getInstance().getDocument(pluginXml);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      document.insertString(document.getText().indexOf("</idea-plugin>"), "  <xi:include href=\"extra.xml\"/>\n");
+      PsiDocumentManager.getInstance(getProject()).commitDocument(document);
+    });
+
     doHighlightingTest();
   }
 

@@ -233,6 +233,20 @@ public class ExtensionImplementationIndexTest extends LightJavaCodeInsightFixtur
     assertOrderedEquals(ids, "prefix", "prefixFirst", "exactFirst", "nested");
   }
 
+  public void testXIncludesAreSkipped() {
+    var file = myFixture.addFileToProject("META-INF/plugin.xml", """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <extensions defaultExtensionNs="com.intellij">
+          <xi:include href="top.xml"/>
+          <myEp implementation="myPkg.MyImplementation"><xi:include href="nested.xml"/></myEp>
+        </extensions>
+      </idea-plugin>
+      """).getVirtualFile();
+    Map<String, IntList> data = FileBasedIndex.getInstance().getFileData(ExtensionImplementationIndex.NAME, file, getProject());
+
+    assertSameElements(data.keySet(), "myPkg.MyImplementation", "ep:myEp");
+  }
+
   public void testStrictMatchSkipsOuterPrefixes() {
     var file = myFixture.copyFileToProject("plugin.xml", "META-INF/plugin.xml");
     var scope = GlobalSearchScope.fileScope(getProject(), file);
