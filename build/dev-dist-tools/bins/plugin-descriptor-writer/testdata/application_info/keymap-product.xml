@@ -1,0 +1,7 @@
+<component xmlns="http://jetbrains.org/intellij/schema/application-info">
+  <names fullname="Product" />
+  <version major="263" minor="2" />
+  <build />
+  <keymap reassignAltClickToMultipleCarets="true" />
+  <keymap reassignAltClickToMultipleCarets="ignored" />
+</component>

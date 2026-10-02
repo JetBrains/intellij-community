@@ -175,12 +175,6 @@ abstract class ProductProperties {
     "${appInfo.fullProductName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
 
   /**
-   * If `true`, Alt+Button1 shortcut will be removed from 'Quick Evaluate Expression' action and assigned to 'Add/Remove Caret' action
-   * (instead of Alt+Shift+Button1) in the default keymap.
-   */
-  var reassignAltClickToMultipleCarets: Boolean = false
-
-  /**
    * Now a file containing information about third-party libraries is bundled and shown inside the IDE.
    * If `true`, HTML & JSON files of third-party libraries will be placed alongside built artifacts.
    */
@@ -569,7 +563,9 @@ abstract class ProductProperties {
     val patchVersion: String?,
     val fullVersionFormat: String?,
     val versionSuffix: String?,
-    val majorReleaseDate: String?
+    val majorReleaseDate: String?,
+    /** The `reassignAltClickToMultipleCarets` attribute of the `keymap` element. `null` removes the element. */
+    val reassignAltClickToMultipleCarets: String? = null,
   )
 
   /**

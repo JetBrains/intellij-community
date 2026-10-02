@@ -1,0 +1,8 @@
+<component xmlns="http://jetbrains.org/intellij/schema/application-info" xmlns:other="urn:other">
+  <keymap reassignAltClickToMultipleCarets="false" />
+  <names product="JetBrains Client" />
+  <version />
+  <build number="__BUILD_NUMBER__" />
+  <other:keymap reassignAltClickToMultipleCarets="kept" />
+  <keymap reassignAltClickToMultipleCarets="second" />
+</component>

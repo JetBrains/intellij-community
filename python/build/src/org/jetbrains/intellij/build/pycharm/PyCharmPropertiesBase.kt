@@ -21,7 +21,6 @@ abstract class PyCharmPropertiesBase(enlargeWelcomeScreen: Boolean) : JetBrainsP
       additionalVmOptions += "-Dwelcome.screen.defaultWidth=1000"
       additionalVmOptions += "-Dwelcome.screen.defaultHeight=720"
     }
-    reassignAltClickToMultipleCarets = true
     useSplash = true
     buildCrossPlatformDistribution = true
     mavenArtifacts.additionalModules = mavenArtifacts.additionalModules.addingAll(listOf(

@@ -120,6 +120,37 @@ impl ApplicationInfoElements {
         self.element_mut(self.build)
     }
 
+    /// Replaces every `keymap` element of the application-info namespace with one that states this value, or with
+    /// none.
+    ///
+    /// The new element takes the namespace of `names` and goes last. A removal can move the three unique children, so
+    /// this method finds their positions again.
+    fn set_keymap(&mut self, reassign_alt_click_to_multiple_carets: Option<&str>) {
+        let names = self.names();
+        let mut keymap = Element {
+            name: KEYMAP.to_owned(),
+            prefix: names.prefix.clone(),
+            uri: names.uri.clone(),
+            ..Element::default()
+        };
+        self.root.children.retain(|node| {
+            !node
+                .as_element()
+                .is_some_and(|element| element.name == KEYMAP && element.uri == APPLICATION_INFO_NAMESPACE)
+        });
+        for (index, name) in [
+            (&mut self.names, "names"),
+            (&mut self.version, "version"),
+            (&mut self.build, "build"),
+        ] {
+            *index = single_child(&self.root, name, APPLICATION_INFO_NAMESPACE).expect("a removed keymap keeps the unique children");
+        }
+        if let Some(value) = reassign_alt_click_to_multiple_carets {
+            keymap.set_attribute(REASSIGN_ALT_CLICK_TO_MULTIPLE_CARETS, value);
+            self.root.children.push(Node::Element(keymap));
+        }
+    }
+
     fn element(&self, index: usize) -> &Element {
         self.root.children[index].as_element().expect("the index points at an element")
     }
@@ -129,12 +160,15 @@ impl ApplicationInfoElements {
     }
 }
 
-/// Copies the names, the version and the release date of the host product into the application info of a frontend.
+/// Copies the names, the version, the release date and the keymap fact of the host product into the application info
+/// of a frontend.
 ///
 /// It is the XML that `applyApplicationInfoOverrides` writes for `JetBrainsClientPropertiesForLaunchers`
 /// (`platform/buildScripts/src/JetBrainsClientPropertiesForLaunchers.kt`). The frontend takes the full name of the
 /// host, or its product name, and loses its edition. Each other attribute takes the value of the host, and an attribute
-/// that the host does not state is removed. The host file names the input in an error.
+/// that the host does not state is removed. The `keymap` element of the frontend states the
+/// `reassignAltClickToMultipleCarets` value of the first host `keymap`, and a host without the value removes it. The
+/// host file names the input in an error.
 pub fn merge_host_application_info(client: &mut ApplicationInfoElements, host: &ApplicationInfoElements, host_file: &Path) -> Result<()> {
     let host_names = host.names();
     let Some(product_name) = host_names.attribute("fullname").or_else(|| host_names.attribute("product")) else {
@@ -152,8 +186,18 @@ pub fn merge_host_application_info(client: &mut ApplicationInfoElements, host: &
     }
 
     copy_attribute(client.build_mut(), host.build(), "majorReleaseDate");
+
+    let reassign_alt_click_to_multiple_carets = host
+        .root()
+        .child_in_namespace(KEYMAP, APPLICATION_INFO_NAMESPACE)
+        .and_then(|keymap| keymap.attribute(REASSIGN_ALT_CLICK_TO_MULTIPLE_CARETS));
+    client.set_keymap(reassign_alt_click_to_multiple_carets);
     Ok(())
 }
+
+const KEYMAP: &str = "keymap";
+
+const REASSIGN_ALT_CLICK_TO_MULTIPLE_CARETS: &str = "reassignAltClickToMultipleCarets";
 
 /// `getChildren(name, namespace).singleOrNull()`: the position of the one child element with this name in this
 /// namespace URI.

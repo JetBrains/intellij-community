@@ -51,4 +51,5 @@ internal class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   override fun isEAP(): Boolean = delegate.isEAP
   override fun getSplashImageUrl(): String? = delegate.splashImageUrl
   override fun isSimplifiedSplashSupported(): Boolean = delegate.isSimplifiedSplashSupported
+  override fun isReassignAltClickToMultipleCarets(): Boolean = delegate.isReassignAltClickToMultipleCarets
 }

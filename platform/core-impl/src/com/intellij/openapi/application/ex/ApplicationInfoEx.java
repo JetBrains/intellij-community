@@ -81,4 +81,13 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract @Nullable String getDefaultDarkLaf();
 
   public abstract @Nullable String getDefaultClassicDarkLaf();
+
+  /**
+   * Returns {@code true} if the default keymap gives Alt+Click to "Add/Remove Caret" and Alt+Shift+Click to the former Alt+Click actions.
+   * The {@code <keymap reassignAltClickToMultipleCarets="true"/>} element of the application info sets it.
+   */
+  @ApiStatus.Internal
+  public boolean isReassignAltClickToMultipleCarets() {
+    return false;
+  }
 }

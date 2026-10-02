@@ -96,6 +96,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myDefaultDarkLaf;
   private String myDefaultClassicDarkLaf;
 
+  private boolean myReassignAltClickToMultipleCarets;
+
   private boolean myUseSpecialAnniversarySplash = true;
 
   private static final Logger LOG = Logger.getInstance(ApplicationInfoImpl.class);
@@ -215,6 +217,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
         case "splash": {
           myUseSpecialAnniversarySplash = Boolean.parseBoolean(getAttributeValue(child, "use-special-anniversary-splash"));
+        }
+        break;
+
+        case "keymap": {
+          myReassignAltClickToMultipleCarets = Boolean.parseBoolean(getAttributeValue(child, "reassignAltClickToMultipleCarets"));
         }
         break;
       }
@@ -641,6 +648,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public boolean isSimplifiedSplashSupported() {
     return simplifiedSplashImageUrl != null;
+  }
+
+  @Override
+  public boolean isReassignAltClickToMultipleCarets() {
+    return myReassignAltClickToMultipleCarets;
   }
 
   /** @deprecated Use {@link ApplicationManagerEx#isInStressTest} */

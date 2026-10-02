@@ -25,6 +25,7 @@
         </xs:element>
         <xs:element type="subscriptionsType" name="subscriptions" minOccurs="0"/>
         <xs:element type="default-lafType" name="default-laf" minOccurs="0"/>
+        <xs:element type="keymapType" name="keymap" minOccurs="0"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -241,5 +242,15 @@
     <xs:attribute type="xs:string" name="dark"/>
     <xs:attribute type="xs:string" name="light-classic"/>
     <xs:attribute type="xs:string" name="dark-classic"/>
+  </xs:complexType>
+  <xs:complexType name="keymapType">
+    <xs:attribute type="xs:boolean" name="reassignAltClickToMultipleCarets">
+      <xs:annotation>
+        <xs:documentation>
+          If 'true', the default keymap assigns Alt+Click to the 'Add/Remove Caret' action and Alt+Shift+Click to the former Alt+Click actions.
+          The IDE swaps the two mouse shortcuts when it loads the default keymap.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 </xs:schema>

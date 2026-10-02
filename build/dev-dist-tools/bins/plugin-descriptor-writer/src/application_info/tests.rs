@@ -28,6 +28,9 @@ fn application_info_request(output: &Path, client: &str, product: &str) -> Vec<S
 ///
 /// The prefixed case finds the elements of the application-info namespace by URI, whatever prefix a file binds to it.
 /// Its expected file is the Kotlin output without `branchName`, because only a refused override adds that attribute.
+///
+/// The two keymap cases have hand-written expected files. The `keymap` element of the frontend follows the host, and a
+/// `keymap` of another namespace stays.
 #[test]
 fn application_info_matches_kotlin() {
     for (name, client, product, want) in [
@@ -35,6 +38,8 @@ fn application_info_matches_kotlin() {
         ("remove attributes", "client", "sparse-product", "sparse"),
         ("empty attributes", "client", "empty-product", "empty"),
         ("namespace prefixes", "prefixed-client", "prefixed-product", "prefixed"),
+        ("keymap", "keymap-client", "keymap-product", "keymap"),
+        ("keymap removed", "keymap-client", "product", "keymap-removed"),
     ] {
         let dir = TempDir::new();
         let dir = dir.path();

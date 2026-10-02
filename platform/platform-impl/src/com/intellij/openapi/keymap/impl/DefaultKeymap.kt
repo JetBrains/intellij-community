@@ -6,6 +6,7 @@ package com.intellij.openapi.keymap.impl
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -64,9 +65,11 @@ open class DefaultKeymap {
       filteredBeans.putAll(macOsBeans)
     }
 
+    val reassignAltClickToMultipleCarets = ApplicationInfoEx.getInstanceEx().isReassignAltClickToMultipleCarets
     for ((bean, pluginDescriptor) in filteredBeans) {
       runCatching {
-        loadKeymap(getKeymapName(bean), object : SchemeDataHolder<KeymapImpl> {
+        val keymapName = getKeymapName(bean)
+        loadKeymap(keymapName, object : SchemeDataHolder<KeymapImpl> {
           override fun read(): Element {
             val effectiveFile = getEffectiveFile(bean)
             // check parents because of IDEA-314393
@@ -74,7 +77,11 @@ open class DefaultKeymap {
             if (data == null) {
               throw PluginException("Cannot find $effectiveFile", pluginDescriptor.pluginId)
             }
-            return JDOMUtil.load(data)
+            val element = JDOMUtil.load(data)
+            if (reassignAltClickToMultipleCarets && keymapName == KeymapManager.DEFAULT_IDEA_KEYMAP) {
+              swapAltClickWithAltShiftClick(element)
+            }
+            return element
           }
         }, pluginDescriptor)
       }.getOrLogException(logger<DefaultKeymap>())
@@ -132,6 +139,23 @@ open class DefaultKeymap {
           else -> "$newName (macOS)"
         }
           .removePrefix("${osName()}/")
+      }
+    }
+  }
+}
+
+/**
+ * Swaps the `alt button1` and `alt shift button1` mouse shortcuts of every action in [keymap].
+ *
+ * A keystroke must match exactly. So `alt button1 doubleClick` and `ctrl alt button1` stay.
+ * [ApplicationInfoEx.isReassignAltClickToMultipleCarets] enables the swap for the default keymap.
+ */
+internal fun swapAltClickWithAltShiftClick(keymap: Element) {
+  for (action in keymap.getChildren("action")) {
+    for (shortcut in action.getChildren("mouse-shortcut")) {
+      when (shortcut.getAttributeValue("keystroke")) {
+        "alt button1" -> shortcut.setAttribute("keystroke", "alt shift button1")
+        "alt shift button1" -> shortcut.setAttribute("keystroke", "alt button1")
       }
     }
   }

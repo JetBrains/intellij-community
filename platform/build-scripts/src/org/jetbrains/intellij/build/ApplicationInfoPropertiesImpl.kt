@@ -245,6 +245,11 @@ internal fun applyApplicationInfoOverrides(
     replaceAttribute(version, "suffix", appInfoOverride.versionSuffix)
 
     replaceAttribute(build, "majorReleaseDate", appInfoOverride.majorReleaseDate)
+
+    element.removeChildren("keymap", namespace)
+    appInfoOverride.reassignAltClickToMultipleCarets?.let {
+      element.addContent(Element("keymap", names.namespace).setAttribute("reassignAltClickToMultipleCarets", it))
+    }
   }
 
   if (isEapOverride != null || suffixOverride != null) {

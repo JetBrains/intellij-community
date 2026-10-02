@@ -194,6 +194,15 @@ public class ApplicationInfoTest {
     assertThat(info.isSimplifiedSplashSupported()).isFalse();
   }
 
+  @Test
+  public void keymapReassignsAltClickOnlyWhenStated() {
+    assertThat(createAppInfo().isReassignAltClickToMultipleCarets()).isFalse();
+    var keymap = new XmlElement("keymap", Map.of("reassignAltClickToMultipleCarets", "true"), List.of(), null);
+    assertThat(createAppInfo(keymap).isReassignAltClickToMultipleCarets()).isTrue();
+    var disabled = new XmlElement("keymap", Map.of("reassignAltClickToMultipleCarets", "false"), List.of(), null);
+    assertThat(createAppInfo(disabled).isReassignAltClickToMultipleCarets()).isFalse();
+  }
+
   public static @NotNull ApplicationInfoImpl createAppInfo(@NotNull XmlElement @NotNull ... content) {
     var children = new ArrayList<>(List.of(content));
     children.add(new XmlElement("icon", Map.of("svg", "xxx.svg", "svg-small", "xxx.svg"), List.of(), null));

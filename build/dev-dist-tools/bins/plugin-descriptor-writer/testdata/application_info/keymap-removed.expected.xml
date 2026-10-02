@@ -1,0 +1,6 @@
+<component xmlns="http://jetbrains.org/intellij/schema/application-info" xmlns:other="urn:other">
+  <names product="JetBrains Client" fullname="Product &amp; Tools" motto="Create &lt;more&gt;" />
+  <version eap="false" major="263" minor="2" micro="3" patch="4" full="{0}.{1}.{2}" suffix="RC" />
+  <build number="__BUILD_NUMBER__" majorReleaseDate="__MAJOR_RELEASE_DATE__" />
+  <other:keymap reassignAltClickToMultipleCarets="kept" />
+</component>
