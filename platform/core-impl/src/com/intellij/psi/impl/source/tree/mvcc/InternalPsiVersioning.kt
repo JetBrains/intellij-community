@@ -18,16 +18,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.containers.ConcurrentLongIntMap
-import com.intellij.util.containers.Java11Shim
-import it.unimi.dsi.fastutil.longs.LongArrayList
-import it.unimi.dsi.fastutil.longs.LongList
 import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.Collections
 import java.util.IdentityHashMap
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Supplier
@@ -348,10 +346,10 @@ object InternalPsiVersioning {
      * FileViewProvider subsystem is notoriously famous for dropping its data at random points of time
      * When some computation captured a version, we must keep the data alive and available until the computation is finished.
      */
-    val frozenPsiVersionsRegistry: ConcurrentLongIntMap = Java11Shim.createConcurrentLongIntMap(0).apply { put(0, 1) }
+    val frozenPsiVersionsRegistry: ConcurrentMap<Long, Int> = ConcurrentHashMap<Long, Int>().apply { put(0, 1) }
 
     fun <T> rememberFrozenVersion(version: Long, action: () -> T): T {
-      frozenPsiVersionsRegistry.compute(version) { _, count -> count + 1 }
+      frozenPsiVersionsRegistry.compute(version) { _, v -> if (v == null) 1 else v + 1 }
       try {
         return action()
       } finally {
@@ -360,7 +358,7 @@ object InternalPsiVersioning {
     }
 
     fun rememberFrozenVersionUnsafe(version: Long) {
-      frozenPsiVersionsRegistry.compute(version) { _, count -> count + 1 }
+      frozenPsiVersionsRegistry.compute(version) { _, v -> if (v == null) 1 else v + 1 }
     }
 
     fun forgetFrozenVersionUnsafe(version: Long) {
@@ -369,8 +367,8 @@ object InternalPsiVersioning {
     fun minVersionForCleaning(): Long {
       // we select the lowest even version for cleanup -- we need to retain only this version for guaranteed semantics preservation
       // there is always at least one frozen version, so we never observe an empty collection
-      return frozenPsiVersionsRegistry.entrySet().minOf {
-        it.key - (it.key % MAIN_TIMELINE_DELTA)
+      return frozenPsiVersionsRegistry.keys.minOf {
+        it - (it % MAIN_TIMELINE_DELTA)
       }
     }
 
@@ -381,7 +379,7 @@ object InternalPsiVersioning {
     fun incrementVersion(expected: Long) {
       val nextVersion = expected + MAIN_TIMELINE_DELTA
       // the published version is always frozen, we have no right to remove it until it ends
-      frozenPsiVersionsRegistry.put(nextVersion, 1)
+      frozenPsiVersionsRegistry[nextVersion] = 1
       val versionAdvanced = version.compareAndSet(expected, nextVersion)
       assert(versionAdvanced) {
         "Version modification failed: could not increment the version with $expected, because global version version is ${version.get()}"
@@ -392,22 +390,20 @@ object InternalPsiVersioning {
 
 
     private fun decrementFrozenVersion(version: Long) {
-      val newValue = frozenPsiVersionsRegistry.compute(version) { _, count ->
-        when (count) {
-          0 -> error("Unpublished version $version is unexpected")
-          1 -> 0
-          else -> count - 1
+      val newValue = frozenPsiVersionsRegistry.compute(version) { _, v ->
+        when (v) {
+          null -> error("Unpublished version $version is unexpected")
+          1 -> null
+          else -> v - 1
         }
       }
-      if (newValue == 0) {
+      if (newValue == null) {
         garbageCollector?.liveVersionsChanged(minVersionForCleaning())
       }
     }
 
-    fun getFrozenKeys(): LongList {
-      val result = LongArrayList(frozenPsiVersionsRegistry.size())
-      frozenPsiVersionsRegistry.forEach { key, _ -> result.add(key) }
-      return result
+    fun getFrozenKeys(): Set<Long> {
+      return frozenPsiVersionsRegistry.keys
     }
   }
 

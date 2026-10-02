@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.mvcc
 
-import it.unimi.dsi.fastutil.longs.LongList
 import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.ReferenceQueue
 import java.lang.ref.WeakReference
@@ -346,7 +345,7 @@ class ConcurrentWeakVersionedValueHashMap<K: Any, V: Any> : ConcurrentMap<K, V>,
    * Checks whether it makes sense to retain the existing payload map
    */
   private fun keepPayloadMapIfNeeded(payloadMap: VersionedPayloadMap): VersionedPayloadMap? {
-    val activeVersions = InternalPsiVersioning.PsiVersionRegistry.instance.getFrozenKeys()
+    val activeVersions = InternalPsiVersioning.PsiVersionRegistry.instance.getFrozenKeys().toList()
     return if (payloadMap.getLiveValue() != null || payloadMap.isLiveVisibleInAnyVersion(activeVersions)) {
       payloadMap
     } else {
@@ -378,11 +377,8 @@ class ConcurrentWeakVersionedValueHashMap<K: Any, V: Any> : ConcurrentMap<K, V>,
     return lowerBound(version) as WeakValueReference<K, V>?
   }
 
-  private fun VersionedPayloadMap.isLiveVisibleInAnyVersion(versions: LongList): Boolean {
-    for (index in versions.indices) {
-      if (getLiveVersionedValue(versions.getLong(index)) != null) return true
-    }
-    return false
+  private fun VersionedPayloadMap.isLiveVisibleInAnyVersion(versions: Collection<Long>): Boolean {
+    return versions.any { getLiveVersionedValue(it) != null }
   }
 
   override fun liveVersionChanged(minVersion: Long) {
