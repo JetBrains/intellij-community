@@ -4,7 +4,9 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 ### auto-generated section `build kotlin.util.project-model-updater` start
 create_kotlinc_options(
     name = "custom_project-model-updater",
+    api_version = "2.4",
     jvm_target = "21",
+    language_version = "2.4",
     opt_in = [
         "org.jetbrains.kotlin.psi.KtExperimentalApi",
         "org.jetbrains.kotlin.psi.KtNonPublicApi",
