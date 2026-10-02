@@ -9,21 +9,21 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="rd-text" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-text:2026.3.0">
+        <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-text:2026.3.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2026.3.0/rd-text-2026.3.0.jar">
-              <sha256sum>07779d58eb9b1d062512adb40cc01d1d3f68c29e58602a0572a63bb19293cbf1</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2026.3.1/rd-text-2026.3.1.jar">
+              <sha256sum>575adc0ec5ae919ac141948b579d5643dd09a3f52a38e1d9ab3f626aa17e3de1</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2026.3.0/rd-text-2026.3.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2026.3.1/rd-text-2026.3.1.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2026.3.0/rd-text-2026.3.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2026.3.1/rd-text-2026.3.1-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2026.3.0/rd-text-2026.3.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2026.3.1/rd-text-2026.3.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

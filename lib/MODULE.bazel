@@ -11215,59 +11215,59 @@ http_file(
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-core-2026_3_0_http",
-    downloaded_file_path = "rd-core-2026.3.0.jar",
-    sha256 = "54456d5a2ca88eca1720ba2da890c6858d17d3532164103dd263acfab0c90e08",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-core/2026.3.0/rd-core-2026.3.0.jar",
+    name = "com_jetbrains_rd-rd-core-2026_3_1_http",
+    downloaded_file_path = "rd-core-2026.3.1.jar",
+    sha256 = "75fbda5bb72c94a6985139b227b1bdc0d2d69235271f94110fa2ebc088924cbb",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-core/2026.3.1/rd-core-2026.3.1.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-core-2026_3_0-sources_http",
-    downloaded_file_path = "rd-core-2026.3.0-sources.jar",
-    sha256 = "ddbc28f20231d5f44598b0f7c1e5315103b820d4ae7593d15eb6601b79533d13",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-core/2026.3.0/rd-core-2026.3.0-sources.jar",
+    name = "com_jetbrains_rd-rd-core-2026_3_1-sources_http",
+    downloaded_file_path = "rd-core-2026.3.1-sources.jar",
+    sha256 = "fee88806998d2106b8b4ee0527d4a2360f0571ea05d2518c939c338db90335e0",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-core/2026.3.1/rd-core-2026.3.1-sources.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-framework-2026_3_0_http",
-    downloaded_file_path = "rd-framework-2026.3.0.jar",
-    sha256 = "15020dbb0261d8e5cd2fb031fe32b22052b0e01db5190423074e03435796e504",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-framework/2026.3.0/rd-framework-2026.3.0.jar",
+    name = "com_jetbrains_rd-rd-framework-2026_3_1_http",
+    downloaded_file_path = "rd-framework-2026.3.1.jar",
+    sha256 = "5d400453809a2fe21799667e6b7ef9b515186bc1936c5501ef453336f48accbe",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-framework/2026.3.1/rd-framework-2026.3.1.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-framework-2026_3_0-sources_http",
-    downloaded_file_path = "rd-framework-2026.3.0-sources.jar",
-    sha256 = "79028657867626de29fbc238e7521d3518658a3ffd1ef1f8723aaf60900de3d5",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-framework/2026.3.0/rd-framework-2026.3.0-sources.jar",
+    name = "com_jetbrains_rd-rd-framework-2026_3_1-sources_http",
+    downloaded_file_path = "rd-framework-2026.3.1-sources.jar",
+    sha256 = "53be560e195369c122a8cb1edbfecd150e9b3e73d07e195b828acd557ad0c5fe",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-framework/2026.3.1/rd-framework-2026.3.1-sources.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-swing-2026_3_0_http",
-    downloaded_file_path = "rd-swing-2026.3.0.jar",
-    sha256 = "3f349b66c1217f02e339744284bba2c4e4645a7c627be3b5dd452f93b39994a4",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-swing/2026.3.0/rd-swing-2026.3.0.jar",
+    name = "com_jetbrains_rd-rd-swing-2026_3_1_http",
+    downloaded_file_path = "rd-swing-2026.3.1.jar",
+    sha256 = "4f781cd97f39cabc7ee8d281a67338f1fd1ce3125f6eef26ebfc29e86f511603",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-swing/2026.3.1/rd-swing-2026.3.1.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-swing-2026_3_0-sources_http",
-    downloaded_file_path = "rd-swing-2026.3.0-sources.jar",
-    sha256 = "af5b48d5edd2afac526e08de4725ce3ef6ec0af2df4ecf87675b2fb7ea676ff0",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-swing/2026.3.0/rd-swing-2026.3.0-sources.jar",
+    name = "com_jetbrains_rd-rd-swing-2026_3_1-sources_http",
+    downloaded_file_path = "rd-swing-2026.3.1-sources.jar",
+    sha256 = "f304033853c94a2ae7a9a045623471ef3b6f89c884d5eb7832ec6ca892b4d259",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-swing/2026.3.1/rd-swing-2026.3.1-sources.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-text-2026_3_0_http",
-    downloaded_file_path = "rd-text-2026.3.0.jar",
-    sha256 = "07779d58eb9b1d062512adb40cc01d1d3f68c29e58602a0572a63bb19293cbf1",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-text/2026.3.0/rd-text-2026.3.0.jar",
+    name = "com_jetbrains_rd-rd-text-2026_3_1_http",
+    downloaded_file_path = "rd-text-2026.3.1.jar",
+    sha256 = "575adc0ec5ae919ac141948b579d5643dd09a3f52a38e1d9ab3f626aa17e3de1",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-text/2026.3.1/rd-text-2026.3.1.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-text-2026_3_0-sources_http",
-    downloaded_file_path = "rd-text-2026.3.0-sources.jar",
-    sha256 = "dfe3df884da653746e3bc6695f4639e8ddc0699da7eb09e2ae9fe9818c92b435",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-text/2026.3.0/rd-text-2026.3.0-sources.jar",
+    name = "com_jetbrains_rd-rd-text-2026_3_1-sources_http",
+    downloaded_file_path = "rd-text-2026.3.1-sources.jar",
+    sha256 = "0d46d020c0c5b5bd7225326c81b49dfd16d01fc7ec866a463771ef8bd09a50b8",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-text/2026.3.1/rd-text-2026.3.1-sources.jar",
 )
 
 http_file(
@@ -15611,17 +15611,17 @@ http_file(
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-gen-2026_3_0_http",
-    downloaded_file_path = "rd-gen-2026.3.0.jar",
-    sha256 = "c8eba5dda8dc2282abaa4a24dc14d75da2e8501657ae863db76e7a88e19bb280",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-gen/2026.3.0/rd-gen-2026.3.0.jar",
+    name = "com_jetbrains_rd-rd-gen-2026_3_1_http",
+    downloaded_file_path = "rd-gen-2026.3.1.jar",
+    sha256 = "36b44da8290aacc0c4d41ae95a471437ede8427ccacc1659f5ea19f29e9429d7",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-gen/2026.3.1/rd-gen-2026.3.1.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-gen-2026_3_0-sources_http",
-    downloaded_file_path = "rd-gen-2026.3.0-sources.jar",
-    sha256 = "e65342d96596aecd9cda42aa1e07d1f013ba545f4cce09f7af9f2f2178708044",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-gen/2026.3.0/rd-gen-2026.3.0-sources.jar",
+    name = "com_jetbrains_rd-rd-gen-2026_3_1-sources_http",
+    downloaded_file_path = "rd-gen-2026.3.1-sources.jar",
+    sha256 = "11a6a072d815039c6e35cb2b44a050c9598db4698b27f5c7d2777ab207314210",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-gen/2026.3.1/rd-gen-2026.3.1-sources.jar",
 )
 
 http_file(

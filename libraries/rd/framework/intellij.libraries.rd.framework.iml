@@ -9,21 +9,21 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="rd-framework" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-framework:2026.3.0">
+        <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-framework:2026.3.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2026.3.0/rd-framework-2026.3.0.jar">
-              <sha256sum>15020dbb0261d8e5cd2fb031fe32b22052b0e01db5190423074e03435796e504</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2026.3.1/rd-framework-2026.3.1.jar">
+              <sha256sum>5d400453809a2fe21799667e6b7ef9b515186bc1936c5501ef453336f48accbe</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2026.3.0/rd-framework-2026.3.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2026.3.1/rd-framework-2026.3.1.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2026.3.0/rd-framework-2026.3.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2026.3.1/rd-framework-2026.3.1-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2026.3.0/rd-framework-2026.3.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2026.3.1/rd-framework-2026.3.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
