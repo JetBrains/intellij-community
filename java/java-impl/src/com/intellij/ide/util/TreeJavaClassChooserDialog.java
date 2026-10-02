@@ -27,6 +27,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.JavaImplicitClassUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FindSymbolParameters;
 import org.jetbrains.annotations.NotNull;
@@ -161,13 +162,13 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
       // try to convert kotlin classes to psi without new API
       // used only when Project Tree tab is selected and manual search is performed
       Object value = nodeDescriptor.getValue();
-      if (value instanceof PsiNameIdentifierOwner) {
-        PsiElement nameIdentifier = ((PsiNameIdentifierOwner)value).getNameIdentifier();
+      if (value instanceof PsiNameIdentifierOwner nameIdentifierOwner) {
+        PsiElement nameIdentifier = nameIdentifierOwner.getNameIdentifier();
         if (nameIdentifier != null) {
-          Iterable<JvmElement> elements = JvmDeclarationSearch.getElementsByIdentifier(nameIdentifier);
-          Iterator<JvmElement> iterator = elements.iterator();
-          if (iterator.hasNext()) {
-            return (PsiClass)iterator.next();
+          for (JvmElement next : JvmDeclarationSearch.getElementsByIdentifier(nameIdentifier)) {
+            if (next instanceof PsiClass aClass) {
+              return aClass;
+            }
           }
         }
       }
