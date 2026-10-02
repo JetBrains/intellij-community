@@ -1095,6 +1095,7 @@ platform/todo/plugin
 platform/tracing
 platform/tracing-ide
 platform/ui.jcef
+platform/undo
 platform/usageView
 platform/usageView-impl
 platform/util

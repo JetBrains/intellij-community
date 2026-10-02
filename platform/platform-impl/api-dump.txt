@@ -2236,28 +2236,6 @@ f:com.intellij.openapi.application.ex.ClipboardUtil
 - s:getTextInClipboard():java.lang.String
 f:com.intellij.openapi.application.impl.AppUIExecutorImplKt
 - sf:coroutineDispatchingContext(com.intellij.openapi.application.AppUIExecutor):kotlin.coroutines.ContinuationInterceptor
-f:com.intellij.openapi.command.impl.DummyProject
-- com.intellij.openapi.util.UserDataHolderBase
-- com.intellij.openapi.project.Project
-- s:getInstance():com.intellij.openapi.project.Project
-f:com.intellij.openapi.command.impl.FinishMarkAction
-- com.intellij.openapi.command.undo.BasicUndoableAction
-- getAffectedDocuments():com.intellij.openapi.command.undo.DocumentReference[]
-f:com.intellij.openapi.command.impl.StartMarkAction
-- com.intellij.openapi.command.undo.BasicUndoableAction
-- s:canStart(com.intellij.openapi.editor.Editor):com.intellij.openapi.command.impl.StartMarkAction
-- s:canStart(com.intellij.openapi.project.Project):com.intellij.openapi.command.impl.StartMarkAction
-- setCommandName(java.lang.String):V
-f:com.intellij.openapi.command.impl.StartMarkAction$AlreadyStartedException
-- java.lang.Exception
-c:com.intellij.openapi.command.impl.UndoManagerImpl
-- com.intellij.openapi.command.undo.UndoManager
-- com.intellij.openapi.Disposable
-- addDocumentAsAffected(com.intellij.openapi.editor.Document):V
-- clearUndoRedoQueueInTests(com.intellij.openapi.vfs.VirtualFile):V
-- dropHistoryInTests():V
-- invalidateActionsFor(com.intellij.openapi.command.undo.DocumentReference):V
-- isActive():Z
 f:com.intellij.openapi.diff.impl.DiffUtil
 - s:isDiffEditor(com.intellij.openapi.editor.Editor):Z
 c:com.intellij.openapi.editor.CaretStateTransferableData
@@ -3188,10 +3166,6 @@ a:com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 - a:includeCurrentCommandAsNavigation():V
 - a:includeCurrentPlaceAsChangePlace():V
 - a:setCurrentCommandHasMoves():V
-com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
-- getCurrentEditor():com.intellij.openapi.fileEditor.FileEditor
-- getCurrentEditor(com.intellij.openapi.project.Project):com.intellij.openapi.fileEditor.FileEditor
-- s:getInstance():com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 c:com.intellij.openapi.fileEditor.impl.EditorComposite

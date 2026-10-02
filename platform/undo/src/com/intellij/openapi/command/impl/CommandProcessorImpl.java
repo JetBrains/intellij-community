@@ -15,7 +15,6 @@ import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jspecify.annotations.NonNull;
 
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
@@ -126,7 +125,7 @@ public final class CommandProcessorImpl extends CoreCommandProcessor implements 
     return undoManager == null ? () -> false : undoManager.captureHasActions();
   }
 
-  private static void undoLastOperation(@NonNull CommandToken command, boolean hasActions, boolean showTooComplexDialog) {
+  private static void undoLastOperation(@NotNull CommandToken command, boolean hasActions, boolean showTooComplexDialog) {
     Project project = command.getProject();
     if (project != null && hasActions) {
       var undoManagerImpl = getUndoManagerImpl(project);

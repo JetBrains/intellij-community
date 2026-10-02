@@ -61,7 +61,11 @@ jvm_library(
         exclude = ["resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["//platform/platform-api:ide"],
+    exports = [
+        # do not sort,
+        "//platform/platform-api:ide",
+        "//platform/undo",
+    ],
     runtime_deps = [
         # do not sort,
         "@lib//:slf4j-api",
@@ -89,6 +93,7 @@ jvm_library(
         "//platform/credential-store",
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-api:ide",
+        "//platform/undo",
         "//platform/icons",
         "//platform/welcome-screen",
         "//platform/welcome-screen-impl:welcomeScreen-impl",
@@ -225,6 +230,8 @@ jvm_library(
         # do not sort,
         "//platform/platform-api:ide",
         "//platform/platform-api:ide_test_lib",
+        "//platform/undo",
+        "//platform/undo:undo_test_lib",
     ],
     runtime_deps = [
         # do not sort,
@@ -236,6 +243,7 @@ jvm_library(
         "//platform/credential-store:credential-store_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/platform-api:ide_test_lib",
+        "//platform/undo:undo_test_lib",
         "//platform/icons:icons_test_lib",
         "//platform/welcome-screen:welcome-screen_test_lib",
         "//platform/welcome-screen-impl:welcomeScreen-impl_test_lib",

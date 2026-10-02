@@ -8,12 +8,12 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.command.undo.UndoableAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.fileEditor.DocumentsEditor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
@@ -39,7 +39,7 @@ object UndoDocumentUtil {
     if (editor is DocumentReferenceProvider) {
       return editor.getDocumentReferences()
     }
-    return TextEditorProvider.getDocuments(editor).filter { document ->
+    return getDocuments(editor).filter { document ->
       // KirillK : in AnAction.update we may have an editor with an invalid file
       val file = FileDocumentManager.getInstance().getFile(document)
       file == null || file.isValid()
@@ -148,5 +148,13 @@ object UndoDocumentUtil {
 
   private fun getOriginalDocument(document: Document): Document {
     return document.getUserData(UndoManager.ORIGINAL_DOCUMENT) ?: document
+  }
+}
+
+private fun getDocuments(editor: FileEditor): Array<Document> {
+  return when (editor) {
+    is DocumentsEditor -> editor.documents
+    is TextEditor -> arrayOf(editor.editor.document)
+    else -> editor.file?.let { FileDocumentManager.getInstance().getDocument(it) }?.let { arrayOf(it) } ?: Document.EMPTY_ARRAY
   }
 }

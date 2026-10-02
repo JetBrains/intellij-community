@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.ide.lightEdit.LightEditUtil;
+import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
@@ -54,7 +54,7 @@ public final class DocumentUndoProvider implements DocumentListener {
         handleBeforeDocumentChange(getUndoManager(project), document);
       }
     }
-    Project lightEditProject = LightEditUtil.getProjectIfCreated();
+    Project lightEditProject = LightEditService.getInstance().getProject();
     if (lightEditProject != null) {
       handleBeforeDocumentChange(getUndoManager(lightEditProject), document);
     }
@@ -81,7 +81,7 @@ public final class DocumentUndoProvider implements DocumentListener {
         handleDocumentChanged(getUndoManager(project), document, e);
       }
     }
-    Project lightEditProject = LightEditUtil.getProjectIfCreated();
+    Project lightEditProject = LightEditService.getInstance().getProject();
     if (lightEditProject != null) {
       handleDocumentChanged(getUndoManager(lightEditProject), document, e);
     }
