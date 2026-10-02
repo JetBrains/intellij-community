@@ -27,7 +27,8 @@ public final class CachedConversionResult {
   static @NotNull Path getConversionInfoFile(@NotNull Path projectFile) {
     // https://youtrack.jetbrains.com/issue/IDEA-256011
     Path projectFileFileName = projectFile.getFileName();
-    String dirName = PathUtilRt.suggestFileName((projectFileFileName == null ? "" : projectFileFileName.toString()) + Integer.toHexString(projectFile.toAbsolutePath().hashCode()));
+    String pathHash = Integer.toHexString(projectFile.toAbsolutePath().toString().hashCode());
+    String dirName = PathUtilRt.suggestFileName((projectFileFileName == null ? "" : projectFileFileName.toString()) + pathHash);
     return Path.of(PathManager.getSystemPath(), "conversion", dirName + ".xml");
   }
 
