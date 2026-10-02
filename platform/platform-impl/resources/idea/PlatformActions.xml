@@ -764,7 +764,6 @@
         <group id="HelpDiagnosticTools" popup="true">
           <reference ref="Performance.ActivityMonitor"/>
           <reference ref="Performance.DumpThreads"/>
-          <reference ref="Performance.MemTester"/>
           <separator/>
           <reference ref="LogDebugConfigure"/>
           <reference ref="BrowseSpecialPaths"/>

@@ -14,7 +14,6 @@
     <action id="FileChooser.LightEditGotoOpenedFile"
             class="com.intellij.ide.lightEdit.actions.LightEditGotoOpenedFileAction"
             icon="AllIcons.General.Locate"/>
-    <action id="DumpCodeStyleCache" class="com.intellij.ide.actions.DumpCodeStyleCacheAction" internal="true"/>
     <action id="DumpPluginDescriptorsAction" class="com.intellij.internal.DumpPluginDescriptorsAction" internal="true"/>
     <action id="List-selectFirstRow" class="com.intellij.ui.ListActions$Home" use-shortcut-of="EditorTextStart"/>
     <action id="List-selectFirstRowExtendSelection" class="com.intellij.ui.ListActions$ShiftHome"
@@ -534,7 +533,6 @@
     <action id="CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
     <action id="Performance.ActivityMonitor" class="com.intellij.ide.actions.ActivityMonitorAction"/>
     <action id="Performance.DumpThreads" class="com.intellij.ide.actions.DumpThreadsAction"/>
-    <action id="Performance.MemTester" class="com.intellij.ide.actions.MemTestAction"/>
     <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
     <action id="BrowseSpecialPaths" class="com.intellij.diagnostic.specialPaths.BrowseSpecialPathsAction"/>
     <action id="CollectTroubleshootingInformation" class="com.intellij.troubleshooting.ui.CollectTroubleshootingInformationAction"

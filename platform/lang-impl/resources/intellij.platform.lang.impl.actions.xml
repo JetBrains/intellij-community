@@ -503,7 +503,6 @@
       <reference ref="Arrangement.Rule.Group.Condition.Move.Down"/>
     </group>
     <group id="Internal.Dump" internal="true" popup="true">
-      <reference ref="DumpCodeStyleCache"/>
       <reference ref="DumpPluginDescriptorsAction"/>
     </group>
     <group id="HierarchyGroup">

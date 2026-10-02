@@ -185,7 +185,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                        key="notification.group.file.watcher"/>
     <notificationGroup id="Test Results" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false" hideFromSettings="true"/>
     <notificationGroup id="Settings External Change Conflict" displayType="STICKY_BALLOON" hideFromSettings="true"/>
-    <notificationGroup id="code.style.cache.dump" displayType="BALLOON" hideFromSettings="true" isLogByDefault="false"/>
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>
     <registryKey key="performance.watcher.maxDumpDuration.ms" defaultValue="40000"
                  description="Maximum duration of performance watcher dumps in ms"/>

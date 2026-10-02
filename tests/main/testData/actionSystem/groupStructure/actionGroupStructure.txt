@@ -862,8 +862,8 @@
         MarkFileDirty
         ValidateLocalHistory
       Internal.Dump
-        DumpCodeStyleCache
         DumpPluginDescriptorsAction
+        DumpCodeStyleCache
         DumpExtensions
         DumpInspectionDescriptions
         DumpIntentionsDescriptions
@@ -1364,7 +1364,6 @@
     HelpDiagnosticTools
       Performance.ActivityMonitor
       Performance.DumpThreads
-      Performance.MemTester
       <separator>
       LogDebugConfigure
       BrowseSpecialPaths
@@ -2286,7 +2285,6 @@
 [group HelpDiagnosticTools]
   Performance.ActivityMonitor
   Performance.DumpThreads
-  Performance.MemTester
   <separator>
   LogDebugConfigure
   BrowseSpecialPaths

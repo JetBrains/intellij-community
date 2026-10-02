@@ -54,6 +54,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <notificationGroup id="editor.state.dump" displayType="BALLOON" hideFromSettings="true" isLogByDefault="false"/>
+    <notificationGroup id="code.style.cache.dump" displayType="BALLOON" hideFromSettings="true" isLogByDefault="false"/>
 
     <statusBarWidgetFactory id="WriteThread" implementation="com.intellij.dev.core.WriteThreadIndicatorWidgetFactory"
                             order="last"/>
@@ -229,6 +230,9 @@
       <add-to-group group-id="Internal.VFS"/>
     </action>
 
+    <action id="DumpCodeStyleCache" internal="true" class="com.intellij.dev.core.DumpCodeStyleCacheAction">
+      <add-to-group group-id="Internal.Dump"/>
+    </action>
     <action id="DumpExtensions" internal="true" class="com.intellij.dev.core.DumpExtensionsAction">
       <add-to-group group-id="Internal.Dump"/>
     </action>
