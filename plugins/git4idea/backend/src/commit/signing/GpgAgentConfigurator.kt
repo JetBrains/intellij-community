@@ -7,6 +7,7 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -82,6 +83,7 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     fun isEnabled(project: Project, executable: GitExecutable): Boolean =
       (Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry", false) || application.isUnitTestMode)
       && TrustedProjects.isProjectTrusted(project)
+      && !WelcomeUtils.isWelcomeProject(project)
       && (isRemDevOrWsl(executable) || isLocalUnix(executable))
       && signingIsEnabledInAnyRepo(project)
 

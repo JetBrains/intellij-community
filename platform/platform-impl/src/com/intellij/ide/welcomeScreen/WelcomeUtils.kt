@@ -80,6 +80,7 @@ object WelcomeUtils {
     return null
   }
 
+  @JvmStatic
   fun isWelcomeProject(project: Project): Boolean {
     @Suppress("DEPRECATION")
     return ProjectFrameCapabilitiesService.getInstanceSync().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)

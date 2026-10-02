@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -70,7 +71,7 @@ public final class RemoteRevisionsCache implements VcsListener {
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, this);
 
-    if ((!myProject.isDefault()) && vcsConfiguration.isChangedOnServerEnabled()) {
+    if ((!myProject.isDefault() && !WelcomeUtils.isWelcomeProject(myProject)) && vcsConfiguration.isChangedOnServerEnabled()) {
       myVcsManager.runAfterInitialization(() -> {
         // do not start if there're no vcses
         if (!myVcsManager.hasActiveVcss() || !vcsConfiguration.isChangedOnServerEnabled()) return;
@@ -85,7 +86,9 @@ public final class RemoteRevisionsCache implements VcsListener {
 
   private void manageAlarm() {
     final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
-    if ((! myProject.isDefault()) && myVcsManager.hasActiveVcss() && vcsConfiguration.isChangedOnServerEnabled()) {
+    if ((!myProject.isDefault() && !WelcomeUtils.isWelcomeProject(myProject)) &&
+        myVcsManager.hasActiveVcss() &&
+        vcsConfiguration.isChangedOnServerEnabled()) {
       // will check whether is already started inside
       // interval is checked further, this is small and constant
       myControlledCycle.startIfNotStarted();

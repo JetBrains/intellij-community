@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.roots
 
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
+import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.Service
@@ -221,7 +222,7 @@ class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScop
       if (ApplicationManager.getApplication().isUnitTestMode) {
         return
       }
-      if (!TrustedProjects.isProjectTrusted(project)) {
+      if (!TrustedProjects.isProjectTrusted(project) || WelcomeUtils.isWelcomeProject(project)) {
         // vcs is disabled
         return
       }

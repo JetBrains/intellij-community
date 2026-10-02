@@ -7,6 +7,7 @@ import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.trustedProjects.TrustedProjects;
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -187,7 +188,7 @@ public abstract class ExecutableValidator {
     if (myProject.isDisposed()) {
       return false;
     }
-    if (!myProject.isDefault() && !TrustedProjects.isProjectTrusted(myProject)) {
+    if (!myProject.isDefault() && (!TrustedProjects.isProjectTrusted(myProject) || WelcomeUtils.isWelcomeProject(myProject))) {
       return notify(new SafeModeErrorNotification());
     }
 

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.application.Topics;
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
@@ -155,7 +156,7 @@ public final class SvnVcs extends AbstractVcs {
   }
 
   private void postStartup() {
-    if (myProject.isDefault()) return;
+    if (myProject.isDefault() || WelcomeUtils.isWelcomeProject(myProject)) return;
 
     if (!getSvnConfiguration().isCleanupRun()) {
       ApplicationManager.getApplication().invokeLater(() -> {

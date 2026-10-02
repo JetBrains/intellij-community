@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.api;
 
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.RootUrlInfo;
@@ -18,7 +20,8 @@ public class UrlMappingRepositoryProvider extends BaseRepositoryProvider {
   public @Nullable Repository get() {
     RootUrlInfo rootInfo = null;
 
-    if (!myVcs.getProject().isDefault()) {
+    Project project = myVcs.getProject();
+    if (!project.isDefault() && !WelcomeUtils.isWelcomeProject(project)) {
       rootInfo = myTarget.isFile()
                  ? myVcs.getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(myTarget.getFile()))
                  : myVcs.getSvnFileUrlMapping().getWcRootForUrl(myTarget.getUrl());

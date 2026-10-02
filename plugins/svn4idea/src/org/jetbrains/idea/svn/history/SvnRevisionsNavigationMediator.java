@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -65,7 +66,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
       throw new VcsException(message("error.could.not.get.head.info.for.url", location));
     }
 
-    final Iterator<ChangesBunch> visualIterator = project.isDefault() ? null :
+    final Iterator<ChangesBunch> visualIterator = project.isDefault() || WelcomeUtils.isWelcomeProject(project) ? null :
                                                   CommittedChangesCache.getInstance(project)
                                                     .getBackBunchedIterator(vcs, vcsRoot, location, CHUNK_SIZE);
     final Iterator<ChangesBunch> internalIterator =

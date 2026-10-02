@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -90,7 +91,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
   }
 
   private void appendSwitched(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable VirtualFile file) {
-    if (file != null && myProject != null && !myProject.isDefault() && !myProject.isDisposed()) {
+    if (file != null && myProject != null && !myProject.isDefault() && !WelcomeUtils.isWelcomeProject(myProject) && !myProject.isDisposed()) {
       String branch = ChangesTreeCompatibilityProvider.getInstance().getSwitchedBranch(myProject, file);
       if (branch != null) {
         String switchedToBranch = "[" + VcsBundle.message("changes.switched.to.branch.name", branch) + "]";

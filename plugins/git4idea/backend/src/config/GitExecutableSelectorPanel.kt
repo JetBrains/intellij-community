@@ -2,6 +2,7 @@
 package git4idea.config
 
 import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
@@ -93,7 +94,7 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
       modalityState, disposable
     )
 
-    if (!project.isDefault && !TrustedProjects.isProjectTrusted(project)) {
+    if (!project.isDefault && (!TrustedProjects.isProjectTrusted(project) || WelcomeUtils.isWelcomeProject(project))) {
       errorNotifier.showError(GitBundle.message("git.executable.validation.cant.run.in.safe.mode"), null)
       return
     }

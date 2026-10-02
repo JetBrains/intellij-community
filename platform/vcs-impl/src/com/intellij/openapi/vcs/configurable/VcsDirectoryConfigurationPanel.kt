@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable
 import com.intellij.ide.util.treeView.FileNameComparator
+import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.ex.Settings
@@ -68,7 +69,7 @@ import javax.swing.table.TableCellRenderer
 internal class VcsDirectoryConfigurationPanel(private val project: Project) : Disposable {
   private val POSTPONE_MAPPINGS_LOADING_PANEL = ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS
 
-  private val isEditingDisabled = project.isDefault
+  private val isEditingDisabled = project.isDefault || WelcomeUtils.isWelcomeProject(project)
 
   private val vcsManager: ProjectLevelVcsManager = ProjectLevelVcsManager.getInstance(project)
   private val vcsConfiguration: VcsConfiguration = VcsConfiguration.getInstance(project)
@@ -192,7 +193,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : Di
   }
 
   private fun scheduleUnregisteredRootsLoading() {
-    if (project.isDefault || !TrustedProjects.isProjectTrusted(project)) return
+    if (project.isDefault || WelcomeUtils.isWelcomeProject(project) || !TrustedProjects.isProjectTrusted(project)) return
     rootDetectionIndicator?.cancel()
     if (!VcsUtil.shouldDetectVcsMappingsFor(project)) return
 

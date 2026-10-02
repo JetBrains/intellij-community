@@ -11,6 +11,7 @@ import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.externalProcessAuthHelper.AuthenticationGate;
 import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.ide.trustedProjects.TrustedProjects;
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProgressManager;
@@ -1013,8 +1014,13 @@ public class GitImpl extends GitImplBase {
   }
 
   public static @NotNull String runBundledCommand(@Nullable Project project, String... args) throws VcsException {
-    if (project != null && !TrustedProjects.isProjectTrusted(project)) {
-      throw new IllegalStateException("Shouldn't be possible to run a Git command in the safe mode");
+    if (project != null) {
+      if (WelcomeUtils.isWelcomeProject(project)) {
+        throw new IllegalStateException("Shouldn't be possible to run a Git command in the Welcome project");
+      }
+      if (!TrustedProjects.isProjectTrusted(project)) {
+        throw new IllegalStateException("Shouldn't be possible to run a Git command in the safe mode");
+      }
     }
 
     try {

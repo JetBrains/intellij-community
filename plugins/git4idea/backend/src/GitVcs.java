@@ -2,6 +2,7 @@
 package git4idea;
 
 import com.intellij.dvcs.commit.DvcsCommitModeProvider;
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -67,7 +68,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -126,7 +126,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   public @Nullable CheckinEnvironment getCheckinEnvironment() {
-    if (myProject.isDefault()) return null;
+    if (myProject.isDefault() || WelcomeUtils.isWelcomeProject(myProject)) return null;
     return myProject.getService(GitCheckinEnvironment.class);
   }
 

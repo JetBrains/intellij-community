@@ -50,7 +50,7 @@ public final class RefactoringUiServiceImpl extends RefactoringUiService {
 
   @Override
   public boolean shouldShowNonProjectRenameWarning(@NotNull Project project, @NotNull VirtualFile file) {
-    return !WelcomeUtils.INSTANCE.isWelcomeProject(project);
+    return !WelcomeUtils.isWelcomeProject(project);
   }
 
   @Override

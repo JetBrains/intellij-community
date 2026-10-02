@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.NlsSafe;
@@ -64,8 +65,10 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
   }
 
   public void appendFileName(@Nullable VirtualFile vFile, @NotNull @NlsSafe String fileName, Color color) {
-    ChangesFileNameDecorator decorator = myProject != null && !myProject.isDefault() && !myProject.isDisposed()
-                                         ? ChangesFileNameDecorator.getInstance(myProject) : null;
+    ChangesFileNameDecorator decorator =
+      myProject != null && !myProject.isDefault() && !WelcomeUtils.isWelcomeProject(myProject) && !myProject.isDisposed()
+      ? ChangesFileNameDecorator.getInstance(myProject)
+      : null;
 
     if (decorator != null) {
       decorator.appendFileName(this, vFile, fileName, color, myHighlightProblems);

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.ide.trustedProjects.TrustedProjects;
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,7 +25,9 @@ public class ImportToRepositoryAction extends AnAction implements DumbAware {
     Project project = e.getData(CommonDataKeys.PROJECT);
     e.getPresentation().setEnabled(
       project == null ||
-      TrustedProjects.isProjectTrusted(project) && !ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()
+      !WelcomeUtils.isWelcomeProject(project) &&
+      TrustedProjects.isProjectTrusted(project) &&
+      !ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()
     );
   }
 

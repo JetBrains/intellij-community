@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -16,7 +17,7 @@ internal class VcsGroupsActionGroup : DefaultActionGroup(), DumbAware {
     if (project != null) {
       presentation.text = ProjectLevelVcsManager.getInstance(project).getConsolidatedVcsName()
     }
-    presentation.isEnabledAndVisible = project != null && TrustedProjects.isProjectTrusted(project)
+    presentation.isEnabledAndVisible = project != null && TrustedProjects.isProjectTrusted(project) && !WelcomeUtils.isWelcomeProject(project)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

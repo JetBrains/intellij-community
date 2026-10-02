@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.trustedProjects.TrustedProjects;
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -48,7 +49,7 @@ public class StartUseVcsAction extends DumbAwareAction {
 
   protected @Nullable VirtualFile guessDirectory(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null || !TrustedProjects.isProjectTrusted(project)) return null;
+    if (project == null || !TrustedProjects.isProjectTrusted(project) || WelcomeUtils.isWelcomeProject(project)) return null;
     ProjectLevelVcsManagerImpl manager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
     if (!manager.hasActiveVcss()) {
       VirtualFile targetDirectory = ProjectUtil.guessProjectDir(project);

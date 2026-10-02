@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.configurable
 
 import com.intellij.application.options.editor.checkBox
 import com.intellij.ide.actions.RevealFileAction
+import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -156,7 +157,8 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
           }
         }
 
-        if (project.isDefault || ProjectLevelVcsManager.getInstance(project).getAllSupportedVcss().any { it.editFileProvider != null }) {
+        if (project.isDefault || WelcomeUtils.isWelcomeProject(project) || ProjectLevelVcsManager.getInstance(project).getAllSupportedVcss()
+            .any { it.editFileProvider != null }) {
           row {
             checkBox(cdShowReadOnlyStatusDialog(project))
           }
@@ -173,7 +175,7 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
             .bindSelected(vcsConfiguration::CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND)
             .gap(RightGap.SMALL)
             .onApply {
-              if (!project.isDefault) {
+              if (!project.isDefault && !WelcomeUtils.isWelcomeProject(project)) {
                 RemoteRevisionsCache.getInstance(project).updateAutomaticRefreshAlarmState(true)
               }
             }

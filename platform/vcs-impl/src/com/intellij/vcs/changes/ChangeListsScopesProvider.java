@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.changes;
 
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -30,7 +31,7 @@ public final class ChangeListsScopesProvider extends CustomScopesProviderEx {
 
   @Override
   public @NotNull List<NamedScope> getCustomScopes() {
-    if (myProject.isDefault() || !ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
+    if (myProject.isDefault() || WelcomeUtils.isWelcomeProject(myProject) || !ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
       return Collections.emptyList();
     }
 
@@ -50,7 +51,7 @@ public final class ChangeListsScopesProvider extends CustomScopesProviderEx {
 
   @Override
   public NamedScope getCustomScope(@NotNull String name) {
-    if (myProject.isDefault()) return null;
+    if (myProject.isDefault() || WelcomeUtils.isWelcomeProject(myProject)) return null;
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     if (ChangeListScope.ALL_CHANGED_FILES_SCOPE_NAME.equals(name)) {
       return new ChangeListScope(changeListManager);
@@ -67,7 +68,7 @@ public final class ChangeListsScopesProvider extends CustomScopesProviderEx {
   @Override
   public boolean isVetoed(NamedScope scope, ScopePlace place) {
     if (place == ScopePlace.SETTING) {
-      if (myProject.isDefault()) return false;
+      if (myProject.isDefault() || WelcomeUtils.isWelcomeProject(myProject)) return false;
       final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
       return changeListManager.findChangeList(scope.getScopeId()) != null;
     }

@@ -4,6 +4,7 @@ package git4idea.commands;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.ide.trustedProjects.TrustedProjects;
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -464,6 +465,9 @@ public abstract class GitHandler {
   }
 
   private void start() throws IOException {
+    if (myProject != null && WelcomeUtils.isWelcomeProject(myProject)) {
+      throw new GitCommandNotTrustedException("Shouldn't be possible to run a Git command in the Home project");
+    }
     if (myProject == null && !TrustedProjects.isProjectTrusted(Objects.requireNonNull(getWorkingDirectory()))) {
       throw new GitCommandNotTrustedException("Shouldn't be possible to run a Git command in potentially untrusted project. " +
                                               "Pass Project to GitHandler constructor if applicable.");

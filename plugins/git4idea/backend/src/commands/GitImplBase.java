@@ -3,6 +3,7 @@ package git4idea.commands;
 
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.externalProcessAuthHelper.AuthenticationMode;
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -370,7 +371,7 @@ public abstract class GitImplBase implements Git {
     if (handler.isSilent()) return;
 
     Project project = handler.project();
-    if (project != null && !project.isDefault()) {
+    if (project != null && !project.isDefault() && !WelcomeUtils.isWelcomeProject(project)) {
       handler.addLineListener(new GitCommandOutputLogger(project, handler));
     }
   }
@@ -419,7 +420,10 @@ public abstract class GitImplBase implements Git {
   private static @NotNull AccessToken lock(@NotNull GitLineHandler handler, boolean canSuppressOptionalLocks) {
     Project project = handler.project();
 
-    if (project == null || project.isDefault() || !shouldTakeWriteLock(handler, canSuppressOptionalLocks)) {
+    if (project == null ||
+        project.isDefault() ||
+        WelcomeUtils.isWelcomeProject(project) ||
+        !shouldTakeWriteLock(handler, canSuppressOptionalLocks)) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
 
