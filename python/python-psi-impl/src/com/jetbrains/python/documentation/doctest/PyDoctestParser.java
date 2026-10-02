@@ -5,10 +5,12 @@ import com.intellij.lang.SyntaxTreeBuilder;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public class PyDoctestParser extends PyParser {
   @Override
   protected ParsingContext createParsingContext(SyntaxTreeBuilder builder, LanguageLevel languageLevel) {

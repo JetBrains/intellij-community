@@ -4,6 +4,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection;
 import com.intellij.codeInspection.options.OptPane;
 import com.jetbrains.python.PyPsiBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
  * Dummy inspection for configuring the PEP8 checker. The checking itself is performed by
  * Pep8ExternalAnnotator.
  */
+@ApiStatus.Internal
 public final class PyPep8Inspection extends PyInspection implements ExternalAnnotatorBatchInspection {
   public List<String> ignoredErrors = new ArrayList<>();
   public static final String INSPECTION_SHORT_NAME = "PyPep8Inspection";

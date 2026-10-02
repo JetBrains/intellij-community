@@ -15,10 +15,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 public final class PyTokenSeparatorGenerator implements TokenSeparatorGenerator {
   @Override
   public ASTNode generateWhitespaceBetweenTokens(@Nullable ASTNode left, @NotNull ASTNode right) {

@@ -4,11 +4,13 @@ package com.jetbrains.python.formatter
 import com.intellij.application.options.codeStyle.properties.CodeStyleChoiceList
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Exposes the active Python code style profile as the `ij_python_code_style_profile` .editorconfig
  * property so the "default" / "classic" choice (PY-85946) round-trips through .editorconfig.
  */
+@ApiStatus.Internal
 class PyCodeStylePropertyAccessor(private val pyCodeStyle: PyCodeStyleSettings) :
   CodeStylePropertyAccessor<String>(),
   CodeStyleChoiceList {

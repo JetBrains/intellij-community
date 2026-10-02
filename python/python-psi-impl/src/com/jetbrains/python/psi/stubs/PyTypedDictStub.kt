@@ -2,7 +2,9 @@
 package com.jetbrains.python.psi.stubs
 
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface PyTypedDictStub : CustomTargetExpressionStub {
 
   /**
@@ -33,4 +35,5 @@ interface PyTypedDictStub : CustomTargetExpressionStub {
 }
 
 
+@ApiStatus.Internal
 data class PyTypedDictFieldStub(val name: String, val type: String?, val isReadOnly: Boolean)

@@ -14,7 +14,9 @@ import com.jetbrains.python.psi.PyParameterList
 import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PyTupleExpression
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyListSplitJoinContext : CommaListSplitJoinContext() {
   override fun extractData(context: PsiElement): ListWithElements? {
     val parent = PsiTreeUtil.findFirstParent(context) {

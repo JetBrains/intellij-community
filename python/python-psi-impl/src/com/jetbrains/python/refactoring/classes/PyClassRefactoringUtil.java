@@ -65,6 +65,7 @@ import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,6 +85,7 @@ import java.util.Set;
 /**
  * @author Dennis.Ushakov
  */
+@ApiStatus.Internal
 public final class PyClassRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(PyClassRefactoringUtil.class.getName());
   private static final Key<PsiNamedElement> ENCODED_IMPORT = Key.create("PyEncodedImport");

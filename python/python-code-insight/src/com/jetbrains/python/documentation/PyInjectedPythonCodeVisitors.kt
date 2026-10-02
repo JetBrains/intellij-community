@@ -17,11 +17,13 @@ import com.jetbrains.python.validation.PyDocStringHighlightingAnnotator
 import com.jetbrains.python.validation.PyFunctionHighlightingAnnotator
 import com.jetbrains.python.validation.PyParameterListAnnotatorVisitor
 import com.jetbrains.python.validation.PyReturnYieldAnnotatorVisitor
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Holds the visitor sets that PyDocstringCodeBlockVisitorFilter and PyDoctestVisitorFilter both disable
  * for Python code injected into a docstring code block or a doctest fragment.
  */
+@ApiStatus.Internal
 object PyInjectedPythonCodeVisitors {
   @JvmField
   val disabledAnnotators: Set<Class<*>> = setOf(

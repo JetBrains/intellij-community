@@ -10,12 +10,14 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.testing.PythonUnitTestDetectorsKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public abstract class PyBaseDocstringInspection extends PyInspection {
   @Override
   public abstract @NotNull Visitor buildVisitor(@NotNull ProblemsHolder holder,

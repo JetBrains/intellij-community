@@ -10,6 +10,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyImportedModule;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.List;
 /**
  * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
  */
+@ApiStatus.Internal
 public class PyModuleFindUsagesHandler extends PyFindUsagesHandler {
   protected final PsiFileSystemItem myElement;
 

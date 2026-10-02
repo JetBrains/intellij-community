@@ -5,11 +5,13 @@ import com.jetbrains.python.debugger.IPyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PyFrameAccessor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 
+@ApiStatus.Internal
 public class LoadFullValueCommand extends AbstractFrameCommand {
   public static final String NEXT_VALUE_SEPARATOR = "__pydev_val__";
   private final @NotNull IPyDebugProcess myDebugProcess;

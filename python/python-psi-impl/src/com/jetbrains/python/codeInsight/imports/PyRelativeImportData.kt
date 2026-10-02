@@ -5,10 +5,12 @@ import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Aleksei Kniazev
  */
+@ApiStatus.Internal
 class PyRelativeImportData private constructor(val relativeLocation: String, val relativeLevel: Int) {
 
   val locationWithDots: String

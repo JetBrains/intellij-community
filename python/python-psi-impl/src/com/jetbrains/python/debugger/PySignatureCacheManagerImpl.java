@@ -22,6 +22,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -31,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+@ApiStatus.Internal
 public final class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   private static final Logger LOG = Logger.getInstance(PySignatureCacheManagerImpl.class.getName());
 

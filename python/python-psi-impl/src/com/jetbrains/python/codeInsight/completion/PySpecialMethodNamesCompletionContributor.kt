@@ -19,7 +19,9 @@ import com.jetbrains.python.extensions.afterDefInFunction
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PySpecialMethodNamesCompletionContributor : CompletionContributor(), DumbAware {
   override fun handleAutoCompletionPossibility(context: AutoCompletionContext): AutoCompletionDecision = autoInsertSingleItem(context)
 

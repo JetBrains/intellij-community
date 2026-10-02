@@ -11,6 +11,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.ruff.RuffRuleInfo
 import com.intellij.python.ruff.RuffUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.toml.lang.psi.TomlArray
 import org.toml.lang.psi.TomlFile
@@ -23,6 +24,7 @@ import org.toml.lang.psi.TomlTable
  * Utility class for Ruff documentation-related functionality.
  * Contains common code shared between Ruff-related classes for handling TOML configuration and documentation.
  */
+@ApiStatus.Internal
 object RuffDocumentationUtil {
   val CODE_PATTERN = Regex("[A-Z]+[0-9]{3}")
 
@@ -66,6 +68,7 @@ object RuffDocumentationUtil {
   }
 }
 
+@ApiStatus.Internal
 class RuffRuleDocumentationTarget(private val ruleInfo: RuffRuleInfo, private val project: Project) : DocumentationTarget {
   override fun createPointer(): Pointer<out DocumentationTarget> {
     return Pointer.hardPointer(this)
@@ -91,12 +94,13 @@ class RuffRuleDocumentationTarget(private val ruleInfo: RuffRuleInfo, private va
 /**
  * warning: is not robust against keys that contain dots (but no ruff keys do 🙂)
  */
-val TomlKeyValue.fullName: String
+@get:ApiStatus.Internal val TomlKeyValue.fullName: String
   get() = (parent as TomlTable).header.key?.text + "." + key.text
 
-val TomlFile.isRuffConfigFile: Boolean
+@get:ApiStatus.Internal val TomlFile.isRuffConfigFile: Boolean
   get() = name == PY_PROJECT_TOML || name == "ruff.toml" || name == ".ruff.toml"
 
+@ApiStatus.Internal
 fun TomlKeySegment.ruffConfigPath(): @NlsSafe String? {
   val fullName = fullName ?: return null
   return when {

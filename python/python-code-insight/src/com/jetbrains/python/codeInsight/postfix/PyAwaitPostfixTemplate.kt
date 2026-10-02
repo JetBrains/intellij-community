@@ -8,7 +8,9 @@ import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.validation.PyImplicitAsyncContextProvider
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyAwaitPostfixTemplate(provider: PostfixTemplateProvider) :
   StringBasedPostfixTemplate("await", "await expr", PyPostfixUtils.selectorAllExpressionsWithCurrentOffset(IN_ASYNC_CONTEXT), provider), DumbAware {
 

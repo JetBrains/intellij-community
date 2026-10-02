@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.PyWhilePart;
 import com.jetbrains.python.psi.PyWhileStatement;
 import com.jetbrains.python.psi.PyWithStatement;
 import com.jetbrains.python.psi.impl.PyIfPartIfImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,7 @@ import java.util.List;
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public abstract class PyUnwrapper extends AbstractUnwrapper<PyUnwrapper.Context> {
 
   public PyUnwrapper(@Nls String description) {

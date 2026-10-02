@@ -6,8 +6,10 @@ import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PyReferringObjectsValue;
 
+import org.jetbrains.annotations.ApiStatus;
 import java.util.List;
 
+@ApiStatus.Internal
 public class GetReferrersCommand extends RunCustomOperationCommand<List<PyDebugValue>> {
 
   public GetReferrersCommand(RemoteDebugger target, String threadId, String frameId, PyReferringObjectsValue value) {

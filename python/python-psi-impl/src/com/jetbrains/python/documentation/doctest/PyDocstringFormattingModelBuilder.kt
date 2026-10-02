@@ -9,7 +9,9 @@ import com.intellij.formatting.Spacing
 import com.intellij.psi.PsiElement
 import com.intellij.psi.formatter.DocumentBasedFormattingModel
 import com.intellij.psi.formatter.common.AbstractBlock
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyDocstringFormattingModelBuilder : CustomFormattingModelBuilder {
   override fun isEngagedToFormat(context: PsiElement): Boolean =
     context.containingFile?.language == PyDoctestLanguageDialect.getInstance()

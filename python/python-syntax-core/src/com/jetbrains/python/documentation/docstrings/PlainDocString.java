@@ -18,6 +18,7 @@ package com.jetbrains.python.documentation.docstrings;
 import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.toolbox.Substring;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import java.util.List;
  * Stub docstring that is capable only of extracting summary and description
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public class PlainDocString extends DocStringLineParser implements StructuredDocString {
   private final String mySummary;
   private final String myDescription;

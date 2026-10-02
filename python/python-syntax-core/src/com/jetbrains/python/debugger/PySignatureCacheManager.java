@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public abstract class PySignatureCacheManager {
   @ApiStatus.Internal public static final @NonNls String RETURN_TYPE = "<RETURN_TYPE>";
 

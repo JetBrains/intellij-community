@@ -6,8 +6,10 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.jetbrains.python.codeInsight.PyCodeInsightBundle
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
+import org.jetbrains.annotations.ApiStatus
 
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@ApiStatus.Internal
 class PythonCodeCompletionConfigurable: UiDslUnnamedConfigurable.Simple(), Configurable {
 
   override fun getDisplayName(): String {

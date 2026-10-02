@@ -19,12 +19,14 @@ import com.intellij.python.ruff.RuffService
 import com.intellij.python.ruff.codeinsight.RuffDocumentationUtil.CODE_PATTERN
 import com.intellij.python.ruff.codeinsight.RuffDocumentationUtil.SUPPRESSION_PATTERN
 import com.jetbrains.python.PyTokenTypes
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Provides inlay hints for Ruff suppression codes in comments.
  * Displays the rule name for each suppression code.
  * For example: `# noqa: F108` will show `# noqa: F108 (unused-value)`
  */
+@ApiStatus.Internal
 class RuffSuppressionInlayHintsProvider : InlayHintsProvider {
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector = Collector()
 

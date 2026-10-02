@@ -1,0 +1,4 @@
+com/google/common/base/Function
+java/util/regex/Matcher
+kotlin/jvm/internal/DefaultConstructorMarker
+kotlin/text/Regex

@@ -15,6 +15,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 
+@ApiStatus.Internal
 public final class PythonDocumentationConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final PythonDocumentationPanel myPanel = new PythonDocumentationPanel();
 

@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.toolbox.Substring;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ import java.util.regex.Pattern;
  * @see <a href="https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt">A Guide to NumPy/SciPy Documentation</a>
  * @see <a href="http://sphinxcontrib-napoleon.readthedocs.org/en/latest/example_numpy.html#example-numpy">Napoleon: Example NumPy Style Python Docstrings</a>
  */
+@ApiStatus.Internal
 public class NumpyDocString extends SectionBasedDocString {
   private static final Pattern SIGNATURE = Pattern.compile("^[ \t]*([\\w., ]+=)?[ \t]*[\\w\\.]+\\(.*\\)[ \t]*$", Pattern.MULTILINE);
   private static final Pattern NAME_SEPARATOR = Pattern.compile("[ \t]*,[ \t]*");

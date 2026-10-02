@@ -6,9 +6,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PyContainerProvider implements ContainerProvider {
   @Override
   public @Nullable PsiElement getContainer(@NotNull PsiElement item) {

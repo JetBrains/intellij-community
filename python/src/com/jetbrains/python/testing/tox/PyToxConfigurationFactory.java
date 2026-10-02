@@ -6,11 +6,13 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.run.PythonConfigurationFactoryBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public final  class PyToxConfigurationFactory extends PythonConfigurationFactoryBase {
   public static final ConfigurationFactory INSTANCE = new PyToxConfigurationFactory(PyToxConfigurationType.INSTANCE);
 

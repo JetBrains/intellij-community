@@ -4,8 +4,10 @@ package com.jetbrains.python.codeInsight.regexp;
 import com.intellij.lang.Language;
 import com.jetbrains.python.PyNames;
 import org.intellij.lang.regexp.RegExpLanguage;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public class PythonVerboseRegexpLanguage extends Language {
   public static final PythonVerboseRegexpLanguage INSTANCE = new PythonVerboseRegexpLanguage();
 

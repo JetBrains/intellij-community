@@ -29,6 +29,7 @@ interface PyImplicitAsyncContextProvider {
   }
 }
 
+@ApiStatus.Internal
 class PyDevConsoleAsyncContextProvider : PyImplicitAsyncContextProvider {
   override fun isImplicitAsyncContext(scopeOwner: ScopeOwner): Boolean {
     // Top-level expressions in the Python console are allowed to contain "await", "async with" and "async for"

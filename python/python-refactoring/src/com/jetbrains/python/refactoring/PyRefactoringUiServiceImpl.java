@@ -20,6 +20,7 @@ import com.jetbrains.python.refactoring.inline.PyInlineFunctionDialog;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import com.jetbrains.python.refactoring.introduce.PyIntroduceHandlerUi;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 @NotNullByDefault
+@ApiStatus.Internal
 public final class PyRefactoringUiServiceImpl extends PyRefactoringUiService {
   @Override
   public void showIntroduceTargetChooser(IntroduceOperation operation,

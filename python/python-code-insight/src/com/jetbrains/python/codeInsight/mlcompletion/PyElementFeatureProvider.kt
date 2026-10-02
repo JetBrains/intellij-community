@@ -9,7 +9,9 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.jetbrains.python.codeInsight.completion.PyMultipleArgumentsCompletionContributor
 import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.PyPrevCallsCompletionFeatures
 import com.jetbrains.python.psi.PyParameter
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyElementFeatureProvider : ElementFeatureProvider {
   override fun getName(): String = "python"
 

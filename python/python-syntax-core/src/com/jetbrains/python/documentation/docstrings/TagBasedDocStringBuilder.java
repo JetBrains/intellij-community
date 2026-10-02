@@ -15,11 +15,13 @@
  */
 package com.jetbrains.python.documentation.docstrings;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public class TagBasedDocStringBuilder extends DocStringBuilder<TagBasedDocStringBuilder> {
   private final String myTagPrefix;
 

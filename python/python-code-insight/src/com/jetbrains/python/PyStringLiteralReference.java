@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.StringLiteralExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public abstract class PyStringLiteralReference extends BaseReference {
   protected final @NotNull StringLiteralExpression myStringLiteral;
 

@@ -26,10 +26,12 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 class PyPartialStubMarkersInvalidator(
   private val project: Project,
   private val coroutineScope: CoroutineScope,

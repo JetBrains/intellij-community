@@ -8,7 +8,9 @@ import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class PyFilterLexer extends BaseFilterLexer {
   public PyFilterLexer(Lexer originalLexer, OccurrenceConsumer occurrenceConsumer) {
     super(originalLexer, occurrenceConsumer);

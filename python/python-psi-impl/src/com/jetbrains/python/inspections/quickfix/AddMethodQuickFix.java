@@ -38,6 +38,7 @@ import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
@@ -45,6 +46,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 /**
  * Adds a method foo to class X if X.foo() is unresolved.
  */
+@ApiStatus.Internal
 public class AddMethodQuickFix implements LocalQuickFix {
 
   private final String myClassName;

@@ -41,11 +41,13 @@ import com.jetbrains.python.psi.types.PyUnsafeUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Warns when a type that doesn't define __str__, __repr__, or __format__
  * is converted to a string using str(), repr(), format(), f-strings, or print().
  */
+@ApiStatus.Internal
 class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
   @JvmField
   val ignoredTypes: MutableList<String> = mutableListOf()

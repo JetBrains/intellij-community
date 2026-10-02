@@ -8,7 +8,9 @@ import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.impl.PyFileImpl
 import com.jetbrains.python.psi.impl.PyFunctionImpl
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 enum class PyCompletionMlElementKind {
   NAMED_ARG,
   KEYWORD,
@@ -23,6 +25,7 @@ enum class PyCompletionMlElementKind {
   }
 }
 
+@ApiStatus.Internal
 data class PyCompletionMlElementInfo(val kind: PyCompletionMlElementKind, val isBuiltins: Boolean = false) {
   companion object {
     val key = Key<PyCompletionMlElementInfo>("py.ml.completion.element.info")

@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyPrefixExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Conditional expressions utility
@@ -56,12 +57,14 @@ private val validConditionalOperators = hashSetOf(
   *comparisonStrings.keys.toTypedArray()
 )
 
+@ApiStatus.Internal
 fun findComparisonNegationOperators(expression: PyBinaryExpression?): Pair<String, String>? {
   val comparisonExpression = findComparisonExpression(expression) ?: return null
   return comparisonStrings.getValue(comparisonExpression.operator) to
     comparisonStrings.getValue(invertedComparisons.getValue(comparisonExpression.operator))
 }
 
+@ApiStatus.Internal
 fun findComparisonExpression(expression: PyBinaryExpression?): PyBinaryExpression? {
   var comparisonExpression = expression
   while (comparisonExpression != null) {
@@ -73,6 +76,7 @@ fun findComparisonExpression(expression: PyBinaryExpression?): PyBinaryExpressio
   return null
 }
 
+@ApiStatus.Internal
 fun negateComparisonExpression(project: Project, file: PsiFile, expression: PyBinaryExpression?): PsiElement? {
   val comparisonExpression = findComparisonExpression(expression) ?: return null
 
@@ -94,6 +98,7 @@ fun negateComparisonExpression(project: Project, file: PsiFile, expression: PyBi
   }
 }
 
+@ApiStatus.Internal
 fun isValidConditionExpression(expression: PyExpression): Boolean {
   if (expression is PyParenthesizedExpression) {
     return expression.containedExpression != null && isValidConditionExpression(expression.containedExpression!!)
@@ -121,6 +126,7 @@ fun isValidConditionExpression(expression: PyExpression): Boolean {
   return true
 }
 
+@ApiStatus.Internal
 fun getInvertedConditionExpression(project: Project, file: PsiFile, expression: PyExpression): PyExpression {
   val level = LanguageLevel.forElement(file)
   val elementGenerator = PyElementGenerator.getInstance(project)

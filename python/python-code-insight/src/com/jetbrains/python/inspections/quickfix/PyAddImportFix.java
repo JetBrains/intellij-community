@@ -11,6 +11,7 @@ import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyImportStatementBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public class PyAddImportFix extends PsiUpdateModCommandQuickFix {
   private final @NotNull String myImportToAdd;
   /**

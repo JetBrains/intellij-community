@@ -4,8 +4,10 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.PyGlobalStatement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PyGlobalStatementNavigator {
   private PyGlobalStatementNavigator() {
   }

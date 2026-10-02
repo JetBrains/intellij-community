@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.impl.PyPathEvaluator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 
 
+@ApiStatus.Internal
 public class PyBlockEvaluator {
   private final @NotNull PyEvaluationResult myEvaluationResult = new PyEvaluationResult();
   private final @NotNull PyEvaluationContext myContext;

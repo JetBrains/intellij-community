@@ -34,11 +34,13 @@ import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Provides completion variants for keys of dict literals marked as TypedDict
  * @see PyTypedDictType
  */
+@ApiStatus.Internal
 class PyDictLiteralCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC, psiElement().inside(PySequenceExpression::class.java), DictLiteralCompletionProvider())

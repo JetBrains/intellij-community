@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.PyMatchStatement;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyTryPart;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
  *   <li>{@code lazy from __future__ import ...}</li>
  * </ul>
  */
+@ApiStatus.Internal
 public final class PyLazyImportInspection extends PyInspection {
 
   /**

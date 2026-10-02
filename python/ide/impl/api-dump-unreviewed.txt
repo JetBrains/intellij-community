@@ -1,0 +1,4 @@
+f:com.intellij.pycharm.community.ide.impl.promo.DjangoPromoFeatureListKt
+- sf:getDjangoPromoFeatureList():java.util.List
+f:com.intellij.pycharm.community.ide.impl.promo.JavaScriptPromoFeatureListKt
+- sf:getJavaScriptPromoFeatureList():java.util.List

@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.PyParenthesizedExpression;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.impl.PyStringLiteralDecoder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+@ApiStatus.Internal
 public class PyStringFormatParser {
   private static final Pattern NEW_STYLE_FORMAT_TOKENS = Pattern.compile("(\\{\\{)|(\\}\\})|(\\{[^\\{\\}]*\\})|([^\\{\\}]+)");
 

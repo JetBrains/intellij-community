@@ -39,6 +39,7 @@ import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isUnknown
+import org.jetbrains.annotations.ApiStatus
 import java.util.Locale
 
 /**
@@ -47,6 +48,7 @@ import java.util.Locale
  * References are soft: used only for code completion and ignored during code inspection.
  *
  */
+@ApiStatus.Internal
 open class PySoftFileReferenceContributor : PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
     val stringLiteral = psiElement(PyStringLiteralExpression::class.java)

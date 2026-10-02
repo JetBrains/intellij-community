@@ -3,7 +3,9 @@ package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.psi.PyElement;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class CodeStylePyImportCollectorFactory implements PyImportCollectorFactory {
   @Override
   public PyImportCollector create(PyElement node, PsiReference reference, String refText) {

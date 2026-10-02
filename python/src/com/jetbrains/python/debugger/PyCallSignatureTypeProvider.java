@@ -10,8 +10,10 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class PyCallSignatureTypeProvider extends PyTypeProviderBase {
   @Override
   public Ref<PyType> getParameterType(final @NotNull PyNamedParameter param,

@@ -22,7 +22,9 @@ import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTypeChecker.isCallable
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyCallingNonCallableInspection : PyInspection() {
 
   override fun buildVisitor(

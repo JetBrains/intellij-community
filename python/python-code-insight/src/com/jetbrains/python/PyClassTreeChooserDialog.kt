@@ -11,6 +11,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.stubs.PyClassNameIndex
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultMutableTreeNode
 
 /**
@@ -18,6 +19,7 @@ import javax.swing.tree.DefaultMutableTreeNode
  * @author ilya.kazakevich
  */
 
+@ApiStatus.Internal
 abstract class PyTreeChooserDialog<T : PsiNamedElement>(@NlsContexts.DialogTitle title: String,
                                                         clazz: Class<T>,
                                                         project: Project,
@@ -33,6 +35,7 @@ abstract class PyTreeChooserDialog<T : PsiNamedElement>(@NlsContexts.DialogTitle
   abstract fun findElements(name: String, searchScope: GlobalSearchScope): Collection<T>
 }
 
+@ApiStatus.Internal
 class PyClassTreeChooserDialog(
   @NlsContexts.DialogTitle title: String,
   project: Project,

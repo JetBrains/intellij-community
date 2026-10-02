@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -33,6 +34,7 @@ import java.util.Set;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 
+@ApiStatus.Internal
 public final class PySuperMethodCompletionContributor extends CompletionContributor implements DumbAware {
   public PySuperMethodCompletionContributor() {
     extend(CompletionType.BASIC,

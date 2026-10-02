@@ -12,6 +12,7 @@ import com.intellij.util.ThreeState;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyStringElement;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -19,6 +20,7 @@ import java.util.Objects;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
+@ApiStatus.Internal
 public final class PyCompletionConfidence extends CompletionConfidence {
 
   @Override

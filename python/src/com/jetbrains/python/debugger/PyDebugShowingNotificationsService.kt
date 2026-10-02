@@ -3,8 +3,10 @@ package com.jetbrains.python.debugger
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.APP)
+@ApiStatus.Internal
 class PyDebugShowingNotificationsService {
   var isCythonNotificationShown: Boolean = false
 

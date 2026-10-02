@@ -8,11 +8,13 @@ import com.jetbrains.python.psi.PyForStatement;
 import com.jetbrains.python.psi.PyPassStatement;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public class PyForUnwrapper extends PyUnwrapper {
   public PyForUnwrapper() {
     super(PyCodeInsightBundle.message("unwrap.for"));

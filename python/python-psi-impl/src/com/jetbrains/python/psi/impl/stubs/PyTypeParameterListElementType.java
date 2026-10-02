@@ -12,10 +12,12 @@ import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTypeParameterList;
 import com.jetbrains.python.psi.impl.PyTypeParameterListImpl;
 import com.jetbrains.python.psi.stubs.PyTypeParameterListStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+@ApiStatus.Internal
 public class PyTypeParameterListElementType extends PyStubElementType<PyTypeParameterListStub, PyTypeParameterList> {
 
   public PyTypeParameterListElementType() {

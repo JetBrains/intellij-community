@@ -8,10 +8,12 @@ import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.Presentation;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.jetbrains.python.PyBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 public class ReformatFix implements ModCommandAction {
   @Override
   public @NotNull String getFamilyName() {

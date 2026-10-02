@@ -23,12 +23,14 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 
+import org.jetbrains.annotations.ApiStatus;
 import java.util.ArrayList;
 import java.util.Collections;
 
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public final class PyMethodNavigationOffsetProvider implements MethodNavigationOffsetProvider {
 
   @Override

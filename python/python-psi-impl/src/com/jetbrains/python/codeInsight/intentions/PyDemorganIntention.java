@@ -14,10 +14,12 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyPrefixExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 public final class PyDemorganIntention extends PsiUpdateModCommandAction<PyBinaryExpression> {
   PyDemorganIntention() {
     super(PyBinaryExpression.class);

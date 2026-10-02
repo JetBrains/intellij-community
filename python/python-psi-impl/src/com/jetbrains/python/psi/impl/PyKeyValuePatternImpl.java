@@ -7,8 +7,10 @@ import com.jetbrains.python.psi.PyInstantTypeProvider;
 import com.jetbrains.python.psi.PyKeyValuePattern;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyKeyValuePatternImpl extends PyElementImpl implements PyKeyValuePattern, PyInstantTypeProvider {
   public PyKeyValuePatternImpl(ASTNode astNode) {
     super(astNode);

@@ -1,0 +1,138 @@
+com.jetbrains.python.documentation.PythonDocumentationQuickInfoProvider
+- *:getHoverAdditionalQuickInfo(com.jetbrains.python.psi.types.TypeEvalContext,com.intellij.psi.PsiElement):java.lang.String
+com.jetbrains.python.psi.PyPattern
+- com.jetbrains.python.ast.PyAstPattern
+- com.jetbrains.python.psi.PyTypedElement
+- *:canExcludePatternType(com.jetbrains.python.psi.types.TypeEvalContext):Z
+a:com.jetbrains.python.psi.PyPsiFacade
+- *a:renderType(com.jetbrains.python.psi.types.PyType,com.jetbrains.python.psi.types.TypeEvalContext,java.util.Set):java.lang.String
+com.jetbrains.python.psi.impl.PyTypeProvider
+- *a:getMemberTypes(com.jetbrains.python.psi.types.PyType,java.lang.String,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.AccessDirection,com.jetbrains.python.psi.resolve.PyResolveContext):java.util.List
+*f:com.jetbrains.python.psi.impl.StubAwareComputation
+- compute(com.jetbrains.python.psi.types.TypeEvalContext):java.lang.Object
+- s:on(com.intellij.psi.StubBasedPsiElement):com.jetbrains.python.psi.impl.StubAwareComputation$PsiToStubConversion
+- overAst(java.util.function.Function):com.jetbrains.python.psi.impl.StubAwareComputation
+- overAstStubLike(java.util.function.Function):com.jetbrains.python.psi.impl.StubAwareComputation
+- overStub(java.util.function.Function):com.jetbrains.python.psi.impl.StubAwareComputation
+- withStubBuilder(java.util.function.Function):com.jetbrains.python.psi.impl.StubAwareComputation
+*f:com.jetbrains.python.psi.impl.StubAwareComputation$PsiToStubConversion
+- overAst(java.util.function.Function):com.jetbrains.python.psi.impl.StubAwareComputation
+- overStub(java.util.function.Function):com.jetbrains.python.psi.impl.StubAwareComputation
+- withCustomStub(java.util.function.Function):com.jetbrains.python.psi.impl.StubAwareComputation$PsiToStubConversion
+*:com.jetbrains.python.psi.resolve.PyThirdPartySdkDetector
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:isInThirdPartySdk(com.intellij.psi.PsiElement):Z
+c:com.jetbrains.python.psi.resolve.RatedResolveResult
+- com.intellij.psi.ResolveResult
+- *sf:RATE_PY_FILE_OVERLOAD:I
+*a:com.jetbrains.python.psi.types.PyAnyType
+- com.jetbrains.python.psi.types.PyType
+- *sf:Companion:com.jetbrains.python.psi.types.PyAnyType$Companion
+- acceptTypeVisitor(com.jetbrains.python.psi.types.PyTypeVisitor):java.lang.Object
+- assertValid(java.lang.String):V
+- *sf:getAny():com.jetbrains.python.psi.types.PyAnyType$Any
+- getCompletionVariants(java.lang.String,com.intellij.psi.PsiElement,com.intellij.util.ProcessingContext):com.jetbrains.python.psi.types.PyAnyType$Any[]
+- getName():java.lang.String
+- *sf:getUnknown():com.jetbrains.python.psi.types.PyAnyType$Unknown
+- isBuiltin():Z
+- *sf:isEnabled():Z
+- resolveMember(java.lang.String,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.AccessDirection,com.jetbrains.python.psi.resolve.PyResolveContext):java.util.List
+- *sf:validate(com.jetbrains.python.psi.types.PyType):V
+- *sf:validate(com.jetbrains.python.psi.types.PyType,com.intellij.psi.PsiElement):V
+*f:com.jetbrains.python.psi.types.PyAnyType$Any
+- com.jetbrains.python.psi.types.PyAnyType
+- sf:INSTANCE:com.jetbrains.python.psi.types.PyAnyType$Any
+*f:com.jetbrains.python.psi.types.PyAnyType$Companion
+- f:getAny():com.jetbrains.python.psi.types.PyAnyType$Any
+- f:getUnknown():com.jetbrains.python.psi.types.PyAnyType$Unknown
+- f:isEnabled():Z
+- f:validate(com.jetbrains.python.psi.types.PyType):V
+- f:validate(com.jetbrains.python.psi.types.PyType,com.intellij.psi.PsiElement):V
+- bs:validate$default(com.jetbrains.python.psi.types.PyAnyType$Companion,com.jetbrains.python.psi.types.PyType,com.intellij.psi.PsiElement,I,java.lang.Object):V
+*f:com.jetbrains.python.psi.types.PyAnyType$Unknown
+- com.jetbrains.python.psi.types.PyAnyType
+- sf:INSTANCE:com.jetbrains.python.psi.types.PyAnyType$Unknown
+com.jetbrains.python.psi.types.PyCallableParameter
+- *a:getPresentableText(Z,com.jetbrains.python.psi.types.TypeEvalContext,java.util.Set,kotlin.jvm.functions.Function1):java.lang.String
+- *:getProtectionLevel():com.jetbrains.python.ProtectionLevel
+- *a:isKeywordOnlySeparator():Z
+- *a:isPositionOnlySeparator():Z
+*:com.jetbrains.python.psi.types.PyCallableParameterListType
+- com.jetbrains.python.psi.types.PyCallableParameterVariadicType
+- a:getParameters():java.util.List
+- getUnpackedParameters(com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
+*:com.jetbrains.python.psi.types.PyCallableParameterVariadicType
+- com.jetbrains.python.psi.types.PyVariadicType
+com.jetbrains.python.psi.types.PyCallableType
+- com.jetbrains.python.psi.types.PyType
+- *:dropSelf(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyCallableType
+- *:getParametersType(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyCallableParameterVariadicType
+- *:getTypeParameters(com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
+- *:getUnpackedParameters(com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
+*:com.jetbrains.python.psi.types.PyKeywordVariadicType
+- com.jetbrains.python.psi.types.PyVariadicType
+*:com.jetbrains.python.psi.types.PyPositionalVariadicType
+- com.jetbrains.python.psi.types.PyVariadicType
+*f:com.jetbrains.python.psi.types.PyTopType
+- com.jetbrains.python.psi.types.PyType
+- sf:INSTANCE:com.jetbrains.python.psi.types.PyTopType
+- acceptTypeVisitor(com.jetbrains.python.psi.types.PyTypeVisitor):java.lang.Object
+- assertValid(java.lang.String):V
+- findMember(java.lang.String,com.jetbrains.python.psi.resolve.PyResolveContext):java.util.List
+- getAllMembers(com.jetbrains.python.psi.resolve.PyResolveContext):java.util.List
+- getCompletionVariants(java.lang.String,com.intellij.psi.PsiElement,com.intellij.util.ProcessingContext):java.lang.Object[]
+- getName():java.lang.String
+- isBuiltin():Z
+- resolveMember(java.lang.String,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.AccessDirection,com.jetbrains.python.psi.resolve.PyResolveContext):java.util.List
+com.jetbrains.python.psi.types.PyType
+- *:acceptTypeVisitor(com.jetbrains.python.psi.types.PyTypeVisitor):java.lang.Object
+- *:findMember(java.lang.String,com.jetbrains.python.psi.resolve.PyResolveContext):java.util.List
+- *:getAllMembers(com.jetbrains.python.psi.resolve.PyResolveContext):java.util.List
+*f:com.jetbrains.python.psi.types.PyTypeMember
+- com.jetbrains.python.psi.resolve.RatedResolveResult
+- <init>(com.jetbrains.python.psi.Property,com.jetbrains.python.psi.types.PyType):V
+- f:getDeleter():com.intellij.psi.PsiElement
+- f:getGetter():com.intellij.psi.PsiElement
+- f:getName():java.lang.String
+- f:getSetter():com.intellij.psi.PsiElement
+- f:getType():com.jetbrains.python.psi.types.PyType
+- f:isClassVar():Z
+- f:isDeletable():Z
+- f:isWritable():Z
+*e:com.jetbrains.python.psi.types.PyTypeRendererFeature
+- java.lang.Enum
+- sf:BARE_LITERAL:com.jetbrains.python.psi.types.PyTypeRendererFeature
+- sf:TYPE_VAR_BOUNDS:com.jetbrains.python.psi.types.PyTypeRendererFeature
+- sf:USE_FQN:com.jetbrains.python.psi.types.PyTypeRendererFeature
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.jetbrains.python.psi.types.PyTypeRendererFeature
+- s:values():com.jetbrains.python.psi.types.PyTypeRendererFeature[]
+*a:com.jetbrains.python.psi.types.PyTypeVisitor
+- *sf:Companion:com.jetbrains.python.psi.types.PyTypeVisitor$Companion
+- <init>():V
+- *sf:visit(com.jetbrains.python.psi.types.PyType,com.jetbrains.python.psi.types.PyTypeVisitor):java.lang.Object
+- visitAnyType():java.lang.Object
+- visitPyCallableParameterListType(com.jetbrains.python.psi.types.PyCallableParameterListType):java.lang.Object
+- visitPyCallableType(com.jetbrains.python.psi.types.PyCallableType):java.lang.Object
+- visitPyClassLikeType(com.jetbrains.python.psi.types.PyClassLikeType):java.lang.Object
+- visitPyClassType(com.jetbrains.python.psi.types.PyClassType):java.lang.Object
+- visitPyFunctionType(com.jetbrains.python.psi.types.PyFunctionType):java.lang.Object
+- visitPyNeverType(com.jetbrains.python.psi.types.PyNeverType):java.lang.Object
+- visitPyTopType(com.jetbrains.python.psi.types.PyTopType):java.lang.Object
+- visitPyType(com.jetbrains.python.psi.types.PyType):java.lang.Object
+- visitPyTypeParameterType(com.jetbrains.python.psi.types.PyTypeParameterType):java.lang.Object
+- visitPyTypeVarTupleType(com.jetbrains.python.psi.types.PyTypeVarTupleType):java.lang.Object
+- visitPyTypeVarType(com.jetbrains.python.psi.types.PyTypeVarType):java.lang.Object
+- visitPyUnpackedTupleType(com.jetbrains.python.psi.types.PyUnpackedTupleType):java.lang.Object
+- visitUnknownType():java.lang.Object
+*f:com.jetbrains.python.psi.types.PyTypeVisitor$Companion
+- f:visit(com.jetbrains.python.psi.types.PyType,com.jetbrains.python.psi.types.PyTypeVisitor):java.lang.Object
+com.jetbrains.python.psi.types.PyUnpackedTupleType
+- com.jetbrains.python.psi.types.PyPositionalVariadicType
+- *a:asCallableParameters():java.util.List
+*:com.jetbrains.python.psi.types.PyVariadicType
+- com.jetbrains.python.psi.types.PyType
+- assertValid(java.lang.String):V
+- getCompletionVariants(java.lang.String,com.intellij.psi.PsiElement,com.intellij.util.ProcessingContext):java.lang.Object[]
+- isBuiltin():Z
+- resolveMember(java.lang.String,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.AccessDirection,com.jetbrains.python.psi.resolve.PyResolveContext):java.util.List

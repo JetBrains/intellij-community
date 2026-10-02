@@ -6,7 +6,9 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyReferenceExpression
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object PyArgumentsCompletionFeatures {
   data class ArgumentsContextCompletionFeatures(
     val isInArguments: Boolean,

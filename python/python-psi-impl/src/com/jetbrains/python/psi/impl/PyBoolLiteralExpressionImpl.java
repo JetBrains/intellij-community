@@ -10,9 +10,11 @@ import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public class PyBoolLiteralExpressionImpl extends PyElementImpl implements PyBoolLiteralExpression, PyInstantTypeProvider {
   public PyBoolLiteralExpressionImpl(ASTNode astNode) {
     super(astNode);

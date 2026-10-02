@@ -5,7 +5,9 @@ import com.intellij.execution.filters.ConsoleFilterProvider
 import com.intellij.execution.filters.Filter
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.run.filter.PythonInstallPackageFilter
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyMessageFilterProvider : ConsoleFilterProvider {
   override fun getDefaultFilters(project: Project): Array<Filter> = arrayOf(
     PythonTracebackFilter(project),

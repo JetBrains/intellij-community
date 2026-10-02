@@ -9,7 +9,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.requirements.parser.psi.RequirementsTypes
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RequirementsPackageNameCompletionContributor : CompletionContributor() {
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {

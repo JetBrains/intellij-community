@@ -20,6 +20,7 @@ import com.jetbrains.python.extensions.ModuleBasedContextAnchor
 import com.jetbrains.python.extensions.ProjectSdkContextAnchor
 import com.jetbrains.python.isPythonModule
 import com.jetbrains.python.run.PythonRunConfiguration
+import org.jetbrains.annotations.ApiStatus
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.ItemEvent
@@ -28,6 +29,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 
+@ApiStatus.Internal
 class PyScriptOrModuleFragment : SettingsEditorFragment<PythonRunConfiguration, JPanel>(
   "py.script.field", null, null, JPanel(GridBagLayout()), SettingsEditorFragmentType.COMMAND_LINE, null, null, { true }) {
 

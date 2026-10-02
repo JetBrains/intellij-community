@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.PyFinallyPart;
 import com.jetbrains.python.psi.PyListCompExpression;
 import com.jetbrains.python.psi.PyRaiseStatement;
 import com.jetbrains.python.psi.PyTupleExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -32,6 +33,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class UnsupportedFeaturesUtil {
   public static final Map<LanguageLevel, Set<String>> BUILTINS = new HashMap<>();
   public static final Map<LanguageLevel, Set<String>> MODULES = new HashMap<>();

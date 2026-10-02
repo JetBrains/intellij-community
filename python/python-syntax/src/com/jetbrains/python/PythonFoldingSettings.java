@@ -7,10 +7,12 @@ import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @State(name = "PythonFoldingSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
+@ApiStatus.Internal
 public class PythonFoldingSettings implements PersistentStateComponent<PythonFoldingSettings> {
   public boolean COLLAPSE_LONG_STRINGS;
   public boolean COLLAPSE_LONG_COLLECTIONS;

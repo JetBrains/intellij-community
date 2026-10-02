@@ -16,7 +16,9 @@
 package com.jetbrains.python.psi.types;
 
 import com.jetbrains.python.psi.PyElementType;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class PyTypeTokenTypes {
   private PyTypeTokenTypes() {}
 

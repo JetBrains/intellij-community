@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.python.ruff.RuffService
 import com.intellij.python.ruff.codeinsight.RuffDocumentationUtil.isRuffCodeElement
+import org.jetbrains.annotations.ApiStatus
 import org.toml.lang.psi.TomlFile
 import org.toml.lang.psi.TomlLiteral
 
@@ -21,6 +22,7 @@ import org.toml.lang.psi.TomlLiteral
  * Displays the rule name for each code in the ruff lint configuration sections.
  * For example: `"F108"` will show `"F108"unused-value`
  */
+@ApiStatus.Internal
 class RuffTomlInlayHintsProvider : InlayHintsProvider {
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
     if (file !is TomlFile) return null

@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
  * Weighs down items starting with two underscores.
  * <br/>
  */
+@ApiStatus.Internal
 public final class PythonCompletionWeigher extends CompletionWeigher {
 
   // TODO Unify different ways of detecting and weighing elements

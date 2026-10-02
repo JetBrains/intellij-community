@@ -6,7 +6,9 @@ import com.intellij.codeInsight.controlflow.impl.InstructionImpl
 import com.jetbrains.python.psi.PyAssertStatement
 import com.jetbrains.python.psi.PyRaiseStatement
 import com.jetbrains.python.psi.PyStatement
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyRaiseInstruction private constructor(builder: ControlFlowBuilder, raiseOrAssert: PyStatement) : InstructionImpl(builder,
                                                                                                                         raiseOrAssert) {
   constructor(builder: ControlFlowBuilder, raise: PyRaiseStatement) : this(builder, raise as PyStatement)

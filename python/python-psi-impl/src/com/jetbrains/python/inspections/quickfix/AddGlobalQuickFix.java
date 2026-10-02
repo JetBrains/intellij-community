@@ -18,8 +18,10 @@ import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class AddGlobalQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   public @NotNull String getFamilyName() {

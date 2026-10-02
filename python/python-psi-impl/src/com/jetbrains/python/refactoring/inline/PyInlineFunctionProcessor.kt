@@ -55,11 +55,13 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.refactoring.PyRefactoringUtil
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
 
 /**
  * @author Aleksei.Kniazev
  */
+@ApiStatus.Internal
 class PyInlineFunctionProcessor(
   project: Project,
   private val myEditor: Editor,

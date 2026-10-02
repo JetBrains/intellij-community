@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import java.util.Map;
 /**
  * @author novokrest
  */
+@ApiStatus.Internal
 public final class PyStaticCallHierarchyUtil {
   public static Map<PsiElement, Collection<PsiElement>> getCallees(@NotNull PyElement element) {
     final MultiMap<PsiElement, PsiElement> callees = MultiMap.createOrderedSet();

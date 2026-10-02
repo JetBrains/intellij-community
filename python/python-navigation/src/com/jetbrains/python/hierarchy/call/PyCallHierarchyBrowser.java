@@ -18,6 +18,7 @@ import com.jetbrains.python.hierarchy.PyHierarchyUtils;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ import java.util.Map;
 /**
  * @author novokrest
  */
+@ApiStatus.Internal
 public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
   private static final Logger LOG = Logger.getInstance(PyCallHierarchyBrowser.class);
 

@@ -1,0 +1,3 @@
+f:com.intellij.python.dbt.common.icons.DbtCommonIcons
+- sf:Dbt:javax.swing.Icon
+- <init>():V

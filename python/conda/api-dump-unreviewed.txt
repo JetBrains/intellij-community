@@ -1,0 +1,12 @@
+f:com.jetbrains.python.sdk.flavors.conda.CondaPythonExecKt
+- sf:getUsePythonForLocalConda():Z
+a:com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
+- a:getEnvName():java.lang.String
+f:com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest$EmptyNamedEnv
+- com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
+- <init>(com.jetbrains.python.psi.LanguageLevel,java.lang.String):V
+- getEnvName():java.lang.String
+f:com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest$EmptyUnnamedEnv
+- com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
+- <init>(com.jetbrains.python.psi.LanguageLevel,java.lang.String):V
+- getEnvName():java.lang.String

@@ -12,10 +12,12 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 public class PyNumericLiteralExpressionImpl extends PyElementImpl implements PyNumericLiteralExpression, PyInstantTypeProvider {
 
   public PyNumericLiteralExpressionImpl(@NotNull ASTNode astNode) {

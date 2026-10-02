@@ -1,0 +1,1532 @@
+com.jetbrains.python.FunctionParameter
+- sf:POSITION_NOT_SUPPORTED:I
+- a:getName():java.lang.String
+- a:getPosition():I
+c:com.jetbrains.python.codeInsight.PyCustomMember
+- com.intellij.openapi.util.UserDataHolderBase
+- <init>(java.lang.String):V
+- <init>(java.lang.String,com.intellij.psi.PsiElement):V
+- <init>(java.lang.String,com.intellij.psi.PsiElement,java.lang.String):V
+- <init>(java.lang.String,java.lang.String,com.intellij.util.Function):V
+- <init>(java.lang.String,java.lang.String,Z):V
+- f:alwaysResolveToCustomElement():com.jetbrains.python.codeInsight.PyCustomMember
+- asClassVar():com.jetbrains.python.codeInsight.PyCustomMember
+- asFunction():com.jetbrains.python.codeInsight.PyCustomMember
+- equals(java.lang.Object):Z
+- getIcon():javax.swing.Icon
+- getName():java.lang.String
+- getShortType():java.lang.String
+- hashCode():I
+- isClassVar():Z
+- isFunction():Z
+- f:isReferenceToMe(com.intellij.psi.PsiReference):Z
+- resolve(com.intellij.psi.PsiElement,com.jetbrains.python.psi.resolve.PyResolveContext):com.intellij.psi.PsiElement
+- resolvesTo(java.lang.String):com.jetbrains.python.codeInsight.PyCustomMember
+- resolvesToClass(java.lang.String):com.jetbrains.python.codeInsight.PyCustomMember
+- toAssignment(java.lang.String):com.jetbrains.python.codeInsight.PyCustomMember
+- toCall(java.lang.String,java.lang.String[]):com.jetbrains.python.codeInsight.PyCustomMember
+- toClass(java.lang.String):com.jetbrains.python.codeInsight.PyCustomMember
+- toClassAttribute(java.lang.String):com.jetbrains.python.codeInsight.PyCustomMember
+- toFunction(java.lang.String):com.jetbrains.python.codeInsight.PyCustomMember
+- toFunctionRecursive(java.lang.String):com.jetbrains.python.codeInsight.PyCustomMember
+- toPsiElement(com.intellij.psi.PsiElement):com.jetbrains.python.codeInsight.PyCustomMember
+- withCustomTypeInfo(com.jetbrains.python.codeInsight.PyCustomMemberTypeInfo):com.jetbrains.python.codeInsight.PyCustomMember
+- withIcon(javax.swing.Icon):com.jetbrains.python.codeInsight.PyCustomMember
+c:com.jetbrains.python.codeInsight.PyCustomMemberTypeInfo
+- <init>(com.intellij.openapi.util.Key,java.lang.Object):V
+- <init>(java.lang.Iterable):V
+- <init>(java.util.Map):V
+com.jetbrains.python.codeInsight.controlflow.ScopeOwner
+- com.jetbrains.python.ast.controlFlow.AstScopeOwner
+- com.jetbrains.python.psi.PyElement
+com.jetbrains.python.documentation.PythonDocumentationQuickInfoProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- getQuickInfo(com.intellij.psi.PsiElement):java.lang.String
+a:com.jetbrains.python.inspections.PyInspectionExtension
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- getFunctionParametersFromUsage(com.intellij.psi.PsiElement):java.util.List
+- ignoreInitNewSignatures(com.jetbrains.python.psi.PyFunction,com.jetbrains.python.psi.PyFunction):Z
+- ignoreInterpreterWarnings(com.jetbrains.python.psi.PyFile):Z
+- ignoreMethodParameters(com.jetbrains.python.psi.PyFunction,com.jetbrains.python.psi.types.TypeEvalContext):Z
+- ignoreMissingDocstring(com.jetbrains.python.psi.PyDocStringOwner):Z
+- ignoreNoEffectStatement(com.jetbrains.python.psi.PyExpressionStatement):Z
+- ignorePackageNameInRequirements(com.jetbrains.python.psi.PyQualifiedExpression):Z
+- ignoreProtectedSymbol(com.jetbrains.python.psi.PyReferenceExpression,com.jetbrains.python.psi.types.TypeEvalContext):Z
+- ignoreShadowed(com.intellij.psi.PsiElement):Z
+- ignoreTrailingSemicolon(com.jetbrains.python.psi.PyStatement):Z
+- ignoreUnresolvedMember(com.jetbrains.python.psi.types.PyType,java.lang.String,com.jetbrains.python.psi.types.TypeEvalContext):Z
+- ignoreUnresolvedReference(com.jetbrains.python.psi.PyElement,com.intellij.psi.PsiReference,com.jetbrains.python.psi.types.TypeEvalContext):Z
+- ignoreUnused(com.intellij.psi.PsiElement,com.jetbrains.python.psi.types.TypeEvalContext):Z
+- ignoreUnusedImports(com.jetbrains.python.psi.PyImportedNameDefiner):Z
+- overrideUnresolvedReferenceInspection(com.intellij.psi.PsiFile):java.lang.Boolean
+com.jetbrains.python.inspections.PyStatementEffectQuickFixProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getQuickFix(com.jetbrains.python.psi.PyExpressionStatement):com.intellij.codeInspection.LocalQuickFix
+com.jetbrains.python.nameResolver.FQNamesProvider
+- alwaysCheckQualifiedName():Z
+- a:getNames():java.lang.String[]
+- a:isClass():Z
+f:com.jetbrains.python.nameResolver.NameResolverTools
+- s:findCallExpParent(com.intellij.psi.PsiElement,com.jetbrains.python.nameResolver.FQNamesProvider):com.jetbrains.python.psi.PyCallExpression
+- s:isCalleeShortCut(com.jetbrains.python.psi.PyCallExpression,com.jetbrains.python.nameResolver.FQNamesProvider[]):Z
+- s:isContainsName(com.intellij.psi.PsiFile,com.jetbrains.python.nameResolver.FQNamesProvider):Z
+- s:isContainsName(java.lang.String,com.jetbrains.python.nameResolver.FQNamesProvider):Z
+- s:isElementWithName(java.util.Collection,com.jetbrains.python.nameResolver.FQNamesProvider[]):Z
+- s:isName(com.jetbrains.python.psi.PyElement,com.jetbrains.python.nameResolver.FQNamesProvider[]):Z
+- s:isNameShortCut(com.jetbrains.python.psi.PyElement,com.jetbrains.python.nameResolver.FQNamesProvider[]):Z
+- s:isSubclass(com.jetbrains.python.psi.PyClass,com.jetbrains.python.nameResolver.FQNamesProvider,com.jetbrains.python.psi.types.TypeEvalContext):Z
+com.jetbrains.python.psi.Property
+- a:getByDirection(com.jetbrains.python.psi.AccessDirection):com.jetbrains.python.toolbox.Maybe
+- a:getDefinitionSite():com.jetbrains.python.psi.PyTargetExpression
+- a:getDeleter():com.jetbrains.python.toolbox.Maybe
+- a:getDoc():java.lang.String
+- a:getGetter():com.jetbrains.python.toolbox.Maybe
+- a:getName():java.lang.String
+- a:getSetter():com.jetbrains.python.toolbox.Maybe
+com.jetbrains.python.psi.PsiReferenceEx
+- com.intellij.psi.PsiReference
+- getQuickFixes(com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
+- a:getUnresolvedDescription():java.lang.String
+- a:getUnresolvedHighlightSeverity(com.jetbrains.python.psi.types.TypeEvalContext):com.intellij.lang.annotation.HighlightSeverity
+com.jetbrains.python.psi.PyAnnotation
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstAnnotation
+- com.jetbrains.python.psi.PyElement
+- getValue():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyAnnotationOwner
+- com.intellij.psi.PsiElement
+- com.jetbrains.python.ast.PyAstAnnotationOwner
+- a:getAnnotation():com.jetbrains.python.psi.PyAnnotation
+com.jetbrains.python.psi.PyArgumentList
+- com.jetbrains.python.ast.PyAstArgumentList
+- com.jetbrains.python.psi.PyElement
+- a:addArgument(com.jetbrains.python.psi.PyExpression):V
+- a:addArgumentAfter(com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.PyExpression):V
+- a:addArgumentFirst(com.jetbrains.python.psi.PyExpression):V
+- getArgumentExpressions():java.util.Collection
+- getArguments():com.jetbrains.python.psi.PyExpression[]
+- getCallExpression():com.jetbrains.python.psi.PyCallExpression
+- getKeywordArgument(java.lang.String):com.jetbrains.python.psi.PyKeywordArgument
+- a:getValueExpressionForParam(com.jetbrains.python.FunctionParameter):com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyAsPattern
+- com.jetbrains.python.ast.PyAstAsPattern
+- com.jetbrains.python.psi.PyPattern
+- getPattern():com.jetbrains.python.psi.PyPattern
+- getTarget():com.jetbrains.python.psi.PyTargetExpression
+com.jetbrains.python.psi.PyAssertStatement
+- com.jetbrains.python.ast.PyAstAssertStatement
+- com.jetbrains.python.psi.PyStatement
+- a:getArguments():com.jetbrains.python.psi.PyExpression[]
+com.jetbrains.python.psi.PyAssignmentExpression
+- com.jetbrains.python.ast.PyAstAssignmentExpression
+- com.jetbrains.python.psi.PyExpression
+- getAssignedValue():com.jetbrains.python.psi.PyExpression
+- getTarget():com.jetbrains.python.psi.PyTargetExpression
+com.jetbrains.python.psi.PyAssignmentStatement
+- com.jetbrains.python.ast.PyAstAssignmentStatement
+- com.jetbrains.python.psi.PyAnnotationOwner
+- com.jetbrains.python.psi.PyNamedElementContainer
+- com.jetbrains.python.psi.PyStatement
+- getAnnotation():com.jetbrains.python.psi.PyAnnotation
+- getAssignedValue():com.jetbrains.python.psi.PyExpression
+- getLeftHandSideExpression():com.jetbrains.python.psi.PyExpression
+- a:getRawTargets():com.jetbrains.python.psi.PyExpression[]
+- a:getTargets():com.jetbrains.python.psi.PyExpression[]
+- getTargetsToValuesMapping():java.util.List
+com.jetbrains.python.psi.PyAugAssignmentStatement
+- com.jetbrains.python.ast.PyAstAugAssignmentStatement
+- com.jetbrains.python.psi.PyQualifiedElement
+- com.jetbrains.python.psi.PyReferenceOwner
+- com.jetbrains.python.psi.PyStatement
+- com.jetbrains.python.psi.PyTypedElement
+- getQualifier():com.jetbrains.python.psi.PyExpression
+- getTarget():com.jetbrains.python.psi.PyExpression
+- getValue():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyBinaryExpression
+- com.jetbrains.python.ast.PyAstBinaryExpression
+- com.jetbrains.python.psi.PyCallSiteExpression
+- com.jetbrains.python.psi.PyQualifiedExpression
+- com.jetbrains.python.psi.PyReferenceOwner
+- getLeftExpression():com.jetbrains.python.psi.PyExpression
+- getQualifier():com.jetbrains.python.psi.PyExpression
+- getRightExpression():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyBoolLiteralExpression
+- com.jetbrains.python.ast.PyAstBoolLiteralExpression
+- com.jetbrains.python.psi.PyLiteralExpression
+com.jetbrains.python.psi.PyBreakStatement
+- com.jetbrains.python.ast.PyAstBreakStatement
+- com.jetbrains.python.psi.PyStatement
+- getLoopStatement():com.jetbrains.python.psi.PyLoopStatement
+com.jetbrains.python.psi.PyCallExpression
+- com.jetbrains.python.ast.PyAstCallExpression
+- com.jetbrains.python.psi.PyCallSiteExpression
+- getArgument(com.jetbrains.python.FunctionParameter,java.lang.Class):com.intellij.psi.PsiElement
+- getArgumentList():com.jetbrains.python.psi.PyArgumentList
+- getArguments():com.jetbrains.python.psi.PyExpression[]
+- getCallee():com.jetbrains.python.psi.PyExpression
+- getKeywordArgument(java.lang.String):com.jetbrains.python.psi.PyExpression
+- a:multiMapArguments(com.jetbrains.python.psi.resolve.PyResolveContext):java.util.List
+- a:multiResolveCallee(com.jetbrains.python.psi.resolve.PyResolveContext):java.util.List
+- multiResolveCalleeFunction(com.jetbrains.python.psi.resolve.PyResolveContext):java.util.List
+c:com.jetbrains.python.psi.PyCallExpression$PyArgumentsMapping
+- getCallableType():com.jetbrains.python.psi.types.PyCallableType
+- getMappedParameters():java.util.Map
+- getMappedTupleParameters():java.util.Map
+- getParametersMappedToVariadicKeywordArguments():java.util.List
+- getParametersMappedToVariadicPositionalArguments():java.util.List
+- getUnmappedArguments():java.util.List
+- getUnmappedContainerParameters():java.util.List
+- getUnmappedParameters():java.util.List
+- isComplete():Z
+com.jetbrains.python.psi.PyCallSiteExpression
+- com.jetbrains.python.ast.PyAstCallSiteExpression
+- com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyCallable
+- com.jetbrains.python.ast.PyAstCallable
+- com.jetbrains.python.psi.PyQualifiedNameOwner
+- com.jetbrains.python.psi.PyTypedElement
+- a:asMethod():com.jetbrains.python.psi.PyFunction
+- a:getParameterList():com.jetbrains.python.psi.PyParameterList
+- a:getParameters(com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
+- getReturnType(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- a:getReturnType(com.jetbrains.python.psi.types.TypeEvalContext,com.jetbrains.python.psi.types.TypeEvalContext$Key):com.jetbrains.python.psi.types.PyType
+com.jetbrains.python.psi.PyCapturePattern
+- com.jetbrains.python.ast.PyAstCapturePattern
+- com.jetbrains.python.psi.PyPattern
+com.jetbrains.python.psi.PyCaseClause
+- com.jetbrains.python.ast.PyAstCaseClause
+- com.jetbrains.python.psi.PyStatementPart
+- getGuardCondition():com.jetbrains.python.psi.PyExpression
+- getPattern():com.jetbrains.python.psi.PyPattern
+com.jetbrains.python.psi.PyClass
+- com.intellij.psi.PsiNameIdentifierOwner
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstClass
+- com.jetbrains.python.codeInsight.controlflow.ScopeOwner
+- com.jetbrains.python.psi.PyCompoundStatement
+- com.jetbrains.python.psi.PyDecoratable
+- com.jetbrains.python.psi.PyDeprecatable
+- com.jetbrains.python.psi.PyDocStringOwner
+- com.jetbrains.python.psi.PyQualifiedNameOwner
+- com.jetbrains.python.psi.PyStatementListContainer
+- com.jetbrains.python.psi.PyTypeParameterListOwner
+- com.jetbrains.python.psi.PyTypedElement
+- com.jetbrains.python.psi.PyWithAncestors
+- sf:ARRAY_FACTORY:com.intellij.util.ArrayFactory
+- sf:EMPTY_ARRAY:com.jetbrains.python.psi.PyClass[]
+- a:findClassAttribute(java.lang.String,Z,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.PyTargetExpression
+- a:findInitOrNew(Z,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.PyFunction
+- a:findInstanceAttribute(java.lang.String,Z):com.jetbrains.python.psi.PyTargetExpression
+- a:findMethodByName(java.lang.String,Z,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.PyFunction
+- a:findNestedClass(java.lang.String,Z):com.jetbrains.python.psi.PyClass
+- a:findProperty(java.lang.String,Z,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.Property
+- a:findPropertyByCallable(com.jetbrains.python.psi.PyCallable):com.jetbrains.python.psi.Property
+- a:getAncestorClasses(com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
+- getArguments():java.util.List
+- a:getClassAttributes():java.util.List
+- a:getClassAttributesInherited(com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
+- getDocStringExpression():com.jetbrains.python.psi.PyStringLiteralExpression
+- a:getInstanceAttributes():java.util.List
+- a:getMetaClassExpression():com.jetbrains.python.psi.PyExpression
+- a:getMetaClassType(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- getMetaClassType(Z,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyClassLikeType
+- a:getMethods():com.jetbrains.python.psi.PyFunction[]
+- a:getMethodsInherited(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.PyFunction[]
+- a:getNestedClasses():com.jetbrains.python.psi.PyClass[]
+- getOwnMatchArgs():java.util.List
+- a:getOwnSlots():java.util.List
+- a:getProperties():java.util.Map
+- a:getPropertiesInherited(com.jetbrains.python.psi.types.TypeEvalContext):java.util.Map
+- a:getSlots(com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
+- getStatementList():com.jetbrains.python.psi.PyStatementList
+- getSuperClassExpressionList():com.jetbrains.python.psi.PyArgumentList
+- a:getSuperClassExpressions():com.jetbrains.python.psi.PyExpression[]
+- a:getSuperClassTypes(com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
+- a:getSuperClasses(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.PyClass[]
+- a:getType(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyClassLikeType
+- a:isNewStyleClass(com.jetbrains.python.psi.types.TypeEvalContext):Z
+- a:isSubclass(com.jetbrains.python.psi.PyClass,com.jetbrains.python.psi.types.TypeEvalContext):Z
+- a:isSubclass(java.lang.String,com.jetbrains.python.psi.types.TypeEvalContext):Z
+- a:multiFindInitOrNew(Z,com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
+- a:multiFindMethodByName(java.lang.String,Z,com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
+- a:processClassLevelDeclarations(com.intellij.psi.scope.PsiScopeProcessor):Z
+- a:processInstanceLevelDeclarations(com.intellij.psi.scope.PsiScopeProcessor,com.intellij.psi.PsiElement):Z
+- a:scanProperties(com.intellij.util.Processor,Z):com.jetbrains.python.psi.Property
+- a:visitClassAttributes(com.intellij.util.Processor,Z,com.jetbrains.python.psi.types.TypeEvalContext):Z
+- a:visitMethods(com.intellij.util.Processor,Z,com.jetbrains.python.psi.types.TypeEvalContext):Z
+com.jetbrains.python.psi.PyClassPattern
+- com.jetbrains.python.ast.PyAstClassPattern
+- com.jetbrains.python.psi.PyPattern
+- sf:SPECIAL_BUILTINS:java.util.Set
+- getArgumentList():com.jetbrains.python.psi.PyPatternArgumentList
+- getClassNameReference():com.jetbrains.python.psi.PyReferenceExpression
+com.jetbrains.python.psi.PyCompoundStatement
+- com.jetbrains.python.ast.PyAstCompoundStatement
+- com.jetbrains.python.psi.PyStatement
+com.jetbrains.python.psi.PyComprehensionElement
+- com.jetbrains.python.ast.PyAstComprehensionElement
+- com.jetbrains.python.psi.PyExpression
+- com.jetbrains.python.psi.PyNamedElementContainer
+- getResultExpression():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyConditionalExpression
+- com.jetbrains.python.ast.PyAstConditionalExpression
+- com.jetbrains.python.psi.PyExpression
+- getCondition():com.jetbrains.python.psi.PyExpression
+- getFalsePart():com.jetbrains.python.psi.PyExpression
+- getTruePart():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyConditionalStatementPart
+- com.jetbrains.python.ast.PyAstConditionalStatementPart
+- com.jetbrains.python.psi.PyStatementPart
+- getCondition():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyContinueStatement
+- com.jetbrains.python.ast.PyAstContinueStatement
+- com.jetbrains.python.psi.PyStatement
+- getLoopStatement():com.jetbrains.python.psi.PyLoopStatement
+com.jetbrains.python.psi.PyCustomPackageIdentifier
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:isPackage(com.intellij.psi.PsiDirectory):Z
+- a:isPackageFile(com.intellij.psi.PsiFile):Z
+com.jetbrains.python.psi.PyDecoratable
+- com.jetbrains.python.ast.PyAstDecoratable
+- com.jetbrains.python.psi.PyElement
+- a:getDecoratorList():com.jetbrains.python.psi.PyDecoratorList
+com.jetbrains.python.psi.PyDecorator
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstDecorator
+- com.jetbrains.python.psi.PyCallExpression
+- getArgumentList():com.jetbrains.python.psi.PyArgumentList
+- getCallee():com.jetbrains.python.psi.PyExpression
+- getExpression():com.jetbrains.python.psi.PyExpression
+- getTarget():com.jetbrains.python.psi.PyFunction
+- a:hasArgumentList():Z
+- a:isBuiltin():Z
+com.jetbrains.python.psi.PyDecoratorList
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstDecoratorList
+- com.jetbrains.python.psi.PyElement
+- findDecorator(java.lang.String):com.jetbrains.python.psi.PyDecorator
+- a:getDecorators():com.jetbrains.python.psi.PyDecorator[]
+com.jetbrains.python.psi.PyDelStatement
+- com.jetbrains.python.ast.PyAstDelStatement
+- com.jetbrains.python.psi.PyStatement
+- a:getTargets():com.jetbrains.python.psi.PyExpression[]
+com.jetbrains.python.psi.PyDeprecatable
+- getDeprecationMessage():java.lang.String
+com.jetbrains.python.psi.PyDictCompExpression
+- com.jetbrains.python.ast.PyAstDictCompExpression
+- com.jetbrains.python.psi.PyComprehensionElement
+com.jetbrains.python.psi.PyDictLiteralExpression
+- com.jetbrains.python.ast.PyAstDictLiteralExpression
+- com.jetbrains.python.psi.PySequenceExpression
+- a:getElements():com.jetbrains.python.psi.PyKeyValueExpression[]
+com.jetbrains.python.psi.PyDocStringOwner
+- com.jetbrains.python.ast.PyAstDocStringOwner
+- com.jetbrains.python.psi.PyElement
+- a:getDocStringExpression():com.jetbrains.python.psi.PyStringLiteralExpression
+- a:getStructuredDocString():com.jetbrains.python.psi.StructuredDocString
+com.jetbrains.python.psi.PyDoubleStarExpression
+- com.jetbrains.python.ast.PyAstDoubleStarExpression
+- com.jetbrains.python.psi.PyExpression
+- getExpression():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyDoubleStarPattern
+- com.jetbrains.python.ast.PyAstDoubleStarPattern
+- com.jetbrains.python.psi.PyPattern
+com.jetbrains.python.psi.PyElement
+- com.jetbrains.python.ast.PyAstElement
+- sf:EMPTY_ARRAY:com.jetbrains.python.psi.PyElement[]
+a:com.jetbrains.python.psi.PyElementGenerator
+- com.jetbrains.python.psi.PyAstElementGenerator
+- <init>(com.intellij.openapi.project.Project):V
+- a:createArgumentList(com.jetbrains.python.psi.LanguageLevel,java.lang.String):com.jetbrains.python.psi.PyArgumentList
+- a:createBinaryExpression(java.lang.String,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.PyExpression):com.jetbrains.python.psi.PyBinaryExpression
+- a:createCallExpression(com.jetbrains.python.psi.LanguageLevel,java.lang.String):com.jetbrains.python.psi.PyCallExpression
+- a:createDecoratorList(java.lang.String[]):com.jetbrains.python.psi.PyDecoratorList
+- createDocstring(java.lang.String):com.jetbrains.python.psi.PyExpressionStatement
+- a:createDot():com.intellij.lang.ASTNode
+- a:createEllipsis():com.jetbrains.python.psi.PyEllipsisLiteralExpression
+- createExpressionFromText(com.jetbrains.python.psi.LanguageLevel,java.lang.String):com.jetbrains.python.psi.PyExpression
+- createFromImportStatement(com.jetbrains.python.psi.LanguageLevel,java.lang.String,java.lang.String,java.lang.String):com.jetbrains.python.psi.PyFromImportStatement
+- a:createFromImportStatement(com.jetbrains.python.psi.LanguageLevel,java.lang.String,java.lang.String,java.lang.String,Z):com.jetbrains.python.psi.PyFromImportStatement
+- a:createImportElement(com.jetbrains.python.psi.LanguageLevel,java.lang.String,java.lang.String):com.jetbrains.python.psi.PyImportElement
+- createImportStatement(com.jetbrains.python.psi.LanguageLevel,java.lang.String,java.lang.String):com.jetbrains.python.psi.PyImportStatement
+- a:createImportStatement(com.jetbrains.python.psi.LanguageLevel,java.lang.String,java.lang.String,Z):com.jetbrains.python.psi.PyImportStatement
+- a:createKeywordArgument(com.jetbrains.python.psi.LanguageLevel,java.lang.String,java.lang.String):com.jetbrains.python.psi.PyKeywordArgument
+- a:createListLiteral():com.jetbrains.python.psi.PyListLiteralExpression
+- a:createNameIdentifier(java.lang.String,com.jetbrains.python.psi.LanguageLevel):com.intellij.lang.ASTNode
+- a:createNewLine():com.intellij.psi.PsiElement
+- a:createParameter(java.lang.String):com.jetbrains.python.psi.PyNamedParameter
+- a:createParameter(java.lang.String,java.lang.String,java.lang.String,com.jetbrains.python.psi.LanguageLevel):com.jetbrains.python.psi.PyNamedParameter
+- a:createParameterList(com.jetbrains.python.psi.LanguageLevel,java.lang.String):com.jetbrains.python.psi.PyParameterList
+- createPassStatement():com.jetbrains.python.psi.PyPassStatement
+- a:createPatternFromText(com.jetbrains.python.psi.LanguageLevel,java.lang.String):com.jetbrains.python.psi.PyPattern
+- a:createProperty(com.jetbrains.python.psi.LanguageLevel,java.lang.String,java.lang.String,com.jetbrains.python.psi.AccessDirection):com.jetbrains.python.psi.PyFunction
+- a:createSingleStarParameter():com.jetbrains.python.psi.PySingleStarParameter
+- a:createSlashParameter():com.jetbrains.python.psi.PySlashParameter
+- a:createStringLiteral(com.jetbrains.python.psi.StringLiteralExpression,java.lang.String):com.jetbrains.python.psi.PyStringLiteralExpression
+- a:createStringLiteralAlreadyEscaped(java.lang.String):com.jetbrains.python.psi.PyStringLiteralExpression
+- pa:createStringLiteralFromString(com.intellij.psi.PsiFile,java.lang.String,Z,Z):com.jetbrains.python.psi.PyStringLiteralExpression
+- a:createStringLiteralFromString(java.lang.String):com.jetbrains.python.psi.PyStringLiteralExpression
+- a:createStringLiteralFromString(java.lang.String,Z):com.jetbrains.python.psi.PyStringLiteralExpression
+- s:getInstance(com.intellij.openapi.project.Project):com.jetbrains.python.psi.PyElementGenerator
+- a:insertItemIntoList(com.jetbrains.python.psi.PyElement,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.PyExpression):com.intellij.psi.PsiElement
+- a:insertItemIntoListRemoveRedundantCommas(com.jetbrains.python.psi.PyElement,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.PyExpression):com.intellij.psi.PsiElement
+c:com.jetbrains.python.psi.PyElementVisitor
+- com.intellij.psi.PsiElementVisitor
+- <init>():V
+- visitPyAnnotation(com.jetbrains.python.psi.PyAnnotation):V
+- visitPyArgumentList(com.jetbrains.python.psi.PyArgumentList):V
+- visitPyAsPattern(com.jetbrains.python.psi.PyAsPattern):V
+- visitPyAssertStatement(com.jetbrains.python.psi.PyAssertStatement):V
+- visitPyAssignmentExpression(com.jetbrains.python.psi.PyAssignmentExpression):V
+- visitPyAssignmentStatement(com.jetbrains.python.psi.PyAssignmentStatement):V
+- visitPyAugAssignmentStatement(com.jetbrains.python.psi.PyAugAssignmentStatement):V
+- visitPyBinaryExpression(com.jetbrains.python.psi.PyBinaryExpression):V
+- visitPyBoolLiteralExpression(com.jetbrains.python.psi.PyBoolLiteralExpression):V
+- visitPyBreakStatement(com.jetbrains.python.psi.PyBreakStatement):V
+- visitPyCallExpression(com.jetbrains.python.psi.PyCallExpression):V
+- visitPyCapturePattern(com.jetbrains.python.psi.PyCapturePattern):V
+- visitPyCaseClause(com.jetbrains.python.psi.PyCaseClause):V
+- visitPyClass(com.jetbrains.python.psi.PyClass):V
+- visitPyClassPattern(com.jetbrains.python.psi.PyClassPattern):V
+- visitPyComprehensionElement(com.jetbrains.python.psi.PyComprehensionElement):V
+- visitPyConditionalExpression(com.jetbrains.python.psi.PyConditionalExpression):V
+- visitPyConditionalStatementPart(com.jetbrains.python.psi.PyConditionalStatementPart):V
+- visitPyContinueStatement(com.jetbrains.python.psi.PyContinueStatement):V
+- visitPyDecorator(com.jetbrains.python.psi.PyDecorator):V
+- visitPyDecoratorList(com.jetbrains.python.psi.PyDecoratorList):V
+- visitPyDelStatement(com.jetbrains.python.psi.PyDelStatement):V
+- visitPyDictCompExpression(com.jetbrains.python.psi.PyDictCompExpression):V
+- visitPyDictLiteralExpression(com.jetbrains.python.psi.PyDictLiteralExpression):V
+- visitPyDoubleStarExpression(com.jetbrains.python.psi.PyDoubleStarExpression):V
+- visitPyDoubleStarPattern(com.jetbrains.python.psi.PyDoubleStarPattern):V
+- visitPyElement(com.jetbrains.python.psi.PyElement):V
+- visitPyEllipsisLiteralExpression(com.jetbrains.python.psi.PyEllipsisLiteralExpression):V
+- visitPyExceptBlock(com.jetbrains.python.psi.PyExceptPart):V
+- visitPyExpression(com.jetbrains.python.psi.PyExpression):V
+- visitPyExpressionStatement(com.jetbrains.python.psi.PyExpressionStatement):V
+- visitPyFStringFragment(com.jetbrains.python.psi.PyFStringFragment):V
+- visitPyFile(com.jetbrains.python.psi.PyFile):V
+- visitPyForStatement(com.jetbrains.python.psi.PyForStatement):V
+- visitPyFormattedStringElement(com.jetbrains.python.psi.PyFormattedStringElement):V
+- visitPyFromImportStatement(com.jetbrains.python.psi.PyFromImportStatement):V
+- visitPyFunction(com.jetbrains.python.psi.PyFunction):V
+- visitPyGeneratorExpression(com.jetbrains.python.psi.PyGeneratorExpression):V
+- visitPyGlobalStatement(com.jetbrains.python.psi.PyGlobalStatement):V
+- visitPyGroupPattern(com.jetbrains.python.psi.PyGroupPattern):V
+- visitPyIfStatement(com.jetbrains.python.psi.PyIfStatement):V
+- visitPyImportElement(com.jetbrains.python.psi.PyImportElement):V
+- visitPyImportStatement(com.jetbrains.python.psi.PyImportStatement):V
+- visitPyKeyValueExpression(com.jetbrains.python.psi.PyKeyValueExpression):V
+- visitPyKeyValuePattern(com.jetbrains.python.psi.PyKeyValuePattern):V
+- visitPyKeywordArgument(com.jetbrains.python.psi.PyKeywordArgument):V
+- visitPyKeywordPattern(com.jetbrains.python.psi.PyKeywordPattern):V
+- visitPyLambdaExpression(com.jetbrains.python.psi.PyLambdaExpression):V
+- visitPyListCompExpression(com.jetbrains.python.psi.PyListCompExpression):V
+- visitPyListLiteralExpression(com.jetbrains.python.psi.PyListLiteralExpression):V
+- visitPyLiteralPattern(com.jetbrains.python.psi.PyLiteralPattern):V
+- visitPyMappingPattern(com.jetbrains.python.psi.PyMappingPattern):V
+- visitPyMatchStatement(com.jetbrains.python.psi.PyMatchStatement):V
+- visitPyNamedParameter(com.jetbrains.python.psi.PyNamedParameter):V
+- visitPyNoneLiteralExpression(com.jetbrains.python.psi.PyNoneLiteralExpression):V
+- visitPyNonlocalStatement(com.jetbrains.python.psi.PyNonlocalStatement):V
+- visitPyNumericLiteralExpression(com.jetbrains.python.psi.PyNumericLiteralExpression):V
+- visitPyOrPattern(com.jetbrains.python.psi.PyOrPattern):V
+- visitPyParameter(com.jetbrains.python.psi.PyParameter):V
+- visitPyParameterList(com.jetbrains.python.psi.PyParameterList):V
+- visitPyParenthesizedExpression(com.jetbrains.python.psi.PyParenthesizedExpression):V
+- visitPyPassStatement(com.jetbrains.python.psi.PyPassStatement):V
+- visitPyPattern(com.jetbrains.python.psi.PyPattern):V
+- visitPyPatternArgumentList(com.jetbrains.python.psi.PyPatternArgumentList):V
+- visitPyPrefixExpression(com.jetbrains.python.psi.PyPrefixExpression):V
+- visitPyPrintStatement(com.jetbrains.python.psi.PyPrintStatement):V
+- visitPyRaiseStatement(com.jetbrains.python.psi.PyRaiseStatement):V
+- visitPyReferenceExpression(com.jetbrains.python.psi.PyReferenceExpression):V
+- visitPyReprExpression(com.jetbrains.python.psi.PyReprExpression):V
+- visitPyReturnStatement(com.jetbrains.python.psi.PyReturnStatement):V
+- visitPySequenceExpression(com.jetbrains.python.psi.PySequenceExpression):V
+- visitPySequencePattern(com.jetbrains.python.psi.PySequencePattern):V
+- visitPySetCompExpression(com.jetbrains.python.psi.PySetCompExpression):V
+- visitPySetLiteralExpression(com.jetbrains.python.psi.PySetLiteralExpression):V
+- visitPySingleStarParameter(com.jetbrains.python.psi.PySingleStarParameter):V
+- visitPySingleStarPattern(com.jetbrains.python.psi.PySingleStarPattern):V
+- visitPySlashParameter(com.jetbrains.python.psi.PySlashParameter):V
+- visitPyStarArgument(com.jetbrains.python.psi.PyStarArgument):V
+- visitPyStarExpression(com.jetbrains.python.psi.PyStarExpression):V
+- visitPyStarImportElement(com.jetbrains.python.psi.PyStarImportElement):V
+- visitPyStatement(com.jetbrains.python.psi.PyStatement):V
+- visitPyStatementList(com.jetbrains.python.psi.PyStatementList):V
+- visitPyStringLiteralExpression(com.jetbrains.python.psi.PyStringLiteralExpression):V
+- visitPySubscriptionExpression(com.jetbrains.python.psi.PySubscriptionExpression):V
+- visitPyTargetExpression(com.jetbrains.python.psi.PyTargetExpression):V
+- visitPyTryExceptStatement(com.jetbrains.python.psi.PyTryExceptStatement):V
+- visitPyTupleExpression(com.jetbrains.python.psi.PyTupleExpression):V
+- visitPyTupleParameter(com.jetbrains.python.psi.PyTupleParameter):V
+- visitPyTypeAliasStatement(com.jetbrains.python.psi.PyTypeAliasStatement):V
+- visitPyTypeDeclarationStatement(com.jetbrains.python.psi.PyTypeDeclarationStatement):V
+- visitPyTypeParameter(com.jetbrains.python.psi.PyTypeParameter):V
+- visitPyTypeParameterList(com.jetbrains.python.psi.PyTypeParameterList):V
+- visitPyValuePattern(com.jetbrains.python.psi.PyValuePattern):V
+- visitPyWhileStatement(com.jetbrains.python.psi.PyWhileStatement):V
+- visitPyWithItem(com.jetbrains.python.psi.PyWithItem):V
+- visitPyWithStatement(com.jetbrains.python.psi.PyWithStatement):V
+- visitPyYieldExpression(com.jetbrains.python.psi.PyYieldExpression):V
+- visitWildcardPattern(com.jetbrains.python.psi.PyWildcardPattern):V
+com.jetbrains.python.psi.PyEllipsisLiteralExpression
+- com.jetbrains.python.ast.PyAstEllipsisLiteralExpression
+- com.jetbrains.python.psi.PyLiteralExpression
+com.jetbrains.python.psi.PyElsePart
+- com.jetbrains.python.ast.PyAstElsePart
+- com.jetbrains.python.psi.PyStatementPart
+com.jetbrains.python.psi.PyEmptyExpression
+- com.jetbrains.python.ast.PyAstEmptyExpression
+- com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyExceptPart
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstExceptPart
+- com.jetbrains.python.psi.PyElement
+- com.jetbrains.python.psi.PyNamedElementContainer
+- com.jetbrains.python.psi.PyStatementPart
+- sf:EMPTY_ARRAY:com.jetbrains.python.psi.PyExceptPart[]
+- getExceptClass():com.jetbrains.python.psi.PyExpression
+- getTarget():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyExecStatement
+- com.jetbrains.python.ast.PyAstExecStatement
+- com.jetbrains.python.psi.PyStatement
+com.jetbrains.python.psi.PyExpression
+- com.jetbrains.python.ast.PyAstExpression
+- com.jetbrains.python.psi.PyTypedElement
+- sf:EMPTY_ARRAY:com.jetbrains.python.psi.PyExpression[]
+com.jetbrains.python.psi.PyExpressionCodeFragment
+- com.jetbrains.python.ast.PyAstExpressionCodeFragment
+- com.jetbrains.python.psi.PyFile
+com.jetbrains.python.psi.PyExpressionStatement
+- com.jetbrains.python.ast.PyAstExpressionStatement
+- com.jetbrains.python.psi.PyStatement
+- getExpression():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyFStringFragment
+- com.jetbrains.python.ast.PyAstFStringFragment
+- com.jetbrains.python.psi.PyElement
+- getExpression():com.jetbrains.python.psi.PyExpression
+- getFormatPart():com.jetbrains.python.psi.PyFStringFragmentFormatPart
+com.jetbrains.python.psi.PyFStringFragmentFormatPart
+- com.jetbrains.python.ast.PyAstFStringFragmentFormatPart
+- com.jetbrains.python.psi.PyElement
+- getFragments():java.util.List
+com.jetbrains.python.psi.PyFile
+- com.intellij.psi.PsiFile
+- com.jetbrains.python.ast.PyAstFile
+- com.jetbrains.python.codeInsight.controlflow.ScopeOwner
+- com.jetbrains.python.psi.PyDocStringOwner
+- com.jetbrains.python.psi.PyTypedElement
+- a:findExportedName(java.lang.String):com.intellij.psi.PsiElement
+- a:findTopLevelAttribute(java.lang.String):com.jetbrains.python.psi.PyTargetExpression
+- a:findTopLevelClass(java.lang.String):com.jetbrains.python.psi.PyClass
+- a:findTopLevelFunction(java.lang.String):com.jetbrains.python.psi.PyFunction
+- a:findTypeAliasStatement(java.lang.String):com.jetbrains.python.psi.PyTypeAliasStatement
+- a:getDeprecationMessage():java.lang.String
+- getDocStringExpression():com.jetbrains.python.psi.PyStringLiteralExpression
+- a:getDunderAll():java.util.List
+- a:getElementNamed(java.lang.String):com.intellij.psi.PsiElement
+- a:getFromImports():java.util.List
+- getImportBlock():java.util.List
+- a:getImportTargets():java.util.List
+- getStatements():java.util.List
+- a:getTopLevelAttributes():java.util.List
+- a:getTopLevelClasses():java.util.List
+- a:getTopLevelFunctions():java.util.List
+- a:getTypeAliasStatements():java.util.List
+- a:iterateNames():java.lang.Iterable
+- a:multiResolveName(java.lang.String):java.util.List
+- a:multiResolveName(java.lang.String,Z):java.util.List
+com.jetbrains.python.psi.PyFinallyPart
+- com.jetbrains.python.ast.PyAstFinallyPart
+- com.jetbrains.python.psi.PyStatementPart
+com.jetbrains.python.psi.PyForPart
+- com.jetbrains.python.ast.PyAstForPart
+- com.jetbrains.python.psi.PyStatementPart
+- getSource():com.jetbrains.python.psi.PyExpression
+- getTarget():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyForStatement
+- com.jetbrains.python.ast.PyAstForStatement
+- com.jetbrains.python.psi.PyLoopStatement
+- com.jetbrains.python.psi.PyNamedElementContainer
+- com.jetbrains.python.psi.PyStatementWithElse
+- getForPart():com.jetbrains.python.psi.PyForPart
+com.jetbrains.python.psi.PyFormattedStringElement
+- com.jetbrains.python.ast.PyAstFormattedStringElement
+- com.jetbrains.python.psi.PyElement
+- com.jetbrains.python.psi.PyStringElement
+- getFragments():java.util.List
+com.jetbrains.python.psi.PyFromImportStatement
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstFromImportStatement
+- com.jetbrains.python.psi.PyImplicitImportNameDefiner
+- com.jetbrains.python.psi.PyImportStatementBase
+- getImportSource():com.jetbrains.python.psi.PyReferenceExpression
+- a:getStarImportElement():com.jetbrains.python.psi.PyStarImportElement
+- a:resolveImportSource():com.intellij.psi.PsiFileSystemItem
+- a:resolveImportSourceCandidates():java.util.List
+com.jetbrains.python.psi.PyFunction
+- com.intellij.psi.PsiNameIdentifierOwner
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstFunction
+- com.jetbrains.python.codeInsight.controlflow.ScopeOwner
+- com.jetbrains.python.psi.PyAnnotationOwner
+- com.jetbrains.python.psi.PyCallable
+- com.jetbrains.python.psi.PyCompoundStatement
+- com.jetbrains.python.psi.PyDecoratable
+- com.jetbrains.python.psi.PyDeprecatable
+- com.jetbrains.python.psi.PyDocStringOwner
+- com.jetbrains.python.psi.PyPossibleClassMember
+- com.jetbrains.python.psi.PyStatementListContainer
+- com.jetbrains.python.psi.PyTypeCommentOwner
+- com.jetbrains.python.psi.PyTypeParameterListOwner
+- sf:ARRAY_FACTORY:com.intellij.util.ArrayFactory
+- sf:EMPTY_ARRAY:com.jetbrains.python.psi.PyFunction[]
+- asMethod():com.jetbrains.python.psi.PyFunction
+- s:extractDeprecationMessage(java.util.List):java.lang.String
+- a:findAttributes():java.util.List
+- getContainingClass():com.jetbrains.python.psi.PyClass
+- getDocStringExpression():com.jetbrains.python.psi.PyStringLiteralExpression
+- a:getProperty():com.jetbrains.python.psi.Property
+- a:getReturnStatementType(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- getStatementList():com.jetbrains.python.psi.PyStatementList
+- a:isGenerator():Z
+com.jetbrains.python.psi.PyGeneratorExpression
+- com.jetbrains.python.ast.PyAstGeneratorExpression
+- com.jetbrains.python.psi.PyComprehensionElement
+com.jetbrains.python.psi.PyGlobalStatement
+- com.jetbrains.python.ast.PyAstGlobalStatement
+- com.jetbrains.python.psi.PyNamedElementContainer
+- com.jetbrains.python.psi.PyStatement
+- a:addGlobal(java.lang.String):V
+- a:getGlobals():com.jetbrains.python.psi.PyTargetExpression[]
+com.jetbrains.python.psi.PyGroupPattern
+- com.jetbrains.python.ast.PyAstGroupPattern
+- com.jetbrains.python.psi.PyPattern
+- getPattern():com.jetbrains.python.psi.PyPattern
+com.jetbrains.python.psi.PyIfPart
+- com.jetbrains.python.ast.PyAstIfPart
+- com.jetbrains.python.psi.PyConditionalStatementPart
+- sf:EMPTY_ARRAY:com.jetbrains.python.psi.PyIfPart[]
+com.jetbrains.python.psi.PyIfPartElif
+- com.jetbrains.python.ast.PyAstIfPartElif
+- com.jetbrains.python.psi.PyIfPart
+com.jetbrains.python.psi.PyIfPartIf
+- com.jetbrains.python.ast.PyAstIfPartIf
+- com.jetbrains.python.psi.PyIfPart
+com.jetbrains.python.psi.PyIfStatement
+- com.jetbrains.python.ast.PyAstIfStatement
+- com.jetbrains.python.psi.PyCompoundStatement
+- com.jetbrains.python.psi.PyStatementWithElse
+- getElifParts():com.jetbrains.python.psi.PyIfPart[]
+- getIfPart():com.jetbrains.python.psi.PyIfPart
+com.jetbrains.python.psi.PyImplicitImportNameDefiner
+- com.jetbrains.python.ast.PyAstImplicitImportNameDefiner
+- com.jetbrains.python.psi.PyImportedNameDefiner
+com.jetbrains.python.psi.PyImportElement
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstImportElement
+- com.jetbrains.python.psi.PyElement
+- com.jetbrains.python.psi.PyImportedNameDefiner
+- getAsNameElement():com.jetbrains.python.psi.PyTargetExpression
+- getContainingImportStatement():com.jetbrains.python.psi.PyStatement
+- a:getElementNamed(java.lang.String,Z):com.intellij.psi.PsiElement
+- getImportReferenceExpression():com.jetbrains.python.psi.PyReferenceExpression
+- a:multiResolve():java.util.List
+com.jetbrains.python.psi.PyImportStatement
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstImportStatement
+- com.jetbrains.python.psi.PyImplicitImportNameDefiner
+- com.jetbrains.python.psi.PyImportStatementBase
+com.jetbrains.python.psi.PyImportStatementBase
+- com.jetbrains.python.ast.PyAstImportStatementBase
+- com.jetbrains.python.psi.PyStatement
+- a:getImportElements():com.jetbrains.python.psi.PyImportElement[]
+com.jetbrains.python.psi.PyImportedNameDefiner
+- com.jetbrains.python.ast.PyAstImportedNameDefiner
+- com.jetbrains.python.psi.PyElement
+- a:iterateNames():java.lang.Iterable
+- a:multiResolveName(java.lang.String):java.util.List
+com.jetbrains.python.psi.PyKeyValueExpression
+- com.jetbrains.python.ast.PyAstKeyValueExpression
+- com.jetbrains.python.psi.PyExpression
+- sf:EMPTY_ARRAY:com.jetbrains.python.psi.PyKeyValueExpression[]
+- getKey():com.jetbrains.python.psi.PyExpression
+- getValue():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyKeyValuePattern
+- com.jetbrains.python.ast.PyAstKeyValuePattern
+- com.jetbrains.python.psi.PyPattern
+- getKeyPattern():com.jetbrains.python.psi.PyPattern
+- getValuePattern():com.jetbrains.python.psi.PyPattern
+com.jetbrains.python.psi.PyKeywordArgument
+- com.intellij.model.psi.PsiExternalReferenceHost
+- com.intellij.psi.PsiNamedElement
+- com.jetbrains.python.ast.PyAstKeywordArgument
+- com.jetbrains.python.psi.PyExpression
+- getValueExpression():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyKeywordPattern
+- com.jetbrains.python.ast.PyAstKeywordPattern
+- com.jetbrains.python.psi.PyPattern
+- getContainingClassPattern():com.jetbrains.python.psi.PyClassPattern
+- getValuePattern():com.jetbrains.python.psi.PyPattern
+com.jetbrains.python.psi.PyLambdaExpression
+- com.jetbrains.python.ast.PyAstLambdaExpression
+- com.jetbrains.python.codeInsight.controlflow.ScopeOwner
+- com.jetbrains.python.psi.PyCallable
+- com.jetbrains.python.psi.PyExpression
+- asMethod():com.jetbrains.python.psi.PyFunction
+- getBody():com.jetbrains.python.psi.PyExpression
+- getParameterList():com.jetbrains.python.psi.PyParameterList
+com.jetbrains.python.psi.PyListCompExpression
+- com.jetbrains.python.ast.PyAstListCompExpression
+- com.jetbrains.python.psi.PyComprehensionElement
+com.jetbrains.python.psi.PyListLiteralExpression
+- com.jetbrains.python.ast.PyAstListLiteralExpression
+- com.jetbrains.python.psi.PySequenceExpression
+com.jetbrains.python.psi.PyLiteralExpression
+- com.jetbrains.python.ast.PyAstLiteralExpression
+- com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyLiteralPattern
+- com.jetbrains.python.ast.PyAstLiteralPattern
+- com.jetbrains.python.psi.PyPattern
+- getExpression():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyLoopStatement
+- com.jetbrains.python.ast.PyAstLoopStatement
+- com.jetbrains.python.psi.PyCompoundStatement
+com.jetbrains.python.psi.PyMappingPattern
+- com.jetbrains.python.ast.PyAstMappingPattern
+- com.jetbrains.python.psi.PyPattern
+com.jetbrains.python.psi.PyMatchStatement
+- com.jetbrains.python.ast.PyAstMatchStatement
+- com.jetbrains.python.psi.PyCompoundStatement
+- getCaseClauses():java.util.List
+- getSubject():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyNamedElementContainer
+- com.intellij.psi.PsiElement
+- com.jetbrains.python.ast.PyAstNamedElementContainer
+com.jetbrains.python.psi.PyNamedParameter
+- com.intellij.psi.PsiNameIdentifierOwner
+- com.intellij.psi.PsiNamedElement
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstNamedParameter
+- com.jetbrains.python.psi.PyAnnotationOwner
+- com.jetbrains.python.psi.PyExpression
+- com.jetbrains.python.psi.PyParameter
+- com.jetbrains.python.psi.PyTypeCommentOwner
+- a:getArgumentType(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- getAsNamed():com.jetbrains.python.psi.PyNamedParameter
+- getAsTuple():com.jetbrains.python.psi.PyTupleParameter
+- getDefaultValue():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyNoneLiteralExpression
+- com.jetbrains.python.ast.PyAstNoneLiteralExpression
+- com.jetbrains.python.psi.PyLiteralExpression
+com.jetbrains.python.psi.PyNonlocalStatement
+- com.jetbrains.python.ast.PyAstNonlocalStatement
+- com.jetbrains.python.psi.PyStatement
+- a:getVariables():com.jetbrains.python.psi.PyTargetExpression[]
+com.jetbrains.python.psi.PyNumericLiteralExpression
+- com.jetbrains.python.ast.PyAstNumericLiteralExpression
+- com.jetbrains.python.psi.PyLiteralExpression
+com.jetbrains.python.psi.PyOrPattern
+- com.jetbrains.python.ast.PyAstOrPattern
+- com.jetbrains.python.psi.PyPattern
+- getAlternatives():java.util.List
+com.jetbrains.python.psi.PyParameter
+- com.jetbrains.python.ast.PyAstParameter
+- com.jetbrains.python.psi.PyElement
+- a:getAsNamed():com.jetbrains.python.psi.PyNamedParameter
+- a:getAsTuple():com.jetbrains.python.psi.PyTupleParameter
+- a:getDefaultValue():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyParameterList
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstParameterList
+- com.jetbrains.python.psi.PyElement
+- a:addParameter(com.jetbrains.python.psi.PyNamedParameter):V
+- a:findParameterByName(java.lang.String):com.jetbrains.python.psi.PyNamedParameter
+- a:getContainingCallable():com.jetbrains.python.psi.PyCallable
+- getContainingFunction():com.jetbrains.python.psi.PyFunction
+- a:getParameters():com.jetbrains.python.psi.PyParameter[]
+- getPresentableText(Z):java.lang.String
+- a:getPresentableText(Z,com.jetbrains.python.psi.types.TypeEvalContext):java.lang.String
+- a:hasKeywordContainer():Z
+- a:hasPositionalContainer():Z
+com.jetbrains.python.psi.PyParenthesizedExpression
+- com.jetbrains.python.ast.PyAstParenthesizedExpression
+- com.jetbrains.python.psi.PyExpression
+- getContainedExpression():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyPassStatement
+- com.jetbrains.python.ast.PyAstPassStatement
+- com.jetbrains.python.psi.PyStatement
+com.jetbrains.python.psi.PyPattern
+- com.jetbrains.python.ast.PyAstPattern
+- com.jetbrains.python.psi.PyTypedElement
+- a:getType(com.jetbrains.python.psi.types.TypeEvalContext,com.jetbrains.python.psi.types.TypeEvalContext$Key):com.jetbrains.python.psi.types.PyType
+com.jetbrains.python.psi.PyPatternArgumentList
+- com.jetbrains.python.ast.PyAstPatternArgumentList
+- com.jetbrains.python.psi.PyElement
+- getPatterns():java.util.List
+com.jetbrains.python.psi.PyPlainStringElement
+- com.jetbrains.python.ast.PyAstPlainStringElement
+- com.jetbrains.python.psi.PyStringElement
+com.jetbrains.python.psi.PyPossibleClassMember
+- com.jetbrains.python.ast.PyAstPossibleClassMember
+- a:getContainingClass():com.jetbrains.python.psi.PyClass
+com.jetbrains.python.psi.PyPrefixExpression
+- com.jetbrains.python.ast.PyAstPrefixExpression
+- com.jetbrains.python.psi.PyCallSiteExpression
+- com.jetbrains.python.psi.PyQualifiedExpression
+- com.jetbrains.python.psi.PyReferenceOwner
+- getOperand():com.jetbrains.python.psi.PyExpression
+- getQualifier():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyPrintStatement
+- com.jetbrains.python.ast.PyAstPrintStatement
+- com.jetbrains.python.psi.PyStatement
+com.jetbrains.python.psi.PyPrintTarget
+- com.jetbrains.python.ast.PyAstPrintTarget
+- com.jetbrains.python.psi.PyElement
+a:com.jetbrains.python.psi.PyPsiFacade
+- <init>():V
+- createClassByQName(com.intellij.psi.util.QualifiedName,com.intellij.psi.PsiElement):com.jetbrains.python.psi.PyClass
+- a:createClassByQName(java.lang.String,com.intellij.psi.PsiElement):com.jetbrains.python.psi.PyClass
+- a:createClassType(com.jetbrains.python.psi.PyClass,Z):com.jetbrains.python.psi.types.PyClassType
+- a:createResolveContextFromFoothold(com.intellij.psi.PsiElement):com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
+- a:createTupleType(java.util.List,com.intellij.psi.PsiElement):com.jetbrains.python.psi.types.PyType
+- a:createUnionType(java.util.Collection):com.jetbrains.python.psi.types.PyType
+- a:findShortestImportableName(com.intellij.openapi.vfs.VirtualFile,com.intellij.psi.PsiElement):java.lang.String
+- s:getInstance(com.intellij.openapi.project.Project):com.jetbrains.python.psi.PyPsiFacade
+- a:getLanguageLevel(com.intellij.psi.PsiElement):com.jetbrains.python.psi.LanguageLevel
+- a:parseTypeAnnotation(java.lang.String,com.intellij.psi.PsiElement):com.jetbrains.python.psi.types.PyType
+- a:resolveQualifiedName(com.intellij.psi.util.QualifiedName,com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext):java.util.List
+com.jetbrains.python.psi.PyQualifiedElement
+- com.jetbrains.python.ast.PyAstQualifiedElement
+- com.jetbrains.python.psi.PyElement
+- a:getQualifier():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyQualifiedExpression
+- com.jetbrains.python.ast.PyAstQualifiedExpression
+- com.jetbrains.python.psi.PyExpression
+- com.jetbrains.python.psi.PyQualifiedElement
+com.jetbrains.python.psi.PyQualifiedNameOwner
+- com.jetbrains.python.ast.PyAstQualifiedNameOwner
+- com.jetbrains.python.psi.PyElement
+- a:getQualifiedName():java.lang.String
+com.jetbrains.python.psi.PyRaiseStatement
+- com.jetbrains.python.ast.PyAstRaiseStatement
+- com.jetbrains.python.psi.PyStatement
+- a:getExpressions():com.jetbrains.python.psi.PyExpression[]
+c:com.jetbrains.python.psi.PyRecursiveElementVisitor
+- com.jetbrains.python.psi.PyElementVisitor
+- com.intellij.psi.PsiRecursiveVisitor
+- <init>():V
+- visitElement(com.intellij.psi.PsiElement):V
+com.jetbrains.python.psi.PyReferenceExpression
+- com.intellij.model.psi.PsiExternalReferenceHost
+- com.jetbrains.python.ast.PyAstReferenceExpression
+- com.jetbrains.python.psi.PyQualifiedExpression
+- com.jetbrains.python.psi.PyReferenceOwner
+- sf:EMPTY_ARRAY:com.jetbrains.python.psi.PyReferenceExpression[]
+- a:followAssignmentsChain(com.jetbrains.python.psi.resolve.PyResolveContext):com.jetbrains.python.psi.resolve.QualifiedResolveResult
+- getQualifier():com.jetbrains.python.psi.PyExpression
+- a:getReference():com.intellij.psi.PsiPolyVariantReference
+- multiFollowAssignmentsChain(com.jetbrains.python.psi.resolve.PyResolveContext):java.util.List
+- a:multiFollowAssignmentsChain(com.jetbrains.python.psi.resolve.PyResolveContext,java.util.function.Predicate):java.util.List
+com.jetbrains.python.psi.PyReferenceOwner
+- com.jetbrains.python.ast.PyAstReferenceOwner
+- com.jetbrains.python.psi.PyElement
+- a:getReference(com.jetbrains.python.psi.resolve.PyResolveContext):com.intellij.psi.PsiPolyVariantReference
+com.jetbrains.python.psi.PyReprExpression
+- com.jetbrains.python.ast.PyAstReprExpression
+- com.jetbrains.python.psi.PyExpression
+- getExpression():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyReturnStatement
+- com.jetbrains.python.ast.PyAstReturnStatement
+- com.jetbrains.python.psi.PyStatement
+- getExpression():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PySequenceExpression
+- com.jetbrains.python.ast.PyAstSequenceExpression
+- com.jetbrains.python.psi.PyExpression
+- a:getElements():com.jetbrains.python.psi.PyExpression[]
+com.jetbrains.python.psi.PySequencePattern
+- com.jetbrains.python.ast.PyAstSequencePattern
+- com.jetbrains.python.psi.PyPattern
+- getElements():java.util.List
+com.jetbrains.python.psi.PySetCompExpression
+- com.jetbrains.python.ast.PyAstSetCompExpression
+- com.jetbrains.python.psi.PyComprehensionElement
+com.jetbrains.python.psi.PySetLiteralExpression
+- com.jetbrains.python.ast.PyAstSetLiteralExpression
+- com.jetbrains.python.psi.PySequenceExpression
+com.jetbrains.python.psi.PySingleStarParameter
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstSingleStarParameter
+- com.jetbrains.python.psi.PyParameter
+- getAsNamed():com.jetbrains.python.psi.PyNamedParameter
+- getAsTuple():com.jetbrains.python.psi.PyTupleParameter
+- getDefaultValue():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PySingleStarPattern
+- com.jetbrains.python.ast.PyAstSingleStarPattern
+- com.jetbrains.python.psi.PyPattern
+- getPattern():com.jetbrains.python.psi.PyPattern
+com.jetbrains.python.psi.PySlashParameter
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstSlashParameter
+- com.jetbrains.python.psi.PyParameter
+- getAsNamed():com.jetbrains.python.psi.PyNamedParameter
+- getAsTuple():com.jetbrains.python.psi.PyTupleParameter
+- getDefaultValue():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PySliceItem
+- com.jetbrains.python.ast.PyAstSliceItem
+- com.jetbrains.python.psi.PyExpression
+- getLowerBound():com.jetbrains.python.psi.PyExpression
+- getStride():com.jetbrains.python.psi.PyExpression
+- getUpperBound():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyStarArgument
+- com.jetbrains.python.ast.PyAstStarArgument
+- com.jetbrains.python.psi.PyExpression
+- getExpression():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyStarExpression
+- com.jetbrains.python.ast.PyAstStarExpression
+- com.jetbrains.python.psi.PyExpression
+- getExpression():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyStarImportElement
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstStarImportElement
+- com.jetbrains.python.psi.PyImplicitImportNameDefiner
+com.jetbrains.python.psi.PyStatement
+- com.jetbrains.python.ast.PyAstStatement
+- com.jetbrains.python.psi.PyElement
+- sf:EMPTY_ARRAY:com.jetbrains.python.psi.PyStatement[]
+com.jetbrains.python.psi.PyStatementList
+- com.jetbrains.python.ast.PyAstStatementList
+- com.jetbrains.python.psi.PyElement
+- sf:EMPTY_ARRAY:com.jetbrains.python.psi.PyStatementList[]
+- a:getStatements():com.jetbrains.python.psi.PyStatement[]
+com.jetbrains.python.psi.PyStatementListContainer
+- com.jetbrains.python.ast.PyAstStatementListContainer
+- com.jetbrains.python.psi.PyElement
+- a:getStatementList():com.jetbrains.python.psi.PyStatementList
+com.jetbrains.python.psi.PyStatementPart
+- com.jetbrains.python.ast.PyAstStatementPart
+- com.jetbrains.python.psi.PyStatementListContainer
+- sf:EMPTY_ARRAY:com.jetbrains.python.psi.PyStatementPart[]
+- getStatementList():com.jetbrains.python.psi.PyStatementList
+com.jetbrains.python.psi.PyStatementWithElse
+- com.jetbrains.python.ast.PyAstStatementWithElse
+- com.jetbrains.python.psi.PyStatement
+- getElsePart():com.jetbrains.python.psi.PyElsePart
+com.jetbrains.python.psi.PyStringElement
+- com.intellij.psi.PsiElement
+- com.jetbrains.python.ast.PyAstStringElement
+com.jetbrains.python.psi.PyStringLiteralExpression
+- com.intellij.psi.PsiLanguageInjectionHost
+- com.jetbrains.python.ast.PyAstStringLiteralExpression
+- com.jetbrains.python.psi.PyLiteralExpression
+- com.jetbrains.python.psi.StringLiteralExpression
+- getStringElements():java.util.List
+- a:isInterpolated():Z
+- a:valueOffsetToTextOffset(I):I
+a:com.jetbrains.python.psi.PyStubElementType
+- com.intellij.psi.stubs.IStubElementType
+- <init>(java.lang.String):V
+- a:createElement(com.intellij.lang.ASTNode):com.intellij.psi.PsiElement
+- getExternalId():java.lang.String
+- indexStub(com.intellij.psi.stubs.StubElement,com.intellij.psi.stubs.IndexSink):V
+com.jetbrains.python.psi.PySubscriptionExpression
+- com.jetbrains.python.ast.PyAstSubscriptionExpression
+- com.jetbrains.python.psi.PyCallSiteExpression
+- com.jetbrains.python.psi.PyQualifiedExpression
+- com.jetbrains.python.psi.PyReferenceOwner
+- getIndexExpression():com.jetbrains.python.psi.PyExpression
+- getOperand():com.jetbrains.python.psi.PyExpression
+- getQualifier():com.jetbrains.python.psi.PyExpression
+- getRootOperand():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyTargetExpression
+- com.intellij.model.psi.PsiExternalReferenceHost
+- com.intellij.psi.PsiNameIdentifierOwner
+- com.intellij.psi.PsiNamedElement
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstTargetExpression
+- com.jetbrains.python.psi.PyAnnotationOwner
+- com.jetbrains.python.psi.PyDocStringOwner
+- com.jetbrains.python.psi.PyPossibleClassMember
+- com.jetbrains.python.psi.PyQualifiedExpression
+- com.jetbrains.python.psi.PyQualifiedNameOwner
+- com.jetbrains.python.psi.PyReferenceOwner
+- com.jetbrains.python.psi.PyTypeCommentOwner
+- sf:EMPTY_ARRAY:com.jetbrains.python.psi.PyTargetExpression[]
+- findAssignedValue():com.jetbrains.python.psi.PyExpression
+- getAnnotation():com.jetbrains.python.psi.PyAnnotation
+- getContainingClass():com.jetbrains.python.psi.PyClass
+- getDocStringExpression():com.jetbrains.python.psi.PyStringLiteralExpression
+- getQualifier():com.jetbrains.python.psi.PyExpression
+- a:getReference():com.intellij.psi.PsiReference
+- a:multiResolveAssignedValue(com.jetbrains.python.psi.resolve.PyResolveContext):java.util.List
+com.jetbrains.python.psi.PyTryExceptStatement
+- com.jetbrains.python.ast.PyAstTryExceptStatement
+- com.jetbrains.python.psi.PyCompoundStatement
+- com.jetbrains.python.psi.PyStatementWithElse
+- a:getExceptParts():com.jetbrains.python.psi.PyExceptPart[]
+- getFinallyPart():com.jetbrains.python.psi.PyFinallyPart
+- getTryPart():com.jetbrains.python.psi.PyTryPart
+com.jetbrains.python.psi.PyTryPart
+- com.jetbrains.python.ast.PyAstTryPart
+- com.jetbrains.python.psi.PyStatementPart
+com.jetbrains.python.psi.PyTupleExpression
+- com.jetbrains.python.ast.PyAstTupleExpression
+- com.jetbrains.python.psi.PySequenceExpression
+- java.lang.Iterable
+com.jetbrains.python.psi.PyTupleParameter
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstTupleParameter
+- com.jetbrains.python.psi.PyParameter
+- getAsNamed():com.jetbrains.python.psi.PyNamedParameter
+- getAsTuple():com.jetbrains.python.psi.PyTupleParameter
+- a:getContents():com.jetbrains.python.psi.PyParameter[]
+- getDefaultValue():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyTypeAliasStatement
+- com.intellij.psi.PsiNameIdentifierOwner
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstTypeAliasStatement
+- com.jetbrains.python.codeInsight.controlflow.ScopeOwner
+- com.jetbrains.python.psi.PyQualifiedNameOwner
+- com.jetbrains.python.psi.PyStatement
+- com.jetbrains.python.psi.PyTypeParameterListOwner
+- com.jetbrains.python.psi.PyTypedElement
+- getTypeExpression():com.jetbrains.python.psi.PyExpression
+- a:getTypeExpressionText():java.lang.String
+com.jetbrains.python.psi.PyTypeCommentOwner
+- com.intellij.psi.PsiElement
+- com.jetbrains.python.ast.PyAstTypeCommentOwner
+- a:getTypeCommentAnnotation():java.lang.String
+com.jetbrains.python.psi.PyTypeDeclarationStatement
+- com.jetbrains.python.ast.PyAstTypeDeclarationStatement
+- com.jetbrains.python.psi.PyAnnotationOwner
+- com.jetbrains.python.psi.PyStatement
+- getAnnotation():com.jetbrains.python.psi.PyAnnotation
+- getTarget():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyTypeParameter
+- com.intellij.psi.PsiNameIdentifierOwner
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstTypeParameter
+- com.jetbrains.python.psi.PyElement
+- com.jetbrains.python.psi.PyQualifiedNameOwner
+- com.jetbrains.python.psi.PyTypedElement
+- getBoundExpression():com.jetbrains.python.psi.PyExpression
+- getDefaultExpression():com.jetbrains.python.psi.PyExpression
+com.jetbrains.python.psi.PyTypeParameterList
+- com.intellij.psi.StubBasedPsiElement
+- com.jetbrains.python.ast.PyAstTypeParameterList
+- com.jetbrains.python.psi.PyElement
+- a:getTypeParameters():java.util.List
+com.jetbrains.python.psi.PyTypeParameterListOwner
+- com.intellij.psi.PsiElement
+- com.jetbrains.python.ast.PyAstTypeParameterListOwner
+- a:getTypeParameterList():com.jetbrains.python.psi.PyTypeParameterList
+com.jetbrains.python.psi.PyTypedElement
+- com.jetbrains.python.ast.PyAstTypedElement
+- com.jetbrains.python.psi.PyElement
+- getType(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- a:getType(com.jetbrains.python.psi.types.TypeEvalContext,com.jetbrains.python.psi.types.TypeEvalContext$Key):com.jetbrains.python.psi.types.PyType
+com.jetbrains.python.psi.PyValuePattern
+- com.jetbrains.python.ast.PyAstValuePattern
+- com.jetbrains.python.psi.PyPattern
+- getValue():com.jetbrains.python.psi.PyReferenceExpression
+com.jetbrains.python.psi.PyWhilePart
+- com.jetbrains.python.ast.PyAstWhilePart
+- com.jetbrains.python.psi.PyConditionalStatementPart
+com.jetbrains.python.psi.PyWhileStatement
+- com.jetbrains.python.ast.PyAstWhileStatement
+- com.jetbrains.python.psi.PyLoopStatement
+- com.jetbrains.python.psi.PyStatementWithElse
+- getWhilePart():com.jetbrains.python.psi.PyWhilePart
+com.jetbrains.python.psi.PyWildcardPattern
+- com.jetbrains.python.ast.PyAstWildcardPattern
+- com.jetbrains.python.psi.PyPattern
+com.jetbrains.python.psi.PyWithAncestors
+- com.jetbrains.python.ast.PyAstWithAncestors
+- a:getAncestorTypes(com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
+com.jetbrains.python.psi.PyWithItem
+- com.jetbrains.python.ast.PyAstWithItem
+- com.jetbrains.python.psi.PyElement
+- sf:EMPTY_ARRAY:com.jetbrains.python.psi.PyWithItem[]
+- getExpression():com.jetbrains.python.psi.PyExpression
+- getTarget():com.jetbrains.python.psi.PyExpression
+- a:isSuppressingExceptions(com.jetbrains.python.psi.types.TypeEvalContext):Z
+com.jetbrains.python.psi.PyWithStatement
+- com.jetbrains.python.ast.PyAstWithStatement
+- com.jetbrains.python.psi.PyCompoundStatement
+- com.jetbrains.python.psi.PyNamedElementContainer
+- com.jetbrains.python.psi.PyStatementListContainer
+- getStatementList():com.jetbrains.python.psi.PyStatementList
+- a:getWithItems():com.jetbrains.python.psi.PyWithItem[]
+- a:isSuppressingExceptions(com.jetbrains.python.psi.types.TypeEvalContext):Z
+com.jetbrains.python.psi.PyYieldExpression
+- com.jetbrains.python.ast.PyAstYieldExpression
+- com.jetbrains.python.psi.PyExpression
+- getExpression():com.jetbrains.python.psi.PyExpression
+- a:getSendType(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- a:getYieldType(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+f:com.jetbrains.python.psi.icons.PythonPsiApiIcons
+- sf:IPythonNotebook:javax.swing.Icon
+- sf:PropertyDeleter:javax.swing.Icon
+- sf:PropertyGetter:javax.swing.Icon
+- sf:PropertySetter:javax.swing.Icon
+- sf:Python_32x32:javax.swing.Icon
+- <init>():V
+f:com.jetbrains.python.psi.icons.PythonPsiApiIcons$Nodes
+- sf:CyanDot:javax.swing.Icon
+- sf:Lock:javax.swing.Icon
+- sf:RedInvTriangle:javax.swing.Icon
+- <init>():V
+com.jetbrains.python.psi.impl.PyImportResolver
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:resolveImportReference(com.intellij.psi.util.QualifiedName,com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext,Z):com.intellij.psi.PsiElement
+com.jetbrains.python.psi.impl.PyKeywordArgumentProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getKeywordArguments(com.jetbrains.python.psi.PyFunction,com.jetbrains.python.psi.PyCallExpression):java.util.List
+f:com.jetbrains.python.psi.impl.PyPsiUtils
+- sf:INSTANCE:com.jetbrains.python.psi.impl.PyPsiUtils
+- sf:asQualifiedName(com.jetbrains.python.psi.PyExpression):com.intellij.psi.util.QualifiedName
+- sf:asQualifiedName(com.jetbrains.python.psi.PyQualifiedExpression):com.intellij.psi.util.QualifiedName
+- sf:assertValid(com.intellij.openapi.module.Module):V
+- sf:assertValid(com.intellij.psi.PsiElement):V
+- sf:containsImport(com.jetbrains.python.psi.PyFile,java.lang.String):Z
+- sf:deleteAdjacentCommaWithWhitespaces(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
+- sf:findArgumentIndex(com.jetbrains.python.psi.PyCallExpression,com.intellij.psi.PsiElement):I
+- sf:findSameLineComment(com.intellij.psi.PsiElement):com.intellij.psi.PsiComment
+- sf:flattenParens(com.jetbrains.python.psi.PyExpression):com.jetbrains.python.psi.PyExpression
+- sf:getAdjacentComma(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- sf:getAttribute(com.jetbrains.python.psi.PyFile,java.lang.String):com.jetbrains.python.psi.PyTargetExpression
+- sf:getAttributeValuesFromFile(com.jetbrains.python.psi.PyFile,java.lang.String):java.util.List
+- sf:getChildByFilter(com.intellij.psi.PsiElement,com.intellij.psi.tree.TokenSet,I):com.intellij.psi.PsiElement
+- sf:getContainingFilePath(com.intellij.psi.PsiElement):java.lang.String
+- sf:getElementIndentation(com.intellij.psi.PsiElement):I
+- sf:getElementTextWithoutHostEscaping(com.intellij.psi.PsiElement):java.lang.String
+- sf:getFileSystemItem(com.intellij.psi.PsiElement):com.intellij.psi.PsiFileSystemItem
+- sf:getFirstChildOfType(com.intellij.psi.PsiElement,com.jetbrains.python.psi.PyElementType):com.intellij.psi.PsiElement
+- sf:getFirstQualifier(com.jetbrains.python.psi.PyQualifiedExpression):com.jetbrains.python.psi.PyExpression
+- sf:getNextComma(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- sf:getNextNonCommentSibling(com.intellij.psi.PsiElement,Z):com.intellij.psi.PsiElement
+- sf:getNextNonWhitespaceSibling(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
+- sf:getNextNonWhitespaceSibling(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- sf:getNextSignificantLeaf(com.intellij.psi.PsiElement,Z):com.intellij.psi.PsiElement
+- sf:getParentRightBefore(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- sf:getPrecedingCommentBlocks(com.intellij.psi.PsiElement):java.util.List
+- sf:getPrecedingComments(com.intellij.psi.PsiElement):java.util.List
+- sf:getPrecedingComments(com.intellij.psi.PsiElement,Z):java.util.List
+- sf:getPrevComma(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- sf:getPrevNonCommentSibling(com.intellij.psi.PsiElement,Z):com.intellij.psi.PsiElement
+- sf:getPrevNonWhitespaceSibling(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
+- sf:getPrevNonWhitespaceSibling(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- sf:getPrevNonWhitespaceSiblingOnSameLine(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- sf:getPrevSignificantLeaf(com.intellij.psi.PsiElement,Z):com.intellij.psi.PsiElement
+- sf:getRealContext(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- sf:getStatement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- sf:getStatementList(com.intellij.psi.PsiElement):com.jetbrains.python.psi.PyElement
+- sf:getStringValue(com.intellij.psi.PsiElement):java.lang.String
+- sf:getStringValueTextRange(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
+- sf:getStringValues(com.jetbrains.python.psi.PyExpression[]):java.util.List
+- sf:isBefore(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- sf:isMethodContext(com.intellij.psi.PsiElement):Z
+- sf:removeElements(com.intellij.psi.PsiElement[]):V
+- sf:removeRedundantPass(com.jetbrains.python.psi.PyStatementList):V
+- sf:sequenceToList(java.util.List,com.jetbrains.python.psi.PyExpression):V
+- sf:skipSiblingsBackward(com.intellij.lang.ASTNode,com.intellij.psi.tree.TokenSet):com.intellij.lang.ASTNode
+- sf:skipSiblingsForward(com.intellij.lang.ASTNode,com.intellij.psi.tree.TokenSet):com.intellij.lang.ASTNode
+- sf:strValue(com.jetbrains.python.psi.PyExpression):java.lang.String
+- sf:toPath(com.jetbrains.python.psi.PyQualifiedExpression):java.lang.String
+com.jetbrains.python.psi.impl.PyResolveResultRater
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getImportElementRate(com.intellij.psi.PsiElement):I
+- a:getMemberRate(com.intellij.psi.PsiElement,com.jetbrains.python.psi.types.PyType,com.jetbrains.python.psi.types.TypeEvalContext):I
+com.jetbrains.python.psi.impl.PyTypeProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getCallType(com.jetbrains.python.psi.PyFunction,com.jetbrains.python.psi.PyCallSiteExpression,com.jetbrains.python.psi.types.TypeEvalContext):com.intellij.openapi.util.Ref
+- a:getCallableType(com.jetbrains.python.psi.PyCallable,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- a:getContextManagerVariableType(com.jetbrains.python.psi.PyClass,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- a:getGenericSubstitutions(com.jetbrains.python.psi.PyClass,com.jetbrains.python.psi.types.TypeEvalContext):java.util.Map
+- a:getGenericType(com.jetbrains.python.psi.PyClass,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- a:getParameterType(com.jetbrains.python.psi.PyNamedParameter,com.jetbrains.python.psi.PyFunction,com.jetbrains.python.psi.types.TypeEvalContext):com.intellij.openapi.util.Ref
+- a:getReferenceExpressionType(com.jetbrains.python.psi.PyReferenceExpression,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- a:getReferenceType(com.intellij.psi.PsiElement,com.jetbrains.python.psi.types.TypeEvalContext,com.intellij.psi.PsiElement):com.intellij.openapi.util.Ref
+- a:getReturnType(com.jetbrains.python.psi.PyCallable,com.jetbrains.python.psi.types.TypeEvalContext):com.intellij.openapi.util.Ref
+- a:prepareCalleeTypeForCall(com.jetbrains.python.psi.types.PyType,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.types.TypeEvalContext):com.intellij.openapi.util.Ref
+e:com.jetbrains.python.psi.resolve.PointInImport
+- java.lang.Enum
+- sf:AS_MODULE:com.jetbrains.python.psi.resolve.PointInImport
+- sf:AS_NAME:com.jetbrains.python.psi.resolve.PointInImport
+- sf:NONE:com.jetbrains.python.psi.resolve.PointInImport
+- s:valueOf(java.lang.String):com.jetbrains.python.psi.resolve.PointInImport
+- s:values():com.jetbrains.python.psi.resolve.PointInImport[]
+com.jetbrains.python.psi.resolve.PyCanonicalPathProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getCanonicalPath(com.intellij.psi.PsiElement,com.intellij.psi.util.QualifiedName,com.intellij.psi.PsiElement):com.intellij.psi.util.QualifiedName
+com.jetbrains.python.psi.resolve.PyOverridingReferenceResolveProvider
+- com.jetbrains.python.psi.resolve.PyReferenceResolveProvider
+com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
+- a:copyWithMembers():com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
+- a:copyWithPlainDirectories():com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
+- a:copyWithRelative(I):com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
+- a:copyWithRoots():com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
+- a:copyWithoutForeign():com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
+- a:copyWithoutRoots():com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
+- a:copyWithoutStubs():com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
+- a:getContainingDirectory():com.intellij.psi.PsiDirectory
+- a:getFoothold():com.intellij.psi.PsiElement
+- a:getFootholdFile():com.intellij.psi.PsiFile
+- a:getModule():com.intellij.openapi.module.Module
+- a:getProject():com.intellij.openapi.project.Project
+- a:getPsiManager():com.intellij.psi.PsiManager
+- a:getRelativeLevel():I
+- a:getVisitAllModules():Z
+- a:getWithMembers():Z
+- a:getWithPlainDirectories():Z
+- a:getWithoutForeign():Z
+- a:getWithoutRoots():Z
+- a:getWithoutStubs():Z
+- a:isValid():Z
+com.jetbrains.python.psi.resolve.PyReferenceResolveProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- allowsForwardOutgoingReferencesInClass(com.jetbrains.python.psi.PyQualifiedExpression):Z
+- a:resolveName(com.jetbrains.python.psi.PyQualifiedExpression,com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
+f:com.jetbrains.python.psi.resolve.PyResolveContext
+- allowImplicits():Z
+- allowProperties():Z
+- allowRemote():Z
+- s:defaultContext():com.jetbrains.python.psi.resolve.PyResolveContext
+- s:defaultContext(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.resolve.PyResolveContext
+- equals(java.lang.Object):Z
+- getTypeEvalContext():com.jetbrains.python.psi.types.TypeEvalContext
+- hashCode():I
+- s:implicitContext(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.resolve.PyResolveContext
+- s:noProperties(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.resolve.PyResolveContext
+- withRemote():com.jetbrains.python.psi.resolve.PyResolveContext
+- withTypeEvalContext(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.resolve.PyResolveContext
+- withoutImplicits():com.jetbrains.python.psi.resolve.PyResolveContext
+c:com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult
+- com.jetbrains.python.psi.resolve.RatedResolveResult
+- com.jetbrains.python.psi.resolve.QualifiedResolveResult
+- <init>(com.intellij.psi.PsiElement,java.util.List,I,Z):V
+- equals(java.lang.Object):Z
+- getQualifiers():java.util.List
+- hashCode():I
+- isImplicit():Z
+com.jetbrains.python.psi.resolve.QualifiedResolveResult
+- com.intellij.psi.ResolveResult
+- sf:EMPTY:com.jetbrains.python.psi.resolve.QualifiedResolveResult
+- a:getQualifiers():java.util.List
+- a:isImplicit():Z
+c:com.jetbrains.python.psi.resolve.RatedResolveResult
+- com.intellij.psi.ResolveResult
+- sf:EMPTY_ARRAY:com.jetbrains.python.psi.resolve.RatedResolveResult[]
+- sf:RATE_HIGH:I
+- sf:RATE_LOW:I
+- sf:RATE_NORMAL:I
+- <init>(I,com.intellij.psi.PsiElement):V
+- equals(java.lang.Object):Z
+- getElement():com.intellij.psi.PsiElement
+- getRate():I
+- hashCode():I
+- isValidResult():Z
+- replace(com.intellij.psi.PsiElement):com.jetbrains.python.psi.resolve.RatedResolveResult
+- s:sorted(java.util.List):java.util.List
+com.jetbrains.python.psi.stubs.PyAnnotationOwnerStub
+- a:getAnnotation():java.lang.String
+com.jetbrains.python.psi.stubs.PyAnnotationStub
+- com.intellij.psi.stubs.StubElement
+com.jetbrains.python.psi.stubs.PyClassStub
+- com.intellij.psi.stubs.NamedStub
+- com.jetbrains.python.psi.stubs.PyVersionSpecificStub
+- a:getDeprecationMessage():java.lang.String
+- a:getDocString():java.lang.String
+- a:getMatchArgs():java.util.List
+- a:getMetaClass():com.intellij.psi.util.QualifiedName
+- a:getSlots():java.util.List
+- a:getSuperClasses():java.util.Map
+- a:getSuperClassesText():java.util.List
+com.jetbrains.python.psi.stubs.PyDecoratorListStub
+- com.intellij.psi.stubs.StubElement
+com.jetbrains.python.psi.stubs.PyDecoratorStub
+- com.intellij.psi.stubs.StubElement
+- a:getQualifiedName():com.intellij.psi.util.QualifiedName
+- a:hasArgumentList():Z
+com.jetbrains.python.psi.stubs.PyExceptPartStub
+- com.intellij.psi.stubs.StubElement
+com.jetbrains.python.psi.stubs.PyFileStub
+- com.intellij.psi.stubs.PsiFileStub
+- a:getDeprecationMessage():java.lang.String
+- a:getDunderAll():java.util.List
+- a:getFutureFeatures():java.util.BitSet
+com.jetbrains.python.psi.stubs.PyFromImportStatementStub
+- com.intellij.psi.stubs.StubElement
+- com.jetbrains.python.psi.stubs.PyVersionSpecificStub
+- a:getImportSourceQName():com.intellij.psi.util.QualifiedName
+- a:getRelativeLevel():I
+- a:isStarImport():Z
+com.jetbrains.python.psi.stubs.PyFunctionStub
+- com.intellij.psi.stubs.NamedStub
+- com.jetbrains.python.psi.stubs.PyAnnotationOwnerStub
+- com.jetbrains.python.psi.stubs.PyTypeCommentOwnerStub
+- com.jetbrains.python.psi.stubs.PyVersionSpecificStub
+- a:getDeprecationMessage():java.lang.String
+- a:getDocString():java.lang.String
+- a:isAsync():Z
+- a:isGenerator():Z
+- onlyRaisesNotImplementedError():Z
+com.jetbrains.python.psi.stubs.PyImportElementStub
+- com.intellij.psi.stubs.StubElement
+- a:getAsName():java.lang.String
+- a:getImportedQName():com.intellij.psi.util.QualifiedName
+com.jetbrains.python.psi.stubs.PyImportStatementStub
+- com.intellij.psi.stubs.StubElement
+- com.jetbrains.python.psi.stubs.PyVersionSpecificStub
+com.jetbrains.python.psi.stubs.PyNamedParameterStub
+- com.intellij.psi.stubs.NamedStub
+- com.jetbrains.python.psi.stubs.PyAnnotationOwnerStub
+- com.jetbrains.python.psi.stubs.PyTypeCommentOwnerStub
+- getDefaultValueText():java.lang.String
+- a:isKeywordContainer():Z
+- a:isPositionalContainer():Z
+com.jetbrains.python.psi.stubs.PyParameterListStub
+- com.intellij.psi.stubs.StubElement
+com.jetbrains.python.psi.stubs.PySingleStarParameterStub
+- com.intellij.psi.stubs.StubElement
+com.jetbrains.python.psi.stubs.PySlashParameterStub
+- com.intellij.psi.stubs.StubElement
+com.jetbrains.python.psi.stubs.PyStarImportElementStub
+- com.intellij.psi.stubs.StubElement
+com.jetbrains.python.psi.stubs.PyTargetExpressionStub
+- com.intellij.psi.stubs.NamedStub
+- com.jetbrains.python.psi.stubs.PyAnnotationOwnerStub
+- com.jetbrains.python.psi.stubs.PyTypeCommentOwnerStub
+- com.jetbrains.python.psi.stubs.PyVersionSpecificStub
+- a:getDocString():java.lang.String
+- a:getInitializer():com.intellij.psi.util.QualifiedName
+- a:getInitializerType():com.jetbrains.python.psi.stubs.PyTargetExpressionStub$InitializerType
+- a:hasAssignedValue():Z
+- a:isQualified():Z
+e:com.jetbrains.python.psi.stubs.PyTargetExpressionStub$InitializerType
+- java.lang.Enum
+- sf:CallExpression:com.jetbrains.python.psi.stubs.PyTargetExpressionStub$InitializerType
+- sf:Custom:com.jetbrains.python.psi.stubs.PyTargetExpressionStub$InitializerType
+- sf:Other:com.jetbrains.python.psi.stubs.PyTargetExpressionStub$InitializerType
+- sf:ReferenceExpression:com.jetbrains.python.psi.stubs.PyTargetExpressionStub$InitializerType
+- s:fromIndex(I):com.jetbrains.python.psi.stubs.PyTargetExpressionStub$InitializerType
+- getIndex():I
+- s:valueOf(java.lang.String):com.jetbrains.python.psi.stubs.PyTargetExpressionStub$InitializerType
+- s:values():com.jetbrains.python.psi.stubs.PyTargetExpressionStub$InitializerType[]
+com.jetbrains.python.psi.stubs.PyTupleParameterStub
+- com.intellij.psi.stubs.StubElement
+- getDefaultValueText():java.lang.String
+com.jetbrains.python.psi.stubs.PyTypeAliasStatementStub
+- com.intellij.psi.stubs.NamedStub
+- com.jetbrains.python.psi.stubs.PyVersionSpecificStub
+- a:getTypeExpressionText():java.lang.String
+com.jetbrains.python.psi.stubs.PyTypeCommentOwnerStub
+- a:getTypeComment():java.lang.String
+com.jetbrains.python.psi.stubs.PyTypeParameterListStub
+- com.intellij.psi.stubs.StubElement
+com.jetbrains.python.psi.stubs.PyTypeParameterStub
+- com.intellij.psi.stubs.NamedStub
+- a:getBoundExpressionText():java.lang.String
+- a:getDefaultExpressionText():java.lang.String
+- a:getKind():com.jetbrains.python.ast.PyAstTypeParameter$Kind
+com.jetbrains.python.psi.stubs.PyVersionSpecificStub
+- a:getVersions():com.google.common.collect.RangeSet
+com.jetbrains.python.psi.types.PyCallableParameter
+- a:getArgumentType(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- getDeclarationElement():com.intellij.psi.PsiElement
+- a:getDefaultValue():com.jetbrains.python.psi.PyExpression
+- a:getDefaultValueText():java.lang.String
+- a:getName():java.lang.String
+- a:getParameter():com.jetbrains.python.psi.PyParameter
+- getPresentableText(Z):java.lang.String
+- a:getPresentableText(Z,com.jetbrains.python.psi.types.TypeEvalContext):java.lang.String
+- getPresentableText(Z,com.jetbrains.python.psi.types.TypeEvalContext,kotlin.jvm.functions.Function1):java.lang.String
+- a:getType(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- a:hasDefaultValue():Z
+- a:isKeywordContainer():Z
+- a:isPositionalContainer():Z
+- a:isSelf():Z
+com.jetbrains.python.psi.types.PyCallableType
+- com.jetbrains.python.psi.types.PyType
+- acceptTypeVisitor(com.jetbrains.python.psi.types.PyTypeVisitor):java.lang.Object
+- getCallable():com.jetbrains.python.psi.PyCallable
+- getModifier():com.jetbrains.python.ast.PyAstFunction$Modifier
+- getName():java.lang.String
+- getParameters(com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
+- a:getReturnType(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- isCallable():Z
+com.jetbrains.python.psi.types.PyClassLikeType
+- com.jetbrains.python.psi.PyWithAncestors
+- com.jetbrains.python.psi.types.PyCallableType
+- com.jetbrains.python.psi.types.PyInstantiableType
+- acceptTypeVisitor(com.jetbrains.python.psi.types.PyTypeVisitor):java.lang.Object
+- getCallType(com.jetbrains.python.psi.types.TypeEvalContext,com.jetbrains.python.psi.PyElement):com.jetbrains.python.psi.types.PyType
+- a:getClassQName():java.lang.String
+- a:getMemberNames(Z,com.jetbrains.python.psi.types.TypeEvalContext):java.util.Set
+- a:getMetaClassType(com.jetbrains.python.psi.types.TypeEvalContext,Z):com.jetbrains.python.psi.types.PyClassLikeType
+- a:getSuperClassTypes(com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
+- isAttributeWritable(java.lang.String,com.jetbrains.python.psi.types.TypeEvalContext):Z
+- a:isValid():Z
+- a:resolveMember(java.lang.String,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.AccessDirection,com.jetbrains.python.psi.resolve.PyResolveContext,Z):java.util.List
+- a:visitMembers(com.intellij.util.Processor,Z,com.jetbrains.python.psi.types.TypeEvalContext):V
+com.jetbrains.python.psi.types.PyClassMembersProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getMembers(com.jetbrains.python.psi.types.PyClassType,com.intellij.psi.PsiElement,com.jetbrains.python.psi.types.TypeEvalContext):java.util.Collection
+- a:resolveMember(com.jetbrains.python.psi.types.PyClassType,java.lang.String,com.intellij.psi.PsiElement,com.jetbrains.python.psi.resolve.PyResolveContext):com.intellij.psi.PsiElement
+c:com.jetbrains.python.psi.types.PyClassMembersProviderBase
+- com.jetbrains.python.psi.types.PyClassMembersProvider
+- <init>():V
+- getMembers(com.jetbrains.python.psi.types.PyClassType,com.intellij.psi.PsiElement,com.jetbrains.python.psi.types.TypeEvalContext):java.util.Collection
+- resolveMember(com.jetbrains.python.psi.types.PyClassType,java.lang.String,com.intellij.psi.PsiElement,com.jetbrains.python.psi.resolve.PyResolveContext):com.intellij.psi.PsiElement
+- s:resolveMemberByName(java.util.Collection,java.lang.String,com.intellij.psi.PsiElement,com.jetbrains.python.psi.resolve.PyResolveContext):com.intellij.psi.PsiElement
+com.jetbrains.python.psi.types.PyClassType
+- com.intellij.openapi.util.UserDataHolder
+- com.jetbrains.python.psi.types.PyClassLikeType
+- acceptTypeVisitor(com.jetbrains.python.psi.types.PyTypeVisitor):java.lang.Object
+- a:getPyClass():com.jetbrains.python.psi.PyClass
+- a:getTypeArguments():java.util.List
+- isParameterized():Z
+- a:toClass():com.jetbrains.python.psi.types.PyClassType
+- a:toInstance():com.jetbrains.python.psi.types.PyClassType
+com.jetbrains.python.psi.types.PyFunctionType
+- com.jetbrains.python.psi.types.PyCallableType
+- a:dropSelf(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyFunctionType
+- a:getCallable():com.jetbrains.python.psi.PyCallable
+- getModifier():com.jetbrains.python.ast.PyAstFunction$Modifier
+com.jetbrains.python.psi.types.PyInstantiableType
+- com.jetbrains.python.psi.types.PyType
+- a:isDefinition():Z
+- a:toClass():com.jetbrains.python.psi.types.PyInstantiableType
+- a:toInstance():com.jetbrains.python.psi.types.PyInstantiableType
+a:com.jetbrains.python.psi.types.PyModuleMembersProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- getMembers(com.jetbrains.python.psi.PyFile,com.jetbrains.python.psi.resolve.PointInImport,com.jetbrains.python.psi.types.TypeEvalContext):java.util.Collection
+- pa:getMembersByQName(com.jetbrains.python.psi.PyFile,java.lang.String,com.jetbrains.python.psi.types.TypeEvalContext):java.util.Collection
+- resolveMember(com.jetbrains.python.psi.PyFile,java.lang.String,com.jetbrains.python.psi.resolve.PyResolveContext):com.intellij.psi.PsiElement
+f:com.jetbrains.python.psi.types.PyNeverType
+- com.jetbrains.python.psi.types.PyType
+- sf:Companion:com.jetbrains.python.psi.types.PyNeverType$Companion
+- sf:NEVER:com.jetbrains.python.psi.types.PyNeverType
+- sf:NO_RETURN:com.jetbrains.python.psi.types.PyNeverType
+- acceptTypeVisitor(com.jetbrains.python.psi.types.PyTypeVisitor):java.lang.Object
+- assertValid(java.lang.String):V
+- equals(java.lang.Object):Z
+- getCompletionVariants(java.lang.String,com.intellij.psi.PsiElement,com.intellij.util.ProcessingContext):java.lang.Object[]
+- getName():java.lang.String
+- hashCode():I
+- isBuiltin():Z
+- resolveMember(java.lang.String,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.AccessDirection,com.jetbrains.python.psi.resolve.PyResolveContext):java.util.List
+- sf:toNoReturnIfNeeded(com.jetbrains.python.psi.types.PyType):com.jetbrains.python.psi.types.PyType
+f:com.jetbrains.python.psi.types.PyNeverType$Companion
+- f:toNoReturnIfNeeded(com.jetbrains.python.psi.types.PyType):com.jetbrains.python.psi.types.PyType
+com.jetbrains.python.psi.types.PyType
+- sf:CTX_NAMES:com.intellij.openapi.util.Key
+- sf:Companion:com.jetbrains.python.psi.types.PyType$Companion
+- a:assertValid(java.lang.String):V
+- a:getCompletionVariants(java.lang.String,com.intellij.psi.PsiElement,com.intellij.util.ProcessingContext):java.lang.Object[]
+- getDeclarationElement():com.jetbrains.python.psi.PyQualifiedNameOwner
+- a:getName():java.lang.String
+- a:isBuiltin():Z
+- a:resolveMember(java.lang.String,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.AccessDirection,com.jetbrains.python.psi.resolve.PyResolveContext):java.util.List
+f:com.jetbrains.python.psi.types.PyType$Companion
+com.jetbrains.python.psi.types.PyTypeParameterType
+- com.jetbrains.python.psi.types.PyType
+- getBound():com.jetbrains.python.psi.types.PyType
+- getDefaultType():com.intellij.openapi.util.Ref
+- a:getName():java.lang.String
+- a:getScopeOwner():com.jetbrains.python.psi.PyQualifiedNameOwner
+- getVariance():com.jetbrains.python.psi.types.PyVariance
+e:com.jetbrains.python.psi.types.PyTypeParameterType$Variance
+- java.lang.Enum
+- sf:BIVARIANT:com.jetbrains.python.psi.types.PyTypeParameterType$Variance
+- sf:CONTRAVARIANT:com.jetbrains.python.psi.types.PyTypeParameterType$Variance
+- sf:COVARIANT:com.jetbrains.python.psi.types.PyTypeParameterType$Variance
+- sf:INFER_VARIANCE:com.jetbrains.python.psi.types.PyTypeParameterType$Variance
+- sf:INVARIANT:com.jetbrains.python.psi.types.PyTypeParameterType$Variance
+- s:valueOf(java.lang.String):com.jetbrains.python.psi.types.PyTypeParameterType$Variance
+- s:values():com.jetbrains.python.psi.types.PyTypeParameterType$Variance[]
+c:com.jetbrains.python.psi.types.PyTypeProviderBase
+- com.jetbrains.python.psi.impl.PyTypeProvider
+- <init>():V
+- getCallType(com.jetbrains.python.psi.PyFunction,com.jetbrains.python.psi.PyCallSiteExpression,com.jetbrains.python.psi.types.TypeEvalContext):com.intellij.openapi.util.Ref
+- getCallableType(com.jetbrains.python.psi.PyCallable,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- getContextManagerVariableType(com.jetbrains.python.psi.PyClass,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- getGenericSubstitutions(com.jetbrains.python.psi.PyClass,com.jetbrains.python.psi.types.TypeEvalContext):java.util.Map
+- getGenericType(com.jetbrains.python.psi.PyClass,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- getMemberTypes(com.jetbrains.python.psi.types.PyType,java.lang.String,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.AccessDirection,com.jetbrains.python.psi.resolve.PyResolveContext):java.util.List
+- getParameterType(com.jetbrains.python.psi.PyNamedParameter,com.jetbrains.python.psi.PyFunction,com.jetbrains.python.psi.types.TypeEvalContext):com.intellij.openapi.util.Ref
+- getReferenceExpressionType(com.jetbrains.python.psi.PyReferenceExpression,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
+- getReferenceType(com.intellij.psi.PsiElement,com.jetbrains.python.psi.types.TypeEvalContext,com.intellij.psi.PsiElement):com.intellij.openapi.util.Ref
+- getReturnType(com.jetbrains.python.psi.PyCallable,com.jetbrains.python.psi.types.TypeEvalContext):com.intellij.openapi.util.Ref
+- prepareCalleeTypeForCall(com.jetbrains.python.psi.types.PyType,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.types.TypeEvalContext):com.intellij.openapi.util.Ref
+com.jetbrains.python.psi.types.PyTypeVarTupleType
+- com.jetbrains.python.psi.types.PyPositionalVariadicType
+- com.jetbrains.python.psi.types.PyTypeParameterType
+- a:getDefaultType():com.intellij.openapi.util.Ref
+com.jetbrains.python.psi.types.PyTypeVarType
+- com.jetbrains.python.psi.types.PyInstantiableType
+- com.jetbrains.python.psi.types.PyTypeParameterType
+- a:getConstraints():java.util.List
+com.jetbrains.python.psi.types.PyUnpackedTupleType
+- com.jetbrains.python.psi.types.PyPositionalVariadicType
+- a:getElementTypes():java.util.List
+- a:isUnbound():Z
+e:com.jetbrains.python.psi.types.PyVariance
+- java.lang.Enum
+- sf:BIVARIANT:com.jetbrains.python.psi.types.PyVariance
+- sf:CONTRAVARIANT:com.jetbrains.python.psi.types.PyVariance
+- sf:COVARIANT:com.jetbrains.python.psi.types.PyVariance
+- sf:INFER_VARIANCE:com.jetbrains.python.psi.types.PyVariance
+- sf:INVARIANT:com.jetbrains.python.psi.types.PyVariance
+- s:getEntries():kotlin.enums.EnumEntries
+- f:isCompatibleWithActual(com.jetbrains.python.psi.types.PyVariance):Z
+- not():com.jetbrains.python.psi.types.PyVariance
+- times(com.jetbrains.python.psi.types.PyVariance):com.jetbrains.python.psi.types.PyVariance
+- times(com.jetbrains.python.psi.types.PyVarianceIntermediateResult):com.jetbrains.python.psi.types.PyVariance
+- s:valueOf(java.lang.String):com.jetbrains.python.psi.types.PyVariance
+- s:values():com.jetbrains.python.psi.types.PyVariance[]
+a:com.jetbrains.python.psi.types.TypeEvalContext
+- sf:Companion:com.jetbrains.python.psi.types.TypeEvalContext$Companion
+- p:<init>():V
+- a:allowCallContext(com.intellij.psi.PsiElement):Z
+- a:allowDataFlow(com.intellij.psi.PsiElement):Z
+- a:allowReturnTypes(com.intellij.psi.PsiElement):Z
+- sf:codeAnalysis(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile):com.jetbrains.python.psi.types.TypeEvalContext
+- sf:codeCompletion(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile):com.jetbrains.python.psi.types.TypeEvalContext
+- sf:codeInsightFallback(com.intellij.openapi.project.Project):com.jetbrains.python.psi.types.TypeEvalContext
+- sf:deepCodeInsight(com.intellij.openapi.project.Project):com.jetbrains.python.psi.types.TypeEvalContext
+- a:getKnownReturnType(com.jetbrains.python.psi.PyCallable):com.jetbrains.python.psi.types.PyType
+- a:getKnownType(com.jetbrains.python.psi.PyTypedElement):com.jetbrains.python.psi.types.PyType
+- a:getOrigin():com.intellij.psi.PsiFile
+- a:getProcessingContext():com.intellij.util.ProcessingContext
+- a:getReturnType(com.jetbrains.python.psi.PyCallable):com.jetbrains.python.psi.types.PyType
+- a:getType(com.jetbrains.python.psi.PyTypedElement):com.jetbrains.python.psi.types.PyType
+- a:maySwitchToAST(com.intellij.psi.PsiElement):Z
+- a:printTrace():java.lang.String
+- a:trace(java.lang.String,java.lang.Object[]):V
+- a:traceIndent():V
+- a:traceUnindent():V
+- a:traceWithIndent(java.lang.String,kotlin.jvm.functions.Function0):V
+- a:tracing():Z
+- sf:userInitiated(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile):com.jetbrains.python.psi.types.TypeEvalContext
+- a:withTracing():com.jetbrains.python.psi.types.TypeEvalContext
+f:com.jetbrains.python.psi.types.TypeEvalContext$Companion
+- f:codeAnalysis(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile):com.jetbrains.python.psi.types.TypeEvalContext
+- f:codeCompletion(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile):com.jetbrains.python.psi.types.TypeEvalContext
+- f:codeInsightFallback(com.intellij.openapi.project.Project):com.jetbrains.python.psi.types.TypeEvalContext
+- f:deepCodeInsight(com.intellij.openapi.project.Project):com.jetbrains.python.psi.types.TypeEvalContext
+- f:userInitiated(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile):com.jetbrains.python.psi.types.TypeEvalContext
+a:com.jetbrains.python.psi.types.TypeEvalContext$Key
+pf:com.jetbrains.python.psi.types.TypeEvalContext$KeyImpl
+- com.jetbrains.python.psi.types.TypeEvalContext$Key
+- sf:INSTANCE:com.jetbrains.python.psi.types.TypeEvalContext$KeyImpl
+c:com.jetbrains.python.toolbox.Maybe
+- <init>():V
+- <init>(java.lang.Object):V
+- isDefined():Z
+- value():java.lang.Object
+- valueOrNull():java.lang.Object

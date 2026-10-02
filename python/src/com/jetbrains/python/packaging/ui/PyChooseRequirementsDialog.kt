@@ -21,12 +21,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBLabel
 import com.jetbrains.python.PyBundle
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class PyChooseRequirementsDialog<T : Any>(project: Project,
                                           requirements: List<T>,
                                           presenter: (T) -> String) : DialogWrapper(project, false) {

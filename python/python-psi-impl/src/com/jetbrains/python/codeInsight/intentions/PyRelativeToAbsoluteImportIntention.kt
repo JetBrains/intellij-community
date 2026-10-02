@@ -7,6 +7,7 @@ import com.intellij.modcommand.Presentation
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.extensions.getQName
 import com.jetbrains.python.psi.PyFile
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Converts location of 'from .three import foo' to absolute path, e.g. 'from one.two.three import foo'.
@@ -14,6 +15,7 @@ import com.jetbrains.python.psi.PyFile
  * @see PyRelativeToAbsoluteImportIntention
  * @author Aleksei.Kniazev
  */
+@ApiStatus.Internal
 class PyRelativeToAbsoluteImportIntention : PyConvertImportIntentionAction("INTN.convert.relative.to.absolute") {
   override fun getPresentation(context: ActionContext, element: PsiElement): Presentation? {
     if (context.file !is PyFile) return null

@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +49,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * Replaces expressions like {@code "%s" % values} with likes of {@code "{0:s}".format(values)}.
  * <br/>
  */
+@ApiStatus.Internal
 public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionAction {
 
   private static final Pattern FORMAT_PATTERN =

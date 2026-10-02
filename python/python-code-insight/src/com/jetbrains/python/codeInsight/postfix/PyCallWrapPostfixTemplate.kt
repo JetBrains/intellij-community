@@ -5,11 +5,13 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvid
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Wraps an expression with a call to a built-in such as `str`, `list`, `set`, `dict` or `tuple`:
  * `expr.list` -> `list(expr)`.
  */
+@ApiStatus.Internal
 class PyCallWrapPostfixTemplate(
   private val function: String,
   provider: PostfixTemplateProvider,

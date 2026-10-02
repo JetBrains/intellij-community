@@ -6,11 +6,13 @@ import com.intellij.psi.PsiElement
 import com.jetbrains.python.documentation.PythonDocumentationLinkProvider
 import com.jetbrains.python.documentation.PythonDocumentationMap
 import com.jetbrains.python.documentation.PythonDocumentationProvider
+import org.jetbrains.annotations.ApiStatus
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
 
 
+@ApiStatus.Internal
 class SciPyDocumentationLinkProvider : PythonDocumentationLinkProvider {
 
   private val nameToWebpageName: Map<String, String> by lazy {

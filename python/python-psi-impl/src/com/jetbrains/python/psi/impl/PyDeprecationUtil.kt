@@ -6,9 +6,11 @@ import com.jetbrains.python.ast.PyAstStringLiteralExpression
 import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.resolve.PyResolveUtil
+import org.jetbrains.annotations.ApiStatus
 
-val deprecationDecorators = arrayOf("typing_extensions.deprecated", "warnings.deprecated")
+@ApiStatus.Internal val deprecationDecorators = arrayOf("typing_extensions.deprecated", "warnings.deprecated")
 
+@ApiStatus.Internal
 fun extractDeprecationMessageFromDecorator(element: PyAstDecoratable): String? {
   val deprecatedDecorator = element.decoratorList?.decorators?.firstOrNull { it.name == "deprecated" } ?: return null
   if (deprecatedDecorator.arguments.isEmpty()) {

@@ -16,7 +16,9 @@
 package com.jetbrains.python.testing.doctest;
 
 import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public interface PythonDocTestRunConfigurationParams {
   AbstractPythonTestRunConfigurationParams getTestRunConfigurationParams();
 

@@ -11,7 +11,9 @@ import com.jetbrains.python.psi.types.PyFunctionType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeProviderBase
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyAncestorTypeProvider : PyTypeProviderBase() {
 
   override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {

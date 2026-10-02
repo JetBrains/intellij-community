@@ -3,12 +3,14 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * TODO: Move methods to {@link PyCustomMember}. Only dependency hell prevents me from doing it
  */
+@ApiStatus.Internal
 public final class PyCustomMemberUtils {
   private PyCustomMemberUtils() {
   }

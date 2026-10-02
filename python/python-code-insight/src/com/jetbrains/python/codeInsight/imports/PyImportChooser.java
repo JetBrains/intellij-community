@@ -16,6 +16,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.PyPsiBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -27,6 +28,7 @@ import java.awt.Component;
 import java.awt.Font;
 import java.util.List;
 
+@ApiStatus.Internal
 public class PyImportChooser implements ImportChooser {
 
   @Override

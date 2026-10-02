@@ -4,7 +4,9 @@ package com.jetbrains.python.psi.types
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object PyABCUtil {
   @JvmStatic
   fun isSubclass(subClass: PyClass, superClass: PyClass, context: TypeEvalContext?): Boolean {

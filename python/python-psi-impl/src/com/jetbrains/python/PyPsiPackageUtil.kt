@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ResourceUtil
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageName
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
 /**
@@ -12,6 +13,7 @@ import java.io.IOException
  *
  * @see PyPackageUtil for other package utility methods, including run-time dependent parts.
  */
+@ApiStatus.Internal
 object PyPsiPackageUtil {
   private val LOG = Logger.getInstance(PyPsiPackageUtil::class.java)
 

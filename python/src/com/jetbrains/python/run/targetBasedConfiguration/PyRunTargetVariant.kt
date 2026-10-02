@@ -14,6 +14,7 @@ import com.jetbrains.python.extensions.resolveToElement
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.PythonRunConfigurationForm
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 /**
@@ -49,6 +50,7 @@ fun targetAsPsiElement(targetType: PyRunTargetVariant,
 /**
  * Converts target to file if possible
  */
+@ApiStatus.Internal
 fun targetAsVirtualFile(targetType: PyRunTargetVariant, target: String): VirtualFile? {
   if (targetType == PyRunTargetVariant.PATH) {
     return StandardFileSystems.local().findFileByPath(target)

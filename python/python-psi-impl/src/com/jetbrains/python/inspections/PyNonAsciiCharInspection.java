@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import static com.jetbrains.python.inspections.PyMandatoryEncodingInspection.enc
 /**
  * User : catherine
  */
+@ApiStatus.Internal
 public final class PyNonAsciiCharInspection extends PyInspection {
 
   @Override

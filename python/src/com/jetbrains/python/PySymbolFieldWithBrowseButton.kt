@@ -45,6 +45,7 @@ import com.jetbrains.python.psi.stubs.PyFunctionNameIndex
 import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -52,6 +53,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  * Only source based packages are supported.
  * [PySymbolFieldWithBrowseButton] use this function to get list of root names
  */
+@ApiStatus.Internal
 fun isPythonModule(element: PsiElement): Boolean = element is PyFile || (element as? PsiDirectory)?.let {
   it.findFile(PyNames.INIT_DOT_PY) != null
 } ?: false
@@ -63,6 +65,7 @@ fun isPythonModule(element: PsiElement): Boolean = element is PyFile || (element
  * @param startFromDirectory symbols resolved against module, but may additionally be resolved against this folder if provided like in [QNameResolveContext.folderToStart]
  *
  */
+@ApiStatus.Internal
 class PySymbolFieldWithBrowseButton(contextAnchor: ContextAnchor,
                                     filter: ((PsiElement) -> Boolean)? = null,
                                     startFromDirectory: (() -> VirtualFile)? = null) : TextAccessor, ComponentWithBrowseButton<TextFieldWithCompletion>(

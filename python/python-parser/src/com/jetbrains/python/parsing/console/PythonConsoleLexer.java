@@ -9,6 +9,7 @@ import com.jetbrains.python.lexer.PythonIndentingLexer;
 import com.jetbrains.python.lexer.PythonLexerKind;
 import com.jetbrains.python.psi.PyElementType;
 
+import org.jetbrains.annotations.ApiStatus;
 import java.util.Map;
 
 import static com.jetbrains.python.PyTokenTypes.BAD_CHARACTER;
@@ -19,6 +20,7 @@ import static com.jetbrains.python.PyTokenTypes.STATEMENT_BREAK;
 import static com.jetbrains.python.parsing.console.PyConsoleTokenTypes.MAGIC_COMMAND_LINE;
 import static com.jetbrains.python.parsing.console.PyConsoleTokenTypes.SHELL_COMMAND;
 
+@ApiStatus.Internal
 public class PythonConsoleLexer extends PythonIndentingLexer {
   public PythonConsoleLexer() {
     super(PythonLexerKind.CONSOLE);

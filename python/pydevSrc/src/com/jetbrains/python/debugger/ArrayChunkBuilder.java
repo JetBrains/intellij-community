@@ -15,8 +15,10 @@
  */
 package com.jetbrains.python.debugger;
 
+import org.jetbrains.annotations.ApiStatus;
 import java.util.List;
 
+@ApiStatus.Internal
 public class ArrayChunkBuilder {
   private PyDebugValue myValue;
   private String myPresentation;

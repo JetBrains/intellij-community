@@ -173,6 +173,7 @@ fun fromFoothold(foothold: PsiElement): PyQualifiedNameResolveContext {
 /**
  * Creates a [PyQualifiedNameResolveContext] from a [module].
  */
+@ApiStatus.Internal
 fun fromModule(module: Module): PyQualifiedNameResolveContext =
   PyQualifiedNameResolveContextImpl(PsiManager.getInstance(module.project), module, null)
 
@@ -235,6 +236,7 @@ private fun relativeResultsFromSkeletons(name: QualifiedName, context: PyQualifi
   return emptyList()
 }
 
+@ApiStatus.Internal
 fun relativeResultsForStubsFromRoots(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
   if (context.footholdFile !is PyiFile || context.relativeLevel <= 0) {
     return emptyList()
@@ -476,6 +478,7 @@ private fun resolvedElementPriority(element: PsiElement, module: Module?): Prior
   }
 }
 
+@ApiStatus.Internal
 fun isInSkeletons(element: PsiElement): Boolean {
   val interpreter = ModuleUtilCore.findModuleForPsiElement(element)?.pythonInterpreterIfReady() ?: return false
   val vFile = (if (element is PsiDirectory) element.virtualFile else element.containingFile?.virtualFile) ?: return false

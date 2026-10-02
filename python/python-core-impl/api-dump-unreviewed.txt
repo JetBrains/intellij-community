@@ -1,0 +1,58 @@
+com.jetbrains.python.extensions.ContextAnchor
+- a:getProject():com.intellij.openapi.project.Project
+- a:getQualifiedNameResolveContext():com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
+- getRoots():com.intellij.openapi.vfs.VirtualFile[]
+- a:getScope():com.intellij.psi.search.GlobalSearchScope
+- a:getSdk():com.intellij.openapi.projectRoots.Sdk
+f:com.jetbrains.python.extensions.ModuleBasedContextAnchor
+- com.jetbrains.python.extensions.ContextAnchor
+- <init>(com.intellij.openapi.module.Module):V
+- f:getModule():com.intellij.openapi.module.Module
+- getProject():com.intellij.openapi.project.Project
+- getQualifiedNameResolveContext():com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
+- getRoots():com.intellij.openapi.vfs.VirtualFile[]
+- getScope():com.intellij.psi.search.GlobalSearchScope
+- getSdk():com.intellij.openapi.projectRoots.Sdk
+f:com.jetbrains.python.extensions.NameAndElement
+- <init>(com.intellij.psi.util.QualifiedName,com.intellij.psi.PsiElement):V
+- f:component1():com.intellij.psi.util.QualifiedName
+- f:component2():com.intellij.psi.PsiElement
+- f:copy(com.intellij.psi.util.QualifiedName,com.intellij.psi.PsiElement):com.jetbrains.python.extensions.NameAndElement
+- bs:copy$default(com.jetbrains.python.extensions.NameAndElement,com.intellij.psi.util.QualifiedName,com.intellij.psi.PsiElement,I,java.lang.Object):com.jetbrains.python.extensions.NameAndElement
+- equals(java.lang.Object):Z
+- f:getElement():com.intellij.psi.PsiElement
+- f:getName():com.intellij.psi.util.QualifiedName
+- hashCode():I
+f:com.jetbrains.python.extensions.ProjectSdkContextAnchor
+- com.jetbrains.python.extensions.ContextAnchor
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk):V
+- getProject():com.intellij.openapi.project.Project
+- getQualifiedNameResolveContext():com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
+- getRoots():com.intellij.openapi.vfs.VirtualFile[]
+- getScope():com.intellij.psi.search.GlobalSearchScope
+- getSdk():com.intellij.openapi.projectRoots.Sdk
+f:com.jetbrains.python.extensions.QNameResolveContext
+- <init>(com.jetbrains.python.extensions.ContextAnchor,com.intellij.openapi.projectRoots.Sdk,com.jetbrains.python.psi.types.TypeEvalContext,com.intellij.openapi.vfs.VirtualFile,Z):V
+- b:<init>(com.jetbrains.python.extensions.ContextAnchor,com.intellij.openapi.projectRoots.Sdk,com.jetbrains.python.psi.types.TypeEvalContext,com.intellij.openapi.vfs.VirtualFile,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():com.jetbrains.python.extensions.ContextAnchor
+- f:component2():com.intellij.openapi.projectRoots.Sdk
+- f:component3():com.jetbrains.python.psi.types.TypeEvalContext
+- f:component4():com.intellij.openapi.vfs.VirtualFile
+- f:component5():Z
+- f:copy(com.jetbrains.python.extensions.ContextAnchor,com.intellij.openapi.projectRoots.Sdk,com.jetbrains.python.psi.types.TypeEvalContext,com.intellij.openapi.vfs.VirtualFile,Z):com.jetbrains.python.extensions.QNameResolveContext
+- bs:copy$default(com.jetbrains.python.extensions.QNameResolveContext,com.jetbrains.python.extensions.ContextAnchor,com.intellij.openapi.projectRoots.Sdk,com.jetbrains.python.psi.types.TypeEvalContext,com.intellij.openapi.vfs.VirtualFile,Z,I,java.lang.Object):com.jetbrains.python.extensions.QNameResolveContext
+- equals(java.lang.Object):Z
+- f:getAllowInaccurateResult():Z
+- f:getContextAnchor():com.jetbrains.python.extensions.ContextAnchor
+- f:getEvalContext():com.jetbrains.python.psi.types.TypeEvalContext
+- f:getFolderToStart():com.intellij.openapi.vfs.VirtualFile
+- f:getSdk():com.intellij.openapi.projectRoots.Sdk
+- hashCode():I
+f:com.jetbrains.python.extensions.QualifiedNameExtKt
+- sf:getElementAndResolvableName(com.intellij.psi.util.QualifiedName,com.jetbrains.python.extensions.QNameResolveContext,Z):com.jetbrains.python.extensions.NameAndElement
+- bs:getElementAndResolvableName$default(com.intellij.psi.util.QualifiedName,com.jetbrains.python.extensions.QNameResolveContext,Z,I,java.lang.Object):com.jetbrains.python.extensions.NameAndElement
+- sf:getRelativeNameTo(com.intellij.psi.util.QualifiedName,com.intellij.psi.util.QualifiedName):com.intellij.psi.util.QualifiedName
+- sf:resolveToElement(com.intellij.psi.util.QualifiedName,com.jetbrains.python.extensions.QNameResolveContext,Z):com.intellij.psi.PsiElement
+- bs:resolveToElement$default(com.intellij.psi.util.QualifiedName,com.jetbrains.python.extensions.QNameResolveContext,Z,I,java.lang.Object):com.intellij.psi.PsiElement
+f:com.jetbrains.python.extensions.python.PyCallExpressionExtKt
+- sf:isCalleeName(com.jetbrains.python.psi.PyCallExpression,com.jetbrains.python.nameResolver.FQNamesProvider[]):Z

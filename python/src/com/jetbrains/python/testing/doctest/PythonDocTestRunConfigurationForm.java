@@ -21,6 +21,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
 import com.jetbrains.python.testing.PyTestSharedForm;
 import com.jetbrains.python.testing.PythonTestLegacyRunConfigurationForm;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JCheckBox;
@@ -32,6 +33,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.BorderLayout;
 
+@ApiStatus.Internal
 public class PythonDocTestRunConfigurationForm implements PythonDocTestRunConfigurationParams {
   private final JPanel myRootPanel;
   private final PythonTestLegacyRunConfigurationForm myTestRunConfigurationForm;

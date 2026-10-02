@@ -28,11 +28,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.ast.PyAstDocStringOwner;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.editor.PythonEnterHandler.DocstringState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User : catherine
  */
+@ApiStatus.Internal
 public final class PythonSpaceHandler extends TypedHandlerDelegate {
   @Override
   public @NotNull Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {

@@ -10,9 +10,11 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PyDefaultArgumentInspection extends PyInspection {
 
   @Override

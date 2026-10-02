@@ -31,8 +31,10 @@ import com.jetbrains.python.run.CommandLinePatcher
 import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.run.PythonScriptTargetedCommandLineBuilder
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
+@ApiStatus.Internal
 class PyRerunFailedTestsAction(componentContainer: ComponentContainer) : AbstractRerunFailedTestsAction(componentContainer) {
   override fun getRunProfile(environment: ExecutionEnvironment): MyRunProfile? {
     val model = model ?: return null

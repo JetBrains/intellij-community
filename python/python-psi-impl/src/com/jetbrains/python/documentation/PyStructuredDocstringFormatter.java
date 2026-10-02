@@ -16,12 +16,14 @@ import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.documentation.docstrings.DocStringParser;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.PyIndentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 
+@ApiStatus.Internal
 public final class PyStructuredDocstringFormatter {
 
   private static final Logger LOG = Logger.getInstance(PyStructuredDocstringFormatter.class);

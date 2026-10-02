@@ -9,7 +9,9 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyOverridesInspection : PyInspection() {
   override fun buildVisitor(
     holder: ProblemsHolder,

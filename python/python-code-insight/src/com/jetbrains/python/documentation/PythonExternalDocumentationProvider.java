@@ -26,6 +26,7 @@ import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.pyi.PyiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.HttpStatusException;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class PythonExternalDocumentationProvider extends PythonDocumentationProvider implements ExternalDocumentationProvider {
   private static final Logger LOG = Logger.getInstance(PythonExternalDocumentationProvider.class);
 

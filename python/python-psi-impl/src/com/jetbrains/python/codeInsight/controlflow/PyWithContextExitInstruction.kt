@@ -5,6 +5,7 @@ import com.intellij.codeInsight.controlflow.ControlFlowBuilder
 import com.intellij.codeInsight.controlflow.impl.InstructionImpl
 import com.jetbrains.python.psi.PyWithItem
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Each `with` statement surrounds its block with an implicit `try/except`. Depending on the return value
@@ -34,6 +35,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  *
  * @see PyWithItem.isSuppressingExceptions
  */
+@ApiStatus.Internal
 class PyWithContextExitInstruction(builder: ControlFlowBuilder, withItem: PyWithItem) : InstructionImpl(builder, withItem) {
   override fun getElementPresentation(): String = "exit context manager: ${element.text}"
   override fun getElement(): PyWithItem = super.getElement() as PyWithItem

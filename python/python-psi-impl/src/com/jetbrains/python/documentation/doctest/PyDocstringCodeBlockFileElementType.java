@@ -3,8 +3,10 @@ package com.jetbrains.python.documentation.doctest;
 
 import com.intellij.lang.Language;
 import com.jetbrains.python.psi.PyFileElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyDocstringCodeBlockFileElementType extends PyFileElementType {
   public PyDocstringCodeBlockFileElementType(Language language) {
     super(language);

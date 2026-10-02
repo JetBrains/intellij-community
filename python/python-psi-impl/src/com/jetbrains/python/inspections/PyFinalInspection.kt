@@ -55,7 +55,9 @@ import com.jetbrains.python.psi.types.PySelfType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.refactoring.PyDefUseUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyFinalInspection : PyInspection() {
 
   override fun buildVisitor(

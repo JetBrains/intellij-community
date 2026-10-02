@@ -5,6 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.util.containers.SLRUMap
 import com.jetbrains.python.psi.LanguageLevel
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Caches the output of the external docstring formatter (see [PyRuntimeDocstringFormatter]).
@@ -16,6 +17,7 @@ import com.jetbrains.python.psi.LanguageLevel
  * instead of spawning another process.
  */
 @Service(Service.Level.APP)
+@ApiStatus.Internal
 class PyDocstringFormatterCache {
 
   data class Key(

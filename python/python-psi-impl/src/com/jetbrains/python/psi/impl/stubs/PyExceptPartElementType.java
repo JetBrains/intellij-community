@@ -10,11 +10,13 @@ import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyExceptPartImpl;
 import com.jetbrains.python.psi.stubs.PyExceptPartStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 
+@ApiStatus.Internal
 public class PyExceptPartElementType extends PyStubElementType<PyExceptPartStub, PyExceptPart> {
   public PyExceptPartElementType() {
     super("EXCEPT_PART");

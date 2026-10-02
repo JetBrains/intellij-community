@@ -20,6 +20,7 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -33,6 +34,7 @@ import java.util.Collection;
  *            for more info
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public interface MembersBasedView<C extends MembersViewInitializationInfo> {
   /**
    * Display conflict dialogs.

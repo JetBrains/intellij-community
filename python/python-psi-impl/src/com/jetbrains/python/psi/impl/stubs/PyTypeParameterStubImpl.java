@@ -6,9 +6,11 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyTypeParameter;
 import com.jetbrains.python.psi.stubs.PyTypeParameterStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class PyTypeParameterStubImpl extends StubBase<PyTypeParameter> implements PyTypeParameterStub {
 
   private final String myName;

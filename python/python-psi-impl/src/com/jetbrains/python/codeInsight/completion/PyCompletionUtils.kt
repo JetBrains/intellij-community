@@ -32,6 +32,7 @@ import com.jetbrains.python.psi.resolve.pythonSdkIfReady
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 import one.util.streamex.StreamEx
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Various utils for custom completions
@@ -42,6 +43,7 @@ import one.util.streamex.StreamEx
  *
  * auto-insert the obvious only case; else show other cases.
  */
+@ApiStatus.Internal
 fun autoInsertSingleItem(context: AutoCompletionContext): AutoCompletionDecision =
   if (context.items.size == 1) {
     AutoCompletionDecision.insertItem(context.items.first())
@@ -51,7 +53,9 @@ fun autoInsertSingleItem(context: AutoCompletionContext): AutoCompletionDecision
   }
 
 
+@ApiStatus.Internal
 fun CompletionParameters.getPyClass(): PyClass? = (ScopeUtil.getScopeOwner(position) as? PyFunction)?.containingClass
+@ApiStatus.Internal
 fun CompletionParameters.getFile(): PsiFile? = (ScopeUtil.getScopeOwner(position) as? PyFunction)?.containingFile
 
 
@@ -105,6 +109,7 @@ fun addFunctionToResult(
  * Can be used to create lookup elements for packages and modules.
  * Uses canonical import path for item representation.
  */
+@ApiStatus.Internal
 fun createLookupElementBuilder(file: PsiFile, element: PsiFileSystemItem): LookupElementBuilder? {
   val name = FileUtil.getNameWithoutExtension(element.name)
   if (!PyNames.isIdentifier(name)) return null
@@ -126,7 +131,7 @@ private const val LOCATION = 100
 private const val PRIVATE_API = 1_000
 private const val LOCATION_NOT_YET_IMPORTED = 10_000
 private const val UNDERSCORE_IN_NAME = 100_000
-const val FALLBACK_WEIGHT = -1_000_000
+@ApiStatus.Internal const val FALLBACK_WEIGHT = -1_000_000
 
 
 /**
@@ -134,6 +139,7 @@ const val FALLBACK_WEIGHT = -1_000_000
  * @param completionLocation file, in which the completion is taking place
  * @param nameOnly indicates that we just need to check the name for underscores
  */
+@ApiStatus.Internal
 fun computeCompletionWeight(
   element: PsiElement,
   elementName: String?,
@@ -190,6 +196,7 @@ fun computeCompletionWeight(
   return weight
 }
 
+@ApiStatus.Internal
 fun hasImportsFrom(file: PsiFile, qName: QualifiedName): Boolean {
   return if (file is PyFile) {
     StreamEx.of(file.fromImports).map<QualifiedName> { it.getImportSourceQName() }

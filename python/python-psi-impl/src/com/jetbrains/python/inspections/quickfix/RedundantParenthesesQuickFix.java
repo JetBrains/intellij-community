@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyParenthesizedExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * QuickFix to remove redundant parentheses from if/while/except statement
  */
+@ApiStatus.Internal
 public class RedundantParenthesesQuickFix extends PsiUpdateModCommandQuickFix {
   private static final Logger LOG = Logger.getInstance(RedundantParenthesesQuickFix.class);
 

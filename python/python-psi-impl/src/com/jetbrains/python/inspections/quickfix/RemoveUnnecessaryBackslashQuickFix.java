@@ -11,6 +11,7 @@ import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.editor.PyEditorHandlerConfig;
 import com.jetbrains.python.psi.PyParenthesizedExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * QuickFix to remove all unnecessary backslashes in expression
  */
+@ApiStatus.Internal
 public class RemoveUnnecessaryBackslashQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   public @NotNull String getFamilyName() {

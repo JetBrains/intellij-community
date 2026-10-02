@@ -10,10 +10,12 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
+@ApiStatus.Internal
 public class RemovePrefixQuickFix extends PsiUpdateModCommandQuickFix {
   private final String myPrefix;
 

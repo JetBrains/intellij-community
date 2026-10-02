@@ -16,8 +16,10 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.PythonConfigurationType
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+@ApiStatus.Internal
 class PyRunAnythingFileProvider : RunAnythingCommandLineProvider() {
   override fun getHelpCommand() = "python"
 
@@ -78,5 +80,5 @@ class PyRunAnythingFileProvider : RunAnythingCommandLineProvider() {
   }
 }
 
-val PYTHON_FLAGS = listOf("-b", "-B", "-c", "-d", "-E", "-h", "-i", "-I", "-m", "-O", "-OO", "-q", "-s", "-S", "-u", "-v", "-V", "-W",
+@ApiStatus.Internal val PYTHON_FLAGS = listOf("-b", "-B", "-c", "-d", "-E", "-h", "-i", "-I", "-m", "-O", "-OO", "-q", "-s", "-S", "-u", "-v", "-V", "-W",
                           "-x", "-X").asSequence()

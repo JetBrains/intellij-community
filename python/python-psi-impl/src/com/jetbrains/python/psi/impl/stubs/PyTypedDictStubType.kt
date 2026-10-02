@@ -5,8 +5,10 @@ import com.intellij.psi.stubs.StubInputStream
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.stubs.PyTypedDictStub
 
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
+@ApiStatus.Internal
 class PyTypedDictStubType : CustomTargetExpressionStubType<PyTypedDictStub>() {
 
   override fun createStub(psi: PyTargetExpression): PyTypedDictStub? {

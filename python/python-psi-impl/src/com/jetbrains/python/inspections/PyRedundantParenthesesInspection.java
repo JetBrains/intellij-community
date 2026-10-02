@@ -32,6 +32,7 @@ import com.jetbrains.python.psi.PyWhilePart;
 import com.jetbrains.python.psi.PyYieldExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -42,6 +43,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
  * <p>
  * Inspection to detect redundant parentheses in if/while statement.
  */
+@ApiStatus.Internal
 public final class PyRedundantParenthesesInspection extends PyInspection {
   private final SmartSerializer mySerializer = new SmartSerializer();
 

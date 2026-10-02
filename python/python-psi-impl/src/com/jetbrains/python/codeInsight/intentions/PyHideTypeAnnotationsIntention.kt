@@ -10,10 +10,12 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyUtil
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Folds type annotations in Python code
  */
+@ApiStatus.Internal
 class PyHideTypeAnnotationsIntention : PyBaseIntentionAction() {
   override fun getFamilyName(): String {
     return PyPsiBundle.message("INTN.NAME.hide.type.annotations")

@@ -6,8 +6,10 @@ import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.stubs.PyExceptPartStub;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public class PyExceptPartStubImpl extends StubBase<PyExceptPart> implements PyExceptPartStub {
   protected PyExceptPartStubImpl(final StubElement parent) {
     super(parent, PyStubElementTypes.EXCEPT_PART);

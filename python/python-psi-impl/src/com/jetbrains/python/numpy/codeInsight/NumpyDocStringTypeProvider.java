@@ -36,6 +36,7 @@ import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Substring;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +58,7 @@ import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
  *
  * @author avereshchagin
  */
+@ApiStatus.Internal
 public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   private static final Map<String, String> NUMPY_ALIAS_TO_REAL_TYPE = new HashMap<>();
   private static final Pattern REDIRECT = Pattern.compile("^Refer to `(.*)` for full documentation.$");

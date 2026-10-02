@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.PyExpressionStatement;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyTupleExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  * QuickFix to replace statement that has no effect with function call
  */
+@ApiStatus.Internal
 public class StatementEffectFunctionCallQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   public @NotNull String getFamilyName() {

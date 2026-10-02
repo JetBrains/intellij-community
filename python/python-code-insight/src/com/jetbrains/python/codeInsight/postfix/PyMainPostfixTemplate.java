@@ -17,8 +17,10 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.refactoring.surround.surrounders.statements.PyStatementSurrounder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyMainPostfixTemplate extends SurroundPostfixTemplateBase implements DumbAware {
 
   public static final @NlsSafe String DESCR = "if __name__ == '__main__': expr";

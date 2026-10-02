@@ -19,6 +19,7 @@ import org.intellij.lang.regexp.psi.RegExpNamedCharacter;
 import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
 import org.intellij.lang.regexp.psi.RegExpNumber;
 import org.intellij.lang.regexp.psi.RegExpSimpleClass;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.util.EnumSet;
 
 import static com.jetbrains.python.codeInsight.regexp.PythonMrabRegexpKt.isMrabRegexp;
 
+@ApiStatus.Internal
 public final class PythonRegExpHost implements RegExpLanguageHost {
   private final DefaultRegExpPropertiesProvider myPropertiesProvider;
 

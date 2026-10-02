@@ -14,11 +14,13 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.prevLeafs
 import com.intellij.python.requirements.parser.psi.RequirementsTypes
 import com.jetbrains.python.packaging.requirement.PyRequirementEnvMarkerType
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Completes PEP 508 environment-marker names (`python_version`, `sys_platform`, …) from
  * [PyRequirementEnvMarkerType] after `;`, `and`, `or`, or `(` in a requirement's marker section.
  */
+@ApiStatus.Internal
 class RequirementsEnvMarkerCompletionContributor : CompletionContributor() {
   override fun beforeCompletion(context: CompletionInitializationContext) {
     if (context.file !is RequirementsFile) return

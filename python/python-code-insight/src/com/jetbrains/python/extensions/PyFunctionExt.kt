@@ -4,7 +4,9 @@ package com.jetbrains.python.extensions
 import com.jetbrains.python.FunctionParameter
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyParameter
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 fun PyFunction.getParameter(paramToSearch: FunctionParameter): PyParameter? {
   val parameterList = this.parameterList
   val position = paramToSearch.position

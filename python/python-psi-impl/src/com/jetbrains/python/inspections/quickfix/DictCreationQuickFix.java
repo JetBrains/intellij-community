@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.PyKeyValueExpression;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import java.util.Map;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
+@ApiStatus.Internal
 public class DictCreationQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   public @NotNull String getFamilyName() {

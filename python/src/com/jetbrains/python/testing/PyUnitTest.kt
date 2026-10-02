@@ -30,6 +30,7 @@ import java.util.function.Function
  * unittest
  */
 
+@ApiStatus.Internal
 class PyUnitTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
   PyAbstractTestSettingsEditor(
     PyTestSharedForm.create(configuration,
@@ -37,6 +38,7 @@ class PyUnitTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
                             PyTestCustomOption(PyUnitTestConfiguration::runnerScript, *PyRunTargetVariant.entries.toTypedArray(),
                                                helpKey = "runcfg.unittest.config.runnerScript.help")))
 
+@ApiStatus.Internal
 class PyUnitTestExecutionEnvironment(configuration: PyUnitTestConfiguration, environment: ExecutionEnvironment) :
   PyTestExecutionEnvironment<PyUnitTestConfiguration>(configuration, environment) {
 

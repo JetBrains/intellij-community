@@ -34,6 +34,7 @@ import javax.swing.JComponent
 
 private const val EVALUATION_TIMEOUT_STEP_MS = 500
 
+@ApiStatus.Internal
 class PyDebuggerConfigurable(private val myProject: Project) : SearchableConfigurable, Configurable.NoScroll, BackedByPersistentState {
 
   @ApiStatus.Internal

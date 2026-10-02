@@ -1,0 +1,6 @@
+com/intellij/mcpserver/McpToolset
+kotlin/jvm/internal/DefaultConstructorMarker
+kotlinx/serialization/descriptors/SerialDescriptor
+kotlinx/serialization/encoding/Decoder
+kotlinx/serialization/encoding/Encoder
+kotlinx/serialization/internal/GeneratedSerializer

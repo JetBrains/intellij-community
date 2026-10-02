@@ -19,6 +19,7 @@ import com.jetbrains.python.psi.resolve.isElementInSkeletons
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isNoneType
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * User: ktisha
@@ -28,6 +29,7 @@ import com.jetbrains.python.psi.types.isNoneType
  * Used when an assignment is done on a function call but the inferred function doesn't return anything.
  * Also reports when the result of such a function is used in other contexts (e.g., as an argument, in f-strings).
  */
+@ApiStatus.Internal
 class PyNoneFunctionAssignmentInspection : PyInspection() {
   override fun buildVisitor(
     holder: ProblemsHolder,

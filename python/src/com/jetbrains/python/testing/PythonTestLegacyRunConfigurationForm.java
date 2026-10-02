@@ -16,6 +16,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import com.jetbrains.python.run.PyCommonOptionsFormFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.AbstractButton;
@@ -42,6 +43,7 @@ import static com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfigurat
 /**
  * @author Leonid Shalupov
  */
+@ApiStatus.Internal
 public class PythonTestLegacyRunConfigurationForm implements AbstractPythonTestRunConfigurationParams, PanelWithAnchor {
   private final JPanel myRootPanel;
   private final LabeledComponentNoThrow myTestClassComponent;

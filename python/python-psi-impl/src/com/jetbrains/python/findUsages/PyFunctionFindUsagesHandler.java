@@ -2,6 +2,7 @@
 package com.jetbrains.python.findUsages;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.List;
 /**
  * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
  */
+@ApiStatus.Internal
 public class PyFunctionFindUsagesHandler extends PyFindUsagesHandler {
   private final List<PsiElement> myAllElements;
 

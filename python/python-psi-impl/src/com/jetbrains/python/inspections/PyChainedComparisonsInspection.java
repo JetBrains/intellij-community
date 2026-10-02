@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyLiteralExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * Inspection to detect chained comparisons which can be simplified
  * For instance, a < b and b < c  -->  a < b < c
  */
+@ApiStatus.Internal
 public final class PyChainedComparisonsInspection extends PyInspection {
 
   private static final String INSPECTION_SHORT_NAME = "PyChainedComparisonsInspection";

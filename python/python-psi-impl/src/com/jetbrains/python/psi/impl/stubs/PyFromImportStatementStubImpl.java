@@ -8,9 +8,11 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public class PyFromImportStatementStubImpl extends PyVersionSpecificStubBase<PyFromImportStatement> implements PyFromImportStatementStub {
   private final QualifiedName myImportSourceQName;
   private final boolean myStarImport;

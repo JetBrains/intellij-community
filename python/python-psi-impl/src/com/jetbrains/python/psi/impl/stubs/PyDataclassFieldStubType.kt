@@ -4,7 +4,9 @@ package com.jetbrains.python.psi.impl.stubs
 import com.intellij.psi.stubs.StubInputStream
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyDataclassFieldStubType : CustomTargetExpressionStubType<PyDataclassFieldStub>() {
 
   override fun createStub(psi: PyTargetExpression): PyDataclassFieldStub? = PyDataclassFieldStubImpl.create(psi)

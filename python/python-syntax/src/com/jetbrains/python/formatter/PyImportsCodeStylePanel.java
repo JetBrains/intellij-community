@@ -16,6 +16,7 @@ import com.intellij.uiDesigner.core.Spacer;
 import com.jetbrains.python.PySyntaxBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import java.util.ResourceBundle;
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
   private final JBCheckBox mySortImports;
   private final JBCheckBox mySortNamesInFromImports;

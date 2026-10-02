@@ -4,8 +4,10 @@ package com.jetbrains.python.psi.impl.stubs
 import com.intellij.psi.stubs.StubInputStream
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.stubs.PyTypingNewTypeStub
+import org.jetbrains.annotations.ApiStatus
 
 
+@ApiStatus.Internal
 class PyTypingNewTypeStubType : CustomTargetExpressionStubType<PyTypingNewTypeStub>() {
 
   override fun createStub(psi: PyTargetExpression): PyTypingNewTypeStub? {

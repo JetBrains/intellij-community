@@ -14,9 +14,11 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class PyMemberInplaceRenameHandler extends MemberInplaceRenameHandler {
   @Override
   protected boolean isAvailable(@Nullable PsiElement element,

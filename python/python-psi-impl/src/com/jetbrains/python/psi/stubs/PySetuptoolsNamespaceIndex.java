@@ -14,6 +14,7 @@ import com.intellij.util.indexing.hints.FileNameSuffixInputFilter;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@ApiStatus.Internal
 public final class PySetuptoolsNamespaceIndex extends ScalarIndexExtension<String> {
   public static final ID<String, Void> NAME = ID.create("Py.setuptools.namespace");
   private static final Pattern RE_NAMESPACE = Pattern.compile("sys\\.modules\\.setdefault\\('([^']*)'");

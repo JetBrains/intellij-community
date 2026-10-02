@@ -15,7 +15,9 @@ import com.jetbrains.python.documentation.docstrings.DocStringTagCompletionContr
 import com.jetbrains.python.psi.PyDocStringOwner
 import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.PyStringLiteralExpression
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class DocStringTagCompletionContributor : CompletionContributor(), DumbAware {
   init {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement().withParent(DOCSTRING_PATTERN),

@@ -78,6 +78,7 @@ import com.jetbrains.python.psi.PyTryPart;
 import com.jetbrains.python.psi.PyTypeAliasStatement;
 import com.jetbrains.python.psi.PyTypeParameter;
 import com.jetbrains.python.psi.PyWithItem;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,6 +96,7 @@ import static com.intellij.patterns.StandardPatterns.or;
  * element is cleared after matching.
  */
 @SuppressWarnings({"InstanceVariableOfConcreteClass"})
+@ApiStatus.Internal
 public final class PyKeywordCompletionContributor extends CompletionContributor implements DumbAware {
   /**
    * Matches places where a keyword-based statement might be appropriate.

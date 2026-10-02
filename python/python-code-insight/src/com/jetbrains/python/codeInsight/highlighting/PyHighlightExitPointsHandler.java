@@ -19,6 +19,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyRaiseStatement;
 import com.jetbrains.python.psi.PyReturnStatement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> implements DumbAware {
   private final PsiElement myTarget;
 

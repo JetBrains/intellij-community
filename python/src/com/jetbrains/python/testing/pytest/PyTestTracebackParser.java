@@ -4,12 +4,14 @@ package com.jetbrains.python.testing.pytest;
 import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.traceBackParsers.LinkInTrace;
 import com.jetbrains.python.traceBackParsers.TraceBackParser;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * User : catherine
  */
+@ApiStatus.Internal
 public final class PyTestTracebackParser implements TraceBackParser {
 
 

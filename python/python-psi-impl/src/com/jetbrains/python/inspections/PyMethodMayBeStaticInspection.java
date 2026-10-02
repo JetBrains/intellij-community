@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ import java.util.Locale;
  * User: ktisha
  *
  */
+@ApiStatus.Internal
 public final class PyMethodMayBeStaticInspection extends PyInspection {
 
   @Override

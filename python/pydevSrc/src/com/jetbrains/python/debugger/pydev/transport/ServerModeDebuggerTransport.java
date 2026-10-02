@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger.pydev.transport;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.jetbrains.python.debugger.pydev.RemoteDebugger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -15,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * @author Alexander Koshevoy
  */
+@ApiStatus.Internal
 public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
   private static final Logger LOG = Logger.getInstance(ServerModeDebuggerTransport.class);
 

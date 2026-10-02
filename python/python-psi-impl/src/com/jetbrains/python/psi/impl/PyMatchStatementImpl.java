@@ -4,7 +4,9 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyMatchStatement;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class PyMatchStatementImpl extends PyElementImpl implements PyMatchStatement {
   public PyMatchStatementImpl(ASTNode astNode) {
     super(astNode);

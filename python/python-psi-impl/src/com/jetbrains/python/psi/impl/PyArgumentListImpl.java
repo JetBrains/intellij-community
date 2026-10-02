@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyKeywordArgument;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 
+@ApiStatus.Internal
 public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList, PsiListLikeElement {
 
   // Filters all expressions but keyword arguments

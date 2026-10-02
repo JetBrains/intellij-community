@@ -30,7 +30,9 @@ import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyPatternInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val context = PyInspectionVisitor.getContext(session)
@@ -158,6 +160,7 @@ private class SimplifyAsPatternFix(element: PyAsPattern) : PsiUpdateModCommandAc
   }
 }
 
+@ApiStatus.Internal
 class PyRemoveElementFix(element: PyElement) : PsiUpdateModCommandAction<PyElement>(element) {
   override fun getFamilyName(): String = PyPsiBundle.message("QFIX.NAME.remove.element")
   override fun getPresentation(context: ActionContext, element: PyElement): Presentation? = when (element) {
@@ -171,6 +174,7 @@ class PyRemoveElementFix(element: PyElement) : PsiUpdateModCommandAction<PyEleme
 }
 
 
+@ApiStatus.Internal
 class AddMatchArgsFix(element: PyClass) : PsiUpdateModCommandAction<PyClass>(element) {
   override fun getFamilyName(): String = PyPsiBundle.message("QFIX.NAME.add.match.args.to.class")
   override fun getPresentation(context: ActionContext, element: PyClass): Presentation {

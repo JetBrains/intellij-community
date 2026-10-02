@@ -16,15 +16,18 @@ import org.jetbrains.annotations.ApiStatus
  * trial test runner
  */
 
+@ApiStatus.Internal
 class PyTrialTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
   PyAbstractTestSettingsEditor(PyTestSharedForm.create(configuration))
 
+@ApiStatus.Internal
 class PyTrialTestExecutionEnvironment(configuration: PyTrialTestConfiguration, environment: ExecutionEnvironment) :
   PyTestExecutionEnvironment<PyTrialTestConfiguration>(configuration, environment) {
   override fun getRunner(): PythonHelper = PythonHelper.TRIAL
 }
 
 
+@ApiStatus.Internal
 class PyTrialTestConfiguration(project: Project, factory: PyTrialTestFactory)
   : PyAbstractTestConfiguration(project, factory) {
 
@@ -39,6 +42,7 @@ class PyTrialTestConfiguration(project: Project, factory: PyTrialTestFactory)
 }
 
 
+@ApiStatus.Internal
 class PyTrialTestFactory(type:PythonTestConfigurationType) : PyAbstractTestFactory<PyTrialTestConfiguration>(type) {
   @ApiStatus.Internal
   companion object {

@@ -5,8 +5,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiUtilCore
+import org.jetbrains.annotations.ApiStatus
 
 
+@ApiStatus.Internal
 fun VirtualFile.toPsi(project: Project): PsiFileSystemItem? {
   return PsiUtilCore.findFileSystemItem(project, this)
 }

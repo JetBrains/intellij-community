@@ -3,11 +3,13 @@ package com.jetbrains.python.findUsages;
 
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyClass;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
  */
+@ApiStatus.Internal
 public class PyClassFindUsagesHandler extends PyFindUsagesHandler {
 
   public PyClassFindUsagesHandler(@NotNull PyClass psiElement) {

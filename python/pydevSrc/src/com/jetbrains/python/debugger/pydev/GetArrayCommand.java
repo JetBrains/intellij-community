@@ -4,11 +4,13 @@ package com.jetbrains.python.debugger.pydev;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author amarch
  */
+@ApiStatus.Internal
 public class GetArrayCommand extends GetFrameCommand {
   private final String myVariableName;
   private final int myRowOffset;

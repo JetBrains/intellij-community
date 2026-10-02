@@ -13,10 +13,12 @@ import com.jetbrains.python.psi.PyDocStringOwner
 import com.jetbrains.python.psi.PyFormattedStringElement
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyUtil
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Intention to convert between f-strings and t-strings (PEP-750)
  */
+@ApiStatus.Internal
 class PyFStringToTStringIntention : PsiUpdateModCommandAction<PyFormattedStringElement>(PyFormattedStringElement::class.java) {
   override fun getPresentation(context: ActionContext, stringElement: PyFormattedStringElement): Presentation? {
     if (LanguageLevel.forElement(stringElement).isOlderThan(LanguageLevel.PYTHON314)) return null

@@ -6,12 +6,14 @@ import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.execution.util.PathMappingsComponent
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.configuration.AbstractPythonConfigurationFragmentedEditor.Companion.MIN_FRAGMENT_WIDTH
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class PyPathMappingsEditorFragment<T : AbstractPythonRunConfiguration<*>>(val notifier: PyInterpreterModeNotifier) :
   SettingsEditorFragment<T, JPanel>("py.path.mappings", null, null, JPanel(GridBagLayout()), null, null, { true }) {
   private val pathMappingsComponent = PathMappingsComponent()

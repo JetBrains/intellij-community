@@ -11,10 +11,12 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyImportStatementBase
 import com.jetbrains.python.pyi.PyiUtil
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Aleksei.Kniazev
  */
+@ApiStatus.Internal
 public class PyInlineFunctionDialog(project: Project,
                              private val myEditor: Editor,
                              private val myFunction: PyFunction,

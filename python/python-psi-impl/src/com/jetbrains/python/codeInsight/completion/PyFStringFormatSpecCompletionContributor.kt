@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 // The value types come from the shared catalog, so completion, the annotator and the inspections
 // agree on what supports the format mini-language.
@@ -55,6 +56,7 @@ private val UNKNOWN_SPECS = setOf(".", "d", "f", "s", "<", ">")
  * Offers completions after the colon in f-string format parts, e.g., f"{x:<caret>}"
  * Shows valid format spec options based on the expression type.
  */
+@ApiStatus.Internal
 class PyFStringFormatSpecCompletionContributor : CompletionContributor(), DumbAware {
 
   init {

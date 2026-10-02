@@ -7,9 +7,11 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Document;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public class OverwriteEqualsInsertHandler implements InsertHandler<LookupElement> {
   public static final OverwriteEqualsInsertHandler INSTANCE = new OverwriteEqualsInsertHandler();
 

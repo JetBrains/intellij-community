@@ -21,11 +21,13 @@ import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_CLOSE
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_EXTRA_ITEMS_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Completes the `total=`, `closed=`, and `extra_items=` (PEP 728) class parameters inside the base-class list of a
  * `TypedDict` definition, e.g. `class Movie(TypedDict, <caret>)`.
  */
+@ApiStatus.Internal
 class PyTypedDictKeywordArgumentCompletionContributor : CompletionContributor(), DumbAware {
   init {
     extend(

@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import com.jetbrains.python.codeInsight.imports.PyRelativeImportData
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Converts location of 'from one.two.three import foo' to the one relative to the current file, e.g. 'from .three import foo'.
@@ -15,6 +16,7 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder
  * @see PyRelativeToAbsoluteImportIntention
  * @author Aleksei.Kniazev
  */
+@ApiStatus.Internal
 class PyAbsoluteToRelativeImportIntention : PyConvertImportIntentionAction("INTN.convert.absolute.to.relative") {
   override fun getPresentation(context: ActionContext, element: PsiElement): Presentation? {
     if (context.file !is PyFile) return null

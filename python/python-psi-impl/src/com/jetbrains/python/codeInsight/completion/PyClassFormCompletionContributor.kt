@@ -21,6 +21,7 @@ import com.jetbrains.python.codeInsight.imports.AddImportHelper
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.addOrUpdateFromImportStatement
 import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.PyReferenceExpression
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Offers completions that scaffold common Python class forms (`dataclass`, `Enum`, `TypedDict`).
@@ -29,6 +30,7 @@ import com.jetbrains.python.psi.PyReferenceExpression
  * Selecting such a completion at the start of a statement inserts the corresponding class skeleton, adds the required
  * import, and starts a live template with editable stops for the class name and the class body.
  */
+@ApiStatus.Internal
 class PyClassFormCompletionContributor : CompletionContributor(), DumbAware {
   private enum class ClassForm(
     val myLookupString: String,

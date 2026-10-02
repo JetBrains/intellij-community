@@ -12,9 +12,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.jetbrains.python.ast.PyAstFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public final class PyEnterAtIndentHandler implements EnterHandlerDelegate {
   @Override
   public Result preprocessEnter(@NotNull PsiFile file,

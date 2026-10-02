@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.psi.PyParameter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 
+@ApiStatus.Internal
 public class PyFunctionBuilder {
   private final String myName;
   private final List<String> myParameters = new ArrayList<>();

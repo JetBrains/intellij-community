@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.PyParenthesizedExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -27,6 +28,7 @@ import java.util.List;
  * QuickFix to replace assignment that can be replaced with augmented assignment.
  * for instance, i = i + 1   --> i +=1
  */
+@ApiStatus.Internal
 public class AugmentedAssignmentQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   public @NotNull String getFamilyName() {

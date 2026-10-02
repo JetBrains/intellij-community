@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
+import org.jetbrains.annotations.ApiStatus
+
 //To generate this maps, need to run the task
 //'community/python/build/build-debug-binaries/src/build.gradle#generateImportErrorsMap()'
 //After that, copy the contents of the file
@@ -9,7 +11,7 @@ package com.jetbrains.python.run
 // When you will run it for the second time (second OS),
 // please copy previous results from 'community/python/helpers/pydev/build_tools/generate_debugger_import_errors/result.txt' to the same file
 
-val IMPORT_ERRORS_FILTER_MAP = mapOf(
+@ApiStatus.Internal val IMPORT_ERRORS_FILTER_MAP = mapOf(
   "ImportError: cannot import name log" to "math.py",
   "AttributeError: 'module' object has no attribute 'cStringIO_CAPI'" to "cStringIO.py",
   "ImportError: cannot import name 'Decimal' from 'decimal'" to "decimal.py",

@@ -6,11 +6,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import org.intellij.lang.regexp.RegExpCapability;
 import org.intellij.lang.regexp.RegExpFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 
 
+@ApiStatus.Internal
 public final class PythonVerboseRegexpParserDefinition extends PythonRegexpParserDefinition {
   public static final IFileElementType VERBOSE_PYTHON_REGEXP_FILE = new IFileElementType("VERBOSE_PYTHON_REGEXP_FILE", PythonVerboseRegexpLanguage.INSTANCE);
   private final EnumSet<RegExpCapability> VERBOSE_CAPABILITIES;

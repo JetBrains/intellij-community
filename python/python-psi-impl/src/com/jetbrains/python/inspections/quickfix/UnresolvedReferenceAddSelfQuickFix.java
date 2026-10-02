@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -20,6 +21,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  *
  * QuickFix to add self to unresolved reference
  */
+@ApiStatus.Internal
 public class UnresolvedReferenceAddSelfQuickFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
   private final String myQualifier;
   private final String myAttributeName;

@@ -4,7 +4,9 @@ package com.jetbrains.python.run;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public abstract class PyRunConfigurationFactoryEx extends PyRunConfigurationFactory {
   public abstract RunnerAndConfigurationSettings createRunConfiguration(Module module, ConfigurationFactory factory);
 }

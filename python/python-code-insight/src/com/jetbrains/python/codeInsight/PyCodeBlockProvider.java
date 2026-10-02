@@ -10,9 +10,11 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 public final class PyCodeBlockProvider implements CodeBlockProvider {
   @Override
   public @Nullable TextRange getCodeBlockRange(Editor editor, PsiFile psiFile) {

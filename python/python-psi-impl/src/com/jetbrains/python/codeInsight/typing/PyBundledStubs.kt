@@ -6,7 +6,9 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.community.helpersLocator.PythonBundledPyiStubsLocator
 import kotlin.io.path.absolutePathString
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object PyBundledStubs {
   private const val THIRD_PARTY_STUBS_DIR = "third_party"
 

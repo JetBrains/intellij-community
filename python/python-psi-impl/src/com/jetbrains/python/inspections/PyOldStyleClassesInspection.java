@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ import java.util.List;
  * <p>
  * Inspection to detect occurrences of new-style class features in old-style classes
  */
+@ApiStatus.Internal
 public final class PyOldStyleClassesInspection extends PyInspection {
 
   @Override

@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyDecoratorImpl;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
 import com.jetbrains.python.psi.stubs.PyDecoratorStubIndex;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -21,6 +22,7 @@ import java.util.List;
 /**
  * Actual serialized data of a decorator call.
  */
+@ApiStatus.Internal
 public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStub, PyDecorator>
   implements PyCustomizableStubElementType<PyDecorator, PyCustomDecoratorStub, PyCustomDecoratorStubType<? extends PyCustomDecoratorStub>> {
   public PyDecoratorCallElementType() {

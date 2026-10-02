@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.types.PyTypeRendererFeature;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Set;
 
 
+@ApiStatus.Internal
 public final class PyPsiFacadeImpl extends PyPsiFacade {
   private final Project myProject;
 

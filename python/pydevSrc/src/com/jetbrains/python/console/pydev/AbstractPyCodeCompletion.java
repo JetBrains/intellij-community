@@ -5,7 +5,9 @@ package com.jetbrains.python.console.pydev;
 
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class AbstractPyCodeCompletion  {
     public static final int LOOKING_FOR_INSTANCE_UNDEFINED=0;
     public static final int LOOKING_FOR_INSTANCED_VARIABLE=1;

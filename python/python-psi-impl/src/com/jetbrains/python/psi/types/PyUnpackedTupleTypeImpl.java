@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import java.util.stream.Stream;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
+@ApiStatus.Internal
 public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
   public static final PyUnpackedTupleType UNSPECIFIED = new PyUnpackedTupleTypeImpl(Collections.singletonList(PyAnyType.getUnknown()), true);
 

@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyStatementWithElse;
 import com.jetbrains.python.psi.impl.PyIfPartElifImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,6 +32,7 @@ import java.util.List;
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public class PyElIfUnwrapper extends PyUnwrapper {
   public PyElIfUnwrapper() {
     super(PyCodeInsightBundle.message("unwrap.elif"));

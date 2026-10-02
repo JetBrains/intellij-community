@@ -3,11 +3,13 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyTypeDeclarationStatement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
+@ApiStatus.Internal
 public final class PyTypeDeclarationStatementNavigator {
   private PyTypeDeclarationStatementNavigator() {
   }

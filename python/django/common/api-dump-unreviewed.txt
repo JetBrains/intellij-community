@@ -1,0 +1,3 @@
+f:com.intellij.python.django.common.icons.DjangoCommonIcons
+- sf:Django:javax.swing.Icon
+- <init>():V

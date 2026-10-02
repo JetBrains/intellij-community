@@ -10,10 +10,12 @@ import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyDecoratorListImpl;
 import com.jetbrains.python.psi.stubs.PyDecoratorListStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+@ApiStatus.Internal
 public class PyDecoratorListElementType extends PyStubElementType<PyDecoratorListStub, PyDecoratorList> {
 
   public PyDecoratorListElementType() {

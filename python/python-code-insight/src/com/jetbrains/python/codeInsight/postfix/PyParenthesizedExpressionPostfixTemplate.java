@@ -4,7 +4,9 @@ package com.jetbrains.python.codeInsight.postfix;
 import com.intellij.codeInsight.template.postfix.templates.ParenthesizedPostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class PyParenthesizedExpressionPostfixTemplate extends ParenthesizedPostfixTemplate implements DumbAware {
   public PyParenthesizedExpressionPostfixTemplate(PostfixTemplateProvider provider) {
     super(PyPostfixUtils.PY_PSI_INFO, PyPostfixUtils.selectorAllExpressionsWithCurrentOffset(), provider);

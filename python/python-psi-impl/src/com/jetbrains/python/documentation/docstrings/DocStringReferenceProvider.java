@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.toolbox.Substring;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 
+@ApiStatus.Internal
 public class DocStringReferenceProvider extends PsiReferenceProvider {
   @Override
   public boolean acceptsTarget(@NotNull PsiElement target) {

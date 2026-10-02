@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
+@ApiStatus.Internal
 public class PyStepIntoMyCodeAction extends XDebuggerActionBase
   implements TooltipDescriptionProvider, TooltipLinkProvider {
 

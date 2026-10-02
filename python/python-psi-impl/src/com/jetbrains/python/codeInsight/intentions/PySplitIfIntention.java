@@ -18,8 +18,10 @@ import com.jetbrains.python.psi.PyIfPart;
 import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class PySplitIfIntention extends PyBaseIntentionAction {
   @Override
   public @NotNull String getFamilyName() {

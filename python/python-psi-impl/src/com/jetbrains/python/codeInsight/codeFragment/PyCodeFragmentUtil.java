@@ -51,6 +51,7 @@ import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +68,7 @@ import java.util.Set;
 
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
+@ApiStatus.Internal
 public final class PyCodeFragmentUtil {
   private PyCodeFragmentUtil() {
   }

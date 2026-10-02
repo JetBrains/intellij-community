@@ -14,7 +14,9 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
 import com.jetbrains.python.psi.types.PyTypeChecker.expandTupleTypeParameters
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object PyCollectionTypeUtil {
 
   private const val MAX_ANALYZED_ELEMENTS_OF_LITERALS = 10 /* performance */

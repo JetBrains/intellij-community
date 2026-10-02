@@ -33,6 +33,7 @@ import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.skeletons.PySkeletonGenerator;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 
 
+@ApiStatus.Internal
 public final class GenerateBinaryStubsFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(GenerateBinaryStubsFix.class);
 

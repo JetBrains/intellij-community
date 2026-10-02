@@ -13,6 +13,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonLanguage
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 /**
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.Nls
  * The option travels on the lookup element under [FORMAT_SPEC_OPTION_KEY], so this provider never parses
  * the item text again.
  */
+@ApiStatus.Internal
 class PyFStringFormatSpecDocumentationProvider : LookupElementDocumentationTargetProvider {
   override fun documentationTarget(psiFile: PsiFile, element: LookupElement, offset: Int): DocumentationTarget? {
     if (!psiFile.language.isKindOf(PythonLanguage.getInstance())) {

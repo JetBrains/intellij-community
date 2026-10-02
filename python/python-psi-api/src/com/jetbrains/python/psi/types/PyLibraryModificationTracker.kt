@@ -19,9 +19,11 @@ import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.util.ForcefulReparseModificationTracker
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.TimeUnit
 
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 class PyLibraryModificationTracker(project: Project) : ModificationTracker, Disposable {
   private val myProjectRootManager: ModificationTracker = ProjectRootManager.getInstance(project)
   private val myDumbServiceModificationTracker: ModificationTracker = DumbService.getInstance(project).modificationTracker

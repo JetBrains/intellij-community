@@ -10,7 +10,9 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyOverridingModuleMembersProvider
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyStdlibOverridingModuleMembersProvider : PyOverridingModuleMembersProvider() {
 
   override fun getMembersByQName(module: PyFile, qName: String, context: TypeEvalContext): List<PyCustomMember> = emptyList()

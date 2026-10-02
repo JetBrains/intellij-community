@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.EntryStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * User : catherine
  */
+@ApiStatus.Internal
 public final class PyMandatoryEncodingInspection extends PyInspection {
 
   @Override

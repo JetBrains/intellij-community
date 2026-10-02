@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.stubs.PyDataclassStub
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 internal class PyDataclassTransformParametersProvider : PyDataclassParametersProvider {
   override fun getType(): PyDataclassParameters.Type = PyDataclassTransformType
@@ -40,6 +41,7 @@ internal class PyDataclassTransformParametersProvider : PyDataclassParametersPro
   }
 }
 
+@ApiStatus.Internal
 object PyDataclassTransformType : PyDataclassParameters.Type {
   override val name: String = "DATACLASS_TRANSFORM"
   override val isDataclassTransformBased: Boolean = true

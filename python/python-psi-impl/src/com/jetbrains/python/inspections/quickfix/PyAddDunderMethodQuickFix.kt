@@ -11,7 +11,9 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.impl.PyFunctionBuilder
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyAddDunderMethodQuickFix(pyClass: PyClass, val dunderMethod: String) : PsiUpdateModCommandQuickFix() {
   private val myClassPointer = SmartPointerManager.createPointer(pyClass)
   private val myClassName = pyClass.name ?: "?"

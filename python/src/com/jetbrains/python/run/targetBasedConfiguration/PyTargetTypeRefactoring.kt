@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.extensions.getQName
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.run.UndoRefactoringCompletionListener
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -22,6 +23,7 @@ import com.jetbrains.python.run.UndoRefactoringCompletionListener
  * @param setTarget lambda to set target on rename
  * @return renamer or null if [elementUnderRefactoring] does not affect current configuration
  */
+@ApiStatus.Internal
 fun createRefactoringListenerIfPossible(elementUnderRefactoring: PsiElement,
                                         targetPsiElement: PsiElement?,
                                         targetVirtualFile: VirtualFile?,

@@ -2,6 +2,7 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -9,6 +10,7 @@ import java.util.Map;
 
 
 // todo: extensive types support
+@ApiStatus.Internal
 public final class PyTypeHandler {
 
   private interface Formatter {

@@ -3,8 +3,10 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyPrintTarget;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public class PyPrintTargetImpl extends PyElementImpl implements PyPrintTarget {
   public PyPrintTargetImpl(ASTNode astNode) {
     super(astNode);

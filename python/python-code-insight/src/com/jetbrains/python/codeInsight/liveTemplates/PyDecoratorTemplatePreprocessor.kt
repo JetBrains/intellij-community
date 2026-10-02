@@ -7,7 +7,9 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import com.intellij.util.text.CharArrayUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyDecoratorTemplatePreprocessor : TemplatePreprocessor {
   override fun preprocessTemplate(editor: Editor, file: PsiFile, caretOffset: Int, textToInsert: String, templateText: String) {
     if (!templateText.startsWith('@')) {

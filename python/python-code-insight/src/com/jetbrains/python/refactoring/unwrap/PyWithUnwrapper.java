@@ -10,11 +10,13 @@ import com.jetbrains.python.psi.PyPassStatement;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyWithStatement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public class PyWithUnwrapper extends PyUnwrapper {
   public PyWithUnwrapper() {
     super(PyCodeInsightBundle.message("unwrap.with"));

@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.PyExpressionStatement;
 import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * dict(foo) -> no transformation
  * dict(**foo) -> no transformation
  */
+@ApiStatus.Internal
 public final class PyDictConstructorToLiteralFormIntention extends PsiUpdateModCommandAction<PyCallExpression> {
   PyDictConstructorToLiteralFormIntention() {
     super(PyCallExpression.class);

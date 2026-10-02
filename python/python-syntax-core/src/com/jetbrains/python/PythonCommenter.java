@@ -19,9 +19,11 @@ import com.intellij.codeInsight.generation.IndentedCommenter;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 public final class PythonCommenter implements CodeDocumentationAwareCommenter, IndentedCommenter {
   @Override
   public String getLineCommentPrefix() {

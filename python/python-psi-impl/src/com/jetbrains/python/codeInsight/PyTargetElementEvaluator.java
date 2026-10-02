@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.impl.references.PyReferenceBase;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import java.util.Set;
  * Go to declaration gets its targets from {@link com.jetbrains.python.psi.impl.PyGotoDeclarationHandler} first.
  * That handler also uses a user-initiated context.
  */
+@ApiStatus.Internal
 public final class PyTargetElementEvaluator extends TargetElementEvaluatorEx2 {
   @Override
   public boolean includeSelfInGotoImplementation(@NotNull PsiElement element) {

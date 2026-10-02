@@ -4,6 +4,7 @@ package com.jetbrains.python.debugger;
 import com.intellij.util.io.URLUtil;
 import com.jetbrains.python.console.pydev.AbstractPyCodeCompletion;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
@@ -21,6 +22,7 @@ import java.util.List;
  * Translate XML protocol responses into Py structures.
  *
  */
+@ApiStatus.Internal
 public final class PydevXmlUtils {
 
   private static final SAXParserFactory parserFactory = SAXParserFactory.newDefaultInstance();

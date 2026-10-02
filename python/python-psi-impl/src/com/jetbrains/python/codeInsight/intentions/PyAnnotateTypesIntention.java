@@ -28,12 +28,14 @@ import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyStatementList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
   @Override

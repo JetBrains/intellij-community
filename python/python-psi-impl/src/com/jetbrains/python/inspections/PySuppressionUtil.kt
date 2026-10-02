@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyStatement
 import com.jetbrains.python.psi.PyStatementList
+import org.jetbrains.annotations.ApiStatus
 import java.util.regex.Pattern
 
 /**
@@ -21,6 +22,7 @@ import java.util.regex.Pattern
  * [PyTypeCheckerSuppressionCode] ids), so the scope-scanning stays in one place. [toSuppressionCode] is also
  * reused by the `# type: ignore` suppressor to recognize the same kebab aliases inside brackets.
  */
+@ApiStatus.Internal
 object PySuppressionUtil {
   private val SUPPRESS_PATTERN: Pattern = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP)
 

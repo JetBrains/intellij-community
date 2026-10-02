@@ -9,9 +9,11 @@ import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class RemoveTrailingBlankLinesFix implements ModCommandAction {
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {

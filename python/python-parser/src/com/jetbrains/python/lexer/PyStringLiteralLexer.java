@@ -5,6 +5,7 @@ import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * Snatched from com.intellij.lexer.StringLiteralLexer and may inherit from it in the future.
  * Lexes the entire string, with u/b/r designator, quotes, and content, thus self-adjusts for the format.
  */
+@ApiStatus.Internal
 public class PyStringLiteralLexer extends PyStringLiteralLexerBase {
 
   private static final short BEFORE_FIRST_QUOTE = 0; // the initial state; may last during 'u' and 'r' prefixes.

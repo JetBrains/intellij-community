@@ -36,8 +36,10 @@ import com.jetbrains.python.psi.types.PyVariance.BIVARIANT
 import com.jetbrains.python.psi.types.PyVariance.CONTRAVARIANT
 import com.jetbrains.python.psi.types.PyVariance.COVARIANT
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 
+@ApiStatus.Internal
 class PyVarianceInspection : PyInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {

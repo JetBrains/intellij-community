@@ -56,6 +56,7 @@ import kotlin.contracts.contract
 private typealias NTFields = LinkedHashMap<String, PyNamedTupleType.FieldTypeAndDefaultValue>
 private typealias ImmutableNTFields = Map<String, PyNamedTupleType.FieldTypeAndDefaultValue>
 
+@ApiStatus.Internal
 class PyNamedTupleTypeProvider : PyTypeProviderBase() {
 
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {

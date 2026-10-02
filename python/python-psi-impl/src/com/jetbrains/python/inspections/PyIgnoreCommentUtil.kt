@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import org.jetbrains.annotations.ApiStatus
 import java.util.regex.Pattern
 
 /**
@@ -22,6 +23,7 @@ import java.util.regex.Pattern
  * granular type-checker codes) lives with the callers — [com.jetbrains.python.inspections.typeignore]
  * on the impl side for whole-inspection suppression, and [PyTypeCheckerProblemReporter] for granular codes.
  */
+@ApiStatus.Internal
 object PyIgnoreCommentUtil {
   private const val PYCHARM_NAMESPACE = "pycharm"
 

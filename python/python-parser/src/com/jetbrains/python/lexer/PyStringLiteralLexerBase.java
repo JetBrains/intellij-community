@@ -6,8 +6,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public abstract class PyStringLiteralLexerBase extends LexerBase {
   protected static final Logger LOG = Logger.getInstance(PyStringLiteralLexer.class);
   protected final IElementType myOriginalLiteralToken;

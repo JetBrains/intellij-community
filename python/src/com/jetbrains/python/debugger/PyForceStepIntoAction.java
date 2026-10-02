@@ -13,8 +13,10 @@ import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.ForceStepIntoAction;
 import com.intellij.xdebugger.impl.actions.XDebuggerProxySuspendedActionHandler;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyForceStepIntoAction extends ForceStepIntoAction {
   private final XDebuggerProxySuspendedActionHandler myPyForceStepIntoHandler;
 

@@ -9,11 +9,13 @@ import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
 
+@ApiStatus.Internal
 public class PySetCompExpressionImpl extends PyComprehensionElementImpl implements PySetCompExpression {
   public PySetCompExpressionImpl(ASTNode astNode) {
     super(astNode);

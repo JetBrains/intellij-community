@@ -4,8 +4,10 @@ package com.jetbrains.python.documentation.doctest;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyDocstringCodeBlockFileType extends PythonFileType {
   public static final PythonFileType INSTANCE = new PyDocstringCodeBlockFileType();
 

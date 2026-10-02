@@ -12,12 +12,14 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyExpressionCodeFragment;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * clone of JSExpressionCodeFragment
  */
+@ApiStatus.Internal
 public class PyExpressionCodeFragmentImpl extends PyFileImpl implements PyExpressionCodeFragment {
   private PsiElement myContext;
   private boolean myPhysical;

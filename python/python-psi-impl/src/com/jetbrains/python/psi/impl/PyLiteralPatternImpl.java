@@ -7,9 +7,11 @@ import com.jetbrains.python.psi.PyLiteralPattern;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class PyLiteralPatternImpl extends PyElementImpl implements PyLiteralPattern {
   public PyLiteralPatternImpl(ASTNode astNode) {
     super(astNode);

@@ -17,9 +17,11 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyIfStatementNavigator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PyRunLineMarkerContributor extends RunLineMarkerContributor implements DumbAware {
   public PyRunLineMarkerContributor() {
     if (PlatformUtils.isPyCharmEducational()) {

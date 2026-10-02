@@ -10,9 +10,11 @@ import com.intellij.openapi.editor.Editor;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public final class PyClassInsertHandler implements InsertHandler<LookupElement> {
   public static PyClassInsertHandler INSTANCE = new PyClassInsertHandler();
 

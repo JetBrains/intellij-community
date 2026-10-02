@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ import java.util.stream.Stream;
  * @param <T> type of current elements
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public final class PsiQuery<T extends PsiElement> {
 
   private final @NotNull List<T> myElements;

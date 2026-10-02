@@ -22,6 +22,7 @@ import com.jetbrains.python.ast.PyAstImportStatementBase
 import com.jetbrains.python.ast.PyAstStatementList
 import com.jetbrains.python.ast.PyAstStringLiteralExpression
 import com.jetbrains.python.psi.PyStringLiteralCoreUtil
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 
 
@@ -312,7 +313,7 @@ open class PythonFoldingBuilder : CustomFoldingBuilder(), DumbAware {
 }
 
 @JvmField
-val FOLDABLE_COLLECTIONS_LITERALS: TokenSet = TokenSet.create(
+@ApiStatus.Internal val FOLDABLE_COLLECTIONS_LITERALS: TokenSet = TokenSet.create(
   PyElementTypes.SET_LITERAL_EXPRESSION,
   PyElementTypes.DICT_LITERAL_EXPRESSION,
   PyElementTypes.GENERATOR_EXPRESSION,

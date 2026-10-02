@@ -7,6 +7,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * @param <M> Type of model
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public abstract class MembersBasedPresenterWithPreviewImpl<T extends MembersBasedView<?>,
   M extends MemberInfoModel<PyElement, PyMemberInfo<PyElement>>> extends MembersBasedPresenterImpl<T, M> {
 

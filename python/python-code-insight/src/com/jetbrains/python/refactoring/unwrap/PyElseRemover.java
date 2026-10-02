@@ -19,10 +19,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.psi.PyElement;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public class PyElseRemover extends PyElseUnwrapperBase {
   public PyElseRemover() {
     super(PyCodeInsightBundle.message("remove.else"));

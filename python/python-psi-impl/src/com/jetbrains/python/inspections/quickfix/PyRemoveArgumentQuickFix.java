@@ -9,9 +9,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 //TODO: Remove pydoc aswell
+@ApiStatus.Internal
 public class PyRemoveArgumentQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override

@@ -11,12 +11,14 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyNames;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public final class CollectionElementNameMacro extends Macro {
   @Override
   public String getName() {

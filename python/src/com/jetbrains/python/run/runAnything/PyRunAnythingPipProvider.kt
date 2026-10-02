@@ -7,6 +7,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.parser.icons.PythonParserIcons
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 internal class PyRunAnythingPipProvider : PyRunAnythingPackageProvider() {
@@ -42,5 +43,5 @@ internal class PyRunAnythingPipProvider : PyRunAnythingPackageProvider() {
   override fun getLogCommandType(): CommandType = CommandType.PIP
 }
 
-val PIP_COMMANDS = listOf("install", "download", "uninstall", "freeze", "list", "show", "wheel", "hash", "check", "config", "cache",
+@ApiStatus.Internal val PIP_COMMANDS = listOf("install", "download", "uninstall", "freeze", "list", "show", "wheel", "hash", "check", "config", "cache",
                           "completion", "help").asSequence()

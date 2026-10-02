@@ -1,0 +1,30 @@
+c:com.jetbrains.python.refactoring.classes.PyMemberInfoStorage
+- com.intellij.refactoring.classMembers.AbstractMemberInfoStorage
+- <init>(com.jetbrains.python.psi.PyClass):V
+- <init>(com.jetbrains.python.psi.PyClass,com.intellij.refactoring.classMembers.MemberInfoBase$Filter):V
+- p:buildSubClassesMap(com.jetbrains.python.psi.PyClass):V
+- p:extractClassMembers(com.jetbrains.python.psi.PyClass,java.util.ArrayList):V
+- p:isInheritor(com.jetbrains.python.psi.PyClass,com.jetbrains.python.psi.PyClass):Z
+- p:memberConflict(com.jetbrains.python.psi.PyElement,com.jetbrains.python.psi.PyElement):Z
+c:com.jetbrains.python.refactoring.classes.ui.PyMemberSelectionTable
+- com.intellij.refactoring.ui.AbstractMemberSelectionTable
+- <init>(java.util.List,com.intellij.refactoring.classMembers.MemberInfoModel,Z):V
+- p:getAbstractColumnValue(com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo):java.lang.Object
+- p:getOverrideIcon(com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo):javax.swing.Icon
+- p:isAbstractColumnEditable(I):Z
+- p:setVisibilityIcon(com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo,com.intellij.ui.icons.RowIcon):V
+a:com.jetbrains.python.refactoring.rename.RenamePyElementProcessor
+- com.intellij.refactoring.rename.RenamePsiElementProcessor
+- <init>():V
+- findExistingNameConflicts(com.intellij.psi.PsiElement,java.lang.String,com.intellij.util.containers.MultiMap):V
+- getHelpID(com.intellij.psi.PsiElement):java.lang.String
+f:com.jetbrains.python.refactoring.rename.RenamePyFunctionProcessor
+- com.jetbrains.python.refactoring.rename.RenamePyElementProcessor
+- <init>():V
+- canProcessElement(com.intellij.psi.PsiElement):Z
+- isToSearchForTextOccurrences(com.intellij.psi.PsiElement):Z
+- isToSearchInComments(com.intellij.psi.PsiElement):Z
+- prepareRenaming(com.intellij.psi.PsiElement,java.lang.String,java.util.Map):V
+- setToSearchForTextOccurrences(com.intellij.psi.PsiElement,Z):V
+- setToSearchInComments(com.intellij.psi.PsiElement,Z):V
+- substituteElementToRename(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor):com.intellij.psi.PsiElement

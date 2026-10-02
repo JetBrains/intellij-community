@@ -32,6 +32,7 @@ import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +55,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * <br><small>
  * </small>
  */
+@ApiStatus.Internal
 public final class ImportFromToImportIntention extends PyBaseIntentionAction {
   /**
    * This class exists to extract bunches of info we can't store in our stateless instance.

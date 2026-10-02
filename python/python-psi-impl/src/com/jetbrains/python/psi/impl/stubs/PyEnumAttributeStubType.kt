@@ -14,7 +14,9 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyEnumAttributeStub
 import com.jetbrains.python.psi.stubs.PyLiteralKind
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyEnumAttributeStubType : CustomTargetExpressionStubType<PyEnumAttributeStub>() {
   override fun createStub(psi: PyTargetExpression): PyEnumAttributeStub? {
     if (ScopeUtil.getScopeOwner(psi) !is PyClass) return null

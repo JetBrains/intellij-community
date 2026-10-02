@@ -13,6 +13,7 @@ import com.jetbrains.python.console.pydev.ConsoleCommunication
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 open class PydevDebugConsoleExecuteActionHandler(private val myConsole: PythonDebugLanguageConsoleView,
                                                  myProcessHandler: ProcessHandler,
                                                  consoleCommunication: ConsoleCommunication) : PydevConsoleExecuteActionHandler(myConsole.pydevConsoleView, myProcessHandler, consoleCommunication), XDebugSessionListener {

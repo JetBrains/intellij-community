@@ -3,10 +3,12 @@ package com.jetbrains.python.debugger.remote.vfs;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.jetbrains.python.PyBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
 
+@ApiStatus.Internal
 public class PyRemoteDebugFileType implements FileType {
   public static final PyRemoteDebugFileType INSTANCE = new PyRemoteDebugFileType();
 

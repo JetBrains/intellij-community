@@ -4,7 +4,9 @@ package com.jetbrains.python.psi.impl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.psi.LanguageLevel
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface VirtualFilePyLanguageLevelListener {
   companion object {
     @JvmField

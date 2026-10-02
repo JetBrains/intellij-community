@@ -11,8 +11,10 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyStatement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
 
+@ApiStatus.Internal
 abstract class PyConvertImportIntentionAction(
   @PropertyKey(resourceBundle = PyPsiBundle.BUNDLE) private val intentionText: String
 ) : PsiUpdateModCommandAction<PsiElement>(PsiElement::class.java) {

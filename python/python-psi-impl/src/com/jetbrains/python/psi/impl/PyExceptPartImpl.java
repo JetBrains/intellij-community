@@ -8,9 +8,11 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.stubs.PyExceptPartStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class PyExceptPartImpl extends PyBaseElementImpl<PyExceptPartStub> implements PyExceptPart {
 
   public PyExceptPartImpl(ASTNode astNode) {

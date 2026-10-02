@@ -5,8 +5,10 @@ import com.intellij.psi.search.searches.ExtensibleQueryFactory;
 import com.intellij.util.EmptyQuery;
 import com.intellij.util.Query;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public final class PyOverridingMethodsSearch extends ExtensibleQueryFactory<PyFunction, PyOverridingMethodsSearch.SearchParameters> {
   public static final PyOverridingMethodsSearch INSTANCE = new PyOverridingMethodsSearch();
 

@@ -8,12 +8,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.configuration.findModuleSdkIfReady
 import com.jetbrains.python.sdk.PythonSdkType
+import org.jetbrains.annotations.ApiStatus
 
 /** The SDK of the interpreter of the Python project of [psiFile], read from the snapshot. */
+@ApiStatus.Internal
 fun getPythonSdk(psiFile: PsiFile): Sdk? {
   return findModuleSdkIfReady(ModuleUtil.findModuleForPsiElement(psiFile))
 }
 
+@ApiStatus.Internal
 fun getPythonSdk(project: Project, virtualFile: VirtualFile): Sdk? {
   val module = ModuleUtil.findModuleForFile(virtualFile, project) ?: return null
   val moduleSdk = findModuleSdkIfReady(module) ?: return null

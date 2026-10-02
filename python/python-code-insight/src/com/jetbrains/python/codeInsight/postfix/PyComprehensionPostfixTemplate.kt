@@ -8,10 +8,12 @@ import com.intellij.codeInsight.template.impl.VariableNode
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.codeInsight.liveTemplates.CollectionElementNameMacro
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Builds a list/set/generator comprehension over an iterable expression, e.g. `nums.compl` -> `[n for n in nums]`.
  */
+@ApiStatus.Internal
 class PyComprehensionPostfixTemplate(name: String, template: String, example: String, provider: PostfixTemplateProvider) :
   PyEditablePostfixTemplate(
     name,

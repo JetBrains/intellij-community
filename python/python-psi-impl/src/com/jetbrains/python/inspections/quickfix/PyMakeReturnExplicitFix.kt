@@ -12,10 +12,12 @@ import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyPassStatement
 import com.jetbrains.python.psi.PyReturnStatement
 import com.jetbrains.python.psi.PyStatement
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Appends missing `return None`, and transforms `return` into `return None`.
  */
+@ApiStatus.Internal
 class PyMakeReturnExplicitFix(statement: PyStatement) : PsiUpdateModCommandAction<PyStatement>(statement) {
   override fun getFamilyName(): @IntentionFamilyName String = PyPsiBundle.message("QFIX.add.explicit.return.none")
 

@@ -28,12 +28,14 @@ import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import com.jetbrains.python.psi.stubs.PyTypeAliasNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
 
+@ApiStatus.Internal
 public class PyGotoSymbolContributor implements GotoClassContributor, ChooseByNameContributorEx, PossiblyDumbAware {
   @Override
   public void processNames(final @NotNull Processor<? super String> processor, final @NotNull GlobalSearchScope scope, final @Nullable IdFilter filter) {

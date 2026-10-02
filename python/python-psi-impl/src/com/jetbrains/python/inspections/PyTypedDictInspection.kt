@@ -60,7 +60,9 @@ import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL
 import com.jetbrains.python.psi.types.PyVariance
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isUnknown
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyTypedDictInspection : PyInspection() {
   override fun buildVisitor(
     holder: ProblemsHolder,

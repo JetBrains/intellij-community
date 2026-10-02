@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyImportStatementStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ import java.util.List;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
+@ApiStatus.Internal
 public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementStub> implements PyImportStatement, PsiListLikeElement {
   public PyImportStatementImpl(ASTNode astNode) {
     super(astNode);

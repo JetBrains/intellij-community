@@ -70,11 +70,13 @@ import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFileType
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.LongConsumer
 
 /**
  * Adds completion variants for Python classes, functions and variables.
  */
+@ApiStatus.Internal
 class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
   init {
     if (TRACING_WITH_SPUTNIK_ENABLED) {

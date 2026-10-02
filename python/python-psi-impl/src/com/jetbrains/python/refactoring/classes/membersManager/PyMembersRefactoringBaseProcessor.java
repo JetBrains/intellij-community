@@ -10,6 +10,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringProcessor implements UsageViewDescriptor {
 
   protected final @NotNull Collection<PyMemberInfo<PyElement>> myMembersToMove;

@@ -9,7 +9,9 @@ import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.impl.stubs.PyCustomDecoratorStub
 import com.jetbrains.python.psi.impl.stubs.PyCustomDecoratorStubType
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyFunctoolsWrapsDecoratorStubType : PyCustomDecoratorStubType<PyFunctoolsWrapsDecoratorStub> {
   override fun createStub(psi: PyDecorator): PyFunctoolsWrapsDecoratorStub? {
     return PyFunctoolsWrapsDecoratorStub.create(psi)
@@ -21,6 +23,7 @@ class PyFunctoolsWrapsDecoratorStubType : PyCustomDecoratorStubType<PyFunctoolsW
   }
 }
 
+@ApiStatus.Internal
 class PyFunctoolsWrapsDecoratorStub(val wrapped: String) : PyCustomDecoratorStub {
   override fun getTypeClass(): Class<out PyCustomDecoratorStubType<*>> = PyFunctoolsWrapsDecoratorStubType::class.java
 

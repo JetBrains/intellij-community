@@ -6,8 +6,10 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.jetbrains.python.console.RunPythonOrDebugConsoleAction
 import com.jetbrains.python.icons.PythonIcons
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+@ApiStatus.Internal
 class PyConsoleRunAnythingProvider : RunAnythingAnActionProvider<RunPythonOrDebugConsoleAction>() {
   override fun getCommand(value: RunPythonOrDebugConsoleAction) = helpCommand
 

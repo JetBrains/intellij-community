@@ -29,7 +29,9 @@ import com.jetbrains.python.ast.PyAstSubscriptionExpression
 import com.jetbrains.python.ast.PyAstTupleExpression
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore
 import com.jetbrains.python.psi.PyAstElementGenerator
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyTrailingCommasPostFormatProcessor : PostFormatProcessor {
 
   private fun processTextRange(psiElement: PsiElement, range: TextRange, settings: CodeStyleSettings): TextRange {

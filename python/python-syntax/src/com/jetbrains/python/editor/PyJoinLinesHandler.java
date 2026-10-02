@@ -18,6 +18,7 @@ import com.jetbrains.python.ast.PyAstFile;
 import com.jetbrains.python.ast.PyAstStatement;
 import com.jetbrains.python.ast.PyAstStringElement;
 import com.jetbrains.python.ast.PyAstStringLiteralExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,7 @@ import java.util.List;
  * <li>second line is 'class' or 'def': fail.</li>
  * </ul>
  */
+@ApiStatus.Internal
 public final class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
   private static final Joiner[] JOINERS = {
     new OpenBracketJoiner(),

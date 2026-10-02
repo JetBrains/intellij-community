@@ -12,10 +12,12 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.configuration.AbstractPyRunConfigTargetChooserFragment
 import com.jetbrains.python.run.configuration.AbstractPythonConfigurationFragmentedEditor
 import com.jetbrains.python.testing.autoDetectTests.PyAutoDetectTestConfiguration
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 
 
+@ApiStatus.Internal
 class PyAbstractTestConfigurationFragmentedEditor(runConfiguration: PyAbstractTestConfiguration) :
   AbstractPythonConfigurationFragmentedEditor<PyAbstractTestConfiguration>(runConfiguration) {
 
@@ -113,6 +115,7 @@ class PyAbstractTestConfigurationFragmentedEditor(runConfiguration: PyAbstractTe
 }
 
 
+@ApiStatus.Internal
 class PyTestTargetChooserFragment: AbstractPyRunConfigTargetChooserFragment<PyAbstractTestConfiguration>() {
   override fun applyEditorTo(s: PyAbstractTestConfiguration) {
     val mode = currentMode

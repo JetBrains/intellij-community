@@ -37,6 +37,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * Helps to specify type  in annotations in python3
  */
+@ApiStatus.Internal
 public final class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   @Override
   public @NotNull String getFamilyName() {

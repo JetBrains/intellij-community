@@ -9,11 +9,13 @@ import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
 
+@ApiStatus.Internal
 public class PyKeyValueExpressionImpl extends PyElementImpl implements PyKeyValueExpression {
   public PyKeyValueExpressionImpl(ASTNode astNode) {
     super(astNode);

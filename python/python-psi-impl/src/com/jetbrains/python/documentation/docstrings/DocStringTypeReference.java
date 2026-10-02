@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.types.PyImportedModuleType;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import java.util.List;
 /**
  * User : catherine
  */
+@ApiStatus.Internal
 public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiElement> {
   private @Nullable PyType myType;
   private final @NotNull TextRange myFullRange;

@@ -23,12 +23,14 @@ import com.jetbrains.python.psi.types.PyTypeMember
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 
 fun PyClassLikeType.isProtocol(context: TypeEvalContext): Boolean = containsProtocol(getSuperClassTypes(context))
 
 fun PyClass.isProtocol(context: TypeEvalContext): Boolean = containsProtocol(getSuperClassTypes(context))
 
+@ApiStatus.Internal
 fun PyClassType.isRuntimeCheckable(context: TypeEvalContext): Boolean =
   PyKnownDecoratorUtil.knownDecoratorsOf(pyClass, context)
     .containsAny(TYPING_RUNTIME_CHECKABLE, TYPING_RUNTIME_CHECKABLE_EXT, TYPING_RUNTIME, TYPING_RUNTIME_EXT)
@@ -42,6 +44,7 @@ fun matchingProtocolDefinitions(expected: PyType?, actual: PyType?, context: Typ
 
 typealias ProtocolAndSubclassElements = Pair<PyTypeMember, List<PyTypeMember>>
 
+@ApiStatus.Internal
 fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, context: TypeEvalContext): List<ProtocolAndSubclassElements> {
   val resolveContext = PyResolveContext.defaultContext(context)
   val result = mutableListOf<Pair<PyTypeMember, List<PyTypeMember>>>()
@@ -106,6 +109,7 @@ private fun PyClassType.findProtocolMember(name: String, context: TypeEvalContex
 
 private const val TYPED_DICT_FALLBACK = "_typeshed._type_checker_internals.TypedDictFallback"
 
+@ApiStatus.Internal
 fun PyClassLikeType.getProtocolMembers(context: TypeEvalContext): List<PyTypeMember> {
   val resolveContext = PyResolveContext.defaultContext(context)
   val result = mutableListOf<PyTypeMember>()

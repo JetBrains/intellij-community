@@ -32,6 +32,7 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyExpectedTypeJudgement;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -54,6 +55,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  *     print(f'# {line&lt;caret&gt;}')
  * </code></pre>
  */
+@ApiStatus.Internal
 public final class PyFStringLikeCompletionContributor extends CompletionContributor implements DumbAware {
 
   private static final PsiElementPattern.Capture<PyPlainStringElement> APPLICABLE_STRING_ELEMENT =

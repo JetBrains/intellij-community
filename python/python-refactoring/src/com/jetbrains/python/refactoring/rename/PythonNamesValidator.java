@@ -6,8 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.lexer.PythonLexer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PythonNamesValidator implements NamesValidator {
   private static final PythonLexer ourLexer = new PythonLexer();
 

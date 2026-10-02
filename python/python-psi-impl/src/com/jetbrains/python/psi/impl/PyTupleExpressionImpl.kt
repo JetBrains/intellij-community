@@ -11,7 +11,9 @@ import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCollectionTypeUtil
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyTupleExpressionImpl(astNode: ASTNode) : PySequenceExpressionImpl(astNode), PyTupleExpression {
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
     pyVisitor.visitPyTupleExpression(this)

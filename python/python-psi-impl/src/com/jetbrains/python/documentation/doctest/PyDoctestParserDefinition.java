@@ -9,11 +9,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PythonParserDefinition;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public final class PyDoctestParserDefinition extends PythonParserDefinition {
   public static final IFileElementType PYTHON_DOCTEST_FILE = new PyDocstringFileElementType(PyDoctestLanguageDialect
                                                                                                 .getInstance());

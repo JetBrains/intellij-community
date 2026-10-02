@@ -3,11 +3,13 @@ package com.jetbrains.python.testing
 
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * It is generally configuration provider duty to check if certain configuration is one from context and could be reused.
  * But this extension point allows external code to participate in this process
  */
+@ApiStatus.Internal
 interface PyTestConfigurationSelector {
   /**
    * See [PyTestsConfigurationProducer.isConfigurationFromContext]

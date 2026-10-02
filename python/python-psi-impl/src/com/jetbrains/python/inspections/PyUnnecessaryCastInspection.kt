@@ -20,7 +20,9 @@ import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.isSameType
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyUnnecessaryCastInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val context = PyInspectionVisitor.getContext(session)

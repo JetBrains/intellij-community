@@ -6,8 +6,10 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> implements PyNamedParameterStub {
   private final String myName;
   private final boolean myPositionalContainer;

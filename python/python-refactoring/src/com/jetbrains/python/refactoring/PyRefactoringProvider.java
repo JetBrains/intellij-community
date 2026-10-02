@@ -16,9 +16,11 @@ import com.jetbrains.python.refactoring.classes.pushDown.PyPushDownHandler;
 import com.jetbrains.python.refactoring.introduce.constant.PyIntroduceConstantHandler;
 import com.jetbrains.python.refactoring.introduce.parameter.PyIntroduceParameterHandler;
 import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PyRefactoringProvider extends RefactoringSupportProvider {
   @Override
   public RefactoringActionHandler getIntroduceVariableHandler() {

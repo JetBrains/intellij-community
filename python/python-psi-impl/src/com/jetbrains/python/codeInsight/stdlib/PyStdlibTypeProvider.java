@@ -83,6 +83,7 @@ import static com.jetbrains.python.PyNames.isSunder;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
+@ApiStatus.Internal
 public final class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   public static @Nullable PyStdlibTypeProvider getInstance() {

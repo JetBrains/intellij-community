@@ -16,10 +16,12 @@
 package com.jetbrains.python.codeInsight.regexp;
 
 import org.intellij.lang.regexp.RegExpSyntaxHighlighterFactory;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Bas Leijdekkers
  */
+@ApiStatus.Internal
 public final class PythonRegexpSyntaxHighlighterFactory extends RegExpSyntaxHighlighterFactory {
   public PythonRegexpSyntaxHighlighterFactory() {
     super(PythonRegexpLanguage.INSTANCE);

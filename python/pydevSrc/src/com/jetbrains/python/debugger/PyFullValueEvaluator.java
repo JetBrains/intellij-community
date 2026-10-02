@@ -4,9 +4,11 @@ package com.jetbrains.python.debugger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.jetbrains.python.PydevBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyFullValueEvaluator extends XFullValueEvaluator {
   protected final @NotNull PyFrameAccessor myDebugProcess;
   protected final @NotNull String myExpression;

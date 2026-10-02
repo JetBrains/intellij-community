@@ -20,6 +20,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.refactoring.PyRefactoringBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.ResourceBundle;
 
+@ApiStatus.Internal
 public class PyIntroduceDialog extends DialogWrapper {
   private final JPanel myContentPane;
   private final JLabel myNameLabel;

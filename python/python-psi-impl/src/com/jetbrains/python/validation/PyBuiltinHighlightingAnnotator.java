@@ -16,11 +16,13 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Marks built-in names.
  */
+@ApiStatus.Internal
 public class PyBuiltinHighlightingAnnotator extends PyAnnotatorBase {
 
   @Override

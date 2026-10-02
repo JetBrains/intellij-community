@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.Set;
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public final class PyNameSuggestionProvider implements NameSuggestionProvider {
   @Override
   public SuggestedNameInfo getSuggestedNames(PsiElement element, PsiElement nameSuggestionContext, Set<String> result) {

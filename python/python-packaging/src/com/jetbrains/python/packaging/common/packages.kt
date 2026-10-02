@@ -107,6 +107,7 @@ fun List<PyRequirement>.toPythonPackages(): List<PythonPackage> {
   return mapNotNull { it.toPythonPackage() }
 }
 
+@ApiStatus.Internal
 class PythonOutdatedPackage(name: String, version: String, val latestVersion: String)
   : PythonPackage(name, version, false) {
   override fun toString(): String = "PythonOutdatedPackage(name='$name', version='$version', latestVersion='$latestVersion')"

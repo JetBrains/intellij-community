@@ -8,11 +8,13 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Checks for non-top-level star imports.
  */
+@ApiStatus.Internal
 public class PyImportAnnotatorVisitor extends PyElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 

@@ -6,7 +6,9 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class PyElementListCellRenderer extends PsiElementListCellRenderer {
   @Override
   public String getElementText(final PsiElement element) {

@@ -12,12 +12,14 @@ import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMembersUtil;
 import com.jetbrains.python.vp.Creator;
 import com.jetbrains.python.vp.ViewPresenterUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dennis.Ushakov
  */
+@ApiStatus.Internal
 public class PyExtractSuperclassHandler extends PyClassRefactoringHandler {
   @Override
   protected void doRefactorImpl(final @NotNull Project project,

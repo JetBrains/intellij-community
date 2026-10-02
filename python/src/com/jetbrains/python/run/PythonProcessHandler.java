@@ -6,10 +6,12 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
+@ApiStatus.Internal
 public class PythonProcessHandler extends KillableProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
 
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();

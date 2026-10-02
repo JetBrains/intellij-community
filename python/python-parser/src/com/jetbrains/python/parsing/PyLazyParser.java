@@ -8,6 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyParsingBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
  * and does not carry mutable language-level state. All context (language level, builder)
  * is passed explicitly through method parameters.
  */
+@ApiStatus.Internal
 public final class PyLazyParser {
 
   private static final Logger LOG = Logger.getInstance(PyLazyParser.class);

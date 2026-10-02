@@ -11,6 +11,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.util.PairProcessor
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Computes the suppression codes of the problems currently on a given line, so the "Specify inspection codes"
@@ -21,6 +22,7 @@ import com.intellij.util.PairProcessor
  * so problems that a bare `# type: ignore` on the line would otherwise hide are still reported. Must be called
  * under a read action off the EDT (e.g. from a ModCommand quick fix).
  */
+@ApiStatus.Internal
 object PyIgnoreCodeComputer {
 
   /**

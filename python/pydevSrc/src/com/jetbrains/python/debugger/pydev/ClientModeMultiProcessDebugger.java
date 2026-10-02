@@ -24,6 +24,7 @@ import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.tables.TableCommandParameters;
 import com.jetbrains.python.tables.TableCommandType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ import java.util.concurrent.ExecutorService;
  * any more.
  */
 @Deprecated(forRemoval = true)
+@ApiStatus.Internal
 public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   private static final Logger LOG = Logger.getInstance(ClientModeMultiProcessDebugger.class);
 

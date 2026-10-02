@@ -87,11 +87,13 @@ import com.jetbrains.python.psi.impl.PyWildcardPatternImpl
 import com.jetbrains.python.psi.impl.PyWithItemImpl
 import com.jetbrains.python.psi.impl.PyWithStatementImpl
 import com.jetbrains.python.psi.impl.PyYieldExpressionImpl
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
 
 typealias F = Function<in ASTNode, out PsiElement>
 
+@ApiStatus.Internal
 class PyElementTypesFacadeImpl : PyElementTypesFacade() {
 
   override val functionDeclaration: IStubElementType<*, *>

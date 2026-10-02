@@ -5,12 +5,14 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public final class PythonASTFactory extends ASTFactory {
 
   @Override

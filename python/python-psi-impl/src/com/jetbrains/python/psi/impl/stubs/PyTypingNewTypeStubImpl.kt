@@ -12,8 +12,10 @@ import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyTypingNewTypeStub
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
+@ApiStatus.Internal
 class PyTypingNewTypeStubImpl private constructor(
   val qualifiedName: String,
   private val baseClassName: String,

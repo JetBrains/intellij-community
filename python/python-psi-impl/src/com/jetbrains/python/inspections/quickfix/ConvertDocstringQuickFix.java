@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * QuickFix to convert docstrings to the common form according to PEP-257
  * For consistency, always use """triple double quotes""" around docstrings.
  */
+@ApiStatus.Internal
 public class ConvertDocstringQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   public @NotNull String getFamilyName() {

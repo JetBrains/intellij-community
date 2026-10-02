@@ -16,7 +16,9 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil.getCaretPosition
 import com.jetbrains.python.debugger.pydev.PyDebugCallback
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PySetNextStatementAction : XDebuggerActionBase(true) {
   private val setNextStatementActionHandler: XDebuggerSuspendedActionHandler
 

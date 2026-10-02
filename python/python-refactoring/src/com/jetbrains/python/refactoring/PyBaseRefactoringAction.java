@@ -24,11 +24,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.jetbrains.python.PythonLanguage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public abstract class PyBaseRefactoringAction extends BaseRefactoringAction {
 
   protected abstract boolean isEnabledOnElementInsideEditor(@NotNull PsiElement element,

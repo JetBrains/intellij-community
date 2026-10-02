@@ -11,6 +11,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 
 import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
+import org.jetbrains.annotations.ApiStatus;
 import javax.swing.AbstractButton;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -32,6 +33,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 
+@ApiStatus.Internal
 public class PythonDocumentationEntryEditor extends DialogWrapper {
   private final JPanel myPanel;
   private final JTextField myNameField;

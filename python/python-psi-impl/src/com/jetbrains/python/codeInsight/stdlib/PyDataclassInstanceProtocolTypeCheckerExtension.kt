@@ -8,8 +8,10 @@ import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeCheckerExtension
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.Optional
 
+@ApiStatus.Internal
 class PyDataclassInstanceProtocolTypeCheckerExtension : PyTypeCheckerExtension {
   override fun match(
     expected: PyType?,

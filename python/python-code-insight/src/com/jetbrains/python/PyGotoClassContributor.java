@@ -22,12 +22,14 @@ import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
 
+@ApiStatus.Internal
 public class PyGotoClassContributor implements GotoClassContributor, ChooseByNameContributorEx, PossiblyDumbAware {
   @Override
   public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {

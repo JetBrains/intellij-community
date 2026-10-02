@@ -2,9 +2,11 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public interface PyTypingNewTypeStub extends CustomTargetExpressionStub {
 
   @NotNull

@@ -9,11 +9,13 @@ import com.intellij.refactoring.actions.BasePlatformRefactoringAction
 import com.intellij.refactoring.actions.ExtractSuperActionBase
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.refactoring.PyRefactoringProvider
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Python flavor of the platform "Extract Method" action. In Python the extracted code becomes a function, so the action
  * is labeled "Extract Function" (see [PyRefactoringProvider] which no longer exposes the platform extract-method handler).
  */
+@ApiStatus.Internal
 class PyExtractFunctionAction : BasePlatformRefactoringAction() {
   override fun getRefactoringHandler(provider: RefactoringSupportProvider): RefactoringActionHandler? =
     if (provider is PyRefactoringProvider) PyExtractMethodHandler() else null

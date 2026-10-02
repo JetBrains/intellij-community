@@ -4,6 +4,7 @@ package com.jetbrains.python.refactoring.classes.membersManager.vp;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import java.util.Collections;
  *
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public class MembersViewInitializationInfo {
 
   private final @NotNull MemberInfoModel<PyElement, PyMemberInfo<PyElement>> myMemberInfoModel;

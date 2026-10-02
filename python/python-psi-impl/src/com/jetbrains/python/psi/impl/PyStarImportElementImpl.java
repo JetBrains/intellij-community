@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.stubs.PyStarImportElementStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
@@ -31,6 +32,7 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
+@ApiStatus.Internal
 public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportElementStub> implements PyStarImportElement {
   public PyStarImportElementImpl(ASTNode astNode) {
     super(astNode);

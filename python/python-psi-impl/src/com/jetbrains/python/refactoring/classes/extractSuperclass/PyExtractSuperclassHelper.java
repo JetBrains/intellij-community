@@ -46,6 +46,7 @@ import static com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil.pl
 /**
  * @author Dennis.Ushakov
  */
+@ApiStatus.Internal
 public final class PyExtractSuperclassHelper {
   private static final Logger LOG = Logger.getInstance(PyExtractSuperclassHelper.class.getName());
   /**

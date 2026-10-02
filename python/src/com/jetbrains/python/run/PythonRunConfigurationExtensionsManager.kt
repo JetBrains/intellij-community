@@ -4,8 +4,10 @@ package com.jetbrains.python.run
 import com.intellij.execution.configuration.RunConfigurationExtensionsManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import org.jetbrains.annotations.ApiStatus
 
 @Service
+@ApiStatus.Internal
 class PythonRunConfigurationExtensionsManager : RunConfigurationExtensionsManager<AbstractPythonRunConfiguration<*>, PythonRunConfigurationExtension>(PythonRunConfigurationExtension.EP_NAME) {
   companion object {
     @JvmStatic

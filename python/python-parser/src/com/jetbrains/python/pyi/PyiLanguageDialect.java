@@ -18,7 +18,9 @@ package com.jetbrains.python.pyi;
 import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
 import com.jetbrains.python.PythonLanguage;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class PyiLanguageDialect extends Language implements DependentLanguage {
   public static final String ID = "PythonStub";
 

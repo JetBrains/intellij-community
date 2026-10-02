@@ -5,9 +5,11 @@ import com.intellij.lang.WhitespacesAndCommentsBinder;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 
+import org.jetbrains.annotations.ApiStatus;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public class LeadingCommentsBinder implements WhitespacesAndCommentsBinder {
   public static final LeadingCommentsBinder INSTANCE = new LeadingCommentsBinder();
 

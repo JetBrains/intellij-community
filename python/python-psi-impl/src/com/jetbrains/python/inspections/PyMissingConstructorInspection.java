@@ -19,6 +19,7 @@ import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ import static com.jetbrains.python.PyNames.__CLASS__;
  * <p>
  * Inspection to warn if call to super constructor in class is missed
  */
+@ApiStatus.Internal
 public final class PyMissingConstructorInspection extends PyInspection {
 
   @Override

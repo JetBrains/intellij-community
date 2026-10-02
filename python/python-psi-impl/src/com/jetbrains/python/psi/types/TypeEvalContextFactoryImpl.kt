@@ -5,7 +5,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class TypeEvalContextFactoryImpl : TypeEvalContextFactory {
   override fun codeCompletion(
     project: Project,

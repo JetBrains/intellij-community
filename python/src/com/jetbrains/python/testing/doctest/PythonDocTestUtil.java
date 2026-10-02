@@ -7,10 +7,12 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 
+import org.jetbrains.annotations.ApiStatus;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+@ApiStatus.Internal
 public final class PythonDocTestUtil {
 
   private PythonDocTestUtil() {

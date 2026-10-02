@@ -13,9 +13,11 @@ import com.jetbrains.python.psi.PyStatementPart;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public class PyFileStubBuilder extends DefaultStubBuilder {
   @Override
   protected @NotNull StubElement createStubForFile(@NotNull PsiFile file) {

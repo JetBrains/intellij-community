@@ -11,10 +11,12 @@ import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTargetExpression> implements PyTargetExpressionStub {
   private final String myName;
   private final InitializerType myInitializerType;

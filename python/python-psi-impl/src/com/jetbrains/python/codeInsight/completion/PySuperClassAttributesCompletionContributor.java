@@ -17,11 +17,13 @@ import com.jetbrains.python.psi.PyExpressionStatement;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyTargetExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class PySuperClassAttributesCompletionContributor extends CompletionContributor implements DumbAware {
   public PySuperClassAttributesCompletionContributor() {
     extend(CompletionType.BASIC,

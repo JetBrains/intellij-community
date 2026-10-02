@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.toolbox.Substring;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * Helps to specify type
  */
+@ApiStatus.Internal
 public final class SpecifyTypeInDocstringIntention extends TypeIntention {
   @Override
   public @NotNull String getFamilyName() {

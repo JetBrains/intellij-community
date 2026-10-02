@@ -1,8 +1,10 @@
 package com.jetbrains.python.lexer;
 
 import com.jetbrains.python.PyTokenTypes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PythonIndentingLexerForLazyElements extends PythonIndentingLexer {
 
   private final int myBaseIndent;

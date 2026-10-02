@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -8,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public enum PythonFunctionParameters implements FunctionParameter {
   /**
    * environment.setdevault(key, failobj) # key

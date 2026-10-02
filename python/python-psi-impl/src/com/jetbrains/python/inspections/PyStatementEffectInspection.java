@@ -33,6 +33,7 @@ import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.PyYieldExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,7 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
+@ApiStatus.Internal
 public final class PyStatementEffectInspection extends PyInspection {
 
   @Override

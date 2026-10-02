@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.python.ruff.RuffConfigOptionInfo
 import com.intellij.python.ruff.RuffService
 import com.intellij.python.ruff.RuffUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.toml.lang.psi.TomlFile
 import org.toml.lang.psi.TomlHeaderOwner
@@ -27,6 +28,7 @@ import org.toml.lang.psi.TomlTableHeader
  * When hovering over a configuration option key in a ruff config file, this provider
  * shows the option documentation fetched from the Ruff executable.
  */
+@ApiStatus.Internal
 class RuffConfigOptionDocumentationProvider : DocumentationTargetProvider {
   override fun documentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> {
     if (file !is TomlFile) {
@@ -71,6 +73,7 @@ class RuffConfigOptionDocumentationProvider : DocumentationTargetProvider {
 /**
  * Documentation target for a Ruff configuration option.
  */
+@ApiStatus.Internal
 class RuffConfigOptionDocumentationTarget(
   @param:Nls private val configPath: String,
   private val configInfo: RuffConfigOptionInfo,

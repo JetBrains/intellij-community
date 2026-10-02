@@ -18,12 +18,14 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
 import java.util.Collection;
 import java.util.Collections;
 
+@ApiStatus.Internal
 public final class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvider {
   // TODO: Create an icon for a related Python stub item
   public static final Icon ICON = AllIcons.Gutter.Unique;

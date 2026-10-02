@@ -2,7 +2,9 @@
 package com.jetbrains.python.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyLenPostfixTemplate(provider: PostfixTemplateProvider) :
   PyEditablePostfixTemplate(
     "len",

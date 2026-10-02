@@ -5,7 +5,9 @@ import com.intellij.codeInsight.completion.ml.CompletionEnvironment
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object PyClassCompletionFeatures {
   data class ClassFeatures(val diffLinesWithClassDef: Int, val classHaveConstructor: Boolean)
 

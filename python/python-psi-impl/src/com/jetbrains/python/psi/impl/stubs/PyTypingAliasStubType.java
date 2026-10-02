@@ -53,6 +53,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypingAliasStub> {
   private static final int STRING_LITERAL_LENGTH_THRESHOLD = 100;
   private static final Key<CachedValue<PyExpression>> ASSIGNED_VALUE_FROM_STUB = Key.create("PyTypingAliasStubType.assignedValueFromStub");

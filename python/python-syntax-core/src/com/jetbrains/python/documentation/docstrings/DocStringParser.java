@@ -13,10 +13,12 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.toolbox.Substring;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class DocStringParser {
   /**
    * @param stringText docstring text with possible string prefix and quotes

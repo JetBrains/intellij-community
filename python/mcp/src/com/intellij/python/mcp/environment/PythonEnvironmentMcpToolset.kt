@@ -29,13 +29,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import kotlin.io.path.pathString
 
-const val GET_PYTHON_ENVIRONMENT_TOOL: String = "get_python_environment"
-const val CONFIGURE_PYTHON_INTERPRETER_TOOL: String = "configure_python_interpreter"
+@ApiStatus.Internal const val GET_PYTHON_ENVIRONMENT_TOOL: String = "get_python_environment"
+@ApiStatus.Internal const val CONFIGURE_PYTHON_INTERPRETER_TOOL: String = "configure_python_interpreter"
 
 /** Tool names contributed by [PythonEnvironmentMcpToolset]; imported by the PyCharm bundled-skills provider. */
-val PYTHON_ENVIRONMENT_TOOLS: Set<String> = setOf(GET_PYTHON_ENVIRONMENT_TOOL, CONFIGURE_PYTHON_INTERPRETER_TOOL)
+@ApiStatus.Internal val PYTHON_ENVIRONMENT_TOOLS: Set<String> = setOf(GET_PYTHON_ENVIRONMENT_TOOL, CONFIGURE_PYTHON_INTERPRETER_TOOL)
 
 /**
  * Suffix that tells the agent the configure tool can resolve the missing interpreter; the SKILL branches on it.

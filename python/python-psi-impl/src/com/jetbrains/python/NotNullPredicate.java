@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.google.common.base.Predicate;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * @deprecated use java 8 primitives instead
  */
 @Deprecated(forRemoval = true)
+@ApiStatus.Internal
 public class NotNullPredicate<T> implements Predicate<T> {
   /**
    * Simply filters nulls

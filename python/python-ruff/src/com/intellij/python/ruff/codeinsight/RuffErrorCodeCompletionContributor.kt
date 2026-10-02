@@ -18,6 +18,7 @@ import com.intellij.python.ruff.RuffService
 import com.intellij.python.ruff.codeinsight.RuffDocumentationUtil.isRuffCodeElement
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.psi.PyFile
+import org.jetbrains.annotations.ApiStatus
 import org.toml.lang.TomlLanguage
 import org.toml.lang.psi.TomlArray
 import org.toml.lang.psi.TomlKeyValue
@@ -27,6 +28,7 @@ import org.toml.lang.psi.TomlLiteral
  * Provides code completion for Ruff error codes in Python comments and TOML files.
  * In the completion item, both the error code and its name are shown.
  */
+@ApiStatus.Internal
 class RuffErrorCodeCompletionContributor : CompletionContributor() {
 
   init {

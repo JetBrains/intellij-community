@@ -1,0 +1,81 @@
+f:com.jetbrains.python.codeInsight.PyInjectionUtil
+- sf:ELEMENTS_TO_INJECT_IN:java.util.List
+- s:getLargestStringLiteral(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:registerStringLiteralInjection(com.intellij.psi.PsiElement,com.intellij.lang.injection.MultiHostRegistrar,com.intellij.lang.Language):com.jetbrains.python.codeInsight.PyInjectionUtil$InjectionResult
+- s:registerStringLiteralInjectionWithParenthesis(com.intellij.psi.PsiElement,com.intellij.lang.injection.MultiHostRegistrar,com.intellij.lang.Language):com.jetbrains.python.codeInsight.PyInjectionUtil$InjectionResult
+c:com.jetbrains.python.codeInsight.PyInjectionUtil$InjectionResult
+- sf:EMPTY:com.jetbrains.python.codeInsight.PyInjectionUtil$InjectionResult
+- <init>(Z,Z):V
+- append(com.jetbrains.python.codeInsight.PyInjectionUtil$InjectionResult):com.jetbrains.python.codeInsight.PyInjectionUtil$InjectionResult
+- isInjected():Z
+- isStrict():Z
+a:com.jetbrains.python.codeInsight.PyInjectorBase
+- com.intellij.lang.injection.MultiHostInjector
+- <init>():V
+- elementsToInjectIn():java.util.List
+- a:getInjectedLanguage(com.intellij.psi.PsiElement):com.intellij.lang.Language
+- getLanguagesToInject(com.intellij.lang.injection.MultiHostRegistrar,com.intellij.psi.PsiElement):V
+- p:registerInjection(com.intellij.lang.injection.MultiHostRegistrar,com.intellij.psi.PsiElement):com.jetbrains.python.codeInsight.PyInjectionUtil$InjectionResult
+c:com.jetbrains.python.codeInsight.imports.CodeStylePyImportCollector
+- com.jetbrains.python.codeInsight.imports.PyImportCollector
+- <init>(com.jetbrains.python.psi.PyElement,com.intellij.psi.PsiReference,java.lang.String):V
+- p:addCandidatesViaFromImports(com.intellij.psi.PsiFile,com.jetbrains.python.psi.PyFile):com.intellij.psi.PsiFile
+a:com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType
+- com.intellij.codeInsight.template.TemplateContextType
+- <init>(java.lang.String):V
+- createHighlighter():com.intellij.openapi.fileTypes.SyntaxHighlighter
+- isInContext(com.intellij.codeInsight.template.TemplateActionContext):Z
+- pa:isInContext(com.intellij.psi.PsiElement):Z
+f:com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$Class
+- com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType
+- <init>():V
+f:com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General
+- com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType
+- <init>():V
+f:com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$TopLevel
+- com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType
+- <init>():V
+f:com.jetbrains.python.codeInsight.postfix.PyPostfixUtils
+- sf:PY_PSI_INFO:com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfo
+- s:currentStatementSelector():com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector
+- s:getAllExpressionsAtOffset(com.intellij.psi.PsiFile,I):java.util.List
+- s:selectorAllExpressionsWithCurrentOffset():com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector
+- s:selectorAllExpressionsWithCurrentOffset(com.intellij.openapi.util.Condition):com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector
+- s:selectorTopmost():com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector
+c:com.jetbrains.python.codeInsight.regexp.PythonRegexpLanguage
+- com.intellij.lang.Language
+- sf:INSTANCE:com.jetbrains.python.codeInsight.regexp.PythonRegexpLanguage
+f:com.jetbrains.python.extensions.StringLiteralExpressionExtKt
+- sf:getCalleeIfArgument(com.jetbrains.python.psi.StringLiteralExpression,I,java.lang.String):com.jetbrains.python.psi.PyExpression
+- sf:getCalleeIfArgument(com.jetbrains.python.psi.StringLiteralExpression,com.jetbrains.python.FunctionParameter):com.jetbrains.python.psi.PyExpression
+- bs:getCalleeIfArgument$default(com.jetbrains.python.psi.StringLiteralExpression,I,java.lang.String,I,java.lang.Object):com.jetbrains.python.psi.PyExpression
+f:com.jetbrains.python.highlighting.PyRainbowVisitor
+- com.intellij.codeInsight.daemon.RainbowVisitor
+- <init>():V
+- clone():com.jetbrains.python.highlighting.PyRainbowVisitor
+- suitableForFile(com.intellij.psi.PsiFile):Z
+- visit(com.intellij.psi.PsiElement):V
+f:com.jetbrains.python.highlighting.PyRainbowVisitor$Holder
+- sf:INSTANCE:com.jetbrains.python.highlighting.PyRainbowVisitor$Holder
+- f:getDEFAULT_HIGHLIGHTING_KEY():com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:getHIGHLIGHTING_KEYS():java.util.Set
+- f:getIGNORED_NAMES():java.util.Set
+f:com.jetbrains.python.highlighting.PySyntaxHighlighterFactory
+- com.jetbrains.python.highlighting.PySyntaxHighlighterFactoryBase
+- <init>():V
+c:com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix
+- com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
+- com.intellij.codeInspection.LocalQuickFix
+- <init>(com.intellij.psi.PsiElement):V
+- availableInBatchMode():Z
+- p:checkLocalScope(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getElementToMakeWritable(com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
+- getFamilyName():java.lang.String
+- getText():java.lang.String
+- invoke(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
+- startInWriteAction():Z
+c:com.jetbrains.python.refactoring.unwrap.PyUnwrapDescriptor
+- com.intellij.codeInsight.unwrap.UnwrapDescriptorBase
+- <init>():V
+- p:createUnwrappers():com.intellij.codeInsight.unwrap.Unwrapper[]
+- p:findTargetElement(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement

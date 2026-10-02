@@ -18,7 +18,9 @@ import com.intellij.util.ProcessingContext
 import com.jetbrains.python.codeInsight.completion.runtime.patProvider.RemoteFilePathRetrievalService
 import com.jetbrains.python.debugger.state.PyRuntime
 import com.jetbrains.python.psi.PyStringElement
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class AbstractRuntimeCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val project = parameters.editor.project ?: return

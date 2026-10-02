@@ -14,11 +14,13 @@ import com.jetbrains.python.psi.PyParenthesizedExpression;
 import com.jetbrains.python.psi.PySequenceExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 
+@ApiStatus.Internal
 public final class PyStdReferenceContributor extends PsiReferenceContributor {
   private static class Holder {
     private static final PatternCondition<PsiElement> IN_OPTIONAL_PARENTHESIS_INSIDE_ASSIGNMENT =

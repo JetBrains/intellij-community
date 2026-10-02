@@ -5,7 +5,9 @@ import com.intellij.codeInsight.daemon.ChangeLocalityDetector
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.jetbrains.python.psi.PyFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyChangeLocalityDetector : ChangeLocalityDetector {
   override fun getChangeHighlightingDirtyScopeFor(changedElement: PsiElement): PsiElement? {
     if (changedElement is PsiWhiteSpace) {

@@ -41,6 +41,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.PythonEnvUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -53,6 +54,7 @@ import java.util.Map;
 
 import static com.jetbrains.python.statistics.CythonWarningIdsHolder.CYTHON_EXTENSION_SPEEDS_UP_PYTHON_DEBUGGING;
 
+@ApiStatus.Internal
 public final class PyDebugNotificationForCythonExtension {
   private static final Logger LOG = Logger.getInstance(PyDebugNotificationForCythonExtension.class);
 

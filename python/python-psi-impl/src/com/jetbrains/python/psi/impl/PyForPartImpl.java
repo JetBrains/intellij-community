@@ -9,7 +9,9 @@ import com.jetbrains.python.psi.PyForPart;
 import com.jetbrains.python.psi.impl.references.PyKeywordReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class PyForPartImpl extends PyElementImpl implements PyForPart {
   public PyForPartImpl(ASTNode astNode) {
     super(astNode);

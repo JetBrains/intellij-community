@@ -8,7 +8,9 @@ import com.intellij.util.Function;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.types.PyType;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public abstract class PyCustomMemberProvider {
   public static PyCustomMemberProvider getInstance() {
     return ApplicationManager.getApplication().getService(PyCustomMemberProvider.class);

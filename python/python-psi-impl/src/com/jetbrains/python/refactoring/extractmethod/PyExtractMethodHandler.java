@@ -25,9 +25,11 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class PyExtractMethodHandler implements RefactoringActionHandler {
   @Override
   public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {

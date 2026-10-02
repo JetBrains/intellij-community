@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.impl.LightNamedElement;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyModuleType;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 
+@ApiStatus.Internal
 public class PyDunderAllReference extends PsiPolyVariantReferenceBase<PyStringLiteralExpression> {
   public PyDunderAllReference(@NotNull PyStringLiteralExpression element) {
     super(element);

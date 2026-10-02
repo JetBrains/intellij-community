@@ -28,7 +28,9 @@ import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sourceRoots.PySourceRootsBundle
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyRelativeImportInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,

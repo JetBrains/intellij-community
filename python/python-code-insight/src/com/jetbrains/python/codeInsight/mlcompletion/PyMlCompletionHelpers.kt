@@ -10,9 +10,11 @@ import com.jetbrains.python.psi.PyQualifiedExpression
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntMaps
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import org.jetbrains.annotations.ApiStatus
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 
+@ApiStatus.Internal
 object PyMlCompletionHelpers {
   // imports and builtins popularity was calculated on github by number of search results for each present builtins or import
   val importPopularity: Object2IntMap<String> = initMapFromJsonResource("/mlcompletion/importPopularityWeights.json")

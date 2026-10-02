@@ -2,10 +2,12 @@
 package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public interface ImportChooser {
   static ImportChooser getInstance() {
     return ApplicationManager.getApplication().getService(ImportChooser.class);

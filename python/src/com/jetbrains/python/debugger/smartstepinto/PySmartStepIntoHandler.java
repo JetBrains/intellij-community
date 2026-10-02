@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepIntoVariant> {
   private final @NotNull XDebugSession mySession;
   private final @NotNull PyDebugProcess myProcess;

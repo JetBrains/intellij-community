@@ -9,9 +9,11 @@ import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModu
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceClasses;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class ReSTService extends PyDefaultProjectAwareService<
   ReSTService.ServiceState, ReSTService, ReSTService.AppService, ReSTService.ModuleService> {
 

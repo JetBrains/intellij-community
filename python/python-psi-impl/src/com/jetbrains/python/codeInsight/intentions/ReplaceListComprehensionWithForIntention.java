@@ -19,11 +19,13 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyForStatement;
 import com.jetbrains.python.psi.PyListCompExpression;
 import com.jetbrains.python.psi.PyPrintStatement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ReplaceListComprehensionWithForIntention extends PsiUpdateModCommandAction<PsiElement> {
   ReplaceListComprehensionWithForIntention() {
     super(PsiElement.class);

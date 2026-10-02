@@ -14,10 +14,12 @@ import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.cache.firstPageOrEmpty
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.parser.icons.PythonParserIcons
+import org.jetbrains.annotations.ApiStatus
 
 private const val HYPHEN_DELIMITER = '-'
 private const val UNDERSCORE_DELIMITER = '_'
 
+@ApiStatus.Internal
 fun completePackageNames(project: Project, interpreter: PythonInterpreter, result: CompletionResultSet) {
   val repositoryManager = PythonPackageManager.forPythonInterpreter(project, interpreter).repositoryManager
   val typedPrefix = result.prefixMatcher.prefix
@@ -54,6 +56,7 @@ fun completePackageNames(project: Project, interpreter: PythonInterpreter, resul
   }.forEach { result.addElement(it) }
 }
 
+@ApiStatus.Internal
 fun completeVersions(name: String, project: Project, interpreter: PythonInterpreter, result: CompletionResultSet, addQuotes: Boolean) {
   val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
   val repositoryManager = packageManager.repositoryManager

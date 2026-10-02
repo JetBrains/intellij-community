@@ -15,6 +15,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@ApiStatus.Internal
 public class PyDocstringLanguageInjector implements LanguageInjector {
   private static final Pattern CODE_BLOCK_PATTERN =
     Pattern.compile("^\\s*\\.\\.\\s+(code-block|code|sourcecode)::\\s*(\\w+)?\\s*$");

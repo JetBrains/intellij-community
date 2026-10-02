@@ -13,10 +13,12 @@ import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Predicates
 import com.intellij.ui.components.fields.ExtendableTextField
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import javax.swing.JComponent
 
 
+@ApiStatus.Internal
 abstract class PyCommonFragmentsBuilder {
   abstract fun <T : AbstractPythonRunConfiguration<*>> createEnvironmentFragments(
     fragments: MutableList<SettingsEditorFragment<T, *>>,

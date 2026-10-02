@@ -16,10 +16,12 @@
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedPresenter;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public interface PyExtractSuperclassPresenter extends MembersBasedPresenter {
   //TODO: Remove?
 }

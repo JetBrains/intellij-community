@@ -5,7 +5,9 @@ import com.intellij.psi.PsiFile
 import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.PyExpressionCodeFragment
 import com.jetbrains.python.psi.PythonVisitorFilter
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyExpressionCodeFragmentVisitorFilter : PythonVisitorFilter {
   override fun isSupported(visitorClass: Class<out PyElementVisitor>, file: PsiFile): Boolean {
     if (file is PyExpressionCodeFragment) {

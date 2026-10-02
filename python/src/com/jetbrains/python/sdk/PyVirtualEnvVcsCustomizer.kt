@@ -26,6 +26,7 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
+import org.jetbrains.annotations.ApiStatus
 
 internal class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
   override fun customizeCommandAndEnvironment(project: Project?, envs: MutableMap<String, String>, context: VcsExecutableContext) {
@@ -78,6 +79,7 @@ internal class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
 
 @Service(Service.Level.PROJECT)
 @State(name = "PyVirtualEnvVcsSettings", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
+@ApiStatus.Internal
 class PyVirtualEnvVcsSettings : BaseState(), PersistentStateComponent<PyVirtualEnvVcsSettings> {
   override fun getState(): PyVirtualEnvVcsSettings = this
 

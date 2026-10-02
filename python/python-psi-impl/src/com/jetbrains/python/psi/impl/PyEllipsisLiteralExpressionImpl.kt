@@ -8,7 +8,9 @@ import com.jetbrains.python.psi.PyInstantTypeProvider
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyEllipsisLiteralExpressionImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyEllipsisLiteralExpression, PyInstantTypeProvider {
   override fun getType(context: TypeEvalContext, key: TypeEvalContext.Key): PyType? {
     return PyBuiltinCache.getInstance(this).ellipsisType ?: PyAnyType.unknown

@@ -7,12 +7,14 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStarExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Comprehension-like element base, for list comps ang generators.
  */
+@ApiStatus.Internal
 public abstract class PyComprehensionElementImpl extends PyElementImpl implements PyComprehensionElement {
   public PyComprehensionElementImpl(ASTNode astNode) {
     super(astNode);

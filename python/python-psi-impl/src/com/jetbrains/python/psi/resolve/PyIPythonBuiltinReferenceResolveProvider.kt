@@ -14,7 +14,9 @@ import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.impl.ResolveResultList
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyIPythonBuiltinReferenceResolveProvider : PyReferenceResolveProvider {
 
   private val underscoreRegex = "_[0-9]*".toRegex()

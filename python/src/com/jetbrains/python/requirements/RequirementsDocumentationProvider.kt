@@ -45,6 +45,7 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.ui.PyEmbeddedBrowserProvider
 import com.intellij.python.requirements.parser.psi.NameReq
 import com.intellij.python.requirements.parser.psi.UrlReq
+import org.jetbrains.annotations.ApiStatus
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -59,6 +60,7 @@ import kotlin.io.path.pathString
  * (workspace member or `pip install -e .` of an in-project module), Anaconda, PyPI, or a
  * custom-configured repo. Falls back to PyPI when the spec lookup yields no usable URL.
  */
+@ApiStatus.Internal
 class RequirementsDocumentationProvider : PsiDocumentationTargetProvider {
   override fun documentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget? {
     val anchor = originalElement ?: element

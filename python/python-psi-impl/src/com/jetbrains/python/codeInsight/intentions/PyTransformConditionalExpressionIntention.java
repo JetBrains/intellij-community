@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyIfStatement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * else:
  *    x = b
  */
+@ApiStatus.Internal
 public final class PyTransformConditionalExpressionIntention extends PsiUpdateModCommandAction<PyAssignmentStatement> {
   PyTransformConditionalExpressionIntention() {
     super(PyAssignmentStatement.class);

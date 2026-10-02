@@ -8,9 +8,11 @@ import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TextResult;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PyVerSpecificSuperSignatureMacro extends Macro {
   @Override
   public String getName() {

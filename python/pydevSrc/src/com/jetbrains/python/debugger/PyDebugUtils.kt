@@ -1,9 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger
 
+import org.jetbrains.annotations.ApiStatus
+
 interface AbstractPolicy
 
 
+@ApiStatus.Internal
 fun interface PolicyListener {
   fun valuesPolicyUpdated()
 }
@@ -15,6 +18,7 @@ enum class ValuesPolicy : AbstractPolicy {
   ON_DEMAND
 }
 
+@ApiStatus.Internal
 enum class QuotingPolicy : AbstractPolicy {
   SINGLE,
   DOUBLE,
@@ -27,12 +31,14 @@ enum class QuotingPolicy : AbstractPolicy {
  * [DO_NOT_SORT] keeps the order that the debugger sends. For a dict, a list, a tuple and a set this is the
  * order of the object itself. [BY_TYPE] puts the children of one type together.
  */
+@ApiStatus.Internal
 enum class SortingPolicy : AbstractPolicy {
   DO_NOT_SORT,
   ALPHABETICALLY,
   BY_TYPE
 }
 
+@ApiStatus.Internal
 object NodeTypes {
   const val ARRAY_NODE_TYPE: String = "array"
   const val DICT_NODE_TYPE: String = "dict"
@@ -60,6 +66,7 @@ object NodeTypes {
   const val DATASET_DICT_NODE_TYPE: String = "DatasetDict"
 }
 
+@ApiStatus.Internal
 fun getQuotingString(policy: QuotingPolicy, value: String): String =
   when (policy) {
     QuotingPolicy.SINGLE -> value

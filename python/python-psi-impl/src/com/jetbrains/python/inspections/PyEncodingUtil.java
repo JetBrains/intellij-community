@@ -2,10 +2,12 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * User : catherine
  */
+@ApiStatus.Internal
 public final class PyEncodingUtil {
 
   private PyEncodingUtil() {

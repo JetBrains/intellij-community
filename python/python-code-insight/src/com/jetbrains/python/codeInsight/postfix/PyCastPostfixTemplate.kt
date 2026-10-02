@@ -11,7 +11,9 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.codeInsight.imports.AddImportHelper
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyCastPostfixTemplate(provider: PostfixTemplateProvider) :
   StringBasedPostfixTemplate("cast", "cast(, expr)", PyPostfixUtils.selectorAllExpressionsWithCurrentOffset(), provider), DumbAware {
 

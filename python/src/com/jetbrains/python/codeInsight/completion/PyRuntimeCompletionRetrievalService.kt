@@ -7,8 +7,10 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.values.DataFrameDebugValue
 import com.jetbrains.python.debugger.values.completeDataFrameColumns
+import org.jetbrains.annotations.ApiStatus
 
 
+@ApiStatus.Internal
 interface PyRuntimeCompletionRetrievalService {
   /**
    * This function checks additional conditions before calling completion

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -21,6 +22,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public final class DocStringSectionHeaderCompletionContributor extends CompletionContributor implements DumbAware {
   public DocStringSectionHeaderCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().withParent(DocStringTagCompletionContributor.Helper.DOCSTRING_PATTERN),

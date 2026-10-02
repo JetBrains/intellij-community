@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import java.util.Collection;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public interface PyPsiFindUsagesHandlerFactory {
   default boolean canFindUsages(@NotNull PsiElement element) {
     return element instanceof PyClass ||

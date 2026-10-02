@@ -1,0 +1,18 @@
+*c:com.jetbrains.python.PythonCodeStyleService
+- sf:IMPORT_GROUP_BEGIN:com.intellij.openapi.util.Key
+- <init>():V
+- getIndentSize(com.intellij.psi.PsiFile):I
+- s:getInstance():com.jetbrains.python.PythonCodeStyleService
+- getTabSize(com.intellij.psi.PsiFile):I
+- isOptimizeImportsAlwaysSplitFromImports(com.intellij.psi.PsiFile):Z
+- isOptimizeImportsCaseSensitiveOrder(com.intellij.psi.PsiFile):Z
+- isOptimizeImportsSortImports(com.intellij.psi.PsiFile):Z
+- isOptimizeImportsSortNamesInFromImports(com.intellij.psi.PsiFile):Z
+- isOptimizeImportsSortedByTypeFirst(com.intellij.psi.PsiFile):Z
+- isSpaceAroundEqInKeywordArgument(com.intellij.psi.PsiFile):Z
+- isTabIndentation(com.intellij.psi.PsiFile):Z
+- reparseOpenEditorFiles(com.intellij.openapi.project.Project):V
+- setSpaceAroundEqInKeywordArgument(com.intellij.openapi.project.Project,Z):V
+*f:com.jetbrains.python.pyi.PyiUtilCore
+- <init>():V
+- s:isInsideStub(com.intellij.psi.PsiElement):Z

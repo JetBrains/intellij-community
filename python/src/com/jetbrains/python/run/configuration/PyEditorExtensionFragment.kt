@@ -8,11 +8,13 @@ import com.intellij.openapi.util.Disposer
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.PyRunConfigurationEditorExtension
 import com.jetbrains.python.run.PyRunConfigurationEditorFactory
+import org.jetbrains.annotations.ApiStatus
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class PyEditorExtensionFragment<T : AbstractPythonRunConfiguration<*>> :
   SettingsEditorFragment<T, JPanel>("py.extension", null, null, JPanel(GridBagLayout()), null, null, { true }) {
 

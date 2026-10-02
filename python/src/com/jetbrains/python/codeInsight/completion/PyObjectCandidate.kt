@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.completion
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * This data class stores information about a possible python object.
  * @param psiName - name of PsiElement, that could be a python object
@@ -13,6 +15,7 @@ package com.jetbrains.python.codeInsight.completion
  *     psiName = PyQualifiedExpressionItem("a",PyTokenTypes.DOT),
  *     pyQualifiedExpressionList = [PyQualifiedExpressionItem("b",PyTokenTypes.DOT),PyQualifiedExpressionItem("c",PyTokenTypes.DOT)]
  */
+@ApiStatus.Internal
 data class PyObjectCandidate(
   val psiName: PyQualifiedExpressionItem,
   val pyQualifiedExpressionList: List<PyQualifiedExpressionItem>,

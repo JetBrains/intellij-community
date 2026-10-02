@@ -17,6 +17,7 @@ package com.jetbrains.python.refactoring.classes.pullUp;
 
 
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedPresenter;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Presenter for pull-up refactoring
@@ -25,6 +26,7 @@ import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedPr
  *
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public interface PyPullUpPresenter extends MembersBasedPresenter {
 
   /**

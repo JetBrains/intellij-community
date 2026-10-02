@@ -6,8 +6,10 @@ import com.intellij.psi.FileViewProvider;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpressionCodeFragment;
 import com.jetbrains.python.psi.impl.PyFileImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyTypeHintFile extends PyFileImpl implements PyExpressionCodeFragment {
 
   PyTypeHintFile(@NotNull FileViewProvider viewProvider) {

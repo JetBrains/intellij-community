@@ -2,11 +2,13 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public interface PyTypingAliasStub extends CustomTargetExpressionStub {
   @NotNull
   String getText();

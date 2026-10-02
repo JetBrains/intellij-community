@@ -15,11 +15,13 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTryExceptStatement;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class PyExceptClausesOrderInspection extends PyInspection {
 
   @Override

@@ -1,0 +1,70 @@
+f:com.jetbrains.python.packaging.PyCustomPackageManagers
+- *sf:tryCreateCustomPackageManager(com.intellij.openapi.projectRoots.Sdk):com.jetbrains.python.packaging.PyPackageManager
+*a:com.jetbrains.python.projectCreation.SystemPythonRequirements
+*f:com.jetbrains.python.projectCreation.SystemPythonRequirements$ByVersionSpecifier
+- com.jetbrains.python.projectCreation.SystemPythonRequirements
+- <init>():V
+- <init>(com.intellij.python.community.services.systemPython.SystemPythonService,com.jetbrains.python.packaging.PyVersionSpecifiers,kotlin.jvm.functions.Function1):V
+- b:<init>(com.intellij.python.community.services.systemPython.SystemPythonService,com.jetbrains.python.packaging.PyVersionSpecifiers,kotlin.jvm.functions.Function1,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():com.intellij.python.community.services.systemPython.SystemPythonService
+- f:component2():com.jetbrains.python.packaging.PyVersionSpecifiers
+- f:component3():kotlin.jvm.functions.Function1
+- f:copy(com.intellij.python.community.services.systemPython.SystemPythonService,com.jetbrains.python.packaging.PyVersionSpecifiers,kotlin.jvm.functions.Function1):com.jetbrains.python.projectCreation.SystemPythonRequirements$ByVersionSpecifier
+- bs:copy$default(com.jetbrains.python.projectCreation.SystemPythonRequirements$ByVersionSpecifier,com.intellij.python.community.services.systemPython.SystemPythonService,com.jetbrains.python.packaging.PyVersionSpecifiers,kotlin.jvm.functions.Function1,I,java.lang.Object):com.jetbrains.python.projectCreation.SystemPythonRequirements$ByVersionSpecifier
+- equals(java.lang.Object):Z
+- f:getConfirmInstallation():kotlin.jvm.functions.Function1
+- f:getSystemPythonService():com.intellij.python.community.services.systemPython.SystemPythonService
+- f:getVersionSpecifiers():com.jetbrains.python.packaging.PyVersionSpecifiers
+- hashCode():I
+*f:com.jetbrains.python.projectCreation.SystemPythonRequirements$Explicit
+- com.jetbrains.python.projectCreation.SystemPythonRequirements
+- <init>(com.intellij.python.community.services.systemPython.SystemPython):V
+- f:component1():com.intellij.python.community.services.systemPython.SystemPython
+- f:copy(com.intellij.python.community.services.systemPython.SystemPython):com.jetbrains.python.projectCreation.SystemPythonRequirements$Explicit
+- bs:copy$default(com.jetbrains.python.projectCreation.SystemPythonRequirements$Explicit,com.intellij.python.community.services.systemPython.SystemPython,I,java.lang.Object):com.jetbrains.python.projectCreation.SystemPythonRequirements$Explicit
+- equals(java.lang.Object):Z
+- f:getSystemPython():com.intellij.python.community.services.systemPython.SystemPython
+- hashCode():I
+*f:com.jetbrains.python.projectCreation.VenvWithSdkCreatorKt
+- sf:createVenvAndSdk(com.jetbrains.python.sdk.ModuleOrProject,com.jetbrains.python.projectCreation.SystemPythonRequirements,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
+- bs:createVenvAndSdk$default(com.jetbrains.python.sdk.ModuleOrProject,com.jetbrains.python.projectCreation.SystemPythonRequirements,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+*a:com.jetbrains.python.run.PythonExecution
+- *sf:Companion:com.jetbrains.python.run.PythonExecution$Companion
+- sf:SKIP_ARGUMENT:java.lang.String
+- a:accept(com.jetbrains.python.run.PythonExecution$Visitor):V
+- f:addEnvironmentVariable(java.lang.String,java.lang.String):V
+- f:addEnvironmentVariable(java.lang.String,java.util.function.Function):V
+- f:addParameter(java.lang.String):V
+- f:addParameter(java.util.function.Function):V
+- f:addParameters(java.util.List):V
+- f:addParameters(java.lang.String[]):V
+- f:getAdditionalInterpreterParameters():java.util.List
+- f:getCharset():java.nio.charset.Charset
+- f:getEnvs():java.util.Map
+- f:getInputFile():java.io.File
+- f:getParameters():java.util.List
+- f:getWorkingDir():java.util.function.Function
+- f:setCharset(java.nio.charset.Charset):V
+- f:setInputFile(java.io.File):V
+- f:setWorkingDir(java.util.function.Function):V
+- f:withInputFile(java.io.File):V
+*f:com.jetbrains.python.run.PythonExecution$Companion
+*:com.jetbrains.python.run.PythonExecution$Visitor
+- a:visit(com.jetbrains.python.run.PythonModuleExecution):V
+- a:visit(com.jetbrains.python.run.PythonScriptExecution):V
+- a:visit(com.jetbrains.python.run.PythonToolModuleExecution):V
+- a:visit(com.jetbrains.python.run.PythonToolScriptExecution):V
+*f:com.jetbrains.python.run.PythonModuleExecution
+- com.jetbrains.python.run.PythonExecution
+- <init>():V
+- accept(com.jetbrains.python.run.PythonExecution$Visitor):V
+- f:getModuleName():java.lang.String
+- f:setModuleName(java.lang.String):V
+*f:com.jetbrains.python.run.PythonScriptExecution
+- com.jetbrains.python.run.PythonExecution
+- <init>():V
+- accept(com.jetbrains.python.run.PythonExecution$Visitor):V
+- f:getPythonScriptPath():java.util.function.Function
+- f:setPythonScriptPath(java.util.function.Function):V
+*:com.jetbrains.python.run.PythonScriptTargetedCommandLineBuilder
+- a:build(com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest,com.jetbrains.python.run.PythonExecution):com.jetbrains.python.run.PythonExecution

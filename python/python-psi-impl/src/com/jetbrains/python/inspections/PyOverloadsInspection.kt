@@ -35,9 +35,11 @@ import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.EnumSet
 
+@ApiStatus.Internal
 class PyOverloadsInspection : PyInspection() {
 
   override fun buildVisitor(

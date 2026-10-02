@@ -4,8 +4,10 @@ package com.jetbrains.python.psi.stubs;
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.jetbrains.python.psi.PyElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class PyExportedModuleAttributeIndex extends StringStubIndexExtension<PyElement> {
   public static final StubIndexKey<String, PyElement> KEY = StubIndexKey.createIndexKey("Py.module.attribute");
 

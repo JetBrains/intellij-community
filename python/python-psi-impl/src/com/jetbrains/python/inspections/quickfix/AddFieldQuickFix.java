@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,7 @@ import java.util.function.Function;
 /**
  * Available on self.my_something when my_something is unresolved.
  */
+@ApiStatus.Internal
 public final class AddFieldQuickFix implements LocalQuickFix {
   private final String myInitializer;
   private final String myClassName;

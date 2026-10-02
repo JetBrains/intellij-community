@@ -17,10 +17,12 @@ import com.jetbrains.python.getEffectiveLanguageLevel
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import org.intellij.lang.annotations.Pattern
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Marks references that fail to resolve.
  */
+@ApiStatus.Internal
 class PyUnresolvedReferencesInspection : PyInspection() {
   @JvmField
   var ignoredIdentifiers: List<String> = ArrayList()

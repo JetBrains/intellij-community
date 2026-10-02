@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.util.Set;
  * Checks nested decorators, especially whatever comes after @classmethod.
  * <br/>
  */
+@ApiStatus.Internal
 public final class PyNestedDecoratorsInspection extends PyInspection {
 
   @Override

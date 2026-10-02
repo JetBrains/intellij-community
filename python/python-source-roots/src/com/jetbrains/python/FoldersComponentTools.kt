@@ -4,10 +4,12 @@ package com.jetbrains.python
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Tools of [PersistentStateComponent] that stores folders as [VirtualFile]
  */
+@ApiStatus.Internal
 class FoldersComponentTools(private val folders: MutableList<VirtualFile>) {
 
   fun setFoldersAsStrings(folders: List<String>) {

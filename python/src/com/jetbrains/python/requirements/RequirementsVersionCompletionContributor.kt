@@ -14,7 +14,9 @@ import com.intellij.psi.util.prevLeafs
 import com.intellij.python.requirements.parser.psi.NameReq
 import com.intellij.python.requirements.parser.psi.Version
 import com.intellij.python.requirements.parser.psi.RequirementsTypes
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RequirementsVersionCompletionContributor : CompletionContributor() {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     if (parameters.originalFile !is RequirementsFile)

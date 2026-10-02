@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.util.List;
 /**
  * User :catherine
  */
+@ApiStatus.Internal
 public final class PyListCreationInspection extends PyInspection {
 
   @Override

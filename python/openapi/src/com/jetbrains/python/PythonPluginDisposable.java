@@ -5,12 +5,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * The service is intended to be used instead of a project/application as a parent disposable.
  */
 @Service({Service.Level.APP, Service.Level.PROJECT})
+@ApiStatus.Internal
 public final class PythonPluginDisposable implements Disposable {
   public static @NotNull Disposable getInstance() {
     return ApplicationManager.getApplication().getService(PythonPluginDisposable.class);

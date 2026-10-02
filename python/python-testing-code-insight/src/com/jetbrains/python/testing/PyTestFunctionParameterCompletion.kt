@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.PyParameterList
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureAsParameterProvider
 import com.jetbrains.python.testing.pyTestParametrized.PyTestParameterFromParametrizeProvider
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 
@@ -36,6 +37,7 @@ private val completionProviders = arrayOf(PyTestFixtureAsParameterProvider, PyTe
  * Contributes function argument names.
  * @see completionProviders
  */
+@ApiStatus.Internal
 class PyTestParameterCompletionContributor : CompletionContributor(), DumbAware {
   init {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement().inside(PyParameterList::class.java), PyTestFunctionArgumentCompletion)

@@ -3,8 +3,10 @@ package com.jetbrains.python.pyi;
 
 import com.intellij.lang.Language;
 import com.jetbrains.python.psi.PyFileElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyiFileElementType extends PyFileElementType {
   protected PyiFileElementType(Language language) {
     super(language);

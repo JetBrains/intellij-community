@@ -12,7 +12,9 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyCaseClauseImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyCaseClause, PyCaptureContext {
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
     pyVisitor.visitPyCaseClause(this)

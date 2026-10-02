@@ -14,11 +14,13 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyLoopStatement;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides reaction on ctrl+click for {@code break} and {@code continue} statements.
  */
+@ApiStatus.Internal
 public final class PyBreakContinueGotoProvider extends GotoDeclarationHandlerBase {
   @Override
   public PsiElement getGotoDeclarationTarget(@Nullable PsiElement source, Editor editor) {

@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.stubs.PyCustomDecoratorStub
 import com.jetbrains.python.psi.impl.stubs.PyDataclassTransformDecoratorStubType
 import com.jetbrains.python.psi.resolve.PyResolveUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
 /**
@@ -24,6 +25,7 @@ import java.io.IOException
  *
  * See https://docs.python.org/3.13/library/typing.html#typing.dataclass_transform.
  */
+@ApiStatus.Internal
 data class PyDataclassTransformDecoratorStub(
   val eqDefault: Boolean,
   val orderDefault: Boolean,

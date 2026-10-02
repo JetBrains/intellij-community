@@ -15,9 +15,11 @@
  */
 package com.jetbrains.python.sdk.flavors;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public abstract class CPythonSdkFlavor<T extends PyFlavorData> extends PythonSdkFlavor<T> {
   @Override
   public @NotNull String getName() {

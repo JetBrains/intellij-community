@@ -45,12 +45,14 @@ import com.jetbrains.python.psi.PyStatementListContainer
 import com.jetbrains.python.psi.PyStatementPart
 import com.jetbrains.python.psi.PyWhilePart
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Inverts 'if' condition branches
  *
  * @author Vasya Aksyonov
  */
+@ApiStatus.Internal
 class PyInvertIfConditionIntention : PsiUpdateModCommandAction<PsiElement>(PsiElement::class.java) {
   private companion object {
     const val PYLINT_COMMENT_PREFIX = "# pylint:"

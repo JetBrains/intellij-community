@@ -6,11 +6,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyRaiseStatement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Describes 'raise' statement.
  */
+@ApiStatus.Internal
 public class PyRaiseStatementImpl extends PyElementImpl implements PyRaiseStatement {
   public PyRaiseStatementImpl(ASTNode astNode) {
     super(astNode);

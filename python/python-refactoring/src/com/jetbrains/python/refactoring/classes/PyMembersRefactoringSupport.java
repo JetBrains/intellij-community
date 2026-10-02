@@ -11,10 +11,12 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.move.moduleMembers.PyDependentModuleMembersCollector;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Dennis.Ushakov
  */
+@ApiStatus.Internal
 public final class PyMembersRefactoringSupport implements ClassMembersRefactoringSupport<PyElement> {
 
   public static PyMemberInfoStorage getSelectedMemberInfos(PyClass clazz, PsiElement element1, PsiElement element2) {

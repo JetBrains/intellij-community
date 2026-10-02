@@ -6,7 +6,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.EDT
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 fun <T> ProgressManager.runUnderProgress(@NlsContexts.DialogTitle title: String, code: () -> T): T =
   if (EDT.isCurrentThreadEdt()) {
     run(object : Task.WithResult<T, Exception>(null, title, false) {

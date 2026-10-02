@@ -16,7 +16,9 @@ import com.jetbrains.python.psi.types.PyClassMembersProviderBase
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyOverridingClassMembersProvider
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyOverridingClassDunderMembersProvider : PyClassMembersProviderBase(), PyOverridingClassMembersProvider {
 
   override fun resolveMember(type: PyClassType, name: String, location: PsiElement?, resolveContext: PyResolveContext): PsiElement? {

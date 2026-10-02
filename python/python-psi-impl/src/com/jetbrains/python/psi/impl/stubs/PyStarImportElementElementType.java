@@ -10,10 +10,12 @@ import com.jetbrains.python.psi.PyStarImportElement;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyStarImportElementImpl;
 import com.jetbrains.python.psi.stubs.PyStarImportElementStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+@ApiStatus.Internal
 public class PyStarImportElementElementType extends PyStubElementType<PyStarImportElementStub, PyStarImportElement> {
   public PyStarImportElementElementType() {
     super("STAR_IMPORT_ELEMENT");

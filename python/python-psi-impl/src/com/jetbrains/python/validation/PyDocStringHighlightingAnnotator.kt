@@ -19,10 +19,12 @@ import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyStringLiteralExpression
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Highlights doc strings in classes, functions, and files.
  */
+@ApiStatus.Internal
 class PyDocStringHighlightingAnnotator : PyAnnotatorBase() {
 
   override fun runInBatchMode(): Boolean {

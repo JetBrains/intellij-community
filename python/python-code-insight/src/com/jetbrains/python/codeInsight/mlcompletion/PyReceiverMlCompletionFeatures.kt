@@ -11,7 +11,9 @@ import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object PyReceiverMlCompletionFeatures {
   val receiverNamesKey = Key<List<String>>("py.ml.completion.receiver.name")
 

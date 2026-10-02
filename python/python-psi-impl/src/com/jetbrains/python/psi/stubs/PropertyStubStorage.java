@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.impl.PropertyBunch;
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 import com.jetbrains.python.psi.impl.stubs.PropertyStubType;
 import com.jetbrains.python.toolbox.Maybe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.io.IOException;
 /**
  * Packs property description for storage in a stub.
  */
+@ApiStatus.Internal
 public class PropertyStubStorage extends PropertyBunch<String> implements CustomTargetExpressionStub {
 
   @Override

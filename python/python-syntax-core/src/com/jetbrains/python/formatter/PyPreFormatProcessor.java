@@ -19,11 +19,13 @@ import com.jetbrains.python.ast.PyAstRecursiveElementVisitor;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyAstElementGenerator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class PyPreFormatProcessor implements PreFormatProcessor {
   @Override
   public @NotNull TextRange process(@NotNull ASTNode element, @NotNull TextRange range) {

@@ -31,6 +31,7 @@ import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ import static com.jetbrains.python.statistics.PythonCompatibilityInspectionAdver
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public final class PyCompatibilityInspectionAdvertiser implements Annotator {
 
   private static final Key<Boolean> DONT_SHOW_BALLOON = Key.create("showingPyCompatibilityAdvertiserBalloon");

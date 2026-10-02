@@ -10,12 +10,14 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.stubs.PyClassStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public class PyClassStubImpl extends PyVersionSpecificStubBase<PyClass> implements PyClassStub {
 
   private final @Nullable String myName;

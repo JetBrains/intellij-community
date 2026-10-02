@@ -66,10 +66,12 @@ private val NON_PARAMETERIZED_CANDIDATE_STUB: PyDataclassStub = PyDataclassStubI
   slots = null,
 )
 
+@ApiStatus.Internal
 fun parseStdDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {
   return parseDataclassParameters(cls, context)?.takeIf { it.type.name == PyStdlibDataclassType.name }
 }
 
+@ApiStatus.Internal
 fun parseStdOrDataclassTransformDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {
   return parseDataclassParameters(cls, context)?.takeIf {
     it.type.name == PyStdlibDataclassType.name ||
@@ -77,6 +79,7 @@ fun parseStdOrDataclassTransformDataclassParameters(cls: PyClass, context: TypeE
   }
 }
 
+@ApiStatus.Internal
 fun parseDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? =
   PyUtil.getNullableParameterizedCachedValue(cls, context) {
     StubAwareComputation.on(cls)
@@ -130,6 +133,7 @@ fun isFrozenAttribute(attribute: PyTargetExpression, context: TypeEvalContext): 
  * @see parseStdDataclassParameters
  * @see parseDataclassParameters
  */
+@ApiStatus.Internal
 fun parseDataclassParametersForStub(cls: PyClass): PyDataclassStub? = parseDataclassParametersFromAST(cls, null)?.first
 
 /**
@@ -138,6 +142,7 @@ fun parseDataclassParametersForStub(cls: PyClass): PyDataclassStub? = parseDatac
  *
  * Shared entry point for type providers and inspections so they don't re-derive the framework from decorators/config.
  */
+@ApiStatus.Internal
 fun getDataclassKind(cls: PyClass, context: TypeEvalContext): Type? =
   parseDataclassParameters(cls, context)?.type
 
@@ -145,6 +150,7 @@ fun getDataclassKind(cls: PyClass, context: TypeEvalContext): Type? =
  * [expression] is the "no default" sentinel.
  * see [com.jetbrains.python.codeInsight.stdlib.PyDataclassResolver.omittedDefaultQualifiedNames]).
  */
+@ApiStatus.Internal
 fun PyDataclassResolver.resolvesToOmittedDefault(expression: PyExpression): Boolean =
   !(omittedDefaultQualifiedNames.isEmpty() || expression !is PyReferenceExpression) &&
   resolveImportedElementQNameLocally(expression).any { it.toString() in omittedDefaultQualifiedNames }
@@ -153,6 +159,7 @@ fun PyDataclassResolver.resolvesToOmittedDefault(expression: PyExpression): Bool
  * It should be used only to map arguments to parameters and
  * determine what settings dataclass has.
  */
+@ApiStatus.Internal
 fun decoratorAndTypeAndMarkedCallee(project: Project): List<Triple<QualifiedName, Type, List<PyCallableParameter>>> {
   return PyDataclassParametersProvider.EP_NAME.extensionList.mapNotNull { it.getDecoratorAndTypeAndParameters(project) } +
          DECORATOR_AND_TYPE_AND_PARAMETERS.map {
@@ -168,6 +175,7 @@ fun decoratorAndTypeAndMarkedCallee(project: Project): List<Triple<QualifiedName
          }
 }
 
+@ApiStatus.Internal
 fun buildDecoratorDataclassStubAndMapping(
   cls: PyClass,
   context: TypeEvalContext?,
@@ -220,6 +228,7 @@ private fun resolveDataclassParameters(
   }
 }
 
+@ApiStatus.Internal
 fun resolveDataclassFieldParameters(
   dataclass: PyClass,
   dataclassParams: PyDataclassParameters,
@@ -235,6 +244,7 @@ fun resolveDataclassFieldParameters(
  * `__init__` simply never see one. This is shared model construction, not per-framework behaviour, so it lives here
  * rather than on [com.jetbrains.python.codeInsight.stdlib.PyDataclassResolver].
  */
+@ApiStatus.Internal
 fun getDataclassInitVars(
   cls: PyClass,
   params: PyDataclassParameters?,
@@ -380,10 +390,12 @@ class InitFieldsAccumulator {
 }
 
 /** A framework-provided "shallow copy with overrides" free function (e.g. `dataclasses.replace` / `attrs.evolve`). */
+@ApiStatus.Internal
 data class PyDataclassCopyFunction(
   val qualifiedName: QualifiedName,
   val instanceParameterName: String,
 )
 
 /** A resolved `InitVar[...]` pseudo-field: the declaring attribute and the unwrapped init-only type. */
+@ApiStatus.Internal
 data class InitVarInfo(val targetExpression: PyTargetExpression, val type: PyType?)

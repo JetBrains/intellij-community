@@ -16,8 +16,10 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyUnpackedTupleTypeImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyStarExpressionImpl extends PyElementImpl implements PyStarExpression, PyInstantTypeProvider {
   public PyStarExpressionImpl(ASTNode astNode) {
     super(astNode);

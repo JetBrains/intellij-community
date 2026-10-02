@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.types.PyCallableType;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, PyParameterInfoUtils.CallInfo> {
   private static final int MY_PARAM_LENGTH_LIMIT = 50;
   private static final int MAX_PARAMETER_INFO_TO_SHOW = 20;

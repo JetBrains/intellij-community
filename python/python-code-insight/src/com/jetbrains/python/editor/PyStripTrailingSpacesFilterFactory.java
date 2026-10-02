@@ -8,8 +8,10 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class PyStripTrailingSpacesFilterFactory extends PsiBasedStripTrailingSpacesFilter.Factory {
   @Override
   protected @NotNull PsiBasedStripTrailingSpacesFilter createFilter(@NotNull Document document) {

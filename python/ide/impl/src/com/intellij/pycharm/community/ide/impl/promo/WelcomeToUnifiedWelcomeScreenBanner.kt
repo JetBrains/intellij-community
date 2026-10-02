@@ -23,12 +23,14 @@ import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import javax.swing.Icon
 import javax.swing.JPanel
 
 private const val PREV_BUILD_WAS_PC_PROP = "pycharm.previous.version.was.community"
 
+@ApiStatus.Internal
 class WelcomeToUnifiedWelcomeScreenBanner : PyCommunityToUnifiedWelcomeScreenBannerBase() {
 
   companion object {
@@ -101,6 +103,7 @@ class WelcomeToUnifiedWelcomeScreenBanner : PyCommunityToUnifiedWelcomeScreenBan
   }
 }
 
+@ApiStatus.Internal
 class CommunityToUnifiedListener : AppLifecycleListener {
   override fun appStarted() {
     if (PlatformUtils.isPyCharmCommunity()) {

@@ -4,8 +4,10 @@ package com.jetbrains.python.psi.impl.stubs
 import com.intellij.psi.stubs.StubInputStream
 import com.jetbrains.python.psi.PyDecorator
 import com.jetbrains.python.psi.stubs.PyDataclassTransformDecoratorStub
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
+@ApiStatus.Internal
 class PyDataclassTransformDecoratorStubType : PyCustomDecoratorStubType<PyDataclassTransformDecoratorStub> {
   override fun createStub(decorator: PyDecorator): PyDataclassTransformDecoratorStub? = PyDataclassTransformDecoratorStub.create(decorator)
 

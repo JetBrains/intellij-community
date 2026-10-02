@@ -3,6 +3,7 @@ package com.jetbrains.python.run;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -10,6 +11,7 @@ import javax.swing.JComponent;
 /**
  * @author Leonid Shalupov
  */
+@ApiStatus.Internal
 public class PythonRunConfigurationEditor extends SettingsEditor<PythonRunConfiguration> {
   private PythonRunConfigurationForm myForm;
 

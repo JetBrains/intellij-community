@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.PySetLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * Inspection to highlight backslashes in places where line continuation is implicit (inside (), [], {}).
  */
+@ApiStatus.Internal
 public final class PyUnnecessaryBackslashInspection extends PyInspection {
 
   @Override

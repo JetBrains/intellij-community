@@ -1,0 +1,6 @@
+f:com.intellij.python.pytools.frontend.icons.PythonPytoolsFrontendIcons
+- sf:Edit:javax.swing.Icon
+- sf:Install:javax.swing.Icon
+- sf:Settings:javax.swing.Icon
+- sf:Upgrade:javax.swing.Icon
+- <init>():V

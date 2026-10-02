@@ -11,11 +11,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.extensions.CaptureExtKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 
+@ApiStatus.Internal
 public final class PyParameterCompletionContributor extends CompletionContributor implements DumbAware {
   public PyParameterCompletionContributor() {
     extend(CompletionType.BASIC,

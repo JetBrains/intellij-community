@@ -15,8 +15,10 @@ import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.components.TextComponentEmptyText
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.PythonRunConfiguration
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 
+@ApiStatus.Internal
 class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfiguration) :
   AbstractPythonConfigurationFragmentedEditor<PythonRunConfiguration>(runConfiguration) {
 

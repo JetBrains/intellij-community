@@ -9,8 +9,10 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStarExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyReplaceStarByUnpackQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   public @NotNull String getFamilyName() {

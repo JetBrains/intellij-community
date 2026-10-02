@@ -3,11 +3,13 @@ package com.jetbrains.python.documentation.doctest;
 
 import com.intellij.lang.Language;
 import com.jetbrains.python.psi.PyFileElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public class PyDocstringFileElementType extends PyFileElementType {
   public PyDocstringFileElementType(Language language) {
     super(language);

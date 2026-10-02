@@ -38,9 +38,11 @@ import com.jetbrains.python.ast.PyAstTypeAliasStatement;
 import com.jetbrains.python.ast.PyAstWithStatement;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.PyElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PyKeywordHighlightingAnnotator extends PyAnnotatorBase implements HighlightRangeExtension {
 
   @Override

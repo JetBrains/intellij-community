@@ -8,7 +8,9 @@ import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.PrevCallsModelsP
 import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.PyPrevCallsCompletionFeatures
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyContextFeatureProvider : ContextFeatureProvider {
   override fun getName(): String = "python"
 

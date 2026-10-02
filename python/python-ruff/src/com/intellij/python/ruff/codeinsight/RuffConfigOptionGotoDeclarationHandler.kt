@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.paths.WebReference
 import com.intellij.psi.PsiElement
 import com.intellij.python.ruff.RuffUtil.RUFF_WEBSITE
+import org.jetbrains.annotations.ApiStatus
 import org.toml.lang.psi.TomlFile
 import org.toml.lang.psi.TomlKeySegment
 
@@ -18,6 +19,7 @@ import org.toml.lang.psi.TomlKeySegment
  * ```
  * Then it will link to `https://docs.astral.sh/ruff/settings/#lint_allowed-confusables`
  */
+@ApiStatus.Internal
 class RuffConfigOptionGotoDeclarationHandler : GotoDeclarationHandlerBase() {
 
   override fun getGotoDeclarationTarget(sourceElement: PsiElement?, editor: Editor): PsiElement? {

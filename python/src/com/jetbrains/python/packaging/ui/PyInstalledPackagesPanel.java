@@ -35,6 +35,7 @@ import java.util.Set;
 import static com.jetbrains.python.SdkUiUtilKt.isNonToolVirtualEnv;
 
 
+@ApiStatus.Internal
 public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   static String PYTHON = "python";
 

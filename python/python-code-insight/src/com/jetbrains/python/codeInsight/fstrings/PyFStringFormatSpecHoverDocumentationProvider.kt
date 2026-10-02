@@ -18,6 +18,7 @@ import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.psi.PyFStringFragment
 import com.jetbrains.python.psi.PyFStringFragmentFormatPart
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 // The example is rendered eagerly from the width and the precision in the document, so both need a
@@ -31,6 +32,7 @@ private const val MAX_EXAMPLE_PRECISION = 20
  * Hovering anywhere after the colon describes the whole specification, not the single character under the
  * caret. The spec is read with the shared [PyFormatSpec] parser.
  */
+@ApiStatus.Internal
 class PyFStringFormatSpecHoverDocumentationProvider : DocumentationTargetProvider {
 
   override fun documentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> {

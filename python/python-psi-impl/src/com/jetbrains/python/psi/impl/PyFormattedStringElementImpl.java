@@ -4,7 +4,9 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyFormattedStringElement;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class PyFormattedStringElementImpl extends PyElementImpl implements PyFormattedStringElement {
 
   public PyFormattedStringElementImpl(ASTNode astNode) {

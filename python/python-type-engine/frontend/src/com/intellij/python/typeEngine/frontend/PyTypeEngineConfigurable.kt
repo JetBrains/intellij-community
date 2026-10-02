@@ -19,7 +19,9 @@ import com.intellij.python.typeEngine.common.PyTypeEngineId
 import com.intellij.python.typeEngine.common.PyTypeEngineSelectionRequest
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.SegmentedButton
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyTypeEngineConfigurable(
   private val project: Project,
 ) : UiDslUnnamedConfigurable.Simple(), SearchableConfigurable {

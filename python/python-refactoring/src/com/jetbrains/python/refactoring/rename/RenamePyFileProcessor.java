@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.PyImportStatementBase;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyRefactoringBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 
+@ApiStatus.Internal
 public final class RenamePyFileProcessor extends RenamePsiFileProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {

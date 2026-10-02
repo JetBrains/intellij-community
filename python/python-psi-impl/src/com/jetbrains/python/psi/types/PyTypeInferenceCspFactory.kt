@@ -464,8 +464,10 @@ object PyTypeInferenceCspFactory {
   }
 }
 
+@ApiStatus.Internal
 class NotSupportedException : RuntimeException()
 
+@ApiStatus.Internal
 fun normalizeType(type: PyType?, context: TypeEvalContext): PyType? {
   var normalizedType = type
   if (type is PyClassType && !type.isParameterized) {
@@ -480,6 +482,7 @@ fun normalizeType(type: PyType?, context: TypeEvalContext): PyType? {
   return normalizedType
 }
 
+@ApiStatus.Internal
 fun TypeEvalContext.getNarrowedType(element: PyExpression): PyType? {
   return PyLiteralType.getLiteralType (element, this) ?: this.getType(element)
 }

@@ -8,7 +8,9 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyTupleExpression
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class WrapExceptTupleInParenthesesQuickFix(exceptPartTuple: PyTupleExpression)
   : PsiUpdateModCommandAction<PyTupleExpression>(exceptPartTuple) {
 

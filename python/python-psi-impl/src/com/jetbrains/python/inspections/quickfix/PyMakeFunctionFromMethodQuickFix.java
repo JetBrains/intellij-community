@@ -28,11 +28,13 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
   public PyMakeFunctionFromMethodQuickFix() {
   }

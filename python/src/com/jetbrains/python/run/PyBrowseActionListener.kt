@@ -6,7 +6,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class PyBrowseActionListener @JvmOverloads constructor(
   private val configuration: AbstractPythonRunConfiguration<*>,
   chooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor().withExtensionFilter("py")

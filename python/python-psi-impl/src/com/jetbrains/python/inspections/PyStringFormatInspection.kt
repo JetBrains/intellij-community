@@ -68,11 +68,13 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isNoneType
 import com.jetbrains.python.pyi.PyiUtil
+import org.jetbrains.annotations.ApiStatus
 import java.math.BigInteger
 import java.util.function.ToIntFunction
 import java.util.stream.Collectors
 import kotlin.math.max
 
+@ApiStatus.Internal
 class PyStringFormatInspection : PyInspection() {
   override fun buildVisitor(
     holder: ProblemsHolder,

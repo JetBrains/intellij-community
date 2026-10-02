@@ -4,8 +4,10 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyPrintStatement;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public class PyPrintStatementImpl extends PyElementImpl implements PyPrintStatement {
   public PyPrintStatementImpl(ASTNode astNode) {
     super(astNode);

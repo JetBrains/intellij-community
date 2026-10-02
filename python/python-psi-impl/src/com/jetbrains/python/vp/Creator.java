@@ -2,6 +2,7 @@
 package com.jetbrains.python.vp;
 
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * @param <P> presenter interface
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public interface Creator<V, P extends Presenter> {
 
   /**

@@ -1,0 +1,3 @@
+com/intellij/xdebugger/impl/ui/tree/nodes/XValueNodeEx
+com/jetbrains/python/tables/TableCommandParameters
+com/jetbrains/python/tables/TableCommandType

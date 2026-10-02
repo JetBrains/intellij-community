@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  * Inspection to detect docstrings not using triple double-quoted string
  */
+@ApiStatus.Internal
 public final class PySingleQuotedDocstringInspection extends PyInspection {
 
   @Override

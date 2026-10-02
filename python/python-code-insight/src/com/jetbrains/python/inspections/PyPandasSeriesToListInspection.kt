@@ -24,7 +24,9 @@ import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isUnknown
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyPandasSeriesToListInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     return Visitor(holder, PyInspectionVisitor.getContext(session))

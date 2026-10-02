@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -20,6 +21,7 @@ import java.util.Objects;
 /**
  * Highlights class definitions, function definitions, and decorators.
  */
+@ApiStatus.Internal
 public final class PyDefinitionsHighlightingAnnotator extends PyAnnotatorBase {
 
   @Override

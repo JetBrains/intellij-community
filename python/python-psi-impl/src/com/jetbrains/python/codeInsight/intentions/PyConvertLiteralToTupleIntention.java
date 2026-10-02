@@ -9,11 +9,13 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySequenceExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public final class PyConvertLiteralToTupleIntention extends PyBaseConvertCollectionLiteralIntention {
   public PyConvertLiteralToTupleIntention() {
     super(PyTupleExpression.class, "tuple", "(", ")");

@@ -21,6 +21,7 @@ import kotlin.reflect.jvm.javaType
  * @author Ilya.Kazakevich
  */
 
+@ApiStatus.Internal
 interface Property {
   fun getName(): String
   fun getType(): Type
@@ -168,4 +169,5 @@ fun getProperties(instance: Any, annotationToFilterByClass: Class<*>? = null, us
  *
  * Property credentials here is [DelegationProperty]. It can be val, but all other properties should be var
  */
+@ApiStatus.Internal
 annotation class DelegationProperty

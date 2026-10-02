@@ -9,8 +9,10 @@ import com.jetbrains.python.PyPsiBundle
 import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 class PyAddToDeclaredPackagesQuickFix(
   private val manager: PythonPackageManager,
   val packageName: String,

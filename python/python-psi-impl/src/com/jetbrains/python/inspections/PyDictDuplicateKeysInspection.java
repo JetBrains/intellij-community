@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ import java.util.Map;
  * <p>
  * Inspection to detect using the same value as dictionary key twice.
  */
+@ApiStatus.Internal
 public final class PyDictDuplicateKeysInspection extends PyInspection {
 
   @Override

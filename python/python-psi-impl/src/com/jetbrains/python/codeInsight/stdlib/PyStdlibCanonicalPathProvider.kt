@@ -7,8 +7,10 @@ import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.psi.resolve.PyCanonicalPathProvider
 import com.jetbrains.python.psi.resolve.pythonSdkIfReady
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
+import org.jetbrains.annotations.ApiStatus
 
 
+@ApiStatus.Internal
 class PyStdlibCanonicalPathProvider : PyCanonicalPathProvider {
   override fun getCanonicalPath(symbol: PsiElement?, qName: QualifiedName, foothold: PsiElement?): QualifiedName? {
     val virtualFile = PsiUtilCore.getVirtualFile(symbol)
@@ -26,6 +28,7 @@ private fun QualifiedName.replaceHead(newHead: String): QualifiedName {
   return QualifiedName.fromDottedString(newHead).append(removeHead(1))
 }
 
+@ApiStatus.Internal
 fun restoreStdlibCanonicalPath(qName: QualifiedName): QualifiedName? {
   if (qName.matchesPrefix(QualifiedName.fromComponents("mock", "mock"))) {
     return qName.removeHead(1)

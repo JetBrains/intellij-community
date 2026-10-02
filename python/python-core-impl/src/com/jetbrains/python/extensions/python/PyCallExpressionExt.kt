@@ -6,11 +6,12 @@ import com.jetbrains.python.nameResolver.NameResolverTools
 import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyPossibleClassMember
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Checks if ``foo = SomeExpr()`` where foo is class attribute
  */
-val PyCallExpression.isClassAttribute: Boolean
+@get:ApiStatus.Internal val PyCallExpression.isClassAttribute: Boolean
   get() =
     (parent as? PyAssignmentStatement)?.targets?.filterIsInstance<PyPossibleClassMember>()?.any { it.containingClass != null } == true
 

@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 import static com.intellij.execution.target.value.TargetEnvironmentFunctions.joinToStringFunction;
 import static com.intellij.execution.target.value.TargetEnvironmentFunctions.targetPath;
 
+@ApiStatus.Internal
 public class PythonDocTestRunConfiguration extends AbstractPythonLegacyTestRunConfiguration<PythonDocTestRunConfiguration>
   implements PythonDocTestRunConfigurationParams {
   private static final PackageAvailabilitySpec PACKAGE_SPEC = new PackageAvailabilitySpec("doctest", "doctest.DocTestRunner");

@@ -7,6 +7,7 @@ import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExpressionStatement;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -20,6 +21,7 @@ import java.util.function.Supplier;
  * Compares elements by their dependencies.
  * If A depends on B, then A &lt; B
  */
+@ApiStatus.Internal
 public final class PyDependenciesComparator implements Comparator<PyElement>, Serializable {
   private static final Key<UUID> UUID_KEY = new Key<>("pyUUIDKey");
   private static final Key<Set<UUID>> DEPENDENCIES_KEY = new Key<>("pyUUIDDependencies");

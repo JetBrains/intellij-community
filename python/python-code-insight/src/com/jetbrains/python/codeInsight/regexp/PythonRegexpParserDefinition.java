@@ -6,6 +6,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import org.intellij.lang.regexp.RegExpCapability;
 import org.intellij.lang.regexp.RegExpParserDefinition;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
@@ -19,6 +20,7 @@ import static org.intellij.lang.regexp.RegExpCapability.SHORTHAND_CLASS_RANGE_EN
 import static org.intellij.lang.regexp.RegExpCapability.SHORTHAND_CLASS_RANGE_START_ERROR;
 
 
+@ApiStatus.Internal
 public class PythonRegexpParserDefinition extends RegExpParserDefinition {
   public static final IFileElementType PYTHON_REGEXP_FILE = new IFileElementType("PYTHON_REGEXP_FILE", PythonRegexpLanguage.INSTANCE);
   protected final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(DANGLING_METACHARACTERS,

@@ -13,11 +13,13 @@ import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyAnnotationImpl;
 import com.jetbrains.python.psi.stubs.PyAnnotationStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+@ApiStatus.Internal
 public class PyAnnotationElementType extends PyStubElementType<PyAnnotationStub, PyAnnotation> {
   public PyAnnotationElementType() {
     this("ANNOTATION");

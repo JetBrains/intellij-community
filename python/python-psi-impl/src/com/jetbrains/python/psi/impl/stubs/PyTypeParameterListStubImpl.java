@@ -6,7 +6,9 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyTypeParameterList;
 import com.jetbrains.python.psi.stubs.PyTypeParameterListStub;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class PyTypeParameterListStubImpl extends StubBase<PyTypeParameterList> implements PyTypeParameterListStub {
   public PyTypeParameterListStubImpl(StubElement parent, IStubElementType stubElementType) {
     super(parent, stubElementType);

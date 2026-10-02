@@ -20,6 +20,7 @@ import com.jetbrains.python.debugger.values.DataFrameDebugValue;
 import com.thoughtworks.xstream.io.naming.NoNameCoder;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import io.github.xstream.mxparser.MXParser;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class ProtocolParser {
   private ProtocolParser() {
   }

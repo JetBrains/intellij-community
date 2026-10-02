@@ -11,7 +11,9 @@ import com.intellij.lang.Language
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.DefaultInjectedLanguageBlockBuilder
 import com.jetbrains.python.PythonLanguage
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyFormattableInjectedBlock(parent: PyBlock,
                                 node: ASTNode,
                                 alignment: Alignment?,

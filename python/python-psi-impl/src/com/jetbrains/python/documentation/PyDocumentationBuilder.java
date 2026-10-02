@@ -96,6 +96,7 @@ import static com.intellij.lang.documentation.DocumentationMarkup.SECTION_CONTEN
 import static com.intellij.lang.documentation.DocumentationMarkup.SECTION_HEADER_CELL;
 import static com.jetbrains.python.psi.PyUtil.as;
 
+@ApiStatus.Internal
 public final class PyDocumentationBuilder {
   private final PsiElement myElement;
   private final PsiElement myOriginalElement;

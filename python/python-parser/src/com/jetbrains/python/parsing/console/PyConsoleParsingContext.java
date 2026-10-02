@@ -10,9 +10,11 @@ import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
 
+import org.jetbrains.annotations.ApiStatus;
 import static com.jetbrains.python.parsing.console.PyConsoleTokenTypes.MAGIC_COMMAND_LINE;
 import static com.jetbrains.python.parsing.console.PyConsoleTokenTypes.SHELL_COMMAND;
 
+@ApiStatus.Internal
 public class PyConsoleParsingContext extends ParsingContext {
   private final StatementParsing stmtParser;
   private final ExpressionParsing expressionParser;

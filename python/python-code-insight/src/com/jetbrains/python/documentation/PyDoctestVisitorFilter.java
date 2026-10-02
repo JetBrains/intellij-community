@@ -3,6 +3,7 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PythonVisitorFilter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * filter out some python inspections and annotations if we're in doctest substitution
  */
+@ApiStatus.Internal
 public final class PyDoctestVisitorFilter implements PythonVisitorFilter {
   @Override
   public boolean isSupported(final @NotNull Class visitorClass, final @NotNull PsiFile file) {

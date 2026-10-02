@@ -6,6 +6,7 @@ import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.ConfigurableWithId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FeaturePromoBundle
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import kotlin.reflect.KClass
 
@@ -13,11 +14,13 @@ import kotlin.reflect.KClass
  * The lock badge comes from the `promo="true"` attribute of the declaration, so the Settings tree paints it
  * without a load of this class.
  */
+@ApiStatus.Internal
 abstract class ProPromoConfigurable : ConfigurableWithId {
   override fun isModified(): Boolean = false
   override fun apply() = Unit
 }
 
+@ApiStatus.Internal
 abstract class ProPromoConfigurableProvider(private val clazz: KClass<out Configurable>) : ConfigurableProvider() {
   final override fun createConfigurable(): Configurable? {
     return clazz.java.getConstructor().newInstance()

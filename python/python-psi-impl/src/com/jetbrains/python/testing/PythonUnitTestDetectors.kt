@@ -10,11 +10,13 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.testing.pyTestFixtures.TEST_FIXTURE_DECORATOR_NAMES
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Pytest could use any "test_" function as a test.
  * See `PythonUnitTestDetectorsBasedOnSettings.isTestFunction`.
  */
+@ApiStatus.Internal
 fun isTestFunction(function: PyFunction): Boolean {
   // Check if the function name starts with "test"
   val isTestNamed = function.name?.startsWith("test") == true
@@ -37,6 +39,7 @@ fun isTestFunction(function: PyFunction): Boolean {
  * Inheritor of TestCase class is always test for unittest and could also be launched with pytest.
  * See `PythonUnitTestDetectorsBasedOnSettings.isTestFunction`.
  */
+@ApiStatus.Internal
 fun isUnitTestCaseClass(clazz: PyClass, context: TypeEvalContext): Boolean =
   clazz.inherits(context, "unittest.TestCase", "unittest.case.TestCase")
 
@@ -74,6 +77,7 @@ fun isTestClass(clazz: PyClass, context: TypeEvalContext): Boolean {
   return hasTestMethod || hasTestInNested
 }
 
+@ApiStatus.Internal
 fun isTestFile(
   file: PyFile,
   context: TypeEvalContext,
@@ -89,6 +93,7 @@ fun isTestFile(
        }
 }
 
+@ApiStatus.Internal
 fun isTestElement(element: PsiElement, typeEvalContext: TypeEvalContext): Boolean = when (element) {
   is PyFile -> isTestFile(element, typeEvalContext)
   is PsiDirectory -> element.name.contains("test", true) || element.children.any {

@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import java.util.List;
  * Intention to add documentation string for function
  * (with checked format)
  */
+@ApiStatus.Internal
 public final class PyGenerateDocstringIntention extends PyBaseIntentionAction {
   @Override
   public @NotNull String getFamilyName() {

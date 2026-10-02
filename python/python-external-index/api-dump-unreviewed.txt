@@ -1,0 +1,2 @@
+f:com.intellij.python.externalIndex.workspace.PyExternalIndexedFileEntityModifications
+- sf:createPyExternalIndexedFileEntity(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource):com.intellij.python.externalIndex.workspace.PyExternalIndexedFileEntityBuilder

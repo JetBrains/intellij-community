@@ -7,6 +7,7 @@ import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * Must be registered last.
  * Keeping it here instead of the inspection class itself is necessary for decoupling intellij.python.psi.impl.
  */
+@ApiStatus.Internal
 public final class PyUnresolvedReferenceDefaultInspectionExtension extends PyInspectionExtension {
   @Override
   public Boolean overrideUnresolvedReferenceInspection(@NotNull PsiFile file) {

@@ -7,10 +7,12 @@ import com.intellij.lang.InjectableLanguage;
 import com.intellij.lang.Language;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public class PyDoctestLanguageDialect extends Language implements DependentLanguage, InjectableLanguage {
 
   public static PyDoctestLanguageDialect getInstance() {

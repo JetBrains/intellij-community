@@ -2,6 +2,8 @@
 package com.jetbrains.python.extensions
 
 import org.intellij.lang.regexp.psi.RegExpPattern
+import org.jetbrains.annotations.ApiStatus
 import java.util.regex.Pattern
 
+@ApiStatus.Internal
 fun RegExpPattern.asPattern(): Pattern = Pattern.compile(text)!!

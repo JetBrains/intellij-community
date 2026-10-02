@@ -15,11 +15,13 @@ import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 
+@ApiStatus.Internal
 public class PyDictCompExpressionImpl extends PyComprehensionElementImpl implements PyDictCompExpression {
   public PyDictCompExpressionImpl(ASTNode astNode) {
     super(astNode);

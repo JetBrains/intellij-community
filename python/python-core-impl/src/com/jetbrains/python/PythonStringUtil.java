@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.PathUtil;
 import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.util.Objects;
 /**
  * @author Alexei Orischenko
  */
+@ApiStatus.Internal
 public final class PythonStringUtil {
 
   private PythonStringUtil() {

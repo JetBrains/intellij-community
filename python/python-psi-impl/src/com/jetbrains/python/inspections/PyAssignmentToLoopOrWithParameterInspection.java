@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.PyWithItem;
 import com.jetbrains.python.psi.PyWithStatement;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ import java.util.List;
  *
  * @author link
  */
+@ApiStatus.Internal
 public final class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,

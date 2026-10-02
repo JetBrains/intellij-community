@@ -7,11 +7,13 @@ import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.jetbrains.python.psi.PyTypeAliasStatement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 
+@ApiStatus.Internal
 public final class PyTypeAliasNameIndex extends StringStubIndexExtension<PyTypeAliasStatement> {
   public static final StubIndexKey<String, PyTypeAliasStatement> KEY = StubIndexKey.createIndexKey("Py.TypeAliasName");
 

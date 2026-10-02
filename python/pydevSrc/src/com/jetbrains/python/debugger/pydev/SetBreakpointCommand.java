@@ -5,9 +5,11 @@ package com.jetbrains.python.debugger.pydev;
 
 
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class SetBreakpointCommand extends LineBreakpointCommand {
   private final @Nullable String myCondition;
   private final @Nullable String myLogExpression;

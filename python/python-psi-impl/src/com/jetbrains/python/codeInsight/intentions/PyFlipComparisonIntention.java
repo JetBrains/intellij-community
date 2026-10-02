@@ -11,11 +11,13 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class PyFlipComparisonIntention extends PsiUpdateModCommandAction<PyBinaryExpression> {
   PyFlipComparisonIntention() {
     super(PyBinaryExpression.class);

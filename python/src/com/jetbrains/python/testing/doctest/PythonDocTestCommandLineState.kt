@@ -22,6 +22,7 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.function.Function
 
+@ApiStatus.Internal
 class PythonDocTestCommandLineState(config: PythonDocTestRunConfiguration, env: ExecutionEnvironment)
   : PythonTestCommandLineStateBase<PythonDocTestRunConfiguration>(config, env) {
   override fun getRunner(): PythonHelper = PythonHelper.DOCSTRING

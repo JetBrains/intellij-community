@@ -5,10 +5,12 @@ import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyTypeDeclarationStatement;
 import com.jetbrains.python.psi.impl.PyElementImpl;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public class PyTypeDeclarationStatementImpl extends PyElementImpl implements PyTypeDeclarationStatement {
   public PyTypeDeclarationStatementImpl(ASTNode astNode) {
     super(astNode);

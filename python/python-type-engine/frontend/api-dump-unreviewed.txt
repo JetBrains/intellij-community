@@ -1,0 +1,8 @@
+com.intellij.python.typeEngine.frontend.PyTypeEngineFrontend
+- sf:Companion:com.intellij.python.typeEngine.frontend.PyTypeEngineFrontend$Companion
+- a:createConfigurableContent(com.intellij.ui.dsl.builder.Panel,com.intellij.openapi.project.Project,com.intellij.openapi.observable.properties.PropertyGraph):com.intellij.ui.dsl.builder.RowsRange
+- a:getId():com.intellij.python.typeEngine.common.PyTypeEngineId
+- a:getPresentableName():java.lang.String
+f:com.intellij.python.typeEngine.frontend.PyTypeEngineFrontend$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+- f:getSupported(com.intellij.openapi.project.Project):java.util.List

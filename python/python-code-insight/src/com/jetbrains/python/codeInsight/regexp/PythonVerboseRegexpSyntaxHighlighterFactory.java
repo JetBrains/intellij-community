@@ -16,7 +16,9 @@
 package com.jetbrains.python.codeInsight.regexp;
 
 import org.intellij.lang.regexp.RegExpSyntaxHighlighterFactory;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class PythonVerboseRegexpSyntaxHighlighterFactory extends RegExpSyntaxHighlighterFactory {
   public PythonVerboseRegexpSyntaxHighlighterFactory() {
     super(PythonVerboseRegexpLanguage.INSTANCE);

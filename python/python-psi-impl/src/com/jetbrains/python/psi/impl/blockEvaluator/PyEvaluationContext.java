@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.impl.blockEvaluator;
 
 import com.jetbrains.python.psi.PyFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.util.Map;
  *
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public class PyEvaluationContext {
   private final @NotNull Map<PyFile, PyEvaluationResult> myResultMap = new HashMap<>();
 

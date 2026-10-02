@@ -7,11 +7,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.console.PyConsoleUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author oleg
  */
+@ApiStatus.Internal
 public final class PythonConsoleAutopopupBlockingHandler extends TypedHandlerDelegate {
 
   public static final Key<Object> REPL_KEY = new Key<>("python.repl.console.editor");

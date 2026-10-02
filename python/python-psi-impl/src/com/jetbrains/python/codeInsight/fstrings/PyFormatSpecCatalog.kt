@@ -9,6 +9,7 @@ import com.jetbrains.python.codeInsight.fstrings.PyFormatSpecCategory.GROUPING
 import com.jetbrains.python.codeInsight.fstrings.PyFormatSpecCategory.PRECISION
 import com.jetbrains.python.codeInsight.fstrings.PyFormatSpecCategory.SIGN
 import com.jetbrains.python.codeInsight.fstrings.PyFormatSpecCategory.TYPE
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.NonNls
  * This is the one source the annotator, the completion contributor and the documentation providers read,
  * so an option is described in exactly one place.
  */
+@ApiStatus.Internal
 object PyFormatSpecCatalog {
 
   /**

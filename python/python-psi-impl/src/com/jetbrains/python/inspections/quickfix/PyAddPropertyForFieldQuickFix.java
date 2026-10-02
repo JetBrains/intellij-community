@@ -18,10 +18,12 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
+@ApiStatus.Internal
 public class PyAddPropertyForFieldQuickFix extends PsiUpdateModCommandQuickFix {
   private final @IntentionFamilyName String myName;
 

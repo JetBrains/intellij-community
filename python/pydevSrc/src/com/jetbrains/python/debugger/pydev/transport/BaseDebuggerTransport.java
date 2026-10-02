@@ -4,6 +4,7 @@ package com.jetbrains.python.debugger.pydev.transport;
 import com.intellij.openapi.diagnostic.Logger;
 import com.jetbrains.python.debugger.pydev.ProtocolFrame;
 import com.jetbrains.python.debugger.pydev.RemoteDebugger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -13,6 +14,7 @@ import java.util.Date;
 /**
  * @author Alexander Koshevoy
  */
+@ApiStatus.Internal
 public abstract class BaseDebuggerTransport implements DebuggerTransport {
   private static final Logger LOG = Logger.getInstance(BaseDebuggerTransport.class);
 

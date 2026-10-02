@@ -51,10 +51,12 @@ import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_EXTRA
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.stream.Collectors
 
 typealias TDFields = LinkedHashMap<String, PyTypedDictType.FieldTypeAndTotality>
 
+@ApiStatus.Internal
 class PyTypedDictTypeProvider : PyTypeProviderBase() {
   override fun getReferenceExpressionType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
     return getTypedDictTypeForCallee(referenceExpression, context)

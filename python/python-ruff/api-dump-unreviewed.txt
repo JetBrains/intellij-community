@@ -1,0 +1,3 @@
+f:com.intellij.python.ruff.codeinsight.RuffConfigOptionDocumentationProviderKt
+- sf:getFullName(org.toml.lang.psi.TomlKey):java.lang.String
+- sf:getFullName(org.toml.lang.psi.TomlKeySegment):java.lang.String

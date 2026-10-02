@@ -22,6 +22,7 @@ import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyStatementWithElse;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.Set;
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public class PyElseUnwrapper extends PyElseUnwrapperBase {
   public PyElseUnwrapper() {
     super(PyCodeInsightBundle.message("unwrap.else"));

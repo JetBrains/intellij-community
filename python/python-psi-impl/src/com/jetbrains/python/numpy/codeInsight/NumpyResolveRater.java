@@ -9,7 +9,9 @@ import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class NumpyResolveRater extends PyResolveResultRaterBase {
 
   @Override

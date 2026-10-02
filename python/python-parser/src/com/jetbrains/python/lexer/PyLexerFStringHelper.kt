@@ -6,9 +6,11 @@ import com.intellij.util.containers.Stack
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.PyElementType
 import com.jetbrains.python.psi.PyStringLiteralUtil
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.min
 
 
+@ApiStatus.Internal
 class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
   private val myFStringStates: Stack<FStringState> = Stack()
 

@@ -27,6 +27,7 @@ import com.jetbrains.python.ast.PyAstTypeParameterList;
 import com.jetbrains.python.ast.PyAstWithStatement;
 import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class PyEditorHandlerConfig {
   private PyEditorHandlerConfig() {
   }

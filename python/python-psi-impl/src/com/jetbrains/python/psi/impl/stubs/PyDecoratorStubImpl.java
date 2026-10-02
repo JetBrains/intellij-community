@@ -8,11 +8,13 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Decorator stub storage.
  */
+@ApiStatus.Internal
 public class PyDecoratorStubImpl extends StubBase<PyDecorator> implements PyDecoratorStub {
   private final QualifiedName myQualifiedName;
   private final boolean myHasArgumentList;

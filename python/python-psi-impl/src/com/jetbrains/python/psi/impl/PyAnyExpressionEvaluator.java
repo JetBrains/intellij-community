@@ -6,6 +6,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PySequenceExpression;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.List;
 /**
  * Evaluator that supports expression of any type (it evaluates any expression, concatenating several expressions to list, etc.).
  */
+@ApiStatus.Internal
 public class PyAnyExpressionEvaluator extends PyEvaluator {
   private final boolean myEvalSequence;
 

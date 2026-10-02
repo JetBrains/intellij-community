@@ -2,6 +2,7 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@ApiStatus.Internal
 public final class NameSuggesterUtil {
   private static final Pattern NON_LETTER_PATTERN = Pattern.compile("[^a-zA-Z_]+");
 

@@ -38,6 +38,7 @@ import com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureDialog;
 import com.jetbrains.python.refactoring.changeSignature.PyMethodDescriptor;
 import com.jetbrains.python.refactoring.changeSignature.PyParameterInfo;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +55,7 @@ import java.util.function.Supplier;
 import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
 import static com.jetbrains.python.psi.PyUtil.as;
 
+@ApiStatus.Internal
 public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
 
   public static final Key<Boolean> CHANGE_SIGNATURE_ORIGINAL_CALL = Key.create("CHANGE_SIGNATURE_ORIGINAL_CALL");

@@ -9,6 +9,7 @@ import com.intellij.openapi.options.ConfigurableWithOptionDescriptors
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.codeInsight.PyCodeInsightBundle
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
 private val longStringLiterals: CheckboxDescriptor
@@ -21,6 +22,7 @@ private val typeAnnotations: CheckboxDescriptor
   get() = CheckboxDescriptor(PyCodeInsightBundle.message("python.type.annotations"), PythonFoldingSettings.getInstance()::COLLAPSE_TYPE_ANNOTATIONS,
                              comment = PyCodeInsightBundle.message("python.type.annotations.hint"))
 
+@ApiStatus.Internal
 class PythonFoldingOptionsProvider : UiDslUnnamedConfigurable.Simple(), CodeFoldingOptionsProvider, ConfigurableWithOptionDescriptors {
 
   override fun Panel.createContent() {

@@ -14,8 +14,10 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyParameterList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyUpdatePropertySignatureQuickFix extends PsiUpdateModCommandQuickFix {
   private final boolean myHasValue;
 

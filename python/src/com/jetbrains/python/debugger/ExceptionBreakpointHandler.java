@@ -4,9 +4,11 @@ package com.jetbrains.python.debugger;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public abstract class ExceptionBreakpointHandler<T extends ExceptionBreakpointProperties<?>> extends XBreakpointHandler<XBreakpoint<T>> {
 
   private final PyDebugProcess myDebugProcess;

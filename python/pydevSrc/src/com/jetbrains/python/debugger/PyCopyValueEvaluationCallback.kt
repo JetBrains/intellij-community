@@ -5,7 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.impl.ui.tree.actions.AbstractXFetchValueAction
 import com.intellij.xdebugger.impl.ui.tree.nodes.HeadlessValueEvaluationCallback
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyCopyValueEvaluationCallback(node: XValueNodeImpl,
                                     private val valueCollector: AbstractXFetchValueAction.ValueCollector,
                                     private val currentPolicy: QuotingPolicy) : HeadlessValueEvaluationCallback(node) {

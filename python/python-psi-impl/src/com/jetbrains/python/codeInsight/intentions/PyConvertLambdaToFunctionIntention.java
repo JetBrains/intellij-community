@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -35,6 +36,7 @@ import java.util.List;
  * User: catherine
  * Intention to convert lambda to function
  */
+@ApiStatus.Internal
 public final class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAction {
 
   @Override

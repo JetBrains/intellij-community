@@ -16,6 +16,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyExpressionStatement;
 import com.jetbrains.python.psi.PyKeyValueExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * {'a': 3, 'b': 5} -> dict(a=3, b=5)
  * {a: 3, b: 5} -> no transformation
  */
+@ApiStatus.Internal
 public final class PyDictLiteralFormToConstructorIntention extends PsiUpdateModCommandAction<PyDictLiteralExpression> {
   PyDictLiteralFormToConstructorIntention() {
     super(PyDictLiteralExpression.class);

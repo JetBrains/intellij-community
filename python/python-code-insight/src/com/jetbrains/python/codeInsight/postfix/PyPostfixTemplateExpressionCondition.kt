@@ -24,9 +24,11 @@ import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isNoneType
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
+@ApiStatus.Internal
 interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondition<PyExpression?> {
   override fun equals(other: Any?): Boolean
   override fun hashCode(): Int

@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ import java.util.List;
 /**
  * Reports assignment to 'self' or 'cls'.
  */
+@ApiStatus.Internal
 public final class PyMethodFirstArgAssignmentInspection extends PyInspection {
 
   @Override

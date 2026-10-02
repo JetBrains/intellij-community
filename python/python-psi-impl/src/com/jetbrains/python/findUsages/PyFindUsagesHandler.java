@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.pyi.PyiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.List;
 /**
  * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
  */
+@ApiStatus.Internal
 public abstract class PyFindUsagesHandler extends FindUsagesHandlerBase {
   protected PyFindUsagesHandler(@NotNull PsiElement psiElement) {
     super(psiElement);

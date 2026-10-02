@@ -4,8 +4,10 @@ package com.jetbrains.python.debugger.pydev;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 
+import org.jetbrains.annotations.ApiStatus;
 import java.util.Optional;
 
+@ApiStatus.Internal
 public class ConsoleExecCommand extends AbstractFrameCommand<String> {
   private final String myExpression;
 

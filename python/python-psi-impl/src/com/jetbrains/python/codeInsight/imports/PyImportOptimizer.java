@@ -36,6 +36,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
@@ -53,6 +54,7 @@ import java.util.Set;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
+@ApiStatus.Internal
 public final class PyImportOptimizer implements ImportOptimizer {
   private static final Logger LOG = Logger.getInstance(PyImportOptimizer.class);
   private static final Set<JavaResourceRootType> TEST_RESOURCE_ROOT_TYPES = Set.of(JavaResourceRootType.TEST_RESOURCE);

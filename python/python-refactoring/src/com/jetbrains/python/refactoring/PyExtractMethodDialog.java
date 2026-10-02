@@ -14,6 +14,7 @@ import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodSettings;
 import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodUtil;
 import com.jetbrains.python.refactoring.extractmethod.PyVariableData;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+@ApiStatus.Internal
 public class PyExtractMethodDialog extends AbstractExtractMethodDialog<Object> {
   private static final String TYPES_MESSAGE_KEY = "refactoring.extract.method.title.type";
   private static final String ADD_TYPE_ANNOTATIONS_MESSAGE_KEY = "refactoring.extract.method.addTypeAnnotations";

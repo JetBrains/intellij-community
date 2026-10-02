@@ -13,6 +13,7 @@ import com.jetbrains.python.NotNullPredicate;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
  *
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public abstract class MembersManager<T extends PyElement> implements Function<T, PyMemberInfo<T>> {
   /**
    * List of managers. Class delegates all logic to them.

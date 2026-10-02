@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.nodes.Document;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 
+@ApiStatus.Internal
 public final class PyStdlibDocumentationLinkProvider implements PythonDocumentationLinkProvider {
   // use tools/stdlib-modindex.py to regenerate the map when new Python versions are released
   private static final Map<String, String> py2LibraryModulesToWebpageName = new MyBuilder()

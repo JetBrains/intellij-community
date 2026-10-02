@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyExpressionStatement;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ import java.util.List;
  * <p>
  * QuickFix to remove redundant argument equal default
  */
+@ApiStatus.Internal
 public class RemoveArgumentEqualDefaultQuickFix implements LocalQuickFix {
   private final List<SmartPsiElementPointer<PyExpression>> myProblemElements;
 

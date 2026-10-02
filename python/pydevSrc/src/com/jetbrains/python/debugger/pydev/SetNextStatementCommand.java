@@ -4,9 +4,11 @@ package com.jetbrains.python.debugger.pydev;
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XSourcePosition;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class SetNextStatementCommand extends AbstractThreadCommand {
   private final int myLine;
   private final @NotNull PyDebugCallback<Pair<Boolean, String>> myCallback;

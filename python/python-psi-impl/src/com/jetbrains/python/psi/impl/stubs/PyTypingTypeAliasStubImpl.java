@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyTypingAliasStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import java.io.IOException;
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public class PyTypingTypeAliasStubImpl implements PyTypingAliasStub {
   private final String myText;
 

@@ -4,9 +4,11 @@ package com.jetbrains.python.run
 import com.intellij.execution.target.RunConfigurationTargetEnvironmentAdjuster
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.projectRoots.Sdk
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.WeakHashMap
 
+@ApiStatus.Internal
 class PyRunConfigurationTargetOptions : PyRunConfigurationEditorExtension {
   private val factoriesCache = WeakHashMap<RunConfigurationTargetEnvironmentAdjuster, PyRunConfigurationEditorFactory>()
 

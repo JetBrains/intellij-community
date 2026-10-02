@@ -5,7 +5,9 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 enum class CommandType(val command: String) {
   PYTHON("python"),
   PIP("pip"),

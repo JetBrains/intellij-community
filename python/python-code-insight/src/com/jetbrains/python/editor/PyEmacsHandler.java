@@ -18,6 +18,7 @@ import com.intellij.util.DocumentUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PySequenceExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import java.util.List;
  * <p/>
  * Thread-safe.
  */
+@ApiStatus.Internal
 public final class PyEmacsHandler implements EmacsProcessingHandler {
 
   private static final TokenSet COMPOUND_STATEMENT_TYPES = TokenSet.create(

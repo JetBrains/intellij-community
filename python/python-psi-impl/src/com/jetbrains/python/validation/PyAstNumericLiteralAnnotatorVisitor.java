@@ -6,8 +6,10 @@ import com.jetbrains.python.PySyntaxCoreBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.ast.PyAstElementVisitor;
 import com.jetbrains.python.ast.PyAstNumericLiteralExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyAstNumericLiteralAnnotatorVisitor extends PyAstElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 

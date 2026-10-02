@@ -16,9 +16,11 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyYieldExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PyYieldFromIntention extends PsiUpdateModCommandAction<PyForStatement> {
   PyYieldFromIntention() {
     super(PyForStatement.class);

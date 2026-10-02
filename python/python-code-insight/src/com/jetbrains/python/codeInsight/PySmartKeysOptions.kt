@@ -4,7 +4,9 @@ package com.jetbrains.python.codeInsight
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.openapi.options.BeanConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PySmartKeysOptions : BeanConfigurable<PyCodeInsightSettings>(PyCodeInsightSettings.getInstance()), SearchableConfigurable {
 
   init {

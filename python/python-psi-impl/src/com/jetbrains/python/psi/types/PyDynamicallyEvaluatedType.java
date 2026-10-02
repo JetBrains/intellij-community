@@ -2,11 +2,13 @@
 package com.jetbrains.python.psi.types;
 
 import com.jetbrains.python.PyNames;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 
+@ApiStatus.Internal
 public final class PyDynamicallyEvaluatedType extends PyUnionType {
   private PyDynamicallyEvaluatedType(@NotNull LinkedHashSet<@Nullable PyType> members) {
     super(members);

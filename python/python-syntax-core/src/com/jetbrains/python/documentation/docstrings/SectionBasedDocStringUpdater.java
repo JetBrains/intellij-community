@@ -24,6 +24,7 @@ import com.jetbrains.python.documentation.docstrings.SectionBasedDocString.Secti
 import com.jetbrains.python.documentation.docstrings.SectionBasedDocString.SectionField;
 import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.toolbox.Substring;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ import java.util.Map;
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<SectionBasedDocString> {
   private static final ImmutableList<String> CANONICAL_SECTION_ORDER = ImmutableList.of(
     SectionBasedDocString.PARAMETERS_SECTION,

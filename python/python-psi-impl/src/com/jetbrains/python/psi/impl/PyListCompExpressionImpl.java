@@ -12,12 +12,14 @@ import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
 
+@ApiStatus.Internal
 public class PyListCompExpressionImpl extends PyComprehensionElementImpl implements PyListCompExpression {
   public PyListCompExpressionImpl(ASTNode astNode) {
     super(astNode);

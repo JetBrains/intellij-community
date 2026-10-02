@@ -6,8 +6,10 @@ import com.intellij.codeInsight.template.postfix.templates.SurroundPostfixTempla
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.project.DumbAware;
 import com.jetbrains.python.refactoring.surround.surrounders.expressions.PyWhileExpressionSurrounder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyWhilePostfixTemplate extends SurroundPostfixTemplateBase implements DumbAware {
 
   public PyWhilePostfixTemplate(PostfixTemplateProvider provider) {

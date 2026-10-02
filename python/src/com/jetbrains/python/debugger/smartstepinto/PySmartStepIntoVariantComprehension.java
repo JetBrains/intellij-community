@@ -6,9 +6,11 @@ import com.jetbrains.python.psi.PyComprehensionElement;
 import com.jetbrains.python.psi.PyDictCompExpression;
 import com.jetbrains.python.psi.PyGeneratorExpression;
 import com.jetbrains.python.psi.PyListCompExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PySmartStepIntoVariantComprehension extends PySmartStepIntoVariant {
 
   protected PySmartStepIntoVariantComprehension(@NotNull PyComprehensionElement element, int callOrder,

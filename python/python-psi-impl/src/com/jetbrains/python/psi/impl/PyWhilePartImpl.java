@@ -3,7 +3,9 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyWhilePart;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class PyWhilePartImpl extends PyConditionalStatementPartImpl implements PyWhilePart {
   public PyWhilePartImpl(ASTNode astNode) {
     super(astNode);

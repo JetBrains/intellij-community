@@ -21,9 +21,11 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public final class PyUsageTypeProvider implements UsageTypeProviderEx {
   private static final UsageType IN_IMPORT = new UsageType(PyPsiBundle.messagePointer("python.find.usages.usage.in.import.statement"));
   private static final UsageType UNTYPED = new UsageType(PyPsiBundle.messagePointer("python.find.usages.untyped.probable.usage"));

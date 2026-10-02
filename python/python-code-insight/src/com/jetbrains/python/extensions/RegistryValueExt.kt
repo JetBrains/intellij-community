@@ -16,8 +16,10 @@
 package com.jetbrains.python.extensions
 
 import com.intellij.openapi.util.registry.RegistryValue
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @return list of values in case they are comma separated
  */
+@ApiStatus.Internal
 fun RegistryValue.asList(): List<String> = this.asString().split(",")

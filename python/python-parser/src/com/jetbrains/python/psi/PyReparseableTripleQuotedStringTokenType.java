@@ -3,8 +3,10 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonLexer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyReparseableTripleQuotedStringTokenType extends PyReparseableTokenTypeWithSimpleCheck {
 
   public PyReparseableTripleQuotedStringTokenType(@NotNull String debugName) {

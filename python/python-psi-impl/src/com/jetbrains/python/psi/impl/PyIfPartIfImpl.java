@@ -3,10 +3,12 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyIfPartIf;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * PyIfPart that represents an 'if' part.
  */
+@ApiStatus.Internal
 public class PyIfPartIfImpl extends PyConditionalStatementPartImpl implements PyIfPartIf {
 
   public PyIfPartIfImpl(ASTNode astNode) {

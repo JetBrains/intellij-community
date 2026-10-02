@@ -8,13 +8,15 @@ import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueGroup
 import com.jetbrains.python.debugger.pydev.ProcessDebugger
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 
-const val DUNDER_LEN: String = "__len__"
-const val DUNDER_EX: String = "__exception__"
-val PROTECTED_ATTRS_EXCLUDED: Set<String> = setOf(DUNDER_LEN, DUNDER_EX)
+@ApiStatus.Internal const val DUNDER_LEN: String = "__len__"
+@ApiStatus.Internal const val DUNDER_EX: String = "__exception__"
+@ApiStatus.Internal val PROTECTED_ATTRS_EXCLUDED: Set<String> = setOf(DUNDER_LEN, DUNDER_EX)
 
+@ApiStatus.Internal
 open class PyXValueGroup(groupName: String, val groupType: ProcessDebugger.GROUP_TYPE) : XValueGroup(groupName)
 
 

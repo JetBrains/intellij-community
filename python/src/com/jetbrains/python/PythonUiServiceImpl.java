@@ -53,6 +53,7 @@ import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,6 +66,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class PythonUiServiceImpl extends PythonUiService {
   @Override
   public void showBalloonInfo(Project project, @PopupContent String message) {

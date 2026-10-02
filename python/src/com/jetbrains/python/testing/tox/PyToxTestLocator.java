@@ -11,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyAstElementGenerator;
 import com.jetbrains.python.psi.PyElementGenerator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.util.List;
  * Enables env-based rerun
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public final class PyToxTestLocator implements SMTestLocator {
   public static final PyToxTestLocator INSTANCE = new PyToxTestLocator();
 

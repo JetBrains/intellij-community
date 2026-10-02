@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
+@ApiStatus.Internal
 public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparatorUtil.Provider {
 
   private static final class TooltipProvider implements Function<PsiElement, @NlsContexts.Tooltip String> {

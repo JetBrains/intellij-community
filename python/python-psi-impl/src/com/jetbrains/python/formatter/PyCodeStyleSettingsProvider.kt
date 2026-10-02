@@ -3,7 +3,9 @@ package com.jetbrains.python.formatter
 
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomDataSynchronizer
 import com.jetbrains.python.PythonLanguage
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyCodeStyleSettingsProvider : CodeStyleSettingsCustomDataSynchronizer<PyCodeStyleSettings>() {
   override val language: PythonLanguage get() = PythonLanguage.INSTANCE
 

@@ -44,12 +44,14 @@ import com.jetbrains.python.documentation.docstrings.SectionBasedDocString;
 import com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy;
 import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 
 
+@ApiStatus.Internal
 public final class PythonEnterHandler implements EnterHandlerDelegate {
   private int myPostprocessShift = 0;
 

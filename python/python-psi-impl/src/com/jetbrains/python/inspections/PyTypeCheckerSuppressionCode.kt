@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * User-facing suppression codes for [PyTypeCheckerInspection].
  *
@@ -11,6 +13,7 @@ package com.jetbrains.python.inspections
  * The kebab-case [id]s follow the conventions of the newest Python type checkers (pyrefly / ty), e.g.
  * `bad-argument-type`, `bad-return`, `not-iterable`.
  */
+@ApiStatus.Internal
 enum class PyTypeCheckerSuppressionCode(val id: String) {
   /** Call-site argument type mismatches: regular calls, `self`/`cls`, `ParamSpec`, protocols, `**TypedDict` arguments. */
   BAD_ARGUMENT_TYPE("bad-argument-type"),

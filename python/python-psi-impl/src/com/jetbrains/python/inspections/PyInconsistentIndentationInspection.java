@@ -14,12 +14,14 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.inspections.quickfix.ConvertIndentsFix;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public final class PyInconsistentIndentationInspection extends PyInspection {
 
   @Override

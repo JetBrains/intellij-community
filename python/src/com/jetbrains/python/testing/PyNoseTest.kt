@@ -11,22 +11,26 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Nose runner
  */
 
+@ApiStatus.Internal
 class PyNoseTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
   PyAbstractTestSettingsEditor(
     PyTestSharedForm.create(configuration, PyTestCustomOption(
       PyNoseTestConfiguration::regexPattern, PyRunTargetVariant.PATH)))
 
+@ApiStatus.Internal
 class PyNoseTestExecutionEnvironment(configuration: PyNoseTestConfiguration, environment: ExecutionEnvironment) :
   PyTestExecutionEnvironment<PyNoseTestConfiguration>(configuration, environment) {
   override fun getRunner(): PythonHelper = PythonHelper.NOSE
 }
 
 
+@ApiStatus.Internal
 class PyNoseTestConfiguration(project: Project, factory: PyNoseTestFactory) :
   PyAbstractTestConfiguration(project, factory),
   PyTestConfigurationWithCustomSymbol {
@@ -49,6 +53,7 @@ class PyNoseTestConfiguration(project: Project, factory: PyNoseTestFactory) :
   override val symbolSymbolSeparator get() = "."
 }
 
+@ApiStatus.Internal
 class PyNoseTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFactory<PyNoseTestConfiguration>(type) {
   companion object {
     const val id = "Nosetests"

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Contract
  * A more descriptively named API alias for [PyTypeParser].
  */
 @Suppress("DEPRECATION")
+@ApiStatus.Internal
 object PyLegacyDocstringTypeParser {
   @JvmStatic
   @Contract("null, _ -> null")

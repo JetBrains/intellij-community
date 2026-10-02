@@ -21,11 +21,13 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Checks that properties are accessed correctly.
  */
+@ApiStatus.Internal
 public final class PyPropertyAccessInspection extends PyInspection {
 
   @Override

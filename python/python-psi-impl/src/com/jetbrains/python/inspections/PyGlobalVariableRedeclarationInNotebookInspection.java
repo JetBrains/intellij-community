@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.Set;
@@ -35,6 +36,7 @@ import java.util.Set;
  * <p>
  * TODO PY-85045: this inspection is disabled by default and needs further refinement
  */
+@ApiStatus.Internal
 public final class PyGlobalVariableRedeclarationInNotebookInspection extends PyInspection {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,

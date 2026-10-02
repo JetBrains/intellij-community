@@ -10,9 +10,11 @@ import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.lexer.PythonLexer
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.regex.Pattern
 
 
+@ApiStatus.Internal
 fun isNamespacePackage(element: PsiElement): Boolean {
   if (element is PsiDirectory) {
     val level = LanguageLevel.forElement(element)
@@ -40,6 +42,7 @@ fun isNamespacePackage(element: PsiElement): Boolean {
   return false
 }
 
+@ApiStatus.Internal
 fun isInNamespacePackage(element: PsiElement): Boolean {
   val myFile = element.containingFile ?: return false
   val parentDirectory = myFile.containingDirectory

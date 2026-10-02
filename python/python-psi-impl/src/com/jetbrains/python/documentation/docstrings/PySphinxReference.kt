@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.regex.Pattern
 
 /**
@@ -144,6 +145,7 @@ internal class PySphinxReference(
  * [PySphinxReference], and reports the markup ranges that natural-language analysis must skip.
  * See the [Python domain documentation](https://www.sphinx-doc.org/en/master/usage/domains/python.html).
  */
+@ApiStatus.Internal
 object SphinxReferences {
   /** Inline cross-referencing roles of the Python domain, with or without the explicit `py:` domain prefix. */
   private const val ROLE_NAMES = "mod|func|class|meth|attr|data|const|exc|obj|type|deco"

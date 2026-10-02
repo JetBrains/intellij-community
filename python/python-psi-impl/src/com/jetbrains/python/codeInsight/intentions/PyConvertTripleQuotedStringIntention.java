@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.PyParenthesizedExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.PyUtil.StringNodeInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ import java.util.List;
  *      "but \"this\" includes far too much" "\n"
  *      "whitespace at the start")
  */
+@ApiStatus.Internal
 public final class PyConvertTripleQuotedStringIntention extends PsiUpdateModCommandAction<PyStringLiteralExpression> {
   PyConvertTripleQuotedStringIntention() {
     super(PyStringLiteralExpression.class);

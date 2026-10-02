@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.PySetLiteralExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public abstract class PyBaseConvertCollectionLiteralIntention extends PsiUpdateModCommandAction<PsiElement> {
   private final Class<? extends PySequenceExpression> myTargetCollectionClass;
   private final String myTargetCollectionName;

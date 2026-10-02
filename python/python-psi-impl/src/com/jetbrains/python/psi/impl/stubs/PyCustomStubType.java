@@ -6,11 +6,13 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.stubs.PyClassStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
+@ApiStatus.Internal
 public interface PyCustomStubType<Psi extends PyElement, Stub extends PyCustomStub> {
 
   /**

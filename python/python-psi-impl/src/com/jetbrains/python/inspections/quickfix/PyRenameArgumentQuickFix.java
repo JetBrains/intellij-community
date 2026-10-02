@@ -11,8 +11,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonTemplateRunner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyRenameArgumentQuickFix implements LocalQuickFix {
   @Override
   public @NotNull String getFamilyName() {

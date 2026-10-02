@@ -7,10 +7,12 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.LookupElementDocumentationTargetProvider
 import com.intellij.psi.PsiFile
 import com.intellij.python.ruff.RuffService
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Provides documentation for Ruff error code completion items.
  */
+@ApiStatus.Internal
 class RuffErrorCodeCompletionDocumentationProvider : LookupElementDocumentationTargetProvider {
   override fun documentationTarget(psiFile: PsiFile, element: LookupElement, offset: Int): DocumentationTarget? {
     val code = element.lookupString

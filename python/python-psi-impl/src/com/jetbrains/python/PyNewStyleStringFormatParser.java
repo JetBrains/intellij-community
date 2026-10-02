@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public final class PyNewStyleStringFormatParser {
   private int myImplicitlyNumberedFieldsCounter = 0;
   private final List<Field> myTopLevelFields = new ArrayList<>();

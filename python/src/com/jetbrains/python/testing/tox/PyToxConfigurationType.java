@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.icons.PythonIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
@@ -12,6 +13,7 @@ import javax.swing.Icon;
 /**
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public final class PyToxConfigurationType implements ConfigurationType {
 
   public static final String ID = "Tox";

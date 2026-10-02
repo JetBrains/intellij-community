@@ -6,11 +6,13 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PySequenceExpression;
 import com.jetbrains.python.psi.PySetLiteralExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public final class PyConvertLiteralToSetIntention extends PyBaseConvertCollectionLiteralIntention {
   public PyConvertLiteralToSetIntention() {
     super(PySetLiteralExpression.class, "set", "{", "}");

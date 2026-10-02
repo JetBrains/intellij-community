@@ -1,0 +1,15 @@
+com/intellij/python/sdk/backend/PythonInterpreter
+com/jetbrains/python/codeInsight/DataclassParameterArgumentMapping
+com/jetbrains/python/codeInsight/controlflow/PyDataFlow
+com/jetbrains/python/codeInsight/controlflow/Reachability
+com/jetbrains/python/codeInsight/typing/PyTypingTypeProvider$Context
+com/jetbrains/python/project/PyProject
+com/jetbrains/python/psi/impl/stubs/PyDataclassMetadata
+com/jetbrains/python/psi/types/PyExpectedVariance
+com/jetbrains/python/psi/types/PyNarrowedType
+com/jetbrains/python/psi/types/PyTypeChecker$Generics
+com/jetbrains/python/psi/types/PyTypeFormType
+com/jetbrains/python/psi/types/PyTypingNewType
+com/jetbrains/python/psi/types/PyVarianceIntermediateResult
+com/jetbrains/python/psi/types/TypedDictKeyProblem
+com/jetbrains/python/validation/PyAnnotationHolder

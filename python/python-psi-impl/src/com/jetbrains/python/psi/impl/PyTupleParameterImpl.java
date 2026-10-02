@@ -9,12 +9,14 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a tuple parameter as stubbed element.
  */
+@ApiStatus.Internal
 public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub> implements PyTupleParameter {
 
   public PyTupleParameterImpl(ASTNode astNode) {

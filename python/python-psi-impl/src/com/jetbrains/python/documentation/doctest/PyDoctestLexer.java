@@ -5,10 +5,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public class PyDoctestLexer extends PythonIndentingLexer {
   @Override
   public void advance() {

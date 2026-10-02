@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.util.Collection;
  *
  * @author traff
  */
+@ApiStatus.Internal
 public class RootFileReferenceSet extends FileReferenceSet {
   public RootFileReferenceSet(String str,
                               @NotNull PsiElement element,

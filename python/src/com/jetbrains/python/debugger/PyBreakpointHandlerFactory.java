@@ -3,8 +3,10 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public abstract class PyBreakpointHandlerFactory {
   public static final ExtensionPointName<PyBreakpointHandlerFactory> EP_NAME = ExtensionPointName.create("Pythonid.breakpointHandler");
 

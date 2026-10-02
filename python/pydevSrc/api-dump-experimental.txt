@@ -1,0 +1,3 @@
+com.jetbrains.python.debugger.PyPositionConverter
+- *:convertFrameToPython(com.jetbrains.python.debugger.PySourcePosition):com.jetbrains.python.debugger.PySourcePosition
+- *:convertPythonToFrame(java.lang.String,I):com.jetbrains.python.debugger.PySourcePosition

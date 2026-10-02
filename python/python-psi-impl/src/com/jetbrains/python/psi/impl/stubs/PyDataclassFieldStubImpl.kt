@@ -8,6 +8,7 @@ import com.intellij.util.io.DataInputOutputUtil
 import com.jetbrains.python.codeInsight.PyDataclassParametersProvider
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
 /**
@@ -17,6 +18,7 @@ import java.io.IOException
  * [com.jetbrains.python.psi.stubs.PyDataclassStub.type] of the owning class) and an opaque [metadata] payload so a
  * framework can round-trip its own per-field configuration without core knowing the framework.
  */
+@ApiStatus.Internal
 class PyDataclassFieldStubImpl(
   private val type: String,
   private val calleeName: QualifiedName,

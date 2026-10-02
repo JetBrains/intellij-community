@@ -6,27 +6,30 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.jetbrains.python.PythonLanguage
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Master switch (flag 1) for the PY-85946 new Python formatter defaults. When off, the whole feature
  * is inert: classic everywhere, no migration, no balloon — byte-identical to the historical behavior.
  */
-const val PY_NEW_FORMATTER_DEFAULTS_ENABLED_KEY: String = "python.formatter.new.defaults.enabled"
+@ApiStatus.Internal const val PY_NEW_FORMATTER_DEFAULTS_ENABLED_KEY: String = "python.formatter.new.defaults.enabled"
 
 /**
  * The advanced setting that holds the per-installation rollout state (flag 2): whether this installation uses
  * the new defaults. The rollout turns it on for a new installation, and for an upgrade when the user accepts
  * the switch balloon. It has an effect only while the master switch ([PY_NEW_FORMATTER_DEFAULTS_ENABLED_KEY]) is on.
  */
-const val PY_NEW_FORMATTER_DEFAULTS_SETTING_ID: String = "python.formatter.use.new.defaults"
+@ApiStatus.Internal const val PY_NEW_FORMATTER_DEFAULTS_SETTING_ID: String = "python.formatter.use.new.defaults"
 
 /** The master switch (flag 1): whether the new-defaults feature is enabled at all. */
+@ApiStatus.Internal
 fun isPyNewFormatterDefaultsFeatureEnabled(): Boolean = Registry.`is`(PY_NEW_FORMATTER_DEFAULTS_ENABLED_KEY, false)
 
 /**
  * Whether the modern defaults are the active baseline for this installation: the master switch (flag 1)
  * and the per-installation rollout state (flag 2) are both on.
  */
+@ApiStatus.Internal
 fun isPyNewFormatterDefaultsActive(): Boolean =
   isPyNewFormatterDefaultsFeatureEnabled() && isPyNewFormatterDefaultsSettingOn()
 
@@ -39,13 +42,14 @@ private fun isPyNewFormatterDefaultsSettingOn(): Boolean =
  * are active (so the IDE-level "Default" scheme simply *is* modern and reads clean), otherwise the
  * historical [PyClassicStyleGuide].
  */
+@ApiStatus.Internal
 fun defaultPyCodeStyleId(): String =
   if (isPyNewFormatterDefaultsActive()) PyDefaultStyleGuide.CODE_STYLE_ID else PyClassicStyleGuide.CODE_STYLE_ID
 
-val CodeStyleSettings.pyCommonSettings: PyCommonCodeStyleSettings?
+@get:ApiStatus.Internal val CodeStyleSettings.pyCommonSettings: PyCommonCodeStyleSettings?
   get() = getCommonSettings(PythonLanguage.getInstance()) as? PyCommonCodeStyleSettings
 
-val CodeStyleSettings.pyCustomSettings: PyCodeStyleSettings
+@get:ApiStatus.Internal val CodeStyleSettings.pyCustomSettings: PyCodeStyleSettings
   get() = getCustomSettings(PyCodeStyleSettings::class.java)
 
 /**
@@ -55,6 +59,7 @@ val CodeStyleSettings.pyCustomSettings: PyCodeStyleSettings
  * @see PyDefaultStyleGuide
  * @see PyClassicStyleGuide
  */
+@ApiStatus.Internal
 fun CodeStyleSettings.pyCodeStyleProfile(): String? = pyCustomSettings.CODE_STYLE_PROFILE?.takeIf { customStyleId ->
   customStyleId == pyCommonSettings?.CODE_STYLE_PROFILE
 }

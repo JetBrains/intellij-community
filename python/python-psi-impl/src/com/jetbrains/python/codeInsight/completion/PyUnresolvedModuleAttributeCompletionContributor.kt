@@ -46,7 +46,9 @@ import com.jetbrains.python.psi.stubs.PyQualifiedNameCompletionMatcher
 import com.jetbrains.python.psi.stubs.PyQualifiedNameCompletionMatcher.QualifiedNameMatcher
 import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor(), DumbAware {
 
   init {

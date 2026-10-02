@@ -12,11 +12,13 @@ import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.PyTypeParameterList
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Removes a single type parameter from a type parameter list.
  * If the list becomes empty, removes the brackets as well.
  */
+@ApiStatus.Internal
 class PyRemoveTypeParameterQuickFix : PsiUpdateModCommandQuickFix() {
   override fun getFamilyName(): String = PyPsiBundle.message("QFIX.NAME.remove.type.parameter")
 

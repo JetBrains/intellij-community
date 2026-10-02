@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,7 @@ import java.util.Set;
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public class PyDoctestReference extends PyReferenceImpl {
   public PyDoctestReference(PyQualifiedExpression element, @NotNull PyResolveContext context) {
     super(element, context);

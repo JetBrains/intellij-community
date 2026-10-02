@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,6 +39,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * <p>
  * QuickFix to create function to unresolved unqualified reference
  */
+@ApiStatus.Internal
 public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
   private final String myFunctionName;
   private final boolean myAsync;

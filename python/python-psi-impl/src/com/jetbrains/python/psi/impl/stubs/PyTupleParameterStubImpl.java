@@ -6,11 +6,13 @@ import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Implementation does nothing but marking the element type.
  */
+@ApiStatus.Internal
 public class PyTupleParameterStubImpl extends StubBase<PyTupleParameter> implements PyTupleParameterStub {
   private final @Nullable String myDefaultValueText;
 

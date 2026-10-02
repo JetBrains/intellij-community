@@ -17,10 +17,12 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.PyTypeAliasStatement
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Annotates type alias re-declarations
  */
+@ApiStatus.Internal
 class PyTypeAliasRedeclarationInspection : PyInspection() {
   override fun buildVisitor(
     holder: ProblemsHolder,

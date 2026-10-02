@@ -7,8 +7,10 @@ package com.jetbrains.python.debugger.pydev;
 import com.jetbrains.python.debugger.IPyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class ChangeVariableCommand extends AbstractFrameCommand {
 
   private final String myVariableName;

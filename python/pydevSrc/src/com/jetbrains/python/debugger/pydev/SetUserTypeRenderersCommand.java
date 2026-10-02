@@ -2,10 +2,12 @@
 package com.jetbrains.python.debugger.pydev;
 
 import com.jetbrains.python.debugger.PyUserTypeRenderer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class SetUserTypeRenderersCommand extends AbstractCommand {
 
   private final @NotNull List<@NotNull PyUserTypeRenderer> myRenderers;

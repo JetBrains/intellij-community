@@ -8,6 +8,7 @@ import com.jetbrains.python.packaging.conda.CondaPackageManager
 import com.jetbrains.python.packaging.conda.CondaPackageRepository
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.repository.PyPackageRepository
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -44,5 +45,5 @@ internal class PyRunAnythingCondaProvider : PyRunAnythingPackageProvider() {
   override fun getLogCommandType(): CommandType = CommandType.CONDA
 }
 
-val CONDA_COMMANDS: Sequence<String> = listOf("clean", "compare", "config", "create", "help", "info", "init", "install", "list", "package", "remove",
+@ApiStatus.Internal val CONDA_COMMANDS: Sequence<String> = listOf("clean", "compare", "config", "create", "help", "info", "init", "install", "list", "package", "remove",
                                               "uninstall", "run", "search", "update", "upgrade").asSequence()

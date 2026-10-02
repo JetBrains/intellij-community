@@ -5,6 +5,7 @@ import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * Do not highlight syntax errors in doctests
  */
+@ApiStatus.Internal
 public final class PyDocstringErrorFilter extends HighlightErrorFilter {
 
   @Override

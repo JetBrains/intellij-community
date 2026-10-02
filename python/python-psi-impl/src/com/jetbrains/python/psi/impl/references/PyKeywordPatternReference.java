@@ -24,12 +24,14 @@ import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyInstantiableType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class PyKeywordPatternReference extends PsiReferenceBase.Poly<PyKeywordPattern> {
   public PyKeywordPatternReference(@NotNull PyKeywordPattern keywordPattern) {
     super(keywordPattern, keywordPattern.getKeywordElement().getTextRangeInParent(), false);

@@ -19,6 +19,7 @@ import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 private enum class ProvidedDataclassMember(val memberName: String) {
   DUNDER_SLOTS(PyDataclassNames.Dataclasses.DUNDER_SLOTS),
@@ -41,6 +42,7 @@ private enum class ProvidedDataclassMember(val memberName: String) {
 /**
  * Adds members for dataclass-like classes.
  */
+@ApiStatus.Internal
 class PyDataclassClassMembersProvider : PyClassMembersProviderBase() {
 
   override fun resolveMember(type: PyClassType, name: String, location: PsiElement?, resolveContext: PyResolveContext): PsiElement? {

@@ -3,6 +3,7 @@ package com.jetbrains.python.formatter
 
 import com.intellij.openapi.util.Comparing
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import java.util.function.Predicate
@@ -15,6 +16,7 @@ import java.util.function.Predicate
  * Mirrors the Kotlin plugin helper `org.jetbrains.kotlin.idea.util.ReflectionUtil`; the
  * platform [com.intellij.util.ReflectionUtil.comparePublicNonFinalFields] has no skip variant.
  */
+@ApiStatus.Internal
 object PyCodeStyleReflectionUtil {
     @JvmStatic
     fun comparePublicNonFinalFieldsWithSkip(first: Any, second: Any): Boolean {

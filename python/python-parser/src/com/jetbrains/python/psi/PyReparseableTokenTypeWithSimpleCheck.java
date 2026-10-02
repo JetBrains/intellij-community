@@ -4,9 +4,11 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class PyReparseableTokenTypeWithSimpleCheck extends PyReparseableTokenType {
 
   @SuppressWarnings("LoggerInitializedWithForeignClass")

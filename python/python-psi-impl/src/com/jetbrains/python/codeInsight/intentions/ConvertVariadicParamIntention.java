@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.PyUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +58,7 @@ import java.util.Set;
  *   doSomething(foo)
  *
  */
+@ApiStatus.Internal
 public final class ConvertVariadicParamIntention extends PyBaseIntentionAction {
 
   @Override

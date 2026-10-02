@@ -1,0 +1,83 @@
+c:com.jetbrains.python.hierarchy.PyHierarchyNodeDescriptor
+- com.intellij.ide.hierarchy.HierarchyNodeDescriptor
+- com.intellij.pom.Navigatable
+- <init>(com.intellij.ide.util.treeView.NodeDescriptor,com.intellij.psi.PsiElement,java.util.Collection,Z):V
+- <init>(com.intellij.ide.util.treeView.NodeDescriptor,com.intellij.psi.PsiElement,Z):V
+- canNavigate():Z
+- canNavigateToSource():Z
+- navigate(Z):V
+- update():Z
+f:com.jetbrains.python.hierarchy.PyHierarchyUtils
+- s:getComparator(com.intellij.openapi.project.Project):java.util.Comparator
+c:com.jetbrains.python.hierarchy.PyTypeHierachyProvider
+- com.intellij.ide.hierarchy.HierarchyProvider
+- <init>():V
+- browserActivated(com.intellij.ide.hierarchy.HierarchyBrowser):V
+- createHierarchyBrowser(com.intellij.psi.PsiElement):com.intellij.ide.hierarchy.HierarchyBrowser
+- getTarget(com.intellij.openapi.actionSystem.DataContext):com.intellij.psi.PsiElement
+c:com.jetbrains.python.hierarchy.PyTypeHierarchyBrowser
+- com.intellij.ide.hierarchy.TypeHierarchyBrowserBase
+- p:<init>(com.jetbrains.python.psi.PyClass):V
+- p:canBeDeleted(com.intellij.psi.PsiElement):Z
+- p:createHierarchyTreeStructure(java.lang.String,com.intellij.psi.PsiElement):com.intellij.ide.hierarchy.HierarchyTreeStructure
+- p:createLegendPanel():javax.swing.JPanel
+- p:createTrees(java.util.Map):V
+- p:getComparator():java.util.Comparator
+- p:getElementFromDescriptor(com.intellij.ide.hierarchy.HierarchyNodeDescriptor):com.intellij.psi.PsiElement
+- p:getQualifiedName(com.intellij.psi.PsiElement):java.lang.String
+- p:isApplicableElement(com.intellij.psi.PsiElement):Z
+- p:isInterface(com.intellij.psi.PsiElement):Z
+a:com.jetbrains.python.hierarchy.call.PyCallHierarchyTreeStructureBase
+- com.intellij.ide.hierarchy.HierarchyTreeStructure
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,java.lang.String):V
+- p:buildChildren(com.intellij.ide.hierarchy.HierarchyNodeDescriptor):java.lang.Object[]
+- pa:getChildren(com.jetbrains.python.psi.PyElement):java.util.Map
+c:com.jetbrains.python.hierarchy.treestructures.PySubTypesHierarchyTreeStructure
+- com.intellij.ide.hierarchy.HierarchyTreeStructure
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.ide.hierarchy.HierarchyNodeDescriptor):V
+- <init>(com.jetbrains.python.psi.PyClass):V
+- p:buildChildren(com.intellij.ide.hierarchy.HierarchyNodeDescriptor):java.lang.Object[]
+c:com.jetbrains.python.hierarchy.treestructures.PyTypeHierarchyTreeStructure
+- com.jetbrains.python.hierarchy.treestructures.PySubTypesHierarchyTreeStructure
+- <init>(com.jetbrains.python.psi.PyClass):V
+c:com.jetbrains.python.structureView.PyStructureViewElement
+- com.intellij.ide.structureView.StructureViewTreeElement
+- <init>(com.jetbrains.python.psi.PyElement):V
+- p:<init>(com.jetbrains.python.psi.PyElement,com.jetbrains.python.structureView.PyStructureViewElement$Visibility,Z,Z):V
+- canNavigate():Z
+- canNavigateToSource():Z
+- p:createChild(com.jetbrains.python.psi.PyElement,com.jetbrains.python.structureView.PyStructureViewElement$Visibility,Z,Z):com.intellij.ide.structureView.StructureViewTreeElement
+- p:elementIsField(com.jetbrains.python.psi.PyElement):Z
+- equals(java.lang.Object):Z
+- getChildren():com.intellij.ide.structureView.StructureViewTreeElement[]
+- p:getClassAttributes(com.jetbrains.python.psi.PyClass):java.util.List
+- getPresentation():com.intellij.navigation.ItemPresentation
+- getValue():com.jetbrains.python.psi.PyElement
+- hashCode():I
+- isField():Z
+- isInherited():Z
+- p:isWorthyItem(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- navigate(Z):V
+- setIcon(javax.swing.Icon):V
+pe:com.jetbrains.python.structureView.PyStructureViewElement$Visibility
+- java.lang.Enum
+- sf:INVISIBLE:com.jetbrains.python.structureView.PyStructureViewElement$Visibility
+- sf:NORMAL:com.jetbrains.python.structureView.PyStructureViewElement$Visibility
+- sf:PREDEFINED:com.jetbrains.python.structureView.PyStructureViewElement$Visibility
+- sf:PRIVATE:com.jetbrains.python.structureView.PyStructureViewElement$Visibility
+- sf:PROTECTED:com.jetbrains.python.structureView.PyStructureViewElement$Visibility
+- s:valueOf(java.lang.String):com.jetbrains.python.structureView.PyStructureViewElement$Visibility
+- s:values():com.jetbrains.python.structureView.PyStructureViewElement$Visibility[]
+c:com.jetbrains.python.structureView.PyStructureViewModel
+- com.intellij.ide.structureView.StructureViewModelBase
+- com.intellij.ide.structureView.StructureViewModel$ElementInfoProvider
+- com.intellij.ide.structureView.StructureViewModel$ExpandInfoProvider
+- <init>(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
+- <init>(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.ide.structureView.StructureViewTreeElement):V
+- getFilters():com.intellij.ide.util.treeView.smartTree.Filter[]
+- getMinimumAutoExpandDepth():I
+- isAlwaysLeaf(com.intellij.ide.structureView.StructureViewTreeElement):Z
+- isAlwaysShowsPlus(com.intellij.ide.structureView.StructureViewTreeElement):Z
+- isAutoExpand(com.intellij.ide.structureView.StructureViewTreeElement):Z
+- isSmartExpand():Z
+- shouldEnterElement(java.lang.Object):Z

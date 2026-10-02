@@ -6,6 +6,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.jetbrains.python.PySyntaxCoreBundle
 import com.jetbrains.python.PythonLanguage
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * The legacy ("classic") Python code style defaults — exactly the behavior that shipped before
@@ -14,6 +15,7 @@ import com.jetbrains.python.PythonLanguage
  *
  * @see PyDefaultStyleGuide for the new industry-standard defaults.
  */
+@ApiStatus.Internal
 object PyClassicStyleGuide {
   const val CODE_STYLE_ID: String = "PY_CLASSIC_DEFAULTS"
 

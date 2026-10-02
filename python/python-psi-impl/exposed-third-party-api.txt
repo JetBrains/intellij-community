@@ -1,0 +1,4 @@
+com/google/common/collect/ImmutableMap
+com/google/common/collect/ImmutableSet
+kotlin/Triple
+kotlin/jvm/internal/DefaultConstructorMarker

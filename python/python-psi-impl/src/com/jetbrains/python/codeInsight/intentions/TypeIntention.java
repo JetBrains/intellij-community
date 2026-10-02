@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ import java.util.function.Predicate;
  * User: ktisha
  * Common part for type specifying intentions
  */
+@ApiStatus.Internal
 public abstract class TypeIntention extends PyBaseIntentionAction {
 
   @Override

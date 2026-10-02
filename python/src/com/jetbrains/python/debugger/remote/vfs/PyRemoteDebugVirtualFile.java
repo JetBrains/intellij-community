@@ -3,10 +3,12 @@ package com.jetbrains.python.debugger.remote.vfs;
 
 import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.remote.PyRemotePathMapper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
+@ApiStatus.Internal
 public class PyRemoteDebugVirtualFile extends LightVirtualFile {
   private final String myRemotePath;
   private final PyRemoteDebugVirtualFS myVirtualFileSystem;

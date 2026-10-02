@@ -9,7 +9,9 @@ import com.jetbrains.python.psi.PyImportElement
 import com.jetbrains.python.psi.PyImportStatement
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object PyImportCompletionFeatures {
   data class ElementImportPathFeatures (val isImported: Boolean,
                                         val numPrivateComponents: Int,

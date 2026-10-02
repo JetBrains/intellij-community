@@ -7,8 +7,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
+@ApiStatus.Internal
 abstract class PyElementTypesFacade {
 
   // stubs on backend side

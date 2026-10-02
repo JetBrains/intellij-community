@@ -54,6 +54,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 
+import org.jetbrains.annotations.ApiStatus;
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +71,7 @@ import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
   @Override
   public @Nls @NotNull String getFamilyName() {

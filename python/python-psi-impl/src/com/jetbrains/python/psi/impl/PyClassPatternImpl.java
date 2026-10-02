@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.types.PyTypeMember;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.PyUtil.multiResolveTopPriority;
 
+@ApiStatus.Internal
 public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern, PyCaptureContext {
   public PyClassPatternImpl(ASTNode astNode) {
     super(astNode);

@@ -8,12 +8,14 @@ import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyDelStatement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public class PyDelStatementImpl extends PyElementImpl implements PyDelStatement, PsiListLikeElement {
   public PyDelStatementImpl(ASTNode astNode) {
     super(astNode);

@@ -10,9 +10,11 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class PyLazyParseablePsiElement extends LazyParseablePsiElement implements PyElement {
 
   public PyLazyParseablePsiElement(@NotNull IElementType type,

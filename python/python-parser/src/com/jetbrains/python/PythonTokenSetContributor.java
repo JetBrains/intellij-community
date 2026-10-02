@@ -16,6 +16,7 @@
 package com.jetbrains.python;
 
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.PyElementTypes.ASSERT_STATEMENT;

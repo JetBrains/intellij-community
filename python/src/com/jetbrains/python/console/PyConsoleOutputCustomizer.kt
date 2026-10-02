@@ -18,4 +18,5 @@ internal interface PyConsoleOutputCustomizer {
   fun isInlineOutputSupported(): Boolean = false
 }
 
+@ApiStatus.Internal
 class PyConsoleOutputCustomizerDefault : PyConsoleOutputCustomizer

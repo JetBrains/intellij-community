@@ -21,10 +21,12 @@ import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 import kotlin.collections.asSequence
 import kotlin.collections.contains
 import kotlin.sequences.forEach
 
+@ApiStatus.Internal
 class PyAttrsDataclassInspection : PyInspection() {
   override fun buildVisitor(
     holder: ProblemsHolder,

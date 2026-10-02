@@ -9,9 +9,11 @@ import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public class PyConditionalExpressionImpl extends PyElementImpl implements PyConditionalExpression {
   public PyConditionalExpressionImpl(ASTNode astNode) {
     super(astNode);

@@ -3,11 +3,13 @@ package com.jetbrains.python.codeInsight.fstrings
 
 import com.intellij.openapi.util.Key
 import com.jetbrains.python.PyPsiBundle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
 
 /** The kind of a format spec option, used to group the catalog. */
+@ApiStatus.Internal
 enum class PyFormatSpecCategory(private val labelSupplier: Supplier<@Nls String>) {
   ALIGNMENT(PyPsiBundle.messagePointer("fstring.format.spec.doc.category.alignment")),
   SIGN(PyPsiBundle.messagePointer("fstring.format.spec.doc.category.sign")),
@@ -28,6 +30,7 @@ enum class PyFormatSpecCategory(private val labelSupplier: Supplier<@Nls String>
  * The descriptions resolve from `PyPsiBundle` on demand, so building the catalog does not read the whole
  * bundle while the class initializes.
  */
+@ApiStatus.Internal
 class PyFormatSpecOption internal constructor(
   val spec: String,
   val category: PyFormatSpecCategory,
@@ -46,4 +49,4 @@ class PyFormatSpecOption internal constructor(
  * Key that carries the option a format-spec lookup element stands for, so the documentation provider can
  * describe the element without parsing its text again.
  */
-val FORMAT_SPEC_OPTION_KEY: Key<PyFormatSpecOption> = Key.create("py.fstring.format.spec.option")
+@ApiStatus.Internal val FORMAT_SPEC_OPTION_KEY: Key<PyFormatSpecOption> = Key.create("py.fstring.format.spec.option")

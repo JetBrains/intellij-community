@@ -6,10 +6,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiListLikeElement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyPatternArgumentList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class PyPatternArgumentListImpl extends PyElementImpl implements PyPatternArgumentList, PsiListLikeElement {
   public PyPatternArgumentListImpl(ASTNode astNode) {
     super(astNode);

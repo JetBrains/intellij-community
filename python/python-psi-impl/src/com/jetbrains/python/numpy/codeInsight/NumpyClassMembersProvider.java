@@ -8,6 +8,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.types.PyClassMembersProviderBase;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.List;
  *
  * User : ktisha
  */
+@ApiStatus.Internal
 public final class NumpyClassMembersProvider extends PyClassMembersProviderBase {
   private static final String BUNCH = "sklearn.datasets.base.Bunch";
   public static final List<String> BUNCH_MEMBERS = Lists.newArrayList("target", "data", "filenames", "target_names", "DESCR");

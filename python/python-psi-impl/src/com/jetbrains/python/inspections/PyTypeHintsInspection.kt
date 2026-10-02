@@ -125,7 +125,9 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isUnknown
 import com.jetbrains.python.pyi.PyiUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyTypeHintsInspection : PyInspection() {
 
   override fun buildVisitor(

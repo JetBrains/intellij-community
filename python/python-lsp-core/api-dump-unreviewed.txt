@@ -1,0 +1,18 @@
+com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider
+- sf:Companion:com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider$Companion
+- a:getPyTypeEngineType():com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
+- a:isSupported(com.intellij.openapi.project.Project):Z
+- a:updateLspServers(com.intellij.openapi.project.Project):V
+f:com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider$Companion
+- f:getSupportedTypes(com.intellij.openapi.project.Project):java.util.List
+- f:updateLspServers(com.intellij.openapi.project.Project):V
+e:com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
+- java.lang.Enum
+- sf:PYCHARM:com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
+- sf:PYREFLY:com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
+- sf:TY:com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
+- f:getDisplayName():java.lang.String
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getPackageName():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
+- s:values():com.intellij.python.lsp.core.typeEngine.PyTypeEngineType[]

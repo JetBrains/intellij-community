@@ -19,10 +19,12 @@ import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex;
 import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.stubs.PyTypeAliasNameIndex;
 import com.jetbrains.python.psi.stubs.PyTypeAliasStatementStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+@ApiStatus.Internal
 public class PyTypeAliasStatementElementType extends PyStubElementType<PyTypeAliasStatementStub, PyTypeAliasStatement> {
 
   public PyTypeAliasStatementElementType() {

@@ -8,7 +8,9 @@ import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyStringLiteralExpression
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyEscapeBackslashQuickFix(private val offsetInElement: Int) : PsiUpdateModCommandQuickFix() {
   override fun getFamilyName(): String = PyPsiBundle.message("QFIX.escape.backslash")
 

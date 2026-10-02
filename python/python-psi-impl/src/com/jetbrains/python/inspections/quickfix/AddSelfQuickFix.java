@@ -9,12 +9,14 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameterList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Insert 'self' in a method that lacks any arguments
  */
+@ApiStatus.Internal
 public class AddSelfQuickFix extends PsiUpdateModCommandQuickFix {
   private final String myParamName;
 

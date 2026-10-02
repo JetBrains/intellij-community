@@ -16,6 +16,7 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public abstract class DocStringBuilder<This extends DocStringBuilder> {
   private final List<String> myLines;
   

@@ -9,9 +9,11 @@ import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public final class PyDeclarationRangeHandler implements DeclarationRangeHandler {
   @Override
   public @NotNull TextRange getDeclarationRange(@NotNull PsiElement container) {

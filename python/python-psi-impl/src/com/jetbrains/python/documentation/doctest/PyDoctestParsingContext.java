@@ -9,11 +9,13 @@ import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public class PyDoctestParsingContext extends ParsingContext {
   private final StatementParsing myStatementParser;
   private final ExpressionParsing myExpressionParser;

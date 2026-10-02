@@ -182,6 +182,7 @@ private fun PsiElement.getReachabilityForInspectionNoCache(context: FlowContext)
  * Determines if the element is unreachable by control flow analysis.
  * If the element does not have corresponding instruction in CFG, searches for the nearest parent that has.
  */
+@ApiStatus.Internal
 fun PsiElement.isUnreachableByControlFlow(context: TypeEvalContext): Boolean {
   return getReachabilityByControlFlow(FlowContext(context, true)) != Reachability.REACHABLE
 }

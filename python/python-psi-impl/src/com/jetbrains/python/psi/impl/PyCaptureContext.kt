@@ -8,7 +8,9 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface PyCaptureContext : PyElement {
   fun getCaptureTypeForChild(pattern: PyPattern, context: TypeEvalContext): PyType?
 

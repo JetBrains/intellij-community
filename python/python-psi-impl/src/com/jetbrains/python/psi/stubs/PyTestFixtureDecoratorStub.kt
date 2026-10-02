@@ -2,7 +2,9 @@
 package com.jetbrains.python.psi.stubs
 
 import com.jetbrains.python.psi.impl.stubs.PyCustomDecoratorStub
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface PyTestFixtureDecoratorStub : PyCustomDecoratorStub {
   val name: String
 }

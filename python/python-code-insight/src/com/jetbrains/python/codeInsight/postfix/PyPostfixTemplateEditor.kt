@@ -25,8 +25,10 @@ import com.jetbrains.python.PyGotoClassContributor
 import com.jetbrains.python.codeInsight.PyCodeInsightBundle
 import com.jetbrains.python.codeInsight.postfix.PyPostfixTemplateExpressionCondition.PyClassCondition.Companion.create
 import com.jetbrains.python.psi.PyClass
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 class PyPostfixTemplateEditor(provider: PyPostfixTemplateProvider) :
   PostfixTemplateEditorBase<PyPostfixTemplateExpressionCondition?>(provider, true) {
 

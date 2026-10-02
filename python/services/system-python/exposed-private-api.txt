@@ -1,0 +1,5 @@
+com/intellij/python/community/execService/python/advancedApi/ExecutablePython
+com/intellij/python/community/services/shared/VanillaPythonWithPythonInfo
+com/jetbrains/python/PyToolUIInfo
+com/jetbrains/python/PythonInfo
+com/jetbrains/python/packaging/PyVersionSpecifiers

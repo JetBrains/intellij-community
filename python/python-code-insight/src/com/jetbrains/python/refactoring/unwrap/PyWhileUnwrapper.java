@@ -8,11 +8,13 @@ import com.jetbrains.python.psi.PyPassStatement;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyWhileStatement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public class PyWhileUnwrapper extends PyUnwrapper {
   public PyWhileUnwrapper() {
     super(PyCodeInsightBundle.message("unwrap.while"));

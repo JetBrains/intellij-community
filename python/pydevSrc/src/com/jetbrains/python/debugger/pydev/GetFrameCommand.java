@@ -7,11 +7,13 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.debugger.IPyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 
+@ApiStatus.Internal
 public class GetFrameCommand extends AbstractFrameCommand {
 
   protected final IPyDebugProcess myDebugProcess;

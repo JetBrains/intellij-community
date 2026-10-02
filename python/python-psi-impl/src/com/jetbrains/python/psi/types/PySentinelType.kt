@@ -2,11 +2,13 @@
 package com.jetbrains.python.psi.types
 
 import com.jetbrains.python.psi.PyClass
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Represents a sentinel object type (e.g. `SENTINEL = object()`).
  * It behaves exactly like an instance of `object`, but has a specific name and strict equality.
  */
+@ApiStatus.Internal
 class PySentinelType(
   val sentinelName: String,
   val qName: String,

@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger.pydev;
 
 import com.intellij.openapi.diagnostic.Logger;
 
+import org.jetbrains.annotations.ApiStatus;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
@@ -21,6 +22,7 @@ import java.nio.charset.StandardCharsets;
  * <p>
  * For an example, see {@link PrettyPrintCommandHandler}
  */
+@ApiStatus.Internal
 public class RunCustomOperationCommand<T> extends AbstractCommand<T> {
   private static final Logger LOG = Logger.getInstance(RunCustomOperationCommand.class);
 

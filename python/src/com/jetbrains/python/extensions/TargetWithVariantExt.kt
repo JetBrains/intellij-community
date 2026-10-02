@@ -10,6 +10,7 @@ import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
 import com.jetbrains.python.run.targetBasedConfiguration.targetAsVirtualFile
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -24,11 +25,13 @@ fun TargetWithVariant.asPsiElement(
 /**
  * @see targetAsVirtualFile
  */
+@ApiStatus.Internal
 fun TargetWithVariant.asVirtualFile(): VirtualFile? = target?.let { targetAsVirtualFile(targetType, it) }
 
 /**
  * Sanity check for "target" value. Does not resolve target, only check its syntax CUSTOM type is not checked.
  */
+@ApiStatus.Internal
 fun TargetWithVariant.isWellFormed(): Boolean = when (targetType) {
   PyRunTargetVariant.PYTHON -> target?.let { it.split(".").all { id -> PyNames.isIdentifier(id) } } ?: true
   PyRunTargetVariant.PATH -> !isBadPath(target)

@@ -32,6 +32,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 /**
  * Adds an alias to "import foo" or "from foo import bar" import elements, or removes it if it's already present.
  */
+@ApiStatus.Internal
 public final class ImportToggleAliasIntention extends PyBaseIntentionAction {
   private static class IntentionState {
     private PyImportElement myImportElement;

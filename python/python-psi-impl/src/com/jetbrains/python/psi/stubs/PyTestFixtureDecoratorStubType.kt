@@ -7,7 +7,9 @@ import com.jetbrains.python.psi.PyDecorator
 import com.jetbrains.python.psi.impl.stubs.PyCustomDecoratorStubType
 import com.jetbrains.python.testing.pyTestFixtures.TEST_FIXTURE_DECORATOR_NAMES
 import com.jetbrains.python.testing.pyTestFixtures.getTestFixtureName
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyTestFixtureDecoratorStubType : PyCustomDecoratorStubType<PyTestFixtureDecoratorStub> {
   override fun createStub(psi: PyDecorator): PyTestFixtureDecoratorStub? {
     val qName = psi.getQualifiedName()

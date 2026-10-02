@@ -4,8 +4,10 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyBreakStatement;
 import com.jetbrains.python.psi.PyElementVisitor;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public class PyBreakStatementImpl extends PyElementImpl implements PyBreakStatement {
   public PyBreakStatementImpl(ASTNode astNode) {
     super(astNode);

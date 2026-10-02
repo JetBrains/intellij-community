@@ -3,7 +3,9 @@ package com.jetbrains.python.codeInsight.imports
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface ImportLocationHelper {
 
   fun getSearchStartPosition(anchor: PsiElement?, insertParent: PsiElement): PsiElement?
@@ -16,6 +18,7 @@ interface ImportLocationHelper {
   }
 }
 
+@ApiStatus.Internal
 class PyImportLocationHelper : ImportLocationHelper {
   override fun getSearchStartPosition(anchor: PsiElement?, insertParent: PsiElement): PsiElement? {
     return insertParent.firstChild

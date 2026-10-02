@@ -2,9 +2,11 @@
 package com.intellij.python.typeEngine.frontend
 
 import com.intellij.DynamicBundle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 
+@ApiStatus.Internal
 object TypeEngineFrontendBundle {
   private const val BUNDLE = "messages.TypeEngineFrontendBundle"
   private val INSTANCE = DynamicBundle(TypeEngineFrontendBundle::class.java, BUNDLE)

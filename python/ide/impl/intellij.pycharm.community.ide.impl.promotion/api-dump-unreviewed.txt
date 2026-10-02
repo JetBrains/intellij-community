@@ -1,0 +1,30 @@
+f:com.intellij.pycharm.community.ide.impl.promotion.ActionsKt
+- sf:activateAIAssistantToolwindow(com.intellij.openapi.project.Project):V
+e:com.intellij.pycharm.community.ide.impl.promotion.PromoEventSource
+- java.lang.Enum
+- sf:FILE_PREVIEW:com.intellij.pycharm.community.ide.impl.promotion.PromoEventSource
+- sf:GO_TO_ACTION:com.intellij.pycharm.community.ide.impl.promotion.PromoEventSource
+- sf:NEW_FILE:com.intellij.pycharm.community.ide.impl.promotion.PromoEventSource
+- sf:PROJECT_WIZARD:com.intellij.pycharm.community.ide.impl.promotion.PromoEventSource
+- sf:SETTINGS:com.intellij.pycharm.community.ide.impl.promotion.PromoEventSource
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.pycharm.community.ide.impl.promotion.PromoEventSource
+- s:values():com.intellij.pycharm.community.ide.impl.promotion.PromoEventSource[]
+e:com.intellij.pycharm.community.ide.impl.promotion.PromoTopic
+- java.lang.Enum
+- sf:AiCodeCompletion:com.intellij.pycharm.community.ide.impl.promotion.PromoTopic
+- sf:Database:com.intellij.pycharm.community.ide.impl.promotion.PromoTopic
+- sf:Dataframe:com.intellij.pycharm.community.ide.impl.promotion.PromoTopic
+- sf:Django:com.intellij.pycharm.community.ide.impl.promotion.PromoTopic
+- sf:Docker:com.intellij.pycharm.community.ide.impl.promotion.PromoTopic
+- sf:Endpoints:com.intellij.pycharm.community.ide.impl.promotion.PromoTopic
+- sf:JavaScript:com.intellij.pycharm.community.ide.impl.promotion.PromoTopic
+- sf:Jupyter:com.intellij.pycharm.community.ide.impl.promotion.PromoTopic
+- sf:Plots:com.intellij.pycharm.community.ide.impl.promotion.PromoTopic
+- sf:RemoteSSH:com.intellij.pycharm.community.ide.impl.promotion.PromoTopic
+- sf:TypeScript:com.intellij.pycharm.community.ide.impl.promotion.PromoTopic
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.pycharm.community.ide.impl.promotion.PromoTopic
+- s:values():com.intellij.pycharm.community.ide.impl.promotion.PromoTopic[]
+f:com.intellij.pycharm.community.ide.impl.promotion.StatisticsKt
+- sf:createOpenLearnMorePageLambda(com.intellij.pycharm.community.ide.impl.promotion.PromoEventSource,com.intellij.pycharm.community.ide.impl.promotion.PromoTopic):kotlin.jvm.functions.Function1

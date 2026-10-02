@@ -1,6 +1,7 @@
 package com.jetbrains.python;
 
 import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -8,6 +9,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class PySyntaxBundle {
   private static final @NonNls String BUNDLE = "messages.PySyntaxBundle";
   public static final DynamicBundle INSTANCE = new DynamicBundle(PySyntaxBundle.class, BUNDLE);

@@ -15,5 +15,8 @@
  */
 package com.jetbrains.python.psi.types;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public abstract class PyOverridingModuleMembersProvider extends PyModuleMembersProvider {
 }

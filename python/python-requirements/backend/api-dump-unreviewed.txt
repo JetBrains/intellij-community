@@ -1,0 +1,13 @@
+f:com.jetbrains.python.packaging.PyPackageVersionComparator
+- java.util.Comparator
+- sf:INSTANCE:com.jetbrains.python.packaging.PyPackageVersionComparator
+- compare(com.intellij.python.requirements.PyPackageVersion,com.intellij.python.requirements.PyPackageVersion):I
+- sf:getSTR_COMPARATOR():java.util.Comparator
+f:com.jetbrains.python.packaging.PyRequirementParser
+- <init>():V
+- s:fromFile(com.intellij.openapi.vfs.VirtualFile):java.util.List
+- s:fromLine(java.lang.String):com.jetbrains.python.packaging.PyRequirement
+- s:fromText(java.lang.String):java.util.List
+f:com.jetbrains.python.packaging.PyRequirementsKt
+- sf:pyRequirement(java.lang.String,com.jetbrains.python.packaging.requirement.PyRequirementRelation,java.lang.String):com.jetbrains.python.packaging.PyRequirement
+- sf:pyRequirementVersionSpec(com.jetbrains.python.packaging.requirement.PyRequirementRelation,java.lang.String):com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec

@@ -16,7 +16,9 @@
 package com.jetbrains.python.parsing.console;
 
 import com.jetbrains.python.psi.PyElementType;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class PyConsoleTokenTypes {
   public static final PyElementType QUESTION_MARK = new PyElementType("QUESTION_MARK"); //?
   public static final PyElementType PLING = new PyElementType("PLING"); //!

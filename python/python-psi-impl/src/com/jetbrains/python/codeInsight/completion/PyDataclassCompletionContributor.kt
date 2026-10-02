@@ -27,7 +27,9 @@ import com.jetbrains.python.extensions.inParameterList
 import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.PyParameterList
 import com.jetbrains.python.psi.PySubscriptionExpression
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyDataclassCompletionContributor : CompletionContributor(), DumbAware {
 
   override fun handleAutoCompletionPossibility(context: AutoCompletionContext): AutoCompletionDecision = autoInsertSingleItem(context)

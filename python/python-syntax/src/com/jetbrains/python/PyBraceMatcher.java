@@ -5,10 +5,12 @@ import com.intellij.lang.BracePair;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 public final class PyBraceMatcher implements PairedBraceMatcher {
   private static final BracePair[] ourBraces = {
     new BracePair(PyTokenTypes.LPAR, PyTokenTypes.RPAR, false),

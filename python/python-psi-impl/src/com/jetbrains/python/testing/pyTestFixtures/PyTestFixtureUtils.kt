@@ -6,13 +6,13 @@ import com.jetbrains.python.psi.impl.PyEvaluator
 import org.jetbrains.annotations.ApiStatus
 
 
-const val CONFTEST_PY = "conftest.py"
-const val REQUEST_FIXTURE = "request"
-const val _PYTEST_DIR = "_pytest"
-const val USE_FIXTURES = "usefixtures"
-const val PARAMETRIZE = "parametrize"
+@ApiStatus.Internal const val CONFTEST_PY = "conftest.py"
+@ApiStatus.Internal const val REQUEST_FIXTURE = "request"
+@ApiStatus.Internal const val _PYTEST_DIR = "_pytest"
+@ApiStatus.Internal const val USE_FIXTURES = "usefixtures"
+@ApiStatus.Internal const val PARAMETRIZE = "parametrize"
 
-val reservedFixturesSet = setOf(
+@ApiStatus.Internal val reservedFixturesSet = setOf(
   "capfd",
   "capfdbinary",
   "caplog",
@@ -30,7 +30,7 @@ val reservedFixturesSet = setOf(
   "tmp_path_factory"
 )
 
-val reservedFixtureClassSet = setOf(
+@ApiStatus.Internal val reservedFixtureClassSet = setOf(
   "testdir",
   "tmpdir",
   "tmpdir_factory"

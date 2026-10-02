@@ -6,11 +6,13 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyBreakStatement;
 import com.jetbrains.python.psi.PyContinueStatement;
 import com.jetbrains.python.psi.PyElementVisitor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Annotates misplaced 'break' and 'continue'.
  */
+@ApiStatus.Internal
 public class PyBreakContinueAnnotatorVisitor extends PyElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 

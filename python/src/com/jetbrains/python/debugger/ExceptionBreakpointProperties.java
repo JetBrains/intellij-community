@@ -5,8 +5,10 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.jetbrains.python.debugger.pydev.ExceptionBreakpointCommandFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class ExceptionBreakpointProperties<T> extends XBreakpointProperties<T> implements ExceptionBreakpointCommandFactory{
   @Attribute("exception")
   public String myException;

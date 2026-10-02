@@ -36,6 +36,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.testing.PyModuleTestRunnerQuery
 import com.jetbrains.python.testing.isTestElement
+import org.jetbrains.annotations.ApiStatus
 
 private val PyFunction.asFixture: PyTestFixture?
   get() = decoratorList?.decorators?.firstOrNull { it.name in TEST_FIXTURE_DECORATOR_NAMES }?.let { createFixture(it) }
@@ -88,6 +89,7 @@ private fun getFixtureAsStringLink(
   return module.baseDir?.path?.let { return findRightFixture(fixtureCandidates, null, element, typeEvalContext, it) }
 }
 
+@ApiStatus.Internal
 data class NamedFixtureLink(val fixture: PyTestFixture, val importElement: PyElement?)
 
 private fun PyTestFixture.getContainingFile(): PsiFile? = function?.containingFile
@@ -337,6 +339,7 @@ private fun getFixtureNameFromQualifiedName(assignedValue: PyQualifiedExpression
 /**
  * @return Boolean If named parameter has fixture or not
  */
+@ApiStatus.Internal
 fun PyNamedParameter.isFixture(typeEvalContext: TypeEvalContext) = getFixtureLink(this, typeEvalContext) != null
 
 
@@ -354,6 +357,7 @@ internal fun PyFunction.isFixture() = decoratorList?.hasDecorator(TEST_FIXTURE_D
 data class PyTestFixture(val function: PyFunction? = null, val resolveTarget: PyElement? = function, val name: String)
 
 
+@ApiStatus.Internal
 fun findDecoratorsByName(module: Module, names: Iterable<String>): Iterable<PyDecorator> =
   names.flatMap { name ->
     StubIndex.getElements(PyDecoratorStubIndex.KEY, name, module.project,

@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ import java.util.Arrays;
  * Warns about shadowing names defined in outer scopes.
  *
  */
+@ApiStatus.Internal
 public final class PyShadowingNamesInspection extends PyInspection {
 
   @Override

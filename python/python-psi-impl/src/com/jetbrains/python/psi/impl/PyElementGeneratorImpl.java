@@ -45,6 +45,7 @@ import com.jetbrains.python.psi.PySlashParameter;
 import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.StringLiteralExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +57,7 @@ import java.util.Deque;
 import java.util.Formatter;
 
 
+@ApiStatus.Internal
 public final class PyElementGeneratorImpl extends PyElementGenerator {
   private static final CommasOnly COMMAS_ONLY = new CommasOnly();
 

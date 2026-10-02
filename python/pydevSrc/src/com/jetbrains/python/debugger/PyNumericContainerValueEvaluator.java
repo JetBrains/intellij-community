@@ -4,6 +4,7 @@ package com.jetbrains.python.debugger;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.jetbrains.python.debugger.pydev.tables.PyNumericContainerPopupCustomizer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +14,7 @@ import java.awt.Component;
 import java.awt.KeyboardFocusManager;
 import java.util.List;
 
+@ApiStatus.Internal
 public class PyNumericContainerValueEvaluator extends PyFullValueEvaluator {
 
   protected PyNumericContainerValueEvaluator(@Nls String linkText, PyFrameAccessor debugProcess, String expression) {

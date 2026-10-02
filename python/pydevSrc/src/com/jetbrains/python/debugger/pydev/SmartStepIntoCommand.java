@@ -2,8 +2,10 @@
 package com.jetbrains.python.debugger.pydev;
 
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class SmartStepIntoCommand extends AbstractFrameCommand {
   private final String myFuncName;
   private final int myCallOrder;

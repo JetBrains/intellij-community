@@ -21,8 +21,10 @@ import com.jetbrains.python.psi.PyRecursiveElementVisitor
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyStatementList
 import com.jetbrains.python.psi.PyTargetExpression
+import org.jetbrains.annotations.ApiStatus
 import java.util.Locale
 
+@ApiStatus.Internal
 object PyNamesMatchingMlCompletionFeatures {
   private val scopeNamesKey = Key<Map<String, Int>>("py.ml.completion.scope.names")
   private val scopeTokensKey = Key<Map<String, Int>>("py.ml.completion.scope.tokens")

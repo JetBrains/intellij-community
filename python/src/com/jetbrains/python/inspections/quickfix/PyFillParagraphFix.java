@@ -9,9 +9,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyFillParagraphFix extends BaseIntentionAction implements  HighPriorityAction {
 
   public PyFillParagraphFix() {

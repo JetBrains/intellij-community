@@ -8,8 +8,10 @@ import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.stubs.PyDecoratorListStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyDecoratorListImpl extends PyBaseElementImpl<PyDecoratorListStub> implements PyDecoratorList {
 
   public PyDecoratorListImpl(ASTNode astNode) {

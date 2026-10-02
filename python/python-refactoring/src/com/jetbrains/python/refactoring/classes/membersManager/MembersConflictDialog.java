@@ -9,6 +9,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.refactoring.PyRefactoringBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -19,6 +20,7 @@ import java.util.Collection;
  *
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public class MembersConflictDialog extends ConflictsDialog {
   /**
    * @param project               project under refactoring

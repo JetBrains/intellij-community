@@ -10,6 +10,7 @@ import com.intellij.util.xmlb.XmlSerializer
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.formatter.PyCodeStyleReflectionUtil.comparePublicNonFinalFieldsWithSkip
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
@@ -24,6 +25,7 @@ import java.lang.reflect.Method
  * flags / `ALIGN_MULTILINE_PARAMETERS*` / `RIGHT_MARGIN`, so they would be serialized as
  * explicit diffs for every "default"-profile user. See PY-85946.
  */
+@ApiStatus.Internal
 class PyCommonCodeStyleSettings private constructor(private val isTempForDeserialize: Boolean) :
   CommonCodeStyleSettings(PythonLanguage.INSTANCE) {
   // `@JvmField` is required so this is a real public Java field, exactly like the Java mirror's

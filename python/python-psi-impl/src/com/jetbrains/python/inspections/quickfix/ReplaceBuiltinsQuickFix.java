@@ -11,8 +11,10 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyImportStatement;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class ReplaceBuiltinsQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   public @NotNull String getName() {

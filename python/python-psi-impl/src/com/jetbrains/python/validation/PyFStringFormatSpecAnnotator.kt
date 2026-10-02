@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.PyStringDunderUtil.KNOWN_FORMAT_MINI_LANGUAGE_TY
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Annotator for f-string format specifications (PY-88215).
@@ -30,6 +31,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  * - f"{s:>10s}" where s: str - highlights > 1 0 s
  * - f"{x:.2f}" where x has unknown type - does NOT highlight
  */
+@ApiStatus.Internal
 class PyFStringFormatSpecAnnotator : PyAnnotatorBase() {
 
   override fun runInBatchMode(): Boolean {

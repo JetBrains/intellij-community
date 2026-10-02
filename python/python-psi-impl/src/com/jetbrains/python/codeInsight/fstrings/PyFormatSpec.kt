@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.fstrings
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * The single parser of the Python format mini-language.
  *
@@ -11,6 +13,7 @@ package com.jetbrains.python.codeInsight.fstrings
  */
 
 /** The kind of one recognized piece of a format spec. */
+@ApiStatus.Internal
 enum class PyFormatSpecComponentKind {
   /** The padding character of a `[fill]align` pair. It carries no meaning of its own. */
   FILL,
@@ -33,6 +36,7 @@ enum class PyFormatSpecComponentKind {
 }
 
 /** One recognized piece of a format spec, with its offset inside the parsed text. */
+@ApiStatus.Internal
 class PyFormatSpecComponent(
   val kind: PyFormatSpecComponentKind,
   val text: String,
@@ -50,6 +54,7 @@ class PyFormatSpecComponent(
  * of rejecting a spec whose components are out of order, because a partly typed or an invalid spec still
  * needs highlighting and documentation.
  */
+@ApiStatus.Internal
 class PyFormatSpec private constructor(
   val text: String,
   val components: List<PyFormatSpecComponent>,

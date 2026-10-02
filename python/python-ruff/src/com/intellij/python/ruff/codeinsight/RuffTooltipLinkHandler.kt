@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.python.ruff.RuffBundle
 import com.intellij.python.ruff.RuffRuleInfo
 import com.intellij.python.ruff.RuffService
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 
 /**
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.NotNull
  * Links are in the format: https://docs.astral.sh/ruff/rules/rule-name
  * The documentation is retrieved from RuffCodeService.
  */
+@ApiStatus.Internal
 class RuffTooltipLinkHandler : TooltipLinkHandler() {
 
   override fun getDescription(@NotNull refSuffix: String, @NotNull editor: Editor): String? {

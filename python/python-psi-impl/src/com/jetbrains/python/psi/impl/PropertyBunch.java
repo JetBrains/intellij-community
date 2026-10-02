@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.toolbox.Maybe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import java.util.Objects;
  * Something that describes a property, with all related accessors.
  * <br/>
  */
+@ApiStatus.Internal
 public abstract class PropertyBunch<MType> {
 
   protected Maybe<MType> myGetter;

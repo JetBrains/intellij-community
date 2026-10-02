@@ -5,11 +5,13 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvid
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Prefixes a whole expression statement with a keyword such as `raise` or `yield`:
  * `expr.raise` -> `raise expr`.
  */
+@ApiStatus.Internal
 class PyStatementKeywordPostfixTemplate(
   private val keyword: String,
   provider: PostfixTemplateProvider,

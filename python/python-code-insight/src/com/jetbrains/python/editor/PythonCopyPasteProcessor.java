@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.PyStatementListContainer;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * User : catherine
  */
+@ApiStatus.Internal
 public final class PythonCopyPasteProcessor implements CopyPastePreProcessor {
 
   /**

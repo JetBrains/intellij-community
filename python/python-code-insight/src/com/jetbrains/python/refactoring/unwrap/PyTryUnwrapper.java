@@ -5,11 +5,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.psi.PyTryExceptStatement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public class PyTryUnwrapper extends PyUnwrapper {
   public PyTryUnwrapper() {
     super(PyCodeInsightBundle.message("unwrap.try"));

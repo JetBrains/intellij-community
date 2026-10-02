@@ -1,0 +1,73 @@
+f:com.jetbrains.python.packaging.IndicatedProcessOutputListener
+- com.intellij.execution.process.ProcessAdapter
+- <init>(com.intellij.openapi.progress.ProgressIndicator):V
+- onTextAvailable(com.intellij.execution.process.ProcessEvent,com.intellij.openapi.util.Key):V
+com.jetbrains.python.run.CommandLinePatcher
+c:com.jetbrains.python.sdk.PythonSdkAdditionalData
+- com.intellij.openapi.projectRoots.SdkAdditionalData
+- <init>(com.jetbrains.python.sdk.flavors.PyFlavorAndData,java.nio.file.Path):V
+- f:getFlavor():com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+- load(org.jdom.Element):V
+- save(org.jdom.Element):V
+- f:setAddedPathsFromVirtualFiles(java.util.Set):V
+f:com.jetbrains.python.sdk.flavors.PyFlavorAndData
+- <init>(com.jetbrains.python.sdk.flavors.PyFlavorData,com.jetbrains.python.sdk.flavors.PythonSdkFlavor):V
+- f:component1():com.jetbrains.python.sdk.flavors.PyFlavorData
+- f:component2():com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+- f:copy(com.jetbrains.python.sdk.flavors.PyFlavorData,com.jetbrains.python.sdk.flavors.PythonSdkFlavor):com.jetbrains.python.sdk.flavors.PyFlavorAndData
+- bs:copy$default(com.jetbrains.python.sdk.flavors.PyFlavorAndData,com.jetbrains.python.sdk.flavors.PyFlavorData,com.jetbrains.python.sdk.flavors.PythonSdkFlavor,I,java.lang.Object):com.jetbrains.python.sdk.flavors.PyFlavorAndData
+- equals(java.lang.Object):Z
+- f:getData():com.jetbrains.python.sdk.flavors.PyFlavorData
+- f:getDataClass():java.lang.Class
+- f:getFlavor():com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+- hashCode():I
+com.jetbrains.python.sdk.flavors.PyFlavorData
+- a:prepareTargetCommandLine(com.intellij.openapi.projectRoots.Sdk,com.intellij.execution.target.TargetedCommandLineBuilder):V
+f:com.jetbrains.python.sdk.flavors.PyFlavorData$Empty
+- com.jetbrains.python.sdk.flavors.PyFlavorData
+- sf:INSTANCE:com.jetbrains.python.sdk.flavors.PyFlavorData$Empty
+- prepareTargetCommandLine(com.intellij.openapi.projectRoots.Sdk,com.intellij.execution.target.TargetedCommandLineBuilder):V
+com.jetbrains.python.sdk.flavors.PythonFlavorProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getFlavor():com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+a:com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+- <init>():V
+- s:getFlavor(java.lang.String):com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+- getFlavorDataClass():java.lang.Class
+- getIcon():javax.swing.Icon
+- getLanguageLevel(com.intellij.openapi.projectRoots.Sdk):com.jetbrains.python.psi.LanguageLevel
+- a:getName():java.lang.String
+- s:getVersionStringStatic(java.lang.String):java.lang.String
+- f:suggestLocalHomePaths(com.intellij.openapi.module.Module,com.intellij.openapi.util.UserDataHolder):java.util.Collection
+- p:suggestLocalHomePathsImpl(com.intellij.openapi.module.Module,com.intellij.openapi.util.UserDataHolder):java.util.Collection
+c:com.jetbrains.python.target.PyTargetAwareAdditionalData
+- com.intellij.execution.target.TargetBasedSdkAdditionalData
+- com.intellij.remote.RemoteSdkProperties
+- com.jetbrains.python.sdk.PythonSdkAdditionalData
+- sf:Companion:com.jetbrains.python.target.PyTargetAwareAdditionalData$Companion
+- getDefaultHelpersName():java.lang.String
+- getHelpersPath():java.lang.String
+- getInterpreterPath():java.lang.String
+- getPathMappings():com.intellij.util.PathMappingSettings
+- sf:getPathsAddedByUser(com.jetbrains.python.target.PyTargetAwareAdditionalData):java.util.Map
+- sf:getPathsRemovedByUser(com.jetbrains.python.target.PyTargetAwareAdditionalData):java.util.Map
+- getSdkId():java.lang.String
+- getTargetEnvironmentConfiguration():com.intellij.execution.target.TargetEnvironmentConfiguration
+- isHelpersVersionChecked():Z
+- isRunAsRootViaSudo():Z
+- isValid():Z
+- load(org.jdom.Element):V
+- sf:loadTargetAwareData(com.intellij.openapi.projectRoots.Sdk,org.jdom.Element):com.jetbrains.python.target.PyTargetAwareAdditionalData
+- save(org.jdom.Element):V
+- setHelpersPath(java.lang.String):V
+- setHelpersVersionChecked(Z):V
+- setInterpreterPath(java.lang.String):V
+- setPathMappings(com.intellij.util.PathMappingSettings):V
+- setRunAsRootViaSudo(Z):V
+- setSdkId(java.lang.String):V
+- setTargetEnvironmentConfiguration(com.intellij.execution.target.TargetEnvironmentConfiguration):V
+- setValid(Z):V
+f:com.jetbrains.python.target.PyTargetAwareAdditionalData$Companion
+- f:getPathsAddedByUser(com.jetbrains.python.target.PyTargetAwareAdditionalData):java.util.Map
+- f:getPathsRemovedByUser(com.jetbrains.python.target.PyTargetAwareAdditionalData):java.util.Map
+- f:loadTargetAwareData(com.intellij.openapi.projectRoots.Sdk,org.jdom.Element):com.jetbrains.python.target.PyTargetAwareAdditionalData

@@ -6,6 +6,7 @@ package com.jetbrains.python.run
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.listeners.UndoRefactoringElementAdapter
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Tools to support refactoring for configurations
@@ -16,6 +17,7 @@ import com.intellij.refactoring.listeners.UndoRefactoringElementAdapter
 /**
  * @see CompositeRefactoringElementListener
  */
+@ApiStatus.Internal
 abstract class UndoRefactoringCompletionListener : UndoRefactoringElementAdapter() {
   public abstract override fun refactored(element: PsiElement, oldQualifiedName: String?)
 }
@@ -23,6 +25,7 @@ abstract class UndoRefactoringCompletionListener : UndoRefactoringElementAdapter
 /**
  * Chains several [com.intellij.refactoring.listeners.RefactoringElementListener]
  */
+@ApiStatus.Internal
 class CompositeRefactoringElementListener(private vararg val listeners: UndoRefactoringCompletionListener) : UndoRefactoringElementAdapter() {
   override fun refactored(element: PsiElement, oldQualifiedName: String?) {
     listeners.forEach { it.refactored(element, oldQualifiedName) }
@@ -38,6 +41,7 @@ class CompositeRefactoringElementListener(private vararg val listeners: UndoRefa
 /**
  * Renames working directory if folder physically renamed
  */
+@ApiStatus.Internal
 class PyWorkingDirectoryRenamer(private val workingDirectoryFile: VirtualFile?,
                                 private val conf: AbstractPythonRunConfiguration<*>) : UndoRefactoringCompletionListener() {
   override fun refactored(element: PsiElement, oldQualifiedName: String?) {

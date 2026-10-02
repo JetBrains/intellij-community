@@ -17,8 +17,10 @@ import com.jetbrains.python.psi.PyImportStatementBase;
 import com.jetbrains.python.psi.PyNonlocalStatement;
 import com.jetbrains.python.psi.PyPlainStringElement;
 import com.jetbrains.python.psi.PyStatement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PythonImportUtils {
   private PythonImportUtils() {
 

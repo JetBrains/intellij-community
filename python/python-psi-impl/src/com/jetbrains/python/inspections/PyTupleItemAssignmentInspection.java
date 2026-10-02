@@ -14,8 +14,10 @@ import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class PyTupleItemAssignmentInspection extends PyInspection {
 
   @Override

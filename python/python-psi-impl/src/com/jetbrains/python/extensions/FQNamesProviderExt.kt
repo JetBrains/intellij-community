@@ -5,22 +5,28 @@ import com.intellij.navigation.NavigationItem
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.nameResolver.FQNamesProvider
 import com.jetbrains.python.psi.PyQualifiedNameOwner
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 fun FQNamesProvider.getQualifiedNames(): Array<QualifiedName> = names.map(QualifiedName::fromDottedString).toTypedArray()
 
+@ApiStatus.Internal
 fun FQNamesProvider.getFirstName(): String = names[0]!!
 
+@ApiStatus.Internal
 fun FQNamesProvider.shortNameMatches(item: NavigationItem): Boolean = item.name.run { this in getShortNames() }
 
 /**
  * @return all names in unqualified ("after last dot") format
  */
+@ApiStatus.Internal
 fun FQNamesProvider.getShortNames(): List<String> = getQualifiedNames().mapNotNull(QualifiedName::getLastComponent).toList()
 
 /**
  * Checks if element name matches. [.alwaysCheckQualifiedName] controls if full name should be checked, or only last and first
  * parts (name and package) are enough. It may be used for cases when physical FQN is not documented.
  */
+@ApiStatus.Internal
 fun FQNamesProvider.isNameMatches(qualifiedNameOwner: PyQualifiedNameOwner): Boolean {
   val qualifiedName = qualifiedNameOwner.qualifiedName ?: return false
 

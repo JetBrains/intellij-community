@@ -1,0 +1,3 @@
+f:com.intellij.python.flask.common.icons.FlaskCommonIcons
+- sf:Flask:javax.swing.Icon
+- <init>():V

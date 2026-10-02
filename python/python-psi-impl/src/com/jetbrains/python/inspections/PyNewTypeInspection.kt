@@ -21,7 +21,9 @@ import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyTypingNewTypeFactoryType
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyNewTypeInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val context = PyInspectionVisitor.getContext(session)

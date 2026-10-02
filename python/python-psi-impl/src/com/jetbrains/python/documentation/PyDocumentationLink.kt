@@ -25,8 +25,10 @@ import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isNoneType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 object PyDocumentationLink {
 
   /** Prefix understood by `com.intellij.codeInsight.hint.ElementLinkHandler` for navigable tooltip links. */

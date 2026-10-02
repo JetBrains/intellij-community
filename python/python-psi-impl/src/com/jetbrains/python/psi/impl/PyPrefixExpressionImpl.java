@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExpression {
   public PyPrefixExpressionImpl(ASTNode astNode) {
     super(astNode);

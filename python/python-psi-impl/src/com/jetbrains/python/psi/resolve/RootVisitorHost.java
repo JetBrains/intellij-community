@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonRuntimeService;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 
+@ApiStatus.Internal
 public final class RootVisitorHost {
   public static void visitRoots(final @NotNull PsiElement elt, final @NotNull RootVisitor visitor) {
     // real search

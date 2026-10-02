@@ -55,8 +55,10 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
 import com.jetbrains.python.psi.types.PyTypeChecker.substitute
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
+import org.jetbrains.annotations.ApiStatus
 
 
+@ApiStatus.Internal
 object PyExpectedTypeJudgement {
   private val recursionGuard = RecursionManager.createGuard<Pair<PsiElement, TypeEvalContext>>("PyExpectedTypeJudgement")
   private val SYNTHETIC_PROTOCOL: Key<Boolean> = Key.create("PyExpectedTypeJudgement.SYNTHETIC_PROTOCOL")

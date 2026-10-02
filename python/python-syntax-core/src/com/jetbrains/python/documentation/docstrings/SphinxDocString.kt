@@ -16,7 +16,9 @@
 package com.jetbrains.python.documentation.docstrings
 
 import com.jetbrains.python.toolbox.Substring
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class SphinxDocString(docstringText: Substring) : TagBasedDocString(docstringText, TAG_PREFIX) {
   override fun getKeywordArguments(): MutableList<String?> {
     return toUniqueStrings(keywordArgumentSubstrings)

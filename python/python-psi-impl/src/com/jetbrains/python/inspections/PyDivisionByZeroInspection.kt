@@ -32,6 +32,7 @@ import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 private const val FRACTION_QN = "fractions.Fraction"
 
@@ -113,6 +114,7 @@ private enum class DivisionOperation(val methods: List<String>, val knownFunctio
   }
 }
 
+@ApiStatus.Internal
 class PyDivisionByZeroInspection : PyInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {

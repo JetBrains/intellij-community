@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
  * Inspection to detect occurrences of @classmethod and @staticmethod
  * on methods outside of a class
  */
+@ApiStatus.Internal
 public final class PyDecoratorInspection extends PyInspection {
 
   @Override

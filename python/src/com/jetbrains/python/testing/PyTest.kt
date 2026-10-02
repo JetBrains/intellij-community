@@ -33,6 +33,7 @@ import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.testing.PyTestSharedForm.create
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Pytest runner
@@ -41,6 +42,7 @@ import com.jetbrains.python.testing.PyTestSharedForm.create
 //Fetch param from parametrized test name spam[eggs]
 private val PARAM_REGEX = Regex("\\[(.+)]$")
 
+@ApiStatus.Internal
 class PyTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
   PyAbstractTestSettingsEditor(
     create(
@@ -49,6 +51,7 @@ class PyTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
       PyTestCustomOption(PyTestConfiguration::parameters, PyRunTargetVariant.PATH, PyRunTargetVariant.PYTHON),
     ))
 
+@ApiStatus.Internal
 class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environment: ExecutionEnvironment) :
   PyTestExecutionEnvironment<PyTestConfiguration>(configuration, environment) {
   override fun getRunner(): PythonHelper = PythonHelper.PYTEST

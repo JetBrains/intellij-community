@@ -11,7 +11,9 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.resolve.PyResolveUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyLocalVariableHighlightingAnnotator : PyAnnotatorBase() {
 
   override fun runInBatchMode(): Boolean {

@@ -16,12 +16,14 @@
 package com.jetbrains.python.refactoring.classes.membersManager.vp;
 
 import com.jetbrains.python.vp.Presenter;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Presenter for dialogs that display members
  *
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public interface MembersBasedPresenter extends Presenter {
   /**
    * User clicked on "ok" button

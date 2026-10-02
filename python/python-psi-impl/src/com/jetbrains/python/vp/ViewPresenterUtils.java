@@ -4,6 +4,7 @@ package com.jetbrains.python.vp;
 
 import com.google.common.base.Preconditions;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationHandler;
@@ -12,6 +13,7 @@ import java.lang.reflect.InvocationHandler;
  * Entry point to package. Use {@link #linkViewWithPresenterAndLaunch(Class, Class, Creator)}
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public final class ViewPresenterUtils {
   private ViewPresenterUtils() {
   }

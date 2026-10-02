@@ -10,7 +10,9 @@ import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.PyTypeParameterList
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyTypeParameterListAnnotatorVisitor(private val holder: PyAnnotationHolder) : PyElementVisitor() {
   override fun visitPyTypeParameterList(node: PyTypeParameterList) {
     if (!node.typeParameters.isEmpty()) {

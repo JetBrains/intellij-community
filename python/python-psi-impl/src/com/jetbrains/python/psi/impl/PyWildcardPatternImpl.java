@@ -6,9 +6,11 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyWildcardPattern;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class PyWildcardPatternImpl extends PyElementImpl implements PyWildcardPattern {
   public PyWildcardPatternImpl(ASTNode astNode) {
     super(astNode);

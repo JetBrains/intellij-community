@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ import java.util.Set;
  * <p>
  * Inspection to detect assignments that can be replaced with augmented assignments.
  */
+@ApiStatus.Internal
 public final class PyAugmentAssignmentInspection extends PyInspection {
 
   private static final @NotNull TokenSet OPERATIONS = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MINUS, PyTokenTypes.MULT,

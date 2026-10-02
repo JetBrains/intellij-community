@@ -13,6 +13,7 @@ import com.jetbrains.python.codeInsight.parameterInfo.PyTypeParameterInfoUtil
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.EnumSet
 
 /**
@@ -23,6 +24,7 @@ import java.util.EnumSet
  * higher priority so that a generic subscription nested in a call, such as `cast(list[<caret>], x)`, shows the type
  * parameters of the subscription rather than the parameters of the enclosing call.
  */
+@ApiStatus.Internal
 class PyTypeParameterInfoHandler : ParameterInfoHandler<PySubscriptionExpression, PyTypeParameterInfoHandler.TypeParameterListPresentation> {
 
   class TypeParameterListPresentation(val representations: List<String>)

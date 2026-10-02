@@ -6,12 +6,14 @@
  */
 package com.jetbrains.python.console.pydev;
 
+import org.jetbrains.annotations.ApiStatus;
 import java.io.Serializable;
 
 
 /**
  * @author Fabio Zadrozny
  */
+@ApiStatus.Internal
 public interface IToken extends Serializable, Comparable{
 
     /**

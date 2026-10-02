@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.testing.PythonUnitTestDetectorsKt;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ import java.util.Set;
  * <p>
  * Inspection to detect situations, where instance attribute is defined outside __init__ function.
  */
+@ApiStatus.Internal
 public final class PyAttributeOutsideInitInspection extends PyInspection {
 
   @Override

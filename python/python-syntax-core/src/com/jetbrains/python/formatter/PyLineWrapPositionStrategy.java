@@ -12,10 +12,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.ast.PyAstFStringFragment;
 import com.jetbrains.python.psi.StringLiteralExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 public final class PyLineWrapPositionStrategy extends GenericLineWrapPositionStrategy {
   public PyLineWrapPositionStrategy() {
     // Commas.

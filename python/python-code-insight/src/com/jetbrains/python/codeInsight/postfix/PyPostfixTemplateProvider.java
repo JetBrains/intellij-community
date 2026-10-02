@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplat
 import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.readExternalLiveTemplate;
 import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.readExternalTopmostAttribute;
 
+@ApiStatus.Internal
 public final class PyPostfixTemplateProvider implements PostfixTemplateProvider {
 
   private final @NotNull Set<PostfixTemplate> myTemplates = Set.of(

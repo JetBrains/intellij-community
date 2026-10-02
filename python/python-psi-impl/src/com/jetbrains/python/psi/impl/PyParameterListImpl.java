@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> implements PyParameterList, PsiListLikeElement {
   public PyParameterListImpl(ASTNode astNode) {
     super(astNode);

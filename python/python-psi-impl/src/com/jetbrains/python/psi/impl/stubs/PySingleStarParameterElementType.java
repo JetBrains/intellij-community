@@ -10,11 +10,13 @@ import com.jetbrains.python.psi.PySingleStarParameter;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PySingleStarParameterImpl;
 import com.jetbrains.python.psi.stubs.PySingleStarParameterStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 
+@ApiStatus.Internal
 public class PySingleStarParameterElementType extends PyStubElementType<PySingleStarParameterStub, PySingleStarParameter> {
   public PySingleStarParameterElementType() {
     super("SINGLE_STAR_PARAMETER");

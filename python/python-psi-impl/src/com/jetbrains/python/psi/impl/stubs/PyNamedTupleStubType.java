@@ -4,11 +4,13 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.stubs.StubInputStream;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
+@ApiStatus.Internal
 public final class PyNamedTupleStubType extends CustomTargetExpressionStubType<PyNamedTupleStub> {
 
   @Override

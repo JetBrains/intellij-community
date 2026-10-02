@@ -13,11 +13,13 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.PyTypeDeclarationStatement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public class PyTypeAnnotationTargetAnnotatorVisitor extends PyElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 

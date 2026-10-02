@@ -44,6 +44,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.testing.PythonUnitTestDetectorsKt;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +63,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
  * protected member (i.e. class member with a name beginning with an underscore)
  * is access outside the class or a descendant of the class where it's defined.
  */
+@ApiStatus.Internal
 public final class PyProtectedMemberInspection extends PyInspection {
   public boolean ignoreTestFunctions = true;
   public boolean ignoreAnnotations = false;

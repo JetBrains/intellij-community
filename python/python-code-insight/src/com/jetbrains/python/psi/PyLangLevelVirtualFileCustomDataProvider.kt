@@ -10,9 +10,11 @@ import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 import com.jetbrains.python.psi.impl.VirtualFilePyLanguageLevelListener
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
+@ApiStatus.Internal
 class PyLangLevelVirtualFileCustomDataProvider : VirtualFileCustomDataProvider<LanguageLevelHolder> {
   override val id: String = "virtualFilePyLangLevel"
 

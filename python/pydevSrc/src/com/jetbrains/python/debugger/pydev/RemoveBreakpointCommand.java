@@ -4,8 +4,10 @@
 package com.jetbrains.python.debugger.pydev;
 
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class RemoveBreakpointCommand extends LineBreakpointCommand {
 
   public RemoveBreakpointCommand(final RemoteDebugger debugger, final @NotNull String type, final @NotNull String file, final int line) {

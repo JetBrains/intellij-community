@@ -16,12 +16,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author novokrest
  */
+@ApiStatus.Internal
 public final class PyCallHierarchyProvider implements HierarchyProvider {
   @Override
   public @Nullable PsiElement getTarget(@NotNull DataContext dataContext) {

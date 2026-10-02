@@ -7,8 +7,10 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.jetbrains.python.PythonParserDefinition;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class PyTypeHintParserDefinition extends PythonParserDefinition {
   @Override
   public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {

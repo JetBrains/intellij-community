@@ -4,8 +4,10 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyIfStatement;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public class PyIfStatementImpl extends PyElementImpl implements PyIfStatement {
   public PyIfStatementImpl(ASTNode astNode) {
     super(astNode);

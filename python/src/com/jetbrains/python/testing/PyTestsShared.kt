@@ -89,6 +89,7 @@ import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.PropertyKey
 import java.io.File
@@ -101,6 +102,7 @@ fun getFactoryById(id: String): PyAbstractTestFactory<*>? =
   // user may have "pytest" because it was used instead of py.test (old id) for some time
   PythonTestConfigurationType.getInstance().typedFactories.toTypedArray().firstOrNull { it.id == if (id == "pytest") PyTestFactory.id else id }
 
+@ApiStatus.Internal
 fun getFactoryByIdOrDefault(id: String): PyAbstractTestFactory<*> = getFactoryById(id)
                                                                     ?: PythonTestConfigurationType.getInstance().autoDetectFactory
 
@@ -108,6 +110,7 @@ fun getFactoryByIdOrDefault(id: String): PyAbstractTestFactory<*> = getFactoryBy
  * Accepts text that may be wrapped in TC message. Unwraps it and removes TC escape code.
  * Regular text is unchanged
  */
+@ApiStatus.Internal
 fun processTCMessage(text: String): String {
   val parsedMessage = ServiceMessage.parse(text.trim()) ?: return text // Not a TC message
   return when (parsedMessage) {
@@ -203,6 +206,7 @@ private fun getElementByUrl(
 }
 
 
+@ApiStatus.Internal
 object PyTestsLocator : SMTestLocator {
 
   override fun getLocation(
@@ -245,6 +249,7 @@ object PyTestsLocator : SMTestLocator {
 }
 
 
+@ApiStatus.Internal
 abstract class PyTestExecutionEnvironment<T : PyAbstractTestConfiguration>(
   configuration: T,
   environment: ExecutionEnvironment,
@@ -969,6 +974,7 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
 /**
  * Mark run configuration field with it to enable saving, restoring and form iteraction
  */
+@ApiStatus.Internal
 annotation class ConfigField(@param:PropertyKey(resourceBundle = PyBundle.BUNDLE) val localizedName: String)
 
 /**

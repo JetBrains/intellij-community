@@ -33,6 +33,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.PyWithItem;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
@@ -42,6 +43,7 @@ import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
  * <p>
  * Helps to specify type by assertion
  */
+@ApiStatus.Internal
 public final class TypeAssertionIntention extends PyBaseIntentionAction {
 
   @Override

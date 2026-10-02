@@ -3,7 +3,9 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElsePart;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class PyElsePartImpl extends PyElementImpl implements PyElsePart {
 
   public PyElsePartImpl(ASTNode astNode) {

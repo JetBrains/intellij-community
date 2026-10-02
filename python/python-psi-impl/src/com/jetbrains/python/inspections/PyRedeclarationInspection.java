@@ -40,6 +40,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +52,7 @@ import static com.jetbrains.python.psi.impl.PyTypeDeclarationStatementNavigator.
 /**
  * Annotates declarations that unconditionally override others without these being used.
  */
+@ApiStatus.Internal
 public final class PyRedeclarationInspection extends PyInspection {
 
   @Override

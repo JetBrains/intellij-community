@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -48,6 +49,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  *
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public final class PyStructuralTypeAttributesCompletionContributor extends CompletionContributor implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance(PyStructuralTypeAttributesCompletionContributor.class);

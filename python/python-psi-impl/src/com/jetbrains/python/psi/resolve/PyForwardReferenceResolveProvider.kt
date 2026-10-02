@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.resolve
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Forward references resolution for annotations and pyi stubs.
@@ -11,6 +12,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  * @see <a href="PEP-484">https://www.python.org/dev/peps/pep-0484/</a>
  * @see <a href="PEP-563">https://www.python.org/dev/peps/pep-0563/</a>
  */
+@ApiStatus.Internal
 class PyForwardReferenceResolveProvider : PyReferenceResolveProvider {
 
   override fun resolveName(element: PyQualifiedExpression, context: TypeEvalContext): List<RatedResolveResult> {

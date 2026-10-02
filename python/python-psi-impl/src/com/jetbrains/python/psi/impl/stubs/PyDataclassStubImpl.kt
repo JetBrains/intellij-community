@@ -9,6 +9,7 @@ import com.jetbrains.python.codeInsight.PyDataclassParameters
 import com.jetbrains.python.codeInsight.parseDataclassParametersForStub
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.stubs.PyDataclassStub
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
 
@@ -21,6 +22,7 @@ import java.io.IOException
  * `validate_by_name` / `validate_by_alias`) without core knowing the framework. Instances are built by [of] and
  * (de)serialized by the single [PyDataclassStubType].
  */
+@ApiStatus.Internal
 class PyDataclassStubImpl(
   override val type: String,
   private val decoratorName: QualifiedName?,

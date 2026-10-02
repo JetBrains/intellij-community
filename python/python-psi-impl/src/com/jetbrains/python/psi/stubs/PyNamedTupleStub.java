@@ -3,11 +3,13 @@ package com.jetbrains.python.psi.stubs;
 
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 import com.jetbrains.python.psi.types.PyAnyType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 
+@ApiStatus.Internal
 public interface PyNamedTupleStub extends CustomTargetExpressionStub {
 
   /**

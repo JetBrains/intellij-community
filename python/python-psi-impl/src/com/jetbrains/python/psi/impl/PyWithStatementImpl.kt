@@ -10,7 +10,9 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.PyWithItem
 import com.jetbrains.python.psi.PyWithStatement
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyWithStatementImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyWithStatement, PsiListLikeElement {
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
     pyVisitor.visitPyWithStatement(this)

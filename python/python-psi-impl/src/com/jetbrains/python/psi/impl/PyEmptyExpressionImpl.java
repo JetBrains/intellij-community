@@ -6,9 +6,11 @@ import com.jetbrains.python.psi.PyEmptyExpression;
 import com.jetbrains.python.psi.PyInstantTypeProvider;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public class PyEmptyExpressionImpl extends PyElementImpl implements PyEmptyExpression, PyInstantTypeProvider {
   public PyEmptyExpressionImpl(ASTNode astNode) {
     super(astNode);

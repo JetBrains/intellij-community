@@ -6,12 +6,14 @@ import com.intellij.python.pytools.common.PyToolConfigurationSerializerProvider
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 
 @Serializable
 @SerialName("python.black")
 data class PyBlackToolConfigurationDto(val arguments: String) : PyToolConfigurationDto
 
+@ApiStatus.Internal
 class PyBlackToolConfigurationSerializerProvider :
   PyToolConfigurationSerializerProvider<PyBlackToolConfigurationDto> {
   override val configurationClass: KClass<PyBlackToolConfigurationDto> = PyBlackToolConfigurationDto::class

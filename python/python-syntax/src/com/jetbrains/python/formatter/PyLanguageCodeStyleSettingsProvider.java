@@ -16,6 +16,7 @@ import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.jetbrains.python.PySyntaxBundle;
 import com.jetbrains.python.PythonLanguage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.WRAP_VALU
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
 
+@ApiStatus.Internal
 public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @Override
   public @NotNull Language getLanguage() {

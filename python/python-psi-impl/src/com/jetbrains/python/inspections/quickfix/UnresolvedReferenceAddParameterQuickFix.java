@@ -16,6 +16,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameterList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * QuickFix to add parameter to unresolved reference
  */
+@ApiStatus.Internal
 public class UnresolvedReferenceAddParameterQuickFix implements LocalQuickFix {
   private final String myName;
 

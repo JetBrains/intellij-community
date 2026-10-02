@@ -5,6 +5,7 @@ import com.intellij.lexer.Lexer
 import com.intellij.psi.impl.cache.impl.OccurrenceConsumer
 import com.intellij.psi.impl.cache.impl.id.LexerBasedIdIndexer
 import com.jetbrains.python.lexer.PythonLexer
+import org.jetbrains.annotations.ApiStatus
 
 internal class PyIdIndexer : LexerBasedIdIndexer() {
   override fun createLexer(consumer: OccurrenceConsumer): Lexer {
@@ -12,6 +13,7 @@ internal class PyIdIndexer : LexerBasedIdIndexer() {
   }
 }
 
+@ApiStatus.Internal
 fun createPyIndexingLexer(consumer: OccurrenceConsumer): Lexer {
   return PyFilterLexer(PythonLexer(), consumer)
 }

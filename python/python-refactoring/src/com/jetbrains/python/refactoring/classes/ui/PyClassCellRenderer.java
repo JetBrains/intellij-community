@@ -4,6 +4,7 @@ package com.jetbrains.python.refactoring.classes.ui;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsSafe;
 import com.jetbrains.python.psi.PyClass;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.DefaultListCellRenderer;
@@ -15,6 +16,7 @@ import java.awt.Component;
 /**
  * @author Dennis.Ushakov
  */
+@ApiStatus.Internal
 public class PyClassCellRenderer extends DefaultListCellRenderer {
   private final boolean myShowReadOnly;
   public PyClassCellRenderer() {

@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.ruff.RuffService
 import com.intellij.util.ProcessingContext
+import org.jetbrains.annotations.ApiStatus
 import org.toml.lang.psi.TomlFile
 import org.toml.lang.psi.TomlKeySegment
 import org.toml.lang.psi.TomlTable
@@ -24,6 +25,7 @@ import kotlin.math.max
 /**
  * Provides code completion for Ruff configuration options in TOML files.
  */
+@ApiStatus.Internal
 class RuffConfigOptionCompletionContributor : CompletionContributor() {
 
   init {

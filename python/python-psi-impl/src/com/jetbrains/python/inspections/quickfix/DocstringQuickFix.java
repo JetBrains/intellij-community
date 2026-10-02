@@ -18,12 +18,14 @@ import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * User : catherine
  */
+@ApiStatus.Internal
 public class DocstringQuickFix extends PsiUpdateModCommandQuickFix {
   private final SmartPsiElementPointer<PyNamedParameter> myMissingParam;
   private final String myUnexpectedParamName;

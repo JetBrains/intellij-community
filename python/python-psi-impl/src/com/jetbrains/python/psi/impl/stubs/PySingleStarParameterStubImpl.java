@@ -6,8 +6,10 @@ import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PySingleStarParameter;
 import com.jetbrains.python.psi.stubs.PySingleStarParameterStub;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public class PySingleStarParameterStubImpl extends StubBase<PySingleStarParameter> implements PySingleStarParameterStub {
   protected PySingleStarParameterStubImpl(final StubElement parent) {
     super(parent, PyStubElementTypes.SINGLE_STAR_PARAMETER);

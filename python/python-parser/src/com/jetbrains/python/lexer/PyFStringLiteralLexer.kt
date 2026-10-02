@@ -5,7 +5,9 @@ import com.intellij.psi.StringEscapesTokenTypes
 import com.intellij.psi.tree.IElementType
 import com.intellij.util.text.CharArrayUtil
 import com.jetbrains.python.PyTokenTypes
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyFStringLiteralLexer(fStringTextToken: IElementType) : PyStringLiteralLexerBase(fStringTextToken) {
   init {
     assert(PyTokenTypes.FSTRING_TEXT_TOKENS.contains(fStringTextToken))

@@ -25,6 +25,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringTypeReference;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -36,6 +37,7 @@ import static com.intellij.patterns.StandardPatterns.or;
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public final class PyDocstringCompletionContributor extends CompletionContributor implements DumbAware {
   public PyDocstringCompletionContributor() {
     extend(CompletionType.BASIC,

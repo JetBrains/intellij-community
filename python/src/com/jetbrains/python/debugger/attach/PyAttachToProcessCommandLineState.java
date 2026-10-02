@@ -19,11 +19,13 @@ import com.jetbrains.python.debugger.PyRemoteDebugProcessAware;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.run.PythonScriptCommandLineState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
 
+@ApiStatus.Internal
 public final class PyAttachToProcessCommandLineState extends PythonScriptCommandLineState {
 
 

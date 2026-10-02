@@ -16,11 +16,13 @@
 package com.jetbrains.python.run;
 
 import com.intellij.execution.configurations.RunConfiguration;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Configuration that knows if it supports run under debug or not
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public interface DebugAwareConfiguration extends RunConfiguration {
   /**
    * @return true if this configuration may run under debug

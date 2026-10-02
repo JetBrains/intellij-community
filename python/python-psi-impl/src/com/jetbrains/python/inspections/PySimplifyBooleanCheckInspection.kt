@@ -15,7 +15,9 @@ import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isNoneType
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PySimplifyBooleanCheckInspection : PyInspection() {
   var ignoreComparisonToZero: Boolean = true
 

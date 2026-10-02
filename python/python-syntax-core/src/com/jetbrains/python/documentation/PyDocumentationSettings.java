@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public abstract class PyDocumentationSettings
   extends PyDefaultProjectAwareService<PyDocumentationSettings.ServiceState,
           PyDocumentationSettings,

@@ -16,6 +16,7 @@ import com.jetbrains.python.inspections.PySuppressionUtil
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 /**
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nls
  * Use [forInspection] for a whole inspection (inserts its kebab-case alias, e.g. `unresolved-references`) or
  * [forCode] for a granular type-checker code (e.g. `unsupported-operator`).
  */
+@ApiStatus.Internal
 class PySuppressWithTypeIgnoreFix private constructor(private val code: String) : SuppressQuickFix {
 
   override fun getFamilyName(): @Nls String = PyPsiBundle.message("INSP.python.suppressor.suppress.with.type.ignore")

@@ -4,7 +4,9 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyForStatement;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class PyForStatementImpl extends PyElementImpl implements PyForStatement {
   public PyForStatementImpl(ASTNode astNode) {
     super(astNode);

@@ -13,10 +13,12 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 public class PyStatementListImpl extends PyLazyParseablePsiElement implements PyStatementList {
 
   public PyStatementListImpl(@NotNull IElementType type, @Nullable CharSequence buffer) {

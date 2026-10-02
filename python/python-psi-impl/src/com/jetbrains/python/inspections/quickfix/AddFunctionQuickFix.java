@@ -32,6 +32,7 @@ import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -43,6 +44,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  *
  * @see AddMethodQuickFix AddMethodQuickFix
  */
+@ApiStatus.Internal
 public class AddFunctionQuickFix implements LocalQuickFix {
 
   private final String myIdentifier;

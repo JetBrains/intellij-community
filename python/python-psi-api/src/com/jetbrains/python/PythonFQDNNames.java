@@ -2,12 +2,14 @@
 package com.jetbrains.python;
 
 import com.jetbrains.python.nameResolver.FQNamesProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Python (not django) names
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public final class PythonFQDNNames implements FQNamesProvider {
 
   /**

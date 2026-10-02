@@ -6,8 +6,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyComprehensionForComponent;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListCompExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PyListCompExpressionNavigator {
   private PyListCompExpressionNavigator() {
   }

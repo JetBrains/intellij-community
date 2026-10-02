@@ -1,0 +1,90 @@
+*:com.jetbrains.python.errorProcessing.ErrorSink
+- kotlinx.coroutines.flow.FlowCollector
+*f:com.jetbrains.python.errorProcessing.ErrorSinkKt
+- sf:ErrorSink():com.jetbrains.python.errorProcessing.ErrorSink
+- sf:emit(com.jetbrains.python.errorProcessing.ErrorSink,com.jetbrains.python.errorProcessing.PyError,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+- bs:emit$default(com.jetbrains.python.errorProcessing.ErrorSink,com.jetbrains.python.errorProcessing.PyError,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:withProject(com.jetbrains.python.errorProcessing.ErrorSink,com.intellij.openapi.project.Project):com.jetbrains.python.errorProcessing.ErrorSink
+*:com.jetbrains.python.errorProcessing.Exe
+- *sf:Companion:com.jetbrains.python.errorProcessing.Exe$Companion
+- pathParts():java.util.List
+*f:com.jetbrains.python.errorProcessing.Exe$Companion
+- f:fromString(java.lang.String):com.jetbrains.python.errorProcessing.Exe
+*f:com.jetbrains.python.errorProcessing.Exe$OnEel
+- com.jetbrains.python.errorProcessing.Exe
+- <init>(com.intellij.platform.eel.path.EelPath):V
+- f:component1():com.intellij.platform.eel.path.EelPath
+- f:copy(com.intellij.platform.eel.path.EelPath):com.jetbrains.python.errorProcessing.Exe$OnEel
+- bs:copy$default(com.jetbrains.python.errorProcessing.Exe$OnEel,com.intellij.platform.eel.path.EelPath,I,java.lang.Object):com.jetbrains.python.errorProcessing.Exe$OnEel
+- equals(java.lang.Object):Z
+- f:getEelPath():com.intellij.platform.eel.path.EelPath
+- hashCode():I
+*f:com.jetbrains.python.errorProcessing.Exe$OnTarget
+- com.jetbrains.python.errorProcessing.Exe
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.jetbrains.python.errorProcessing.Exe$OnTarget
+- bs:copy$default(com.jetbrains.python.errorProcessing.Exe$OnTarget,java.lang.String,I,java.lang.Object):com.jetbrains.python.errorProcessing.Exe$OnTarget
+- equals(java.lang.Object):Z
+- f:getPath():java.lang.String
+- hashCode():I
+*f:com.jetbrains.python.errorProcessing.ExecErrorImpl
+- com.jetbrains.python.errorProcessing.PyError
+- b:<init>(com.jetbrains.python.errorProcessing.Exe,java.lang.String[],com.jetbrains.python.errorProcessing.ExecErrorReason,java.lang.String,com.intellij.python.processOutput.common.ProcessId,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getAdditionalMessageToUser():java.lang.String
+- f:getArgs():java.lang.String[]
+- f:getAsCommand():java.lang.String
+- f:getErrorReason():com.jetbrains.python.errorProcessing.ExecErrorReason
+- f:getExe():com.jetbrains.python.errorProcessing.Exe
+- f:getLoggedProcessId-2tBa3jA():com.intellij.python.processOutput.common.ProcessId
+*f:com.jetbrains.python.errorProcessing.ExecErrorKt
+- sf:asExecutionFailed(com.intellij.execution.process.ProcessOutput):com.jetbrains.python.errorProcessing.ExecErrorReason$UnexpectedProcessTermination
+*:com.jetbrains.python.errorProcessing.ExecErrorReason
+*f:com.jetbrains.python.errorProcessing.ExecErrorReason$CantStart
+- com.jetbrains.python.errorProcessing.ExecErrorReason
+- <init>(java.lang.Integer,java.lang.String):V
+- f:component1():java.lang.Integer
+- f:component2():java.lang.String
+- f:copy(java.lang.Integer,java.lang.String):com.jetbrains.python.errorProcessing.ExecErrorReason$CantStart
+- bs:copy$default(com.jetbrains.python.errorProcessing.ExecErrorReason$CantStart,java.lang.Integer,java.lang.String,I,java.lang.Object):com.jetbrains.python.errorProcessing.ExecErrorReason$CantStart
+- equals(java.lang.Object):Z
+- f:getCantExecProcessError():java.lang.String
+- f:getErrNo():java.lang.Integer
+- hashCode():I
+*f:com.jetbrains.python.errorProcessing.ExecErrorReason$Timeout
+- com.jetbrains.python.errorProcessing.ExecErrorReason
+- sf:INSTANCE:com.jetbrains.python.errorProcessing.ExecErrorReason$Timeout
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.jetbrains.python.errorProcessing.ExecErrorReason$UnexpectedProcessTermination
+- com.intellij.platform.eel.provider.utils.EelProcessExecutionResultInfo
+- com.jetbrains.python.errorProcessing.ExecErrorReason
+- <init>(com.intellij.platform.eel.provider.utils.EelProcessExecutionResult):V
+- f:copy(com.intellij.platform.eel.provider.utils.EelProcessExecutionResult):com.jetbrains.python.errorProcessing.ExecErrorReason$UnexpectedProcessTermination
+- bs:copy$default(com.jetbrains.python.errorProcessing.ExecErrorReason$UnexpectedProcessTermination,com.intellij.platform.eel.provider.utils.EelProcessExecutionResult,I,java.lang.Object):com.jetbrains.python.errorProcessing.ExecErrorReason$UnexpectedProcessTermination
+- equals(java.lang.Object):Z
+- getExitCode():I
+- getStderr():B[]
+- getStdout():B[]
+- hashCode():I
+*c:com.jetbrains.python.errorProcessing.MessageError
+- com.jetbrains.python.errorProcessing.PyError
+- <init>(java.lang.String):V
+*f:com.jetbrains.python.errorProcessing.MessageErrorKt
+- sf:emit(com.jetbrains.python.errorProcessing.ErrorSink,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+*a:com.jetbrains.python.errorProcessing.PyError
+- f:addMessage(java.lang.String):V
+- f:getMessage():java.lang.String
+*f:com.jetbrains.python.errorProcessing.PyErrorDetail
+- <init>(com.jetbrains.python.errorProcessing.PyError,com.intellij.openapi.project.Project):V
+- b:<init>(com.jetbrains.python.errorProcessing.PyError,com.intellij.openapi.project.Project,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():com.jetbrains.python.errorProcessing.PyError
+- f:component2():com.intellij.openapi.project.Project
+- f:copy(com.jetbrains.python.errorProcessing.PyError,com.intellij.openapi.project.Project):com.jetbrains.python.errorProcessing.PyErrorDetail
+- bs:copy$default(com.jetbrains.python.errorProcessing.PyErrorDetail,com.jetbrains.python.errorProcessing.PyError,com.intellij.openapi.project.Project,I,java.lang.Object):com.jetbrains.python.errorProcessing.PyErrorDetail
+- equals(java.lang.Object):Z
+- f:getError():com.jetbrains.python.errorProcessing.PyError
+- f:getProject():com.intellij.openapi.project.Project
+- hashCode():I
+*f:com.jetbrains.python.errorProcessing.PyResultKt
+- sf:getOr(com.jetbrains.python.Result,java.lang.String,kotlin.jvm.functions.Function1):java.lang.Object

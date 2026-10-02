@@ -6,7 +6,9 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.PredefinedCodeStyle
 import com.jetbrains.python.PythonLanguage
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 sealed class PyPredefinedCodeStyle(name: @NlsContexts.ListItem String) : PredefinedCodeStyle(name, PythonLanguage.getInstance()) {
   abstract val codeStyleId: String
 
@@ -16,6 +18,7 @@ sealed class PyPredefinedCodeStyle(name: @NlsContexts.ListItem String) : Predefi
     isPyNewFormatterDefaultsFeatureEnabled() && super.isApplicableToLanguage(language)
 }
 
+@ApiStatus.Internal
 class PyDefaultPredefinedCodeStyle : PyPredefinedCodeStyle(PyDefaultStyleGuide.CODE_STYLE_TITLE) {
   override val codeStyleId: String = PyDefaultStyleGuide.CODE_STYLE_ID
 
@@ -24,6 +27,7 @@ class PyDefaultPredefinedCodeStyle : PyPredefinedCodeStyle(PyDefaultStyleGuide.C
   }
 }
 
+@ApiStatus.Internal
 class PyClassicPredefinedCodeStyle : PyPredefinedCodeStyle(PyClassicStyleGuide.CODE_STYLE_TITLE) {
   override val codeStyleId: String = PyClassicStyleGuide.CODE_STYLE_ID
 

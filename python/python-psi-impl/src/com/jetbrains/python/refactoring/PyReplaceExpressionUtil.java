@@ -37,6 +37,7 @@ import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,6 +73,7 @@ import static com.jetbrains.python.PyTokenTypes.XOR;
 /**
  * @author Dennis.Ushakov
  */
+@ApiStatus.Internal
 public final class PyReplaceExpressionUtil implements PyElementTypes {
   /**
    * This marker is added in cases where valid selection nevertheless breaks existing expression.

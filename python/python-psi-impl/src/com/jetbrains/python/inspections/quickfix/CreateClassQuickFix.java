@@ -21,9 +21,11 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public class CreateClassQuickFix implements LocalQuickFix {
   private final @NotNull String myClassName;
   private final @NotNull SmartPsiElementPointer<PsiFile> myTargetFile;

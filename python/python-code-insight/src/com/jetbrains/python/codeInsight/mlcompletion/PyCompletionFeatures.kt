@@ -29,7 +29,9 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyStatementList
 import com.jetbrains.python.psi.StringLiteralExpression
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object PyCompletionFeatures {
   fun isDictKey(element: LookupElement): Boolean {
     val presentation = LookupElementPresentation.renderElement(element)

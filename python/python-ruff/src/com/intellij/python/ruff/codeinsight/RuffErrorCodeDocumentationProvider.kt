@@ -7,6 +7,7 @@ import com.intellij.platform.backend.documentation.DocumentationTargetProvider
 import com.intellij.psi.PsiFile
 import com.intellij.python.ruff.RuffService
 import com.intellij.python.ruff.codeinsight.RuffDocumentationUtil.isRuffCodeElement
+import org.jetbrains.annotations.ApiStatus
 import org.toml.lang.psi.TomlFile
 import org.toml.lang.psi.TomlLiteral
 
@@ -15,6 +16,7 @@ import org.toml.lang.psi.TomlLiteral
  * When hovering over a Ruff error code in a ruff config file, this provider
  * shows the rule documentation from RuffCodeService.
  */
+@ApiStatus.Internal
 class RuffErrorCodeDocumentationProvider : DocumentationTargetProvider {
   override fun documentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> {
     if (file !is TomlFile) {

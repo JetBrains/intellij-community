@@ -27,11 +27,13 @@ import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isNoneType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
 
 private val DICT_KEY_METHODS: List<String> = listOf("get", "pop", "setdefault")
 private val SET_ELEMENT_METHODS: List<String> = listOf("add", "remove", "discard")
 
+@ApiStatus.Internal
 class PyUnhashableInspection : PyInspection() {
 
   override fun buildVisitor(

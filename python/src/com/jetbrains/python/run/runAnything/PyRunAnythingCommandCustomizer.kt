@@ -12,7 +12,9 @@ import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.activationEnvironment
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyRunAnythingCommandCustomizer : RunAnythingCommandCustomizer() {
   override fun customizeCommandLine(workDirectory: VirtualFile,
                                     dataContext: DataContext,

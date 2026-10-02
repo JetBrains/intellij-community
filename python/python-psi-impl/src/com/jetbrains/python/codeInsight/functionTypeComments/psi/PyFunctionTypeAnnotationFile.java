@@ -11,12 +11,14 @@ import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnot
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpressionCodeFragment;
 import com.jetbrains.python.psi.impl.PyFileImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public class PyFunctionTypeAnnotationFile extends PyFileImpl implements PyExpressionCodeFragment {
   private final @Nullable PsiElement myContext;
 

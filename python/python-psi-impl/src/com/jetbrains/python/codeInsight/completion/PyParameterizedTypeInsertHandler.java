@@ -9,6 +9,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * It includes special constructs from typings, such as {@code typing.Optional} or {@code typing.Union},
  * and regular generic classes, such as {@code list} or {@code ContextManager}.
  */
+@ApiStatus.Internal
 public class PyParameterizedTypeInsertHandler extends ParenthesesInsertHandler<LookupElement> {
   public static boolean isCompletingParameterizedType(@NotNull PsiElement definition,
                                                       @NotNull PsiElement completionPosition,

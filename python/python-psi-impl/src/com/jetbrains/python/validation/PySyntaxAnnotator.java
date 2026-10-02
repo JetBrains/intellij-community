@@ -4,6 +4,7 @@ package com.jetbrains.python.validation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.List;
 
 // AST-based syntax annotator that does not rely on resolve.
 // Planned to move to thin-client (visitors are to be converted to `PyAstElementVisitor`).
+@ApiStatus.Internal
 public final class PySyntaxAnnotator extends PyAnnotatorBase implements DumbAware {
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull PyAnnotationHolder holder) {

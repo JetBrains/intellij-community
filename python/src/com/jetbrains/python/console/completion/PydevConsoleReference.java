@@ -37,11 +37,13 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferenceExpression> {
   private static final Logger LOG = Logger.getInstance(PydevConsoleReference.class);
 

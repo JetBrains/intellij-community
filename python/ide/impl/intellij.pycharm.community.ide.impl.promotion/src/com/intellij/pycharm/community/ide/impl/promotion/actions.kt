@@ -11,9 +11,11 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdver
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.tryUltimate
 import com.intellij.openapi.wm.ToolWindowManager
 import com.jetbrains.python.icons.PythonIcons
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 
+@ApiStatus.Internal
 abstract class ProPromoAction(private val topic: PromoTopic): AnAction(), PromoAction {
   override fun getPromotedProductIcon(): Icon? = PythonIcons.Python.Pycharm
   override fun getCallToAction(): String {

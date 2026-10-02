@@ -1,0 +1,5 @@
+f:com.intellij.python.community.services.systemPython.icons.PythonCommunityServicesSystemPythonIcons
+- sf:Asdf:javax.swing.Icon
+- sf:Homebrew:javax.swing.Icon
+- sf:Pyenv:javax.swing.Icon
+- <init>():V

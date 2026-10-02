@@ -3,8 +3,10 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyExecStatement;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public class PyExecStatementImpl extends PyElementImpl implements PyExecStatement {
   public PyExecStatementImpl(ASTNode astNode) {
     super(astNode);

@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class PyQualifiedNameCompletionMatcher {
   private static final Logger LOG = Logger.getInstance(PyQualifiedNameCompletionMatcher.class);
 

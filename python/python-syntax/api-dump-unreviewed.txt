@@ -1,0 +1,86 @@
+c:com.jetbrains.python.PythonFoldingBuilder
+- com.intellij.lang.folding.CustomFoldingBuilder
+- com.intellij.openapi.project.DumbAware
+- sf:Companion:com.jetbrains.python.PythonFoldingBuilder$Companion
+- sf:PYTHON_TYPE_ANNOTATION_GROUP_NAME:java.lang.String
+- <init>():V
+- p:buildLanguageFoldRegions(java.util.List,com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document,Z):V
+- p:checkFoldBlocks(com.intellij.lang.ASTNode,com.intellij.psi.tree.IElementType):Z
+- p:getDocStringOwnerType(com.intellij.lang.ASTNode):com.intellij.psi.tree.IElementType
+- p:getLanguagePlaceholderText(com.intellij.lang.ASTNode,com.intellij.openapi.util.TextRange):java.lang.String
+- p:isClass(com.intellij.psi.tree.IElementType):Z
+- p:isCustomFoldingCandidate(com.intellij.lang.ASTNode):Z
+- p:isCustomFoldingRoot(com.intellij.lang.ASTNode):Z
+- p:isFunction(com.intellij.psi.tree.IElementType):Z
+- p:isImport(com.intellij.lang.ASTNode):Z
+- p:isLanguageSpecificFoldableBlock(com.intellij.psi.tree.IElementType):Z
+- p:isRegionCollapsedByDefault(com.intellij.lang.ASTNode):Z
+- keepExpandedOnFirstCollapseAll(com.intellij.lang.ASTNode):Z
+f:com.jetbrains.python.PythonFoldingBuilder$Companion
+c:com.jetbrains.python.codeInsight.editorActions.moveUpDown.PyStatementMover
+- com.intellij.codeInsight.editorActions.moveUpDown.LineMover
+- <init>():V
+- beforeMove(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover$MoveInfo,Z):V
+- checkAvailable(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover$MoveInfo,Z):Z
+c:com.jetbrains.python.codeInsight.editorActions.moveUpDown.PyStatementMover$MyLineRange
+- com.intellij.codeInsight.editorActions.moveUpDown.LineRange
+- getEndElement():com.intellij.psi.PsiElement
+- getStartElement():com.intellij.psi.PsiElement
+c:com.jetbrains.python.codeInsight.editorActions.moveUpDown.PyStatementMover$ScopeRange
+- com.intellij.codeInsight.editorActions.moveUpDown.LineRange
+- getAnchor():com.intellij.psi.PsiElement
+- getScope():com.intellij.psi.PsiElement
+- isAddBefore():Z
+- isTheSameLevel():Z
+c:com.jetbrains.python.editor.BaseQuoteHandler
+- com.intellij.codeInsight.editorActions.MultiCharQuoteHandler
+- <init>(com.intellij.psi.tree.TokenSet,C[]):V
+- getClosingQuote(com.intellij.openapi.editor.highlighter.HighlighterIterator,I):java.lang.CharSequence
+- p:getClosingQuotesTokens():com.intellij.psi.tree.TokenSet
+- p:getLiteralContentTokens():com.intellij.psi.tree.TokenSet
+- p:getOpeningQuotesTokens():com.intellij.psi.tree.TokenSet
+- hasNonClosedLiteral(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.highlighter.HighlighterIterator,I):Z
+- isClosingQuote(com.intellij.openapi.editor.highlighter.HighlighterIterator,I):Z
+- isInsideLiteral(com.intellij.openapi.editor.highlighter.HighlighterIterator):Z
+- isOpeningQuote(com.intellij.openapi.editor.highlighter.HighlighterIterator,I):Z
+c:com.jetbrains.python.editor.PythonQuoteHandler
+- com.jetbrains.python.editor.BaseQuoteHandler
+- <init>():V
+- p:getClosingQuotesTokens():com.intellij.psi.tree.TokenSet
+- p:getLiteralContentTokens():com.intellij.psi.tree.TokenSet
+- p:getOpeningQuotesTokens():com.intellij.psi.tree.TokenSet
+c:com.jetbrains.python.highlighting.PySyntaxHighlighterFactoryBase
+- com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
+- <init>():V
+- getConsoleSyntaxHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.SyntaxHighlighter
+- getSyntaxHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.SyntaxHighlighter
+- getSyntaxHighlighterForLanguageLevel(com.jetbrains.python.psi.LanguageLevel):com.intellij.openapi.fileTypes.SyntaxHighlighter
+- p:useConsoleLexer(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
+c:com.jetbrains.python.highlighting.PythonColorsPage
+- com.intellij.application.options.colors.InspectionColorSettingsPage
+- com.intellij.openapi.options.colors.RainbowColorSettingsPage
+- com.intellij.psi.codeStyle.DisplayPrioritySortable
+- <init>():V
+- getAdditionalHighlightingTagToDescriptorMap():java.util.Map
+- getAttributeDescriptors():com.intellij.openapi.options.colors.AttributesDescriptor[]
+- getColorDescriptors():com.intellij.openapi.options.colors.ColorDescriptor[]
+- getDemoText():java.lang.String
+- getDisplayName():java.lang.String
+- getHighlighter():com.intellij.openapi.fileTypes.SyntaxHighlighter
+- getIcon():javax.swing.Icon
+- getLanguage():com.intellij.lang.Language
+- getPriority():com.intellij.psi.codeStyle.DisplayPriority
+- isRainbowType(com.intellij.openapi.editor.colors.TextAttributesKey):Z
+f:com.jetbrains.python.psi.LanguageLevelHolder
+- sf:Companion:com.jetbrains.python.psi.LanguageLevelHolder$Companion
+- <init>(com.jetbrains.python.psi.LanguageLevel):V
+- f:getLanguageLevel():com.jetbrains.python.psi.LanguageLevel
+bf:com.jetbrains.python.psi.LanguageLevelHolder$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.jetbrains.python.psi.LanguageLevelHolder$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.jetbrains.python.psi.LanguageLevelHolder
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.jetbrains.python.psi.LanguageLevelHolder):V
+f:com.jetbrains.python.psi.LanguageLevelHolder$Companion
+- f:serializer():kotlinx.serialization.KSerializer

@@ -38,6 +38,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +57,7 @@ import static com.intellij.codeInspection.options.OptPane.stringList;
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public final class PyPep8NamingInspection extends PyInspection {
 
   private static final String INSPECTION_SHORT_NAME = "PyPep8NamingInspection";

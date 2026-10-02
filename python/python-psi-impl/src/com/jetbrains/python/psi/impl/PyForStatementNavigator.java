@@ -6,8 +6,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyForPart;
 import com.jetbrains.python.psi.PyForStatement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PyForStatementNavigator {
   private PyForStatementNavigator() {
   }

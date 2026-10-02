@@ -19,12 +19,14 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.refactoring.PyRefactoringBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 /**
  * @author Dennis.Ushakov
  */
+@ApiStatus.Internal
 public abstract class PyClassRefactoringHandler implements RefactoringActionHandler, ElementsHandler {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {

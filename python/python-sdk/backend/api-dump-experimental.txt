@@ -1,0 +1,9 @@
+*a:com.jetbrains.python.sdk.ModuleOrProject
+- f:getProject():com.intellij.openapi.project.Project
+*f:com.jetbrains.python.sdk.ModuleOrProject$ModuleAndProject
+- com.jetbrains.python.sdk.ModuleOrProject
+- <init>(com.intellij.openapi.module.Module):V
+- f:getModule():com.intellij.openapi.module.Module
+*f:com.jetbrains.python.sdk.ModuleOrProject$ProjectOnly
+- com.jetbrains.python.sdk.ModuleOrProject
+- <init>(com.intellij.openapi.project.Project):V

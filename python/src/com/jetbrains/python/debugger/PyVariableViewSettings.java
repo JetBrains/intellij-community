@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class PyVariableViewSettings {
   /**
    * Fills the debugger toolwindow's "Debugger Settings" gear popup with the actions shared by pydevd and debugpy.

@@ -1,7 +1,10 @@
 // Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.debugger.pydev;
 
+import org.jetbrains.annotations.ApiStatus;
 
+
+@ApiStatus.Internal
 public abstract class AbstractFrameCommand<T> extends AbstractThreadCommand<T> {
 
   private final String myFrameId;

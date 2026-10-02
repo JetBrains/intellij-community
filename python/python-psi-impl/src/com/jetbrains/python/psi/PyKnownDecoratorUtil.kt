@@ -18,6 +18,7 @@ import org.jetbrains.annotations.ApiStatus
  * 
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 object PyKnownDecoratorUtil {
   /**
    * Returns the known decorators of [element], one entry per decorator in declaration order.

@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,7 @@ import java.util.List;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
+@ApiStatus.Internal
 public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportStatementStub>
   implements PyFromImportStatement, PsiListLikeElement {
   private volatile @Nullable ValueHolder<QualifiedName> myImportSourceQName;

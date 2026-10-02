@@ -11,9 +11,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonCodeStyleService;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public class ConvertIndentsFix implements LocalQuickFix {
   private final boolean myToSpaces;
 

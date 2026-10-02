@@ -948,7 +948,7 @@ object PyTypeUtil {
 }
 
 @OptIn(ExperimentalContracts::class)
-val PyType?.isAnyOrUnknown: Boolean
+@get:ApiStatus.Internal val PyType?.isAnyOrUnknown: Boolean
   @Contract("null -> true")
   get() {
   contract {
@@ -961,7 +961,7 @@ val PyType?.isAnyOrUnknown: Boolean
 }
 
 @OptIn(ExperimentalContracts::class)
-val PyType?.isAny: Boolean
+@get:ApiStatus.Internal val PyType?.isAny: Boolean
   @Contract("null -> true")
   get() {
     contract {
@@ -973,7 +973,7 @@ val PyType?.isAny: Boolean
   }
 
 @OptIn(ExperimentalContracts::class)
-val PyType?.isUnknown: Boolean
+@get:ApiStatus.Internal val PyType?.isUnknown: Boolean
   @Contract("null -> true")
   get() {
     contract {
@@ -986,7 +986,7 @@ val PyType?.isUnknown: Boolean
   }
 
 @OptIn(ExperimentalContracts::class)
-val PyType?.isObject: Boolean
+@get:ApiStatus.Internal val PyType?.isObject: Boolean
   get() {
     contract {
       returns(true) implies (this@isObject is PyClassType)

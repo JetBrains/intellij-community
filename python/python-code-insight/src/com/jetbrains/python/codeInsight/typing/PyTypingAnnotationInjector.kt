@@ -32,12 +32,14 @@ import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Injects fragments for type annotations either in string literals (quoted annotations containing forward references) or
  * in type comments starting with <tt># type:</tt>.
  *
  */
+@ApiStatus.Internal
 class PyTypingAnnotationInjector : PyInjectorBase() {
   override fun registerInjection(registrar: MultiHostRegistrar, context: PsiElement): PyInjectionUtil.InjectionResult? {
     // Handles only string literals containing quoted types

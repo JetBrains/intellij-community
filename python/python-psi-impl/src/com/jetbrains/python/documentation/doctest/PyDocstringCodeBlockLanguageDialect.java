@@ -6,6 +6,7 @@ import com.intellij.lang.InjectableLanguage;
 import com.intellij.lang.Language;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * This is the language of a plain Python code block in a docstring. An rst {@code code-block}
@@ -13,6 +14,7 @@ import com.jetbrains.python.PythonLanguage;
  * {@link PyDoctestLanguageDialect}. This dialect keeps the quick-edit popup on, because the block
  * has no doctest prompt to strip.
  */
+@ApiStatus.Internal
 public class PyDocstringCodeBlockLanguageDialect extends Language implements DependentLanguage, InjectableLanguage {
 
   public static PyDocstringCodeBlockLanguageDialect getInstance() {

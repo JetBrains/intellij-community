@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.BaseOutputReader;
 import com.jetbrains.python.debugger.pydev.RemoteDebugger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.util.concurrent.Future;
 /**
  * @author Alexander Koshevoy
  */
+@ApiStatus.Internal
 public abstract class BaseDebuggerReader extends BaseOutputReader {
   private static final Logger LOG = Logger.getInstance(BaseDebuggerReader.class);
 

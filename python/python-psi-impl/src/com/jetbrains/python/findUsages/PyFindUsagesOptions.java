@@ -7,6 +7,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Yuli Fiterman
  */
 @State(name = "PyFindUsagesOptions", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@ApiStatus.Internal
 public class PyFindUsagesOptions extends FindUsagesOptions implements PersistentStateComponent<PyFindUsagesOptions.State> {
 
 

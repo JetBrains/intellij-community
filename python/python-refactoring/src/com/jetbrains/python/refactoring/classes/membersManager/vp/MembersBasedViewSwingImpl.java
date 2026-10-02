@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersConflictDialog;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.ui.PyMemberSelectionPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -31,6 +32,7 @@ import java.util.Collection;
  * @param <P> View presenter class
  * @param <C> View configuration class
  */
+@ApiStatus.Internal
 public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter, C extends MembersViewInitializationInfo>
   extends RefactoringDialog implements MembersBasedView<C> {
 

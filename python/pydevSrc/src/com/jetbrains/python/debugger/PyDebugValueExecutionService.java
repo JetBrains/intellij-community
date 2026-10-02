@@ -4,6 +4,7 @@ package com.jetbrains.python.debugger;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ConcurrencyUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -16,6 +17,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 public final class PyDebugValueExecutionService {
   private @Nullable ExecutorService myAsyncValuesExecutorService;
   private final @NotNull List<PyFrameAccessor> myFrameAccessors;

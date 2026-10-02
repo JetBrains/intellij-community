@@ -18,12 +18,14 @@ package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedView;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Ilya.Kazakevich
  *         View for pull-up refactoring
  */
+@ApiStatus.Internal
 public interface PyPullUpView extends MembersBasedView<PyPullUpViewInitializationInfo> {
 
   /**

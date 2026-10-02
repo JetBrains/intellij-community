@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.PyTryExceptStatement
 import com.jetbrains.python.psi.PyWhilePart
 import com.jetbrains.python.psi.PyWithStatement
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * PEP8:
@@ -31,6 +32,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  * is returned should explicitly state this as return None, and an explicit return statement should be present
  * at the end of the function (if reachable).
  */
+@ApiStatus.Internal
 class PyInconsistentReturnsInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     return object : PyInspectionVisitor(holder, getContext(session)) {

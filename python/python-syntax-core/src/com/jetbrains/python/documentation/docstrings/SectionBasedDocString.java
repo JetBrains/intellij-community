@@ -23,6 +23,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.toolbox.Substring;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,7 @@ import static com.jetbrains.python.documentation.docstrings.SectionBasedDocStrin
  * @author Mikhail Golubev
  * @see <a href="http://sphinxcontrib-napoleon.readthedocs.org/en/latest/index.html">Napoleon</a>
  */
+@ApiStatus.Internal
 public abstract class SectionBasedDocString extends DocStringLineParser implements StructuredDocString {
 
   /**

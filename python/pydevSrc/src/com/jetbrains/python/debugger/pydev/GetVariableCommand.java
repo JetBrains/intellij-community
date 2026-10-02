@@ -4,9 +4,11 @@
 package com.jetbrains.python.debugger.pydev;
 
 import com.jetbrains.python.debugger.PyDebugValue;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public class GetVariableCommand extends GetFrameCommand {
 
   public static final String BY_ID = "BY_ID";

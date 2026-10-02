@@ -6,6 +6,7 @@ import com.intellij.python.pytools.common.PyToolConfigurationSerializerProvider
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 
 @Serializable
@@ -23,6 +24,7 @@ data class PyLspToolConfigurationDto(
   var typeCheckingMode: String? = null,
 ) : PyToolConfigurationDto
 
+@ApiStatus.Internal
 class PyLspToolConfigurationSerializerProvider :
   PyToolConfigurationSerializerProvider<PyLspToolConfigurationDto> {
   override val configurationClass: KClass<PyLspToolConfigurationDto> = PyLspToolConfigurationDto::class

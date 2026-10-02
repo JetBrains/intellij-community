@@ -31,6 +31,7 @@ import java.util.Set;
 
 import static com.jetbrains.python.PyNames.BUILTINS_MODULES;
 
+@ApiStatus.Internal
 public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
   private static final String RERAISE = "RERAISE";
 

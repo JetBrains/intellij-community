@@ -19,10 +19,12 @@ import com.intellij.refactoring.classMembers.DependentMembersCollectorBase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.membersManager.MembersManager;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Dennis.Ushakov
  */
+@ApiStatus.Internal
 public class PyDependentClassMembersCollector extends DependentMembersCollectorBase<PyElement,PyClass> {
   public PyDependentClassMembersCollector(PyClass clazz, PyClass superClass) {
     super(clazz, superClass);

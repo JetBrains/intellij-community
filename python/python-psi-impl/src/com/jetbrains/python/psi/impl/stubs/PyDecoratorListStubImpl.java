@@ -6,7 +6,9 @@ import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.stubs.PyDecoratorListStub;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class PyDecoratorListStubImpl extends StubBase<PyDecoratorList> implements PyDecoratorListStub {
   public PyDecoratorListStubImpl(final StubElement parent) {
     super(parent, PyStubElementTypes.DECORATOR_LIST);

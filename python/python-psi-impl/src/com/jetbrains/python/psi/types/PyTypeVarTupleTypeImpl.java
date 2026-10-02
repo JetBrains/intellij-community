@@ -3,11 +3,13 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.Ref;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class PyTypeVarTupleTypeImpl implements PyTypeVarTupleType {
   private final @NotNull String myName;
   private final @Nullable PyQualifiedNameOwner myScopeOwner;

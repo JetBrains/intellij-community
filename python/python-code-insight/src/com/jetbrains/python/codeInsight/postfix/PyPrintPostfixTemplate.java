@@ -18,8 +18,10 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.refactoring.surround.surrounders.expressions.PyExpressionSurrounder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyPrintPostfixTemplate extends SurroundPostfixTemplateBase implements DumbAware {
 
   public static final @NlsSafe String DESCR = "print(expr)";

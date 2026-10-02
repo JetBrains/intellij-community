@@ -1,0 +1,29 @@
+f:com.jetbrains.python.testing.PyTestElementsKt
+- sf:isTestElement(com.intellij.psi.PsiElement,com.intellij.util.ThreeState,com.jetbrains.python.psi.types.TypeEvalContext):Z
+f:com.jetbrains.python.testing.pyTestFixtures.PyTestFixture
+- <init>(com.jetbrains.python.psi.PyFunction,com.jetbrains.python.psi.PyElement,java.lang.String):V
+- b:<init>(com.jetbrains.python.psi.PyFunction,com.jetbrains.python.psi.PyElement,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():com.jetbrains.python.psi.PyFunction
+- f:component2():com.jetbrains.python.psi.PyElement
+- f:component3():java.lang.String
+- f:copy(com.jetbrains.python.psi.PyFunction,com.jetbrains.python.psi.PyElement,java.lang.String):com.jetbrains.python.testing.pyTestFixtures.PyTestFixture
+- bs:copy$default(com.jetbrains.python.testing.pyTestFixtures.PyTestFixture,com.jetbrains.python.psi.PyFunction,com.jetbrains.python.psi.PyElement,java.lang.String,I,java.lang.Object):com.jetbrains.python.testing.pyTestFixtures.PyTestFixture
+- equals(java.lang.Object):Z
+- f:getFunction():com.jetbrains.python.psi.PyFunction
+- f:getName():java.lang.String
+- f:getResolveTarget():com.jetbrains.python.psi.PyElement
+- hashCode():I
+f:com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureReference
+- com.jetbrains.python.BaseReference
+- com.intellij.psi.PsiPolyVariantReference
+- <init>(com.intellij.psi.PsiElement,com.jetbrains.python.testing.pyTestFixtures.PyTestFixture,com.jetbrains.python.psi.PyElement,com.intellij.openapi.util.TextRange):V
+- b:<init>(com.intellij.psi.PsiElement,com.jetbrains.python.testing.pyTestFixtures.PyTestFixture,com.jetbrains.python.psi.PyElement,com.intellij.openapi.util.TextRange,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getFunction():com.jetbrains.python.psi.PyFunction
+- handleElementRename(java.lang.String):com.intellij.psi.PsiElement
+- isSoft():Z
+- multiResolve(Z):com.intellij.psi.ResolveResult[]
+- resolve():com.jetbrains.python.psi.PyElement
+f:com.jetbrains.python.testing.pyTestFixtures.PyTextFixtureTypeProvider
+- com.jetbrains.python.psi.types.PyTypeProviderBase
+- <init>():V
+- getParameterType(com.jetbrains.python.psi.PyNamedParameter,com.jetbrains.python.psi.PyFunction,com.jetbrains.python.psi.types.TypeEvalContext):com.intellij.openapi.util.Ref

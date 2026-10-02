@@ -9,9 +9,11 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.lexer.PythonLexer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class PyReparseableIdentifier extends PyReparseableTokenType {
 
   @SuppressWarnings("LoggerInitializedWithForeignClass")

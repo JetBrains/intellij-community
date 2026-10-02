@@ -12,6 +12,7 @@ import com.intellij.python.sdk.backend.findPythonInterpreterIfReady
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * The only [PyQualifiedNameResolveContext].
@@ -19,6 +20,7 @@ import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl
  * [interpreter] is set only for a context that has no module and no foothold, see [fromInterpreter]. Resolve then visits
  * the roots of that interpreter. A context with a module or a foothold finds its interpreter from them.
  */
+@ApiStatus.Internal
 data class PyQualifiedNameResolveContextImpl(
   private val psiManager: PsiManager, private val module: Module?,
   private val foothold: PsiElement?, internal val interpreter: PythonInterpreter? = null,

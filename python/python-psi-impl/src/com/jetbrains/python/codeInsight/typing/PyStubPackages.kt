@@ -24,13 +24,16 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.resolve.isNamespacePackage
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
+import org.jetbrains.annotations.ApiStatus
 
-const val TYPES_PREFIX: String = "types-"
-const val TYPES_SUFFIX: String = "-types"
-const val STUBS_SUFFIX: String = "-stubs"
+@ApiStatus.Internal const val TYPES_PREFIX: String = "types-"
+@ApiStatus.Internal const val TYPES_SUFFIX: String = "-types"
+@ApiStatus.Internal const val STUBS_SUFFIX: String = "-stubs"
 
+@ApiStatus.Internal
 fun String.isStubPackage(): Boolean = startsWith(TYPES_PREFIX) || endsWith(STUBS_SUFFIX) || endsWith(TYPES_SUFFIX)
 
+@ApiStatus.Internal
 fun String.stubPackageToPackage(): String = removeSuffix(STUBS_SUFFIX).removeSuffix(TYPES_SUFFIX).removePrefix(TYPES_PREFIX)
 
 private val STUB_PACKAGE_KEY = Key<Boolean>("PY_STUB_PACKAGE")
@@ -41,6 +44,7 @@ private val INLINE_PACKAGE_KEY = Key<Boolean>("PY_INLINE_PACKAGE")
  * then [name] would be copied and `-stubs` suffix would be removed from the first component,
  * otherwise [name] would be returned.
  */
+@ApiStatus.Internal
 fun convertStubToRuntimePackageName(name: QualifiedName): QualifiedName {
   val top = (name.firstComponent ?: return name).stubPackageToPackage()
 
@@ -52,6 +56,7 @@ fun convertStubToRuntimePackageName(name: QualifiedName): QualifiedName {
  *
  * Requires [withoutStubs] to be False and [dir] to be lib root.
  */
+@ApiStatus.Internal
 fun findStubPackage(
   dir: PsiDirectory,
   referencedName: String,
@@ -114,6 +119,7 @@ private fun doTransferStubPackageMarker(resolvedSubdir: PsiDirectory) {
   PyUtil.turnDirIntoInit(resolvedSubdir)?.putUserData(STUB_PACKAGE_KEY, true)
 }
 
+@ApiStatus.Internal
 fun removeRuntimeModulesForWhomStubModulesFound(resolved: List<RatedResolveResult>): List<RatedResolveResult> {
   val stubPkgModules = mutableSetOf<String>()
 
@@ -142,6 +148,7 @@ private fun getClassOrContentOrSourceRoot(project: Project, file: VirtualFile): 
 /**
  * See [findStubPackage] and [transferStubPackageMarker].
  */
+@ApiStatus.Internal
 fun isInStubPackage(element: PsiElement) = element.getUserData(STUB_PACKAGE_KEY) == true
 
 internal fun isInPartialStubPackage(element: PsiElement): Boolean {

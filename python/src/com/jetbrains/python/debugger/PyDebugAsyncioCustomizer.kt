@@ -3,7 +3,9 @@ package com.jetbrains.python.debugger
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.jetbrains.python.run.EnvironmentController
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface PyDebugAsyncioCustomizer {
   companion object {
     private val EP_NAME: ExtensionPointName<PyDebugAsyncioCustomizer> =
@@ -18,4 +20,5 @@ interface PyDebugAsyncioCustomizer {
   fun isAsyncioModeSupported(): Boolean = false
 }
 
+@ApiStatus.Internal
 class PyDebugAsyncioCustomizerDefault : PyDebugAsyncioCustomizer

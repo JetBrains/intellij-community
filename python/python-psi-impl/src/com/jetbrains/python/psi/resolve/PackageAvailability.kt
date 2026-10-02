@@ -49,6 +49,7 @@ class PackageAvailabilitySpec(
   }
 }
 
+@ApiStatus.Internal
 fun Key<*>.isPackageAvailableKey(): Boolean = this.toString().startsWith(PackageAvailabilitySpec.PREFIX)
 
 /**

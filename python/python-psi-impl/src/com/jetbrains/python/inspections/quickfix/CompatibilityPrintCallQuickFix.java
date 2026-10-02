@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -29,6 +30,7 @@ import java.util.Map;
  * <p>
  * QuickFix to replace statement that has no effect with function call
  */
+@ApiStatus.Internal
 public class CompatibilityPrintCallQuickFix extends ModCommandBatchQuickFix {
   @Override
   public @NotNull String getFamilyName() {

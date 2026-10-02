@@ -6,10 +6,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.FileContentUtil;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
+@ApiStatus.Internal
 public final class PythonCodeStyleServiceImpl extends PythonCodeStyleService {
   @Override
   public boolean isSpaceAroundEqInKeywordArgument(@NotNull PsiFile file) {

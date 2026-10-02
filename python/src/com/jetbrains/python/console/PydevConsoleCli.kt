@@ -10,13 +10,14 @@ import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.PythonExecution
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
-const val MODE_OPTION = "mode"
-const val MODE_OPTION_CLIENT_VALUE = "client"
+@ApiStatus.Internal const val MODE_OPTION = "mode"
+@ApiStatus.Internal const val MODE_OPTION_CLIENT_VALUE = "client"
 
-const val HOST_OPTION = "host"
-const val PORT_OPTION = "port"
+@ApiStatus.Internal const val HOST_OPTION = "host"
+@ApiStatus.Internal const val PORT_OPTION = "port"
 
 private fun getOptionString(name: String, value: Any): String = "--$name=$value"
 

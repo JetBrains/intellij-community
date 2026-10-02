@@ -16,9 +16,11 @@ import com.jetbrains.python.psi.PySetLiteralExpression;
 import com.jetbrains.python.psi.PyStarArgument;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PySubscriptionExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class RenameUnsupportedExpressionProcessor extends RenamePyElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {

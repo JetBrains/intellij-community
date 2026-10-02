@@ -4,9 +4,11 @@ package com.jetbrains.python.debugger.smartstepinto;
 import com.intellij.openapi.util.TextRange;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class PySmartStepIntoVariantCallExpression extends PySmartStepIntoVariant {
   private final @Nullable PyExpression myCallee;
 

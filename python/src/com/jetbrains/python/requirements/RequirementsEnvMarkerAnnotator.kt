@@ -9,12 +9,14 @@ import com.intellij.psi.util.elementType
 import com.intellij.python.requirements.parser.psi.RequirementsTypes
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.requirement.PyRequirementEnvMarkerType
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Flags environment-marker names that are not one of [PyRequirementEnvMarkerType] (PEP 508), e.g. a
  * typo like `pyton_version`. Reported as a warning rather than an error so requirements using marker
  * names outside the enum still lex/parse and install normally.
  */
+@ApiStatus.Internal
 class RequirementsEnvMarkerAnnotator : Annotator {
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     if (element.elementType != RequirementsTypes.ENV_MARKER_NAME) return

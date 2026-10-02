@@ -12,11 +12,13 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyLambdaExpression;
 import com.jetbrains.python.psi.PyReturnStatement;
 import com.jetbrains.python.psi.PyYieldExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Highlights incorrect return statements: 'return' and 'yield' outside functions
  */
+@ApiStatus.Internal
 public class PyReturnYieldAnnotatorVisitor extends PyElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 

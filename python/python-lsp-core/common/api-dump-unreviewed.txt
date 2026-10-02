@@ -1,0 +1,44 @@
+f:com.intellij.python.lsp.core.common.PyLspToolConfigurationDto
+- sf:Companion:com.intellij.python.lsp.core.common.PyLspToolConfigurationDto$Companion
+- <init>(Z,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.String):V
+- b:<init>(Z,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():Z
+- f:component2():java.lang.Boolean
+- f:component3():java.lang.Boolean
+- f:component4():java.lang.Boolean
+- f:component5():java.lang.Boolean
+- f:component6():java.lang.Boolean
+- f:component7():java.lang.Boolean
+- f:component8():java.lang.Boolean
+- f:component9():java.lang.String
+- f:copy(Z,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.String):com.intellij.python.lsp.core.common.PyLspToolConfigurationDto
+- bs:copy$default(com.intellij.python.lsp.core.common.PyLspToolConfigurationDto,Z,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.Boolean,java.lang.String,I,java.lang.Object):com.intellij.python.lsp.core.common.PyLspToolConfigurationDto
+- equals(java.lang.Object):Z
+- f:getCompletions():java.lang.Boolean
+- f:getDocumentation():java.lang.Boolean
+- f:getFixOnSave():java.lang.Boolean
+- f:getFormatSortImports():java.lang.Boolean
+- f:getFormatting():java.lang.Boolean
+- f:getInlayHints():java.lang.Boolean
+- f:getInspections():Z
+- f:getSortImports():java.lang.Boolean
+- f:getTypeCheckingMode():java.lang.String
+- hashCode():I
+- f:setCompletions(java.lang.Boolean):V
+- f:setDocumentation(java.lang.Boolean):V
+- f:setFixOnSave(java.lang.Boolean):V
+- f:setFormatSortImports(java.lang.Boolean):V
+- f:setFormatting(java.lang.Boolean):V
+- f:setInlayHints(java.lang.Boolean):V
+- f:setInspections(Z):V
+- f:setSortImports(java.lang.Boolean):V
+- f:setTypeCheckingMode(java.lang.String):V
+bf:com.intellij.python.lsp.core.common.PyLspToolConfigurationDto$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.python.lsp.core.common.PyLspToolConfigurationDto$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.python.lsp.core.common.PyLspToolConfigurationDto
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.python.lsp.core.common.PyLspToolConfigurationDto):V
+f:com.intellij.python.lsp.core.common.PyLspToolConfigurationDto$Companion
+- f:serializer():kotlinx.serialization.KSerializer

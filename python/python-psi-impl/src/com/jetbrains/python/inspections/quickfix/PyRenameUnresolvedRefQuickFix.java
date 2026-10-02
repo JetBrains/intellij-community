@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.references.PyReferenceBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ import java.util.Set;
  * <p>
  * Quick fix to rename unresolved references
  */
+@ApiStatus.Internal
 public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
 
   @Override

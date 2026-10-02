@@ -39,10 +39,12 @@ import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.refactoring.PyRefactoringUiService
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Aleksei.Kniazev
  */
+@ApiStatus.Internal
 class PyInlineFunctionHandler : InlineActionHandler() {
   override fun isEnabledForLanguage(l: Language?) = l is PythonLanguage
 

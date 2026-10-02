@@ -26,9 +26,11 @@ import com.jetbrains.python.parsing.PyLazyParser;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyIndentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
+@ApiStatus.Internal
 public class PyStatementListElementType extends IReparseableElementType implements ICompositeElementType {
 
   public PyStatementListElementType() {

@@ -4,11 +4,13 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class PyCallableParameterListTypeImpl implements PyCallableParameterListType {
   private final List<PyCallableParameter> myParameters;
 

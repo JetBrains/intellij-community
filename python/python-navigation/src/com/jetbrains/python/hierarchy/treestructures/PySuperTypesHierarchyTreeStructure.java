@@ -7,11 +7,13 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.hierarchy.PyHierarchyNodeDescriptor;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class PySuperTypesHierarchyTreeStructure extends HierarchyTreeStructure {
   public PySuperTypesHierarchyTreeStructure(final @NotNull PyClass cl) {
     super(cl.getProject(), new PyHierarchyNodeDescriptor(null, cl, true));

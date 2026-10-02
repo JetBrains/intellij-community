@@ -4,10 +4,12 @@ package com.jetbrains.python.testing.doctest;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
 
+@ApiStatus.Internal
 public class PythonDocTestRunConfigurationEditor extends SettingsEditor<PythonDocTestRunConfiguration> {
   private PythonDocTestRunConfigurationForm myForm;
 

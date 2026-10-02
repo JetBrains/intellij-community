@@ -7,9 +7,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyKeywordPattern;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PyKeywordPatternManipulator extends AbstractElementManipulator<PyKeywordPattern> {
   @Override
   public @Nullable PyKeywordPattern handleContentChange(@NotNull PyKeywordPattern element,

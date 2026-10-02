@@ -5,6 +5,7 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public final class PyPsiLocationWithFixedClass extends PsiLocation<PyFunction> {
   private final @NotNull PyClass myFixedClass;
 

@@ -8,7 +8,9 @@ import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindSelected
 import com.jetbrains.python.codeInsight.PyCodeInsightBundle
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyAutoImportOptions : UiDslUnnamedConfigurable.Simple(), AutoImportOptionsProvider {
 
   override fun Panel.createContent() {

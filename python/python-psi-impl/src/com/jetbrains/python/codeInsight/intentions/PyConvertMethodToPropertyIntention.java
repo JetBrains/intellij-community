@@ -28,10 +28,12 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyReturnStatement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.PyYieldExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
   @Override
   public @NotNull String getFamilyName() {

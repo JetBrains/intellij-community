@@ -10,9 +10,11 @@ import com.intellij.usages.rules.ImportFilteringRule;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyImportStatementBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public final class PyImportFilteringRule extends ImportFilteringRule {
   @Override
   public boolean isVisible(@NotNull Usage usage, @NotNull UsageTarget @NotNull [] targets) {

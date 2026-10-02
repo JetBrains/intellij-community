@@ -19,6 +19,7 @@ import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,7 @@ import java.util.Set;
 /**
  * Looks for the 'self' or its equivalents.
  */
+@ApiStatus.Internal
 public final class PyMethodParametersInspection extends PyInspection {
 
   public static @Nullable PyMethodParametersInspection getInstance(@NotNull PsiElement element) {

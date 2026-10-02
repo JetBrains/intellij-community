@@ -3,11 +3,13 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PythonVisitorFilter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public final class PyTypeAnnotationVisitorFilter implements PythonVisitorFilter {
   @Override
   public boolean isSupported(@NotNull Class visitorClass, @NotNull PsiFile file) {

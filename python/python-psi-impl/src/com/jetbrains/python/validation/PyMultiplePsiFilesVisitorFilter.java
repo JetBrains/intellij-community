@@ -4,8 +4,10 @@ package com.jetbrains.python.validation;
 import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PythonVisitorFilter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class PyMultiplePsiFilesVisitorFilter implements PythonVisitorFilter {
   @Override
   public boolean isSupported(@NotNull Class visitorClass, @NotNull PsiFile file) {

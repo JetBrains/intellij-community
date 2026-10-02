@@ -6,6 +6,7 @@ import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.jetbrains.python.psi.StringLiteralExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.Arrays;
  *
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public final class PyMagicLiteralTools {
 
   private PyMagicLiteralTools() {

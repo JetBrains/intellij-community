@@ -76,6 +76,7 @@ interface PyExecuteConsoleCustomizer {
   fun notifySciCellGutterExecuted(editor: EditorImpl, actionId: String) {}
 }
 
+@ApiStatus.Internal
 enum class DescriptorType {
   NEW, EXISTING, STARTING
 }

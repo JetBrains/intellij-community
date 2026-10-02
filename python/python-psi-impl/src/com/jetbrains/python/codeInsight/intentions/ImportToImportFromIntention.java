@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.PyImportStatementBase;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +48,7 @@ import java.util.Set;
  * <i>NOTE: currently we only check usage of module name in the same file. For re-exported module names this is not sufficient.</i>
  * <br>
  */
+@ApiStatus.Internal
 public final class ImportToImportFromIntention extends PsiBasedModCommandAction<PyReferenceExpression> {
   private static class IntentionState {
     private final @NotNull PyImportElement myImportElement;

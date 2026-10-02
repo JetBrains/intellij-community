@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +48,7 @@ import java.util.Set;
  * for instance,
  * dict().get(x, None) --> None is default value for second param in dict().get function
  */
+@ApiStatus.Internal
 public final class PyArgumentEqualDefaultInspection extends PyInspection {
 
   @Override

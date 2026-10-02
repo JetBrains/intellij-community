@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Provides literal type variants in the following cases:
@@ -40,6 +41,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  * f("fo<caret>")
  * ```
  */
+@ApiStatus.Internal
 class PyLiteralTypeCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC, psiElement(), PyLiteralTypeCompletionProvider())

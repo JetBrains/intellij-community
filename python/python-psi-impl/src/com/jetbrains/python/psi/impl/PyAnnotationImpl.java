@@ -6,8 +6,10 @@ import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.stubs.PyAnnotationStub;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public class PyAnnotationImpl extends PyBaseElementImpl<PyAnnotationStub> implements PyAnnotation {
   public PyAnnotationImpl(ASTNode astNode) {
     super(astNode);

@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.util.List;
  * User: ktisha
  * See pylint W0232
  */
+@ApiStatus.Internal
 public final class PyClassHasNoInitInspection extends PyInspection {
 
   @Override

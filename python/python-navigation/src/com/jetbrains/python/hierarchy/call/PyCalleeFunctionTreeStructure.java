@@ -4,6 +4,7 @@ package com.jetbrains.python.hierarchy.call;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -12,6 +13,7 @@ import java.util.Map;
 /**
  * @author novokrest
  */
+@ApiStatus.Internal
 public class PyCalleeFunctionTreeStructure extends PyCallHierarchyTreeStructureBase {
   public PyCalleeFunctionTreeStructure(Project project, PsiElement element, String currentScopeType) {
     super(project, element, currentScopeType);

@@ -2,7 +2,9 @@
 package com.jetbrains.python.codeInsight.stdlib
 
 import com.jetbrains.python.PyNames
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object PyDataclassNames {
   object Dataclasses {
     const val DATACLASSES_MISSING: String = "dataclasses.MISSING"

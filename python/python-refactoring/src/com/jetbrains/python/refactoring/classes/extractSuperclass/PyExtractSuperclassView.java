@@ -16,11 +16,13 @@
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedView;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public interface PyExtractSuperclassView extends MembersBasedView<PyExtractSuperclassInitializationInfo> {
 
   /**

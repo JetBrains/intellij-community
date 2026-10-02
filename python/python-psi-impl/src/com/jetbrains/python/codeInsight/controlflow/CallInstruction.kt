@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class CallInstruction(builder: ControlFlowBuilder, call: PyCallExpression) : InstructionImpl(builder, call) {
   override fun getElement(): PyCallExpression {
     return super.getElement() as PyCallExpression

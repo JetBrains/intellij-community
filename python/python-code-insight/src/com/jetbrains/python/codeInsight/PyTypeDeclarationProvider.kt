@@ -8,7 +8,9 @@ import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTypeUtil.compositeComponentSequence
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyTypeDeclarationProvider : TypeDeclarationProvider {
 
   override fun getSymbolTypeDeclarations(symbol: PsiElement): Array<out PsiElement>? {

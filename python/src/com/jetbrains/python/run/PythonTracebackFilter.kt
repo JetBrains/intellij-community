@@ -10,8 +10,10 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.traceBackParsers.LinkInTrace
 import com.jetbrains.python.traceBackParsers.TraceBackParser
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
+@ApiStatus.Internal
 open class PythonTracebackFilter : Filter {
   protected val project: Project
   private val myWorkingDirectory: String?

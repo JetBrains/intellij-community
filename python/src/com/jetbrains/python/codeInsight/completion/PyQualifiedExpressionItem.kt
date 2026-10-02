@@ -2,5 +2,7 @@
 package com.jetbrains.python.codeInsight.completion
 
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 data class PyQualifiedExpressionItem(val pyQualifiedName: String, val delimiter: IElementType?)

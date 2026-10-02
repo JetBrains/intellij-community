@@ -7,9 +7,11 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 public class PyImportElementStubImpl extends StubBase<PyImportElement> implements PyImportElementStub {
   private final QualifiedName myImportedQName;
   private final String myAsName;

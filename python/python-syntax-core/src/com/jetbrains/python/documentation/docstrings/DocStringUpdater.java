@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.toolbox.Substring;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public abstract class DocStringUpdater<T extends DocStringLineParser> {
   protected final T myOriginalDocString;
   private final StringBuilder myBuilder;

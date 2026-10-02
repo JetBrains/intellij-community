@@ -16,6 +16,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyExpressionStatement;
 import com.jetbrains.python.psi.PyListLiteralExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * User : catherine
  */
+@ApiStatus.Internal
 public class ListCreationQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override

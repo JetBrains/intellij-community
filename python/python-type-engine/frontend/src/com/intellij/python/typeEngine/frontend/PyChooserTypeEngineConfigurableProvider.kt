@@ -4,10 +4,12 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Provider for Type Engine configurable.
  */
+@ApiStatus.Internal
 class PyChooserTypeEngineConfigurableProvider(private val project: Project) : ConfigurableProvider() {
   override fun canCreateConfigurable(): Boolean {
     return Registry.`is`("pycharm.type.engine", true)

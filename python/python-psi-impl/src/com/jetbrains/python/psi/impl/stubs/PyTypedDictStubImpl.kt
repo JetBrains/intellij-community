@@ -18,8 +18,10 @@ import com.jetbrains.python.psi.stubs.PyTypedDictStub
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_CLOSED_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_EXTRA_ITEMS_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
+@ApiStatus.Internal
 class PyTypedDictStubImpl private constructor(
   private val myCalleeName: QualifiedName,
   override val name: String,

@@ -16,9 +16,11 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.projectRoots.Sdk;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public interface PyExecutionFix {
   @NotNull @Nls String getName();
   void run(@NotNull Sdk sdk);

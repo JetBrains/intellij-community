@@ -12,7 +12,9 @@ import com.intellij.python.sdk.backend.isReadOnly
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.executionType
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object PyTypeEngineUtils {
   /**
    * The registry key that offers the external type engine to a project with more than one module. It

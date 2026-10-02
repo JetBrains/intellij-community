@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.PySingleStarParameter;
 import com.jetbrains.python.psi.PySlashParameter;
 import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.util.Set;
 /**
  * Checks for anomalies in parameter lists of function declarations.
  */
+@ApiStatus.Internal
 public class PyParameterListAnnotatorVisitor extends PyElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 

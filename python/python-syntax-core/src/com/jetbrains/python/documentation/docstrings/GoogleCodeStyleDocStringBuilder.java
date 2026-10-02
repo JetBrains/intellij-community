@@ -18,12 +18,14 @@ package com.jetbrains.python.documentation.docstrings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyIndentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public class GoogleCodeStyleDocStringBuilder extends SectionBasedDocStringBuilder {
   public static final String DEFAULT_CONTINUATION_INDENT = PyIndentUtil.FOUR_SPACES;
 

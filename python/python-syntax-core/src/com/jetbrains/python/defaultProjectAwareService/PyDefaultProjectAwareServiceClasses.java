@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Storage for service app and module level inheritors
  */
+@ApiStatus.Internal
 public final class PyDefaultProjectAwareServiceClasses<
   STATE,
   SERVICE extends PyDefaultProjectAwareService<STATE, SERVICE, APP_SERVICE, MODULE_SERVICE>,

@@ -1,0 +1,16 @@
+com/intellij/python/venv/sdk/flavors/VirtualEnvSdkFlavor
+com/jetbrains/python/HelperPackage
+com/jetbrains/python/console/PyConsoleOptionsConfigurable$CodeCompletionOption
+com/jetbrains/python/console/PythonConsoleBackendServiceDisposable
+com/jetbrains/python/console/PythonConsoleExecuteActionHandler
+com/jetbrains/python/console/PythonDebugConsoleCommunication
+com/jetbrains/python/console/protocol/PythonConsoleFrontendService$Iface
+com/jetbrains/python/packaging/PyVersionSpecifiers
+com/jetbrains/python/psi/resolve/PackageAvailabilitySpec
+com/jetbrains/python/remote/PyRemotePathMapper
+com/jetbrains/python/remote/RemoteProcessControl
+com/jetbrains/python/run/PythonToolModuleExecution
+com/jetbrains/python/run/PythonToolScriptExecution
+com/jetbrains/python/tables/TableCommandParameters
+com/jetbrains/python/tables/TableCommandType
+com/jetbrains/python/testing/PyTestCustomOption

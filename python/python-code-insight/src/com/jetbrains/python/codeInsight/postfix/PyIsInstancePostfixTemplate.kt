@@ -5,7 +5,9 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvid
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyIsInstancePostfixTemplate(provider: PostfixTemplateProvider) :
   StringBasedPostfixTemplate("isinstance", "isinstance(expr, )", PyPostfixUtils.selectorAllExpressionsWithCurrentOffset(), provider), DumbAware {
 

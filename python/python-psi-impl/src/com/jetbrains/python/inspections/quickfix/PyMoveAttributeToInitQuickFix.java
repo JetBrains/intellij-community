@@ -11,8 +11,10 @@ import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyTargetExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class PyMoveAttributeToInitQuickFix extends PsiUpdateModCommandQuickFix {
 
   public PyMoveAttributeToInitQuickFix() {

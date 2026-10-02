@@ -7,8 +7,10 @@ import com.intellij.codeInsight.template.postfix.templates.editable.EditablePost
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Conditions
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
 @Suppress("PostfixTemplateDescriptionNotFound")
+@ApiStatus.Internal
 open class PyEditablePostfixTemplate(templateId: String,
                                      templateName: String,
                                      liveTemplate: TemplateImpl,

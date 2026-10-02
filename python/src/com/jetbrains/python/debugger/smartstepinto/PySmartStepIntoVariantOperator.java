@@ -7,12 +7,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyPrefixExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+@ApiStatus.Internal
 public class PySmartStepIntoVariantOperator extends PySmartStepIntoVariant {
   private static final @NonNls Map<String, String> UNARY_OPERATOR_MAPPING = ImmutableMap.of(
     "__sub__", "__neg__",

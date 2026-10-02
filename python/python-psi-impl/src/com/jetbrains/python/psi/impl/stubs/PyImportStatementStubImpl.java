@@ -7,9 +7,11 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyImportStatement;
 import com.jetbrains.python.psi.stubs.PyImportStatementStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public class PyImportStatementStubImpl extends PyVersionSpecificStubBase<PyImportStatement> implements PyImportStatementStub {
   public PyImportStatementStubImpl(StubElement parentStub, IStubElementType elementType, @NotNull RangeSet<Version> versions) {
     super(parentStub, elementType, versions);

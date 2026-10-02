@@ -16,6 +16,7 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import com.jetbrains.python.toolbox.Substring;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public class TagBasedDocStringUpdater extends DocStringUpdater<TagBasedDocString>{
 
   private final String myTagPrefix;

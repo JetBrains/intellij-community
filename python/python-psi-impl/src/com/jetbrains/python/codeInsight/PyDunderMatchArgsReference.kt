@@ -16,6 +16,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Reference for names listed in __match_args__ tuples.
@@ -23,6 +24,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  * Similar to [PyDunderSlotsReference], but resolves using [PyType.resolveMember]
  * to account for properties, descriptors, class members, etc.
  */
+@ApiStatus.Internal
 class PyDunderMatchArgsReference(element: PyStringLiteralExpression) :
   PsiReferenceBase<PyStringLiteralExpression>(element, element.getStringValueTextRanges().firstOrNull()),
   PsiReferenceEx {

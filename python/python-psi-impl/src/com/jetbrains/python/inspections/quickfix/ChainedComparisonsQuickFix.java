@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * QuickFix to replace chained comparisons with more simple version
  * For instance, a < b and b < c  --> a < b < c
  */
+@ApiStatus.Internal
 public class ChainedComparisonsQuickFix extends PsiUpdateModCommandQuickFix {
 
   private final boolean myCommonIsInLeftLeft;

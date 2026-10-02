@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.stubs.PyDataclassStub
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 internal class PyStdlibDataclassParametersProvider : PyDataclassParametersProvider {
   override fun getType(): PyDataclassParameters.Type = PyStdlibDataclassType
@@ -39,6 +40,7 @@ internal class PyStdlibDataclassParametersProvider : PyDataclassParametersProvid
   }
 }
 
+@ApiStatus.Internal
 object PyStdlibDataclassType : PyDataclassParameters.Type {
   override val name: String = "STD"
   override val isDataclassTransformBased: Boolean = false

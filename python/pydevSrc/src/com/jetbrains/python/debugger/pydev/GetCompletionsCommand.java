@@ -4,11 +4,13 @@ package com.jetbrains.python.debugger.pydev;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PydevXmlUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class GetCompletionsCommand extends AbstractFrameCommand {
 
   private final String myActionToken;

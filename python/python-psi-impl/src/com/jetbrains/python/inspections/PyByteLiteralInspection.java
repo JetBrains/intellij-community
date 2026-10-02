@@ -10,6 +10,7 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.nio.charset.UnsupportedCharsetException;
 
 import static com.jetbrains.python.psi.FutureFeature.UNICODE_LITERALS;
 
+@ApiStatus.Internal
 public final class PyByteLiteralInspection extends PyInspection {
 
   @Override

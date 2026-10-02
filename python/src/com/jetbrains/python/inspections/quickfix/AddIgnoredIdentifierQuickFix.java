@@ -11,9 +11,11 @@ import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public class AddIgnoredIdentifierQuickFix extends ModCommandQuickFix implements LowPriorityAction {
 
   private final @NotNull QualifiedName myIdentifier;

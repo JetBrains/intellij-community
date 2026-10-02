@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.net.URISyntaxException
 import java.nio.file.FileSystemNotFoundException
@@ -59,6 +60,7 @@ import java.util.concurrent.atomic.AtomicReference
  * anything else → upstream registry page (PyPI / Anaconda / custom repo) in a JCEF tab, URL
  * resolved at click time.
  */
+@ApiStatus.Internal
 class RequirementsReferenceContributor : PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
     registrar.registerReferenceProvider(

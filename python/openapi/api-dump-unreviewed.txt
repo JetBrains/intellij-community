@@ -1,0 +1,148 @@
+a:com.jetbrains.python.Result
+- sf:Companion:com.jetbrains.python.Result$Companion
+- f:getErrorOrNull():java.lang.Object
+- f:getOr(kotlin.jvm.functions.Function1):java.lang.Object
+- f:getSuccessOrNull():java.lang.Object
+- f:mapSuccess(kotlin.jvm.functions.Function1):com.jetbrains.python.Result
+- f:mapSuccessError(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.jetbrains.python.Result
+- f:orThrow(kotlin.jvm.functions.Function1):java.lang.Object
+- bs:orThrow$default(com.jetbrains.python.Result,kotlin.jvm.functions.Function1,I,java.lang.Object):java.lang.Object
+f:com.jetbrains.python.Result$Companion
+- f:failure(java.lang.Object):com.jetbrains.python.Result$Failure
+- f:localizedError(java.lang.String):com.jetbrains.python.Result$Failure
+- f:success(java.lang.Object):com.jetbrains.python.Result$Success
+f:com.jetbrains.python.Result$Failure
+- com.jetbrains.python.Result
+- <init>(java.lang.Object):V
+- f:component1():java.lang.Object
+- f:copy(java.lang.Object):com.jetbrains.python.Result$Failure
+- bs:copy$default(com.jetbrains.python.Result$Failure,java.lang.Object,I,java.lang.Object):com.jetbrains.python.Result$Failure
+- equals(java.lang.Object):Z
+- f:getError():java.lang.Object
+- hashCode():I
+f:com.jetbrains.python.Result$Success
+- com.jetbrains.python.Result
+- <init>(java.lang.Object):V
+- f:component1():java.lang.Object
+- f:copy(java.lang.Object):com.jetbrains.python.Result$Success
+- bs:copy$default(com.jetbrains.python.Result$Success,java.lang.Object,I,java.lang.Object):com.jetbrains.python.Result$Success
+- equals(java.lang.Object):Z
+- f:getResult():java.lang.Object
+- hashCode():I
+f:com.jetbrains.python.ResultKt
+- sf:getOrNull(com.jetbrains.python.Result):java.lang.Object
+- sf:getOrThrow(com.jetbrains.python.Result):java.lang.Object
+- sf:isFailure(com.jetbrains.python.Result):Z
+- sf:isSuccess(com.jetbrains.python.Result):Z
+- sf:mapError(com.jetbrains.python.Result,kotlin.jvm.functions.Function1):com.jetbrains.python.Result
+- sf:mapError(java.lang.Iterable,kotlin.jvm.functions.Function1):java.util.List
+- sf:mapResult(com.jetbrains.python.Result,kotlin.jvm.functions.Function1):com.jetbrains.python.Result
+- sf:onFailure(com.jetbrains.python.Result,kotlin.jvm.functions.Function1):com.jetbrains.python.Result
+- sf:onSuccess(com.jetbrains.python.Result,kotlin.jvm.functions.Function1):com.jetbrains.python.Result
+- sf:orLogException(com.jetbrains.python.Result,com.intellij.openapi.diagnostic.Logger,Z):java.lang.Object
+- bs:orLogException$default(com.jetbrains.python.Result,com.intellij.openapi.diagnostic.Logger,Z,I,java.lang.Object):java.lang.Object
+f:com.jetbrains.python.icons.PythonIcons
+- <init>():V
+f:com.jetbrains.python.icons.PythonIcons$Cython
+- sf:CythonFile:javax.swing.Icon
+- <init>():V
+f:com.jetbrains.python.icons.PythonIcons$Debugger
+- sf:Youtrack:javax.swing.Icon
+- <init>():V
+f:com.jetbrains.python.icons.PythonIcons$Python
+- sf:CommandQueue:javax.swing.Icon
+- sf:Condaenv:javax.swing.Icon
+- sf:DataView:javax.swing.Icon
+- sf:NumPy:javax.swing.Icon
+- sf:Origami:javax.swing.Icon
+- sf:Pandas:javax.swing.Icon
+- sf:Polars:javax.swing.Icon
+- sf:Pycharm:javax.swing.Icon
+- sf:Pycharm32:javax.swing.Icon
+- sf:PythonClosed:javax.swing.Icon
+- sf:PythonConsole:javax.swing.Icon
+- sf:PythonConsoleToolWindow:javax.swing.Icon
+- sf:PythonPackages:javax.swing.Icon
+- sf:PythonTests:javax.swing.Icon
+- sf:ReferencedFile:javax.swing.Icon
+- sf:RemoteInterpreter:javax.swing.Icon
+- <init>():V
+f:com.jetbrains.python.packaging.PyExecutionException
+- com.intellij.execution.ExecutionException
+- <init>(com.jetbrains.python.errorProcessing.PyError):V
+- <init>(com.jetbrains.python.errorProcessing.PyError,java.util.List):V
+- b:<init>(com.jetbrains.python.errorProcessing.PyError,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.String,java.util.List,com.intellij.execution.process.ProcessOutput):V
+- <init>(java.lang.String,java.lang.String,java.util.List,com.intellij.execution.process.ProcessOutput,java.util.List):V
+- b:<init>(java.lang.String,java.lang.String,java.util.List,com.intellij.execution.process.ProcessOutput,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.String,java.util.List,java.lang.String,java.lang.String,I,java.util.List):V
+- <init>(java.lang.String,java.util.List):V
+- b:<init>(java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getFixes():java.util.List
+- f:getPyError():com.jetbrains.python.errorProcessing.PyError
+f:com.jetbrains.python.packaging.PyPackage
+- com.intellij.webcore.packaging.InstalledPackage
+- <init>(java.lang.String,java.lang.String):V
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.util.List):V
+- getLocation():java.lang.String
+- getRequirements():java.util.List
+- getTooltipText():java.lang.String
+- getVersion():java.lang.String
+- matches(com.jetbrains.python.packaging.PyRequirement):Z
+a:com.jetbrains.python.packaging.PyPackageManager
+- com.intellij.openapi.Disposable
+- sf:PACKAGE_MANAGER_TOPIC:com.intellij.util.messages.Topic
+- p:<init>(com.intellij.openapi.projectRoots.Sdk):V
+- dispose():V
+- s:getInstance(com.intellij.openapi.projectRoots.Sdk):com.jetbrains.python.packaging.PyPackageManager
+- a:getPackages():java.util.List
+- pf:getSdk():com.intellij.openapi.projectRoots.Sdk
+- a:install(java.util.List,java.util.List):V
+- a:refreshAndGetPackages(Z):java.util.List
+- p:shouldSubscribeToLocalChanges():Z
+com.jetbrains.python.packaging.PyPackageManager$Listener
+- a:packagesRefreshed(com.intellij.openapi.projectRoots.Sdk):V
+a:com.jetbrains.python.packaging.PyPackageManagers
+- com.intellij.openapi.Disposable
+- <init>():V
+- a:clearCache(com.intellij.openapi.projectRoots.Sdk):V
+- dispose():V
+- a:forSdk(com.intellij.openapi.projectRoots.Sdk):com.jetbrains.python.packaging.PyPackageManager
+- s:getInstance():com.jetbrains.python.packaging.PyPackageManagers
+- a:getManagementService(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk):com.intellij.webcore.packaging.PackageManagementService
+com.jetbrains.python.packaging.PyRequirement
+- appliesTo(java.util.Map):Z
+- a:getEnvironmentMarker():com.jetbrains.python.packaging.requirement.PyRequirementEnvMarker
+- a:getExtras():java.lang.String
+- a:getInstallOptions():java.util.List
+- a:getName():java.lang.String
+- a:getPackageName():com.jetbrains.python.packaging.PyPackageName
+- getPresentableText():java.lang.String
+- a:getPresentableTextWithoutVersion():java.lang.String
+- a:getUrlReference():java.lang.String
+- a:getVersionSpecs():java.util.List
+- isEditable():Z
+- a:match(com.jetbrains.python.packaging.PyPackage):Z
+- a:match(java.util.Collection):com.jetbrains.python.packaging.PyPackage
+com.jetbrains.python.packaging.requirement.PyRequirementEnvMarker
+- a:matches(java.util.Map):Z
+e:com.jetbrains.python.packaging.requirement.PyRequirementRelation
+- java.lang.Enum
+- sf:COMPATIBLE:com.jetbrains.python.packaging.requirement.PyRequirementRelation
+- sf:EQ:com.jetbrains.python.packaging.requirement.PyRequirementRelation
+- sf:GT:com.jetbrains.python.packaging.requirement.PyRequirementRelation
+- sf:GTE:com.jetbrains.python.packaging.requirement.PyRequirementRelation
+- sf:LT:com.jetbrains.python.packaging.requirement.PyRequirementRelation
+- sf:LTE:com.jetbrains.python.packaging.requirement.PyRequirementRelation
+- sf:NE:com.jetbrains.python.packaging.requirement.PyRequirementRelation
+- sf:STR_EQ:com.jetbrains.python.packaging.requirement.PyRequirementRelation
+- getPresentableText():java.lang.String
+- s:valueOf(java.lang.String):com.jetbrains.python.packaging.requirement.PyRequirementRelation
+- s:values():com.jetbrains.python.packaging.requirement.PyRequirementRelation[]
+com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
+- getPresentableText():java.lang.String
+- a:getRelation():com.jetbrains.python.packaging.requirement.PyRequirementRelation
+- a:getVersion():java.lang.String
+- a:matches(java.lang.String):Z

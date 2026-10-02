@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * if not args: args = []
  * pass
  */
+@ApiStatus.Internal
 public class PyDefaultArgumentQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override

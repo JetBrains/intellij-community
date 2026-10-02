@@ -4,6 +4,7 @@ package com.jetbrains.python.codeInsight.stdlib;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.LazyInitializer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
@@ -14,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class PyStdlibUtil {
   private static final LazyInitializer.LazyValue<@Nullable Set<String>> PACKAGES = new LazyInitializer.LazyValue<>(
     PyStdlibUtil::loadStdlibPackagesList);

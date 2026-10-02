@@ -8,6 +8,7 @@ import com.jetbrains.python.ast.PyAstFile;
 import com.jetbrains.python.ast.PyAstStringElement;
 import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@ApiStatus.Internal
 public class PyStringLiteralDecoder {
   public static final Pattern PATTERN_ESCAPE = Pattern.compile("(\\{\\{|}})|" +                // 1
                                                                "\\\\(" +

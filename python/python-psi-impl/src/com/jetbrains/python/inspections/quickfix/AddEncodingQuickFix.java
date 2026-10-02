@@ -14,6 +14,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.PyEncodingUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * <p/>
  * User: catherine
  */
+@ApiStatus.Internal
 public class AddEncodingQuickFix extends PsiUpdateModCommandQuickFix {
 
   private final String myDefaultEncoding;

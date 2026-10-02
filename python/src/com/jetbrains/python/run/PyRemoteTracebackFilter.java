@@ -5,9 +5,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.ProcessControlWithMappings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class PyRemoteTracebackFilter extends PythonTracebackFilter {
   private final ProcessControlWithMappings myHandler;
 

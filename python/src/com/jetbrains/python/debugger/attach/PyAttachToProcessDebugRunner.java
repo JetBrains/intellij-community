@@ -16,6 +16,7 @@ import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyLocalPositionConverter;
 import com.jetbrains.python.debugger.PyRemoteDebugProcess;
 import com.jetbrains.python.run.CommandLinePatcher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.net.ServerSocket;
 
 import static com.intellij.openapi.options.advanced.AdvancedSettings.getInt;
 
+@ApiStatus.Internal
 public class PyAttachToProcessDebugRunner extends PyDebugRunner {
   private final Project myProject;
   private final int myPid;

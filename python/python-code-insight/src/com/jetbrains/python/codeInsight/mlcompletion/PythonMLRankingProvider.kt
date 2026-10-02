@@ -4,7 +4,9 @@ package com.jetbrains.python.codeInsight.mlcompletion
 import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
 import com.intellij.lang.Language
 import com.jetbrains.python.codeInsight.PyCodeInsightBundle
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PythonMLRankingProvider :
   CatBoostJarCompletionModelProvider(PyCodeInsightBundle.message("settings.completion.ml.python.display.name"), "python_features_full_line_exp", "python_model_full_line_exp") {
 

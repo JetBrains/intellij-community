@@ -14,12 +14,14 @@ import com.jetbrains.python.psi.PyImportStatement;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyImportStatementImpl;
 import com.jetbrains.python.psi.stubs.PyImportStatementStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 
+@ApiStatus.Internal
 public class PyImportStatementElementType extends PyStubElementType<PyImportStatementStub, PyImportStatement> {
   public PyImportStatementElementType() {
     this("IMPORT_STATEMENT");

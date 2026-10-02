@@ -5,7 +5,9 @@ import com.intellij.util.asSafely
 import com.jetbrains.python.debugger.pydev.tables.PyDevCommandParameters
 import com.jetbrains.python.tables.TableCommandParameters
 import com.jetbrains.python.tables.TableCommandType
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class TableCommand(debugger: RemoteDebugger?,
                    threadId: String?,
                    frameId: String?,

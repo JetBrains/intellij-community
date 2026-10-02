@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ import java.util.Set;
  * <p/>
  * User: catherine
  */
+@ApiStatus.Internal
 public class AddCallSuperQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override

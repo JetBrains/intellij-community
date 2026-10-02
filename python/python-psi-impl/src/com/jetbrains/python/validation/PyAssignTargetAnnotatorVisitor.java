@@ -46,12 +46,14 @@ import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.PyWithItem;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.PyPsiBundle.message;
 
 
+@ApiStatus.Internal
 public class PyAssignTargetAnnotatorVisitor extends PyElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 

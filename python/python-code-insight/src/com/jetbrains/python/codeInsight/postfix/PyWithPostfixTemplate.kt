@@ -7,10 +7,12 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvid
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Turns a context-manager expression into a `with` block: `open(p).with` -> `with open(p) as f:`.
  */
+@ApiStatus.Internal
 class PyWithPostfixTemplate(provider: PostfixTemplateProvider) :
   StringBasedPostfixTemplate("with", "with expr as name:", PyPostfixUtils.selectorTopmost(), provider), DumbAware {
 

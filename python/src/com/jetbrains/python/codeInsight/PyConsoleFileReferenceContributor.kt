@@ -21,6 +21,7 @@ import com.jetbrains.python.console.PydevConsoleRunnerFactory
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.sdk.ModuleOrProject
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Contributes file path references for Python string literals in the Python console.
@@ -28,6 +29,7 @@ import com.jetbrains.python.sdk.ModuleOrProject
  * References are soft: used only for code completion and ignored during code inspection.
  *
  */
+@ApiStatus.Internal
 class PyConsoleFileReferenceContributor : PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
     val pattern = psiElement(PyStringLiteralExpression::class.java).with(StringWithPathSeparatorInConsole)

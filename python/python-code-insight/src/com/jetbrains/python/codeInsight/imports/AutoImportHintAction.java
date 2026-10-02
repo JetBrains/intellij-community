@@ -18,6 +18,7 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.List;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
+@ApiStatus.Internal
 public class AutoImportHintAction implements LocalQuickFix, HintAction, HighPriorityAction {
   private final @NotNull AutoImportQuickFix myDelegate;
 

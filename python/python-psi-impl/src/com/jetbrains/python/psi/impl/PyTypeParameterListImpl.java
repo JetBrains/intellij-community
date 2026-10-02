@@ -8,10 +8,12 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyTypeParameter;
 import com.jetbrains.python.psi.PyTypeParameterList;
 import com.jetbrains.python.psi.stubs.PyTypeParameterListStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class PyTypeParameterListImpl extends PyBaseElementImpl<PyTypeParameterListStub> implements PyTypeParameterList {
   public PyTypeParameterListImpl(ASTNode astNode) {
     super(astNode);

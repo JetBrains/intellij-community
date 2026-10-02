@@ -4,12 +4,14 @@ package com.jetbrains.python.psi.resolve;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Simple visitor to use with ResolveImportUtil.
  * User: dcheryasov
  */
+@ApiStatus.Internal
 public interface RootVisitor {
   /**
    * @param root   what we're visiting.

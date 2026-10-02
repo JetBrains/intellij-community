@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ import java.util.List;
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyPsiUtils.flattenParens;
 
+@ApiStatus.Internal
 public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
 
   private final @Nullable QualifiedName myCalleeName;

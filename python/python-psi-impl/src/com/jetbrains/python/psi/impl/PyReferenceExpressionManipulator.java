@@ -6,8 +6,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class PyReferenceExpressionManipulator extends AbstractElementManipulator<PyReferenceExpression> {
   @Override
   public PyReferenceExpression handleContentChange(final @NotNull PyReferenceExpression element,

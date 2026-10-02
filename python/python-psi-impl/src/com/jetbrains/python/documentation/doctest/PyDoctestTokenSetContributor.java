@@ -3,11 +3,13 @@ package com.jetbrains.python.documentation.doctest;
 
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PythonDialectsTokenSetContributorBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
  */
+@ApiStatus.Internal
 public final class PyDoctestTokenSetContributor extends PythonDialectsTokenSetContributorBase {
   public static final TokenSet DOCTEST_REFERENCE_EXPRESSIONS = TokenSet.create(PyDoctestTokenTypes.DOC_REFERENCE);
 

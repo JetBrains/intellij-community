@@ -8,7 +8,9 @@ import com.intellij.codeInsight.template.impl.VariableNode
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.codeInsight.liveTemplates.CollectionElementNameMacro
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyForEnumeratePostfixTemplate(name: String, provider: PostfixTemplateProvider) :
   PyEditablePostfixTemplate(
     name,

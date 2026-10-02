@@ -25,12 +25,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Handles overtyping ':' in definitions.
  */
+@ApiStatus.Internal
 public final class PyKeywordTypedHandler extends TypedHandlerDelegate {
   @Override
   public @NotNull Result beforeCharTyped(char character, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {

@@ -10,12 +10,14 @@ import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.stubs.PyFileStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.BitSet;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public class PyFileStubImpl extends PsiFileStubImpl<PyFile> implements PyFileStub {
   private final List<String> myDunderAll;
   private final BitSet myFutureFeatures; // stores IDs of features

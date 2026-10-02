@@ -21,10 +21,12 @@ import com.jetbrains.python.psi.PyListCompExpression;
 import com.jetbrains.python.psi.PyPrefixExpression;
 import com.jetbrains.python.psi.PySetCompExpression;
 import com.jetbrains.python.psi.PyWithStatement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
+@ApiStatus.Internal
 public final class PyAsyncAwaitAnnotatorVisitor extends PyElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 

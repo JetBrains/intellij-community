@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.stubs.PyDataclassStub
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 internal class PyAttrsDataclassParametersProvider : PyDataclassParametersProvider {
   override fun getType(): PyDataclassParameters.Type = PyAttrsDataclassType
@@ -61,6 +62,7 @@ internal class PyAttrsDataclassParametersProvider : PyDataclassParametersProvide
   }
 }
 
+@ApiStatus.Internal
 object PyAttrsDataclassType : PyDataclassParameters.Type {
   override val name: String = "ATTRS"
   override val isDataclassTransformBased: Boolean = false

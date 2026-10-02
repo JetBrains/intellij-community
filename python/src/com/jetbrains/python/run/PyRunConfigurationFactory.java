@@ -3,8 +3,10 @@ package com.jetbrains.python.run;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public abstract class PyRunConfigurationFactory {
   public static PyRunConfigurationFactory getInstance() {
     return ApplicationManager.getApplication().getService(PyRunConfigurationFactory.class);

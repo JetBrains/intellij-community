@@ -1,0 +1,46 @@
+*f:com.intellij.python.community.services.systemPython.ApiKt
+- sf:SystemPythonService():com.intellij.python.community.services.systemPython.SystemPythonService
+*:com.intellij.python.community.services.systemPython.PythonInstallerService
+- *a:installLatestPython(com.jetbrains.python.packaging.PyVersionSpecifiers,kotlin.coroutines.Continuation):java.lang.Object
+- *bs:installLatestPython$default(com.intellij.python.community.services.systemPython.PythonInstallerService,com.jetbrains.python.packaging.PyVersionSpecifiers,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+*:com.intellij.python.community.services.systemPython.SysPythonRegisterError
+- a:getAsPyError():com.jetbrains.python.errorProcessing.PyError
+*f:com.intellij.python.community.services.systemPython.SysPythonRegisterError$NotASystemPython
+- com.intellij.python.community.services.systemPython.SysPythonRegisterError
+- *sf:Companion:com.intellij.python.community.services.systemPython.SysPythonRegisterError$NotASystemPython$Companion
+- getAsPyError():com.jetbrains.python.errorProcessing.PyError
+- f:getNotSystemPython():com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
+*f:com.intellij.python.community.services.systemPython.SysPythonRegisterError$NotASystemPython$Companion
+- kotlin.coroutines.jvm.internal.SuspendFunction
+- kotlin.jvm.functions.Function2
+- invoke(com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.python.community.services.systemPython.SysPythonRegisterError$PythonIsBroken
+- com.intellij.python.community.services.systemPython.SysPythonRegisterError
+- <init>(com.jetbrains.python.errorProcessing.PyError):V
+- f:component1():com.jetbrains.python.errorProcessing.PyError
+- f:copy(com.jetbrains.python.errorProcessing.PyError):com.intellij.python.community.services.systemPython.SysPythonRegisterError$PythonIsBroken
+- bs:copy$default(com.intellij.python.community.services.systemPython.SysPythonRegisterError$PythonIsBroken,com.jetbrains.python.errorProcessing.PyError,I,java.lang.Object):com.intellij.python.community.services.systemPython.SysPythonRegisterError$PythonIsBroken
+- equals(java.lang.Object):Z
+- getAsPyError():com.jetbrains.python.errorProcessing.PyError
+- hashCode():I
+*f:com.intellij.python.community.services.systemPython.SystemPython
+- java.lang.Comparable
+- compareTo(com.intellij.python.community.services.systemPython.SystemPython):I
+- equals(java.lang.Object):Z
+- getAsExecutablePython():com.intellij.python.community.execService.python.advancedApi.ExecutablePython
+- getPythonBinary():java.nio.file.Path
+- getPythonInfo():com.jetbrains.python.PythonInfo
+- getReadableName(kotlin.coroutines.Continuation):java.lang.Object
+- getUi():com.jetbrains.python.PyToolUIInfo
+- hashCode():I
+*:com.intellij.python.community.services.systemPython.SystemPythonProvider
+- *sf:Companion:com.intellij.python.community.services.systemPython.SystemPythonProvider$Companion
+- a:findSystemPythons(com.intellij.platform.eel.EelApi,kotlin.coroutines.Continuation):java.lang.Object
+- getUiCustomization():com.jetbrains.python.PyToolUIInfo
+*f:com.intellij.python.community.services.systemPython.SystemPythonProvider$Companion
+- f:getEP():com.intellij.openapi.extensions.ExtensionPointName
+*:com.intellij.python.community.services.systemPython.SystemPythonService
+- a:findSystemPythons(com.intellij.platform.eel.EelApi,Z,kotlin.coroutines.Continuation):java.lang.Object
+- bs:findSystemPythons$default(com.intellij.python.community.services.systemPython.SystemPythonService,com.intellij.platform.eel.EelApi,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- a:getInstaller(com.intellij.platform.eel.EelApi):com.intellij.python.community.services.systemPython.PythonInstallerService
+- a:registerSystemPython(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object

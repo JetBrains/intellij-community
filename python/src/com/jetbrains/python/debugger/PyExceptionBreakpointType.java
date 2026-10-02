@@ -24,6 +24,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyClassTreeChooserDialog;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ import java.lang.ref.WeakReference;
 import java.util.HashMap;
 
 
+@ApiStatus.Internal
 public final class PyExceptionBreakpointType
   extends XBreakpointType<XBreakpoint<PyExceptionBreakpointProperties>, PyExceptionBreakpointProperties> {
 

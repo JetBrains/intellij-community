@@ -18,6 +18,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.jetbrains.python.navigation.PyNavigationBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,7 @@ import java.util.Collection;
 /**
  * @author traff
  */
+@ApiStatus.Internal
 public final class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory implements PyPsiFindUsagesHandlerFactory {
 
   @Override

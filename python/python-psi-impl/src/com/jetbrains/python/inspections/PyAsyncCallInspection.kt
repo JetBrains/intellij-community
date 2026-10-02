@@ -26,8 +26,10 @@ import com.jetbrains.python.psi.types.PyABCUtil
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil
+import org.jetbrains.annotations.ApiStatus
 
 
+@ApiStatus.Internal
 class PyAsyncCallInspection : PyInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {

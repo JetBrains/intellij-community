@@ -84,8 +84,10 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isUnknown
 import one.util.streamex.StreamEx
+import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
 
+@ApiStatus.Internal
 class PyUnresolvedReferencesVisitor(
   holder: ProblemsHolder?,
   ignoredIdentifiers: List<String>,

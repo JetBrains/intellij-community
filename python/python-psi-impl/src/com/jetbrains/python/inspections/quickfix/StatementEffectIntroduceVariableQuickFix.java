@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * Quickfix to introduce variable if statement seems to have no effect
  */
+@ApiStatus.Internal
 public class StatementEffectIntroduceVariableQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   public @NotNull String getFamilyName() {

@@ -3,11 +3,13 @@ package com.jetbrains.python.debugger.pydev;
 
 import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class GetSmartStepIntoVariantsCommand extends AbstractFrameCommand {
 
   private final int myContextStartLine;

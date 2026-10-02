@@ -14,12 +14,14 @@ import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyImportElementImpl;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 
+@ApiStatus.Internal
 public class PyImportElementElementType extends PyStubElementType<PyImportElementStub, PyImportElement> {
   public PyImportElementElementType() {
     this("IMPORT_ELEMENT");

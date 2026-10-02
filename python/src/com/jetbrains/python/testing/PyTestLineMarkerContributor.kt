@@ -12,7 +12,9 @@ import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyTestLineMarkerContributor : RunLineMarkerContributor(), DumbAware {
   override fun getInfo(element: PsiElement): Info? {
     if ((element !is LeafPsiElement) || element.elementType != PyTokenTypes.IDENTIFIER) {
@@ -37,6 +39,7 @@ class PyTestLineMarkerContributor : RunLineMarkerContributor(), DumbAware {
   }
 }
 
+@ApiStatus.Internal
 interface PyTestLineMarkerContributorCustomizer {
   companion object {
     private val EP_NAME: ExtensionPointName<PyTestLineMarkerContributorCustomizer> =

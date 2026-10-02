@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiUtil
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * [com.intellij.codeInsight.navigation.actions.GotoDeclarationAction] uses [PsiElement.findReferenceAt].
@@ -27,6 +28,7 @@ import com.jetbrains.python.pyi.PyiUtil
  *
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 class PyGotoDeclarationHandler : GotoDeclarationHandlerBase() {
   override fun getGotoDeclarationTarget(sourceElement: PsiElement?, editor: Editor?): PsiElement? {
     return getGotoDeclarationTargets(sourceElement, -1, editor)?.firstOrNull()

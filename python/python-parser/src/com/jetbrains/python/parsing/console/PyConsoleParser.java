@@ -8,7 +8,9 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class PyConsoleParser extends PyParser {
 
   private static final TokenSet IPYTHON_START_SYMBOLS = TokenSet.create(

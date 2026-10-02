@@ -11,12 +11,15 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceService
 import com.intellij.util.IncorrectOperationException
 import org.intellij.lang.regexp.RegExpFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class DjangoRegexpFile(viewProvider: FileViewProvider) : RegExpFile(viewProvider, PythonRegexpLanguage.INSTANCE), ContributedReferenceHost {
   override fun getReferences(): Array<PsiReference> = PsiReferenceService.getService().getContributedReferences(this)
 }
 
 
+@ApiStatus.Internal
 class DjangoRegexpUrlPathFileManipulator : AbstractElementManipulator<DjangoRegexpFile>() {
   @Throws(IncorrectOperationException::class)
   override fun handleContentChange(file: DjangoRegexpFile, range: TextRange, newContent: String): DjangoRegexpFile {

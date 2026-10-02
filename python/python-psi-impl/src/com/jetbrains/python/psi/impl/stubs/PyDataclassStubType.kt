@@ -5,6 +5,7 @@ import com.intellij.psi.stubs.StubInputStream
 import com.jetbrains.python.codeInsight.parseDataclassParametersForStub
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.stubs.PyDataclassStub
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * The single [PyCustomClassStubType] for every dataclass framework (`Pythonid.customClassStubType`).
@@ -13,6 +14,7 @@ import com.jetbrains.python.psi.stubs.PyDataclassStub
  * priority order and produces the [PyDataclassStub] with the matching framework [PyDataclassStub.type]. The stub is
  * (de)serialized by [PyDataclassStubImpl].
  */
+@ApiStatus.Internal
 class PyDataclassStubType : PyCustomClassStubType<PyDataclassStub>() {
   override fun createStub(psi: PyClass): PyDataclassStub? = parseDataclassParametersForStub(psi)
 

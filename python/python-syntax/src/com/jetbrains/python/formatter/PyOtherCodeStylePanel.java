@@ -20,6 +20,7 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.formatter.PyCodeStyleSettings.DictAlignment;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.AbstractButton;
@@ -40,6 +41,7 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 
+@ApiStatus.Internal
 public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
 
   private final JPanel myPanel;

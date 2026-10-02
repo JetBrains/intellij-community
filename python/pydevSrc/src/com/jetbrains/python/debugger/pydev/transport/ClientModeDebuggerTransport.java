@@ -6,6 +6,7 @@ import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.pydev.AbstractCommand;
 import com.jetbrains.python.debugger.pydev.ClientModeMultiProcessDebugger;
 import com.jetbrains.python.debugger.pydev.RemoteDebugger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * any more.
  */
 @Deprecated(forRemoval = true)
+@ApiStatus.Internal
 public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
   private static final Logger LOG = Logger.getInstance(ClientModeDebuggerTransport.class);
 

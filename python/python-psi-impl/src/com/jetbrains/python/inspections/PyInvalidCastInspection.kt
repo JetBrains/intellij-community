@@ -26,7 +26,9 @@ import com.jetbrains.python.psi.types.PyTypeUtil.isSubtypeRelated
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyInvalidCastInspection : PyInspection() {
   @JvmField
   var ignoreGenericVariance: Boolean = true

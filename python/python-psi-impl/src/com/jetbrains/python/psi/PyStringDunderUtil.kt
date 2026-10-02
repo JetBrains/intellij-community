@@ -6,7 +6,9 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object PyStringDunderUtil {
   /**
    * A string conversion of one of these types is not useful. Either the type keeps the `__str__` and the `__repr__`

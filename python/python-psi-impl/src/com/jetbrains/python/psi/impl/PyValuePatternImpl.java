@@ -7,9 +7,11 @@ import com.jetbrains.python.psi.PyValuePattern;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class PyValuePatternImpl extends PyElementImpl implements PyValuePattern {
   public PyValuePatternImpl(ASTNode astNode) {
     super(astNode);

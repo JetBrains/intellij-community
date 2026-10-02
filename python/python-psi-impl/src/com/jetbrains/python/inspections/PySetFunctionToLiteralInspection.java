@@ -16,6 +16,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * Inspection to find set built-in function and replace it with set literal
  * available if the selected language level supports set literals.
  */
+@ApiStatus.Internal
 public final class PySetFunctionToLiteralInspection extends PyInspection {
 
   @Override

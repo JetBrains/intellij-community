@@ -17,12 +17,14 @@ package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.psi.PyIndentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public class NumpyDocStringBuilder extends SectionBasedDocStringBuilder {
   public static final String DEFAULT_SECTION_INDENT = "";
   public static final String DEFAULT_CONTINUATION_INDENT = PyIndentUtil.FOUR_SPACES;

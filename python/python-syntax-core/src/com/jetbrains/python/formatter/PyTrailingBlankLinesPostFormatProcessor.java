@@ -11,6 +11,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.ast.impl.PyUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public final class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProcessor {
 
   private static boolean isApplicableTo(@NotNull PsiFile source) {

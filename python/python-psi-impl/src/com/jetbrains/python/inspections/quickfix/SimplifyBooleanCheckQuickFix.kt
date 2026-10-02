@@ -13,7 +13,9 @@ import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class SimplifyBooleanCheckQuickFix(binaryExpression: PyBinaryExpression) : PsiUpdateModCommandQuickFix() {
   private val myReplacementText = binaryExpression.createReplacementText()
 

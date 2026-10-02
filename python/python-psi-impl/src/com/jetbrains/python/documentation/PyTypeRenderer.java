@@ -61,6 +61,7 @@ import com.jetbrains.python.psi.types.PyUnsafeUnionType;
 import com.jetbrains.python.psi.types.PyVariance;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import kotlin.jvm.functions.Function4;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +80,7 @@ import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 // TODO visitPyConcatenateType
+@ApiStatus.Internal
 public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk> {
   private static final int MAX_DEPTH = 6;
 

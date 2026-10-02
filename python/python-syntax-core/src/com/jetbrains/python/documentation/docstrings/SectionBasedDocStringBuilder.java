@@ -15,12 +15,14 @@
  */
 package com.jetbrains.python.documentation.docstrings;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
 public abstract class SectionBasedDocStringBuilder extends DocStringBuilder<SectionBasedDocStringBuilder> {
 
   protected String mySectionIndent;

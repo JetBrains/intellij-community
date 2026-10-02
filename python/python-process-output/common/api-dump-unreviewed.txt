@@ -1,0 +1,21 @@
+f:com.intellij.python.processOutput.common.ProcessId
+- sf:Companion:com.intellij.python.processOutput.common.ProcessId$Companion
+- bsf:box-impl(I):com.intellij.python.processOutput.common.ProcessId
+- s:constructor-impl(I):I
+- equals(java.lang.Object):Z
+- s:equals-impl(I,java.lang.Object):Z
+- sf:equals-impl0(I,I):Z
+- f:getValue():I
+- hashCode():I
+- s:hashCode-impl(I):I
+- s:toString-impl(I):java.lang.String
+- bf:unbox-impl():I
+bf:com.intellij.python.processOutput.common.ProcessId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.python.processOutput.common.ProcessId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize-pNUbudU(kotlinx.serialization.encoding.Decoder):I
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize-Pqsm5Oo(kotlinx.serialization.encoding.Encoder,I):V
+f:com.intellij.python.processOutput.common.ProcessId$Companion
+- f:serializer():kotlinx.serialization.KSerializer

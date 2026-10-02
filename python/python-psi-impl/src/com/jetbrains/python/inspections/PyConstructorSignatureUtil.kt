@@ -5,7 +5,9 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object PyConstructorSignatureUtil {
   @JvmStatic
   fun findComplementaryConstructors(function: PyFunction, context: TypeEvalContext): List<PyFunction> {

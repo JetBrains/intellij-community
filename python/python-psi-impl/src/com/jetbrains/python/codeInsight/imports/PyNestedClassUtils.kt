@@ -4,7 +4,9 @@ package com.jetbrains.python.codeInsight.imports
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object PyNestedClassUtils {
   private const val MAX_NESTING_DEPTH = 10
 

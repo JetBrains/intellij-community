@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.resolve
 
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
 object IPythonBuiltinConstants {
   const val DISPLAY = "display"
   const val GET_IPYTHON = "get_ipython"

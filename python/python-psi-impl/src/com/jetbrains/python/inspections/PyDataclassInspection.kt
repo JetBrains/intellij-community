@@ -4,7 +4,9 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyDataclassInspection : PyInspection() {
 
   override fun buildVisitor(

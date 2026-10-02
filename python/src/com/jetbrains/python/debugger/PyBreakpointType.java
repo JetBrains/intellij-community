@@ -3,8 +3,10 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public interface PyBreakpointType {
   boolean isBreakpointTypeAllowedInDocument(Project project, Document document);
 }

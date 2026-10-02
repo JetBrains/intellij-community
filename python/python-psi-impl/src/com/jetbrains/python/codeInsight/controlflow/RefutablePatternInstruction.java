@@ -5,8 +5,10 @@ import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.impl.InstructionImpl;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyPattern;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class RefutablePatternInstruction extends InstructionImpl {
   private final boolean myMatched;
 

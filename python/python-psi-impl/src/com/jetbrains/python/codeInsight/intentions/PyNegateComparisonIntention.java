@@ -10,9 +10,11 @@ import com.jetbrains.python.codeInsight.ConditionUtil;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyFile;
 import kotlin.Pair;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PyNegateComparisonIntention extends PsiUpdateModCommandAction<PyBinaryExpression> {
   PyNegateComparisonIntention() {
     super(PyBinaryExpression.class);

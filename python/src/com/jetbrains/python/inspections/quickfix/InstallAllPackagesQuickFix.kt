@@ -10,8 +10,10 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil.moduleToPackageName
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 class InstallAllPackagesQuickFix(private val packageNames: List<String>) : LocalQuickFix {
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {

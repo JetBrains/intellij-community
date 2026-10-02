@@ -16,8 +16,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 class PyTypeEngineFrontendState(project: Project, scope: CoroutineScope) {
   private val state = MutableStateFlow(
     PyTypeEngineStateDto(

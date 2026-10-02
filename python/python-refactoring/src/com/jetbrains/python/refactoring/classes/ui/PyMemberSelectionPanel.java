@@ -8,6 +8,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.BorderFactory;
@@ -24,6 +25,7 @@ import java.util.List;
  *
  * @author Dennis.Ushakov
  */
+@ApiStatus.Internal
 public class PyMemberSelectionPanel extends JPanel {
   private static final List<PyMemberInfo<PyElement>> EMPTY_MEMBER_INFO = Collections.emptyList();
   private final PyMemberSelectionTable myTable;

@@ -31,7 +31,9 @@ import com.jetbrains.python.psi.PyStarArgument
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyCallableParameter
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyMultipleArgumentsCompletionContributor : CompletionContributor(), DumbAware {
   init {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement().inArgumentList(), MyCompletionProvider)
@@ -76,6 +78,7 @@ class PyMultipleArgumentsCompletionContributor : CompletionContributor(), DumbAw
 
 }
 
+@ApiStatus.Internal
 class PyMultipleArgumentsInsertHandler(private val call: PyCallExpression) : ParenthesesInsertHandler<LookupElement>() {
   override fun placeCaretInsideParentheses(context: InsertionContext?, item: LookupElement?): Boolean = false
 

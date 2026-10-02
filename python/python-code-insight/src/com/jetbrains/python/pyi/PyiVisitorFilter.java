@@ -14,10 +14,12 @@ import com.jetbrains.python.inspections.unusedLocal.PyUnusedFunctionInspection;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalVariableInspection;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedParameterInspection;
 import com.jetbrains.python.psi.PythonVisitorFilter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class PyiVisitorFilter implements PythonVisitorFilter {
 
   private static final @NotNull Set<Class<?>> disabledVisitors = ImmutableSet.of(

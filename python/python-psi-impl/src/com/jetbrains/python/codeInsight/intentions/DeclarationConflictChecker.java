@@ -7,6 +7,7 @@ import com.intellij.psi.PsiReference;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.Set;
 /**
  * An utility class that checks local definitions of a given name and can show a conflicts panel.
  */
+@ApiStatus.Internal
 public final class DeclarationConflictChecker {
   private DeclarationConflictChecker() { /* Don't instantiate */ }
 

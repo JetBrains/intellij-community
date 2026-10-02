@@ -9,12 +9,14 @@ import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.refactoring.PyRefactoringBundle;
 
+import org.jetbrains.annotations.ApiStatus;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.Consumer;
 
 import static com.jetbrains.python.refactoring.introduce.IntroduceHandler.findOccurrenceUnderCaret;
 
+@ApiStatus.Internal
 public final class PyIntroduceHandlerUi {
 
   public static void performInplaceIntroduceVariable(IntroduceOperation operation, PsiElement statement) {

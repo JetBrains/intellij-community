@@ -6,6 +6,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.Collection;
  *
  * @author Ilya.Kazakevich
  */
+@ApiStatus.Internal
 public interface TestRunConfigurationReRunResponsible {
   /**
    * Rerun failed tests

@@ -6,7 +6,9 @@ import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyStarImportElement;
 import com.jetbrains.python.psi.stubs.PyStarImportElementStub;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class PyStarImportElementStubImpl extends StubBase<PyStarImportElement> implements PyStarImportElementStub {
   protected PyStarImportElementStubImpl(final StubElement parent) {
     super(parent, PyStubElementTypes.STAR_IMPORT_ELEMENT);

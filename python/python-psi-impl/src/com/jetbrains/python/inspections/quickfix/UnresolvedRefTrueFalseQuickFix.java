@@ -10,6 +10,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * QuickFix to replace true with True, false with False
  */
+@ApiStatus.Internal
 public class UnresolvedRefTrueFalseQuickFix extends PsiUpdateModCommandQuickFix {
   String newName;
 

@@ -13,7 +13,9 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyThirdPartyInspectionExtension : PyInspectionExtension() {
 
   override fun ignoreMethodParameters(function: PyFunction, context: TypeEvalContext): Boolean {

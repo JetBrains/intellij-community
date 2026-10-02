@@ -7,7 +7,9 @@ import com.intellij.psi.FileViewProvider
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyExpressionCodeFragment
 import com.jetbrains.python.psi.impl.PyFileImpl
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class PyDocstringCodeBlockFile(viewProvider: FileViewProvider?) :
   PyFileImpl(viewProvider, PyDocstringCodeBlockLanguageDialect.getInstance()), PyExpressionCodeFragment {
   override fun getFileType(): FileType {

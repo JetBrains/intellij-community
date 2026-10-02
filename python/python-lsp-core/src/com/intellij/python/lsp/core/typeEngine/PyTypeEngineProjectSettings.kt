@@ -8,10 +8,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.python.lsp.core.listener.PyLspListener
 import com.intellij.util.xmlb.XmlSerializerUtil
+import org.jetbrains.annotations.ApiStatus
 
 
 @Service(Service.Level.PROJECT)
 @State(name = "PyTypeEngineProjectSettings", storages = [Storage("pyTypeEngine.xml")])
+@ApiStatus.Internal
 class PyTypeEngineProjectSettings(val project: Project) : PersistentStateComponent<PyTypeEngineSettingsState> {
   private var state: PyTypeEngineSettingsState = PyTypeEngineSettingsState()
 
@@ -34,6 +36,7 @@ class PyTypeEngineProjectSettings(val project: Project) : PersistentStateCompone
 }
 
 
+@ApiStatus.Internal
 data class PyTypeEngineSettingsState(
   var typeEngine: PyTypeEngineType = PyTypeEngineType.PYCHARM,
 )

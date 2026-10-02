@@ -10,7 +10,9 @@ import com.intellij.openapi.util.component2
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.psi.PyFormattedStringElement
 import com.jetbrains.python.psi.PyStringLiteralExpression
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyCopyStringLiteralToClipboardIntention : PsiBasedModCommandAction<PyStringLiteralExpression>(PyStringLiteralExpression::class.java) {
   override fun getFamilyName(): String = PyPsiBundle.message("INTN.NAME.copy.string.to.clipboard")
 

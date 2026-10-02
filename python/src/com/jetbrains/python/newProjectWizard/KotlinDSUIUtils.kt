@@ -4,11 +4,13 @@ package com.jetbrains.python.newProjectWizard
 import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.validationErrorIf
 import com.jetbrains.python.PyBundle
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
  * Kotlin DSL UI validator that makes sure no [deniedChars] are used
  */
+@ApiStatus.Internal
 fun deniedCharsValidation(deniedChars: Regex): DialogValidation.WithParameter<() -> String> =
   validationErrorIf(PyBundle.message("validation.invalid.name")) {
     deniedChars.find(it) != null

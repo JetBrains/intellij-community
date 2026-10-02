@@ -3,8 +3,10 @@ package com.jetbrains.python.debugger
 
 import com.intellij.xdebugger.frame.XValueNode
 import com.jetbrains.python.PydevBundle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 class PyOnDemandValueEvaluator(linkText: @Nls String,
                                debugProcess: PyFrameAccessor,
                                var debugValue: PyDebugValue,

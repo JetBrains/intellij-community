@@ -230,6 +230,7 @@ private fun PyElement.isFromPytestPackage(): Boolean =
     it == "pytest" || it == "_pytest"
   }
 
+@ApiStatus.Internal
 class PyTestFixtureReferenceContributor : PsiReferenceContributor() {
 
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {

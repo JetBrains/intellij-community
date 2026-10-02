@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.impl.PyTupleParameterImpl;
 import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.io.IOException;
 /**
  * Does actual storing and loading of tuple parameter stub. Not much to do.
  */
+@ApiStatus.Internal
 public class PyTupleParameterElementType extends PyStubElementType<PyTupleParameterStub, PyTupleParameter> {
 
   public PyTupleParameterElementType() {
