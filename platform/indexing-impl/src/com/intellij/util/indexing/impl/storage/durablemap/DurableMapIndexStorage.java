@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.function.BiPredicate;
 
 @ApiStatus.Internal
 public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
@@ -451,7 +452,37 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
   public boolean processKeys(@NotNull Processor<? super Key> processor,
                              @NotNull GlobalSearchScope scope,
                              @Nullable IdFilter idFilter) throws StorageException {
-    return processKeys(processor);
+    if (idFilter == null) {
+      return processKeys(processor);
+    }
+
+    return withReadLock(() -> {
+      try {
+        invalidateCachedMappings(); // this will ensure that all new keys are made into the map
+        return durableMap.processEntries((key, container) -> {
+          //TODO RC: very ineffective way to apply IdFilter, but functionally correct:
+          boolean[] idFilterAccepted = new boolean[]{false};
+          container.forEach((fileId, _) -> {
+            if (idFilter.containsFileId(fileId)) {
+              idFilterAccepted[0] = true;
+              return false;//stop
+            }
+            return true;//continue
+          });
+
+          if (idFilterAccepted[0]) {
+            return processor.process(key);
+          }
+          return true;
+        });
+      }
+      catch (IOException e) {
+        throw new StorageException(e);
+      }
+      catch (RuntimeException e) {
+        throw unwrapCauseAndRethrow(e);
+      }
+    });
   }
 
   private boolean processKeys(@NotNull Processor<? super Key> processor) throws StorageException {

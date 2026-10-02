@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.function.BiPredicate;
 
 /**
  * Adapts {@link DurableMap} to the needs of {@link DurableMapIndexStorage}.
@@ -85,6 +86,10 @@ final class ValueContainerDurableMap<Key, Value> implements Closeable, Cleanable
 
   boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException {
     return durableMap.processKeys(processor);
+  }
+
+  boolean processEntries(@NotNull BiPredicate<? super Key, ? super UpdatableValueContainer<Value>> processor) throws IOException {
+    return durableMap.forEachEntry(processor);
   }
 
   @NotNull
