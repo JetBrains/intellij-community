@@ -41,6 +41,9 @@ public final class WriteAction {
    * <br/><span color=red>CAUTION</span>: if called from outside EDT, please be aware of possible deadlocks (e.g. when EDT is busy)
    * or invalid data (e.g. when something is changed during control transferred to EDT and back).
    * <br/>Instead, please use {@link #run(ThrowableRunnable)}.
+   * <p>
+   * Relies on the {@link WriteThread} API, which as of now runs its write actions on the EDT.
+   * In the future versions of the IntelliJ Platform this can change.
    */
   public static <E extends Throwable> void runAndWait(@NotNull ThrowableRunnable<E> action) throws E {
     computeAndWait(CoroutinesKt.throwableRunnableToThrowableComputable(action));
@@ -52,6 +55,9 @@ public final class WriteAction {
    * <br/><span color=red>CAUTION</span>: if called from outside EDT, please be aware of possible deadlocks (e.g. when EDT is busy)
    * or invalid data (e.g. when something is changed during control transferred to EDT and back).
    * <br/>Instead, please use {@link #compute(ThrowableComputable)}.
+   * <p>
+   * Relies on the {@link WriteThread} API, which as of now runs its write actions on the EDT.
+   * In the future versions of the IntelliJ Platform this can change.
    */
   public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action) throws E {
     return computeAndWait(action, ModalityState.defaultModalityState());
