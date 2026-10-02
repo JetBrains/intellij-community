@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.execution
 
@@ -7,9 +7,13 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.task.ExecuteRunConfigurationTask
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.plugins.gradle.execution.build.GradleBaseApplicationEnvironmentProvider
 import org.jetbrains.plugins.gradle.execution.build.GradleInitScriptParameters
+import org.jetbrains.plugins.gradle.service.execution.GRADLE_TOOLING_EXTENSION_CLASSES
+import org.jetbrains.plugins.gradle.service.execution.joinInitScripts
+import org.jetbrains.plugins.gradle.service.execution.loadToolingExtensionProvidingInitScript
 import org.jetbrains.plugins.gradle.service.execution.toGroovyStringLiteral
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -59,50 +63,81 @@ internal fun generateInitScript(params: GradleInitScriptParameters): String? {
         projectPath.takeIf { ':' in it } ?: "$projectPath:" // includes rootProject.name already, for top level projects has no ':'
     }
 
+    return joinInitScripts(
+        // The task script calls GradleLifecycleUtil, so the Gradle daemon needs the tooling extension classes.
+        loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES),
+        generateApplicationTaskScript(
+            gradleProjectId = gradleProjectId,
+            runAppTaskName = params.runAppTaskName,
+            mainClass = params.mainClass,
+            javaExePath = params.javaExePath,
+            workingDirectory = params.workingDirectory,
+            sourceSetName = params.sourceSetName,
+            taskParams = params.params,
+        )
+    )
+}
+
+/**
+ * Builds the init script that adds the run task to the Gradle project with the [gradleProjectId].
+ *
+ * The script asks `GradleLifecycleUtil` to configure each project.
+ * A top level `allprojects` call in an init script makes the root project configure every other project.
+ * Gradle rejects that cross-project access when the build turns on Isolated Projects.
+ */
+@VisibleForTesting
+internal fun generateApplicationTaskScript(
+    gradleProjectId: String,
+    runAppTaskName: String,
+    mainClass: String,
+    javaExePath: String,
+    workingDirectory: String?,
+    sourceSetName: String,
+    taskParams: String,
+): String {
     // @formatter:off
     // @Language("Groovy")
-    val initScript = """
+    return """
+    import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil
+
     def gradleProjectId = '$gradleProjectId'
-    def runAppTaskName = '${params.runAppTaskName}'
-    def mainClassToRun = '${params.mainClass}'
-    def javaExePath = mapPath(${params.javaExePath.toGroovyStringLiteral()})
-    def _workingDir = ${if (params.workingDirectory.isNullOrEmpty()) "null\n" else "mapPath(${params.workingDirectory!!.toGroovyStringLiteral()})"}
-    def sourceSetName = '${params.sourceSetName}'
-    
+    def runAppTaskName = '$runAppTaskName'
+    def mainClassToRun = '$mainClass'
+    def javaExePath = mapPath(${javaExePath.toGroovyStringLiteral()})
+    def _workingDir = ${if (workingDirectory.isNullOrEmpty()) "null\n" else "mapPath(${workingDirectory.toGroovyStringLiteral()})"}
+    def sourceSetName = '$sourceSetName'
+
     def isOlderThan64 = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.4")) < 0
 
-    allprojects {
-        afterEvaluate { project ->
-            if (project.rootProject.name + project.path == gradleProjectId) {
-                def overwrite = project.tasks.findByName(runAppTaskName) != null
-                project.tasks.create(name: runAppTaskName, overwrite: overwrite, type: JavaExec) {
-                    if (javaExePath) executable = javaExePath
-                    if (project.pluginManager.hasPlugin("org.jetbrains.kotlin.multiplatform")) {
-                        project.kotlin.targets.each { target ->
-                            target.compilations.each { compilation ->
-                                if (compilation.defaultSourceSetName == sourceSetName) {
-                                    classpath = compilation.output.allOutputs + compilation.runtimeDependencyFiles
-                                }
+    GradleLifecycleUtil.afterProject(gradle) { Project project ->
+        if (project.rootProject.name + project.path == gradleProjectId) {
+            def overwrite = project.tasks.findByName(runAppTaskName) != null
+            project.tasks.create(name: runAppTaskName, overwrite: overwrite, type: JavaExec) {
+                if (javaExePath) executable = javaExePath
+                if (project.pluginManager.hasPlugin("org.jetbrains.kotlin.multiplatform")) {
+                    project.kotlin.targets.each { target ->
+                        target.compilations.each { compilation ->
+                            if (compilation.defaultSourceSetName == sourceSetName) {
+                                classpath = compilation.output.allOutputs + compilation.runtimeDependencyFiles
                             }
                         }
-                    } else {
-                        classpath = project.sourceSets[sourceSetName].runtimeClasspath
                     }
-                    
-                    if (isOlderThan64) {
-                        main = mainClassToRun
-                    } else {
-                        mainClass = mainClassToRun
-                    }
-    
-                    ${params.params}
-                    if(_workingDir) workingDir = _workingDir
-                    standardInput = System.in
+                } else {
+                    classpath = project.sourceSets[sourceSetName].runtimeClasspath
                 }
+
+                if (isOlderThan64) {
+                    main = mainClassToRun
+                } else {
+                    mainClass = mainClassToRun
+                }
+
+                $taskParams
+                if(_workingDir) workingDir = _workingDir
+                standardInput = System.in
             }
         }
     }
     """
     // @formatter:on
-    return initScript
 }

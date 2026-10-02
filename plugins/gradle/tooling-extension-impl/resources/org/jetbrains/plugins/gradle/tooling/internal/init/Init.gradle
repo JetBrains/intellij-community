@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 //file:noinspection GrPackage
 
+import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil
 import org.gradle.util.GradleVersion
 
 boolean isBuildSrcProject = IS_BUILD_SCR_PROJECT
@@ -9,23 +10,16 @@ apply plugin: JetGradlePlugin
 
 if (isBuildSrcProject) {
   def oldVersion = GradleVersion.current() < GradleVersion.version("6.0")
-  allprojects { project ->
+  GradleLifecycleUtil.beforeProject(gradle) { Project project ->
     if (project.name == 'buildSrc') {
-      if (oldVersion) {
-        apply plugin: 'groovy'
-        dependencies {
-          compile gradleApi()
-          compile localGroovy()
-        }
+      if (!oldVersion) {
+        project.apply plugin: 'java-library'
       }
-      else {
-        apply plugin: 'java-library'
-        apply plugin: 'groovy'
-        dependencies {
-          api gradleApi()
-          api localGroovy()
-        }
-      }
+      project.apply plugin: 'groovy'
+      def configurationName = oldVersion ? 'compile' : 'api'
+      def dependencies = project.dependencies
+      dependencies.add(configurationName, dependencies.gradleApi())
+      dependencies.add(configurationName, dependencies.localGroovy())
     }
   }
 }
