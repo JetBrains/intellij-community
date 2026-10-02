@@ -33,6 +33,9 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.scripting.compiler.plugin.KOTLIN_SCRIPTING_PLUGIN_ID
 import org.jetbrains.kotlin.scripting.compiler.plugin.ReplSnippetConfigurationCodec
+import org.jetbrains.kotlin.scripting.compiler.plugin.ScriptTemplateWithClasspath
+import org.jetbrains.kotlin.scripting.compiler.plugin.scriptTemplateWithClasspath
+import org.jetbrains.kotlin.scripting.compiler.plugin.withRefinedFromSnippetClass
 import java.io.File
 import java.io.Serializable
 import java.nio.file.Files
@@ -47,6 +50,9 @@ import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.asErrorDiagnostics
 import kotlin.script.experimental.api.asSuccess
+import kotlin.script.experimental.api.baseClass
+import kotlin.script.experimental.api.dependencies
+import kotlin.script.experimental.api.hostConfiguration
 import kotlin.script.experimental.api.implicitReceivers
 import kotlin.script.experimental.api.prependSyntheticSnippets
 import kotlin.script.experimental.api.refineBeforeCompiling
@@ -56,10 +62,12 @@ import kotlin.script.experimental.api.resultFieldPrefix
 import kotlin.script.experimental.api.valueOr
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.impl._isSyntheticSnippet
+import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.impl.compiledSnippetFromClassPath
 import kotlin.script.experimental.util.LinkedSnippet
 import kotlin.script.experimental.util.LinkedSnippetImpl
 import kotlin.script.experimental.util.add
+import kotlin.script.experimental.util.toList
 
 /**
  * A [ReplCompiler] that compiles snippets out-of-process through the daemon's ordinary compile path.
@@ -112,6 +120,8 @@ class DaemonReplCompiler(
 
     private val priorOutputDirs = mutableListOf<File>()
     private val priorClassIds = mutableListOf<ClassId>()
+
+    private var scriptTemplateCache: Pair<Any, ScriptTemplateWithClasspath?>? = null
 
     private var lastCompiledSnippetInternal: LinkedSnippetImpl<CompiledSnippet>? = null
 
@@ -180,7 +190,9 @@ class DaemonReplCompiler(
         val sourceDir = Files.createTempDirectory("jsr223-daemon-repl-snippet-src-").toFile()
         try {
             val scriptFiles = refinedSnippets.map { File(sourceDir, it.name).also { file -> file.writeText(it.snippet.text) } }
-            val arguments = buildBatchCompilerArguments(scriptFiles, priorOutputDirs, priorClassIds, outputDir, configurationFile)
+            val arguments = buildBatchCompilerArguments(
+                scriptFiles, priorOutputDirs, priorClassIds, outputDir, configurationFile, batchConfiguration
+            )
 
             messageCollector.clear()
             val exitCode = runDaemonCompile(arguments)
@@ -193,11 +205,15 @@ class DaemonReplCompiler(
             priorOutputDirs += outputDir
             for ((refinedSnippet, scriptFile) in refinedSnippets.zip(scriptFiles)) {
                 val classId = snippetClassId(scriptFile)
+                // Brings in compiler-side refinement results, e.g. `@DependsOn`-resolved jars.
+                val compilationConfiguration = refinedSnippet.configuration.withRefinedFromSnippetClass(
+                    File(outputDir, "${classId.shortClassName.asString()}.class")
+                )
                 val compiledSnippet = compiledSnippetFromClassPath(
                     classPath = listOf(outputDir),
                     snippetClassFQName = classId.asSingleFqName().asString(),
                     snippet = refinedSnippet.snippet,
-                    compilationConfiguration = refinedSnippet.configuration,
+                    compilationConfiguration = compilationConfiguration,
                 )
                 priorClassIds += classId
                 lastCompiledSnippetInternal = lastCompiledSnippetInternal.add(compiledSnippet)
@@ -220,16 +236,18 @@ class DaemonReplCompiler(
         priorClassIds: List<ClassId>,
         outputDir: File,
         configurationFile: File,
+        batchConfiguration: ScriptCompilationConfiguration,
     ): List<String> {
         fun pluginOption(name: String, value: String) = "plugin:$KOTLIN_SCRIPTING_PLUGIN_ID:$name=$value"
         return buildList {
-            val classpathEntries = additionalClasspath.map { it.toAbsolutePath().toString() } + priorOutputDirs.map { it.absolutePath }
+            val classpathEntries = additionalClasspath.map { it.toAbsolutePath().toString() } +
+                    priorSnippetsResolvedClasspath().map { it.absolutePath } +
+                    priorOutputDirs.map { it.absolutePath }
             if (classpathEntries.isNotEmpty()) {
                 add("-cp")
                 add(classpathEntries.joinToString(File.pathSeparator))
             }
             add("-Xallow-any-scripts-in-source-roots")
-            add("-Xuse-fir-lt=false") // TODO: remove after finishing KT-77583
             add("-P")
             add(pluginOption("repl-snippet-stateless-mode", "true"))
             // Only the immediately preceding snippet: the compiler recovers the rest of the session by
@@ -240,6 +258,14 @@ class DaemonReplCompiler(
             }
             add("-P")
             add(pluginOption("repl-snippet-configuration", configurationFile.absolutePath))
+            // Refinement handlers are transient and cannot travel in the configuration file, so the compiler
+            // loads the definition from its template and overrides it with the configuration from the file.
+            scriptTemplateWithClasspathOf(batchConfiguration)?.let { template ->
+                add("-P")
+                add(pluginOption("script-definitions", template.templateClassName))
+                add("-P")
+                add(pluginOption("script-definitions-classpath", template.classpath.joinToString(File.pathSeparator) { it.path }))
+            }
             add("-d")
             add(outputDir.absolutePath)
             add("-Xsuppress-version-warnings")
@@ -247,6 +273,23 @@ class DaemonReplCompiler(
                 add(scriptFile.absolutePath)
             }
         }
+    }
+
+    // The same for all the snippets compiled with the same base class and host configuration, so computed once for them.
+    private fun scriptTemplateWithClasspathOf(configuration: ScriptCompilationConfiguration): ScriptTemplateWithClasspath? {
+        val key = configuration[ScriptCompilationConfiguration.baseClass] to
+                configuration[ScriptCompilationConfiguration.hostConfiguration]
+        scriptTemplateCache?.takeIf { it.first == key }?.let { return it.second }
+        return scriptTemplateWithClasspath(configuration).also { scriptTemplateCache = key to it }
+    }
+
+    // Includes the classpath resolved by the compiler-side refinement of the prior snippets, e.g. by `@DependsOn`.
+    private fun priorSnippetsResolvedClasspath(): List<File> {
+        val known = additionalClasspath.mapTo(HashSet()) { it.toAbsolutePath().toFile() }
+        return lastCompiledSnippetInternal
+            .toList { it.compilationConfiguration[ScriptCompilationConfiguration.dependencies].orEmpty() }
+            .flatten().filterIsInstance<JvmDependency>().flatMap { it.classpath }
+            .filterNot { it in known }.distinct()
     }
 
     private fun runDaemonCompile(arguments: List<String>): Int {
