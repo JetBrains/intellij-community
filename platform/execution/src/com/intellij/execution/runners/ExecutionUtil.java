@@ -33,13 +33,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.icons.IndicatorIcon;
+import com.intellij.ui.icons.LiveIndicatorIcons;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -295,10 +293,11 @@ public final class ExecutionUtil {
     }
   }
 
+  /**
+   * Consider using {@link com.intellij.ui.icons.LiveIndicatorIcons#withLiveIndicatorIcon} instead
+   */
   public static @NotNull Icon withLiveIndicator(final @NotNull Icon base) {
-    return ExperimentalUI.isNewUI() ?
-           IconManager.getInstance().withIconBadge(base, JBUI.CurrentTheme.IconBadge.SUCCESS) :
-           getLiveIndicator(base);
+    return LiveIndicatorIcons.withLiveIndicatorIcon(base);
   }
 
   /**

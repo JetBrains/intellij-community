@@ -1,6 +1,5 @@
 package com.intellij.platform.lsp.impl.serviceView
 
-import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.services.ServiceViewDescriptor
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
@@ -17,6 +16,7 @@ import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.icons.withLiveIndicatorIcon
 import javax.swing.JComponent
 
 internal class LspClientServiceViewDescriptor(
@@ -50,7 +50,7 @@ internal class LspClientServiceViewDescriptor(
     val baseIcon = AllIcons.Webreferences.Server
     presentationData.setIcon(when (state) {
       LspServerState.Initializing -> baseIcon
-      LspServerState.Running -> ExecutionUtil.withLiveIndicator(baseIcon)
+      LspServerState.Running -> withLiveIndicatorIcon(baseIcon)
       LspServerState.ShutdownNormally -> IconLoader.getDisabledIcon(baseIcon)
       LspServerState.ShutdownUnexpectedly -> LayeredIcon.layeredIcon(arrayOf(baseIcon, AllIcons.Nodes.ErrorMark))
     })

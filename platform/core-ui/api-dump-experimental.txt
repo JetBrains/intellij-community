@@ -6,5 +6,6 @@ f:com.intellij.ui.SimpleTextAttributes
 - sf:getLiveIndicatorIcon(javax.swing.Icon):javax.swing.Icon
 - sf:getLiveIndicatorIcon(javax.swing.Icon,java.awt.Color):javax.swing.Icon
 - sf:getLiveIndicatorIcon(javax.swing.Icon,Z):javax.swing.Icon
+- sf:withLiveIndicatorIcon(javax.swing.Icon):javax.swing.Icon
 f:com.intellij.util.IconUtil
 - *sf:downscaleIconToSize(javax.swing.Icon,I,I):javax.swing.Icon
