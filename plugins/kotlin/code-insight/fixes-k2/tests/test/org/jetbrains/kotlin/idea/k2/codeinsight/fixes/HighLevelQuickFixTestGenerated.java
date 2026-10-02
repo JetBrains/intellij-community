@@ -3105,6 +3105,31 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("moveOperatorToCompanionObject.kt")
+        public void testMoveOperatorToCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/moveOperatorToCompanionObject.kt");
+        }
+
+        @TestMetadata("moveOperatorToCompanionObjectUnavailableForExtension.kt")
+        public void testMoveOperatorToCompanionObjectUnavailableForExtension() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/moveOperatorToCompanionObjectUnavailableForExtension.kt");
+        }
+
+        @TestMetadata("moveOperatorToCompanionObjectUnavailableOutsideBlock.kt")
+        public void testMoveOperatorToCompanionObjectUnavailableOutsideBlock() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/moveOperatorToCompanionObjectUnavailableOutsideBlock.kt");
+        }
+
+        @TestMetadata("moveOperatorToCompanionObjectWithUsages.kt")
+        public void testMoveOperatorToCompanionObjectWithUsages() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/moveOperatorToCompanionObjectWithUsages.kt");
+        }
+
+        @TestMetadata("moveOperatorToExistingCompanionObject.kt")
+        public void testMoveOperatorToExistingCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/moveOperatorToExistingCompanionObject.kt");
+        }
+
         @TestMetadata("moveOverloadToCompanionBlock.kt")
         public void testMoveOverloadToCompanionBlock() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/moveOverloadToCompanionBlock.kt");

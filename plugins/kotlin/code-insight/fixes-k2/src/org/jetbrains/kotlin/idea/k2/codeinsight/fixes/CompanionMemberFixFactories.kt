@@ -51,6 +51,7 @@ import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
@@ -76,10 +77,16 @@ internal object CompanionMemberFixFactories {
         listOfNotNull(createMoveOverloadFix(declaration))
     }
 
-    private fun createMoveOverloadFix(declaration: KtNamedDeclaration): MoveOverloadToCompanionFix? =
+    val inapplicableOperatorModifierFactory = quickFixesPsiBasedFactory<PsiElement> { psiElement ->
+        val function = psiElement.getNonStrictParentOfType<KtNamedFunction>()
+        if (function?.isFromCompanionBlock != true) return@quickFixesPsiBasedFactory emptyList()
+        listOf(MoveToCompanionObjectFix(function))
+    }
+
+    private fun createMoveOverloadFix(declaration: KtNamedDeclaration): MoveToCompanionFix? =
         when {
-            declaration.isFromCompanionBlock -> MoveOverloadToCompanionObjectFix(declaration)
-            (declaration.containingClassOrObject as? KtObjectDeclaration)?.isCompanion() == true -> MoveOverloadToCompanionBlockFix(declaration)
+            declaration.isFromCompanionBlock -> MoveToCompanionObjectFix(declaration)
+            (declaration.containingClassOrObject as? KtObjectDeclaration)?.isCompanion() == true -> MoveToCompanionBlockFix(declaration)
             else -> return null
         }
 
@@ -174,7 +181,7 @@ internal object CompanionMemberFixFactories {
     }
 }
 
-private sealed class MoveOverloadToCompanionFix(
+private sealed class MoveToCompanionFix(
     declaration: KtNamedDeclaration
 ) : KotlinQuickFixAction<KtNamedDeclaration>(declaration) {
     protected abstract val actionName: @IntentionName String
@@ -220,9 +227,9 @@ private sealed class MoveOverloadToCompanionFix(
     override fun startInWriteAction(): Boolean = false
 }
 
-private class MoveOverloadToCompanionObjectFix(
+private class MoveToCompanionObjectFix(
     declaration: KtNamedDeclaration
-) : MoveOverloadToCompanionFix(declaration) {
+) : MoveToCompanionFix(declaration) {
     override val actionName: String
         get() = KotlinBundle.message("move.to.companion.object")
 
@@ -232,9 +239,9 @@ private class MoveOverloadToCompanionObjectFix(
     }
 }
 
-private class MoveOverloadToCompanionBlockFix(
+private class MoveToCompanionBlockFix(
     declaration: KtNamedDeclaration
-) : MoveOverloadToCompanionFix(declaration) {
+) : MoveToCompanionFix(declaration) {
     override val actionName: String
         get() = KotlinBundle.message("move.to.companion.block")
 

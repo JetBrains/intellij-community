@@ -8,4 +8,4 @@ class OneSetDistributed {
     }
 
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.MoveOverloadToCompanionBlockFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.MoveToCompanionBlockFix

@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
+import org.jetbrains.kotlin.psi.psiUtil.isFromCompanionBlock
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import java.util.Collections
 
@@ -273,6 +274,7 @@ private fun traverseOuterInstanceReferences(
     body: (OuterInstanceReferenceUsageInfo) -> Unit
 ): Boolean {
     if (member is KtObjectDeclaration || member is KtClass && !member.isInner()) return false
+    if (member.isFromCompanionBlock) return false
     analyze(member) {
         val containingClassOrObject = member.containingClassOrObject ?: return false
         val outerClassSymbol = containingClassOrObject.symbol as? KaClassSymbol ?: return false

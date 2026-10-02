@@ -10,4 +10,4 @@ class OneSetDistributed {
         <caret>operator fun of(): OneSetDistributed = OneSetDistributed()
     }
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.MoveOverloadToCompanionObjectFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.MoveToCompanionObjectFix

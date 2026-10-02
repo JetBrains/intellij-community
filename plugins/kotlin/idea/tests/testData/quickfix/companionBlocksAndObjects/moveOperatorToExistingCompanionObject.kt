@@ -1,0 +1,13 @@
+// "Move to companion object" "true"
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks
+// K2_ERROR: INAPPLICABLE_OPERATOR_MODIFIER
+class Example {
+    companion object {
+        fun create(): Example = Example()
+    }
+
+    companion {
+        <caret>operator fun plus(x: Int): Int = x
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.MoveToCompanionObjectFix

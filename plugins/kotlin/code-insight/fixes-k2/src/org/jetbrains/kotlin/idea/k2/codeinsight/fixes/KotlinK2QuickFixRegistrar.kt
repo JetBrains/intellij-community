@@ -72,7 +72,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerPsiQuickFixes(KaFirDiagnostic.InapplicableLateinitModifier::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(LATEINIT_KEYWORD))
         registerPsiQuickFixes(
             KaFirDiagnostic.InapplicableOperatorModifier::class,
-            RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(OPERATOR_KEYWORD)
+            RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(OPERATOR_KEYWORD),
+            CompanionMemberFixFactories.inapplicableOperatorModifierFactory
         )
 
         registerPsiQuickFixes(
