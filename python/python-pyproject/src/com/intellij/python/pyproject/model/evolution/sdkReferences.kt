@@ -8,23 +8,27 @@ import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 import com.intellij.platform.workspace.jps.entities.SdkDependency
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.entities
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.sdk.internal.PYTHON_FACET_ID
 
 /** The attribute the Python facet configuration stores its SDK name in. */
 private const val FACET_SDK_NAME_ATTRIBUTE = "sdkName"
 
 /**
- * The SDK name of [module], read from [storage], or `null`.
- * Order: the module SDK, the project SDK if the module inherits it, the SDK of a Python facet.
+ * The Python SDK name of [module], read from [storage], or `null`.
+ * Order: the module SDK, the project SDK if the module inherits it, the SDK of a Python facet. The module SDK and the
+ * project SDK count only when they are Python SDKs. So a Java module with a Python facet gets the facet SDK, and not
+ * its JDK, as `PyModuleService.findPythonSdk` answers.
  */
 internal fun sdkReferenceOf(module: ModuleEntity, storage: EntityStorage): String? {
-  for (dependency in module.dependencies) {
+  val moduleSdk = module.dependencies.firstNotNullOfOrNull { dependency ->
     when (dependency) {
-      is SdkDependency -> return dependency.sdk.name
-      is InheritedSdkDependency -> return storage.entities<ProjectSettingsEntity>().firstOrNull()?.projectSdk?.name
-      else -> Unit
+      is SdkDependency -> dependency.sdk
+      is InheritedSdkDependency -> storage.entities<ProjectSettingsEntity>().firstOrNull()?.projectSdk
+      else -> null
     }
   }
+  if (moduleSdk != null && moduleSdk.type == PyNames.PYTHON_SDK_ID_NAME) return moduleSdk.name
   return module.facets.firstOrNull { it.typeId.name == PYTHON_FACET_ID }?.configurationXmlTag?.let(::facetSdkName)
 }
 
