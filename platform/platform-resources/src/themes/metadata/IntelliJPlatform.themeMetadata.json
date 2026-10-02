@@ -28,10 +28,10 @@
       "key": "Banner.infoMutedBorderColor"
     },
     {
-      "key": "Banner.neutralBackground"
+      "key": "Banner.neutralMutedBackground"
     },
     {
-      "key": "Banner.neutralBorderColor"
+      "key": "Banner.neutralMutedBorderColor"
     },
     {
       "key": "Banner.successBackground"

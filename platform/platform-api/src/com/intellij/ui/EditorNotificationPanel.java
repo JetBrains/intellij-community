@@ -239,26 +239,28 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       return;
     }
 
-    var icon = status.getIcon();
     myTextLabel.setIconTextGap(JBUI.scale(8));
-    myTextLabel.setIcon(new Icon() {
-      @Override
-      public void paintIcon(Component component, Graphics graphics, int x, int y) {
-        if (!StringUtil.isEmpty(myTextLabel.getText())) {
-          icon.paintIcon(component, graphics, x, y);
+    var icon = status.getIcon();
+    if (icon != null) {
+      myTextLabel.setIcon(new Icon() {
+        @Override
+        public void paintIcon(Component component, Graphics graphics, int x, int y) {
+          if (!StringUtil.isEmpty(myTextLabel.getText())) {
+            icon.paintIcon(component, graphics, x, y);
+          }
         }
-      }
 
-      @Override
-      public int getIconWidth() {
-        return icon.getIconWidth();
-      }
+        @Override
+        public int getIconWidth() {
+          return icon.getIconWidth();
+        }
 
-      @Override
-      public int getIconHeight() {
-        return icon.getIconHeight();
-      }
-    });
+        @Override
+        public int getIconHeight() {
+          return icon.getIconHeight();
+        }
+      });
+    }
     myTextLabel.setForeground(JBUI.CurrentTheme.Banner.FOREGROUND);
     myTextLabel.setBorder(JBUI.Borders.emptyRight(20));
 
@@ -820,19 +822,19 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     Warning(JBUI.CurrentTheme.Banner.WARNING_BACKGROUND, JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR, () -> AllIcons.General.BalloonWarning),
     Error(JBUI.CurrentTheme.Banner.ERROR_BACKGROUND, JBUI.CurrentTheme.Banner.ERROR_BORDER_COLOR, () -> AllIcons.General.BalloonError),
     Promo(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, EditorNotificationPanel::getPromoIcon),
-    Neutral(JBUI.CurrentTheme.Banner.NEUTRAL_BACKGROUND, JBUI.CurrentTheme.Banner.NEUTRAL_BORDER_COLOR, () -> AllIcons.General.BalloonInformation);
+    NeutralMuted(JBUI.CurrentTheme.Banner.NEUTRAL_MUTED_BACKGROUND, JBUI.CurrentTheme.Banner.NEUTRAL_MUTED_BORDER_COLOR, () -> null);
 
     final @NotNull Color background;
     final @NotNull Color border;
-    private final @NotNull Supplier<Icon> icon;
+    private final @NotNull Supplier<@Nullable Icon> icon;
 
-    Status(@NotNull Color background, @NotNull Color border, @NotNull Supplier<Icon> icon) {
+    Status(@NotNull Color background, @NotNull Color border, @NotNull Supplier<@Nullable Icon> icon) {
       this.background = background;
       this.border = border;
       this.icon = icon;
     }
 
-    public Icon getIcon() {
+    public @Nullable Icon getIcon() {
       return icon.get();
     }
   }
