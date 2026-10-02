@@ -2,8 +2,6 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.declarations
 
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -11,13 +9,12 @@ import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.convertDestructuringToPositionalForm
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractPrimaryParameters
 import org.jetbrains.kotlin.idea.codeinsight.utils.getDestructuredClassType
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFullValueClassDestructuring
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConvertToPositionalDestructuringFix
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtVisitor
@@ -80,12 +77,10 @@ internal class CustomComponentDestructuringMigrationInspection : AbstractKotlinI
 
         val highlightRange = ApplicabilityRanges.destructuringDeclarationParens(declaration).singleOrNull() ?: return
 
-        holder.registerProblem(
-            declaration,
-            highlightRange,
-            KotlinBundle.message("inspection.positional.destructuring.migration"),
-            ConvertCustomComponentDestructuringToSquareBracketFix()
-        )
+        holder.problem(declaration, KotlinBundle.message("inspection.positional.destructuring.migration"))
+            .range(highlightRange)
+            .fix(ConvertToPositionalDestructuringFix(declaration, supportsFixAll = false))
+            .register()
     }
 
     context(session: KaSession)
@@ -96,18 +91,5 @@ internal class CustomComponentDestructuringMigrationInspection : AbstractKotlinI
         val entries = declaration.entries
         if (entries.size > MAP_ENTRY_NAMES.size) return false
         return entries.zip(MAP_ENTRY_NAMES).all { (entry, expected) -> entry.name == expected }
-    }
-}
-
-private class ConvertCustomComponentDestructuringToSquareBracketFix : KotlinModCommandQuickFix<KtDestructuringDeclaration>() {
-
-    override fun getFamilyName(): String = KotlinBundle.message("inspection.positional.destructuring.migration.fix")
-
-    override fun applyFix(
-        project: Project,
-        element: KtDestructuringDeclaration,
-        updater: ModPsiUpdater
-    ) {
-        convertDestructuringToPositionalForm(element)
     }
 }

@@ -1,11 +1,9 @@
 // "Convert to positional destructuring syntax with square brackets" "true"
-// COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=name-mismatch
 // WITH_STDLIB
 
-fun test() {
-    val list = listOf("a", "b", "c")
-    for ([i, element] in list.withIndex()) {
-        println("$i: $element")
-    }
+fun <K, V> putAll(from: Map<out K, V>) {
+    for ([value, key] in from) {}
 }
+
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConvertToPositionalDestructuringFix

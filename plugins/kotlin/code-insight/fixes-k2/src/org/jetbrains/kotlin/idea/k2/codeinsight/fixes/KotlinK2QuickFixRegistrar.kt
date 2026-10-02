@@ -639,7 +639,14 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     }
 
     private val destructuringDeclarations = KtQuickFixesListBuilder.registerPsiQuickFix  {
-        registerFactory(DestructuringFormFactory.convertToFullFormOnShortFormNameMismatch)
+        registerFactory(DestructuringToFullFormFactory.convertToFullFormOnShortFormNameMismatch)
+        registerFactory(DestructuringToFullFormFactory.convertToFullFormOnShortFormUnderscore)
+        registerFactory(DestructuringToFullFormFactory.convertToFullFormOnShortUnderscoreWithoutRename)
+        registerFactory(DestructuringToPositionalFormFactory.convertToPositionalFormOnShortFormNameMismatch)
+        registerFactory(DestructuringToPositionalFormFactory.convertToPositionalFormOnShortFormNonDataClass)
+        registerFactory(DestructuringToPositionalFormFactory.convertToPositionalFormOnShortFormUnderscore)
+        registerFactory(DestructuringToPositionalFormFactory.convertToPositionalFormOnShortUnderscoreWithoutRename)
+        registerFactory(DestructuringRenameFactory.renameToMatchParameterName)
     }
 
     private val other = KtQuickFixesListBuilder.registerPsiQuickFix {

@@ -8830,11 +8830,6 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/fullFormLambda.kt");
         }
 
-        @TestMetadata("fullFormLambdaNameMismatch.kt")
-        public void testFullFormLambdaNameMismatch() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/fullFormLambdaNameMismatch.kt");
-        }
-
         @TestMetadata("fullFormValueClasses.kt")
         public void testFullFormValueClasses() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/fullFormValueClasses.kt");
@@ -8845,19 +8840,9 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/fullFormWithAllUnusedVariable.kt");
         }
 
-        @TestMetadata("fullFormWithSeveralUnusedVariableNameMismatch.kt")
-        public void testFullFormWithSeveralUnusedVariableNameMismatch() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/fullFormWithSeveralUnusedVariableNameMismatch.kt");
-        }
-
         @TestMetadata("fullFormWithUnusedVariable.kt")
         public void testFullFormWithUnusedVariable() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/fullFormWithUnusedVariable.kt");
-        }
-
-        @TestMetadata("fullFormWithUnusedVariableNameMismatch.kt")
-        public void testFullFormWithUnusedVariableNameMismatch() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/fullFormWithUnusedVariableNameMismatch.kt");
         }
 
         @TestMetadata("genericDataClassFullForm.kt")
@@ -8888,6 +8873,125 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("preserveFormatting.kt")
         public void testPreserveFormatting() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/preserveFormatting.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic")
+    public static class DestructingShortFormNameMismatchDiagnostic extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("convertDataClass.kt")
+        public void testConvertDataClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/convertDataClass.kt");
+        }
+
+        @TestMetadata("convertInsideLambda.kt")
+        public void testConvertInsideLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/convertInsideLambda.kt");
+        }
+
+        @TestMetadata("convertMismatchToPositional.kt")
+        public void testConvertMismatchToPositional() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/convertMismatchToPositional.kt");
+        }
+
+        @TestMetadata("fullFormLambdaNameMismatch.kt")
+        public void testFullFormLambdaNameMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/fullFormLambdaNameMismatch.kt");
+        }
+
+        @TestMetadata("fullFormWithSeveralUnusedVariableNameMismatch.kt")
+        public void testFullFormWithSeveralUnusedVariableNameMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/fullFormWithSeveralUnusedVariableNameMismatch.kt");
+        }
+
+        @TestMetadata("fullFormWithUnusedVariableNameMismatch.kt")
+        public void testFullFormWithUnusedVariableNameMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/fullFormWithUnusedVariableNameMismatch.kt");
+        }
+
+        @TestMetadata("mapEntryNamesReversed.kt")
+        public void testMapEntryNamesReversed() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/mapEntryNamesReversed.kt");
+        }
+
+        @TestMetadata("mapEntryRegularNames.kt")
+        public void testMapEntryRegularNames() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/mapEntryRegularNames.kt");
+        }
+
+        @TestMetadata("mismatchOnLaterEntryOnly.kt")
+        public void testMismatchOnLaterEntryOnly() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/mismatchOnLaterEntryOnly.kt");
+        }
+
+        @TestMetadata("notAvailableWhenAllNamesMatch.kt")
+        public void testNotAvailableWhenAllNamesMatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/notAvailableWhenAllNamesMatch.kt");
+        }
+
+        @TestMetadata("renameToMatchProperty.kt")
+        public void testRenameToMatchProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/renameToMatchProperty.kt");
+        }
+
+        @TestMetadata("renameToMatchPropertyDisabled.kt")
+        public void testRenameToMatchPropertyDisabled() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/renameToMatchPropertyDisabled.kt");
+        }
+
+        @TestMetadata("renameToMatchPropertyMap.kt")
+        public void testRenameToMatchPropertyMap() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/renameToMatchPropertyMap.kt");
+        }
+
+        @TestMetadata("renameToMatchPropertyVarCollision.kt")
+        public void testRenameToMatchPropertyVarCollision() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/renameToMatchPropertyVarCollision.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/destructuringShortFormNonDataClassDiagnostics")
+    public static class DestructuringShortFormNonDataClassDiagnostics extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("shortFormNonDataClass.kt")
+        public void testShortFormNonDataClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructuringShortFormNonDataClassDiagnostics/shortFormNonDataClass.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/destructuringShortFormUnderscoreDiagnostics")
+    public static class DestructuringShortFormUnderscoreDiagnostics extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("convertFullFormUnderscoreToPositional.kt")
+        public void testConvertFullFormUnderscoreToPositional() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructuringShortFormUnderscoreDiagnostics/convertFullFormUnderscoreToPositional.kt");
+        }
+
+        @TestMetadata("shortUnderscoreToFullForm.kt")
+        public void testShortUnderscoreToFullForm() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructuringShortFormUnderscoreDiagnostics/shortUnderscoreToFullForm.kt");
+        }
+
+        @TestMetadata("underscoreWithoutRenaming.kt")
+        public void testUnderscoreWithoutRenaming() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructuringShortFormUnderscoreDiagnostics/underscoreWithoutRenaming.kt");
+        }
+
+        @TestMetadata("underscoreWithoutRenamingToFull.kt")
+        public void testUnderscoreWithoutRenamingToFull() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructuringShortFormUnderscoreDiagnostics/underscoreWithoutRenamingToFull.kt");
         }
     }
 

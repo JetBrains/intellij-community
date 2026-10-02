@@ -17,11 +17,14 @@ import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.idea.base.psi.EditCommaSeparatedListHelper
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.resolve.calls.util.isSingleUnderscore
 
+private val MAP_ENTRY_NAMES: List<Name> = listOf(Name.identifier("key"), Name.identifier("value"))
 /**
  * Extracts primary constructor parameters for a data class destructuring declaration.
  *
@@ -67,6 +70,20 @@ fun KtDestructuringDeclaration.isFullValueClassDestructuring(): Boolean {
     return classSymbol.isFullValueClass()
 }
 
+@ApiStatus.Internal
+fun KaSession.extractDestructuringComponentNames(declaration: KtDestructuringDeclaration): List<Name>? {
+    val classType = declaration.getDestructuredClassType() ?: return null
+    val entryCount = declaration.entries.size
+
+    val allNames = when {
+        classType.isSubtypeOf(StandardClassIds.MapEntry) -> MAP_ENTRY_NAMES
+        else -> extractDataClassParameters(classType)?.map { it.name } ?: return null
+    }
+
+    if (entryCount > allNames.size) return null
+    return allNames.take(entryCount)
+}
+
 /**
  * Returns the class type of the value being destructured: either the initializer expression's type
  * or the destructured parameter's type (lambda case)
@@ -105,59 +122,67 @@ fun isPositionalDestructuringType(classType: KaClassType): Boolean {
     return classId in POSITIONAL_DESTRUCTURING_CLASSES
 }
 
+private fun getNewEntriesText(entryMappings: List<EntryMapping>, perEntryKeyword: String, positionBased: Boolean): String {
+    return entryMappings.joinToString(", ") { mapping ->
+        buildString {
+            if (perEntryKeyword.isNotEmpty()) {
+                append(perEntryKeyword)
+                append(" ")
+            }
+            append(mapping.usedName)
+
+            if (!positionBased && mapping.usedName != mapping.targetName.asString()) {
+                append(" = ")
+                append(mapping.targetName.asString())
+            }
+        }
+    }
+}
+
+private fun KtDestructuringDeclaration.buildEntryMappings(usedNames: List<String>, targetNames: List<Name>): List<EntryMapping>? {
+    if (entries.size > targetNames.size || entries.size > usedNames.size) return null
+
+    return entries.mapIndexed { index, entry ->
+        EntryMapping(entry, usedNames[index], targetNames[index])
+    }
+}
+
 @ApiStatus.Internal
 fun KtDestructuringDeclaration.applyNameBasedDestructuringForm(
     nameBasedDestructuringForm: NameBasedDestructuringForm,
     entityNames: List<String>? = null
 ): KtDestructuringDeclaration? {
-    val destructuringNames = nameBasedDestructuringForm.names
+    val targetNames = nameBasedDestructuringForm.names
     val usedNames = entityNames ?: entries.map { it.name ?: return null }
-    if (entries.size > destructuringNames.size || entries.size > usedNames.size) return null
+
+    val entryMappings = buildEntryMappings(usedNames, targetNames) ?: return null
 
     val positionBased = nameBasedDestructuringForm.positionBased
     val useShortForm = !nameBasedDestructuringForm.useFullForm
-    val originalKeyword = if (isVar) "var" else "val"
-    val keyword = if (positionBased || useShortForm) "" else originalKeyword
 
-    val entryMappings = entries.mapIndexed { i, entry ->
-        EntryMapping(entry, usedNames[i], destructuringNames[i])
-    }
-    // entries with "_" name will be removed further
-    val (kept, dropped) = entryMappings.partition { it.usedName != "_" }
-    if (kept.isEmpty()) return null
+    val outerKeyword = if (isVar) "var" else "val"
+    val perEntryKeyword = if (!positionBased && !useShortForm) outerKeyword else ""
 
-    val newEntriesText = kept.joinToString(", ") { mapping ->
-        buildString {
-            if (keyword.isNotEmpty()) {
-                append(keyword)
-                append(" ")
-            }
-            append(mapping.usedName)
-            if (!positionBased && (mapping.usedName != mapping.targetName.asString())) {
-                append(" = ")
-                append(mapping.targetName)
-            }
-        }
-    }
+    val (keptMappings, underscoreMappingsToDrop) = entryMappings.partition { !it.psiEntry.isSingleUnderscore }
 
-    val templateKeyword = if (keyword.isEmpty()) "$originalKeyword " else ""
+    if (keptMappings.isEmpty()) return null
+
+    val newEntriesText = getNewEntriesText(keptMappings, perEntryKeyword, positionBased)
+
+    val templateKeyword = if (perEntryKeyword.isEmpty()) "$outerKeyword " else ""
     val template = KtPsiFactory(project).createDestructuringDeclaration("$templateKeyword($newEntriesText) = TODO()")
 
-    if (template.entries.size != kept.size) return null
-    kept.zip(template.entries).forEach { (mapping, newEntry) ->
+    if (template.entries.size != keptMappings.size) return null
+    keptMappings.zip(template.entries).forEach { (mapping, newEntry) ->
         mapping.psiEntry.replace(newEntry)
     }
-    dropped.forEach {
-        EditCommaSeparatedListHelper.removeItem(it.psiEntry)
-    }
 
-    if (!positionBased && !useShortForm) {
-        valOrVarKeyword?.delete()
-    }
+    underscoreMappingsToDrop.forEach { mapping -> EditCommaSeparatedListHelper.removeItem(mapping.psiEntry) }
 
-    if (positionBased) {
-        convertDestructuringToPositionalForm(this)
-    }
+    val shouldRemoveOuterKeyword = !positionBased && !useShortForm
+    if (shouldRemoveOuterKeyword) { valOrVarKeyword?.delete() }
+
+    if (positionBased) { convertDestructuringToPositionalForm(this) }
     return this
 }
 

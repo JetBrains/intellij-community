@@ -1,0 +1,11 @@
+// "Convert to a full name-based destructuring form" "true"
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=name-mismatch
+// WITH_STDLIB
+
+data class Person(val firstName: String, val lastName: String, val age: Int)
+
+fun test(person: Person) {
+    (val a = firstName, val b = lastName, val c = age) = person
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.DestructuringToFullFormFactory$ConvertNameBasedDestructuringToFullFormFix

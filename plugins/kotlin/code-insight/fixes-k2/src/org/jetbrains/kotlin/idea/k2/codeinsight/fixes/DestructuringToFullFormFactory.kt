@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -15,17 +17,27 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 
-internal object DestructuringFormFactory {
-    val convertToFullFormOnShortFormNameMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.DestructuringShortFormNameMismatch ->
-        val entry = diagnostic.psi as? KtDestructuringDeclarationEntry ?: return@ModCommandBased emptyList()
-        val declaration = entry.parent as? KtDestructuringDeclaration ?: return@ModCommandBased emptyList()
+internal object DestructuringToFullFormFactory {
+    val convertToFullFormOnShortFormNameMismatch =
+        KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.DestructuringShortFormNameMismatch> { createFix(it.psi) }
 
-        if (declaration.isPositionalDestructuringType()) return@ModCommandBased emptyList()
+    val convertToFullFormOnShortFormUnderscore =
+        KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.DestructuringShortFormUnderscore> { createFix(it.psi) }
+
+    val convertToFullFormOnShortUnderscoreWithoutRename =
+        KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.NameBasedDestructuringUnderscoreWithoutRenaming> { createFix(it.psi) }
+
+    context(_: KaSession)
+    private fun createFix(psi: PsiElement): List<ConvertNameBasedDestructuringToFullFormFix> {
+        val entry = psi as? KtDestructuringDeclarationEntry ?: return emptyList()
+        val declaration = entry.parent as? KtDestructuringDeclaration ?: return emptyList()
+
+        if (declaration.isPositionalDestructuringType()) return emptyList()
         val propertyNames = extractPrimaryParameters(declaration)
             ?.take(declaration.entries.size)
             ?.map { it.name }
-            ?: return@ModCommandBased emptyList()
-        listOf(ConvertNameBasedDestructuringToFullFormFix(propertyNames, declaration))
+            ?: return emptyList()
+        return listOf(ConvertNameBasedDestructuringToFullFormFix(propertyNames, declaration))
     }
 
     private class ConvertNameBasedDestructuringToFullFormFix(val propertyNames: List<Name>, declaration: KtDestructuringDeclaration) :
