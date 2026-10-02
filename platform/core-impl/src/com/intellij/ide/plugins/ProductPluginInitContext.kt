@@ -462,6 +462,7 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.platform.debugger.impl.shared",
   "intellij.platform.debugger.impl.ui",
   "intellij.platform.execution.dashboard",
+  "intellij.platform.feedback",
   "intellij.platform.externalSystem",
   "intellij.platform.externalSystem.impl",
   "intellij.platform.tasks",

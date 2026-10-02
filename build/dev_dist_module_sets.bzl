@@ -565,9 +565,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.moduleSets.essential.minimal",
             "intellij.moduleSets.builtInServer",
         ],
-        loading = {
-            "intellij.platform.feedback": "embedded",
-        },
         packed = {
             "intellij.platform.completion.backend": "//platform/completion/backend:backend_content_module_jar",
             "intellij.platform.completion.common": "//platform/completion/common:common_content_module_jar",
@@ -599,6 +596,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.eel.tcp",
             "intellij.platform.execution.impl.backend",
             "intellij.platform.execution.impl.frontend",
+            "intellij.platform.feedback",
             "intellij.platform.find",
             "intellij.platform.find.backend",
             "intellij.platform.ide.internal",

@@ -293,6 +293,7 @@ private val asyncAppListenerAllowListForNonCorePlugin = java.util.Set.of(
   "com.intellij.platform.daemon.client.DaemonApplicationActivity",
   "com.intellij.platform.ijent.community.impl.IjentMessageBusAdapter",
   "com.intellij.platform.compose.SkikoPreloader",
+  "com.intellij.platform.feedback.eap.EAPApplicationInitializedListener",
 )
 
 private fun executeAsyncAppInitListeners(scope: CoroutineScope) {
