@@ -10,6 +10,7 @@ import java.util.List;
  * ({@link PyClassType#getTypeArguments()}, {@link PyClassType#getIteratedItemType()}), so this interface no longer
  * carries any members of its own. It is preserved solely as an empty marker so that {@code instanceof PyCollectionType}
  * checks in third-party plugins keep working. Use {@link PyClassType} (and {@link PyClassType#isParameterized()}) instead.
+ * For the element types of a tuple, use {@link PyTupleType#getElementTypes()}, which overrides {@link #getElementTypes()}.
  */
 @Deprecated
 public interface PyCollectionType extends PyClassType {

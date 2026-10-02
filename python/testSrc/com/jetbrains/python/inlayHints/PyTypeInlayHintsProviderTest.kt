@@ -309,6 +309,19 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, false, SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID, SOLVED_FUNCTION_TYPE_PARAMETERS_OPTION_ID)
   }
 
+  @TestFor(issues = ["PY-92092"])
+  fun `test no solved type parameters hint for a named tuple constructor`() {
+    doTest("""
+      from typing import NamedTuple
+
+      class P(NamedTuple):
+          x: int
+          y: str
+
+      P(1, "a")
+    """, false, SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID)
+  }
+
   @TestFor(issues = ["PY-90411"])
   fun `test solved type parameters hint when new returns unrelated type`() {
     doTest("""

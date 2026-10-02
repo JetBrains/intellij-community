@@ -1132,13 +1132,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       val results: MutableList<PyClassType> = ArrayList()
       for (superClassExpression in getSuperClassExpressions(pyClass)) {
         val type = getType(superClassExpression, context).derefOrUnknown()
-        if (type is PyNamedTupleType && superClassExpression is PySubscriptionExpression) {
-          // A named tuple type reports its field types as its type arguments.
-          // The type arguments of the class must come from the superclass expression, as in `class Sub(Base[str])`.
-          val typeArguments = staticWithCustomContext(context) { getIndexTypes(superClassExpression, it) }
-          results.add(PyCollectionTypeImpl(type.pyClass, false, typeArguments))
-        }
-        else if (type is PyClassType) {
+        if (type is PyClassType) {
           results.add(type)
         }
       }

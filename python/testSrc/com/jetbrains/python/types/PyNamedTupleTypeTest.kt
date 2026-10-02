@@ -6,6 +6,8 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.fixtures.PyCodeInsightTestCase.TestInspections
+import com.jetbrains.python.inspections.PyVarianceInspection
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -441,6 +443,203 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       url = urlparse("https://foo.com/bar")
       expr = url.path.split("/")
       #└ TYPE list[str]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `parameterized generic named tuple renders its type arguments`() = test("""
+      from typing import NamedTuple
+      class Base[T](NamedTuple):
+          path: T
+          n: int
+      def f(b: Base[str]):
+          expr = b
+      #   └ TYPE Base[str]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `parameterized generic named tuple class object renders its type arguments`() = test("""
+      from typing import NamedTuple
+      class Base[T](NamedTuple):
+          path: T
+      expr = Base[str]
+      #└ TYPE type[Base[str]]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `type mismatch of parameterized generic named tuples names the type arguments`() = test("""
+      from typing import NamedTuple
+      class Base[T](NamedTuple):
+          path: T
+          n: int
+      def f(b: Base[int]): ...
+      def g(b: Base[str]):
+          f(b) # WARNING Expected type 'Base[int]', got 'Base[str]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `parameterized generic named tuple matches the same parameterization`() = test("""
+      from typing import NamedTuple
+      class Base[T](NamedTuple):
+          path: T
+          n: int
+      def f(b: Base[str]): ...
+      def g(b: Base[str]):
+          f(b)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `method of a parameterized generic named tuple`() = test("""
+      from typing import NamedTuple
+      class Base[T](NamedTuple):
+          path: T
+          n: int
+          def get(self) -> T: ...
+      def f(b: Base[str]):
+          expr = b.get()
+      #   └ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `method of a legacy parameterized generic named tuple`() = test("""
+      from typing import Generic, NamedTuple, TypeVar
+      T = TypeVar("T")
+      class Base(NamedTuple, Generic[T]):
+          path: T
+          n: int
+          def get(self) -> T: ...
+      def f(b: Base[str]):
+          expr = b.get()
+      #   └ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `field of a nested parameterized generic named tuple`() = test("""
+      from typing import NamedTuple
+      class Inner[T](NamedTuple):
+          v: T
+      class Outer[T](NamedTuple):
+          inner: Inner[T]
+      def f(o: Outer[str]):
+          expr = o.inner.v
+      #   └ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `nested parameterized generic named tuple renders its type arguments`() = test("""
+      from typing import NamedTuple
+      class Inner[T](NamedTuple):
+          v: T
+      class Outer[T](NamedTuple):
+          inner: Inner[T]
+      def f(o: Outer[str]):
+          expr = o.inner
+      #   └ TYPE Inner[str]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `unpacking of a parameterized generic named tuple`() = test("""
+      from typing import NamedTuple
+      class Base[T](NamedTuple):
+          path: T
+          n: int
+      def f(b: Base[str]):
+          expr, n = b
+      #   └ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `parameterized generic named tuple is a tuple of its field types`() = test("""
+      from typing import NamedTuple
+      class Base[T](NamedTuple):
+          path: T
+          n: int
+      def f(b: Base[str]):
+          x: tuple[str, int] = b
+          y: tuple[int, int] = b # WARNING Expected type 'tuple[int, int]', got 'Base[str]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `inheritor of a parameterized generic named tuple matches its base`() = test("""
+      from typing import NamedTuple
+      class Base[T](NamedTuple):
+          path: T
+      class Sub(Base[str]): ...
+      def f(b: Base[str]): ...
+      def g(b: Base[int]): ...
+      def h(s: Sub):
+          f(s)
+          g(s) # WARNING Expected type 'Base[int]', got 'Sub' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `generic function infers a type argument of a generic named tuple`() = test("""
+      from typing import NamedTuple
+      class Box[T](NamedTuple):
+          n: int
+          def get(self) -> T: ...
+      def unwrap[T](b: Box[T]) -> T: ...
+      def f(b: Box[str]):
+          expr = unwrap(b)
+      #   └ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `parameterized generic named tuple is invariant in its type parameter`() = test("""
+      from typing import NamedTuple
+      class Base[T](NamedTuple):
+          path: T
+      def f(b: Base[int]): ...
+      def g(b: Base[bool]):
+          f(b) # WARNING Expected type 'Base[int]', got 'Base[bool]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    @TestInspections(disableInspections = [PyVarianceInspection::class])
+    fun `parameterized generic named tuple with a covariant type parameter`() = test("""
+      from typing import Generic, NamedTuple, TypeVar
+      T_co = TypeVar("T_co", covariant=True)
+      class Base(NamedTuple, Generic[T_co]):
+          path: T_co
+      def f(b: Base[int]): ...
+      def g(b: Base[bool]):
+          f(b)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `star target of a named tuple is checked against its field types`() = test("""
+      from typing import NamedTuple
+      class P(NamedTuple):
+          x: int
+          y: int
+      def f(p: P):
+          a: list[str]
+          (*a,) = p # WARNING Expected type 'list[str]', got 'list[int]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92092"])
+    fun `literal field of a named tuple in a list keeps its type`() = test("""
+      from typing import Literal, NamedTuple
+      class P(NamedTuple):
+          kind: Literal["a"]
+      xs = [P("a")]
+      expr = xs[0].kind
+      #└ TYPE Literal["a"]
       """.trimIndent())
   }
 

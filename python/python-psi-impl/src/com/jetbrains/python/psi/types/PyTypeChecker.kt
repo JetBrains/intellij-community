@@ -1495,6 +1495,10 @@ object PyTypeChecker {
         (actual !is PyNamedTupleType || !actual.pyClass.isSubclass(expected.pyClass, context.context))) {
       return Optional.of(false)
     }
+    // The fields of a generic named tuple follow from the type arguments of its class, so the type arguments are matched.
+    if (expected is PyNamedTupleType && expected.isParameterized) {
+      return Optional.of(matchGenerics(expected, actual, context))
+    }
     if (actual.isHomogeneous) {
       // The type tuple[Any, ...] is consistent with any tuple
       val elementType = actual.iteratedItemType
@@ -1898,7 +1902,8 @@ object PyTypeChecker {
 
   /** @see [expandTupleTypeParameters] */
   private fun shouldExpandElementwiseCollectionType(classType: PyClassType): Boolean {
-    if (classType is PyTupleType) {
+    // The type arguments of a named tuple belong to its class, not to its elements.
+    if (classType is PyTupleType && classType !is PyNamedTupleType) {
       return !classType.isHomogeneous
     }
     return false
@@ -2070,7 +2075,7 @@ object PyTypeChecker {
 
   /**
    * The declared type parameter at [typeArgumentIndex] of [genericType]'s class, or null when there isn't one
-   * (no generic class, a tuple, or an index past the declared parameters). Used both to find the
+   * (no generic class, a plain tuple, or an index past the declared parameters). Used both to find the
    * variance and to name the parameter in breakdowns.
    */
   private fun findTypeParameter(
@@ -2079,7 +2084,7 @@ object PyTypeChecker {
     context: MatchContext,
   ): PyTypeParameterType? {
     if (genericType == null) return null
-    if (genericType is PyTupleType) return null
+    if (genericType is PyTupleType && genericType !is PyNamedTupleType) return null
     val genericDefType = findGenericDefinitionType(genericType.pyClass, context.context)
     return genericDefType?.typeArguments?.getOrNull(typeArgumentIndex) as? PyTypeParameterType
   }
@@ -2629,6 +2634,10 @@ object PyTypeChecker {
           typedDictType.declaredTypeParameters,
           substituteTypeArguments(typedDictType.typeArgumentsOrDeclaredParameters.orEmpty()),
         )
+      }
+
+      override fun visitPyNamedTupleType(namedTupleType: PyNamedTupleType): PyType {
+        return namedTupleType.mapTypes({ clone(it) }, { substituteTypeArguments(it) })
       }
 
       override fun visitPyTupleType(tupleType: PyTupleType): PyType {

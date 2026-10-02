@@ -53,7 +53,7 @@ private fun getParametersFromDecorator(decorator: PyDecorator, function: PyFunct
   }
 
   //Value expression could be scalar
-  if (valuesExpression !is PyClassType || !valuesExpression.isParameterized) {
+  if (valuesExpression !is PyClassType || valuesExpression !is PyTupleType && !valuesExpression.isParameterized) {
     return parameterNames.map { PyTestParameter(it, valuesExpression) }
   }
 

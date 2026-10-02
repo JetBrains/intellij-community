@@ -44,7 +44,19 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
                         @NotNull List<? extends PyType> elementTypes,
                         boolean homogeneous,
                         boolean isDefinition) {
-    super(tupleClass, isDefinition);
+    this(tupleClass, elementTypes, homogeneous, isDefinition, Collections.emptyList());
+  }
+
+  /**
+   * @param classTypeArguments the type arguments of a generic subclass of {@code tuple}, such as a generic named tuple.
+   *                           A plain tuple has none, because its element types are its type arguments.
+   */
+  protected PyTupleType(@NotNull PyClass tupleClass,
+                        @NotNull List<? extends PyType> elementTypes,
+                        boolean homogeneous,
+                        boolean isDefinition,
+                        @NotNull List<? extends PyType> classTypeArguments) {
+    super(tupleClass, isDefinition, classTypeArguments);
     myUnpackedTupleType = new PyUnpackedTupleTypeImpl(elementTypes, homogeneous);
   }
 
@@ -105,6 +117,14 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
 
   @Override
   public @NotNull List<PyType> getTypeArguments() {
+    return myUnpackedTupleType.getElementTypes();
+  }
+
+  /**
+   * The element types of the tuple. For {@code tuple[int, ...]} it is the single repeated type.
+   */
+  @Override
+  public @NotNull List<PyType> getElementTypes() {
     return myUnpackedTupleType.getElementTypes();
   }
 

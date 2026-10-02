@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyFunctionType
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment
 import com.jetbrains.python.psi.types.PyIntersectionType
+import com.jetbrains.python.psi.types.PyNamedTupleType
 import com.jetbrains.python.psi.types.PyParamSpecType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
@@ -489,6 +490,8 @@ internal object PyTypeDiff {
 
   private fun tupleColumns(expected: PyType?, actual: PyType?, context: TypeEvalContext, variance: Variance, depth: Int): List<Col>? {
     if (expected !is PyTupleType || actual !is PyTupleType) return null
+    // A named tuple is shown by its own name, so its fields are not aligned as the elements of a plain `tuple`.
+    if (expected is PyNamedTupleType || actual is PyNamedTupleType) return null
     if (expected.isHomogeneous || actual.isHomogeneous) return null
     if (expected.elementCount != actual.elementCount || expected.elementCount == 0) return null
     // A tuple is covariant in its elements, so each element keeps the tuple's own variance.
@@ -499,10 +502,12 @@ internal object PyTypeDiff {
   private fun genericColumns(expected: PyType?, actual: PyType?, context: TypeEvalContext, variance: Variance, depth: Int): List<Col>? {
     // Tuples are a `PyClassType` too, but they're aligned by [tupleColumns]; a tuple reaching here was
     // rejected there (homogeneous, or mismatched arity), so it must stay a flat leaf — not be decomposed as a
-    // 1-argument generic (which would drop a homogeneous tuple's `...`).
-    if (expected is PyTupleType || actual is PyTupleType) return null
+    // 1-argument generic (which would drop a homogeneous tuple's `...`). A named tuple has type arguments of its class.
+    if ((expected is PyTupleType && expected !is PyNamedTupleType) || (actual is PyTupleType && actual !is PyNamedTupleType)) return null
     val expectedClass = expected as? PyClassType ?: return null
     val actualClass = actual as? PyClassType ?: return null
+    // The type arguments of a named tuple belong to its own class. They do not align with those of another class.
+    if ((expected is PyNamedTupleType || actual is PyNamedTupleType) && expectedClass.pyClass != actualClass.pyClass) return null
     val expectedArgs = expectedClass.typeArguments
     val actualArgs = actualClass.typeArguments
     if (expectedArgs.isEmpty() && actualArgs.isEmpty()) return null

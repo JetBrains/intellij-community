@@ -386,21 +386,27 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   @Override
   public HtmlChunk visitPyTypedDictType(@NotNull PyTypedDictType typedDictType) {
-    List<PyType> typeArguments = typedDictType.getTypeArguments();
-    if (typeArguments.isEmpty()) {
-      return visitPyClassLikeType(typedDictType);
-    }
-
-    HtmlChunk parameterizedRender = PyTypeLayout.concat(classLink(typedDictType, getTypeName(typedDictType)),
-                                                        inSquareBrackets(ContainerUtil.map(typeArguments, this::render)));
-    return typedDictType.isDefinition() ? wrapInTypingType(parameterizedRender) : parameterizedRender;
+    return renderNamedType(typedDictType);
   }
 
   @Override
   public HtmlChunk visitPyNamedTupleType(@NotNull PyNamedTupleType namedTupleType) {
-    // A named tuple is rendered by its class name, not by its field types (which are exposed as type arguments
-    // since it is a subtype of tuple[...]). Before PY-79063 it reached the non-parameterized visitPyClassType branch.
-    return visitPyClassLikeType(namedTupleType);
+    // A named tuple is rendered by its name and the type arguments of its class, not by its field types.
+    return renderNamedType(namedTupleType);
+  }
+
+  /**
+   * Renders a type that has a name of its own, rather than the name of its class, together with its type arguments.
+   */
+  private @NotNull HtmlChunk renderNamedType(@NotNull PyClassType type) {
+    List<PyType> typeArguments = type.getTypeArguments();
+    if (typeArguments.isEmpty()) {
+      return visitPyClassLikeType(type);
+    }
+
+    HtmlChunk parameterizedRender = PyTypeLayout.concat(classLink(type, getTypeName(type)),
+                                                        inSquareBrackets(ContainerUtil.map(typeArguments, this::render)));
+    return type.isDefinition() ? wrapInTypingType(parameterizedRender) : parameterizedRender;
   }
 
   @Override

@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.types;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 
 
 public class PyNamedTupleType extends PyTupleType implements PyCallableType {
@@ -60,15 +62,54 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
                           boolean isDefinition,
                           boolean typed,
                           @Nullable PyQualifiedNameOwner declaration) {
+    this(tupleClass, name, fields, isDefinition, typed, declaration, Collections.emptyList());
+  }
+
+  /**
+   * @param typeArguments the type arguments of a generic named tuple class, such as {@code [str]} for {@code Base[str]}.
+   *                      The field types must already have these type arguments applied.
+   */
+  public PyNamedTupleType(@NotNull PyClass tupleClass,
+                          @NotNull String name,
+                          @NotNull LinkedHashMap<String, FieldTypeAndDefaultValue> fields,
+                          boolean isDefinition,
+                          boolean typed,
+                          @Nullable PyQualifiedNameOwner declaration,
+                          @NotNull List<? extends PyType> typeArguments) {
     super(tupleClass,
           ContainerUtil.map(fields.values(), typeAndValue -> typeAndValue.getType()),
           false,
-          isDefinition);
+          isDefinition,
+          typeArguments);
 
     myFields = new LinkedHashMap<>(fields);
     myName = name;
     myTyped = typed;
     myDeclaration = declaration;
+  }
+
+  /**
+   * The type arguments of the named tuple class, as in {@code Base[str]}. They are empty for a named tuple that is not generic,
+   * or not parameterized. Use {@link #getElementTypes()} or {@link #getFields()} for the field types.
+   */
+  @Override
+  public @NotNull List<PyType> getTypeArguments() {
+    return Collections.unmodifiableList(myTypeArguments);
+  }
+
+  /**
+   * Returns a copy of this named tuple. The copy applies {@code fieldTypeMapper} to each field type,
+   * and {@code typeArgumentsMapper} to the list of type arguments.
+   */
+  public @NotNull PyNamedTupleType mapTypes(@NotNull Function<? super PyType, ? extends PyType> fieldTypeMapper,
+                                            @NotNull Function<? super List<PyType>, ? extends List<? extends PyType>> typeArgumentsMapper) {
+    final LinkedHashMap<String, FieldTypeAndDefaultValue> newFields = new LinkedHashMap<>();
+    for (Map.Entry<String, FieldTypeAndDefaultValue> entry : myFields.entrySet()) {
+      final FieldTypeAndDefaultValue field = entry.getValue();
+      newFields.put(entry.getKey(), new FieldTypeAndDefaultValue(fieldTypeMapper.apply(field.getType()), field.getDefaultValue()));
+    }
+    return withUserDataCopy(new PyNamedTupleType(myClass, myName, newFields, isDefinition(), myTyped, myDeclaration,
+                                                 typeArgumentsMapper.apply(getTypeArguments())));
   }
 
   @Override
@@ -128,20 +169,20 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   @Override
   public @NotNull PyNamedTupleType toInstance() {
     return isDefinition()
-           ? new PyNamedTupleType(myClass, myName, myFields, false, myTyped, myDeclaration)
+           ? new PyNamedTupleType(myClass, myName, myFields, false, myTyped, myDeclaration, myTypeArguments)
            : this;
   }
 
   @Override
   public @NotNull PyNamedTupleType toClass() {
     return !isDefinition()
-           ? new PyNamedTupleType(myClass, myName, myFields, true, myTyped, myDeclaration)
+           ? new PyNamedTupleType(myClass, myName, myFields, true, myTyped, myDeclaration, myTypeArguments)
            : this;
   }
 
   @Override
   public String toString() {
-    return "PyNamedTupleType: " + myName;
+    return "PyNamedTupleType: " + myName + (myTypeArguments.isEmpty() ? "" : "[" + StringUtil.join(myTypeArguments, String::valueOf, ", ") + "]");
   }
 
   @Override
@@ -206,7 +247,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
         }
       }
 
-      return new PyNamedTupleType(myClass, myName, newFields, isDefinition(), false, myDeclaration);
+      return new PyNamedTupleType(myClass, myName, newFields, isDefinition(), false, myDeclaration, myTypeArguments);
     }
 
     return this;

@@ -127,7 +127,7 @@ object PyExpectedTypeJudgement {
           if (PyNames.ITERABLE == typeOfStarParent?.name) {
             return typeOfStarParent
           }
-          if (typeOfStarParent is PyClassType && typeOfStarParent.isParameterized) {
+          if (typeOfStarParent is PyClassType && (typeOfStarParent is PyTupleType || typeOfStarParent.isParameterized)) {
             // upcast to Iterable
             return createIterableType(expr, PyTypeChecker.getIteratedItemType(typeOfStarParent, ctx))
           }
