@@ -19,7 +19,7 @@ import org.jetbrains.plugins.github.util.GithubUtil
 @Service(Service.Level.PROJECT)
 @State(name = "GithubDefaultAccount", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
 class GithubProjectDefaultAccountHolder(project: Project, parentCs: CoroutineScope)
-  : PersistentDefaultAccountHolder<GithubAccount>(project, parentCs.childScope(GithubProjectDefaultAccountHolder::javaClass.name)) {
+  : PersistentDefaultAccountHolder<GithubAccount>(project, parentCs.childScope(GithubProjectDefaultAccountHolder::class.java.name)) {
 
   override fun accountManager() = service<GHAccountManager>()
 

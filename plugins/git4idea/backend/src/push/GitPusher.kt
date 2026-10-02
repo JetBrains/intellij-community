@@ -92,7 +92,7 @@ class GitPusher(
             }
             catch (e: Exception) {
               if (e is CancellationException) currentCoroutineContext().ensureActive()
-              else LOG.warn("Error occurred when collecting push notification actions from ${extension::javaClass.name}", e)
+              else LOG.warn("Error occurred when collecting push notification actions from ${extension.javaClass.name}", e)
               emptyList()
             }
           }

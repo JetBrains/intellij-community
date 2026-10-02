@@ -49,7 +49,7 @@ class GitUntrackedFilesHolder internal constructor(
   parentCs: CoroutineScope,
   private val repository: GitRepository,
 ) {
-  private val cs = parentCs.childScope(::javaClass.name)
+  private val cs = parentCs.childScope(javaClass.name)
 
   private val project: Project = repository.getProject()
   private val repoRoot: VirtualFile = repository.getRoot()

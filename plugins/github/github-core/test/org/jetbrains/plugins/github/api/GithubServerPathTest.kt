@@ -13,7 +13,7 @@ class GithubServerPathDataResidencyTest(
   private val isDataResidency: Boolean
 ) {
   companion object {
-    @JvmStatic @get:Parameters("GQL API path for {0} should be {1}")
+    @JvmStatic @get:Parameters(name = "GQL API path for {0} should be {1}")
     val tests = arrayOf<Array<Any>>(
       arrayOf("github.com", false),
       arrayOf("okta.github.com", false),
@@ -38,7 +38,7 @@ class GithubServerPathApiPathTest(
   private val apiPath: String
 ) {
   companion object {
-    @JvmStatic @get:Parameters("REST API URL for {0} should be {1}")
+    @JvmStatic @get:Parameters(name = "REST API URL for {0} should be {1}")
     val tests = arrayOf<Array<Any>>(
       arrayOf("github.com", "https://api.github.com"),
       arrayOf("github.com/", "https://api.github.com"),
@@ -66,7 +66,7 @@ class GithubServerPathGraphqlApiPathTest(
   private val apiPath: String
 ) {
   companion object {
-    @JvmStatic @get:Parameters("GQL API URL for {0} should be {1}")
+    @JvmStatic @get:Parameters(name = "GQL API URL for {0} should be {1}")
     val tests = arrayOf<Array<Any>>(
       arrayOf("github.com", "https://api.github.com/graphql"),
       arrayOf("github.com/", "https://api.github.com/graphql"),
