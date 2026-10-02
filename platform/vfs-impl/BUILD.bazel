@@ -1,0 +1,149 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.vfs.impl` start
+content_module_jar(module = ":vfs-impl")
+### auto-generated section `dev intellij.platform.vfs.impl` end
+
+### auto-generated section `build intellij.platform.vfs.impl` start
+kt_javac_options(
+    name = "custom-javac-options",
+    add_exports = ["java.base/sun.nio.fs=ALL-UNNAMED"],
+    no_proc = True,
+    warn = "off",
+    x_ep_disable_all_checks = True,
+)
+
+jvm_library(
+    name = "vfs-impl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    javac_opts = ":custom-javac-options",
+    module_name = "intellij.platform.vfs.impl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/fastutil",
+        "//libraries/jetbrains/annotations",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/lz4",
+        "//libraries/opentelemetry",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-impl",
+        "//platform/backend/observation",
+        "//platform/backend/workspace",
+        "//platform/built-in-server-api:builtInServer",
+        "//platform/util/concurrency",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/core-nio-fs",
+        "//platform/core-ui",
+        "//platform/diagnostic",
+        "//platform/diagnostic/telemetry",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/eel",
+        "//platform/eel-impl",
+        "//platform/eel-nioFs-impl",
+        "//platform/eel-provider",
+        "//platform/extensions",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/ide-core-impl",
+        "//platform/progress/shared:ide-progress",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/ijent/impl",
+        "//platform/indexing-api:indexing",
+        "//jps/model-api:model",
+        "//jps/model-serialization",
+        "//platform/lang-core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-impl",
+        "//platform/statistics",
+        "//platform/util",
+        "//platform/util/coroutines",
+        "//platform/util-ex",
+        "//platform/util/storages",
+        "//platform/util:util-ui",
+        "//platform/workspace/storage",
+    ],
+)
+
+jvm_library(
+    name = "vfs-impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    javac_opts = ":custom-javac-options",
+    module_name = "intellij.platform.vfs.impl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":vfs-impl",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/lz4:lz4_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/backend/observation:observation_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
+        "//platform/built-in-server-api:builtInServer_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-nio-fs:core-nio-fs_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/diagnostic:diagnostic_test_lib",
+        "//platform/diagnostic/telemetry:telemetry_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/eel:eel_test_lib",
+        "//platform/eel-impl:eel-impl_test_lib",
+        "//platform/eel-nioFs-impl:eel-nioFs-impl_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//platform/extensions:extensions_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/progress/shared:ide-progress_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/ijent/impl:impl_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//jps/model-serialization:model-serialization_test_lib",
+        "//platform/lang-core:lang-core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/projectModel-impl:projectModel-impl_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+        "//platform/util/storages:storages_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/workspace/storage:storage_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.vfs.impl` end
+
+### auto-generated section `iml intellij.platform.vfs.impl` start
+exports_files(
+    [
+        "intellij.platform.vfs.impl.iml",
+        "resources/intellij.platform.vfs.impl.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.vfs.impl` end

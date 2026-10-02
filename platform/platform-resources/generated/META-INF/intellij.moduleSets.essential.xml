@@ -301,6 +301,7 @@
     <module name="intellij.platform.ide.impl" loading="embedded"/>
     <module name="intellij.platform.undo" loading="embedded"/>
     <module name="intellij.platform.ui.tree" loading="embedded"/>
+    <module name="intellij.platform.vfs.impl" loading="embedded"/>
     <module name="intellij.platform.ide.codeinsight.inline" loading="embedded"/>
     <module name="intellij.platform.pasta" loading="embedded"/>
     <module name="intellij.platform.diagnostic.startUpPerformanceReporter" loading="embedded"/>

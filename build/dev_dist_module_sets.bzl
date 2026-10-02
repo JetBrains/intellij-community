@@ -152,6 +152,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.ide.impl",
             "intellij.platform.undo",
             "intellij.platform.ui.tree",
+            "intellij.platform.vfs.impl",
             "intellij.platform.ide.codeinsight.inline",
             "intellij.platform.pasta",
             "intellij.platform.diagnostic.startUpPerformanceReporter",
@@ -242,6 +243,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.undo": "embedded",
             "intellij.platform.usageView.impl": "embedded",
             "intellij.platform.util.diff": "embedded",
+            "intellij.platform.vfs.impl": "embedded",
             "intellij.platform.welcomeScreen.impl": "embedded",
         },
         packed = {
@@ -305,6 +307,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.undo": "//platform/undo:undo_content_module_jar",
             "intellij.platform.usageView.impl": "//platform/usageView-impl:usageView-impl_content_module_jar",
             "intellij.platform.util.diff": "//platform/util/diff:diff_content_module_jar",
+            "intellij.platform.vfs.impl": "//platform/vfs-impl:vfs-impl_content_module_jar",
             "intellij.platform.welcomeScreen.impl": "//platform/welcome-screen-impl:welcomeScreen-impl_content_module_jar",
             "intellij.platform.wsl.impl": "//platform/wsl-impl:wsl-impl_content_module_jar",
         },

@@ -3,23 +3,15 @@
 
 package com.intellij.openapi.vfs.newvfs.persistent
 
-import com.intellij.ide.ApplicationActivity
-import com.intellij.ide.IdleTracker
-import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.JulLogger
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.CHILDREN_CACHED
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.IS_DIRECTORY
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.CHECK_ORPHAN_RECORDS
-import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.HEALTH_CHECKING_ENABLED
-import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.HEALTH_CHECKING_PERIOD_MS
-import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.HEALTH_CHECKING_START_DELAY_MS
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.MAX_CHILDREN_TO_LOG
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.MAX_SINGLE_ERROR_LOGS_BEFORE_THROTTLE
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.WRAP_HEALTH_CHECK_IN_READ_ACTION
@@ -28,16 +20,7 @@ import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.SystemProperties.getIntProperty
 import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.DataEnumeratorEx
-import com.intellij.util.io.PowerStatus
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
 import java.util.logging.ConsoleHandler
@@ -47,21 +30,19 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
-import kotlin.time.DurationUnit.MILLISECONDS
-import kotlin.time.toDuration
 
 private val LOG = FSRecords.LOG
 
-private object VFSHealthCheckerConstants {
-  val HEALTH_CHECKING_ENABLED = getBooleanProperty("vfs.health-check.enabled",
+object VFSHealthCheckerConstants {
+  val HEALTH_CHECKING_ENABLED: Boolean = getBooleanProperty("vfs.health-check.enabled",
                                                    !ApplicationManager.getApplication().isUnitTestMode)
 
-  val HEALTH_CHECKING_PERIOD_MS = getIntProperty("vfs.health-check.checking-period-ms",
+  val HEALTH_CHECKING_PERIOD_MS: Int = getIntProperty("vfs.health-check.checking-period-ms",
                                                  12.hours.inWholeMilliseconds.toInt())
 
   /** 10min in most cases enough for the initial storm of requests to VFS (scanning/indexing/etc)
    *  to finish, so VFS _likely_ +/- settles down after that. */
-  val HEALTH_CHECKING_START_DELAY_MS = getIntProperty("vfs.health-check.checking-start-delay-ms",
+  val HEALTH_CHECKING_START_DELAY_MS: Int = getIntProperty("vfs.health-check.checking-start-delay-ms",
                                                       10.minutes.inWholeMilliseconds.toInt())
 
 
@@ -71,120 +52,18 @@ private object VFSHealthCheckerConstants {
    *  Acquiring RA for each file record could be costly, and I want HealthCheck to be un-intrusive, so
    *  it is initially switched off -- I expect it to be switched on by default, eventually, after it proves itself
    *  to be safe */
-  val WRAP_HEALTH_CHECK_IN_READ_ACTION = getBooleanProperty("vfs.health-check.wrap-in-read-action", true)
+  val WRAP_HEALTH_CHECK_IN_READ_ACTION: Boolean = getBooleanProperty("vfs.health-check.wrap-in-read-action", true)
 
   /**
    * May slow down scanning significantly, hence dedicated property to control.
    * Default: false, since orphan records appear to be quite common so far.
    */
-  val CHECK_ORPHAN_RECORDS = getBooleanProperty("vfs.health-check.check-orphan-records", false)
+  val CHECK_ORPHAN_RECORDS: Boolean = getBooleanProperty("vfs.health-check.check-orphan-records", false)
 
   /** How many children to log at max with orphan records reporting */
-  val MAX_CHILDREN_TO_LOG = getIntProperty("vfs.health-check.max-children-to-log", 16)
+  val MAX_CHILDREN_TO_LOG: Int = getIntProperty("vfs.health-check.max-children-to-log", 16)
 
-  val MAX_SINGLE_ERROR_LOGS_BEFORE_THROTTLE = getIntProperty("vfs.health-check.max-single-error-logs", 128)
-}
-
-internal class VFSHealthCheckServiceStarter : ApplicationActivity {
-  init {
-    if (!HEALTH_CHECKING_ENABLED) {
-      LOG.info("VFS health-check disabled")
-      throw ExtensionNotApplicableException.create()
-    }
-
-    if (HEALTH_CHECKING_PERIOD_MS < 1.minutes.inWholeMilliseconds) {
-      LOG.warn("VFS health-check is NOT enabled: incorrect period $HEALTH_CHECKING_PERIOD_MS ms, must be >= 1 min")
-      throw ExtensionNotApplicableException.create()
-    }
-  }
-
-  override suspend fun execute() {
-    LOG.info("VFS health-check enabled: first after $HEALTH_CHECKING_START_DELAY_MS ms, " +
-             "and each following $HEALTH_CHECKING_PERIOD_MS ms, wrap in RA: $WRAP_HEALTH_CHECK_IN_READ_ACTION")
-
-    delay(HEALTH_CHECKING_START_DELAY_MS.toDuration(MILLISECONDS))
-
-    coroutineScope {
-      val checkingPeriod = HEALTH_CHECKING_PERIOD_MS.toDuration(MILLISECONDS)
-      while (isActive && !FSRecords.getInstance().isClosed) {
-        //MAYBE RC: track FSRecords.getLocalModCount() to run the check only if there are enough changes
-        //          since the last check.
-        if (!PowerSaveMode.isEnabled()) {
-          //HealthCheck is not really an urgent process -- it is OK to delay a minute or two after
-          // the scheduled time. On the other side, health-check takes anywhere from 3 sec to 1.5 min
-          // depending on load, and could slow down the IDE operations in the process.
-          // We don't want to disturb the user with health-check, so we delay the check until the user
-          // is idle for at least 1 min straight -- which gives us a good probability the health-check
-          // will finish before the user returns from its retreat.
-          @OptIn(FlowPreview::class)
-          IdleTracker.getInstance().events
-            .debounce(1.minutes)
-            .take(1)
-            .collect {
-              withContext(Dispatchers.IO) {
-                //MAYBE RC: show a progress bar -- or better not bother user?
-                doCheckupAndReportResults()
-              }
-            }
-        }
-        else {
-          LOG.info("VFS health-check skipped: PowerSaveMode is enabled")
-        }
-
-        delay(checkingPeriod)
-
-        //MAYBE RC: this seems useless -- i.e. VFS h-check is ~10-60sec long once/(few) hours,
-        //          which is negligible comparing to (GC/JIT/bg tasks) load accumulated
-        //          over the same few hours
-        if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY) {
-          LOG.info("VFS health-check delayed: power source is battery")
-          delay(checkingPeriod) // make it twice rarer
-        }
-      }
-    }
-  }
-
-  private suspend fun doCheckupAndReportResults() {
-    val fsRecordsImpl = FSRecords.getInstance()
-    if (fsRecordsImpl.isClosed) {
-      return
-    }
-    val checker = VFSHealthChecker(fsRecordsImpl, LOG)
-    val checkHealthReport = checker.checkHealth(CHECK_ORPHAN_RECORDS)
-
-    VfsUsageCollector.logVfsHealthCheck(
-      fsRecordsImpl.creationTimestamp,
-      checkHealthReport.timeTaken.inWholeMilliseconds,
-
-      checkHealthReport.recordsReport.fileRecordsChecked,
-      checkHealthReport.recordsReport.fileRecordsDeleted,
-      checkHealthReport.recordsReport.nullNameIds,
-      checkHealthReport.recordsReport.unresolvableNameIds,
-      checkHealthReport.recordsReport.unresolvableAttributesIds,
-      checkHealthReport.recordsReport.notNullContentIds,
-      checkHealthReport.recordsReport.unresolvableContentIds,
-      checkHealthReport.recordsReport.nullParents,
-      checkHealthReport.recordsReport.childrenChecked,
-      checkHealthReport.recordsReport.inconsistentParentChildRelationships,
-      checkHealthReport.recordsReport.generalErrors,
-
-      checkHealthReport.namesEnumeratorReport.namesChecked,
-      checkHealthReport.namesEnumeratorReport.namesResolvedToNull,
-      checkHealthReport.namesEnumeratorReport.idsResolvedToNull,
-      checkHealthReport.namesEnumeratorReport.inconsistentNames,
-      checkHealthReport.namesEnumeratorReport.generalErrors,
-
-      checkHealthReport.rootsReport.rootsCount,
-      checkHealthReport.rootsReport.rootsWithParents,
-      checkHealthReport.rootsReport.rootsDeletedButNotRemoved,
-      checkHealthReport.rootsReport.generalErrors,
-
-      checkHealthReport.contentEnumeratorReport.contentRecordsChecked,
-      checkHealthReport.contentEnumeratorReport.generalErrors
-    )
-
-    //MAYBE RC: create VFS_BROKEN_MARKER?
-  }
+  val MAX_SINGLE_ERROR_LOGS_BEFORE_THROTTLE: Int = getIntProperty("vfs.health-check.max-single-error-logs", 128)
 }
 
 /** How many records to process in one ReadAction */

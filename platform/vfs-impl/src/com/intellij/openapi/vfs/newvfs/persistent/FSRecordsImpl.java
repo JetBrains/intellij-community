@@ -444,7 +444,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  boolean isClosed() {
+  public boolean isClosed() {
     return connection.isClosed();
   }
 

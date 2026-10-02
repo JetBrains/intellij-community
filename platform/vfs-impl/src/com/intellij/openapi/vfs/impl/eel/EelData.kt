@@ -4,8 +4,10 @@ package com.intellij.openapi.vfs.impl.eel
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.fs.EelFileSystemApi.WatchedPath
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 
-internal class EelData(val descriptor: EelDescriptor) {
+@ApiStatus.Internal
+class EelData(val descriptor: EelDescriptor) {
 
   val recursive: MutableSet<EelPath> = mutableSetOf()
   val flat: MutableSet<EelPath> = mutableSetOf()

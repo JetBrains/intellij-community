@@ -283,12 +283,12 @@ class EelFileWatcher : PluggableFileWatcher() {
   }
 
   @TestOnly
-  internal fun addWatchedEelForTest(descriptor: EelDescriptor, cancelCallback: (Boolean) -> Unit) {
+  fun addWatchedEelForTest(descriptor: EelDescriptor, cancelCallback: (Boolean) -> Unit) {
     check(myWatchedEels.putIfAbsent(descriptor, WatchedEel(EelData(descriptor), cancelCallback)) == null)
   }
 
   @TestOnly
-  internal fun retainWatchedEelsForTest(activeDescriptors: Set<EelDescriptor>) {
+  fun retainWatchedEelsForTest(activeDescriptors: Set<EelDescriptor>) {
     removeObsoleteWatchedEels(activeDescriptors)
   }
 

@@ -1,0 +1,41 @@
+f:com.intellij.ide.startup.ServiceNotReadyException
+- com.intellij.openapi.progress.ProcessCanceledException
+a:com.intellij.openapi.vfs.VirtualFileUrlChangeAdapter
+- com.intellij.openapi.vfs.VirtualFileListener
+- <init>():V
+c:com.intellij.openapi.vfs.impl.http.FileDownloadingAdapter
+- com.intellij.openapi.vfs.impl.http.FileDownloadingListener
+- <init>():V
+f:com.intellij.openapi.vfs.impl.http.HttpsFileSystem
+- com.intellij.openapi.vfs.ex.http.HttpFileSystem
+- s:getHttpsInstance():com.intellij.openapi.vfs.impl.http.HttpsFileSystem
+c:com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
+- com.intellij.openapi.vfs.JarFileSystem
+- <init>():V
+- findFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+f:com.intellij.openapi.vfs.impl.jar.TimedZipHandler
+- com.intellij.openapi.vfs.impl.ZipHandlerBase
+- <init>(java.lang.String):V
+c:com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile
+- com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile
+- getPath():java.lang.String
+f:com.intellij.openapi.vfs.newvfs.impl.FilePathInterner
+- com.intellij.util.containers.Interner
+- <init>():V
+a:com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+- com.intellij.openapi.vfs.newvfs.ManagingFS
+- s:getInstance():com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+@:com.intellij.openapi.vfs.newvfs.persistent.PersistentFS$Attributes
+- java.lang.annotation.Annotation
+f:com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants
+- sf:INSTANCE:com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants
+- f:getCHECK_ORPHAN_RECORDS():Z
+- f:getHEALTH_CHECKING_ENABLED():Z
+- f:getHEALTH_CHECKING_PERIOD_MS():I
+- f:getHEALTH_CHECKING_START_DELAY_MS():I
+- f:getMAX_CHILDREN_TO_LOG():I
+- f:getMAX_SINGLE_ERROR_LOGS_BEFORE_THROTTLE():I
+- f:getWRAP_HEALTH_CHECK_IN_READ_ACTION():Z
+f:com.intellij.util.UriUtilKt
+- sf:getFragmentParameters(java.net.URI):java.util.Map
+- sf:getQueryParameters(java.net.URI):java.util.Map

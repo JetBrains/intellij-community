@@ -1400,8 +1400,6 @@ com.intellij.ide.settings.RemoteSettingInfoProvider
 - a:getRemoteSettingsInfo():java.util.Map
 f:com.intellij.ide.settings.RemoteSettingInfoProvider$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
-f:com.intellij.ide.startup.ServiceNotReadyException
-- com.intellij.openapi.progress.ProcessCanceledException
 f:com.intellij.ide.startup.StartupActionScriptManager
 - s:addActionCommand(com.intellij.ide.startup.StartupActionScriptManager$ActionCommand):V
 - s:addActionCommands(java.util.List):V
@@ -3877,9 +3875,6 @@ c:com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener
 - <init>(com.intellij.ui.ColoredTreeCellRenderer):V
 com.intellij.openapi.vcs.impl.FileStatusProvider
 - a:getFileStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
-a:com.intellij.openapi.vfs.VirtualFileUrlChangeAdapter
-- com.intellij.openapi.vfs.VirtualFileListener
-- <init>():V
 c:com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.ide.lightEdit.LightEditCompatible
@@ -3896,30 +3891,6 @@ e:com.intellij.openapi.vfs.encoding.EncodingUtil$Magic8
 - sf:WELL_IF_YOU_INSIST:com.intellij.openapi.vfs.encoding.EncodingUtil$Magic8
 - s:valueOf(java.lang.String):com.intellij.openapi.vfs.encoding.EncodingUtil$Magic8
 - s:values():com.intellij.openapi.vfs.encoding.EncodingUtil$Magic8[]
-c:com.intellij.openapi.vfs.impl.http.FileDownloadingAdapter
-- com.intellij.openapi.vfs.impl.http.FileDownloadingListener
-- <init>():V
-f:com.intellij.openapi.vfs.impl.http.HttpsFileSystem
-- com.intellij.openapi.vfs.ex.http.HttpFileSystem
-- s:getHttpsInstance():com.intellij.openapi.vfs.impl.http.HttpsFileSystem
-c:com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
-- com.intellij.openapi.vfs.JarFileSystem
-- <init>():V
-- findFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
-f:com.intellij.openapi.vfs.impl.jar.TimedZipHandler
-- com.intellij.openapi.vfs.impl.ZipHandlerBase
-- <init>(java.lang.String):V
-c:com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile
-- com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile
-- getPath():java.lang.String
-f:com.intellij.openapi.vfs.newvfs.impl.FilePathInterner
-- com.intellij.util.containers.Interner
-- <init>():V
-a:com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
-- com.intellij.openapi.vfs.newvfs.ManagingFS
-- s:getInstance():com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
-@:com.intellij.openapi.vfs.newvfs.persistent.PersistentFS$Attributes
-- java.lang.annotation.Annotation
 a:com.intellij.openapi.wm.ToolWindowContextMenuActionBase
 - com.intellij.openapi.actionSystem.AnAction
 - <init>():V
@@ -5636,9 +5607,6 @@ f:com.intellij.util.NetworkUtils
 f:com.intellij.util.PopupUtilsKt
 - sf:getBestBalloonPosition(com.intellij.openapi.actionSystem.DataContext):com.intellij.ui.awt.RelativePoint
 - sf:getBestPopupPosition(com.intellij.openapi.actionSystem.DataContext):com.intellij.ui.awt.RelativePoint
-f:com.intellij.util.UriUtilKt
-- sf:getFragmentParameters(java.net.URI):java.util.Map
-- sf:getQueryParameters(java.net.URI):java.util.Map
 f:com.intellij.util.io.socketConnection.ConnectionState
 - getMessage():java.lang.String
 - getStatus():com.intellij.util.io.socketConnection.ConnectionStatus

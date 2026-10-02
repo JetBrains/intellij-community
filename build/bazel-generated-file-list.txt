@@ -1145,6 +1145,7 @@ platform/vcs-log/impl/bookmarks
 platform/vcs-tests
 platform/vcs/plugin
 platform/versionDownloadManager
+platform/vfs-impl
 platform/warmup
 platform/warmup/performanceTesting
 platform/welcome-screen
