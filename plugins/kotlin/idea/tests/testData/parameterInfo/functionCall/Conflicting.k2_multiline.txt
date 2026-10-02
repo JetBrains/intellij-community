@@ -1,1 +1,0 @@
-Text: (<highlight>a: (Int) -> Unit</highlight>), Disabled: false, Strikeout: false, Green: true

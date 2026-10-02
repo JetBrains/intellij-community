@@ -1,1 +1,0 @@
-Text: (<disabled>name: String,</disabled><highlight></highlight> action: (Int, String) -> Unit), Disabled: true, Strikeout: false, Green: true

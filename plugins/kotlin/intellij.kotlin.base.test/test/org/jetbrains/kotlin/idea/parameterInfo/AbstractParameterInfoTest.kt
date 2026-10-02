@@ -130,9 +130,8 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
 
                 val expectedFile = run {
                     val extension = when {
-                        !isMultiline -> "k2.txt"
-                        isMultiline -> "k2_multiline.txt"
-                        else -> "k1.txt"
+                        isMultiline -> "multiline.txt"
+                        else -> "txt"
                     }
                     mainFile.toPath().resolveSibling("${mainFile.nameWithoutExtension}.${extension}")
                 }

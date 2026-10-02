@@ -1,2 +1,0 @@
-Text: (<highlight>p: Int</highlight>), Disabled: false, Strikeout: false, Green: false
-Text: (<highlight>s: String</highlight>), Disabled: false, Strikeout: false, Green: false

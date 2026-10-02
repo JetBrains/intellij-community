@@ -137,9 +137,4 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         append(testMethodPath.extension)
         if (addSuffixAfterExtension) append(expectedSuffix)
     }
-
-    companion object {
-        private val K2_TEST_FILE_EXTENSION: IgnoreTests.FileExtension = IgnoreTests.FileExtension.K2
-        private val FIR_TEST_FILE_EXTENSION: IgnoreTests.FileExtension = IgnoreTests.FileExtension.FIR
-    }
 }

@@ -1,1 +1,0 @@
-Text: (A, <highlight>C : Cloneable</highlight>, R : Runnable), Disabled: false, Strikeout: false, Green: false
