@@ -167,10 +167,7 @@ fn parse_flag_file_refuses_jar_name_as_unknown() {
     let specs = parse_recipe(&scratch, "output=out/a_content_module_jar/intellij.a.jar\nmodule=mod/a.jar\n").unwrap();
     assert_eq!(specs[0].jar_name(), "intellij.a.jar");
     let error = parse_recipe(&scratch, "output=out/a.jar\njar-name=intellij.a.jar\nmodule=mod/a.jar\n").unwrap_err();
-    assert_eq!(
-        format!("{error:#}"),
-        r#"unknown option "jar-name" in "jar-name=intellij.a.jar""#
-    );
+    assert_eq!(format!("{error:#}"), r#"unknown option "jar-name" in "jar-name=intellij.a.jar""#);
 }
 
 #[test]
