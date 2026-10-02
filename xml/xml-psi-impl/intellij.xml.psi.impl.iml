@@ -32,6 +32,8 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
+    <orderEntry type="module" module-name="intellij.libraries.aalto.xml" />
     <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
     <orderEntry type="module" module-name="intellij.platform.polySymbols" />
     <orderEntry type="module" module-name="intellij.platform.polySymbols.web" />

@@ -158,7 +158,8 @@ public final class FileIncludeIndex extends FileBasedIndexExtension<String, List
       @Override
       public boolean acceptInput(@NotNull IndexedFile indexedFile) {
         VirtualFile file = indexedFile.getFile();
-        if (file.getFileSystem() == JarFileSystem.getInstance()) {
+        // by protocol, not by `JarFileSystem.getInstance()`: the jar file system of the language server is not a `JarFileSystem`
+        if (JarFileSystem.PROTOCOL.equals(file.getFileSystem().getProtocol())) {
           return false;
         }
         for (FileIncludeProvider provider : FILE_INCLUDE_PROVIDER_EP_NAME.getExtensionList()) {
