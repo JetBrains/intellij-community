@@ -92,12 +92,12 @@ object CoreModuleSets {
    *
    * **Don't use for:**
    * - Products needing IDE functionality → Use `coreIde()` instead
-   * - Products needing language support → Use `coreLang()` or `essentialMinimal()`
-   * - IDE products with editing capabilities → Use `essentialMinimal()` instead
+   * - Products needing language support → Use `coreLang()` or `CommunityModuleSets.essential()`
+   * - IDE products with editing capabilities → Use `CommunityModuleSets.essential()` instead
    *
    * @see coreIde for platform with basic IDE functionality
    * @see coreLang for platform with IDE and language support
-   * @see [CommunityModuleSets.essentialMinimal] for lightweight IDE with editing (most IDE products should use this)
+   * @see [CommunityModuleSets.essential] for an IDE with editing (most IDE products should use this)
    */
   fun corePlatform(): ModuleSet = moduleSet("core.platform", selfContained = true, outputModule = "intellij.platform.ide.core") {
     moduleSet(librariesPlatform())
@@ -229,18 +229,18 @@ object CoreModuleSets {
    * coreIde → lang.core → ide.impl (all in proper order).
    *
    * **Use when:** Building products that need language support and IDE features but not
-   * the full essentialMinimal infrastructure (editor, search, RPC, backend/frontend split).
+   * the full `CommunityModuleSets.essential()` infrastructure (editor, search, RPC, backend/frontend split).
    *
-   * **⚠️ WARNING:** Most products should use `essentialMinimal()` instead, which includes
+   * **⚠️ WARNING:** Most products should use `CommunityModuleSets.essential()` instead, which includes
    * this module set plus essential IDE infrastructure (editor, search, RPC).
    *
-   * Only use this directly if you need language features but want to exclude editor/search/RPC modules.
+   * A lean product such as Draft uses this set directly and adds the feature sets of `CommunityModuleSets` that it needs.
    *
-   * **Products using this:** All products via `essentialMinimal()` which nests this module set
+   * **Products using this:** All products via `CommunityModuleSets.essential()` which nests this module set
    *
    * @see coreIde for IDE functionality without language support
    * @see corePlatform for base platform without IDE or language support
-   * @see [CommunityModuleSets.essentialMinimal] for full minimal IDE (includes this + RPC + editor + search) - RECOMMENDED
+   * @see [CommunityModuleSets.essential] for a full IDE (includes this + RPC + editor + search) - RECOMMENDED
    */
   fun coreLang(): ModuleSet = moduleSet("core.lang") {
     // Include core IDE (corePlatform + intellij.platform.ide)
@@ -307,6 +307,9 @@ object CoreModuleSets {
     // todo not used by platform - move to plugin
     module("intellij.platform.ide.designer")
 
+    // intellij.platform.ide.bootstrap imports the config before any plugin class loader exists,
+    // and intellij.platform.configurationStore.impl uses it too
+    embeddedModule("intellij.platform.ide.initialConfigImport")
     embeddedModule("intellij.platform.ide.bootstrap")
     embeddedModule("intellij.platform.bootstrap")
 
@@ -392,7 +395,8 @@ object CoreModuleSets {
    * in `corePlatform()`. It only adds the backend/frontend/topics modules on top of the base.
    * 
    * **Use when:** Building products that need full RPC functionality with backend separation.
-   * Products using `essentialMinimal()` get both `rpcMinimal()` (via corePlatform) and this module set.
+   * Products using `CommunityModuleSets.essential()` get both `rpcMinimal()` (via corePlatform) and this module set
+   * through `CommunityModuleSets.splitCore()`.
    * 
    * @see rpcMinimal for base RPC and kernel modules (included in corePlatform)
    */

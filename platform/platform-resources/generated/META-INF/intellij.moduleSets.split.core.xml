@@ -1,0 +1,26 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<!-- Source: see moduleSet("split.core") function in CommunityModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <!-- region nested: rpc.backend.extended -->
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.kernel.impl"/>
+    <module name="intellij.platform.rpc.topics" loading="embedded"/>
+    <module name="intellij.platform.rpc.topics.backend"/>
+    <module name="intellij.platform.rpc.topics.frontend"/>
+    <!-- endregion -->
+
+    <!-- region direct modules -->
+    <module name="intellij.platform.settings.local"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.project.backend"/>
+    <module name="intellij.platform.progress.backend"/>
+    <module name="intellij.platform.lang.impl.backend"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.monolith"/>
+    <!-- endregion -->
+  </content>
+</idea-plugin>

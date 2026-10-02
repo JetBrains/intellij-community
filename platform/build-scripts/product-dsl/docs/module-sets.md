@@ -274,8 +274,10 @@ fun librariesTestFrameworks(): ModuleSet = moduleSet("libraries.testFrameworks")
  * Essential platform modules required by most IDE products.
  */
 fun essential(): ModuleSet = moduleSet("essential") {
-  // Include minimal essential modules
-  moduleSet(essentialMinimal())
+  // Include coreLang and the feature sets (splitCore, editor, find, and others)
+  moduleSet(coreLang())
+  moduleSet(splitCore())
+  moduleSet(editor())
 
   // Embedded modules (core classloader)
   embeddedModule("intellij.platform.scopes")
@@ -391,7 +393,7 @@ Don't create a module set if:
 ### Naming Conventions
 
 - Use **functional names** that describe what the modules do: `vcs`, `xml`, `ssh`, `essential`
-- Use **dot notation** for hierarchical relationships: `libraries.core`, `ide.common`, `essential.minimal`
+- Use **dot notation** for hierarchical relationships: `libraries.core`, `ide.common`, `split.core`
 - Avoid **product names** in module set names (sets should be reusable)
 - Keep names **concise** and **memorable**
 

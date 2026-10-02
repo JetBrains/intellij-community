@@ -197,7 +197,7 @@ Older build scripts used a hard-coded list in `PlatformModules.kt` for modules t
 // OLD (removed): adding modules to a hard-coded platform core list in PlatformModules.kt
 
 // NEW (recommended)
-moduleSet(CommunityModuleSets.essentialMinimal())
+moduleSet(CommunityModuleSets.essential())
 // or for minimal products:
 moduleSet(CommunityModuleSets.corePlatform())
 ```
@@ -215,14 +215,14 @@ moduleSet(CommunityModuleSets.corePlatform())
    (analysis/inspection)         (basic editing)         (all features)
         │                               │                     │
         ▼                               ▼                     ▼
-   corePlatform                   essentialMinimal        ide.common
-                                  + specific sets         or ide.ultimate
+   corePlatform                   coreLang                ide.common
+                                  + feature sets          or ide.ultimate
 ```
 
 | Module Set | Use Case |
 |------------|----------|
 | `corePlatform()` | Minimal tools without editing (CodeServer) |
-| `essentialMinimal()` | Lightweight IDEs with basic editing |
+| `coreLang()` + feature sets | Lightweight IDEs with basic editing, such as Draft (`splitCore()`, `editor()`, `find()`) |
 | `essential()` | Full IDEs with language support |
 | `ide.common` | IDEs with VCS, XML, common features |
 | `ide.ultimate` | Full Ultimate IDEs |
@@ -268,7 +268,7 @@ override fun getProductContentDescriptor(): ProductModulesContentSpec = productM
 }
 ```
 
-**Why corePlatform (not essentialMinimal)?**
+**Why corePlatform (not essential)?**
 CodeServer is an analysis/inspection tool that doesn't provide language editing capabilities:
 - ✅ Needs: Core platform, analysis APIs, IDE extension points
 - ❌ Doesn't need: Language support (lang.*), IDE editing (ide.impl), editor UI, search
@@ -276,6 +276,6 @@ CodeServer is an analysis/inspection tool that doesn't provide language editing 
 
 **Benefits of using module sets:**
 - Modules are actually available at runtime (not just XML extension points)
-- Clear separation: analysis tools use corePlatform, editing IDEs use essentialMinimal
+- Clear separation: analysis tools use corePlatform, editing IDEs use essential, or coreLang with the feature sets
 - Easier to maintain (fewer deprecatedInclude calls)
 - Automatic updates when core platform evolves

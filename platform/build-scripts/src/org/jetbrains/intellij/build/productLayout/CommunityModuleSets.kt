@@ -13,7 +13,9 @@ import org.jetbrains.intellij.build.productLayout.LibraryModuleSets.librariesLsp
  * Community module sets for IDE features that build on CoreModuleSets.
  *
  * This file contains IDE feature module sets:
- * - **essentialMinimal/essential**: IDE editing and navigation features
+ * - **essential**: IDE editing and navigation features, built from coreLang and the feature sets
+ * - **splitCore/credentialStore/editor/searchEverywhere/scopes/find/executionSplit/ideInternal**: the feature sets
+ *   that essential nests, and that a lean product adds itself
  * - **debugger**: Debugger platform
  * - **vcs**: Version control support
  * - **xmlRuntime**: the cglib library, for a product that bundles the XML plugin
@@ -39,103 +41,41 @@ object CommunityModuleSets {
   // region Essential and Debugger
 
   /**
-   * Minimal essential platform modules required by lightweight IDE products WITH editing capabilities.
-   *
-   * **Contents:**
-   * - `coreLang()` (nested) - Includes corePlatform + language support + ide.impl
-   * - `rpcBackend()` - RPC backend/frontend split and topics (base RPC from corePlatform)
-   * - Backend/frontend split modules (settings, backend, project.backend, etc.)
-   * - Editor modules (editor, editor.backend)
-   * - Search modules (searchEverywhere with backend/frontend)
-   * - Inline completion
-   *
-   * **Use when:** Building lightweight IDE products that provide code editing functionality
-   *
-   * **Example products:**
-   * - **Gateway**: Remote development gateway - uses `essential()` + `vcsShared()` + the SSH plugin
-   *
-   * **Don't use for:**
-   * - Analysis-only tools without editing (e.g., CodeServer) → Use `corePlatform()` instead
-   *
-   * **Hierarchy:**
-   * ```
-   * essentialMinimal
-   *   └─ coreLang
-   *       └─ corePlatform
-   *           └─ libraries
-   * ```
-   *
-   * **Note:** Most IDE products should start with this module set or `essential()` (which includes this).
-   * Nested by `essential()` to avoid duplication.
-   *
-   * @see essential for full IDE with navigation and more features
-   * @see CoreModuleSets.coreLang for just language support without editor/search/RPC
-   * @see CoreModuleSets.corePlatform for analysis tools without editing
-   */
-  fun essentialMinimal(): ModuleSet = moduleSet("essential.minimal") {
-    // Lang includes corePlatform (which includes librariesPlatform) as nested set
-    moduleSet(coreLang())
-
-    embeddedModule("intellij.libraries.download.pgp.verifier")
-    embeddedModule("intellij.remoteDev.util")
-
-    // RPC backend functionality (base RPC/kernel already in corePlatform via rpcMinimal)
-    moduleSet(rpcBackend())
-
-    module("intellij.platform.buildScripts.downloader")
-
-    module("intellij.platform.credentialStore.ui")
-    module("intellij.platform.credentialStore.impl")
-
-    // Core platform backend/frontend split
-    module("intellij.platform.settings.local")
-    module("intellij.platform.backend")
-    module("intellij.platform.project.backend")
-    module("intellij.platform.progress.backend")
-    module("intellij.platform.lang.impl.backend")
-    module("intellij.platform.indexing.impl.backend")
-
-    // Frontend/monolith
-    module("intellij.platform.frontend")
-    module("intellij.platform.monolith")
-
-    // Editor
-    module("intellij.platform.editor")
-    module("intellij.platform.editor.backend")
-
-    // Search
-    module("intellij.platform.searchEverywhere")
-    module("intellij.platform.searchEverywhere.backend")
-    module("intellij.platform.searchEverywhere.frontend")
-
-    // Completion
-    module("intellij.platform.inline.completion")
-
-    embeddedModule("intellij.platform.ide.initialConfigImport")
-    embeddedModule("intellij.platform.markdown.utils")
-    module("intellij.platform.ml")
-  }
-
-  /**
    * Essential platform modules required by most IDE products.
+   *
+   * The set nests [CoreModuleSets.coreLang] and the feature sets [splitCore], [credentialStore], [editor],
+   * [searchEverywhere], [scopes], [find], [executionSplit], [ideInternal] and [builtInServer].
+   * A lean product such as Draft takes coreLang and adds only the feature sets that it needs.
+   *
+   * The direct members are groups that only this set carries today.
+   * ADR 0010 (`build/decisions/0010-a-module-set-is-the-leaf-a-fragment-is-the-feature.md`) gives such a group no set.
+   * The `completion.*` and `pluginManager.*` groups become sets when a second product takes `essential` without them.
    *
    * The debugger platform is not part of this set. [ideCommon] nests [debugger],
    * and a lean product that needs the debugger adds [debugger] itself.
    */
   fun essential(): ModuleSet = moduleSet("essential") {
-    // Include minimal essential modules (core backend/frontend, editor, search)
-    moduleSet(essentialMinimal())
+    moduleSet(coreLang())
+    moduleSet(splitCore())
+    moduleSet(credentialStore())
+    moduleSet(editor())
+    moduleSet(searchEverywhere())
+    moduleSet(scopes())
+    moduleSet(find())
+    moduleSet(executionSplit())
+    moduleSet(ideInternal())
+    moduleSet(builtInServer())
 
-    module("intellij.platform.scopes")
-    module("intellij.platform.scopes.backend")
+    embeddedModule("intellij.libraries.download.pgp.verifier")
+    embeddedModule("intellij.remoteDev.util")
+    embeddedModule("intellij.platform.markdown.utils")
 
-    module("intellij.platform.find")
-    module("intellij.platform.find.backend")
-    module("intellij.platform.editor.frontend")
+    module("intellij.platform.buildScripts.downloader")
+    module("intellij.platform.indexing.impl.backend")
+    module("intellij.platform.inline.completion")
+    module("intellij.platform.ml")
     module("intellij.platform.managed.cache")
     module("intellij.platform.managed.cache.backend")
-    module("intellij.platform.ide.internal")
-    module("intellij.platform.ide.internal.backend")
     module("intellij.platform.feedback")
 
     module("intellij.platform.pluginManager.shared.base")
@@ -144,15 +84,11 @@ object CommunityModuleSets {
     module("intellij.platform.pluginManager.frontend")
     module("intellij.platform.ide.updateChecker")
 
-    module("intellij.platform.execution.impl.frontend")
-    module("intellij.platform.execution.impl.backend")
     module("intellij.platform.eel.tcp")
 
     module("intellij.platform.completion.common")
     module("intellij.platform.completion.frontend")
     module("intellij.platform.completion.backend")
-
-    moduleSet(builtInServer())
   }
 
   /**
@@ -189,6 +125,98 @@ object CommunityModuleSets {
   fun builtInServer(): ModuleSet = moduleSet("builtInServer") {
     module("intellij.platform.builtInServer.impl")
     module("intellij.platform.externalProcessAuthHelper")
+  }
+
+  /**
+   * The backend and frontend split anchors of the platform core, and the RPC backend that they need.
+   *
+   * [essential] nests this set. A lean product such as Draft adds the set itself.
+   */
+  fun splitCore(): ModuleSet = moduleSet("split.core") {
+    moduleSet(rpcBackend())
+
+    module("intellij.platform.settings.local")
+    module("intellij.platform.backend")
+    module("intellij.platform.project.backend")
+    module("intellij.platform.progress.backend")
+    module("intellij.platform.lang.impl.backend")
+    module("intellij.platform.frontend")
+    module("intellij.platform.monolith")
+  }
+
+  /**
+   * The credential store implementation and its settings UI.
+   * The API module `intellij.platform.credentialStore` stays in [CoreModuleSets.coreIde].
+   *
+   * [essential] nests this set. A lean product such as Draft adds the set itself.
+   */
+  fun credentialStore(): ModuleSet = moduleSet("credentialStore") {
+    module("intellij.platform.credentialStore.ui")
+    module("intellij.platform.credentialStore.impl")
+  }
+
+  /**
+   * The editor modules and their backend and frontend split.
+   *
+   * [essential] nests this set. A lean product such as Draft adds the set itself.
+   */
+  fun editor(): ModuleSet = moduleSet("editor") {
+    module("intellij.platform.editor")
+    module("intellij.platform.editor.backend")
+    module("intellij.platform.editor.frontend")
+  }
+
+  /**
+   * The Search Everywhere popup and its backend and frontend split.
+   *
+   * [essential] nests this set. A lean product such as Draft adds the set itself.
+   */
+  fun searchEverywhere(): ModuleSet = moduleSet("searchEverywhere") {
+    module("intellij.platform.searchEverywhere")
+    module("intellij.platform.searchEverywhere.backend")
+    module("intellij.platform.searchEverywhere.frontend")
+  }
+
+  /**
+   * The search scopes for the search and find features.
+   *
+   * [essential] nests this set. A lean product such as Draft adds the set itself.
+   */
+  fun scopes(): ModuleSet = moduleSet("scopes") {
+    module("intellij.platform.scopes")
+    module("intellij.platform.scopes.backend")
+  }
+
+  /**
+   * The Find in Files feature and its backend.
+   *
+   * [essential] nests this set. A lean product such as Draft adds the set itself.
+   */
+  fun find(): ModuleSet = moduleSet("find") {
+    module("intellij.platform.find")
+    module("intellij.platform.find.backend")
+  }
+
+  /**
+   * The backend and frontend split of the execution implementation.
+   * The `intellij.platform.execution.impl` module stays in [CoreModuleSets.coreLang].
+   *
+   * [essential] nests this set. A lean product such as Draft adds the set itself.
+   */
+  fun executionSplit(): ModuleSet = moduleSet("execution.split") {
+    module("intellij.platform.execution.impl.frontend")
+    module("intellij.platform.execution.impl.backend")
+  }
+
+  /**
+   * The internal IDE services and actions, and their backend.
+   * The module registers the platform implementations of `StatisticsNotificationManager` and `LatencyRecorder`.
+   *
+   * [essential] nests this set. A lean product such as Draft adds the set itself.
+   */
+  fun ideInternal(): ModuleSet = moduleSet("ide.internal") {
+    module("intellij.platform.ide.internal")
+    module("intellij.platform.ide.internal.backend")
   }
 
   /**
@@ -365,7 +393,7 @@ object CommunityModuleSets {
 
   /**
    * ML platform implementation, consumed only by the ML ranking plugins.
-   * The `intellij.platform.ml` API stays embedded in [essentialMinimal].
+   * The `intellij.platform.ml` API stays in [essential].
    */
   fun ml(): ModuleSet = moduleSet("ml") {
     module("intellij.platform.ml.impl")

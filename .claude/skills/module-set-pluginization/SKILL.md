@@ -6,7 +6,7 @@ description: Convert Product DSL module sets into bundled wrapper plugins.
 
 # Module Set Pluginization
 
-Use this workflow when a group of platform modules that currently live inside an aggregate Product DSL `ModuleSet` (typically `essential`, `essentialMinimal`, or `ide.common`) should become a standalone bundled plugin wrapper.
+Use this workflow when a group of platform modules that currently live inside an aggregate Product DSL `ModuleSet` (typically `essential`, one of the feature sets that `essential` nests, or `ide.common`) should become a standalone bundled plugin wrapper.
 
 **New canonical pattern:** the wrapper is a **hand-written** JPS module placed **next to the feature modules** — not auto-generated under `community/module-set-plugins/generated/`. Auto-generation is being phased out; legacy wrappers stay in place until migrated. Reference example: `community/platform/navbar/plugin/` (IJPL-245430, commit `9d61ae6803221`).
 
