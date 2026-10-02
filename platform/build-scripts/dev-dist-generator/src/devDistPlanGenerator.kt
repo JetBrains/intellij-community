@@ -63,6 +63,7 @@ import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -457,6 +458,14 @@ internal fun computeDevDistPlan(
       add(DEV_DIST_PLAN_RELATIVE_PATH to renderPartition(sortedProducts, half, reusedLaunchModelLabels))
       if (DevDistCapability.REFERENCE_PLAN in half.capabilities) {
         add(DEV_DIST_REFERENCE_PLAN_RELATIVE_PATH to renderReferencePlan(sortedProducts, half))
+        val referenceInputs = buildSpan("dev-distribution plan: resolve reference inputs") {
+          resolveDevDistReferenceInputs(
+            products = sortedProducts.map(::referenceProduct),
+            moduleSets = collected.moduleSets.associateBy(ModuleSetData::name),
+            model = referenceInputModel(targets, outputProvider),
+          )
+        }
+        add(DEV_DIST_REFERENCE_INPUTS_RELATIVE_PATH to renderDevDistReferenceInputs(referenceInputs, half.generatedByHeader))
       }
       add(DEV_DIST_FRAGMENT_INPUTS_RELATIVE_PATH to renderFragmentInputs(sortedProducts, half))
       add(DEV_DIST_MODULE_SETS_RELATIVE_PATH to renderModuleSets(collected.moduleSets, half))
@@ -3366,6 +3375,49 @@ private fun renderReferencePlanFields(product: ProductFragmentPlan, indent: Stri
   appendNameList("platform_asset_archives", product.platformAssets.archives, indent = indent)
 }
 
+/** The names of [product] that the reference inputs resolve, see [resolveDevDistReferenceInputs]. */
+private fun referenceProduct(product: ProductFragmentPlan): DevDistReferenceProduct {
+  fun payload(name: String): DevDistReferencePayload? {
+    val payload = product.payloads.singleOrNull { it.name == name } ?: return null
+    return DevDistReferencePayload(
+      modules = payload.modules,
+      projectLibraries = payload.projectLibraries,
+      moduleSets = payload.moduleSets,
+      runtimeClasspathModules = payload.runtimeClasspathModules,
+    )
+  }
+  return DevDistReferenceProduct(
+    platformPrefix = product.platformPrefix,
+    buildModules = product.buildModules,
+    embeddedFrontend = product.embeddedFrontend,
+    platformLib = payload(PLATFORM_LIB_FRAGMENT),
+    runtimeModuleRepository = payload(PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT),
+  )
+}
+
+/**
+ * The targets JSON and the JPS model as the reference inputs read them. A module dependency outside the test scope is a
+ * runtime classpath edge. A library whose parent is the project is a project library reference, whatever its scope.
+ */
+private fun referenceInputModel(targets: BazelTargetsInfo.TargetsFile, outputProvider: ModuleOutputProvider): DevDistReferenceInputModel {
+  val javaExtension = JpsJavaExtensionService.getInstance()
+  return DevDistReferenceInputModel(
+    targets = targets,
+    moduleDependencies = { name ->
+      outputProvider.findModule(name)?.dependenciesList?.dependencies.orEmpty()
+        .filterIsInstance<JpsModuleDependency>()
+        .filter { javaExtension.getDependencyExtension(it)?.scope != JpsJavaDependencyScope.TEST }
+        .map { it.moduleReference.moduleName }
+    },
+    projectLibraryReferences = { name ->
+      outputProvider.findModule(name)?.dependenciesList?.dependencies.orEmpty()
+        .filterIsInstance<JpsLibraryDependency>()
+        .filter { it.libraryReference.parentReference.resolve() is JpsProject }
+        .map { it.libraryReference.libraryName }
+    },
+  )
+}
+
 
 /** One field value of a product plan as [planFieldBodies] renders it at the top level, keyed with its field. */
 private data class PlanFieldBody(@JvmField val field: String, @JvmField val body: String)
@@ -3464,12 +3516,15 @@ private fun renderFragmentInputs(products: List<ProductFragmentPlan>, half: DevD
   append("# The exact module and library names each fragment declares as its Bazel inputs, so a fragment reads the\n")
   append("# jars its slice of the layout needs instead of the whole production target set.\n")
   append("#\n")
-  append("# Names, not labels, everywhere but one field: this generator has no Bazel-package knowledge, so\n")
-  append("# `").append(half.jpsBridge).append("` resolves each name through its Starlark re-derivation of the converter's package\n")
-  append("# layout and drops, with a warning, a name the model no longer has; the model-generation validation reports\n")
-  append("# staleness. The exception is `packed_content_module_jars`, which is labels because it is the one fact\n")
-  append("# no re-derivation can reach: whether a module packs a `lib/` jar is now a target of its own, and a repository\n")
-  append("# rule can neither see a provider nor test that a target exists.\n")
+  append("# `modules`, `project_libraries`, `module_sets` and `runtime_classpath_modules` are names. The binder reads this\n")
+  append("# file at load time, and no module extension loads it.")
+  if (DevDistCapability.REFERENCE_PLAN in half.capabilities) {
+    append(" The generator resolves the names to the labels of\n")
+    append("# `dev_dist_reference_inputs.bzl`, which only the reference fragments read.")
+  }
+  append("\n")
+  append("# `packed_content_module_jars` is labels: whether a module packs a `lib/` jar is a target of its own, and only the\n")
+  append("# generator knows which modules have one.\n")
   append("#\n")
   append("# `module_sets` is a reference, not a name list: the modules a set contains live in `dev_dist_module_sets.bzl`\n")
   append("# and are shared by every product referencing that set, so this file carries only what no set covers.\n")
@@ -3592,9 +3647,9 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DevDistHalf)
   append(half.generatedByHeader)
   append("#\n")
   append("# What each module set a split product references contains: the modules it declares itself, and the sets it\n")
-  append("# nests. `dev_dist_fragment_inputs.bzl` names the sets a product's platform payload references and\n")
-  append("# `").append(half.jpsBridge).append("` walks them from here, so a set two products share is written once instead of\n")
-  append("# flattened into both payloads - which is what made that file grow by ~450 names per split product.\n")
+  append("# nests. `dev_dist_fragment_inputs.bzl` names the sets a product's platform payload references and the binder\n")
+  append("# walks them from here, so a set two products share is written once instead of flattened into both payloads -\n")
+  append("# which is what made that file grow by ~450 names per split product.\n")
   append("#\n")
   append("# The same `moduleSet { }` declarations the generated module-set descriptors come from, so this stays in step\n")
   append("# with what the layout reads at runtime: both are written by this one run and diffed by the same\n")
@@ -3614,9 +3669,8 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DevDistHalf)
   append("# `mode_refused` names, per product mode, the `packed` members that the mode refuses. The layout of a product of\n")
   append("# that mode places no jar of them. Such a product hands over no such label, and the binder skips it.\n")
   append("#\n")
-  append("# A set name a payload references and this table no longer has is dropped with a warning, like any other\n")
-  append("# stale plan name: this is read during module-extension evaluation, so failing would make the very tool that\n")
-  append("# regenerates it unbuildable.\n")
+  append("# The binder fails on a set name that a payload references and this table does not have. One generator run writes\n")
+  append("# both files, and no module extension loads this one.\n")
   append("DEV_DIST_MODULE_SETS = {\n")
   for (moduleSet in moduleSets) {
     append("    \"").append(moduleSet.name).append("\": struct(\n")

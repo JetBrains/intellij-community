@@ -3,12 +3,10 @@
 # The exact module and library names each fragment declares as its Bazel inputs, so a fragment reads the
 # jars its slice of the layout needs instead of the whole production target set.
 #
-# Names, not labels, everywhere but one field: this generator has no Bazel-package knowledge, so
-# `jps_dynamic_deps_community` resolves each name through its Starlark re-derivation of the converter's package
-# layout and drops, with a warning, a name the model no longer has; the model-generation validation reports
-# staleness. The exception is `packed_content_module_jars`, which is labels because it is the one fact
-# no re-derivation can reach: whether a module packs a `lib/` jar is now a target of its own, and a repository
-# rule can neither see a provider nor test that a target exists.
+# `modules`, `project_libraries`, `module_sets` and `runtime_classpath_modules` are names. The binder reads this
+# file at load time, and no module extension loads it.
+# `packed_content_module_jars` is labels: whether a module packs a `lib/` jar is a target of its own, and only the
+# generator knows which modules have one.
 #
 # `module_sets` is a reference, not a name list: the modules a set contains live in `dev_dist_module_sets.bzl`
 # and are shared by every product referencing that set, so this file carries only what no set covers.

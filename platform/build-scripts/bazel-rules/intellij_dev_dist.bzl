@@ -77,7 +77,7 @@ def _dev_build_inputs_impl(ctx):
         # A module's production label is the *rule* label plus `.jar` (`compute_module_targets`,
         # `@community//build:jps_target_derivation.bzl:410-420`), and the rule's jar output is `%{name}.jar`
         # (`jvm-rules/rules/common-attrs.bzl:129-132`) - so the jar file's owner is the rule and `owner + ".jar"`
-        # reproduces the label. `jps_dynamic_deps_ultimate.bzl:567-570` states the same identity from the other side.
+        # reproduces the label. The generator writes the same labels from `build/bazel-targets.json`.
         for jar in content.module_jars.to_list():
             _add_input_entry(ctx, entries, origins, str(jar.owner) + ".jar", (jar,), jar.owner, "member")
 
