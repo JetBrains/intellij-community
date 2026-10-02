@@ -20,7 +20,6 @@
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
-    <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
@@ -53,5 +52,6 @@
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.RefactoringToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.DiagnosticsToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.IdeScriptToolset" />
+    <buildProgressListenerRegistrar implementation="com.intellij.mcpserver.toolsets.util.RunConfigurationBuildListenerRegistrar"/>
   </extensions>
 </idea-plugin>

@@ -1,7 +1,8 @@
 package com.intellij.mcpserver.toolsets.util
 
 import com.intellij.build.BuildProgressListener
-import com.intellij.build.BuildViewManager
+import com.intellij.build.BuildProgressListenerRegistrar
+import com.intellij.build.BuildProgressObservable
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.Failure
@@ -10,6 +11,7 @@ import com.intellij.build.events.FileMessageEvent
 import com.intellij.build.events.FinishEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.StartBuildEvent
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessEvent
@@ -18,10 +20,13 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.util.containers.DisposableWrapperList
 import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
 import java.util.IdentityHashMap
@@ -35,8 +40,7 @@ class RunConfigurationBuildErrors(private val executionId: () -> Long) : BuildPr
   private val processOutputs = ConcurrentHashMap<ProcessHandler, StringBuilder>()
 
   fun listen(project: Project, disposable: Disposable) {
-    project.getService(BuildViewManager::class.java).addListener(this, disposable)
-    project.getService(ExternalSystemRunConfigurationViewManager::class.java).addListener(this, disposable)
+    project.service<RunConfigurationBuildEvents>().addListener(this, disposable)
     project.messageBus.connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
       override fun processStarting(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
         val id = executionId()
@@ -108,6 +112,50 @@ class RunConfigurationBuildErrors(private val executionId: () -> Long) : BuildPr
     const val MAX_PROCESS_OUTPUT_LENGTH = 20_000
   }
 }
+
+/**
+ * Connects each [BuildProgressObservable] of the project to [RunConfigurationBuildEvents].
+ * The build view and the external system run configuration view are such observables.
+ */
+internal class RunConfigurationBuildListenerRegistrar : BuildProgressListenerRegistrar {
+  override fun register(project: Project, buildProgressObservable: BuildProgressObservable) {
+    project.service<RunConfigurationBuildEvents>().listenTo(buildProgressObservable)
+  }
+}
+
+/**
+ * Sends the build events of all connected observables to the listeners of the active run configuration starts.
+ * A listener stays until its disposable is disposed.
+ */
+@Service(Service.Level.PROJECT)
+internal class RunConfigurationBuildEvents : BuildProgressListener, Disposable {
+  private val listeners = DisposableWrapperList<BuildProgressListener>()
+
+  fun listenTo(buildProgressObservable: BuildProgressObservable) {
+    buildProgressObservable.addListener(this, this)
+  }
+
+  fun addListener(listener: BuildProgressListener, disposable: Disposable) {
+    listeners.add(listener, disposable)
+  }
+
+  override fun onEvent(buildId: Any, event: BuildEvent) {
+    for (listener in listeners) {
+      try {
+        listener.onEvent(buildId, event)
+      }
+      catch (e: Exception) {
+        rethrowControlFlowException(e)
+        LOG.warn(e)
+      }
+    }
+  }
+
+  override fun dispose() {
+  }
+}
+
+private val LOG = logger<RunConfigurationBuildEvents>()
 
 @ApiStatus.Internal
 fun runConfigurationFailureText(error: Throwable): String {
