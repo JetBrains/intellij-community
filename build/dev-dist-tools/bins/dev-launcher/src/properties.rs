@@ -104,6 +104,28 @@ pub(crate) fn distribution_properties(home: &str, info: &ProductInfo) -> anyhow:
     Ok(result)
 }
 
+/// The system property that names the runtime module repository of the IDE.
+pub(crate) const RUNTIME_MODULE_REPOSITORY_PROPERTY: &str = "intellij.platform.runtime.repository.path";
+
+/// Adds the runtime module repository of the home to `properties`, as `PreBuiltDevMain.addRuntimeModuleRepository` does.
+///
+/// The distribution states the property through `product-info.json` when its launch model asks. A row that composes the
+/// repository component gets it from the home. So the launcher adds `<home>/modules/module-descriptors.dat` only when the
+/// home has that file and neither `properties` nor `caller_properties` state the property.
+pub(crate) fn add_runtime_module_repository(
+    properties: &mut IndexMap<String, String>,
+    home: &str,
+    caller_properties: &IndexMap<String, String>,
+) {
+    if properties.contains_key(RUNTIME_MODULE_REPOSITORY_PROPERTY) || caller_properties.contains_key(RUNTIME_MODULE_REPOSITORY_PROPERTY) {
+        return;
+    }
+    let file = Path::new(home).join("modules").join("module-descriptors.dat");
+    if file.is_file() {
+        properties.insert(RUNTIME_MODULE_REPOSITORY_PROPERTY.to_owned(), file.display().to_string());
+    }
+}
+
 /// The main class and the system properties of the custom command of the distribution that handles `command`. This
 /// is `readCustomCommandLaunch` of `DevLaunchProperties.kt`.
 pub(crate) fn custom_command(home: &str, info: &ProductInfo, command: &str) -> anyhow::Result<(String, IndexMap<String, String>)> {

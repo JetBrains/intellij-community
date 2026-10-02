@@ -27,7 +27,9 @@ use anyhow::{Context, anyhow, bail};
 use indexmap::IndexMap;
 use serde::Deserialize;
 
-use crate::properties::{ProductInfo, custom_command, distribution_properties, put_system_property, read_lines};
+use crate::properties::{
+    ProductInfo, add_runtime_module_repository, custom_command, distribution_properties, put_system_property, read_lines,
+};
 use crate::runfiles::Runfiles;
 
 /// The class path separator of the JVM on the host.
@@ -166,6 +168,7 @@ fn prepare(args: &[String], getenv: &dyn Fn(&str) -> String, warnings: &mut dyn 
         main_class = command_main_class;
         properties.extend(command_properties);
     }
+    add_runtime_module_repository(&mut properties, &home, &caller_properties);
 
     let class_path = read_class_path(&home)?;
     let java = files.rlocation(&manifest.java)?;

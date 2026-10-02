@@ -159,6 +159,19 @@ _GENERATE_RUNTIME_MODULE_REPOSITORY_FLAG = "-Dintellij.build.generate.runtime.mo
 # so a row states its root module as the `rootModule` of its own `build/dev-build.json` key instead.
 _ROOT_MODULE_OVERRIDE_FLAG_PREFIX = "-Didea.jbclient.root.module.override="
 
+# The JPS output directories below `out/` of the two halves. A dev launch builds no JPS output, so a launcher flag that
+# names one names a file that no build writes. `devDistRunConfigurations.kt` refuses the same directories in a row.
+_JPS_OUTPUT_DIRECTORIES = ["classes", "production", "test"]
+_WORKSPACE_OUT = "{BUILD_WORKSPACE_DIRECTORY}/out/"
+
+def _names_jps_output(flag):
+    """Whether `flag` names a JPS output directory below `${BUILD_WORKSPACE_DIRECTORY}/out/`."""
+    for rest in flag.split(_WORKSPACE_OUT)[1:]:
+        segment = rest.partition("/")[0].partition(":")[0].partition(";")[0].partition(" ")[0].partition("\"")[0]
+        if segment in _JPS_OUTPUT_DIRECTORIES:
+            return True
+    return False
+
 # The component that provides the `lib/` jars the packer produces. The composer checks the exact set of composed
 # kinds, so this name is part of the distribution's contract.
 PACKED_JARS_COMPONENT = "platform_packed_content_modules"
@@ -612,6 +625,10 @@ def _declare_run_launcher(
             fail("%s: state '%s' as the attribute of intellij_dev_run_configuration, not in jvm_flags" % (name, flag))
         if flag.startswith(_ROOT_MODULE_OVERRIDE_FLAG_PREFIX):
             fail("%s: state the root module as `rootModule` of a build/dev-build.json key, not as '%s'" % (name, flag))
+        if _names_jps_output(flag):
+            fail(("%s: '%s' names a JPS output below out/, which a dev launch does not build. State a file of the " +
+                  "distribution, such as runtime_module_repository = True for the runtime module repository, or a path " +
+                  "outside out/classes, out/production and out/test") % (name, flag))
 
     before_run = _before_run(tables, name, jvm_flags, compile_clion_backend_before_run)
     if tables.launcher_jvm_flags != None:

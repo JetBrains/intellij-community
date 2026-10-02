@@ -297,6 +297,49 @@ fn prepare_starts_a_custom_command() {
 }
 
 #[test]
+fn prepare_adds_the_runtime_module_repository_of_the_home() {
+    let env = [("BUILD_WORKSPACE_DIRECTORY", "/ws")];
+    let property = "-Dintellij.platform.runtime.repository.path=";
+    let without = write_launcher(&[], false);
+    let argv = without.prepare(&[], &env).unwrap().argv.join("\n");
+    assert!(!argv.contains(property), "a home without the repository got the property:\n{argv}");
+
+    let with = write_launcher(&[], false);
+    let repository = with.home.join("modules").join("module-descriptors.dat");
+    write_file(&repository, "");
+    let argv = with.prepare(&[], &env).unwrap().argv.join("\n");
+    assert!(
+        argv.contains(&format!("{property}{}\n", repository.display())),
+        "the command line misses the repository of the home:\n{argv}"
+    );
+
+    let caller = write_launcher(&["-Dintellij.platform.runtime.repository.path=/custom.dat"], false);
+    write_file(&caller.home.join("modules").join("module-descriptors.dat"), "");
+    let argv = caller.prepare(&[], &env).unwrap().argv.join("\n");
+    assert_eq!(argv.matches(property).count(), 1, "{argv}");
+    assert!(
+        argv.contains(&format!("{property}/custom.dat\n")),
+        "the home overrode the caller flag:\n{argv}"
+    );
+}
+
+#[test]
+fn the_distribution_states_the_runtime_module_repository_first() {
+    let directory = tempfile::tempdir().unwrap();
+    let home = directory.path().display().to_string();
+    write_file(&directory.path().join("modules").join("module-descriptors.dat"), "");
+    let mut distribution = IndexMap::from([(
+        properties::RUNTIME_MODULE_REPOSITORY_PROPERTY.to_owned(),
+        "/product-info.dat".to_owned(),
+    )]);
+    add_runtime_module_repository(&mut distribution, &home, &IndexMap::new());
+    assert_eq!(
+        distribution.get(properties::RUNTIME_MODULE_REPOSITORY_PROPERTY).map(String::as_str),
+        Some("/product-info.dat")
+    );
+}
+
+#[test]
 fn prepare_needs_the_workspace() {
     let launcher = write_launcher(&[], false);
     let error = launcher.prepare(&[], &[]).unwrap_err();

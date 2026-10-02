@@ -23,6 +23,7 @@ private const val PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix"
 private const val FRONTEND_BASE_PREFIX_PROPERTY = "dev.build.base.ide.platform.prefix.for.frontend"
 private const val ADDITIONAL_MODULES_PROPERTY = "additional.modules"
 private const val RUNTIME_MODULE_REPOSITORY_PROPERTY = "intellij.build.generate.runtime.module.repository"
+private const val RUNTIME_MODULE_REPOSITORY_PATH_PROPERTY = "intellij.platform.runtime.repository.path"
 
 /**
  * The properties that leave the `jvm_flags`: the fields of a row, and the two product selectors `DevMainImpl` reads.
@@ -44,6 +45,21 @@ private val ROW_FIELD_PROPERTIES = setOf(
 private val LAUNCHER_DATA_PROPERTIES = setOf("idea.config.path", "idea.system.path", "idea.log.path")
 
 private const val PROJECT_DIR_MACRO = "\$PROJECT_DIR\$"
+
+/**
+ * The environment variables that only the legacy engine reads: `IdeBuilder.kt` takes the JPS output directory from
+ * `CLASSES_DIR`. A launcher starts a composed distribution and reads no JPS output, so a row neither passes such a
+ * variable as `env` nor turns it into a flag.
+ */
+private val LEGACY_ENGINE_ENV = setOf("CLASSES_DIR")
+
+/**
+ * A value that names a JPS output directory below `$PROJECT_DIR$/out/`: `out/classes` of the ultimate half, and
+ * `out/production` and `out/test` of the community half. `_declare_run_launcher` in
+ * `community/build/intellij_dev_dist_declarations.bzl` refuses the same directories in a launcher flag.
+ */
+private val JPS_OUTPUT = Regex(Regex.escape("$PROJECT_DIR_MACRO/out/") + "(classes|production|test)(?=[/:;\" ]|$)")
+
 private const val USER_HOME_MACRO = "\$USER_HOME\$"
 
 /** `bazel run` sets the variable, and the launcher expands `${NAME}` at launch; `$$` is a literal `$` for Bazel. */
@@ -67,9 +83,11 @@ internal const val UNPLANNABLE_NO_PLUGIN_DESCRIPTOR = "no plugin descriptor"
  * the launcher owns ([LAUNCHER_DATA_PROPERTIES]). An
  * environment variable that names `$PROJECT_DIR$` becomes a `-D` property there, because the Bazel `env` of a launcher
  * cannot name the workspace. `$PROJECT_DIR$` is the workspace root, as it is for the IDE. [env] holds every other
- * variable in XML order. [programArgs] are the `PROGRAM_PARAMETERS` in the form Bazel `args` take, see
- * [bazelProgramArgument]. [booleanFields] are the boolean fields of the half that the row sets to `true`, in the order of
- * [DevDistHalf.rowFieldProperties].
+ * variable in XML order. A variable of [LEGACY_ENGINE_ENV] is in neither. [runtimeModuleRepository] is `true` for
+ * `-Dintellij.build.generate.runtime.module.repository=true`, and for `-Dintellij.platform.runtime.repository.path` with a
+ * value below `$PROJECT_DIR$/out/`, which then leaves the flags. [programArgs] are the `PROGRAM_PARAMETERS` in the form
+ * Bazel `args` take, see [bazelProgramArgument]. [booleanFields] are the boolean fields of the half that the row sets to
+ * `true`, in the order of [DevDistHalf.rowFieldProperties].
  */
 @ApiStatus.Internal
 class DevRunConfigurationRow(
@@ -89,7 +107,8 @@ class DevRunConfigurationRow(
  *
  * A file whose name contains `.Generated.` is skipped. A file the XML parser rejects is reported on the error stream
  * and skipped. A file with several `<configuration>` elements counts the last one that has a name. A configuration
- * without `-Didea.platform.prefix` fails and names its file, and so do two configurations with one sanitized name.
+ * without `-Didea.platform.prefix` fails and names its file, and so do two configurations with one sanitized name. A
+ * flag or a converted environment variable that names a [JPS_OUTPUT] directory fails too.
  * [fieldProperties] are the boolean fields of the half, keyed by property, see [DevDistHalf.rowFieldProperties].
  */
 @ApiStatus.Internal
@@ -146,10 +165,18 @@ private fun devRunConfigurationRow(
   val platformPrefix = properties.get(PLATFORM_PREFIX_PROPERTY) ?: error("$PLATFORM_PREFIX_PROPERTY not found in VM options ($xmlFileName)")
   val frontendBasePrefix = properties.get(FRONTEND_BASE_PREFIX_PROPERTY)
   val product = if (frontendBasePrefix == null) platformPrefix else frontendBasePrefix + platformPrefix
-  val flagProperties = properties.filterKeys { it !in ROW_FIELD_PROPERTIES && it !in fieldProperties && it !in LAUNCHER_DATA_PROPERTIES }
+  // The row composes the file that the IDE run expected under out/.
+  val repositoryPath = properties.get(RUNTIME_MODULE_REPOSITORY_PATH_PROPERTY)?.takeIf { it.startsWith("$PROJECT_DIR_MACRO/out/") }
+  val flagProperties = properties.filterKeys { key ->
+    key !in ROW_FIELD_PROPERTIES && key !in fieldProperties && key !in LAUNCHER_DATA_PROPERTIES &&
+    (repositoryPath == null || key != RUNTIME_MODULE_REPOSITORY_PATH_PROPERTY)
+  }
   val envProperties = LinkedHashMap<String, String>()
   val bazelEnv = LinkedHashMap<String, String>()
   for ((key, value) in env) {
+    if (key in LEGACY_ENGINE_ENV) {
+      continue
+    }
     if (value.contains(PROJECT_DIR_MACRO)) {
       val property = key.lowercase().replace('_', '.')
       if (property !in LAUNCHER_DATA_PROPERTIES) {
@@ -162,6 +189,13 @@ private fun devRunConfigurationRow(
   }
   val conflicts = flagProperties.keys intersect envProperties.keys
   check(conflicts.isEmpty()) { "The VM options and the environment variables of $xmlFileName both set $conflicts" }
+  for (value in flagProperties.values + envProperties.values + vmOptions.jvmFlags) {
+    check(!JPS_OUTPUT.containsMatchIn(value)) {
+      "$xmlFileName: '$value' names a JPS output below \$PROJECT_DIR\$/out/, which a dev launch does not build." +
+      " State a file of the distribution, such as -D$RUNTIME_MODULE_REPOSITORY_PROPERTY=true for the runtime module repository," +
+      " or a path outside out/classes, out/production and out/test"
+    }
+  }
   val jvmFlags = (flagProperties + envProperties)
     .map { (key, value) -> "-D$key=${value.replace(PROJECT_DIR_MACRO, BAZEL_WORKSPACE_DIRECTORY)}" }
     .plus(vmOptions.jvmFlags)
@@ -173,7 +207,7 @@ private fun devRunConfigurationRow(
     additionalModules = (properties.get(ADDITIONAL_MODULES_PROPERTY) ?: "").split(',').map { it.trim() }.filter { it.isNotEmpty() }.distinct().sorted(),
     jvmFlags = jvmFlags,
     env = bazelEnv,
-    runtimeModuleRepository = properties.get(RUNTIME_MODULE_REPOSITORY_PROPERTY) == "true",
+    runtimeModuleRepository = properties.get(RUNTIME_MODULE_REPOSITORY_PROPERTY) == "true" || repositoryPath != null,
     booleanFields = fieldProperties.mapNotNull { (property, field) -> field.takeIf { properties.get(property) == "true" } },
     programArgs = programArguments(programParameters).map(::bazelProgramArgument),
   )

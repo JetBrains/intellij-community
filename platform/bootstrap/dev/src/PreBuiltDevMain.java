@@ -36,6 +36,8 @@ import java.util.Map;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 @ApiStatus.Internal
 public final class PreBuiltDevMain {
+  private static final String RUNTIME_MODULE_REPOSITORY_PROPERTY = "intellij.platform.runtime.repository.path";
+
   static void main(String[] args) throws Throwable {
     MethodHandles.Lookup lookup = MethodHandles.lookup();
 
@@ -64,6 +66,7 @@ public final class PreBuiltDevMain {
       properties = new LinkedHashMap<>(properties);
       properties.putAll(command.getValue());
     }
+    properties = addRuntimeModuleRepository(properties, homePath);
     List<Path> classpath = readClasspath(homePath);
 
     classLoader.reset(classpath);
@@ -169,6 +172,26 @@ public final class PreBuiltDevMain {
       lookup.findStatic(buildServer, "getIdeSystemProperties", MethodType.methodType(Map.class, Path.class));
     //noinspection unchecked
     return (Map<String, String>)getIdeSystemProperties.invoke(ideHomePath);
+  }
+
+  /**
+   * Adds the runtime module repository of the home, as {@code add_runtime_module_repository} of the launcher does.
+   * <p>
+   * The distribution states the property through {@code product-info.json} when its launch model asks. A row that composes the
+   * repository component gets it from the home. So the method adds {@code <home>/modules/module-descriptors.dat} only when the home
+   * has that file and neither the distribution nor the command line states the property.
+   */
+  private static Map<String, String> addRuntimeModuleRepository(Map<String, String> properties, Path homePath) {
+    if (properties.containsKey(RUNTIME_MODULE_REPOSITORY_PROPERTY) || System.getProperty(RUNTIME_MODULE_REPOSITORY_PROPERTY) != null) {
+      return properties;
+    }
+    var repository = homePath.resolve("modules").resolve("module-descriptors.dat");
+    if (!Files.isRegularFile(repository)) {
+      return properties;
+    }
+    var result = new LinkedHashMap<>(properties);
+    result.put(RUNTIME_MODULE_REPOSITORY_PROPERTY, repository.toAbsolutePath().toString());
+    return result;
   }
 
   /**

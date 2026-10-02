@@ -276,6 +276,65 @@ class DevDistRunConfigurationModulesTest {
   }
 
   @Test
+  fun `a runtime module repository path below out becomes the row attribute`() {
+    write("Embedded.xml", devMain(
+      "Embedded",
+      "-Didea.platform.prefix=Gateway -Dintellij.platform.runtime.repository.path=\$PROJECT_DIR\$/out/classes/module-descriptors.jar -Da=1",
+    ))
+    write("Own.xml", devMain("Own", "-Didea.platform.prefix=Gateway -Dintellij.platform.runtime.repository.path=/opt/descriptors.dat"))
+
+    val rows = readDevRunConfigurationRows(runConfigurations).associateBy { it.name }
+
+    assertThat(rows.getValue("embedded").runtimeModuleRepository).isTrue()
+    assertThat(rows.getValue("embedded").jvmFlags).containsExactly("-Da=1")
+    assertThat(rows.getValue("own").runtimeModuleRepository).isFalse()
+    assertThat(rows.getValue("own").jvmFlags).containsExactly("-Dintellij.platform.runtime.repository.path=/opt/descriptors.dat")
+  }
+
+  @Test
+  fun `a value that names a JPS output fails and names the file and the value`() {
+    class Case(val fileName: String, val vmParameters: String, val env: Map<String, String>, val value: String)
+    for (case in listOf(
+      Case("Property.xml", "-Dx.dir=\$PROJECT_DIR\$/out/classes/production/x", emptyMap(), "\$PROJECT_DIR\$/out/classes/production/x"),
+      Case("Agent.xml", "-javaagent:\$PROJECT_DIR\$/out/test/agent.jar", emptyMap(), "-javaagent:\$PROJECT_DIR\$/out/test/agent.jar"),
+      Case("Variable.xml", "", mapOf("TOOL_DIR" to "\$PROJECT_DIR\$/out/production"), "\$PROJECT_DIR\$/out/production"),
+    )) {
+      write(case.fileName, devMain(case.fileName, "-Didea.platform.prefix=idea ${case.vmParameters}", env = case.env))
+
+      assertThatThrownBy { readDevRunConfigurationRows(runConfigurations) }
+        .isInstanceOf(IllegalStateException::class.java)
+        .hasMessageContaining("${case.fileName}: '${case.value}' names a JPS output")
+        .hasMessageContaining("-Dintellij.build.generate.runtime.module.repository=true")
+      Files.delete(runConfigurations.resolve(case.fileName))
+    }
+
+    write("Kept.xml", devMain(
+      "Kept",
+      "-Didea.platform.prefix=idea -Dx.data=\$PROJECT_DIR\$/out/dev-data/x -Dx.frontend=\$PROJECT_DIR\$/out/local-rd-frontend/current " +
+      "-Dx.other=\$PROJECT_DIR\$/out/classes-cache",
+    ))
+    assertThat(readDevRunConfigurationRows(runConfigurations).single().jvmFlags).containsExactly(
+      "-Dx.data=\$\${BUILD_WORKSPACE_DIRECTORY}/out/dev-data/x",
+      "-Dx.frontend=\$\${BUILD_WORKSPACE_DIRECTORY}/out/local-rd-frontend/current",
+      "-Dx.other=\$\${BUILD_WORKSPACE_DIRECTORY}/out/classes-cache",
+    )
+  }
+
+  @Test
+  fun `a variable that only the legacy engine reads is neither a flag nor env`() {
+    write("Legacy.xml", devMain(
+      "Legacy",
+      "-Didea.platform.prefix=idea",
+      env = mapOf("CLASSES_DIR" to "\$PROJECT_DIR\$/out/production", "K" to "v"),
+    ))
+
+    val row = readDevRunConfigurationRows(runConfigurations).single()
+
+    assertThat(row.jvmFlags).isEmpty()
+    assertThat(row.env).containsExactly(entry("K", "v"))
+  }
+
+  @Test
   fun `a property the VM options and a project-directory variable both set fails`() {
     write("Conflict.xml", devMain(
       "Conflict",

@@ -6,13 +6,7 @@
 load("//build:intellij_dev_community.bzl", "intellij_dev_run_configurations")
 
 DEV_RUN_CONFIGURATIONS = {
-    "android_studio_dev_build": struct(
-        product = "AndroidStudio",  # Android_Studio__dev_build__.xml
-        jvm_flags = [
-            "-Dawt.toolkit.name=auto",
-            "-Dclasses.dir=$${BUILD_WORKSPACE_DIRECTORY}/out/production",
-        ],
-    ),
+    "android_studio_dev_build": struct(product = "AndroidStudio", jvm_flags = ["-Dawt.toolkit.name=auto"]),  # Android_Studio__dev_build__.xml
     "idea_community": struct(
         product = "Idea",  # IDEA_Community.xml
         jvm_flags = [
@@ -25,7 +19,6 @@ DEV_RUN_CONFIGURATIONS = {
         additional_modules = ["intellij.devkit"],
         jvm_flags = [
             "-Dawt.toolkit.name=auto",
-            "-Dclasses.dir=$${BUILD_WORKSPACE_DIRECTORY}/out/production",
             "-Djavax.xml.parsers.SAXParserFactory=com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
         ],
     ),
