@@ -18,12 +18,15 @@ plan files through pluginpack. Each other input fails with an error that names i
 | Input | Accepted | Refused |
 | --- | --- | --- |
 | `keep-manifest=`, `merge-entities=`, `reject-native-entries=` | `true` | `false` and every other value |
-| `source-manifest=` | `coverage-agent`, after a `module=` or a `library=` line | `keep`, `drop`, `rewrite-boot-class-path` |
+| `source-manifest=` | no value. No producer writes a manifest policy into a flag file. | every value, as an unknown option |
 | A flag-file path | a path without a `.` or `..` component | a path with one. The Go parser cleaned it. |
 | `file=<entry name>=<path>` | a nonempty name and path. The recipe replay writes it for a single-file source. | no `=` after the name, or an empty part |
 | `trace-file=` | one path, in any number of groups | two different paths. A run writes one trace. |
-| A file source | every policy except `coverage-agent` | `coverage-agent`. It applies to a jar source only. |
+| `jar-name=` | one nonempty file name per group, without `/` and `\` | an empty value, a value with a separator, or a second line in the group |
 | A source path | a nonempty path | an empty path |
+| The module manifests of one jar | one | a second one. The refusal names the jar and both sources. |
+| The `Boot-Class-Path` main attribute of a module manifest | the file name of the jar, or no attribute | every other value. The refusal names the jar, the source and the value. |
+| A module manifest | UTF-8 text | other bytes |
 | `META-INF/listOfEntities.txt` with `merge_entities` | UTF-8 text | other bytes. The Go trim stopped at the first bad byte. |
 | A native entry in `nativelib::select` | ASCII | other names. The family match folds ASCII case only. |
 | The native tree before the pack | an empty directory | an absent directory, or a directory that holds an entry |
@@ -37,6 +40,25 @@ writes a `file=` line. The recipe replay of `build/dev-dist` writes one, so the 
 The types state the rest of the grammar. A `Source` is a `Jar` with an `EntryFilter` or a `File` with an entry name, so
 a jar without a filter or a patch of a jar cannot occur. A `NativeSpec` has a `NativeTree` with the family and the
 architecture, or no tree, so a platform without a tree cannot occur. The Go port checked these mixes at run time.
+
+## Manifests
+
+A jar keeps the manifest of its module. The `META-INF/MANIFEST.MF` of a `module=` source survives the merge, whatever
+`keep-manifest=` and the `ManifestMode` of the source say. A library source and a file source keep their manifest by
+their `ManifestMode`, and by `keep-manifest=` when they have none. A producer writes `keep-manifest=true` when the jar has
+one meaningful source. pluginpack gives `ManifestMode::Drop` to each module source of a jar with two sources, and the
+module manifest survives all the same. A file source is never a module manifest, so the two manifest refusals do not
+apply to it. No entry changes its content in the merge.
+
+A module manifest with a `Boot-Class-Path` must name the distribution name of the jar, `MergeSpec::jar_name()`. The
+`jar-name=` line states it, because the output file of a content-module jar is `<target>.production.jar`, and the
+distribution names the jar `<module>.jar`. A group without the line, and a `MergeSpec` of pluginpack, take the output
+file name. The name is not in the bytes of the jar. It is also the `jar` tag of the `pack jar` span and the start of the
+duplicate line.
+
+The `Boot-Class-Path` check reads the main section of the manifest, up to the first empty line. A line that starts with
+a space continues the line before it. The attribute name matches without regard to ASCII case, as the JAR specification
+states.
 
 ## Packing
 

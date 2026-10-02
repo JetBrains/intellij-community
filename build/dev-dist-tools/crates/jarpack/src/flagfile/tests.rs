@@ -2,55 +2,15 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::tests::testjar::{Scratch, entry, entry_names, is_library, pack, parse_recipe, parse_recipe_file, read_entry, write_zip_jar};
-use crate::{MANIFEST_ENTRY_NAME, ManifestMode, MergeSpec, Source, resolve_path};
+use crate::tests::golden::GOLDEN_MODULE_MANIFEST;
+use crate::tests::testjar::{
+    AGENT_MANIFEST, Scratch, agent_sources, digest, entry, entry_names, is_library, pack, parse_recipe, parse_recipe_file, read_entry,
+    write_zip_jar,
+};
+use crate::{MANIFEST_ENTRY_NAME, MergeSpec, Source, resolve_path};
 
 fn at_root(relative: &str) -> PathBuf {
     Path::new("/exec/root").join(relative)
-}
-
-#[test]
-fn parse_source_manifest_policy() {
-    let scratch = Scratch::new();
-    // `pack_jar` writes the line after a `library=` or a `module=` line of a coverage agent jar.
-    for kind in ["library", "module"] {
-        let recipe = format!(
-            "output=out/a.jar\nlibrary=first.jar\n{kind}=agent.jar\nsource-manifest=coverage-agent\nmodule=owner.jar\n\
-             output=out/b.jar\nmodule=other.jar\n"
-        );
-        let specs = parse_recipe(&scratch, &recipe).unwrap();
-        let policies: Vec<_> = specs[0].sources.iter().map(Source::manifest).collect();
-        assert_eq!(
-            policies,
-            [None, Some(ManifestMode::CoverageAgent), None],
-            "the policy did not stay on the selected source"
-        );
-        assert_eq!(specs[1].sources[0].manifest(), None);
-    }
-    for recipe in [
-        "source-manifest=coverage-agent\noutput=out.jar\nmodule=in.jar\n",
-        "output=out.jar\nsource-manifest=coverage-agent\nmodule=in.jar\n",
-        "output=out.jar\nlibrary=in.jar\nsource-manifest=unknown\n",
-        "output=out.jar\nlibrary=in.jar\nsource-manifest=\n",
-        "output=out.jar\nlibrary=in.jar\nsource-manifest=coverage-agent\nsource-manifest=coverage-agent\n",
-        "output=out.jar\nfile=META-INF/MANIFEST.MF=in.txt\nsource-manifest=coverage-agent\n",
-        "output=out.jar\npatch=META-INF/MANIFEST.MF=in.txt\nsource-manifest=coverage-agent\n",
-        "output=first.jar\nlibrary=in.jar\noutput=second.jar\nsource-manifest=coverage-agent\nmodule=other.jar\n",
-    ] {
-        assert!(
-            parse_recipe(&scratch, recipe).is_err(),
-            "accepted an invalid source policy: {recipe}"
-        );
-    }
-    // No producer writes another policy into a flag file, so the parser refuses each one and names it.
-    for value in ["keep", "drop", "rewrite-boot-class-path"] {
-        let recipe = format!("output=out.jar\nlibrary=in.jar\nsource-manifest={value}\n");
-        let error = format!("{:#}", parse_recipe(&scratch, &recipe).unwrap_err());
-        assert!(
-            error.contains(&format!("`source-manifest={value}` is not supported")),
-            "{value}: {error}"
-        );
-    }
 }
 
 #[test]
@@ -118,39 +78,24 @@ fn independent_production_entity_recipe() {
     );
 }
 
+/// The line form of the Java agent recipe of `merge/tests.rs` packs the same bytes.
 #[test]
-fn independent_production_coverage_recipe() {
+fn a_module_manifest_survives_a_library_merge() {
     let scratch = Scratch::new();
-    let unrelated = write_zip_jar(
-        &scratch,
-        "unrelated.jar",
-        &[entry(MANIFEST_ENTRY_NAME, "Boot-Class-Path: unrelated.jar\r\nUnrelated: true\r\n")],
+    let (library, module) = agent_sources(&scratch);
+    let recipe = format!(
+        "output=intellij.example.agent.jar\nlibrary={}\nmodule={}\n",
+        library.display(),
+        module.display()
     );
-    let owner = write_zip_jar(
-        &scratch,
-        "owner.jar",
-        &[entry(MANIFEST_ENTRY_NAME, "Boot-Class-Path: owner.jar\r\n")],
+    let specs = parse_recipe(&scratch, &recipe).unwrap();
+    let (data, _) = pack(&scratch, specs[0].clone());
+    assert_eq!(read_entry(&data, MANIFEST_ENTRY_NAME), AGENT_MANIFEST);
+    assert!(
+        !String::from_utf8_lossy(&data).contains("Bundle-Name: asm"),
+        "the library manifest stayed in the jar"
     );
-    for agent_manifest in [
-        "Boot-Class-Path: intellij-coverage-agent-1.2.3.jar\r\nAgent: true\r\n",
-        "Boot-Class-Path: custom-agent.jar\r\nAgent: true\r\n",
-    ] {
-        let agent = write_zip_jar(
-            &scratch,
-            "intellij-coverage-agent-1.2.3.jar",
-            &[entry(MANIFEST_ENTRY_NAME, agent_manifest)],
-        );
-        let recipe = format!(
-            "output=agent_content_module_jar.production.jar\nmerge-entities=true\nlibrary={}\nlibrary={}\nsource-manifest=coverage-agent\nmodule={}\n",
-            unrelated.display(),
-            agent.display(),
-            owner.display()
-        );
-        let specs = parse_recipe(&scratch, &recipe).unwrap();
-        let (production, _) = pack(&scratch, specs[0].clone());
-        let want = agent_manifest.replace("intellij-coverage-agent-1.2.3.jar", "intellij.platform.coverage.agent.jar");
-        assert_eq!(read_entry(&production, MANIFEST_ENTRY_NAME), want);
-    }
+    assert_eq!(digest(&data), GOLDEN_MODULE_MANIFEST);
 }
 
 #[test]
@@ -211,6 +156,52 @@ fn parse_flag_file_rejects_what_would_change_bytes_silently() {
         ),
     ] {
         assert!(parse_recipe(&scratch, lines).is_err(), "{name} was accepted");
+    }
+}
+
+#[test]
+fn parse_flag_file_reads_the_jar_name() {
+    let scratch = Scratch::new();
+    // The line the packing rule writes, where it writes it: after `metadata-file=`.
+    let specs = parse_recipe(
+        &scratch,
+        "output=out/a_content_module_jar.production.jar\nmetadata-file=out/a.metadata.json\njar-name=intellij.a.jar\nmodule=mod/a.jar\n\
+         output=out/b.jar\nmodule=mod/b.jar\n",
+    )
+    .unwrap();
+    assert_eq!(specs[0].jar_name.as_deref(), Some("intellij.a.jar"));
+    assert_eq!(specs[0].jar_name(), "intellij.a.jar");
+    // A group without the line takes the output file name.
+    assert_eq!(specs[1].jar_name, None);
+    assert_eq!(specs[1].jar_name(), "b.jar");
+    for (lines, line) in [
+        ("output=out/a.jar\njar-name=\nmodule=mod/a.jar\n", "jar-name="),
+        ("output=out/a.jar\njar-name=lib/a.jar\nmodule=mod/a.jar\n", "jar-name=lib/a.jar"),
+        ("output=out/a.jar\njar-name=lib\\a.jar\nmodule=mod/a.jar\n", "jar-name=lib\\a.jar"),
+    ] {
+        let error = parse_recipe(&scratch, lines).unwrap_err();
+        assert_eq!(
+            format!("{error:#}"),
+            format!("expected a file name without a path separator in `jar-name=`, got {line:?}")
+        );
+    }
+    let error = parse_recipe(&scratch, "output=out/a.jar\njar-name=a.jar\njar-name=b.jar\nmodule=mod/a.jar\n").unwrap_err();
+    assert_eq!(
+        format!("{error:#}"),
+        r#"expected one `jar-name=` per output, got a second one in "jar-name=b.jar""#
+    );
+    let error = parse_recipe(&scratch, "jar-name=a.jar\noutput=out/a.jar\nmodule=mod/a.jar\n").unwrap_err();
+    assert_eq!(format!("{error:#}"), "`jar-name=a.jar` before any `output=`");
+}
+
+#[test]
+fn parse_flag_file_refuses_source_manifest_as_unknown() {
+    // No producer writes a manifest policy into a flag file, so the line is not in the grammar.
+    let scratch = Scratch::new();
+    for value in ["keep", "drop"] {
+        let line = format!("source-manifest={value}");
+        let error = parse_recipe(&scratch, &format!("output=out/a.jar\nlibrary=in.jar\n{line}\n")).unwrap_err();
+        assert_eq!(format!("{error:#}"), format!("unknown option \"source-manifest\" in {line:?}"));
     }
 }
 

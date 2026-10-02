@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Premain-Class: com.intellij.rt.coverage.main.CoveragePremain
+Boot-Class-Path: intellij.platform.coverage.agent.jar
+Can-Retransform-Classes: true

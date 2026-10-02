@@ -139,14 +139,16 @@ def _dev_plugin_test_impl(ctx):
     for file in payload:
         asserts.true(env, file in collect.inputs.to_list(), file.path)
 
-    # The main jar's flag file: the patch, the modules in order, then the library, as `JarPackager` orders the jar.
+    # The main jar's flag file: the distribution name, the patch, the modules in order, then the library, as
+    # `JarPackager` orders the jar.
     main = _pack_action(packs, "dev-plugin.jar")
     module_jars = [module[_KtJvmInfo].all_output_jars[0] for module in ctx.attr.modules]
     library_jars = ctx.attr.library[JavaInfo].transitive_runtime_jars.to_list()
     main_argv = [_with_short_path(argument, main.inputs.to_list()) for argument in main.argv[1:]]
     asserts.true(env, main_argv[0].startswith("output=") and main_argv[0].endswith("/lib/dev-plugin.jar"), main_argv[0])
     asserts.true(env, main_argv[1].startswith("metadata-file=") and main_argv[1].endswith("/lib/dev-plugin.jar.json"), main_argv[1])
-    rest = main_argv[2:]
+    asserts.equals(env, "jar-name=dev-plugin.jar", main_argv[2])
+    rest = main_argv[3:]
     if ctx.attr.spans:
         asserts.true(env, rest[0].startswith("trace-file=") and rest[0].endswith("/lib/dev-plugin.spans.json"), rest[0])
         rest = rest[1:]
@@ -161,7 +163,7 @@ def _dev_plugin_test_impl(ctx):
     tests_pack = _pack_action(packs, "tests.jar")
     tests_argv = [_with_short_path(argument, tests_pack.inputs.to_list()) for argument in tests_pack.argv[1:]]
     tests_flags = [argument for argument in tests_argv if not argument.startswith(("output=", "metadata-file=", "trace-file=", "module="))]
-    asserts.equals(env, ["keep-manifest=true", "merge-entities=true"], tests_flags)
+    asserts.equals(env, ["jar-name=tests.jar", "keep-manifest=true", "merge-entities=true"], tests_flags)
     asserts.equals(env, ["module=" + ctx.file.test_jar.short_path], [argument for argument in tests_argv if argument.startswith("module=")])
 
     # A jar file token is one archive: the jar takes that file and nothing else.

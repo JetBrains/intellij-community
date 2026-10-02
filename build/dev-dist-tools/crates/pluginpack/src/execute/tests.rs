@@ -937,9 +937,10 @@ const MODULE_FILTER_FIXTURE: [(&str, &str); 7] = [
 ];
 
 /// The module filter of an archive source is the common module excludes alone. The entries keep the central-directory
-/// order of the module jar, and the entities entry moves to the end when the writer merges entities.
+/// order of the module jar, and the entities entry moves to the end when the writer merges entities. The writer manifest
+/// policy applies to a library manifest only, so the manifest of a module source survives `drop`.
 #[test]
-fn module_filter_selects_entries_in_central_directory_order() {
+fn a_module_source_keeps_its_manifest_and_the_central_directory_order() {
     type Case<'a> = (&'a str, Manifest, bool, &'a [&'a str]);
     let tests: [Case<'_>; 3] = [
         (
@@ -956,11 +957,12 @@ fn module_filter_selects_entries_in_central_directory_order() {
             ],
         ),
         (
-            "drop",
+            "drop applies to a library manifest only",
             Manifest::Drop,
             true,
             &[
                 "first/Service.class",
+                "META-INF/MANIFEST.MF",
                 "nested/deep/Deep.class",
                 "last/Kept.class",
                 "META-INF/listOfEntities.txt",

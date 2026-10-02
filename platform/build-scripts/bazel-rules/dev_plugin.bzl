@@ -347,6 +347,7 @@ def _dev_plugin_impl(ctx):
             descriptor = descriptor_info.descriptor if has_main else None,
             descriptor_module = main_module if has_main else None,
             metadata = metadata,
+            jar_name = output.basename,
         )
         packed.append(struct(destination = destination, jar = output, metadata = metadata))
         layout_jars.append({"destination": destination, "members": layout_members})

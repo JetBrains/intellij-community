@@ -23,7 +23,8 @@ pub enum Source {
     Jar {
         path: PathBuf,
         filter: EntryFilter,
-        /// The manifest policy of this source. `None` uses [`MergeSpec::keep_manifest`].
+        /// The manifest policy of a library source. `None` uses [`MergeSpec::keep_manifest`]. A module output keeps its
+        /// manifest whatever the policy is. See [`MergeSpec::merge`].
         manifest: Option<ManifestMode>,
     },
     /// The bytes of one file as the entry `name`. A source of one entry has nothing to select, so it has no filter. The
@@ -33,8 +34,8 @@ pub enum Source {
         path: PathBuf,
         /// A patch must come before every other source of its entry.
         patch: bool,
-        /// The manifest policy of this source. `None` uses [`MergeSpec::keep_manifest`]. The merge refuses
-        /// [`ManifestMode::CoverageAgent`], which only a jar takes.
+        /// The manifest policy of this source. `None` uses [`MergeSpec::keep_manifest`]. A file source is never a module
+        /// manifest, so the two manifest refusals of [`MergeSpec::merge`] do not apply to it.
         manifest: Option<ManifestMode>,
     },
 }
@@ -100,23 +101,37 @@ impl Source {
         }
     }
 
-    /// Reports whether the manifest of this source can survive the merge.
+    /// Reports whether the manifest of this source can survive the merge. The manifest of a module output always
+    /// survives. For a library and a file, the policy of the source decides, and [`MergeSpec::keep_manifest`] decides
+    /// when the source has no policy.
     const fn keeps_manifest(&self, spec: &MergeSpec) -> bool {
+        if self.is_module_output() {
+            return true;
+        }
         match self.manifest() {
             None => spec.keep_manifest,
             Some(ManifestMode::Drop) => false,
-            Some(ManifestMode::Keep | ManifestMode::CoverageAgent) => true,
+            Some(ManifestMode::Keep) => true,
         }
+    }
+
+    /// Reports whether this source is a module output jar.
+    const fn is_module_output(&self) -> bool {
+        matches!(
+            self,
+            Self::Jar {
+                filter: EntryFilter::ModuleOutput,
+                ..
+            }
+        )
     }
 }
 
-/// The manifest policy of one source.
+/// The manifest policy of a library source or a file source. A module output ignores it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ManifestMode {
     Drop,
     Keep,
-    /// Keeps the manifest of a coverage agent jar and points its `Boot-Class-Path` at the merged jar.
-    CoverageAgent,
 }
 
 /// One `output=` group of a flag file: a jar and the recipe it is built from.
@@ -129,6 +144,9 @@ pub struct MergeSpec {
     pub merge_entities: bool,
     pub reject_native_entries: bool,
     pub metadata_file: Option<PathBuf>,
+    /// The distribution name of the jar, from the `jar-name=` line, or `None`. The output file of a content-module jar is
+    /// `<target>.production.jar`, and the distribution names the jar `<module>.jar`. See [`MergeSpec::jar_name`].
+    pub jar_name: Option<String>,
     pub validate_entry_names: bool,
     /// The natives mode of the group, or `None`. See [`NativeSpec`].
     pub native: Option<NativeSpec>,
@@ -155,9 +173,11 @@ pub struct MergeReport {
 }
 
 impl MergeSpec {
-    /// The file name of [`MergeSpec::output`], the `jar` tag of the `pack jar` span and the start of the duplicate line.
+    /// The distribution name of the jar: [`MergeSpec::jar_name`] when the recipe states it, else the file name of
+    /// [`MergeSpec::output`]. The distribution name of a jar can differ from the name of its output file. It is the `jar`
+    /// tag of the `pack jar` span, the start of the duplicate line and the name that a `Boot-Class-Path` must state.
     pub fn jar_name(&self) -> String {
-        file_name(&self.output)
+        self.jar_name.clone().unwrap_or_else(|| file_name(&self.output))
     }
 
     /// Writes the jar this spec describes, and refuses a spec with no source.
@@ -179,12 +199,15 @@ impl MergeSpec {
     /// writes, every library jar must come before every module output. Duplicates are expected, because two libraries
     /// can hold the same `META-INF/services` entry, so the merge reports a collision and does not fail.
     ///
-    /// `keep_manifest` is the one policy that an entry name cannot state. A jar that merges several sources must not
-    /// keep a manifest, because the survivor describes only one of them. A jar from one meaningful source keeps its
-    /// own. The coverage-agent rewrite is the only change to the *content* of an entry. The manifest of such a source
-    /// survives whatever `keep_manifest` says, because a manifest that must be rewritten must survive.
+    /// **A jar keeps the manifest of its module.** The manifest of a module output survives the merge, whatever
+    /// `keep_manifest` and the policy of the source say. The manifest of a library survives only by its policy or by
+    /// `keep_manifest`. A producer sets `keep_manifest` when the library is the one meaningful source of the jar. The
+    /// merge refuses two module manifests in one jar. It also refuses a module manifest whose `Boot-Class-Path` main
+    /// attribute is not the distribution name of the jar, [`MergeSpec::jar_name`]. No entry changes its content in the
+    /// merge.
     pub fn merge(&self, options: &MergeOptions) -> Result<MergeReport> {
         let output = &self.output;
+        let jar_name = self.jar_name();
         let verify_crc = options.verify_crc;
         self.validate_sources()?;
 
@@ -202,10 +225,11 @@ impl MergeSpec {
         let mut seen: HashSet<&str> = HashSet::new();
         let mut duplicates: Vec<String> = Vec::new();
         let mut entities: Vec<String> = Vec::new();
+        let mut module_manifest: Option<&Path> = None;
 
         for (i, source) in self.sources.iter().enumerate() {
             let keep_manifest = source.keeps_manifest(self);
-            let (path, filter, manifest) = match source {
+            let (path, filter) = match source {
                 Source::File { name, path, patch, .. } => {
                     if let Some(native) = &self.native
                         && nativelib::is_native_entry(name)
@@ -226,7 +250,7 @@ impl MergeSpec {
                     }
                     continue;
                 }
-                Source::Jar { path, filter, manifest } => (path, *filter, *manifest),
+                Source::Jar { path, filter, .. } => (path, *filter),
             };
 
             let opened = Jar::open(path)?;
@@ -242,7 +266,6 @@ impl MergeSpec {
                 .as_ref()
                 .filter(|natives| natives.index == i)
                 .map(|natives| &natives.reserved);
-            let coverage_agent = manifest == Some(ManifestMode::CoverageAgent);
             for entry in jar.entries() {
                 if self.validate_entry_names {
                     distpath::validate_entry_name(entry.name).with_context(|| path.display().to_string())?;
@@ -263,13 +286,20 @@ impl MergeSpec {
                     continue;
                 }
                 let is_manifest = entry.name == MANIFEST_ENTRY_NAME;
-                let included = if is_manifest {
-                    coverage_agent || (keep_manifest && filter.accepts(entry.name))
-                } else {
-                    filter.accepts(entry.name)
-                };
-                if !included {
+                if (is_manifest && !keep_manifest) || !filter.accepts(entry.name) {
                     continue;
+                }
+                let is_module_manifest = is_manifest && filter == EntryFilter::ModuleOutput;
+                if is_module_manifest {
+                    if let Some(first) = module_manifest {
+                        bail!(
+                            "{}: two module manifests, from {} and {}",
+                            output.display(),
+                            first.display(),
+                            path.display()
+                        );
+                    }
+                    module_manifest = Some(path);
                 }
                 // This check comes before the duplicate check. In natives mode a second copy of a native is an error,
                 // not a collision. The tree is written from the native library alone.
@@ -306,12 +336,8 @@ impl MergeSpec {
                         );
                     }
                 }
-                if coverage_agent && is_manifest {
-                    let data = replace_coverage_agent(&data);
-                    // The content changed, so this is the one entry whose CRC cannot come from the source. It also
-                    // stays out of the package index. See Writer::add.
-                    at_output(writer.add(entry.name, &data, crc32fast::hash(&data), false), output)?;
-                    continue;
+                if is_module_manifest {
+                    check_boot_class_path(&data, path, output, &jar_name)?;
                 }
                 at_output(writer.add(entry.name, &data, entry.crc, true), output)?;
             }
@@ -339,7 +365,7 @@ impl MergeSpec {
         })
     }
 
-    /// Checks what the type of [`Source`] cannot state: the entry names, the paths and the manifest policies.
+    /// Checks what the type of [`Source`] cannot state: the entry names and the paths.
     #[expect(
         clippy::unnecessary_debug_formatting,
         reason = "the Debug form quotes the path, and a refusal keeps its text"
@@ -356,15 +382,12 @@ impl MergeSpec {
         }
         for source in &self.sources {
             match source {
-                Source::File { name, path, manifest, .. } => {
+                Source::File { name, path, .. } => {
                     if self.validate_entry_names {
                         distpath::validate_entry_name(name)?;
                     }
                     if path.as_os_str().is_empty() {
                         bail!("invalid file source {name:?}");
-                    }
-                    if *manifest == Some(ManifestMode::CoverageAgent) {
-                        bail!("the file source {name:?} has the coverage-agent manifest policy, which only a jar source takes");
                     }
                 }
                 Source::Jar { path, .. } => {
@@ -475,63 +498,55 @@ pub(crate) fn trim_entity_list<'a>(data: &'a [u8], source: &Path) -> Result<&'a 
     Ok(text.trim_matches(|value: char| value != '\u{85}' && (value.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&value))))
 }
 
-/// The literal start of the `Boot-Class-Path` of a coverage agent jar.
-const COVERAGE_AGENT_ATTRIBUTE: &[u8] = b"Boot-Class-Path: intellij-coverage-agent-";
+/// The main attribute of a Java agent manifest that names the jar to add to the boot class path.
+const BOOT_CLASS_PATH: &str = "Boot-Class-Path";
 
-/// The `Boot-Class-Path` that names the merged jar.
-const MERGED_COVERAGE_AGENT_ATTRIBUTE: &[u8] = b"Boot-Class-Path: intellij.platform.coverage.agent.jar";
-
-/// Points the manifest of a coverage agent at the jar it is in. The agent instruments from any class loader, and for
-/// that the attribute must name its own jar. The merge into `lib/<module>.jar` renames it. A manifest without the
-/// attribute comes back unchanged.
-///
-/// The function replaces each non-overlapping match of the Go pattern
-/// `Boot-Class-Path: intellij-coverage-agent-\d+(\.\d+)*\.jar` from the left, as the Go `ReplaceAll` did. The Go `\d` is
-/// ASCII only. It is written by hand, because a crate dependency in the packer re-keys every packing action when the
-/// crate changes.
-pub(crate) fn replace_coverage_agent(data: &[u8]) -> Vec<u8> {
-    let mut replaced = Vec::with_capacity(data.len());
-    let mut copied = 0;
-    let mut search = 0;
-    while let Some(start) = find(&data[search..], COVERAGE_AGENT_ATTRIBUTE).map(|offset| search + offset) {
-        let version_start = start + COVERAGE_AGENT_ATTRIBUTE.len();
-        match version_and_jar_length(&data[version_start..]) {
-            Some(length) => {
-                replaced.extend_from_slice(&data[copied..start]);
-                replaced.extend_from_slice(MERGED_COVERAGE_AGENT_ATTRIBUTE);
-                copied = version_start + length;
-                search = copied;
-            }
-            None => search = start + 1,
+/// Refuses a module manifest whose `Boot-Class-Path` main attribute is not `jar_name`, the distribution name of the jar
+/// at `output`. A Java agent names its own jar in this attribute, so the attribute must name the jar that the merge
+/// writes, by the name that the distribution gives it. A manifest without the attribute passes.
+pub(crate) fn check_boot_class_path(data: &[u8], source: &Path, output: &Path, jar_name: &str) -> Result<()> {
+    let Ok(text) = std::str::from_utf8(data) else {
+        bail!(
+            "{}: the module manifest of {} is not valid UTF-8",
+            output.display(),
+            source.display()
+        );
+    };
+    for value in main_attribute_values(text, BOOT_CLASS_PATH) {
+        if value != jar_name {
+            bail!(
+                "{}: the module manifest of {} has `{BOOT_CLASS_PATH}: {value}`, but the jar is {jar_name}",
+                output.display(),
+                source.display()
+            );
         }
     }
-    replaced.extend_from_slice(&data[copied..]);
-    replaced
+    Ok(())
 }
 
-/// The length of `\d+(\.\d+)*\.jar` at the start of `text`, or `None`.
-///
-/// The greedy scan gives the only possible match. A shorter version leaves a digit or a `.` and a digit before `.jar`,
-/// and `.jar` cannot start there.
-fn version_and_jar_length(text: &[u8]) -> Option<usize> {
-    let digits = |from: usize| text[from..].iter().take_while(|byte| byte.is_ascii_digit()).count();
-    let mut end = digits(0);
-    if end == 0 {
-        return None;
-    }
-    while text.get(end) == Some(&b'.') {
-        let more = digits(end + 1);
-        if more == 0 {
+/// Returns each value of the main attribute `name` of a manifest, in manifest order. The main section ends at the first
+/// empty line. A line that starts with a space continues the line before it. The attribute name matches without regard
+/// to ASCII case, as the JAR specification states.
+pub(crate) fn main_attribute_values(text: &str, name: &str) -> Vec<String> {
+    let mut lines: Vec<String> = Vec::new();
+    for line in text.split('\n') {
+        let line = line.strip_suffix('\r').unwrap_or(line);
+        if line.is_empty() {
             break;
         }
-        end += 1 + more;
+        match (line.strip_prefix(' '), lines.last_mut()) {
+            (Some(continuation), Some(last)) => last.push_str(continuation),
+            _ => lines.push(line.to_string()),
+        }
     }
-    text[end..].starts_with(b".jar").then_some(end + ".jar".len())
-}
-
-/// The position of the first `needle` in `haystack`.
-fn find(haystack: &[u8], needle: &[u8]) -> Option<usize> {
-    haystack.windows(needle.len()).position(|window| window == needle)
+    lines
+        .iter()
+        .filter_map(|line| {
+            let (key, value) = line.split_once(':')?;
+            key.eq_ignore_ascii_case(name).then_some(value)
+        })
+        .map(|value| value.strip_prefix(' ').unwrap_or(value).to_string())
+        .collect()
 }
 
 #[cfg(test)]

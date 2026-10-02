@@ -192,7 +192,7 @@ def _packer_resources(os, _inputs_size):
     """One single-threaded packer process."""
     return {"cpu": 1, "memory": 192 if os == "windows" else 96}
 
-def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names, mnemonic, progress_message, extra_flags = [], extra_outputs = [], descriptor = None, descriptor_module = None, descriptor_path = "META-INF/plugin.xml", patches = [], metadata = None, coverage_agent_manifest = False):
+def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names, mnemonic, progress_message, extra_flags = [], extra_outputs = [], descriptor = None, descriptor_module = None, descriptor_path = "META-INF/plugin.xml", patches = [], metadata = None, jar_name = None):
     """Runs the packer over one jar, for either of this file's two rules and for `dev_plugin.bzl`.
 
     The rules differ in the jar's identity - its path, its mnemonic and its provider - and in nothing the packer
@@ -208,10 +208,9 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
     natives-mode tree. The `File` form, not its path, so that path mapping can rewrite the line with the rest of the
     flag file. A `File` the packer writes besides the jar and its metadata goes into `extra_outputs`.
 
-    `coverage_agent_manifest` selects the coverage policy `JarPackager` applies to the same jar. Each source named
-    `intellij-coverage-agent*` gets `source-manifest=coverage-agent`, which rewrites its `Boot-Class-Path` to the jar
-    it ends up in. The call fails when the policy is selected and no source has that name, so a renamed agent library
-    cannot ship an unrewritten manifest.
+    The packer keeps the manifest of a module output, and a library manifest only when the library is the one
+    meaningful source. `jar_name` is the distribution name of the jar. The packer checks a `Boot-Class-Path` against
+    it, because the output file of a content-module jar is not its distribution name.
 
     `descriptor` replaces `descriptor_path` in the output of `descriptor_module`. `patches` is a list of
     `struct(path, file)` that replaces more entries of the same module output. Each patch is a `patch=` line before the
@@ -224,6 +223,8 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
     if metadata == None:
         metadata = ctx.actions.declare_file(ctx.label.name + ".metadata.json")
     args.add(metadata, format = "metadata-file=%s")
+    if jar_name != None:
+        args.add("jar-name=" + jar_name)
 
     outputs = [output, metadata]
     if spans:
@@ -253,7 +254,6 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
 
     # Files, not `.path` strings, so path mapping can rewrite them. The module outputs come first and the libraries
     # after them, as `JarPackager` orders the same jar, so the module descriptor is the first entry.
-    coverage_agent_sources = 0
     patch_files = ([struct(path = descriptor_path, file = descriptor)] if descriptor != None else []) + patches
     if patch_files and descriptor_module not in merged_module_names:
         fail("%s: the patched module '%s' is not merged into the jar" % (ctx.label, descriptor_module))
@@ -262,19 +262,7 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
             for patch in patch_files:
                 args.add(patch.file, format = "patch=" + patch.path + "=%s")
         args.add(module_jar, format = "module=%s")
-        if coverage_agent_manifest and module_jar.basename.startswith("intellij-coverage-agent"):
-            args.add("source-manifest=coverage-agent")
-            coverage_agent_sources += 1
-    if coverage_agent_manifest:
-        for library_jar in library_jars:
-            args.add(library_jar, format = "library=%s")
-            if library_jar.basename.startswith("intellij-coverage-agent"):
-                args.add("source-manifest=coverage-agent")
-                coverage_agent_sources += 1
-    else:
-        args.add_all(library_jars, format_each = "library=%s")
-    if coverage_agent_manifest and coverage_agent_sources == 0:
-        fail("%s: the module name selects the coverage-agent manifest policy, but no merged jar is named intellij-coverage-agent*" % ctx.label)
+    args.add_all(library_jars, format_each = "library=%s")
 
     ctx.actions.run(
         # One mnemonic per producer, so a strategy or an execution-info override reaches every jar of that producer and
@@ -382,7 +370,7 @@ def _content_module_jar_impl(ctx):
         descriptor = ctx.file.descriptor,
         descriptor_module = module_name,
         descriptor_path = ctx.attr.descriptor_path,
-        coverage_agent_manifest = "intellij.platform.coverage.agent" in module_name,
+        jar_name = module_name + ".jar",
     )
     native_trees = _native_trees(ctx, natives, library_jars) if natives else {}
     return [
@@ -416,9 +404,7 @@ _content_module_jar = rule(
 
 One `PackContentModuleJar` action writes `<target>.production.jar` and `<target>.production.metadata.json`. The jar is
 `DefaultInfo`, and the plan files and the plugin chain name it by that label. The destination `<module>.jar` travels
-in `ContentModuleJarInfo.relative_path`. The action merges the entity lists of its sources. When the module name
-contains `intellij.platform.coverage.agent`, it rewrites the `Boot-Class-Path` of each source named
-`intellij-coverage-agent*`, the way `JarPackager` does for the same jar.
+in `ContentModuleJarInfo.relative_path`. The action merges the entity lists of its sources.
 
 With `native_lib` and `native_lib_dir` set, the jar leaves the native entries of that presigned library out, and one
 action per `HOST_PLATFORMS` token writes the platform's native files into `<target>.native_<platform>/native`. A consumer
@@ -557,6 +543,7 @@ def _dev_dist_platform_jar_impl(ctx):
         extra_flags = ["merge-entities=true"] + (["reject-native-entries=true"] if members else []),
         descriptor_module = patches.module,
         patches = patches.patches,
+        jar_name = output.basename,
     )
     return [
         DefaultInfo(files = depset([output])),

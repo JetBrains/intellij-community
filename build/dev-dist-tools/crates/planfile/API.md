@@ -34,7 +34,7 @@ the operation itself. `preparations` is an unknown key.
 | a tree `native-tree:<module>` whose module has no reused natives jar | requires its reused natives jar |
 | a jar source of the kind `zip`, or a kind with another filter than its one filter | the kind, or the filter |
 | a source option other than `patch`, and a `file` source without `patch` and an entry | the entry and the options |
-| `preparedManifest`, and the writer keys `rewriteBootClassPath`, `outputName` and `directoryEntries` | unknown field |
+| `preparedManifest`, the writer key `directoryEntries`, and the retired writer keys `rewriteBootClassPath` and `outputName`. No producer writes them, so a stale producer fails. | unknown field |
 | a writer manifest other than `single-meaningful-source`, `keep` and `drop` | unknown variant |
 | `preparations`, `preparationRoots`, and every field of a Kotlin-executed operation | unknown field |
 | `layoutSignature`, because a plan file carries no layout signature | unknown field |

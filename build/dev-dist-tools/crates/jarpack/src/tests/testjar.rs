@@ -64,7 +64,7 @@ pub(crate) struct SourceEntry<'a> {
 }
 
 /// A DEFLATED entry.
-pub(crate) fn entry<'a>(name: &'a str, data: &'a str) -> SourceEntry<'a> {
+pub(crate) const fn entry<'a>(name: &'a str, data: &'a str) -> SourceEntry<'a> {
     SourceEntry { name, data, stored: false }
 }
 
@@ -241,25 +241,57 @@ pub(crate) const fn is_library(source: &Source) -> bool {
     )
 }
 
+/// The entries of [`module_source`].
+const MODULE_ENTRIES: [SourceEntry<'static>; 11] = [
+    entry("com/", ""),
+    entry("com/example/", ""),
+    entry("com/example/Service.class", "class bytes"),
+    entry("com/example/nested/Inner.class", "inner bytes"),
+    entry("messages/Bundle.properties", "key=value"),
+    entry("icon-robots.txt", "dropped: a build-time input"),
+    entry("com/example/icon-robots.txt", "dropped: same, nested"),
+    entry(".unmodified", "dropped: compilation cache leftover"),
+    entry("classpath.index", "dropped: compilation cache leftover"),
+    entry("module-info.class", "dropped"),
+    entry(INDEX_FILE_NAME, "dropped: a stale index is never inherited"),
+];
+
 /// What `jvm_library` gives the packer: a module output jar from Bazel. It has directory records, the build-time inputs
-/// the filter drops, and what an earlier pack left behind.
+/// the filter drops, and what an earlier pack left behind. It has no manifest, because a module output has one only when
+/// the module states it in its resources.
 pub(crate) fn module_source(scratch: &Scratch, name: &str) -> PathBuf {
-    write_zip_jar(
+    write_zip_jar(scratch, name, &MODULE_ENTRIES)
+}
+
+/// The jar of [`module_source`] with a module manifest as its last entry.
+pub(crate) fn module_source_with_manifest(scratch: &Scratch, name: &str) -> PathBuf {
+    let mut entries = MODULE_ENTRIES.to_vec();
+    entries.push(entry(MANIFEST_ENTRY_NAME, "Manifest-Version: 1.0\r\n\r\n"));
+    write_zip_jar(scratch, name, &entries)
+}
+
+/// The manifest that [`agent_sources`] gives the module output. It has LF line ends, as a checked-in resource file has.
+pub(crate) const AGENT_MANIFEST: &str = "Manifest-Version: 1.0\nPremain-Class: com.example.agent.Premain\n\
+                                         Boot-Class-Path: intellij.example.agent.jar\nCan-Retransform-Classes: true\n";
+
+/// A Java agent jar: a library with its own manifest, and the module output of the agent with the manifest of the
+/// agent. The output jar is `intellij.example.agent.jar`.
+pub(crate) fn agent_sources(scratch: &Scratch) -> (PathBuf, PathBuf) {
+    let library = write_zip_jar(
         scratch,
-        name,
+        "asm-9.8.jar",
         &[
-            entry("com/", ""),
-            entry("com/example/", ""),
-            entry("com/example/Service.class", "class bytes"),
-            entry("com/example/nested/Inner.class", "inner bytes"),
-            entry("messages/Bundle.properties", "key=value"),
-            entry("icon-robots.txt", "dropped: a build-time input"),
-            entry("com/example/icon-robots.txt", "dropped: same, nested"),
-            entry(".unmodified", "dropped: compilation cache leftover"),
-            entry("classpath.index", "dropped: compilation cache leftover"),
-            entry("module-info.class", "dropped"),
-            entry(INDEX_FILE_NAME, "dropped: a stale index is never inherited"),
-            entry(MANIFEST_ENTRY_NAME, "Manifest-Version: 1.0\r\n\r\n"),
+            entry("org/objectweb/asm/ClassReader.class", "reader"),
+            entry(MANIFEST_ENTRY_NAME, "Manifest-Version: 1.0\r\nBundle-Name: asm\r\n\r\n"),
         ],
-    )
+    );
+    let module = write_zip_jar(
+        scratch,
+        "agent.jar",
+        &[
+            entry("com/example/agent/Premain.class", "premain"),
+            entry(MANIFEST_ENTRY_NAME, AGENT_MANIFEST),
+        ],
+    );
+    (library, module)
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
-import java.nio.ByteBuffer
 import java.nio.file.Path
 
 /** The manifest entry, whose survival is decided per jar rather than per name - see [mergeIntoJar]. */
@@ -33,13 +32,6 @@ class JarMergeSource(
  * meaningful source keeps its own. Which sources count as meaningful is the caller's decision, so it is passed in
  * rather than guessed from the source list.
  *
- * [rewriteBootClassPath] is the one thing a distribution packer does to the *content* of an entry. The coverage agent
- * instruments from any class loader, which needs its `Boot-Class-Path` manifest attribute to name the jar it is
- * actually in; merged into `lib/<module>.jar` it no longer does. When set, the first `META-INF/MANIFEST.MF` a source
- * offers is kept whatever [keepManifest] says - a manifest that has to be rewritten is a manifest that has to
- * survive - and that attribute is rewritten to the name of [target]. This mirrors `mergeJars.kt`'s
- * `checkCoverageAgentManifest`, which does the same for the same jar on the `JarPackager` side.
- *
  * **First source wins.** Duplicates are expected - two libraries can legitimately carry the same `META-INF/services`
  * entry - so a collision is reported rather than fatal, and the caller decides whether a given name is worth failing
  * over. Sources are read in the order given, so that order is the precedence. To reproduce what the distribution
@@ -50,7 +42,6 @@ fun mergeIntoJar(
   target: Path,
   sources: List<JarMergeSource>,
   keepManifest: Boolean = false,
-  rewriteBootClassPath: Boolean = false,
 ): List<String> {
   val duplicates = ArrayList<String>()
   val seen = HashSet<String>()
@@ -58,20 +49,10 @@ fun mergeIntoJar(
   ZipFileWriter(zipWriter(targetFile = target, packageIndexBuilder = packageIndexBuilder)).use { zipWriter ->
     for (source in sources) {
       readZipFile(source.file) { name, dataFetcher ->
-        val isRewrittenManifest = rewriteBootClassPath && name == MANIFEST_ENTRY_NAME
-        if ((keepManifest || isRewrittenManifest || name != MANIFEST_ENTRY_NAME) && source.nameFilter(name)) {
+        if ((keepManifest || name != MANIFEST_ENTRY_NAME) && source.nameFilter(name)) {
           if (seen.add(name)) {
-            if (isRewrittenManifest) {
-              // Deliberately not indexed. `mergeJars.kt` writes this entry before it reaches its own
-              // `packageIndexBuilder.addFile`, so the jar the distribution ships has the manifest in the archive and
-              // not in `__index__`; adding it here would be one entry of difference in every byte comparison. The
-              // agent's manifest is read by the JVM, which uses the central directory, not by the IKV reader.
-              zipWriter.uncompressedData(name, rewriteBootClassPath(dataFetcher(), target.fileName.toString()))
-            }
-            else {
-              packageIndexBuilder.addFile(name)
-              zipWriter.uncompressedData(name, dataFetcher())
-            }
+            packageIndexBuilder.addFile(name)
+            zipWriter.uncompressedData(name, dataFetcher())
           }
           else {
             duplicates.add(name)
@@ -83,18 +64,6 @@ fun mergeIntoJar(
   }
   return duplicates
 }
-
-/** Points the manifest's `Boot-Class-Path` at [targetJarName], the jar the entry is being written into. */
-private fun rewriteBootClassPath(data: ByteBuffer, targetJarName: String): ByteBuffer {
-  val attribute = "Boot-Class-Path:"
-  val text = Charsets.UTF_8.decode(data.duplicate()).toString()
-  if (!text.contains(attribute)) {
-    return data
-  }
-  return ByteBuffer.wrap(bootClassPathPattern.replace(text, "$attribute $targetJarName").toByteArray())
-}
-
-private val bootClassPathPattern = Regex("Boot-Class-Path:[^\r\n]*")
 
 /**
  * Which entries of a *module output* jar are packed into a distribution jar.

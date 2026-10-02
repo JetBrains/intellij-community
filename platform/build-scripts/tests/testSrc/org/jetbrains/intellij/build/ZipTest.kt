@@ -13,9 +13,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.configuration.ConfigurationProvider
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.ByteBufferDataWriter
+import org.jetbrains.intellij.build.io.MANIFEST_ENTRY_NAME
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
@@ -701,6 +703,76 @@ class ZipTest {
         "4",
       )
     }
+  }
+
+  @Test
+  fun `module manifest survives a library manifest`(@TempDir tempDir: Path) {
+    val libraryDir = writeManifest(tempDir.resolve("library"), "Manifest-Version: 1.0\nCreated-By: library\n")
+    val moduleManifest = "Manifest-Version: 1.0\nPremain-Class: test.Agent\nBoot-Class-Path: agent.jar\n"
+    val moduleDir = writeManifest(tempDir.resolve("module"), moduleManifest)
+
+    val dirSourceJar = tempDir.resolve("dir-source/agent.jar")
+    buildJar(dirSourceJar, listOf(DirSource(libraryDir, moduleName = null), DirSource(moduleDir, moduleName = "test.agent")))
+    assertThat(readManifest(dirSourceJar)).isEqualTo(moduleManifest)
+
+    val moduleJar = tempDir.resolve("module.jar")
+    zipWithPackageIndex(moduleJar, moduleDir)
+    val zipSourceJar = tempDir.resolve("zip-source/agent.jar")
+    buildJar(zipSourceJar, listOf(
+      DirSource(libraryDir, moduleName = null),
+      ZipSource(file = moduleJar, distributionFileEntryProducer = null, moduleName = "test.agent", filter = { true }),
+    ))
+    assertThat(readManifest(zipSourceJar)).isEqualTo(moduleManifest)
+  }
+
+  @Test
+  fun `manifest rules of a merged jar`(@TempDir tempDir: Path) {
+    val firstModuleDir = writeManifest(tempDir.resolve("first-module"), "Manifest-Version: 1.0\n")
+    val secondModuleDir = writeManifest(tempDir.resolve("second-module"), "Manifest-Version: 1.0\n")
+    assertThatThrownBy {
+      buildJar(tempDir.resolve("two-modules/agent.jar"), listOf(
+        DirSource(firstModuleDir, moduleName = "test.first"),
+        DirSource(secondModuleDir, moduleName = "test.second"),
+      ))
+    }
+      .hasMessageContaining("agent.jar")
+      .hasMessageContaining("first-module")
+      .hasMessageContaining("second-module")
+
+    val otherJarDir = writeManifest(tempDir.resolve("other-jar"), "Manifest-Version: 1.0\nBoot-Class-Path: other.jar\n")
+    assertThatThrownBy {
+      buildJar(tempDir.resolve("other-jar-target/agent.jar"), listOf(DirSource(otherJarDir, moduleName = "test.agent")))
+    }
+      .hasMessageContaining("agent.jar")
+      .hasMessageContaining("other-jar")
+      .hasMessageContaining("other.jar")
+
+    // The value continues on the next line.
+    val continuedManifest = "Manifest-Version: 1.0\r\nBoot-Class-Path: age\r\n nt.jar\r\n"
+    val continuedDir = writeManifest(tempDir.resolve("continued"), continuedManifest)
+    val continuedJar = tempDir.resolve("continued-target/agent.jar")
+    buildJar(continuedJar, listOf(DirSource(continuedDir, moduleName = "test.agent")))
+    assertThat(readManifest(continuedJar)).isEqualTo(continuedManifest)
+
+    val firstLibraryDir = writeManifest(tempDir.resolve("first-library"), "Manifest-Version: 1.0\n")
+    val secondLibraryDir = writeManifest(tempDir.resolve("second-library"), "Manifest-Version: 1.0\n")
+    val librariesJar = tempDir.resolve("libraries/agent.jar")
+    buildJar(librariesJar, listOf(DirSource(firstLibraryDir, moduleName = null), DirSource(secondLibraryDir, moduleName = null)))
+    assertThat(readManifest(librariesJar)).isNull()
+  }
+}
+
+private fun writeManifest(dir: Path, content: String): Path {
+  Files.createDirectories(dir.resolve("META-INF"))
+  Files.writeString(dir.resolve(MANIFEST_ENTRY_NAME), content)
+  Files.writeString(dir.resolve("${dir.name}.txt"), dir.name)
+  return dir
+}
+
+private fun readManifest(jar: Path): String? {
+  java.util.zip.ZipFile(jar.toFile()).use { zipFile ->
+    val entry = zipFile.getEntry(MANIFEST_ENTRY_NAME) ?: return null
+    return zipFile.getInputStream(entry).use { String(it.readAllBytes()) }
   }
 }
 

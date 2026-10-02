@@ -2,11 +2,11 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::merge::{replace_coverage_agent, trim_entity_list};
+use crate::merge::{main_attribute_values, trim_entity_list};
 use crate::tests::golden::*;
 use crate::tests::testjar::{
-    RawEntry, Scratch, SourceEntry, digest, entry, entry_names, index_pointer, module_source, pack, raw, read_entry, write_raw_jar,
-    write_zip_jar,
+    AGENT_MANIFEST, RawEntry, Scratch, SourceEntry, agent_sources, digest, entry, entry_names, index_pointer, module_source,
+    module_source_with_manifest, pack, raw, read_entry, write_raw_jar, write_zip_jar,
 };
 use crate::{EntryFilter, MANIFEST_ENTRY_NAME, ManifestMode, MergeOptions, MergeSpec, Source, duplicate_line};
 
@@ -65,124 +65,48 @@ fn entity_merge_keeps_source_order() {
 #[test]
 fn manifest_policy_belongs_to_the_source() {
     let scratch = Scratch::new();
-    let first = write_zip_jar(
+    let library = write_zip_jar(
         &scratch,
-        "unrelated.jar",
-        &[entry(MANIFEST_ENTRY_NAME, "Boot-Class-Path: unrelated.jar\r\n")],
+        "library.jar",
+        &[entry("org/library/A.class", "a"), entry(MANIFEST_ENTRY_NAME, "Library: true\r\n")],
     );
-    let agent = write_zip_jar(
-        &scratch,
-        "agent.jar",
-        &[entry(
-            MANIFEST_ENTRY_NAME,
-            "Boot-Class-Path: intellij-coverage-agent-1.2.3.jar\r\nOther: unchanged\r\n",
-        )],
-    );
-    for (mode, want) in [
-        (
-            ManifestMode::Keep,
-            "Boot-Class-Path: intellij-coverage-agent-1.2.3.jar\r\nOther: unchanged\r\n",
-        ),
-        (
-            ManifestMode::CoverageAgent,
-            "Boot-Class-Path: intellij.platform.coverage.agent.jar\r\nOther: unchanged\r\n",
-        ),
+    // The policy of a library source wins over `keep_manifest`, and `None` takes `keep_manifest`.
+    for (mode, keep_manifest, kept) in [
+        (None, false, false),
+        (None, true, true),
+        (Some(ManifestMode::Keep), false, true),
+        (Some(ManifestMode::Drop), true, false),
     ] {
-        // No entry filter drops the manifest, so the two policies take the two filters.
-        let filter = if mode == ManifestMode::CoverageAgent {
-            EntryFilter::Library
-        } else {
-            EntryFilter::ModuleOutput
+        let source = Source::Jar {
+            path: library.clone(),
+            filter: EntryFilter::Library,
+            manifest: mode,
         };
-        let sources = vec![
-            Source::module(&first).with_manifest(ManifestMode::Drop),
-            Source::Jar {
-                path: agent.clone(),
-                filter,
-                manifest: Some(mode),
-            },
-        ];
         let (data, _) = pack(
             &scratch,
             MergeSpec {
-                keep_manifest: true,
-                ..spec("renamed.jar", sources)
+                keep_manifest,
+                ..spec("intellij.example.jar", vec![source])
             },
         );
-        assert_eq!(read_entry(&data, MANIFEST_ENTRY_NAME), want, "{mode:?}");
-    }
-}
-
-#[test]
-fn coverage_rewrite_uses_the_production_pattern() {
-    let input = b"Boot-Class-Path: custom-agent.jar\r\nBoot-Class-Path: intellij-coverage-agent-1.jar\r\n";
-    let want = "Boot-Class-Path: custom-agent.jar\r\nBoot-Class-Path: intellij.platform.coverage.agent.jar\r\n";
-    assert_eq!(String::from_utf8(replace_coverage_agent(input)).unwrap(), want);
-    // The version is `\d+(\.\d+)*`, and `.jar` follows it directly.
-    for (input, want) in [
-        (
-            "Boot-Class-Path: intellij-coverage-agent-1.2.3.jar",
-            "Boot-Class-Path: intellij.platform.coverage.agent.jar",
-        ),
-        (
-            "Boot-Class-Path: intellij-coverage-agent-.jar",
-            "Boot-Class-Path: intellij-coverage-agent-.jar",
-        ),
-        (
-            "Boot-Class-Path: intellij-coverage-agent-1..jar",
-            "Boot-Class-Path: intellij-coverage-agent-1..jar",
-        ),
-        (
-            "Boot-Class-Path: intellij-coverage-agent-1.2x.jar",
-            "Boot-Class-Path: intellij-coverage-agent-1.2x.jar",
-        ),
-        (
-            "xBoot-Class-Path: intellij-coverage-agent-2.jar.jar",
-            "xBoot-Class-Path: intellij.platform.coverage.agent.jar.jar",
-        ),
-    ] {
+        let names = entry_names(&data);
         assert_eq!(
-            String::from_utf8(replace_coverage_agent(input.as_bytes())).unwrap(),
-            want,
-            "{input:?}"
+            names.iter().any(|name| name == MANIFEST_ENTRY_NAME),
+            kept,
+            "{mode:?}, {keep_manifest}: {names:?}"
         );
     }
-}
-
-#[test]
-fn coverage_rewrite_replaces_every_match_from_the_left() {
-    for (input, want) in [
-        // Two attributes, each replaced.
-        (
-            "Boot-Class-Path: intellij-coverage-agent-1.jar Boot-Class-Path: intellij-coverage-agent-2.0.jar",
-            "Boot-Class-Path: intellij.platform.coverage.agent.jar Boot-Class-Path: intellij.platform.coverage.agent.jar",
+    // A module output keeps its manifest whatever the policy is. `pluginpack` gives `Drop` to each module source of a
+    // jar with two sources, and the manifest of the module survives all the same.
+    let module = module_source_with_manifest(&scratch, "module.jar");
+    let (data, _) = pack(
+        &scratch,
+        spec(
+            "intellij.example.jar",
+            vec![Source::library(&library), Source::module(&module).with_manifest(ManifestMode::Drop)],
         ),
-        // A candidate that fails does not stop the search.
-        (
-            "Boot-Class-Path: intellij-coverage-agent-x\r\nBoot-Class-Path: intellij-coverage-agent-3.jar",
-            "Boot-Class-Path: intellij-coverage-agent-x\r\nBoot-Class-Path: intellij.platform.coverage.agent.jar",
-        ),
-        // The longest version wins, and a dot after the version must start `.jar`.
-        (
-            "Boot-Class-Path: intellij-coverage-agent-10.20.30.jar!",
-            "Boot-Class-Path: intellij.platform.coverage.agent.jar!",
-        ),
-        (
-            "Boot-Class-Path: intellij-coverage-agent-1.2.ja",
-            "Boot-Class-Path: intellij-coverage-agent-1.2.ja",
-        ),
-        (
-            "Boot-Class-Path: intellij-coverage-agent-",
-            "Boot-Class-Path: intellij-coverage-agent-",
-        ),
-        ("", ""),
-    ] {
-        assert_eq!(
-            String::from_utf8(replace_coverage_agent(input.as_bytes())).unwrap(),
-            want,
-            "{input:?}"
-        );
-    }
+    );
+    assert_eq!(read_entry(&data, MANIFEST_ENTRY_NAME), "Manifest-Version: 1.0\r\n\r\n");
 }
 
 #[test]
@@ -229,18 +153,12 @@ fn merge_rejects_unsafe_or_stale_source_operations() {
         "module.jar",
         &[entry("present.so", "native"), entry("icon-robots.txt", "excluded")],
     );
-    let agent_file = scratch.file("MANIFEST.MF", b"Boot-Class-Path: intellij-coverage-agent-1.jar\r\n");
     // The type of `Source` cannot state a jar without a filter or a patch of a jar, so those cases of the Go test are
     // gone.
     for (source, want) in [
         (Source::module(PathBuf::new()), "invalid archive source"),
         (Source::file("entry", PathBuf::new()), "invalid file source"),
         (Source::file("../escape", &archive), "../escape"),
-        // No producer gives a single file the coverage-agent policy, so the merge refuses it.
-        (
-            Source::file(MANIFEST_ENTRY_NAME, &agent_file).with_manifest(ManifestMode::CoverageAgent),
-            "which only a jar source takes",
-        ),
     ] {
         let output = scratch.dir().join("invalid.jar");
         let recipe = MergeSpec {
@@ -281,7 +199,7 @@ fn pack_module_output_drops_what_a_distribution_never_inherits() {
 #[test]
 fn pack_keeps_the_manifest_of_a_single_meaningful_source() {
     let scratch = Scratch::new();
-    let module = module_source(&scratch, "module.jar");
+    let module = module_source_with_manifest(&scratch, "module.jar");
     let (data, _) = pack(
         &scratch,
         MergeSpec {
@@ -294,6 +212,9 @@ fn pack_keeps_the_manifest_of_a_single_meaningful_source() {
         "the manifest was not kept"
     );
     assert_eq!(digest(&data), GOLDEN_KEEP_MANIFEST);
+    // The source is a module output, so `keep_manifest` does not change the bytes.
+    let (without_flag, _) = pack(&scratch, spec("intellij.example.jar", vec![Source::module(&module)]));
+    assert_eq!(without_flag, data, "keep_manifest changed the jar of a module output");
 }
 
 /// A third-party jar: DEFLATED, with every kind of name the library filter drops.
@@ -372,56 +293,171 @@ fn pack_resolves_a_duplicate_to_the_first_source() {
     assert_eq!(digest(&data), GOLDEN_FIRST_SOURCE_WINS);
 }
 
-/// The coverage agent library of `intellij.platform.coverage.agent`, and the module output merged after it.
-pub(crate) fn coverage_agent_sources(scratch: &Scratch) -> (PathBuf, PathBuf) {
-    let agent = write_zip_jar(
-        scratch,
-        "intellij-coverage-agent-1.0.765.jar",
-        &[
-            entry("com/intellij/rt/coverage/main/CoveragePremain.class", "premain"),
-            entry("META-INF/listOfEntities.txt", "com.intellij.rt.coverage.Agent\n"),
-            entry(
-                MANIFEST_ENTRY_NAME,
-                "Manifest-Version: 1.0\r\nPremain-Class: com.intellij.rt.coverage.main.CoveragePremain\r\n\
-                 Boot-Class-Path: intellij-coverage-agent-1.0.765.jar\r\n\r\n",
-            ),
-        ],
+/// The recipe of a Java agent jar. The manifest of the module survives, and the manifest of the library drops.
+#[test]
+fn pack_keeps_the_module_manifest_and_drops_the_library_one() {
+    let scratch = Scratch::new();
+    let (library, module) = agent_sources(&scratch);
+    let (data, _) = pack(
+        &scratch,
+        spec(
+            "intellij.example.agent.jar",
+            vec![Source::library(&library), Source::module(&module)],
+        ),
     );
-    let module = write_zip_jar(
-        scratch,
-        "intellij.platform.coverage.agent.jar",
-        &[
-            entry("com/intellij/coverage/AgentLocator.class", "locator"),
-            entry("META-INF/listOfEntities.txt", "com.intellij.coverage.AgentLocator"),
-            entry(MANIFEST_ENTRY_NAME, "Manifest-Version: 1.0\r\n\r\n"),
-        ],
+    assert_eq!(read_entry(&data, MANIFEST_ENTRY_NAME), AGENT_MANIFEST);
+    assert_eq!(
+        entry_names(&data),
+        [
+            "org/objectweb/asm/ClassReader.class",
+            "com/example/agent/Premain.class",
+            MANIFEST_ENTRY_NAME,
+            "__index__"
+        ]
     );
-    (agent, module)
+    assert_eq!(digest(&data), GOLDEN_MODULE_MANIFEST);
 }
 
-/// The recipe `content_module_jar` writes for the coverage agent module. The rewritten manifest is the one entry whose
-/// CRC is calculated and that stays out of the package index.
 #[test]
-fn pack_points_the_coverage_agent_manifest_at_the_jar_it_ends_up_in() {
+fn two_module_manifests_are_refused() {
     let scratch = Scratch::new();
-    let (agent, module) = coverage_agent_sources(&scratch);
-    let sources = vec![
-        Source::library(&agent).with_manifest(ManifestMode::CoverageAgent),
-        Source::module(&module),
-    ];
+    let first = module_source_with_manifest(&scratch, "first.jar");
+    let second = module_source_with_manifest(&scratch, "second.jar");
+    let output = scratch.dir().join("intellij.example.jar");
+    let recipe = spec(output.to_str().unwrap(), vec![Source::module(&first), Source::module(&second)]);
+    assert_eq!(
+        pack_error(&recipe),
+        format!(
+            "{}: two module manifests, from {} and {}",
+            output.display(),
+            first.display(),
+            second.display()
+        )
+    );
+    // A library manifest is not a module manifest, so a kept library manifest and a module manifest give a duplicate.
+    let library = write_zip_jar(&scratch, "library.jar", &[entry(MANIFEST_ENTRY_NAME, "Library: true\r\n")]);
+    let (data, duplicates) = pack(
+        &scratch,
+        MergeSpec {
+            keep_manifest: true,
+            ..spec("intellij.example.jar", vec![Source::library(&library), Source::module(&first)])
+        },
+    );
+    assert_eq!(duplicates, [MANIFEST_ENTRY_NAME]);
+    assert_eq!(read_entry(&data, MANIFEST_ENTRY_NAME), "Library: true\r\n");
+}
+
+#[test]
+fn a_module_manifest_boot_class_path_must_name_the_jar() {
+    let scratch = Scratch::new();
+    let module_with = |manifest: &str| write_zip_jar(&scratch, "agent.jar", &[entry(MANIFEST_ENTRY_NAME, manifest)]);
+    for (manifest, value) in [
+        ("Boot-Class-Path: other.jar\n", "other.jar"),
+        // The value is the whole attribute, so a list of two jars does not name the jar.
+        (
+            "Boot-Class-Path: intellij.example.agent.jar other.jar\r\n",
+            "intellij.example.agent.jar other.jar",
+        ),
+        // A continuation line belongs to the value.
+        (
+            "Boot-Class-Path: intellij.example\n .agent.jar.old\n",
+            "intellij.example.agent.jar.old",
+        ),
+        // Each attribute of the name must name the jar.
+        ("Boot-Class-Path: intellij.example.agent.jar\nBoot-Class-Path: x.jar\n", "x.jar"),
+        // The attribute name matches without regard to ASCII case.
+        ("boot-class-path: other.jar\n", "other.jar"),
+    ] {
+        let module = module_with(manifest);
+        let output = scratch.dir().join("intellij.example.agent.jar");
+        let recipe = spec(output.to_str().unwrap(), vec![Source::module(&module)]);
+        assert_eq!(
+            pack_error(&recipe),
+            format!(
+                "{}: the module manifest of {} has `Boot-Class-Path: {value}`, but the jar is intellij.example.agent.jar",
+                output.display(),
+                module.display()
+            ),
+            "{manifest:?}"
+        );
+    }
+    for manifest in [
+        "Boot-Class-Path: intellij.example.agent.jar\r\n",
+        "Boot-Class-Path: intellij.exa\r\n mple.agent.jar\r\n",
+        // No attribute, another name, or a name in a later section is no `Boot-Class-Path` main attribute.
+        "Manifest-Version: 1.0\n",
+        "X-Boot-Class-Path: other.jar\n",
+        "Manifest-Version: 1.0\n\nName: a/b\nBoot-Class-Path: other.jar\n",
+    ] {
+        let module = module_with(manifest);
+        let (data, _) = pack(&scratch, spec("intellij.example.agent.jar", vec![Source::module(&module)]));
+        assert_eq!(read_entry(&data, MANIFEST_ENTRY_NAME), manifest);
+    }
+    // The check reads a module manifest only. A library manifest that `keep_manifest` keeps passes as it is.
+    let library = write_zip_jar(
+        &scratch,
+        "library.jar",
+        &[entry(MANIFEST_ENTRY_NAME, "Boot-Class-Path: other.jar\n")],
+    );
     let (data, _) = pack(
         &scratch,
         MergeSpec {
-            merge_entities: true,
-            ..spec("intellij.platform.coverage.agent.jar", sources)
+            keep_manifest: true,
+            ..spec("intellij.example.agent.jar", vec![Source::library(&library)])
         },
     );
-    let manifest = read_entry(&data, MANIFEST_ENTRY_NAME);
-    assert!(
-        manifest.contains("Boot-Class-Path: intellij.platform.coverage.agent.jar\r\n"),
-        "the manifest is {manifest:?}"
+    assert_eq!(read_entry(&data, MANIFEST_ENTRY_NAME), "Boot-Class-Path: other.jar\n");
+}
+
+/// The output file of a content-module jar is `<target>.production.jar`. The distribution name that the recipe states is
+/// the name that a `Boot-Class-Path` must state.
+#[test]
+fn a_module_manifest_boot_class_path_names_the_stated_jar_name() {
+    let scratch = Scratch::new();
+    let module_with = |value: &str| {
+        write_zip_jar(
+            &scratch,
+            "agent.jar",
+            &[entry(MANIFEST_ENTRY_NAME, &format!("Boot-Class-Path: {value}\n"))],
+        )
+    };
+    let stated = |output: &str, module: &Path| MergeSpec {
+        jar_name: Some("intellij.example.agent.jar".into()),
+        ..spec(output, vec![Source::module(module)])
+    };
+    let module = module_with("intellij.example.agent.jar");
+    let (data, _) = pack(&scratch, stated("x.production.jar", &module));
+    assert_eq!(
+        read_entry(&data, MANIFEST_ENTRY_NAME),
+        "Boot-Class-Path: intellij.example.agent.jar\n"
     );
-    assert_eq!(digest(&data), GOLDEN_COVERAGE_AGENT);
+    // The jar name is not in the bytes.
+    let (unstated, _) = pack(&scratch, spec("intellij.example.agent.jar", vec![Source::module(&module)]));
+    assert_eq!(data, unstated, "the stated jar name changed the bytes");
+
+    let module = module_with("x.production.jar");
+    let output = scratch.dir().join("x.production.jar");
+    assert_eq!(
+        pack_error(&stated(output.to_str().unwrap(), &module)),
+        format!(
+            "{}: the module manifest of {} has `Boot-Class-Path: x.production.jar`, but the jar is intellij.example.agent.jar",
+            output.display(),
+            module.display()
+        )
+    );
+}
+
+#[test]
+fn main_attribute_values_read_the_main_section() {
+    let values = |text: &str| main_attribute_values(text, "Boot-Class-Path");
+    assert_eq!(values("Boot-Class-Path: a.jar\r\nOther: b\r\n"), ["a.jar"]);
+    assert_eq!(values("Boot-Class-Path: a\r\n .j\r\n ar\r\n"), ["a.jar"]);
+    assert_eq!(values("Boot-Class-Path:a.jar\nBoot-Class-Path: b.jar"), ["a.jar", "b.jar"]);
+    assert_eq!(values("boot-class-path: a.jar\n"), ["a.jar"]);
+    assert_eq!(values("Other: a\n\nBoot-Class-Path: a.jar\n"), Vec::<String>::new());
+    // A continuation line with no line before it starts no attribute.
+    assert_eq!(values(" Boot-Class-Path: a.jar\n"), Vec::<String>::new());
+    assert_eq!(values(""), Vec::<String>::new());
 }
 
 /// A jar whose data starts after a *local* extra field that the central directory does not state. Every other case
