@@ -1622,12 +1622,13 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
 
   buildFile.load((if (module.isCommunity) "" else "@community") + "//build:compiler-options.bzl", "create_kotlinc_options")
 
+  if (jvmTarget != kotlincDefaults.jvmTarget) {
+    options.put("jvm_target", jvmTarget)
+  }
+
   val kotlincOptionsName = "custom_" + module.targetName
   buildFile.target("create_kotlinc_options") {
     option("name", kotlincOptionsName)
-    if (jvmTarget != kotlincDefaults.jvmTarget) {
-      option("jvm_target", jvmTarget)
-    }
     for ((name, value) in options.entries.sortedBy { it.key }) {
       option(name, value)
     }
