@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.python.lsp.core.fakePyToolClient
 import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.python.PythonLanguage
+import com.jetbrains.python.documentation.doctest.PyDocstringCodeBlockFile
 import com.jetbrains.python.documentation.doctest.PyDoctestFile
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.PyExpressionCodeFragment
@@ -54,8 +55,26 @@ class PyLspTypeEngineInjectionTest : PyCodeInsightTestCase() {
     assertTrue(testTypeEngine().isSupportedForResolve(target))
   }
 
-  /** Only the injection guard rejects this one: a code-block is injected as plain [PythonLanguage]. */
+  /** Only the injection guard rejects this one: a `# language=Python` comment injects plain [PythonLanguage]. */
   @Test
+  fun `element of a string injected as Python is not supported`() = runInEdtAndWait {
+    myFixture.configureByText("a.py", """
+      # language=Python
+      code = "x = 1"
+    """.trimIndent())
+
+    val literal = PsiTreeUtil.findChildOfType(myFixture.file, PyStringLiteralExpression::class.java)!!
+    val injectedFile = injectedFiles(literal).single()
+    assertTrue(injectedFile.language.`is`(PythonLanguage.INSTANCE), "The comment injects plain Python")
+    assertFalse(injectedFile is PyExpressionCodeFragment, "The injected file is a plain Python file, not a code fragment")
+
+    val target = PsiTreeUtil.findChildOfType(injectedFile, PyTargetExpression::class.java)!!
+    assertFalse(testTypeEngine().isSupportedForResolve(target))
+  }
+
+  /** Both guards reject a code-block, as they reject a doctest. [PyDocstringCodeBlockFile] is a [PyExpressionCodeFragment]. */
+  @Test
+  @TestFor(issues = ["PY-91625"])
   fun `element of an injected code-block is not supported`() = runInEdtAndWait {
     myFixture.configureByText("a.py", """
       def spam():
@@ -68,9 +87,7 @@ class PyLspTypeEngineInjectionTest : PyCodeInsightTestCase() {
           '''
     """.trimIndent())
 
-    val injectedFile = injectedDocstringFiles().first { it.language.`is`(PythonLanguage.INSTANCE) }
-    assertFalse(injectedFile is PyExpressionCodeFragment, "A code-block is a plain Python file, not a code fragment")
-
+    val injectedFile = injectedDocstringFiles().filterIsInstance<PyDocstringCodeBlockFile>().single()
     val target = PsiTreeUtil.findChildOfType(injectedFile, PyTargetExpression::class.java)!!
     assertFalse(testTypeEngine().isSupportedForResolve(target))
   }
@@ -101,9 +118,12 @@ class PyLspTypeEngineInjectionTest : PyCodeInsightTestCase() {
 
   private fun injectedDocstringFiles(): List<PsiFile> {
     val function = PsiTreeUtil.findChildOfType(myFixture.file, PyFunction::class.java)!!
-    val docstring = PsiTreeUtil.findChildOfType(function, PyStringLiteralExpression::class.java)!!
-    val injected = InjectedLanguageManager.getInstance(myFixture.project).getInjectedPsiFiles(docstring)
-    assertNotNull(injected, "No injected PSI files in the docstring")
+    return injectedFiles(PsiTreeUtil.findChildOfType(function, PyStringLiteralExpression::class.java)!!)
+  }
+
+  private fun injectedFiles(host: PyStringLiteralExpression): List<PsiFile> {
+    val injected = InjectedLanguageManager.getInstance(myFixture.project).getInjectedPsiFiles(host)
+    assertNotNull(injected, "No injected PSI files in ${host.text}")
     return injected!!.mapNotNull { it.first as? PsiFile }
   }
 }

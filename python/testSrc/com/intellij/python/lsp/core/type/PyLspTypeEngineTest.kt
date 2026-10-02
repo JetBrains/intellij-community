@@ -46,7 +46,7 @@ internal class PyLspTypeEngineTest {
   fun `an element of a served module is supported`() = runBlocking {
     val engine = engineServing(mainModule.get())
 
-    assertTrue(engine.isSupportedForResolve(referenceIn(mainPath.get())))
+    assertTrue(engine.supports(referenceIn(mainPath.get())))
   }
 
   @Test
@@ -54,15 +54,15 @@ internal class PyLspTypeEngineTest {
     val engine = engineServing(mainModule.get())
     secondModule.get()
 
-    assertFalse(engine.isSupportedForResolve(referenceIn(secondPath.get())))
+    assertFalse(engine.supports(referenceIn(secondPath.get())))
   }
 
   @Test
   fun `one server that serves both modules answers for both`() = runBlocking {
     val engine = engineServing(mainModule.get(), secondModule.get())
 
-    assertTrue(engine.isSupportedForResolve(referenceIn(mainPath.get())))
-    assertTrue(engine.isSupportedForResolve(referenceIn(secondPath.get())))
+    assertTrue(engine.supports(referenceIn(mainPath.get())))
+    assertTrue(engine.supports(referenceIn(secondPath.get())))
   }
 
   @Test
@@ -73,8 +73,8 @@ internal class PyLspTypeEngineTest {
     val otherReference = referenceIn(secondPath.get())
 
     repeat(2) {
-      assertTrue(engine.isSupportedForResolve(ownReference))
-      assertFalse(engine.isSupportedForResolve(otherReference))
+      assertTrue(engine.supports(ownReference))
+      assertFalse(engine.supports(otherReference))
     }
   }
 
@@ -83,34 +83,41 @@ internal class PyLspTypeEngineTest {
     val engine = engineServing(mainModule.get())
     secondModule.get()
 
-    assertTrue(engine.isSupportedForResolve(referenceIn(outsidePath.get())))
+    assertTrue(engine.supports(referenceIn(outsidePath.get())))
   }
 
   /**
    * A restart replaces the client, and a cached `TypeEvalContext` still holds this engine. A stopped
-   * server answers nothing, so the engine must refuse, and PyCharm then infers the type itself.
+   * server answers nothing, so the engine is not ready. The engine still sees the element, so the
+   * context does not give it to the built-in engine when the engine forbids that.
    */
   @Test
-  @TestFor(issues = ["PY-92008"])
-  fun `an engine behind a stopped server supports nothing`() = runBlocking {
+  @TestFor(issues = ["PY-92008", "PY-92254"])
+  fun `an engine behind a stopped server is not ready`() = runBlocking {
     val stopped = fakePyToolClient(mainModule.get(), serverState = LspServerState.ShutdownNormally)
     val engine = FakeLspTypeEngine(mainModule.get(), stopped)
 
-    assertFalse(engine.isSupportedForResolve(referenceIn(mainPath.get())))
+    assertFalse(engine.isReady)
+    assertTrue(engine.supports(referenceIn(mainPath.get())))
   }
 
   /**
-   * The platform answers `null` to every request sent before the server runs. An engine that accepted
-   * the element would store `PyNullType` for it, instead of letting PyCharm infer the type itself.
+   * The platform answers `null` to every request sent before the server runs. A ready engine would
+   * get `PyNullType` for the element, instead of the answer of the server after it starts.
    */
   @Test
-  @TestFor(issues = ["PY-92008"])
-  fun `an engine behind an initializing server supports nothing`() = runBlocking {
+  @TestFor(issues = ["PY-92008", "PY-92254"])
+  fun `an engine behind an initializing server is not ready`() = runBlocking {
     val initializing = fakePyToolClient(mainModule.get(), serverState = LspServerState.Initializing)
     val engine = FakeLspTypeEngine(mainModule.get(), initializing)
 
-    assertFalse(engine.isSupportedForResolve(referenceIn(mainPath.get())))
+    assertFalse(engine.isReady)
+    assertTrue(engine.supports(referenceIn(mainPath.get())))
   }
+
+  /** [PyLspTypeEngine.isSupportedForResolve] reads the PSI, so it runs in a read action. */
+  private suspend fun PyLspTypeEngine.supports(element: PyTypedElement): Boolean =
+    readAction { isSupportedForResolve(element) }
 
   /** An engine for the first of [servedModules], behind a server that answers for all of them. */
   private fun engineServing(vararg servedModules: Module): FakeLspTypeEngine =
