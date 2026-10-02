@@ -51,18 +51,22 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Container
@@ -128,8 +132,17 @@ internal class WelcomeScreenRightTabImpl(
 
   private val sectionContents: List<WelcomeScreenFeatureUI.Content> = body?.sections?.map { it.content }.orEmpty()
 
+  /**
+   * A child scope of the provider scope. Cancelled with the owner, so a coroutine of the tab never outlives the tab.
+   */
+  private val scope: CoroutineScope = run {
+    val parentContext = contentProvider.coroutineScope.coroutineContext
+    CoroutineScope(parentContext + SupervisorJob(parentContext.job) + CoroutineName("welcome right tab"))
+  }
+
   init {
     Disposer.register(owner, this)
+    scope.coroutineContext.job.cancelOnDispose(this)
 
     contentPanel.isOpaque = false
 
@@ -394,12 +407,12 @@ internal class WelcomeScreenRightTabImpl(
     component.add(footerWrapper)
     footerWrapper.add(toolbar.component)
 
-    addErrorReportAlert(coroutineScope, footerWrapper)
+    addErrorReportAlert(footerWrapper)
   }
 
-  private fun addErrorReportAlert(coroutineScope: CoroutineScope, footerWrapper: JPanel) {
+  private fun addErrorReportAlert(footerWrapper: JPanel) {
     fun reconcileErrorReportAlert(alert: JPanel) {
-      coroutineScope.launch {
+      scope.launch {
         LOG.debug("Recheck if error reporting is enabled, hide alert otherwise")
 
         if (!ExceptionAutoReportUtil.isAutoReportAllowedByUser()) {
@@ -413,7 +426,7 @@ internal class WelcomeScreenRightTabImpl(
     }
 
     if (ExceptionAutoReportUtil.isConsentAllowedToBeVisible) {
-      coroutineScope.launch {
+      scope.launch {
         if (ExceptionAutoReportUtil.isAutoReportAllowedByUser()) {
           if (ExceptionAutoReportUtil.needNotificationOfDataCollection()) {
             LOG.info("Notify user that error reports are sent automatically")
