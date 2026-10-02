@@ -179,6 +179,9 @@ public final class ConvertStringToMultilineIntention extends Intention {
         }
       }
     }
+    if (GrStringUtil.endsWithUnescaped(buffer, quote.charAt(0))) {
+      buffer.insert(buffer.length() - 1, '\\');
+    }
 
     buffer.append(quote);
     return buffer;

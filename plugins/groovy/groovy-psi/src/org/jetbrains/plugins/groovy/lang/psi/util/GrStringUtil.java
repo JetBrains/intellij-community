@@ -582,6 +582,15 @@ public final class GrStringUtil {
     return "";
   }
 
+  public static boolean endsWithUnescaped(CharSequence cs, char c) {
+    if (cs.isEmpty() || cs.charAt(cs.length() - 1) != c) return false;
+    boolean escaped = false;
+    for (int i = cs.length() - 2; i >= 0; i--) {
+      if (cs.charAt(i) == '\\') escaped = !escaped;
+    }
+    return !escaped;
+  }
+
   @Contract("null -> null")
   public static @Nullable TextRange getStringContentRange(@Nullable PsiElement element) {
     if (element == null) return null;

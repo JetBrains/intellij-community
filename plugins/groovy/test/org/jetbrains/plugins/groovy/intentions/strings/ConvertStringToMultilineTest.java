@@ -44,6 +44,17 @@ public class ConvertStringToMultilineTest extends GrIntentionTestCase {
                  """);
   }
 
+  public void testEscapeEndingQuote() {
+    doTextTest("""
+                 void test() {
+                     "<caret>1\\""
+                 }""",
+               """
+                 void test() {
+                     ""\"1\\""\""
+                 }""");
+  }
+
   public void testAlreadyMultiline() {
     doAntiTest("print \"\"\"a<caret>bc\"\"\"");
   }
