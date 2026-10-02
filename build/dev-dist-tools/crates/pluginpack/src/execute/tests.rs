@@ -23,8 +23,8 @@ fn tree_plan(root: &Path) -> (Recipe, Catalogue) {
     (recipe, catalogue(vec![directory_artifact("tree", root)]))
 }
 
-/// The Go test `checkAssetNamespace` created the remainder entries and the independent files in a probe directory. The
-/// port compares the case identities, so each collision fails on every file system.
+/// The former test `checkAssetNamespace` created the remainder entries and the independent files in a probe directory.
+/// This test compares the case identities, so each collision fails on every file system.
 #[test]
 fn independent_destinations_collide_with_remainder_tree_entries() {
     type Case<'a> = (&'a str, &'a str, &'a [&'a str], &'a str);
@@ -365,8 +365,8 @@ fn input_root_links_reject_output_aliases() {
     }
 }
 
-/// The Go test names the output `Café` beside the source `Cafe\u{301}`. The inventory holds no such name, so only the
-/// host names of the source and the output differ in case or in normalization.
+/// The former test named the output `Café` beside the source `Cafe\u{301}`. The inventory holds no such name, so
+/// only the host names of the source and the output differ in case or in normalization.
 #[test]
 fn filesystem_boundaries_accept_distinct_source_names() {
     for (name, output_name) in [("Source", "source"), ("Caf\u{e9}", "Cafe\u{301}")] {
@@ -1039,8 +1039,8 @@ fn module_output_name_filter_agrees_with_common_module_excludes() {
     }
 }
 
-/// The plan/write half of the Go `TestKotlinDefaultFieldEncoding`: a jar recipe without sources plans and writes one
-/// empty jar. The decode half is in the `planfile` crate.
+/// The plan/write half of the former `TestKotlinDefaultFieldEncoding`: a jar recipe without sources plans and writes
+/// one empty jar. The decode half is in the `planfile` crate.
 #[test]
 fn default_field_recipe_plans_and_writes() {
     let recipe = Recipe {

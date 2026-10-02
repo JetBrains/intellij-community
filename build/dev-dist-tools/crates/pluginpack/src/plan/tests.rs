@@ -64,9 +64,9 @@ fn tree_plan_allows_descendant_assets_without_reading_tree() {
     plan(&recipe, &catalogue).unwrap();
 }
 
-/// Also covers the Go "unicode alias" case: a destination that is not ASCII is refused, because the inventory cannot
-/// hold it. The Go cases "mode", "sources", "target", "options" and "no input" have no port: the typed copy-tree
-/// operation has none of these fields.
+/// Also covers the former "unicode alias" case: the plan refuses a destination that is not ASCII, because the inventory
+/// cannot hold it. The former cases "mode", "sources", "target", "options" and "no input" have no port: the typed
+/// copy-tree operation has none of these fields.
 #[test]
 fn tree_plan_rejects_unsafe_ownership_and_operation_options() {
     type Mutation = fn(&mut Recipe, &mut Catalogue);
@@ -193,7 +193,7 @@ fn plan_does_not_read_payloads() {
     assert_eq!(execution.recipe.assets[1].destination, "lib/plugin.jar");
 }
 
-/// Eight Go cases have no port, because the typed recipe cannot state them. Four are "unknown operation", "unknown
+/// Eight former cases have no port, because the typed recipe cannot state them. Four are "unknown operation", "unknown
 /// source", "missing reference" and "unknown filter". The other four are "unknown manifest", "excludes on prepared
 /// entries", "unknown directory mode" and "mixed operation".
 #[test]
@@ -378,7 +378,7 @@ fn plan_rejects_unsafe_directory_references() {
 /// The Go test planned symlink operations. The typed recipe has none, so the port checks the same graphs through the
 /// link check of a tree: `distpath::validate_links`, then `planfile::validate::validate_link_graph`. `distpath` refuses a link chain,
 /// so a graph where one link resolves through another is refused, and a cycle is a chain. It also refuses an empty
-/// segment in a target, so the Go case of the exact spelling `./dir///` is a refusal.
+/// segment in a target, so the former case of the exact spelling `./dir///` is a refusal.
 #[test]
 fn link_graph_uses_raw_components_and_known_directories() {
     type Case<'a> = (&'a str, &'a [&'a str], &'a [(&'a str, &'a str)], &'a str);

@@ -42,7 +42,7 @@ pub struct FlagFile {
 /// - A path has no `.` and no `..` component, so the parser compares the paths as they are written. See
 ///   [`resolve_path`].
 ///
-/// The flag file must be UTF-8. The Go parser kept the raw bytes of a path, and no Bazel path needs that.
+/// The flag file must be UTF-8, because no Bazel path needs other bytes.
 #[expect(
     clippy::unnecessary_debug_formatting,
     reason = "the Debug form quotes the path, and a refusal keeps its text"

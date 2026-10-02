@@ -124,7 +124,8 @@ pub fn plan(recipe: &Recipe, catalogue: &Catalogue) -> Result<Execution> {
     Ok(execution)
 }
 
-/// Reports whether a catalogue root is a clean, nonempty path without a NUL or a line end, as Go `path.Clean` states it.
+/// Reports whether a catalogue root is a clean, nonempty path without a NUL or a line end. [`distpath::clean`] states
+/// what a clean path is.
 fn clean_root(root: &str) -> bool {
     let slashed = if cfg!(windows) { root.replace('\\', "/") } else { root.to_owned() };
     !root.is_empty() && root != "." && distpath::clean(&slashed) == slashed && !root.contains(['\0', '\r', '\n'])

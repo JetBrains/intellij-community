@@ -30,8 +30,8 @@ const BUFFER_SIZE: usize = 1 << 20;
 /// cannot write that, so these headers are written by hand.
 ///
 /// Writing goes forward only. Each offset is known when the writer gets to it, so there is one buffered pass and no
-/// seek. A writer dropped before a successful [`Writer::close`] discards its buffer, as the Go writer did. So a failed
-/// merge leaves no plausible tail in the output file. After a failed call the state of the writer is not defined, so the
+/// seek. A writer that the caller drops before a successful [`Writer::close`] discards its buffer. So a failed merge
+/// leaves no plausible tail in the output file. After a failed call the state of the writer is not defined, so the
 /// caller drops it.
 ///
 /// An I/O error of the output has no path, because the writer does not know the path of its output. A caller adds it.

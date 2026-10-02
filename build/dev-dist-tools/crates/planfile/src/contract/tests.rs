@@ -18,8 +18,8 @@ fn transform(kind: LayoutTransformKind) -> LayoutTransform {
     }
 }
 
-/// The decode half of the Go test. The Go test also compares the transform with its kotlinx encoding in a
-/// layout-assets operation, which the Kotlin golden tests of the `pluginpack` crate do.
+/// The decode half of the former test. The former test also compared the transform with its kotlinx encoding in a
+/// layout-assets operation. `layout_transform_encoding_in_a_kotlin_operation` of the `pluginpack` crate does that now.
 #[test]
 fn layout_transform_encoding() {
     for (text, want) in [

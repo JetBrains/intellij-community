@@ -208,8 +208,8 @@ impl MergeSpec {
         self.validate_sources()?;
 
         // Every source jar stays open until the output is closed. The duplicate set, the natives state and the entity
-        // list hold names and entries of all of them. A cell per source opens each jar when the merge gets to it. The
-        // Go merge did the same, so an error names the same source first.
+        // list hold names and entries of all of them. A cell per source opens each jar when the merge gets to it. So
+        // an error names the first source that fails in the source order.
         let jars: Vec<OnceCell<Jar>> = self.sources.iter().map(|_| OnceCell::new()).collect();
         let mut natives = match &self.native {
             Some(native) => Some(NativeMerge::new(self.native_source_index(native)?)),
@@ -397,8 +397,8 @@ impl MergeSpec {
     }
 }
 
-/// Names the jar in an I/O failure of the writer, as the Go `write <path>: ...` error did. A [`Writer`] does not know
-/// the path of its output. A refusal of the writer names its entry or its limit already and stays as it is.
+/// Names the jar in an I/O failure of the writer. A [`Writer`] does not know the path of its output. A refusal of the
+/// writer names its entry or its limit already and stays as it is.
 fn at_output<T>(result: Result<T>, output: &Path) -> Result<T> {
     result.map_err(|error| {
         if error.is::<io::Error>() {
@@ -477,8 +477,8 @@ impl<W: Write> Write for HashingWrite<W> {
     }
 }
 
-/// The native entries that `reject-native-entries` refuses. It is the Go `isNativeEntry` of the merge, and it has no
-/// `.tbd`, unlike [`nativelib::is_native_entry`].
+/// The native entries that `reject-native-entries` refuses. The set has no `.tbd`, unlike
+/// [`nativelib::is_native_entry`].
 fn is_residual_native_entry(name: &str) -> bool {
     matches!(extension(name), ".so" | ".dylib" | ".jnilib" | ".dll" | ".exe")
         || name.ends_with("pty4j-unix-spawn-helper")

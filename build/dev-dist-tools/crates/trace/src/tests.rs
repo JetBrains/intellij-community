@@ -1,6 +1,6 @@
 //! The expectations are whole documents, written by hand. A decoder would accept any field name and any nesting. The
 //! reader of a merged build trace uses these bytes as the schema, and the field order of the Kotlin exporter is part
-//! of it. Each expectation matches the Go original `internal/span/span_test.go`, except the `time` tag.
+//! of it. Each expectation came from the former test `internal/span/span_test.go`, except the `time` tag.
 
 use std::collections::HashSet;
 use std::fs;
@@ -138,7 +138,8 @@ fn a_span_never_ended_is_closed_at_write_time() {
     drop(span);
 }
 
-/// The Go `End` is idempotent. `end` consumes the span, so a span ends once, and a later write keeps that end.
+/// The `End` of the former tool was idempotent. `end` consumes the span, so a span ends once, and a later write keeps
+/// that end.
 #[test]
 fn an_ended_span_keeps_its_end_time() {
     let tracer = new_test_tracer();

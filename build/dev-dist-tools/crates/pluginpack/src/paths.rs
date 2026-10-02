@@ -13,8 +13,8 @@ pub(crate) fn host(root: &Path, relative: &str) -> PathBuf {
     path
 }
 
-/// Go `filepath.Clean` of a host path: removes `.` components, a trailing separator, and each inner `..` with the
-/// component before it. The lexical step comes before an `lstat`, so a trailing separator cannot follow a link.
+/// Cleans a host path lexically: removes `.` components, a trailing separator, and each inner `..` with the component
+/// before it. The lexical step comes before an `lstat`, so a trailing separator cannot follow a link.
 pub(crate) fn clean_host(path: &Path) -> PathBuf {
     let mut components: Vec<Component<'_>> = Vec::new();
     for component in path.components() {
@@ -45,7 +45,7 @@ pub(crate) fn within(root: &Path, file: &Path) -> bool {
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub(crate) struct FileId(#[cfg(unix)] (u64, u64), #[cfg(windows)] same_file::Handle);
 
-/// Returns the [`FileId`] of the file that `path` names, as Go `os.Stat` and `os.SameFile` compare it.
+/// Returns the [`FileId`] of the file that `path` names. A link gives the identity of its target.
 pub(crate) fn file_id(path: &Path) -> io::Result<FileId> {
     #[cfg(unix)]
     {
@@ -75,7 +75,7 @@ pub(crate) fn entry_id(path: &Path, metadata: &fs::Metadata) -> io::Result<FileI
     }
 }
 
-/// Creates one directory with mode 0755 before the umask, as Go `os.Mkdir(name, 0o755)` does.
+/// Creates one directory. On Unix the directory gets the mode 0755 before the umask.
 pub(crate) fn create_directory(path: &Path) -> io::Result<()> {
     #[cfg(unix)]
     {
@@ -88,8 +88,8 @@ pub(crate) fn create_directory(path: &Path) -> io::Result<()> {
     }
 }
 
-/// Creates the link `link` with the text `target`. Windows gives a link the kind of its target, as Go `os.Symlink`
-/// does, so the target must exist before the link.
+/// Creates the link `link` with the text `target`. On Windows the link gets the kind of its target, so the target must
+/// exist before the link.
 pub(crate) fn create_symlink(target: &str, link: &Path) -> io::Result<()> {
     // Only Windows reads the kind, so only Windows probes the target.
     let target_is_directory =
@@ -97,7 +97,7 @@ pub(crate) fn create_symlink(target: &str, link: &Path) -> io::Result<()> {
     fscopy::symlink(Path::new(target), link, target_is_directory)
 }
 
-/// Reports whether the link target text is an absolute host path, as Go `filepath.IsAbs` does.
+/// Reports whether the link target text is an absolute host path.
 pub(crate) fn is_absolute_target(target: &str) -> bool {
     Path::new(target).is_absolute()
 }

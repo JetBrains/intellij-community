@@ -127,7 +127,7 @@ fn open_zip(file: &Path) -> Result<ZipArchive<BufReader<File>>> {
 }
 
 /// Refuses a zip with two central-directory records of one name. The `zip` crate keeps only the last record of a name,
-/// and the Go reader wrote the first. No real input repeats a name.
+/// so the function refuses the archive and does not choose a record. No real input repeats a name.
 fn refuse_repeated_names(file: &Path, directory_start: u64) -> Result<()> {
     let mut input = BufReader::new(File::open(file).with_context(|| file.display().to_string())?);
     input
@@ -156,7 +156,7 @@ fn refuse_repeated_names(file: &Path, directory_start: u64) -> Result<()> {
 }
 
 /// Writes the decoded zip into the scratch directory, so the central directory can be read. The file must hold one
-/// zstd frame: `zstd` writes one frame, and the Go decoder read several only because its library did.
+/// zstd frame, because `zstd` writes one frame. The function refuses data after that frame.
 fn decode_zstd_archive(file: &Path, scratch: &mut LayoutScratch) -> Result<PathBuf> {
     let input = File::open(file).with_context(|| file.display().to_string())?;
     let mut input = BufReader::new(input);

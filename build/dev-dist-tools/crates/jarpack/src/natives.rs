@@ -74,7 +74,7 @@ impl NativeSpec {
         };
         match fs::read_dir(dir) {
             Ok(entries) => {
-                // The Go `os.ReadDir` sorts by name, so the error names the first file in that order.
+                // The error names the first file in name order, so the text does not depend on the order of `read_dir`.
                 let mut names = Vec::new();
                 for entry in entries {
                     let entry = entry.map_err(in_tree)?;

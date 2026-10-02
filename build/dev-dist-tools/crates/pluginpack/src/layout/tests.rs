@@ -428,8 +428,8 @@ fn a_zip_keeps_the_first_entry_of_a_shared_destination() {
     assert_content(&written.output.join("payload/x"), "first");
 }
 
-/// Two central-directory records with one name. The `zip` crate keeps only the last record of a name, and the Go reader
-/// wrote the first. No real input repeats a name, so the packer refuses the archive.
+/// Two central-directory records with one name. The `zip` crate keeps only the last record of a name, and the former
+/// reader wrote the first. No real input repeats a name, so the packer refuses the archive.
 #[test]
 fn a_zip_that_repeats_an_entry_name_fails() {
     for name in ["assets.zip", "assets.zip.zst"] {
@@ -696,8 +696,8 @@ fn a_single_visit_keeps_the_targets_before_and_after_the_first_link() {
     }
 }
 
-/// First claim wins, the kind conflict, and the entries order. The Go case of mode 0644 on a layout-tree has no port.
-/// The typed layout-tree operation has no mode, because no plan file normalizes the modes of a tree.
+/// First claim wins, the kind conflict, and the entries order. The former case of mode 0644 on a layout-tree has no
+/// port. The typed layout-tree operation has no mode, because no plan file normalizes the modes of a tree.
 #[test]
 fn the_first_claim_wins_across_assets_and_a_kind_conflict_fails() {
     let root = temp();
@@ -1004,7 +1004,7 @@ fn layout_includes_and_executables_validation() {
     }
 }
 
-/// Seven Go cases have no port, because the typed recipe cannot state them. Four are "layout on a copy-tree",
+/// Seven former cases have no port, because the typed recipe cannot state them. Four are "layout on a copy-tree",
 /// "layout-tree mode without normalization", "layout-tree without layout" and "layout source with the drop manifest".
 /// The other three are "layout on an archive source", "unknown transform" and "an inline-text transform".
 #[test]

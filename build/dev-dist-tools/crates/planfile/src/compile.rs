@@ -211,7 +211,7 @@ struct Compiler<'a> {
     required_raw: Vec<&'a str>,
     artifacts: HashMap<&'a str, &'a Artifact>,
     libraries: HashMap<&'a str, &'a Library>,
-    /// The Go-executed operations by output. The catalogue resolution replaces each one with its resolved copy.
+    /// The packer-executed operations by output. The catalogue resolution replaces each one with its resolved copy.
     go_executed: HashMap<&'a str, Operation>,
 }
 
@@ -681,8 +681,8 @@ impl<'a> Compiler<'a> {
         Ok(operations)
     }
 
-    /// The Kotlin `compileSources`: it turns the recipe sources into the sources the packer reads. A prepared source of
-    /// a Go-executed operation becomes the layout source.
+    /// Turns the recipe sources into the sources the packer reads. A prepared source of a packer-executed operation
+    /// becomes the layout source.
     fn compile_sources(&self, recipe: &JarRecipe) -> Result<Vec<Source>> {
         let mut meaningful = 0usize;
         for source in &recipe.sources {
@@ -763,7 +763,7 @@ fn validate_asset(asset: &Asset) -> Result<()> {
     Ok(())
 }
 
-/// The jar source that the packer executes in place of the prepared output of a Go-executed operation.
+/// The jar source that the packer executes in place of the prepared output of a packer-executed operation.
 fn go_executed_source(operation: &Operation) -> Result<Source> {
     let layout = &operation.layout_assets;
     if layout.format != LayoutFormat::Entries {

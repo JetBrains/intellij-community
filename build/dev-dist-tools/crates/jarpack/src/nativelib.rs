@@ -235,7 +235,7 @@ pub fn is_native_entry(name: &str) -> bool {
         || name.ends_with("icudtl.dat")
 }
 
-/// The Go `path.Ext`: the suffix from the last dot of the last slash-separated element, or the empty string.
+/// The extension of `name`: the suffix from the last dot of the last slash-separated element, or the empty string.
 pub(crate) fn extension(name: &str) -> &str {
     let element_start = name.rfind('/').map_or(0, |slash| slash + 1);
     match name[element_start..].rfind('.') {
@@ -246,7 +246,7 @@ pub(crate) fn extension(name: &str) -> &str {
 
 /// States the executable bit of a selected file: a POSIX file without an extension runs directly.
 ///
-/// `family` is `None` for a spec that only reserves, and that is not Windows, as the empty Go family was not.
+/// `family` is `None` for a spec that only reserves, and `None` is not Windows.
 pub fn is_executable(family: Option<Family>, file_name: &str) -> bool {
     family != Some(Family::Windows) && !file_name.contains('.')
 }

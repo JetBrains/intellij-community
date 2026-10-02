@@ -3,7 +3,7 @@
 //! The decoder accepts only the shapes that the checked-in plan files use. `serde` refuses an unknown key. So a key of
 //! `PluginPackingProjectionEncoding.kt` that no plan file states is an error, for example `symlinkTarget` or a field of
 //! a Kotlin-executed operation. The decoder refuses an unused value of a known key by name. A `null` value of an
-//! `Option` field is an absent key, the way Go decodes `null` into a pointer field.
+//! `Option` field is an absent key.
 
 use std::path::Path;
 

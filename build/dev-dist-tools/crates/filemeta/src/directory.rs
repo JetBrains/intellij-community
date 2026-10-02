@@ -5,8 +5,8 @@ use std::path::Path;
 /// Creates the directory `path` and its missing parents. Each directory that the function creates gets the mode 0755.
 ///
 /// The mode does not depend on the umask, because the inventory of a payload records the mode of each directory.
-/// [`fs::create_dir_all`] gives 0777 without the umask bits, so the umask 002 gives 0775. The Go tools called
-/// `os.MkdirAll(path, 0o755)`. It gives the result of this function when the umask has no bit outside 022.
+/// [`fs::create_dir_all`] gives 0777 without the umask bits, so the umask 002 gives 0775. The former tool created
+/// each directory with 0755 under the umask. It gave the result of this function when the umask had no bit outside 022.
 ///
 /// A directory that exists keeps its mode. On Windows, the function only creates the directories. An error names the
 /// directory and keeps the [`io::ErrorKind`] of the cause.

@@ -307,7 +307,8 @@ const fn manifest_mode(manifest: Manifest) -> ManifestMode {
     }
 }
 
-/// Refuses a remainder entry that collides with an independent file or native tree, as Go `checkAssetNamespace` did. A tree operation writes entries that the asset table does not name, so the plan cannot make this check.
+/// Refuses a remainder entry that collides with an independent file or native tree. A tree operation writes entries
+/// that the asset table does not name, so the plan cannot make this check.
 ///
 /// The composer writes each independent file beside the remainder. The check compares the case identities of the names,
 /// so the result does not depend on the file system of the build.
@@ -573,7 +574,8 @@ pub(crate) fn resolve_transport_file(
     Ok((source, metadata, root))
 }
 
-/// Go `filepath.Abs` and `EvalSymlinks` of a path whose tail may not exist yet: the missing tail stays as it is.
+/// The absolute path of `file` with every link resolved. The path can have a tail that does not exist yet, and that
+/// tail stays as it is.
 fn physical_path(file: &Path) -> Result<PathBuf> {
     let absolute = fscopy::absolute_path(file)?;
     match fscopy::real_path(&absolute) {

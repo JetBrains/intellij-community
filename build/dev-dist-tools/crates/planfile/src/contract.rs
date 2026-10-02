@@ -1,9 +1,10 @@
 //! The contract of one plugin remainder: the recipe that the packer executes, the asset rows, and the input catalogue.
 //!
 //! The recipe stays in the process, so it has no JSON form. The asset rows go to `assets.json`, and Starlark writes the
-//! catalogue. The asset rows keep the field order and the omitted defaults of the Go `json` tags, so
-//! `serde_json::to_vec` writes the bytes of Go `json.Marshal`. Go also escapes `<`, `>`, `&`, U+2028 and U+2029, and no
-//! plan file holds one of them.
+//! catalogue. An asset row writes its fields in declaration order. It omits an empty `artifact`, the kind `file` and an
+//! absent `class_path`, and it writes `destination` and `producer` always. So `serde_json::to_vec` writes the bytes
+//! that the former writer wrote. The former writer also escaped `<`, `>`, `&`, U+2028 and U+2029, and no plan file
+//! holds one of them.
 
 use serde::{Deserialize, Serialize};
 
@@ -32,14 +33,14 @@ pub struct Asset {
     pub producer: Producer,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub artifact: String,
-    /// A file is an absent key, as the Go writer omitted an empty kind.
+    /// The row omits the kind `file`, as the former writer did.
     #[serde(default, skip_serializing_if = "AssetKind::is_file")]
     pub kind: AssetKind,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub class_path: Option<bool>,
 }
 
-/// The producer of an asset. The reader refuses every other text with the text of the Go collector.
+/// The producer of an asset. The reader refuses every other text by name.
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[serde(rename_all = "kebab-case", try_from = "String")]
 pub enum Producer {

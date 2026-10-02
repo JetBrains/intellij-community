@@ -1,14 +1,13 @@
 //! The JSON reader of the plan file, the catalogue and the asset rows: `serde_json::from_slice` with the path in the
 //! error.
 //!
-//! With a `deny_unknown_fields` type, `serde` refuses what Go `pluginpack.ReadJSON` refuses: an unknown key, a
-//! repeated key, trailing data after the document and invalid UTF-8. A key must match its field exactly. A `null`
-//! value of an `Option` field is an absent key, the way Go decodes `null` into a pointer field. A `null` value of any
-//! other field is an error, where Go keeps the zero value.
+//! With a `deny_unknown_fields` type, `serde` refuses an unknown key, a repeated key, trailing data after the document
+//! and invalid UTF-8. A key must match its field exactly. A `null` value of an `Option` field is an absent key. A
+//! `null` value of any other field is an error.
 //!
 //! The reader has no check of its own. The producers are the kotlinx encoder of the plan file, Starlark `json.encode`
 //! and `serde_json`, and none of them can write a repeated key. `serde` also reads a JSON array in place of an object,
-//! in the field order, where Go refuses it. No producer writes such an array.
+//! in the field order. No producer writes such an array.
 
 use std::path::Path;
 

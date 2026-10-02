@@ -1,7 +1,7 @@
 //! The fixtures that the tests of the modules share, and the tests that cross the modules. The tests of a module are in
-//! `<module>/tests.rs`. The tests port the Go tests of `internal/pluginpack`, and each test module names its Go file. A
-//! Go case without a port is named in the doc comment of the nearest test, with the reason. `corpus` and the tests of
-//! `gzip_resources` have no Go original.
+//! `<module>/tests.rs`. The tests port the tests of the former tool in `internal/pluginpack`, and each test module
+//! names its former file. The doc comment of the nearest test names a former case without a port, with the reason.
+//! `corpus` and the tests of `gzip_resources` have no former original.
 
 #![allow(
     clippy::cast_possible_truncation,
@@ -406,8 +406,7 @@ pub(crate) fn write_zip(file: &Path, entries: &[ZipEntry]) {
     write_file(file, zip_bytes(entries));
 }
 
-/// Writes a jar whose entries hold the names and contents in order, as Go `zip.Writer.Create` writes them: a file is
-/// DEFLATED, a directory is STORED.
+/// Writes a jar whose entries hold the names and contents in order. A file is DEFLATED, and a directory is STORED.
 pub(crate) fn archive_file(file: &Path, entries: &[(&'static str, &str)]) {
     let entries: Vec<ZipEntry> = entries
         .iter()

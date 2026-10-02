@@ -21,7 +21,7 @@ const MAX_COMMENT_BYTES: usize = 1 << 16;
 
 /// A source jar opened for reading, with its central directory.
 ///
-/// The central directory is parsed by hand, as the Go reader did, and not with the `zip` crate, for three reasons:
+/// [`Jar::open`] parses the central directory by hand and does not use the `zip` crate, for three reasons:
 ///
 /// - The IKV key is the hash of the *raw name bytes* of an entry.
 /// - The data offset comes from the extra-field length of the *local* header. Jars from other tools can have a local
@@ -30,8 +30,8 @@ const MAX_COMMENT_BYTES: usize = 1 << 16;
 ///   of the last. The merge must write the first and report the second as a duplicate.
 ///
 /// The jar is mapped on a unix host, so a local header and a STORED entry are memory reads, not a `pread` per entry.
-/// Other hosts read the file into the heap, as the Go `mmapfile` fallback did. Nothing is read through the file
-/// afterwards, so the file handle is closed when `open` returns.
+/// Other hosts read the file into the heap. Nothing is read through the file afterwards, so the file handle is closed
+/// when `open` returns.
 pub struct Jar {
     data: Contents,
     /// The names of all kept entries, one after the other. Each [`RawEntry`] holds its range.
@@ -145,7 +145,7 @@ impl Jar {
 fn read_contents(path: &Path) -> Result<Contents> {
     let file = std::fs::File::open(path).with_context(|| path.display().to_string())?;
     // SAFETY: the map is read-only, and the packer only reads action inputs, which no process writes during the action.
-    // The Go reader mapped the file under the same condition.
+    // The former reader mapped the file under the same condition.
     let map = unsafe { memmap2::Mmap::map(&file) }.map_err(|error| anyhow!("{}: mmap: {error}", path.display()))?;
     Ok(Contents::Mapped(map))
 }

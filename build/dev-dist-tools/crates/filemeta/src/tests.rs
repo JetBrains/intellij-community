@@ -330,7 +330,7 @@ fn metadata_refuses_names_outside_the_supported_text() {
     }
 }
 
-/// The expectation is the output of the Go `filemetadata.Write`. It shows the field order, no `hash` for a directory
+/// The expectation is the output that the former writer wrote. It shows the field order, no `hash` for a directory
 /// and no empty `symlinkTarget`. It also shows the escapes of `"`, the tab and the other control characters.
 #[test]
 fn write_produces_the_bytes_of_the_go_writer() {
@@ -357,7 +357,7 @@ fn write_produces_the_bytes_of_the_go_writer() {
     let temporary = tempfile::tempdir().unwrap();
     let destination = temporary.path().join("nested/metadata.json");
     write(&destination, &entries).unwrap();
-    // The output of the Go writer for the same entries.
+    // The output that the former writer wrote for the same entries.
     let expected = concat!(
         r#"{"version":1,"entries":["#,
         r#"{"relativePath":"a b","type":"directory","size":0,"mode":493,"executable":false},"#,

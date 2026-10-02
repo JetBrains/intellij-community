@@ -1,11 +1,11 @@
-//! The reader part of `pluginpack/contract_test.go`: `serde_json` refuses what Go `ReadJSON` refuses.
+//! The reader part of `pluginpack/contract_test.go`: `serde_json` refuses what the former reader refused.
 
 use serde::Deserialize;
 
 use super::{from_slice, read};
 use crate::contract::{Asset, Catalogue};
 
-/// The shape of the Go test document: a recipe with a version, a plugin and operations.
+/// The shape of the test document: a recipe with a version, a plugin and operations.
 #[derive(Deserialize, Debug, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 struct Document {

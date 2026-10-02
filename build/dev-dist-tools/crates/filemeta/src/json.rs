@@ -11,7 +11,7 @@ use crate::entry::{Entry, EntryType, merge};
 /// The version of the inventory format.
 const VERSION: i64 = 1;
 
-/// The inventory document. The field order is the order of the Go writer.
+/// The inventory document. The serializer writes the fields in declaration order, `version` before `entries`.
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Document {
@@ -51,7 +51,7 @@ pub fn read(source: &Path) -> Result<Vec<Entry>> {
 /// Merges `entries` and writes them to the inventory file `destination`.
 ///
 /// The function creates the missing parent directories with [`create_dir_all_0755`]. So each new directory has the mode
-/// 0755, also under a strict umask. The Go writer applied the umask. The function merges before it writes, so an
+/// 0755, also under a strict umask. The former writer applied the umask. The function merges before it writes, so an
 /// invalid set of entries leaves the file unchanged.
 pub fn write(destination: &Path, entries: &[Entry]) -> Result<()> {
     let entries = merge(entries)?;
@@ -62,7 +62,7 @@ pub fn write(destination: &Path, entries: &[Entry]) -> Result<()> {
     write_file(destination, &data).with_context(|| destination.display().to_string())
 }
 
-/// Returns the document followed by a newline, as the Go writer wrote it.
+/// Returns the document followed by a newline.
 pub(crate) fn encode(entries: &[Entry]) -> Vec<u8> {
     let document = Document {
         version: VERSION,
@@ -119,7 +119,7 @@ fn from_wire(wire: WireEntry) -> Result<Entry> {
 
 /// Deserializes a `hash` key that is present. With `default`, a missing key stays `None`.
 ///
-/// The Go reader also told a missing `hash` apart from `"hash": null`.
+/// So the reader tells a missing `hash` apart from `"hash": null`.
 #[expect(clippy::option_option, reason = "a missing key and a null value are two states of the format")]
 fn present<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<Option<i64>>, D::Error> {
     Option::<i64>::deserialize(deserializer).map(Some)

@@ -1,4 +1,4 @@
-//! The port of `planfile_test.go`. The Go `mustDerive` also plans the derived recipe with `pluginpack.Plan`. That check
+//! The port of `planfile_test.go`. The `mustDerive` of the former tool also planned the derived recipe. That check
 //! needs the `pluginpack` crate, so its tests hold it.
 
 mod corpus;
@@ -222,7 +222,8 @@ fn read_expands_the_compact_forms() {
     assert_eq!(operation.layout_assets.assets[0].destination, "raw.txt");
 }
 
-/// The Go table, with a message for each refusal. The decoder refuses every shape that no checked-in plan file uses.
+/// The table of refused forms, with a message for each refusal. The decoder refuses every shape that no checked-in plan
+/// file uses.
 #[test]
 fn read_refuses_malformed_forms() {
     let one_module = r#"{"module": "m"}"#;
@@ -522,7 +523,7 @@ fn read_names_the_file_and_the_operation() {
     );
 }
 
-/// A `null` for a Go pointer field is an absent key.
+/// A `null` for an `Option` field is an absent key.
 #[test]
 fn read_treats_null_as_absent_for_an_optional_field() {
     let file = must_read_plan(&plan(
@@ -932,7 +933,7 @@ fn derive_compiles_every_operation_kind() {
         row("bin/tool", Producer::Remainder, ""),
     ];
     assert_eq!(derivation.assets, rows);
-    // The asset rows are the `assets.json` of the packer: Go `json.Marshal` of the rows.
+    // The asset rows are the `assets.json` of the packer, in the compact JSON form.
     assert_eq!(
         serde_json::to_string(&derivation.assets).unwrap(),
         concat!(
@@ -1049,7 +1050,7 @@ fn derive_refuses_what_the_packer_does_not_execute() {
             catalogue(vec![directory_artifact("source")]),
             "no mode override",
         ),
-        // The refusals below are Rust additions to the Go table.
+        // The table of the former tool had none of the refusals below.
         (
             "a layout input the operation lacks",
             plan(

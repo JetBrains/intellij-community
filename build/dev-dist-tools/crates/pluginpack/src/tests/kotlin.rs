@@ -248,8 +248,8 @@ pub(crate) fn kotlin_layout_assets_operation(id: &str, output: &str, format: &st
     )
 }
 
-/// The Kotlin half of the Go `TestLayoutTransformExcludesEncoding`: the kotlinx operation holds the transform in the
-/// encoding that the `planfile` crate reads. The encoding half is in the `planfile` crate.
+/// The Kotlin half of the former `TestLayoutTransformExcludesEncoding`: the kotlinx operation holds the transform in
+/// the encoding that the `planfile` crate reads. The encoding half is in the `planfile` crate.
 #[test]
 fn layout_transform_encoding_in_a_kotlin_operation() {
     for (transform, want) in [

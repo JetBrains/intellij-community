@@ -153,8 +153,8 @@ fn merge_rejects_unsafe_or_stale_source_operations() {
         "module.jar",
         &[entry("present.so", "native"), entry(".unmodified", "excluded")],
     );
-    // The type of `Source` cannot state a jar without a filter or a patch of a jar, so those cases of the Go test are
-    // gone.
+    // The type of `Source` cannot state a jar without a filter or a patch of a jar. So the former cases for them have
+    // no port.
     for (source, want) in [
         (Source::module(PathBuf::new()), "invalid archive source"),
         (Source::file("entry", PathBuf::new()), "invalid file source"),
@@ -648,7 +648,7 @@ fn a_merge_spec_can_move_between_threads() {
     assert_send_sync::<crate::MergeReport>();
 }
 
-/// A failed write names the jar, as the Go `write <path>: ...` error did. A read-only directory makes the create call
+/// A failed write names the jar, as the error of the former writer did. A read-only directory makes the create call
 /// fail, and that call named the jar already. So the test limits the file size, which makes a write fail after the
 /// create. It runs itself again in a child process under that limit.
 #[cfg(unix)]

@@ -43,7 +43,8 @@ const GOLDEN_PLATFORM_MANIFEST: &str = concat!(
     r#"{"type":"component-file","relativePath":"bin/idea.sh","hash":42,"executable":true,"source":"inputs/idea.sh"}]}"#
 );
 
-/// Decodes a manifest and applies the checks of the reader, so that the version and mode checks apply as in the Go test.
+/// Decodes a manifest and applies the checks of the reader, so that the version and mode checks apply as in the former
+/// test.
 /// The Kotlin inputs list core classpath jars that no entry names, so the core classpath check does not apply.
 pub(crate) fn read_golden_manifest(content: &str) -> ComponentManifest {
     let manifest: ComponentManifest = serde_json::from_str(content).unwrap();
@@ -137,8 +138,8 @@ fn kotlin_core_classpath_order_golden() {
     assert_eq!(classpath::order_core_classpath_entries(&platform.core_class_path), expected);
 }
 
-// The Kotlin test "Go manifests preserve version 9 hashes and tree fingerprints" pins these content hashes. The
-// fingerprint reuses `xxh3::hash_file` as `computeDevBuildContentHash`, and the vectors prove that the two agree.
+// The former Kotlin test "Go manifests preserve version 9 hashes and tree fingerprints" pinned these content hashes.
+// The vectors prove that `xxh3::hash_file` still gives the hashes of the former Kotlin `computeDevBuildContentHash`.
 #[test]
 fn sourced_manifest_hashes_and_source_independence() {
     let vectors: [(usize, i64); 10] = [

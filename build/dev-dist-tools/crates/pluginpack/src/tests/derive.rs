@@ -1,5 +1,5 @@
-//! The port of `kotlin_derivation_test.go`, and the `pluginpack.Plan` check of the Go `mustDerive` in
-//! `planfile_test.go`. The binary half of the Go derivation test is in `bins/plugin-remainder-packer/tests`.
+//! The port of `kotlin_derivation_test.go`, and the plan check of the `mustDerive` of the former tool in
+//! `planfile_test.go`. The binary half of the derivation test is in `bins/plugin-remainder-packer/tests`.
 
 use planfile::contract::{Artifact, Catalogue, Library, Reference, TREE_VERSION, VERSION};
 
@@ -62,7 +62,7 @@ fn module_filter_plan(manifest: &str, prepared_manifest: Option<KotlinPreparedMa
     }
 }
 
-/// The plan of the Go fixture of jars, ownership rows and the classpath order. It states a link and a directory
+/// The plan of the former fixture of jars, ownership rows and the classpath order. It states a link and a directory
 /// asset. No plan file states either, so the `planfile` decoder refuses it before any input is read.
 fn jars_ownership_rows_and_classpath_order_plan() -> KotlinPlanFile {
     let rt = KotlinJarRecipe {
@@ -155,7 +155,7 @@ fn jars_ownership_rows_and_classpath_order_plan() -> KotlinPlanFile {
     }
 }
 
-/// The plan of the Go fixture of a layout-assets tree and entries beside a raw copy-tree. Its tree normalizes the
+/// The plan of the former fixture of a layout-assets tree and entries beside a raw copy-tree. Its tree normalizes the
 /// copied modes. No plan file does, so the `planfile` decoder refuses it.
 fn layout_assets_beside_a_raw_copy_tree_plan() -> KotlinPlanFile {
     let tree = layout(
@@ -202,7 +202,7 @@ fn layout_assets_beside_a_raw_copy_tree_plan() -> KotlinPlanFile {
     }
 }
 
-/// The plan of the Go fixture of version 3 with a distribution-scope copy. The distribution scope is retired, so
+/// The plan of the former fixture of version 3 with a distribution-scope copy. The distribution scope is retired, so
 /// `planfile` refuses the `scope` key.
 fn distribution_scope_copy_plan() -> KotlinPlanFile {
     KotlinPlanFile {
@@ -326,7 +326,7 @@ fn library(id: &str, members: &[&str]) -> Library {
     }
 }
 
-/// The Go `mustDerive` also planned every derivation of `planfile_test.go`. The `planfile` crate cannot depend on this
+/// The `mustDerive` of the former tool also planned every derivation of `planfile_test.go`. The `planfile` crate cannot depend on this
 /// crate, so this test plans the derivations of its tests: the plan-file shapes that `planfile` accepts must plan. The
 /// derivation of a library input of two members has no case here. No layout transform reads two archive files.
 #[test]
