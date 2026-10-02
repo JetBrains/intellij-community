@@ -98,11 +98,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   static final int FILE_LEVEL_FAKE_LAYER = -4094; // the layer the (fake) RangeHighlighter is created for file-level HighlightInfo in
   private static final Logger LOG = Logger.getInstance(HighlightInfoUpdaterImpl.class);
   private static final Object UNKNOWN_ID = "unknownId";
-  /**
-   * {@link HighlightInfo#group} which means this {@link HighlightInfo} is managed by {@link HighlightInfoUpdaterImpl},
-   * i.e. its {@link HighlightInfo#group} is essentially ignored and infos are reused/deleted by {@link #psiElementVisited}
-   * instead of {@link BackgroundUpdateHighlightersUtil#setHighlightersInRange} or {@link UpdateHighlightersUtil#setHighlightersInRange}
-   */
+  /// [HighlightInfo#group] which means this [HighlightInfo] is managed by [HighlightInfoUpdaterImpl],
+  /// i.e. its [HighlightInfo#group] is essentially ignored and infos are reused/deleted by [#psiElementVisited]
+  /// instead of [BackgroundUpdateHighlightersUtil#setHighlightersInRange] or [UpdateHighlightersUtil#setHighlightersInRange]
   @ApiStatus.Internal
   public static final int MANAGED_HIGHLIGHT_INFO_GROUP = -6;
 
@@ -649,31 +647,29 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     }
   }
 
-  /**
-   * Tool {@code toolId} has generated (maybe empty) {@code newInfos} highlights during visiting PsiElement {@code visitedPsiElement}.
-   * Remove all highlights that this tool had generated earlier during visiting this psi element, and replace them with {@code newInfos}
-   * Do not read below, it's very private and just for me.
-   * --
-   * - retrieve {@code List<HighlightInfo> oldInfos} from {@code data[toolId, psiElement]}
-   * - match the oldInfos with newInfos, obtaining 3 lists:
-   *  1) a list of infos from {@code oldInfos} removed from newInfos - their RHs need to be disposed
-   *  2) a list of infos from {@code newInfos} absent in oldInfos - new RHs must be created for those
-   *  3) a list of infos which exist in both {@code oldInfos} and {@code newInfos} - their RHs from {@code oldInfos} must be reused and stored in {@code newInfos}
-   * - store {@code newInfos} with correctly updated RHs back to {@code data[toolId, psiElement]}
-   * All this must be in an atomic, PCE-non-cancelable block, maintaining the following invariant: it's guaranteed that upon completion there will be
-   * - no dangling RHs are in markup (dangling RH is the one not referenced from data), - to avoid duplicating RHs
-   * - no removed and then recreated RHs, - to avoid blinking
-   * N.B. Sometimes multiple file editors are submitted for highlighting, some of which may have the same underlying document,
-   * e.g., when the editor for the file is opened along with the git log with "preview diff" for the same file.
-   * In this case, it's possible that several instances of e.g., LocalInspectionPass can run in parallel,
-   * thus making `psiElementVisited` potentially reentrant (i.e., it can be called with the same `toolId` from different threads concurrently),
-   * so we need to guard {@link ToolHighlights} against parallel modification.
-   * @param toolId one of
-   *               {@code String}: the tool is a {@link LocalInspectionTool} with its {@link LocalInspectionTool#getShortName()}==toolId
-   *               {@code Class<? extends Annotator>}: the tool is an {@link Annotator} of the corresponding class
-   *               {@code Class<? extends HighlightVisitor>}: the tool is a {@link HighlightVisitor} of the corresponding class
-   *               {@code Object}: injection or chameleon syntax
-   */
+  /// Tool `toolId` has generated (maybe empty) `newInfos` highlights during visiting PsiElement `visitedPsiElement`.
+  /// Remove all highlights that this tool had generated earlier during visiting this psi element, and replace them with `newInfos`
+  /// Do not read below, it's very private and just for me.
+  /// --
+  /// - retrieve `List<HighlightInfo> oldInfos` from `data[toolId, psiElement]`
+  /// - match the oldInfos with newInfos, obtaining 3 lists:
+  ///  \1) a list of infos from `oldInfos` removed from newInfos - their RHs need to be disposed
+  ///  \2) a list of infos from `newInfos` absent in oldInfos - new RHs must be created for those
+  ///  \3) a list of infos which exist in both `oldInfos` and `newInfos` - their RHs from `oldInfos` must be reused and stored in `newInfos`
+  /// - store `newInfos` with correctly updated RHs back to `data[toolId, psiElement]`
+  /// All this must be in an atomic, PCE-non-cancelable block, maintaining the following invariant: it's guaranteed that upon completion there will be
+  /// - no dangling RHs are in markup (dangling RH is the one not referenced from data), - to avoid duplicating RHs
+  /// - no removed and then recreated RHs, - to avoid blinking
+  /// N.B. Sometimes multiple file editors are submitted for highlighting, some of which may have the same underlying document,
+  /// e.g., when the editor for the file is opened along with the git log with "preview diff" for the same file.
+  /// In this case, it's possible that several instances of e.g., LocalInspectionPass can run in parallel,
+  /// thus making \`psiElementVisited\` potentially reentrant (i.e., it can be called with the same \`toolId\` from different threads concurrently),
+  /// so we need to guard [ToolHighlights] against parallel modification.
+  /// @param toolId one of
+  ///               `String`: the tool is a [LocalInspectionTool] with its [LocalInspectionTool#getShortName()]==toolId
+  ///               `Class<? extends Annotator>`: the tool is an [Annotator] of the corresponding class
+  ///               `Class<? extends HighlightVisitor>`: the tool is a [HighlightVisitor] of the corresponding class
+  ///               `Object`: injection or chameleon syntax
   @Override
   @ApiStatus.Internal
   public void psiElementVisited(@NotNull Object toolId,
@@ -1008,10 +1004,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     });
   }
 
-  /**
-   * after inspections completed, save their latencies (from corresponding {@link InspectionRunner.InspectionContext#holder})
-   * to use later in {@link com.intellij.codeInsight.daemon.impl.InspectionProfilerDataHolder#sortByLatencies}
-   */
+  /// after inspections completed, save their latencies (from corresponding [InspectionRunner.InspectionContext#holder])
+  /// to use later in [com.intellij.codeInsight.daemon.impl.InspectionProfilerDataHolder#sortByLatencies]
   @ApiStatus.Internal
   public synchronized void saveLatencies(@NotNull PsiFile psiFile, @NotNull @Unmodifiable Map<Object, ToolLatencies> latencies) {
     if (!psiFile.getViewProvider().correspondsToRealFile()) {
@@ -1054,16 +1048,14 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     return toolHighlights1.latencies.compareLatencies(toolHighlights2.latencies);
   }
 
-  /**
-   * sort `elements` by the number of produced diagnostics:
-   *  - put first the elements for which this `toolWrapper` has produced some diagnostics on previous run
-   *    - in case of a tie, put elements which generated higher severity diagnostics first
-   *  - followed by all other elements
-   */
+  /// sort `elements` by the number of produced diagnostics:
+  ///  - put first the elements for which this `toolWrapper` has produced some diagnostics on previous run
+  ///  - in case of a tie, put elements which generated higher severity diagnostics first
+  ///  - followed by all other elements
   @ApiStatus.Internal
   public static @NotNull @Unmodifiable List<? extends PsiElement> sortByPsiElementFertility(@NotNull PsiFile psiFile,
                                                                                             @NotNull LocalInspectionToolWrapper toolWrapper,
-                                                                                            @NotNull List<? extends PsiElement> elements) {
+                                                                                            @NotNull @Unmodifiable List<? extends PsiElement> elements) {
     String toolId = toolWrapper.getShortName();
     Map<Object, ToolHighlights> map = getData(psiFile);
     if (map.isEmpty()) return elements;
@@ -1144,19 +1136,15 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     assertMarkupConsistentWithData(session.getPsiFile(), toolIdPredicate);
   }
 
-  /**
-   * We associate each {@link HighlightInfo} with the PSI element for which the inspection builder has produced that info.
-   * Unfortunately, there are some crazy inspections that produce infos in their {@link LocalInspectionTool#inspectionFinished(LocalInspectionToolSession, ProblemsHolder)} method instead.
-   * Which is very slow, because that highlight info won't be displayed until the entire file is visited.
-   * For these infos the associated PSI element is assumed to be this {@code FAKE_ELEMENT}
-   */
+  /// We associate each [HighlightInfo] with the PSI element for which the inspection builder has produced that info.
+  /// Unfortunately, there are some crazy inspections that produce infos in their [LocalInspectionTool#inspectionFinished(LocalInspectionToolSession, ProblemsHolder)] method instead.
+  /// Which is very slow, because that highlight info won't be displayed until the entire file is visited.
+  /// For these infos the associated PSI element is assumed to be this `FAKE_ELEMENT`
   @ApiStatus.Internal
   public static final PsiElement FAKE_ELEMENT = HighlightFakePsiElement.create("inspectionFinished");
 
-  /**
-   * for each info in `newInfos` retrieve the RH from recycler (and then invalidElementRecycler if not found) or create new RH
-   * could be reentrant, be careful to avoid leaking/blinking RHs
-   */
+  /// for each info in \`newInfos\` retrieve the RH from recycler (and then invalidElementRecycler if not found) or create new RH
+  /// could be reentrant, be careful to avoid leaking/blinking RHs
   private @NotNull @Unmodifiable List<? extends HighlightInfo> assignRangeHighlighters(@NotNull PsiElement visitedPsiElement,
                                                                                        @NotNull List<? extends HighlightInfo> oldInfos,
                                                                                        @NotNull List<? extends HighlightInfo> newInfos,
