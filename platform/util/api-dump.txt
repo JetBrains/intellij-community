@@ -1320,6 +1320,7 @@ com.intellij.util.containers.ConcurrentLongIntMap
 - a:get(J):I
 - a:getOrDefault(J,I):I
 - a:isEmpty():Z
+- a:keys():J[]
 - a:mappingCount():J
 - a:merge(J,I,com.intellij.util.containers.ConcurrentLongIntMap$IntIntToIntFunction):I
 - a:put(J,I):I

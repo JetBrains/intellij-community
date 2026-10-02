@@ -94,6 +94,28 @@ class ConcurrentLongIntHashMapTest {
   }
 
   @Test
+  fun keys() {
+    val map = ConcurrentCollectionFactory.createConcurrentLongIntMap(0)
+    assertThat(map.keys()).isEmpty()
+
+    val keys = longArrayOf(0, -1, Long.MIN_VALUE, Long.MAX_VALUE, 1, 1L + (1L shl 32))
+    for (key in keys) {
+      map.put(key, 1)
+    }
+    val result = map.keys()
+    assertThat(result).containsExactlyInAnyOrder(*keys)
+
+    map.remove(0)
+    assertThat(map.keys()).containsExactlyInAnyOrder(*keys.filter { it != 0L }.toLongArray())
+    for (key in 0L until 1000L) {
+      map.put(key, 1)
+    }
+    map.clear()
+    assertThat(map.keys()).isEmpty()
+    assertThat(result).containsExactlyInAnyOrder(*keys)
+  }
+
+  @Test
   fun `put if absent`() {
     val map = createFrom(1L to 2)
     assertThat(map.putIfAbsent(1, 3)).isEqualTo(2)

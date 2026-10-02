@@ -46,6 +46,11 @@ public interface ConcurrentLongIntMap {
 
   void clear();
 
+  /**
+   * Returns an array of the keys in this map.
+   */
+  long @NotNull [] keys();
+
   @NotNull
   Set<Entry> entrySet();
 
