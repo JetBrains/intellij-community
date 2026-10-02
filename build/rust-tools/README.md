@@ -1,7 +1,7 @@
 # rust-tools
 
-The shared configuration of the Rust tool workspaces, and the spec of what each workspace has. Three of the four Cargo
-workspaces follow it. The Air UI-lane tooling joins at the vm lane rework.
+The shared configuration of the Rust tool workspaces, and the spec of what each workspace has. All four Cargo workspaces
+follow it.
 
 | Workspace | Crate hub | Crate macro |
 |---|---|---|
