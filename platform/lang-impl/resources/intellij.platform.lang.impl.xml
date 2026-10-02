@@ -303,6 +303,7 @@
     <extensionPoint qualifiedName="com.intellij.templateGroupHintProvider" interface="com.intellij.codeInsight.template.TemplateGroupHintProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.createFromTemplateActionReplacer" interface="com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.projectTemplateFileProcessor" interface="com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.templateModuleBuilderPostprocessing" interface="com.intellij.platform.templates.TemplateModuleBuilderPostprocessing" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.optionsApplicabilityFilter" interface="com.intellij.application.options.OptionsApplicabilityFilter" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.targetElementUtilExtender" interface="com.intellij.codeInsight.TargetElementUtilExtender" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.uiDebuggerExtension" interface="com.intellij.ui.debugger.UiDebuggerExtension"/>
@@ -1084,10 +1085,14 @@
                             implementationClass="com.intellij.codeInsight.completion.command.CommandCompletionContributor"/>
     <modcompletion.completionItemProvider language="any" implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateModCompletionItemProvider"
                                           id="liveTemplates" order="first"/>
+    <templateModuleBuilderPostprocessing implementation="com.intellij.platform.templates.RunConfigurationTemplateModuleBuilderPostprocessing"/>
+    <uiDataRule implementation="com.intellij.codeEditor.printing.RunProfileNameForPrintingRule"/>
     <codeCompletionConfigurable provider="com.intellij.codeInsight.completion.command.configuration.CommandCompletionConfigurableProvider"/>
     <applicationService serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
     <applicationSettings service="com.intellij.execution.console.ConsoleFoldingSettings"/>
     <console.folding implementation="com.intellij.execution.console.SubstringConsoleFolding"/>
+    <applicationService serviceInterface="com.intellij.testIntegration.RunSelectedTestAdvertisement"
+                        serviceImplementation="com.intellij.testIntegration.RunSelectedTestAdvertisementImpl"/>
     <lookup.charFilter implementation="com.intellij.codeInsight.template.impl.LiveTemplateCharFilter" order="first" id="liveTemplate"/>
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.DefaultCharFilter" order="last" id="default"/>
     <lookup.charFilter implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCharFilter" id="fileRef"

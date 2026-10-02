@@ -5,14 +5,12 @@ package com.intellij.testIntegration;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.LangBundle;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -23,6 +21,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,10 +135,8 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
   @Override
   protected @Nullable String getAdText(PsiElement source, int length) {
     if (length > 0 && !TestFinderHelper.isTest(source)) {
-      final Shortcut shortcut = KeymapUtil.getPrimaryShortcut(DefaultRunExecutor.getRunExecutorInstance().getContextActionId());
-      if (shortcut != null) {
-        return (LangBundle.message("popup.advertisement.press.to.run.selected.tests", KeymapUtil.getShortcutText(shortcut)));
-      }
+      @Nls String advertisement = ApplicationManager.getApplication().getService(RunSelectedTestAdvertisement.class).generateAdvertisementText();
+      if (advertisement != null) return advertisement;
     }
     return null;
   }

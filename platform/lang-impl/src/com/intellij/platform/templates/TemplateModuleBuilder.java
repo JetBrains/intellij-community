@@ -2,11 +2,6 @@
 package com.intellij.platform.templates;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -20,6 +15,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -82,6 +78,7 @@ import java.util.zip.ZipInputStream;
 */
 public class TemplateModuleBuilder extends ModuleBuilder {
   private static final Logger LOG = Logger.getInstance(TemplateModuleBuilder.class);
+  private static final ExtensionPointName<TemplateModuleBuilderPostprocessing> EP_NAME = ExtensionPointName.create("com.intellij.templateModuleBuilderPostprocessing");
 
   private final NotNullLazyValue<ModuleType<?>> myType;
   private final NotNullLazyValue<List<WizardInputField<?>>> myAdditionalFields;
@@ -205,12 +202,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
     model.commit();
 
-    RunManager runManager = RunManager.getInstance(module.getProject());
-    for (RunConfiguration configuration : runManager.getAllConfigurationsList()) {
-      if (configuration instanceof ModuleBasedConfiguration) {
-        ((ModuleBasedConfiguration<?, ?>)configuration).getConfigurationModule().setModule(module);
-      }
-    }
+    EP_NAME.forEachExtensionSafe(postprocessing -> postprocessing.postProcessCreatedModule(module));
   }
 
   private static void applyProjectDefaults(@NotNull Project project) {
@@ -218,9 +210,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     String charset = EncodingProjectManager.getInstance(defaultProject).getDefaultCharsetName();
     EncodingProjectManager.getInstance(project).setDefaultCharsetName(charset);
 
-    RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();
-    RunManagerImpl.getInstanceImpl(defaultProject).copyTemplatesToProjectFromTemplate(project);
-    RunManager.getInstance(project).setSelectedConfiguration(selectedConfiguration);
+    EP_NAME.forEachExtensionSafe(postprocessing -> postprocessing.applyProjectDefaults(project));
   }
 
   private @Nullable WizardInputField<?> getBasePackageField() {

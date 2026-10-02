@@ -3,7 +3,6 @@ package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
-import com.intellij.execution.configurations.RunProfile;
 import com.intellij.ide.actions.PrintActionHandler;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.notification.Notification;
@@ -11,7 +10,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ExecutionDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -50,6 +49,7 @@ import java.util.Objects;
 @ApiStatus.Internal
 public final class TextPrintHandler extends PrintActionHandler {
   private static final Logger LOG = Logger.getInstance(TextPrintHandler.class);
+  public static final DataKey<String> FILE_NAME_FOR_PRINTING_KEY = DataKey.create("FILE_NAME_FOR_PRINTING");
 
   @Override
   public boolean canPrint(@NotNull DataContext dataContext) {
@@ -187,8 +187,8 @@ public final class TextPrintHandler extends PrintActionHandler {
   }
 
   private static String generateFileName(DataContext dataContext) {
-    RunProfile runProfile = dataContext.getData(ExecutionDataKeys.RUN_PROFILE);
-    return runProfile == null ? "unknown" : runProfile.getName();
+    String result = dataContext.getData(FILE_NAME_FOR_PRINTING_KEY);
+    return result != null ? result : "unknown";
   }
 
   private static void addToPsiFileList(PsiDirectory psiDirectory, List<? super PsiFile> filesList, boolean isRecursive) {
