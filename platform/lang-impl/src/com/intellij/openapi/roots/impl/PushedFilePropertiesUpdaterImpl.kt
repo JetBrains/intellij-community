@@ -50,7 +50,7 @@ import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.FilePropertyPusherEx
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.UnindexedFilesUpdater
-import com.intellij.util.indexing.diagnostic.ChangedFilesPushedDiagnostic.addEvent
+import com.intellij.util.indexing.diagnostic.ChangedFilesPushedEventReporter
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushingStatistics
 import com.intellij.util.indexing.diagnostic.shouldDumpInUnitTestMode
 import com.intellij.util.indexing.isFirstProjectScanningRequested
@@ -259,7 +259,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
         if (!coroutineContext.isActive) {
           if (statistics != null) {
             statistics.finished(true)
-            addEvent(myProject, statistics)
+            ApplicationManager.getApplication().getService(ChangedFilesPushedEventReporter::class.java).addEvent(myProject, statistics)
           }
           queueTasks(listOf(task),
                      "Rerun pushing tasks after process cancelled") // reschedule dumb mode and ensure the canceled task is enqueued again
@@ -274,7 +274,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     }
     if (statistics != null) {
       statistics.finished(false)
-      addEvent(myProject, statistics)
+      ApplicationManager.getApplication().getService(ChangedFilesPushedEventReporter::class.java).addEvent(myProject, statistics)
     }
   }
 

@@ -7,13 +7,16 @@ import org.jetbrains.annotations.ApiStatus
 
 /** Key in [Project]: `null` before first scanning => [FirstScanningState.REQUESTED] => [FirstScanningState.PERFORMED] */
 @JvmField
-internal val FIRST_SCANNING_REQUESTED: Key<FirstScanningState> = Key.create("FIRST_SCANNING_REQUESTED")
+@ApiStatus.Internal
+val FIRST_SCANNING_REQUESTED: Key<FirstScanningState> = Key.create("FIRST_SCANNING_REQUESTED")
 
-internal enum class FirstScanningState {
+@ApiStatus.Internal
+enum class FirstScanningState {
   REQUESTED, PERFORMED
 }
 
-internal fun isFirstProjectScanningRequested(project: Project): Boolean {
+@ApiStatus.Internal
+fun isFirstProjectScanningRequested(project: Project): Boolean {
   return project.getUserData(FIRST_SCANNING_REQUESTED) != null
 }
 

@@ -1888,6 +1888,9 @@
     <projectService serviceInterface="com.intellij.util.indexing.DumbModeReindexingScheduler"
                     serviceImplementation="com.intellij.util.indexing.NoopDumbModeReindexingScheduler"
                     open="true"/>
+    <applicationService serviceInterface="com.intellij.util.indexing.diagnostic.ChangedFilesPushedEventReporter"
+                        serviceImplementation="com.intellij.util.indexing.diagnostic.NoopChangedFilesPushedEventReporter"
+                        open="true"/>
     <projectService serviceImplementation="com.intellij.ide.navigationToolbar.rider.RiderMainToolbarRootPaneManager" open="true"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingComponent"/>
     <applicationService serviceInterface="com.intellij.util.gist.GistManager"

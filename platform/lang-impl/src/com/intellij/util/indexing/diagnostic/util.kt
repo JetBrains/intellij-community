@@ -3,5 +3,9 @@ package com.intellij.util.indexing.diagnostic
 
 import org.jetbrains.annotations.TestOnly
 
+typealias TimeNano = Long
+typealias TimeMillis = Long
+typealias NumberOfBytes = Long
+
 @TestOnly
 var shouldDumpInUnitTestMode: Boolean = false
