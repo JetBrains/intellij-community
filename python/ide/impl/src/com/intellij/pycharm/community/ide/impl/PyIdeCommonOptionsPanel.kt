@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl
 
 import com.intellij.application.options.ModulesComboBox
@@ -7,6 +7,7 @@ import com.intellij.execution.util.PathMappingsComponent
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.options.ex.Settings
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.RawCommandLineEditor
@@ -47,7 +48,8 @@ internal class PyIdeCommonOptionsPanel(data: PyCommonOptionsFormData, showModule
   lateinit var pathMappingsRow: Row
   lateinit var addContentRootsCheckbox: JCheckBox
   lateinit var addSourceRootsCheckbox: JCheckBox
-  lateinit var panel: DialogPanel
+  @JvmField
+  var panel: DialogPanel
 
   init {
     panel = panel {

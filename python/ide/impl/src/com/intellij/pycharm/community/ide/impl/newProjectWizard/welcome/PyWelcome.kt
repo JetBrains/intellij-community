@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome
 
 import com.intellij.execution.RunManager
@@ -116,7 +116,7 @@ internal object PyWelcome {
 
     return baseDir.children.filterNot {
       ProjectCoreUtil.isProjectOrWorkspaceFile(it) ||
-      innerSdk && it.isDirectory && VfsUtil.isAncestor(it, sdkBinary!!, true) ||
+      innerSdk && it.isDirectory && VfsUtil.isAncestor(it, sdkBinary, true) ||
       FileElement.isFileHidden(it)
     }.firstOrNull()
   }
@@ -128,7 +128,7 @@ internal object PyWelcome {
       .submit(
         Callable {
           WriteAction.compute<PsiFile?, Exception> {
-            prepareFile(project, baseDir)?.also {
+            prepareFile(project, baseDir).also {
               AppUIExecutor.onUiThread().expireWith(PythonPluginDisposable.getInstance(project)).execute { it.navigate(true) }
             }
           }

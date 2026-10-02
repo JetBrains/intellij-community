@@ -204,7 +204,7 @@ internal class PyPackagesTreePane(
    * so `lateinit` is safe — the alternative would be a `by lazy` that reads the still-`null`
    * `tree` field during `.apply { }`.
    */
-  private lateinit var navigator: PkgRowNavigator
+  private var navigator: PkgRowNavigator
 
   private val tree: Tree = object : Tree(treeModel) {
     override fun paintComponent(g: Graphics) {
