@@ -28,6 +28,9 @@
     <selectInTarget implementation="com.intellij.platform.navbar.frontend.actions.SelectInNavBarTarget"/>
   </extensions>
   <actions resource-bundle="messages.NavBarFrontendBundle">
+    <group id="NavbarPopupMenuSearchable" searchable="true">
+      <reference ref="NavbarPopupMenu"/>
+    </group>
     <group id="NavBarActions">
       <action id="NavBar-selectHome" class="com.intellij.platform.navbar.frontend.actions.NavBarActions$Home" use-shortcut-of="EditorLineStart"/>
       <action id="NavBar-selectEnd" class="com.intellij.platform.navbar.frontend.actions.NavBarActions$End" use-shortcut-of="EditorLineEnd"/>

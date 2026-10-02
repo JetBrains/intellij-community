@@ -523,7 +523,7 @@
 
     <reference ref="EncodingPanelActions"/>
 
-    <group id="NavbarPopupMenu">
+    <group id="NavbarPopupMenu" searchable="false">
       <reference ref="WeighingNewGroup"/>
       <reference ref="AssociateWithFileType"/>
       <separator/>
