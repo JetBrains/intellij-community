@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+
+class Vector {
+}
+
+fun use(vector: Vector): Int = Vector.length(3)
+companion fun Vector.length(scale: Int): Int = scale * 2

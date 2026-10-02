@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+
+class Vector {
+}
+
+companion fun Vector.length(): Int = 1

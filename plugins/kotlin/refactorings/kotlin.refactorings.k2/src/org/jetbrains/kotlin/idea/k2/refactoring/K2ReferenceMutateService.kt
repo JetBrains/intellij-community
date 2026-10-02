@@ -15,10 +15,13 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -46,6 +49,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.tail
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassBody
@@ -201,13 +205,21 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             }
             if (fqName.isRoot) return expression
             val elementToReplace = expression.getQualifiedElementOrCallableRef()
+            val callFqName = if (expression.parentOfType<KtImportDirective>() == null) {
+                targetElement.companionExtensionReceiverFqName()?.let {
+                    expression.containingKtFile.addImport(fqName.withoutRootPrefix())
+                    it.child(fqName.shortName())
+                } ?: fqName
+            } else {
+                fqName
+            }
             // If we allow for shortening the references after, we want to add the ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE,
             // which avoids local variables capturing package names of the FQN.
             // Note: When adding an import, we never want to add the root prefix, so we need to drop it before importing.
             val fqNameWithRootPrefix = if (shorteningMode != KtSimpleNameReference.ShorteningMode.NO_SHORTENING) {
-                fqName.withRootPrefixIfNeeded()
+                callFqName.withRootPrefixIfNeeded()
             } else {
-                fqName
+                callFqName
             }
             val result = when (elementToReplace) {
                 is KtUserType -> elementToReplace.replaceWith(fqNameWithRootPrefix, targetElement)
@@ -254,9 +266,10 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     }
 
     /**
-     * Checks whether [this] is an extension function/property or a property with a functional type with a receiver
+     * Checks whether [this] is an extension function/property or a property with a functional type with a receiver (instance to be called on)
      */
     private fun PsiElement.isCallableAsExtensionFunction(): Boolean {
+        if (this is KtCallableDeclaration && hasModifier(KtTokens.COMPANION_KEYWORD)) return false
         if (isExtensionDeclaration()) return true
         return if (this is KtProperty) {
             analyze(this) {
@@ -264,6 +277,13 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 returnType is KaFunctionType && returnType.receiverType != null
             }
         } else false
+    }
+
+    private fun PsiElement?.companionExtensionReceiverFqName(): FqName? {
+        if (this !is KtCallableDeclaration || !hasModifier(KtTokens.COMPANION_KEYWORD)) return null
+        return analyze(this) {
+            (symbol as? KaCallableSymbol)?.receiverType?.expandedSymbol?.classId?.asSingleFqName()
+        }
     }
 
     private fun KtQualifiedExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult? {
@@ -298,6 +318,13 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     private fun KtCallableReferenceExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult? {
         if (targetElement == null) return null
+        val companionExtensionReceiver = targetElement.companionExtensionReceiverFqName()
+        if (companionExtensionReceiver != null) {
+            val callableReference = KtPsiFactory(project).createCallableReferenceExpression(
+                "${companionExtensionReceiver.quoteIfNeeded().asString()}::${fqName.quoteIfNeeded().shortName()}"
+            ) ?: return null
+            return ReplaceResult(replaced(callableReference), false)
+        }
         val isUnQualifiable = targetElement.nameDeterminant().isTopLevelKtOrJavaMember()
         val callableReference = if (isUnQualifiable || fqName.withoutRootPrefix().parent() == FqName.ROOT) {
             containingKtFile.addImport(fqName.withoutRootPrefix())

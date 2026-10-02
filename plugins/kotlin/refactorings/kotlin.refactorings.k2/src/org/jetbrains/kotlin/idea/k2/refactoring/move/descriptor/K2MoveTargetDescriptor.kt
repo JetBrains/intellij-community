@@ -7,15 +7,20 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.appendElementToClassBody
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionBlock
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
+import org.jetbrains.kotlin.idea.base.psi.setCallableReceiverTypeReference
 import org.jetbrains.kotlin.idea.core.getFqNameByDirectoryOrRoot
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.getOrCreateKotlinFile
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.withChildDeclarations
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtCompanionBlock
@@ -23,6 +28,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
 sealed interface K2MoveTargetDescriptor {
     /**
@@ -76,7 +82,7 @@ sealed interface K2MoveTargetDescriptor {
         fun addElement(target: T, element: PsiElement): PsiElement
 
         enum class DeclarationTargetType {
-            CLASS, OBJECT, COMPANION_OBJECT, COMPANION_BLOCK, FILE
+            CLASS, OBJECT, COMPANION_OBJECT, COMPANION_BLOCK, COMPANION_EXTENSION, FILE
         }
 
         fun getTargetType(): DeclarationTargetType
@@ -164,6 +170,30 @@ sealed interface K2MoveTargetDescriptor {
 
         override fun addElement(target: KtCompanionBlock, element: PsiElement): PsiElement =
             appendElementToClassBody(target.body, element)
+    }
+
+    class CompanionExtension(
+        private val containingClass: KtClass
+    ) : Declaration<KtFile> {
+        override val baseDirectory: PsiDirectory = containingClass.containingKtFile.containingDirectory!!
+        override val pkgName: FqName = containingClass.containingKtFile.packageFqName
+
+        override fun getTargetType(): Declaration.DeclarationTargetType = Declaration.DeclarationTargetType.COMPANION_EXTENSION
+
+        override fun getOrCreateTarget(dirStructureMatchesPkg: Boolean): KtFile = getTarget()
+
+        override fun getTarget(): KtFile = containingClass.containingKtFile
+
+        override fun addElement(target: KtFile, element: PsiElement): PsiElement {
+            val declaration = target.add(element)
+            if (declaration is KtCallableDeclaration) {
+                declaration.addModifierKeyword(KtTokens.COMPANION_KEYWORD)
+                val receiverFqName = requireNotNull(containingClass.fqName)
+                val typeReference = KtPsiFactory(target.project).createType(receiverFqName.asString())
+                declaration.setCallableReceiverTypeReference(typeReference)?.let { shortenReferences(it) }
+            }
+            return declaration
+        }
     }
 
     class ClassOrObject(

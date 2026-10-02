@@ -1,0 +1,10 @@
+package usage
+
+import test.Vector
+import test.length
+
+fun use(vector: Vector): Int = Vector.length(3)
+
+fun useQualified(): Int = Vector.length(4)
+
+fun reference(vector: Vector): (Int) -> Int = Vector::length

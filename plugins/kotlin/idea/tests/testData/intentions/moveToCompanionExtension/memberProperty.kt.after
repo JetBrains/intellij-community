@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+package test
+
+class Vector {
+}
+
+companion val Vector.length: Int get() = 1

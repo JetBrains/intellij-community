@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+
+class Vector {
+}
+
+companion fun Vector.length(): Int {
+    val result = 1
+    return result
+}

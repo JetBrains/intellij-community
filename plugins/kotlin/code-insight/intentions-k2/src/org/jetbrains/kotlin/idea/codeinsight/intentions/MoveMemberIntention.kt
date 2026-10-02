@@ -51,10 +51,8 @@ internal abstract class MoveMemberIntention(textGetter: Supplier<@IntentionName 
                 originalDeclaration: KtNamedDeclaration,
                 newDeclaration: KtNamedDeclaration
             ) {
-                // Check that the parameter was actually added
-                if (originalDeclaration == element && originalParameterCount== newDeclaration.getValueParameters().size - 1) {
-                    declarationWithAddedParameters = newDeclaration
-                }
+                declarationWithAddedParameters =
+                    postDeclarationMoved(newDeclaration, element, originalDeclaration, originalParameterCount, declarationWithAddedParameters)
             }
 
             override fun openFilesAfterMoving(movedElements: List<SmartPsiElementPointer<KtNamedDeclaration>>) {
@@ -63,13 +61,27 @@ internal abstract class MoveMemberIntention(textGetter: Supplier<@IntentionName 
                 }
 
                 if (declarationWithAddedParameters?.isValid != true) return
-                declarationWithAddedParameters.invokeRenameOnFirstParameter(editor)
+                declarationWithAddedParameters?.invokeRenameOnFirstParameter(editor)
             }
         }
 
         // Need to set this for the conflict dialog to be shown
         processor.setPrepareSuccessfulSwingThreadCallback { }
         processor.run()
+    }
+
+    protected open fun postDeclarationMoved(
+        newDeclaration: KtNamedDeclaration,
+        element: KtNamedDeclaration,
+        originalDeclaration: KtNamedDeclaration,
+        originalParameterCount: Int,
+        declarationWithAddedParameters: KtNamedDeclaration?
+    ): KtNamedDeclaration? {
+        // Check that the parameter was actually added
+        if (originalDeclaration == element && originalParameterCount == newDeclaration.getValueParameters().size - 1) {
+            return newDeclaration
+        }
+        return declarationWithAddedParameters
     }
 
     private fun KtNamedDeclaration.invokeRenameOnFirstParameter(editor: Editor?) {

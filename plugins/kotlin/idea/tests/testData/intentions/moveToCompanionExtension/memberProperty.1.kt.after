@@ -1,0 +1,8 @@
+package usage
+
+import test.Vector
+import test.length
+
+fun use(vector: Vector): Int = Vector.length
+
+fun useQualified(): Int = Vector.length

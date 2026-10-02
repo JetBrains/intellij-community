@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+
+class Vector(val size: Int) {
+}
+
+fun use(vector: Vector): Int = Vector.length(vector, 3)
+companion fun Vector.length(<caret>vector: Vector, scale: Int): Int = vector.size * scale

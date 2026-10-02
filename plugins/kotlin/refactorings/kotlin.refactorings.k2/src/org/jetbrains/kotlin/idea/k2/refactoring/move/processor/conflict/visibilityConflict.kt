@@ -125,6 +125,10 @@ private fun isPrivateVisibleAt(referencingElement: PsiElement, target: K2MoveTar
             referencingElement.containingFile == target.getTarget()
         }
 
+        is K2MoveTargetDescriptor.CompanionExtension -> {
+            referencingElement.containingFile == target.getTarget()
+        }
+
         is K2MoveTargetDescriptor.ClassBody<*> -> {
             val targetClass = target.getTarget() ?: return false
             // Companion objects can access private members in its parent and vice versa
