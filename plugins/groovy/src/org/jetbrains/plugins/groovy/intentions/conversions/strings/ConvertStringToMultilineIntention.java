@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -75,7 +75,7 @@ public final class ConvertStringToMultilineIntention extends Intention {
     List<GrExpression> result = new ArrayList<>();
     result.add((GrExpression)element);
     while (element.getParent() instanceof GrBinaryExpression binary) {
-      if (!isAppropriateBinary(binary, element)) break;
+      if (!isAppropriateBinary(binary)) break;
 
       result.add(binary);
       element = binary;
@@ -83,17 +83,10 @@ public final class ConvertStringToMultilineIntention extends Intention {
     return result;
   }
 
-  private static boolean isAppropriateBinary(@NotNull GrBinaryExpression binary, @Nullable PsiElement prevChecked) {
-    if (binary.getOperationTokenType() == GroovyTokenTypes.mPLUS) {
-      final GrExpression left = binary.getLeftOperand();
-      final GrExpression right = binary.getRightOperand();
-      if ((left != prevChecked || containsOnlyLiterals(right)) &&
-          (right != prevChecked || containsOnlyLiterals(left))) {
-        return true;
-      }
-    }
-
-    return false;
+  private static boolean isAppropriateBinary(@NotNull GrBinaryExpression binary) {
+    return binary.getOperationTokenType() == GroovyTokenTypes.mPLUS
+           && (containsOnlyLiterals(binary.getLeftOperand()))
+           && containsOnlyLiterals(binary.getRightOperand());
   }
 
   private static boolean containsOnlyLiterals(@Nullable GrExpression expression) {
@@ -221,7 +214,7 @@ public final class ConvertStringToMultilineIntention extends Intention {
       public boolean satisfiedBy(@NotNull PsiElement element) {
         return element instanceof GrLiteral && ("\"".equals(GrStringUtil.getStartQuote(element.getText())) ||
                                                 "'".equals(GrStringUtil.getStartQuote(element.getText())))
-               || element instanceof GrBinaryExpression && isAppropriateBinary((GrBinaryExpression)element, null);
+               || element instanceof GrBinaryExpression expression && isAppropriateBinary(expression);
       }
     };
   }
