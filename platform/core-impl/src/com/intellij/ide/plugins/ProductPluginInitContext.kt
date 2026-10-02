@@ -493,6 +493,8 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.platform.ssh.core",
   "intellij.platform.ssh.core.ui",
   "intellij.platform.ssh.attach",
+  "intellij.platform.graph",
+  "intellij.platform.graph.impl",
 ).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
 
 /**
