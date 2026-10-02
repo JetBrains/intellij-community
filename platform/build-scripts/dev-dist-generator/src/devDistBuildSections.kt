@@ -393,10 +393,17 @@ internal class DevDistBuildSections private constructor(
       val loads = sectionLoadStatements.computeIfAbsent(mainModule) { ArrayList() }
       val remainderRule = if (isCommunity) "//" + DEV_PLUGIN_REMAINDER_RULE.removePrefix(COMMUNITY_REPOSITORY_PREFIX) else DEV_PLUGIN_REMAINDER_RULE
       loads.add(LoadStatement(remainderRule, listOf("dev_dist_complex_plugin")))
-      // A divergent product that embeds the frontend declares its helper targets beside the complex plugin call.
-      if (mainModule == half.embeddedFrontend?.pluginMainModule && "dev_dist_embedded_product_descriptor(" in text) {
-        loads.add(LoadStatement(DEV_DIST_EMBEDDED_PRODUCT_DESCRIPTOR_RULE, listOf("dev_dist_embedded_product_descriptor")))
-        loads.add(LoadStatement(DEV_DIST_FRONTEND_APPLICATION_INFO_RULE, listOf("dev_dist_frontend_application_info")))
+      // A product that embeds the frontend declares its helper targets beside the complex plugin call. The bridge of the
+      // half exports the embedded descriptor macro bound to its descriptor index, and the macro reads the module-set table.
+      if (mainModule == half.embeddedFrontend?.pluginMainModule) {
+        if ("dev_dist_embedded_product_descriptor(" in text) {
+          val bridge = "@jps_dynamic_deps_${if (isCommunity) "community" else "ultimate"}//:targets.bzl"
+          loads.add(LoadStatement(bridge, listOf("dev_dist_embedded_product_descriptor")))
+          loads.add(LoadStatement(DEV_DIST_MODULE_SETS_BZL, listOf(DEV_DIST_MODULE_SETS_SYMBOL)))
+        }
+        if ("dev_dist_frontend_application_info(" in text) {
+          loads.add(LoadStatement(DEV_DIST_FRONTEND_APPLICATION_INFO_RULE, listOf("dev_dist_frontend_application_info")))
+        }
       }
     }
     for ((mainModule, fileNames) in files.exportedFiles) {
@@ -1036,10 +1043,6 @@ internal const val DEV_PLUGIN_REMAINDER_RULE: String = "@community//platform/bui
 
 /** The `.bzl` file that exports `dev_plugin`. A cross-half descriptor package loads it for a simple plugin. */
 internal const val DEV_PLUGIN_RULE: String = "@community//platform/build-scripts/bazel-rules:dev_plugin.bzl"
-
-/** The `.bzl` file that exports `dev_dist_embedded_product_descriptor` for the helper of a divergent product that embeds the frontend. */
-internal const val DEV_DIST_EMBEDDED_PRODUCT_DESCRIPTOR_RULE: String =
-  "@community//platform/build-scripts/bazel-rules:dev_dist_embedded_product_descriptor.bzl"
 
 /** The `.bzl` file that exports `dev_dist_frontend_application_info` for the helper of a divergent product that embeds the frontend. */
 internal const val DEV_DIST_FRONTEND_APPLICATION_INFO_RULE: String =

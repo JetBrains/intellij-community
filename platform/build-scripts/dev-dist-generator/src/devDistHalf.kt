@@ -329,7 +329,7 @@ interface DevDistEmbeddedFrontendSupport {
   /** The main module of the plugin that packs the embedded frontend. */
   val pluginMainModule: String
 
-  /** The package of that plugin. It holds the helper targets and the generated embedded descriptors. */
+  /** The package of that plugin. It holds the helper targets and the embedded descriptor actions. */
   val pluginPackage: String
 
   /** The module whose jar packs the embedded descriptor and the client application info. */
@@ -368,12 +368,6 @@ interface DevDistEmbeddedFrontendSupport {
   /** The images directory of [product], relative to the monorepo root. A product without a known path fails. */
   fun imagesDirectory(product: String): String
 
-  /** The file name of the embedded descriptor that [home] writes into [pluginPackage]. */
-  fun descriptorFileName(home: String): String
-
-  /** The header of the embedded descriptor of one class, see [DevDistEmbeddedFrontendClasses]. */
-  fun descriptorHeader(source: String, embeddingProducts: List<String>, frontendProducts: List<String>): String
-
   /**
    * The classes of [products]. [embeddingProducts] names the products whose layouts pack the embedded frontend. The
    * walk follows [productOrder], so the first product of a class is its home.
@@ -385,8 +379,11 @@ interface DevDistEmbeddedFrontendSupport {
     outputProvider: ModuleOutputProvider,
   ): DevDistEmbeddedFrontendClasses
 
-  /** The embedded descriptors in the packages of [generated] that the run does not write, relative to [projectRoot]. */
-  fun staleDescriptors(projectRoot: Path, generated: Collection<String>): List<String>
+  /**
+   * The embedded descriptor files in [pluginPackage], relative to [projectRoot]. The run writes none, because the
+   * descriptor action composes the content from the module-set table, so each one is stale.
+   */
+  fun staleDescriptors(projectRoot: Path): List<String>
 
   /** The properties of the host product of the frontend product [properties], or `null` when it has no host. */
   fun hostProperties(properties: ProductProperties): ProductProperties?

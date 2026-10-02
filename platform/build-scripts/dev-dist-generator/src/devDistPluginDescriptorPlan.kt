@@ -53,10 +53,13 @@ internal class PluginDescriptorPlan(
   @JvmField val mode: String = "",
   /** The generator sorts entries by main module. Explicit source configuration retains captured request order. */
   @JvmField val plugins: List<PluginDescriptorEntry>,
-  /** Generated source files, keyed by their project-relative paths. */
-  @JvmField val generatedFiles: Map<String, String> = emptyMap(),
   /** The actions of the two generated entries of the application-info module jar, or `null` when the product plans none. */
   @JvmField val productDescriptor: ProductDescriptorPlan? = null,
+  /**
+   * The Product DSL facts of every module set that the product descriptor and the embedded descriptor reach, keyed by
+   * the set name. The module-set table of the half states them, see [ModuleSetData].
+   */
+  @JvmField val moduleSets: Map<String, ModuleSetData> = emptyMap(),
 )
 
 /**
@@ -233,13 +236,16 @@ internal class PluginDescriptorEntry(
 /** The declared inputs and model facts for one embedded product descriptor action. */
 internal data class EmbeddedProductDescriptorPlan(
   /**
-   * The product that declares the action and writes [source]: the first product of its class, see
-   * [DevDistEmbeddedFrontendClasses]. The other products of the class read both.
+   * The product that declares the action: the first product of its class, see [DevDistEmbeddedFrontendClasses]. The
+   * other products of the class read its output.
    */
   @JvmField val home: String,
-  /** The direct Bazel label of the generated base descriptor. */
-  @JvmField val source: String,
-  /** Descriptor file label to resolver load path, in label order. */
+  /** The Product DSL content of the embedded frontend, which the macro composes over the module-set table. */
+  @JvmField val content: ProductContentPlan,
+  /**
+   * Descriptor file label to resolver load path, in label order. The macro derives the row of every set member and
+   * additional module that the bridge index knows, so these are only the other rows.
+   */
   @JvmField val descriptors: Map<String, String>,
   /** Java container label to space-separated resolver load paths, in label order. */
   @JvmField val libraryDescriptors: Map<String, String>,
@@ -253,25 +259,25 @@ internal data class EmbeddedProductDescriptorPlan(
  * The actions that write the generated entries of the application-info module jar of one product.
  *
  * `dev_dist_product_descriptor` resolves the product descriptor, the text `processAndGetProductPluginContentModules`
- * writes. `dev_dist_product_application_info` replaces the markers of [replacements] in the application info, the text
- * `computeAppInfoXml` writes. Only a product with [replacements] has this action, see [hasApplicationInfo]. The
- * generator writes the targets and [source] into [PRODUCT_DESCRIPTOR_PACKAGE], and `dev_dist_platform_jar` patches the
- * outputs into the jar, see [applicationInfoPatchLabel].
+ * writes. The macro composes the [content] over the module-set table of the half. `dev_dist_product_application_info`
+ * replaces the markers of [replacements] in the application info, the text `computeAppInfoXml` writes. Only a product
+ * with [replacements] has this action, see [hasApplicationInfo]. The generator writes the targets into
+ * [PRODUCT_DESCRIPTOR_PACKAGE], and `dev_dist_platform_jar` patches the outputs into the jar, see
+ * [applicationInfoPatchLabel].
  */
 internal data class ProductDescriptorPlan(
-  /** The case-safe name of the product. It names the targets and [source]. */
+  /** The case-safe name of the product. It names the targets. */
   @JvmField val name: String,
   /** The application-info module. */
   @JvmField val mainModule: String,
-  /** The label of the generated Product DSL content, with the module sets and the deprecated includes inlined. */
-  @JvmField val source: String,
-  /** The project-relative path of [source]. */
-  @JvmField val sourceRelativePath: String,
-  /** The text of [source], with its header. */
-  @JvmField val content: String,
+  /** The Product DSL content of the product. */
+  @JvmField val content: ProductContentPlan,
   /** The entry of the product descriptor in the jar: `META-INF/plugin.xml` or `META-INF/<prefix>Plugin.xml`. */
   @JvmField val descriptorPath: String,
-  /** Descriptor file label to resolver load path, in label order. */
+  /**
+   * Descriptor file label to resolver load path, in label order. The macro derives the row of every set member and
+   * additional module that the bridge index knows, less the refused ones, so these are only the other rows.
+   */
   @JvmField val descriptors: Map<String, String>,
   /** Java container label to space-separated resolver load paths, in label order. */
   @JvmField val libraryDescriptors: Map<String, String>,
@@ -286,10 +292,8 @@ internal data class ProductDescriptorPlan(
   /** `ProductProperties.appInfoXmlReplacements` as `<key>=<value>`, in their order. */
   @JvmField val replacements: List<String>,
 ) {
-  /** This plan with no name and no source header, so the plans of two products that render the same content are equal. */
-  fun withoutIdentity(): ProductDescriptorPlan {
-    return copy(name = "", source = "", sourceRelativePath = "", content = content.substringAfter(PRODUCT_DESCRIPTOR_HEADER_END))
-  }
+  /** This plan with no name, so the plans of two products that state the same content are equal. */
+  fun withoutIdentity(): ProductDescriptorPlan = copy(name = "")
 
   /** The label of the product descriptor action. */
   val descriptorLabel: String
@@ -323,10 +327,7 @@ internal data class ProductDescriptorPlan(
   }
 }
 
-/** The end of the header of a generated product descriptor source. The content starts after it. */
-private const val PRODUCT_DESCRIPTOR_HEADER_END: String = "processAndGetProductPluginContentModules loads the same text -->\n"
-
-/** The generated package of every [ProductDescriptorPlan]: the targets, and the Product DSL content of each product. */
+/** The generated package of every [ProductDescriptorPlan]. */
 internal const val PRODUCT_DESCRIPTOR_PACKAGE: String = "build/dev-dist-product-descriptors"
 
 /** The declared file inputs of one `dev_dist_frontend_application_info` action, as labels. */
@@ -447,7 +448,6 @@ internal fun collectPluginDescriptorPlan(
       properties = properties,
       platformPrefix = platformPrefix,
       outputProvider = outputProvider,
-      bazelTargets = bazelTargets,
       frontendModuleFilter = frontendModuleFilter,
       embeddedClasses = embeddedClasses,
       generatedClosureOf = generatedClosureOf,
@@ -506,33 +506,98 @@ internal fun collectPluginDescriptorPlan(
   check(unaccounted.isEmpty()) {
     "The descriptor plan of '$platformPrefix' has no entry for $unaccounted. Every bundled plugin must reach an entry."
   }
+  val productDescriptor = collectProductDescriptor(
+    index = index,
+    project = project,
+    properties = properties,
+    platformPrefix = platformPrefix,
+    outputProvider = outputProvider,
+    contentModuleFilter = contentModuleFilter,
+    generatedClosureOf = generatedClosureOf,
+    name = half.caseSafeProductName(platformPrefix),
+  )
+  val moduleSets = TreeMap<String, ModuleSetData>()
+  mergeModuleSetRows(table = moduleSets, rows = productDescriptor.moduleSets, owner = "The product descriptor of '$platformPrefix'")
+  embeddedDescriptor?.let { mergeModuleSetRows(table = moduleSets, rows = it.moduleSets, owner = "The embedded descriptor of '$platformPrefix'") }
   return PluginDescriptorPlan(
     platformPrefix = platformPrefix,
     mode = properties.productMode.id,
     plugins = plugins,
-    generatedFiles = buildMap {
-      embeddedDescriptor?.let { descriptor -> descriptor.content?.let { put(descriptor.relativePath, it) } }
-    },
-    productDescriptor = collectProductDescriptor(
-      index = index,
-      project = project,
-      properties = properties,
-      platformPrefix = platformPrefix,
-      outputProvider = outputProvider,
-      contentModuleFilter = contentModuleFilter,
-      generatedClosureOf = generatedClosureOf,
-      name = half.caseSafeProductName(platformPrefix),
-      generatorCommand = half.generatorCommand,
-    ),
+    productDescriptor = productDescriptor.plan,
+    moduleSets = moduleSets,
   )
+}
+
+/** A planned product descriptor action, and the Product DSL facts of the module sets its content reaches. */
+private class CollectedProductContent<T>(@JvmField val plan: T, @JvmField val moduleSets: Map<String, ModuleSetData>)
+
+/**
+ * The product content of [spec] for the closure walk: the module sets inlined, and every deprecated include left as an
+ * `xi:include`. The descriptor writer resolves a required include in place, so the walk reaches the include file and
+ * its own includes, and the plan declares them.
+ */
+private fun renderProductContentForComposition(spec: ProductModulesContentSpec, outputProvider: ModuleOutputProvider): String {
+  return buildProductContentXml(
+    spec = spec,
+    outputProvider = outputProvider,
+    inlineXmlIncludes = false,
+    inlineModuleSets = true,
+    metadataBuilder = { it.append("  <id>com.intellij</id>\n") },
+  ).xml
+}
+
+/**
+ * The plan of a product content: the content attributes, the self-check of the composition, and the closure rows that
+ * the macro does not derive.
+ *
+ * The self-check composes the content over the set rows of the Product DSL content, as the macro and the descriptor
+ * writer do, and compares the element structure with the Kotlin rendering [xml], see [checkProductContent]. The closure
+ * walk starts from the same rendering. A row of a set member or an additional module at its bridge index entry is left out, because the
+ * macro derives it, see [isBridgeDerivedDescriptor].
+ */
+private class ProductContentFacts(
+  @JvmField val content: ProductContentPlan,
+  @JvmField val moduleSets: Map<String, ModuleSetData>,
+  @JvmField val xml: String,
+) {
+  /** The module names whose descriptor row the macro derives: every set member and additional module, less [refused]. */
+  fun derivedModules(refused: Collection<String>): Set<String> {
+    val composed = composeProductContent(content, moduleSets)
+    val refusedNames = refused.toHashSet()
+    return composed.blocks.asSequence().flatMap { it.rows }.map { it.name }.filterNotTo(HashSet()) { it in refusedNames }
+  }
+}
+
+private fun productContentFacts(spec: ProductModulesContentSpec, outputProvider: ModuleOutputProvider, owner: String): ProductContentFacts {
+  val content = productContentPlan(spec, owner)
+  val moduleSets = moduleSetRows(spec, owner)
+  val xml = renderProductContentForComposition(spec, outputProvider)
+  checkProductContent(owner = owner, content = content, table = moduleSets, xml = xml)
+  return ProductContentFacts(content = content, moduleSets = moduleSets, xml = xml)
+}
+
+/** [labels] less the rows that the macro derives for [derivedModules] from the bridge index of the half. */
+private fun statedDescriptorRows(
+  labels: Map<String, String>,
+  derivedModules: Set<String>,
+  index: DevDistBazelIndex,
+  outputProvider: ModuleOutputProvider,
+): Map<String, String> {
+  val bridgeLabels = HashMap<String, String?>()
+  val bridgeLabel: (String) -> String? = { moduleName ->
+    bridgeLabels.getOrPut(moduleName) { outputProvider.findModule(moduleName)?.let { bridgeDescriptorLabel(module = it, index = index) } }
+  }
+  return labels.filterTo(TreeMap()) { (label, loadPath) ->
+    !isBridgeDerivedDescriptor(label = label, loadPath = loadPath, contentModules = derivedModules, bridgeLabel = bridgeLabel)
+  }
 }
 
 /**
  * Plans the actions that write the generated entries of the application-info module jar, see [ProductDescriptorPlan].
  *
- * The source is the text `processAndGetProductPluginContentModules` loads: the Product DSL content with the module sets
- * and the deprecated includes inlined. A split product with no Product DSL content fails the generator, because
- * `platform_lib` no longer packs the jar for it.
+ * The content is the Product DSL content of the product, which `processAndGetProductPluginContentModules` renders with
+ * the module sets and the deprecated includes inlined. The macro composes it from the plan and the module-set table. A
+ * split product with no Product DSL content fails the generator, because `platform_lib` no longer packs the jar for it.
  */
 private fun collectProductDescriptor(
   index: DevDistBazelIndex,
@@ -548,11 +613,9 @@ private fun collectProductDescriptor(
     xml: String,
     isContentModuleIncluded: (DeclaredContentModule) -> Boolean,
   ) -> PluginDescriptorClosure,
-  /** The case-safe name of the product, which names the two targets and the source. */
+  /** The case-safe name of the product, which names the two targets. */
   name: String,
-  /** The command that regenerates the files of the half, see [DevDistHalf.generatorCommand]. The header names it. */
-  generatorCommand: String,
-): ProductDescriptorPlan {
+): CollectedProductContent<ProductDescriptorPlan> {
   val spec = requireNotNull(properties.getProductContentDescriptor()) { "Split dev distribution '$platformPrefix' declares no Product DSL content" }
   val mainModule = properties.applicationInfoModule
   val module = outputProvider.findRequiredModule(mainModule)
@@ -561,9 +624,9 @@ private fun collectProductDescriptor(
     ?: outputProvider.findFileInModuleSources(module, "META-INF/${properties.platformPrefix}Plugin.xml")
   ) { "Cannot find the product plugin descriptor of '$platformPrefix' in '$mainModule'" }
   val descriptorPath = "META-INF/${sourceFile.fileName}"
-  val sourceRelativePath = "$PRODUCT_DESCRIPTOR_PACKAGE/$name.xml"
-  val content = renderEmbeddedProductContent(spec, outputProvider)
-  val closure = generatedClosureOf(mainModule, descriptorPath, sourceRelativePath, content) { contentModule ->
+  val owner = "The product descriptor of '$platformPrefix'"
+  val facts = productContentFacts(spec = spec, outputProvider = outputProvider, owner = owner)
+  val closure = generatedClosureOf(mainModule, descriptorPath, "$PRODUCT_DESCRIPTOR_PACKAGE/BUILD.bazel", facts.xml) { contentModule ->
     !contentModule.isOptional || contentModuleFilter.isOptionalModuleIncluded(contentModule.name.substringBeforeLast('/'), null)
   }
   check(closure.unmodelledContentIncludes.isEmpty()) {
@@ -580,20 +643,17 @@ private fun collectProductDescriptor(
       communityHomeDir = communityHomeDir,
     )
   }
-  val header = buildString {
-    append("<!-- DO NOT EDIT: This file is auto-generated from Kotlin code by collectProductDescriptor -->\n")
-    append("<!-- To regenerate, run '").append(generatorCommand).append("' -->\n")
-    append("<!-- Source: ${productContentSource(properties)}, with the module sets and the deprecated includes inlined -->\n")
-    append("<!-- Product: $platformPrefix. ").append(PRODUCT_DESCRIPTOR_HEADER_END)
-  }
-  return ProductDescriptorPlan(
+  val plan = ProductDescriptorPlan(
     name = name,
     mainModule = mainModule,
-    source = ":$name.xml",
-    sourceRelativePath = sourceRelativePath,
-    content = header + content,
+    content = facts.content,
     descriptorPath = descriptorPath,
-    descriptors = labels.descriptors,
+    descriptors = statedDescriptorRows(
+      labels = labels.descriptors,
+      derivedModules = facts.derivedModules(refused = closure.refusedContentModules),
+      index = index,
+      outputProvider = outputProvider,
+    ),
     libraryDescriptors = labels.libraryDescriptors,
     refusedContentModules = closure.refusedContentModules,
     scrambledContentModules = scrambled.map { it.name },
@@ -601,6 +661,7 @@ private fun collectProductDescriptor(
     applicationInfoPath = "idea/${properties.platformPrefix ?: ""}ApplicationInfo.xml",
     replacements = properties.appInfoXmlReplacements.orEmpty().map { (key, value) -> "$key=$value" },
   )
+  return CollectedProductContent(plan = plan, moduleSets = facts.moduleSets)
 }
 
 /** The labels of the descriptors a generated closure reads: the files, and the library containers with their load paths. */
@@ -1048,21 +1109,11 @@ private fun embeddedFrontendApplicationInfo(
   )
 }
 
-private class GeneratedEmbeddedProductDescriptor(
-  @JvmField val plan: EmbeddedProductDescriptorPlan,
-  @JvmField val relativePath: String,
-  /** The text of the file at [relativePath], or `null` when another product of the class writes it. */
-  @JvmField val content: String?,
-)
-
 /**
- * Generates and plans the embedded frontend descriptor that the layout of [DevDistEmbeddedFrontendSupport.pluginMainModule]
- * packs.
+ * Plans the embedded frontend descriptor that the layout of [DevDistEmbeddedFrontendSupport.pluginMainModule] packs.
  *
- * The XML is written into the Bazel package of that plugin under [DevDistEmbeddedFrontendSupport.descriptorFileName], and
- * the plan names it from the same package. So the `dev` section of the plugin reads a file beside itself, and no other
- * package exports it. Only the home of the class of [platformPrefix] writes the file, see [DevDistEmbeddedFrontendClasses].
- * A frontend product of the class packs the resolved descriptor too.
+ * The `dev` section of that plugin declares the action. Only the home of the class of [platformPrefix] declares it, see
+ * [DevDistEmbeddedFrontendClasses]. A frontend product of the class packs the resolved descriptor too.
  */
 private fun collectEmbeddedProductDescriptor(
   support: DevDistEmbeddedFrontendSupport,
@@ -1070,7 +1121,6 @@ private fun collectEmbeddedProductDescriptor(
   properties: ProductProperties,
   platformPrefix: String,
   outputProvider: ModuleOutputProvider,
-  bazelTargets: BazelTargetsInfo.TargetsFile,
   frontendModuleFilter: FrontendModuleFilter,
   embeddedClasses: DevDistEmbeddedFrontendClasses,
   generatedClosureOf: (
@@ -1080,7 +1130,7 @@ private fun collectEmbeddedProductDescriptor(
     xml: String,
     isContentModuleIncluded: (DeclaredContentModule) -> Boolean,
   ) -> PluginDescriptorClosure,
-): GeneratedEmbeddedProductDescriptor {
+): CollectedProductContent<EmbeddedProductDescriptorPlan> {
   val embeddedProperties = requireNotNull(properties.embeddedFrontendProperties?.invoke()) {
     "Product '$platformPrefix' packs the embedded frontend but declares no embedded frontend properties"
   }
@@ -1092,18 +1142,17 @@ private fun collectEmbeddedProductDescriptor(
     properties = properties,
     platformPrefix = platformPrefix,
   )
-  val content = renderEmbeddedProductContent(embeddedProductSpec(embeddedProperties, platformPrefix), outputProvider)
-  val pluginTarget = requireNotNull(moduleRuleTarget(module = support.pluginMainModule, targets = bazelTargets)) {
-    "No production target names '${support.pluginMainModule}', so the embedded frontend descriptor has no package"
-  }
+  val facts = productContentFacts(
+    spec = embeddedProductSpec(embeddedProperties, platformPrefix),
+    outputProvider = outputProvider,
+    owner = "The embedded frontend descriptor of '$platformPrefix'",
+  )
   val home = embeddedClasses.home(platformPrefix)
-  val fileName = support.descriptorFileName(home)
-  val relativePath = "${index.packageDirectory(pluginTarget)}/$fileName"
   val closure = generatedClosureOf(
     support.descriptorModule,
     support.descriptorLoadPath,
-    relativePath,
-    content,
+    "${support.pluginPackage.removePrefix("//")}/BUILD.bazel",
+    facts.xml,
   ) { true }
   check(closure.unmodelledContentIncludes.isEmpty()) {
     "The generated embedded frontend descriptor has an unsupported content include: ${closure.unmodelledContentIncludes}"
@@ -1113,29 +1162,26 @@ private fun collectEmbeddedProductDescriptor(
 
   val modules = sortedSetOf(support.descriptorModule)
   closure.contentModules.mapTo(modules) { it.substringBeforeLast('/') }
-  val header = support.descriptorHeader(
-    source = productContentSource(embeddedProperties),
-    embeddingProducts = embeddedClasses.embeddingMembers(home).ifEmpty { listOf(platformPrefix) },
-    frontendProducts = embeddedClasses.frontendMembers(home),
-  )
-  return GeneratedEmbeddedProductDescriptor(
-    relativePath = relativePath,
-    content = if (home == platformPrefix) header + content else null,
-    plan = EmbeddedProductDescriptorPlan(
-      home = home,
-      source = pluginTarget.substringBeforeLast(':') + ":" + fileName,
-      descriptors = labels.descriptors,
-      libraryDescriptors = labels.libraryDescriptors,
-      modules = modules.toList(),
-      separateJar = separateJarContentModules(
-        layout = PluginLayout.pluginAuto(listOf(support.descriptorModule)),
-        closure = closure,
-        outputProvider = outputProvider,
-        frontendModuleFilter = frontendModuleFilter,
-      ).sorted(),
-      frontendApplicationInfo = frontendApplicationInfo,
+  val plan = EmbeddedProductDescriptorPlan(
+    home = home,
+    content = facts.content,
+    descriptors = statedDescriptorRows(
+      labels = labels.descriptors,
+      derivedModules = facts.derivedModules(refused = emptyList()),
+      index = index,
+      outputProvider = outputProvider,
     ),
+    libraryDescriptors = labels.libraryDescriptors,
+    modules = modules.toList(),
+    separateJar = separateJarContentModules(
+      layout = PluginLayout.pluginAuto(listOf(support.descriptorModule)),
+      closure = closure,
+      outputProvider = outputProvider,
+      frontendModuleFilter = frontendModuleFilter,
+    ).sorted(),
+    frontendApplicationInfo = frontendApplicationInfo,
   )
+  return CollectedProductContent(plan = plan, moduleSets = facts.moduleSets)
 }
 
 /** The Product DSL content of [properties]. [product] names the product in the failure. */
@@ -1159,16 +1205,6 @@ fun renderEmbeddedProductContent(spec: ProductModulesContentSpec, outputProvider
     inlineModuleSets = true,
     metadataBuilder = { it.append("  <id>com.intellij</id>\n") },
   ).xml
-}
-
-/**
- * The `getProductContentDescriptor()` call that renders the content of [properties], for the header. It names the
- * declaring class, and the class of [properties] when that class only sets what the declaring class reads.
- */
-internal fun productContentSource(properties: ProductProperties): String {
-  val declaringClass = properties.javaClass.getMethod("getProductContentDescriptor").declaringClass
-  val call = "${declaringClass.name}.getProductContentDescriptor()"
-  return if (declaringClass == properties.javaClass) call else "$call of ${properties.javaClass.simpleName}"
 }
 
 /** Returns whether this descriptor entry serves the selected dev platform. */

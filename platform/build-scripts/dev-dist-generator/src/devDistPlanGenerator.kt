@@ -314,8 +314,8 @@ internal fun computeDevDistPluginExecutions(
  * cross-half package here. [targets] is the JSON the module and library labels still come from.
  *
  * [half] is the half the run writes, and every path is relative to its root, the project root of the index of
- * [sections]. A half writes the reference plan, the platform patches and the embedded descriptors only when it has the
- * capability, see [requireHalfCapabilities]. A half writes only into its own packages, see [DevDistHalf.ownsPackage].
+ * [sections]. A half writes the reference plan, the platform patches and the embedded descriptor actions only when it has
+ * the capability, see [requireHalfCapabilities]. A half writes only into its own packages, see [DevDistHalf.ownsPackage].
  *
  * [upstreamLaunchModels] are the launch models of the community half, which the ultimate half passes. A key of both
  * registries with one product class and an equal text names the community file, see [sharedLaunchModels]. `null` for
@@ -360,21 +360,15 @@ internal fun computeDevDistPlan(
     runtimeModuleRepositoryProducts = devDistRuntimeModuleRepositoryProducts(runConfigurations, splitProducts),
   )
   val sortedProducts = collected.products.sortedBy(ProductFragmentPlan::platformPrefix)
-  val generatedPluginFiles = TreeMap<String, String>()
-  for (plan in collected.pluginDescriptorPlans) {
-    for ((relativePath, content) in plan.generatedFiles) {
-      check(generatedPluginFiles.put(relativePath, content) == null) {
-        "Two descriptor plans generate '$relativePath'"
-      }
-    }
-  }
   requireHalfCapabilities(
     half = half,
     projectRoot = projectRoot,
     registryProducts = products.map { it.name },
     plannedProducts = sortedProducts.map(ProductFragmentPlan::platformPrefix) +
                       collected.pluginDescriptorPlans.map(PluginDescriptorPlan::platformPrefix),
-    generatedPluginFiles = generatedPluginFiles.keys,
+    embeddingProducts = collected.pluginDescriptorPlans
+      .filter { plan -> plan.plugins.any { it.embeddedProductDescriptor != null } }
+      .map(PluginDescriptorPlan::platformPrefix),
     hasPlatformPatches = collected.platformPatches?.isEmpty == false,
     runtimeModuleRepositoryProducts = sortedProducts
       .filter(ProductFragmentPlan::runtimeModuleRepository)
@@ -412,7 +406,6 @@ internal fun computeDevDistPlan(
     add(DEV_DIST_CONTENT_SETS_RELATIVE_PATH to renderContentSets(pluginExecutions, half))
     add(DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH to renderDevServerRunConfigurations(runConfigurations, splitProducts, half.macrosBzl, half.refusedRowProperties, half.generatedByHeader))
     addAll(crossHalfDescriptorPackages.files(crossHalfPluginTargets, crossHalfPluginCalls).toList())
-    generatedPluginFiles.entries.mapTo(this) { it.key to it.value }
     productDescriptorFiles.entries.mapTo(this) { it.key to it.value }
     collected.platformPatches?.renderPackage()?.entries?.mapTo(this) { it.key to it.value }
     relocatedContentModuleJarPackage?.let { add(relocatedContentModuleJarPackagePath to it) }
@@ -455,15 +448,14 @@ internal fun computeDevDistPlan(
       updater.delete(projectRoot.resolve(relativePath))
     }
   }
-  // Only the home of a class writes its embedded descriptor, so a product that joins a class leaves a file to delete.
-  // A half without an embedded frontend writes no embedded descriptor.
+  // The descriptor actions compose the content from the module-set table, so an embedded descriptor file is stale.
   half.embeddedFrontend?.let { embeddedFrontend ->
-    for (relativePath in embeddedFrontend.staleDescriptors(projectRoot, generatedPluginFiles.keys)) {
+    for (relativePath in embeddedFrontend.staleDescriptors(projectRoot)) {
       updater.delete(projectRoot.resolve(relativePath))
     }
   }
-  // A product whose `platform_lib` packs its application-info module jar again leaves its Product DSL content behind.
-  for (relativePath in staleProductDescriptorSources(projectRoot, productDescriptorFiles.keys)) {
+  // The product descriptor actions compose the content from the module-set table, so a product content file is stale.
+  for (relativePath in staleProductDescriptorSources(projectRoot)) {
     updater.delete(projectRoot.resolve(relativePath))
   }
   return DevDistPlanCompute(
@@ -475,8 +467,8 @@ internal fun computeDevDistPlan(
 }
 
 /**
- * Fails when a half would write what it cannot plan: a product outside its registry, or an embedded descriptor, a
- * platform patch or a runtime module repository without the capability, see [DevDistHalf.capabilities].
+ * Fails when a half would plan what it cannot: a product outside its registry, or an embedded descriptor, a platform
+ * patch or a runtime module repository without the capability, see [DevDistHalf.capabilities].
  * [registryProducts] are the keys of `build/dev-build.json` under [projectRoot], the root of [half], so no generated file of
  * the community half names a product of another registry.
  */
@@ -485,7 +477,8 @@ internal fun requireHalfCapabilities(
   projectRoot: Path,
   registryProducts: Collection<String>,
   plannedProducts: Collection<String>,
-  generatedPluginFiles: Collection<String>,
+  /** The products that plan an embedded descriptor. */
+  embeddingProducts: Collection<String>,
   hasPlatformPatches: Boolean,
   runtimeModuleRepositoryProducts: Collection<String>,
 ) {
@@ -495,8 +488,8 @@ internal fun requireHalfCapabilities(
     "The ${half.name} half renders products outside ${projectRoot.resolve(PRODUCT_REGISTRY_RELATIVE_PATH)}: $foreign"
   }
   val capabilities = half.capabilities
-  check(DevDistCapability.EMBEDDED_FRONTENDS in capabilities || generatedPluginFiles.isEmpty()) {
-    "The ${half.name} half cannot write an embedded descriptor: ${generatedPluginFiles.sorted()}"
+  check(DevDistCapability.EMBEDDED_FRONTENDS in capabilities || embeddingProducts.isEmpty()) {
+    "The ${half.name} half cannot plan an embedded descriptor: ${embeddingProducts.sorted()}"
   }
   check(DevDistCapability.PLATFORM_PATCHES in capabilities || !hasPlatformPatches) { "The ${half.name} half cannot write a platform patch" }
   check(DevDistCapability.RUNTIME_MODULE_REPOSITORY in capabilities || runtimeModuleRepositoryProducts.isEmpty()) {
@@ -668,17 +661,20 @@ class ResidualPlatformJar(
  */
 internal data class ModuleSetData(
   @JvmField val name: String,
+  /** The own members, in DSL order. */
   @JvmField val modules: List<String>,
+  /** The nested sets, in DSL order. */
   @JvmField val nested: List<String>,
   @JvmField val packed: Map<String, String> = emptyMap(),
   @JvmField val moduleSystemLoaded: List<String> = emptyList(),
   @JvmField val modeRefused: Map<String, List<String>> = emptyMap(),
+  /** The loading rule of each own member with a non-default rule, as the descriptor states it, in member order. */
+  @JvmField val loading: Map<String, String> = emptyMap(),
+  /** The `required-if-available` module of each own member that states one, in member order. */
+  @JvmField val requiredIfAvailable: Map<String, String> = emptyMap(),
+  /** The plugin alias of the set, or `null` when it declares none. */
+  @JvmField val alias: String? = null,
 )
-
-private class MutableModuleSet {
-  @JvmField val modules: MutableSet<String> = sortedSetOf()
-  @JvmField val nested: MutableSet<String> = sortedSetOf()
-}
 
 private data class ProductFragmentPlan(
   @JvmField val platformPrefix: String,
@@ -1058,9 +1054,12 @@ private fun collectDescriptorFiles(
   // The filter of each stated mode, keyed by mode id. The layout of a product of that mode applies the same filter. The
   // module set table and the payload of each product ask these filters, so both state one refusal.
   val modeFilters = devDistModeFilters(half = half, products = products, outputProvider = outputProvider)
-  // Only the split products contribute: this table exists to expand their platform payloads, and a set no split
-  // product references would be data nothing reads.
-  val moduleSets = sortedMapOf<String, MutableModuleSet>()
+  // The sets that the product descriptors and the embedded descriptors of the split products reach, from the DSL. The
+  // payloads walk them, and the product descriptor rules compose the content from them.
+  val moduleSets = TreeMap<String, ModuleSetData>()
+  for (plan in pluginDescriptorPlans) {
+    mergeModuleSetRows(table = moduleSets, rows = plan.moduleSets, owner = "Product '${plan.platformPrefix}'")
+  }
   val platformPatches = half.platformPatches?.newTargets()
   val fragmentPlans = products.withIndex().mapNotNull { (productIndex, product) ->
     val content = contentByProduct[productIndex] ?: return@mapNotNull null
@@ -1092,14 +1091,11 @@ private fun collectDescriptorFiles(
       modeFilters = modeFilters,
     )
   }
-  // After every product ran, because a set gains members while the products run. The label of a set member is written
-  // once here, and a product body keeps only the labels no set carries, see `sharePackedLabels`.
-  val packedTable = moduleSets.map { (name, set) ->
+  // The label of a set member is written once here, and a product body keeps only the labels no set carries, see
+  // `sharePackedLabels`.
+  val packedTable = moduleSets.values.map { set ->
     val packed = set.modules.mapNotNull { module -> verdicts.contentModuleJarLabels.get(module)?.let { module to it.label } }.toMap(TreeMap())
-    ModuleSetData(
-      name = name,
-      modules = set.modules.toList(),
-      nested = set.nested.toList(),
+    set.copy(
       packed = packed,
       modeRefused = modeFilters.entries
         .mapNotNull { (mode, filter) ->
@@ -1374,7 +1370,8 @@ private fun collectFragmentPlan(
   moduleToSetChain: Map<String, List<String>>,
   /** The content modules the product spec names itself, as opposed to the ones a module set contains. */
   directContentModules: List<String>,
-  moduleSets: MutableMap<String, MutableModuleSet>,
+  /** The module-set table of the half, keyed by set name. The payload walks the sets it references. */
+  moduleSets: Map<String, ModuleSetData>,
   /** The `dev_dist_platform_patch` targets of every product, or `null` for a half without platform patches. */
   platformPatches: DevDistPlatformPatchTargets?,
   bazelTargets: BazelTargetsInfo.TargetsFile,
@@ -1433,17 +1430,11 @@ private fun collectFragmentPlan(
   }
 
   // The set membership itself goes to `dev_dist_module_sets.bzl` and the payload keeps the references, so a set
-  // shared by two split products is written once instead of flattened into both. Membership per set is what the DSL
-  // declares; the chain a module was reached by names its declaring set last and the references to walk before it.
+  // shared by two split products is written once instead of flattened into both. The table states the DSL sets, and
+  // the chain a module was reached by names the top-level set that the payload references first.
   for ((contentModule, chain) in moduleToSetChain) {
     check(chain.isNotEmpty()) { "Content module '$contentModule' of '${product.name}' has an empty module-set chain" }
     platformPayload.moduleSets.add(chain.first())
-    // The key is `moduleName/descriptorName`; the payload declares Bazel outputs, which are per module.
-    val moduleName = contentModule.substringBeforeLast('/')
-    moduleSets.getOrPut(chain.last()) { MutableModuleSet() }.modules.add(moduleName)
-    for (index in 0 until chain.size - 1) {
-      moduleSets.getOrPut(chain[index]) { MutableModuleSet() }.nested.add(chain[index + 1])
-    }
   }
   // The application-info module is not a content module, and the handover below checks that. So no content module jar
   // packs its jar. A residual jar packs it with two patches, the product descriptor and the stamped application info,
@@ -3415,7 +3406,11 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DevDistHalf)
   append("#\n")
   append("# The same `moduleSet { }` declarations the generated module-set descriptors come from, so this stays in step\n")
   append("# with what the layout reads at runtime: both are written by this one run and diffed by the same\n")
-  append("# model-generation validation.\n")
+  append("# model-generation validation. `modules` and `nested` keep the DSL order.\n")
+  append("#\n")
+  append("# `loading` maps each member with a non-default loading rule to that rule, `required_if_available` maps a member to\n")
+  append("# the module it states, and `alias` is the plugin alias of the set. `dev_dist_product_descriptor` and\n")
+  append("# `dev_dist_embedded_product_descriptor` walk the sets in DSL order with these facts and compose the product content.\n")
   append("#\n")
   append("# `packed` maps each member that owns a `content_module_jar` target to that label, written once per set. A\n")
   append("# product's `platform_lib` payload in `dev_dist_fragment_inputs.bzl` names only the labels no set carries.\n")
@@ -3435,6 +3430,11 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DevDistHalf)
     append("    \"").append(moduleSet.name).append("\": struct(\n")
     appendNameList("modules", moduleSet.modules, indent = "        ")
     appendNameList("nested", moduleSet.nested, indent = "        ")
+    appendStringDict("loading", moduleSet.loading)
+    appendStringDict("required_if_available", moduleSet.requiredIfAvailable)
+    moduleSet.alias?.let { alias ->
+      append("        alias = \"").append(alias).append("\",\n")
+    }
     if (moduleSet.packed.isNotEmpty()) {
       append("        packed = {\n")
       for ((module, label) in moduleSet.packed) {
@@ -3457,6 +3457,18 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DevDistHalf)
     append("    ),\n")
   }
   append("}\n")
+}
+
+/** A `name = {...}` field of a set struct, one entry per line and sorted by key, as buildifier keeps a dict. An empty dict is left out. */
+private fun StringBuilder.appendStringDict(name: String, values: Map<String, String>) {
+  if (values.isEmpty()) {
+    return
+  }
+  append("        ").append(name).append(" = {\n")
+  for ((key, value) in values.toSortedMap()) {
+    append("            \"").append(key).append("\": \"").append(value).append("\",\n")
+  }
+  append("        },\n")
 }
 
 private fun renderContentSets(pluginExecutions: DevDistPluginExecutionRendering, half: DevDistHalf): String = buildString {

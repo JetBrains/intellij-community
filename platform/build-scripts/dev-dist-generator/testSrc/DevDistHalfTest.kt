@@ -236,7 +236,7 @@ class DevDistHalfTest {
       projectRoot = CommunityDevDistHalf.root(dir),
       registryProducts = listOf("community", "Idea", "AndroidStudio", "MPS"),
       plannedProducts = listOf("AndroidStudio", "Idea", "Idea"),
-      generatedPluginFiles = emptyList(),
+      embeddingProducts = emptyList(),
       hasPlatformPatches = false,
       runtimeModuleRepositoryProducts = emptyList(),
     )
@@ -250,7 +250,7 @@ class DevDistHalfTest {
       projectRoot = CommunityDevDistHalf.root(dir),
         registryProducts = listOf("community", "Idea", "AndroidStudio", "MPS"),
         plannedProducts = listOf("Idea", "Other"),
-        generatedPluginFiles = emptyList(),
+        embeddingProducts = emptyList(),
         hasPlatformPatches = false,
         runtimeModuleRepositoryProducts = emptyList(),
       )
@@ -263,7 +263,7 @@ class DevDistHalfTest {
   @Test
   fun `the capability check fails for an output that the half has no capability for`() {
     fun check(
-      generatedPluginFiles: List<String> = emptyList(),
+      embeddingProducts: List<String> = emptyList(),
       hasPlatformPatches: Boolean = false,
       runtimeModuleRepositoryProducts: List<String> = emptyList(),
     ) {
@@ -272,13 +272,13 @@ class DevDistHalfTest {
       projectRoot = CommunityDevDistHalf.root(dir),
         registryProducts = listOf("Idea"),
         plannedProducts = listOf("Idea"),
-        generatedPluginFiles = generatedPluginFiles,
+        embeddingProducts = embeddingProducts,
         hasPlatformPatches = hasPlatformPatches,
         runtimeModuleRepositoryProducts = runtimeModuleRepositoryProducts,
       )
     }
 
-    assertThatThrownBy { check(generatedPluginFiles = listOf("plugins/x/embedded.xml")) }.hasMessageContaining("embedded descriptor")
+    assertThatThrownBy { check(embeddingProducts = listOf("Idea")) }.hasMessageContaining("embedded descriptor")
     assertThatThrownBy { check(hasPlatformPatches = true) }.hasMessageContaining("platform patch")
     assertThatThrownBy { check(runtimeModuleRepositoryProducts = listOf("Idea")) }.hasMessageContaining("runtime module repository")
   }

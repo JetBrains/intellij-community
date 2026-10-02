@@ -443,13 +443,7 @@ private fun renderBody(
   if (descriptor != null && !descriptor.embedContentModules) {
     call.option("embed_content_modules", false)
   }
-  descriptor?.embeddedProductDescriptor?.let { embedded ->
-    call.option("embedded_descriptor_source", embedded.source)
-    embedded.descriptors.ifNotEmpty { call.option("embedded_descriptors", LinkedHashMap(it)) }
-    embedded.libraryDescriptors.ifNotEmpty { call.option("embedded_library_descriptors", LinkedHashMap(it)) }
-    embedded.modules.ifNotEmpty { call.option("embedded_modules", it) }
-    embedded.separateJar.ifNotEmpty { call.option("embedded_separate_jar", it) }
-  }
+  // The embedded product descriptor is a standalone call of the section, see `renderEmbeddedFrontendHelpers`.
   if (descriptor?.exactVersion == true) {
     call.option("exact_version", true)
   }
