@@ -568,9 +568,9 @@
       delombokFieldNameCostants
       delombokUtilityClass
       delombokStandardException
-    I18nize
     ConvertGroovyToJava
     ConvertToCompileStatic
+    I18nize
     AdditionalRefactoringsMenu
       RemoveMiddleman
       ReplaceTempWithQuery
@@ -588,10 +588,10 @@
       <separator>
       <separator>
       BuildArtifact
-    UpdateIdeFromSources
     Groovy.CheckResources
       Groovy.CheckResources.Make
       Groovy.CheckResources.Rebuild
+    UpdateIdeFromSources
     PluginDeployActions
       MakeJarAction
       MakeAllJarsAction
@@ -853,6 +853,8 @@
         PruneEmptyDirectories
         FixLineSeparators
         <separator>
+        MarkFileDirty
+        ValidateLocalHistory
         LoadAllContent
         LoadAllVFSContent
         ComputeVFStatistics
@@ -860,8 +862,6 @@
         DumpVfsInfoForFsRoot
         DumpWatchedRoots
         CountVfsFileChildren
-        MarkFileDirty
-        ValidateLocalHistory
       Internal.Dump
         DumpPluginDescriptorsAction
         DumpCodeStyleCache
@@ -886,6 +886,22 @@
         CollectFUStatisticsAction
       PythonPsiInternalGroup
         PyTypeBenchmarkAction
+      Vcs.Internal
+        Vcs.Log.Internal
+          Vcs.Log.InvalidateCaches
+          Vcs.Log.CheckFirstCommitsIndexData
+          Vcs.Log.CheckSelectedCommitsIndexData
+          Vcs.Log.ShowBigRepositories
+          Git.Log.Internal
+            Git.Log.Show.Command
+        Git.Cleanup.Branches
+      IFTInternalActions
+        DumpFeaturesTrainerText
+        AutorunAllLessons
+        AutorunCurrentLesson
+        SetCurrentLessonAsPassed
+        ResetOnboardingFeedbackState
+        ShowDemoAltClickPromoter
       Internal.Ex
         ClearIDEStatistics
         ShowMainMenu
@@ -907,6 +923,10 @@
         TopAnomalies
         KeymapToCsv
         CompareKeymaps
+      PythonGenerateDictionaries
+      Internal.Python
+        PyUpdateProjectSdk
+        PySetPropertyAction
       TriggerProjectIndexableFilesFilterHealthCheck
       ImageDuplicates
       TestIconMappings
@@ -914,26 +934,6 @@
       ShowSearchEverywhereItemInfo
       CompletionQualityStats
       ShowControlFlow
-      Vcs.Internal
-        Vcs.Log.Internal
-          Vcs.Log.InvalidateCaches
-          Vcs.Log.CheckFirstCommitsIndexData
-          Vcs.Log.CheckSelectedCommitsIndexData
-          Vcs.Log.ShowBigRepositories
-          Git.Log.Internal
-            Git.Log.Show.Command
-        Git.Cleanup.Branches
-      IFTInternalActions
-        DumpFeaturesTrainerText
-        AutorunAllLessons
-        AutorunCurrentLesson
-        SetCurrentLessonAsPassed
-        ResetOnboardingFeedbackState
-        ShowDemoAltClickPromoter
-      PythonGenerateDictionaries
-      Internal.Python
-        PyUpdateProjectSdk
-        PySetPropertyAction
       UastInternal
         DumpUastLog
         DumpUastLogByElement
@@ -1500,8 +1500,8 @@
   ToggleBreakpointEnabled
 [group BuildMenu]
   Java.BuildMenu
-  UpdateIdeFromSources
   Groovy.CheckResources
+  UpdateIdeFromSources
   PluginDeployActions
   AntBuildGroup
   RunTargetAction
@@ -1876,9 +1876,9 @@
   CompareClipboardWithSelection
   Code.Review.Editor.Show.Diff
   Code.Review.Editor.New.Comment
+  XmlGenerateToolsGroup
   OpenInSceneBuilder
   Maven.GlobalProjectMenu
-  XmlGenerateToolsGroup
   Git.Stage.Index.File.Menu
   GitLab.Create.Snippet
   Github.Create.Gist
@@ -1886,8 +1886,8 @@
   Mermaid.ExportDiagram
   JsonPathEvaluateAction
   ChangeTemplateDataLanguage
-  PackageFile
   XPathView.EditorPopup
+  PackageFile
   AddAntBuildFile
 [group EditorPopupMenu.GoTo]
   Console.TableResult.Navigate.Group
@@ -1972,8 +1972,8 @@
   EditorTabPopupMenuEx
   ConvertJavaToKotlin
   ConvertJavaToKotlinGroup
-  OpenInSceneBuilder
   ExcludeFromStubGeneration
+  OpenInSceneBuilder
   GitLab.Create.Snippet
   Github.Create.Gist
 [group EditorTabPopupMenuEx]
@@ -2220,24 +2220,24 @@
 [group GenerateFromTestCreatorsGroup]
 [group GenerateGroup]
   Maven.GenerateGroup
-  GenerateXmlTag
   KotlinGenerateGroup
   JavaGenerateGroup1
   GroovyGenerateGroup1
-  ShGenerateGroup
+  GenerateXmlTag
   Gradle.GenerateGroup
+  ShGenerateGroup
   OverrideMethods
   ImplementMethods
   DelegateMethods
   GenerateFromTestCreatorsGroup
   Markdown.InsertGroup
   GenerateCopyright
-  JavaGenerateGroup2
   HtmlAddTableColumnBefore
   HtmlAddTableColumnAfter
+  org.editorconfig.configmanagement.generate.EditorConfigGenerateLanguagePropertiesAction
+  JavaGenerateGroup2
   KotlinMavenGenerate
   GenerateExternalization
-  org.editorconfig.configmanagement.generate.EditorConfigGenerateLanguagePropertiesAction
   GuiDesigner.GenerateMain
 [group GoToCodeGroup]
   <separator>
@@ -2572,10 +2572,10 @@
   GoToChangeMarkerGroup
 [group NewFromTemplate]
 [group NewGroup]
-  AddNewPropertyFile
   NewGroup1
   Groovy.NewClass
   Kotlin.NewFile
+  AddNewPropertyFile
   NewPythonFile
   NewFile
   WelcomeNewEmptyFile
@@ -2596,10 +2596,10 @@
   CreateResourceBundle
   Markdown.NewFile
   NewXmlDescriptor
-  DevkitObsoleteNewActions
-  DevKit.NewTheme
   Groovy.NewScript
   Gant.NewScript
+  DevkitObsoleteNewActions
+  DevKit.NewTheme
   GuiDesigner.NewActions
 [group NewMicroservices]
 [group NewProjectOrModuleGroup]
@@ -2729,24 +2729,24 @@
   <separator>
   ProjectViewPopupMenuSettingsGroup
   UpdateCopyright
-  ConvertJavaToKotlin
-  ConvertJavaToKotlinGroup
   DissociateResourceBundleAction
   CombinePropertiesFilesAction
   Images.SetBackgroundImage
+  XmlGenerateToolsGroup
+  ConvertJavaToKotlin
+  ConvertJavaToKotlinGroup
   OpenInSceneBuilder
   Maven.AddFileAsMavenProject
   Maven.GlobalProjectMenu
-  XmlGenerateToolsGroup
   AddAntBuildFile
   XPathView.XSLT.Associations
   GitLab.Create.Snippet
   Github.Create.Gist
   Mermaid.ExportDiagram
   Gradle.ProjectViewDependencyAnalyzer
-  PackageFile
   Images.EditExternally
   Images.ConvertSvgToPng
+  PackageFile
   Maven.ProjectViewDependencyAnalyzer
   PluginDeployActions
 [group ProjectViewPopupMenuModifyGroup]
@@ -2814,9 +2814,9 @@
   PyConvertPackageToModuleAction
   LombokActionGroup
   DelombokActionGroup
-  I18nize
   ConvertGroovyToJava
   ConvertToCompileStatic
+  I18nize
   AdditionalRefactoringsMenu
 [group RemoveBom.Group]
   RemoveBom
@@ -2832,8 +2832,8 @@
   OpenInAssociatedApplication
   OpenInBrowserGroup
   ShowFilePath
-  Terminal.OpenInTerminal
   PyOpenInPythonConsole
+  Terminal.OpenInTerminal
   Terminal.OpenInReworkedTerminal
   Git.Hosting.Open.In.Browser.Group
 [group RightToolbarSideGroup]
