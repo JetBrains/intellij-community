@@ -101,20 +101,13 @@ public class ProjectSdksModel implements SdkModel {
     mySdkEventsDispatcher.removeListener(listener);
   }
 
-  public void syncSdks() {
-    syncSdks(LocalEelMachine.INSTANCE);
-  }
-
-  /**
-   * @param eelMachine can be null only if the corresponding feature flag is disabled.
-   */
   @ApiStatus.Internal
-  public final void syncSdks(@Nullable EelMachine eelMachine) {
+  public final void syncSdks(@NotNull EelMachine eelMachine) {
     final Sdk[] projectSdks = ProjectJdkTable.getInstance().getAllJdks();
     for (Sdk sdk : projectSdks) {
       if (myProjectSdks.containsKey(sdk) || myProjectSdks.containsValue(sdk)) continue;
 
-      if (eelMachine != null && !sdkMatchesEel(eelMachine, sdk)) continue;
+      if (!sdkMatchesEel(eelMachine, sdk)) continue;
 
       Sdk editableCopy;
       try {
@@ -275,15 +268,15 @@ public class ProjectSdksModel implements SdkModel {
         break;
       }
       final SdkAdditionalData sdkAdditionalData = currItem.getSdkAdditionalData();
-      if (sdkAdditionalData instanceof ValidatableSdkAdditionalData) {
+      if (sdkAdditionalData instanceof ValidatableSdkAdditionalData data) {
         try {
-          ((ValidatableSdkAdditionalData)sdkAdditionalData).checkValid(this);
+          data.checkValid(this);
         }
         catch (ConfigurationException e) {
           if (rootConfigurable != null) {
             final Object projectJdk = rootConfigurable.getSelectedObject();
-            if (!(projectJdk instanceof Sdk) ||
-                !Comparing.strEqual(((Sdk)projectJdk).getName(), currName)) { //do not leave current item with current name
+            if (!(projectJdk instanceof Sdk sdk) ||
+                !Comparing.strEqual(sdk.getName(), currName)) { //do not leave current item with current name
               rootConfigurable.selectNodeInTree(currName);
             }
           }

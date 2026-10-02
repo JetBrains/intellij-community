@@ -4217,7 +4217,6 @@ c:com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 - removeSdk(com.intellij.openapi.projectRoots.Sdk):V
 - reset(com.intellij.openapi.project.Project):V
 - setProjectSdk(com.intellij.openapi.projectRoots.Sdk):V
-- syncSdks():V
 a:com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel$NewSdkAction
 - com.intellij.openapi.project.DumbAwareAction
 com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
