@@ -38,6 +38,7 @@ jvm_library(
     resource_strip_prefix = "src",
     resources = glob(
         ["src/**/*"],
+        exclude = ["src/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
     deps = [

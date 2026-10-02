@@ -53,6 +53,7 @@ class BazelGeneratorIntegrationTests {
   @Test fun resourcesNonPluginXmlIgnored() = doTest("resources-non-plugin-xml-ignored")
   @Test fun resourcesTestRoot() = doTest("resources-test-root")
   @Test fun resourcesPluginDescriptorInSecondRoot() = doTest("resources-plugin-descriptor-in-second-root")
+  @Test fun resourcesIconRobots() = doTest("resources-icon-robots")
 
   @Test fun compileExcludes() = doTest("compile-excludes")
 

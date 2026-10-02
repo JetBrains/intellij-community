@@ -48,6 +48,7 @@ resourcegroup(
     name = "pycharm-community_resources",
     srcs = glob(
         ["resources/**/*"],
+        exclude = ["resources/**/icon-robots.txt"],
     ),
     strip_prefix = "resources",
 )
@@ -406,6 +407,7 @@ jvm_library(
     resource_strip_prefix = "pluginResources",
     resources = glob(
         ["pluginResources/**/*"],
+        exclude = ["pluginResources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
     exports = [
@@ -1540,6 +1542,7 @@ jvm_library(
     resource_strip_prefix = "helpers",
     resources = glob(
         ["helpers/**/*"],
+        exclude = ["helpers/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
 )

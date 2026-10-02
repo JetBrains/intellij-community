@@ -607,7 +607,7 @@ fn batch_writes_only_its_assets_in_layout_order() {
             ("native/extracted.so", "extract me"),
             ("module/After.class", "after native"),
             ("META-INF/listOfEntities.txt", " Module "),
-            ("icon-robots.txt", "excluded"),
+            (".unmodified", "excluded"),
         ],
     );
     archive_file(
@@ -930,7 +930,7 @@ const MODULE_FILTER_FIXTURE: [(&str, &str); 7] = [
     ("first/Service.class", "kept"),
     ("META-INF/listOfEntities.txt", " Module "),
     ("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\n"),
-    ("icon-robots.txt", "excluded by the module filter"),
+    (".unmodified", "excluded by the module filter"),
     ("nested/deep/Deep.class", "kept"),
     ("module-info.class", "excluded by the module filter"),
     ("last/Kept.class", "kept: the order is the central directory"),
@@ -1009,27 +1009,17 @@ fn a_module_source_keeps_its_manifest_and_the_central_directory_order() {
     }
 }
 
-/// Pins that `jarpack::module_output_name_filter` is `commonModuleExcludes`. The module filter of every archive source
-/// is this one statement, so the two statements of the common excludes must agree on every name.
+/// Pins that `jarpack::module_output_name_filter` is `commonModuleExcludes` without its two `icon-robots.txt` patterns.
+/// The module filter of every archive source is this one statement, so the two statements must agree on every name. A
+/// Bazel module jar holds no `icon-robots.txt`, because the converter leaves it out of the resource glob. Only the JPS
+/// branch of the Kotlin packer needs those two patterns.
 #[test]
 fn module_output_name_filter_agrees_with_common_module_excludes() {
-    let common: Vec<javaglob::JavaGlob> = [
-        "**/icon-robots.txt",
-        "icon-robots.txt",
-        ".unmodified",
-        ".hash",
-        "classpath.index",
-        "module-info.class",
-    ]
-    .iter()
-    .map(|pattern| javaglob::JavaGlob::compile(pattern).unwrap())
-    .collect();
+    let common: Vec<javaglob::JavaGlob> = [".unmodified", ".hash", "classpath.index", "module-info.class"]
+        .iter()
+        .map(|pattern| javaglob::JavaGlob::compile(pattern).unwrap())
+        .collect();
     for name in [
-        "icon-robots.txt",
-        "icons/icon-robots.txt",
-        "a/b/icon-robots.txt",
-        "xicon-robots.txt",
-        "icon-robots.txt.bak",
         ".unmodified",
         "a/.unmodified",
         ".hash",

@@ -827,7 +827,7 @@ internal class BazelBuildFileGenerator(
         }
         if (directResources != null) {
           option("resource_strip_prefix", directResources.stripPrefix)
-          option("resources", glob(directResources.fileGlobs, exclude = directResources.excludes, allowEmpty = directResources.excludes.isNotEmpty()))
+          option("resources", glob(directResources.fileGlobs, exclude = directResources.excludes, allowEmpty = directResources.allowEmpty))
         }
       }
       else if (customModule.resources.isNotEmpty()) {
@@ -878,7 +878,7 @@ internal class BazelBuildFileGenerator(
 
       if (directTestResources != null) {
         option("resource_strip_prefix", directTestResources.stripPrefix)
-        option("resources", glob(directTestResources.fileGlobs, exclude = directTestResources.excludes, allowEmpty = directTestResources.excludes.isNotEmpty()))
+        option("resources", glob(directTestResources.fileGlobs, exclude = directTestResources.excludes, allowEmpty = directTestResources.allowEmpty))
       }
 
       visibility(arrayOf("//visibility:public"))
@@ -1010,6 +1010,7 @@ internal class BazelBuildFileGenerator(
     val fileGlobs: List<String>,
     val stripPrefix: String,
     val excludes: List<String>,
+    val allowEmpty: Boolean,
   )
 
   private data class GenerateResourcesResult(
@@ -1062,7 +1063,7 @@ internal class BazelBuildFileGenerator(
         val name = "${module.targetName}$targetNameSuffix" + (if (i == 0) "" else "_$i")
         target("resourcegroup") {
           option("name", name)
-          option("srcs", glob(resource.files, exclude = resource.excludes, allowEmpty = resource.excludes.isNotEmpty()))
+          option("srcs", glob(resource.files, exclude = resource.excludes, allowEmpty = resource.allowEmpty))
           if (resource.baseDirectory.isNotEmpty()) {
             option("strip_prefix", resource.baseDirectory)
           }
@@ -1080,6 +1081,7 @@ internal class BazelBuildFileGenerator(
         fileGlobs = directResources.files,
         stripPrefix = directResources.baseDirectory,
         excludes = directResources.excludes,
+        allowEmpty = directResources.allowEmpty,
       ),
       resourceJarsTargets = resourceJarsTargets
     )
@@ -1240,17 +1242,50 @@ private fun computeResources(
     .filter { it.rootType == type }
     .map { root ->
       val prefix = resolveRelativeToBazelBuildFileDirectory(root.path, contentRoots, bazelBuildDir, module = module).invariantSeparatorsPathString
+      val globPrefix = if (prefix.isEmpty()) "" else "$prefix/"
       val excludes = compileExcludesForRoot(packageExcludes = packageExcludes, rootPrefix = prefix)
+      val iconRobots = if (type == JavaResourceRootType.RESOURCE) scanIconRobots(root.path) else IconRobotsScan.NONE
       val relativeOutputPath = (root.properties as JavaResourceRootProperties).relativeOutputPath
       ResourceDescriptor(
         baseDirectory = prefix,
-        files = listOf("${if (prefix.isEmpty()) "" else "$prefix/"}**/*"),
+        files = listOf("$globPrefix**/*"),
         relativeOutputPath = relativeOutputPath,
         root = root.path,
-        excludes = excludes,
+        excludes = if (iconRobots == IconRobotsScan.NONE) excludes else excludes + "$globPrefix**/$ICON_ROBOTS_FILE_NAME",
+        allowEmpty = excludes.isNotEmpty() || iconRobots == IconRobotsScan.ONLY,
       )
     }
     .toList()
+}
+
+/**
+ * The icon-class generator reads `icon-robots.txt`. No jar ships it, so the resource glob leaves it out.
+ * The converter adds the exclude only to a production resource root that holds such a file.
+ */
+private const val ICON_ROBOTS_FILE_NAME = "icon-robots.txt"
+
+private enum class IconRobotsScan { NONE, MIXED, ONLY }
+
+/** Walks the resource root once and tells if it holds an `icon-robots.txt` file, and if it holds other files too. */
+private fun scanIconRobots(root: Path): IconRobotsScan {
+  if (!root.isDirectory()) {
+    return IconRobotsScan.NONE
+  }
+
+  var iconRobots = false
+  var otherFile = false
+  for (file in root.walk()) {
+    if (file.fileName.toString() == ICON_ROBOTS_FILE_NAME) {
+      iconRobots = true
+    }
+    else {
+      otherFile = true
+    }
+    if (iconRobots && otherFile) {
+      return IconRobotsScan.MIXED
+    }
+  }
+  return if (iconRobots) IconRobotsScan.ONLY else IconRobotsScan.NONE
 }
 
 private fun compileExcludesForRoot(packageExcludes: List<String>, rootPrefix: String): List<String> {

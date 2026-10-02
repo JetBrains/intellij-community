@@ -5,6 +5,12 @@ import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 
+/**
+ * The names that no module output gives to a distribution jar.
+ *
+ * A Bazel module jar holds no `icon-robots.txt`, because the converter leaves it out of the resource glob.
+ * JPS copies the file into `out/classes`, so the JPS branch of the legacy engine still needs the two `icon-robots.txt` patterns.
+ */
 @ApiStatus.Internal
 val commonModuleExcludes: List<PathMatcher> = FileSystems.getDefault().let { fs ->
   listOf(

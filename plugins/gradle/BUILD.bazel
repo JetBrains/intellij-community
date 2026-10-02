@@ -11,6 +11,7 @@ resourcegroup(
     name = "gradle_resources",
     srcs = glob(
         ["resources/**/*"],
+        exclude = ["resources/**/icon-robots.txt"],
     ),
     strip_prefix = "resources",
 )

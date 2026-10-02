@@ -242,22 +242,21 @@ pub(crate) const fn is_library(source: &Source) -> bool {
 }
 
 /// The entries of [`module_source`].
-const MODULE_ENTRIES: [SourceEntry<'static>; 11] = [
+const MODULE_ENTRIES: [SourceEntry<'static>; 10] = [
     entry("com/", ""),
     entry("com/example/", ""),
     entry("com/example/Service.class", "class bytes"),
     entry("com/example/nested/Inner.class", "inner bytes"),
     entry("messages/Bundle.properties", "key=value"),
-    entry("icon-robots.txt", "dropped: a build-time input"),
-    entry("com/example/icon-robots.txt", "dropped: same, nested"),
     entry(".unmodified", "dropped: compilation cache leftover"),
+    entry(".hash", "dropped: compilation cache leftover"),
     entry("classpath.index", "dropped: compilation cache leftover"),
     entry("module-info.class", "dropped"),
     entry(INDEX_FILE_NAME, "dropped: a stale index is never inherited"),
 ];
 
-/// What `jvm_library` gives the packer: a module output jar from Bazel. It has directory records, the build-time inputs
-/// the filter drops, and what an earlier pack left behind. It has no manifest, because a module output has one only when
+/// What `jvm_library` gives the packer: a module output jar from Bazel. It has directory records, the compilation cache
+/// leftovers that the filter drops, and what an earlier pack left behind. It has no manifest, because a module output has one only when
 /// the module states it in its resources.
 pub(crate) fn module_source(scratch: &Scratch, name: &str) -> PathBuf {
     write_zip_jar(scratch, name, &MODULE_ENTRIES)

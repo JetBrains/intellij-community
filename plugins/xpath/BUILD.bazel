@@ -49,6 +49,7 @@ jvm_library(
     resource_strip_prefix = "xpath-lang/resources",
     resources = glob(
         ["xpath-lang/resources/**/*"],
+        exclude = ["xpath-lang/resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
     runtime_deps = ["//xml/dom-impl"],

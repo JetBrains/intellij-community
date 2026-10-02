@@ -69,12 +69,11 @@ fun mergeIntoJar(
  * Which entries of a *module output* jar are packed into a distribution jar.
  *
  * Far narrower than [defaultLibrarySourcesNamesFilter]: a module output is ours, so the only things to drop are the
- * icon-rule file that is a build-time input and the leftovers the compilation cache writes into an output directory.
+ * leftovers the compilation cache writes into an output directory. A Bazel module jar holds no `icon-robots.txt`,
+ * because the converter leaves it out of the resource glob.
  */
 fun defaultModuleOutputNamesFilter(name: String): Boolean {
-  return name != "icon-robots.txt" &&
-         !name.endsWith("/icon-robots.txt") &&
-         name != ".unmodified" &&
+  return name != ".unmodified" &&
          name != ".hash" &&
          name != "classpath.index" &&
          name != "module-info.class"

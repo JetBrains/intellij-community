@@ -9,16 +9,11 @@ pub const MANIFEST_ENTRY_NAME: &str = "META-INF/MANIFEST.MF";
 
 /// Reports whether an entry of a *module output* jar belongs in a distribution jar.
 ///
-/// A module output is ours, so the filter drops only two kinds of file. The icon-rule file is a build-time input. The
-/// compilation cache leaves the other files in an output directory. It is a port of `defaultModuleOutputNamesFilter` in
-/// `zip/src/jarMerger.kt`.
+/// A module output is ours, so the filter drops only the files that the compilation cache leaves in an output directory.
+/// A module jar holds no `icon-robots.txt`, because the converter leaves it out of the resource glob. It is a port of
+/// `defaultModuleOutputNamesFilter` in `zip/src/jarMerger.kt`.
 pub fn module_output_name_filter(name: &str) -> bool {
-    name != "icon-robots.txt"
-        && !name.ends_with("/icon-robots.txt")
-        && name != ".unmodified"
-        && name != ".hash"
-        && name != "classpath.index"
-        && name != "module-info.class"
+    name != ".unmodified" && name != ".hash" && name != "classpath.index" && name != "module-info.class"
 }
 
 /// The entry filter of one jar source. The two kinds of jar input are filtered differently. A module output gives almost

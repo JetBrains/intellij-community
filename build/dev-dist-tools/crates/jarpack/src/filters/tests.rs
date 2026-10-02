@@ -14,9 +14,6 @@ fn module_output_name_filter_cases() {
     for (name, want) in [
         ("com/example/Service.class", true),
         ("messages/Bundle.properties", true),
-        ("icon-robots.txt", false),
-        ("com/example/icon-robots.txt", false),
-        ("my-icon-robots.txt", true),
         (".unmodified", false),
         (".hash", false),
         ("classpath.index", false),

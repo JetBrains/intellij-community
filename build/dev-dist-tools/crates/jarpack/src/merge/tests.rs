@@ -151,7 +151,7 @@ fn merge_rejects_unsafe_or_stale_source_operations() {
     let archive = write_zip_jar(
         &scratch,
         "module.jar",
-        &[entry("present.so", "native"), entry("icon-robots.txt", "excluded")],
+        &[entry("present.so", "native"), entry(".unmodified", "excluded")],
     );
     // The type of `Source` cannot state a jar without a filter or a patch of a jar, so those cases of the Go test are
     // gone.
@@ -527,7 +527,7 @@ fn pack_writes_no_index_pointer_for_an_empty_result() {
     // The filter drops every entry of this source, so there is no index to point at, and the comment is written all the
     // same.
     let scratch = Scratch::new();
-    let source = write_zip_jar(&scratch, "empty.jar", &[entry("icon-robots.txt", "dropped")]);
+    let source = write_zip_jar(&scratch, "empty.jar", &[entry(".unmodified", "dropped")]);
     let (data, _) = pack(&scratch, spec("intellij.example.jar", vec![Source::module(&source)]));
     assert_eq!(index_pointer(&data), -1);
     assert!(entry_names(&data).is_empty());
