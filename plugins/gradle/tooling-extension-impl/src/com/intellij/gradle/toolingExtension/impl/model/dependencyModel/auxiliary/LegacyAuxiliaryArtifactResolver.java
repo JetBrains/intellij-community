@@ -95,8 +95,8 @@ public class LegacyAuxiliaryArtifactResolver implements AuxiliaryArtifactResolve
     Map<ComponentIdentifier, Set<File>> javadocs = new HashMap<>();
     for (ComponentArtifactsResult component : components) {
       ComponentIdentifier componentId = component.getId();
-      putIfNotNull(sources, componentId, getResolvedAuxiliaryArtifactFiles(component, SourcesArtifact.class));
-      putIfNotNull(javadocs, componentId, getResolvedAuxiliaryArtifactFiles(component, JavadocArtifact.class));
+      putIfNotEmpty(sources, componentId, getResolvedAuxiliaryArtifactFiles(component, SourcesArtifact.class));
+      putIfNotEmpty(javadocs, componentId, getResolvedAuxiliaryArtifactFiles(component, JavadocArtifact.class));
     }
     return new AuxiliaryConfigurationArtifacts(sources, javadocs);
   }
@@ -112,8 +112,8 @@ public class LegacyAuxiliaryArtifactResolver implements AuxiliaryArtifactResolve
       .collect(Collectors.toSet());
   }
 
-  private static <K, V> void putIfNotNull(@NotNull Map<K, V> target, @NotNull K key, @Nullable V value) {
-    if (value != null) {
+  private static <K, V> void putIfNotEmpty(@NotNull Map<K, Set<V>> target, @NotNull K key, @Nullable Set<V> value) {
+    if (value != null && !value.isEmpty()) {
       target.put(key, value);
     }
   }
