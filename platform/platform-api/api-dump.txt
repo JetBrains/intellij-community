@@ -10082,6 +10082,7 @@ pc:com.intellij.ui.table.JBTable$AccessibleJBTable$AccessibleJBTableCell
 - <init>(com.intellij.ui.table.JBTable$AccessibleJBTable,javax.swing.JTable,I,I,I):V
 - p:getCurrentAccessibleContext():javax.accessibility.AccessibleContext
 - p:getCurrentComponent():java.awt.Component
+- isVisible():Z
 pc:com.intellij.ui.table.JBTable$DefaultColumnInfoBasedRowSorter
 - javax.swing.table.TableRowSorter
 - <init>(javax.swing.table.TableModel):V

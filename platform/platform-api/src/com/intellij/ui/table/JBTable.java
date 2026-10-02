@@ -1571,6 +1571,16 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       }
 
       @Override
+      public boolean isVisible() {
+        // Cells outside the visible area are reported as invisible without creating the renderer component,
+        // which can be expensive and would otherwise be done for every cell of the table (e.g., for visible children query)
+        if (!JBTable.this.getVisibleRect().intersects(JBTable.this.getCellRect(myRow, myColumn, false))) {
+          return false;
+        }
+        return super.isVisible();
+      }
+
+      @Override
       protected AccessibleContext getCurrentAccessibleContext() {
         Component c = getCurrentComponent();
         if (c instanceof Accessible) {
