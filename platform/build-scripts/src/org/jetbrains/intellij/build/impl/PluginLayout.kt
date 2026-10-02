@@ -3,9 +3,6 @@
 
 package org.jetbrains.intellij.build.impl
 
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
@@ -22,12 +19,10 @@ import org.jetbrains.intellij.build.LazySource
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.CompatibleBuildRange
-import org.jetbrains.intellij.build.dev.ClassicDevRun
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetOwner
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
 import org.jetbrains.intellij.build.impl.BuildUtils.checkedReplace
-import java.nio.file.Files
 import java.nio.file.Path
 
 typealias ResourceGenerator = (Path, BuildContext) -> Unit
@@ -694,49 +689,6 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      */
     fun scrambleSkip(jar: String, classFilter: String) {
       layout.scrambleSkipStatements += Pair(jar, classFilter)
-    }
-
-    /**
-     * Concatenates `META-INF/services` files with the same name from different modules together.
-     * By default, the first service file silently wins.
-     *
-     * The dev distribution omits the merge. Its jar writer keeps the first service file of a name and reports the
-     * collision, which is the default this method replaces. The classic dev build runs the merge.
-     */
-    fun mergeServiceFiles() {
-      layout.withPatch(DeclaredPluginLayoutPatcher(DevPluginLayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)) { patcher, _, context ->
-        val discoveredServiceFiles = LinkedHashMap<String, LinkedHashSet<Pair<String, Path>>>()
-
-        for (moduleName in layout.includedModules.asSequence().filter { it.relativeOutputFile == layout.mainJarName }.map { it.moduleName }.distinct()) {
-          val path = context.findFileInModuleSources(moduleName, "META-INF/services") ?: continue
-          Files.newDirectoryStream(path).use { dirStream ->
-            dirStream
-              .asSequence()
-              .filter { Files.isRegularFile(it) }
-              .forEach { serviceFile ->
-                discoveredServiceFiles.computeIfAbsent(serviceFile.fileName.toString()) { LinkedHashSet() }
-                  .add(Pair(moduleName, serviceFile))
-              }
-          }
-        }
-
-        for ((serviceFileName, serviceFiles) in discoveredServiceFiles) {
-          if (serviceFiles.size <= 1) {
-            continue
-          }
-
-          val content = serviceFiles.joinToString(separator = "\n") { Files.readString(it.second) }
-          Span.current().addEvent("merge service file)", Attributes.of(
-            AttributeKey.stringKey("serviceFile"), serviceFileName,
-            AttributeKey.stringArrayKey("serviceFiles"), serviceFiles.map { it.first },
-          ))
-          patcher.patchModuleOutput(
-            moduleName = serviceFiles.first().first, // the first one wins
-            path = "META-INF/services/$serviceFileName",
-            content = content,
-          )
-        }
-      })
     }
 
     /**
