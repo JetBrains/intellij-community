@@ -2631,6 +2631,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/NestedTypeAlias_2_2.kt");
         }
 
+        @TestMetadata("UnnamedLocalVariables_2_4_Increase_Version.kt")
+        public void testUnnamedLocalVariables_2_4_Increase_Version() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/UnnamedLocalVariables_2_4_Increase_Version.kt");
+        }
+
         @TestMetadata("WhenGuards_2_0.kt")
         public void testWhenGuards_2_0() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/WhenGuards_2_0.kt");
