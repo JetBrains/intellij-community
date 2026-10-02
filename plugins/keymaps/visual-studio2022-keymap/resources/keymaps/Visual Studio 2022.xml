@@ -165,7 +165,6 @@
 
   <!--Rider-specific actions-->
   <action id="Rider.Plugins.FSharp.SendToFsi" />
-  <action id="com.jetbrains.rider.interactive.csi.SendToCSharpInteractive" />
   <action id="BuildCurrentProject">
     <keyboard-shortcut first-keystroke="control B"/><!--Build.BuildSelection-->
   </action>
