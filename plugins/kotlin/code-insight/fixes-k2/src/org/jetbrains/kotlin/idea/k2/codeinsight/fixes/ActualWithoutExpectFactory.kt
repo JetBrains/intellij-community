@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import com.intellij.ide.util.EditorHelper
 import com.intellij.ide.util.MemberChooser
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showOkNoDialog
@@ -189,10 +191,10 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
             initial.takeIf { initial.isValid } ?: shortened ?: initial
         }
 
-        EditorHelper.openInEditor(target)?.caretModel?.moveToOffset(
-            (target as? KtNamedDeclaration)?.nameIdentifier?.startOffset ?: target.startOffset,
-            true,
-        )
+        val caretOffset = (target as? KtNamedDeclaration)?.nameIdentifier?.startOffset ?: target.startOffset
+        val virtualFile = target.containingFile.virtualFile ?: return
+        val descriptor = OpenFileDescriptor(project, virtualFile, caretOffset)
+        FileEditorManager.getInstance(project).requestOpenTextEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor))
     }
 
     abstract fun generate(project: Project, targetExpectedClass: KtClassOrObject?, expectedFile: KtFile, declaration: D): D?
