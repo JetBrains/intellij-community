@@ -249,7 +249,6 @@ internal data class EmbeddedProductDescriptorPlan(
   @JvmField val descriptors: Map<String, String>,
   /** Java container label to space-separated resolver load paths, in label order. */
   @JvmField val libraryDescriptors: Map<String, String>,
-  @JvmField val modules: List<String>,
   @JvmField val separateJar: List<String>,
   /** The application info action of the embedded frontend, or `null` when the plugin packs no frontend of its own. */
   @JvmField val frontendApplicationInfo: FrontendApplicationInfoPlan? = null,
@@ -1160,8 +1159,6 @@ private fun collectEmbeddedProductDescriptor(
 
   val labels = closureDescriptorLabels(closure = closure, index = index, owner = "the embedded frontend descriptor")
 
-  val modules = sortedSetOf(support.descriptorModule)
-  closure.contentModules.mapTo(modules) { it.substringBeforeLast('/') }
   val plan = EmbeddedProductDescriptorPlan(
     home = home,
     content = facts.content,
@@ -1172,7 +1169,6 @@ private fun collectEmbeddedProductDescriptor(
       outputProvider = outputProvider,
     ),
     libraryDescriptors = labels.libraryDescriptors,
-    modules = modules.toList(),
     separateJar = separateJarContentModules(
       layout = PluginLayout.pluginAuto(listOf(support.descriptorModule)),
       closure = closure,

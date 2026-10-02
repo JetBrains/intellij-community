@@ -194,7 +194,6 @@ def derived_descriptor_rows(module_names, descriptor_index, descriptors = {}, re
 
 def product_content_attributes(
         caller,
-        source,
         aliases,
         includes,
         module_sets,
@@ -207,14 +206,14 @@ def product_content_attributes(
         descriptor_index,
         descriptors,
         refused_content_modules = []):
-    """Returns the content attributes of a product descriptor rule: the `source` form or the content form.
+    """Returns the content attributes of a product descriptor rule: the rows of `product_content_rows` and the derived
+    `descriptors` rows.
 
-    Exactly one form must be given. The `source` form passes `source` and `descriptors` as they are. The content form
-    passes the rows of `product_content_rows` and the derived `descriptors` rows.
+    A target that states no alias, no include, no set and no additional module fails, because the descriptor writer
+    refuses a request without a composition flag.
 
     Args:
         caller: the macro name for a failure message.
-        source: the `source` label, or `None`.
         aliases: see `product_content_rows`.
         includes: the deprecated includes, href to `required` or `optional`, in order.
         module_sets: see `product_content_rows`.
@@ -231,17 +230,8 @@ def product_content_attributes(
     Returns:
         A dict of rule attributes.
     """
-    content_form = bool(
-        aliases or includes or module_sets or module_set_table or loading_overrides or content_modules or
-        private_content_modules or content_module_loading or content_module_required_if_available,
-    )
-    if bool(source) == content_form:
-        fail("%s requires exactly one of `source` and the content attributes" % caller)
-    if source:
-        attributes = {"source": source}
-        if descriptors:
-            attributes["descriptors"] = descriptors
-        return attributes
+    if not (aliases or includes or module_sets or content_modules):
+        fail("%s states no content: no alias, no include, no module set and no additional module" % caller)
     for href, kind in includes.items():
         if kind not in _INCLUDE_KINDS:
             fail("%s: the include '%s' has the kind '%s'. The kind must be one of %s" % (caller, href, kind, _INCLUDE_KINDS))

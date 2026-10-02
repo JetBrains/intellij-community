@@ -17,10 +17,9 @@ pub(crate) const PLUGIN_CLASS_PATH_FORMAT_VERSION: u8 = 3;
 
 /// The declared inputs of the product descriptor, the `META-INF` descriptor of the application-info module.
 ///
-/// The source is the Product DSL content with the module sets inlined. It is the text that
-/// `processAndGetProductPluginContentModules` (`productModuleLayout.kt`) loads. The flags compose it, or a file that the
-/// generator writes states it. The plan states the refusals of the content filter of the product and the scrambled
-/// content modules. So the action loads no project model.
+/// The flags compose the Product DSL content with the module sets inlined. It is the text that
+/// `processAndGetProductPluginContentModules` (`productModuleLayout.kt`) loads. The plan states the refusals of the
+/// content filter of the product and the scrambled content modules. So the action loads no project model.
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct ProductDescriptorRequest {
     pub content: EmbeddedProductRequest,
@@ -97,8 +96,8 @@ fn classpath_descriptor(content: &ProductContent, main_module: &str) -> Result<S
     Ok(descriptorxml::write(&element))
 }
 
-/// The part of `processAndGetProductPluginContentModules` (`productModuleLayout.kt`) that follows the load of the
-/// source.
+/// The part of `processAndGetProductPluginContentModules` (`productModuleLayout.kt`) that follows the render of the
+/// content.
 ///
 /// The includes resolve first. Then the content filter removes the refused modules, and every other content module
 /// receives its descriptor, except a scrambled one. The product descriptor takes no `separate-jar` attribute, because

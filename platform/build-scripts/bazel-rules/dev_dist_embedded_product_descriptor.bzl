@@ -1,7 +1,7 @@
 """Resolves one embedded product descriptor from declared XML files.
 
-In the content form, the descriptor writer composes the content from the rows that the macro derives from the module-set
-table of the half. See `dev_dist_product_content.bzl`.
+The descriptor writer composes the content from the rows that the macro derives from the module-set table of the half.
+See `dev_dist_product_content.bzl`.
 """
 
 load("@rules_java//java:defs.bzl", "JavaInfo")
@@ -69,7 +69,6 @@ def add_product_content_args(ctx, args):
     args.add_all(ctx.attr.additional_rows, format_each = "--additional-module=%s")
 
 def _dev_dist_embedded_product_descriptor_impl(ctx):
-    source = ctx.file.source
     declared = declared_descriptors(ctx)
     output = ctx.actions.declare_file(ctx.label.name + ".xml")
     args = ctx.actions.args()
@@ -77,16 +76,13 @@ def _dev_dist_embedded_product_descriptor_impl(ctx):
     args.use_param_file("--flagfile=%s", use_always = True)
     args.add("--embedded-product")
     args.add(output, format = "--out=%s")
-    if source:
-        args.add(source, format = "--source=%s")
-    else:
-        add_product_content_args(ctx, args)
+    add_product_content_args(ctx, args)
     args.add_all(declared.descriptor_args, format_each = "--descriptor=%s")
     args.add_all(declared.descriptor_jar_args, format_each = "--descriptor-in-jar=%s")
     args.add_all(ctx.attr.separate_jar, format_each = "--separate-jar=%s")
     ctx.actions.run(
         mnemonic = "DevDistEmbeddedProductDescriptor",
-        inputs = depset(([source] if source else []) + declared.inputs),
+        inputs = declared.inputs,
         outputs = [output],
         executable = ctx.executable._resolver,
         arguments = [args],
@@ -97,13 +93,6 @@ def _dev_dist_embedded_product_descriptor_impl(ctx):
 _dev_dist_embedded_product_descriptor = rule(
     implementation = _dev_dist_embedded_product_descriptor_impl,
     attrs = {
-        # TRANSITION(product content attributes; remove after the generator run)
-        "source": attr.label(
-            allow_single_file = [".xml"],
-            doc = """The exported embedded product descriptor.
-
-            The content attributes replace it. A target states either this or the content attributes.""",
-        ),
         "aliases": attr.string_list(
             doc = "The plugin ids of the `<module value>` rows: the product aliases and the set aliases, sorted.",
         ),
@@ -124,10 +113,6 @@ _dev_dist_embedded_product_descriptor = rule(
             providers = [[JavaInfo]],
             doc = "Ordered runtime jar containers valued by space-separated resolver load paths.",
         ),
-        "modules": attr.string_list(
-            doc = """Unused. The writer reads every descriptor from `descriptors` and `library_descriptors`, so the action
-            states no search scope. The dev-dist generator still sets the attribute.""",
-        ),
         "separate_jar": attr.string_list(
             doc = "Content modules whose embedded descriptor takes separate-jar=true.",
         ),
@@ -141,7 +126,6 @@ _dev_dist_embedded_product_descriptor = rule(
 
 def dev_dist_embedded_product_descriptor(
         main_module,
-        source = None,
         product = None,
         aliases = [],
         includes = {},
@@ -168,7 +152,6 @@ def dev_dist_embedded_product_descriptor(
 
     Args:
         main_module: the main module of the plugin, which names the target.
-        source: the exported embedded product descriptor. The content attributes replace it.
         product: the `dev-build.json` key of the home of the class, or `None` for the baseline class.
         aliases: the product aliases.
         includes: the deprecated includes, href to `required` or `optional`, in order.
@@ -185,12 +168,9 @@ def dev_dist_embedded_product_descriptor(
         visibility: public by default.
         **kwargs: see `_dev_dist_embedded_product_descriptor`.
     """
-
-    # TRANSITION(product content attributes; remove after the generator run): `source` and the content form are exclusive.
     attributes = dict(kwargs)
     attributes.update(product_content_attributes(
         caller = "dev_dist_embedded_product_descriptor",
-        source = source,
         aliases = aliases,
         includes = includes,
         module_sets = module_sets,

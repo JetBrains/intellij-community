@@ -1,6 +1,35 @@
-"""Checks the executable, mode, and output of the descriptor actions."""
+"""Checks the executable, mode, and output of the descriptor actions, and holds the module-set tables of the fixtures."""
 
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
+
+# The module-set table of the `product_descriptor` fixture: the set rows of `SOURCE_COMPOSITION` in the writer tests.
+PRODUCT_FIXTURE_MODULE_SETS = {
+    "intellij.moduleSets.pycharm.fixture": struct(
+        modules = [
+            "intellij.platform.debugger",
+            "intellij.fixture.refused",
+            "intellij.libraries.blockmap",
+            "intellij.platform.ide.osCertificates",
+        ],
+        nested = [],
+        loading = {
+            "intellij.libraries.blockmap": "embedded",
+            "intellij.platform.ide.osCertificates": "required",
+        },
+    ),
+}
+
+# The module-set table of the `embedded` fixture: the set rows of `COMPOSITION` in the writer tests.
+EMBEDDED_FIXTURE_MODULE_SETS = {
+    "intellij.moduleSets.embedded": struct(
+        modules = [
+            "intellij.embedded.noPackage",
+            "intellij.embedded/fragment",
+        ],
+        nested = [],
+        loading = {"intellij.embedded/fragment": "embedded"},
+    ),
+}
 
 def _descriptor_action_test_impl(ctx):
     env = analysistest.begin(ctx)

@@ -6,7 +6,7 @@ load("//build/dev-dist-tools:defs.bzl", "dev_dist_rust_crate")
 load("//platform/build-scripts/bazel-rules:dev_dist_embedded_product_descriptor.bzl", "dev_dist_embedded_product_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_dist_frontend_application_info.bzl", "dev_dist_frontend_application_info")
 load("//platform/build-scripts/bazel-rules:dev_dist_product_descriptor.bzl", "dev_dist_product_application_info", "dev_dist_product_descriptor")
-load(":descriptor_rules_test.bzl", "descriptor_action_test")
+load(":descriptor_rules_test.bzl", "EMBEDDED_FIXTURE_MODULE_SETS", "PRODUCT_FIXTURE_MODULE_SETS", "descriptor_action_test")
 
 dev_dist_rust_crate(
     name = "plugin-descriptor-writer",
@@ -57,8 +57,20 @@ java_import(
     "file",
 ]]
 
+# The composition of `a_composition_gives_the_stage_output_of_its_source`, so the rule and the unit test compare one
+# expected file.
 dev_dist_embedded_product_descriptor(
     testonly = True,
+    aliases = [
+        "embedded.alias.b",
+        "embedded.alias.a",
+    ],
+    content_module_loading = {"intellij.embedded.notSeparate": "on-demand"},
+    content_module_required_if_available = {"intellij.embedded.existing": "intellij.embedded.noPackage"},
+    content_modules = [
+        "intellij.embedded.notSeparate",
+        "intellij.embedded.existing",
+    ],
     descriptors = {
         ":existing_descriptor": "intellij.embedded.existing.xml",
         ":fragment_descriptor": "intellij.embedded.fragment.xml",
@@ -68,10 +80,17 @@ dev_dist_embedded_product_descriptor(
         "testdata/embedded_product/module-extensions.xml": "META-INF/module-extensions.xml",
         "testdata/embedded_product/no-package.xml": "intellij.embedded.noPackage.xml",
     },
+    includes = {
+        "content.xml": "required",
+        "optional.xml": "optional",
+    },
     library_descriptors = {
         ":embedded_descriptor_library": "META-INF/nested.xml intellij.embedded.jar.xml",
     },
     main_module = "embedded",
+    module_set_table = EMBEDDED_FIXTURE_MODULE_SETS,
+    module_sets = ["intellij.moduleSets.embedded"],
+    private_content_modules = ["intellij.embedded.notSeparate"],
     separate_jar = [
         "intellij.embedded.existing",
         "intellij.embedded.noPackage",
@@ -79,13 +98,12 @@ dev_dist_embedded_product_descriptor(
         "intellij.embedded.jar",
         "intellij.embedded.file",
     ],
-    source = "testdata/embedded_product/source.xml",
 )
 
 diff_test(
     name = "embedded_product_rule_test",
     file1 = ":embedded_dev_embedded_product_descriptor",
-    file2 = "testdata/embedded_product/expected.xml",
+    file2 = "testdata/embedded_product/composed.expected.xml",
 )
 
 descriptor_action_test(
@@ -115,10 +133,16 @@ descriptor_action_test(
     target_under_test = ":client_default_dev_frontend_application_info",
 )
 
-# The same fixture as `product_descriptor_matches_kotlin`, so the rule and the unit test compare one expected file.
+# The same fixture as `the_composition_of_the_source_matches_kotlin`, so the rule and the unit test compare one
+# expected file.
 dev_dist_product_descriptor(
     name = "product_descriptor",
     testonly = True,
+    aliases = [
+        "com.intellij.modules.pycharm",
+        "com.intellij.modules.lang",
+    ],
+    content_modules = ["intellij.libraries.sqlite"],
     descriptors = {
         "testdata/product_descriptor/%s.xml" % module: "%s.xml" % module
         for module in [
@@ -128,10 +152,13 @@ dev_dist_product_descriptor(
             "intellij.platform.debugger.content",
             "intellij.platform.ide.osCertificates",
         ]
-    },
+    } | {"testdata/product_descriptor/META-INF/pycharm-core.xml": "META-INF/pycharm-core.xml"},
+    includes = {"/META-INF/pycharm-core.xml": "required"},
     main_module = "intellij.pycharm.community",
+    module_set_table = PRODUCT_FIXTURE_MODULE_SETS,
+    module_sets = ["intellij.moduleSets.pycharm.fixture"],
+    private_content_modules = ["intellij.libraries.sqlite"],
     refused_content_modules = ["intellij.fixture.refused"],
-    source = "testdata/product_descriptor/source.xml",
 )
 
 diff_test(

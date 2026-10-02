@@ -1115,9 +1115,6 @@ private fun renderEmbeddedProductDescriptorCall(
     attributes.put("library_descriptors", LinkedHashMap(embedded.libraryDescriptors))
   }
   attributes.put("main_module", support.pluginMainModule)
-  if (embedded.modules.isNotEmpty()) {
-    attributes.put("modules", embedded.modules)
-  }
   product?.let { attributes.put("product", it) }
   if (embedded.separateJar.isNotEmpty()) {
     attributes.put("separate_jar", embedded.separateJar)

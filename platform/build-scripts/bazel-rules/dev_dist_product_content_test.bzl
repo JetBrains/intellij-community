@@ -167,7 +167,6 @@ _derived_descriptors_test = unittest.make(_derived_descriptors_test_impl)
 def _attributes(**kwargs):
     arguments = {
         "caller": "probe",
-        "source": None,
         "aliases": [],
         "includes": {},
         "module_sets": [],
@@ -185,13 +184,6 @@ def _attributes(**kwargs):
 
 def _attributes_test_impl(ctx):
     env = unittest.begin(ctx)
-
-    # The `source` form passes `descriptors` as it is, in its order.
-    explicit = {"//z:z.xml": "z.xml", "//a:a.xml": "a.xml"}
-    attributes = _attributes(source = "product.xml", descriptors = explicit, descriptor_index = {"x": "//x:x.xml"})
-    asserts.equals(env, {"source": "product.xml", "descriptors": explicit}, attributes)
-    asserts.equals(env, ["//z:z.xml", "//a:a.xml"], list(attributes["descriptors"]))
-
     attributes = _attributes(
         includes = {"/META-INF/optional.xml": "optional", "/META-INF/required.xml": "required"},
         module_sets = [_C],
@@ -241,10 +233,8 @@ def _content_failure_probe_impl(ctx):
         _rows([], content_modules = ["x", "x"])
     elif case == "override_of_nested_member":
         _rows([_A], loading_overrides = {"b1": "required"})
-    elif case == "both_forms":
-        _attributes(source = "product.xml", module_sets = [_C], module_set_table = _TABLE)
-    elif case == "no_form":
-        _attributes()
+    elif case == "no_content":
+        _attributes(module_set_table = _TABLE)
     elif case == "include_kind":
         _attributes(includes = {"META-INF/a.xml": "fallback"})
     else:
@@ -273,9 +263,8 @@ _FAILURES = {
     "module_of_two_sets": "the module 'c1' of the module set 'intellij.moduleSets.shared' is already in the module set 'intellij.moduleSets.c'",
     "product_alias_of_set": "the alias 'com.intellij.modules.a' of the module set 'intellij.moduleSets.a' is already declared by the product",
     "set_member_as_additional_module": "the module 'c1' of content_modules is already in the module set 'intellij.moduleSets.c'",
-    "both_forms": "probe requires exactly one of `source` and the content attributes",
     "include_kind": "probe: the include 'META-INF/a.xml' has the kind 'fallback'",
-    "no_form": "probe requires exactly one of `source` and the content attributes",
+    "no_content": "probe states no content: no alias, no include, no module set and no additional module",
     "override_of_nested_member": "loading_overrides names 'b1', which is not an own member of a set in module_sets",
     "unknown_nested_set": "the module set 'intellij.moduleSets.a' names the module set 'intellij.moduleSets.missing', which the module-set table does not have",
     "unknown_top_level_set": "module_sets names the module set 'intellij.moduleSets.missing', which the module-set table does not have",
@@ -296,7 +285,7 @@ def _stripped(arguments):
     return [
         argument
         for argument in arguments
-        if not argument.startswith(("--out=", "--source=", "--descriptor=", "--plugin-classpath-prefix=", "--classpath-descriptor="))
+        if not argument.startswith(("--out=", "--descriptor=", "--plugin-classpath-prefix=", "--classpath-descriptor="))
     ]
 
 def _product_content_form_test_impl(ctx):
@@ -331,23 +320,9 @@ def _product_content_form_test_impl(ctx):
         ["c1.xml", "a1.xml", "intellij.fixture.extra.xml", "META-INF/required.xml"],
         _load_paths(arguments, "--descriptor="),
     )
-    asserts.false(env, [argument for argument in arguments if argument.startswith("--source=")])
     return analysistest.end(env)
 
 _product_content_form_test = analysistest.make(_product_content_form_test_impl)
-
-def _product_source_form_test_impl(ctx):
-    env = analysistest.begin(ctx)
-    arguments = _writer_arguments(env, "DevDistProductDescriptor")
-    asserts.equals(env, "--product-descriptor", arguments[0])
-    asserts.true(env, arguments[1].startswith("--out="), arguments[1])
-    asserts.true(env, arguments[2].startswith("--source=") and arguments[2].endswith("_source.xml"), arguments[2])
-    asserts.equals(env, "--main-module=intellij.fixture.product", arguments[3])
-    asserts.equals(env, ["b.xml", "a.xml"], _load_paths(arguments, "--descriptor="))
-    asserts.equals(env, ["--product-descriptor", "--main-module=intellij.fixture.product"], _stripped(arguments))
-    return analysistest.end(env)
-
-_product_source_form_test = analysistest.make(_product_source_form_test_impl)
 
 def _embedded_content_form_test_impl(ctx):
     env = analysistest.begin(ctx)
@@ -407,18 +382,6 @@ def _rule_tests(name):
     )
     tests.append(content_form + "_test")
     _product_content_form_test(name = tests[-1], target_under_test = ":" + content_form)
-
-    source_form = name + "_source_form"
-    dev_dist_product_descriptor(
-        name = source_form,
-        testonly = True,
-        main_module = "intellij.fixture.product",
-        source = _fixture_descriptor(name + "_source"),
-        descriptor_index = index,
-        descriptors = {_fixture_descriptor(name + "_b"): "b.xml", _fixture_descriptor(name + "_a"): "a.xml"},
-    )
-    tests.append(source_form + "_test")
-    _product_source_form_test(name = tests[-1], target_under_test = ":" + source_form)
 
     embedded_main_module = name + "_embedded"
     dev_dist_embedded_product_descriptor(
