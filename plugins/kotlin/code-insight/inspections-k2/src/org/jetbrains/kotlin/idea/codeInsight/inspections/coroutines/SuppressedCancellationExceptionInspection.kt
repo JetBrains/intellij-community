@@ -67,6 +67,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtThrowExpression
 import org.jetbrains.kotlin.psi.KtTryExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.createExpressionByPattern
@@ -362,11 +363,20 @@ internal class SuppressedCancellationExceptionInspection :
     }
 
     /**
-     * See [mayRaiseCancellationAfter] and [suppressesCancellationException].
+     * See [mayHandleCancellationAfter] and [suppressesCancellationException].
      */
     context(session: KaSession)
-    private fun KtExpression.mayDescendantRaiseCancellation(additionalChecks: (KaFunctionCall<*>) -> Boolean = { false }): Boolean {
+    private fun KtExpression.mayDescendantHandleCancellation(additionalChecks: (KaFunctionCall<*>) -> Boolean = { false }): Boolean {
+        // If the user throws _any_ exception, or explicitly references `CancellationException`,
+        // we are defensive and assume the user knows about potentially suppressed exceptions.
         if (anyDescendantOfType<KtThrowExpression>()) return true
+
+        val typeReferences = descendantsOfType<KtTypeReference>()
+        val cancellationExceptionType by lazy(LazyThreadSafetyMode.NONE) {
+            session.typeCreator.classType(CoroutinesIds.Stdlib.Cancellation.CancellationException.ID)
+        }
+        if (typeReferences.any { it.type.isPossiblySubTypeOf(cancellationExceptionType) }) return true
+
         val calls = descendantsOfType<KtCallExpression>()
         for (call in calls) {
             val resolvedCall = call.resolveSuccessfulCall() ?: continue
@@ -384,11 +394,12 @@ internal class SuppressedCancellationExceptionInspection :
      *  - there is a throw expression inside the block,
      *  - the block calls something that always throws,
      *  - the block calls `ensureActive`,
-     *  - or the exception is passed to any function that does more than logging.
+     *  - the exception is passed to any function that does more than logging,
+     *  - or `CancellationException` is mentioned explicitly, such as in an `is` check.
      */
     context(session: KaSession)
     private fun KtBlockExpression.suppressesCancellationException(): Boolean {
-        return !mayDescendantRaiseCancellation { resolvedCall ->
+        return !mayDescendantHandleCancellation { resolvedCall ->
             val consumesThrowable = resolvedCall.combinedArgumentMapping.values
                 .any { it.returnType.isSubtypeOf(StandardClassIds.Throwable) }
             consumesThrowable && !resolvedCall.isLoggingOnlyCall()
@@ -396,12 +407,12 @@ internal class SuppressedCancellationExceptionInspection :
     }
 
     /**
-     * Checks if the code that might be executed after/"below" the given element may raise a cancellation exception.
+     * Checks if the code that might be executed after/"below" the given element may handle a cancellation exception.
      * Given the containing block and all of its parents in the same function, we check all statements "below" the element
-     * to see if they may raise a cancellation exception, see [mayRaiseCancellation].
+     * to see if they may handle a cancellation exception, see [mayDescendantHandleCancellation].
      */
     context(session: KaSession)
-    private fun KtElement.mayRaiseCancellationAfter(): Boolean {
+    private fun KtElement.mayHandleCancellationAfter(): Boolean {
         var current: KtElement? = this
         while (current != null) {
             // We reached the boundary of our search scope
@@ -413,7 +424,7 @@ internal class SuppressedCancellationExceptionInspection :
                 val finallyBlock = current.finallyBlock
                 // The special case is only necessary if we did not come from the finally block before
                 val isDescendantOfFinally = PsiTreeUtil.isAncestor(finallyBlock, this, true)
-                if (finallyBlock != null && !isDescendantOfFinally && finallyBlock.finalExpression.mayDescendantRaiseCancellation()) {
+                if (finallyBlock != null && !isDescendantOfFinally && finallyBlock.finalExpression.mayDescendantHandleCancellation()) {
                     return true
                 }
             }
@@ -424,7 +435,7 @@ internal class SuppressedCancellationExceptionInspection :
                 val siblingsInBlock = current.siblings(forward = true, withSelf = false)
                     .filterIsInstance<KtExpression>()
                 for (statement in siblingsInBlock) {
-                    if (statement.mayDescendantRaiseCancellation()) {
+                    if (statement.mayDescendantHandleCancellation()) {
                         return true
                     }
                 }
@@ -542,8 +553,8 @@ internal class SuppressedCancellationExceptionInspection :
         } ?: return null
 
         // We do the following checks after running the detection because they are heavy performance wise
-        if (element.mayRaiseCancellationAfter()) {
-            // The code after the `runCatching` or `catch` already potentially re-raises the CancellationException
+        if (element.mayHandleCancellationAfter()) {
+            // The code after the `runCatching` or `catch` already potentially handles the CancellationException
             return null
         }
         val scopeContext = element.containingKtFile.scopeContext(element)

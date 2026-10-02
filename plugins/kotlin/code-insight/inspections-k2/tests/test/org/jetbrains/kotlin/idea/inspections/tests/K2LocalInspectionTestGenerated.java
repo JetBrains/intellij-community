@@ -17598,6 +17598,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                     runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_getOrElseCallsError.kt");
                 }
 
+                @TestMetadata("runCatching_getOrElseChecksCancellation.kt")
+                public void testRunCatching_getOrElseChecksCancellation() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_getOrElseChecksCancellation.kt");
+                }
+
                 @TestMetadata("runCatching_getOrElseRethrows.kt")
                 public void testRunCatching_getOrElseRethrows() throws Exception {
                     runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_getOrElseRethrows.kt");
@@ -17733,6 +17738,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                     runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_onFailureStoredInVariable.kt");
                 }
 
+                @TestMetadata("runCatching_onFailureWhenIsCancellation.kt")
+                public void testRunCatching_onFailureWhenIsCancellation() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_onFailureWhenIsCancellation.kt");
+                }
+
                 @TestMetadata("runCatching_onSuccessThenGetOrNull.kt")
                 public void testRunCatching_onSuccessThenGetOrNull() throws Exception {
                     runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/runCatching_onSuccessThenGetOrNull.kt");
@@ -17861,6 +17871,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 @TestMetadata("tryCatchException_callsFunctionWithoutException.kt")
                 public void testTryCatchException_callsFunctionWithoutException() throws Exception {
                     runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_callsFunctionWithoutException.kt");
+                }
+
+                @TestMetadata("tryCatchException_cancellationCheckInOtherClause.kt")
+                public void testTryCatchException_cancellationCheckInOtherClause() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_cancellationCheckInOtherClause.kt");
+                }
+
+                @TestMetadata("tryCatchException_checksCancellation.kt")
+                public void testTryCatchException_checksCancellation() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_checksCancellation.kt");
+                }
+
+                @TestMetadata("tryCatchException_checksCancellationTypeAlias.kt")
+                public void testTryCatchException_checksCancellationTypeAlias() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suppressedCancellationException/tryCatchException_checksCancellationTypeAlias.kt");
                 }
 
                 @TestMetadata("tryCatchException_coroutineContextEnsureActive.kt")
