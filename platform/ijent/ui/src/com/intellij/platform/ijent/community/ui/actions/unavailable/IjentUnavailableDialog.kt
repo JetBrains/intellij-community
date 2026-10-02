@@ -26,6 +26,7 @@ import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.ijent.IjentCallerContext
 import com.intellij.platform.ijent.IjentMachine
 import com.intellij.platform.ijent.IjentSession
+import com.intellij.platform.ijent.IjentSessionState
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandler
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableUserDecisionException
 import com.intellij.platform.ijent.community.impl.nio.ReconnectUiDialogImpl
@@ -33,6 +34,7 @@ import com.intellij.platform.ijent.community.impl.nio.ReconnectUiHandleImpl
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
 import com.intellij.platform.ijent.community.ui.actions.dashboard.IjentStatDashboard
 import com.intellij.platform.ijent.community.ui.actions.dashboard.printTable
+import com.intellij.platform.ijent.runningIjentSessionOrNull
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
@@ -51,7 +53,6 @@ import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -141,15 +142,15 @@ class IjentUnavailableDialogHandler : IjentUnavailableHandler {
     }?.let {
       DialogParams.ProjectIjent(eelDescriptor, it)
     } ?: DialogParams.UnrelatedIjent(eelDescriptor, ProjectManager.getInstance().defaultProject)
-    LOG.warn("Ijent is unavailable. Modal dialog will be shown.")
+    val sessionState = eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.ijentSessionState
+    val capturedInitialSession = (sessionState?.value as? IjentSessionState.Deployed)?.session
+    LOG.warn("IJent for ${eelDescriptor.name} is unavailable (${sessionState?.value.debugString(eelDescriptor)}). Modal dialog will be shown.")
     NotRespondingFilesystemDialogService.getInstance().doOnceOrWait(dialogParams, uiHandle::setDialogSession) { dialogSession ->
-      val capturedSession = eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()
       coroutineScope {
-        val sessionState = MutableStateFlow(capturedSession)
         launch(Dispatchers.IO) {
-          logIjentDiagnostics(sessionState)
+          logIjentDiagnostics(eelDescriptor, sessionState, capturedInitialSession)
         }
-        showCloseProjectDialog(dialogSession, dialogParams, sessionState)
+        showCloseProjectDialog(dialogSession, dialogParams, sessionState, capturedInitialSession)
       }
     }
   }
@@ -168,13 +169,14 @@ class IjentUnavailableDialogHandler : IjentUnavailableHandler {
   private suspend fun showCloseProjectDialog(
     dialogSession: CompletableDeferred<ReconnectUiDialogImpl>,
     dialogParams: DialogParams,
-    sessionState: StateFlow<IjentSession?>,
+    sessionState: StateFlow<IjentSessionState>?,
+    capturedSession: IjentSession?,
   ): Nothing {
     val coroutineContext = currentCoroutineContext()
     suspendCancellableCoroutine<Nothing> { cont ->
       val builder = DialogBuilder(dialogParams.projectList.first()).apply {
         setTitle(IjentImplBundle.message("dialog.title.ijent.unavailable"))
-        setCenterPanel(createCenterPanel(dialogParams, sessionState))
+        setCenterPanel(createCenterPanel(dialogParams, sessionState, capturedSession))
         DialogBuilder.CancelActionDescriptor().getAction(dialogWrapper).isEnabled = false
         when (dialogParams) {
           is DialogParams.ProjectIjent -> {
@@ -211,13 +213,13 @@ class IjentUnavailableDialogHandler : IjentUnavailableHandler {
               }
               WelcomeFrame.showIfNoProjectOpened()
             }
-            sessionState.value?.takeIf { it.isRunning }?.close()
+            dialogParams.eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.ijentSessionState?.value?.runningIjentSessionOrNull?.close()
             throw IjentUnavailableUserDecisionException(
               "The user chose to close the project instead of waiting for IJent ${dialogParams.eelDescriptor}."
             )
           }
           is DialogParams.UnrelatedIjent -> {
-            sessionState.value?.takeIf { it.isRunning }?.close()
+            dialogParams.eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.ijentSessionState?.value?.runningIjentSessionOrNull?.close()
             throw IjentUnavailableUserDecisionException(
               "The user chose to stop IJent ${dialogParams.eelDescriptor}, which has no open projects."
             )
@@ -230,7 +232,7 @@ class IjentUnavailableDialogHandler : IjentUnavailableHandler {
     }
   }
 
-  private fun Panel.createDefaultPanel(dialogParams: DialogParams, sessionState: StateFlow<IjentSession?>) {
+  private fun Panel.createDefaultPanel(dialogParams: DialogParams, sessionState: StateFlow<IjentSessionState>?) {
     row {
       icon(AllIcons.General.WarningDialog)
         .align(AlignY.TOP)
@@ -258,14 +260,17 @@ class IjentUnavailableDialogHandler : IjentUnavailableHandler {
     }
   }
 
-  private fun createCenterPanel(dialogParams: DialogParams, sessionState: StateFlow<IjentSession?>): JComponent {
-    val session = sessionState.value
-    val statTab = session?.let { IjentStatDashboard(it.eventBus.counter) }
+  private fun createCenterPanel(
+    dialogParams: DialogParams,
+    sessionState: StateFlow<IjentSessionState>?,
+    capturedSession: IjentSession?,
+  ): JComponent {
+    val statTab = capturedSession?.let { IjentStatDashboard(it.eventBus.counter) }
     val preferredWidth = maxOf(480, statTab?.component?.preferredSize?.width ?: 0)
     return panel {
       createDefaultPanel(dialogParams, sessionState)
       if (statTab != null) {
-        createStatPanel(statTab, session.getIjentInstance(dialogParams.eelDescriptor))
+        createStatPanel(statTab, capturedSession, dialogParams.eelDescriptor)
       }
     }
       .withBorder(JBUI.Borders.empty(16, 12, 8, 12))
@@ -273,11 +278,11 @@ class IjentUnavailableDialogHandler : IjentUnavailableHandler {
       .withMinimumWidth(200)
   }
 
-  private fun Panel.createStatPanel(statDashboard: IjentStatDashboard, eelApi: EelApi) {
+  private fun Panel.createStatPanel(statDashboard: IjentStatDashboard, capturedSession: IjentSession, eelDescriptor: EelDescriptor) {
     statDashboard.component.launchOnShow("ping request") {
-      makePingRequest(eelApi)
+      makePingRequest(capturedSession.getIjentInstance(eelDescriptor))
     }
-    collapsibleGroup(IjentImplBundle.message("tab.title.ijent.dashboard.stat")) {
+    collapsibleGroup(IjentImplBundle.message("tab.title.ijent.dashboard.stat.for.session", capturedSession.debugString(eelDescriptor))) {
       row {
         cell(statDashboard.component)
       }
@@ -288,7 +293,7 @@ class IjentUnavailableDialogHandler : IjentUnavailableHandler {
     eelApi.fs.stat(eelApi.userInfo.home).eelIt()
   }
 
-  private fun Panel.bindIjentSessionState(dialogParams: DialogParams, sessionState: StateFlow<IjentSession?>) {
+  private fun Panel.bindIjentSessionState(dialogParams: DialogParams, sessionState: StateFlow<IjentSessionState>?) {
     row {
       val description = when (dialogParams) {
         is DialogParams.ProjectIjent -> IjentImplBundle.message("label.projects.below.should.be.closed")
@@ -301,13 +306,16 @@ class IjentUnavailableDialogHandler : IjentUnavailableHandler {
         .customize(UnscaledGaps(bottom = 12))
         .component
       statusText.launchOnShow("monitor IJent session") {
-        sessionState.collectLatest { session ->
+        sessionState?.collectLatest { state ->
+          val sessionDebugString = (state as? IjentSessionState.Deployed)?.session?.debugString(dialogParams.eelDescriptor)
           while (true) {
-            statusText.text = if (session?.isRunning == true) {
-              IjentImplBundle.message("label.ijent.status.running")
-            }
-            else {
-              IjentImplBundle.message("label.ijent.status.stopped")
+            statusText.text = when (state) {
+              is IjentSessionState.Deployed if state.session.isRunning ->
+                IjentImplBundle.message("label.ijent.status.running", sessionDebugString!!)
+              is IjentSessionState.Deployed -> IjentImplBundle.message("label.ijent.status.stopped", sessionDebugString!!)
+              is IjentSessionState.Deploying -> IjentImplBundle.message("label.ijent.status.deploying")
+              is IjentSessionState.Failed -> IjentImplBundle.message("label.ijent.status.failed")
+              is IjentSessionState.NotDeployed -> IjentImplBundle.message("label.ijent.status.none")
             }
             delay(1.seconds)
           }
@@ -316,20 +324,39 @@ class IjentUnavailableDialogHandler : IjentUnavailableHandler {
     }
   }
 
-  private suspend fun logIjentDiagnostics(sessionState: StateFlow<IjentSession?>) {
+  private suspend fun logIjentDiagnostics(
+    eelDescriptor: EelDescriptor,
+    sessionState: StateFlow<IjentSessionState>?,
+    capturedSession: IjentSession?,
+  ) {
     var backOff = 2.seconds
     while (true) {
-      val session = sessionState.value?.takeIf { it.isRunning }
-      val statTable = session?.eventBus?.counter?.snapshot()?.printTable()
+      val statTable = capturedSession?.eventBus?.counter?.snapshot()?.printTable()
       val path = PerformanceWatcher.getInstance().dumpThreads("ijent", true, true)
-      LOG.warn("Ijent is unavailable. Thread dump saved to $path.")
+      LOG.warn(
+        "IJent for ${eelDescriptor.name} is unavailable (${sessionState?.value.debugString(eelDescriptor)}). Thread dump saved to $path."
+      )
       if (statTable != null) {
-        LOG.warn("Calls statistics:\n\n$statTable")
+        LOG.warn("Calls statistics for captured ${capturedSession.debugString(eelDescriptor)}:\n\n$statTable")
       }
       delay(backOff)
       backOff *= 2
     }
   }
+}
+
+private fun IjentSession.debugString(eelDescriptor: EelDescriptor): String {
+  val objectId = System.identityHashCode(this).toString(16)
+  val remotePid = getIjentInstance(eelDescriptor).ijentProcessInfo.remotePid.value
+  return "IjentSession@$objectId(remotePid=$remotePid)"
+}
+
+private fun IjentSessionState?.debugString(eelDescriptor: EelDescriptor): String = when (this) {
+  is IjentSessionState.Deployed -> "${session.debugString(eelDescriptor)}, ${if (session.isRunning) "running" else "stopped"}"
+  is IjentSessionState.Deploying -> "deploying"
+  is IjentSessionState.Failed -> "deployment failed: ${cause.message ?: cause.javaClass.name}"
+  is IjentSessionState.NotDeployed -> "not deployed"
+  null -> "session state unavailable"
 }
 
 private fun DialogWrapper.registerWhenShowing(dialogSession: CompletableDeferred<ReconnectUiDialogImpl>) {
