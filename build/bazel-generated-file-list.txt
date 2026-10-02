@@ -936,6 +936,7 @@ platform/platform-impl/bootstrap
 platform/platform-impl/bootstrap/eel
 platform/platform-impl/bootstrap/kernel
 platform/platform-impl/codeinsight-inline
+platform/platform-impl/color-picker
 platform/platform-impl/concurrency
 platform/platform-impl/designer
 platform/platform-impl/eel

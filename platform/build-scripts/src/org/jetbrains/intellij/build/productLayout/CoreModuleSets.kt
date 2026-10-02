@@ -305,6 +305,8 @@ object CoreModuleSets {
 
     embeddedModule("intellij.platform.remote.core")
     module("intellij.platform.ide.remote")
+    // intellij.platform.ide.impl shows the color picker popup through the service of this module
+    module("intellij.platform.ide.colorPicker")
     module("intellij.platform.threadDumpParser")
     module("intellij.platform.ide.favoritesTreeView")
     // todo not used by platform - move to plugin

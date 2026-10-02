@@ -9,7 +9,6 @@ import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
@@ -18,24 +17,15 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.colorpicker.ColorPickerBuilder;
-import com.intellij.ui.colorpicker.ColorPickerComponentProvider;
-import com.intellij.ui.colorpicker.ColorPickerModel;
-import com.intellij.ui.colorpicker.ColorPipetteButton;
-import com.intellij.ui.colorpicker.LightCalloutPopup;
-import com.intellij.ui.colorpicker.MaterialGraphicalColorPipetteProvider;
-import com.intellij.ui.colorpicker.RecentColorsPalette;
 import com.intellij.ui.picker.ColorListener;
 import com.intellij.ui.picker.ColorPickerPopupCloseListener;
 import com.intellij.ui.picker.ColorPipette;
@@ -51,7 +41,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -61,7 +50,6 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.UIManager;
@@ -82,7 +70,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Insets;
-import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
@@ -95,7 +82,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
@@ -454,7 +440,8 @@ public final class ColorPicker extends JPanel implements ColorListener, Document
                                    boolean showAlpha,
                                    boolean showAlphaAsPercent,
                                    final @Nullable ColorPickerPopupCloseListener popupCloseListener) {
-    if( !isEnoughSpaceToShowPopup() || !Registry.is("ide.new.color.picker")) {
+    ColorPickerPopupProvider popupProvider = ApplicationManager.getApplication().getService(ColorPickerPopupProvider.class);
+    if (popupProvider == null || !isEnoughSpaceToShowPopup() || !Registry.is("ide.new.color.picker")) {
       Color color = showDialog(IdeFocusManager.getGlobalInstance().getFocusOwner(), IdeBundle.message("dialog.title.choose.color"),
                                currentColor, showAlpha, null, showAlphaAsPercent);
       if (color != null) {
@@ -462,69 +449,25 @@ public final class ColorPicker extends JPanel implements ColorListener, Document
       }
       return;
     }
-    Ref<LightCalloutPopup> ref = Ref.create();
+    popupProvider.showPopup(project, currentColor, listener, location, showAlpha, showAlphaAsPercent, popupCloseListener);
+  }
 
-    ColorListener colorListener = new ColorListener() {
-      final Object groupId = new Object();
-      final Alarm alarm = new Alarm();
+  /**
+   * Returns the saved recent colors of the color picker.
+   */
+  @ApiStatus.Internal
+  public static @NotNull List<Color> getRecentColors() {
+    return RecentColorsComponent.getRecentColors();
+  }
 
-      @Override
-      public void colorChanged(final Color color, final Object source) {
-        Runnable apply = () -> CommandProcessor.getInstance().executeCommand(project,
-                                                                             () -> listener.colorChanged(color, source),
-                                                                             IdeBundle.message("command.name.apply.color"),
-                                                                             groupId);
-        alarm.cancelAllRequests();
-        Runnable request = () -> ApplicationManager.getApplication().invokeLaterOnWriteThread(apply);
-        if (source instanceof ColorPipetteButton && ((ColorPipetteButton)source).getCurrentState() == ColorPipetteButton.PipetteState.UPDATING) {
-          alarm.addRequest(request, 150);
-        } else {
-          request.run();
-        }
-      }
-    };
-
-    List<Color> recentColors = RecentColorsComponent.getRecentColors();
-    ColorPickerBuilder builder = new ColorPickerBuilder(showAlpha, showAlphaAsPercent)
-      .setOriginalColor(currentColor)
-      .addSaturationBrightnessComponent()
-      .addColorAdjustPanel(new MaterialGraphicalColorPipetteProvider())
-      .addColorValuePanel().withFocus();
-    if (!recentColors.isEmpty()) {
-      builder/*.addSeparator()*/
-        .addCustomComponent(new ColorPickerComponentProvider() {
-          @Override
-          public @NotNull JComponent createComponent(@NotNull ColorPickerModel colorPickerModel) {
-            return new RecentColorsPalette(colorPickerModel, recentColors);
-          }
-        });
-    }
-      builder.addColorListener(colorListener,true)
-      .addColorListener(new ColorListener() {
-        @Override
-        public void colorChanged(Color color, Object source) {
-          updatePointer(ref);
-        }
-      }, true)
-        .addColorListener(new ColorListener() {
-          @Override
-          public void colorChanged(Color color, Object source) {
-            RecentColorsComponent.saveRecentColors(RecentColorsComponent.appendColor(color, recentColors, 20));
-          }
-        }, false)
-      .focusWhenDisplay(true)
-      .setFocusCycleRoot(true)
-      .addKeyAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelPopup(ref))
-      .addKeyAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), applyColor(ref))
-      .setPopupCloseListener(popupCloseListener);
-    LightCalloutPopup popup = builder.build();
-    ref.set(popup);
-
-    if (location == null) {
-      location = new RelativePoint(MouseInfo.getPointerInfo().getLocation());
-    }
-    popup.show(location.getScreenPoint());
-    updatePointer(ref);
+  /**
+   * Puts the color first in the recent colors, keeps at most 20 colors, and saves them.
+   *
+   * @param recentColors the recent colors from {@link #getRecentColors()}
+   */
+  @ApiStatus.Internal
+  public static void saveRecentColor(@NotNull Color color, @NotNull List<? extends Color> recentColors) {
+    RecentColorsComponent.saveRecentColors(RecentColorsComponent.appendColor(color, recentColors, 20));
   }
 
   private static boolean isEnoughSpaceToShowPopup() {
@@ -533,43 +476,6 @@ public final class ColorPicker extends JPanel implements ColorListener, Document
       return false;
     }
     return true;
-  }
-
-  private static void updatePointer(Ref<LightCalloutPopup> ref) {
-    LightCalloutPopup popup = ref.get();
-    Balloon balloon = popup.getBalloon();
-    if (balloon instanceof BalloonImpl) {
-      RelativePoint showingPoint = ((BalloonImpl)balloon).getShowingPoint();
-      Color c = popup.getPointerColor(showingPoint, ((BalloonImpl)balloon).getComponent());
-      if (c != null) {
-        c = ColorUtil.withAlpha(c, 1.0); //clear transparency
-      }
-      ((BalloonImpl)balloon).setPointerColor(c);
-    }
-  }
-
-  private static @NotNull AbstractAction cancelPopup(Ref<LightCalloutPopup> ref) {
-    return new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final LightCalloutPopup popup = ref.get();
-        if (popup != null) {
-          popup.cancel();
-        }
-      }
-    };
-  }
-
-  private static @NotNull AbstractAction applyColor(Ref<LightCalloutPopup> ref) {
-    return new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final LightCalloutPopup popup = ref.get();
-        if (popup != null) {
-          popup.close();
-        }
-      }
-    };
   }
 
   private JComponent buildTopPanel(boolean enablePipette) throws ParseException {

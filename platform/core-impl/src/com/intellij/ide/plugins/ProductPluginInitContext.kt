@@ -464,6 +464,7 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.platform.execution.dashboard",
   "intellij.platform.feedback",
   "intellij.platform.ide.socketConnection",
+  "intellij.platform.ide.colorPicker",
   "intellij.platform.externalSystem",
   "intellij.platform.externalSystem.impl",
   "intellij.platform.tasks",
