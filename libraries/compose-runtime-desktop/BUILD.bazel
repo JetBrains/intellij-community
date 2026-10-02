@@ -38,7 +38,6 @@ jvm_library(
         "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-desktop",
         "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop",
         "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-retain-desktop",
-        "//libraries/jspecify",
     ],
 )
 
@@ -60,6 +59,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":compose-runtime-desktop",
+        "//libraries/jspecify",
         "//libraries/jspecify:jspecify_test_lib",
     ],
 )

@@ -323,7 +323,7 @@ object LibraryModuleSets {
    * Each entry is a shared-set placement under ADR 0005 that a plugin-private copy could replace.
    */
   fun librariesIdeCommon(): ModuleSet = moduleSet("libraries.ide.common") {
-    // the jspecify annotations; the Compose runtime, Gradle, Kotlin, Android and other plugins depend on them
+    // the jspecify annotations; Gradle, Kotlin, Android and other plugins depend on them
     module("intellij.libraries.jspecify")
     module("intellij.libraries.javax.activation")
     module("intellij.libraries.opencsv")

@@ -306,7 +306,6 @@ object CommunityModuleSets {
    * [ideCommon] does not nest this set. A product that bundles the plugin [COMPOSE_PLUGIN_MODULE] adds it,
    * because the plugin content modules depend on `intellij.libraries.compose.runtime.desktop`.
    * The renderer stack with Skiko, Compose Foundation and Jewel is content of that plugin.
-   * `intellij.libraries.compose.runtime.desktop` depends on the jspecify annotations from [LibraryModuleSets.librariesIdeCommon].
    */
   fun composeRuntime(): ModuleSet = moduleSet("compose.runtime") {
     module("intellij.libraries.compose.runtime.desktop")
