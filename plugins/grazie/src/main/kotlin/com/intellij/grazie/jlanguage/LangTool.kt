@@ -3,16 +3,26 @@ package com.intellij.grazie.jlanguage
 
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.LanguageISO
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieDynamic
+import com.intellij.grazie.GrazieScope
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.broker.GrazieDynamicDataBroker
 import com.intellij.grazie.jlanguage.filters.UppercaseMatchFilter
 import com.intellij.grazie.jlanguage.hunspell.LuceneHunspellDictionary
+import com.intellij.grazie.spellcheck.async.AsyncUtils
 import com.intellij.grazie.utils.TextStyleDomain
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.CollectionFactory.createConcurrentSoftValueMap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.languagetool.JLanguageTool
 import org.languagetool.ResultCache
 import org.languagetool.Tag
@@ -33,6 +43,8 @@ internal const val CACHE_SIZE: Long = 1024
 
 object LangTool : GrazieStateLifecycle {
   private val langs: MutableMap<Lang, MutableMap<TextStyleDomain, JLanguageTool>> = ConcurrentHashMap()
+  /** The tools under creation in the background. */
+  private val toolsInCreation: MutableSet<Pair<Lang, TextStyleDomain>> = ConcurrentHashMap.newKeySet()
   private val rulesEnabledByDefault = ConcurrentHashMap<Lang, MutableMap<TextStyleDomain, Set<String>>>()
   private val inappropriateExamples = mapOf(
     "DT_NNS_AGREEMENT" to setOf("small children and their mothers", "eternal rest")
@@ -73,6 +85,38 @@ object LangTool : GrazieStateLifecycle {
       }
     }
   }
+  /**
+   * Returns the tool for [lang] and [domain] when it exists. Otherwise it starts the creation in the background and returns null.
+   * The creation parses the rule files and takes hundreds of milliseconds on the first use. Once the tool is ready, the daemon
+   * restarts in every open project, so a highlighting pass that skipped the check gets its problems later.
+   */
+  fun getToolOrScheduleCreation(lang: Lang, domain: TextStyleDomain): JLanguageTool? {
+    val tool = langs[lang]?.get(domain)
+    if (tool != null) return tool
+    val key = lang to domain
+    if (!toolsInCreation.add(key)) return null
+    GrazieScope.coroutineScope().launch(Dispatchers.Default) {
+      val created = try {
+        getTool(lang, domain)
+        true
+      }
+      catch (e: Throwable) {
+        rethrowControlFlowException(e)
+        thisLogger().warn("LanguageTool creation failed for ${lang.displayName}", e)
+        false
+      }
+      finally {
+        toolsInCreation.remove(key)
+      }
+      if (created) {
+        withContext(Dispatchers.EDT) {
+          AsyncUtils.restartInspection(ApplicationManager.getApplication(), "LanguageTool for ${lang.displayName} is ready")
+        }
+      }
+    }
+    return null
+  }
+
   internal fun createTool(lang: Lang, state: GrazieConfig.State, domain: TextStyleDomain): JLanguageTool {
     val jLanguage = lang.jLanguage
     require(jLanguage != null) { "Trying to get LangTool for not available language ${lang.displayName}" }

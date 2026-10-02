@@ -7,6 +7,7 @@ import com.intellij.grazie.detection.toAvailableLang
 import com.intellij.grazie.ide.ui.components.utils.html
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
+import com.intellij.grazie.spellcheck.async.AsyncUtils
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.RuleGroup
 import com.intellij.grazie.text.TextChecker
@@ -73,7 +74,7 @@ open class LanguageToolChecker : TextChecker() {
   }
 
   private fun collectLanguageToolProblems(extracted: TextContent, lang: Lang, domain: TextStyleDomain): List<Problem> {
-    val tool = LangTool.getTool(lang, domain)
+    val tool = toolFor(lang, domain) ?: return emptyList()
     val sentences = tool.sentenceTokenize(extracted.toString())
     if (sentences.any { it.length > 1000 }) {
       return emptyList()
@@ -97,6 +98,12 @@ open class LanguageToolChecker : TextChecker() {
         extracted.hasUnknownFragmentsIn(range)
       }
       .toList()
+  }
+
+  /** Outside tests, a tool that does not exist yet is created in the background, and the daemon restarts when it is ready. */
+  private fun toolFor(lang: Lang, domain: TextStyleDomain): JLanguageTool? {
+    if (AsyncUtils.isNonAsyncMode()) return LangTool.getTool(lang, domain)
+    return LangTool.getToolOrScheduleCreation(lang, domain)
   }
 
   private fun checkQuotedText(extracted: TextContent, tool: JLanguageTool): Predicate<RuleMatch> = when {
