@@ -44,6 +44,10 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.jetbrains.rider.cpp.icons",
         iconDirectory = "icons/expui",
       )
+      "intellij.rider.cpp.core.languages" -> IntellijIconClassGeneratorModuleConfig(
+        className = "RiderCppCoreLanguagesIcons",
+        packageName = "com.jetbrains.rider.cpp.fileType.icons",
+      )
       "intellij.clouds.docker.gateway" -> IntellijIconClassGeneratorModuleConfig(
         className = "DockerGatewayIcons",
         packageName = "com.intellij.clouds.docker.gateway"
