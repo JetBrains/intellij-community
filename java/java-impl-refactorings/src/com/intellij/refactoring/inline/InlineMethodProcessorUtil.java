@@ -4,6 +4,7 @@ package com.intellij.refactoring.inline;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -31,6 +32,7 @@ import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiImportStaticReferenceElement;
@@ -110,6 +112,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
@@ -228,7 +231,7 @@ public final class InlineMethodProcessorUtil {
     else if (reference instanceof PsiMethodReferenceExpression ref) {
       processSideEffectsInMethodReferenceQualifier(conflicts, ref);
     }
-    addInaccessibleMemberConflicts(method, usages, new ReferencedElementsCollector(), conflicts);
+    addInaccessibleMemberConflicts(method, usages, new ReferencedElementsCollector(), conflicts, true);
     addInaccessibleSuperCallsConflicts(method, usages, conflicts);
   }
 
@@ -236,19 +239,75 @@ public final class InlineMethodProcessorUtil {
                                                     UsageInfo[] usages,
                                                     ReferencedElementsCollector collector,
                                                     MultiMap<PsiElement, @DialogMessage String> conflicts) {
+    addInaccessibleMemberConflicts(method, usages, collector, conflicts, false);
+  }
+
+  /**
+   * @param useAccessors if true, the inlining replaces an inaccessible field reference with an accessor call
+   *                     when {@link FieldAccessFixer} finds one. Then the conflict is not reported for an exact accessor,
+   *                     and a hint is reported for an overridable accessor.
+   */
+  private static void addInaccessibleMemberConflicts(PsiMethod method,
+                                                     UsageInfo[] usages,
+                                                     ReferencedElementsCollector collector,
+                                                     MultiMap<PsiElement, @DialogMessage String> conflicts,
+                                                     boolean useAccessors) {
     PsiCodeBlock body = Objects.requireNonNull(method.getBody());
     body.accept(collector);
     final Map<PsiMember, Set<PsiMember>> locationsToInaccessibles = getInaccessible(collector.myReferencedMembers, usages, method);
     String methodDescription = RefactoringUIUtil.getDescription(method, true);
     locationsToInaccessibles.forEach((container, inaccessibles) -> {
+      final String containerDescription = RefactoringUIUtil.getDescription(container, true);
+      PsiElement place = useAccessors ? findUsageInContainer(usages, container) : null;
       for (PsiMember inaccessible : inaccessibles) {
         final String referencedDescription = RefactoringUIUtil.getDescription(inaccessible, true);
-        final String containerDescription = RefactoringUIUtil.getDescription(container, true);
-        String message = RefactoringBundle.message("0.which.is.used.in.1.not.accessible.from.call.site.s.in.2",
-                                                   referencedDescription, methodDescription, containerDescription);
+        List<FieldAccessFixer> fixers = place != null && inaccessible instanceof PsiField field
+                                        ? getAccessorFixers(body, field, place)
+                                        : null;
+        String message;
+        if (fixers == null) {
+          message = RefactoringBundle.message("0.which.is.used.in.1.not.accessible.from.call.site.s.in.2",
+                                              referencedDescription, methodDescription, containerDescription);
+        }
+        else if (ContainerUtil.and(fixers, fixer -> fixer.kind() == FieldAccessFixer.AccessorKind.EXACT)) {
+          continue;
+        }
+        else {
+          String className = Objects.requireNonNull(inaccessible.getContainingClass()).getName();
+          String accessors = StreamEx.of(fixers).map(FieldAccessFixer::accessorName).distinct().sorted()
+            .map(name -> "<b><code>" + className + "." + name + "()</code></b>").collect(NlsMessages.joiningAnd());
+          message = JavaRefactoringBundle.message("inline.method.field.replaced.with.overridable.accessor",
+                                                  referencedDescription, containerDescription, accessors);
+        }
         conflicts.putValue(usages.length == 1 ? inaccessible : container, StringUtil.capitalize(message));
       }
     });
+  }
+
+  private static @Nullable PsiElement findUsageInContainer(UsageInfo @NotNull [] usages, @NotNull PsiMember container) {
+    for (UsageInfo usage : usages) {
+      PsiElement element = usage.getElement();
+      if (element != null && ConflictsUtil.getContainer(element) == container) return element;
+    }
+    return null;
+  }
+
+  /**
+   * @return the fixers that replace every reference to the field in the body with an accessor call at the place;
+   * null if some reference has no fixer, or has only a name-based one
+   */
+  private static @Nullable List<FieldAccessFixer> getAccessorFixers(@NotNull PsiCodeBlock body,
+                                                                    @NotNull PsiField field,
+                                                                    @NotNull PsiElement place) {
+    List<FieldAccessFixer> fixers = new ArrayList<>();
+    for (PsiReferenceExpression ref : SyntaxTraverser.psiTraverser(body).filter(PsiReferenceExpression.class)) {
+      PsiElement target = ref.resolve();
+      if (target != field) continue;
+      FieldAccessFixer fixer = FieldAccessFixer.create(ref, target, place);
+      if (fixer == null || fixer.kind() == FieldAccessFixer.AccessorKind.NAME_BASED) return null;
+      fixers.add(fixer);
+    }
+    return fixers.isEmpty() ? null : fixers;
   }
 
   /**
