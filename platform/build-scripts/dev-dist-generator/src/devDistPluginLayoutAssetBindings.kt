@@ -15,9 +15,7 @@ import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginReference
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
-import org.jetbrains.intellij.build.getLibraryRoots
 import org.jetbrains.intellij.build.impl.BazelTargetsInfo
-import java.nio.file.Path
 
 data class GeneratedDevPluginLayoutAssetBindings(
   @JvmField val facts: PluginSymbolicPreparationFacts,
@@ -356,15 +354,14 @@ private class DevPluginLayoutAssetSourceResolver(
     val description = requireNotNull(index.targets.projectLibraries.get(source.name)) {
       "Project library '${source.name}' has no Bazel target record"
     }
-    val roots = outputProvider.findLibraryRoots(source.name, moduleLibraryModuleName = null)
-    return ResolvedLayoutAssetSource(listOf(libraryReference(DevDistPluginLibraryInput(source.name), description, roots, "project library '${source.name}'")))
+    return ResolvedLayoutAssetSource(listOf(libraryReference(DevDistPluginLibraryInput(source.name), description, "project library '${source.name}'")))
   }
 
   private fun resolveModuleLibrary(source: DevPluginLayoutAssetSource.ModuleLibrary): ResolvedLayoutAssetSource {
     val module = requireNotNull(outputProvider.findModule(source.module)) {
       "Layout callback '$key' found no module '${source.module}'"
     }
-    val library = requireNotNull(module.libraryCollection.libraries.singleOrNull { it.name == source.name }) {
+    require(module.libraryCollection.libraries.singleOrNull { it.name == source.name } != null) {
       "Layout callback '$key' found no module library '${source.name}' in '${source.module}'"
     }
     val description = requireNotNull(index.targets.modules.get(source.module)?.moduleLibraries?.get(source.name)) {
@@ -373,29 +370,26 @@ private class DevPluginLayoutAssetSourceResolver(
     return ResolvedLayoutAssetSource(listOf(libraryReference(
       input = DevDistPluginLibraryInput(source.name, source.module),
       description = description,
-      roots = getLibraryRoots(library, outputProvider),
       owner = "module library '${source.module}:${source.name}'",
     )))
   }
 
   /**
    * One reference to the library container. The operation input names the container, and the packer expands it to
-   * the member jars the catalogue lists. The recorded jar targets serve one check here: the index and the JPS roots
-   * agree on the member count.
+   * the member jars the catalogue lists. The file name is the base name of the first jar that `bazel-targets.json` records.
    */
   private fun libraryReference(
     input: DevDistPluginLibraryInput,
     description: BazelTargetsInfo.LibraryDescription,
-    roots: List<Path>,
     owner: String,
   ): ResolvedLayoutAssetReference {
-    require(description.jarTargets.size == roots.size && roots.isNotEmpty()) {
-      "The ordered Bazel files and JPS roots differ for $owner: labels=${description.jarTargets.size}, roots=${roots.size}"
+    require(description.jarTargets.size == description.jars.size && description.jars.isNotEmpty()) {
+      "The jar labels and the jar paths differ for $owner: labels=${description.jarTargets.size}, jars=${description.jars.size}"
     }
     val label = index.libraryLabel(input.libraryName, input.moduleName, dependentIsCommunity = false)
     require(label == description.target) { "The container label of $owner does not match the owner index: $label" }
     libraries.add(input)
-    return ResolvedLayoutAssetReference(DevPluginReference(label), requireNotNull(roots.first().fileName).toString(), "archive", library = true)
+    return ResolvedLayoutAssetReference(DevPluginReference(label), jarFileName(description.jars.first()), "archive", library = true)
   }
 
   private fun validateFileName(fileName: String): String {

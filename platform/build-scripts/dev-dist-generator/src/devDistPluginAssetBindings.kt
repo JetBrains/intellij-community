@@ -166,12 +166,11 @@ fun generateDevPluginAssetBindings(
     check(index.libraryLabel(generator.libraryName, owner = null, dependentIsCommunity = false) == library.target) {
       "Project library '${generator.libraryName}' has a stale Bazel container label"
     }
-    val roots = outputProvider.findLibraryRoots(generator.libraryName, moduleLibraryModuleName = null)
-    check(roots.size == 1) {
-      "Project library '${generator.libraryName}' requires one root, but has ${roots.size}"
+    check(library.jars.size == 1) {
+      "Project library '${generator.libraryName}' requires one recorded jar, but has ${library.jars.size}"
     }
-    val fileName = requireNotNull(roots.single().fileName).toString()
-    check(fileName.isNotEmpty()) { "Project library '${generator.libraryName}' has no root filename" }
+    val fileName = jarFileName(library.jars.single())
+    check(fileName.isNotEmpty()) { "Project library '${generator.libraryName}' has no jar file name" }
     val inputFileFacts = DevDistPluginFileFacts(kind = "archive", fileName = fileName)
     val previousFileFacts = fileFacts.putIfAbsent(library.jarTargets.single(), inputFileFacts)
     check(previousFileFacts == null || previousFileFacts == inputFileFacts) {
@@ -472,3 +471,6 @@ private fun isBazelPackage(directory: Path): Boolean {
 private fun joinResourceDestination(parent: String, name: String): String {
   return listOf(parent, name).filter(String::isNotEmpty).joinToString("/")
 }
+
+/** The base name of a jar path that `bazel-targets.json` records in `LibraryDescription.jars`. */
+internal fun jarFileName(jar: String): String = jar.substringAfterLast('/')

@@ -81,7 +81,21 @@ class DevDistRenderDocRuntimeTest {
     assertThat(second.operations.single().layoutAssets).isEqualTo(first.operations.single().layoutAssets)
   }
 
-  private fun bind(checkout: Path, libraryName: String, libraryLabel: String) = generateDevPluginLayoutAssetBindings(
+  @Test
+  fun `the module library binding reads no library file`(@TempDir checkout: Path) {
+    val libraryName = "jetbrains.rd.client.renderdoc.runtime.linux.x86_64"
+    val withFiles = bind(checkout, libraryName = libraryName, libraryLabel = "//plugins/renderdoc:linux")
+    val withoutFiles = bind(checkout, libraryName = libraryName, libraryLabel = "//plugins/renderdoc:linux", libraryRoots = false)
+
+    assertThat(withoutFiles).isEqualTo(withFiles)
+  }
+
+  private fun bind(
+    checkout: Path,
+    libraryName: String,
+    libraryLabel: String,
+    libraryRoots: Boolean = true,
+  ) = generateDevPluginLayoutAssetBindings(
     key = KEY,
     owner = object : DevPluginLayoutAssetOwner {
       override val devPluginLayoutAssetSpec: DevPluginLayoutAssetSpec = DevPluginLayoutAssetSpec(
@@ -92,7 +106,7 @@ class DevDistRenderDocRuntimeTest {
     requestedFormat = "tree",
     index = renderDocIndex(checkout, libraryName = libraryName, libraryLabel = libraryLabel),
     binder = CommunityDevDistHalf.assetBinder,
-    outputProvider = renderDocOutputProvider(checkout, libraryName = libraryName),
+    outputProvider = renderDocOutputProvider(checkout, libraryName = libraryName, libraryRoots = libraryRoots),
   )
 
   private fun renderDocIndex(checkout: Path, libraryName: String, libraryLabel: String): DevDistBazelIndex {
@@ -122,7 +136,7 @@ class DevDistRenderDocRuntimeTest {
     )
   }
 
-  private fun renderDocOutputProvider(checkout: Path, libraryName: String): SourceRootModuleOutputProvider {
+  private fun renderDocOutputProvider(checkout: Path, libraryName: String, libraryRoots: Boolean): SourceRootModuleOutputProvider {
     val project = JpsElementFactory.getInstance().createModel().project
     val module = project.addModule(LIBRARY_MODULE, JpsJavaModuleType.INSTANCE)
     val baseLibrary = module.addModuleLibrary("jetbrains.rd.client.renderdoc", JpsJavaLibraryType.INSTANCE)
@@ -140,8 +154,10 @@ class DevDistRenderDocRuntimeTest {
         file("readme.txt", "ignored")
       }
     }.generate(archive)
-    baseLibrary.addRoot(JpsPathUtil.pathToUrl(baseArchive.toString()), JpsOrderRootType.COMPILED)
-    library.addRoot(JpsPathUtil.pathToUrl(archive.toString()), JpsOrderRootType.COMPILED)
+    if (libraryRoots) {
+      baseLibrary.addRoot(JpsPathUtil.pathToUrl(baseArchive.toString()), JpsOrderRootType.COMPILED)
+      library.addRoot(JpsPathUtil.pathToUrl(archive.toString()), JpsOrderRootType.COMPILED)
+    }
     return SourceRootModuleOutputProvider(project)
   }
 }
