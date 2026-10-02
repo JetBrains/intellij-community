@@ -116,40 +116,15 @@ interface PythonHelpersLocator {
   }
 
   @ApiStatus.Internal
-  fun findRootByJarPath(aClass: Class<*>, moduleName: String, relativePath: String): Path {
-    if (PluginManagerCore.isRunningFromSources()) {
-      return Path.of(PathManager.getCommunityHomePath(), relativePath)
-    }
-
-    getPluginDistDirByClass(aClass)?.let {
-      return it.resolve(PathUtil.getFileName(relativePath))
-    }
-
-    val jarPath = PathUtil.getJarPathForClass(aClass)
-    getPluginBaseDir(jarPath)?.let {
-      return it.resolve(PathUtil.getFileName(relativePath))
-    }
-
-    return Path.of(jarPath).parent.toAbsolutePath().resolve(moduleName)
-  }
-
-  private fun getPluginBaseDir(jarPath: String): Path? {
-    if (jarPath.endsWith(".jar")) {
-      val path = Path.of(jarPath)
-
-      LOG.assertTrue(path.exists(), "$path to plugin base bir does not exists")
-      return path.parent.parent
-    }
-
-    return null
-  }
+  fun findRootByJarPath(aClass: Class<*>, moduleName: String, relativePath: String): Path =
+    findModuleRootByJarPath(aClass, moduleName, relativePath)
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun assertHelpersLayout(root: Path): Path {
     if (!root.exists()) {
       LOG.info("Helpers root does not exist: $root")
     }
-    listOf("generator3", "pycharm", "pycodestyle.py", "pydev", "syspath.py", "typeshed").forEach { child ->
+    listOf("generator3", "pycharm", "pycodestyle.py", "pydev", "syspath.py").forEach { child ->
       if (!root.resolve(child).exists()) {
         LOG.info("No '$child' inside $root")
       }
@@ -160,3 +135,37 @@ interface PythonHelpersLocator {
 }
 
 internal class PythonHelpersLocatorDefault : PythonHelpersLocator
+
+/**
+ * Resolves the root of a resource-only module.
+ *
+ * It works from sources and from an installed plugin.
+ */
+@ApiStatus.Internal
+fun findModuleRootByJarPath(aClass: Class<*>, moduleName: String, relativePath: String): Path {
+  if (PluginManagerCore.isRunningFromSources()) {
+    return Path.of(PathManager.getCommunityHomePath(), relativePath)
+  }
+
+  getPluginDistDirByClass(aClass)?.let {
+    return it.resolve(PathUtil.getFileName(relativePath))
+  }
+
+  val jarPath = PathUtil.getJarPathForClass(aClass)
+  getPluginBaseDir(jarPath)?.let {
+    return it.resolve(PathUtil.getFileName(relativePath))
+  }
+
+  return Path.of(jarPath).parent.toAbsolutePath().resolve(moduleName)
+}
+
+private fun getPluginBaseDir(jarPath: String): Path? {
+  if (jarPath.endsWith(".jar")) {
+    val path = Path.of(jarPath)
+
+    PythonHelpersLocator.LOG.assertTrue(path.exists(), "$path to plugin base bir does not exists")
+    return path.parent.parent
+  }
+
+  return null
+}

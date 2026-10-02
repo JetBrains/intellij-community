@@ -22,7 +22,10 @@ content_module_jar(module = ":python-pydev")
 filegroup(
     name = "dev_dist_resources",
     srcs = glob(
-        ["helpers/pydev/**"],
+        [
+            "bundledPyiStubs/**",
+            "helpers/pydev/**",
+        ],
     ),
     visibility = ["//visibility:public"],
 )
@@ -301,6 +304,43 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.pycharm.community.main` end
+
+### auto-generated section `build intellij.python.bundledPyiStubs` start
+jvm_library(
+    name = "python-bundledPyiStubs",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.bundledPyiStubs",
+    resource_strip_prefix = "bundledPyiStubs",
+    resources = glob(
+        ["bundledPyiStubs/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "python-bundledPyiStubs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.bundledPyiStubs",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":python-bundledPyiStubs"],
+)
+### auto-generated section `build intellij.python.bundledPyiStubs` end
+
+### auto-generated section `iml intellij.python.bundledPyiStubs` start
+exports_files(
+    [
+        "intellij.python.bundledPyiStubs.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.bundledPyiStubs` end
 
 ### auto-generated section `build intellij.python.commonTests` start
 jvm_library(

@@ -305,6 +305,7 @@ dev_dist_complex_plugin(
     },
     remainder_trees = [
         "helpers",
+        "bundledPyiStubs",
         "pyrefly/license",
     ],
     resource_inputs = {
@@ -312,11 +313,13 @@ dev_dist_complex_plugin(
     },
     source_tree_prefixes = {
         "module-resource:resource-generator:0:0:source": "python/helpers",
-        "layout-source:resource-generator:1:0": "license",
+        "module-resource:resource-generator:1:0:source": "python/bundledPyiStubs",
+        "layout-source:resource-generator:2:0": "license",
     },
     source_tree_targets = {
         "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
-        "layout-source:resource-generator:1:0": "@dev_launch_pyrefly_license_extracted//:files",
+        "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
+        "layout-source:resource-generator:2:0": "@dev_launch_pyrefly_license_extracted//:files",
     },
 )
 
@@ -450,6 +453,7 @@ dev_dist_complex_plugin(
     },
     remainder_trees = [
         "helpers",
+        "bundledPyiStubs",
         "pyrefly/license",
     ],
     resource_inputs = {
@@ -457,11 +461,13 @@ dev_dist_complex_plugin(
     },
     source_tree_prefixes = {
         "module-resource:resource-generator:0:0:source": "python/helpers",
-        "layout-source:resource-generator:1:0": "license",
+        "module-resource:resource-generator:1:0:source": "python/bundledPyiStubs",
+        "layout-source:resource-generator:2:0": "license",
     },
     source_tree_targets = {
         "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
-        "layout-source:resource-generator:1:0": "@dev_launch_pyrefly_license_extracted//:files",
+        "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
+        "layout-source:resource-generator:2:0": "@dev_launch_pyrefly_license_extracted//:files",
     },
 )
 
@@ -595,6 +601,7 @@ dev_dist_complex_plugin(
     },
     remainder_trees = [
         "helpers",
+        "bundledPyiStubs",
         "pyrefly/license",
     ],
     resource_inputs = {
@@ -602,11 +609,13 @@ dev_dist_complex_plugin(
     },
     source_tree_prefixes = {
         "module-resource:resource-generator:0:0:source": "python/helpers",
-        "layout-source:resource-generator:1:0": "license",
+        "module-resource:resource-generator:1:0:source": "python/bundledPyiStubs",
+        "layout-source:resource-generator:2:0": "license",
     },
     source_tree_targets = {
         "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
-        "layout-source:resource-generator:1:0": "@dev_launch_pyrefly_license_extracted//:files",
+        "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
+        "layout-source:resource-generator:2:0": "@dev_launch_pyrefly_license_extracted//:files",
     },
 )
 
@@ -740,6 +749,7 @@ dev_dist_complex_plugin(
     },
     remainder_trees = [
         "helpers",
+        "bundledPyiStubs",
         "pyrefly/license",
     ],
     resource_inputs = {
@@ -747,11 +757,13 @@ dev_dist_complex_plugin(
     },
     source_tree_prefixes = {
         "module-resource:resource-generator:0:0:source": "python/helpers",
-        "layout-source:resource-generator:1:0": "license",
+        "module-resource:resource-generator:1:0:source": "python/bundledPyiStubs",
+        "layout-source:resource-generator:2:0": "license",
     },
     source_tree_targets = {
         "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
-        "layout-source:resource-generator:1:0": "@dev_launch_pyrefly_license_extracted//:files",
+        "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
+        "layout-source:resource-generator:2:0": "@dev_launch_pyrefly_license_extracted//:files",
     },
 )
 
@@ -885,6 +897,7 @@ dev_dist_complex_plugin(
     },
     remainder_trees = [
         "helpers",
+        "bundledPyiStubs",
         "pyrefly/license",
     ],
     resource_inputs = {
@@ -892,11 +905,13 @@ dev_dist_complex_plugin(
     },
     source_tree_prefixes = {
         "module-resource:resource-generator:0:0:source": "python/helpers",
-        "layout-source:resource-generator:1:0": "license",
+        "module-resource:resource-generator:1:0:source": "python/bundledPyiStubs",
+        "layout-source:resource-generator:2:0": "license",
     },
     source_tree_targets = {
         "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
-        "layout-source:resource-generator:1:0": "@dev_launch_pyrefly_license_extracted//:files",
+        "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
+        "layout-source:resource-generator:2:0": "@dev_launch_pyrefly_license_extracted//:files",
     },
 )
 
@@ -1030,6 +1045,7 @@ dev_dist_complex_plugin(
     },
     remainder_trees = [
         "helpers",
+        "bundledPyiStubs",
         "pyrefly/license",
     ],
     resource_inputs = {
@@ -1037,11 +1053,13 @@ dev_dist_complex_plugin(
     },
     source_tree_prefixes = {
         "module-resource:resource-generator:0:0:source": "python/helpers",
-        "layout-source:resource-generator:1:0": "license",
+        "module-resource:resource-generator:1:0:source": "python/bundledPyiStubs",
+        "layout-source:resource-generator:2:0": "license",
     },
     source_tree_targets = {
         "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
-        "layout-source:resource-generator:1:0": "@dev_launch_pyrefly_license_extracted//:files",
+        "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
+        "layout-source:resource-generator:2:0": "@dev_launch_pyrefly_license_extracted//:files",
     },
 )
 ### auto-generated section `dev intellij.python.community.plugin` end

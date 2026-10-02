@@ -35,6 +35,11 @@ object PythonCommunityPluginModules {
           excludedFiles = listOf("setup.py", "conftest.py"),
           excludedDirectories = listOf("tests", ".idea", "pydev/pydev_test*"),
         )
+        spec.withResourceTree(
+          moduleName = "intellij.python.bundledPyiStubs",
+          resourcePath = "",
+          relativeOutputPath = "bundledPyiStubs",
+        )
         spec.withDevDistSourceTree(pydevSourceTree)
       }
 

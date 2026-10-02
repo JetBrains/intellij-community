@@ -18,7 +18,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.QualifiedName
-import com.intellij.python.community.helpersLocator.PythonHelpersLocator
+import com.intellij.python.community.helpersLocator.PythonBundledPyiStubsLocator
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.psi.LanguageLevel
 import org.toml.lang.psi.TomlFile
@@ -28,6 +28,7 @@ import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.kind
 import java.io.File
+import kotlin.io.path.absolutePathString
 
 /**
  * Utilities for managing the local copy of the typeshed repository.
@@ -225,7 +226,7 @@ object PyTypeShed {
     get() {
       val paths = listOf("${PathManager.getConfigPath()}/typeshed",
                          "${PathManager.getConfigPath()}/../typeshed",
-                         PythonHelpersLocator.findPathStringInHelpers("typeshed"))
+                         PythonBundledPyiStubsLocator.findPath("typeshed").absolutePathString())
       return paths.asSequence()
         .filter { File(it).exists() }
         .firstOrNull()

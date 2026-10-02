@@ -4,10 +4,11 @@ package com.jetbrains.python.codeInsight.typing
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.python.community.helpersLocator.PythonHelpersLocator
+import com.intellij.python.community.helpersLocator.PythonBundledPyiStubsLocator
+import kotlin.io.path.absolutePathString
 
 object PyBundledStubs {
-  private const val BUNDLED_STUBS_PATH = "bundled_stubs"
+  private const val THIRD_PARTY_STUBS_DIR = "third_party"
 
   fun isInside(file: VirtualFile): Boolean {
     return root?.let { return VfsUtil.isAncestor(it, file, false) } ?: false
@@ -17,8 +18,8 @@ object PyBundledStubs {
    * The actual bundled stubs directory.
    */
   val root: VirtualFile? by lazy {
-    val helpersPath = PythonHelpersLocator.findPathStringInHelpers(BUNDLED_STUBS_PATH)
-    StandardFileSystems.local().findFileByPath(helpersPath)
+    val stubsPath = PythonBundledPyiStubsLocator.findPath(THIRD_PARTY_STUBS_DIR)
+    StandardFileSystems.local().findFileByPath(stubsPath.absolutePathString())
   }
 
   /**
