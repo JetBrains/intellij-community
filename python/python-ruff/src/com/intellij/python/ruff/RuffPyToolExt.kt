@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.ruff
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -56,9 +57,14 @@ internal class RuffStdinCommand(val arguments: List<String>, val workingDir: Pat
   val args: Args get() = Args(*arguments.toTypedArray())
 }
 
-/** The project config for a Ruff run on [file] of [project], or `null` when Ruff finds a config itself. See [ruffFallbackConfig]. */
-internal fun ruffStdinFallback(file: VirtualFile, project: Project): RuffConfigFile? =
-  file.parent?.let { ruffFallbackConfig(it, project) }
+/**
+ * The project config for a Ruff run on [file] of [project], or `null` when Ruff finds a config itself or the file
+ * keeps the defaults of Ruff. See [ruffFallbackConfig] and [ruffGetsProjectConfig].
+ */
+internal suspend fun ruffStdinFallback(file: VirtualFile, project: Project): RuffConfigFile? {
+  if (!readAction { ruffGetsProjectConfig(ModuleUtilCore.findModuleForFile(file, project), project) }) return null
+  return file.parent?.let { ruffFallbackConfig(it, project) }
+}
 
 /**
  * The Ruff run of [subcommand] on stdin for the file at [path], which must come from [ruffPath].

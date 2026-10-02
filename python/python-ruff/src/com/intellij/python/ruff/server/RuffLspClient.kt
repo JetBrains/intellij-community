@@ -5,6 +5,7 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
@@ -34,6 +35,7 @@ import com.intellij.python.ruff.codeinsight.actions.RuffDisableRuleIntentionActi
 import com.intellij.python.ruff.isRuffConfigEvent
 import com.intellij.python.ruff.ruffFallbackConfig
 import com.intellij.python.ruff.ruffFolderFallback
+import com.intellij.python.ruff.ruffGetsProjectConfig
 import com.intellij.python.ruff.ruffInitializationOptions
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import kotlinx.coroutines.launch
@@ -108,7 +110,11 @@ class RuffLspClientDescriptor(
 
   private class StartedWith(val fallback: RuffFolderFallback?)
 
-  private fun computeFallback(): RuffFolderFallback? = ruffFolderFallback(roots.toList(), project.guessProjectDir())
+  /** Whether the folders of this server can get the project config. The modules of one server share a workspace. */
+  private val getsProjectConfig: Boolean = runReadActionBlocking { ruffGetsProjectConfig(module, project) }
+
+  private fun computeFallback(): RuffFolderFallback? =
+    if (getsProjectConfig) ruffFolderFallback(roots.toList(), project.guessProjectDir()) else null
 
   private fun fallbackOfThisStart(): RuffFolderFallback? =
     (startedWith ?: StartedWith(computeFallback()).also { startedWith = it }).fallback

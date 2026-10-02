@@ -51,6 +51,9 @@ import kotlin.time.Duration.Companion.milliseconds
  * The project directory is the first content root, and it holds a `ruff.toml` that asks for single quotes. The second
  * content root has no Ruff config, so Ruff alone would format it with its default double quotes. The third content
  * root has a config of its own, so the project config must not reach it.
+ *
+ * A second module has every content root outside the project directory, as a project that "Attach to project" loads.
+ * It is a workspace of its own, so the project config must not reach it either.
  */
 @TestFor(issues = ["PY-85409"])
 @Subsystems.LspTools
@@ -69,6 +72,8 @@ class RuffProjectConfigEnvTest {
       withContext(Dispatchers.EDT) {
         ModuleRootModificationUtil.addContentRoot(module, secondRoot.toString())
         ModuleRootModificationUtil.addContentRoot(module, ownRoot.toString())
+        // The same interpreter, so the module runs the same Ruff.
+        ModuleRootModificationUtil.setModuleSdk(outsideModule, venv)
       }
       assertEquals(3, ModuleRootManager.getInstance(module).contentRoots.size)
     }
@@ -97,6 +102,16 @@ class RuffProjectConfigEnvTest {
 
     project.service<RuffConfiguration>().formatSortImports = true
     assertEquals("x = \"a\"\n", reformat(ownRoot.resolve("cli.py"), "x = 'a'\n"))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-85409", "PY-86537"])
+  fun `a module outside the project keeps the defaults of Ruff`(): Unit = timeoutRunBlocking(timeout = 5.minutes) {
+    project.service<RuffConfiguration>().formatSortImports = false
+    assertEquals("x = \"a\"\n", reformat(outsideRoot.resolve("server.py"), "x = 'a'\n"))
+
+    project.service<RuffConfiguration>().formatSortImports = true
+    assertEquals("x = \"a\"\n", reformat(outsideRoot.resolve("cli.py"), "x = 'a'\n"))
   }
 
   @Test
@@ -155,18 +170,21 @@ class RuffProjectConfigEnvTest {
     private val projectDirFixture = tempPathFixture()
     private val secondRootFixture = tempPathFixture()
     private val ownRootFixture = tempPathFixture()
+    private val outsideRootFixture = tempPathFixture()
     private val projectFixture = projectFixture(projectDirFixture, openAfterCreation = true)
     private val moduleFixture = projectFixture.pyModuleFixture(projectDirFixture, addPathToSourceRoot = true)
     private val venvFixture = pySdkFixture().pyVenvFixture(where = projectDirFixture, addToSdkTable = true, moduleFixture = moduleFixture)
+    private val outsideModuleFixture = projectFixture.pyModuleFixture(outsideRootFixture, addPathToSourceRoot = true)
     private val codeInsightFixtureFixture = codeInsightFixture(projectFixture, projectDirFixture)
 
     private val projectDir by projectDirFixture
     private val secondRoot by secondRootFixture
     private val ownRoot by ownRootFixture
+    private val outsideRoot by outsideRootFixture
     private val project by projectFixture
     private val module by moduleFixture
     private val pyProject by moduleFixture.pyProjectFixture()
-    @Suppress("unused")
+    private val outsideModule by outsideModuleFixture
     private val venv by venvFixture
     private val editorFixture by codeInsightFixtureFixture
   }

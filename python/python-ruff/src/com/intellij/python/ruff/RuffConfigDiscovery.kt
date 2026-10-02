@@ -2,6 +2,7 @@
 package com.intellij.python.ruff
 
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -11,7 +12,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.python.lsp.core.pyLspWorkspaceRootOf
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.apache.tuweni.toml.Toml
 import org.apache.tuweni.toml.TomlTable
 import java.io.IOException
@@ -64,6 +67,18 @@ internal fun ruffFallbackConfig(directory: VirtualFile, projectDir: VirtualFile?
   if (projectDir == null || findRuffConfig(directory) != null) return null
   return findRuffConfig(projectDir)
 }
+
+/**
+ * Whether a file of [module] can get the project config, see [ruffFallbackConfig].
+ *
+ * Only a module of the workspace of the project can, see [pyLspWorkspaceRootOf]. A project that "Attach to project"
+ * loads as a module is a workspace of its own, and so is a module with every content root outside the project
+ * directory. Its files keep the defaults of Ruff, as `ruff` run in its own directory gives them. A file in no module
+ * counts as a file of the project.
+ */
+@RequiresReadLock
+internal fun ruffGetsProjectConfig(module: Module?, project: Project): Boolean =
+  module == null || pyLspWorkspaceRootOf(module) == project.basePath
 
 /** [ruffFallbackConfig] for the project directory of [project]. */
 internal fun ruffFallbackConfig(directory: VirtualFile, project: Project): RuffConfigFile? =
