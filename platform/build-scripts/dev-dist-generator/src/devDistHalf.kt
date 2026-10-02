@@ -132,7 +132,7 @@ internal fun DevDistHalf.requireWritable(relativePath: String) {
 /** What a half can plan beyond the common facts. */
 @ApiStatus.Internal
 enum class DevDistCapability {
-  /** The reference plan of the gates, `build/dev_dist_reference_plan.bzl`. */
+  /** The reference files of the gates, `build/dev_dist_reference_plan.bzl` and `build/dev_dist_reference_inputs.bzl`. */
   REFERENCE_PLAN,
 
   /** A platform patch of a layout patcher, see [DevDistPlatformPatchSupport]. */
@@ -170,9 +170,9 @@ data class SplitDevDistribution(
   /** The plugins that every distribution of the product adds, beside the modules of its run configurations. */
   @JvmField val additionalPluginModules: List<String> = emptyList(),
   /**
-   * The modules whose runtime classpath a platform patch of the product loads. A Kotlin fragment that applies the
-   * patch, the reference fragment among them, declares the raw outputs and the libraries of each module and of its
-   * dependency closure, whichever jars the payload packs.
+   * The modules whose runtime classpath a platform patch of the product loads. The reference that applies the patch
+   * declares the raw outputs and the libraries of each module and of its dependency closure. The jars that the
+   * payload packs do not change that set.
    */
   @JvmField val runtimeClasspathModules: List<String> = emptyList(),
 )

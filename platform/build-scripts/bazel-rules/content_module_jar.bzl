@@ -22,10 +22,10 @@ Three things the attribute form got wrong and this does not:
   `getattr(ctx.rule.attr, "content_module_jar_libraries", None)` - a name-based read of another rule's attributes that
   answers `None` rather than failing when the name is wrong. They are this rule's own attributes now.
 
-The point of packing here at all is what the action declares: the jars it merges, and nothing else. A fragment that
-packed these jars had to evaluate the whole product layout, so it declared the shared project-model tree and any `.iml`
-edit re-keyed it; no composed fragment packs them any more, and the one that still can - the reference target
-`./build/dev-dist.cmd jars` builds - exists only to compare this packer against `JarPackager` byte for byte.
+The point of packing here at all is what the action declares: the jars it merges, and nothing else. A reference that
+packs these jars evaluates the whole product layout, so it declares the shared project-model tree, and any `.iml` edit
+re-keys it. No component packs these jars through a layout. The reference that `./build/dev-dist.cmd jars` builds
+packs them only to compare this packer with `JarPackager` byte for byte.
 
 **Source order is load-bearing.** The packer resolves an entry name offered by more than one source to the first source
 offering it. To reproduce what the in-process `JarPackager` writes, every library jar comes before every module output,
@@ -269,8 +269,10 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
     args.add_all(library_jars, format_each = "library=%s")
 
     ctx.actions.run(
-        # One mnemonic per producer, so a strategy or an execution-info override reaches every jar of that producer and
-        # of no other. `common.bazelrc` pins a pool size to each, and `no-cache` to the platform one alone.
+        # The mnemonic selects a strategy or an execution-info override for every pack action that carries it. Three
+        # producers share `PackContentModuleJar`: the content-module jar, the platform jar and the native tree. So one
+        # override reaches all three. `common.bazelrc` adds `no-remote-cache` to `PackContentModuleJar` alone, so their
+        # outputs stay in the disk cache only. `PackDevPluginJar` keeps both caches. `cache.spec.md` states the policy.
         mnemonic = mnemonic,
         inputs = depset(library_jars + module_jars + [patch.file for patch in patch_files]),
         outputs = outputs,

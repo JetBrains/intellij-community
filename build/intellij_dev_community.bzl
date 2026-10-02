@@ -72,7 +72,7 @@ _DECLARATIONS = intellij_dev_dist_declarations(struct(
 # The platform set of one split product. See `platform_set` in `intellij_dev_dist_declarations.bzl`.
 intellij_dev_platform_set_community = _DECLARATIONS.platform_set
 
-# The platform fragment labels of one split product, for a distribution declared outside `build/BUILD.bazel`.
+# The platform component labels of one split product, for a distribution declared outside `build/BUILD.bazel`.
 dev_dist_platform_fragments = _DECLARATIONS.platform_fragments
 
 # Fails at load time when the generated plan cannot serve a launcher.

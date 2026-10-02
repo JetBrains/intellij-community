@@ -227,7 +227,7 @@ PLATFORM_ASSETS_COMPONENT = "platform_assets"
 _PLATFORM_RESOURCES_FRAGMENT = "platform_resources"
 
 def _fragment_suffix(fragment_name):
-    """The target suffix of a platform fragment, `<platform set>_<suffix>`."""
+    """The target suffix of a platform component, `<platform set>_<suffix>`."""
     return fragment_name[len("platform_"):]
 
 def _plan(tables, product):
@@ -246,7 +246,7 @@ def _product_info_label(tables, product):
     return tables.product_info_label(product)
 
 def _platform_fragment_layout(tables, product):
-    """The ordered platform fragments of one product, as `struct(suffix, fragment_name)` entries.
+    """The ordered platform components of one product, as `struct(suffix, fragment_name)` entries.
 
     `suffix` names the target, `<platform set>_<suffix>`. `fragment_name` is the composer's name for it. The order is
     the composition order: `platform_resources`, then the packed content-module jars, then the platform assets. This is
@@ -262,10 +262,10 @@ def _platform_fragment_layout(tables, product):
     return layout
 
 def _has_runtime_module_repository(tables, product):
-    """Whether the plan of `product` has the runtime module repository fragment.
+    """Whether the plan of `product` has the runtime module repository component.
 
     The generator states it for a product with a row that asks for the repository. `_platform_fragment_layout` never
-    lists the fragment.
+    lists the component.
     """
     return getattr(_plan(tables, product), "runtime_module_repository", False)
 
@@ -274,7 +274,7 @@ def _modular_loader(tables, product):
     return getattr(_plan(tables, product), "modular_loader", False)
 
 def _platform_fragments(tables, product, runtime_module_repository = False):
-    """The platform fragment labels of one split product, for a distribution declared outside the build package.
+    """The platform component labels of one split product, for a distribution declared outside the build package.
 
     Returns `struct(fragments, fragment_names)` in composition order, with absolute labels into `tables.build_package`.
     The product's platform set must be declared there through the platform set macro. For a community product, the
@@ -333,8 +333,8 @@ def _platform_set(tables, product, name, target_platform, visibility):
         )
 
         # The embedded frontend is a frontend-only plugin of the product, and so are the plugins that only the frontend
-        # bundles. Their components are the frontend product's. They are configured for this product, as the Kotlin
-        # fragment lays them out with the build context of this product.
+        # bundles. Their components are the frontend product's. The parts target configures them for this product
+        # through `product_info`, because the repository of this product lists them.
         frontend_attrs = {}
         frontend = getattr(plan, "embedded_frontend", "")
         if frontend:
@@ -561,12 +561,12 @@ def _declare_fragments_dist(
         selected_modules = additional_component_modules,
     )
 
-    # The plugin components are declared apart from the fragments: the dist rule configures them for the product, and
-    # the platform fragments keep their configuration. Every plugin of the distribution is a component.
+    # The plugin components are declared apart from the platform components: the dist rule configures them for the
+    # product, and the platform components keep their configuration. Every plugin of the distribution is a component.
     fragments = list(platform_fragments)
     plugin_components = bundled_components.labels + additional_components.labels
 
-    # A plugin component's fragment name is its main module (`component_name` in `dev_plugin_component`).
+    # The component name of a plugin component is its main module (`component_name` in `dev_plugin_component`).
     expect_fragments = (
         list(platform_fragment_names) +
         bundled_components.modules +
@@ -850,7 +850,7 @@ def intellij_dev_dist_declarations(tables):
         return _platform_set(tables, product, name, target_platform, visibility)
 
     def platform_fragments(product, runtime_module_repository = False):
-        """The platform fragment labels of one split product. See `_platform_fragments`."""
+        """The platform component labels of one split product. See `_platform_fragments`."""
         return _platform_fragments(tables, product, runtime_module_repository = runtime_module_repository)
 
     def declare_fragments_dist(

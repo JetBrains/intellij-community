@@ -93,7 +93,11 @@ jps_to_bazel_targets_json(
     config_setting(
         name = "host_%s" % name,
         constraint_values = constraints,
-        # the select axis for every per-platform dependency set, in this repository and in ultimate
+        # The select axis of every per-platform dependency set, in this repository and in ultimate. A setting matches
+        # the target platform of the configuration, which is the host platform unless `--platforms` states another.
+        # No dev-dist rule transitions the target platform. A cross distribution passes its `target_platform` to the
+        # tools only as the `--os` and `--arch` arguments, so a setting still matches the host there. Under an exec
+        # transition, the target platform is the exec platform.
         visibility = ["//visibility:public"],
     )
     for name, constraints in {

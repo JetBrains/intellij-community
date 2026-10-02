@@ -54,7 +54,7 @@ private fun snapshotDescriptorEntry(entry: PluginDescriptorEntry): PluginDescrip
 }
 
 /**
- * The directory that holds one Bazel package per cross-half descriptor leaf.
+ * The directory that holds the product package of each plugin and the class package of each divergent descriptor leaf.
  *
  * Beside `//build/dev-dist-descriptors` itself, which declares the product's set targets. A subpackage rather than a
  * target of that package, because that package loads the plan file, and a leaf must not be re-analysed when another
@@ -77,7 +77,7 @@ private fun descriptorTargetName(entry: PluginDescriptorEntry): String = when {
 }
 
 /**
- * Which cross-half descriptor packages one run states, and which packages on disk no plugin needs any more.
+ * Which product packages and class packages one run states, and which packages on disk no plugin needs any more.
  *
  * [files] is keyed by project-relative path. [stale] lists every package under the root that [files] does not hold.
  * The caller deletes them. [planLabel] spells a label in the recorded form for a package of the half of the run, see
@@ -249,8 +249,8 @@ internal fun collectCrossHalfDescriptorPackages(
 }
 
 /**
- * The project-relative path of one cross-half descriptor package: the plugin package for a `null` [product], and the
- * product package of a divergent product otherwise.
+ * The project-relative path of one package under [CROSS_HALF_PACKAGE_ROOT]: the product package for a `null` [product], and
+ * the class package of a divergent product otherwise.
  */
 internal fun crossHalfPackagePath(mainModule: String, product: String?): String = "${crossHalfPackageDirectory(mainModule, product)}/BUILD.bazel"
 
@@ -273,7 +273,7 @@ private fun productOfPackagePath(path: String): String? {
 }
 
 /**
- * One cross-half package. [complexPluginCalls] is the rendered `dev_dist_complex_plugin` calls of a community complex
+ * One product package. [complexPluginCalls] is the rendered `dev_dist_complex_plugin` calls of a community complex
  * plugin, or `null`. A call names the product info of the main repository, so the community section cannot hold it.
  * The plan file it reads sits in the community package, exported, or in this package. [planLabel] spells the label of a
  * load line for the package.
@@ -294,9 +294,9 @@ private fun renderCrossHalfPackage(
       append("#\n")
       append("# A bundled plugin normally declares these targets in its own `BUILD.bazel`. This plugin cannot: its `dev`\n")
       append("# section holds no production descriptor, or it is a community plugin whose descriptor patch, packaging or\n")
-      append("# plugin chain reads a file only the main repository can name, so the community half of the JPS-to-Bazel\n")
-      append("# converter emits no section for it. One package per plugin, because a shared file would put the most edited\n")
-      append("# plugins of this repository into one merge-conflict domain.\n")
+      append("# plugin chain reads a file only the main repository can name. The ultimate half then cannot reuse the `dev`\n")
+      append("# section that the community half of the generator writes for it. One package per plugin, because a shared file\n")
+      append("# would put the most edited plugins of this repository into one merge-conflict domain.\n")
     }
     else -> {
       append("# The dev-distribution targets of one plugin for the product `").append(product).append("` and every product that\n")

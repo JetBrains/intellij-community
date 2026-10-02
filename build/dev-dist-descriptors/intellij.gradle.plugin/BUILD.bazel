@@ -4,9 +4,9 @@
 #
 # A bundled plugin normally declares these targets in its own `BUILD.bazel`. This plugin cannot: its `dev`
 # section holds no production descriptor, or it is a community plugin whose descriptor patch, packaging or
-# plugin chain reads a file only the main repository can name, so the community half of the JPS-to-Bazel
-# converter emits no section for it. One package per plugin, because a shared file would put the most edited
-# plugins of this repository into one merge-conflict domain.
+# plugin chain reads a file only the main repository can name. The ultimate half then cannot reuse the `dev`
+# section that the community half of the generator writes for it. One package per plugin, because a shared file
+# would put the most edited plugins of this repository into one merge-conflict domain.
 #
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`

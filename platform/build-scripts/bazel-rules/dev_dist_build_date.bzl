@@ -1,8 +1,8 @@
 """The build date that every action of a dev distribution pins."""
 
-# Pinned so the fragments of one distribution agree and an assembly does not carry the wall clock into its outputs. It
-# dates archive entries and the `.SNAPSHOT` plugin version suffix, and both would otherwise differ between fragments
-# assembled minutes apart.
+# Pinned so the components of one distribution agree and an assembly does not carry the wall clock into its outputs. It
+# dates archive entries and the `.SNAPSHOT` plugin version suffix, and both would otherwise differ between components
+# built minutes apart.
 #
 # Deliberately *not* the product build date. A dev distribution stamps none, so the IDE resolves its build time at
 # startup and no EAP expiration period can run out on a cached distribution. See `computeAppInfoXml`. A far-future date

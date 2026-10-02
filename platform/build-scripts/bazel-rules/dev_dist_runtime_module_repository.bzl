@@ -69,7 +69,7 @@ def _dev_dist_runtime_module_repository_impl(ctx):
     if bool(ctx.attr.frontend_platform_payload) != bool(ctx.attr.frontend_core_module):
         fail("%s: frontend_platform_payload and frontend_core_module go together" % ctx.label, attr = "frontend_core_module")
 
-    # The core plugin first, then the bundled plugins, then the frontend-only plugins, as the Kotlin fragment states them.
+    # The core plugin first, then the bundled plugins, then the frontend-only plugins, as the reference states them.
     parts = [_platform_part(ctx, "platform", ctx.attr.platform_payload, ctx.attr.core_module, ctx.attr.first_jars, ctx.attr.last_jars, "first_jars")]
     descriptors = {ctx.attr.core_module: ctx.file.core_descriptor}
     frontend_parts = []
@@ -87,7 +87,7 @@ def _dev_dist_runtime_module_repository_impl(ctx):
         descriptors[ctx.attr.frontend_core_module] = ctx.file.frontend_core_descriptor
         inputs.append(ctx.file.frontend_core_descriptor)
 
-    # Sorted by descriptor module, as the Kotlin fragment states them. The order is in the bytes: a module that several
+    # Sorted by descriptor module, as the reference states them. The order is in the bytes: a module that several
     # plugins include takes its ID from the last of them, see `generateRuntimePluginHeaders`.
     for plugins, destination in [(ctx.attr.plugins, parts), (ctx.attr.frontend_plugins, frontend_parts)]:
         infos = plugins[DevDistRuntimeLayoutPartsInfo].plugins if plugins else []
@@ -132,7 +132,7 @@ def _dev_dist_runtime_module_repository_impl(ctx):
         outputs = [ctx.outputs.compact, ctx.outputs.jar],
         arguments = [args],
         # The project model tree is large and changes with every model edit, so this action uses the local disk cache
-        # only, as the fragments that read the tree do.
+        # only, as the references that read the tree do.
         execution_requirements = {"block-network": "1", "no-remote-cache": "1", "no-remote-exec": "1"},
         progress_message = "Generating the runtime module repository of %{label}",
     )

@@ -531,7 +531,7 @@ class DevDistSimplePackagingTest {
     assertThat(relocated.crossHalf).isFalse()
     assertThat(relocated.contentModuleJarLabels).containsExactly(entry(communityContentModule, relocatedLabel))
 
-    // A community section cannot name the product package, so the cross-half package names the relocated label.
+    // A community section cannot name the relocated-call package, so the product package names the relocated label.
     val community = classify(communityPlugin, relocatedModules = setOf(communityContentModule))
     assertThat(community.crossHalf).isTrue()
     assertThat(community.contentModuleJarLabels).isEmpty()

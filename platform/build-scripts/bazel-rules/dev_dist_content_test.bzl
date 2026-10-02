@@ -324,7 +324,8 @@ def _fragment_test_impl(ctx):
         for file in inputs.files.to_list():
             asserts.true(env, file in action.inputs.to_list(), file.path)
 
-        # The runtime module repository fragment also writes the layout it generates the repository from, beside the home.
+        # The runtime module repository reference also writes the layout it generates the repository from, beside the
+        # home.
         asserts.true(env, layout[0] in action.outputs.to_list())
         asserts.true(env, "--runtime-module-repository-layout=" + layout[0].path in action.argv)
 

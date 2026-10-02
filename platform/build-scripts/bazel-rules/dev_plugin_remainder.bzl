@@ -517,8 +517,8 @@ def _dev_plugin_artifact_catalogue_impl(ctx):
     # archives. A compiled input is a module target or the `<target>.jar` output file of one; both give the module's
     # own jar, whose owner is the module rule. An archive is one jar of a library the plan names jar by jar, because the
     # library shares another jar with a second library. It arrives as a resource input and is keyed by its own label,
-    # the way `dev_plugin.bzl` carries a jar file token. A descriptor or any other resource is no content, so a fragment
-    # that lays the plugin out without packing it declares neither.
+    # the way `dev_plugin.bzl` carries a jar file token. A descriptor or any other resource is no content, so a
+    # reference that lays the plugin out without packing it declares neither.
     content_module_jars = []
     for target in compiled.inputs.keys():
         if DevDistPluginDescriptorInfo in target:

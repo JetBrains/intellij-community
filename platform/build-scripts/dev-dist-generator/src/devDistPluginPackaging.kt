@@ -58,7 +58,7 @@ internal class DevDistSimplePackaging(
   @JvmField val jars: Map<String, List<String>>,
   @JvmField val moduleJarPaths: Map<String, String>,
   @JvmField val reusedModules: List<String>,
-  /** Whether the plugin's own package cannot state a token, so the ultimate cross-half package declares the packaging. */
+  /** Whether the plugin's own package cannot state a token, so the ultimate product package declares the packaging. */
   @JvmField val crossHalf: Boolean,
   /**
    * The label of each reused jar whose `content_module_jar` call is relocated, keyed by module and sorted. The own
@@ -218,7 +218,7 @@ internal fun classifySimplePluginPackaging(
   val destinations = jars.keys + reused.map(::reusedDestination) + files.keys
   if (destinations.any { below -> destinations.any { above -> below.startsWith("$above/") } }) return null
   // The section infers reuse as its content modules minus the modules the jars name. A reused module the section
-  // cannot name is a cross-repository member, and the cross-half package then lists every reused jar explicitly.
+  // cannot name is a cross-repository member, and the product package then lists every reused jar explicitly.
   // A refused module stays in the section list and is not packed, so it is not part of the reuse set.
   val sectionReuse = contentModuleNames.filterTo(HashSet()) { it !in moduleTokens && it !in refusedContentModules }
   val reusedSet = reused.toSet()
@@ -239,7 +239,7 @@ internal fun classifySimplePluginPackaging(
                     files.values.any { !index.canName(it, dependentIsCommunity = true) }
                   )
   val pluginDirectory = entry.layout("").directoryName
-  // The cross-half package lists the reused jars by label, sorted. The own section lists them in content order.
+  // The product package lists the reused jars by label, sorted. The own section lists them in content order.
   val declaredReuse = if (crossHalf) {
     reused.sortedBy { contentModuleJarLabel(it) ?: error("Module '$it' has no content_module_jar label") }
   }

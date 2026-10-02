@@ -16,7 +16,7 @@ load(":dev_dist_content.bzl", "DevDistContentInfo", "DevDistPlatformPayloadInfo"
 load(":dev_dist_plugin_descriptor.bzl", "DevDistProductInfo", "dev_dist_product_info_transition")
 
 IntellijDevBuildInputsInfo = provider(
-    doc = "The exact Bazel inputs and label-to-path manifest made available to one dev-build fragment.",
+    doc = "The exact Bazel inputs and label-to-path manifest made available to one reference.",
     fields = {
         "files": "The input files named by the manifest.",
         "manifest": "The logical Bazel input label to execution path manifest.",
@@ -102,12 +102,12 @@ def _dev_build_inputs_impl(ctx):
 
     # An empty declaration writes an empty file rather than a lone newline, for the same reason `writeUnusedInputs`
     # does: `wc -l` is what reads this pair, and a blank line would report one declared input that does not exist.
-    # Unchanged for every non-empty manifest, so no fragment is re-keyed by this.
+    # Unchanged for every non-empty manifest, so no reference is re-keyed by this.
     ctx.actions.write(manifest, ("\n".join(lines) + "\n") if lines else "")
 
     # A sidecar, deliberately not a third column in the manifest: `ExplicitBazelInputResolver.load` splits on the first
     # tab and takes the rest of the line as the path, and the manifest is an action input - changing its bytes would
-    # re-key every fragment to carry a measurement. Nothing declares this file as an input, so it re-keys nothing.
+    # re-key every reference to carry a measurement. Nothing declares this file as an input, so it re-keys nothing.
     inputs_origin = ctx.actions.declare_file(ctx.label.name + ".bazel-inputs-origin")
     origin_lines = ["%s\t%s" % (logical_key, origins[logical_key]) for logical_key in sorted(origins.keys())]
     ctx.actions.write(inputs_origin, ("\n".join(origin_lines) + "\n") if origin_lines else "")
@@ -122,7 +122,7 @@ def _dev_build_inputs_impl(ctx):
     ]
 
 intellij_dev_build_inputs = rule(
-    doc = "Groups a fragment's derived raw labels behind one typed, validated input boundary.",
+    doc = "Groups the derived raw labels of a reference behind one typed, validated input boundary.",
     implementation = _dev_build_inputs_impl,
     attrs = {
         # Inputs are direct generated labels, never aliases: configured Target.label is the manifest key. The Kotlin
@@ -172,24 +172,26 @@ IntellijProjectModelTreeInfo = provider(
     },
 )
 
-# Not `local`, which is what these actions used to say. Verified against the shipped `JetBrains/9.1.0-jb` binary rather
-# than the documentation: `Spawns.mayBeCached` is `!containsKey("no-cache") && !containsKey("local")`, and
-# `RemoteExecutionService.getRead/WriteCachePolicy` gates **`--disk_cache`** on exactly that - so `local` was throwing
-# away the local disk cache in order to keep gigabytes off the shared remote one. This says only the second thing.
-# Fragment outputs stay in the local disk cache: they are too large for the shared cache, and remote execution is out of
-# scope until the inputs are represented by platform-independent plans. Network access is blocked as a second line of
-# defence behind `--preloaded-only`; an accidentally incomplete preload set must fail instead of poisoning the cache.
+# The cache policy of the references and the component collectors. `cache.spec.md` states it.
+# The policy does not use `local`. In the shipped `JetBrains/9.1.0-jb` binary, `Spawns.mayBeCached` tests both
+# `no-cache` and `local`, and `RemoteExecutionService` gates `--disk_cache` on that test. So `local` also stops the disk
+# cache.
+# A reference declares the shared project-model tree and writes a large home, so the remote cache does not keep it.
+# Remote execution is out of scope until platform-independent plans represent the inputs of a reference.
+# A reference runs with `--preloaded-only`, and the blocked network is a second check. An incomplete preload set then
+# fails and does not poison the cache.
+# A collector writes one small manifest, and its payload stays in the cache of the action that produced it. The
+# collectors use this policy too, because no measurement supports another policy for them yet.
 _LOCAL_DISK_CACHE_ONLY = {
     "block-network": "1",
     "no-remote-cache": "1",
     "no-remote-exec": "1",
 }
 
-# What the scheduler reserves for one tool, in CPUs and MiB. Without it Bazel books a JVM as a 250 MiB action and
-# starts as many as `--jobs` allows. The memory of a JVM tool is its `-Xmx` in `build/BUILD.bazel` plus the JVM's own
-# overhead and, on Windows, the launcher's `jar` helper. Keep the two sides in step.
+# What the scheduler reserves for one tool action, in CPUs and MiB. Without a `resource_set`, Bazel books an action at
+# one CPU and 250 MiB and starts as many as `--jobs` allows.
 def _small_tool_resources(_os, _inputs):
-    """The project model tree tool."""
+    """The materializer of the project model tree. It is a native binary with no JVM heap to reserve."""
     return {"cpu": 1, "memory": 256}
 
 def _composer_resources(_os, _inputs):
@@ -328,8 +330,9 @@ def _project_model_tree_impl(ctx):
         # Hermetic. It reads its manifest and the execroot-relative sources that manifest names, writes only under its
         # output directory, and consults no environment variable, no home directory and no network, so it may be
         # sandboxed and the disk cache may keep it. The remote cache may not. The output is tens of thousands of small
-        # files, every model edit re-keys it, and every consumer is a fragment that runs locally. A remote hit would
-        # download the whole tree to save a few seconds of local copying.
+        # files, and every model edit re-keys it. Its consumers are the runtime module repository action and the
+        # references, and both run locally. A remote hit would download the whole tree to save a few seconds of local
+        # copying.
         execution_requirements = {"no-remote-cache": "1"},
         resource_set = _small_tool_resources,
         mnemonic = "IntellijProjectModelTree",
@@ -337,23 +340,22 @@ def _project_model_tree_impl(ctx):
     )
     return [
         DefaultInfo(files = depset([tree])),
-        # Not in `IntellijProjectModelTreeInfo`: that provider is what a fragment reads to declare an *input*, and a
-        # span file must never become one. The fragment reaches this group instead.
+        # Not in `IntellijProjectModelTreeInfo`. A consumer reads that provider to declare an *input*, and a span file
+        # must never become one. A reference reaches this group instead.
         OutputGroupInfo(trace_spans = _spans_output_group([spans], [])),
         IntellijProjectModelTreeInfo(tree = tree),
     ]
 
 intellij_project_model_tree = rule(
-    doc = """The checkout-shaped JPS project model tree that dev-distribution fragments read.
+    doc = """The checkout-shaped JPS project model tree.
 
-    A consuming repository can declare one tree for many products and share it with every fragment of those products.
-    A fragment used to build its own, and at 7 432 file copies that cost as much as the assembly itself - affordable
-    once, not once per fragment.
+    Only the runtime module repository action and the references read the tree. No other action of a distribution
+    reads it. A consuming repository can declare one tree for many products and share it with every consumer of those
+    products. One tree per consumer would repeat about 7 400 file copies for each one.
 
-    It carries the union of what the fragments need, so a file only one of them reads (the OS natives of the resources
-    fragment, or the branding of one product, say) invalidates all of them. Those change far less often than the model
-    does, and the model was already invalidating every fragment: project files are inputs no fragment can prune, unlike
-    the module jars.
+    The tree carries the union of what its consumers need. A file that only one consumer reads, for example the branding
+    of one product, therefore re-keys every consumer. Such files change less often than the model, and every model edit
+    already re-keys every consumer.
     """,
     implementation = _project_model_tree_impl,
     attrs = {
@@ -389,7 +391,7 @@ def _fragment_impl(ctx):
     # Which declared inputs the assembly never resolved. It used to be `unused_inputs_list`, pruning the action key
     # after the fact - which can skip a re-run in one output base but never produce a disk- or remote-cache hit, since
     # the key is computed over the full declared set before the action runs. Narrowing what is *declared* replaced it.
-    # The file stays as the measurement of how honest a declaration is: declared minus unused is what a fragment used.
+    # The file stays as the measurement of how honest a declaration is: declared minus unused is what a reference used.
     unused_inputs = ctx.actions.declare_file(ctx.label.name + ".unused-inputs")
     outputs = [home, scratch, unused_inputs]
 
@@ -404,7 +406,7 @@ def _fragment_impl(ctx):
 
     # Whatever an assembly still wants to download or extract goes here rather than into the checkout, where the cache
     # used to live: the project tree is shared and read-only now, and a cache no action declares is not an input.
-    # Everything a fragment actually reads is declared - see the preloaded archives - so this should stay empty, and
+    # Everything a reference actually reads is declared - see the preloaded archives - so this should stay empty, and
     # it is cleaned on success.
     args.add("--download-cache-dir=" + scratch.path + "/download-cache")
     args.add("--clean-scratch-on-success")
@@ -471,10 +473,10 @@ def _fragment_impl(ctx):
         # the assembly, which is the point - `used` is only knowable from a real assembly.
         OutputGroupInfo(
             declared_inputs = depset([bazel_inputs_manifest, build_inputs.inputs_origin, unused_inputs]),
-            # This fragment's spans and the shared project model tree's. No distribution composes a reference, so a
-            # request for the spans of a distribution does not reach the tree.
+            # The spans of this reference and of the shared project model tree. No distribution composes a reference,
+            # so a request for the spans of a distribution does not reach the tree.
             trace_spans = _spans_output_group([spans], [ctx.attr.project_model_tree]),
-            # This fragment's executed recipe. Nothing is propagated into it: the tree runs no assembler.
+            # The executed recipe of this reference. Nothing is propagated into it: the tree runs no assembler.
             dev_dist_plans = _plans_output_group([plan], []),
             runtime_module_repository_layout = depset([runtime_module_repository_layout] if runtime_module_repository_layout else []),
         ),
@@ -508,7 +510,7 @@ intellij_dev_fragment = rule(
                   "`intellij_dev_packed_jars_component` provides, which this fragment packs the way `JarPackager` " +
                   "packs them.",
         ),
-        "project_model_tree": attr.label(providers = [IntellijProjectModelTreeInfo], mandatory = True, doc = "The materialized project model tree this fragment reads. A consuming repository can share one tree with every fragment."),
+        "project_model_tree": attr.label(providers = [IntellijProjectModelTreeInfo], mandatory = True, doc = "The materialized project model tree this reference reads. A consuming repository can share one tree with every reference."),
         "bazel_targets_json": attr.label(allow_single_file = True, mandatory = True),
         "build_inputs": attr.label(providers = [IntellijDevBuildInputsInfo], mandatory = True),
         "preloaded_downloads": attr.label_list(allow_files = True),
@@ -817,8 +819,8 @@ def _compose(ctx, fragment_targets):
             # Every span file of this distribution in one request: the composition's own and each component's. This is the
             # group a measuring run asks for.
             trace_spans = _spans_output_group([spans], fragment_targets),
-            # Every fragment's executed recipe in one request. The composition itself has none: it places files, it
-            # does not pack them.
+            # The executed recipe of each component that has one, in one request. The composition itself has none,
+            # because it places files and does not pack them.
             dev_dist_plans = _plans_output_group([], fragment_targets),
         ),
     ]
@@ -827,7 +829,7 @@ def _compose_fragments_impl(ctx):
     if ctx.attr.plugin_components and ctx.attr.product_info == None:
         fail("%s composes plugin components and names no product_info" % ctx.label, attr = "product_info")
 
-    # The plugin components follow the fragments. The composer checks the set of kinds, not their order.
+    # The plugin components follow the platform components. The composer checks the set of kinds, not their order.
     return _compose(ctx, ctx.attr.fragments + ctx.attr.plugin_components)
 
 intellij_dev_fragments_dist = rule(
@@ -838,7 +840,7 @@ intellij_dev_fragments_dist = rule(
         "plugin_components": attr.label_list(
             providers = [IntellijDevFragmentInfo],
             cfg = dev_dist_product_info_transition,
-            doc = """The plugin components of this product, composed after `fragments`.
+            doc = """The plugin components of this product, composed after the components of `fragments`.
 
 Transitioned onto `product_info`: a packed plugin component reads the product through the flag, so one component target
 per plugin serves every product that bundles the plugin.""",
@@ -850,13 +852,13 @@ per plugin serves every product that bundles the plugin.""",
         "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
         "local_launch": attr.bool(default = False, doc = "Compose metadata that refers to component runfiles instead of copying their contents."),
         "expect_fragments": attr.string_list(
-            doc = "The fragment names this distribution is supposed to be made of, stated independently of `fragments` so that a fragment missing from that list fails composition instead of thinning the IDE.",
+            doc = "The component names of this distribution, stated independently of `fragments`. A component missing from that list then fails composition and does not thin the IDE.",
         ),
         "additional_modules": attr.string_list(
             doc = "The plugin modules this distribution declares it contains, for `DevIdeConfig`. What the " +
-                  "distribution was configured with, not what any one fragment assembled: a module the product " +
-                  "bundles is packed by a shared plugin fragment, and a consumer asking for it can only find out " +
-                  "from here.",
+                  "distribution was configured with, not what any one component assembled. A shared plugin component " +
+                  "packs a module that the product bundles, so only this attribute tells a consumer that the " +
+                  "distribution contains it.",
         ),
     } | _TRACE_SPANS_ATTR,
 )

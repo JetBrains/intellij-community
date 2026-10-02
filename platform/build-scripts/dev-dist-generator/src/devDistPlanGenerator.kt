@@ -81,30 +81,17 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.invariantSeparatorsPathString
 
 /**
- * The generated Starlark a dev-distribution fragment is built from: its cache partition, its declared inputs, the
- * module sets those inputs reference, and the descriptor files it reads.
+ * The file of `DEV_DIST_EXTRA_DESCRIPTOR_FILES`, the descriptors that a module reaches only through an `xi:include`.
  *
- * A fragment computes the whole product layout before it packs its slice, and computing it needs every content
- * module's descriptor and every bundled plugin's `plugin.xml`. Those are read out of module *jars* today
- * ([org.jetbrains.intellij.build.findUnprocessedDescriptorContent]), which makes hundreds of jars an input of
- * every fragment and is most of why splitting the assembly bought so little.
+ * The shared project model tree carries every content module descriptor and every bundled plugin descriptor. Only
+ * the runtime module repository action and the references read the tree. Bazel finds most descriptors by convention,
+ * as `<moduleName>.xml` or `META-INF/plugin.xml` at a production resource root. The convention cannot predict the
+ * name of an included file, so the generator lists those files here. The generator walks and validates the
+ * `xi:include` closure, so an unresolvable include is a generation error.
  *
- * The product model already knows the answer exactly: a content module's descriptor is named after the module,
- * and the `xi:include` closure is walked and validated during generation - an unresolvable include is a
- * generation error. So the generator writes the file list out, Bazel materializes those files into the shared
- * project model tree, and the layout reads them from there instead of opening jars.
- *
- * The plugins are the exception: a component of its own packs each plugin, so the name tables cover the platform
- * payloads only. The plugin components are labels in the `DEV_DIST_PLUGIN_COMPONENTS` map of
- * `dev-dist-content/dev_dist_content_sets.bzl`. The `dev_dist_complex_plugin` call of a complex plugin sits beside
- * the plugin: in its `dev` section, or in its cross-half package, see [DevDistPluginPlanHome].
- *
- * Separate files, not one, because they have different lifetimes. The partition is what a human reasons about and it
- * changes rarely; the payloads and the descriptor exceptions are long sorted lists that a model change rewrites
- * constantly; the module-set membership changes when a module set does and does not depend on how many products are
- * split; the plugin components change when a plugin's layout does. Keeping them apart means a payload-only or
- * descriptor-only regeneration leaves the partition file untouched, and gives them independent merge-conflict domains
- * instead of one shared 3000-line file.
+ * Each generated table has its own file, because the tables change at different rates. A payload-only or a
+ * descriptor-only regeneration then leaves the partition file [DEV_DIST_PLAN_RELATIVE_PATH] unchanged. Each file is
+ * also its own merge-conflict domain.
  */
 private const val DEV_DIST_DESCRIPTORS_RELATIVE_PATH: String = "build/dev_dist_descriptors.bzl"
 private const val DEV_DIST_PRODUCT_INFO_RELATIVE_PATH: String = "build/dev_dist_product_info.bzl"
@@ -197,6 +184,11 @@ private fun listLaunchModels(projectRoot: Path): List<String> {
 }
 private const val DEV_DIST_FRAGMENT_INPUTS_RELATIVE_PATH: String = "build/dev_dist_fragment_inputs.bzl"
 private const val DEV_DIST_MODULE_SETS_RELATIVE_PATH: String = "build/dev_dist_module_sets.bzl"
+/**
+ * The file of `DEV_DIST_PLUGIN_COMPONENTS`, the component label of every plugin. A component of its own packs each
+ * plugin, so the platform payload tables name no plugin jar. The `dev_dist_complex_plugin` call of a complex plugin
+ * sits beside the plugin, see [DevDistPluginPlanHome].
+ */
 private const val DEV_DIST_CONTENT_SETS_RELATIVE_PATH: String = "build/dev-dist-content/dev_dist_content_sets.bzl"
 private const val DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH: String = "build/dev_server_run_configurations.bzl"
 
@@ -287,7 +279,7 @@ internal class DevDistPluginExecutions(
  * and [computeDevDistPlan] reads the result to write the cross-half calls and the two maps.
  *
  * [upstreamPackagePlans] are the plans of the community half, which the ultimate half passes. The first collection
- * homes every community plugin in its cross-half plugin package. A plugin whose plan files and calls equal the community ones there reuses the community targets, see
+ * homes every community plugin in its product package. A plugin whose plan files and calls equal the community ones there reuses the community targets, see
  * [DevDistOwnPackagePlans.acceptsUpstreamPlans]. The run then collects and renders once more with the community home.
  * [communityProducts] are the community products of the half, see [devDistCommunityProducts].
  */
@@ -297,7 +289,7 @@ internal fun computeDevDistPluginExecutions(
   communityProducts: Set<String> = emptySet(),
 ): DevDistPluginExecutions {
   sections.requireDescriptorDeclarationsUnchanged()
-  // A simple plugin has no plan file: its own section or its cross-half package declares the packaging.
+  // A simple plugin has no plan file: its own section or its product package declares the packaging.
   val planFileRecords = sections.pluginPlanRecords.filterKeys { sections.simplePackaging(it.plugin) == null }
   val half = sections.half
   // Both collections read one set of texts, so the run encodes and folds every record once.
@@ -368,7 +360,7 @@ internal fun computeDevDistPluginExecutions(
  * every `content_module_jar` label, every plugin content target and every descriptor target, and the plan entries the
  * sections read. So the plan and the dev sections state one label per target and build one entry per plugin.
  * [executions] holds the plan files and the calls of every complex plugin. The calls of a community plugin go into its
- * cross-half package here. [targets] is the JSON the module and library labels still come from.
+ * product package here. [targets] is the JSON the module and library labels still come from.
  *
  * [half] is the half the run writes, and every path is relative to its root, the project root of the index of
  * [sections]. A half writes the reference plan, the platform patches and the embedded descriptor actions only when it has
@@ -633,8 +625,9 @@ internal fun checkPluginNativeTrees(entries: Collection<DevDistPluginPlanEntry>)
 private const val PLATFORM_LIB_FRAGMENT = "platform_lib"
 
 /**
- * The fragment that writes `modules/module-descriptors.{dat,jar}`. The plan emits it for a product with a run
- * configuration that asks for the runtime module repository, and only such a row composes it.
+ * The component that places `modules/module-descriptors.{dat,jar}`, which the `dev_dist_runtime_module_repository`
+ * action writes. The plan emits it for a product with a run configuration that asks for the runtime module repository,
+ * and only such a row composes it.
  */
 private const val PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT = "platform_runtime_module_repository"
 
@@ -743,20 +736,20 @@ private data class ProductFragmentPlan(
   @JvmField val productMode: String,
   @JvmField val buildModules: List<String>,
   /**
-   * Whether the product has the runtime module repository fragment: a row asks for it, or the product loads the
+   * Whether the product has the runtime module repository component: a row asks for it, or the product loads the
    * modular loader. Only a row with the runtime module repository composes it, unless [modularLoader] is set.
    */
   @JvmField val runtimeModuleRepository: Boolean,
   /**
    * The `build/dev-build.json` key of the split product whose platform the embedded frontend is, or `null` when the
-   * product embeds none or has no [runtimeModuleRepository] fragment. The runtime module repository fragment lays
+   * product embeds none or has no [runtimeModuleRepository] component. The runtime module repository component lays
    * the frontend's platform and its own bundled plugins out too, so the Bazel side takes that product's `platform_lib`
    * declaration and the components of its frontend-only plugins beside the product's own.
    */
   @JvmField val embeddedFrontend: String?,
   /**
    * Whether the product starts through the modular loader (`ProductProperties.rootModuleForModularLoader`). Such a
-   * product reads `modules/module-descriptors.jar` at every start, so every row composes the [runtimeModuleRepository] fragment.
+   * product reads `modules/module-descriptors.jar` at every start, so every row composes the [runtimeModuleRepository] component.
    */
   @JvmField val modularLoader: Boolean,
   @JvmField val payloads: List<FragmentPayload>,
@@ -769,7 +762,7 @@ private data class ProductFragmentPlan(
   @JvmField val ideaProperties: String,
   /** The application info sources that the `platform_resources` component reads beside [launchModel]. */
   @JvmField val applicationInfoSources: ApplicationInfoSources,
-  /** The `lib/` jar order of the platform. `null` for a product without the [runtimeModuleRepository] fragment. */
+  /** The `lib/` jar order of the platform. `null` for a product without the [runtimeModuleRepository] component. */
   @JvmField val platformJarOrder: PlatformJarOrder? = null,
   /** The application-info module, which holds the descriptor of the core plugin of the runtime module repository. */
   @JvmField val applicationInfoModule: String = "",
@@ -1117,7 +1110,7 @@ private fun ProductContentBuildResult.withoutModules(modules: Set<String>): Prod
  * Every part of the plan: the files of the flat [walk], the fragment plans of the split products and the descriptor
  * plans. [pluginDescriptorPlans] are the entries the dev sections read, passed through unchanged. [pluginRequests]
  * are the plugins that get a component in this run, so a fragment plan can check that every bundled plugin has one.
- * [runtimeModuleRepositoryProducts] names the products whose plan gets the runtime module repository fragment, see
+ * [runtimeModuleRepositoryProducts] names the products whose plan gets the runtime module repository component, see
  * [devDistRuntimeModuleRepositoryProducts]. [communityProducts] are the community products of [half], see
  * [devDistCommunityProducts]. The community half plans them, so this half collects no fragment plan, no product
  * descriptor and no module-set row of them.
@@ -1832,7 +1825,7 @@ private fun collectFragmentPlan(
     " model; run ./build/jpsModelToBazel.cmd:\n" +
     staleTargetNames.sorted().joinToString(separator = "\n") { "  $it" }
   }
-  // A modular-loader product reads the repository at every start, so its plan carries the fragment whatever its rows ask.
+  // A modular-loader product reads the repository at every start, so its plan carries the component whatever its rows ask.
   val modularLoader = properties.rootModuleForModularLoader != null
   val hasRuntimeModuleRepository = runtimeModuleRepository || modularLoader
   val frontendProperties = if (!hasRuntimeModuleRepository) null else properties.embeddedFrontendProperties?.invoke()
@@ -1954,8 +1947,8 @@ private fun frontendIconPatches(
  *
  * The generator lays the platform and every bundled plugin out without files, and the dry layout resolves the output
  * and the libraries of each module it packs. The `platform_lib` payload of the product already names the platform,
- * and the `platform_lib` payload of [embeddedFrontend] names the frontend's platform. The bridge takes both
- * declarations whole, before the packed jars leave them. The bundled plugins arrive as `DevDistContentInfo` from
+ * and the `platform_lib` payload of [embeddedFrontend] names the frontend's platform. The reference macro takes
+ * both declarations whole, before the packed jars leave them. The bundled plugins arrive as `DevDistContentInfo` from
  * their components, which `dev_dist_plugin_content` unions per product. So this payload names only the embedded
  * frontend root modules and the product's own modular-loader root, which no platform payload and no plugin carries.
  * A debug wrapper's `rootModule` (`build/dev-build.json`) is that root, and the layout packs it into a residual jar
@@ -1991,7 +1984,8 @@ private fun collectRuntimeModuleRepositoryPayload(
     )
   }
 
-  // A name the project does not have declares nothing, and the Starlark side would only warn about it.
+  // A name the project does not have declares nothing. The generator resolves the reference inputs from these names
+  // and fails on a name that the targets JSON lacks, so the payload keeps only the names of the project.
   payload.modules.retainAll { outputProvider.findModule(it) != null }
   return payload.freeze(name = PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT)
 }
@@ -3176,10 +3170,9 @@ internal class DescriptorCollector(
 private fun renderDescriptors(files: List<DescriptorFile>, half: DevDistHalf): String = buildString {
   append(half.generatedByHeader)
   append("#\n")
-  append("# A dev-distribution fragment computes the whole product layout before it packs its slice, and reads every\n")
-  append("# content module descriptor and bundled plugin descriptor to do it. Bazel materializes those into the\n")
-  append("# shared project model tree so the layout reads files instead of opening module jars - see\n")
-  append("# `intellij_project_model_tree`.\n")
+  append("# The shared project model tree carries every content module descriptor and every bundled plugin descriptor,\n")
+  append("# so a reader of the tree reads files instead of opening module jars. Only the runtime module repository action\n")
+  append("# and the references read the tree - see `intellij_project_model_tree`.\n")
   append("#\n")
   append("# Bazel finds most of them by convention: `<moduleName>.xml` and `META-INF/plugin.xml` at a production\n")
   append("# resource root. This file is the remainder - descriptors reached only through an `xi:include`, whose name\n")
@@ -3245,7 +3238,8 @@ private fun renderPartition(products: List<ProductFragmentPlan>, half: DevDistHa
   }
   if (!half.writesCommunityPackages) {
     append("# The community products: the keys that both registries state with one product class. The community half plans\n")
-    append("# them, so no table of this half has a row of them. A distribution of a community product composes the community\n")
+    append("# them, so the plan tables of this half have no row of them. The component map states only their additional tier,\n")
+    append("# and the rows file keeps their run configurations. A distribution of a community product composes the community\n")
     append("# platform set and the community bundled plugins, see `intellij_dev_dist_declarations`.\n")
     if (communityProducts.isEmpty()) {
       append("DEV_DIST_COMMUNITY_PRODUCTS = []\n")
@@ -3510,12 +3504,13 @@ private fun renderPlanFields(product: ProductFragmentPlan, indent: String, share
     append(indent).append(field).append(" = ").append(sharedFields.get(body) ?: body.body.replace("\n", "\n$indent")).append(",\n")
   }
   if (product.runtimeModuleRepository) {
-    // Only a row that asks for the runtime module repository composes the fragment. A product without one has no field.
+    // Only a row that asks for the runtime module repository composes the component. A product without one has no field.
     append(indent).append("runtime_module_repository = True,\n")
-    // The split product whose platform the fragment lays out beside the product's own. The bridge and the macro
-    // take that product's `platform_lib` declaration and its frontend-only plugin components from here.
+    // The split product whose platform the component lays out beside the product's own. The dist macro takes its
+    // platform payload and its frontend-only plugin components from here. Only the reference macro reads its
+    // `platform_lib` declaration.
     product.embeddedFrontend?.let { append(indent).append("embedded_frontend = \"").append(it).append("\",\n") }
-    // A modular-loader product reads the repository at every start, so every row of it composes the fragment.
+    // A modular-loader product reads the repository at every start, so every row of it composes the component.
     if (product.modularLoader) {
       append(indent).append("modular_loader = True,\n")
     }

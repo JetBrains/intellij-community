@@ -86,7 +86,7 @@ def _dev_plugin_inputs_impl(ctx):
             fail("%s is neither a library container nor one jar file" % target.label, attr = "libraries")
         libraries[token] = struct(label = str(target.label), jars = tuple(files))
 
-    # The raw content, for the fragment that lays the plugin out without packing it: the plugin's own module jars and
+    # The raw content, for the reference that lays the plugin out without packing it: the plugin's own module jars and
     # libraries, plus what each reused content module jar merged. Its recipe travels with it, see `ContentModuleJarInfo`.
     content_module_jars = list(module_jars.values())
     content_library_jars = list(libraries.values())
@@ -473,7 +473,7 @@ def _dev_plugin_impl(ctx):
         DefaultInfo(files = depset([manifest, classpath]), runfiles = ctx.runfiles(transitive_files = payload)),
         DevDistRuntimeLayoutInfo(part = runtime_layout, descriptor = classpath_descriptor, descriptor_module = main_module),
         # The raw content, published beside the packed component: `dev_dist_plugin_content` unions it per product for
-        # the fragment that lays the plugin out without packing it.
+        # the reference that lays the plugin out without packing it.
         inputs.content,
         IntellijDevFragmentInfo(
             name = main_module,

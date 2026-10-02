@@ -182,11 +182,11 @@ def _dev_dist_plugin_content_impl(ctx):
 dev_dist_plugin_content = rule(
     doc = """The raw module and library jars of the bundled plugins of one product, as one `DevDistContentInfo`.
 
-    The runtime module repository fragment lays every bundled plugin out without files and resolves the output and the
+    The runtime module repository reference lays every bundled plugin out without files and resolves the output and the
     libraries of each module it reaches. Those jars used to arrive as a generated name list of ~2 000 names per
     product. They are the same jars every plugin component already reads, so the components publish them and this
     rule unions them. Raw jars only: no packed plugin jar and no descriptor is in here, so a plugin source edit
-    re-keys no fragment through this target.
+    re-keys no reference through this target.
 
     `plugins` are the components of the product's own bundled plugins. They need the product configuration, which
     `product_info` sets on the way down, exactly as `intellij_dev_fragments_dist` does. The module jars below them

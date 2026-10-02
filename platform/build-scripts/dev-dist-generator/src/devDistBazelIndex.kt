@@ -304,7 +304,7 @@ private const val DEV_DESCRIPTOR_TARGET_SUFFIX: String = "_dev_descriptor"
 /**
  * The repositories a community package may name: its own, `@community`, and the community library container `@lib`.
  * A label from another repository vetoes a community descriptor target, and it moves the `jars` of a community section
- * to the cross-half package.
+ * to the product package.
  */
 private val COMMUNITY_NAMEABLE_REPOSITORIES: Set<String> = setOf("", COMMUNITY_REPOSITORY_NAME, "@lib")
 

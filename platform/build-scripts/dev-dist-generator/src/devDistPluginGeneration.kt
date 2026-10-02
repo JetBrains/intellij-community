@@ -879,7 +879,7 @@ internal fun assignRegistryLayoutsToProducts(
  * The `dev_dist_complex_plugin` calls of one complex plugin, as top-level statements.
  *
  * [sectionText] holds the calls the plugin's own `dev` section states, or `null`. [crossHalfText] holds the calls of the
- * cross-half plugin package at [crossHalfPath], or `null`. A community plugin states its baseline call in its own section
+ * product package at [crossHalfPath], or `null`. A community plugin states its baseline call in its own section
  * when every label of that call is one a community package can name. Every other call of a community plugin names a
  * product in its chain class, so it sits cross-half. [exportsPlanFiles] says the section exports the plan files, because
  * a cross-half call reads one of them. One blank line separates two calls, see [renderDevDistPluginExecutionCalls].
@@ -905,11 +905,11 @@ internal class DevDistPluginExecutionRendering(
  * product and tier index that consumes every plugin component.
  *
  * The call of a plugin sits in the package its plan home names, see [DevDistPluginPlanHome]: the own package of an
- * ultimate plugin, and the cross-half plugin package of a community plugin. The call states `plan_package` when the
+ * ultimate plugin, and the product package of a community plugin. The call states `plan_package` when the
  * plan file sits in another package than the call.
  *
  * A plugin with a simple packaging has no chain here. Its component is the `dev_plugin` target its own section or its
- * cross-half package declares, and the index names that label. The component map states no bundled tier for a product
+ * product package declares, and the index names that label. The component map states no bundled tier for a product
  * of [communityProducts], see [devDistCommunityProducts].
  */
 internal fun renderGeneratedDevDistPluginExecutions(
@@ -1053,7 +1053,7 @@ private fun renderPluginCall(
 }
 
 /**
- * The absolute label of the package that holds the calls of [mainModule]: the cross-half plugin package for a
+ * The absolute label of the package that holds the calls of [mainModule]: the product package for a
  * community plugin, and the plan home's package otherwise.
  */
 private fun devDistPluginCallPackageLabel(mainModule: String, home: DevDistPluginPlanHome): String {

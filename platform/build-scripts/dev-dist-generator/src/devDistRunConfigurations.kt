@@ -370,7 +370,7 @@ internal fun devDistRunConfigurationModules(rows: List<DevRunConfigurationRow>, 
 
 /**
  * The products of [splitProducts] with one of [rows] that sets `-Dintellij.build.generate.runtime.module.repository=true`.
- * The plan emits the `platform_runtime_module_repository` fragment for such a product, and only a row that sets the
+ * The plan emits the `platform_runtime_module_repository` component for such a product, and only a row that sets the
  * property composes it.
  */
 internal fun devDistRuntimeModuleRepositoryProducts(rows: List<DevRunConfigurationRow>, splitProducts: Set<String>): Set<String> {
