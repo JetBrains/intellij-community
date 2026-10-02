@@ -19,21 +19,23 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.pyi.PyiFileType
 import com.jetbrains.python.sdk.ModuleOrProject
 import java.io.IOException
+import java.nio.file.Path
 
 /**
- * Runs the Ruff executable with [args], feeding [input] to stdin, and returns the captured stdout.
+ * Runs the Ruff executable with [command], feeding [input] to stdin, and returns the captured stdout.
  *
  * Every Ruff entry point pipes the (possibly unsaved) in-memory document through Ruff this way: sending the source over
  * stdin lets Ruff resolve the path-based `pyproject.toml` configuration via `--stdin-filename` while it still operates
- * on the editor text rather than on the version on disk.
+ * on the editor text rather than on the version on disk. When Ruff finds no configuration that way, [command] gives
+ * it the project config, see [ruffStdinCommand].
  */
 internal suspend fun RuffPyTool.runOnStdin(
   moduleOrProject: ModuleOrProject,
-  args: Args,
+  command: RuffStdinCommand,
   input: String,
   execOptions: ExecOptions = ExecOptions(),
 ): PyResult<String> =
-  moduleOrProject.executeToolInteractive(this, args, execOptions = execOptions) { stdin, processResult ->
+  moduleOrProject.executeToolInteractive(this, command.args, command.workingDir, execOptions) { stdin, processResult ->
     try {
       stdin.sendWholeText(input)
       stdin.close(null)
@@ -49,15 +51,33 @@ internal suspend fun RuffPyTool.runOnStdin(
     if (output.exitCode != 0) Result.failure(output.stderrString) else Result.success(output.stdoutString)
   }
 
+/** The arguments of one Ruff run on stdin, and the working directory of the run. `null` keeps the default directory. */
+internal class RuffStdinCommand(val arguments: List<String>, val workingDir: Path?) {
+  val args: Args get() = Args(*arguments.toTypedArray())
+}
+
+/** The project config for a Ruff run on [file] of [project], or `null` when Ruff finds a config itself. See [ruffFallbackConfig]. */
+internal fun ruffStdinFallback(file: VirtualFile, project: Project): RuffConfigFile? =
+  file.parent?.let { ruffFallbackConfig(it, project) }
+
 /**
- * The arguments that run the Ruff [command] on stdin for the file at [path], which must come from [ruffPath].
+ * The Ruff run of [subcommand] on stdin for the file at [path], which must come from [ruffPath].
  *
  * `--force-exclude` makes Ruff apply the project's `exclude` settings to [path]. Without it, Ruff treats a path on the
  * command line as an explicit request, and it changes a file that the project excludes. For an excluded file, Ruff
  * returns the input unchanged.
+ *
+ * A [fallback] from [ruffStdinFallback] goes to Ruff with `--config`. Ruff resolves the relative paths of a `--config`
+ * file against the working directory. So the run starts in the directory of that config, where Ruff resolves the
+ * relative paths of a config that it finds itself.
  */
-internal fun ruffStdinArgs(path: String, vararg command: String): Args =
-  Args(*command, "--force-exclude", "--stdin-filename", path, "-")
+internal fun ruffStdinCommand(path: String, fallback: RuffConfigFile?, vararg subcommand: String): RuffStdinCommand {
+  val stdinArgs = listOf("--force-exclude", "--stdin-filename", path, "-")
+  val configPath = fallback?.file?.ruffPath()
+  val configDir = fallback?.file?.parent?.let { it.fileSystem.getNioPath(it) }
+  if (configPath == null || configDir == null) return RuffStdinCommand(subcommand.toList() + stdinArgs, null)
+  return RuffStdinCommand(subcommand.toList() + listOf("--config", configPath) + stdinArgs, configDir)
+}
 
 /** Whether Ruff checks and formats a file of [fileType]: a Python source file or a `.pyi` stub. */
 internal fun isRuffFileType(fileType: FileType): Boolean =

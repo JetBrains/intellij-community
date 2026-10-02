@@ -11,8 +11,10 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.pytools.backend.isEnabledOn
 import com.jetbrains.python.Result
+import com.jetbrains.python.sdk.ModuleOrProject
 
 private val LOG = logger<RuffFixOnSaveAction>()
 
@@ -39,14 +41,14 @@ internal class RuffFixOnSaveAction : DocumentUpdatingActionOnSave() {
 
       // Ruff runs on the interpreter's machine, so the path it is given must be the path there.
       val path = virtualFile.ruffPath() ?: return@readAction null
-      Triple(path, ruffScopeOf(project, virtualFile), document.text)
+      Request(virtualFile, path, ruffScopeOf(project, virtualFile), document.text)
     } ?: return
 
-    val (path, moduleOrProject, originalText) = request
+    val (virtualFile, path, moduleOrProject, originalText) = request
 
     val fixedText = when (val result = RuffPyTool.getInstance().runOnStdin(
       moduleOrProject,
-      ruffStdinArgs(path, "check", "--fix-only"),
+      ruffStdinCommand(path, ruffStdinFallback(virtualFile, project), "check", "--fix-only"),
       originalText,
     )) {
       is Result.Success -> result.result
@@ -65,3 +67,5 @@ internal class RuffFixOnSaveAction : DocumentUpdatingActionOnSave() {
     }
   }
 }
+
+private data class Request(val file: VirtualFile, val path: String, val moduleOrProject: ModuleOrProject, val text: String)

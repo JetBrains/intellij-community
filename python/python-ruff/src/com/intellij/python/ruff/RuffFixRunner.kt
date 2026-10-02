@@ -48,8 +48,8 @@ internal suspend fun applyRuffFixes(
       } ?: continue
       val (document, originalText) = snapshot
 
-      val args = ruffStdinArgs(path, "check", "--fix-only")
-      when (val result = ruff.runOnStdin(ruffScopeOf(project, file), args, originalText)) {
+      val command = ruffStdinCommand(path, ruffStdinFallback(file, project), "check", "--fix-only")
+      when (val result = ruff.runOnStdin(ruffScopeOf(project, file), command, originalText)) {
         is Result.Success -> if (result.result != originalText) fixes += RuffFix(document, originalText, result.result)
         is Result.Failure -> failures += "${file.name}: ${result.error.message}"
       }

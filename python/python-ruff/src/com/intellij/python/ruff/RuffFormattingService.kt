@@ -10,6 +10,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.python.pytools.backend.isEnabledOn
 import com.jetbrains.python.Result
@@ -77,7 +79,8 @@ internal class RuffFormattingService : AsyncDocumentFormattingService() {
     return object : FormattingTask {
       override fun run() {
         try {
-          when (val result = runBlockingCancellable { formatAndSortImports(moduleOrProject, path, originalText) }) {
+          val result = runBlockingCancellable { formatAndSortImports(context.project, virtualFile, moduleOrProject, path, originalText) }
+          when (result) {
             is Result.Success -> formattingRequest.onTextReady(result.result.takeIf { it != originalText })
             is Result.Failure -> {
               LOG.warn("Ruff formatting failed for $path: ${result.error.message}")
@@ -101,11 +104,20 @@ internal class RuffFormattingService : AsyncDocumentFormattingService() {
   }
 
   /** `ruff format` piped into `ruff check --fix-only --select I`. When a pass fails, the result is its failure. */
-  private suspend fun formatAndSortImports(moduleOrProject: ModuleOrProject, path: String, originalText: String): PyResult<String> {
+  private suspend fun formatAndSortImports(
+    project: Project,
+    file: VirtualFile,
+    moduleOrProject: ModuleOrProject,
+    path: String,
+    originalText: String,
+  ): PyResult<String> {
     val ruff = RuffPyTool.getInstance()
-    val formatted = ruff.runOnStdin(moduleOrProject, ruffStdinArgs(path, "format"), originalText).getOr { return it }
+    val fallback = ruffStdinFallback(file, project)
+    val format = ruffStdinCommand(path, fallback, "format")
+    val formatted = ruff.runOnStdin(moduleOrProject, format, originalText).getOr { return it }
 
     // `I` sorts imports. It is force-selected, so the option works whatever the project's rule set enables.
-    return ruff.runOnStdin(moduleOrProject, ruffStdinArgs(path, "check", "--fix-only", "--select", "I"), formatted)
+    val sortImports = ruffStdinCommand(path, fallback, "check", "--fix-only", "--select", "I")
+    return ruff.runOnStdin(moduleOrProject, sortImports, formatted)
   }
 }

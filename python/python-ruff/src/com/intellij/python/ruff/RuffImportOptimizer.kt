@@ -54,9 +54,9 @@ class RuffImportOptimizer : SuspendableImportOptimizer {
 
     // `ruff check --fix-only` applies the fixes and writes the resulting source to stdout, exiting 0 even when
     // unfixable violations remain. `I` sorts imports and `F401` removes the unused ones.
-    val args = ruffStdinArgs(path, "check", "--fix-only", "--select", "I,F401")
+    val command = ruffStdinCommand(path, ruffStdinFallback(virtualFile, file.project), "check", "--fix-only", "--select", "I,F401")
     val scope = ruffScopeOf(file.project, virtualFile)
-    val optimizedText = when (val result = RuffPyTool.getInstance().runOnStdin(scope, args, originalText)) {
+    val optimizedText = when (val result = RuffPyTool.getInstance().runOnStdin(scope, command, originalText)) {
       is Result.Success -> result.result
       is Result.Failure -> {
         LOG.warn("Ruff import optimization failed for $path: ${result.error.message}")
