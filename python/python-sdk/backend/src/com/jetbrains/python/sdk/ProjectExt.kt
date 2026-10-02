@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
-import com.intellij.execution.target.TargetBasedSdkAdditionalData
+import com.intellij.execution.target.sdkMatchesEel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -10,10 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.platform.eel.EelMachine
-import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.getEelMachine
-import com.intellij.platform.eel.provider.ownsPath
 import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.jetbrains.python.Result
@@ -22,8 +19,6 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.codeCouldProbablyBeRunWithConfig
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.nio.file.InvalidPathException
-import java.nio.file.Path
 
 /**
  * Renames the SDK currently registered as [oldName] to [newName] and keeps this project's references pointing at it.
@@ -117,19 +112,4 @@ fun ModuleOrProject.filterAssignablePythonSdks(sdks: Collection<Sdk>): List<Sdk>
       (targetModuleSitsOn == null || targetModuleSitsOn.codeCouldProbablyBeRunWithConfig(sdk.targetEnvConfiguration))
     }
     .sortedWith(compareBy({ PythonSdkUtil.isRemote(it) }, { it.name }))
-}
-
-/**
- * Mirrors `ProjectSdksModel.sdkMatchesEel` (which lives in lang-impl and is unavailable here): target-based SDKs are
- * always eligible; other SDKs must have a home path owned by the project's [eelMachine].
- */
-private fun sdkMatchesEel(eelMachine: EelMachine, sdk: Sdk): Boolean {
-  if (sdk.sdkAdditionalData is TargetBasedSdkAdditionalData) return true
-  val home = sdk.homePath ?: return false
-  return try {
-    eelMachine.ownsPath(Path.of(home))
-  }
-  catch (_: InvalidPathException) {
-    eelMachine == LocalEelMachine
-  }
 }

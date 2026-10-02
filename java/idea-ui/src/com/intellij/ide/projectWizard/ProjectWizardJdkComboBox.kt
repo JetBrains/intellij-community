@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard
 
+import com.intellij.execution.target.sdkMatchesEel
 import com.intellij.icons.AllIcons
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.AddJdkFromJdkListDownloader
@@ -50,7 +51,6 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListDownloader
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
@@ -528,7 +528,7 @@ private fun computeRegisteredSdks(key: EelDescriptor?): List<ExistingJdk> {
     .filter { jdk ->
       jdk.sdkType is JavaSdkType &&
       jdk.sdkType !is DependentSdkType &&
-      (key == null || ProjectSdksModel.sdkMatchesEel(key.getResolvedEelMachine() ?: LocalEelMachine, jdk))
+      (key == null || sdkMatchesEel(key.getResolvedEelMachine() ?: LocalEelMachine, jdk))
     }
     .map { ExistingJdk(it) }
 }

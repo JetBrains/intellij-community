@@ -3,6 +3,7 @@ package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionHost.LensInvalidateSignal
+import com.intellij.execution.target.sdkMatchesEel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
@@ -19,7 +20,6 @@ import com.intellij.openapi.projectRoots.JdkFinder
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -150,7 +150,7 @@ public class ExternalJavaConfigurationService(public val project: Project, inter
     // Match against the project JDK table
     val jdks = ProjectJdkTable.getInstance(project).allJdks
     for (jdk in jdks) {
-      if (!ProjectSdksModel.sdkMatchesEel(eelMachine, jdk)) continue
+      if (!sdkMatchesEel(eelMachine, jdk)) continue
       val candidate = JdkCandidate.Jdk(releaseData, jdk, false)
       when (releaseData.matchAgainstSdk(jdk)) {
         ReleaseDataMatching.EXACT_MATCH -> return proceedWithMatch(candidate, match = ReleaseDataMatching.EXACT_MATCH, configFile)
@@ -161,7 +161,7 @@ public class ExternalJavaConfigurationService(public val project: Project, inter
 
     // Match against JdkFinder
     JdkFinder.getInstance().suggestHomePaths(project).forEach { path ->
-      if (ProjectSdksModel.sdkMatchesEel(eelMachine, path)) {
+      if (sdkMatchesEel(eelMachine, path)) {
         val candidate = JdkCandidate.Path(releaseData, path)
         when (releaseData.matchAgainstPath(path)) {
           ReleaseDataMatching.EXACT_MATCH -> return proceedWithMatch(candidate, match = ReleaseDataMatching.EXACT_MATCH, configFile)

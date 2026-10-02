@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
-import com.intellij.execution.target.TargetBasedSdkAdditionalData;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -44,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,6 +54,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
+import static com.intellij.execution.target.SdkEelMatching.sdkMatchesEel;
 import static com.intellij.openapi.roots.ui.configuration.projectRoot.SdkNameToolsKt.suggestSdkNamePostfix;
 import static com.intellij.openapi.util.NlsActions.ActionText;
 
@@ -565,32 +564,6 @@ public class ProjectSdksModel implements SdkModel {
 
   public boolean isInitialized() {
     return myInitialized;
-  }
-
-  @ApiStatus.Internal
-  public static boolean sdkMatchesEel(@NotNull EelMachine eelMachine, Sdk sdk) {
-    if (sdk.getSdkAdditionalData() instanceof TargetBasedSdkAdditionalData) {
-      return true;
-    }
-    String sdkHomePath = sdk.getHomePath();
-    return sdkMatchesEel(eelMachine, sdkHomePath);
-  }
-
-  @ApiStatus.Internal
-  public static boolean sdkMatchesEel(@NotNull EelMachine eelMachine, String sdkHomePath) {
-    if (sdkHomePath != null) {
-      try {
-        Path path = Path.of(sdkHomePath);
-        if (EelProviderUtil.ownsPath(eelMachine, path)) {
-          return true;
-        }
-      }
-      catch (InvalidPathException ignored) {
-        // Ignored.
-        return eelMachine == LocalEelMachine.INSTANCE;
-      }
-    }
-    return false;
   }
 
   private static @NotNull List<SdkType> getAddableSdkTypes(@Nullable Predicate<? super SdkTypeId> filter) {
