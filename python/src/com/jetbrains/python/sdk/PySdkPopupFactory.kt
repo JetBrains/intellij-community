@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -12,6 +11,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.projectRoots.Sdk
@@ -21,19 +21,19 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.python.sdk.backend.asInterpreterRef
 import com.intellij.python.sdk.common.PyInterpreterItem
-import com.intellij.util.ui.SwingHelper
-import com.intellij.util.ui.launchOnShow
-import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.ListPopupModel
+import com.intellij.util.ui.SwingHelper
+import com.intellij.util.ui.launchOnShow
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.observeSdkConfigurationInProgress
-import com.jetbrains.python.sdk.inspections.InterpreterSettingsQuickFix
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.codeCouldProbablyBeRunWithConfig
+import com.jetbrains.python.sdk.inspections.InterpreterSettingsQuickFix
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.withContext
@@ -112,7 +112,7 @@ class PySdkPopupFactory(val module: Module) {
     popup.content.launchOnShow("PySdkPopupFactory.interpreters") {
       reload.collect {
         val interpreters = withContext(Dispatchers.IO) {
-          module.project.getAssignablePythonSdks(module).groupInterpreterItemsByTypes(module)
+          module.asModuleOrProject.getAssignablePythonSdks().groupInterpreterItemsByTypes(module)
         }
         withContext(Dispatchers.EDT) {
           content = buildContent(interpreters)
@@ -139,7 +139,7 @@ class PySdkPopupFactory(val module: Module) {
     addSwitchInterpreterActions(group, interpreters)
 
     val addInterpreterGroup = DefaultActionGroup(PyBundle.message("python.sdk.action.add.new.interpreter.text"), true)
-    addInterpreterGroup.addAll(collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(module)) { })
+    addInterpreterGroup.addAll(collectAddInterpreterActions(module.asModuleOrProject) { })
     ActionManager.getInstance().getAction("Python.NewInterpreter.Extra")?.let { addInterpreterGroup.add(it) }
     group.add(addInterpreterGroup)
 

@@ -14,12 +14,12 @@ import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.platform.eel.provider.ownsPath
+import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.codeCouldProbablyBeRunWithConfig
-import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.InvalidPathException
@@ -86,11 +86,11 @@ fun Project.renameSdk(oldName: String, newName: String): PyResult<Unit> {
 }
 
 /**
- * Returns all Python SDKs registered in the IDE that are usable from this project, optionally restricted to the target
- * the given [module] resides on. Remote interpreters are sorted last, then by name.
+ * Returns all Python SDKs registered in the IDE that are usable from [ModuleOrProject.project], restricted to the target
+ * the module resides on (only for [ModuleOrProject.ModuleAndProject]). Remote interpreters are sorted last, then by name.
  */
 @Internal
-fun Project.getAssignablePythonSdks(module: Module?): List<Sdk> = filterAssignablePythonSdks(PythonSdkUtil.getAllSdks(), module)
+fun ModuleOrProject.getAssignablePythonSdks(): List<Sdk> = filterAssignablePythonSdks(PythonSdkUtil.getAllSdks())
 
 /** First module in this project whose configured Python SDK equals [sdk], or `null` if none matches. */
 @Internal
@@ -107,9 +107,9 @@ fun Project.findFirstPythonSdk(): Sdk? =
  * copies from its own `ProjectSdksModel` here, so the displayed list matches the live one.
  */
 @Internal
-fun Project.filterAssignablePythonSdks(sdks: Collection<Sdk>, module: Module?): List<Sdk> {
-  val eelMachine = getEelMachine()
-  val targetModuleSitsOn = module?.let { PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(it) }
+fun ModuleOrProject.filterAssignablePythonSdks(sdks: Collection<Sdk>): List<Sdk> {
+  val eelMachine = project.getEelMachine()
+  val targetModuleSitsOn = moduleIfExists?.let { PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(it) }
   return sdks
     .filter { sdk ->
       PythonSdkUtil.isPythonSdk(sdk) &&

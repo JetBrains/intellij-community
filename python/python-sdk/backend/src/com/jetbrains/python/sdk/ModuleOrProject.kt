@@ -38,6 +38,7 @@ sealed class ModuleOrProject(val project: Project) {
   class ModuleAndProject(val module: Module) : ModuleOrProject(module.project)
 }
 
+@get:ApiStatus.Internal
 val ModuleOrProject.moduleIfExists: Module?
   get() = when (this) {
     is ModuleOrProject.ModuleAndProject -> module
@@ -49,8 +50,15 @@ val ModuleOrProject.workingDirectory: Path?
   get() = moduleIfExists?.baseDir?.path?.let { Path.of(it) }
           ?: project.basePath?.let { Path.of(it) }
 
+@get:ApiStatus.Internal
 val ModuleOrProject.destructured: Pair<Project, Module?>
   get() = when (this) {
     is ModuleOrProject.ProjectOnly -> project to null
     is ModuleOrProject.ModuleAndProject -> project to module
   }
+
+@get:ApiStatus.Internal
+val Module.asModuleOrProject: ModuleOrProject.ModuleAndProject get() = ModuleOrProject.ModuleAndProject(this)
+
+@get:ApiStatus.Internal
+val Project.asModuleOrProject: ModuleOrProject.ProjectOnly get() = ModuleOrProject.ProjectOnly(this)

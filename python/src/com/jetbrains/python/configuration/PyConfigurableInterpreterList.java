@@ -4,6 +4,7 @@ package com.jetbrains.python.configuration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.jetbrains.python.sdk.ModuleOrProject;
 import com.jetbrains.python.sdk.ProjectExtKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +13,7 @@ import java.util.List;
 
 /**
  * @deprecated The cached SDK model was removed; query the live SDK table via
- * {@link ProjectExtKt#getAssignablePythonSdks(Project, com.intellij.openapi.module.Module)} instead. Retained for
+ * {@link ProjectExtKt#getAssignablePythonSdks(ModuleOrProject)} instead. Retained for
  * external plugins that still reference this service.
  */
 @Deprecated
@@ -24,7 +25,7 @@ public final class PyConfigurableInterpreterList {
   }
 
   /**
-   * @deprecated Obtain interpreters via {@link ProjectExtKt#getAssignablePythonSdks(Project, com.intellij.openapi.module.Module)}.
+   * @deprecated Obtain interpreters via {@link ProjectExtKt#getAssignablePythonSdks(ModuleOrProject)}.
    */
   @Deprecated
   public static PyConfigurableInterpreterList getInstance(@Nullable Project project) {
@@ -33,10 +34,10 @@ public final class PyConfigurableInterpreterList {
   }
 
   /**
-   * @deprecated Use {@link ProjectExtKt#getAssignablePythonSdks(Project, com.intellij.openapi.module.Module)} with a {@code null} module.
+   * @deprecated Use {@link ProjectExtKt#getAssignablePythonSdks(ModuleOrProject)} with {@link ModuleOrProject.ProjectOnly}.
    */
   @Deprecated
   public @NotNull List<Sdk> getAllPythonSdks() {
-    return ProjectExtKt.getAssignablePythonSdks(myProject, null);
+    return ProjectExtKt.getAssignablePythonSdks(new ModuleOrProject.ProjectOnly(myProject));
   }
 }

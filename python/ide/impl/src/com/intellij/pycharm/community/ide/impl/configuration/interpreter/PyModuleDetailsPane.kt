@@ -1,10 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
+import com.intellij.configurationStore.StoreUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
-import com.intellij.configurationStore.StoreUtil
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -12,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.ex.Settings
@@ -22,24 +25,21 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
-import com.intellij.openapi.application.EDT
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET
-import com.intellij.ide.ui.icons.icon
-import com.intellij.openapi.Disposable
-import com.intellij.python.sdk.common.PyInterpreterItem
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.module.PyModuleService
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.collectAddInterpreterActions
 import com.jetbrains.python.sdk.filterAssignablePythonSdks
 import com.jetbrains.python.sdk.findPythonSdk
 import com.jetbrains.python.sdk.interpreterItemsUnderProgress
-import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
@@ -274,7 +274,7 @@ internal class PyModuleDetailsPane(
   private fun ensureSourcesBuilt() {
     if (sourcesBuilt) return
     sourcesBuilt = true
-    val sourcesComponent = sourcesConfigurable.createComponent() ?: return
+    val sourcesComponent = sourcesConfigurable.createComponent()
     sourcesHolder.add(sourcesComponent, BorderLayout.CENTER)
     sourcesHolder.revalidate()
     sourcesHolder.repaint()
@@ -301,7 +301,7 @@ internal class PyModuleDetailsPane(
 
   private fun collectAvailablePythonSdks(): List<Sdk> {
     val editable = projectSdksModel.projectSdks.values.toList()
-    return project.filterAssignablePythonSdks(editable, module)
+    return moduleOrProject.filterAssignablePythonSdks(editable)
   }
 
   /**

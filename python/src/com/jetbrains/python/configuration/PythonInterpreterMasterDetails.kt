@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration
 
 import com.intellij.icons.AllIcons
@@ -14,10 +14,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.python.sdk.backend.pyInterpreterItems
-import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -27,10 +23,15 @@ import com.intellij.openapi.ui.InputValidatorEx
 import com.intellij.openapi.ui.MasterDetailsComponent
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Condition
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.python.sdk.backend.pyInterpreterItems
+import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.ModuleOrProject.ModuleAndProject
 import com.jetbrains.python.sdk.ModuleOrProject.ProjectOnly
@@ -42,7 +43,6 @@ import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.noInterpreterMarker
 import com.jetbrains.python.sdk.renameSdk
-import com.jetbrains.python.onFailure
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -121,7 +121,7 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
   }
 
   private val allPythonSdksInEdit: List<Sdk>
-    get() = project.filterAssignablePythonSdks(projectSdksModel.sdks.toList(), module)
+    get() = moduleOrProject.filterAssignablePythonSdks(projectSdksModel.sdks.toList())
 
   override fun reset() {
     pythonPathsModified = false
