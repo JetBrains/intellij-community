@@ -203,6 +203,7 @@ intellij.python.processOutput.frontend.tests
 intellij.python.pyproject.tests
 intellij.python.pytools.tests
 intellij.python.requirements.tests
+intellij.python.ruff.tests
 intellij.python.sdk.tests
 intellij.python.test.env.junit5
 intellij.python.venv.tests

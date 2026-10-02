@@ -391,6 +391,7 @@
       InspectCodeGroup
         InspectCode
         CodeCleanup
+        Ruff.FixScope
       AnalyzeActionsPopup
         AnalyzeActions
           SilentCodeCleanup
@@ -2367,6 +2368,7 @@
 [group InspectCodeGroup]
   InspectCode
   CodeCleanup
+  Ruff.FixScope
 [group InspectCodeInCodeMenuGroup]
   <separator>
   InspectCodeGroup
