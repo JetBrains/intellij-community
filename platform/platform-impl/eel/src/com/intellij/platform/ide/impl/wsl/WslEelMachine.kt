@@ -11,8 +11,13 @@ import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.provider.EelMachineResolver
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.ijent.IjentMachine
 import com.intellij.platform.ijent.IjentPosixApi
+import com.intellij.platform.ijent.IjentSession
+import com.intellij.platform.ijent.IjentSessionState
 import com.intellij.platform.ijent.IjentTunnelsPosixApi
+import com.intellij.platform.ijent.ParentOfIjentScopes
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -39,7 +44,7 @@ internal class WslEelMachineResolver : EelMachineResolver {
 }
 
 @ApiStatus.Internal
-class WslEelMachine internal constructor(val distribution: WSLDistribution) : EelMachine {
+class WslEelMachine internal constructor(val distribution: WSLDistribution) : EelMachine, IjentMachine {
   override val internalName: String = "WSL-" + distribution.id
 
   override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
@@ -75,6 +80,13 @@ class WslEelMachine internal constructor(val distribution: WSLDistribution) : Ee
 
   override fun ownsDescriptor(descriptor: EelDescriptor): Boolean {
     return descriptor is WslEelDescriptor && descriptor.distribution == distribution
+  }
+
+  override val ijentSessionState: StateFlow<IjentSessionState>
+    get() = WslIjentManager.getInstance().getIjentSessionState(distribution, rootUser = false)
+
+  override suspend fun getIjentSession(sessionScope: ParentOfIjentScopes): IjentSession.Posix {
+    return WslIjentManager.instanceAsync().getIjentSession(distribution, null, rootUser = false, sessionScope)
   }
 
   companion object {
