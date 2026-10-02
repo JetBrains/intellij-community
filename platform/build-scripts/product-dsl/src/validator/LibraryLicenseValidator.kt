@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.productLayout.validator
 
@@ -11,10 +11,9 @@ import org.jetbrains.intellij.build.productLayout.model.error.MissingLibraryLice
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
 import org.jetbrains.intellij.build.productLayout.pipeline.NodeIds
 import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
+import java.util.BitSet
 
 /**
  * Library license validation.
@@ -94,6 +93,9 @@ internal object LibraryLicenseValidator : PipelineNode {
 /**
  * Reads the production runtime libraries of each module, and reports the ones no license entry covers.
  *
+ * [ProductionRuntimeLibraryClosure] gives the libraries. A library that more than one module reaches names the last of
+ * these modules in [moduleNames].
+ *
  * Returns the number of modules that resolved to a JPS module, and the violations. Both rules need the count, because a
  * zero would make a pass meaningless.
  */
@@ -102,15 +104,26 @@ internal fun collectMissingLicenseViolations(
   outputProvider: ModuleOutputProvider,
   coveredNames: Set<String>,
 ): Pair<Int, List<MissingLibraryLicenseViolation>> {
-  // a library can come from more than one module, so report it once
-  val libraryToModule = HashMap<JpsLibrary, String>()
-  var checkedModuleCount = 0
+  val closure = ProductionRuntimeLibraryClosure()
+  val checkedNames = ArrayList<String>()
+  val checkedClosures = ArrayList<BitSet>()
   for (moduleName in moduleNames) {
     val module = outputProvider.findModule(moduleName) ?: continue
-    checkedModuleCount++
-    val enumerator = JpsJavaExtensionService.dependencies(module).recursively().includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
-    for (library in enumerator.libraries) {
-      libraryToModule.put(library, moduleName)
+    checkedNames.add(moduleName)
+    checkedClosures.add(closure.libraryIndices(module))
+  }
+
+  // a library can come from more than one module, so report it once, with the last module that reaches it
+  val libraryToModule = HashMap<JpsLibrary, String>()
+  val assigned = BitSet()
+  for (i in checkedNames.indices.reversed()) {
+    val newLibraries = checkedClosures.get(i).clone() as BitSet
+    newLibraries.andNot(assigned)
+    assigned.or(newLibraries)
+    var index = newLibraries.nextSetBit(0)
+    while (index >= 0) {
+      libraryToModule.put(closure.library(index), checkedNames.get(i))
+      index = newLibraries.nextSetBit(index + 1)
     }
   }
 
@@ -130,7 +143,7 @@ internal fun collectMissingLicenseViolations(
     val coordinates = library.asTyped(JpsRepositoryLibraryType.INSTANCE)?.properties?.data?.toString()
     violations.add(MissingLibraryLicenseViolation(libraryName = libraryName, coordinates = coordinates, moduleName = moduleName))
   }
-  return checkedModuleCount to violations
+  return checkedNames.size to violations
 }
 
 /**
