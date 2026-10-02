@@ -37,7 +37,6 @@ private val LOG = logger<ClassicUiToIslandsMigration>()
  * Todo can be removed after some time (e.g. in 2026.3). Additionally remove:
  * * com.intellij.platform.ide.bootstrap.ConfigKt.enableNewUi
  * * [ExperimentalUI.forcedSwitchedUi]
- * * [ExperimentalUI.SHOW_NEW_UI_ONBOARDING_ON_START]
  * * [ExperimentalUI.cleanUpClassicUIFromDisabled]
  */
 internal object ClassicUiToIslandsMigration {
@@ -102,7 +101,6 @@ internal object ClassicUiToIslandsMigration {
     LOG.info("Islands switching: settings and scheme updating")
 
     switchedFromClassicToIslandsInSession = false
-    ExperimentalUI.SHOW_NEW_UI_ONBOARDING_ON_START = true
 
     withContext(Dispatchers.EDT) {
       val settings = UISettings.getInstance()

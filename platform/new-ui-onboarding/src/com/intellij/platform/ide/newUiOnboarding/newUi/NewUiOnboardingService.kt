@@ -6,29 +6,16 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
-import com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingStatistics.OnboardingStartingPlace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
 internal class NewUiOnboardingService(private val project: Project, private val cs: CoroutineScope) {
-  fun showOnboardingDialog() {
-    val dialog = NewUiOnboardingDialog(project)
-    NewUiOnboardingStatistics.logWelcomeDialogShown(project)
-    val startTour = dialog.showAndGet()
-    if (startTour) {
-      startOnboarding()
-      NewUiOnboardingStatistics.logOnboardingStarted(project, OnboardingStartingPlace.WELCOME_DIALOG)
-    }
-    else {
-      NewUiOnboardingStatistics.logWelcomeDialogSkipPressed(project)
-    }
-  }
-
   fun startOnboarding() {
     val steps = getSteps()
     val executor = NewUiOnboardingExecutor(project, steps, cs, project)
+    NewUiOnboardingStatistics.logOnboardingStarted(project)
     cs.launch(Dispatchers.EDT) { executor.start() }
   }
 

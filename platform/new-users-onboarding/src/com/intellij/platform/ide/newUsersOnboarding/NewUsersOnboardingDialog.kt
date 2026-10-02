@@ -97,7 +97,7 @@ internal class NewUsersOnboardingDialog(
   override fun createContentPaneBorder(): Border? = null
 
   companion object {
-    private const val IMAGE_PATH: String = "newUiOnboarding/meetIslandsTourCover.png"
+    private const val IMAGE_PATH: String = "newUsersOnboarding/tourCover.png"
 
     const val CLOSE_EXTERNALLY: Int = NEXT_USER_EXIT_CODE
   }

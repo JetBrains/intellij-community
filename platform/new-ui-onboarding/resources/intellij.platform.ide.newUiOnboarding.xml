@@ -44,18 +44,9 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingStartupActivity"/>
-    <registryKey key="ide.experimental.ui.onboarding" defaultValue="true"
-                 description="Show the dialog on startup after New UI switch with a proposal to start the onboarding."/>
-
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingStatistics"/>
     <statistics.validation.customValidationRule implementation="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepIdRule"/>
   </extensions>
-
-  <applicationListeners>
-    <listener class="com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingAppListener"
-              topic="com.intellij.ide.AppLifecycleListener"/>
-  </applicationListeners>
 
   <actions resource-bundle="messages.NewUiOnboardingBundle">
     <action internal="true" id="StartNewUiOnboarding" class="com.intellij.platform.ide.newUiOnboarding.newUi.StartNewUiOnboardingAction"/>

@@ -3,9 +3,7 @@ package com.intellij.platform.ide.newUiOnboarding
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.ide.DataManager
-import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.actions.SettingsEntryPointAction
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -27,14 +25,12 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingBean
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.WebAnimationUtils
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
@@ -65,10 +61,6 @@ import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 object NewUiOnboardingUtil {
-  const val ONBOARDING_PROPOSED_VERSION: String = "experimental.ui.onboarding.proposed.version"
-  const val NEW_UI_ON_FIRST_STARTUP: String = "experimental.ui.on.first.startup"
-
-  internal const val MEET_ISLANDS_TOUR_COVER_IMAGE_PATH: String = "newUiOnboarding/meetIslandsTourCover.png"
   internal const val SHOW_TOOL_WINDOW_NAMES_IMAGE_PATH: String = "newUiOnboarding/showToolWindowNamesTour.png"
 
   private const val LOTTIE_SCRIPT_PATH = "newUiOnboarding/lottie.js"
@@ -76,30 +68,8 @@ object NewUiOnboardingUtil {
   private const val LIGHT_HEADER_SUFFIX = "_light_header"
   private const val DARK_SUFFIX = "_dark"
 
-  val isOnboardingEnabled: Boolean
-    get() = Registry.`is`("ide.experimental.ui.onboarding", true)
-            && !DistractionFreeModeController.shouldMinimizeCustomHeader()
-            && NewUiOnboardingBean.isPresent
-
-  enum class OnboardingType {
-    NEW_UI_ONBOARDING
-  }
-
   internal fun getImage(path: String): Icon {
     return IconLoader.getIcon(path, NewUiOnboardingUtil::class.java.classLoader)
-  }
-
-  fun shouldProposeOnboarding(type: OnboardingType): Boolean {
-    val propertiesComponent = PropertiesComponent.getInstance()
-    val proposeOnboarding = propertiesComponent.getBoolean(ExperimentalUI.NEW_UI_SWITCH)
-                            && ((!propertiesComponent.getBoolean(NEW_UI_ON_FIRST_STARTUP)
-                                 && !propertiesComponent.isValueSet(ONBOARDING_PROPOSED_VERSION))
-                                || ExperimentalUI.forcedSwitchedUi)
-
-    return ExperimentalUI.isNewUI()
-           && isOnboardingEnabled
-           && (proposeOnboarding ||
-               (type == OnboardingType.NEW_UI_ONBOARDING && ExperimentalUI.SHOW_NEW_UI_ONBOARDING_ON_START))
   }
 
   fun getHelpLink(topic: String): String {

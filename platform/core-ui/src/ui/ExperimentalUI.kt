@@ -3,7 +3,6 @@
 
 package com.intellij.ui
 
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.DevTimeClassLoader
 import com.intellij.openapi.components.service
@@ -36,13 +35,7 @@ abstract class ExperimentalUI {
     @Volatile
     var cleanUpClassicUIFromDisabled: Runnable? = null
 
-    var SHOW_NEW_UI_ONBOARDING_ON_START: Boolean
-      get() = PropertiesComponent.getInstance().getBoolean(SHOW_NEW_UI_ONBOARDING_ON_START_KEY)
-      set(value) = PropertiesComponent.getInstance().setValue(SHOW_NEW_UI_ONBOARDING_ON_START_KEY, value)
-
     var wasThemeReset: Boolean = false
-
-    private const val SHOW_NEW_UI_ONBOARDING_ON_START_KEY = "show.new.ui.onboarding.on.start"
 
     @Internal
     @JvmField

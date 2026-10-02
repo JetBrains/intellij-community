@@ -13,22 +13,15 @@ import com.intellij.platform.ide.newUiOnboarding.OnboardingStatisticsUtil.stepId
 internal object NewUiOnboardingStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("new.ui.onboarding", 4)
-
-  enum class OnboardingStartingPlace {
-    WELCOME_DIALOG
-  }
+  private val GROUP: EventLogGroup = EventLogGroup("new.ui.onboarding", 5)
 
   enum class OnboardingStopReason {
     SKIP_ALL, ESCAPE_PRESSED, PROJECT_CLOSED
   }
 
-  private val startingPlaceField = EventFields.Enum<OnboardingStartingPlace>("starting_place")
   private val stopReasonField = EventFields.Enum<OnboardingStopReason>("reason")
 
-  private val welcomeDialogShownEvent = GROUP.registerEvent("welcome.dialog.shown")
-  private val welcomeDialogSkipEvent = GROUP.registerEvent("welcome.dialog.skip.clicked")
-  private val onboardingStartedEvent = GROUP.registerEvent("started", startingPlaceField)
+  private val onboardingStartedEvent = GROUP.registerEvent("started")
   private val onboardingStoppedEvent = GROUP.registerVarargEvent("stopped", stepIdField, stopReasonField,
                                                                  durationField, lastStepDurationField)
   private val onboardingFinishedEvent = GROUP.registerEvent("finished", durationField)
@@ -36,16 +29,8 @@ internal object NewUiOnboardingStatistics : CounterUsagesCollector() {
   private val stepFinishedEvent = GROUP.registerEvent("step.finished", stepIdField, durationField)
   private val linkClickedEvent = GROUP.registerEvent("link.clicked", stepIdField)
 
-  fun logWelcomeDialogShown(project: Project) {
-    welcomeDialogShownEvent.log(project)
-  }
-
-  fun logWelcomeDialogSkipPressed(project: Project) {
-    welcomeDialogSkipEvent.log(project)
-  }
-
-  fun logOnboardingStarted(project: Project, place: OnboardingStartingPlace) {
-    onboardingStartedEvent.log(project, place)
+  fun logOnboardingStarted(project: Project) {
+    onboardingStartedEvent.log(project)
   }
 
   fun logOnboardingStopped(project: Project, stepId: String, reason: OnboardingStopReason, startMillis: Long, lastStepStartMillis: Long) {
