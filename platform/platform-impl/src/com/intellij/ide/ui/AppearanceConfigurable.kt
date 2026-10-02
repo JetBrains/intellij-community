@@ -19,7 +19,7 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.IdeZ
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ThemeAutodetectSelector
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.islands.IslandsFeedback
+import com.intellij.openapi.application.impl.islands.IslandsTheme
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorFontType
@@ -178,11 +178,11 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   private val propertyGraph = PropertyGraph()
   private val lafProperty = propertyGraph.lazyProperty { lafManager.lookAndFeelReference }
   private val syncThemeProperty = propertyGraph.lazyProperty { lafManager.autodetect }
-  private val islandLafProperty = propertyGraph.lazyProperty { IslandsFeedback.isIslandTheme() }
+  private val islandLafProperty = propertyGraph.lazyProperty { IslandsTheme.isIslandTheme() }
 
   override fun createPanel(): DialogPanel {
     lafProperty.afterChange(disposable!!) {
-      islandLafProperty.set(IslandsFeedback.isIslandTheme(it.themeId))
+      islandLafProperty.set(IslandsTheme.isIslandTheme(it.themeId))
       ApplicationManager.getApplication().invokeLater {
         QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it.themeId), true)
         LafManager.getInstance().checkRestart()
