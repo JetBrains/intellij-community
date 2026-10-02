@@ -628,6 +628,24 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       expr = shift(Colour.RED)
       # └ TYPE Colour
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92229"])
+    fun `type parameter solved by an earlier argument constrains a protocol method parameter`() = test("""
+      from typing import Protocol
+
+      class SupportsRMod[T_contra, T_co](Protocol):
+          def __rmod__(self, other: T_contra, /) -> T_co: ...
+
+      class IntOnly:
+          def __rmod__(self, other: int, /) -> str: ...
+
+      def mod[T_contra, T_co](a: T_contra, b: SupportsRMod[T_contra, T_co], /) -> T_co: ...
+
+      mod(1, IntOnly())
+      mod("", IntOnly())
+      #       ^^^^^^^^^ WARNING Expected type 'SupportsRMod[str, T_co]' (matched generic type 'SupportsRMod[T_contra, T_co]'), got 'IntOnly' instead
+      """.trimIndent())
   }
 
   @Nested

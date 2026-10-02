@@ -1314,6 +1314,88 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-92229"])
+    fun `type var with incompatible lower and upper bounds from a contravariant class`() = test("""
+      class Sink[T]:
+          def put(self, x: T) -> None: ...
+
+      def lower_first[T](a: T, b: Sink[T]) -> T: ...
+      def upper_first[T](b: Sink[T], a: T) -> T: ...
+      def two_sinks[T](a: Sink[T], b: Sink[T]) -> None: ...
+
+      lower_first(1, Sink[int]())
+      lower_first(True, Sink[int]())
+      lower_first("", Sink[int]()) # WARNING Expected type 'Sink[Literal[""]]' (matched generic type 'Sink[T]'), got 'Sink[int]' instead
+      upper_first(Sink[object](), "")
+      upper_first(Sink[int](), "") # WARNING Expected type 'int' (matched generic type 'T'), got 'Literal[""]' instead
+      two_sinks(Sink[int](), Sink[str]())
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92229"])
+    fun `type var with incompatible lower and upper bounds from a callable parameter`() = test("""
+      from typing import Callable
+
+      def lower_first[T](x: T, cb: Callable[[T], None]) -> None: ...
+      def upper_first[T](cb: Callable[[T], None], x: T) -> None: ...
+      def takes_int(x: int) -> None: ...
+      def takes_object(x: object) -> None: ...
+
+      lower_first(1, takes_int)
+      lower_first("", takes_object)
+      lower_first("", takes_int) # WARNING Expected type '(str) -> None' (matched generic type '(T) -> None'), got '(x: int) -> None' instead
+      upper_first(takes_object, "")
+      upper_first(takes_int, "") # WARNING Expected type 'int' (matched generic type 'T'), got 'Literal[""]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92229"])
+    fun `type var with compatible bounds from nested and alternative positions`() = test("""
+      from typing import Callable, Iterable, overload
+
+      class Sink[T]:
+          def put(self, x: T) -> None: ...
+
+      def takes_int(x: int) -> None: ...
+      def takes_objects(xs: Iterable[object]) -> None: ...
+      def takes_sink_str(s: Sink[str]) -> None: ...
+
+      @overload
+      def takes_int_or_str(x: int) -> None: ...
+      @overload
+      def takes_int_or_str(x: str) -> None: ...
+      def takes_int_or_str(x): ...
+
+      def generic_in_callable[T](f: Callable[[T], None], g: Callable[[Iterable[T]], None]) -> None: ...
+      def sink_in_callable[T](x: T, g: Callable[[Sink[T]], None]) -> None: ...
+      def union_member[T](x: T | list[T], cb: Callable[[T], None]) -> None: ...
+      def widened_after_overload[T](cb: Callable[[T], None], x: T, y: Sink[T]) -> None: ...
+      def tuple_in_callable[T](cb: Callable[[tuple[T]], None], x: T) -> None: ...
+      def takes_int_or_str_tuple(x: tuple[int] | tuple[str]) -> None: ...
+
+      generic_in_callable(takes_int, takes_objects)
+      sink_in_callable(1, takes_sink_str)
+      union_member([1], takes_int)
+      widened_after_overload(takes_int_or_str, "", Sink[str]())
+      tuple_in_callable(takes_int_or_str_tuple, "")
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92229"])
+    fun `constrained type var with incompatible lower and upper bounds`() = test("""
+      from typing import Callable
+
+      def takes_bytes(x: bytes) -> None: ...
+      def takes_str(x: str) -> None: ...
+
+      def lower_first[S: (str, bytes)](x: S, cb: Callable[[S], None]) -> None: ...
+
+      lower_first("", takes_str)
+      lower_first("", takes_bytes)
+      #               ^^^^^^^^^^^ WARNING Expected type '(str) -> None' (matched generic type '(S ≤: str | bytes) -> None'), got '(x: bytes) -> None' instead
+      """.trimIndent())
+
+    @Test
     @TestFor(issues = ["PY-33500"])
     fun `implicit generic dunder call on typed element`() = test("""
       from typing import TypeVar, Generic

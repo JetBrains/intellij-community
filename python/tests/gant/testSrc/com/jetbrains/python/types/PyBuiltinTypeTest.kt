@@ -127,6 +127,27 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
   }
 
   @Nested
+  inner class DivmodAndOperatorDivision {
+    @Test
+    @TestFor(issues = ["PY-92229"])
+    fun `incompatible first argument of divmod and operator mod`() = test("""
+      import operator
+
+      divmod(1, 2)
+      divmod(1.5, 2)
+      divmod(1, 2.5)
+      divmod(True, 1)
+      operator.mod(5, 2)
+      operator.mod(1, 2.5)
+      operator.mod("%s", 2)
+      divmod(1j, 0) # WARNING No overload of 'divmod' matches the arguments. Argument types: (complex, Literal[0]). Expected one of: (x: SupportsDivMod[_T_contra, _T_co], y: _T_contra), (x: _T_contra, y: SupportsRDivMod[_T_contra, _T_co])
+      divmod("", 0) # WARNING No overload of 'divmod' matches the arguments. Argument types: (Literal[""], Literal[0]). Expected one of: (x: SupportsDivMod[_T_contra, _T_co], y: _T_contra), (x: _T_contra, y: SupportsRDivMod[_T_contra, _T_co])
+      operator.mod(1j, 0) # WARNING No overload of 'mod' matches the arguments. Argument types: (complex, Literal[0]). Expected one of: (a: SupportsMod[_T_contra, _T_co], b: _T_contra), (a: _T_contra, b: SupportsRMod[_T_contra, _T_co])
+      operator.mod("", 0)
+      """.trimIndent())
+  }
+
+  @Nested
   inner class Round {
     @Test
     @TestFor(issues = ["PY-13750"])
