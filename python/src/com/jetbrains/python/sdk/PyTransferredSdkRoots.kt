@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
 import com.google.common.collect.MultimapBuilder
@@ -17,34 +17,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.psi.PyUtil
 import org.jetbrains.annotations.ApiStatus
-
-/**
- * Applies [transferRoots] to all modules having [sdk] as a python sdk.
- */
-@ApiStatus.Internal
-
-fun transferRootsToModulesWithSdk(project: Project, sdk: Sdk) {
-  updateRootsForModulesWithSdk(project, sdk, ::transferRoots)
-}
-
-/**
- * See [transferRootsToModulesWithSdk] and [removeTransferredRoots].
- */
-@ApiStatus.Internal
-
-fun removeTransferredRootsFromModulesWithSdk(project: Project, sdk: Sdk) {
-  updateRootsForModulesWithSdk(project, sdk, ::removeTransferredRoots)
-}
-
-private fun updateRootsForModulesWithSdk(project: Project, sdk: Sdk?, action: (Module, Sdk) -> Unit) {
-  if (sdk == null) {
-    return
-  }
-
-  for (module in runReadAction { ModuleManager.getInstance(project).modules }) {
-    action(module, sdk)
-  }
-}
 
 /**
  * Applies [transferRoots] to all modules inheriting python sdk from the [project].
@@ -206,8 +178,8 @@ private data class ModuleTransferredRoots(val sourceRoots: Set<VirtualFile>, val
 
 private class TransferredRootsDetector(private val project: Project) {
   val projectModules: List<Module> = runReadAction { ModuleManager.getInstance(project).modules }.toList()
-  val moduleToContentRoots: SetMultimap<Module, VirtualFile> = MultimapBuilder.hashKeys().hashSetValues().build<Module, VirtualFile>()
-  val moduleToSourceRoots: SetMultimap<Module, VirtualFile> = MultimapBuilder.hashKeys().hashSetValues().build<Module, VirtualFile>()
+  val moduleToContentRoots: SetMultimap<Module, VirtualFile> = MultimapBuilder.hashKeys().hashSetValues().build()
+  val moduleToSourceRoots: SetMultimap<Module, VirtualFile> = MultimapBuilder.hashKeys().hashSetValues().build()
 
   init {
     for (mod in projectModules) {

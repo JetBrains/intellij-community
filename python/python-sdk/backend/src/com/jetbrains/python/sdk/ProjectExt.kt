@@ -92,11 +92,6 @@ fun ModuleOrProject.getAssignablePythonSdks(): List<Sdk> = filterAssignablePytho
 fun Project.findModuleForSdk(sdk: Sdk): Module? =
   ModuleManager.getInstance(this).modules.find { PythonSdkUtil.findPythonSdk(it) == sdk }
 
-/** First Python SDK configured on any module of this project, or `null` if none. */
-@Internal
-fun Project.findFirstPythonSdk(): Sdk? =
-  ModuleManager.getInstance(this).modules.firstNotNullOfOrNull { PythonSdkUtil.findPythonSdk(it) }
-
 /**
  * Filters and sorts [sdks] the same way [getAssignablePythonSdks] does. The "Python Interpreters" dialog passes the editable
  * copies from its own `ProjectSdksModel` here, so the displayed list matches the live one.

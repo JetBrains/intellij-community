@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.configuration
 
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.PythonInfo
@@ -124,4 +123,3 @@ suspend fun prepareSdkCreator(
 fun CreateInterpreterInfoWithInterpreterCreator.getInterpreterCreator(module: Module): InterpreterCreator =
   getInterpreterCreator(module.name)
 
-suspend fun CreateInterpreterInfoWithInterpreterCreator.createInterpreter(module: Module): PyResult<PythonInterpreter> = createInterpreter(module.name)
