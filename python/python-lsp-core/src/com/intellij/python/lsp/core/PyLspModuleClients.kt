@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.lsp.core
 
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.evolution.evoPyProjects
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
@@ -38,6 +39,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
 private val MODULE_CLIENTS_LOG: Logger = logger<PyLspToolDescriptor>()
@@ -163,14 +165,15 @@ val PY_LSP_SERVE_KEYS_CHANGED: Topic<PyLspServeKeysListener> =
 /**
  * The last computed serve keys of each tool, with the stamp of the project state they rest on.
  *
- * The keys rest on the project roots and on the installed tool versions, so both trackers make the
- * stamp. Reading them is cheap; recomputing them is not, and it cannot happen under a read lock.
+ * The keys rest on the project roots, on the interpreters of the Python projects and on the
+ * installed tool versions, so all three make the stamp. Reading them is cheap; recomputing them is
+ * not, and it cannot happen under a read lock.
  */
 @Service(Service.Level.PROJECT)
 private class PyLspServeKeyCache(private val project: Project, private val cs: CoroutineScope) {
-  private data class Stamp(val roots: Long, val versions: Long) {
-    /** Whether the state behind this stamp is at least as new as the state behind [other]. Both counters only grow. */
-    fun isAtLeast(other: Stamp): Boolean = roots >= other.roots && versions >= other.versions
+  private data class Stamp(val roots: Long, val structure: Long, val versions: Long) {
+    /** Whether the state behind this stamp is at least as new as the state behind [other]. Every counter only grows. */
+    fun isAtLeast(other: Stamp): Boolean = roots >= other.roots && structure >= other.structure && versions >= other.versions
   }
 
   private class Snapshot(val stamp: Stamp?, val keys: Map<Module, PyLspServeKey>)
@@ -178,9 +181,19 @@ private class PyLspServeKeyCache(private val project: Project, private val cs: C
   private val perTool = ConcurrentHashMap<String, AtomicReference<Snapshot>>()
   /** The tools with a refresh in flight, so a hot read path does not queue one refresh per call. */
   private val refreshing: MutableSet<String> = ConcurrentHashMap.newKeySet()
+  /** Every tool that asked for its keys, so a new [EvoPyProjectModel] generation can refresh them. */
+  private val tools = ConcurrentHashMap<String, PyTool>()
+
+  /**
+   * The count of [EvoPyProjectModel] generations. The interpreter of each module comes from that
+   * model, and a new generation lands after the `rootsChanged` of the change. A refresh in between
+   * reads the old interpreters, so the roots counter alone would keep its wrong keys.
+   */
+  private val structureGeneration = AtomicLong()
 
   fun view(pyTool: PyTool): PyLspServeKeysView {
     val toolName = pyTool.packageName.name
+    tools.putIfAbsent(toolName, pyTool)
     val snapshot = snapshotRefOf(toolName).get()
     val fresh = snapshot.stamp == stampOf(toolName)
     if (!fresh && refreshing.add(toolName)) {
@@ -198,6 +211,7 @@ private class PyLspServeKeyCache(private val project: Project, private val cs: C
 
   suspend fun refreshedKeys(pyTool: PyTool): Map<Module, PyLspServeKey> {
     val toolName = pyTool.packageName.name
+    tools.putIfAbsent(toolName, pyTool)
     val ref = snapshotRefOf(toolName)
     val stamp = stampOf(toolName)
     ref.get().let { if (it.stamp?.isAtLeast(stamp) == true) return it.keys }
@@ -227,6 +241,16 @@ private class PyLspServeKeyCache(private val project: Project, private val cs: C
         dropModule(module)
       }
     })
+    // A new interpreter of a module reaches the keys only through a new generation, and nothing else
+    // asks for the keys then. A refresh that changes them tells the providers to group again.
+    cs.launch {
+      EvoPyProjectModel.getInstance(project).snapshotFlow().collect {
+        structureGeneration.incrementAndGet()
+        for (pyTool in tools.values) {
+          cs.launch { refreshedKeys(pyTool) }
+        }
+      }
+    }
   }
 
   /** Removes [module] from every snapshot. The snapshot then counts as stale, so the next read refreshes it. */
@@ -241,6 +265,7 @@ private class PyLspServeKeyCache(private val project: Project, private val cs: C
 
   private fun stampOf(toolName: String): Stamp = Stamp(
     ProjectRootModificationTracker.getInstance(project).modificationCount,
+    structureGeneration.get(),
     PyLspToolVersionTracker.getInstance(project).counterOf(toolName),
   )
 
