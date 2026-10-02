@@ -95,12 +95,15 @@ def dev_dist_plugin(
         executable_files: The single-file destinations of `files` the distribution marks executable. This is the mode
             `withResource*` gives a file.
         embedded_descriptor_source: The direct label of an embedded product descriptor.
+            TRANSITION(standalone embedded descriptor call; remove after the generator run): a standalone
+            `dev_dist_embedded_product_descriptor` call replaces the five `embedded_` attributes.
         embedded_descriptors: Exact descriptor targets mapped to resolver load paths.
         embedded_library_descriptors: Ordered Java containers mapped to space-separated resolver load paths.
         embedded_modules: Unused. The `modules` attribute of the embedded product descriptor, which the generator still sets.
         embedded_separate_jar: Embedded content modules packed into separate jars.
         frontend_application_info: The application info template of the embedded frontend. Stated together with the other
-            `frontend_` label by the plugin that packs the JetBrains Client, and empty for every other plugin.
+            `frontend_` label by the plugin that packs the JetBrains Client, and empty for every other plugin. A
+            standalone `dev_dist_embedded_product_descriptor` call can declare the embedded descriptor of that plugin.
         frontend_product_application_info: The application info of the product the frontend takes its names and version from.
         directory_name: The plugin directory, when the layout does not take the derived one. Only the packed component
             reads it.
@@ -116,8 +119,6 @@ def dev_dist_plugin(
     frontend_labels = [frontend_application_info, frontend_product_application_info]
     if any(frontend_labels) and not all(frontend_labels):
         fail("dev_dist_plugin: %s states one of the two frontend application info labels, and a frontend states both" % main_module)
-    if frontend_application_info and not embedded_descriptor_source:
-        fail("dev_dist_plugin: %s states a frontend application info without an embedded descriptor" % main_module)
     if jars and variants:
         fail("dev_dist_plugin: %s states jars and layout variants, and a packed plugin has one layout" % main_module)
     if jars and not descriptor:

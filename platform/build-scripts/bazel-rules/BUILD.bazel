@@ -1,5 +1,6 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load(":dev_dist_content_test.bzl", "dev_dist_content_test_suite")
+load(":dev_dist_product_content_test.bzl", "dev_dist_product_content_test_suite")
 load(":dev_dist_tool.bzl", "dev_dist_tool")
 
 # Whether the packaging actions of a dev distribution write a Jaeger-JSON span file beside each of their outputs.
@@ -82,10 +83,13 @@ exports_files(
 
 dev_dist_content_test_suite(name = "dev_dist_content_tests")
 
+dev_dist_product_content_test_suite(name = "dev_dist_product_content_tests")
+
 test_suite(
     name = "bazel_rules_tests",
     tests = [
         ":dev_dist_content_tests",
+        ":dev_dist_product_content_tests",
         "//build/dev-dist-tools/bins/plugin-descriptor-writer:descriptor_rule_tests",
         "//platform/build-scripts/bazel-rules/dev-plugin-remainder-tests:dev_plugin_remainder_tests",
         "//platform/build-scripts/bazel-rules/dev-plugin-tests:dev_plugin_tests",

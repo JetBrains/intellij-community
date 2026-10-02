@@ -477,6 +477,8 @@ def _dev_dist_plugin_wrapper_test_impl(ctx):
     asserts.equals(env, "".join([
         'load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", _dev_dist_plugin = "dev_dist_plugin")\n',
         'load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", _dev_dist_plugin_descriptor = "dev_dist_plugin_descriptor")\n',
+        'load("@community//platform/build-scripts/bazel-rules:dev_dist_product_descriptor.bzl", _dev_dist_product_descriptor = "dev_dist_product_descriptor")\n',
+        'load("@community//platform/build-scripts/bazel-rules:dev_dist_embedded_product_descriptor.bzl", _dev_dist_embedded_product_descriptor = "dev_dist_embedded_product_descriptor")\n',
     ]), format_dev_dist_plugin_load())
     asserts.equals(env, "\n".join([
         "def dev_dist_plugin(module_targets = MODULE_TARGETS, descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
@@ -486,6 +488,14 @@ def _dev_dist_plugin_wrapper_test_impl(ctx):
         "def dev_dist_plugin_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
         '    """`dev_dist_plugin_descriptor` bound to this bridge\'s descriptor index."""',
         "    _dev_dist_plugin_descriptor(descriptor_index = descriptor_index, **kwargs)",
+        "",
+        "def dev_dist_product_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
+        '    """`dev_dist_product_descriptor` bound to this bridge\'s descriptor index."""',
+        "    _dev_dist_product_descriptor(descriptor_index = descriptor_index, **kwargs)",
+        "",
+        "def dev_dist_embedded_product_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
+        '    """`dev_dist_embedded_product_descriptor` bound to this bridge\'s descriptor index."""',
+        "    _dev_dist_embedded_product_descriptor(descriptor_index = descriptor_index, **kwargs)",
         "",
     ]), format_dev_dist_plugin_wrapper())
     return unittest.end(env)

@@ -445,19 +445,26 @@ DEV_DIST_PLUGIN_BZL = "@community//platform/build-scripts/bazel-rules:dev_dist_p
 # The macro every cross-half plugin package calls. The bridge binds it to its descriptor index.
 DEV_DIST_PLUGIN_DESCRIPTOR_BZL = "@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl"
 
+# The macros of the product descriptor packages. The bridge binds them to its descriptor index.
+DEV_DIST_PRODUCT_DESCRIPTOR_BZL = "@community//platform/build-scripts/bazel-rules:dev_dist_product_descriptor.bzl"
+DEV_DIST_EMBEDDED_PRODUCT_DESCRIPTOR_BZL = "@community//platform/build-scripts/bazel-rules:dev_dist_embedded_product_descriptor.bzl"
+
 def format_dev_dist_plugin_load():
-    """Render the load lines of the two bound macros. They are the first statements of `targets.bzl`."""
+    """Render the load lines of the four bound macros. They are the first statements of `targets.bzl`."""
     return "".join([
         'load("%s", _dev_dist_plugin = "dev_dist_plugin")\n' % DEV_DIST_PLUGIN_BZL,
         'load("%s", _dev_dist_plugin_descriptor = "dev_dist_plugin_descriptor")\n' % DEV_DIST_PLUGIN_DESCRIPTOR_BZL,
+        'load("%s", _dev_dist_product_descriptor = "dev_dist_product_descriptor")\n' % DEV_DIST_PRODUCT_DESCRIPTOR_BZL,
+        'load("%s", _dev_dist_embedded_product_descriptor = "dev_dist_embedded_product_descriptor")\n' % DEV_DIST_EMBEDDED_PRODUCT_DESCRIPTOR_BZL,
     ])
 
 def format_dev_dist_plugin_wrapper():
-    """Render `dev_dist_plugin` and `dev_dist_plugin_descriptor` bound to the bridge's maps.
+    """Render `dev_dist_plugin` and the descriptor macros bound to the bridge's maps.
 
     A `dev <module>` section loads only `dev_dist_plugin`. A cross-half plugin package loads `dev_dist_plugin_descriptor`
-    too. The bridge is the one file that knows its half, so the binding lives here and not in the macros, which the
-    community module owns. A caller can still state each map.
+    too. A product descriptor package loads `dev_dist_product_descriptor` or `dev_dist_embedded_product_descriptor`. The
+    bridge is the one file that knows its half, so the binding lives here and not in the macros, which the community
+    module owns. A caller can still state each map.
     """
     return "\n".join([
         "def dev_dist_plugin(module_targets = MODULE_TARGETS, descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
@@ -467,6 +474,14 @@ def format_dev_dist_plugin_wrapper():
         "def dev_dist_plugin_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
         '    """`dev_dist_plugin_descriptor` bound to this bridge\'s descriptor index."""',
         "    _dev_dist_plugin_descriptor(descriptor_index = descriptor_index, **kwargs)",
+        "",
+        "def dev_dist_product_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
+        '    """`dev_dist_product_descriptor` bound to this bridge\'s descriptor index."""',
+        "    _dev_dist_product_descriptor(descriptor_index = descriptor_index, **kwargs)",
+        "",
+        "def dev_dist_embedded_product_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
+        '    """`dev_dist_embedded_product_descriptor` bound to this bridge\'s descriptor index."""',
+        "    _dev_dist_embedded_product_descriptor(descriptor_index = descriptor_index, **kwargs)",
         "",
     ])
 
