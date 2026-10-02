@@ -1,0 +1,18 @@
+*c:com.intellij.ui.components.JBTreeTable
+- javax.swing.JComponent
+- com.intellij.ui.tree.TreePathBackgroundSupplier
+- <init>(com.intellij.ui.treeStructure.treetable.TreeTableModel):V
+- <init>(com.intellij.ui.treeStructure.treetable.TreeTableModel,com.intellij.ui.treeStructure.Tree):V
+- getColumnProportion():F
+- getDefaultRenderer(java.lang.Class):javax.swing.table.TableCellRenderer
+- getModel():com.intellij.ui.treeStructure.treetable.TreeTableModel
+- getPathBackground(javax.swing.tree.TreePath,I):java.awt.Color
+- getTable():com.intellij.ui.table.JBTable
+- getTree():com.intellij.ui.treeStructure.Tree
+- hasFocus():Z
+- setColumnProportion(F):V
+- setDefaultRenderer(java.lang.Class,javax.swing.table.TableCellRenderer):V
+- setModel(com.intellij.ui.treeStructure.treetable.TreeTableModel):V
+- setRowSorter(javax.swing.RowSorter):V
+*f:com.intellij.ui.tree.TreeStructureDomainModelAdapterKt
+- *sf:buildTreeNodeDescriptorPresentation(com.intellij.ide.util.treeView.PresentableNodeDescriptor,com.intellij.ui.treeStructure.TreeNodePresentationBuilder):com.intellij.ui.treeStructure.TreeNodePresentation

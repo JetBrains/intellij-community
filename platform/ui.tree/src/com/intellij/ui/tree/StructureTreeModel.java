@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
-import org.jspecify.annotations.NonNull;
 
 import javax.swing.JTree;
 import javax.swing.event.TreeModelEvent;
@@ -328,7 +327,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
   @ApiStatus.Internal
   @Override
-  protected @NonNull TreeModelEvent createTreeModelEvent(@Nullable TreePath path, int @Nullable [] indices, Object @Nullable [] children) {
+  protected @NotNull TreeModelEvent createTreeModelEvent(@Nullable TreePath path, int @Nullable [] indices, Object @Nullable [] children) {
     return new RequestedTreeModelUpdateEvent(updateRequest.get().get(), this, path, indices, children);
   }
 

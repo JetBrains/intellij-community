@@ -30,7 +30,6 @@ import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jspecify.annotations.NonNull;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -304,7 +303,7 @@ public abstract class ProjectFileNodeUpdater {
     return getAndClear(updateByFileCauses);
   }
 
-  private static @NonNull HashSet<ProjectViewUpdateCause> getAndClear(Set<ProjectViewUpdateCause> causes) {
+  private static @NotNull HashSet<ProjectViewUpdateCause> getAndClear(Set<ProjectViewUpdateCause> causes) {
     var result = new HashSet<ProjectViewUpdateCause>();
     // We're not very interested in consistency here, as it's for statistics only.
     // But it's still nice not to miss a value in the case it's added a moment after this call.
