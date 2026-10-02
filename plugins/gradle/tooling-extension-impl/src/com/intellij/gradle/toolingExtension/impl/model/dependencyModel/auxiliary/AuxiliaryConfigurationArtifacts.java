@@ -131,11 +131,17 @@ public class AuxiliaryConfigurationArtifacts {
     if (this == EMPTY) return other;
     Map<ComponentIdentifier, Set<File>> mergedSources = new HashMap<>(this.sources);
     for (Map.Entry<ComponentIdentifier, Set<File>> entry : other.sources.entrySet()) {
-      mergedSources.putIfAbsent(entry.getKey(), entry.getValue());
+      Set<File> files = mergedSources.get(entry.getKey());
+      if (files == null || files.isEmpty()) {
+        mergedSources.put(entry.getKey(), entry.getValue());
+      }
     }
     Map<ComponentIdentifier, Set<File>> mergedJavadocs = new HashMap<>(this.javadocs);
     for (Map.Entry<ComponentIdentifier, Set<File>> entry : other.javadocs.entrySet()) {
-      mergedJavadocs.putIfAbsent(entry.getKey(), entry.getValue());
+      Set<File> files = mergedJavadocs.get(entry.getKey());
+      if (files == null || files.isEmpty()) {
+        mergedJavadocs.put(entry.getKey(), entry.getValue());
+      }
     }
     return new AuxiliaryConfigurationArtifacts(mergedSources, mergedJavadocs);
   }

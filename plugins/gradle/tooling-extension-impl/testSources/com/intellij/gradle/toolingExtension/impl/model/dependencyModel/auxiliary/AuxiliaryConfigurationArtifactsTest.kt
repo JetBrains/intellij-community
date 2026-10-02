@@ -56,6 +56,39 @@ class AuxiliaryConfigurationArtifactsTest {
   }
 
   @Test
+  fun `mergeWith prefers primary non-empty artifacts and fills empty or missing from other`() {
+    val id1 = TestComponentIdentifier()
+    val id2 = TestComponentIdentifier()
+    val id3 = TestComponentIdentifier()
+
+    val src1Primary = testFile("foo-sources.jar")
+    val src2Secondary = testFile("bar-sources.jar")
+    val src3Secondary = testFile("baz-sources.jar")
+
+    val primary = AuxiliaryConfigurationArtifacts(
+      mapOf(
+        id1 to setOf(src1Primary),
+        id2 to emptySet()
+      ),
+      emptyMap()
+    )
+    val secondary = AuxiliaryConfigurationArtifacts(
+      mapOf(
+        id1 to setOf(testFile("foo-secondary-sources.jar")),
+        id2 to setOf(src2Secondary),
+        id3 to setOf(src3Secondary)
+      ),
+      emptyMap()
+    )
+
+    val merged = primary.mergeWith(secondary)
+    val mainFile = testFile("main.jar")
+    assertEquals(src1Primary, merged.getSources(id1, mainFile))
+    assertEquals(src2Secondary, merged.getSources(id2, mainFile))
+    assertEquals(src3Secondary, merged.getSources(id3, mainFile))
+  }
+
+  @Test
   fun `choose auxiliary artifact file when there is none to choose from`() {
     val main = testFile("foo-bar.jar")
     assertThat(AuxiliaryConfigurationArtifacts.chooseAuxiliaryArtifactFile(main, setOf())).isNull()
