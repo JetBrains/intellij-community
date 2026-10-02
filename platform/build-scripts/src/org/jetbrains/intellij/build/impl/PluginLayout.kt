@@ -22,6 +22,7 @@ import org.jetbrains.intellij.build.LazySource
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.CompatibleBuildRange
+import org.jetbrains.intellij.build.dev.ClassicDevRun
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetOwner
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
@@ -224,12 +225,23 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     private set
 
   /**
-   * The platform resource generators. The dev-distribution generator plans each one from its [DevPluginLayoutAssetSpec].
-   * [DeclaredPluginLayoutResourceGenerator.run] states where each one runs. See [PluginLayoutBuilder.withGeneratedPlatformResources].
+   * The platform resource generators. The dev-distribution generator plans each one from its [DevPluginLayoutAssetSpec],
+   * and the spec states whether the classic dev build runs it. See [PluginLayoutBuilder.withGeneratedPlatformResources].
    */
   @ApiStatus.Internal
   var platformResourceGenerators: PersistentMap<SupportedDistribution, PersistentList<DeclaredPluginLayoutResourceGenerator>> = persistentMapOf()
     private set
+
+  /** The resource generators that a build runs. [classicDev] is true for the classic dev build, see [selectForBuild]. */
+  internal fun resourceGeneratorsFor(classicDev: Boolean): List<ResourceGenerator> = selectForBuild(resourceGenerators, classicDev)
+
+  /** The platform resource generators of [platform] that a build runs, see [selectForBuild]. */
+  internal fun platformResourceGeneratorsFor(platform: SupportedDistribution, classicDev: Boolean): List<ResourceGenerator> {
+    return selectForBuild(platformResourceGenerators.get(platform) ?: persistentListOf(), classicDev)
+  }
+
+  /** The custom assets that a build packs, see [selectForBuild]. */
+  internal fun customAssetsFor(classicDev: Boolean): List<CustomAssetDescriptor> = selectForBuild(customAssets, classicDev)
 
   @ApiStatus.Internal
   var executablePatterns: PersistentMap<SupportedDistribution, PersistentList<String>> = persistentMapOf()
@@ -412,14 +424,10 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     /**
      * A resource generator. The dev-distribution generator plans it from [layoutAssetSpec], and
      * [DevPluginLayoutAssetSpec.OMITTED] states that the dev distribution leaves its files out.
-     * [run] states whether classic dev mode also runs [generator].
+     * [DevPluginLayoutAssetSpec.runsInClassicDev] states whether the classic dev build also runs [generator].
      */
-    fun withGeneratedResources(
-      layoutAssetSpec: DevPluginLayoutAssetSpec,
-      run: DeclaredResourceGeneratorRun = DeclaredResourceGeneratorRun.BUNDLED_AND_DEV,
-      generator: ResourceGenerator,
-    ) {
-      layout.resourceGenerators += DeclaredPluginLayoutResourceGenerator(layoutAssetSpec, generator, run)
+    fun withGeneratedResources(layoutAssetSpec: DevPluginLayoutAssetSpec, generator: ResourceGenerator) {
+      layout.resourceGenerators += DeclaredPluginLayoutResourceGenerator(layoutAssetSpec, generator)
     }
 
     /**
@@ -478,15 +486,15 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     /**
      * A platform resource generator. The dev-distribution generator plans it from [layoutAssetSpec], and
      * [DevPluginLayoutAssetSpec.OMITTED] states that the dev distribution leaves its files out.
-     * [run] states whether classic dev mode also runs [generator]. See [platformResourceGenerators].
+     * [DevPluginLayoutAssetSpec.runsInClassicDev] states whether the classic dev build also runs [generator].
+     * See [platformResourceGenerators].
      */
     fun withGeneratedPlatformResources(
       platform: SupportedDistribution,
       layoutAssetSpec: DevPluginLayoutAssetSpec,
-      run: DeclaredResourceGeneratorRun = DeclaredResourceGeneratorRun.BUNDLED_AND_DEV,
       generator: ResourceGenerator,
     ) {
-      val declared = DeclaredPluginLayoutResourceGenerator(layoutAssetSpec, generator, run)
+      val declared = DeclaredPluginLayoutResourceGenerator(layoutAssetSpec, generator)
       layout.platformResourceGenerators += platform to (layout.platformResourceGenerators.get(platform) ?: persistentListOf()) + declared
     }
 
@@ -693,10 +701,10 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * By default, the first service file silently wins.
      *
      * The dev distribution omits the merge. Its jar writer keeps the first service file of a name and reports the
-     * collision, which is the default this method replaces.
+     * collision, which is the default this method replaces. The classic dev build runs the merge.
      */
     fun mergeServiceFiles() {
-      layout.withPatch(DeclaredPluginLayoutPatcher(DevPluginLayoutAssetSpec.OMITTED) { patcher, _, context ->
+      layout.withPatch(DeclaredPluginLayoutPatcher(DevPluginLayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)) { patcher, _, context ->
         val discoveredServiceFiles = LinkedHashMap<String, LinkedHashSet<Pair<String, Path>>>()
 
         for (moduleName in layout.includedModules.asSequence().filter { it.relativeOutputFile == layout.mainJarName }.map { it.moduleName }.distinct()) {

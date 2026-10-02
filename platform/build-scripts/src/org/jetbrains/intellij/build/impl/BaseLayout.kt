@@ -49,6 +49,9 @@ sealed class BaseLayout {
   var patchers: PersistentList<LayoutPatcher> = persistentListOf()
     private set
 
+  /** The layout patchers that a build runs. [classicDev] is true for the classic dev build, see [selectForBuild]. */
+  internal fun patchersFor(classicDev: Boolean): List<LayoutPatcher> = selectForBuild(patchers, classicDev)
+
   fun withPatch(patcher: LayoutPatcher) {
     patchers += patcher
   }

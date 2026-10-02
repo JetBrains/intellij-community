@@ -24,9 +24,8 @@ internal fun buildPlatformSpecificPluginResources(
   context: BuildContext,
   isDevMode: Boolean,
 ): List<DistributionFileEntry> {
-  for ((dist, generators) in plugin.platformResourceGenerators) {
-    val selected = if (isDevMode) generators.filter(::runsInClassicDevMode) else generators
-    handlePlatformResourceGenerator(dist, selected, pluginDirs, context)
+  for (dist in plugin.platformResourceGenerators.keys) {
+    handlePlatformResourceGenerator(dist, plugin.platformResourceGeneratorsFor(dist, classicDev = isDevMode), pluginDirs, context)
   }
 
   val distEntries = ArrayList<DistributionFileEntry>()
@@ -37,7 +36,7 @@ internal fun buildPlatformSpecificPluginResources(
         targetPlatform = platform,
         context = context,
         pluginDir = pluginDir,
-        runCustomAssetShimTasks = !isDevMode,
+        classicDev = isDevMode,
       )
     )
   }
@@ -64,6 +63,7 @@ private fun handlePlatformResourceGenerator(
 }
 
 /**
+ * @param classicDev whether the build is the classic dev build. It selects the custom assets, see [PluginLayout.customAssetsFor].
  * @param runCustomAssetShimTasks whether a [CustomAssetShimSource] runs its task. A bundled build runs them; classic dev
  * mode and a published plugin do not.
  */
@@ -72,10 +72,11 @@ internal fun handleCustomPlatformSpecificAssets(
   targetPlatform: SupportedDistribution?,
   context: BuildContext,
   pluginDir: Path,
-  runCustomAssetShimTasks: Boolean,
+  classicDev: Boolean,
+  runCustomAssetShimTasks: Boolean = !classicDev,
 ): List<DistributionFileEntry> {
   val distEntries = ArrayList<DistributionFileEntry>()
-  for (customAsset in layout.customAssets) {
+  for (customAsset in layout.customAssetsFor(classicDev)) {
     if (targetPlatform == null) {
       if (customAsset.platformSpecific != null) {
         continue

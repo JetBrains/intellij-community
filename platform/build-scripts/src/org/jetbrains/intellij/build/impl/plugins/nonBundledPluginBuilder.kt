@@ -190,6 +190,7 @@ private fun buildNonBundledPlugins(
           targetPlatform = null,
           context = context,
           pluginDir = pluginDirOrFile,
+          classicDev = context.options.isDevDistribution,
           runCustomAssetShimTasks = false,
         )
       }

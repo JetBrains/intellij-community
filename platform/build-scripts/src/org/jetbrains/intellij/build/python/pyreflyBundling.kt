@@ -12,7 +12,6 @@ import org.jetbrains.intellij.build.dependencies.extractToCacheLocation
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
-import org.jetbrains.intellij.build.impl.DeclaredResourceGeneratorRun
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.SupportedDistribution
@@ -74,7 +73,7 @@ private fun pyreflyBinaryDevSpec(os: OsFamily, arch: JvmArchitecture): DevPlugin
  * the files only when [isPyreflyBundlingEnabled] is true.
  */
 fun PluginLayout.PluginLayoutSpec.withBundledPyrefly() {
-  withGeneratedResources(PYREFLY_LICENSE_DEV_SPEC, run = DeclaredResourceGeneratorRun.BUNDLED_AND_DEV) { targetDir, context ->
+  withGeneratedResources(PYREFLY_LICENSE_DEV_SPEC) { targetDir, context ->
     if (isPyreflyStepEnabled()) {
       copyPyreflyLicenseReport(targetDir, context)
     }
@@ -82,7 +81,7 @@ fun PluginLayout.PluginLayoutSpec.withBundledPyrefly() {
 
   for (platform in SUPPORTED_DISTRIBUTIONS) {
     val (os, arch) = platform
-    withGeneratedPlatformResources(platform, pyreflyBinaryDevSpec(os, arch), run = DeclaredResourceGeneratorRun.BUNDLED_AND_DEV) { targetDir, context ->
+    withGeneratedPlatformResources(platform, pyreflyBinaryDevSpec(os, arch)) { targetDir, context ->
       if (isPyreflyStepEnabled()) {
         copyPyreflyBinary(targetDir, context, os, arch)
       }

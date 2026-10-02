@@ -303,7 +303,7 @@ class JarPackager private constructor(
       return
     }
 
-    for (customAsset in layout.customAssets) {
+    for (customAsset in layout.customAssetsFor(classicDev = context.options.isDevDistribution)) {
       if (customAsset.platformSpecific != null) {
         continue
       }

@@ -835,7 +835,7 @@ internal fun layoutDistribution(
 
       Files.createDirectories(targetDir)
       // patchers must be executed _before_ packing, because patchers patch the module output
-      val patchers = layout.patchers
+      val patchers = layout.patchersFor(classicDev = context.options.isDevDistribution)
       if (!patchers.isEmpty()) {
         spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).use {
           for (patcher in patchers) {
@@ -916,9 +916,7 @@ private fun layoutAdditionalResources(layout: BaseLayout, targetDirectory: Path,
     return
   }
 
-  val resourceGenerators = layout.resourceGenerators.let { all ->
-    if (context.options.isDevDistribution) all.filter(::runsInClassicDevMode) else all
-  }
+  val resourceGenerators = layout.resourceGeneratorsFor(classicDev = context.options.isDevDistribution)
   if (!resourceGenerators.isEmpty()) {
     spanBuilder("generate and pack resources").use {
       for (item in resourceGenerators) {

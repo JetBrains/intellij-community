@@ -8,27 +8,26 @@ import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
 import java.nio.file.Path
 
 /**
- * States when a declared resource generator runs, an ordinary one and a platform one alike.
- * The dev-distribution generator plans the declared tree in both cases.
+ * Whether the classic dev build runs [owner], a resource generator, a custom asset or a layout patcher.
+ * The spec of the owner states it, see [DevPluginLayoutAssetSpec.runsInClassicDev].
  */
-enum class DeclaredResourceGeneratorRun {
-  /** Runs in a bundled build and in classic dev mode. */
-  BUNDLED_AND_DEV,
+internal fun runsInClassicDevMode(owner: DevPluginLayoutAssetOwner): Boolean = owner.devPluginLayoutAssetSpec.runsInClassicDev()
 
-  /** Runs in a bundled build only. Classic dev mode skips it. */
-  BUNDLED_ONLY,
-}
-
-/** Whether classic dev mode runs [generator]. A declared generator states it; any other generator runs in both modes. */
-internal fun runsInClassicDevMode(generator: ResourceGenerator): Boolean {
-  return (generator as? DeclaredPluginLayoutResourceGenerator)?.run != DeclaredResourceGeneratorRun.BUNDLED_ONLY
+/**
+ * The items of [items] that a build runs. A bundled build runs every item. The classic dev build runs an item without a
+ * [DevPluginLayoutAssetSpec] and an item that [runsInClassicDevMode] keeps.
+ */
+internal fun <T : Any> selectForBuild(items: List<T>, classicDev: Boolean): List<T> {
+  if (!classicDev) {
+    return items
+  }
+  return items.filter { item -> (item as? DevPluginLayoutAssetOwner)?.let(::runsInClassicDevMode) ?: true }
 }
 
 @ApiStatus.Internal
 class DeclaredPluginLayoutResourceGenerator(
   override val devPluginLayoutAssetSpec: DevPluginLayoutAssetSpec,
   private val delegate: ResourceGenerator,
-  @JvmField val run: DeclaredResourceGeneratorRun = DeclaredResourceGeneratorRun.BUNDLED_AND_DEV,
 ) : DevPluginLayoutAssetOwner, ResourceGenerator {
   override fun invoke(targetDirectory: Path, context: BuildContext) {
     delegate(targetDirectory, context)
