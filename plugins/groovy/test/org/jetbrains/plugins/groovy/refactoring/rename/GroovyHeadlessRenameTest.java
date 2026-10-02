@@ -11,6 +11,8 @@ import com.intellij.refactoring.rename.HeadlessRenameFailure;
 import com.intellij.refactoring.rename.HeadlessRenameProcessor;
 import com.intellij.refactoring.rename.HeadlessRenamePsiElementProcessor;
 import com.intellij.refactoring.rename.HeadlessRenameResult;
+import com.intellij.refactoring.rename.RenamePlan;
+import com.intellij.refactoring.rename.RenamePsiElementProcessorBase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
@@ -45,13 +47,12 @@ public class GroovyHeadlessRenameTest extends LightGroovyTestCase {
       }
       """);
     PsiField hits = findField("Counter", "hits");
-    assertInstanceOf(HeadlessRenamePsiElementProcessor.processorOf(hits), HeadlessRenameGrFieldProcessor.class);
+    assertProcessor(hits, HeadlessRenameGrFieldProcessor.class);
 
-    HeadlessRenameResult result = performRename(hits, "count");
+    rename(hits, "count");
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
     assertNotNull("the field kept the old name", findClass("Counter").findFieldByName("count", false));
-    assertTrue("a usage kept the old name: " + reader.getText(), reader.getText().contains("counter.count + counter.getCount()"));
+    assertFileContains(reader, "counter.count + counter.getCount()");
   }
 
   public void testFieldConflictWithAnExplicitGetterIsRefused() {
@@ -63,10 +64,8 @@ public class GroovyHeadlessRenameTest extends LightGroovyTestCase {
       """);
     PsiField hits = findField("Holder", "hits");
 
-    HeadlessRenameResult result = HeadlessRenameProcessor.analyze(getProject(), hits, "count");
+    assertRefused(hits, "count");
 
-    HeadlessRenameResult.Refused refused = assertInstanceOf(result, HeadlessRenameResult.Refused.class);
-    assertFalse("a refusal must name its conflict", refused.getConflicts().isEmpty());
     assertNotNull("the rename wrote to the file", findClass("Holder").findFieldByName("hits", false));
   }
 
@@ -81,12 +80,11 @@ public class GroovyHeadlessRenameTest extends LightGroovyTestCase {
       }
       """);
     PsiField lock = findField("Guarded", "$lock");
-    assertInstanceOf(HeadlessRenamePsiElementProcessor.processorOf(lock), SynchronizedRenameFieldProcessor.class);
+    assertProcessor(lock, SynchronizedRenameFieldProcessor.class);
 
-    HeadlessRenameResult result = performRename(lock, "myLock");
+    rename(lock, "myLock");
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
-    assertTrue("the annotation does not name the new lock: " + file.getText(), file.getText().contains("@Synchronized('myLock')"));
+    assertFileContains(file, "@Synchronized('myLock')");
   }
 
   public void testOverridingMethodIsRenamedWithItsBase() {
@@ -102,14 +100,12 @@ public class GroovyHeadlessRenameTest extends LightGroovyTestCase {
       }
       """);
     PsiMethod implRun = findMethod("Impl", "run");
-    assertInstanceOf(HeadlessRenamePsiElementProcessor.processorOf(implRun), HeadlessRenameAliasImportedMethodProcessor.class);
+    assertProcessor(implRun, HeadlessRenameAliasImportedMethodProcessor.class);
 
-    HeadlessRenameResult planned = HeadlessRenameProcessor.analyze(getProject(), implRun, "execute");
-    HeadlessRenameResult.Planned plan = assertInstanceOf(planned, HeadlessRenameResult.Planned.class);
-    assertEquals("the target was not substituted with the base method", findMethod("Base", "run"), plan.getPlan().getPrimaryElement());
-    HeadlessRenameResult result = plan.getPlan().apply();
+    RenamePlan plan = plan(implRun, "execute");
+    assertEquals("the target was not substituted with the base method", findMethod("Base", "run"), plan.getPrimaryElement());
+    assertInstanceOf(plan.apply(), HeadlessRenameResult.Applied.class);
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
     assertSize(1, findClass("Base").findMethodsByName("execute", false));
     assertSize(1, findClass("Impl").findMethodsByName("execute", false));
   }
@@ -123,12 +119,11 @@ public class GroovyHeadlessRenameTest extends LightGroovyTestCase {
       """);
     GrMethod add = PsiTreeUtil.findChildOfType(calc, GrMethod.class);
     assertNotNull("no method add in the fixture", add);
-    assertInstanceOf(HeadlessRenamePsiElementProcessor.processorOf(add), RenameGrReflectedMethodProcessor.class);
+    assertProcessor(add, RenameGrReflectedMethodProcessor.class);
 
-    HeadlessRenameResult result = performRename(add, "sum");
+    rename(add, "sum");
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
-    assertTrue("a usage kept the old name: " + calc.getText(), calc.getText().contains("def use() { sum(1) + sum(1, 2) }"));
+    assertFileContains(calc, "def use() { sum(1) + sum(1, 2) }");
   }
 
   public void testClassAndItsUsageAreRenamed() {
@@ -141,12 +136,11 @@ public class GroovyHeadlessRenameTest extends LightGroovyTestCase {
       }
       """);
     PsiClass widget = findClass("Widget");
-    assertInstanceOf(HeadlessRenamePsiElementProcessor.processorOf(widget), RenameAliasImportedClassProcessor.class);
+    assertProcessor(widget, RenameAliasImportedClassProcessor.class);
 
-    HeadlessRenameResult result = performRename(widget, "Gadget");
+    rename(widget, "Gadget");
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
-    assertTrue("a usage kept the old name: " + holder.getText(), holder.getText().contains("Gadget widget = new Gadget()"));
+    assertFileContains(holder, "Gadget widget = new Gadget()");
   }
 
   public void testScriptRenameRenamesItsClass() {
@@ -158,13 +152,12 @@ public class GroovyHeadlessRenameTest extends LightGroovyTestCase {
         def start() { new runner().run() }
       }
       """);
-    assertInstanceOf(HeadlessRenamePsiElementProcessor.processorOf(script), RenameGroovyScriptProcessor.class);
+    assertProcessor(script, RenameGroovyScriptProcessor.class);
 
-    HeadlessRenameResult result = performRename(script, "launcher.groovy");
+    rename(script, "launcher.groovy");
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
     assertEquals("the file kept the old name", "launcher.groovy", script.getName());
-    assertTrue("a usage of the script class kept the old name: " + user.getText(), user.getText().contains("new launcher().run()"));
+    assertFileContains(user, "new launcher().run()");
   }
 
   public void testScriptNameThatIsNoIdentifierIsRefused() {
@@ -172,10 +165,8 @@ public class GroovyHeadlessRenameTest extends LightGroovyTestCase {
       println 'hi'
       """);
 
-    HeadlessRenameResult result = HeadlessRenameProcessor.analyze(getProject(), script, "my-runner.groovy");
+    assertRefused(script, "my-runner.groovy");
 
-    HeadlessRenameResult.Refused refused = assertInstanceOf(result, HeadlessRenameResult.Refused.class);
-    assertFalse("a refusal must name its conflict", refused.getConflicts().isEmpty());
     assertEquals("the rename wrote to the file", "runner.groovy", script.getName());
   }
 
@@ -187,7 +178,7 @@ public class GroovyHeadlessRenameTest extends LightGroovyTestCase {
       """);
     GrField hits = (GrField)findField("Bean", "hits");
     PsiMethod getter = hits.getGetters()[0];
-    assertInstanceOf(HeadlessRenamePsiElementProcessor.processorOf(getter), GrLightElementRenamer.class);
+    assertProcessor(getter, GrLightElementRenamer.class);
 
     HeadlessRenameResult result = HeadlessRenameProcessor.analyze(getProject(), getter, "getCount");
 
@@ -223,10 +214,27 @@ public class GroovyHeadlessRenameTest extends LightGroovyTestCase {
     assertEquals(Map.of(hits, "count", getter, "getCount", setter, "setCount"), allRenames);
   }
 
-  private static HeadlessRenameResult performRename(PsiElement element, String newName) {
-    HeadlessRenameResult planned = HeadlessRenameProcessor.analyze(element.getProject(), element, newName);
-    HeadlessRenameResult.Planned plan = assertInstanceOf(planned, HeadlessRenameResult.Planned.class);
-    return plan.getPlan().apply();
+  private static RenamePlan plan(PsiElement element, String newName) {
+    HeadlessRenameResult result = HeadlessRenameProcessor.analyze(element.getProject(), element, newName);
+    return assertInstanceOf(result, HeadlessRenameResult.Planned.class).getPlan();
+  }
+
+  private static void rename(PsiElement element, String newName) {
+    assertInstanceOf(plan(element, newName).apply(), HeadlessRenameResult.Applied.class);
+  }
+
+  private static void assertRefused(PsiElement element, String newName) {
+    HeadlessRenameResult result = HeadlessRenameProcessor.analyze(element.getProject(), element, newName);
+    HeadlessRenameResult.Refused refused = assertInstanceOf(result, HeadlessRenameResult.Refused.class);
+    assertFalse("a refusal must name its conflict", refused.getConflicts().isEmpty());
+  }
+
+  private static void assertProcessor(PsiElement element, Class<? extends RenamePsiElementProcessorBase> processorClass) {
+    assertInstanceOf(HeadlessRenamePsiElementProcessor.processorOf(element), processorClass);
+  }
+
+  private static void assertFileContains(PsiFile file, String fragment) {
+    assertTrue("no '" + fragment + "' in " + file.getName() + ": " + file.getText(), file.getText().contains(fragment));
   }
 
   private PsiField findField(String className, String name) {
