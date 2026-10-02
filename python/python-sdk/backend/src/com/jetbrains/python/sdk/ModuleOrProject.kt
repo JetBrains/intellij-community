@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.jetbrains.python.project.PyProject
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -35,7 +36,23 @@ import java.nio.file.Path
 @ApiStatus.Experimental
 sealed class ModuleOrProject(val project: Project) {
   class ProjectOnly(project: Project) : ModuleOrProject(project)
-  class ModuleAndProject(val module: Module) : ModuleOrProject(module.project)
+
+
+  /**
+   * [module] always exists, [pyProject] is prefered if exists: [module] will be dropped soon.
+   * It is guaranteed to be based on the same [module].
+   */
+  class ModuleAndProject
+  private constructor(val module: Module, @get:ApiStatus.Internal val pyProject: PyProject?) : ModuleOrProject(module.project) {
+    @ApiStatus.Internal
+    constructor(pyProject: PyProject) : this(pyProject.residesOnModule, pyProject)
+
+    /**
+     * Use the one with [PyProject]
+     */
+    @ApiStatus.Obsolete
+    constructor(module: Module) : this(module, null)
+  }
 }
 
 @get:ApiStatus.Internal
@@ -47,8 +64,10 @@ val ModuleOrProject.moduleIfExists: Module?
 
 @get:ApiStatus.Internal
 val ModuleOrProject.workingDirectory: Path?
-  get() = moduleIfExists?.baseDir?.path?.let { Path.of(it) }
-          ?: project.basePath?.let { Path.of(it) }
+  get() = when (this) {
+    is ModuleOrProject.ModuleAndProject -> pyProject?.baseDir ?: module.baseDir?.toNioPath()
+    is ModuleOrProject.ProjectOnly -> project.basePath?.let { Path.of(it) }
+  }
 
 @get:ApiStatus.Internal
 val ModuleOrProject.destructured: Pair<Project, Module?>

@@ -101,6 +101,7 @@ import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.project.project
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
@@ -110,7 +111,6 @@ import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterPresenter
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers
 import com.jetbrains.python.sdk.add.v2.eelDescriptor
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
-import com.jetbrains.python.sdk.asModuleOrProject
 import com.jetbrains.python.sdk.collectAddInterpreterActions
 import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
 import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
@@ -632,7 +632,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val module = pyProject.residesOnModule
     // Only interpreters actually associated with this module (its own envs) — not every configured SDK, which for a
     // fresh project would be a huge global list. De-duplicated like the classic popup.
-    return module.asModuleOrProject.getAssignablePythonSdks().filter { it.isAssociatedWithModule(module) }
+    return ModuleOrProject.ModuleAndProject(pyProject).getAssignablePythonSdks().filter { it.isAssociatedWithModule(module) }
       .distinctBy { it.sdkAdditionalData?.javaClass to it.homePath }.map { sdk ->
         val item = sdk.pythonInterpreterAsync().asItem()
         PyInterpreterDto(
@@ -1209,7 +1209,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val pyProject = resolveTarget(projectId, pyProjectKey)?.pyProject?.pyProject
                     ?: return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.pyproject.not.found", pyProjectKey))
     val presenter = PythonAddLocalInterpreterPresenter(
-      moduleOrProject = pyProject.residesOnModule.asModuleOrProject,
+      moduleOrProject = ModuleOrProject.ModuleAndProject(pyProject),
       errorSink = ErrorSink(),
       bestGuessCreateSdkInfo = CompletableDeferred(value = null),
     )
@@ -1237,12 +1237,11 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
       PyEvoWidgetCollector.backendActionPerformed(project, evoNodeStats(nodeId), PyEvoWidgetCollector.Outcome.ERROR)
       return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.select.failed"))
     }
-    val module = target.pyProject.pyProject.residesOnModule
     val widgetScope = project.service<EvoWidgetTraceScope>().scope
     // Re-collect the same actions the node was built from and run the index-th one. Associate any SDK the action
     // creates with the module — and with the rest of its workspace (target wizards report the new SDK via this
     // callback; the local dialog also self-associates).
-    val actions = collectAddInterpreterActions(module.asModuleOrProject) { sdk ->
+    val actions = collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(target.pyProject.pyProject)) { sdk ->
       // setPythonSdk → ModuleRootModificationUtil.setModuleSdk does its own EDT write (invokeAndWait); calling it inside
       // a write action deadlocks, so run it plainly on a background coroutine.
       widgetScope.launch {

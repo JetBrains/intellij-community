@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.venv.sdk.evolution
 
 import com.intellij.openapi.projectRoots.Sdk
@@ -110,7 +111,7 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
     createSdkGuessingTypeByPath(
       PathHolder.Eel(homePath),
       context.fileSystem,
-      ModuleOrProject.ModuleAndProject(context.pyProject.pyProject.residesOnModule),
+      ModuleOrProject.ModuleAndProject(context.pyProject.pyProject),
       null,
     )
 
@@ -165,7 +166,7 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
     return createSdkGuessingTypeByPath(
       PathHolder.Eel(venvPython),
       context.fileSystem,
-      ModuleOrProject.ModuleAndProject(context.pyProject.pyProject.residesOnModule),
+      ModuleOrProject.ModuleAndProject(context.pyProject.pyProject),
       null,
     )
   }

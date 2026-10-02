@@ -63,7 +63,7 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
       setupExistingVenv(pyProject, venvs)
     }
     else {
-      createVenvAndSdk(ModuleOrProject.ModuleAndProject(pyProject.residesOnModule))
+      createVenvAndSdk(ModuleOrProject.ModuleAndProject(pyProject))
     }
 
   private suspend fun setupExistingVenv(pyProject: PyProject, venvs: List<PythonBinary>): PyResult<PythonInterpreter> {

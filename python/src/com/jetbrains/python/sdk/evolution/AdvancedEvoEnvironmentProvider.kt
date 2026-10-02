@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.evolution
 
 import com.intellij.icons.AllIcons
@@ -23,7 +24,7 @@ internal class AdvancedEvoEnvironmentProvider : PyEvoEnvironmentProvider {
   override val icon: Icon get() = AllIcons.Toolwindows.ToolWindowInternal
 
   override suspend fun loadSections(context: EvoToolContext, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
-    val actions = collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(context.pyProject.pyProject.residesOnModule)) { }
+    val actions = collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(context.pyProject.pyProject)) { }
     // Serialize each add-interpreter action by its stable index; the same list is re-collected on click to run it
     // (see PyEvoSdkApiProvider.performNodeAction).
     val leaves = actions.mapIndexed { index, action ->

@@ -48,7 +48,7 @@ internal class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigur
 
   private suspend fun createAndAddSdk(pyProject: PyProject): PyResult<PythonInterpreter> {
     val project = pyProject.project
-    val pythonInterpreter = createVenvAndSdk(ModuleOrProject.ModuleAndProject(pyProject.residesOnModule)).getOr { return it }
+    val pythonInterpreter = createVenvAndSdk(ModuleOrProject.ModuleAndProject(pyProject)).getOr { return it }
     PySdkConfigurationCollector.logVirtualEnv(project, VirtualEnvResult.CREATED)
 
     val requirementsTxtOrSetupPyFile = readAction { getRequirementsTxtOrSetupPy(pyProject.residesOnModule) }

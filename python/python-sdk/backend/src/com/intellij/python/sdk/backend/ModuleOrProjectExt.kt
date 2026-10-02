@@ -24,12 +24,12 @@ import com.intellij.python.pytools.backend.parseVersion
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.sdk.pythonSdk
-import java.nio.file.Path
+import com.jetbrains.python.sdk.workingDirectory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.nio.file.Path
 
 /*
  * Running a tool in the context of a module (or bare project) and its Python SDK.
@@ -67,9 +67,7 @@ suspend fun ModuleOrProject.toolExecutableWithBaseArgs(
                        ?: customPath
                        ?: findExecutableInPath(eelApi, executableName)
 
-  val workDir = (workingDir
-                 ?: moduleIfExists?.baseDir?.toNioPath()
-                 ?: project.baseDir?.toNioPath())?.asEelPath()
+  val workDir = (workingDir ?: workingDirectory)?.asEelPath()
 
   if (toolBinaryPath != null) {
     return PyResult.success(BinOnEel(toolBinaryPath, workDir = workDir) to emptyList())
@@ -78,7 +76,7 @@ suspend fun ModuleOrProject.toolExecutableWithBaseArgs(
   val uvxPath = PyTool.findExecutable(UVX_COMMAND)?.let { PyExecutableCache.getInstance().get(eelDescriptor, it) }
                 ?: return PyResult.localizedError(PyToolsBundle.message("uvx.is.not.installed"))
   val uvxArgs = if (executableName == tool.packageName.name) listOf(executableName)
-                else listOf("--from", tool.packageName.name, executableName)
+  else listOf("--from", tool.packageName.name, executableName)
   return PyResult.success(BinOnEel(uvxPath, workDir = workDir) to uvxArgs)
 }
 
