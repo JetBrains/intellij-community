@@ -284,6 +284,11 @@ object UniversalFileChooser {
 
     private val renameAction = RenameFileAction(::getActiveFileView)
 
+    /**
+     * Access on EDT only. Allows to cancel outdated scheduled [preselect] requests
+     */
+    private var preselectRequestId = 0
+
     private val topToolbar: ActionToolbar
     private val toolbarActionGroup: DefaultActionGroup
     private val popupActionGroup: DefaultActionGroup
@@ -560,6 +565,7 @@ object UniversalFileChooser {
     }
 
     fun preselect(toSelect: Path?) {
+      val requestId = ++preselectRequestId
       scope.launch {
         withContext(Dispatchers.IO) {
           val target = pathToSelect(toSelect) ?: return@withContext
@@ -570,6 +576,7 @@ object UniversalFileChooser {
             target
           }
           runOnEdt {
+            if (requestId != preselectRequestId) return@runOnEdt
             navigateToFile(effective, preselectPathText = true)
             if (toSelect == null) {
               preselectProjectTab(project)
@@ -661,6 +668,9 @@ object UniversalFileChooser {
     fun navigateToFile(file: Path, preselectPathText: Boolean = false) {
       val index = fileViews.indexOfFirst { it.contributor.ownsPath(file) }
       if (index < 0) return
+
+      // Cancel preselect requests scheduled before this navigation
+      preselectRequestId++
       if (fileViews.size > 1) {
         tabbedPane.selectedIndex = index
       }
