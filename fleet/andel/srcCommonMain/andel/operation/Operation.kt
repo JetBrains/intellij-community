@@ -294,28 +294,39 @@ fun deduceFast(deletes: String, inserts: String): List<Op> {
 }
 
 /** Deduce changes, and use the common suffix as the fallback resynchronization point. */
-@Suppress("NAME_SHADOWING")
 fun deduce(deletes: String, inserts: String): List<Op> {
   val result = ArrayList<Op>()
-  var deletes = deletes
-  var inserts = inserts
+  var deletesPosition = 0
+  var insertsPosition = 0
 
-  while (deletes.isNotEmpty() || inserts.isNotEmpty()) {
-    val commonPrefix = deletes.commonPrefixWith(inserts).length
+  while (deletesPosition < deletes.length || insertsPosition < inserts.length) {
+    var commonPrefix = 0
+    while (
+      deletesPosition + commonPrefix < deletes.length &&
+      insertsPosition + commonPrefix < inserts.length &&
+      deletes[deletesPosition + commonPrefix] == inserts[insertsPosition + commonPrefix]
+    ) {
+      commonPrefix++
+    }
     if (commonPrefix != 0) {
       result.add(Op.Retain(commonPrefix.toLong()))
-      deletes = deletes.drop(commonPrefix)
-      inserts = inserts.drop(commonPrefix)
+      deletesPosition += commonPrefix
+      insertsPosition += commonPrefix
     }
     else {
-      val (deletesIdx, insertsIdx) = commonChar(deletes, inserts)
-      val deletesPrefix = deletes.take(deletesIdx)
-      val insertsPrefix = inserts.take(insertsIdx)
+      val (nextDeletesPosition, nextInsertsPosition) = commonChar(
+        deletes,
+        deletesPosition,
+        inserts,
+        insertsPosition,
+      )
+      val deletesPrefix = deletes.substring(deletesPosition, nextDeletesPosition)
+      val insertsPrefix = inserts.substring(insertsPosition, nextInsertsPosition)
 
       check(deletesPrefix.isNotEmpty() || insertsPrefix.isNotEmpty())
       result.add(Op.Replace(deletesPrefix, insertsPrefix))
-      deletes = deletes.drop(deletesIdx)
-      inserts = inserts.drop(insertsIdx)
+      deletesPosition = nextDeletesPosition
+      insertsPosition = nextInsertsPosition
     }
   }
 
@@ -328,16 +339,35 @@ private fun similarFromThere(s1: String, i1: Int, s2: String, i2: Int): Boolean 
   return (0 until sequentMin).all { s1.getOrNull(i1 + it) == s2.getOrNull(i2 + it) }
 }
 
-private fun commonChar(s1: String, s2: String): Pair<Int, Int> {
-  val nearestSimilarity = s2.take(distanceMax).withIndex().mapNotNull { (i2, c2) ->
-    val found = s1.take(distanceMax).withIndex().firstOrNull { (i1, c1) -> c1 == c2 && similarFromThere(s1, i1, s2, i2) }
-    if (found != null) Pair(found.index, i2) else null
-  }.minByOrNull { min(it.first, it.second) }
+private fun commonChar(s1: String, i1: Int, s2: String, i2: Int): Pair<Int, Int> {
+  var nearestSimilarity: Pair<Int, Int>? = null
+  var nearestDistance = Int.MAX_VALUE
+  val s1End = i1 + min(distanceMax, s1.length - i1)
+  val s2End = i2 + min(distanceMax, s2.length - i2)
+  for (candidate2 in i2 until s2End) {
+    for (candidate1 in i1 until s1End) {
+      if (s1[candidate1] == s2[candidate2] && similarFromThere(s1, candidate1, s2, candidate2)) {
+        val distance = min(candidate1 - i1, candidate2 - i2)
+        if (distance < nearestDistance) {
+          nearestSimilarity = Pair(candidate1, candidate2)
+          nearestDistance = distance
+        }
+        break
+      }
+    }
+  }
 
   if (nearestSimilarity != null)
     return nearestSimilarity
 
-  val commonSuffix = s1.commonSuffixWith(s2).length
+  var commonSuffix = 0
+  while (
+    s1.length - commonSuffix > i1 &&
+    s2.length - commonSuffix > i2 &&
+    s1[s1.length - commonSuffix - 1] == s2[s2.length - commonSuffix - 1]
+  ) {
+    commonSuffix++
+  }
   if (commonSuffix == 0)
     return Pair(s1.length, s2.length)
 
