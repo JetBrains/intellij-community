@@ -212,17 +212,19 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
                                                                ?: lspClient.descriptor.presentableName
 
   protected open fun subscribeOnChanges(pyTool: PyLspTool<*>, project: Project, parentDisposable: Disposable) {
-    val executableChanged = PyToolChangeDebouncer(project.service<PyLspService>().cs) { pyTool.onExecutableChanged(project) }
+    val cs = project.service<PyLspService>().cs
+    val executableChanged = PyToolChangeDebouncer(cs) { pyTool.onExecutableChanged(project) }
+    val interpreterChanged = PyToolChangeDebouncer(cs) { onInterpreterChanged(pyTool, project) }
     val connection = project.messageBus.connect(parentDisposable)
     connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, LspPackageListener(pyTool, project, executableChanged))
     connection.subscribe(ModuleRootListener.TOPIC, LspFolderSetListener(project))
     // A new module SDK can resolve another binary of the tool, and a running server keeps the old one.
     connection.subscribe(PySdkListener.TOPIC, object : PySdkListener {
       override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) {
-        if (module.project == project && prevSdk != newSdk) executableChanged.schedule()
+        if (module.project == project && prevSdk != newSdk) interpreterChanged.schedule()
       }
     })
-    connection.subscribe(ModuleRootListener.TOPIC, LspInterpreterChangeListener(project, executableChanged))
+    connection.subscribe(ModuleRootListener.TOPIC, LspInterpreterChangeListener(project, interpreterChanged))
     // A refresh of the serve keys lands without a project event, so it triggers the checks itself. A
     // server that started before the refresh can hold the wrong group, and a module that just got the
     // tool can need a server that nothing started.
@@ -269,33 +271,46 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
   }
 
   /**
-   * Schedules [executableChanged] when a client of this tool serves a module whose interpreter is no
+   * Schedules [interpreterChanged] when a client of this tool serves a module whose interpreter is no
    * longer the one the client started with, see [PyLspToolDescriptor.interpreterChanged].
    *
    * The Project Structure dialog, the SDK table and a new project interpreter fire only `rootsChanged`,
    * not [PySdkListener].
-   *
-   * A new interpreter can also move a module to another group, see [restartStaleClients]. That
-   * restart gives every client a new binary, so no other restart follows it.
    */
   inner class LspInterpreterChangeListener(
     private val project: Project,
-    private val executableChanged: PyToolChangeDebouncer,
+    private val interpreterChanged: PyToolChangeDebouncer,
   ) : ModuleRootListener {
     override fun rootsChanged(event: ModuleRootEvent) {
-      val providerClass = this@PyLspToolIntegrationProvider::class.java
       val clientManager = LspClientManager.getInstance(project)
-      if (clientManager.getClients(providerClass).isEmpty()) return
+      if (clientManager.getClients(this@PyLspToolIntegrationProvider::class.java).isEmpty()) return
       // `rootsChanged` runs inside a write action, and the interpreters are read after it.
       project.service<PyLspService>().cs.launch {
-        if (restartStaleClients(project)) return@launch
-        val changed = readAction {
-          clientManager.getClients(providerClass).any { (it.descriptor as? PyLspToolDescriptor)?.interpreterChanged() == true }
-        }
-        if (!changed) return@launch
-        thisLogger().info("The interpreter of a module that a ${providerClass.simpleName} client serves changed. Scheduling a restart.")
-        executableChanged.schedule()
+        if (readAction { anyClientInterpreterChanged(project) }) interpreterChanged.schedule()
       }
+    }
+  }
+
+  @RequiresReadLock
+  private fun anyClientInterpreterChanged(project: Project): Boolean =
+    LspClientManager.getInstance(project).getClients(this::class.java)
+      .any { (it.descriptor as? PyLspToolDescriptor)?.interpreterChanged() == true }
+
+  /**
+   * Calls [PyLspTool.onExecutableChanged] when a client still runs with an interpreter that its modules left,
+   * or when no client runs.
+   *
+   * This runs after the quiet period of the debouncer, so it checks again. A new interpreter can move a module to
+   * another group, see [restartStaleClients]. That restart gives the new servers the new interpreters, and then
+   * this check finds nothing to do. With no client, no server reports a version, so the tool learns of the change
+   * here.
+   */
+  private suspend fun onInterpreterChanged(pyTool: PyLspTool<*>, project: Project) {
+    project.service<PyLspService>().restartMutex.withLock {
+      val noClient = readAction { LspClientManager.getInstance(project).getClients(this::class.java).isEmpty() }
+      if (!noClient && !readAction { anyClientInterpreterChanged(project) }) return@withLock
+      thisLogger().debug("The interpreter of a module of ${pyTool.lspServerName} changed. Telling the tool.")
+      pyTool.onExecutableChanged(project)
     }
   }
 

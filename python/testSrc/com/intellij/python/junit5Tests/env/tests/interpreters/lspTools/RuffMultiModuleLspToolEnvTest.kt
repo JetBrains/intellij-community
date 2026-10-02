@@ -63,6 +63,9 @@ import kotlin.time.Duration.Companion.seconds
  */
 private const val SERVICE_RUFF_VERSION = "0.14.0"
 
+/** A third Ruff version, for an interpreter outside the project. */
+private const val SPARE_RUFF_VERSION = "0.13.0"
+
 /** An unused import, which Ruff reports with its default rules. The diagnostic proves that Ruff checked the file. */
 private const val UNUSED_IMPORT_SNIPPET = "import os\n"
 
@@ -92,11 +95,17 @@ class RuffMultiModuleLspToolEnvTest {
   private val projectSdkFixture = pySdkFixture().pyVenvFixture(where = projectPath, addToSdkTable = true)
   private val serviceSdkFixture = pySdkFixture().pyVenvFixture(where = servicePath, addToSdkTable = true, serviceModuleFixture)
 
+  /** A module outside the project directory. It is a workspace of its own, so it never joins the group of a module above. */
+  private val sparePath = tempPathFixture(prefix = "ruff_spare")
+  private val spareModuleFixture = projectFixture.pyModuleFixture(sparePath, addPathToSourceRoot = true)
+  private val spareSdkFixture = pySdkFixture().pyVenvFixture(where = sparePath, addToSdkTable = true, spareModuleFixture)
+
   private val project: Project by projectFixture
   private val rootModule: Module by rootModuleFixture
   private val serviceModule: Module by serviceModuleFixture
   private val rootPyProject: PyProject by rootModuleFixture.pyProjectFixture()
   private val servicePyProject: PyProject by serviceModuleFixture.pyProjectFixture()
+  private val sparePyProject: PyProject by spareModuleFixture.pyProjectFixture()
   private val projectSdk: Sdk by projectSdkFixture
   private val codeInsightFixture by codeInsightFixture(projectFixture, projectPath)
 
@@ -108,8 +117,27 @@ class RuffMultiModuleLspToolEnvTest {
 
     assertRuffChecks(serviceFile, serviceModule, SERVICE_RUFF_VERSION)
     assertRuffChecks(rootFile, rootModule, pinnedRuffVersion)
-    val clients = LspClientManager.getInstance(project).getClients<RuffLspIntegrationProvider>()
-    assertEquals(2, clients.size, "two Ruff versions need two servers, got ${clients.map { it.pyServedModules }}")
+    awaitRuffClientOf(rootModule, "two Ruff versions need two servers") {
+      LspClientManager.getInstance(project).getClients<RuffLspIntegrationProvider>().count { client -> client.state == LspServerState.Running } == 2
+    }
+  }
+
+  /**
+   * The service module moves to an interpreter outside the project, with a third Ruff version. Its group stays the
+   * same, so no group restart runs. Only the interpreter listener of the provider restarts its server.
+   */
+  @Test
+  fun `a new module interpreter in the same group restarts the server of the module`(): Unit = timeoutRunBlocking(12.minutes) {
+    val (_, serviceFile) = setUpModules()
+    sparePyProject.installToolPackage("ruff==$SPARE_RUFF_VERSION")
+    assertRuffChecks(serviceFile, serviceModule, SERVICE_RUFF_VERSION)
+
+    ModuleRootModificationUtil.setModuleSdk(serviceModule, spareSdkFixture.get())
+
+    val client = awaitRuffClientOf(serviceModule, "the Ruff server of module 'service' did not restart with Ruff $SPARE_RUFF_VERSION") {
+      it.ruffVersion == SPARE_RUFF_VERSION
+    }
+    assertEquals(listOf(serviceModule), client.pyServedModules, "the service module keeps a server of its own")
   }
 
   @Test
