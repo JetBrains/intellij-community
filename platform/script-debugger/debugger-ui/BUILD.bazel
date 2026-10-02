@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["//platform/platform-impl/socket-connection"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -32,6 +33,7 @@ jvm_library(
         "//platform/xdebugger-api:debugger",
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl/socket-connection",
         "//platform/script-debugger/backend",
         "//platform/xdebugger-impl:debugger-impl",
         "//libraries/guava",
@@ -58,6 +60,11 @@ jvm_library(
     ),
     module_name = "intellij.platform.scriptDebugger.ui",
     visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/platform-impl/socket-connection",
+        "//platform/platform-impl/socket-connection:socket-connection_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":scriptDebugger-ui",
@@ -68,6 +75,7 @@ jvm_library(
         "//platform/xdebugger-api:debugger_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-impl/socket-connection:socket-connection_test_lib",
         "//platform/script-debugger/backend:backend_test_lib",
         "//platform/xdebugger-impl:debugger-impl_test_lib",
         "//libraries/guava:guava_test_lib",

@@ -950,6 +950,7 @@ platform/platform-impl/presentation-assistant
 platform/platform-impl/recentProjects
 platform/platform-impl/remote
 platform/platform-impl/rpc
+platform/platform-impl/socket-connection
 platform/platform-impl/ui
 platform/platform-impl/ui-inspector
 platform/platform-impl/update-checker

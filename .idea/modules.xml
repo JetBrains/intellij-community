@@ -1686,6 +1686,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/recentProjects/intellij.platform.ide.recentProjects.iml" filepath="$PROJECT_DIR$/platform/platform-impl/recentProjects/intellij.platform.ide.recentProjects.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/remote/intellij.platform.ide.remote.iml" filepath="$PROJECT_DIR$/platform/platform-impl/remote/intellij.platform.ide.remote.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/rpc/intellij.platform.ide.rpc.iml" filepath="$PROJECT_DIR$/platform/platform-impl/rpc/intellij.platform.ide.rpc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/socket-connection/intellij.platform.ide.socketConnection.iml" filepath="$PROJECT_DIR$/platform/platform-impl/socket-connection/intellij.platform.ide.socketConnection.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/ui/intellij.platform.ide.ui.iml" filepath="$PROJECT_DIR$/platform/platform-impl/ui/intellij.platform.ide.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/ui-inspector/intellij.platform.ide.ui.inspector.iml" filepath="$PROJECT_DIR$/platform/platform-impl/ui-inspector/intellij.platform.ide.ui.inspector.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/update-checker/intellij.platform.ide.updateChecker.iml" filepath="$PROJECT_DIR$/platform/platform-impl/update-checker/intellij.platform.ide.updateChecker.iml" />

@@ -1,0 +1,12 @@
+f:com.intellij.util.io.socketConnection.ConnectionState
+- <init>(com.intellij.util.io.socketConnection.ConnectionStatus):V
+- <init>(com.intellij.util.io.socketConnection.ConnectionStatus,java.lang.String,javax.swing.event.HyperlinkListener):V
+- getMessageLinkListener():javax.swing.event.HyperlinkListener
+e:com.intellij.util.io.socketConnection.ConnectionStatus
+- sf:CONNECTED:com.intellij.util.io.socketConnection.ConnectionStatus
+- sf:CONNECTION_FAILED:com.intellij.util.io.socketConnection.ConnectionStatus
+- sf:DETACHED:com.intellij.util.io.socketConnection.ConnectionStatus
+- sf:DISCONNECTED:com.intellij.util.io.socketConnection.ConnectionStatus
+- sf:NOT_CONNECTED:com.intellij.util.io.socketConnection.ConnectionStatus
+- sf:WAITING_FOR_CONNECTION:com.intellij.util.io.socketConnection.ConnectionStatus
+- s:valueOf(java.lang.String):com.intellij.util.io.socketConnection.ConnectionStatus

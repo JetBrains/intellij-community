@@ -5607,13 +5607,6 @@ f:com.intellij.util.NetworkUtils
 f:com.intellij.util.PopupUtilsKt
 - sf:getBestBalloonPosition(com.intellij.openapi.actionSystem.DataContext):com.intellij.ui.awt.RelativePoint
 - sf:getBestPopupPosition(com.intellij.openapi.actionSystem.DataContext):com.intellij.ui.awt.RelativePoint
-f:com.intellij.util.io.socketConnection.ConnectionState
-- getMessage():java.lang.String
-- getStatus():com.intellij.util.io.socketConnection.ConnectionStatus
-e:com.intellij.util.io.socketConnection.ConnectionStatus
-- java.lang.Enum
-- getStatusText():java.lang.String
-- s:values():com.intellij.util.io.socketConnection.ConnectionStatus[]
 f:com.intellij.util.net.IdeHttpClientHelpers
 f:com.intellij.util.net.IdeHttpClientHelpers$ApacheHttpClient4
 - <init>():V

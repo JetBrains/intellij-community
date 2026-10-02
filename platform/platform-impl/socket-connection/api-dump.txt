@@ -1,0 +1,7 @@
+f:com.intellij.util.io.socketConnection.ConnectionState
+- getMessage():java.lang.String
+- getStatus():com.intellij.util.io.socketConnection.ConnectionStatus
+e:com.intellij.util.io.socketConnection.ConnectionStatus
+- java.lang.Enum
+- getStatusText():java.lang.String
+- s:values():com.intellij.util.io.socketConnection.ConnectionStatus[]

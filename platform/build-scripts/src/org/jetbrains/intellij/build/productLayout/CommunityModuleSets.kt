@@ -78,6 +78,7 @@ object CommunityModuleSets {
     module("intellij.platform.managed.cache.backend")
     module("intellij.platform.feedback")
     module("intellij.platform.ide.presentationAssistant")
+    module("intellij.platform.ide.socketConnection")
 
     module("intellij.platform.pluginManager.shared.base")
     module("intellij.platform.pluginManager.shared")

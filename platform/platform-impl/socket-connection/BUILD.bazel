@@ -1,0 +1,66 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.ide.socketConnection` start
+content_module_jar(module = ":socket-connection")
+### auto-generated section `dev intellij.platform.ide.socketConnection` end
+
+### auto-generated section `build intellij.platform.ide.socketConnection` start
+jvm_library(
+    name = "socket-connection",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.socketConnection",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//libraries/fastutil",
+        "//libraries/jetbrains/annotations",
+        "//platform/core-api:core",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/util",
+    ],
+)
+
+jvm_library(
+    name = "socket-connection_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.socketConnection",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":socket-connection",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/util:util_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.ide.socketConnection` end
+
+### auto-generated section `iml intellij.platform.ide.socketConnection` start
+exports_files(
+    [
+        "intellij.platform.ide.socketConnection.iml",
+        "resources/intellij.platform.ide.socketConnection.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.ide.socketConnection` end

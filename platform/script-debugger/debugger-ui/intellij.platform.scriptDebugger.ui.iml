@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.socketConnection" exported="" />
     <orderEntry type="module" module-name="intellij.platform.scriptDebugger.backend" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
