@@ -12,6 +12,7 @@ import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.uv.backend.UvPyTool
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
@@ -46,7 +47,7 @@ internal val Sdk.uvUsePackageManagement: Boolean
  * Execution context for UV SDK operations.
  * Consolidates all PathHolder type-specific data needed to execute UV commands.
  *
- * Use [getUvExecutionContextAsync] to create an instance from an SDK.
+ * Use [getUvExecutionContextAsync] to create an instance from an interpreter.
  */
 internal sealed interface UvExecutionContext<P : PathHolder> {
   val workingDir: Path
@@ -111,11 +112,16 @@ private suspend fun createTargetUvExecutionContext(
   )
 }
 
-internal fun Sdk.getUvExecutionContextAsync(scope: CoroutineScope, project: Project? = null): Deferred<UvExecutionContext<*>>? {
-  val data = sdkAdditionalData
-  val uvWorkingDirectory = pySdkAdditionalData.workingDirectory.takeIf { pySdkAdditionalData.hasValidWorkingDirectory() }
-  val uvPathString = uvFlavorData?.uvPath
-  val pythonBinaryPath = homePath ?: return null
+/** The uv execution context of this interpreter, started lazily in [scope], or `null` when it is no uv environment. */
+internal fun PythonInterpreter.getUvExecutionContextAsync(scope: CoroutineScope, project: Project? = null): Deferred<UvExecutionContext<*>>? {
+  // The uv flavor data, the working directory and the home path live in the SDK.
+  @Suppress("DEPRECATION")
+  val sdk = getSdkAPI()
+  val data = sdk.sdkAdditionalData
+  val pyData = sdk.pySdkAdditionalData
+  val uvWorkingDirectory = pyData.workingDirectory.takeIf { pyData.hasValidWorkingDirectory() }
+  val uvPathString = sdk.uvFlavorData?.uvPath
+  val pythonBinaryPath = sdk.homePath ?: return null
 
   return when (data) {
     is UvSdkAdditionalData -> {

@@ -10,6 +10,8 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.requirements.parser.PyRequirementParser
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createHatchServiceAsync
@@ -22,8 +24,8 @@ import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.pip.PipPythonPackageManager
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.add.v2.toFileSystem
-import kotlinx.coroutines.Deferred
 import java.nio.file.Path
+import kotlinx.coroutines.Deferred
 
 internal class HatchPackageManager(
   project: Project,
@@ -70,12 +72,14 @@ internal class HatchPackageManager(
 }
 
 internal class HatchPackageManagerProvider : PythonPackageManagerProvider {
-  override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? {
-    if (!sdk.isHatch) {
+  // The manager constructor still takes the SDK.
+  @Suppress("DEPRECATION")
+  override fun createPackageManager(project: Project, interpreter: PythonInterpreter): PythonPackageManager? {
+    if (!interpreter.isHatch) {
       return null
     }
 
-    val hatchService = sdk.createHatchServiceAsync(PyPackageCoroutine.getScope(project)) ?: return null
-    return HatchPackageManager(project, sdk, hatchService)
+    val hatchService = interpreter.createHatchServiceAsync(PyPackageCoroutine.getScope(project)) ?: return null
+    return HatchPackageManager(project, interpreter.getSdkAPI(), hatchService)
   }
 }

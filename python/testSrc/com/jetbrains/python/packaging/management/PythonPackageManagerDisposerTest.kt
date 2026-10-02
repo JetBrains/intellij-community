@@ -3,6 +3,8 @@ package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.jetbrains.python.allure.Layers
@@ -28,11 +30,11 @@ class PythonPackageManagerDisposerTest {
   private val projectFixture = projectFixture()
 
   @Test
-  fun `a fresh manager is absent from the Disposer tree`() {
+  fun `a fresh manager is absent from the Disposer tree`(): Unit = timeoutRunBlocking {
     val project = projectFixture.get()
-    val sdk = ProjectJdkImpl("PY-90829 test SDK", PythonSdkType.getInstance())
+    val interpreter = ProjectJdkImpl("PY-90829 test SDK", PythonSdkType.getInstance()).pythonInterpreterAsync()
 
-    val manager = TestPythonPackageManager(project, sdk)
+    val manager = TestPythonPackageManager(project, interpreter)
 
     Disposer.getTree().assertNoReferenceKeptInTree(manager)
   }

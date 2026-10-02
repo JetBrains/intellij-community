@@ -7,6 +7,8 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.pyproject.model.evolution.findPythonInterpreterIfReady
+import com.intellij.python.sdk.backend.pythonInterpreter
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -16,8 +18,11 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 internal open class PyPackageManagerBridge(private val sdk: Sdk) : PyPackageManager(sdk) {
-  protected val packageManager: PythonPackageManager = PythonPackageManager.forSdk(guessProject(), sdk = sdk)
-  protected val packageManagerUI: PythonPackageManagerUI = PythonPackageManagerUI.forPackageManager(packageManager)
+  protected val packageManager: PythonPackageManager by lazy {
+    // The old API is sync. Its blocking methods run off the EDT, so they detect the interpreter.
+    PythonPackageManager.forPythonInterpreter(guessProject(), sdk.pythonInterpreter())
+  }
+  protected val packageManagerUI: PythonPackageManagerUI by lazy { PythonPackageManagerUI.forPackageManager(packageManager) }
 
   @Throws(ExecutionException::class)
   override fun install(requirements: MutableList<PyRequirement>?, extraArgs: MutableList<String>) {
@@ -46,7 +51,10 @@ internal open class PyPackageManagerBridge(private val sdk: Sdk) : PyPackageMana
 
 
   override fun getPackages(): List<PyPackage> {
-    return packageManagerUI.manager.listInstalledPackagesSnapshot().map { PyPackage(it.name, it.version) }
+    // A snapshot read, which can run on the EDT, so it takes the interpreter from the project structure.
+    val interpreter = guessProject().findPythonInterpreterIfReady(sdk) ?: return emptyList()
+    return PythonPackageManager.forPythonInterpreter(guessProject(), interpreter).listInstalledPackagesSnapshot()
+      .map { PyPackage(it.name, it.version) }
   }
 
   private fun guessProject() = getOpenedProjects().firstOrNull() ?: ProjectManager.getInstance().defaultProject

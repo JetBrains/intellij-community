@@ -2,6 +2,7 @@
 package com.intellij.python.junit5Tests.env.tests.ruff
 
 import com.intellij.openapi.module.Module
+import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.ruff.codeinsight.RuffConfigError
 import com.intellij.python.ruff.codeinsight.checkRuffConfig
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
@@ -17,6 +18,7 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.sdk.ModuleOrProject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -95,10 +97,10 @@ internal class RuffConfigCheckEnvTest {
   }
 
   private suspend fun installRuff() {
-    // The venv fixture puts the SDK on the module, and `installToolPackage` reads that SDK.
+    // The venv fixture puts the SDK on the module, and `installToolPackage` reads its interpreter.
     venvFixture.get()
     if (ruffInstalled.compareAndSet(false, true)) {
-      module.installToolPackage(LspToolVersions.requirement(RuffPyTool.getInstance()))
+      pyProject.installToolPackage(LspToolVersions.requirement(RuffPyTool.getInstance()))
     }
   }
 
@@ -117,6 +119,7 @@ internal class RuffConfigCheckEnvTest {
     private val tempPathFixture = tempPathFixture()
     private val projectFixture = projectFixture(openAfterCreation = true)
     private val moduleFixture = projectFixture.pyModuleFixture(tempPathFixture, addPathToSourceRoot = true)
+    private val pyProjectFixture = moduleFixture.pyProjectFixture()
     private val venvFixture = pySdkFixture().pyVenvFixture(
       where = tempPathFixture,
       addToSdkTable = true,
@@ -125,6 +128,7 @@ internal class RuffConfigCheckEnvTest {
 
     // `@TestApplication` implies `@TestFixtures`, which initializes every field of type `TestFixture`.
     private val module: Module get() = moduleFixture.get()
+    private val pyProject: PyProject get() = pyProjectFixture.get()
     private val workingDir: Path get() = tempPathFixture.get()
   }
 }

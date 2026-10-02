@@ -34,7 +34,7 @@ internal class PipPackageManagerEngine(
   private val sdk: Sdk,
 ) : PythonPackageManagerEngine {
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
-    val manager = PythonPackageManager.forSdk(project, sdk)
+    val manager = PythonPackageManager.forPythonInterpreter(project, sdk.pythonInterpreterAsync())
 
     PipManagementInstaller(sdk, manager).installManagementIfNeeded().getOr { return it }
 

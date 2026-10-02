@@ -6,6 +6,7 @@ import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsigh
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
+import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.python.ty.TyConfiguration
 import com.intellij.python.ty.TyLspIntegrationProvider
@@ -36,7 +37,7 @@ import kotlin.time.Duration.Companion.minutes
 @PyEnvTestCase
 @Timeout(value = 10, unit = TimeUnit.MINUTES)
 class TyLspToolEnvTest {
-  private suspend fun enableTyAndInstall() = module.enableLspToolAndInstall(
+  private suspend fun enableTyAndInstall() = pyProject.enableLspToolAndInstall(
     project = project,
     pyTool = TyPyTool.getInstance(),
     toolInstalled = toolInstalled,
@@ -65,7 +66,7 @@ class TyLspToolEnvTest {
     private val projectFixture = projectFixture(openAfterCreation = true)
     internal val project by projectFixture
     private val moduleFixture = projectFixture.pyModuleFixture(tempPathFixture, addPathToSourceRoot = true)
-    internal val module by moduleFixture
+    internal val pyProject by moduleFixture.pyProjectFixture()
     internal val venv by pySdkFixture().pyVenvFixture(
       where = tempPathFixture,
       addToSdkTable = true,

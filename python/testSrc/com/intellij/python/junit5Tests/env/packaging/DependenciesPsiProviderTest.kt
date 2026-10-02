@@ -20,6 +20,7 @@ import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfoData
 import com.intellij.python.junit5Tests.framework.metaInfo.TestMethodInfoData
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.python.venv.createVenv
 import com.intellij.python.venv.createVenvAdditionalData
 import com.intellij.testFramework.ExtensionTestUtil
@@ -256,7 +257,7 @@ internal class DependenciesPsiProviderTest {
       }
 
       sdk.putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, requirementsProviderType)
-      PythonPackageManager.forSdk(project, sdk).waitForInit()
+      PythonPackageManager.forPythonInterpreter(project, sdk.pythonInterpreterAsync()).waitForInit()
 
       fixture.configureFromTempProjectFile(requirementsProviderType.filename)
 

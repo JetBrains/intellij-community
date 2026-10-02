@@ -188,6 +188,14 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
      * A name that the SDK table does not hold is only in [sdkReferences].
      */
     val interpreters: Set<PythonInterpreter> = evoPyProjects.mapNotNullTo(mutableSetOf()) { it.interpreter }
+
+    /**
+     * Every interpreter this project can use: the ones of its projects, and the shared ones.
+     * An SDK whose interpreter is not here is broken or not accessible.
+     *
+     * Holds only [interpreters] now. The shared interpreters come later.
+     */
+    val availableInterpreters: Set<PythonInterpreter> get() = interpreters
   }
 
   private val state = MutableStateFlow<Snapshot?>(null)
@@ -411,6 +419,23 @@ suspend fun Project.evoPyProjects(): Sequence<EvoPyProject> = EvoPyProjectModel.
  */
 @ApiStatus.Internal
 suspend fun Project.pythonInterpreters(): Set<PythonInterpreter> = EvoPyProjectModel.getInstance(this).snapshot().interpreters
+
+/** [pythonInterpreters] without the wait. `null` before the first snapshot. */
+@ApiStatus.Internal
+fun Project.pythonInterpretersIfReady(): Set<PythonInterpreter>? = EvoPyProjectModel.getInstance(this).snapshotOrNull()?.interpreters
+
+/**
+ * The interpreter of [sdk], from [EvoPyProjectModel.Snapshot.availableInterpreters]. Waits for the first snapshot.
+ * For a caller that the platform passes an [Sdk]. `null` means [sdk] is broken or not accessible.
+ */
+@ApiStatus.Internal
+suspend fun Project.findPythonInterpreter(sdk: Sdk): PythonInterpreter? =
+  EvoPyProjectModel.getInstance(this).snapshot().availableInterpreters.firstOrNull { it.isFor(sdk) }
+
+/** [findPythonInterpreter] for [sdk] without the wait. `null` also before the first snapshot. */
+@ApiStatus.Internal
+fun Project.findPythonInterpreterIfReady(sdk: Sdk): PythonInterpreter? =
+  EvoPyProjectModel.getInstance(this).snapshotOrNull()?.availableInterpreters?.firstOrNull { it.isFor(sdk) }
 
 /**
  * The Python project every Python surface shows for [file], by the rule of [EvoPyProjectModel.Snapshot.forFile].

@@ -15,15 +15,15 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiFile
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.model.spi.ProjectName
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterWithoutDetection
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -54,6 +54,10 @@ import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.readOnlyErrorMessage
 import com.jetbrains.python.sdk.refreshPaths
+import java.nio.file.Path
+import java.util.SequencedMap
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -73,10 +77,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
-import java.nio.file.Path
-import java.util.SequencedMap
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.cancellation.CancellationException
 
 
 /**
@@ -609,19 +609,24 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   }
 
   companion object {
+    /**
+     * [forPythonInterpreter] for a caller that holds only an [Sdk].
+     *
+     * It does not detect the environment, so the manager it returns has an incomplete interpreter. Our code does not
+     * call it any more. It stays for the callers of other teams until they move to [forPythonInterpreter].
+     */
+    @Deprecated("Pass a PythonInterpreter to forPythonInterpreter. Get it from the project structure or with pythonInterpreterAsync.")
     @Throws(AlreadyDisposedException::class)
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
-      val pythonPackageManagerService = project.service<PythonPackageManagerService>()
-      return pythonPackageManagerService.forSdk(project, sdk)
+      @Suppress("DEPRECATION") // This is the one bridge from an SDK to a package manager.
+      return forPythonInterpreter(project, sdk.pythonInterpreterWithoutDetection())
     }
 
     /** The manager of the environment [interpreter] runs in. */
     @ApiStatus.Internal
     @Throws(AlreadyDisposedException::class)
-    fun forPythonInterpreter(project: Project, interpreter: PythonInterpreter): PythonPackageManager {
-      @Suppress("DEPRECATION") // The managers are keyed by the SDK, so this is the one place that reaches it.
-      return forSdk(project, interpreter.getSdkAPI())
-    }
+    fun forPythonInterpreter(project: Project, interpreter: PythonInterpreter): PythonPackageManager =
+      project.service<PythonPackageManagerService>().forPythonInterpreter(project, interpreter)
 
     @Topic.AppLevel
     val PACKAGE_MANAGEMENT_TOPIC: Topic<PythonPackageManagementListener> =

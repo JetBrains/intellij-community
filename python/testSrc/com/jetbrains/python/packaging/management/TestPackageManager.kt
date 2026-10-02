@@ -4,16 +4,18 @@ package com.jetbrains.python.packaging.management
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.intellij.python.pyproject.PyDependencyGroup
+import com.intellij.python.requirements.parser.PyRequirementParser
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.associatedModuleDir
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.extensions.toPsi
-import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
@@ -22,14 +24,16 @@ import com.jetbrains.python.packaging.common.toPythonPackage
 import com.jetbrains.python.packaging.common.toPythonPackages
 import com.jetbrains.python.packaging.setupPy.SetupPyHelpers
 import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.sdk.associatedModuleDir
 import com.jetbrains.python.sdk.pipenv.PipEnvParser
+import java.nio.file.Path
 import org.jetbrains.annotations.TestOnly
 import org.toml.lang.psi.TomlFile
-import java.nio.file.Path
 
 @TestOnly
-internal class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
+// `PythonPackageManager` still takes the SDK, so the constructor passes it on.
+@Suppress("DEPRECATION")
+internal class TestPythonPackageManager(project: Project, private val interpreter: PythonInterpreter) :
+  PythonPackageManager(project, interpreter.getSdkAPI()) {
   private var packageNames: List<String> = emptyList()
   private var packageDetails: PythonPackageDetails? = null
   private var packageVersions: Map<String, List<String>> = emptyMap()
@@ -100,14 +104,14 @@ internal class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPack
   override val dependenciesFilesRelativePaths: List<Path>
     get() {
       val providerType = sdk.getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return emptyList()
-      sdk.associatedModuleDir ?: return emptyList()
+      interpreter.associatedModuleDir ?: return emptyList()
 
       return listOf(Path.of(providerType.filename))
     }
 
   override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>>? {
     val providerType = sdk.getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return null
-    val moduleDir = sdk.associatedModuleDir ?: return null
+    val moduleDir = interpreter.associatedModuleDir ?: return null
     val dependenciesFile = moduleDir.findChild(providerType.filename) ?: return null
 
     return when (providerType) {

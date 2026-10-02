@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
@@ -195,10 +196,13 @@ class PythonPackageManagerUI private constructor(
   }
 
   companion object {
+    /** [forPythonInterpreter] for a caller that holds only an [Sdk]. See [PythonPackageManager.forSdk]. */
+    @Deprecated("Pass a PythonInterpreter to forPythonInterpreter. Get it from the project structure or with pythonInterpreterAsync.")
     @JvmStatic
     @JvmOverloads
     @ApiStatus.Internal
     fun forSdk(project: Project, sdk: Sdk, sink: ErrorSink = ErrorSink()): PythonPackageManagerUI {
+      @Suppress("DEPRECATION")
       val packageManager = PythonPackageManager.forSdk(project, sdk)
       return PythonPackageManagerUI(packageManager, sink)
     }
@@ -211,5 +215,19 @@ class PythonPackageManagerUI private constructor(
     fun forPackageManager(
       packageManager: PythonPackageManager,
     ): PythonPackageManagerUI = PythonPackageManagerUI(packageManager, ErrorSink())
+
+    /**
+     * Installs [packages] into the interpreter of [sdk], with a modal progress. For a Java caller on the EDT that holds
+     * only an [Sdk]. The interpreter is detected inside the progress.
+     */
+    @JvmStatic
+    @ApiStatus.Internal
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    fun installPackagesWithModalProgressBlocking(project: Project, sdk: Sdk, vararg packages: String): List<PythonPackage>? {
+      val interpreter = runWithModalProgressBlocking(project, PyBundle.message("python.packaging.installing.packages")) {
+        sdk.pythonInterpreterAsync()
+      }
+      return forPythonInterpreter(project, interpreter).installPackagesWithModalProgressBlocking(*packages)
+    }
   }
 }

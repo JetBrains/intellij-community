@@ -7,6 +7,7 @@ import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsigh
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
+import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.ruff.RuffConfiguration
 import com.intellij.python.ruff.RuffPyTool
 import com.intellij.python.ruff.server.RuffLspIntegrationProvider
@@ -38,7 +39,7 @@ import kotlin.time.Duration.Companion.minutes
 @PyEnvTestCase
 @Timeout(value = 10, unit = TimeUnit.MINUTES)
 class RuffLspToolEnvTest {
-  private suspend fun enableRuffAndInstall() = module.enableLspToolAndInstall(
+  private suspend fun enableRuffAndInstall() = pyProject.enableLspToolAndInstall(
     project = project,
     pyTool = RuffPyTool.getInstance(),
     toolInstalled = toolInstalled,
@@ -78,7 +79,7 @@ class RuffLspToolEnvTest {
     private val projectFixture = projectFixture(openAfterCreation = true)
     internal val project by projectFixture
     private val moduleFixture = projectFixture.pyModuleFixture(tempPathFixture, addPathToSourceRoot = true)
-    internal val module by moduleFixture
+    internal val pyProject by moduleFixture.pyProjectFixture()
     internal val venv by pySdkFixture().pyVenvFixture(
       where = tempPathFixture,
       addToSdkTable = true,

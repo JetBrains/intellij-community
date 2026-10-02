@@ -8,6 +8,8 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.python.hatch.HatchService
 import com.intellij.python.hatch.getHatchService
 import com.intellij.python.hatch.impl.sdk.HatchSdkFlavorData
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
@@ -16,14 +18,19 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
+import java.nio.file.Path
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import java.nio.file.Path
 
 internal val Sdk.isHatch: Boolean
   get() = hatchFlavorData != null
+
+/** Whether this interpreter is a Hatch environment. */
+internal val PythonInterpreter.isHatch: Boolean
+  @Suppress("DEPRECATION") // The Hatch flavor data lives in the SDK additional data.
+  get() = getSdkAPI().isHatch
 
 private val Sdk.hatchFlavorData: HatchSdkFlavorData?
   get() {
@@ -56,9 +63,13 @@ private suspend fun createTargetHatchService(
   )
 }
 
-internal fun Sdk.createHatchServiceAsync(scope: CoroutineScope): Deferred<PyResult<HatchService<*>>>? {
-  val data = pySdkAdditionalData
-  val flavorData = hatchFlavorData ?: return null
+/** The Hatch service of this interpreter, started lazily in [scope], or `null` when it is no Hatch environment. */
+internal fun PythonInterpreter.createHatchServiceAsync(scope: CoroutineScope): Deferred<PyResult<HatchService<*>>>? {
+  // The flavor data and the working directory live in the SDK additional data.
+  @Suppress("DEPRECATION")
+  val sdk = getSdkAPI()
+  val data = sdk.pySdkAdditionalData
+  val flavorData = sdk.hatchFlavorData ?: return null
   val workingDirectory = data.workingDirectory.takeIf { data.hasValidWorkingDirectory() } ?: return null
 
   return when (data) {

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.processOutput.common.ProcessOutputTopic
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.TraceContext
@@ -47,8 +48,8 @@ object PyChangeVersionPopupLauncher {
     anchor: RelativePoint? = null,
     workspaceMember: PyWorkspaceMember? = null,
   ) {
-    val manager = PythonPackageManager.forSdk(project, sdk)
     PyPackageCoroutine.launch(project, Dispatchers.Default) {
+      val manager = PythonPackageManager.forPythonInterpreter(project, sdk.pythonInterpreterAsync())
       val trace = TraceContext(PyBundle.message("trace.context.packaging.tool.window.change.version", packageName), null)
       val details = manager.repositoryManager.getPackageDetails(packageName, null).getOrNull()
       if (details == null) {

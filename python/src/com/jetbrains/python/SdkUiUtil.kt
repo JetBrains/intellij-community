@@ -2,8 +2,10 @@
 package com.jetbrains.python
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 
 
@@ -11,3 +13,6 @@ import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 
 internal val Sdk.isNonToolVirtualEnv: Boolean get() = (sdkAdditionalData as? PythonSdkAdditionalData)?.flavor is VirtualEnvSdkFlavor
 internal val Sdk.isCondaVirtualEnv: Boolean get() = (sdkAdditionalData as? PythonSdkAdditionalData)?.flavor is CondaEnvSdkFlavor
+internal val PythonInterpreter.isCondaVirtualEnv: Boolean
+  @Suppress("DEPRECATION") // The flavor lives in the SDK additional data.
+  get() = getSdkAPI().isCondaVirtualEnv

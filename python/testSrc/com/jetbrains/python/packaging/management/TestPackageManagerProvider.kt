@@ -2,7 +2,7 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
@@ -41,8 +41,8 @@ class TestPackageManagerProvider : PythonPackageManagerProvider {
     return this
   }
 
-  override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager {
-    return TestPythonPackageManager(project, sdk)
+  override fun createPackageManager(project: Project, interpreter: PythonInterpreter): PythonPackageManager {
+    return TestPythonPackageManager(project, interpreter)
       .withPackageNames(packageNames)
       .withPackageDetails(packageDetails)
       .withPackageInstalled(packageInstalled)

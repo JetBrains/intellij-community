@@ -4,6 +4,7 @@ package com.jetbrains.python.requirements
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.jetbrains.python.fixtures.awaitPythonInterpreters
@@ -96,7 +97,7 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
     // the initialization runs read actions, which a plain `runBlocking` on the EDT would deadlock against a
     // pending background write action
     runWithModalProgressBlocking(myFixture.project, "Initializing the test package manager") {
-      PythonPackageManager.forSdk(myFixture.project, sdk).waitForInit()
+      PythonPackageManager.forPythonInterpreter(myFixture.project, sdk.pythonInterpreterAsync()).waitForInit()
     }
   }
 }

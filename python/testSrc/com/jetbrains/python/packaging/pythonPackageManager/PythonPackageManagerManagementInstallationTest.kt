@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pythonPackageManager
 
+import com.intellij.python.sdk.backend.pythonInterpreter
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.allure.Layers
 import com.intellij.openapi.projectRoots.Sdk
@@ -63,7 +64,7 @@ open class PythonPackageManagerManagementInstallationTask(private val pkgToInsta
     requireNotNull(existingSdk) { "Sdk should be not bull" }
 
     val sdk = existingSdk
-    val manager = PythonPackageManager.forSdk(myFixture.project, sdk)
+    val manager = PythonPackageManager.forPythonInterpreter(myFixture.project, sdk.pythonInterpreter())
     val managementInstaller = PipManagementInstaller(sdk, manager)
 
     runBlocking {

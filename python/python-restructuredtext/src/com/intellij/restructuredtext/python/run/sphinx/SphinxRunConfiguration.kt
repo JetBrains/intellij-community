@@ -12,6 +12,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.python.pyproject.model.evolution.findPythonInterpreterIfReady
 import com.intellij.restructuredtext.python.PythonRestBundle.message
 import com.intellij.restructuredtext.python.run.RestConfigurationEditor
 import com.intellij.restructuredtext.python.run.RestRunConfiguration
@@ -27,9 +28,10 @@ class SphinxRunConfiguration(
 ) : RestRunConfiguration(project, factory) {
   override fun createConfigurationEditor(): SettingsEditor<out RunConfiguration?> {
     val model = SphinxTasksModel()
-    val sdk = sdk
-    if (!model.contains("pdf") && sdk != null) {
-      val packageManager = PythonPackageManager.forSdk(project, sdk)
+    // The interpreter from the snapshot. An SDK outside it is broken or not accessible.
+    val interpreter = sdk?.let { project.findPythonInterpreterIfReady(it) }
+    if (!model.contains("pdf") && interpreter != null) {
+      val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
       val isInstalled = packageManager.hasInstalledPackageSnapshot("rst2pdf")
       if (isInstalled) {
         model.add(13, "pdf")

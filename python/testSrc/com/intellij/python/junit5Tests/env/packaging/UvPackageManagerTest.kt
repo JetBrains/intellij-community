@@ -2,9 +2,9 @@
 package com.intellij.python.junit5Tests.env.packaging
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.python.test.env.junit5.pyUvVenvFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
@@ -18,6 +18,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.minutes
+import com.intellij.python.sdk.backend.PythonInterpreter
 
 @PyEnvTestCase
 class UvPackageManagerTest {
@@ -38,12 +39,12 @@ class UvPackageManagerTest {
       ]
     """.trimIndent())
 
-    val manager = PythonPackageManager.forSdk(projectFixture.get(), sdkFixture.get())
+    val manager = PythonPackageManager.forPythonInterpreter(projectFixture.get(), sdkFixture.get().pythonInterpreterAsync())
 
     val httpxOutdated = CompletableDeferred<Unit>()
     val connection = ApplicationManager.getApplication().messageBus.connect()
     connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
-      override fun outdatedPackagesChanged(sdk: Sdk) {
+      override fun outdatedPackagesChanged(interpreter: PythonInterpreter) {
         if (manager.listOutdatedPackagesSnapshot().values.any { it.name == "httpx" }) {
           httpxOutdated.complete(Unit)
         }

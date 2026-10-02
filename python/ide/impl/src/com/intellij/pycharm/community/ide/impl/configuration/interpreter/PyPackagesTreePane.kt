@@ -74,6 +74,8 @@ import javax.swing.SwingUtilities
 import javax.swing.event.DocumentEvent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 
 /**
  * Typed tree-row payload the pane attaches to every `DefaultMutableTreeNode.userObject`. Classified
@@ -314,10 +316,11 @@ internal class PyPackagesTreePane(
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(
       PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC,
       object : PythonPackageManagementListener {
-        override fun packagesChanged(sdk: Sdk) {
+        override fun packagesChanged(interpreter: PythonInterpreter) {
           // Match by name: `currentSdk` may be an editable copy from `ProjectSdksModel` while the
           // event fires against the original SDK from `ProjectJdkTable`, so `===` would miss it.
-          if (sdk.name != currentSdk?.name) return
+          @Suppress("DEPRECATION") // The pane still holds the SDK of the settings combo.
+          if (interpreter.getSdkAPI().name != currentSdk?.name) return
           ApplicationManager.getApplication().invokeLater({ reloadCurrentSdk() }, project.disposed)
         }
       },
@@ -361,14 +364,19 @@ internal class PyPackagesTreePane(
       applyUiState(PackageTreeUiState.noSdk())
       return
     }
-    val manager = PythonPackageManager.forSdk(project, sdk)
-    currentManager = manager
-
-    // Sync fast path: paint the cached snapshot immediately so the tab is not blank while the tree loader
-    // runs. The tree loader below then replaces this with the hierarchical view if the manager provides one.
-    applyUiState(snapshotUiState(manager))
+    currentManager = null
+    applyUiState(PackageTreeUiState.loading())
 
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
+      // The settings hold an editable copy of the SDK, so the interpreter is detected here and not read from the
+      // project structure.
+      val manager = PythonPackageManager.forPythonInterpreter(project, sdk.pythonInterpreterAsync())
+      withContext(Dispatchers.EDT) {
+        if (currentSdk !== sdk) return@withContext
+        currentManager = manager
+        // Paint the cached snapshot first, so the tab is not blank while the tree loader runs.
+        applyUiState(snapshotUiState(manager))
+      }
       val uiState = safeLoadPackageTree(manager)
       withContext(Dispatchers.EDT) {
         if (currentSdk !== sdk) return@withContext
@@ -700,7 +708,7 @@ internal class PyPackagesTreePane(
     val pkgName = pkg.name.name
     val member = workspaceMemberName?.let { PyWorkspaceMember(it) }
     PyPackageCoroutine.launch(project) {
-      PythonPackageManagerUI.forSdk(project, sdk).uninstallPackagesBackground(listOf(pkgName), workspaceMember = member)
+      PythonPackageManagerUI.forPythonInterpreter(project, sdk.pythonInterpreterAsync()).uninstallPackagesBackground(listOf(pkgName), workspaceMember = member)
       withContext(Dispatchers.EDT) {
         val current = currentSdk ?: return@withContext
         if (current === sdk) reloadCurrentSdk()

@@ -5,7 +5,6 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClientManager
@@ -20,6 +19,7 @@ import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.python.test.env.junit5.LspToolVersions
 import com.intellij.python.test.env.junit5.installToolPackage
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
+import com.jetbrains.python.project.PyProject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
@@ -145,12 +145,12 @@ internal suspend fun stopLspClientsAndWait(project: Project, providerClass: Clas
 }
 
 /**
- * Enable [pyTool] for [project] and install its pinned version (see [LspToolVersions]) into this
- * module's venv exactly once per test class (guarded by [toolInstalled]). Tool-specific settings are
+ * Enable [pyTool] for [project] and install its pinned version (see [LspToolVersions]) into the
+ * interpreter of this project exactly once per test class (guarded by [toolInstalled]). Tool-specific settings are
  * applied via [configure], which the caller owns because the configuration services share no common
  * writable surface.
  */
-internal suspend fun Module.enableLspToolAndInstall(
+internal suspend fun PyProject.enableLspToolAndInstall(
   project: Project,
   pyTool: PyTool,
   toolInstalled: AtomicBoolean,

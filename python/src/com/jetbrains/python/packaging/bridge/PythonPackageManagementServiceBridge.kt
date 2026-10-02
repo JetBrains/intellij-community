@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.util.CatchingConsumer
 import com.intellij.webcore.packaging.InstalledPackage
 import com.intellij.webcore.packaging.PackageVersionComparator
@@ -36,13 +37,13 @@ internal class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) 
 
   private val scope = project.service<PyPackagingToolWindowService>().serviceScope
 
-  private val manager: PythonPackageManager
-    get() = PythonPackageManager.forSdk(project, sdk)
+  // The old API is sync, but every method runs its work in a coroutine or a blocking runner, so it detects the
+  // interpreter there.
+  private suspend fun manager(): PythonPackageManager = PythonPackageManager.forPythonInterpreter(project, sdk.pythonInterpreterAsync())
 
-  private val repositoryManager
-    get() = manager.repositoryManager
-  private val managerUI: PythonPackageManagerUI
-    get() = PythonPackageManagerUI.forSdk(project, sdk)
+  private suspend fun repositoryManager() = manager().repositoryManager
+
+  private suspend fun managerUI(): PythonPackageManagerUI = PythonPackageManagerUI.forPackageManager(manager())
 
   var useConda: Boolean = true
   val isConda: Boolean
@@ -50,7 +51,7 @@ internal class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) 
 
   override fun getInstalledPackagesList(): List<InstalledPackage> {
     val packages = runWithModalBlockingOrInBackground(project, PyBundle.message("python.packaging.list.packages")) {
-      manager.listInstalledPackages()
+      manager().listInstalledPackages()
     }
     return packages.map { InstalledPackage(it.name, it.version) }
   }
@@ -58,7 +59,7 @@ internal class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) 
 
   override fun getAllPackages(): List<RepoPackage> {
     runBlockingMaybeCancellable {
-      repositoryManager
+      repositoryManager()
         .initCaches()
         .onFailure {
           it.notify(project)
@@ -69,14 +70,14 @@ internal class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) 
 
   override fun getAllPackagesCached(): List<RepoPackage> {
     val packages = runWithModalBlockingOrInBackground(project, PyBundle.message("python.packaging.list.packages")) {
-      manager.listInstalledPackages()
+      manager().listInstalledPackages()
     }
     return packages.map { RepoPackage(it.name, null, null) }
   }
 
   override fun reloadAllPackages(): List<RepoPackage> {
     return runBlockingCancellable {
-      repositoryManager
+      repositoryManager()
         .refreshCaches()
         .onFailure {
           it.notify(project)
@@ -95,21 +96,21 @@ internal class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) 
   ) {
     scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
       val versionSpec = version?.let { pyRequirementVersionSpec(PyRequirementRelation.EQ, version) }
-      managerUI.installPackageBackground(repoPackage.name, versionSpec, listOfNotNull(extraOptions))
+      managerUI().installPackageBackground(repoPackage.name, versionSpec, listOfNotNull(extraOptions))
     }
   }
 
 
   override fun uninstallPackages(installedPackages: List<InstalledPackage>, listener: Listener) {
     scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
-      managerUI.uninstallPackagesBackground(installedPackages.map<InstalledPackage, @NlsSafe String> { it.name })
+      managerUI().uninstallPackagesBackground(installedPackages.map<InstalledPackage, @NlsSafe String> { it.name })
     }
   }
 
 
   override fun fetchPackageVersions(packageName: String, consumer: CatchingConsumer<in List<String>, in Exception>) {
     scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
-      when (val result = repositoryManager.getPackageDetails(packageName, null)) {
+      when (val result = repositoryManager().getPackageDetails(packageName, null)) {
         is com.jetbrains.python.Result.Success -> consumer.consume(result.result.availableVersions.sortedWith(PackageVersionComparator.VERSION_COMPARATOR.reversed()))
         is com.jetbrains.python.Result.Failure -> consumer.consume(Exception(result.error.message))
       }
@@ -118,7 +119,7 @@ internal class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) 
 
   override fun fetchPackageDetails(packageName: String, consumer: CatchingConsumer<in String, in Exception>) {
     scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
-      when (val result = repositoryManager.getPackageDetails(packageName, null)) {
+      when (val result = repositoryManager().getPackageDetails(packageName, null)) {
         is com.jetbrains.python.Result.Success -> consumer.consume(buildDescription(result.result))
         is com.jetbrains.python.Result.Failure -> consumer.consume(Exception(result.error.message))
       }
@@ -131,7 +132,7 @@ internal class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) 
 
   override fun fetchLatestVersion(pkg: InstalledPackage, consumer: CatchingConsumer<in String, in Exception>) {
     scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
-      val latestVersion = repositoryManager.getLatestVersion(pkg.name, null)?.presentableText
+      val latestVersion = repositoryManager().getLatestVersion(pkg.name, null)?.presentableText
       consumer.consume(latestVersion)
     }
   }

@@ -368,7 +368,7 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     return new FacetConfigurationQuickFix() {
       @Override
       public void run(JComponent place) {
-        PythonPackageManagerUI.forSdk(myProject, sdk).installPackagesWithModalProgressBlocking(name);
+        PythonPackageManagerUI.installPackagesWithModalProgressBlocking(myProject, sdk, name);
         facetErrorPanel.getValidatorsManager().validate();
       }
     };

@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.utils
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.packaging.PyRequirement
@@ -16,7 +17,7 @@ internal object PyPackagesManagerUIBridge {
   @JvmStatic
   fun runInstallInBackground(project: Project, sdk: Sdk, requirements: List<PyRequirement>?, extraArgs: List<String>, listener: PyPackageManagerUI.Listener?) {
     PyPackageCoroutine.launch(project) {
-      val manager = PythonPackageManagerUI.forSdk(project, sdk)
+      val manager = PythonPackageManagerUI.forPythonInterpreter(project, sdk.pythonInterpreterAsync())
       listener?.started()
       manager.installPyRequirementsBackground(requirements?.toList() ?: emptyList(), extraArgs)
       listener?.finished(emptyList())
@@ -26,7 +27,7 @@ internal object PyPackagesManagerUIBridge {
   @JvmStatic
   fun runUninstallInBackground(project: Project, sdk: Sdk, packages: List<PyPackage>, listener: PyPackageManagerUI.Listener?) {
     PyPackageCoroutine.getScope(project).launch {
-      val manager = PythonPackageManagerUI.forSdk(project, sdk)
+      val manager = PythonPackageManagerUI.forPythonInterpreter(project, sdk.pythonInterpreterAsync())
       listener?.started()
       manager.uninstallPackagesBackground(packages.map { it.name })
       listener?.finished(emptyList())

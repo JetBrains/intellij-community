@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.QualifiedName
+import com.intellij.python.pyproject.model.evolution.findPythonInterpreterIfReady
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.psi.resolve.PackageAvailabilityService
 import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
@@ -100,7 +101,9 @@ internal class PackageAvailabilityServiceImpl(val cs: CoroutineScope) : PackageA
   }
 
   private fun isPackageInstalledInPackageManager(project: Project, sdk: Sdk, packageName: String): Boolean {
-    val packageManager = PythonPackageManager.forSdk(project, sdk)
+    // Sync, so it reads the snapshot. An SDK outside it is broken or not in use, and the PSI fallback answers for it.
+    val interpreter = project.findPythonInterpreterIfReady(sdk) ?: return false
+    val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
     val normalizedName = PyPackageName.from(packageName)
     return packageManager.listInstalledPackagesSnapshot()
       .any { it.normalizedName == normalizedName }

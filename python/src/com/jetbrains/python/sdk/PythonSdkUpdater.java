@@ -579,7 +579,6 @@ public final class PythonSdkUpdater {
       if (!(mySdk.getSdkAdditionalData() instanceof PythonSdkAdditionalData)) {
         return;
       }
-      PythonPackageManager manager = PythonPackageManager.Companion.forSdk(myProject, mySdk);
       // Cancel the indicator when the SDK is disposed to terminate any running processes (e.g., skeleton generation).
       // This explicit cancellation should become unnecessary on migrating PythonSdkUpdater to coroutines and withBackgroundProgress.
       Disposable indicatorDisposable = getIndicatorDisposable(indicator);
@@ -597,6 +596,7 @@ public final class PythonSdkUpdater {
       }
       try {
         PythonInterpreter pythonInterpreter = pythonInterpreter(mySdk, true);
+        PythonPackageManager manager = PythonPackageManager.Companion.forPythonInterpreter(myProject, pythonInterpreter);
         PyTargetsIntrospectionFacade targetsFacade = PyTargetsIntrospectionFacade.create(mySdk, myProject);
         String version = targetsFacade.getInterpreterVersion();
         commitSdkVersionIfChanged(mySdk, version);
