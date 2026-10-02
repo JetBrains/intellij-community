@@ -427,12 +427,26 @@ internal class PyLspServedModulesTest {
       assertTrue(pyLspFolderSetIsStale(listOf(descriptor), listOf(other.get()), oneVersion))
     }
 
+    /**
+     * The module gets this server from [pyLspModulesToServeWith], so a stop would start the same server
+     * again, and the group check on its start would stop it again.
+     */
+    @Test
+    @TestFor(issues = ["PY-92008", "PY-86537"])
+    fun `a server of its own for a module the project does not serve is neither stale nor serving nothing`() {
+      val served = listOf(main.get(), other.get())
+      val descriptor = tyDescriptorServing(unserved.get())
+
+      assertFalse(pyLspFolderSetIsStale(listOf(descriptor), served, oneVersion))
+      assertFalse(pyLspServesNothing(descriptor, served))
+    }
+
     /** No folder set suits such a server, so it is not stale. The caller stops it instead. */
     @Test
     @TestFor(issues = ["PY-92008"])
-    fun `a server for a module the project does not serve is not stale, it serves nothing`() {
-      val served = listOf(main.get(), other.get())
-      val descriptor = tyDescriptorServing(unserved.get())
+    fun `a shared server whose modules all left the served set serves nothing`() {
+      val served = listOf(main.get())
+      val descriptor = tyDescriptorServing(other.get(), unserved.get())
 
       assertFalse(pyLspFolderSetIsStale(listOf(descriptor), served, oneVersion))
       assertTrue(pyLspServesNothing(descriptor, served))

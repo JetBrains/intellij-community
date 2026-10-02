@@ -495,10 +495,17 @@ fun pyLspFolderSetIsStale(
  * Such a server answers for nobody. It holds folders the project dropped, and its descriptor keeps a
  * strong reference to every module it was built with, so a disposed module stays reachable while the
  * server runs. The caller stops it.
+ *
+ * A server of one live module that [served] leaves out is not such a server. [pyLspModulesToServeWith]
+ * gives that module a server of its own, for example for a module without a local interpreter. A stop
+ * would start the same server again, and the group check on its start would stop it again.
  */
 @ApiStatus.Internal
-fun pyLspServesNothing(descriptor: PyLspToolDescriptor, served: List<Module>): Boolean =
-  descriptor.servedModules.none { it in served }
+fun pyLspServesNothing(descriptor: PyLspToolDescriptor, served: List<Module>): Boolean {
+  if (descriptor.servedModules.any { it in served }) return false
+  val alone = descriptor.servedModules.singleOrNull() ?: return true
+  return alone.isDisposed
+}
 
 /** The modules the server behind [this] answers for. Empty when the client is not a Python LSP tool. */
 @get:ApiStatus.Internal
