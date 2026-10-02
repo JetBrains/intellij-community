@@ -21,7 +21,6 @@
     <module name="intellij.platform.ui.jcef"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.python.community.execService"/>
-    <module name="intellij.python.pyproject"/>
   </dependencies>
   <!-- endregion -->
 

@@ -7,7 +7,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.pyproject.model.evolution.findPythonInterpreterIfReady
+import com.intellij.python.sdk.backend.findPythonInterpreterIfReady
 import com.intellij.python.sdk.backend.pythonInterpreter
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure

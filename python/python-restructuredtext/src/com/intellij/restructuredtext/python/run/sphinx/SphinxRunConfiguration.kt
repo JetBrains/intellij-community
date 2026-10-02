@@ -12,7 +12,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
-import com.intellij.python.pyproject.model.evolution.findPythonInterpreterIfReady
+import com.intellij.python.sdk.backend.findPythonInterpreterIfReady
 import com.intellij.restructuredtext.python.PythonRestBundle.message
 import com.intellij.restructuredtext.python.run.RestConfigurationEditor
 import com.intellij.restructuredtext.python.run.RestRunConfiguration
@@ -28,7 +28,7 @@ class SphinxRunConfiguration(
 ) : RestRunConfiguration(project, factory) {
   override fun createConfigurationEditor(): SettingsEditor<out RunConfiguration?> {
     val model = SphinxTasksModel()
-    // The interpreter from the snapshot. An SDK outside it is broken or not accessible.
+    // Sync, so it does not wait. An SDK that this project cannot use offers no pdf task.
     val interpreter = sdk?.let { project.findPythonInterpreterIfReady(it) }
     if (!model.contains("pdf") && interpreter != null) {
       val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
