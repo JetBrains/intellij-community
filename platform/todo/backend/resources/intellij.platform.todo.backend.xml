@@ -21,6 +21,11 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="todo.toolwindow.split.host"
+                 defaultValue="true"
+                 description="Enables the `TODO toolwindow` implementation, optimized for Remote Development."
+                 restartRequired="true"/>
+
     <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex"/>
     <projectService serviceInterface="com.intellij.psi.impl.cache.TodoCacheManager"
                     serviceImplementation="com.intellij.psi.impl.cache.impl.IndexTodoCacheManagerImpl"

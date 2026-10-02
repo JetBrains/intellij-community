@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 fun shouldUseSplitTodo(): Boolean {
-  val shouldUseSplitTodo = Registry.`is`("todo.toolwindow.split", true)
+  val shouldUseSplitTodo = Registry.`is`("todo.toolwindow.split", false)
   fileLogger().debug("Using TODO  ${if (shouldUseSplitTodo) "split" else "fallback"} implementation")
   return shouldUseSplitTodo
 }
