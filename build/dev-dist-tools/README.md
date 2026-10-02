@@ -60,7 +60,8 @@ A change to a tool must pass both gates. Run them from the ultimate root, then t
 cd community && ./bazel.cmd test //build/dev-dist-tools/...
 ```
 
-- `jars` compares every packed content-module jar with the `JarPackager` reference, byte for byte.
+- `jars` pairs each packed content-module jar of the platform payload with its `JarPackager` reference jar and compares the
+  bytes. It fails on a differing jar, on a jar without a partner on either side, and on an empty compare.
 - The tests include the frozen jar digests in `crates/jarpack/src/tests/golden.rs`, the Kotlin goldens of
   `crates/pluginpack/testdata`, the plan file corpus, the crate closure test of each action tool, and the
   `<crate>-clippy` test of every crate.
