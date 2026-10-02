@@ -132,8 +132,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
                                              0, false));
       panel2.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(BorderFactory.createEtchedBorder(),
-                                                                                this.$$$getMessageFromBundle$$$("messages/JavaBundle",
-                                                                                                                "title.naming"),
+                                                                                JavaBundle.message("title.naming"),
                                                                                 TitledBorder.DEFAULT_JUSTIFICATION,
                                                                                 TitledBorder.DEFAULT_POSITION, null, null));
       myCbPreferLongerNames = new JCheckBox();
@@ -249,8 +248,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
                                              0, false));
       panel4.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(BorderFactory.createEtchedBorder(),
-                                                                                this.$$$getMessageFromBundle$$$("messages/JavaBundle",
-                                                                                                                "title.naming.final.modifier"),
+                                                                                JavaBundle.message("title.naming.final.modifier"),
                                                                                 TitledBorder.DEFAULT_JUSTIFICATION,
                                                                                 TitledBorder.DEFAULT_POSITION, null, null));
       myCbGenerateFinalLocals = new JCheckBox();
@@ -292,9 +290,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
                                                       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
                                                       null, null, 0, false));
       myOverridePanel.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(BorderFactory.createEtchedBorder(),
-                                                                                         this.$$$getMessageFromBundle$$$(
-                                                                                           "messages/JavaBundle",
-                                                                                           "code.style.generation.override.method.signature"),
+                                                                                         JavaBundle.message("code.style.generation.override.method.signature"),
                                                                                          TitledBorder.DEFAULT_JUSTIFICATION,
                                                                                          TitledBorder.DEFAULT_POSITION, null, null));
       myInsertOverrideAnnotationCheckBox = new JCheckBox();
@@ -338,8 +334,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
                                              0, false));
       panel5.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(BorderFactory.createEtchedBorder(),
-                                                                                this.$$$getMessageFromBundle$$$("messages/JavaBundle",
-                                                                                                                "title.naming.functional.expressions"),
+                                                                                JavaBundle.message("title.naming.functional.expressions"),
                                                                                 TitledBorder.DEFAULT_JUSTIFICATION,
                                                                                 TitledBorder.DEFAULT_POSITION, null, null));
       final Spacer spacer4 = new Spacer();
@@ -367,7 +362,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
       this.$$$loadButtonText$$$(myGenerateTypeAnnotationBeforeType,
                                 this.$$$getMessageFromBundle$$$("messages/JavaBundle", "generate.type.use.before.type"));
       myGenerateTypeAnnotationBeforeType.setToolTipText(
-        this.$$$getMessageFromBundle$$$("messages/JavaBundle", "generate.type.use.before.type.description"));
+        JavaBundle.message("generate.type.use.before.type.description"));
       panel1.add(myGenerateTypeAnnotationBeforeType, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
                                                                          GridConstraints.SIZEPOLICY_CAN_SHRINK |
                                                                          GridConstraints.SIZEPOLICY_CAN_GROW,

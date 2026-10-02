@@ -219,6 +219,7 @@ public class ImplicitSubclassInspection : LocalInspectionTool() {
     private val text = when (uDeclaration) {
       is UClass ->
         if (actionsToPerform.size <= MAX_MESSAGES_TO_COMBINE)
+          @Suppress("HardCodedStringLiteral")
           actionsToPerform.filter { it.isAvailable(uDeclaration.project, null, uDeclaration.containingFile) }
             .joinToString { it.text }
         else JavaAnalysisBundle.message("inspection.implicit.subclass.make.class.extendable",
@@ -227,6 +228,7 @@ public class ImplicitSubclassInspection : LocalInspectionTool() {
                                         siblingsDescription())
       else ->
         if (actionsToPerform.size <= MAX_MESSAGES_TO_COMBINE)
+          @Suppress("HardCodedStringLiteral")
           actionsToPerform.filter { it.isAvailable(uDeclaration.project, null, uDeclaration.containingFile) }
             .joinToString { it.text }
         else

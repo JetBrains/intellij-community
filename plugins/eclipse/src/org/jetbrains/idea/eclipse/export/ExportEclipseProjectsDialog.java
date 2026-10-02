@@ -64,8 +64,7 @@ public class ExportEclipseProjectsDialog extends DialogWrapper {
                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
                                                   null, 0, false));
       panel1.setBorder(IdeBorderFactory.PlainSmallWithoutIndent.createTitledBorder(null,
-                                                                                   this.$$$getMessageFromBundle$$$("messages/EclipseBundle",
-                                                                                                                   "border.title.modules.to.export"),
+                                                                                   EclipseBundle.message("border.title.modules.to.export"),
                                                                                    TitledBorder.DEFAULT_JUSTIFICATION,
                                                                                    TitledBorder.DEFAULT_POSITION,
                                                                                    this.$$$getFont$$$(null, -1, -1, panel1.getFont()),

@@ -62,11 +62,9 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 
 public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQuickFixDialog {
@@ -359,9 +357,7 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
                                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                         new Dimension(100, -1), null, null, 0, false));
         myPreviewPanel.setBorder(IdeBorderFactory.PlainSmallWithoutIndent.createTitledBorder(BorderFactory.createEtchedBorder(),
-                                                                                             this.$$$getMessageFromBundle$$$(
-                                                                                               "messages/JavaI18nBundle",
-                                                                                               "i18n.quickfix.preview.panel.title"),
+                                                                                             JavaI18nBundle.message("i18n.quickfix.preview.panel.title"),
                                                                                              TitledBorder.DEFAULT_JUSTIFICATION,
                                                                                              TitledBorder.DEFAULT_POSITION, null, null));
         myPreviewLabel = new MultiLineLabel();
@@ -384,9 +380,7 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
                                                              GridConstraints.SIZEPOLICY_FIXED, new Dimension(100, -1), null, null, 0,
                                                              false));
         myJavaCodeInfoPanel.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(BorderFactory.createEtchedBorder(),
-                                                                                               this.$$$getMessageFromBundle$$$(
-                                                                                                 "messages/JavaI18nBundle",
-                                                                                                 "i18n.quickfix.code.panel.title"),
+                                                                                               JavaI18nBundle.message("i18n.quickfix.code.panel.title"),
                                                                                                TitledBorder.DEFAULT_JUSTIFICATION,
                                                                                                TitledBorder.DEFAULT_POSITION, null, null));
         myResourceBundleSuggester = new JPanel();
@@ -396,25 +390,6 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
                                                     null, 0, false));
       }
-    }
-
-    private static Method $$$cachedGetBundleMethod$$$ = null;
-
-    /** @noinspection ALL */
-    private String $$$getMessageFromBundle$$$(String path, String key) {
-      ResourceBundle bundle;
-      try {
-        Class<?> thisClass = this.getClass();
-        if ($$$cachedGetBundleMethod$$$ == null) {
-          Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
-          $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
-        }
-        bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
-      }
-      catch (Exception e) {
-        bundle = ResourceBundle.getBundle(path);
-      }
-      return bundle.getString(key);
     }
 
     /** @noinspection ALL */

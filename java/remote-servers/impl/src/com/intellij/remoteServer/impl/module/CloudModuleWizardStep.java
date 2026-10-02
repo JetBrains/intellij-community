@@ -19,6 +19,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.util.CloudAccountSelectionEditor;
@@ -32,11 +33,9 @@ import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Insets;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ResourceBundle;
 import java.util.Set;
 
 
@@ -75,12 +74,12 @@ public class CloudModuleWizardStep extends ModuleWizardStep {
       myMainPanel.add(spacer1, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
                                                    GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
       final TitledSeparator titledSeparator1 = new TitledSeparator();
-      titledSeparator1.setText(this.$$$getMessageFromBundle$$$("messages/CloudBundle", "CloudModuleWizardStep.title.account"));
+      titledSeparator1.setText(CloudBundle.message("CloudModuleWizardStep.title.account"));
       myMainPanel.add(titledSeparator1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       final TitledSeparator titledSeparator2 = new TitledSeparator();
-      titledSeparator2.setText(this.$$$getMessageFromBundle$$$("messages/CloudBundle", "CloudModuleWizardStep.title.application"));
+      titledSeparator2.setText(CloudBundle.message("CloudModuleWizardStep.title.application"));
       myMainPanel.add(titledSeparator2, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
@@ -105,25 +104,6 @@ public class CloudModuleWizardStep extends ModuleWizardStep {
 
     myAccountSelectionPanel.setAccountSelectionListener(() -> onAccountSelectionChanged());
     onAccountSelectionChanged();
-  }
-
-  private static Method $$$cachedGetBundleMethod$$$ = null;
-
-  /** @noinspection ALL */
-  private String $$$getMessageFromBundle$$$(String path, String key) {
-    ResourceBundle bundle;
-    try {
-      Class<?> thisClass = this.getClass();
-      if ($$$cachedGetBundleMethod$$$ == null) {
-        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
-        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
-      }
-      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
-    }
-    catch (Exception e) {
-      bundle = ResourceBundle.getBundle(path);
-    }
-    return bundle.getString(key);
   }
 
   /** @noinspection ALL */

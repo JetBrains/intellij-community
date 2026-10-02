@@ -191,7 +191,7 @@ class MethodExtractor {
       try {
         readAction { findAllOptionsToExtract(elements) }
       } catch (exception: ExtractException) {
-        InplaceExtractUtils.showExtractErrorHint(editor, exception.message.orEmpty(), exception.problems)
+        InplaceExtractUtils.showExtractErrorHint(editor, exception.message, exception.problems)
         emptyList()
       }
     }
@@ -229,6 +229,7 @@ class MethodExtractor {
     }
   }
 
+  @Suppress("HardCodedStringLiteral")
   fun doTestExtract(
     doRefactor: Boolean,
     editor: Editor,

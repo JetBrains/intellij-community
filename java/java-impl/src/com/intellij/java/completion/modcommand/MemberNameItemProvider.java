@@ -12,6 +12,7 @@ import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -427,9 +428,10 @@ final class MemberNameItemProvider extends JavaModCompletionItemProvider {
     if (ourClassParent == null) return;
 
     if (ourClassParent.isAnnotationType() && matcher.prefixMatches(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)) {
-      set.add(new CommonCompletionItem(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
+      @NlsSafe String methodName = PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
+      set.add(new CommonCompletionItem(methodName)
                 .withPresentation(new ModCompletionItemPresentation(
-                  MarkupText.plainText(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME).concat("()", MarkupText.Kind.GRAYED))
+                  MarkupText.plainText(methodName).concat("()", MarkupText.Kind.GRAYED))
                                     .withMainIcon(() -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Method)))
                 .withAdditionalUpdater((completionStart, updater) -> {
                 })); // TODO: parentheses

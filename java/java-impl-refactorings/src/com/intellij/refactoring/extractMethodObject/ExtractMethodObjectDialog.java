@@ -233,7 +233,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
                                                                        GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
       final TitledSeparator titledSeparator1 = new TitledSeparator();
       titledSeparator1.setText(
-        this.$$$getMessageFromBundle$$$("messages/JavaRefactoringBundle", "extract.method.object.signature.preview"));
+        JavaRefactoringBundle.message("extract.method.object.signature.preview"));
       myWholePanel.add(titledSeparator1, new GridConstraints(7, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
                                                              GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
@@ -243,7 +243,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       final TitledSeparator titledSeparator2 = new TitledSeparator();
-      titledSeparator2.setText(this.$$$getMessageFromBundle$$$("messages/JavaRefactoringBundle", "extract.method.object.parameters"));
+      titledSeparator2.setText(JavaRefactoringBundle.message("extract.method.object.parameters"));
       myWholePanel.add(titledSeparator2, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
                                                              GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));

@@ -415,7 +415,7 @@ abstract class CommonLogicForOnboardingTours(id: String, @Nls lessonName: String
 
       override val addRowsForUserAgreement: Panel.() -> Unit = {
         row(JavaLessonsBundle.message("java.onboarding.feedback.system.found.jdks")) {
-          val versions: @NlsSafe String = jdkVersions?.joinToString("\n") ?: "none"
+          @NlsSafe val versions = jdkVersions?.joinToString("\n") ?: "none"
           cell(MultiLineLabel(versions))
         }
         row(JavaLessonsBundle.message("java.onboarding.feedback.system.jdk.at.start")) {

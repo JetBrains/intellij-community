@@ -69,9 +69,7 @@ public class EclipseCodeStyleImportStep extends ProjectImportWizardStep {
                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
                                                        null, null, 0, false));
       myTitlePanel.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(BorderFactory.createEmptyBorder(),
-                                                                                      this.$$$getMessageFromBundle$$$(
-                                                                                        "messages/EclipseBundle",
-                                                                                        "border.title.choose.project.code.style"),
+                                                                                      EclipseBundle.message("border.title.choose.project.code.style"),
                                                                                       TitledBorder.DEFAULT_JUSTIFICATION,
                                                                                       TitledBorder.DEFAULT_POSITION, null, null));
       myUseDefaultCodeStyleRB = new JBRadioButton();

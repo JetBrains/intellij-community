@@ -160,13 +160,13 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
                                             0, false));
       methodField = new LabeledComponentNoThrow();
       methodField.setLabelLocation("West");
-      methodField.setText(this.$$$getMessageFromBundle$$$("messages/TestngBundle", "testng.configuration.method.label"));
+      methodField.setText(TestngBundle.message("testng.configuration.method.label"));
       panel1.add(methodField, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
                                                   GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       suiteField = new LabeledComponentNoThrow();
       suiteField.setLabelLocation("West");
-      suiteField.setText(this.$$$getMessageFromBundle$$$("messages/TestngBundle", "testng.configuration.suite.label"));
+      suiteField.setText(TestngBundle.message("testng.configuration.suite.label"));
       panel1.add(suiteField, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                  GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
@@ -178,7 +178,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
                                                    GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       packageField = new LabeledComponentNoThrow();
       packageField.setLabelLocation("West");
-      packageField.setText(this.$$$getMessageFromBundle$$$("messages/TestngBundle", "testng.configuration.package.label"));
+      packageField.setText(TestngBundle.message("testng.configuration.package.label"));
       CellConstraints cc = new CellConstraints();
       packagePanel.add(packageField, cc.xyw(1, 1, 5));
       packagesInProject = new JRadioButton();
@@ -195,26 +195,26 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       packagePanel.add(packagesAcrossModules, cc.xy(5, 3));
       classField = new LabeledComponentNoThrow();
       classField.setLabelLocation("West");
-      classField.setText(this.$$$getMessageFromBundle$$$("messages/TestngBundle", "testng.configuration.class.label"));
+      classField.setText(TestngBundle.message("testng.configuration.class.label"));
       panel1.add(classField, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
                                                  GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       outputDirectory = new LabeledComponentNoThrow();
       outputDirectory.setLabelLocation("West");
-      outputDirectory.setText(this.$$$getMessageFromBundle$$$("messages/TestngBundle", "testng.configuration.output.directory"));
+      outputDirectory.setText(TestngBundle.message("testng.configuration.output.directory"));
       panel1.add(outputDirectory, new GridConstraints(6, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                       GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       groupField = new LabeledComponentNoThrow();
       groupField.setLabelLocation("West");
-      groupField.setText(this.$$$getMessageFromBundle$$$("messages/TestngBundle", "testng.configuration.group.label"));
+      groupField.setText(TestngBundle.message("testng.configuration.group.label"));
       panel1.add(groupField, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
                                                  GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       myPattern = new LabeledComponentNoThrow();
       myPattern.setComponentClass("javax.swing.JPanel");
       myPattern.setLabelLocation("West");
-      myPattern.setText(this.$$$getMessageFromBundle$$$("messages/TestngBundle", "testng.configuration.pattern.label"));
+      myPattern.setText(TestngBundle.message("testng.configuration.pattern.label"));
       myPattern.setVisible(true);
       panel1.add(myPattern, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
@@ -234,10 +234,10 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
                                                    GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(200, 200), null, 0, false));
       final JPanel panel2 = new JPanel();
       panel2.setLayout(new GridLayoutManager(7, 1, new Insets(0, 0, 0, 0), -1, -1));
-      jBTabbedPane1.addTab(this.$$$getMessageFromBundle$$$("messages/TestngBundle", "testng.configuration.jdk.settings.pane"), panel2);
+      jBTabbedPane1.addTab(TestngBundle.message("testng.configuration.jdk.settings.pane"), panel2);
       myShortenCommandLineCombo.setLabelLocation("West");
       myShortenCommandLineCombo.setText(
-        this.$$$getMessageFromBundle$$$("messages/ExecutionBundle", "application.configuration.shorten.command.line.label"));
+        ExecutionBundle.message("application.configuration.shorten.command.line.label"));
       panel2.add(myShortenCommandLineCombo, new GridConstraints(5, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
@@ -263,7 +263,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       moduleClasspath.setComponentClass("com.intellij.application.options.ModuleDescriptionsComboBox");
       moduleClasspath.setLabelLocation("West");
       moduleClasspath.setText(
-        this.$$$getMessageFromBundle$$$("messages/ExecutionBundle", "application.configuration.use.classpath.and.jdk.of.module.label"));
+        ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module.label"));
       panel2.add(moduleClasspath, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
@@ -278,17 +278,17 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
                                                       null, null, 0, false));
       final JPanel panel3 = new JPanel();
       panel3.setLayout(new BorderLayout(0, 0));
-      jBTabbedPane1.addTab(this.$$$getMessageFromBundle$$$("messages/TestngBundle", "testng.configuration.parameters.pane"), panel3);
+      jBTabbedPane1.addTab(TestngBundle.message("testng.configuration.parameters.pane"), panel3);
       propertiesFile = new LabeledComponentNoThrow();
       propertiesFile.setLabelLocation("West");
-      propertiesFile.setText(this.$$$getMessageFromBundle$$$("messages/TestngBundle", "testng.configuration.properties.file"));
+      propertiesFile.setText(TestngBundle.message("testng.configuration.properties.file"));
       panel3.add(propertiesFile, BorderLayout.NORTH);
       myPropertiesPanel = new JPanel();
       myPropertiesPanel.setLayout(new BorderLayout(0, 0));
       panel3.add(myPropertiesPanel, BorderLayout.CENTER);
       final JPanel panel4 = new JPanel();
       panel4.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
-      jBTabbedPane1.addTab(this.$$$getMessageFromBundle$$$("messages/TestngBundle", "testng.configuration.listeners.pane"), panel4);
+      jBTabbedPane1.addTab(TestngBundle.message("testng.configuration.listeners.pane"), panel4);
       myListenersPanel = new JPanel();
       myListenersPanel.setLayout(new BorderLayout(0, 0));
       panel4.add(myListenersPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiClass;
@@ -76,7 +77,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
   @Override
   protected boolean invokeImpl(final Project project, final PsiLocalVariable localVariable, final Editor editor) {
     JavaIntroduceFieldModCommandService.ToFieldContext context = FieldExtractor.getContext(myHelper, localVariable, false);
-    if (context instanceof JavaIntroduceFieldModCommandService.ToFieldContext.Error(String errorMessage)) {
+    if (context instanceof JavaIntroduceFieldModCommandService.ToFieldContext.Error(@NlsContexts.DialogMessage String errorMessage)) {
       CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, getRefactoringNameText(), getHelpID());
       return false;
     }

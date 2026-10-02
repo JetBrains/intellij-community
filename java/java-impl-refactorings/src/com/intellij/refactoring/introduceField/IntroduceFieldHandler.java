@@ -149,7 +149,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
   @Override
   protected boolean invokeImpl(final Project project, PsiLocalVariable localVariable, final Editor editor) {
     JavaIntroduceFieldModCommandService.ToFieldContext context = FieldExtractor.getContext(myHelper, localVariable, false);
-    if (context instanceof JavaIntroduceFieldModCommandService.ToFieldContext.Error(String errorMessage)) {
+    if (context instanceof JavaIntroduceFieldModCommandService.ToFieldContext.Error(@NlsContexts.DialogMessage String errorMessage)) {
       CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, IntroduceFieldHelper.getRefactoringNameText(), getHelpID());
       return false;
     }

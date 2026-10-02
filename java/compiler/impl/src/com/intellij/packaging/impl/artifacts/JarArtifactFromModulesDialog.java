@@ -101,8 +101,7 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
                                                   null, 0, false));
-      panel1.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(null, this.$$$getMessageFromBundle$$$(
-                                                                                  "messages/JavaCompilerBundle", "jar.artifacts.dialog.border.title.jar.files.from.libraries"), TitledBorder.DEFAULT_JUSTIFICATION,
+      panel1.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(null, JavaCompilerBundle.message("jar.artifacts.dialog.border.title.jar.files.from.libraries"), TitledBorder.DEFAULT_JUSTIFICATION,
                                                                                 TitledBorder.DEFAULT_POSITION, null, null));
       myExtractJarsRadioButton = new JRadioButton();
       myExtractJarsRadioButton.setSelected(true);
