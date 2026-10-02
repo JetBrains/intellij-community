@@ -229,7 +229,6 @@ sealed class BaseLayout {
       moduleName = moduleName,
       resourcePath = resourcePath,
       relativeOutputPath = relativeOutputPath,
-      packToZip = false
     )
   }
 }

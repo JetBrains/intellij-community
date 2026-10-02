@@ -919,16 +919,11 @@ private fun layoutResourcePaths(layout: BaseLayout, targetDirectory: Path, outpu
       continue
     }
     val target = targetDirectory.resolve(resourceData.relativeOutputPath).normalize()
-    if (resourceData.packToZip) {
-      writeResourceArchive(source, target)
+    if (Files.isRegularFile(source)) {
+      copyFileToDir(source, target)
     }
     else {
-      if (Files.isRegularFile(source)) {
-        copyFileToDir(source, target)
-      }
-      else {
-        copyDir(source, target)
-      }
+      copyDir(source, target)
     }
   }
 
@@ -936,8 +931,6 @@ private fun layoutResourcePaths(layout: BaseLayout, targetDirectory: Path, outpu
     "Resource paths of layout '$layout' do not exist:\n  " + missing.joinToString(separator = "\n  ")
   }
 }
-
-internal fun writeResourceArchive(source: Path, target: Path): Path = writeResourceArchiveImpl(source, target)
 
 private fun layoutAdditionalResources(layout: BaseLayout, targetDirectory: Path, context: BuildContext) {
   layoutResourcePaths(layout = layout, targetDirectory = targetDirectory, outputProvider = context.outputProvider)

@@ -4,7 +4,6 @@ package com.intellij.platform.buildScripts.devDistGenerator
 
 import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicPreparationFacts
 import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicPreparedEffect
-import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicPreparedSourceManifest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
@@ -14,9 +13,6 @@ import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetTransform
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginReference
-import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
-import org.jetbrains.intellij.build.devDist.JarSourceRecipe
-import org.jetbrains.intellij.build.devDist.JarWriterRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
 import org.jetbrains.intellij.build.impl.LibraryResourceGenerator
 import org.jetbrains.intellij.build.impl.ModuleResourceTree
@@ -51,7 +47,6 @@ fun generateDevPluginAssetBindings(
   val layout = request.layout
   val effects = LinkedHashMap<String, PluginSymbolicPreparedEffect>()
   val declaredAssets = LinkedHashMap<String, List<PluginPackingAsset>>()
-  val preparedSourceManifests = LinkedHashMap<String, PluginSymbolicPreparedSourceManifest>()
   val fileFacts = LinkedHashMap<String, DevDistPluginFileFacts>()
   val additionalInputs = ArrayList<DevDistPluginRawInput>()
   val operations = ArrayList<DevPluginPreparationOperation>()
@@ -92,7 +87,6 @@ fun generateDevPluginAssetBindings(
   fun result(): GeneratedDevPluginBindings {
     val directFacts = PluginSymbolicPreparationFacts(
       effects = effects.toMap(),
-      preparedSourceManifests = preparedSourceManifests.toMap(),
       declaredAssets = declaredAssets.toMap(),
     )
     val directCatalogueFacts = DevDistPluginCatalogueFacts(additionalInputs = additionalInputs.toList(), fileFacts = fileFacts.toMap())
@@ -131,57 +125,23 @@ fun generateDevPluginAssetBindings(
       sourceTreePrefix = source.sourceTreePrefix,
     ))
     val key = "resource:$resourceIndex"
-    if (!resource.packToZip) {
-      if (source.isDirectory) {
-        directResourceTrees.add(DirectResourceTree(key, resource.relativeOutputPath, inputId))
-        continue
-      }
-      declaredAssets.put(key, listOf(PluginPackingAsset(
-        destination = joinResourceDestination(resource.relativeOutputPath, source.fileName),
-        inputs = listOf(inputId),
-        mode = 493,
-        kind = "file",
-        classPath = false,
-      )))
+    if (source.isDirectory) {
+      directResourceTrees.add(DirectResourceTree(key, resource.relativeOutputPath, inputId))
       continue
     }
-    require(source.isDirectory) {
-      "Plugin '${layout.mainModule}' has an unsupported archived file resource: ${resource.moduleName}:${resource.resourcePath}"
-    }
-    // The packer copies the directory as the entries of one jar. The jar has no manifest, as the archived resource had none.
-    val id = "layout-assets:resource:$resourceIndex"
-    val output = "$id:output"
-    val operation = DevPluginPreparationOperation(
-      id = id,
-      kind = "layout-assets",
-      inputs = listOf(DevPluginReference(inputId)),
-      output = output,
-      manifest = "keep",
-      layoutAssets = DevPluginLayoutAssetPreparation(
-        format = "entries",
-        assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0))),
-      ),
-    )
-    effects.put(key, PluginSymbolicPreparedEffect(
-      operation = operation,
-      assets = listOf(PluginPackingAsset(
-        destination = resource.relativeOutputPath,
-        inputs = listOf(output),
-        recipe = CanonicalJarRecipe(
-          sources = listOf(JarSourceRecipe(output, "prepared", "prepared")),
-          writer = JarWriterRecipe(manifest = "drop"),
-        ),
-        classPath = false,
-      )),
-    ))
-    preparedSourceManifests.put(output, PluginSymbolicPreparedSourceManifest(1, listOf("keep")))
-    operations.add(operation)
+    declaredAssets.put(key, listOf(PluginPackingAsset(
+      destination = joinResourceDestination(resource.relativeOutputPath, source.fileName),
+      inputs = listOf(inputId),
+      mode = 493,
+      kind = "file",
+      classPath = false,
+    )))
   }
   for ((generatorIndex, candidate) in layout.resourceGenerators.withIndex()) {
     val key = "resource-generator:$generatorIndex"
     if (candidate is ModuleResourceTree) {
       // A declared tree is a plain copy of its directory, or of the filtered filegroup when it states exclusions.
-      // It joins the `withResource*` directories, so a second tree over its destination is an overlay as theirs is.
+      // It joins the `withResource*` directories, so a second tree over its destination is refused as theirs is.
       val spec = candidate.devPluginLayoutAssetSpec
       val source = spec.sources.single() as DevPluginLayoutAssetSource.ModuleDirectory
       val inputId = "module-resource:$key:0:source"
@@ -244,12 +204,7 @@ fun generateDevPluginAssetBindings(
     )
     operations.add(operation)
   }
-  bindDirectResourceTrees(
-    trees = directResourceTrees,
-    effects = effects,
-    declaredAssets = declaredAssets,
-    operations = operations,
-  )
+  bindDirectResourceTrees(mainModule = layout.mainModule, trees = directResourceTrees, declaredAssets = declaredAssets)
   addSelectedPlatformCallbacks()
   return result()
 }
@@ -260,53 +215,30 @@ private data class DirectResourceTree(
   @JvmField val input: String,
 )
 
+/** Binds each directory as a plain tree copy. Two directories over one destination are refused, see ADR 0032. */
 private fun bindDirectResourceTrees(
+  mainModule: String,
   trees: List<DirectResourceTree>,
-  effects: MutableMap<String, PluginSymbolicPreparedEffect>,
   declaredAssets: MutableMap<String, List<PluginPackingAsset>>,
-  operations: MutableList<DevPluginPreparationOperation>,
 ) {
   val byDestination = LinkedHashMap<String, ArrayList<DirectResourceTree>>()
   for (tree in trees) {
     byDestination.computeIfAbsent(tree.destination) { ArrayList() }.add(tree)
   }
   for ((destination, group) in byDestination) {
-    if (group.size == 1) {
-      val tree = group.single()
-      declaredAssets.put(tree.key, listOf(PluginPackingAsset(
-        destination = destination,
-        inputs = listOf(tree.input),
-        kind = "tree",
-        classPath = false,
-      )))
-      continue
+    if (group.size > 1) {
+      throw DevDistUnplannableLayoutException(
+        "Plugin '$mainModule' copies ${group.size} directories over the destination '$destination'. " +
+        "Declare the children of the directories one by one (ADR 0032)."
+      )
     }
-    val id = "resource-tree-overlay:${group.first().key.substringAfter(':')}"
-    val output = "$id:output"
-    val operation = DevPluginPreparationOperation(
-      id = id,
-      kind = "layout-assets",
-      inputs = group.map { DevPluginReference(it.input) },
-      output = output,
-      manifest = "keep",
-      layoutAssets = DevPluginLayoutAssetPreparation(
-        format = "tree",
-        root = destination,
-        assets = group.indices.map { DevPluginLayoutAsset(destination = "", sources = listOf(it)) },
-      ),
-    )
-    for ((index, tree) in group.withIndex()) {
-      effects.put(tree.key, PluginSymbolicPreparedEffect(
-        operation = operation,
-        assets = if (index == 0) listOf(PluginPackingAsset(
-          destination = destination,
-          inputs = listOf(output),
-          kind = "tree",
-          classPath = false,
-        )) else emptyList(),
-      ))
-    }
-    operations.add(operation)
+    val tree = group.single()
+    declaredAssets.put(tree.key, listOf(PluginPackingAsset(
+      destination = destination,
+      inputs = listOf(tree.input),
+      kind = "tree",
+      classPath = false,
+    )))
   }
 }
 

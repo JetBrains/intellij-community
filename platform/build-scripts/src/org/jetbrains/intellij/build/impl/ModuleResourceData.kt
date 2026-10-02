@@ -20,8 +20,4 @@ data class ModuleResourceData(
   /** Target path relative to the plugin root directory */
   @JvmField
   val relativeOutputPath: String,
-
-  /** If `true` resource is packed into the zip archive */
-  @JvmField
-  val packToZip: Boolean = false,
 )

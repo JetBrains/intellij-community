@@ -9,9 +9,7 @@ filegroup(
         ],
         allow_empty = False,
     ) + [
-        # Written by plugin-model-tool into the `dev intellij.java.jdkAnnotations` section, because the Java plugin
-        # layout declares the directory with `withResourceArchiveFromModule`.
-        "//java/jdkAnnotations:dev_dist_resources",
+        "//java/jdkAnnotations:annotation_files",
     ],
     visibility = ["//visibility:public"],
 )

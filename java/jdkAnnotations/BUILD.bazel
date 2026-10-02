@@ -1,14 +1,11 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `dev intellij.java.jdkAnnotations` start
+# The annotation tree as source files. A test finds it in the runfiles through `TestJdkAnnotationsFilesProviderImpl`.
 filegroup(
-    name = "dev_dist_resources",
-    srcs = glob(
-        ["resources/**"],
-    ),
-    visibility = ["//visibility:public"],
+    name = "annotation_files",
+    srcs = glob(["resources/**"]),
+    visibility = ["//java:__pkg__"],
 )
-### auto-generated section `dev intellij.java.jdkAnnotations` end
 
 ### auto-generated section `build intellij.java.jdkAnnotations` start
 jvm_library(

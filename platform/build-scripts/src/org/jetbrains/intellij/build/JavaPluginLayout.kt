@@ -22,7 +22,7 @@ object JavaPluginLayout {
       // explicitly pack and sa-jdwp as a separate JARs
       spec.withModuleLibrary("sa-jdwp", "intellij.java.debugger.impl", "sa-jdwp.jar")
 
-      spec.withResourceArchiveFromModule("intellij.java.jdkAnnotations", "resources", "lib/resources/jdkAnnotations.jar")
+      spec.withModule("intellij.java.jdkAnnotations", "resources/jdkAnnotations.jar")
 
       addition?.invoke(spec)
     }

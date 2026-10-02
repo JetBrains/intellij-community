@@ -725,7 +725,7 @@ private fun createAndroidPluginLayout(
     //  "//tools/adt/idea/artwork:device-art-resources-bundle",  # duplicated in android.jar
     spec.withResourceFromModule("intellij.android.artwork", "resources/device-art-resources", "resources/device-art-resources")
     //  "//tools/adt/idea/android/annotations:androidAnnotations",
-    spec.withResourceArchiveFromModule("intellij.android.core", "annotations", "resources/androidAnnotations.jar")
+    spec.withModule("intellij.android.externalAnnotations", "resources/androidAnnotations.jar")
     //  "//tools/adt/idea/emulator/native:native_lib",
     spec.withResourceFromModule("intellij.android.streaming", "native/linux", "resources/native/linux")
     spec.withResourceFromModule("intellij.android.streaming", "native/mac", "resources/native/mac")

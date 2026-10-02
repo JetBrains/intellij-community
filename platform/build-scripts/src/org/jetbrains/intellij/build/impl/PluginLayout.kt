@@ -576,23 +576,6 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       }
 
     /**
-     * @param resourcePath path to a resource file or directory relative to `moduleName` module content root
-     * @param relativeOutputFile target path relative to the plugin root directory
-     *
-     * The path stays inside the Bazel package of the module, the directory that holds its `BUILD.bazel`. It uses no `..`
-     * and crosses no nested package. The dev-distribution generator derives `//<package>:dev_dist_resources` from the
-     * declaration and refuses a layout that breaks the rule. Declare a resource against the module whose package holds it.
-     */
-    fun withResourceArchiveFromModule(moduleName: String, resourcePath: String, relativeOutputFile: String) {
-      layout.resourcePaths = layout.resourcePaths.adding(ModuleResourceData(
-        moduleName = moduleName,
-        resourcePath = resourcePath,
-        relativeOutputPath = relativeOutputFile,
-        packToZip = true,
-      ))
-    }
-
-    /**
      * By default, a version of a plugin is equal to [org.jetbrains.intellij.build.BuildContext.pluginBuildNumber].
      * This method allows specifying custom version evaluator.
      */

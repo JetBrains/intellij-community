@@ -3,6 +3,7 @@ package com.intellij.platform.buildScripts.devDistGenerator
 
 import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicVariant
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Assertions.entry
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.ProductProperties
@@ -20,7 +21,7 @@ import java.nio.file.Path
 /**
  * A `withResourceTree` declaration binds as a plain tree copy, as a `withResource*` directory does. With exclusions it
  * reads the filtered filegroup of its package. No operation and no preparation stand behind it, so the copy alone keeps
- * a plugin simple.
+ * a plugin simple. A second tree over one destination is refused.
  */
 class DevDistResourceTreeBindingTest {
   @TempDir
@@ -87,18 +88,17 @@ class DevDistResourceTreeBindingTest {
   }
 
   @Test
-  fun `a resource tree over the destination of a withResource directory is an overlay`() {
+  fun `a resource tree over the destination of a withResource directory is refused`() {
     val layout = PluginLayout.pluginAutoWithCustomDirName(plugin) {
       it.withResource("helpers", "helpers")
       it.withResourceTree(moduleName = plugin, resourcePath = "helpers", relativeOutputPath = "helpers", excludedDirectories = listOf("tests"))
     }
 
-    val bindings = bindings(layout)
-
-    val operation = bindings.operations.single()
-    assertThat(operation.id).isEqualTo("resource-tree-overlay:0")
-    assertThat(operation.inputs.map { it.artifact }).containsExactly("module-resource:0:source", "module-resource:resource-generator:0:0:source")
-    assertThat(bindings.facts.declaredAssets).isEmpty()
+    assertThatThrownBy { bindings(layout) }
+      .isInstanceOf(DevDistUnplannableLayoutException::class.java)
+      .hasMessageContaining("Plugin '$plugin'")
+      .hasMessageContaining("destination 'helpers'")
+      .hasMessageContaining("one by one")
   }
 }
 
