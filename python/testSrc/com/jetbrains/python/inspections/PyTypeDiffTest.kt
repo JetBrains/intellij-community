@@ -661,6 +661,38 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     assertNotHighlighted(tooltip, "Sequence")
   }
 
+  @Test
+  @TestFor(issues = ["PY-92092"])
+  fun `generic named tuple aligns the type arguments of its class`() {
+    val tooltip = tooltipFor("""
+      from typing import NamedTuple
+      class Base[T](NamedTuple):
+          path: T
+          n: int
+      x: Base[str]
+      a: Base[int] = x
+    """)
+    assertCodeLineContains(tooltip, "Base[str]")
+    assertCodeLineContains(tooltip, "Base[int]")
+    assertProvided(tooltip, "str")
+    assertExpected(tooltip, "int")
+    assertNotHighlighted(tooltip, "Base")
+  }
+
+  @Test
+  @TestFor(issues = ["PY-92092"])
+  fun `generic named tuple does not align its type arguments with another class`() {
+    val tooltip = tooltipFor("""
+      from typing import NamedTuple, Sequence
+      class Base[T](NamedTuple):
+          path: T
+          n: str
+      x: Base[int]
+      a: Sequence[int] = x
+    """)
+    assertNotHighlighted(tooltip, "int")
+  }
+
   // `list` is invariant, so its element must match exactly. The invariance propagates into the nested `Callable`,
   // whose parameter (`int` vs `bool`) is then the highlighted incompatibility — even though `Callable[[int], str]`
   // would be assignable to `Callable[[bool], str]` covariantly.

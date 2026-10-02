@@ -521,7 +521,7 @@ open class PyTypeCheckerInspection : PyInspection() {
             val rhs = possibleLhs.assignedValue
             if (rhs != null) {
               val rhsType = myTypeEvalContext.getType(rhs)
-              if (rhsType is PyClassType && rhsType.isParameterized) {
+              if (rhsType is PyClassType && (rhsType is PyTupleType || rhsType.isParameterized)) {
                 val elementType = upcastLiteralToClass(rhsType.iteratedItemType)
                 val listClass = PyBuiltinCache.getInstance(node).getClass("list")
                 if (listClass != null) {

@@ -189,8 +189,8 @@ public final class PyRecursiveTypeVisitor extends PyTypeVisitorExt<PyRecursiveTy
       //     name: str
       //     age: int
       //
-      // is just Person, not Person[str, int]
-      return Collections.emptyList();
+      // is just Person, not Person[str, int]. The type arguments of a generic named tuple class, as in Base[str], belong to its notation.
+      return namedTupleType.getTypeArguments();
     }
 
     @Override
