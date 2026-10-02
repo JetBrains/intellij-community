@@ -612,8 +612,11 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     /**
      * [forPythonInterpreter] for a caller that holds only an [Sdk].
      *
-     * It does not detect the environment, so the manager it returns has an incomplete interpreter. Our code does not
-     * call it any more. It stays for the callers of other teams until they move to [forPythonInterpreter].
+     * It does not detect the environment, so the manager it returns has an incomplete interpreter. The packaging code and
+     * its UI do not call it any more. The other callers move to [forPythonInterpreter] in a follow-up change, one change
+     * per owner, so each owner reviews their own part: the LSP tools, the type engine, Jupyter, AI Assistant, Qodana,
+     * Aqua, marimo, dbt and django-core. [PythonPackageManagerUI.forSdk] stays until then for the same callers. This
+     * function is removed with the last of them.
      */
     @Deprecated("Pass a PythonInterpreter to forPythonInterpreter. Get it from the project structure or with pythonInterpreterAsync.")
     @Throws(AlreadyDisposedException::class)
