@@ -1,10 +1,11 @@
 // "Change type of 'foo' to 'Any'" "true"
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
 class O
 class P
 
-val foo: O = when {
+val foo: O =<caret> when {
     true -> O()
-    else -> P()<caret>
+    else -> P()
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

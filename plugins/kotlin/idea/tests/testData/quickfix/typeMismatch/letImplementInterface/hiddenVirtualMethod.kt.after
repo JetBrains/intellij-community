@@ -1,8 +1,8 @@
 // "Let 'C' implement interface 'I'" "true"
-// ERROR: 'exampleMethod' hides member of supertype 'I' and needs 'override' modifier
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 class C : I {
-    fun exampleMethod() {
+    override fun exampleMethod() {
     }
 }
 

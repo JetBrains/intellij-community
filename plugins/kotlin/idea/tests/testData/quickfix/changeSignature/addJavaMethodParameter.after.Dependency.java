@@ -1,5 +1,5 @@
 class Foo {
-    public static void foo(int n, int m, int i) {
+    static void foo(int n, int m, int i) {
 
     }
 }

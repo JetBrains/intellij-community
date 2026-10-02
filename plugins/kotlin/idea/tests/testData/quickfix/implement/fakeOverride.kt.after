@@ -1,9 +1,9 @@
 // "Implement members" "true"
 // WITH_STDLIB
-// K2_ERROR: Class 'C' is not abstract and does not implement abstract base class members:<br>fun write(p0: CharArray!, p1: Int, p2: Int): Unit<br>fun flush(): Unit<br>fun close(): Unit
+// K2_ERROR: ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED
 
 class C : java.io.Writer(), java.lang.Appendable {
-    override fun close() {
+    override fun write(p0: CharArray, p1: Int, p2: Int) {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 
@@ -11,7 +11,7 @@ class C : java.io.Writer(), java.lang.Appendable {
         TODO("Not yet implemented")
     }
 
-    override fun write(p0: CharArray, p1: Int, p2: Int) {
+    override fun close() {
         TODO("Not yet implemented")
     }
 }

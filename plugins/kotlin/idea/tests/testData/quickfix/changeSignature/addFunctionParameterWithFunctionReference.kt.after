@@ -1,8 +1,8 @@
 // "Add parameter to function 'baz'" "true"
-// K2_ERROR: Too many arguments for 'fun baz(): Unit'.
+// K2_ERROR: TOO_MANY_ARGUMENTS
 fun bar(): Int = 42
 
-fun baz(kFunction0: () -> Int) {}
+fun baz(function: () -> Int) {}
 
 fun foo() {
     baz(::bar)

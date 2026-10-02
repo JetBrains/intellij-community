@@ -1,7 +1,7 @@
 import kotlin.properties.ReadWriteProperty
 
 // "Create function 'foo'" "true"
-// K2_ERROR: Unresolved reference 'foo'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 
 class A<T>(val t: T) {
@@ -9,7 +9,7 @@ class A<T>(val t: T) {
         var x: A<Int> by foo(t, "")
     }
 
-    private fun foo(t: T, s: String): ReadWriteProperty<Nothing?, A<Int>> {
+    private fun foo(t: T, string: String): ReadWriteProperty<Any?, A<Int>> {
         <selection>TODO("Not yet implemented")<caret></selection>
     }
 }

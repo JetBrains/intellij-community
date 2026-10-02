@@ -1,12 +1,10 @@
 // "Create secondary constructor" "true"
 // K2_ACTION: "Add primary constructor to 'A'" "true"
-// K2_ERROR: Too many arguments for 'constructor(): A'.
+// K2_ERROR: TOO_MANY_ARGUMENTS
 
 interface T
 
-class A: T {
-    constructor(i: Int)
-}
+class A(i: Int) : T
 
 fun test() {
     val t: T = A(1)

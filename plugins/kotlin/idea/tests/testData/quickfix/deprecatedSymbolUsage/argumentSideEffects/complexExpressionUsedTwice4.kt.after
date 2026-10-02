@@ -10,8 +10,8 @@ fun C.newFun(c: C, p: Int){}
 val bar = 0
 
 fun foo() {
-    val bar1 = getBar()
-    bar1.<caret>newFun(bar1, bar)
+    val c = getBar()
+    c.<caret>newFun(c, bar)
 }
 
 fun getBar(): C = C()

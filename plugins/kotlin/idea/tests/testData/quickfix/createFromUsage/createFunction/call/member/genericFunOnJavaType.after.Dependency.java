@@ -1,6 +1,8 @@
+import org.jetbrains.annotations.NotNull;
+
 class A {
 
-    public <T, U> U foo(U u, T t) {
-        return null;
+    public int foo(int i, @NotNull String string) {
+        return 0;
     }
 }

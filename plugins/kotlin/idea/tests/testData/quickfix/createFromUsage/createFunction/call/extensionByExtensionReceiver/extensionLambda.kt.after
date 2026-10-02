@@ -13,6 +13,6 @@ fun test() {
     }
 }
 
-private fun A.foo(n: Int): Boolean {
+private fun A.foo(i: Int): Boolean {
     TODO("Not yet implemented")
 }

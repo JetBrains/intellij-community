@@ -1,5 +1,4 @@
-// "Wrap with '?.let { ... }' call" "false"
-// SHOULD_BE_AVAILABLE_AFTER_EXECUTION
+// "Wrap with '?.let { ... }' call" "true"
 // ACTION: Add 'a =' to argument
 // ACTION: Add non-null asserted (a1!!) call
 // ACTION: Flip '+'
@@ -7,8 +6,8 @@
 // ACTION: Replace overloaded operator with function call
 // ACTION: Replace with safe (?.) call
 // ACTION: Surround with null check
-// ERROR: Operator call corresponds to a dot-qualified call 'a1.plus(a2)' which is not allowed on a nullable receiver 'a1'.
 // WITH_STDLIB
+// K2_ERROR: UNSAFE_OPERATOR_CALL
 
 interface A {
     operator fun plus(a: A): A = this
@@ -19,3 +18,5 @@ fun test(a1: A?, a2: A) {
 }
 
 fun notNull(a: A): A = a
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.WrapWithSafeLetCallFixFactories$WrapWithSafeLetCallModCommandAction

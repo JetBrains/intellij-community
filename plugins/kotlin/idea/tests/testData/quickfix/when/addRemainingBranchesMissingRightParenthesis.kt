@@ -1,9 +1,11 @@
-// "Add remaining branches" "false"
-// ERROR: 'when' expression must be exhaustive, add necessary 'is B' branch or 'else' branch instead
+// "Add remaining branches" "true"
 // WITH_STDLIB
+// K2_ERROR: NO_ELSE_IN_WHEN
 
 sealed class A
 class B : A()
 
 fun test(a: A) {
-  <caret>when (a
+  val i = w<caret>hen (a
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddWhenRemainingBranchFixFactories$AddRemainingWhenBranchesQuickFix

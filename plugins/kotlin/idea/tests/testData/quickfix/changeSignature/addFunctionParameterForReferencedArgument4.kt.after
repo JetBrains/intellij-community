@@ -1,6 +1,6 @@
 // "Add parameter to function 'foo'" "true"
 // DISABLE_ERRORS
-fun foo(s: String) {}
+fun foo(string: String) {}
 
 fun bar(f: (String) -> Unit) {}
 

@@ -1,5 +1,5 @@
 // "Change parameter 'param' type of function 'handle' to 'Callback'" "true"
-// K2_ERROR: Argument type mismatch: actual type is '<anonymous>', but 'Int' was expected.
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 interface Callback {
     fun onEvent()
 }

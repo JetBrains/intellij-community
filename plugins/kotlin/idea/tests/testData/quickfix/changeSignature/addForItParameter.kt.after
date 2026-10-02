@@ -1,8 +1,8 @@
 // "Add parameter to constructor 'Foo'" "true"
 // WITH_STDLIB
-// K2_ERROR: Too many arguments for 'constructor(): Foo'.
+// K2_ERROR: TOO_MANY_ARGUMENTS
 
-class Foo(s: String)
+class Foo(string: String)
 
 fun test(name: String) {
     name.also { Foo(it) }

@@ -10,7 +10,7 @@ fun Char.newFun(x: X, c: Char): Char = this
 
 fun foo(s: String, t: X) {
     val chars = s.filter {
-        (X('a') + X('b'))?.let { t1 -> it.newFun(t1, t.c) } != 'a'
+        (X('a') + X('b'))?.let { x -> it.newFun(x, t.c) } != 'a'
     }
 }
 

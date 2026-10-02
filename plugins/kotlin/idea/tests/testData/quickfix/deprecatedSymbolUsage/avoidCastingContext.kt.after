@@ -1,10 +1,11 @@
 import java.util.Locale
+import java.util.Locale.getDefault
 
 // "Replace with 'lowercase(Locale.getDefault())'" "true"
 // WITH_STDLIB
 
 fun m(s: String?) {
-    val string = s?.<caret>lowercase(Locale.getDefault())
+    val string = s?.<caret>lowercase(getDefault())
 }
 
 @Deprecated("", ReplaceWith("lowercase(Locale.getDefault())", "java.util.Locale"))

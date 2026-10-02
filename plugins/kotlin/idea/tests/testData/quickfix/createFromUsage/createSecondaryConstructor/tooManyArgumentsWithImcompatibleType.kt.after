@@ -3,7 +3,7 @@
 // DISABLE_ERRORS
 
 class CtorPrimary(val f1: Int, val f2: String) {
-    constructor(f1: Int, f2: Int, i: Int) : this()
+    constructor(f1: Int, f2: Int, i3: Int) : this(f1, f2)
 }
 
 fun construct() {

@@ -1,12 +1,13 @@
 // "Change type of 'f' to '(Int, Int) -> (String) -> Int'" "true"
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
 fun foo() {
-    val f: () -> Long = {
+    val f: () -> Long =<caret> {
         a: Int, b: Int ->
         val x = {s: String -> 42}
         if (true) x
         else if (true) x else {
             var y = 42
-            if (true) x<caret> else x
+            if (true) x else x
         }
     }
 }

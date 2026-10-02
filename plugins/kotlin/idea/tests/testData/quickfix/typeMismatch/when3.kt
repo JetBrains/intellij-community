@@ -1,7 +1,8 @@
 // "Change type of 's' to 'String'" "true"
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
 fun test(i: Int) {
-    val s: Int = when (i) {
-        0 -> ""<caret>
+    val s: Int =<caret> when (i) {
+        0 -> ""
         else -> ""
     }
 }

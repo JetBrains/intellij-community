@@ -1,7 +1,7 @@
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 interface A {
 
-    @Nullable
-    <T, U> U foo(U u, T t);
+    @Nullable Integer foo(int i, @NotNull String string);
 }

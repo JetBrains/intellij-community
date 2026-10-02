@@ -1,7 +1,6 @@
 // "Wrap with '?.let { ... }' call" "true"
-// SHOULD_BE_AVAILABLE_AFTER_EXECUTION
-// ERROR: Type mismatch: inferred type is String? but String was expected
 // WITH_STDLIB
+// K2_ERROR: UNSAFE_IMPLICIT_INVOKE_CALL
 
 interface Foo {
     val f: ((() -> Unit) -> String)?
@@ -13,3 +12,4 @@ fun test(foo: Foo) {
 
 fun bar(s: String) {}
 
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.WrapWithSafeLetCallFixFactories$WrapWithSafeLetCallModCommandAction

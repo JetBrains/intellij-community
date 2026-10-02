@@ -11,7 +11,9 @@ class C {
 fun newFun(){}
 
 fun foo() {
-    getC()?.<caret>let { newFun() }
+    <caret>if (getC() != null) {
+        newFun()
+    }
 }
 
 fun getC(): C? = null

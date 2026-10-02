@@ -5,6 +5,6 @@ fun test(): Int? {
     return A().foo(1, "2")
 }
 
-private fun A.foo(i: Int, s: String): Int? {
+private fun A.foo(i: Int, string: String): Int? {
     TODO("Not yet implemented")
 }

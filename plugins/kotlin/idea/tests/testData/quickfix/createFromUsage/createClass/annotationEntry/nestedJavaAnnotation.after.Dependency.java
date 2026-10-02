@@ -2,9 +2,9 @@ import org.jetbrains.annotations.NotNull;
 
 class J {
 
-    public static @interface foo {
+    public @interface foo {
         int i();
 
-        @NotNull String s();
+        @NotNull String string();
     }
 }

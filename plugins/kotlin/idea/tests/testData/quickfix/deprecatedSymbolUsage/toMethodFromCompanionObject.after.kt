@@ -1,7 +1,7 @@
-import dependency.C.Companion.newFun
+import dependency.C
 
 // "Replace with 'newFun(this)'" "true"
 
 fun foo(c: dependency.C) {
-    newFun(c)
+    C.<selection><caret></selection>newFun(c)
 }

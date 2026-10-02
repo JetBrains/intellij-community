@@ -1,6 +1,6 @@
 // "Add parameter to constructor 'Foo'" "true"
 // DISABLE_ERRORS
-enum class Foo(s: String) {
+enum class Foo(string: String) {
     A("A"),
     B("B")
 }

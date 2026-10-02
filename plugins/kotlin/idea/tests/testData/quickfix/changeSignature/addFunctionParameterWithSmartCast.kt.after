@@ -1,11 +1,11 @@
 // "Add parameter to function 'fooFun'" "true"
-// K2_ERROR: Too many arguments for 'fun fooFun(): Int'.
+// K2_ERROR: TOO_MANY_ARGUMENTS
 sealed class Foo {
     class SubFoo : Foo()
     class Sub2Foo : Foo()
 }
 
-fun fooFun(subFoo: Foo.SubFoo): Int = 1
+fun fooFun(subFoo1: Foo.SubFoo): Int = 1
 
 val subFoo: Foo = Foo.SubFoo()
 val bar = when(subFoo){

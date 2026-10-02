@@ -1,5 +1,6 @@
 // "Wrap with '?.let { ... }' call" "true"
 // WITH_STDLIB
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
 
 interface A
 
@@ -11,3 +12,4 @@ fun test(a1: A, a2: A) {
 
 fun notNull(t: A): A = t
 
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.WrapWithSafeLetCallFixFactories$WrapWithSafeLetCallModCommandAction

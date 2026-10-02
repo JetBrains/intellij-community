@@ -1,5 +1,5 @@
 // "Initialize with constructor parameter" "true"
-// K2_ERROR: Property must be initialized or be abstract.
+// K2_ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
 open class RGrandAccessor(x: Int) {}
 
 open class RAccessor : RGrandAccessor {
@@ -8,6 +8,6 @@ open class RAccessor : RGrandAccessor {
         this.f = f
     }
 
-    constructor(p: String) : this(true, 0)
+    constructor(p: String, f: Int) : this(true, f)
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.InitializePropertyQuickFixFactories$InitializeWithConstructorParameterFix

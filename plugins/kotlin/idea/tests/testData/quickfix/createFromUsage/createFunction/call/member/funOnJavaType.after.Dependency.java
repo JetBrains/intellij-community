@@ -3,8 +3,7 @@ import org.jetbrains.annotations.Nullable;
 
 class A {
 
-    @Nullable
-    public Integer foo(int i, @NotNull String s) {
+    public @Nullable Integer foo(int i, @NotNull String string) {
         return null;
     }
 }

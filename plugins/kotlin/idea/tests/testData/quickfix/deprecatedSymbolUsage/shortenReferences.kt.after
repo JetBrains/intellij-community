@@ -1,4 +1,5 @@
 import java.io.File
+import java.io.File.separatorChar
 
 // "Replace with 'newFun(java.io.File.separatorChar)'" "true"
 
@@ -8,7 +9,7 @@ fun oldFun() { }
 fun newFun(separator: Char){}
 
 fun foo() {
-    newFun(File.separatorChar)
+    newFun(separatorChar)
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

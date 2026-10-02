@@ -1,8 +1,8 @@
 // "Wrap with '?.let { ... }' call" "true"
-// SHOULD_BE_AVAILABLE_AFTER_EXECUTION
-// ERROR: A 'return' expression required in a function with a block body ('{...}')
-// ERROR: Type mismatch: inferred type is String? but String was expected
 // WITH_STDLIB
+// K2_AFTER_ERROR: NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY
 
 fun test(s: String?): String? {
     if (true) {
@@ -11,3 +11,4 @@ fun test(s: String?): String? {
 }
 
 fun notNull(name: String): String = name
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.WrapWithSafeLetCallFixFactories$WrapWithSafeLetCallModCommandAction

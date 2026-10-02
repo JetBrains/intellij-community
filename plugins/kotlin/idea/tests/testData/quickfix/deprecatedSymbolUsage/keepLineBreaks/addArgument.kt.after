@@ -11,8 +11,7 @@ fun foo(x: X) {
     x.newFun(
         1,
         2,
-        0
-    )
+        0)
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

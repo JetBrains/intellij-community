@@ -1,11 +1,11 @@
 // "Initialize with constructor parameter" "true"
-// K2_ERROR: Property must be initialized.
+// K2_ERROR: MUST_BE_INITIALIZED
 open class A(s: String, n: Int) {
     var n: Int = n
         get() = 1
 
-    constructor(): this("", 0)
-    constructor(a: Int): this("" + a, 0)
+    constructor(n: Int) : this("", n)
+    constructor(a: Int, n: Int): this("" + a, n)
 }
 
 class B : A("", 0)

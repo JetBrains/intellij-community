@@ -11,7 +11,8 @@ class Executor {
 }
 
 fun usage(executor: Executor) {
-    executor.self.execute {
+    executor.self.// do something
+    execute {
         // do something
     }
 }

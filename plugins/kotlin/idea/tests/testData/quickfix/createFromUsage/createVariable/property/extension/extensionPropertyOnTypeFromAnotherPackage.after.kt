@@ -4,9 +4,6 @@
 import package1.A
 
 private val package2.A.foo: Any
-    get() {
-        TODO("Not yet implemented")
-    }
 
 class X {
     init {

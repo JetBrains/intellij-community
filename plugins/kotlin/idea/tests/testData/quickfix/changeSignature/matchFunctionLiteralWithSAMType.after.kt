@@ -2,5 +2,5 @@
 // DISABLE_ERRORS
 
 fun main(args: Array<String>) {
-    Test<String>().perform("") { s: String, s1: String -> }
+    Test<String>().perform("") <selection><caret></selection>{ string, string1 -> }
 }

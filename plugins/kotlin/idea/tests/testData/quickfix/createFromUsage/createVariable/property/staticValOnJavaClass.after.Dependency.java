@@ -1,4 +1,4 @@
 class J {
 
-    public static final int foo;
+    public static final int foo = ;
 }

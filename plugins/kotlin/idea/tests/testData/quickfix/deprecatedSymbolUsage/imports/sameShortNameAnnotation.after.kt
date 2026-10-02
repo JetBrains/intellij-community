@@ -6,5 +6,5 @@ import p2.Anno
 @Deprecated("", ReplaceWith("Anno", "p2.Anno"))
 annotation class Anno()
 
-@<selection><caret></selection>Anno
+@An<selection><caret></selection>no
 class Foo

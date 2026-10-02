@@ -12,7 +12,7 @@ fun Char.newFun(x: X, c: Char): Char = this
 
 fun foo(s: String, x: X) {
     val chars = s.filter {
-        O.x?.<caret>let { x1 -> it.newFun(x1, x.c) } != 'a'
+        O.x?.<caret>let { t -> it.newFun(t, x.c) } != 'a'
     }
 }
 

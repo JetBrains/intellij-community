@@ -1,4 +1,6 @@
-// "Change return type to 'T'" "true"
+// "Change return type to 'S'" "true"
+// K2_AFTER_ERROR: RETURN_TYPE_MISMATCH_ON_OVERRIDE
+// K2_ERROR: RETURN_TYPE_MISMATCH_ON_OVERRIDE
 open class S {}
 open class T : S() {}
 

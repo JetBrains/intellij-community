@@ -1,5 +1,5 @@
 class J {
 
-    public static interface A {
+    public interface A {
     }
 }

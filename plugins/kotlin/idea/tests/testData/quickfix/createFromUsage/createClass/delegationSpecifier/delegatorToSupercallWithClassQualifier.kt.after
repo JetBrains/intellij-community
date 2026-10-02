@@ -1,9 +1,9 @@
 // "Create class 'A'" "true"
-// K2_ERROR: Unresolved reference 'A'.
+// K2_ERROR: UNRESOLVED_REFERENCE
 package p
 
 class X {
-    open class A(i: Int, s: String) {
+    open class A(i: Int, string: String) {
 
     }
 

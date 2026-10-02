@@ -1,5 +1,5 @@
 class K {
 
     @JvmField
-    var foo: Any? = TODO("initialize me")
+    var foo = TODO("initialize me")
 }

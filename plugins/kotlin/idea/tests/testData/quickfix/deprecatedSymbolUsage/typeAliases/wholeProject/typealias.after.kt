@@ -7,4 +7,4 @@ import dependency.d.A
 
 fun foo(a: <caret>A<Int>): A<Int>? = null
 
-val usage: A<Int> = A()
+val usage: A<Int> = A<Int>()

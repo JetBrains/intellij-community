@@ -7,14 +7,14 @@
 // K2_ACTIONS_LIST: Rename reference
 // K2_ACTIONS_LIST: Create annotation 'bar'
 // ERROR: Unresolved reference: foo
-// K2_ERROR: Annotation argument must be a compile-time constant.
-// K2_ERROR: Unresolved reference 'bar'.
-// K2_ERROR: Unresolved reference 'foo'.
-// K2_AFTER_ERROR: Unresolved reference 'foo'.
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: ANNOTATION_ARGUMENT_MUST_BE_CONST
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
 
 @[foo(1, "2", bar("3", 4))] fun test() {
 
 }
 
-annotation class <caret>bar(val s: String, val i: Int)
+annotation class <caret>bar(val string: String, val i: Int)
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction

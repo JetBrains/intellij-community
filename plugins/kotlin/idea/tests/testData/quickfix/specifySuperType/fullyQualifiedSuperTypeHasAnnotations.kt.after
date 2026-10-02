@@ -1,6 +1,6 @@
 // "Specify supertype" "true"
 // SHOULD_DIFFER_FROM_FE10
-// K2_ERROR: Multiple supertypes available. Specify the intended supertype in angle brackets, e.g. 'super<Foo>'.
+// K2_ERROR: AMBIGUOUS_SUPER
 package a.b.c
 
 interface Z {
@@ -13,7 +13,7 @@ open class X {
 
 class Test : (@Suppress("foo") a.b.c.X)(), Z {
     override fun foo() {
-        super<a.b.c.X>.foo()
+        super<X>.foo()
     }
 }
 
