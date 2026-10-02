@@ -1482,8 +1482,6 @@
                             order="after PowerSaveMode"/>
     <statusBarWidgetFactory id="CodeStyleStatusBarWidget" implementation="com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidgetFactory"
                             order="after InsertOverwrite"/>
-    <statusBarWidgetFactory id="inspectionProfileWidget" implementation="com.intellij.openapi.wm.impl.status.InspectionProfileWidgetFactory"
-                            order="after ReadOnlyAttribute"/>
     <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.DetectableIndentOptionsProvider" order="last"/>
     <codeStyleSettingsModifier id="com.intellij.psi.codeStyle.DetectableIndentSettingsModifier" implementation="com.intellij.psi.codeStyle.DetectableIndentSettingsModifier" order="last"/>
     <lang.formatter.restriction implementation="com.intellij.formatting.ExcludedFileFormattingRestriction"/>

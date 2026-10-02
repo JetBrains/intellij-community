@@ -90,7 +90,6 @@ fun unregisterExtensionsForLightProduct(checkNotInstantiated: Boolean = false) {
       "largeFileEncodingWidget",
       "CodeStyleStatusBarWidget",
       "ReadOnlyAttribute",
-      "inspectionProfileWidget",
       "SmartModeIndicator",
       "IndexesAndVfsFlushIndicator",
       checkNotInstantiated = checkNotInstantiated,
