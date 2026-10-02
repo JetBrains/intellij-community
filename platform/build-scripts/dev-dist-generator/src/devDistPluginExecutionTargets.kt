@@ -230,16 +230,16 @@ internal fun renderDevDistPluginExecutionTargets(
   // package does, because the ultimate half reuses such a plan file as the community half wrote it.
   val communityPass = owner.index.planPackageIsCommunity
   // The community calls state a repository of one chain with the platform token, and this chain names its platform.
-  val communityRepositories = files.homes.get(entry.mainModule)?.communityRepositories.orEmpty()
+  val callRepositories = files.homes.get(entry.mainModule)?.callRepositories.orEmpty()
     .mapTo(HashSet()) { if (platform == null) it else it.replace(PLATFORM_TOKEN, platform) }
   if (inCommunity) {
     require(isCommunityCallLabel(descriptorLabel, communityPass) && planPackage.isEmpty()) {
       "A community call names an ultimate descriptor or plan package: ${configuration.name}"
     }
   }
-  val label: (String) -> String = { if (inCommunity) communityCallLabel(it, communityPass, communityRepositories) else it }
+  val label: (String) -> String = { if (inCommunity) communityCallLabel(it, communityPass, callRepositories) else it }
   val planInCommunity = planPackage.ifEmpty { configuration.packageLabel }.startsWith(COMMUNITY_REPOSITORY_PREFIX)
-  val id: (String) -> String = { if (planInCommunity && "//" in it) communityCallLabel(it, communityPass, communityRepositories) else it }
+  val id: (String) -> String = { if (planInCommunity && "//" in it) communityCallLabel(it, communityPass, callRepositories) else it }
   val arguments = listOf(
     "main_module" to executionQuote(entry.mainModule),
     "descriptor" to executionQuote(label(descriptorLabel)),
@@ -265,16 +265,16 @@ private const val PLATFORM_TOKEN = "{platform}"
 
 /**
  * Whether a community package can name [label] in its community spelling: a label of `@community`, of `@lib`, or of a
- * repository in [communityRepositories]. An ultimate label is spelled `//` here, so a community call cannot state it.
+ * repository in [callRepositories]. An ultimate label is spelled `//` here, so a community call cannot state it.
  * In the [communityPass], a `//` label is a label of the community checkout, so a community call can state it too.
  *
- * [communityRepositories] are the repositories that the community calls of one plugin name, such as a `dev_launch_*`
+ * [callRepositories] are the repositories that the community calls of one plugin name, such as a `dev_launch_*`
  * download repository. Bazel loads these calls in the community module, so the community module can see each of these
  * repositories. The generator reads them from the calls and not from `community/MODULE.bazel`.
  */
-internal fun isCommunityCallLabel(label: String, communityPass: Boolean = false, communityRepositories: Set<String> = emptySet()): Boolean {
+internal fun isCommunityCallLabel(label: String, communityPass: Boolean = false, callRepositories: Set<String> = emptySet()): Boolean {
   return label.startsWith(COMMUNITY_REPOSITORY_PREFIX) || label.startsWith("@lib//") || communityPass && label.startsWith("//") ||
-         labelRepository(label)?.let { it in communityRepositories } == true
+         labelRepository(label)?.let { it in callRepositories } == true
 }
 
 /** The repository that [label] names as `@<repository>//`, or `null` for a label without a repository. */
@@ -288,8 +288,8 @@ internal fun labelRepository(label: String): String? {
  * the [communityPass], every label comes from the community model, so a call can name it. Another pass can name only a
  * community call label, see [isCommunityCallLabel].
  */
-private fun communityCallLabel(label: String, communityPass: Boolean, communityRepositories: Set<String>): String {
-  require(communityPass || isCommunityCallLabel(label, communityRepositories = communityRepositories)) { "A community call cannot name '$label'" }
+private fun communityCallLabel(label: String, communityPass: Boolean, callRepositories: Set<String>): String {
+  require(communityPass || isCommunityCallLabel(label, callRepositories = callRepositories)) { "A community call cannot name '$label'" }
   return if (label.startsWith(COMMUNITY_REPOSITORY_PREFIX)) "//" + label.removePrefix(COMMUNITY_REPOSITORY_PREFIX) else label
 }
 

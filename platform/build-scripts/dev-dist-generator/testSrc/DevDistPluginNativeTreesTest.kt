@@ -112,4 +112,27 @@ class DevDistPluginNativeTreesTest {
       .hasMessageContaining(JNA_NATIVE_DIR)
       .hasMessageContaining("lib/misplaced")
   }
+
+  @Test
+  fun `the JNA plugin fails when its plan places no native tree`() {
+    val jna = planEntry(JNA_PLUGIN_MODULE, emptyList())
+
+    assertThatThrownBy { checkPluginNativeTrees(listOf(jna)) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining(JNA_NATIVE_DIR)
+      .hasMessageContaining("at []")
+  }
+
+  @Test
+  fun `the JNA plugin fails when its plan places a second native tree beside the launcher path`() {
+    val jna = planEntry(JNA_PLUGIN_MODULE, listOf(
+      nativeTree(jnaTreeDestination(), module = "intellij.libraries.jna"),
+      nativeTree("lib/second-natives", module = "intellij.libraries.other.natives"),
+    ))
+
+    assertThatThrownBy { checkPluginNativeTrees(listOf(jna)) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining(JNA_NATIVE_DIR)
+      .hasMessageContaining("lib/second-natives")
+  }
 }

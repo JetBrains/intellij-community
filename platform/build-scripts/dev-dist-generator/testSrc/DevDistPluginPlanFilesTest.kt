@@ -381,7 +381,7 @@ class DevDistPluginPlanFilesTest {
     assertThat(home.packageLabel).isEqualTo("@community//plugins/c")
     assertThat(home.callIsCrossHalf).isFalse()
     assertThat(home.exportsPlanFiles).isFalse()
-    // The community half writes the file relative to `community/`, and the text names no community repository.
+    // The community half writes the file relative to `community/`, and the text names no `@community` label.
     assertThat(createdPaths(files)).containsExactly("community/plugins/c/$communityPlugin.dev-plan.json")
     assertThat(files.updates.results.single().relativePath).isEqualTo("plugins/c/$communityPlugin.dev-plan.json")
     assertThat(plans.hasHome(communityPlugin)).isTrue()
@@ -425,10 +425,10 @@ class DevDistPluginPlanFilesTest {
 
     assertThat(plans.acceptsUpstreamPlans(communityPlugin, planTexts, call)).isTrue()
     // The reused call is rendered per platform, so the home keeps the token and a chain resolves it for its platform.
-    assertThat(plans.upstreamHome(communityPlugin).communityRepositories).containsExactly("dev_launch_z", "dev_launch_{platform}_jcef")
-    assertThat(isCommunityCallLabel("@dev_launch_linux_x64_jcef//:files", communityRepositories = setOf("dev_launch_linux_x64_jcef"))).isTrue()
+    assertThat(plans.upstreamHome(communityPlugin).callRepositories).containsExactly("dev_launch_z", "dev_launch_{platform}_jcef")
+    assertThat(isCommunityCallLabel("@dev_launch_linux_x64_jcef//:files", callRepositories = setOf("dev_launch_linux_x64_jcef"))).isTrue()
     assertThat(isCommunityCallLabel("@dev_launch_linux_x64_jcef//:files")).isFalse()
-    assertThat(isCommunityCallLabel("//plugins/c:d", communityRepositories = setOf("dev_launch_z"))).isFalse()
+    assertThat(isCommunityCallLabel("//plugins/c:d", callRepositories = setOf("dev_launch_z"))).isFalse()
   }
 
   @Test
@@ -441,8 +441,8 @@ class DevDistPluginPlanFilesTest {
     val crossHalfCall = call.replace("\"//", "\"@community//")
 
     assertThat(plans.acceptsUpstreamPlans(communityPlugin, planTexts, crossHalfCall)).isFalse()
-    assertThat(plans.upstreamHome(communityPlugin).communityRepositories).isEmpty()
-    // A call that names another download repository does not make this repository a community repository.
+    assertThat(plans.upstreamHome(communityPlugin).callRepositories).isEmpty()
+    // A call that names another download repository does not make this repository a repository of the community calls.
     val otherCall = "dev_dist_complex_plugin(descriptor = \"//plugins/c:d\", resource_inputs = {\"@dev_launch_y//:files\": \"r\"})\n"
     val (_, otherPlans) = communityHalfPlans(records, sectionCall = otherCall)
     assertThat(otherPlans.acceptsUpstreamPlans(communityPlugin, planTexts, otherCall.replace("\"//", "\"@community//"))).isFalse()

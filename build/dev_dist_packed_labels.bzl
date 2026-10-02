@@ -24,7 +24,9 @@ def dev_dist_packed_labels(fragment_inputs, module_sets, product, product_mode):
     plan generator splits it the same way (`shareModuleSystemLoadedLabels`). A name without a `packed` label fails.
 
     A set name that `module_sets` does not have fails, and the message names the product and the sets. One generator
-    run writes both tables, so the bootstrap tolerance of the bridge does not apply here.
+    run writes both tables, so the bootstrap tolerance of the bridge does not apply here. The failure stops the load of
+    the `build` package, which the data of both generators reach. The IDE run configuration "Generate Product Layouts"
+    loads no Bazel package, so it recovers after the converter.
     """
     inputs = fragment_inputs.get(product)
     if inputs == None:
@@ -67,5 +69,5 @@ def dev_dist_packed_labels(fragment_inputs, module_sets, product, product_mode):
     if frontier:
         fail("Module set nesting did not settle for the '%s' payload of product '%s'" % (_PLATFORM_LIB_FRAGMENT, product))
     if stale:
-        fail("The dev-distribution plan of '%s' references unknown module sets: %s. Regenerate the dev-distribution tables." % (product, ", ".join(sorted(stale))))
+        fail("The dev-distribution plan of '%s' references unknown module sets: %s. Regenerate the tables with the converter and the Generate Product Layouts run configuration." % (product, ", ".join(sorted(stale))))
     return struct(packed = sorted(packed.keys()), module_system_loaded = sorted(module_system_loaded.keys()))

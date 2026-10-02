@@ -13,7 +13,7 @@ private val RESERVED_PATH_COMPONENT = Regex("(?i)(con|prn|aux|nul|com[1-9]|lpt[1
  *
  * A plugin of the half of the run keeps its plan files in its own package, beside its `BUILD.bazel`, and its `dev`
  * section holds the call. The ultimate half cannot write a community package, so it homes a community plugin in the
- * cross-half plugin package with the call. When the plan files and the calls equal the ones of the community half, the
+ * product package with the call. When the plan files and the calls equal the ones of the community half, the
  * ultimate half reads them in the own package and writes no copy, see [DevDistOwnPackagePlans].
  */
 internal class DevDistPluginPlanHome(
@@ -21,16 +21,16 @@ internal class DevDistPluginPlanHome(
   @JvmField val directory: String,
   /** The absolute package label the call states: `@community//plugins/kotlin/plugin`, `//plugins/tailwindcss`, or `//build/dev-dist-descriptors/intellij.java.plugin`. */
   @JvmField val packageLabel: String,
-  /** Whether the call lives in the cross-half plugin package, and not in the own `dev` section. */
+  /** Whether the call lives in the product package, and not in the own `dev` section. */
   @JvmField val callIsCrossHalf: Boolean,
-  /** Whether the plan files live in a community package while the call lives cross-half, so the `dev` section exports them. */
+  /** Whether the plan files live in a community package while the call lives in the product package, so the `dev` section exports them. */
   @JvmField val exportsPlanFiles: Boolean,
   /**
    * The repositories that the community calls in this home name, with the platform token of a folded call. The ultimate
    * half renders a reused call into this home, and that call can name them, see [isCommunityCallLabel]. Empty for
    * every other home.
    */
-  @JvmField val communityRepositories: Set<String> = emptySet(),
+  @JvmField val callRepositories: Set<String> = emptySet(),
 ) {
   init {
     require(packageLabel.startsWith("//") || packageLabel.startsWith(COMMUNITY_REPOSITORY_PREFIX)) {
@@ -41,7 +41,7 @@ internal class DevDistPluginPlanHome(
     validatePlanPath(directory)
   }
 
-  /** Whether [directory] is the package of the plugin's main module. The cross-half home is a generated package instead. */
+  /** Whether [directory] is the package of the plugin's main module. A product package is a generated package instead. */
   val isModulePackage: Boolean
     get() = !callIsCrossHalf || exportsPlanFiles
 
@@ -59,7 +59,7 @@ internal class DevDistPluginPlanHome(
  *
  * The community half homes a complex plugin in its own package with the call in its `dev` section, and the directory is
  * relative to `community/`. The ultimate half homes an ultimate plugin in its own package, and a community plugin in the
- * cross-half plugin package, because it writes no community package.
+ * product package, because it writes no community package.
  */
 internal fun devDistPluginPlanHome(mainModule: String, index: DevDistBazelIndex): DevDistPluginPlanHome {
   val location = requireNotNull(index.location(mainModule)) { "Plugin '$mainModule' has no Bazel package, so its plan files have no home" }

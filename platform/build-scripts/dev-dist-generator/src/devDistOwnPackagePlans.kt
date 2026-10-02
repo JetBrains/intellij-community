@@ -15,7 +15,7 @@ private val QUOTED_LABEL = Regex("\"([^\"\\s]*//[^\"\\s]*)\"")
  * community plugin.
  *
  * The community half renders first and writes them. The ultimate half cannot write a community package, so it homes a
- * community plugin in the cross-half plugin package. It reuses the plan files and the calls of the own package together
+ * community plugin in the product package. It reuses the plan files and the calls of the own package together
  * when both are equal, see [acceptsUpstreamPlans]. So the ultimate half writes no copy.
  */
 internal class DevDistOwnPackagePlans(
@@ -43,9 +43,9 @@ internal class DevDistOwnPackagePlans(
    * Whether the ultimate half can reuse the plan files and the calls that the community half writes into the own
    * package of [mainModule].
    *
-   * [planTexts] are the plan files of the ultimate half in its cross-half plugin package, keyed by file name, with
+   * [planTexts] are the plan files of the ultimate half in its product package, keyed by file name, with
    * their ultimate spelling. [crossHalfCalls] are its calls there. The plan texts and the calls must name only community
-   * call labels, see [isCommunityCallLabel]. A repository that the community calls name counts as a community repository.
+   * call labels, see [isCommunityCallLabel]. Such a label can name a repository of the community calls.
    * The plan texts with every `@community//` label spelled `//` must equal the community texts. The community calls with
    * every `//` label spelled `@community//` must equal [crossHalfCalls]. A plan file and a call name no package of their
    * own, so the text of either does not depend on its package.
@@ -55,9 +55,9 @@ internal class DevDistOwnPackagePlans(
       return false
     }
     val communityCalls = sectionCalls.get(mainModule) ?: return false
-    val repositories = communityRepositories(communityCalls)
+    val repositories = callRepositories(communityCalls)
     val labels = (planTexts.values + crossHalfCalls).asSequence().flatMap { QUOTED_LABEL.findAll(it) }.map { it.groupValues.get(1) }
-    if (labels.any { !isCommunityCallLabel(it, communityRepositories = repositories) }) {
+    if (labels.any { !isCommunityCallLabel(it, callRepositories = repositories) }) {
       return false
     }
     val respelled = planTexts.mapValuesTo(TreeMap()) { (_, text) -> text.replace("\"$COMMUNITY_REPOSITORY_PREFIX", "\"//") }
@@ -77,12 +77,12 @@ internal class DevDistOwnPackagePlans(
       packageLabel = home.packageLabel,
       callIsCrossHalf = false,
       exportsPlanFiles = false,
-      communityRepositories = sectionCalls.get(mainModule)?.let(::communityRepositories).orEmpty(),
+      callRepositories = sectionCalls.get(mainModule)?.let(::callRepositories).orEmpty(),
     )
   }
 
   /** The repositories that the community calls [calls] name, sorted. A folded call keeps the platform token in a name. */
-  private fun communityRepositories(calls: String): Set<String> {
+  private fun callRepositories(calls: String): Set<String> {
     return QUOTED_LABEL.findAll(calls).mapNotNullTo(TreeSet()) { labelRepository(it.groupValues.get(1)) }
   }
 
