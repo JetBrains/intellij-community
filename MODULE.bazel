@@ -223,8 +223,6 @@ single_version_override(
     patch_strip = 1,
     patches = [
         "//:build/rules_rs-0.0.108-github-crate-tarball.patch",  # TODO: remove that once merged to upstream
-        # A Unix-only crate cross-built from a Windows host needs its build dependencies there. TODO: upstream.
-        "//:build/rules_rs-0.0.108-exec-build-deps.patch",
     ],
 )
 
