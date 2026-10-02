@@ -17,6 +17,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -68,7 +69,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
       initialScanJob = launch {
         readAction {
           blockingContextToIndicator {
-            buildInitialScanEvents(project, request.scope, searchScope, filter)
+            sendInitialScanEvents(project, request.scope, searchScope, filter)
           }
           PsiManager.getInstance(project).addPsiTreeChangeListener(
             TodoBackendPsiListener(::scheduleInitialScan) { file -> fileChangesQueue.trySend(file) },
@@ -105,12 +106,13 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     awaitCancellation()
   }.buffer(Channel.UNLIMITED)
 
-  private fun ProducerScope<TodoEvent>.buildInitialScanEvents(
+  private fun ProducerScope<TodoEvent>.sendInitialScanEvents(
     project: Project,
     scope: TodoScope,
     searchScope: SearchScope?,
     filter: TodoFilter?,
   ) {
+    ProgressManager.checkCanceled()
     val psiManager = PsiManager.getInstance(project)
     trySend(TodoEvent.AllItemsRemoved)
     when (scope) {
@@ -118,6 +120,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
       is TodoScope.ChangeList -> scope.fileIds.forEach { sendTodoFileResult(project, psiManager, it, filter) }
       is TodoScope.Project -> {
         PsiTodoSearchHelper.getInstance(project).processFilesWithTodoItems { psiFile ->
+          ProgressManager.checkCanceled()
           val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
           val result = buildTodoFileResult(project, psiFile, virtualFile, filter)
           if (result != null) {
@@ -132,6 +135,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
           return
         }
         PsiTodoSearchHelper.getInstance(project).processFilesWithTodoItems { psiFile ->
+          ProgressManager.checkCanceled()
           val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
           if (!searchScope.contains(virtualFile)) return@processFilesWithTodoItems true
           val result = buildTodoFileResult(project, psiFile, virtualFile, filter)
@@ -151,6 +155,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     fileId: VirtualFileId,
     filter: TodoFilter?,
   ) {
+    ProgressManager.checkCanceled()
     val virtualFile = fileId.virtualFile() ?: return
     if (!virtualFile.isValid) return
     val psiFile = psiManager.findFile(virtualFile) ?: return
@@ -178,6 +183,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
         trySend(TodoEvent.FileRemoved(file.rpcId()))
         return@readAction
       }
+      ProgressManager.checkCanceled()
       val result = buildTodoFileResult(project, psiFile, file, filter)
       if (result != null) {
         trySend(TodoEvent.FileUpserted(result))
