@@ -3,12 +3,12 @@ package com.intellij.execution.console;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
@@ -43,7 +43,7 @@ final class UseConsoleInputAction extends ToggleAction implements DumbAware {
   public void setSelected(@NotNull AnActionEvent event, boolean state) {
     useProcessStdIn = !state;
 
-    LanguageConsoleView consoleView = (LanguageConsoleView)event.getData(ExecutionDataKeys.CONSOLE_VIEW);
+    LanguageConsoleView consoleView = (LanguageConsoleView)event.getData(ConsoleView.DATA_KEY);
     assert consoleView != null;
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(consoleView.getProject());
     PsiFile file = consoleView.getFile();
