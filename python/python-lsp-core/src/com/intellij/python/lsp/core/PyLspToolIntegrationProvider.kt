@@ -156,7 +156,15 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
     Disposer.register(listenerDisposable) {
       listenerConnectedForProjects.remove(project)
     }
-    subscribeOnChanges(descriptor.pyTool, project, listenerDisposable)
+    try {
+      subscribeOnChanges(descriptor.pyTool, project, listenerDisposable)
+    }
+    catch (e: Throwable) {
+      // `fileOpened` runs in a read action that a write action cancels, for example while the first
+      // call creates a service. The dispose removes the project again, so the next call subscribes.
+      Disposer.dispose(listenerDisposable)
+      throw e
+    }
     // The Python plugin can unload before the project closes, and the entry must go then too.
     if (!Disposer.tryRegister(PythonPluginDisposable.getInstance(project), Disposable { listenerConnectedForProjects.remove(project) })) {
       Disposer.dispose(listenerDisposable)
