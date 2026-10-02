@@ -88,6 +88,12 @@ bazel run //platform/buildScripts:plugin-model-tool -- --check --trace=/tmp/plug
 Open the file in the Jaeger UI, or in any tool that reads the Jaeger JSON format. Read the trace before you optimize
 the generator, because the trace states which stage owns the run.
 
+### Unused Inputs (`--unused-inputs`)
+
+`--unused-inputs=<file>` writes the declared Bazel inputs that the run did not read, in every mode. Without an
+explicit input manifest, the file is empty. The tool ignores an unknown flag. A misspelled `--unused-inputs` writes no
+file, and without `--check` the run still writes the generated files.
+
 ### Adding Debug Statements
 
 Use the `debug()` function when investigating issues:

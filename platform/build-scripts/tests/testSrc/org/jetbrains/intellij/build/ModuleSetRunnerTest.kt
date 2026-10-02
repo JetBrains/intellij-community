@@ -100,4 +100,26 @@ class ModuleSetRunnerTest {
       .isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("--trace needs a file")
   }
+
+  @Test
+  fun `a run without the unused inputs argument has no unused inputs file`() {
+    assertThat(parseGeneratorOptions(arrayOf("--check", "--trace=trace.json")).unusedInputsFile).isNull()
+  }
+
+  @Test
+  fun `the unused inputs argument becomes an absolute path`() {
+    val options = parseGeneratorOptions(arrayOf("--unused-inputs=out/unused.txt", "--trace=trace.json"))
+
+    assertThat(options.unusedInputsFile).isAbsolute()
+    assertThat(options.unusedInputsFile).endsWithRaw(Path.of("out", "unused.txt"))
+    assertThat(options.traceFile?.fileName).isEqualTo(Path.of("trace.json"))
+    assertThat(options.commitChanges).isTrue()
+  }
+
+  @Test
+  fun `an empty unused inputs argument throws`() {
+    assertThatThrownBy { parseGeneratorOptions(arrayOf("--unused-inputs=")) }
+      .isInstanceOf(IllegalArgumentException::class.java)
+      .hasMessageContaining("--unused-inputs needs a file")
+  }
 }

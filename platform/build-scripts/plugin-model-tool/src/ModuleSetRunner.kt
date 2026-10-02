@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.BuildTracer
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.buildSpan
+import org.jetbrains.intellij.build.impl.BazelBuildInputs
 import org.jetbrains.intellij.build.impl.BazelModuleOutputProvider
 import org.jetbrains.intellij.build.impl.JpsModuleOutputProvider
 import org.jetbrains.intellij.build.impl.bazelOutputRoot
@@ -99,6 +100,8 @@ private fun determineProductCategory(contentSpec: ProductModulesContentSpec?): P
  * - `--validation=<ids>`: Run only specified validation rules (comma-separated).
  *   Use `--validation=none` to skip all validation. Generation generators always run.
  * - `--trace=<file>`: Write an OpenTelemetry trace of the run into the file, in the Jaeger JSON format.
+ * - `--unused-inputs=<file>`: Write the declared Bazel inputs that the run did not read into the file, in every mode.
+ *   Without an explicit input manifest, the file is empty.
  *
  * @param args Command line arguments
  * @param communityModuleSetSources Module sets from community sources grouped by discovery label
@@ -197,6 +200,8 @@ fun runModuleSetMain(
     }
     println("Trace: $traceFile")
   }
+
+  options.unusedInputsFile?.let(BazelBuildInputs::writeUnusedInputs)
 
   // The exit must come after the trace file is closed, because a process exit skips the flush of the exporter.
   if (exitCode != 0) {
