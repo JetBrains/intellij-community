@@ -259,9 +259,6 @@
             }
         },
         {
-            "module": "intellij.python.community.impl.huggingFace"
-        },
-        {
             "module": "intellij.python.community.plugin.impl"
         },
         {
