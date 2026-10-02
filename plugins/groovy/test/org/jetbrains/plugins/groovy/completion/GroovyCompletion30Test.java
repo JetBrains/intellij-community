@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -136,6 +136,17 @@ public class GroovyCompletion30Test extends GroovyCompletionTestBase {
                       x([l])
                       l.byteValue()<caret>
                   }""");
+  }
+
+  public void testCompleteQuotedMethodName() {
+    doBasicTest("""
+                  def 'good job'() {}
+                  goo<caret>
+                  """,
+                """
+                  def 'good job'() {}
+                  'good job'()
+                  """);
   }
 
   @Override

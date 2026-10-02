@@ -1,8 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
+import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement
 import javax.swing.Icon
 
 class GroovyResolveResultLookupElementDecorator(private val typeText: String?, private val tailText: String?, builder: LookupElementBuilder) : LookupElementDecorator<LookupElementBuilder>(builder) {
@@ -19,5 +21,16 @@ class GroovyResolveResultLookupElementDecorator(private val typeText: String?, p
     result = 31 * result + (typeText?.hashCode() ?: 0)
     result = 31 * result + (tailText?.hashCode() ?: 0)
     return result
+  }
+
+  override fun getLookupString(): String {
+    val string = super.getLookupString()
+    if (!StringUtil.isJavaIdentifier(string)) {
+      val element = psiElement
+      if (element is GrNamedElement) {
+        return element.nameIdentifierGroovy.text
+      }
+    }
+    return string
   }
 }
