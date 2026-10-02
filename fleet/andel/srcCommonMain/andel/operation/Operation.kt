@@ -308,6 +308,15 @@ fun deduce(deletes: String, inserts: String): List<Op> {
     ) {
       commonPrefix++
     }
+    if (
+      commonPrefix > 0 &&
+      (
+        hasSurrogatePairAt(deletes, deletesPosition + commonPrefix - 1) ||
+        hasSurrogatePairAt(inserts, insertsPosition + commonPrefix - 1)
+      )
+    ) {
+      commonPrefix--
+    }
     if (commonPrefix != 0) {
       result.add(Op.Retain(commonPrefix.toLong()))
       deletesPosition += commonPrefix
@@ -368,10 +377,25 @@ private fun commonChar(s1: String, i1: Int, s2: String, i2: Int): Pair<Int, Int>
   ) {
     commonSuffix++
   }
+  val s1SuffixPairIndex = s1.length - commonSuffix - 1
+  val s2SuffixPairIndex = s2.length - commonSuffix - 1
+  if (
+    commonSuffix > 0 &&
+    (
+      s1SuffixPairIndex >= i1 && hasSurrogatePairAt(s1, s1SuffixPairIndex) ||
+      s2SuffixPairIndex >= i2 && hasSurrogatePairAt(s2, s2SuffixPairIndex)
+    )
+  ) {
+    commonSuffix--
+  }
   if (commonSuffix == 0)
     return Pair(s1.length, s2.length)
 
   return Pair(s1.length - commonSuffix, s2.length - commonSuffix)
+}
+
+private fun hasSurrogatePairAt(s: String, index: Int): Boolean {
+  return index >= 0 && index < s.length - 1 && s[index].isHighSurrogate() && s[index + 1].isLowSurrogate()
 }
 
 
