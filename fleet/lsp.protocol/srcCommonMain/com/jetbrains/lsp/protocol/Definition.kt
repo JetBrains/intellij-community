@@ -48,12 +48,17 @@ data class TypeDefinitionParams(
     override val partialResultToken: ProgressToken? = null,
 ) : TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams
 
-// TODO: In reality, this method, similar to TypeDefinition, returns the type `Location | Location[] | LocationLink[] | null`.
-//       Since the testing machinery of the language-server currently doesn't support performing the partial result tests
-//       with requests that return something that isn't a list, the definition here is kept as is.
-//       The Air (Fleet) LSP client has its own RequestType of this method as a temporary measure, but the aim is to merge them together.
-val DefinitionRequestType: RequestType<DefinitionParams, List<Location>/*TODO  LocationLink should be here as more flexible*/, Unit> =
-    RequestType("textDocument/definition", DefinitionParams.serializer(), ListSerializer(Location.serializer()), Unit.serializer())
+/**
+ * The spec result is `Location | Location[] | LocationLink[] | null`. This type covers the two list forms, so partial
+ * results still work: the testing machinery of the language server supports partial results only for list results.
+ * A server sends [LocationLink]s only to a client with [DefinitionClientCapabilities.linkSupport], and never mixes the two
+ * kinds in one answer.
+ *
+ * TODO: the single `Location` and `null` forms. The Air (Fleet) LSP client has its own RequestType of this method as a
+ *       temporary measure, but the aim is to merge them together.
+ */
+val DefinitionRequestType: RequestType<DefinitionParams, List<LocationOrLink>, Unit> =
+    RequestType("textDocument/definition", DefinitionParams.serializer(), ListSerializer(LocationOrLink.serializer()), Unit.serializer())
 
 val TypeDefinitionRequestType: RequestType<TypeDefinitionParams, Locations?, Unit> =
     RequestType("textDocument/typeDefinition", TypeDefinitionParams.serializer(), Locations.serializer().nullable, Unit.serializer())

@@ -1,6 +1,7 @@
 package com.jetbrains.lsp.protocol
 
 import fleet.util.isValidUriString
+import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
@@ -15,6 +16,7 @@ import kotlinx.serialization.descriptors.buildSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonContentPolymorphicSerializer
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonEncoder
@@ -368,11 +370,29 @@ data class TextDocumentEdit(
     val edits: List<TextEdit>,
 ): FileChange
 
+/**
+ * One element of a result that is `Location[] | LocationLink[]`, e.g. of `textDocument/definition`.
+ *
+ * An object with a `targetUri` member is a [LocationLink], any other object a [Location]. One answer must not mix the two
+ * kinds, also across partial results.
+ */
+@Serializable(with = LocationOrLink.Serializer::class)
+sealed interface LocationOrLink {
+    class Serializer : JsonContentPolymorphicSerializer<LocationOrLink>(LocationOrLink::class) {
+        override fun selectDeserializer(element: JsonElement): DeserializationStrategy<LocationOrLink> {
+            return when (element) {
+                is JsonObject -> if (element.containsKey("targetUri")) LocationLink.serializer() else Location.serializer()
+                else -> throw SerializationException("Expected either Location or LocationLink, got $element")
+            }
+        }
+    }
+}
+
 @Serializable
 data class Location(
     val uri: DocumentUri,
     val range: Range,
-)
+) : LocationOrLink
 
 @Serializable
 data class LocationLink(
@@ -403,7 +423,7 @@ data class LocationLink(
      * `targetRange`. See also `DocumentSymbol#range`
      */
     val targetSelectionRange: Range,
-)
+) : LocationOrLink
 
 @Serializable
 data class Command(

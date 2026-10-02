@@ -71,6 +71,7 @@ import com.jetbrains.lsp.protocol.InlayHints
 import com.jetbrains.lsp.protocol.InlineValueOptions
 import com.jetbrains.lsp.protocol.LinkedEditingRangeOptions
 import com.jetbrains.lsp.protocol.Location
+import com.jetbrains.lsp.protocol.LocationOrLink
 import com.jetbrains.lsp.protocol.Locations
 import com.jetbrains.lsp.protocol.MonikerOptions
 import com.jetbrains.lsp.protocol.NotebookDocumentSyncOptions
@@ -181,7 +182,7 @@ fun LspServerCapabilitiesBuilder.declarationProvider(
 
 fun LspServerCapabilitiesBuilder.definitionProvider(
     value: OrBoolean<DefinitionRegistrationOptions> = OrBoolean(true),
-    handler: suspend context(LspHandlerContext) CoroutineScope.(DefinitionParams) -> List<Location>,
+    handler: suspend context(LspHandlerContext) CoroutineScope.(DefinitionParams) -> List<LocationOrLink>,
 ): Unit = capability(update = { copy(definitionProvider = value) }, register = {
     request(DefinitionRequestType, handler)
 })
