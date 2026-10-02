@@ -4,8 +4,6 @@ package com.jetbrains.python.sdk.uv
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -48,7 +46,7 @@ internal val Sdk.uvUsePackageManagement: Boolean
  * Execution context for UV SDK operations.
  * Consolidates all PathHolder type-specific data needed to execute UV commands.
  *
- * Use [getUvExecutionContext] to create an instance from an SDK.
+ * Use [getUvExecutionContextAsync] to create an instance from an SDK.
  */
 internal sealed interface UvExecutionContext<P : PathHolder> {
   val workingDir: Path
@@ -137,19 +135,6 @@ internal fun Sdk.getUvExecutionContextAsync(scope: CoroutineScope, project: Proj
     else -> null
   }
 }
-
-@Service
-private class MyService(val coroutineScope: CoroutineScope)
-
-/**
- * Creates a [UvExecutionContext] from an SDK.
- * This factory consolidates all PathHolder casts in one place for SDK consumption code.
- *
- * @param project Optional project for fallback working directory
- * @return UvExecutionContext if the SDK is a valid UV SDK, null otherwise
- */
-internal suspend fun Sdk.getUvExecutionContext(project: Project? = null): UvExecutionContext<*>? =
-  getUvExecutionContextAsync(service<MyService>().coroutineScope, project)?.await()
 
 internal suspend fun setupNewUvSdkAndEnv(uvExecutable: Path, workingDir: Path, version: Version?, errorSink: ErrorSink): PyResult<PythonInterpreter> =
   setupNewUvSdkAndEnv(
