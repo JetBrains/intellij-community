@@ -823,7 +823,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.langInjection",
             "intellij.platform.langInjection.backend",
             "intellij.platform.versionDownloadManager",
-            "intellij.libraries.cglib",
         ],
         nested = [
             "intellij.moduleSets.essential",
@@ -837,14 +836,11 @@ DEV_DIST_MODULE_SETS = {
             "intellij.moduleSets.polySymbols",
             "intellij.moduleSets.vcs",
             "intellij.moduleSets.lsp",
+            "intellij.moduleSets.xml.runtime",
             "intellij.moduleSets.duplicates",
         ],
-        loading = {
-            "intellij.libraries.cglib": "embedded",
-        },
         packed = {
             "intellij.emojipicker": "//plugins/emojipicker:emojipicker_content_module_jar",
-            "intellij.libraries.cglib": "//platform/libraries/cglib:cglib_content_module_jar",
             "intellij.platform.buildView": "//platform/buildView:buildView_content_module_jar",
             "intellij.platform.buildView.backend": "//platform/buildView/backend:backend_content_module_jar",
             "intellij.platform.buildView.frontend": "//platform/buildView/frontend:frontend_content_module_jar",
@@ -1717,5 +1713,18 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.vcs.impl.shared",
             "intellij.platform.vcs.shared",
         ],
+    ),
+    "intellij.moduleSets.xml.runtime": struct(
+        modules = [
+            "intellij.libraries.cglib",
+        ],
+        nested = [
+        ],
+        loading = {
+            "intellij.libraries.cglib": "embedded",
+        },
+        packed = {
+            "intellij.libraries.cglib": "//platform/libraries/cglib:cglib_content_module_jar",
+        },
     ),
 }

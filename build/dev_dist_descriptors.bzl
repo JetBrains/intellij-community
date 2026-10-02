@@ -185,7 +185,7 @@ DEV_DIST_EXTRA_DESCRIPTOR_FILES = [
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.telemetry.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.vcs.shared.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.vcs.xml", "intellij.platform.resources"),
-    ("platform/platform-resources/generated/META-INF/intellij.moduleSets.xml.without.structureView.xml", "intellij.platform.resources"),
+    ("platform/platform-resources/generated/META-INF/intellij.moduleSets.xml.runtime.xml", "intellij.platform.resources"),
     ("platform/usageView-impl/resources/intellij.platform.usageView.impl.actions.xml", "intellij.platform.usageView.impl"),
     ("platform/usageView/resources/intellij.platform.usageView.actions.xml", "intellij.platform.usageView"),
     ("platform/vcs-impl/resources/META-INF/VcsActions.xml", "intellij.platform.vcs.impl"),

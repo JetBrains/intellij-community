@@ -16,7 +16,7 @@ import org.jetbrains.intellij.build.productLayout.LibraryModuleSets.librariesLsp
  * - **essentialMinimal/essential**: IDE editing and navigation features
  * - **debugger**: Debugger platform
  * - **vcs**: Version control support
- * - **xml**: XML support
+ * - **xmlRuntime**: the cglib library, for a product that bundles the XML plugin
  * - **externalSystem**: the external system platform, for a product that bundles a build-tool plugin
  * - **composeRuntime**: Compose runtime and Compose Swing, for a product that bundles the Compose plugin
  * - **spellchecker/settingsSync/ml**: one feature with the library it needs
@@ -238,39 +238,6 @@ object CommunityModuleSets {
   }
 
   /**
-   * XML support modules without Structure View UI.
-   * The other products bundle the `intellij.xml.plugin` wrapper plugin instead.
-   */
-  fun xmlWithoutStructureView(): ModuleSet = moduleSet("xml.without.structureView", alias = "com.intellij.modules.xml") {
-    module("intellij.xml.dom")
-    module("intellij.xml.dom.impl")
-    module("intellij.xml.psi")
-    module("intellij.xml.psi.impl")
-    module("intellij.xml.analysis")
-    module("intellij.xml.emmet")
-    module("intellij.xml.emmet.shared")
-    module("intellij.xml.emmet.backend")
-    module("intellij.xml.emmet.frontend")
-    module("intellij.xml.ui.common")
-    module("intellij.xml.parser")
-    module("intellij.xml.syntax")
-    module("intellij.relaxng")
-    // kept embedded (i.e. loaded by the core classloader): `AdvancedEnhancer.getDefaultClassLoader()` defines each
-    // generated DOM proxy in the `PluginClassLoader` of one of the proxied interfaces, so `net.sf.cglib.proxy.Factory`
-    // has to be resolvable from any plugin classloader - a set the layout cannot enumerate.
-    embeddedModule("intellij.libraries.cglib")
-    module("intellij.libraries.isorelax")
-    module("intellij.libraries.jing")
-    module("intellij.libraries.xerces")
-    module("intellij.libraries.xml.resolver")
-    module("intellij.xml.impl")
-    module("intellij.xml.analysis.impl")
-    module("intellij.xml.langInjection")
-    module("intellij.xml.langInjection.xpath")
-    module("intellij.xml.vcs")
-  }
-
-  /**
    * Duplicates analysis modules.
    */
   fun duplicates(): ModuleSet = moduleSet("duplicates") {
@@ -419,9 +386,22 @@ object CommunityModuleSets {
   }
 
   /**
+   * The XML module that stays in the platform: the cglib library.
+   * The XML modules are content of the bundled plugin `intellij.xml.plugin`, or of the Language Server XML Core plugin.
+   * cglib is embedded, because `AdvancedEnhancer.getDefaultClassLoader()` defines each generated DOM proxy in the
+   * `PluginClassLoader` of one of the proxied interfaces. `net.sf.cglib.proxy.Factory` must resolve from any plugin
+   * classloader, and the layout cannot enumerate that set.
+   *
+   * [ideCommon] nests this set. A lean product that bundles an XML plugin adds the set itself.
+   */
+  fun xmlRuntime(): ModuleSet = moduleSet("xml.runtime") {
+    embeddedModule("intellij.libraries.cglib")
+  }
+
+  /**
    * IDE common modules.
-   * Nests essential, debugger, spellchecker, settings.sync, ml, externalSystem, polySymbols, vcs, lsp, duplicates, and the
-   * libraries.ide.common and libraries.grpc sets from [LibraryModuleSets].
+   * Nests essential, debugger, spellchecker, settings.sync, ml, externalSystem, polySymbols, vcs, lsp, xml.runtime,
+   * duplicates, and the libraries.ide.common and libraries.grpc sets from [LibraryModuleSets].
    * No Compose module is in this set. A product that bundles the plugin [COMPOSE_PLUGIN_MODULE] adds [composeRuntime].
    */
   fun ideCommon(): ModuleSet = moduleSet("ide.common") {
@@ -468,11 +448,7 @@ object CommunityModuleSets {
 
     moduleSet(vcs())
     moduleSet(lsp())
-    // the other xml modules live in the `intellij.xml.plugin` wrapper plugin; cglib is kept embedded
-    // (i.e. loaded by the core classloader): `AdvancedEnhancer.getDefaultClassLoader()` defines each
-    // generated DOM proxy in the `PluginClassLoader` of one of the proxied interfaces, so `net.sf.cglib.proxy.Factory`
-    // has to be resolvable from any plugin classloader - a set the layout cannot enumerate.
-    embeddedModule("intellij.libraries.cglib")
+    moduleSet(xmlRuntime())
     moduleSet(duplicates())
 
     // Note: rd.common is intentionally NOT included in ide.common

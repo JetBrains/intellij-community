@@ -201,8 +201,8 @@ class ModuleSetBuilder {
  * }
  *
  * // With module alias:
- * fun xmlWithoutStructureView() = moduleSet("xml.without.structureView", alias = "com.intellij.modules.xml") {
- *   module("intellij.xml.dom")
+ * fun featureX() = moduleSet("feature.x", alias = "com.intellij.modules.featureX") {
+ *   module("intellij.featureX")
  *   // ...
  * }
  *

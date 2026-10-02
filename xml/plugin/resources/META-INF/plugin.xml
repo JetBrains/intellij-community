@@ -10,8 +10,7 @@
   ]]></description>
   <module value="com.intellij.modules.xml"/>
 
-  <!-- intellij.libraries.cglib stays embedded in the core classloader,
-       see embeddedModule("intellij.libraries.cglib") in CommunityModuleSets.ideCommon(). -->
+  <!-- intellij.libraries.cglib stays embedded in the core classloader, see CommunityModuleSets.xmlRuntime(). -->
   <content namespace="jetbrains">
     <module name="intellij.xml.dom"/>
     <module name="intellij.xml.dom.impl"/>

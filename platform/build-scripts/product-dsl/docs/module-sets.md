@@ -145,7 +145,7 @@ Includes another module set. Creates hierarchical composition:
 fun ideCommon() = moduleSet("ide.common") {
   moduleSet(essential())  // Nest essential modules
   moduleSet(vcs())        // Nest VCS modules
-  moduleSet(xml())        // Nest XML modules
+  moduleSet(lsp())        // Nest LSP modules
 }
 ```
 
@@ -166,14 +166,14 @@ Generation intersects that build-time registry with each product's `ProductModul
 Generates a `<module value="..."/>` declaration in the XML, allowing plugins to depend on this module set as a module:
 
 ```kotlin
-fun xml() = moduleSet("xml", alias = "com.intellij.modules.xml") {
+fun featureX() = moduleSet("feature.x", alias = "com.intellij.modules.featureX") {
   // ...
 }
 ```
 
 Generated XML includes:
 ```xml
-<module value="com.intellij.modules.xml"/>
+<module value="com.intellij.modules.featureX"/>
 ```
 
 ### `outputModule` - Custom Output Location
@@ -241,14 +241,11 @@ fun vcs(): ModuleSet = moduleSet("vcs") {
 
 ```kotlin
 /**
- * XML support modules.
+ * The feature X modules. Plugins depend on the alias, not on one member module.
  */
-fun xml(): ModuleSet = moduleSet("xml", alias = "com.intellij.modules.xml") {
-  embeddedModule("intellij.xml.dom")
-  embeddedModule("intellij.xml.psi")
-  embeddedModule("intellij.xml.psi.impl")
-  module("intellij.xml.emmet")
-  module("intellij.relaxng")
+fun featureX(): ModuleSet = moduleSet("feature.x", alias = "com.intellij.modules.featureX") {
+  embeddedModule("intellij.featureX")
+  module("intellij.featureX.impl")
   // ...
 }
 ```

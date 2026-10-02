@@ -479,6 +479,10 @@
     <!-- endregion -->
     <!-- endregion -->
 
+    <!-- region nested: xml.runtime -->
+    <module name="intellij.libraries.cglib" loading="embedded"/>
+    <!-- endregion -->
+
     <!-- region nested: duplicates -->
     <module name="intellij.platform.duplicates.analysis"/>
     <!-- endregion -->
@@ -510,7 +514,6 @@
     <module name="intellij.platform.langInjection"/>
     <module name="intellij.platform.langInjection.backend"/>
     <module name="intellij.platform.versionDownloadManager"/>
-    <module name="intellij.libraries.cglib" loading="embedded"/>
     <!-- endregion -->
   </content>
 </idea-plugin>
