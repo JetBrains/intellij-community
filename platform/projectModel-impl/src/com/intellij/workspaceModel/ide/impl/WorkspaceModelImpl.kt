@@ -5,6 +5,7 @@ import com.intellij.concurrency.ThreadContextAwareReentrantLock
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.diagnostic.dumpCoroutines
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
@@ -12,7 +13,6 @@ import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.checkCanceled
@@ -71,9 +71,6 @@ import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.minutes
 
 private val EP_NAME: ExtensionPointName<BridgeInitializer> = ExtensionPointName("com.intellij.workspace.bridgeInitializer")
-
-@ApiStatus.Internal
-var logSilentUpdates: Boolean = true
 
 @ApiStatus.Internal
 open class WorkspaceModelImpl : WorkspaceModelInternal {
@@ -366,9 +363,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       updatesCounter.incrementAndGet()
     }
 
-    if (logSilentUpdates) {
-      log.info("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description (project=${project.name}, locationHash=${project.locationHash})")
-    }
+    log.debug("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description (project=${project.name}, locationHash=${project.locationHash})")
   }
 
   /**

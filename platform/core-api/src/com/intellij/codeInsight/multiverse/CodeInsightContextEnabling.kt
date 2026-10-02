@@ -29,7 +29,7 @@ internal fun isSharedSourceSupportEnabledImpl(project: Project): Boolean {
     val result = computeSharedSourceEnabled(project)
     project.putUserData(multiverse_enabler_key, result)
     if (logMultiverseState) {
-      log.info("multiverse is ${if (result) "enabled" else "disabled"}")
+      log.info("Multiverse is ${if (result) "enabled" else "disabled"}")
     }
     return result
   }
