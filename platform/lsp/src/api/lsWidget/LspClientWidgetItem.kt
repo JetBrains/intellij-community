@@ -7,11 +7,11 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.lang.lsWidget.LanguageServiceItemRunningState
 import com.intellij.platform.lang.lsWidget.LanguageServicePopupSection
 import com.intellij.platform.lang.lsWidget.LanguageServicePopupSection.ForCurrentFile
@@ -55,8 +55,7 @@ open class LspClientWidgetItem(
   override val widgetActionLocation: LanguageServicePopupSection by lazy {
     if (currentFile != null &&
         lspClient.descriptor.isSupportedFile(currentFile) &&
-        lspClient.descriptor.roots.any { root -> VfsUtil.isAncestor(root, currentFile, true) } &&
-        ProjectFileIndex.getInstance(lspClient.project).isInContent(currentFile)) {
+        (IdeProductMode.isFrontend || lspClient.descriptor.roots.any { root -> VfsUtil.isAncestor(root, currentFile, true) })) {
       ForCurrentFile
     }
     else Other
