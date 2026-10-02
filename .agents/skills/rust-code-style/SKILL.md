@@ -1,6 +1,6 @@
 ---
 name: rust-code-style
-description: Write or review Rust in the build tools: the error model, the CLI grammar, the crate rule, the test layout, the shared lint, format and Bazel configuration.
+description: Write or review Rust in the build tools: errors, CLI grammar, crates, tests, lint, format and Bazel.
 ---
 
 # Rust Code Style
