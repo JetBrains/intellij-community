@@ -3,6 +3,7 @@ package com.intellij.platform.lsp.impl.serviceView
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.process.AnsiEscapeDecoder
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
@@ -10,6 +11,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
@@ -30,6 +32,7 @@ import javax.swing.JPanel
 private val TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss")
 private const val MAX_TRAFFIC_PAYLOAD_LENGTH = 10_000
 private const val MAX_STORED_PAYLOAD_LENGTH = 100_000
+private const val MAX_INCOMPLETE_LINE_LENGTH = 10_000
 
 /**
  * A console shown in the Services tool window for a single [com.intellij.platform.lsp.api.LspClient].
@@ -38,6 +41,8 @@ private const val MAX_STORED_PAYLOAD_LENGTH = 100_000
 internal class LspClientConsole(project: Project) : Disposable {
   private val console: ConsoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).apply { setViewer(true) }.console
   private val ansiDecoder = AnsiEscapeDecoder()
+  private val standardOutputLines = ProcessOutputLines("STDOUT", ConsoleViewContentType.NORMAL_OUTPUT)
+  private val errorOutputLines = ProcessOutputLines("STDERR", ConsoleViewContentType.ERROR_OUTPUT)
   private var panel: JComponent? = null
 
   init {
@@ -49,6 +54,26 @@ internal class LspClientConsole(project: Project) : Disposable {
 
   fun printShowMessage(type: MessageType, message: String): Unit =
     print(type.levelTag(), "window/showMessage: $message", type.contentType())
+
+  /**
+   * Prints a raw chunk of the text that the server process wrote to its standard output or to its standard error stream.
+   * Many servers write their log there. A chunk can end in the middle of a line.
+   * The console keeps the incomplete last line until the next chunk completes it, or until [flushProcessOutput].
+   */
+  @Synchronized
+  fun printProcessOutput(chunk: String, outputType: Key<*>) {
+    when {
+      ProcessOutputType.isStderr(outputType) -> errorOutputLines.append(chunk)
+      ProcessOutputType.isStdout(outputType) -> standardOutputLines.append(chunk)
+    }
+  }
+
+  /** Prints the incomplete last lines of the server process output. Call it when the server process terminates. */
+  @Synchronized
+  fun flushProcessOutput() {
+    standardOutputLines.flush()
+    errorOutputLines.flush()
+  }
 
   fun printTrace(message: String): Unit =
     print("TRACE", message, ConsoleViewContentType.LOG_VERBOSE_OUTPUT)
@@ -127,6 +152,38 @@ internal class LspClientConsole(project: Project) : Disposable {
 
   override fun dispose() {
     panel = null
+  }
+
+  /**
+   * Puts the chunks of one output stream of the server process together into lines.
+   * `\n`, `\r\n`, and a lone `\r` end a line. A line longer than [MAX_INCOMPLETE_LINE_LENGTH] is printed in parts.
+   * Use it only under the lock of the console.
+   */
+  private inner class ProcessOutputLines(private val tag: @NlsSafe String, private val contentType: ConsoleViewContentType) {
+    private val incompleteLine = StringBuilder()
+
+    fun append(chunk: String) {
+      incompleteLine.append(chunk)
+      // A '\r' at the end can be the first half of "\r\n". It waits for the next chunk.
+      val searchEnd = if (incompleteLine.endsWith('\r')) incompleteLine.length - 2 else incompleteLine.length - 1
+      val lastLineBreak = (searchEnd downTo 0).firstOrNull { incompleteLine[it] == '\n' || incompleteLine[it] == '\r' }
+      if (lastLineBreak != null) {
+        printLines(incompleteLine.substring(0, lastLineBreak))
+        incompleteLine.delete(0, lastLineBreak + 1)
+      }
+      if (incompleteLine.length > MAX_INCOMPLETE_LINE_LENGTH) flush()
+    }
+
+    fun flush() {
+      printLines(incompleteLine.toString())
+      incompleteLine.setLength(0)
+    }
+
+    private fun printLines(text: String) {
+      for (line in text.lineSequence()) {
+        if (line.isNotBlank()) print(tag, line, contentType)
+      }
+    }
   }
 }
 
