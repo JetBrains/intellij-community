@@ -2,8 +2,8 @@ package com.intellij.ide.starter.process
 
 import com.intellij.execution.Platform
 import com.intellij.execution.process.OSProcessUtil
+import com.intellij.execution.process.WinProcessManager
 import com.intellij.ide.starter.utils.catchAll
-import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -22,11 +22,14 @@ import kotlin.time.Duration.Companion.seconds
  *
  * To remember while editing:
  * - On Windows, killing descendants should not be done by iterating descendants — PID rotation can happen (see MRI-4085).
- *   Use [OSProcessUtil.killProcessTree] (which goes through WinP/Job-Objects) instead.
+ *   Use [WinProcessManager.kill] with `tree = true` (`taskkill /t`) instead.
+ *   Do not use [OSProcessUtil.killProcessTree]: it needs `LocalProcessService`, and the test JVM does not have it.
  *
  * - TW-71208: many processes on Linux TC (java for sure, ide we test and small test apps from portUtilTest) ignore SIGINT and only react to SIGTERM,
  *   SIGTERM is sent by `processHandle.destroy()`.
  *   OSProcessUtil.terminateProcessGracefully sends SIGINT on Linux.
+ *
+ * - On Windows, there is no graceful stop. A Ctrl+C needs `LocalProcessService`, so only the forceful kill runs.
  *
  * - SIGTERM does NOT propagate through shells like dash/xvfb-run to their children, so we must
  *   signal each descendant explicitly. We cannot rely on process groups either: Java's
@@ -100,26 +103,20 @@ object ProcessKiller {
     )
   }
 
-  @OptIn(LowLevelLocalMachineAccess::class)
   private suspend fun gracefulStop(processHandle: ProcessHandle, gracefulTimeout: Duration, cleanUpDescendants: Boolean) {
+    // On Windows, Ctrl+C needs `LocalProcessService` (WinP), and the test JVM does not have it.
+    // `destroy()` is a forceful kill on Windows, so `forcefulKill` handles Windows alone.
+    if (OS.CURRENT.platform != Platform.UNIX) return
     runCatching {
-      when {
-        OS.CURRENT.platform == Platform.UNIX -> {
-          if (cleanUpDescendants) {
-            val descendants = processHandle.descendants().toList()
-            descendants.asReversed().forEach {
-              logOutput("${processHandleToString(processHandle)}: Stopping descendant ${processHandleToString(it)} gracefully by `destroy` [SIGTERM]")
-              gracefulStop(it, 2.seconds, cleanUpDescendants = false)
-            }
-          }
-          logOutput("${processHandleToString(processHandle)}: Stopping gracefully by `destroy` [SIGTERM]")
-          processHandle.destroy()
-        }
-        else -> {
-          logOutput("${processHandleToString(processHandle)}: Stopping gracefully `OSProcessUtil.terminateProcessGracefully` [Ctrl+C]")
-          OSProcessUtil.terminateProcessGracefully(processHandle.pid().toInt())
+      if (cleanUpDescendants) {
+        val descendants = processHandle.descendants().toList()
+        descendants.asReversed().forEach {
+          logOutput("${processHandleToString(processHandle)}: Stopping descendant ${processHandleToString(it)} gracefully by `destroy` [SIGTERM]")
+          gracefulStop(it, 2.seconds, cleanUpDescendants = false)
         }
       }
+      logOutput("${processHandleToString(processHandle)}: Stopping gracefully by `destroy` [SIGTERM]")
+      processHandle.destroy()
     }
       .onFailure {
         logOutput("${processHandleToString(processHandle)}: Graceful stop failed: $it")
@@ -131,7 +128,6 @@ object ProcessKiller {
       }
   }
 
-  @OptIn(LowLevelLocalMachineAccess::class)
   private suspend fun forcefulKill(processHandle: ProcessHandle, forcefulTimeout: Duration, cleanUpDescendants: Boolean = true) {
     // On Windows we deliberately don't iterate descendants — see the MRI-4085 note at the top of the file.
     val descendantsSnapshot: List<ProcessHandle> =
@@ -141,7 +137,8 @@ object ProcessKiller {
     runCatching {
       if (cleanUpDescendants) {
         logOutput("${processHandleToString(processHandle)}: Killing process tree")
-        return@runCatching OSProcessUtil.killProcessTree(processHandle.pid())
+        return@runCatching if (OS.CURRENT.platform == Platform.UNIX) OSProcessUtil.killProcessTree(processHandle.pid())
+        else WinProcessManager.kill(processHandle.pid().toInt(), true)
       }
 
       if (processHandle.isAlive) {
