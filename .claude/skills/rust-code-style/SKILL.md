@@ -178,4 +178,4 @@ external repository.
 | The Bazel macro core: `rust_tool_crate`, `optimized_binary`, `windows_clippy_tests` | `community/build/rust-tools/defs.bzl` |
 | The dev-dist tools: crate map, gates, agent rules | [`community/build/dev-dist-tools/README.md`](../../../build/dev-dist-tools/README.md) and `AGENTS.md` |
 | BT | [`community/tools/bt/README.md`](../../../tools/bt/README.md) |
-| The Air UI-lane tooling, which joins the spec at its rework | `plugins/air/tests/integration/vm-lane/README.md` |
+| The Air UI-lane tooling: crate map, gates, agent rules | `plugins/air/tests/integration/vm-lane/README.md` and `AGENTS.md` |
