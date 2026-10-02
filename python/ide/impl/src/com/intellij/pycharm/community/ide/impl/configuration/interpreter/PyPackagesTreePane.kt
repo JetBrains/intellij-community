@@ -7,10 +7,13 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SimpleTextAttributes
@@ -29,7 +32,6 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
@@ -52,10 +54,9 @@ import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
 import com.jetbrains.python.packaging.toolwindow.ui.PyChangeVersionPopupLauncher
 import com.jetbrains.python.packaging.toolwindow.ui.PyInstallPackageDialogLauncher
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.jetbrains.python.sdk.ModuleOrProject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.IOException
 import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.Dimension
@@ -65,6 +66,7 @@ import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.io.IOException
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -74,8 +76,6 @@ import javax.swing.SwingUtilities
 import javax.swing.event.DocumentEvent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 
 /**
  * Typed tree-row payload the pane attaches to every `DefaultMutableTreeNode.userObject`. Classified
