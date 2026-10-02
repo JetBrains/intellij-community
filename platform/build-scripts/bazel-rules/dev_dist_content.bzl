@@ -228,15 +228,21 @@ dev_dist_plugin_components = rule(
     } | DEV_DIST_PRODUCT_INFO_ATTR,
 )
 
-def dev_dist_plugin_component_builds(components, product_info):
+def dev_dist_plugin_component_builds(components, product_info, community_products = [], community_product_info = None):
     """Declares one `<product>_plugin_components` target per product, so that each component builds once.
 
     A component serves every product that states it alike, so the first product that names a component builds it.
+    The additional tier of a community product builds under the community product info, as a distribution of it does.
 
     Args:
         components: The component map, `{product: {tier: {main module: label or {platform: label}}}}`.
         product_info: The label pattern of a product's `dev_dist_product_info`, with `%s` for the product key.
+        community_products: The community products of the map. The other half declares their product info.
+        community_product_info: The label pattern of a community product's `dev_dist_product_info`, with `%s` for the
+            product key. Required when `community_products` is not empty.
     """
+    if community_products and community_product_info == None:
+        fail("community_products needs community_product_info")
     claimed = {}
     for product, tiers in components.items():
         plugins = []
@@ -250,5 +256,5 @@ def dev_dist_plugin_component_builds(components, product_info):
             dev_dist_plugin_components(
                 name = product + "_plugin_components",
                 plugins = plugins,
-                product_info = product_info % product,
+                product_info = (community_product_info if product in community_products else product_info) % product,
             )
