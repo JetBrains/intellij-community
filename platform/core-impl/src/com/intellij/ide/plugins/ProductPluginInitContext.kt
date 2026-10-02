@@ -486,6 +486,7 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.xml.psi.impl",
   "intellij.xml.syntax",
   "intellij.xml.ui.common",
+  "intellij.platform.webide",
   "intellij.platform.webide.impl",
   "intellij.platform.wsl.impl",
   "intellij.platform.ide.favoritesTreeView",
