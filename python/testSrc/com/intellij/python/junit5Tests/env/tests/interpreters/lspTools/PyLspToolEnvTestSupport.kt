@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspServerState
@@ -97,6 +98,33 @@ private suspend fun readLspErrorDiagnostics(
     .map { it.diagnostic }
     .filter { it.severity == DiagnosticSeverity.Error }
 }
+
+/**
+ * Waits until [client] holds a diagnostic for [file] that matches [predicate], and returns every matching one.
+ *
+ * It waits for the events the way [awaitLspErrorDiagnostics] does. Use it when the project runs more than one
+ * client of a tool, because [awaitLspErrorDiagnostics] reads only the first one.
+ */
+internal suspend fun awaitLspDiagnostics(client: LspClient, file: VirtualFile, predicate: (Diagnostic) -> Boolean): List<Diagnostic> {
+  val clientImpl = client as LspClientImpl
+  return withTimeout(2.minutes) {
+    var matching = clientImpl.diagnosticsOf(file).filter(predicate)
+    while (matching.isEmpty()) {
+      try {
+        withTimeoutOrNull(LSP_EVENT_WAIT_LIMIT) { awaitDiagnosticsFromLspServer(client.descriptor.project, file) }
+      }
+      catch (_: AssertionError) {
+        // Another server of the project shut down. This client can still publish.
+        delay(LSP_EVENT_WAIT_LIMIT)
+      }
+      matching = clientImpl.diagnosticsOf(file).filter(predicate)
+    }
+    matching
+  }
+}
+
+private suspend fun LspClientImpl.diagnosticsOf(file: VirtualFile): List<Diagnostic> =
+  readAction { getDiagnosticsAndQuickFixes(file) }.map { it.diagnostic }
 
 /**
  * Assert that [errors] contains a diagnostic that is actually about the `int = "..."` type mismatch

@@ -213,6 +213,7 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
         if (module.project == project && prevSdk != newSdk) executableChanged.schedule()
       }
     })
+    connection.subscribe(ModuleRootListener.TOPIC, LspInterpreterChangeListener(project, executableChanged))
     // A refresh of the serve keys lands without a project event, so it triggers the checks itself. A
     // server that started before the refresh can hold the wrong group, and a module that just got the
     // tool can need a server that nothing started.
@@ -254,6 +255,33 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
         for (client in LspClientManager.getInstance(project).getClients(providerClass)) {
           (client.descriptor as? PyLspToolDescriptor)?.projectChangedAround(client)
         }
+      }
+    }
+  }
+
+  /**
+   * Schedules [executableChanged] when a client of this tool serves a module whose interpreter is no
+   * longer the one the client started with, see [PyLspToolDescriptor.interpreterChanged].
+   *
+   * The Project Structure dialog, the SDK table and a new project interpreter fire only `rootsChanged`,
+   * not [PySdkListener].
+   */
+  inner class LspInterpreterChangeListener(
+    private val project: Project,
+    private val executableChanged: PyToolChangeDebouncer,
+  ) : ModuleRootListener {
+    override fun rootsChanged(event: ModuleRootEvent) {
+      val providerClass = this@PyLspToolIntegrationProvider::class.java
+      val clientManager = LspClientManager.getInstance(project)
+      if (clientManager.getClients(providerClass).isEmpty()) return
+      // `rootsChanged` runs inside a write action, and the interpreters are read after it.
+      project.service<PyLspService>().cs.launch {
+        val changed = readAction {
+          clientManager.getClients(providerClass).any { (it.descriptor as? PyLspToolDescriptor)?.interpreterChanged() == true }
+        }
+        if (!changed) return@launch
+        thisLogger().info("The interpreter of a module that a ${providerClass.simpleName} client serves changed. Scheduling a restart.")
+        executableChanged.schedule()
       }
     }
   }
@@ -445,6 +473,23 @@ abstract class PyLspToolDescriptor(
    */
   val liveServedModules: List<Module> get() = servedModules.filterNot { it.isDisposed }
 
+  /**
+   * The home path of the interpreter of each served module when [createCommandLine] last ran, or
+   * `null` before that. The binary of the server comes from these interpreters.
+   */
+  @Volatile
+  private var interpreterHomes: Map<Module, String?>? = null
+
+  /**
+   * Whether a live served module now has another interpreter than when the server started. The binary
+   * of the tool comes from the interpreter, so the server can then run the wrong binary.
+   */
+  @RequiresReadLock
+  fun interpreterChanged(): Boolean {
+    val started = interpreterHomes ?: return false
+    return liveServedModules.any { started[it] != it.pythonSdk?.homePath }
+  }
+
   /** The served module that holds [file], or `null` when no served module does. */
   fun servedModuleOf(file: VirtualFile): Module? =
     ModuleUtilCore.findModuleForFile(file, project)?.takeIf { it in liveServedModules }
@@ -616,7 +661,10 @@ abstract class PyLspToolDescriptor(
     return cmd
   }
 
-  override fun createCommandLine(): GeneralCommandLine = runBlockingMaybeCancellable { resolveCommandLine() }
+  override fun createCommandLine(): GeneralCommandLine = runBlockingMaybeCancellable {
+    interpreterHomes = readAction { liveServedModules.associateWith { it.pythonSdk?.homePath } }
+    resolveCommandLine()
+  }
 
   open fun hasExecutable(): Boolean = findExecutable() != null
 
