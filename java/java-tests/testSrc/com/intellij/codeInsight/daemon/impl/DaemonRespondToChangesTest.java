@@ -2736,30 +2736,36 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
   }
 
   public void testLaunchingZillionCoroutinesDoesNotSaturateDefaultPoolToThePointOfFrozenHighlighting() throws Exception {
-    @Language("JAVA")
-    String text = "class X {  void foo() {\n" +
-                  "     String xxx;\n".repeat(1000) +
-                  "}}";
-
-    configureByText(JavaFileType.INSTANCE, text); // first give a chance an indexer to complete indexing
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // give chance daemon to queue status update on doc commit
-    myTestDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests(); // it uses Alarm which uses coroutines, so we'll give it a chance
-    CoroutineScope scope = ((ComponentManagerEx)getProject()).getCoroutineScope();
     CountDownLatch latch = new CountDownLatch(1);
-    List<CompletableFuture<Unit>> jobs = IntStream.range(0, 200)
-      .mapToObj(_ -> BuildersKt.launch(scope, scope.getCoroutineContext(), CoroutineStart.DEFAULT, (_, _) -> {
-        try {
-          latch.await();
-        }
-        catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-        return Unit.INSTANCE;
-      }))
-      .map(job -> FutureKt.asCompletableFuture(job))
-      .toList();
-    List<HighlightInfo> errs = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
-    latch.countDown();
+    List<CompletableFuture<Unit>> jobs;
+    List<HighlightInfo> errs;
+    try {
+      @Language("JAVA")
+      String text = "class X {  void foo() {\n" +
+                    "     String xxx;\n".repeat(1000) +
+                    "}}";
+
+      configureByText(JavaFileType.INSTANCE, text); // first give a chance an indexer to complete indexing
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // give chance daemon to queue status update on doc commit
+      myTestDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests(); // it uses Alarm which uses coroutines, so we'll give it a chance
+      CoroutineScope scope = ((ComponentManagerEx)getProject()).getCoroutineScope();
+      jobs = IntStream.range(0, 200)
+        .mapToObj(_ -> BuildersKt.launch(scope, scope.getCoroutineContext(), CoroutineStart.DEFAULT, (_, _) -> {
+          try {
+            latch.await(1, TimeUnit.MINUTES);
+          }
+          catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+          return Unit.INSTANCE;
+        }))
+        .map(job -> FutureKt.asCompletableFuture(job))
+        .toList();
+      errs = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
+    }
+    finally {
+      latch.countDown();
+    }
     assertTrue(errs.toString(), errs.size()>900);
     ConcurrencyUtil.getAll(jobs);
   }
