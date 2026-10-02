@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ModalityState.any
 import com.intellij.openapi.application.ModalityState.nonModal
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.impl.InternalThreading
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation
 import com.intellij.openapi.progress.withWriteActionTitle
@@ -23,6 +22,7 @@ import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import com.intellij.openapi.vfs.impl.local.withPrefetchForRemoteRoots
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.impl.VfsThreadingUtil
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.util.SystemProperties
@@ -31,7 +31,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.progress.waitForMaybeCancellable
-import com.intellij.util.ui.EDT
 import java.util.Objects
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
@@ -344,12 +343,7 @@ internal class RefreshSessionImpl internal constructor(
     get() = myEvents
 
   private fun invokeOnEdt(r: Runnable) {
-    if (EDT.isCurrentThreadEdt()) {
-      r.run()
-    }
-    else {
-      InternalThreading.invokeAndWaitWithTransferredWriteAction(r)
-    }
+    VfsThreadingUtil.runActionOnEdtRegardlessOfCurrentThread(r)
   }
 
 
