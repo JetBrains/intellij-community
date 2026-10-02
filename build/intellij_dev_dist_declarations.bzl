@@ -271,6 +271,7 @@ def _platform_set(tables, product, name, target_platform):
         frontend = getattr(plan, "embedded_frontend", "")
         if frontend:
             frontend_catalogue = _plugin_component_catalogue(tables, frontend)
+            frontend_order = tables.platform_jar_orders[frontend]
             bundled = {entry.main_module: True for entry in catalogue.bundled}
             frontend_only = [entry.main_module for entry in frontend_catalogue.bundled if entry.main_module not in bundled]
             dev_dist_runtime_layout_parts(
@@ -283,15 +284,18 @@ def _platform_set(tables, product, name, target_platform):
                 "frontend_platform_payload": "%s:%s_platform_payload" % (tables.build_package, tables.product(frontend).platform_set),
                 "frontend_core_module": tables.plans[frontend].application_info_module,
                 "frontend_core_descriptor": _product_descriptor(tables, frontend),
-                "frontend_jar_order": tables.platform_jar_orders[frontend],
+                "frontend_first_jars": frontend_order.first,
+                "frontend_last_jars": frontend_order.last,
                 "frontend_plugins": ":" + repository + "_frontend_parts",
             }
+        order = tables.platform_jar_orders[product]
         dev_dist_runtime_module_repository(
             name = repository,
             platform_payload = ":" + name + "_platform_payload",
             core_module = plan.application_info_module,
             core_descriptor = _product_descriptor(tables, product),
-            jar_order = tables.platform_jar_orders[product],
+            first_jars = order.first,
+            last_jars = order.last,
             plugins = ":" + repository + "_parts",
             ide_properties = [":%s_product_files/idea.properties" % name],
             project_model_tree = tables.project_model_tree,
@@ -728,7 +732,9 @@ def intellij_dev_dist_declarations(tables):
 
     `tables` is a struct with these fields:
 
-    - `plans`, `launch_models`, `platform_jar_orders`: the generated plan tables, keyed by product.
+    - `plans`, `launch_models`: the generated plan tables, keyed by product.
+    - `platform_jar_orders`: the generated platform jar orders, keyed by product. Each entry is `struct(first, last)`,
+      the platform jars before and after the sorted range.
     - `application_infos`: the generated application info sources, keyed by product. Each entry is
       `struct(source, host, replacements)`, where `host` and `replacements` are present only when set.
     - `fragment_inputs`: the generated input table, keyed by product.

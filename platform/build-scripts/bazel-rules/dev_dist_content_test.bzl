@@ -246,7 +246,7 @@ def _platform_payload_test_impl(ctx):
     )
     asserts.equals(env, [packed.relative_path], payload.core_classpath_jar_names)
 
-    # What each packed jar merges, sorted by destination. The runtime module repository orders it by the platform jar order.
+    # What each packed jar merges, sorted by destination. The runtime module repository orders it by the platform jar rule.
     asserts.equals(
         env,
         sorted([
@@ -354,24 +354,26 @@ def _runtime_module_repository_test_impl(ctx):
     actions = analysistest.target_actions(env)
     payload = ctx.attr.payload[DevDistPlatformPayloadInfo]
 
-    # The core plugin part, written at analysis from the payload: every packed jar under `lib/`, and the jar order file
-    # that the assembly orders them by.
+    # The core plugin part, written at analysis from the payload: every packed jar under `lib/`, in the platform jar order.
+    # The jars with a module sort by their smallest member. The library-only `ext/nested.jar` is in `last_jars`.
     parts = [action for action in actions if action.mnemonic == "FileWrite" and action.outputs.to_list()[0].basename.endswith(".platform.runtime-layout.json")]
     asserts.equals(env, 1, len(parts))
     part = json.decode(parts[0].content)
-    asserts.equals(env, ["test.core", "", "layout", ctx.file.jar_order.path], [part[key] for key in ["descriptorModule", "directory", "order", "jarOrder"]])
-    asserts.equals(env, ["lib/" + entry.destination for entry in payload.layout], [jar["destination"] for jar in part["jars"]])
-    asserts.equals(env, [{"module": module} for module in payload.layout[0].member_modules], [member for member in part["jars"][0]["members"] if "module" in member])
+    asserts.equals(env, ["test.core", "", "layout"], [part[key] for key in ["descriptorModule", "directory", "order"]])
+    asserts.false(env, "jarOrder" in part)
+    by_module = {entry.member_modules[0]: "lib/" + entry.destination for entry in payload.layout if entry.member_modules}
+    asserts.equals(env, [by_module["test.natives"], by_module["test.packed"], "lib/ext/nested.jar"], [jar["destination"] for jar in part["jars"]])
+    asserts.equals(env, [{"module": "test.packed"}], [member for member in part["jars"][1]["members"] if "module" in member])
 
-    # The assembly reads the part, the jar order and bazel-targets.json. The generator reads the layout, the project model
-    # tree and the core descriptor, and writes the two predeclared files.
+    # The assembly reads the part and bazel-targets.json. The generator reads the layout, the project model tree and the
+    # core descriptor, and writes the two predeclared files.
     assemblies = [action for action in actions if action.mnemonic == "DevDistRuntimeLayout"]
     asserts.equals(env, 1, len(assemblies))
     layout = target[OutputGroupInfo].runtime_module_repository_layout.to_list()
     asserts.equals(env, 1, len(layout))
     if assemblies:
         asserts.true(env, "--part=" + parts[0].outputs.to_list()[0].path in assemblies[0].argv)
-        asserts.true(env, ctx.file.jar_order in assemblies[0].inputs.to_list())
+
         asserts.equals(env, layout, assemblies[0].outputs.to_list())
     generators = [action for action in actions if action.mnemonic == "DevDistRuntimeModuleRepository"]
     asserts.equals(env, 1, len(generators))
@@ -386,7 +388,6 @@ _runtime_module_repository_test = analysistest.make(
     _runtime_module_repository_test_impl,
     attrs = {
         "payload": attr.label(mandatory = True, providers = [DevDistPlatformPayloadInfo]),
-        "jar_order": attr.label(mandatory = True, allow_single_file = True),
         "core_descriptor": attr.label(mandatory = True, allow_single_file = True),
     },
 )
@@ -833,7 +834,7 @@ def dev_dist_content_test_suite(name):
         preloaded_manifests = [":" + fixture + ".data"],
         tags = ["manual"],
     )
-    repository_files = [name + "_repository_order.txt", name + "_repository_core.xml", name + "_repository_targets.json"]
+    repository_files = [name + "_repository_core.xml", name + "_repository_targets.json"]
     for file in repository_files:
         native.genrule(name = file + "_file", outs = [file], cmd = "echo '{}' > $@", tags = ["manual"])
     repository = name + "_runtime_module_repository"
@@ -841,10 +842,11 @@ def dev_dist_content_test_suite(name):
         name = repository,
         platform_payload = ":" + payload,
         core_module = "test.core",
-        core_descriptor = ":" + repository_files[1],
-        jar_order = ":" + repository_files[0],
+        core_descriptor = ":" + repository_files[0],
+        first_jars = [],
+        last_jars = ["ext/nested.jar"],
         project_model_tree = ":" + fixture,
-        bazel_targets_json = ":" + repository_files[2],
+        bazel_targets_json = ":" + repository_files[1],
         tags = ["manual"],
     )
     tests.append(repository + "_test")
@@ -852,9 +854,32 @@ def dev_dist_content_test_suite(name):
         name = tests[-1],
         target_under_test = ":" + repository,
         payload = ":" + payload,
-        jar_order = ":" + repository_files[0],
-        core_descriptor = ":" + repository_files[1],
+        core_descriptor = ":" + repository_files[0],
     )
+
+    # The platform jar rule refuses a named jar that the payload does not pack, and a library-only jar outside `last_jars`.
+    for case, first_jars, last_jars, expected_message in [
+        ("unknown_jar", ["missing.jar"], ["ext/nested.jar"], "the platform jar order names missing.jar, but the payload does not pack it"),
+        ("unplaced_library_jar", [], [], "ext/nested.jar has no module and so no sort key, but the platform jar order does not name it in last"),
+    ]:
+        failing_repository = repository + "_" + case
+        dev_dist_runtime_module_repository(
+            name = failing_repository,
+            platform_payload = ":" + payload,
+            core_module = "test.core",
+            core_descriptor = ":" + repository_files[0],
+            first_jars = first_jars,
+            last_jars = last_jars,
+            project_model_tree = ":" + fixture,
+            bazel_targets_json = ":" + repository_files[1],
+            tags = ["manual"],
+        )
+        tests.append(failing_repository + "_test")
+        _expected_failure_test(
+            name = tests[-1],
+            target_under_test = ":" + failing_repository,
+            expected_message = expected_message,
+        )
 
     tests.append(fragment + "_test")
     _fragment_test(

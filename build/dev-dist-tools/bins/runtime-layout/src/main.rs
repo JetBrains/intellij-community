@@ -38,7 +38,7 @@ use anyhow::{Context, bail};
 use serde::Deserialize;
 
 use crate::assemble::{AssembledPart, assemble};
-use crate::part::{LAYOUT_ORDER, Member, PART_VERSION, read_part, write_json};
+use crate::part::{Member, PART_VERSION, PLUGIN_ORDER, read_part, write_json};
 
 fn main() -> ExitCode {
     ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stdout(), &mut std::io::stderr()))
@@ -84,16 +84,7 @@ fn run_assemble(args: Vec<OsString>) -> anyhow::Result<String> {
                 frontend_only,
                 ..AssembledPart::default()
             };
-            if part.order == LAYOUT_ORDER {
-                let jar_order =
-                    std::fs::read_to_string(&part.jar_order).with_context(|| format!("{file}: cannot read {}", part.jar_order))?;
-                for (index, line) in jar_order.lines().enumerate() {
-                    if line.is_empty() {
-                        bail!("{file}: line {} of {} is empty", index + 1, part.jar_order);
-                    }
-                    assembled.jar_order.push(line.to_owned());
-                }
-            } else {
+            if part.order == PLUGIN_ORDER {
                 assembled.content = descriptor::read_content_order(Path::new(&part.descriptor))?;
             }
             assembled.part = part;

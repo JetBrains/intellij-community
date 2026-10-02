@@ -98,7 +98,9 @@ DEV_DIST_APPLICATION_INFOS = {
     "Idea": struct(source = "//community-resources:resources/idea/IdeaApplicationInfo.xml"),
 }
 
-# The `lib/` jars of the platform in the order in which `JarPackager` creates them, for every product with the runtime
-# module repository fragment. The runtime module repository states the entries of the core plugin in this order.
+# The `lib/` jar order of the platform as a rule with two lists, for every product with the runtime module repository
+# fragment. The core plugin lists the jars of `first` in that order. Then it lists every other jar with a module,
+# sorted by its smallest member module name. Then it lists the jars of `last` in that order. Bazel knows the member
+# names, but not the two lists. Equal lists are one private struct, named as a shared plan field is named.
 DEV_DIST_PLATFORM_JAR_ORDERS = {
 }

@@ -2,12 +2,13 @@
 
 The layout of the repository is derived in Bazel. The platform payload states what each platform jar merges, and each
 plugin component states the layout part of its own jars, see `DevDistRuntimeLayoutInfo`. The plan generator states
-only the order of the platform jars, which Bazel does not know. `runtime-layout` joins the parts into the
-`RuntimeModuleRepositoryLayout`, and `runtime_module_repository_generator` writes the repository from it, the project
-model and the plugin descriptors.
+only the platform jars before and after the sorted range, see `dev_dist_platform_jar_order.bzl`. `runtime-layout` joins
+the parts into the `RuntimeModuleRepositoryLayout`, and `runtime_module_repository_generator` writes the repository
+from it, the project model and the plugin descriptors.
 """
 
 load(":dev_dist_content.bzl", "DevDistPlatformPayloadInfo")
+load(":dev_dist_platform_jar_order.bzl", "platform_jar_order")
 load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_PRODUCT_INFO_ATTR", "dev_dist_product_info_transition")
 load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo")
 load(":intellij_dev_dist.bzl", "IntellijProjectModelTreeInfo")
@@ -40,22 +41,26 @@ dev_dist_runtime_layout_parts = rule(
     } | DEV_DIST_PRODUCT_INFO_ATTR,
 )
 
-def _platform_part(ctx, name, payload, descriptor_module, jar_order):
-    """Writes the layout part of a core plugin at analysis: the packed platform jars, ordered by `jar_order`."""
+def _platform_part(ctx, name, payload, descriptor_module, first, last, attr):
+    """Writes the layout part of a core plugin at analysis: the packed platform jars in the platform jar order."""
+    layout = payload[DevDistPlatformPayloadInfo].layout
+    order = platform_jar_order(layout, first = first, last = last)
+    if order.error:
+        fail("%s: %s" % (ctx.label, order.error), attr = attr)
+    by_destination = {entry.destination: entry for entry in layout}
     part = ctx.actions.declare_file(ctx.label.name + "." + name + ".runtime-layout.json")
     ctx.actions.write(part, json.encode({
         "version": 1,
         "descriptorModule": descriptor_module,
         "directory": "",
         "order": "layout",
-        "jarOrder": jar_order.path,
         "jars": [
             {
                 "destination": "lib/" + entry.destination,
                 "members": [{"module": module} for module in entry.member_modules] +
                            [{"library": library.label, "jars": [jar.path for jar in library.jars]} for library in entry.library_jars],
             }
-            for entry in payload[DevDistPlatformPayloadInfo].layout
+            for entry in [by_destination[destination] for destination in order.destinations]
         ],
     }) + "\n")
     return part
@@ -65,14 +70,22 @@ def _dev_dist_runtime_module_repository_impl(ctx):
         fail("%s: frontend_platform_payload and frontend_core_module go together" % ctx.label, attr = "frontend_core_module")
 
     # The core plugin first, then the bundled plugins, then the frontend-only plugins, as the Kotlin fragment states them.
-    parts = [_platform_part(ctx, "platform", ctx.attr.platform_payload, ctx.attr.core_module, ctx.file.jar_order)]
+    parts = [_platform_part(ctx, "platform", ctx.attr.platform_payload, ctx.attr.core_module, ctx.attr.first_jars, ctx.attr.last_jars, "first_jars")]
     descriptors = {ctx.attr.core_module: ctx.file.core_descriptor}
     frontend_parts = []
-    inputs = [ctx.file.jar_order, ctx.file.core_descriptor]
+    inputs = [ctx.file.core_descriptor]
     if ctx.attr.frontend_platform_payload:
-        frontend_parts.append(_platform_part(ctx, "frontend-platform", ctx.attr.frontend_platform_payload, ctx.attr.frontend_core_module, ctx.file.frontend_jar_order))
+        frontend_parts.append(_platform_part(
+            ctx,
+            "frontend-platform",
+            ctx.attr.frontend_platform_payload,
+            ctx.attr.frontend_core_module,
+            ctx.attr.frontend_first_jars,
+            ctx.attr.frontend_last_jars,
+            "frontend_first_jars",
+        ))
         descriptors[ctx.attr.frontend_core_module] = ctx.file.frontend_core_descriptor
-        inputs += [ctx.file.frontend_jar_order, ctx.file.frontend_core_descriptor]
+        inputs.append(ctx.file.frontend_core_descriptor)
 
     # Sorted by descriptor module, as the Kotlin fragment states them. The order is in the bytes: a module that several
     # plugins include takes its ID from the last of them, see `generateRuntimePluginHeaders`.
@@ -143,12 +156,14 @@ them by label. The output group `runtime_module_repository_layout` holds the lay
         "platform_payload": attr.label(mandatory = True, providers = [DevDistPlatformPayloadInfo], doc = "The payload of the platform `lib/` jars."),
         "core_module": attr.string(mandatory = True, doc = "The application-info module, which holds the descriptor of the core plugin."),
         "core_descriptor": attr.label(mandatory = True, allow_single_file = [".xml"], doc = "The product descriptor, with the content module descriptors inlined."),
-        "jar_order": attr.label(mandatory = True, allow_single_file = True, doc = "The platform jar order of the product, from `DEV_DIST_PLATFORM_JAR_ORDERS`."),
+        "first_jars": attr.string_list(doc = "The platform jars before the sorted range, from `DEV_DIST_PLATFORM_JAR_ORDERS`."),
+        "last_jars": attr.string_list(doc = "The platform jars after the sorted range, with every library-only jar."),
         "plugins": attr.label(providers = [DevDistRuntimeLayoutPartsInfo], doc = "The layout parts of the bundled plugins."),
         "frontend_platform_payload": attr.label(providers = [DevDistPlatformPayloadInfo], doc = "The platform payload of the embedded frontend, or none."),
         "frontend_core_module": attr.string(doc = "The application-info module of the embedded frontend."),
         "frontend_core_descriptor": attr.label(allow_single_file = [".xml"], doc = "The product descriptor of the embedded frontend."),
-        "frontend_jar_order": attr.label(allow_single_file = True, doc = "The platform jar order of the embedded frontend."),
+        "frontend_first_jars": attr.string_list(doc = "The platform jars of the embedded frontend before the sorted range."),
+        "frontend_last_jars": attr.string_list(doc = "The platform jars of the embedded frontend after the sorted range."),
         "frontend_plugins": attr.label(providers = [DevDistRuntimeLayoutPartsInfo], doc = "The layout parts of the plugins that only the embedded frontend bundles."),
         "ide_properties": attr.label_list(allow_files = True, doc = "The `idea.properties` of the product, which can suppress plugins."),
         "project_model_tree": attr.label(mandatory = True, providers = [IntellijProjectModelTreeInfo]),

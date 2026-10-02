@@ -134,7 +134,6 @@ fn plugin_part(descriptor_module: &str, directory: &str, jars: Vec<PartJar>) -> 
         order: PLUGIN_ORDER.to_owned(),
         descriptor: "plugin.xml".to_owned(),
         jars,
-        ..Part::default()
     }
 }
 
@@ -143,29 +142,18 @@ fn layout_part(descriptor_module: &str, jars: Vec<PartJar>) -> Part {
         version: PART_VERSION,
         descriptor_module: descriptor_module.to_owned(),
         order: LAYOUT_ORDER.to_owned(),
-        jar_order: "platform-jars.txt".to_owned(),
         jars,
         ..Part::default()
     }
 }
 
-/// A layout part whose jar order file names its jars in part order.
+/// A layout part as the assembly takes it.
 fn in_part_order(part: Part, frontend_only: bool) -> AssembledPart {
-    let jar_order = part
-        .jars
-        .iter()
-        .map(|jar| jar.destination.strip_prefix("lib/").unwrap().to_owned())
-        .collect();
     AssembledPart {
         part,
         frontend_only,
-        jar_order,
         ..AssembledPart::default()
     }
-}
-
-fn lines(text: &str) -> Vec<String> {
-    text.lines().map(str::to_owned).collect()
 }
 
 fn content(names: &[(&str, &str)]) -> Vec<ContentModule> {
@@ -483,12 +471,9 @@ fn assemble_command() {
             r#"{{"version":1,"descriptorModule":"p.main","directory":"plugins/p","order":"plugin","descriptor":{descriptor:?},"jars":[{{"destination":"lib/p.jar","members":[{{"module":"p.main"}}]}},{{"destination":"lib/modules/p.content.jar","members":[{{"module":"p.content"}}],"reused":true}}]}}"#
         ),
     );
-    let jar_order = files.write("idea.platform-jars.txt", "util.jar\napp.jar\n");
     let platform = files.write(
         "platform.json",
-        &format!(
-            r#"{{"version":1,"descriptorModule":"intellij.idea.customization","directory":"","order":"layout","jarOrder":{jar_order:?},"jars":[{{"destination":"lib/app.jar","members":[{{"module":"intellij.idea.customization"}},{{"library":"@@lib+//:alpha","jars":["external/lib+/alpha.jar"]}}]}},{{"destination":"lib/util.jar","members":[{{"module":"intellij.platform.util"}}]}}]}}"#
-        ),
+        r#"{"version":1,"descriptorModule":"intellij.idea.customization","directory":"","order":"layout","jars":[{"destination":"lib/util.jar","members":[{"module":"intellij.platform.util"}]},{"destination":"lib/app.jar","members":[{"module":"intellij.idea.customization"},{"library":"@@lib+//:alpha","jars":["external/lib+/alpha.jar"]}]}]}"#,
     );
     let targets = files.write("bazel-targets.json", TEST_TARGETS);
     let output = files.path("layout.json").display().to_string();
@@ -564,35 +549,27 @@ fn invalid_input() {
             "version 2",
         ),
         (
-            r#"{"version":1,"descriptorModule":"p","directory":"","order":"layout","jars":[]}"#,
-            "the layout part of 'p' names no jar order",
-        ),
-        (
-            r#"{"version":1,"descriptorModule":"p","order":"layout","jarOrder":"o.txt","jars":[]}"#,
+            r#"{"version":1,"descriptorModule":"p","order":"layout","jars":[]}"#,
             "missing field `directory`",
-        ),
-        (
-            r#"{"version":1,"descriptorModule":"p","directory":"","order":"layout","jarOrder":"missing.txt","jars":[]}"#,
-            "cannot read missing.txt",
         ),
         (
             r#"{"version":1,"descriptorModule":"p","directory":"plugins/p","order":"plugin","jars":[]}"#,
             "names no descriptor",
         ),
         (
-            r#"{"version":1,"descriptorModule":"p","directory":"","order":"layout","jarOrder":"o.txt","jars":[{"destination":"p.jar","members":[{"module":"p"}]}]}"#,
+            r#"{"version":1,"descriptorModule":"p","directory":"","order":"layout","jars":[{"destination":"p.jar","members":[{"module":"p"}]}]}"#,
             "not a jar under lib/",
         ),
         (
-            r#"{"version":1,"descriptorModule":"p","directory":"","order":"layout","jarOrder":"o.txt","jars":[{"destination":"lib/p.jar","members":[]}]}"#,
+            r#"{"version":1,"descriptorModule":"p","directory":"","order":"layout","jars":[{"destination":"lib/p.jar","members":[]}]}"#,
             "merges nothing",
         ),
         (
-            r#"{"version":1,"descriptorModule":"p","directory":"","order":"layout","jarOrder":"o.txt","jars":[{"destination":"lib/p.jar","members":[{"module":"p","library":"@lib//:a"}]}]}"#,
+            r#"{"version":1,"descriptorModule":"p","directory":"","order":"layout","jars":[{"destination":"lib/p.jar","members":[{"module":"p","library":"@lib//:a"}]}]}"#,
             "one module or one library",
         ),
         (
-            r#"{"version":1,"descriptorModule":"p","directory":"","order":"layout","jarOrder":"o.txt","extra":true,"jars":[]}"#,
+            r#"{"version":1,"descriptorModule":"p","directory":"","order":"layout","extra":true,"jars":[]}"#,
             "unknown field",
         ),
         (
@@ -615,20 +592,6 @@ fn invalid_input() {
         );
         assert!(result.errors.starts_with(&format!("ERROR: {part_file}: ")), "{}", result.errors);
     }
-    let jar_order = files.write("order.txt", "lib/a.jar\n\nlib/b.jar\n");
-    let part_file = files.write(
-        "part.json",
-        &format!(r#"{{"version":1,"descriptorModule":"p","directory":"","order":"layout","jarOrder":{jar_order:?},"jars":[]}}"#),
-    );
-    let result = run_tool(&[
-        format!("--part={part_file}"),
-        format!("--bazel-targets={targets}"),
-        format!("--output={}", files.path("layout.json").display()),
-    ]);
-    assert_eq!(
-        (result.code, result.errors),
-        (1, format!("ERROR: {part_file}: line 2 of {jar_order} is empty\n"))
-    );
     for (args, message) in [
         (
             vec![format!("--bazel-targets={targets}"), "--output=out.json".to_owned()],
@@ -741,51 +704,29 @@ fn project_library_jar_starts_the_layout_pass() {
     );
 }
 
-/// A platform part orders its jars by its jar order file. A jar that the part lacks fails the assembly. A jar that the
-/// file lacks is left out, because it is not in the platform layout.
+/// A layout part keeps its part order: the platform part states its jars in the platform jar order. Inside a jar, the
+/// modules keep their merge order.
 #[test]
-fn platform_jar_order() {
+fn layout_part_keeps_its_part_order() {
     let part = layout_part(
         "intellij.idea.customization",
         vec![
-            jar("lib/ext/platform-main.jar", modules(&["intellij.platform.main"])),
             jar("lib/nio-fs.jar", modules(&["intellij.platform.core.nio.fs"])),
-            jar("lib/util.jar", modules(&["intellij.platform.util", "intellij.platform.util.base"])),
+            jar("lib/util.jar", modules(&["intellij.platform.util.base", "intellij.platform.util"])),
+            jar("lib/ext/platform-main.jar", modules(&["intellij.platform.main"])),
         ],
     );
-    let with_order = |jar_order: &str| AssembledPart {
-        part: part.clone(),
-        jar_order: lines(jar_order),
-        ..AssembledPart::default()
-    };
-    let result = assemble(&[with_order("nio-fs.jar\nutil.jar\next/platform-main.jar\n")], &test_index()).unwrap();
+    let result = assemble(&[in_part_order(part, false)], &test_index()).unwrap();
     assert_eq!(
         entry_modules(&result.plugins[0]),
         [
             "intellij.platform.core.nio.fs",
-            "intellij.platform.util",
             "intellij.platform.util.base",
+            "intellij.platform.util",
             "intellij.platform.main"
         ]
     );
     assert_eq!(result.plugins[0].entries[3].path.as_deref(), Some("lib/ext/platform-main.jar"));
-
-    let error = assemble(&[with_order("nio-fs.jar\nutil.jar\nextra.jar\n")], &test_index()).unwrap_err();
-    assert!(
-        format!("{error:#}").contains("does not pack: extra.jar"),
-        "an unknown jar was accepted: {error:#}"
-    );
-
-    let result = assemble(&[with_order("util.jar\nnio-fs.jar\n")], &test_index()).unwrap();
-    assert_eq!(
-        entry_modules(&result.plugins[0]),
-        [
-            "intellij.platform.util",
-            "intellij.platform.util.base",
-            "intellij.platform.core.nio.fs"
-        ],
-        "a jar outside the order was kept"
-    );
 }
 
 fn plan_part_args(files: &Files, plan: &str, independent: &str, descriptor: &str, output: &str) -> Vec<String> {
@@ -827,7 +768,6 @@ fn plan_part() {
         directory: "plugins/p".to_owned(),
         order: PLUGIN_ORDER.to_owned(),
         descriptor: "bazel-out/bin/p/plugin.classpath.xml".to_owned(),
-        jar_order: String::new(),
         jars: vec![
             jar("lib/modules/p.content.jar", modules(&["p.content"])),
             jar("lib/modules/p.natives.jar", natives),

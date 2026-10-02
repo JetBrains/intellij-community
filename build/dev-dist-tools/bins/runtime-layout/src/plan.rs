@@ -70,7 +70,6 @@ pub(crate) fn part_from_plan(
         directory: plugin_directory.to_owned(),
         order: PLUGIN_ORDER.to_owned(),
         descriptor: descriptor.to_owned(),
-        jar_order: String::new(),
         jars: Vec::new(),
     };
     for (asset, &omitted) in plan.assets.iter().zip(&omitted) {

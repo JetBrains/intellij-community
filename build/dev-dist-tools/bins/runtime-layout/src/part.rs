@@ -10,7 +10,7 @@ pub(crate) const PART_VERSION: i64 = 1;
 
 // The two orders of a part. A plugin states its jars in the order of its plan file, in which `JarPackager` creates
 // them. It marks the reused content module jars, and the assembly places them by the `<content>` order of the plugin
-// descriptor. The platform states its jars in the order of its layout.
+// descriptor. The platform states its jars in layout order, and the assembly keeps that order.
 pub(crate) const PLUGIN_ORDER: &str = "plugin";
 pub(crate) const LAYOUT_ORDER: &str = "layout";
 
@@ -30,10 +30,7 @@ pub(crate) struct Part {
     /// The plugin descriptor whose `<content>` order a plugin part follows.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub descriptor: String,
-    /// The platform jar order file of a layout part, one `lib/`-relative destination on each line. The assembly orders
-    /// the jars by it.
-    #[serde(default, skip_serializing_if = "String::is_empty")]
-    pub jar_order: String,
+
     pub jars: Vec<PartJar>,
 }
 
@@ -80,12 +77,8 @@ impl Part {
         }
         match self.order.as_str() {
             PLUGIN_ORDER if self.descriptor.is_empty() => bail!("the plugin part of '{module}' names no descriptor"),
-            LAYOUT_ORDER if self.jar_order.is_empty() => bail!("the layout part of '{module}' names no jar order"),
             PLUGIN_ORDER | LAYOUT_ORDER => {}
             order => bail!("the part of '{module}' has the order {order:?}, but {PLUGIN_ORDER:?} or {LAYOUT_ORDER:?} is expected"),
-        }
-        if !self.jar_order.is_empty() && self.order != LAYOUT_ORDER {
-            bail!("the part of '{module}' names a jar order, but only a layout part takes one");
         }
         if self.directory.starts_with('/') || self.directory.ends_with('/') {
             bail!(

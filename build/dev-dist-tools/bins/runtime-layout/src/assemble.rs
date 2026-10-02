@@ -49,8 +49,6 @@ pub(crate) struct AssembledPart {
     pub frontend_only: bool,
     /// The `<content>` order of the plugin descriptor, for a plugin part.
     pub content: Vec<ContentModule>,
-    /// The lines of the jar order file, for a layout part.
-    pub jar_order: Vec<String>,
 }
 
 /// One jar in the order in which `JarPackager` creates it, with its modules in the order in which it reports them.
@@ -78,8 +76,7 @@ pub(crate) fn assemble(parts: &[AssembledPart], libraries: &LibraryIndex) -> any
             bail!("two parts have the descriptor module '{}'", part.descriptor_module);
         }
         let resolved = resolve_libraries(part, libraries).with_context(|| part.descriptor_module.clone())?;
-        let assets =
-            order_assets(part, &assembled.content, &assembled.jar_order, &resolved).with_context(|| part.descriptor_module.clone())?;
+        let assets = order_assets(part, &assembled.content, &resolved);
         let mut plugin = PluginLayout {
             descriptor_module: part.descriptor_module.clone(),
             additional_frontend_only_plugin: assembled.frontend_only,
@@ -142,28 +139,23 @@ fn resolve_libraries(part: &Part, libraries: &LibraryIndex) -> anyhow::Result<Ve
 
 /// Returns the jars of `part` in the order in which `JarPackager` creates their assets.
 ///
-/// A layout part takes the order of its jar order file and keeps the merge order inside each jar. A plugin part states
-/// its jars in asset order, the order of its plan file, except for the reused content module jars. The content pass of
+/// A layout part keeps its part order and the merge order inside each jar. A plugin part states its jars in asset order,
+/// the order of its plan file, except for the reused content module jars. The content pass of
 /// `computeModuleSourcesByContent` creates each reused jar, so it goes among the other jars of that pass by
 /// `<content>` order. Inside a plugin jar, the content modules come first in `<content>` order. The other modules and
 /// the libraries follow in merge order, as `computeDistributionFileEntries` reports them.
-fn order_assets<'a>(
-    part: &'a Part,
-    content: &[ContentModule],
-    jar_order: &[String],
-    resolved: &'a [Vec<ResolvedLibrary>],
-) -> anyhow::Result<Vec<Asset<'a>>> {
+fn order_assets<'a>(part: &'a Part, content: &[ContentModule], resolved: &'a [Vec<ResolvedLibrary>]) -> Vec<Asset<'a>> {
     let mut content_index: HashMap<&str, usize> = HashMap::with_capacity(content.len());
     for (position, module) in content.iter().enumerate() {
         content_index.insert(module.name.as_str(), position);
     }
     let order = if part.order == LAYOUT_ORDER {
-        order_by_jar_order(part, jar_order)?
+        (0..part.jars.len()).collect()
     } else {
         plugin_asset_order(part, content, &content_index, resolved)
     };
 
-    let assets = order
+    order
         .into_iter()
         .map(|index| {
             let jar = &part.jars[index];
@@ -184,35 +176,7 @@ fn order_assets<'a>(
                 libraries: &resolved[index],
             }
         })
-        .collect();
-    Ok(assets)
-}
-
-/// Orders the jars of a layout part by its jar order file, which names the jars of the platform layout.
-/// A jar of the file that the part lacks has no producer, and fails the assembly. A jar of the part that the file lacks
-/// is not in the platform layout, and the part leaves it out. A platform payload packs the jar of every module that it
-/// holds, and a frontend holds modules that its platform layout does not place.
-fn order_by_jar_order(part: &Part, jar_order: &[String]) -> anyhow::Result<Vec<usize>> {
-    let mut by_destination: HashMap<&str, usize> = HashMap::with_capacity(part.jars.len());
-    for (index, jar) in part.jars.iter().enumerate() {
-        by_destination.insert(jar.destination.strip_prefix("lib/").unwrap_or(&jar.destination), index);
-    }
-    let mut order = Vec::with_capacity(part.jars.len());
-    let mut unknown = Vec::new();
-    for line in jar_order {
-        match by_destination.remove(line.as_str()) {
-            Some(index) => order.push(index),
-            None => unknown.push(line.as_str()),
-        }
-    }
-    if !unknown.is_empty() {
-        bail!(
-            "the jar order {} names jars that the part does not pack: {}",
-            part.jar_order,
-            unknown.join(", ")
-        );
-    }
-    Ok(order)
+        .collect()
 }
 
 /// Merges the reused jars of a plugin part into the order of its other jars.

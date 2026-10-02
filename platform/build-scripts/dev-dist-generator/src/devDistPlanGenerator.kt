@@ -121,34 +121,67 @@ private const val LAUNCH_MODEL_SUFFIX: String = ".launch.json"
 private fun launchModelRelativePath(caseSafeName: String): String = "$DEV_DIST_LAUNCH_DIRECTORY/$caseSafeName$LAUNCH_MODEL_SUFFIX"
 
 /**
- * The package of the platform jar orders, whose `BUILD.bazel` exports every `<product>.platform-jars.txt`. Only a product
- * with the runtime module repository fragment has one.
+ * The `lib/` jar order of the platform as a rule with two lists. The core plugin lists the jars of [first] in that
+ * order. Then it lists every other jar with a module, sorted by its smallest member module name. Then it lists the jars
+ * of [last] in that order. `dev_dist_platform_jar_order.bzl` applies the rule. Bazel knows the member names, but not
+ * the two lists.
+ *
+ * The runtime module repository states the entries of the core plugin in this order. The modular loader builds the main
+ * class loader in the same order. Each name is a destination relative to `lib/`.
  */
-private const val DEV_DIST_PLATFORM_JAR_ORDER_DIRECTORY: String = "build/dev-dist-runtime-module-repository"
-
-private const val PLATFORM_JAR_ORDER_SUFFIX: String = ".platform-jars.txt"
+internal data class PlatformJarOrder(@JvmField val first: List<String>, @JvmField val last: List<String>)
 
 /**
- * The `lib/` jars of the platform in the order in which `JarPackager` creates them: the module jars in layout order,
- * then the library-only jars in the order of [residualJars]. The runtime module repository states the entries of the
- * core plugin in this order, and the modular loader builds the main class loader in the same order. Bazel knows what
- * each jar merges, but not this order.
+ * The [PlatformJarOrder] of [product]. The true order is the order in which `JarPackager` creates the jars. It holds the
+ * module jars in layout order, then the library-only jars in the order of [residualJars]. The key of a module jar is its
+ * smallest member module name.
  */
-private fun platformJarOrder(layout: PlatformLayout, residualJars: Map<String, ResidualPlatformJar>): List<String> {
-  val order = LinkedHashSet<String>()
-  layout.includedModules.mapTo(order) { it.relativeOutputFile }
-  residualJars.filterValues { it.modules.isEmpty() }.keys.toCollection(order)
-  return java.util.List.copyOf(order)
+private fun platformJarOrder(product: String, layout: PlatformLayout, residualJars: Map<String, ResidualPlatformJar>): PlatformJarOrder {
+  val keys = LinkedHashMap<String, String>()
+  for (item in layout.includedModules) {
+    keys.merge(item.relativeOutputFile, item.moduleName) { old, new -> minOf(old, new) }
+  }
+  val libraryOnly = residualJars.filter { it.value.modules.isEmpty() && it.key !in keys }.keys.toList()
+  return derivePlatformJarOrder(product = product, keys = keys.entries.map { it.key to it.value }, libraryOnly = libraryOnly)
 }
 
-private fun listPlatformJarOrders(projectRoot: Path): List<String> {
-  val directory = projectRoot.resolve(DEV_DIST_PLATFORM_JAR_ORDER_DIRECTORY)
-  if (!Files.isDirectory(directory)) {
-    return emptyList()
+/**
+ * The two lists of the [PlatformJarOrder] for the true order [keys] then [libraryOnly]. [keys] are the module jars with
+ * their sort keys, in true order. The keys are distinct, because a module packs into one jar.
+ *
+ * The longest strictly ascending run of keys is the sorted range, and the earliest run wins a tie. [PlatformJarOrder.first]
+ * is the jars before the run. [PlatformJarOrder.last] is the jars after the run, then [libraryOnly]. The function fails
+ * when the rule does not give the true order, and names [product] and the first jar that differs.
+ */
+internal fun derivePlatformJarOrder(product: String, keys: List<Pair<String, String>>, libraryOnly: List<String>): PlatformJarOrder {
+  var runStart = 0
+  var bestStart = 0
+  var bestLength = 0
+  for (index in keys.indices) {
+    if (index > 0 && keys[index - 1].second >= keys[index].second) {
+      runStart = index
+    }
+    val length = index - runStart + 1
+    if (length > bestLength) {
+      bestStart = runStart
+      bestLength = length
+    }
   }
-  return Files.newDirectoryStream(directory).use { stream ->
-    stream.map { it.fileName.toString() }.filter { it.endsWith(PLATFORM_JAR_ORDER_SUFFIX) }.map { "$DEV_DIST_PLATFORM_JAR_ORDER_DIRECTORY/$it" }.sorted()
+  val jars = keys.map { it.first }
+  val order = PlatformJarOrder(
+    first = jars.subList(0, bestStart).toList(),
+    last = jars.subList(bestStart + bestLength, jars.size) + libraryOnly,
+  )
+  // The production rule is the check: the Bazel side applies this rule, so the generator proves it on the true order.
+  val named = HashSet(order.first + order.last)
+  val derived = order.first + keys.filter { it.first !in named }.sortedBy { it.second }.map { it.first } + order.last
+  val expected = jars + libraryOnly
+  val difference = (0 until maxOf(derived.size, expected.size)).firstOrNull { derived.getOrNull(it) != expected.getOrNull(it) }
+  if (difference != null) {
+    error("$product: the platform jar rule places ${derived.getOrNull(difference)} at position $difference," +
+          " but the layout places ${expected.getOrNull(difference)} there")
   }
+  return order
 }
 
 private fun listLaunchModels(projectRoot: Path): List<String> {
@@ -413,7 +446,6 @@ internal fun computeDevDistPlan(
       if (product.platformPrefix !in reusedLaunchModels) {
         add(product.launchModelRelativePath to launchModels.getValue(product.platformPrefix).text)
       }
-      platformJarOrderRelativePath(product)?.let { add(it to product.platformJarOrder.joinToString(separator = "\n", postfix = "\n")) }
     }
   }
   // A half writes only into its own packages, see `DevDistHalf.ownsPackage`.
@@ -438,13 +470,6 @@ internal fun computeDevDistPlan(
   val launchModelPaths = sortedProducts.filter { it.platformPrefix !in reusedLaunchModels }.mapTo(HashSet()) { it.launchModelRelativePath }
   for (relativePath in listLaunchModels(projectRoot)) {
     if (relativePath !in launchModelPaths) {
-      updater.delete(projectRoot.resolve(relativePath))
-    }
-  }
-  // A product that loses its runtime module repository fragment leaves its platform jar order behind.
-  val platformJarOrders = sortedProducts.mapNotNullTo(HashSet(), ::platformJarOrderRelativePath)
-  for (relativePath in listPlatformJarOrders(projectRoot)) {
-    if (relativePath !in platformJarOrders) {
       updater.delete(projectRoot.resolve(relativePath))
     }
   }
@@ -708,11 +733,8 @@ private data class ProductFragmentPlan(
   @JvmField val ideaProperties: String,
   /** The application info sources that the `platform_resources` component reads beside [launchModel]. */
   @JvmField val applicationInfoSources: ApplicationInfoSources,
-  /**
-   * The `lib/` jars of the platform in `JarPackager` order, see [platformJarOrder]. Empty for a product without the
-   * [runtimeModuleRepository] fragment.
-   */
-  @JvmField val platformJarOrder: List<String> = emptyList(),
+  /** The `lib/` jar order of the platform. `null` for a product without the [runtimeModuleRepository] fragment. */
+  @JvmField val platformJarOrder: PlatformJarOrder? = null,
   /** The application-info module, which holds the descriptor of the core plugin of the runtime module repository. */
   @JvmField val applicationInfoModule: String = "",
   /**
@@ -1770,7 +1792,7 @@ private fun collectFragmentPlan(
       product = product.name,
       hostProperties = half.embeddedFrontend?.hostProperties(properties),
     ),
-    platformJarOrder = if (hasRuntimeModuleRepository) platformJarOrder(layout, platformLibPayload.residualJars) else emptyList(),
+    platformJarOrder = if (hasRuntimeModuleRepository) platformJarOrder(product.name, layout, platformLibPayload.residualJars) else null,
     applicationInfoModule = properties.applicationInfoModule,
     productDescriptor = productDescriptor.takeIf { usesProductDescriptor(platformLibPayload.residualJars.values) },
   )
@@ -3114,13 +3136,56 @@ private fun renderPartition(products: List<ProductFragmentPlan>, half: DevDistHa
   }
   append("}\n")
   append("\n")
-  append("# The `lib/` jars of the platform in the order in which `JarPackager` creates them, for every product with the runtime\n")
-  append("# module repository fragment. The runtime module repository states the entries of the core plugin in this order.\n")
+  append("# The `lib/` jar order of the platform as a rule with two lists, for every product with the runtime module repository\n")
+  append("# fragment. The core plugin lists the jars of `first` in that order. Then it lists every other jar with a module,\n")
+  append("# sorted by its smallest member module name. Then it lists the jars of `last` in that order. Bazel knows the member\n")
+  append("# names, but not the two lists. Equal lists are one private struct, named as a shared plan field is named.\n")
+  appendPlatformJarOrders(products.mapNotNull { product -> product.platformJarOrder?.let { product.platformPrefix to it } })
+}
+
+/** A jar list of a [PlatformJarOrder] as [appendNameList] writes it, or `[]` when it is empty. */
+private fun StringBuilder.appendJarList(field: String, jars: List<String>, indent: String) {
+  if (jars.isEmpty()) {
+    append(indent).append(field).append(" = [],\n")
+  }
+  else {
+    appendNameList(field, jars, indent = indent)
+  }
+}
+
+/**
+ * `DEV_DIST_PLATFORM_JAR_ORDERS` of [orders], in the given product order. A struct that two or more products state alike
+ * is one private constant. It is `_PLATFORM_JAR_ORDER` when every product states it, and `_PLATFORM_JAR_ORDER_<first
+ * product>` otherwise. This is the naming of [sharePlanFieldBodies].
+ */
+private fun StringBuilder.appendPlatformJarOrders(orders: List<Pair<String, PlatformJarOrder>>) {
+  val users = LinkedHashMap<PlatformJarOrder, MutableList<String>>()
+  for ((product, order) in orders) {
+    users.computeIfAbsent(order) { ArrayList() }.add(product)
+  }
+  val shared = users.filterValues { it.size > 1 }
+  val sharedNames = HashMap<PlatformJarOrder, String>()
+  for ((order, owners) in shared) {
+    val name = if (users.size == 1) "_PLATFORM_JAR_ORDER" else "_PLATFORM_JAR_ORDER_" + owners.first()
+    sharedNames.put(order, name)
+    append(name).append(" = struct(\n")
+    appendJarList("first", order.first, indent = INDENT)
+    appendJarList("last", order.last, indent = INDENT)
+    append(")\n\n")
+  }
   append("DEV_DIST_PLATFORM_JAR_ORDERS = {\n")
-  for (product in products) {
-    val path = platformJarOrderRelativePath(product) ?: continue
-    append("    \"").append(product.platformPrefix).append("\": \"//").append(path.substringBeforeLast('/')).append(":")
-      .append(path.substringAfterLast('/')).append("\",\n")
+  for ((product, order) in orders) {
+    append(INDENT).append("\"").append(product).append("\": ")
+    val sharedName = sharedNames.get(order)
+    if (sharedName == null) {
+      append("struct(\n")
+      appendJarList("first", order.first, indent = INDENT + INDENT)
+      appendJarList("last", order.last, indent = INDENT + INDENT)
+      append(INDENT).append("),\n")
+    }
+    else {
+      append(sharedName).append(",\n")
+    }
   }
   append("}\n")
 }
@@ -3166,14 +3231,6 @@ private fun renderReferencePlanFields(product: ProductFragmentPlan, indent: Stri
   appendNameList("platform_asset_archives", product.platformAssets.archives, indent = indent)
 }
 
-/** Where the platform jar order of [product] lives, beside its launch model name, or `null` when it has none. */
-private fun platformJarOrderRelativePath(product: ProductFragmentPlan): String? {
-  if (product.platformJarOrder.isEmpty()) {
-    return null
-  }
-  val caseSafeName = product.launchModelRelativePath.substringAfterLast('/').removeSuffix(LAUNCH_MODEL_SUFFIX)
-  return "$DEV_DIST_PLATFORM_JAR_ORDER_DIRECTORY/$caseSafeName$PLATFORM_JAR_ORDER_SUFFIX"
-}
 
 /** One field value of a product plan as [planFieldBodies] renders it at the top level, keyed with its field. */
 private data class PlanFieldBody(@JvmField val field: String, @JvmField val body: String)
