@@ -178,10 +178,10 @@ def _platform_jar_test_impl(ctx):
     asserts.true(env, info.jar.path.endswith("/" + target.label.name + "/" + ctx.attr.destination), info.jar.path)
     asserts.equals(env, ctx.attr.member_modules, list(info.member_modules))
 
-    # The flag file in grammar order. A fixture with one meaningful source keeps the manifest. A jar with a module member
+    # The flag file in grammar order. A fixture of one library keeps its manifest. A jar with a module member
     # rejects a native entry, because a presigned library packs as a `content_module_jar`. A library-only jar keeps them.
     expected = ["output=" + info.jar.path, "metadata-file=" + info.metadata.path, "jar-name=" + info.jar.basename]
-    expected += ["keep-manifest=true"] if len(ctx.files.library_jars) + len(ctx.attr.member_modules) == 1 else []
+    expected += ["keep-manifest=true"] if len(ctx.files.library_jars) == 1 and not ctx.attr.member_modules else []
     expected += ["merge-entities=true"] + (["reject-native-entries=true"] if ctx.attr.member_modules else [])
 
     # A patch precedes the `module=` line of the patched module, so the packer takes the patch instead of the entry of
@@ -231,7 +231,7 @@ def content_module_jar_test_suite(name):
     _fixture_library(name = name + "_overlapping_library", jars = [":" + first, ":" + second])
 
     for case, module_name, before, after, libraries, library_jars, keep_manifest in [
-        ("single", "test.production.single", [], [], [], [], True),
+        ("single", "test.production.single", [], [], [], [], False),
         ("wrapper", "intellij.libraries.production.single", [], [], [name + "_single_library"], [first], True),
         ("wrapper_multi", "intellij.libraries.production.multi", [], [], [name + "_library"], [second, first], False),
         ("ordered", "test.production.ordered", [first], [second], [name + "_library", name + "_overlapping_library"], [second, first], False),

@@ -45,8 +45,8 @@ architecture, or no tree, so a platform without a tree cannot occur. The Go port
 
 A jar keeps the manifest of its module. The `META-INF/MANIFEST.MF` of a `module=` source survives the merge, whatever
 `keep-manifest=` and the `ManifestMode` of the source say. A library source and a file source keep their manifest by
-their `ManifestMode`, and by `keep-manifest=` when they have none. A producer writes `keep-manifest=true` when the jar has
-one meaningful source. pluginpack gives `ManifestMode::Drop` to each module source of a jar with two sources, and the
+their `ManifestMode`, and by `keep-manifest=` when they have none. A producer writes `keep-manifest=true` when a library
+is the one meaningful source of the jar, and never for a module output. pluginpack gives `ManifestMode::Drop` to each module source of a jar with two sources, and the
 module manifest survives all the same. A file source is never a module manifest, so the two manifest refusals do not
 apply to it. No entry changes its content in the merge.
 

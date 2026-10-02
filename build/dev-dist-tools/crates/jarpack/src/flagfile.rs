@@ -38,6 +38,7 @@ pub struct FlagFile {
 /// The parser takes only the forms that the Starlark rules and the recipe replay write:
 ///
 /// - `keep-manifest=`, `merge-entities=` and `reject-native-entries=` take only `true`. A producer omits a false flag.
+///   `keep-manifest=true` keeps the manifest of a library source. A module output keeps its manifest without it.
 /// - `jar-name=` takes one nonempty file name without `/` and `\`, at most once per group. It states the distribution
 ///   name of the jar, which can differ from the output file name. A group without it takes the output file name.
 /// - A path has no `.` and no `..` component, so the parser compares the paths as they are written. See

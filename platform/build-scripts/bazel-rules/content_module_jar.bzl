@@ -139,12 +139,17 @@ def merge_order_jars(library_entries):
     return jars
 
 def _keep_manifest(library_jars, merged_module_names):
-    significant_sources = len(library_jars) + len([
+    """Whether the one library jar of the jar keeps its manifest: it is the one meaningful source.
+
+    A module output keeps its manifest by the rule of the packer, so a module never asks for the flag. A module named
+    `intellij.libraries.*` is a library under the name of a module, and it does not count.
+    """
+    significant_modules = [
         name
         for name in merged_module_names
         if not name.startswith(_LIB_MODULE_PREFIX)
-    ])
-    return significant_sources == 1
+    ]
+    return len(library_jars) == 1 and not significant_modules
 
 def module_output_jar(target):
     """The module target's declared `<name>.jar`, or None if the target did not declare one.
@@ -208,9 +213,10 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
     natives-mode tree. The `File` form, not its path, so that path mapping can rewrite the line with the rest of the
     flag file. A `File` the packer writes besides the jar and its metadata goes into `extra_outputs`.
 
-    The packer keeps the manifest of a module output, and a library manifest only when the library is the one
-    meaningful source. `jar_name` is the distribution name of the jar. The packer checks a `Boot-Class-Path` against
-    it, because the output file of a content-module jar is not its distribution name.
+    The packer keeps the manifest of a module output. A library manifest survives only with `keep-manifest=true`,
+    which the caller writes when the library is the one meaningful source of the jar. `jar_name` is the distribution
+    name of the jar. The packer checks a `Boot-Class-Path` against it, because the output file of a content-module jar
+    is not its distribution name.
 
     `descriptor` replaces `descriptor_path` in the output of `descriptor_module`. `patches` is a list of
     `struct(path, file)` that replaces more entries of the same module output. Each patch is a `patch=` line before the

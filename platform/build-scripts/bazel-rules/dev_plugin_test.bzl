@@ -190,12 +190,12 @@ def _dev_plugin_test_impl(ctx):
     expected = ["module=" + jar.short_path for jar in module_jars] + ["library=" + jar.short_path for jar in library_jars]
     asserts.equals(env, expected, rest)
 
-    # A jar that merges a test-only module takes its test jar and the writer flags of every other jar. It has one
-    # meaningful source and no descriptor, so it keeps the manifest. It has no directory entries.
+    # A jar that merges a test-only module takes its test jar and the writer flags of every other jar. Its one source
+    # is a module output, whose manifest survives without a flag. It has no directory entries.
     tests_pack = _pack_action(packs, "tests.jar")
     tests_argv = [_with_short_path(argument, tests_pack.inputs.to_list()) for argument in tests_pack.argv[1:]]
     tests_flags = [argument for argument in tests_argv if not argument.startswith(("output=", "metadata-file=", "trace-file=", "module="))]
-    asserts.equals(env, ["jar-name=tests.jar", "keep-manifest=true", "merge-entities=true"], tests_flags)
+    asserts.equals(env, ["jar-name=tests.jar", "merge-entities=true"], tests_flags)
     asserts.equals(env, ["module=" + ctx.file.test_jar.short_path], [argument for argument in tests_argv if argument.startswith("module=")])
 
     # A jar file token is one archive: the jar takes that file and nothing else.
