@@ -26,6 +26,12 @@ public interface ConcurrentLongIntMap {
 
   boolean containsValue(int value);
 
+  /**
+   * Associates the key with the value.
+   * Removes the key if the value equals the configured default value.
+   *
+   * @return the previous value, or the configured default value if the key was absent
+   */
   int put(long key, int value);
 
   int putIfAbsent(long key, int value);

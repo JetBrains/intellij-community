@@ -875,7 +875,7 @@ final class ConcurrentLongIntHashMap implements ConcurrentLongIntMap {
      * @throws NullPointerException if the specified key or value is null
      */
     public int put(long key, int value) {
-        return putVal(key, value, false);
+        return value == defaultValue ? remove(key) : putVal(key, value, false);
     }
 
     /** Implementation for put and putIfAbsent */
