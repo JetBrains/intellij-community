@@ -51,7 +51,12 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return if (node.isRegistered()) node else null
   }
 
-  private fun findNode(url: String): VirtualFileUrlImpl? {
+  /**
+   * Returns the trie node for [url], or `null` if the trie has no such node.
+   * Unlike [get], the function also returns a node which [storeAndGet] didn't register.
+   * Use [VirtualFileUrl.findChild] to get the nodes below the result.
+   */
+  public fun findNode(url: String): VirtualFileUrlImpl? {
     var currentNode: VirtualFileUrlImpl = root
     forEachNameSegment(url) { nameSegment ->
       currentNode = currentNode.findChild(nameSegment) ?: return null

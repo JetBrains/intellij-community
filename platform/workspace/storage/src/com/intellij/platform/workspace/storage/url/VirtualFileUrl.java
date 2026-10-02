@@ -57,4 +57,8 @@ public interface VirtualFileUrl {
    * @return instance representing the resolved path
    */
   VirtualFileUrl append(String relativePath);
+
+  /** Returns the child for [nameSegment], or `null` if this node has no children yet or has no such child. */
+  @ApiStatus.Internal
+  @Nullable VirtualFileUrl findChild(String nameSegment);
 }
