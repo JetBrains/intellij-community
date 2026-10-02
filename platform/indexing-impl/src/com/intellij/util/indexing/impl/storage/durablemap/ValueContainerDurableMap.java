@@ -4,6 +4,7 @@ package com.intellij.util.indexing.impl.storage.durablemap;
 import com.intellij.openapi.Forceable;
 import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
+import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap;
 import com.intellij.platform.util.io.storages.durablemap.dev.DurableMapOverBlobStorage;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.impl.ChangeTrackingValueContainer;
@@ -34,6 +35,7 @@ final class ValueContainerDurableMap<Key, Value> implements Closeable, Cleanable
 
   private final boolean keyIsUniqueForIndexedFile;
 
+  /// A patchable map must accept [ChangeTrackingValueContainer] patches encoded by [PatchableValueContainerExternalizer]
   ValueContainerDurableMap(@NotNull DurableMap<Key, UpdatableValueContainer<Value>> durableMap,
                            @NotNull DataExternalizer<Value> externalizer,
                            boolean keyIsUniqueForIndexedFile) {
@@ -45,8 +47,16 @@ final class ValueContainerDurableMap<Key, Value> implements Closeable, Cleanable
   void merge(Key key,
              ChangeTrackingValueContainer<Value> valueContainer) throws IOException {
     if (!valueContainer.needsCompacting() && !keyIsUniqueForIndexedFile) {
-      //RC: with appendable Map implementation we could merge in new values, instead always overwriting.
-      //    (see ValueContainerMap.merge() as an inspiration)
+
+      //TODO RC: this is temporary solution -- in final design it should be either 2 different ValueContainerDurableMap
+      //         implementations, one per each variant -- or, more likely, the older DurableMapOverBlobStorage variant,
+      //         which was really a prototype, not fully-developed solution -- should be dropped entirely
+
+      if (durableMap instanceof PatchableDurableMap<?, ?, ?>) {
+        var patchableMap = (PatchableDurableMap<Key, UpdatableValueContainer<Value>, ChangeTrackingValueContainer<Value>>)durableMap;
+        patchableMap.patchValue(key, valueContainer);
+        return;
+      }
 
       if (durableMap instanceof DurableMapOverBlobStorage<Key, UpdatableValueContainer<Value>> durableMapOverBlobStorage){
         UnsyncByteArrayOutputStream stream = new UnsyncByteArrayOutputStream();
