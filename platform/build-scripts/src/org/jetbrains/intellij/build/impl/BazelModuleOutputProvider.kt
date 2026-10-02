@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.bazel.runfiles.BazelLabel
 import com.intellij.platform.bazel.runfiles.BazelRunfiles
+import com.intellij.platform.bazel.runfiles.BazelRunfilesManifest
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildLifetime
@@ -108,7 +109,10 @@ object BazelBuildInputs {
   fun declaredFileNameOf(label: String, file: Path): String? = resolver?.declaredFileNameOf(label = label, file = file)
 
   fun writeUnusedInputs(file: Path) {
-    resolver?.writeUnusedInputs(file) ?: Files.writeString(file, "")
+    resolver?.writeUnusedInputs(file) ?: run {
+      file.parent?.let { Files.createDirectories(it) }
+      Files.writeString(file, "")
+    }
   }
 }
 
@@ -336,28 +340,28 @@ class BazelModuleOutputProvider(
   private val zipFilePool = ModuleOutputZipFilePool(lifetime)
 
   /**
-   * The declared output roots of a module, by module name and by the output kind. A probe over the whole project asks
-   * every module once per path, and the resolution of a label to a file costs a file system call, so the answer is kept.
+   * The probe roots of a module, by module name and by the output kind. A probe over the whole project asks every
+   * module once per path, and the resolution of a label to a file costs a file system call, so the answer is kept.
    */
-  private val declaredOutputRoots = ConcurrentHashMap<String, List<Path>>()
+  private val probeRoots = ConcurrentHashMap<String, List<Path>>()
 
   /**
    * Reads through the pool of cached zip file instances.
    *
-   * A probe by contract - it returns `null` for a module that does not have the file - so it reads only the module
-   * outputs this build declares; see [BazelBuildInputs.resolveIfDeclared].
+   * A probe by contract: it returns `null` for a module that does not have the file. It reads only the roots that
+   * [computeProbeRoots] gives.
    */
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    for (moduleOutput in getDeclaredOutputRoots(module, forTests)) {
+    for (moduleOutput in getProbeRoots(module, forTests)) {
       zipFilePool.getData(moduleOutput, relativePath)?.let { return it }
     }
     return null
   }
 
-  private fun getDeclaredOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
+  private fun getProbeRoots(module: JpsModule, forTests: Boolean): List<Path> {
     val key = if (forTests) module.name + ":test" else module.name
-    return declaredOutputRoots.get(key) ?: getModuleOutputRootsImpl(module, forTests, declaredOnly = true).also {
-      declaredOutputRoots.putIfAbsent(key, it)
+    return probeRoots.get(key) ?: computeProbeRoots(module, forTests).also {
+      probeRoots.putIfAbsent(key, it)
     }
   }
 
@@ -368,7 +372,7 @@ class BazelModuleOutputProvider(
   private val outputEntryIndex by lazy {
     ModuleOutputEntryIndex.build(modules = state.modules) { module ->
       val names = ArrayList<String>()
-      for (root in getDeclaredOutputRoots(module, forTests = false)) {
+      for (root in getProbeRoots(module, forTests = false)) {
         names.addAll(zipFilePool.readEntryNames(root, ModuleOutputEntryIndex::isIndexedName) ?: return@build null)
       }
       names
@@ -410,7 +414,7 @@ class BazelModuleOutputProvider(
       ?: library.jarTargets.mapNotNull(BazelBuildInputs::resolveIfDeclared)
     }
     else {
-      library.jarTargets.map { BazelRunfiles.getFileByLabel(BazelLabel.fromString(it)) }
+      library.jarTargets.mapNotNull(::findRunfileByLabel)
     }
     return paths.filter { it.isRegularFile() }
   }
@@ -516,9 +520,42 @@ class BazelModuleOutputProvider(
     return state.bazelTargetsMap.pluginDistributionTargets[mainModuleName]
   }
 
-  private fun getModuleOutputRootsImpl(module: JpsModule, forTests: Boolean, declaredOnly: Boolean = false): List<Path> {
-    val bazelTargetsMap = state.bazelTargetsMap
-    val moduleDescription = bazelTargetsMap.modules[module.name] ?: error("Cannot find module '${module.name}' in the project")
+  private fun getModuleOutputRootsImpl(module: JpsModule, forTests: Boolean): List<Path> {
+    val moduleDescription = findModuleDescription(module, forTests)
+    return if (BazelBuildInputs.isConfigured || BazelRunfiles.isRunningFromBazel) {
+      val targets = if (forTests) moduleDescription.testTargets else moduleDescription.productionTargets
+      targets.map(BazelBuildInputs::resolve)
+    }
+    else {
+      val jarsRelative = if (forTests) moduleDescription.testJars else moduleDescription.productionJars
+      jarsRelative.map { state.projectHome.resolve(it) }
+    }
+  }
+
+  /**
+   * The roots that a probe of [module] reads. Each mode gives the roots by its own rule.
+   *
+   * Under an explicit input manifest, the roots are the module targets that the manifest declares.
+   * Under plain Bazel runfiles, [resolveProbeRoot] gives one root for each module target.
+   * That root is the resources sibling jar, or the module jar when the sibling is absent.
+   * A module target has no root when both files are absent.
+   * Outside Bazel, the roots are the module jars in the project home.
+   */
+  private fun computeProbeRoots(module: JpsModule, forTests: Boolean): List<Path> {
+    val moduleDescription = findModuleDescription(module, forTests)
+    val targets = if (forTests) moduleDescription.testTargets else moduleDescription.productionTargets
+    return when {
+      BazelBuildInputs.isConfigured -> targets.mapNotNull(BazelBuildInputs::resolveIfDeclared)
+      BazelRunfiles.isRunningFromBazel -> targets.mapNotNull { resolveProbeRoot(moduleTarget = it, resolveFile = ::findRunfileByLabel) }
+      else -> {
+        val jarsRelative = if (forTests) moduleDescription.testJars else moduleDescription.productionJars
+        jarsRelative.map { state.projectHome.resolve(it) }
+      }
+    }
+  }
+
+  private fun findModuleDescription(module: JpsModule, forTests: Boolean): BazelTargetsInfo.TargetsFileModuleDescription {
+    val moduleDescription = state.bazelTargetsMap.modules.get(module.name) ?: error("Cannot find module '${module.name}' in the project")
 
     if (forTests && !isTestCompilationOutputEnabled(module)) {
       error(
@@ -529,15 +566,7 @@ class BazelModuleOutputProvider(
         "default value: ${BuildOptions.USE_TEST_COMPILATION_OUTPUT_DEFAULT_VALUE}"
       )
     }
-
-    return if (BazelBuildInputs.isConfigured || BazelRunfiles.isRunningFromBazel) {
-      val targets = if (forTests) moduleDescription.testTargets else moduleDescription.productionTargets
-      if (declaredOnly) targets.mapNotNull(BazelBuildInputs::resolveIfDeclared) else targets.map(BazelBuildInputs::resolve)
-    }
-    else {
-      val jarsRelative = if (forTests) moduleDescription.testJars else moduleDescription.productionJars
-      jarsRelative.map { state.projectHome.resolve(it) }
-    }
+    return moduleDescription
   }
 
   /**
@@ -567,6 +596,63 @@ class BazelModuleOutputProvider(
   override fun getModuleImlFile(module: JpsModule): Path = state.getModuleImlFile(module)
 
   override fun toString(): String = "BazelModuleOutputProvider(projectHome=${state.projectHome}, bazelOutputRoot=${state.resolvedBazelOutputRoot ?: "<not resolved>"})"
+}
+
+/** The entries of the runfiles manifest, or `null` when the runfiles have no manifest. */
+private val runfilesManifestEntries: Map<String, String>? by lazy {
+  BazelRunfilesManifest().takeIf { it.exists }?.entries
+}
+
+/**
+ * The file of [label] in the Bazel runfiles, or `null` when the runfiles do not hold it.
+ *
+ * It looks up the exact manifest key, and it uses the runfiles tree when the runfiles have no manifest.
+ */
+private fun findRunfileByLabel(label: String): Path? {
+  val bazelLabel = BazelLabel.fromString(label)
+  val repoEntry = BazelRunfiles.bazelTestRepoMapping.get(bazelLabel.repo) ?: return null
+  val key = buildString {
+    append(repoEntry.runfilesRelativePath)
+    if (bazelLabel.packageName.isNotEmpty()) {
+      append('/')
+      append(bazelLabel.packageName)
+    }
+    append('/')
+    append(bazelLabel.target)
+  }
+  val entries = runfilesManifestEntries
+  val file = if (entries == null) BazelRunfiles.bazelJavaRunfilesPath.resolve(key) else Path.of(entries.get(key) ?: return null)
+  return if (Files.exists(file)) file else null
+}
+
+/**
+ * The label of the resources sibling jar of [moduleTarget], or `null` when [moduleTarget] is not a jar label.
+ *
+ * The sibling of `<package>:<name>.jar` is `<package>:lib<name>_resources.jar`. The repository prefix stays.
+ * The `lib` prefix goes before the last name element, as in the output of a `java_library`.
+ */
+internal fun resourcesSiblingLabel(moduleTarget: String): String? {
+  val targetStart = moduleTarget.lastIndexOf(':') + 1
+  if (targetStart == 0 || !moduleTarget.endsWith(".jar")) {
+    return null
+  }
+  val nameStart = maxOf(targetStart, moduleTarget.lastIndexOf('/') + 1)
+  val nameEnd = moduleTarget.length - ".jar".length
+  if (nameStart >= nameEnd) {
+    return null
+  }
+  return moduleTarget.substring(0, nameStart) + "lib" + moduleTarget.substring(nameStart, nameEnd) + "_resources.jar"
+}
+
+/**
+ * The probe root of [moduleTarget] under plain Bazel runfiles. [resolveFile] gives the file of a label, or `null`.
+ *
+ * The resources sibling jar comes first. The module jar is the root when the sibling is absent.
+ * The module target has no root when both are absent.
+ */
+internal fun resolveProbeRoot(moduleTarget: String, resolveFile: (String) -> Path?): Path? {
+  resourcesSiblingLabel(moduleTarget)?.let(resolveFile)?.let { return it }
+  return resolveFile(moduleTarget)
 }
 
 /**
