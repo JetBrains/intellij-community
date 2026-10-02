@@ -25,10 +25,7 @@ import com.intellij.grazie.spellcheck.ranker.DiacriticSuggestionRanker
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.spellchecker.SpellCheckerManager
 import com.intellij.spellchecker.dictionary.Dictionary
@@ -74,23 +71,6 @@ class GrazieSpellCheckerEngine(private val project: Project, private val corouti
   private val replacingRules: Set<RuleDictionary> = getReplacingRules()
   private val modificationTracker: DictionaryModificationTracker
     get() = DictionaryModificationTracker.getInstance(project)
-
-  internal class SpellerLoadActivity : ProjectActivity {
-    init {
-      // Do not preload the speller in test mode, so it won't slow down tests not related to the spellchecker.
-      // We will still load it in tests but only when it is actually necessary.
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        throw ExtensionNotApplicableException.create()
-      }
-    }
-
-    override suspend fun execute(project: Project) {
-      getInstance(project).initializeSpeller(project)
-      project.serviceAsync<SpellCheckerManager>()
-      knownPhrases.computeIfAbsent(Language.ENGLISH) { KnownPhrases.forLanguage(Language.ENGLISH) }
-        .validPhrases("Bugfix")
-    }
-  }
 
   internal class SuggestionCacheInvalidator(private val project: Project): CustomDictionarySettingsListener {
     override fun customDictionaryPathsChanged(newPaths: List<String>) {
