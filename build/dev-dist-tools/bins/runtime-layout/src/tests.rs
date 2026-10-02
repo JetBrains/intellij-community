@@ -255,6 +255,39 @@ fn reused_jars_follow_content_order() {
     );
 }
 
+/// A reused jar with a custom path is a jar of the layout pass, as for `intellij.java.plugin`. The part states it in
+/// classpath order, and it keeps that place. A reused jar that the content pass places goes among the jars of that pass.
+#[test]
+fn reused_jar_with_custom_path_keeps_its_place() {
+    let part = plugin_part(
+        "p.main",
+        "plugins/p",
+        vec![
+            jar("lib/modules/p.content.jar", modules(&["p.content"])),
+            reused_jar("lib/modules/p.reused.jar", modules(&["p.reused"])),
+            jar("lib/launcher.jar", modules(&["p.launcher"])),
+            reused_jar("lib/p_rt.jar", modules(&["p.rt"])),
+            reused_jar("lib/resources/p.annotations.jar", modules(&["p.annotations"])),
+            jar("lib/p.jar", modules(&["p.main"])),
+        ],
+    );
+    let content = vec![
+        ContentModule::new("p.content", ""),
+        ContentModule::new("p.reused", ""),
+        ContentModule::new("p.annotations", "embedded"),
+    ];
+    let result = assemble_one(part, content);
+    assert_eq!(
+        entry_modules(&result.plugins[0]),
+        ["p.content", "p.reused", "p.launcher", "p.rt", "p.annotations", "p.main"]
+    );
+    assert_eq!(result.plugins[0].entries[3].path.as_deref(), Some("plugins/p/lib/p_rt.jar"));
+    assert_eq!(
+        result.plugins[0].entries[4].relative_output_file.as_deref(),
+        Some("resources/p.annotations.jar")
+    );
+}
+
 /// A plugin part keeps the plan order of its own jars, library jars included. A reused jar goes among the jars of the
 /// content pass, before the first jar of the layout pass. A library reports one entry for each of its files.
 #[test]
@@ -657,16 +690,10 @@ fn custom_path_content_modules() {
         ("p.shared", ""),
         ("p.late", ""),
     ]);
-    let result = assemble_one(part.clone(), all.clone());
+    let result = assemble_one(part, all);
     assert_eq!(
         entry_modules(&result.plugins[0]),
         ["p.embedded", "p.frontend", "p.shared", "p.main", "p.late", "p.custom"]
-    );
-    // A reused jar of a module that the descriptor refused is left out.
-    let result = assemble_one(part, all[..4].to_vec());
-    assert!(
-        !entry_modules(&result.plugins[0]).contains(&"p.late"),
-        "a refused reused jar was kept"
     );
 }
 

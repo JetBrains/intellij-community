@@ -187,6 +187,10 @@ fn order_assets<'a>(part: &'a Part, content: &[ContentModule], resolved: &'a [Ve
 /// it after every module. A jar with module libraries only does not end the content pass, because the module that owns
 /// them can be a content module. It stays behind the jar before it: the generator reads a module library entry by its
 /// owner and not by its place.
+///
+/// A reused jar that the content pass places goes among the jars of that pass by `<content>` order. A reused jar that it
+/// does not place has a custom path, such as `lib/idea_rt.jar`. The layout pass creates it, so it keeps its part
+/// position like any other jar of that pass.
 fn plugin_asset_order(
     part: &Part,
     content: &[ContentModule],
@@ -220,12 +224,10 @@ fn plugin_asset_order(
     let mut last: Option<usize> = None;
     let mut in_layout_pass = false;
     for (index, jar) in part.jars.iter().enumerate() {
-        if jar.reused {
-            // A reused jar is left out when the descriptor does not declare its module, because the descriptor refused
-            // that module. Otherwise the generator makes it an EMBEDDED module of the plugin.
-            if let Some(key) = first_placed(jar) {
-                reused.push(Group { key, jars: vec![index] });
-            }
+        if jar.reused
+            && let Some(key) = first_placed(jar)
+        {
+            reused.push(Group { key, jars: vec![index] });
             continue;
         }
         let has_module = jar.members.iter().any(|member| !member.module.is_empty());

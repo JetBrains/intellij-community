@@ -246,27 +246,27 @@ def _dev_plugin_test_impl(ctx):
     asserts.true(env, spec["files"][2]["source"].endswith("/" + resources["second.txt"].short_path.removeprefix("../")), spec["files"][2]["source"])
     asserts.equals(env, [], [action for action in actions if action.mnemonic not in ["PackDevPluginJar", "CollectDevPluginComponent", "FileWrite"]])
 
-    # The layout part keeps the plan order of the own jars and the merge order of their members, and not the classpath
-    # order. The reused jar follows them, marked, with the members its own target merged.
+    # The layout part states the jars in `classpath_jars` order and keeps the merge order of their members. So the reused
+    # jar comes first here, marked, with the members its own target merged.
     layout = target[DevDistRuntimeLayoutInfo]
     asserts.equals(env, spec["descriptor"], layout.descriptor.path)
     parts = [action for action in actions if layout.part in action.outputs.to_list()]
     asserts.equals(env, 1, len(parts))
     part = json.decode(parts[0].content)
     asserts.equals(env, [1, _MAIN_MODULE, "plugins/dev-plugin", "plugin", layout.descriptor.path], [part[key] for key in ["version", "descriptorModule", "directory", "order", "descriptor"]])
-    asserts.equals(env, ["lib/dev-plugin.jar", "lib/foo.jar", "lib/tests.jar", "lib/member.jar"], [jar["destination"] for jar in part["jars"]])
-    asserts.equals(env, [False, False, False, True], [jar.get("reused", False) for jar in part["jars"]])
-    main_members = part["jars"][0]["members"]
+    asserts.equals(env, ["lib/member.jar", "lib/dev-plugin.jar", "lib/foo.jar", "lib/tests.jar"], [jar["destination"] for jar in part["jars"]])
+    asserts.equals(env, [True, False, False, False], [jar.get("reused", False) for jar in part["jars"]])
+    main_members = part["jars"][1]["members"]
     asserts.equals(env, [None, _MAIN_MODULE, _SPLIT_MODULE], [member.get("module") for member in main_members])
     asserts.equals(env, _PACKAGE + ":" + ctx.attr.library.label.name, main_members[0]["library"])
     asserts.equals(env, len(library_jars), len(main_members[0]["jars"]))
     for jar, path in zip(library_jars, main_members[0]["jars"]):
         asserts.true(env, path.endswith("/" + jar.short_path.removeprefix("../")), path)
-    single = part["jars"][1]["members"]
+    single = part["jars"][2]["members"]
     asserts.equals(env, [_PACKAGE + ":foo-1.2.3.jar"], [member["library"] for member in single])
     asserts.true(env, single[0]["jars"][0].endswith("/" + ctx.file.single_jar.short_path.removeprefix("../")), single[0]["jars"])
-    asserts.equals(env, [{"module": _TEST_MODULE}], part["jars"][2]["members"])
-    asserts.equals(env, [{"module": module} for module in content.member_modules], part["jars"][3]["members"])
+    asserts.equals(env, [{"module": _TEST_MODULE}], part["jars"][3]["members"])
+    asserts.equals(env, [{"module": module} for module in content.member_modules], part["jars"][0]["members"])
 
     # The raw content: every merged module jar, the members of the reused content module jar, and every library the
     # plugin names, the jar file token included. Neutral, like the packed inputs, so compared by short path.

@@ -397,13 +397,16 @@ def _dev_plugin_impl(ctx):
         })
 
     # The collector reads the jars in spec order and writes the classpath record in that order. `classpath_jars` states
-    # the order when the plan's order is not the default one.
+    # the order when the plan's order is not the default one. The layout part takes the same order, so a reused jar with
+    # a custom path keeps its place among the jars of the layout pass.
     if ctx.attr.classpath_jars:
         by_destination = {entry.destination: entry for entry in packed}
         classpath_jars = [destination for destination in ctx.attr.classpath_jars if destination in by_destination] if refused else ctx.attr.classpath_jars
         if sorted(classpath_jars) != sorted(by_destination.keys()):
             fail("classpath_jars must name every jar once; the jars are %s" % sorted(by_destination.keys()), attr = "classpath_jars")
         packed = [by_destination[destination] for destination in classpath_jars]
+        layout_by_destination = {entry["destination"]: entry for entry in layout_jars}
+        layout_jars = [layout_by_destination[destination] for destination in classpath_jars]
 
     copies = _copies(ctx, inputs, destinations)
     copied_files = [copy.file for copy in copies]
@@ -515,7 +518,7 @@ destination.""",
         ),
         "classpath_jars": attr.string_list(
             doc = """The classpath order of every jar, by destination. Empty takes the default order: the `jars` keys, then the
-reused content module jars in `content_module_jars` order.""",
+reused content module jars in `content_module_jars` order. The layout part states its jars in the same order.""",
         ),
         "files": attr.string_dict(
             doc = """The plain copies, keyed by destination relative to the plugin directory and valued by the label token of
