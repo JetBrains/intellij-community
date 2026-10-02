@@ -56,7 +56,7 @@ private val EVAL_VERSIONS_PROVIDER = StubBuildCachedValueProvider<ImmutableRange
     result = evaluateVersionsForElement(parent)
     if (parent is PyIfPart || parent is PyElsePart) {
       val grandParent = parent.parent
-      if (grandParent is PyIfStatement && element === (parent as PyStatementPart).statementList) {
+      if (grandParent is PyIfStatement && element === parent.statementList) {
         val versions = evaluateVersionRangeForIfStatementPart(grandParent, parent)
         if (versions != null) {
           result = result.intersection(versions)

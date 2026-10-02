@@ -23,18 +23,23 @@ interface PyAstElement : NavigatablePsiElement {
   fun <T : PyAstElement> childrenToPsi(filterSet: TokenSet?, array: Array<T>): Array<T> =
     PyPsiUtilsCore.nodesToPsi<T>(node.getChildren(filterSet), array)
 
+  @Suppress("UNCHECKED_CAST")
   fun <T : PyAstElement> childToPsi(filterSet: TokenSet?, index: Int): T? =
     node.getChildren(filterSet).getOrNull(index)?.psi as T?
 
+  @Suppress("UNCHECKED_CAST")
   fun <T : PyAstElement> childToPsi(elType: IElementType): T? =
     node.findChildByType(elType)?.psi as T?
 
+  @Suppress("UNCHECKED_CAST")
   fun <T : PyAstElement> childToPsi(elTypes: TokenSet): T? =
     node.findChildByType(elTypes)?.psi as T?
 
+  @Suppress("UNCHECKED_CAST")
   fun <T : PyAstElement> childToPsiNotNull(filterSet: TokenSet?, index: Int): T =
     childToPsi<PyAstElement>(filterSet, index) as T? ?: throw RuntimeException("child must not be null: expression text $text")
 
+  @Suppress("UNCHECKED_CAST")
   fun <T : PyAstElement> childToPsiNotNull(elType: IElementType): T =
     childToPsi<PyAstElement>(elType) as T? ?: throw RuntimeException("child must not be null; expression text $text")
 
@@ -60,7 +65,7 @@ fun <T> PsiElement.findChildrenByClass(aClass: Class<T>): Array<T> {
   val result: java.util.ArrayList<T> = java.util.ArrayList()
   var cur: PsiElement? = firstChild
   while (cur != null) {
-    if (aClass.isInstance(cur)) result.add(cur as T)
+    if (aClass.isInstance(cur)) result.add(aClass.cast(cur))
     cur = cur.nextSibling
   }
   return result.toArray(ArrayUtil.newArray(aClass, result.size))
@@ -101,6 +106,7 @@ private inline fun <T : PsiElement> PsiElement.findChildrenByType(filter: (IElem
       if (result === null) {
         result = ArrayList()
       }
+      @Suppress("UNCHECKED_CAST")
       result.add(child.psi as T)
     }
     child = child.treeNext
@@ -108,6 +114,6 @@ private inline fun <T : PsiElement> PsiElement.findChildrenByType(filter: (IElem
   return result ?: emptyList()
 }
 
-private inline fun <T> PsiElement.nonNullChild(child: T?): T {
+private fun <T> PsiElement.nonNullChild(child: T?): T {
   return requireNotNull(child) { "child must not be null: expression text " + text }
 }

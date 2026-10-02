@@ -296,6 +296,7 @@ object PyDefUseUtil {
     val instructions = controlFlow.instructions
     val instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor)
     if (instr < 0) {
+      @Suppress("UNCHECKED_CAST")
       return PyElement.EMPTY_ARRAY as Array<PsiElement?>
     }
     val visited = BooleanArray(instructions.size)

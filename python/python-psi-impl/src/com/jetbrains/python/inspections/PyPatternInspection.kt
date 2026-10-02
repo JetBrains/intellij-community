@@ -83,7 +83,7 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
 
     val matchArgs = PyClassPatternImpl.getMatchArgs(classType, myTypeEvalContext) ?: run {
       node.argumentList.patterns.filterNot { it is PyKeywordPattern }.forEach { pattern ->
-        holder!!.problem(pattern,
+        holder.problem(pattern,
                        PyPsiBundle.message("INSP.patterns.class.does.not.support.pattern.matching.with.positional.arguments", pyClass.name))
           .fix(AddMatchArgsFix(pyClass))
           .register()
@@ -94,7 +94,7 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
     val (positionalPatterns, keywordPatterns) = node.argumentList.patterns.partition { it !is PyKeywordPattern }
 
     for (pattern in positionalPatterns.drop(matchArgs.size)) {
-      holder!!.problem(pattern, PyPsiBundle.message("INSP.patterns.too.many.positional.patterns.expected", matchArgs.size))
+      holder.problem(pattern, PyPsiBundle.message("INSP.patterns.too.many.positional.patterns.expected", matchArgs.size))
         .fix(PyRemoveElementFix(pattern))
         .register()
     }
@@ -111,7 +111,7 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
       val keywordName = (keywordPattern as PyKeywordPattern).keyword
       val positionalIndex = positionalAttributeNames.indexOf(keywordName)
       if (positionalIndex >= 0) {
-        holder!!.problem(keywordPattern,
+        holder.problem(keywordPattern,
                        PyPsiBundle.message("INSP.patterns.attribute.already.specified.as.positional.pattern.at.position",
                                            keywordName,
                                            positionalIndex + 1))

@@ -28,6 +28,7 @@ object PyPsiUtilsCore {
   fun <T : PyAstElement> nodesToPsi(nodes: Array<ASTNode>, array: Array<T>): Array<T> {
     val psiElements = ArrayUtil.newArray(ArrayUtil.getComponentType(array), nodes.size)
     for (i in nodes.indices) {
+      @Suppress("UNCHECKED_CAST")
       psiElements[i] = nodes[i].psi as T
     }
     return psiElements

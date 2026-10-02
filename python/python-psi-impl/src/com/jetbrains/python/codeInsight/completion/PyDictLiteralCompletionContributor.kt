@@ -57,7 +57,7 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
       possibleSequenceExpr = possibleSequenceExpr.parent
     }
     if (possibleSequenceExpr is PyDictLiteralExpression || possibleSequenceExpr is PySetLiteralExpression) { // it's set literal when user is typing the first key
-      addCompletionToCallExpression(originalElement, possibleSequenceExpr as PySequenceExpression, result)
+      addCompletionToCallExpression(originalElement, possibleSequenceExpr, result)
       addCompletionToAssignment(originalElement, possibleSequenceExpr, result)
       addCompletionToReturnStatement(originalElement, possibleSequenceExpr, result)
     }

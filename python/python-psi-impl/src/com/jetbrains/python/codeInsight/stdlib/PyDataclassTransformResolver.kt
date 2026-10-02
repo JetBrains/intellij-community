@@ -285,7 +285,7 @@ private fun getReturnTypeOfConverter(converterExpr: PyExpression, context: TypeE
     converterType.asUnionSequence().forEach { type ->
       when (type) {
         is PyCallableType -> type.getReturnType(context)?.let(::add)
-        is PyOverloadType -> type.items.forEach { it?.getReturnType(context)?.let(::add) }
+        is PyOverloadType -> type.items.forEach { it.getReturnType(context)?.let(::add) }
       }
     }
   }

@@ -44,7 +44,7 @@ import one.util.streamex.StreamEx
  */
 fun autoInsertSingleItem(context: AutoCompletionContext): AutoCompletionDecision =
   if (context.items.size == 1) {
-    AutoCompletionDecision.insertItem(context.items.first())!!
+    AutoCompletionDecision.insertItem(context.items.first())
   }
   else {
     AutoCompletionDecision.SHOW_LOOKUP!!

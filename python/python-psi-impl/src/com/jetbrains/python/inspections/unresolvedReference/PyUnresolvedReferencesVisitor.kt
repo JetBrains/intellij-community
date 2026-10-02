@@ -493,8 +493,7 @@ class PyUnresolvedReferencesVisitor(
       type.module.languageLevel.isAtLeast(LanguageLevel.PYTHON37) ->
         definesGetAttr(type.module, myTypeEvalContext)
 
-      type != null -> isIgnoredByExtension(type, name)
-      else -> false
+      else -> isIgnoredByExtension(type, name)
     }
   }
 

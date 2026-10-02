@@ -2761,14 +2761,8 @@ object PyTypeChecker {
 
   @JvmStatic
   fun definesGetAttr(file: PyFile, context: TypeEvalContext): Boolean {
-    if (file is PyTypedElement) {
-      val type = context.getType(file as PyTypedElement)
-      if (type != null) {
-        return resolveTypeMember(type, PyNames.GETATTR, context) != null
-      }
-    }
-
-    return false
+    val type = context.getType(file) ?: return false
+    return resolveTypeMember(type, PyNames.GETATTR, context) != null
   }
 
   @JvmStatic
