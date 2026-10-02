@@ -16,11 +16,13 @@ import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.zipWriter
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
+import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
+import java.util.jar.Manifest
 import java.util.zip.Deflater
 
 private const val listOfEntitiesFileName = "META-INF/listOfEntities.txt"
@@ -312,35 +314,19 @@ private class ModuleManifestCheck(private val targetFile: Path, private val jarN
     }
     manifestSource = source
 
-    val bootClassPath = readMainAttribute(Charsets.UTF_8.decode(data.duplicate()), "Boot-Class-Path") ?: return
+    val bytes = ByteArray(data.remaining())
+    data.duplicate().get(bytes)
+    val manifest = try {
+      Manifest(ByteArrayInputStream(bytes))
+    }
+    catch (e: IOException) {
+      throw IllegalStateException("$targetFile gets a module manifest from $source that is not a valid manifest: ${e.message}", e)
+    }
+    val bootClassPath = manifest.mainAttributes.getValue("Boot-Class-Path") ?: return
     if (bootClassPath != jarName) {
       error("$targetFile gets a module manifest from $source with Boot-Class-Path '$bootClassPath'. The value must be '$jarName'.")
     }
   }
-}
-
-/**
- * Returns the value of the main attribute [name] of a manifest, or `null` if the main section does not have it.
- *
- * A line that starts with a space continues the value of the previous line.
- */
-private fun readMainAttribute(manifest: CharSequence, name: String): String? {
-  var value: StringBuilder? = null
-  for (line in manifest.lineSequence()) {
-    if (value != null) {
-      if (!line.startsWith(' ')) {
-        break
-      }
-      value.append(line, 1, line.length)
-    }
-    else if (line.isEmpty()) {
-      break
-    }
-    else if (line.length > name.length && line[name.length] == ':' && line.startsWith(name, ignoreCase = true)) {
-      value = StringBuilder(line.substring(name.length + 1).removePrefix(" "))
-    }
-  }
-  return value?.toString()
 }
 
 private fun isDuplicated(uniqueNames: MutableMap<String, Path>, name: String, sourceFile: Path): Boolean {
