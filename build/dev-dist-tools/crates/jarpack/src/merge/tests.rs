@@ -409,10 +409,10 @@ fn a_module_manifest_boot_class_path_must_name_the_jar() {
     assert_eq!(read_entry(&data, MANIFEST_ENTRY_NAME), "Boot-Class-Path: other.jar\n");
 }
 
-/// The output file of a content-module jar is `<target>.production.jar`. The distribution name that the recipe states is
-/// the name that a `Boot-Class-Path` must state.
+/// Every producer writes a jar under its distribution name, so the file name of the output is the name that a
+/// `Boot-Class-Path` must state.
 #[test]
-fn a_module_manifest_boot_class_path_names_the_stated_jar_name() {
+fn a_module_manifest_boot_class_path_names_the_jar() {
     let scratch = Scratch::new();
     let module_with = |value: &str| {
         write_zip_jar(
@@ -421,26 +421,19 @@ fn a_module_manifest_boot_class_path_names_the_stated_jar_name() {
             &[entry(MANIFEST_ENTRY_NAME, &format!("Boot-Class-Path: {value}\n"))],
         )
     };
-    let stated = |output: &str, module: &Path| MergeSpec {
-        jar_name: Some("intellij.example.agent.jar".into()),
-        ..spec(output, vec![Source::module(module)])
-    };
     let module = module_with("intellij.example.agent.jar");
-    let (data, _) = pack(&scratch, stated("x.production.jar", &module));
+    let (data, _) = pack(&scratch, spec("intellij.example.agent.jar", vec![Source::module(&module)]));
     assert_eq!(
         read_entry(&data, MANIFEST_ENTRY_NAME),
         "Boot-Class-Path: intellij.example.agent.jar\n"
     );
-    // The jar name is not in the bytes.
-    let (unstated, _) = pack(&scratch, spec("intellij.example.agent.jar", vec![Source::module(&module)]));
-    assert_eq!(data, unstated, "the stated jar name changed the bytes");
 
-    let module = module_with("x.production.jar");
-    let output = scratch.dir().join("x.production.jar");
+    let module = module_with("other.jar");
+    let output = scratch.dir().join("intellij.example.agent.jar");
     assert_eq!(
-        pack_error(&stated(output.to_str().unwrap(), &module)),
+        pack_error(&spec(output.to_str().unwrap(), vec![Source::module(&module)])),
         format!(
-            "{}: the module manifest of {} has `Boot-Class-Path: x.production.jar`, but the jar is intellij.example.agent.jar",
+            "{}: the module manifest of {} has `Boot-Class-Path: other.jar`, but the jar is intellij.example.agent.jar",
             output.display(),
             module.display()
         )

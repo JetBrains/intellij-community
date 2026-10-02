@@ -52,11 +52,11 @@ def _packing_test_impl(ctx):
     action = actions[0]
 
     # One action writes the shipped jar. DefaultInfo, the provider and the metadata group name its outputs. The file is
-    # `<target>.production.jar`; the destination is derived from the module name, not from the file.
+    # `<target>/<module>.jar`, so its name is the destination and a `Boot-Class-Path` can name it.
     asserts.equals(env, [info.jar], target[DefaultInfo].files.to_list())
     asserts.equals(env, [info.metadata], groups.file_metadata.to_list())
-    asserts.equals(env, target.label.name + ".production.jar", info.jar.basename)
-    asserts.equals(env, target.label.name + ".production.metadata.json", info.metadata.basename)
+    asserts.true(env, info.jar.path.endswith("/" + target.label.name + "/" + info.module_name + ".jar"), info.jar.path)
+    asserts.true(env, info.metadata.path.endswith("/" + target.label.name + "/" + info.module_name + ".metadata.json"), info.metadata.path)
     asserts.equals(env, info.module_name + ".jar", info.relative_path)
     asserts.equals(env, ctx.attr.member_modules, list(info.member_modules))
     asserts.equals(env, [module[_KtJvmInfo].all_output_jars[0].short_path for module in ctx.attr.modules], [jar.short_path for jar in info.member_jars])
@@ -66,9 +66,9 @@ def _packing_test_impl(ctx):
     library_jars_by_path = {jar.short_path: jar for entry in info.library_jars for jar in entry.jars}
     spans = groups.trace_spans.to_list()
 
-    # The flag file in grammar order: the output, its metadata, the distribution name, the optional trace file, the
-    # flags of the jar, then the module outputs and then the libraries.
-    expected = ["output=" + info.jar.path, "metadata-file=" + info.metadata.path, "jar-name=" + info.relative_path]
+    # The flag file in grammar order: the output, its metadata, the optional trace file, the flags of the jar, then the
+    # module outputs and then the libraries.
+    expected = ["output=" + info.jar.path, "metadata-file=" + info.metadata.path]
     expected += ["trace-file=" + file.path for file in spans]
     if ctx.attr.keep_manifest:
         expected.append("keep-manifest=true")
@@ -114,7 +114,6 @@ def _natives_test_impl(ctx):
     asserts.equals(env, 1, len(jar_action))
     jar_argv = jar_action[0].argv[1:]
     asserts.true(env, "native-lib=" + ctx.attr.native_lib in jar_argv, str(jar_argv))
-    asserts.equals(env, ["jar-name=" + info.relative_path], [line for line in jar_argv if line.startswith("jar-name=")])
     asserts.false(env, [line for line in jar_argv if line.startswith("native-tree=") or line.startswith("native-variant=")], str(jar_argv))
 
     # A tree action packs the libraries alone into a scratch jar and writes the tree of its platform beside it. The
@@ -152,21 +151,6 @@ _natives_test = analysistest.make(
     config_settings = {_TRACE_SPANS: False},
 )
 
-def _selected_output_test_impl(ctx):
-    env = analysistest.begin(ctx)
-    info = ctx.attr.owner[ContentModuleJarInfo]
-    expected = info.metadata if ctx.attr.metadata else info.jar
-    asserts.equals(env, [expected], analysistest.target_under_test(env)[DefaultInfo].files.to_list())
-    return analysistest.end(env)
-
-_selected_output_test = analysistest.make(
-    _selected_output_test_impl,
-    attrs = {
-        "owner": attr.label(providers = [ContentModuleJarInfo]),
-        "metadata": attr.bool(),
-    },
-)
-
 def _platform_jar_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
@@ -180,7 +164,7 @@ def _platform_jar_test_impl(ctx):
 
     # The flag file in grammar order. A fixture of one library keeps its manifest. A jar with a module member
     # rejects a native entry, because a presigned library packs as a `content_module_jar`. A library-only jar keeps them.
-    expected = ["output=" + info.jar.path, "metadata-file=" + info.metadata.path, "jar-name=" + info.jar.basename]
+    expected = ["output=" + info.jar.path, "metadata-file=" + info.metadata.path]
     expected += ["keep-manifest=true"] if len(ctx.files.library_jars) == 1 and not ctx.attr.member_modules else []
     expected += ["merge-entities=true"] + (["reject-native-entries=true"] if ctx.attr.member_modules else [])
 
@@ -258,17 +242,6 @@ def content_module_jar_test_suite(name):
                 spans = spans,
             )
             tests.append(test_name)
-
-    # The predeclared outputs stay label-addressable: the plan files and the plugin chain name the jar by its label.
-    selected_owner = content_module_jar_target_name(name + "_single")
-    for suffix, output_suffix, metadata in [
-        ("jar_label", ".production.jar", False),
-        ("metadata_label", ".production.metadata.json", True),
-    ]:
-        selected = name + "_" + suffix
-        native.filegroup(name = selected, srcs = [":" + selected_owner + output_suffix], tags = ["manual"])
-        _selected_output_test(name = selected + "_test", target_under_test = selected, owner = ":" + selected_owner, metadata = metadata)
-        tests.append(selected + "_test")
 
     # A platform jar states its own destination, and it may name a subdirectory of the plugin's `lib/`. The three
     # residual jars of `idea` do - `ext/platform-main.jar` and the two `frontend-split/` jars - so the destination must

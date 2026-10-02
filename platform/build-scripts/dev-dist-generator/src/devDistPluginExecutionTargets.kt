@@ -175,8 +175,8 @@ internal fun renderDevDistPluginExecutionTargets(
     }
     checkExecutionLabel(binding.label)
     require(independent.put(binding.label, artifact.module) == null) { "Duplicate independent provider: ${binding.label}" }
-    val excluded = listOf(binding.label, "${binding.label}.production.jar", "${binding.label}.production.metadata.json").map(::devBuildPathIdentity)
-    require(excluded.none { it in labels } && devBuildPathIdentity(descriptorLabel) !in excluded) {
+    val excluded = devBuildPathIdentity(binding.label)
+    require(excluded !in labels && devBuildPathIdentity(descriptorLabel) != excluded) {
       "An independent artifact overlaps a raw input or descriptor: ${binding.label}"
     }
   }
@@ -189,9 +189,7 @@ internal fun renderDevDistPluginExecutionTargets(
     raw.values.mapTo(this) { it.label }
     addAll(requiredLibraries)
     addAll(independent.keys)
-    independent.keys.mapTo(this) { "$it.production.jar" }
     add(descriptorLabel)
-    independent.keys.mapTo(this) { "$it.production.metadata.json" }
   }
   val inputIdentities = inputs.mapTo(HashSet(), ::devBuildPathIdentity)
   val graphIdentities = graphLabels.map(::devBuildPathIdentity)
@@ -226,8 +224,7 @@ internal fun renderDevDistPluginExecutionTargets(
     "The descriptor of ${configuration.name} has the catalogue ID ${descriptorInput.id}"
   }
   val directoryName = if (originalDirectoryName == derivedPluginDirectoryName(entry.mainModule)) "" else originalDirectoryName
-  // The macro derives the `.production.jar` file of each reused artifact from its owner label, so the owner labels are
-  // stated once. A source tree is keyed by its artifact ID, so one target can serve two IDs with different prefixes.
+  // The macro reads the jar of each reused artifact from its owner label, so the owner labels are stated once. A source tree is keyed by its artifact ID, so one target can serve two IDs with different prefixes.
   // A call in a community package names a label as a community package spells it. An ID keeps its spelling, because
   // the plan file keeps it. A chain that reads a plan file of a community package spells a label-shaped ID as that
   // package does, because the ultimate half reuses such a plan file as the community half wrote it.

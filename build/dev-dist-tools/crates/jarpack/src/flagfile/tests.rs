@@ -160,38 +160,17 @@ fn parse_flag_file_rejects_what_would_change_bytes_silently() {
 }
 
 #[test]
-fn parse_flag_file_reads_the_jar_name() {
+fn parse_flag_file_refuses_jar_name_as_unknown() {
+    // Every producer writes a jar under its distribution name, so the name of the jar is the output file name and no
+    // line states it. A producer that still writes the retired line fails.
     let scratch = Scratch::new();
-    // The line the packing rule writes, where it writes it: after `metadata-file=`.
-    let specs = parse_recipe(
-        &scratch,
-        "output=out/a_content_module_jar.production.jar\nmetadata-file=out/a.metadata.json\njar-name=intellij.a.jar\nmodule=mod/a.jar\n\
-         output=out/b.jar\nmodule=mod/b.jar\n",
-    )
-    .unwrap();
-    assert_eq!(specs[0].jar_name.as_deref(), Some("intellij.a.jar"));
+    let specs = parse_recipe(&scratch, "output=out/a_content_module_jar/intellij.a.jar\nmodule=mod/a.jar\n").unwrap();
     assert_eq!(specs[0].jar_name(), "intellij.a.jar");
-    // A group without the line takes the output file name.
-    assert_eq!(specs[1].jar_name, None);
-    assert_eq!(specs[1].jar_name(), "b.jar");
-    for (lines, line) in [
-        ("output=out/a.jar\njar-name=\nmodule=mod/a.jar\n", "jar-name="),
-        ("output=out/a.jar\njar-name=lib/a.jar\nmodule=mod/a.jar\n", "jar-name=lib/a.jar"),
-        ("output=out/a.jar\njar-name=lib\\a.jar\nmodule=mod/a.jar\n", "jar-name=lib\\a.jar"),
-    ] {
-        let error = parse_recipe(&scratch, lines).unwrap_err();
-        assert_eq!(
-            format!("{error:#}"),
-            format!("expected a file name without a path separator in `jar-name=`, got {line:?}")
-        );
-    }
-    let error = parse_recipe(&scratch, "output=out/a.jar\njar-name=a.jar\njar-name=b.jar\nmodule=mod/a.jar\n").unwrap_err();
+    let error = parse_recipe(&scratch, "output=out/a.jar\njar-name=intellij.a.jar\nmodule=mod/a.jar\n").unwrap_err();
     assert_eq!(
         format!("{error:#}"),
-        r#"expected one `jar-name=` per output, got a second one in "jar-name=b.jar""#
+        r#"unknown option "jar-name" in "jar-name=intellij.a.jar""#
     );
-    let error = parse_recipe(&scratch, "jar-name=a.jar\noutput=out/a.jar\nmodule=mod/a.jar\n").unwrap_err();
-    assert_eq!(format!("{error:#}"), "`jar-name=a.jar` before any `output=`");
 }
 
 #[test]

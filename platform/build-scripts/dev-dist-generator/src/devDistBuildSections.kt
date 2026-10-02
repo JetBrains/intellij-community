@@ -37,7 +37,7 @@ import kotlin.io.path.invariantSeparatorsPathString
  * The facts the tool decides for the dev distribution, which the plan reads as labels.
  *
  * [contentModuleJarLabels] records each owner label with its jar artifact and recipe. The artifact is the owner's
- * default output, `<label>.production.jar`.
+ * default output, `<label>/<module>.jar`.
  * Labels use the spelling of a package outside `community/`. A module absent from the index packs no independent `lib/` jar.
  * [pluginRecords] is the [DevSectionRecord] of every plugin of the population that has a Bazel package, whether or not
  * the plugin renders a section. A registry layout outside the population that no request plans has no record.

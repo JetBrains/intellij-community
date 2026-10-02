@@ -368,7 +368,6 @@ def _dev_plugin_impl(ctx):
             descriptor = descriptor_info.descriptor if has_main else None,
             descriptor_module = main_module if has_main else None,
             metadata = metadata,
-            jar_name = output.basename,
         )
         packed.append(struct(destination = destination, jar = output, metadata = metadata))
         layout_jars.append({"destination": destination, "members": layout_members})
@@ -506,7 +505,9 @@ Not transitioned. The consumer reaches it in the product configuration, and `_pr
             doc = """The jars, keyed by destination relative to the plugin directory and valued by source tokens in merge order.
 
 A token is a JPS module name, or a label token, which holds `//`, of a library container or a jar file. The jar of the
-main module receives the patched descriptor.""",
+main module receives the patched descriptor. A destination can name a subdirectory of `lib/`, such as
+`lib/rt/debugger-agent.jar`. The packer checks a `Boot-Class-Path` of a module manifest against the file name of the
+destination.""",
             mandatory = True,
         ),
         "module_jar_paths": attr.string_dict(

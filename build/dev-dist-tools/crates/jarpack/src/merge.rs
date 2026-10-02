@@ -144,9 +144,6 @@ pub struct MergeSpec {
     pub merge_entities: bool,
     pub reject_native_entries: bool,
     pub metadata_file: Option<PathBuf>,
-    /// The distribution name of the jar, from the `jar-name=` line, or `None`. The output file of a content-module jar is
-    /// `<target>.production.jar`, and the distribution names the jar `<module>.jar`. See [`MergeSpec::jar_name`].
-    pub jar_name: Option<String>,
     pub validate_entry_names: bool,
     /// The natives mode of the group, or `None`. See [`NativeSpec`].
     pub native: Option<NativeSpec>,
@@ -173,11 +170,11 @@ pub struct MergeReport {
 }
 
 impl MergeSpec {
-    /// The distribution name of the jar: [`MergeSpec::jar_name`] when the recipe states it, else the file name of
-    /// [`MergeSpec::output`]. The distribution name of a jar can differ from the name of its output file. It is the `jar`
-    /// tag of the `pack jar` span, the start of the duplicate line and the name that a `Boot-Class-Path` must state.
+    /// The file name of [`MergeSpec::output`]. Every producer writes a jar under the name it has in the distribution, so
+    /// this is that name. It is the `jar` tag of the `pack jar` span, the start of the duplicate line and the name that a
+    /// `Boot-Class-Path` must state.
     pub fn jar_name(&self) -> String {
-        self.jar_name.clone().unwrap_or_else(|| file_name(&self.output))
+        file_name(&self.output)
     }
 
     /// Writes the jar this spec describes, and refuses a spec with no source.
@@ -203,8 +200,7 @@ impl MergeSpec {
     /// `keep_manifest` and the policy of the source say. The manifest of a library survives only by its policy or by
     /// `keep_manifest`. A producer sets `keep_manifest` when the library is the one meaningful source of the jar. The
     /// merge refuses two module manifests in one jar. It also refuses a module manifest whose `Boot-Class-Path` main
-    /// attribute is not the distribution name of the jar, [`MergeSpec::jar_name`]. No entry changes its content in the
-    /// merge.
+    /// attribute is not the name of the jar, [`MergeSpec::jar_name`]. No entry changes its content in the merge.
     pub fn merge(&self, options: &MergeOptions) -> Result<MergeReport> {
         let output = &self.output;
         let jar_name = self.jar_name();
@@ -501,9 +497,9 @@ pub(crate) fn trim_entity_list<'a>(data: &'a [u8], source: &Path) -> Result<&'a 
 /// The main attribute of a Java agent manifest that names the jar to add to the boot class path.
 const BOOT_CLASS_PATH: &str = "Boot-Class-Path";
 
-/// Refuses a module manifest whose `Boot-Class-Path` main attribute is not `jar_name`, the distribution name of the jar
-/// at `output`. A Java agent names its own jar in this attribute, so the attribute must name the jar that the merge
-/// writes, by the name that the distribution gives it. A manifest without the attribute passes.
+/// Refuses a module manifest whose `Boot-Class-Path` main attribute is not `jar_name`, the file name of the jar at
+/// `output`. A Java agent names its own jar in this attribute, so the attribute must name the jar that the merge
+/// writes. A manifest without the attribute passes.
 pub(crate) fn check_boot_class_path(data: &[u8], source: &Path, output: &Path, jar_name: &str) -> Result<()> {
     let Ok(text) = std::str::from_utf8(data) else {
         bail!(

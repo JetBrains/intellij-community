@@ -39,8 +39,6 @@ pub struct FlagFile {
 ///
 /// - `keep-manifest=`, `merge-entities=` and `reject-native-entries=` take only `true`. A producer omits a false flag.
 ///   `keep-manifest=true` keeps the manifest of a library source. A module output keeps its manifest without it.
-/// - `jar-name=` takes one nonempty file name without `/` and `\`, at most once per group. It states the distribution
-///   name of the jar, which can differ from the output file name. A group without it takes the output file name.
 /// - A path has no `.` and no `..` component, so the parser compares the paths as they are written. See
 ///   [`resolve_path`].
 ///
@@ -101,15 +99,6 @@ pub fn parse_flag_file(path: &Path, base_dir: &Path) -> Result<FlagFile> {
                     bail!("expected one nonempty `metadata-file=` per output");
                 }
                 spec.metadata_file = Some(resolve(value)?);
-            }
-            "jar-name" => {
-                if spec.jar_name.is_some() {
-                    bail!("expected one `jar-name=` per output, got a second one in {line:?}");
-                }
-                if value.is_empty() || value.contains(['/', '\\']) {
-                    bail!("expected a file name without a path separator in `jar-name=`, got {line:?}");
-                }
-                spec.jar_name = Some(value.to_string());
             }
             "reject-native-entries" => spec.reject_native_entries = parse_true(option, value)?,
             "native-tree" | "native-variant" | "native-lib" => {

@@ -19,10 +19,10 @@ plan files through pluginpack. Each other input fails with an error that names i
 | --- | --- | --- |
 | `keep-manifest=`, `merge-entities=`, `reject-native-entries=` | `true` | `false` and every other value |
 | `source-manifest=` | no value. No producer writes a manifest policy into a flag file. | every value, as an unknown option |
+| `jar-name=` | no value. Every producer writes a jar under its distribution name. | every value, as an unknown option |
 | A flag-file path | a path without a `.` or `..` component | a path with one. The Go parser cleaned it. |
 | `file=<entry name>=<path>` | a nonempty name and path. The recipe replay writes it for a single-file source. | no `=` after the name, or an empty part |
 | `trace-file=` | one path, in any number of groups | two different paths. A run writes one trace. |
-| `jar-name=` | one nonempty file name per group, without `/` and `\` | an empty value, a value with a separator, or a second line in the group |
 | A source path | a nonempty path | an empty path |
 | The module manifests of one jar | one | a second one. The refusal names the jar and both sources. |
 | The `Boot-Class-Path` main attribute of a module manifest | the file name of the jar, or no attribute | every other value. The refusal names the jar, the source and the value. |
@@ -50,11 +50,9 @@ is the one meaningful source of the jar, and never for a module output. pluginpa
 module manifest survives all the same. A file source is never a module manifest, so the two manifest refusals do not
 apply to it. No entry changes its content in the merge.
 
-A module manifest with a `Boot-Class-Path` must name the distribution name of the jar, `MergeSpec::jar_name()`. The
-`jar-name=` line states it, because the output file of a content-module jar is `<target>.production.jar`, and the
-distribution names the jar `<module>.jar`. A group without the line, and a `MergeSpec` of pluginpack, take the output
-file name. The name is not in the bytes of the jar. It is also the `jar` tag of the `pack jar` span and the start of the
-duplicate line.
+A module manifest with a `Boot-Class-Path` must name the jar, `MergeSpec::jar_name()`. That is the file name of the
+output, because every producer writes a jar under the name it has in the distribution. The name is not in the bytes of
+the jar. It is also the `jar` tag of the `pack jar` span and the start of the duplicate line.
 
 The `Boot-Class-Path` check reads the main section of the manifest, up to the first empty line. A line that starts with
 a space continues the line before it. The attribute name matches without regard to ASCII case, as the JAR specification

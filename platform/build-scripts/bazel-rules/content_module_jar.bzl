@@ -49,15 +49,15 @@ ContentModuleJarInfo = provider(
     is what replaced `dev_dist_content.bzl` asking another rule for attributes by name - `getattr(ctx.rule.attr,
     "content_module_jar_libraries", None)`, which answered `None` rather than failing when the name was wrong.""",
     fields = {
-        "jar": "The packed `File`, `<target>.production.jar`.",
+        "jar": "The packed `File`, `<target>/<module>.jar`.",
         "metadata": "The file hash metadata from the same packing action.",
-        # The distribution's path for this jar is derived from the module name, not from the jar's own path, so the name
-        # travels with the jar rather than being re-derived from a label by every consumer.
+        # The distribution's path for this jar is derived from the module name, so the name travels with the jar rather
+        # than being re-derived from a label by every consumer.
         "module_name": "The JPS module the jar is named after.",
-        # Derived from the module name, not from the file: the packed file is `<target>.production.jar` and the
-        # destination is `<module>.jar`. A field all the same: `DevDistPlatformJarInfo` carries a destination that can
-        # name a subdirectory, and a consumer of both providers reads one field rather than deriving the flat case
-        # from the file and the nested case from a provider.
+        # Derived from the module name. The packed file carries the same name, so the packer can check a `Boot-Class-Path`
+        # against it. A field all the same: `DevDistPlatformJarInfo` carries a destination that can name a subdirectory,
+        # and a consumer of both providers reads one field rather than deriving the flat case from the file and the
+        # nested case from a provider.
         "relative_path": "string: the jar's destination, relative to the plugin's own `lib/`.",
         "member_jars": "tuple of File: the own jar of every merged module, this jar's own module included.",
         "member_modules": """tuple of string: the same members by JPS module name.
@@ -197,7 +197,7 @@ def _packer_resources(os, _inputs_size):
     """One single-threaded packer process."""
     return {"cpu": 1, "memory": 192 if os == "windows" else 96}
 
-def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names, mnemonic, progress_message, extra_flags = [], extra_outputs = [], descriptor = None, descriptor_module = None, descriptor_path = "META-INF/plugin.xml", patches = [], metadata = None, jar_name = None):
+def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names, mnemonic, progress_message, extra_flags = [], extra_outputs = [], descriptor = None, descriptor_module = None, descriptor_path = "META-INF/plugin.xml", patches = [], metadata = None):
     """Runs the packer over one jar, for either of this file's two rules and for `dev_plugin.bzl`.
 
     The rules differ in the jar's identity - its path, its mnemonic and its provider - and in nothing the packer
@@ -214,9 +214,9 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
     flag file. A `File` the packer writes besides the jar and its metadata goes into `extra_outputs`.
 
     The packer keeps the manifest of a module output. A library manifest survives only with `keep-manifest=true`,
-    which the caller writes when the library is the one meaningful source of the jar. `jar_name` is the distribution
-    name of the jar. The packer checks a `Boot-Class-Path` against it, because the output file of a content-module jar
-    is not its distribution name.
+    which the caller writes when the library is the one meaningful source of the jar. The packer checks a
+    `Boot-Class-Path` of a module manifest against the file name of `output`, so every caller declares the output
+    under the name the jar has in the distribution.
 
     `descriptor` replaces `descriptor_path` in the output of `descriptor_module`. `patches` is a list of
     `struct(path, file)` that replaces more entries of the same module output. Each patch is a `patch=` line before the
@@ -229,8 +229,6 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
     if metadata == None:
         metadata = ctx.actions.declare_file(ctx.label.name + ".metadata.json")
     args.add(metadata, format = "metadata-file=%s")
-    if jar_name != None:
-        args.add("jar-name=" + jar_name)
 
     outputs = [output, metadata]
     if spans:
@@ -359,14 +357,15 @@ def _content_module_jar_impl(ctx):
     library_jars = _merge_order_jars(library_entries)
     natives = _natives(ctx)
 
-    # The predeclared outputs, so the plan files and the plugin chain can name the jar by its label.
-    output = ctx.outputs.production_jar
+    # The jar is written under its distribution name, so the packer checks a `Boot-Class-Path` against the file name. The
+    # plan files and the plugin chain name the jar by the label of this target, whose `DefaultInfo` it is.
+    output = ctx.actions.declare_file(ctx.label.name + "/" + module_name + ".jar")
     spans = _declare_spans(ctx, ctx.label.name + ".production")
     metadata = _pack(
         ctx,
         output = output,
         spans = spans,
-        metadata = ctx.outputs.production_metadata,
+        metadata = ctx.actions.declare_file(ctx.label.name + "/" + module_name + ".metadata.json"),
         module_jars = module_jars,
         library_jars = library_jars,
         merged_module_names = merged_module_names,
@@ -376,7 +375,6 @@ def _content_module_jar_impl(ctx):
         descriptor = ctx.file.descriptor,
         descriptor_module = module_name,
         descriptor_path = ctx.attr.descriptor_path,
-        jar_name = module_name + ".jar",
     )
     native_trees = _native_trees(ctx, natives, library_jars) if natives else {}
     return [
@@ -408,18 +406,15 @@ def _content_module_jar_impl(ctx):
 _content_module_jar = rule(
     doc = """Packs one content module's `lib/` jar of a platform distribution.
 
-One `PackContentModuleJar` action writes `<target>.production.jar` and `<target>.production.metadata.json`. The jar is
+One `PackContentModuleJar` action writes `<target>/<module>.jar` and `<target>/<module>.metadata.json`. The jar is
 `DefaultInfo`, and the plan files and the plugin chain name it by that label. The destination `<module>.jar` travels
-in `ContentModuleJarInfo.relative_path`. The action merges the entity lists of its sources.
+in `ContentModuleJarInfo.relative_path`, and the file carries the same name. The action merges the entity lists of its
+sources.
 
 With `native_lib` and `native_lib_dir` set, the jar leaves the native entries of that presigned library out, and one
 action per `HOST_PLATFORMS` token writes the platform's native files into `<target>.native_<platform>/native`. A consumer
 places the tree of its platform under `lib/<native_lib_dir>/`, the way `JarPackager` extracts the natives.""",
     implementation = _content_module_jar_impl,
-    outputs = {
-        "production_jar": "%{name}.production.jar",
-        "production_metadata": "%{name}.production.metadata.json",
-    },
     attrs = {
         "module": attr.label(
             doc = """The module this jar belongs to: it is named `<module_name>.jar` and its output is merged in place.
@@ -549,7 +544,6 @@ def _dev_dist_platform_jar_impl(ctx):
         extra_flags = ["merge-entities=true"] + (["reject-native-entries=true"] if members else []),
         descriptor_module = patches.module,
         patches = patches.patches,
-        jar_name = output.basename,
     )
     return [
         DefaultInfo(files = depset([output])),

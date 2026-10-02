@@ -179,8 +179,7 @@ def _dev_plugin_test_impl(ctx):
     main_argv = [_with_short_path(argument, main.inputs.to_list()) for argument in main.argv[1:]]
     asserts.true(env, main_argv[0].startswith("output=") and main_argv[0].endswith("/lib/dev-plugin.jar"), main_argv[0])
     asserts.true(env, main_argv[1].startswith("metadata-file=") and main_argv[1].endswith("/lib/dev-plugin.jar.json"), main_argv[1])
-    asserts.equals(env, "jar-name=dev-plugin.jar", main_argv[2])
-    rest = main_argv[3:]
+    rest = main_argv[2:]
     if ctx.attr.spans:
         asserts.true(env, rest[0].startswith("trace-file=") and rest[0].endswith("/lib/dev-plugin.spans.json"), rest[0])
         rest = rest[1:]
@@ -195,7 +194,7 @@ def _dev_plugin_test_impl(ctx):
     tests_pack = _pack_action(packs, "tests.jar")
     tests_argv = [_with_short_path(argument, tests_pack.inputs.to_list()) for argument in tests_pack.argv[1:]]
     tests_flags = [argument for argument in tests_argv if not argument.startswith(("output=", "metadata-file=", "trace-file=", "module="))]
-    asserts.equals(env, ["jar-name=tests.jar", "merge-entities=true"], tests_flags)
+    asserts.equals(env, ["merge-entities=true"], tests_flags)
     asserts.equals(env, ["module=" + ctx.file.test_jar.short_path], [argument for argument in tests_argv if argument.startswith("module=")])
 
     # A jar file token is one archive: the jar takes that file and nothing else.
