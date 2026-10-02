@@ -5,6 +5,7 @@ import com.intellij.accessibility.AccessibilityUsageTrackerCollector
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.playSound
 import kotlinx.coroutines.CoroutineScope
@@ -20,8 +21,9 @@ abstract class SoundSignalPlayer {
     fun getInstance(): SoundSignalPlayer = service()
   }
 
+  // In split mode the frontend plays the signal; the backend may have no audio device at all.
   fun play(vararg signals: SoundSignal) {
-    if (signals.isEmpty()) return
+    if (signals.isEmpty() || IdeProductMode.isBackend) return
     val enabled = signals.filter(::isSoundSignalOn).distinctBy { it.id }
     if (enabled.isEmpty()) return
     playEnabled(enabled)
@@ -31,7 +33,7 @@ abstract class SoundSignalPlayer {
   }
 
   fun preview(vararg signals: SoundSignal) {
-    if (signals.isNotEmpty()) playEnabled(signals.distinctBy { it.id })
+    if (signals.isNotEmpty() && !IdeProductMode.isBackend) playEnabled(signals.distinctBy { it.id })
   }
 
   protected abstract fun playEnabled(signals: Collection<SoundSignal>)

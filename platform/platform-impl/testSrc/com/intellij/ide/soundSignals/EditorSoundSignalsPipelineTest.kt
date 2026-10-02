@@ -24,6 +24,8 @@ import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.replaceService
 import com.intellij.util.DocumentUtil
@@ -398,6 +400,23 @@ class EditorSoundSignalsPipelineTest {
 
     assertThat(manager.isListening).isFalse()
     assertThat(detector.detected()).isEmpty()
+  }
+
+  @Test
+  fun `a split mode backend neither listens nor plays`() = pipelineTest { editor ->
+    detector.returned = setOf(LINE_SIGNAL)
+
+    ApplicationManager.getApplication().replaceService(IdeProductMode::class.java, object : IdeProductMode {
+      override val currentMode: ProductMode = ProductMode.BACKEND
+    }, disposable)
+    manager.updateListenersState()
+    moveCaret(editor, LINE_1_START)
+    awaitIdle()
+    player.play(LINE_SIGNAL)
+
+    assertThat(manager.isListening).isFalse()
+    assertThat(detector.detected()).isEmpty()
+    assertThat(player.recorded).isEmpty()
   }
 
   @Test

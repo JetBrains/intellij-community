@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -143,7 +144,7 @@ class EditorSoundSignalsManager internal constructor(
 
   @Synchronized
   private fun updateListenersDisposable(): Disposable? {
-    if (!managerJob.isActive || !isSoundSignalsFeatureEnabled() || EditorSoundSignalDetector.EP_NAME.findFirstSafe { it.hasEnabledSignal() } == null) {
+    if (!managerJob.isActive || IdeProductMode.isBackend || !isSoundSignalsFeatureEnabled() || EditorSoundSignalDetector.EP_NAME.findFirstSafe { it.hasEnabledSignal() } == null) {
       return listenersDisposable.also { listenersDisposable = null }
     }
     if (listenersDisposable != null) return null
