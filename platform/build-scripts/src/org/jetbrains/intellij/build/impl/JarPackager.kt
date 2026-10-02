@@ -766,12 +766,6 @@ private fun buildDuplicateSourceErrorMessage(
   }
 }
 
-/**
- * The version of the jar merge rules in the jar cache key.
- * Bump it when a merge rule changes the bytes of a jar without changing its sources.
- */
-private const val JAR_MERGE_RULE_VERSION = 1
-
 private fun buildAsset(
   asset: AssetDescriptor,
   isCodesignEnabled: Boolean,
@@ -820,7 +814,6 @@ private fun buildAsset(
         span = span,
         producer = object : SourceBuilder {
           override fun updateDigest(digest: HashStream64) {
-            digest.putInt(JAR_MERGE_RULE_VERSION)
             val isScramblingEnabled = !context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
             digest.putInt(if (isScramblingEnabled) 1 else 0)
             if (layout is PluginLayout) {
