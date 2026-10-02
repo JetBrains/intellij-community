@@ -67,7 +67,6 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
     if (injectedLanguageManager.isInjectedFragment(element.getContainingFile())) return null;
-    if (isUntrustedFile(element)) return null;
 
     List<RunLineMarkerContributor> contributors =
       DumbService.getInstance(element.getProject()).filterByDumbAwareness(RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage()));
@@ -89,15 +88,16 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
       infos.add(info);
     }
     if (icon == null) return null;
+    if (isUntrustedFile(element)) return null;
 
-    return createLineMarker(element, icon, infos);
+    return doCreateLineMarker(element, icon, infos);
   }
 
   @Override
   public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
                                      @NotNull Collection<? super LineMarkerInfo<?>> result) {
+    if (!elements.isEmpty() && isUntrustedFile(elements.getFirst())) return;
     for (PsiElement element : elements) {
-      if (isUntrustedFile(element)) continue;
       List<RunLineMarkerContributor> contributors = DumbService.getInstance(element.getProject())
         .filterByDumbAwareness(RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage()));
       Icon icon = null;
@@ -117,10 +117,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
         infos.add(info);
       }
       if (icon != null) {
-        LineMarkerInfo<PsiElement> lineMarker = createLineMarker(element, icon, infos);
-        if (lineMarker != null) {
-          result.add(lineMarker);
-        }
+        result.add(doCreateLineMarker(element, icon, infos));
       }
     }
 
@@ -136,6 +133,12 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
                                                                       @NotNull Icon icon,
                                                                       @NotNull List<? extends Info> infos) {
     if (isUntrustedFile(element)) return null;
+    return doCreateLineMarker(element, icon, infos);
+  }
+
+  private static @NotNull LineMarkerInfo<PsiElement> doCreateLineMarker(@NotNull PsiElement element,
+                                                                        @NotNull Icon icon,
+                                                                        @NotNull List<? extends Info> infos) {
     if (infos.size() > 1) {
       infos = new ArrayList<>(infos);
       infos.sort(COMPARATOR);
