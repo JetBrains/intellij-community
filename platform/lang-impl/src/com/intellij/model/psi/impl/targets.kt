@@ -38,6 +38,36 @@ fun targetDeclarationAndReferenceSymbols(file: PsiFile, offset: Int): Pair<Colle
   return (declaredData?.targets?.map { it.symbol } ?: emptyList()) to (referencedData?.targets?.map { it.symbol } ?: emptyList())
 }
 
+/**
+ * Target symbols of one kind (declared or referenced) and their source range.
+ *
+ * @property range the absolute range in the file of the chosen declarations or references.
+ * It is `null` when there are no declarations or references of this kind.
+ * For a reference with many ranges, it is the range that contains the offset.
+ */
+@Internal
+data class TargetSymbolsAndRange(val symbols: Collection<Symbol>, val range: TextRange?)
+
+/**
+ * Does the same as [targetDeclarationAndReferenceSymbols], and also returns the source range of each kind.
+ *
+ * @return two items: declared symbols with their range, and referenced symbols with their range
+ */
+@Internal
+fun targetDeclarationAndReferenceSymbolsAndRanges(file: PsiFile, offset: Int): Pair<TargetSymbolsAndRange, TargetSymbolsAndRange> {
+  val (declaredData, referencedData) = declaredReferencedData(file, offset)
+                                       ?: return Pair(TargetSymbolsAndRange(emptyList(), null), TargetSymbolsAndRange(emptyList(), null))
+  return symbolsAndRange(declaredData) to symbolsAndRange(referencedData)
+}
+
+private fun symbolsAndRange(data: TargetData?): TargetSymbolsAndRange {
+  if (data == null) {
+    return TargetSymbolsAndRange(emptyList(), null)
+  }
+  // All chosen items have the same minimal range (see chooseByRange).
+  return TargetSymbolsAndRange(data.targets.map { it.symbol }, data.drs.first().rangeWithOffset)
+}
+
 internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferencedData? {
   val allDeclarationsOrReferences: List<DeclarationOrReference> = declarationsOrReferences(file, offset)
   if (allDeclarationsOrReferences.isEmpty()) {
