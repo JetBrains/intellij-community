@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl
 
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.find.DirectorySearchEngine
 import com.intellij.find.DirectorySearchEngine.FileSearchCandidate
@@ -11,18 +13,21 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.limits.FileSizeLimit
+import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelSearchEvent
 import com.intellij.platform.eel.fs.EelSearchEvent.Skipped.Reason
 import com.intellij.platform.eel.fs.EelSearchOptions
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
+import com.intellij.platform.eel.provider.prefetchDataElement
 import java.io.IOException
 import java.util.function.Consumer
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
 /**
  * Streams candidate files from a remote directory through EEL.
@@ -80,6 +85,7 @@ class EelDirectorySearchEngine @VisibleForTesting constructor(private val edges:
               }
             }
             EelSearchEvent.Truncated -> throw IOException("Search under $eelPath was truncated")
+            is EelSearchEvent.Directory -> null
           }
 
           if (path != null) {
@@ -110,6 +116,7 @@ class EelDirectorySearchEngine @VisibleForTesting constructor(private val edges:
       val eelRoot = edges.eelPathOf(nioRoot)
       val searchApi = edges.searchApiOf(eelRoot.descriptor) ?: throw IOException("No search API for ${eelRoot.descriptor}")
       consumer.accept(FileSearchCandidate.fromPath(nioRoot))
+      val directories = HashMap<EelPath, EelFileInfo>()
       searchApi.search(EelSearchOptions(
         roots = listOf(eelRoot),
         nameFilter = nameFilter,
@@ -117,10 +124,26 @@ class EelDirectorySearchEngine @VisibleForTesting constructor(private val edges:
         yieldDirectories = true,
         followSymlinks = true,
       )).collect { event ->
-        if (event is EelSearchEvent.Hit) {
-          val nioPath = edges.nioPathOf(event.path)
-          if (!nioPath.startsWith(nioRoot)) throw IOException("Search returned $nioPath outside $nioRoot")
-          consumer.accept(FileSearchCandidate.fromPath(nioPath))
+        when (event) {
+          is EelSearchEvent.Directory -> directories[event.path] = event.info
+          is EelSearchEvent.Hit -> {
+            val nioPath = edges.nioPathOf(event.path)
+            if (!nioPath.startsWith(nioRoot)) throw IOException("Search returned $nioPath outside $nioRoot")
+            val info = event.info
+            if (info == null) {
+              consumer.accept(FileSearchCandidate.fromPath(nioPath))
+            }
+            else {
+              // The hit and the directories above it carry their attributes, so the resolution does not stat the remote path.
+              // The thread context, not the coroutine context, is what DiskQueryRelay hands to the thread that does the lookup.
+              val attributes = prefetchDataElement(hitAttributes(eelRoot, event.path, info, directories))
+              val file = installThreadContext(currentThreadContext() + attributes, replace = true) {
+                LocalFileSystem.getInstance().findFileByPathWithoutCaching(nioPath.toString())
+              }
+              if (file != null) consumer.accept(FileSearchCandidate.fromVirtualFile(file))
+            }
+          }
+          is EelSearchEvent.Skipped, EelSearchEvent.Truncated -> {}
         }
       }
     }
@@ -150,4 +173,24 @@ private fun ignoredNameGlobs(): List<String> {
     .map { it.trim() }
     .filter { it.isNotEmpty() && it.all { c -> c.isLetterOrDigit() || c in "_.*?-~" } }
     .flatMap { listOf(it, "**/$it") }
+}
+
+/**
+ * The attributes of a hit and of the directories between [root] and the hit, as `directory -> (name -> info)`.
+ * [directories] holds the attributes the search reported; a directory it does not hold ends the chain, and
+ * [root] itself is a [VirtualFile] already, so it is not included.
+ */
+@VisibleForTesting
+internal fun hitAttributes(root: EelPath, path: EelPath, info: EelFileInfo, directories: Map<EelPath, EelFileInfo>): Map<EelPath, Map<String, EelFileInfo>> {
+  val result = HashMap<EelPath, Map<String, EelFileInfo>>()
+  var child = path
+  var childInfo = info
+  while (true) {
+    val parent = child.parent ?: break
+    result[parent] = mapOf(child.fileName to childInfo)
+    if (parent == root) break
+    child = parent
+    childInfo = directories[parent] ?: break
+  }
+  return result
 }

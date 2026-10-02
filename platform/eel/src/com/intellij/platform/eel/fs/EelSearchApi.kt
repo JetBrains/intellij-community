@@ -112,7 +112,19 @@ sealed interface EelSearchEvent {
     /** The number of matching lines in content mode; 0 in name mode. */
     val matchCount: Long,
     val isDirectory: Boolean,
+    /**
+     * The attributes of the hit, or null when the server could not read them.
+     * With [EelSearchOptions.followSymlinks] they describe the target.
+     */
+    val info: EelFileInfo? = null,
   ) : EelSearchEvent
+
+  /**
+   * A directory between a root and a hit, with its attributes. The server reports it once per search,
+   * before the first hit under it. Together with [Hit.info] it describes the whole path of a hit.
+   */
+  @ApiStatus.Internal
+  data class Directory(val path: EelPath, val info: EelFileInfo) : EelSearchEvent
 
   /**
    * A file or directory that was selected by the walk but not searched; it is NOT covered by this search.

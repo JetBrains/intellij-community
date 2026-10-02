@@ -11,12 +11,12 @@ import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 private val LOG = logger<PrefetchDataElementImpl>()
 
 /**
- * Coroutine context element carrying prefetched directory data.
+ * A [PrefetchDataElement] over [data], `directory path -> (child name -> file info)`.
+ * [data] must not change after this call.
  *
  * Checked by `GrpcIjentFileSystemPosixApi` before making gRPC calls,
  * making the cache fully transparent to all callers.
@@ -25,24 +25,13 @@ private val LOG = logger<PrefetchDataElementImpl>()
  * 1. **Coroutine context** — [ThreadContextElement] sets/restores the ThreadLocal on coroutine dispatch.
  * 2. **IntelliJ platform executors** — [IntelliJContextElement] propagates through `ContextRunnable`/`ChildContext`,
  *    covering DiskQueryRelay, executeOnPooledThread, invokeLater, etc.
- *
- * @param data directory path → (childName → fileInfo), immutable after construction
  */
+@ApiStatus.Internal
+fun prefetchDataElement(data: Map<EelPath, Map<String, EelFileInfo>>): PrefetchDataElement = PrefetchDataElementImpl(data)
+
 private class PrefetchDataElementImpl(private val data: Map<EelPath, Map<String, EelFileInfo>>) :
   PrefetchDataElement(),
   IntelliJThreadContextElement<Unit> {
-
-  // --- ThreadContextElement ---
-
-  override fun updateThreadContext(context: CoroutineContext): PrefetchDataElement? {
-    val prev = threadLocal.get()
-    threadLocal.set(this)
-    return prev
-  }
-
-  override fun restoreThreadContext(context: CoroutineContext, oldState: PrefetchDataElement?) {
-    threadLocal.set(oldState)
-  }
 
   // --- IntelliJContextElement ---
 
@@ -86,7 +75,6 @@ class PrefetchContextBuilder(remoteRoots: List<Pair<EelDescriptor, EelPath>>) {
   }
   fun toElement(): PrefetchDataElement? {
     if (prefetchData.isEmpty()) return null
-    val element = PrefetchDataElementImpl(prefetchData)
-    return element
+    return prefetchDataElement(prefetchData)
   }
 }

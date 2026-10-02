@@ -17,6 +17,8 @@ import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.fs.EelFileInfo
+import com.intellij.platform.eel.fs.EelPosixFileInfoImpl
 import com.intellij.platform.eel.fs.EelSearchApi
 import com.intellij.platform.eel.fs.EelSearchEvent
 import com.intellij.platform.eel.path.EelPath
@@ -193,6 +195,54 @@ internal class EelDirectorySearchEngineTest {
     assertThat(request.excludeGlobs).contains(".git", "**/.git")
     assertThat(request.yieldDirectories).isTrue()
     assertThat(request.followSymlinks).isTrue()
+  }
+
+  @Test
+  fun `hit attributes cover the hit and the directories between the root and the hit`() {
+    val fileInfo = EelPosixFileInfoImpl(
+      type = EelPosixFileInfoImpl.Regular(6),
+      permissions = EelPosixFileInfoImpl.Permissions(0, 0, 0),
+      creationTime = null, lastModifiedTime = null, lastAccessTime = null,
+      inodeDev = 0, inodeIno = 0,
+    )
+
+    val directoryInfo = fileInfo.copy(type = EelPosixFileInfoImpl.Directory(EelFileInfo.CaseSensitivity.SENSITIVE))
+    val directories = mapOf(eelPath("root/dir") to directoryInfo, eelPath("root/dir/sub") to directoryInfo)
+
+    val attributes = hitAttributes(eelPath("root"), eelPath("root/dir/sub/file.txt"), fileInfo, directories)
+
+    assertThat(attributes).isEqualTo(mapOf(
+      eelPath("root/dir/sub") to mapOf("file.txt" to fileInfo),
+      eelPath("root/dir") to mapOf("sub" to directoryInfo),
+      eelPath("root") to mapOf("dir" to directoryInfo),
+    ))
+    // a directory the search did not report ends the chain; its stat falls through to the file system
+    val partial = hitAttributes(eelPath("root"), eelPath("root/dir/sub/file.txt"), fileInfo, mapOf(eelPath("root/dir/sub") to directoryInfo))
+    assertThat(partial.keys).containsExactlyInAnyOrder(eelPath("root/dir/sub"), eelPath("root/dir"))
+  }
+
+  @Test
+  fun `name search resolves a hit with attributes to a virtual file`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("root")
+    val path = Files.createFile(Files.createDirectories(baseDir.rootPath.resolve("root/dir")).resolve("file.txt"))
+    val fileInfo = EelPosixFileInfoImpl(
+      type = EelPosixFileInfoImpl.Regular(0),
+      permissions = EelPosixFileInfoImpl.Permissions(0, 0, 0),
+      creationTime = null, lastModifiedTime = null, lastAccessTime = null,
+      inodeDev = 0, inodeIno = 0,
+    )
+    val api = FakeEelSearchApi(flowOf(
+      EelSearchEvent.Directory(eelPath("root/dir"), fileInfo.copy(type = EelPosixFileInfoImpl.Directory(EelFileInfo.CaseSensitivity.SENSITIVE))),
+      EelSearchEvent.Hit(eelPath("root/dir/file.txt"), "root/dir/file.txt", 0L, false, fileInfo),
+      EelSearchEvent.Hit(eelPath("root/dir/vanished.txt"), "root/dir/vanished.txt", 0L, false, fileInfo),
+    ))
+    val candidates = mutableListOf<FileSearchCandidate>()
+
+    engine { api }.searchNames(root, "file") { candidates.add(it) }
+
+    val resolved = candidates.filterIsInstance<FileSearchCandidate.FromVirtualFile>()
+    assertThat(resolved.map { it.file.toNioPath() }).containsExactly(path)
+    assertThat(candidates.filterIsInstance<FileSearchCandidate.FromPath>().map { it.path }).containsExactly(root.toNioPath())
   }
 
   @Test

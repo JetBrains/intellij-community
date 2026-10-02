@@ -48,6 +48,16 @@ abstract class PrefetchDataElement :
 
   abstract val size: Int
 
+  final override fun updateThreadContext(context: CoroutineContext): PrefetchDataElement? {
+    val previous = threadLocal.get()
+    threadLocal.set(this)
+    return previous
+  }
+
+  final override fun restoreThreadContext(context: CoroutineContext, oldState: PrefetchDataElement?) {
+    threadLocal.set(oldState)
+  }
+
   companion object Key : CoroutineContext.Key<PrefetchDataElement> {
     val threadLocal: ThreadLocal<PrefetchDataElement?> = ThreadLocal<PrefetchDataElement?>()
 
