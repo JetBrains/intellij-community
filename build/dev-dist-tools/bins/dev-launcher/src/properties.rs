@@ -48,7 +48,7 @@ pub(crate) fn parse_properties(data: &[u8]) -> anyhow::Result<IndexMap<String, S
     Ok(result)
 }
 
-/// Substitutes the `IDE_HOME` macro of `product-info.json` for the host OS, as `BuildServer.kt` does.
+/// Substitutes the `IDE_HOME` macro of `product-info.json` for the host OS, as `DevLaunchProperties.kt` does.
 fn resolve_ide_home_macro(argument: &str, home: &str) -> String {
     let macro_name = match std::env::consts::OS {
         "windows" => "%IDE_HOME%",

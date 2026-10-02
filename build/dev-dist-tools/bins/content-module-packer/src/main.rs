@@ -7,10 +7,10 @@
 //! the output is a function of the inputs alone. `jarpack` holds the recipe grammar and the bytes of the jar. This crate
 //! holds the command line, the inventory of each jar, the spans and the parallel packing of a large recipe.
 //!
-//! The inventory is the port of `inventoryPackingOutput` of the Go `main.go`. It goes to the `metadata-file=` of the
-//! group through `filemeta`, after the jar. It lists the jar, and in natives mode also the tree root and every entry under
-//! it. A tree file gets `NativeTree::file_mode`, not the mode that a stat returns. A tree directory gets the mode that a
-//! stat returns. The Kotlin build and the collector read the file, so its bytes are the inventory JSON version 1.
+//! The inventory goes to the `metadata-file=` of the group through `filemeta`, after the jar. It lists the jar, and in
+//! natives mode also the tree root and every entry under it. A tree file gets `NativeTree::file_mode`, not the mode that
+//! a stat returns. A tree directory gets the mode that a stat returns. The Kotlin build and the collector read the file,
+//! so its bytes are the inventory JSON version 1.
 //!
 //! The merge hashes the jar while it writes it, and its report holds the size and the content hash. So the inventory
 //! does not read the jar again, and takes only the mode of the jar from a stat. It refuses a jar output that is not a
@@ -37,7 +37,7 @@ use jarpack::{FlagFile, MergeOptions, MergeSpec};
 /// The name of the producer in the merged build trace.
 const SERVICE_NAME: &str = "content-module-packer";
 
-/// The exit code of every failure. The Go packer used the same code.
+/// The exit code of every failure. The former packer used the same code.
 const FAILURE: u8 = 3;
 
 fn main() -> ExitCode {

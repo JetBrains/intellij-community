@@ -804,7 +804,7 @@ fn plan_part() {
     };
     assert_eq!(actual, expected);
     assert!(data.ends_with("}\n"), "the part does not end with a newline: {data:?}");
-    // The compact form of the Go encoder, in the field order of the part.
+    // The compact JSON form, in the field order of the part.
     assert!(
         data.starts_with(r#"{"version":1,"descriptorModule":"p.main","directory":"plugins/p","order":"plugin","descriptor":"bazel-out/bin/p/plugin.classpath.xml","jars":[{"destination":"lib/modules/p.content.jar","members":[{"module":"p.content"}]}"#),
         "{data}"

@@ -1,21 +1,21 @@
 # planfile API
 
-The Rust port of the Go packages `internal/planfile`, the contract part of `internal/pluginpack` (`contract.go`), and
-`internal/pluginclasspath`. The crate does no file system work except `read` and `json::read`.
+The plan file of one complex plugin, the remainder contract, and the plugin classpath record. The crate does no file
+system work except `read` and `json::read`.
 The crate depends on `anyhow`, `distpath`, `serde` and `serde_json` only. Every function that can fail returns
 `anyhow::Result`. A refusal is one message that names the plan element, and a caller adds its context, so `{:#}` prints
-`<context>: <message>` as the Go `fmt.Errorf("%s: %w")` did.
+`<context>: <message>`.
 
-`Plan` and `Execution` of `pluginpack/plan.go` are not here. They belong to the `pluginpack` crate. `ValidateAssets` and
-`ValidateLinkGraph` are in `planfile::validate`, because the packer and the collector both apply them.
+`plan` and `Execution` are not here. They belong to the `pluginpack` crate. `validate_assets` and `validate_link_graph`
+are in `planfile::validate`, because the packer and the collector both apply them.
 
 Rustdoc states each public item: the plan file types, `read`, `derive` and `omitted_assets` at the crate root, and the
 modules `contract`, `validate`, `json` and `classpath`.
 
 ## The subset rule
 
-The crate ports only the shapes that the checked-in `*.dev-plan.json` files use. It refuses every other shape with
-an error that names it. The table lists what the Go code supports and the port refuses.
+The crate supports only the shapes that the checked-in `*.dev-plan.json` files use. It refuses every other shape with
+an error that names it. The table lists the refused shapes.
 
 `testdata/corpus/` holds a copy of each of these files, without the Starlark test fixture. The corpus test reads and
 derives every copy, and it requires every accepted source kind and operation kind to occur. Its catalogue declares a
@@ -54,14 +54,13 @@ the operation itself. `preparations` is an unknown key.
 The recipe stays in the process, so it has no JSON form. The asset rows go to `assets.json`, and Starlark writes the
 catalogue. The bytes of `assets.json` are frozen:
 
-- `serde_json::to_vec(&rows)` writes the bytes of Go `json.Marshal`, because no plan file holds `<`, `>`, `&`, U+2028 or
-  U+2029.
-- A row of the kind `file` has no `kind` key, as the Go writer omitted an empty kind. A row of the kind `tree` has the
-  key, and every row has its producer.
+- `serde_json::to_vec(&rows)` writes the frozen bytes, because no plan file holds `<`, `>`, `&`, U+2028 or U+2029.
+- A row of the kind `file` has no `kind` key, because the reader takes an absent kind as `file`. A row of the kind
+  `tree` has the key, and every row has its producer.
 - A row has no scope, because every asset is below the plugin directory.
 
-The readers of the rows and of the catalogue refuse a value that the enums do not hold, with the text of the Go check.
-The collector and the remainder packer read these files, so both refuse with one text.
+The readers of the rows and of the catalogue refuse a value that the enums do not hold, with the text below. The
+collector and the remainder packer read these files, so both refuse with one text.
 
 | Refused input | Error |
 | --- | --- |
@@ -89,12 +88,13 @@ the link.
 | a link that goes through a file, above the root, or to a missing name | `traverses a non-directory`, `escapes the plugin`, `unresolved symlink target` |
 | a directory cycle through links | `symlink directory cycle` |
 
-A caller checks a link graph with `distpath::validate_links` first, as the Go collector did. That function refuses a
-target that resolves through another link, so `validate_link_graph` does not check it again.
+A caller checks a link graph with `distpath::validate_links` first. That function refuses a target that resolves through
+another link, so `validate_link_graph` does not check it again.
 
 ## JSON (`planfile::json`)
 
-`json::read` and `json::from_slice` port Go `pluginpack.ReadJSON`. Both are `serde_json::from_slice`. With a
-`deny_unknown_fields` type, it refuses an unknown key, a repeated key, trailing data and invalid UTF-8. A key must match
-its field exactly. `null` for an `Option` field is the same as an absent key, as for a Go pointer. `null` for any other
-field is an error. Errors state the line and the column. `json::read` adds the path as the context of an error.
+`json::read` and `json::from_slice` read the plan file, the catalogue and the asset rows. Both are
+`serde_json::from_slice`. With a `deny_unknown_fields` type, it refuses an unknown key, a repeated key, trailing data
+and invalid UTF-8. A key must match its field exactly. `null` for an `Option` field is the same as an absent key. `null`
+for any other field is an error. Errors state the line and the column. `json::read` adds the path as the context of an
+error.

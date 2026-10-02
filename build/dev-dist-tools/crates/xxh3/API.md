@@ -1,8 +1,7 @@
 # xxh3
 
-The xxh3 hashes of the dev-distribution tools, with the values of hash4j. Port of the Go package `internal/xxh3` and of
-`HashFile` of `internal/filemetadata`. The crate has no first-party dependency, so a tool that needs a hash links no
-other crate for it.
+The xxh3 hashes of the dev-distribution tools, with the values of hash4j. The crate has no first-party dependency, so a
+tool that needs a hash links no other crate for it.
 
 ## Frozen values
 
@@ -20,7 +19,7 @@ the open or of a read unchanged. The error does not name the path, so the caller
 
 ## Public items
 
-| Item | Go original | Description |
+| Item | Former counterpart | Description |
 |---|---|---|
 | `hash_bytes(&[u8]) -> i64` | `xxh3.HashBytes` | hash4j `hashBytesToLong`: XXH3-64, seed 0, over the bytes. The IKV keys of the `__index__` use it. |
 | `hash_chars(&str) -> i64` | `xxh3.HashChars` | hash4j `hashCharsToLong`: XXH3-64, seed 0, over the UTF-16LE code units, with no length. The package sets of the `__index__` use it. |

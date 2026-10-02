@@ -1,14 +1,14 @@
 # pluginpack API
 
-The plugin remainder packer: the port of the Go package `internal/pluginpack` without its contract part, which is in
-`planfile::contract`. The binary `plugin-remainder-packer` is its only caller. The asset rules and the link-graph rules
-of its plan step are in `planfile::validate`, because the collector applies them again to the produced table.
+The plugin remainder packer. Its contract types are in `planfile::contract`. The binary `plugin-remainder-packer` is its
+only caller. The asset rules and the link-graph rules of its plan step are in `planfile::validate`, because the
+collector applies them again to the produced table.
 
 ## The subset rule
 
 The crate executes only the shapes that the checked-in `*.dev-plan.json` files use, and it refuses every other shape
 with an error that names it. `planfile` refuses most unused shapes at decode time, so its typed recipe cannot state
-them. The table lists what the Go packer supported and this crate refuses.
+them. The table lists the refused shapes.
 
 | Refused input | Error |
 | --- | --- |
@@ -28,14 +28,14 @@ them. The table lists what the Go packer supported and this crate refuses.
 
 A jar operation writes no directory record. A directory of a non-class file is an index row of `__index__`.
 
-The Go distribution transport root `.distribution-root/` does not exist. Every asset is below the plugin directory,
-and the remainder writes only plugin files.
+Every asset is below the plugin directory, and the remainder writes only plugin files. The crate has no transport
+root, such as the former `.distribution-root/`.
 
 ## Errors
 
-Every function returns `anyhow::Result`. `{:#}` prints the text of the Go error with its context, and a refusal of
-`distpath` or `planfile::validate` keeps its text. The doc comments of `plan`, `Execution::write` and
-`write_gzip_resources` state their contracts.
+Every function returns `anyhow::Result`. `{:#}` prints the error with its context, and a refusal of `distpath` or
+`planfile::validate` keeps its text. The doc comments of `plan`, `Execution::write` and `write_gzip_resources` state
+their contracts.
 
 ## Archive readers
 

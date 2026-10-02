@@ -1,7 +1,7 @@
 # trace
 
 Records the spans of one run and writes them as Jaeger JSON, in the field order of the Kotlin
-`JaegerJsonSpanExporter`. Port of the Go package `internal/span`.
+`JaegerJsonSpanExporter`.
 
 A tool starts a root span from a `Tracer` and each child from its parent span. A disabled tracer gives inert spans, so
 a run without `--trace-file` runs the same statements and records nothing. The API is written by hand, because a crate
@@ -34,7 +34,8 @@ trace::run_traced(SERVICE_NAME, trace_file.as_deref(), FAILURE, stderr, |tracer,
 | `Span::end(self)` | Ends the span. A span that drops without this call ends at the drop. |
 | `enum TagValue { Str(String), Long(i64) }` | The value of a tag. `From` converts `&str`, `String`, `i64`, `u64` and `usize`. A `u64` or a `usize` past `i64::MAX` saturates. |
 
-The Go names of `Tracer::new`, `Tracer::write_file` and `Span::fail` were `NewTracer`, `WriteFile` and `Span.Fail`.
+In the former tool, `Tracer::new`, `Tracer::write_file` and `Span::fail` had the names `NewTracer`, `WriteFile` and
+`Span.Fail`.
 
 ## Mapping to the document
 
@@ -49,14 +50,14 @@ The Go names of `Tracer::new`, `Tracer::write_file` and `Span::fail` were `NewTr
   key, and a span with no tags has no `tags` key.
 - `startTime` and `duration` are in microseconds, truncated. `startTimeNano` and `durationNano` follow them.
 - The file lists the spans in the order they started.
-- `serde_json` writes the document. The tracer then escapes U+2028 and U+2029 as the Go writer did. The other bytes
-  are the bytes of `serde_json`, which match Go `encoding/json` with `SetEscapeHTML(false)`.
+- `serde_json` writes the document. The tracer then escapes U+2028 and U+2029, as the former writer did. The other
+  bytes are the bytes of `serde_json`.
 - The process tag `time` is the start of the run as an HTTP date in UTC, for example `Sun, 09 Sep 2001 01:46:40 GMT`.
-  The Go writer used the local time with a numeric offset. A person reads the tag, and no tool parses it.
+  The former writer used the local time with a numeric offset. A person reads the tag, and no tool parses it.
 - The trace id and the span ids come from `getrandom`.
 
 ## Supported subset
 
-The Go original recorded only string and integer tags and had no events. `TagValue` has only these two kinds, so a
+The tracer records only string and integer tags, and it has no events. `TagValue` has only these two kinds, so a
 boolean, a float or an event cannot reach the document. The API has no current span, so a span has no parent other
 than the span that started it.

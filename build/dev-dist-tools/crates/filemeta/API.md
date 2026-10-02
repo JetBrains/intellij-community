@@ -1,8 +1,7 @@
 # filemeta
 
-The file metadata of the dev-distribution tools: inventory JSON version 1. Port of the Go package
-`internal/filemetadata`. The path and link rules of `internal/filemetadata` are in `distpath`. The content hash of a
-file, `HashFile`, is `xxh3::hash_file` of the `xxh3` crate. Rustdoc states each public item and its contract.
+The file metadata of the dev-distribution tools: inventory JSON version 1. The path and link rules are in `distpath`.
+The content hash of a file is `xxh3::hash_file` of the `xxh3` crate. Rustdoc states each public item and its contract.
 
 ## File format
 
@@ -25,5 +24,5 @@ negative size.
 
 Every function that can fail returns `anyhow::Result`. `create_dir_all_0755` and `read_link_target` return
 `io::Result`. A file system failure has the path as its context, so `{:#}` prints `<path>: <error>`, and
-`downcast_ref::<io::Error>()` gives the `io::ErrorKind`. A refusal is one message with the text of the Go original, or a
-text that names the unsupported input. `read` puts the path of the file before a refusal of its content.
+`downcast_ref::<io::Error>()` gives the `io::ErrorKind`. A refusal is one message. It states the broken rule, or it
+names the unsupported input. `read` puts the path of the file before a refusal of its content.

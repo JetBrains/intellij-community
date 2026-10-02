@@ -26,7 +26,7 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `crates/cli` | The command line of every tool: the options `--key=value` and `--flag`, the positional arguments, the refusal of every other form, and the `ERROR:` line of a failure. | `@community//build/dev-dist-tools/crates/cli:cli_test` |
 | `crates/component` | The component contract of the collector, the composer and the launcher: the manifest, the types and the reader of the local layout, the core classpath order, and the host paths. | `@community//build/dev-dist-tools/crates/component:component_test` |
 | `crates/contentreport` | The reader of an executed packaging recipe and of a built distribution, for `dev-dist` and `content-report`. | `@community//build/dev-dist-tools/crates/contentreport:contentreport_test` |
-| `crates/distpath` | The slash-path rules: the path inside a distribution, the jar entry name, the link target, and the Go `path` functions. | `@community//build/dev-dist-tools/crates/distpath:distpath_test` |
+| `crates/distpath` | The slash-path rules: the path inside a distribution, the jar entry name, the link target, and the lexical path functions `clean`, `dir` and `join`. | `@community//build/dev-dist-tools/crates/distpath:distpath_test` |
 | `crates/filemeta` | Inventory JSON version 1, the hash of a link target, and the directory creation with the mode 0755. | `@community//build/dev-dist-tools/crates/filemeta:filemeta_test` |
 | `crates/fscopy` | The copy that clones where the volume supports it, the mode helpers, and the path helpers. | `@community//build/dev-dist-tools/crates/fscopy:fscopy_test` |
 | `crates/jarpack` | The frozen-bytes engine of the packer: the jar reader and writer, the merge, the `__index__`, and the native tree of a presigned library. The remainder packer merges through it, and the descriptor writer reads library jars through its reader. | `@community//build/dev-dist-tools/crates/jarpack:jarpack_test` |
@@ -127,7 +127,7 @@ cp out/bazel-bin/build/dev-dist-tools/bins/<bin>/<bin>_closure.txt build/dev-dis
 ## The subset rule
 
 A tool supports only the input that the repository produces. It refuses all other input with an error that names the
-input. So an unused shape of the Go original has no code here, and a shape that no producer writes cannot pass in
+input. So an unused shape of the former tool has no code here, and a shape that no producer writes cannot pass in
 silence.
 
 `crates/planfile/testdata/corpus` holds a copy of the checked-in plan files. The corpus test reads and derives every

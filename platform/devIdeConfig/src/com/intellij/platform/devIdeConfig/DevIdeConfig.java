@@ -11,8 +11,8 @@ import java.util.Properties;
 /**
  * The handshake between a process that assembles a dev IDE distribution and a process that starts one.
  * <p>
- * The Go composer of the dev distribution writes this file next to the distribution. A launcher
- * ({@code PreBuiltDevMain}) or a test harness reads it to find the distribution, the class to start, and what the
+ * The composer of the dev distribution writes this file next to the distribution. A launcher (the row launcher or
+ * {@code PreBuiltDevMain}) or a test harness reads it to find the distribution, the class to start, and what the
  * distribution actually is - which product, and which plugin modules were built into it. A consumer that needs a
  * different module set is looking at the wrong distribution, and can only notice because the distribution says so
  * here.

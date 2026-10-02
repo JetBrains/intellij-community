@@ -7,7 +7,7 @@ Matches a jar entry name against a `java.nio` `glob:` pattern of the subset that
 
 - The subset has literals, `*`, `**` and `{a,b}` groups. An alternative of a group can hold `*` and `**`.
 - `compile` refuses `?`, `[`, `]`, `\`, a nested `{` and an unbalanced brace.
-- The error of `compile` reads `glob "<pattern>": the dev-dist plan supports only *, ** and {a,b}, but the pattern has <problem>`. The problem names the character and its index, for example `'?' at 1`. Wrap it as the Go caller did, for example `invalid exclude: {error:#}`.
+- The error of `compile` reads `glob "<pattern>": the dev-dist plan supports only *, ** and {a,b}, but the pattern has <problem>`. The problem names the character and its index, for example `'?' at 1`. A caller adds its context, for example `invalid include: {error:#}`.
 - `matches` covers the whole name and is case-sensitive. It first removes one trailing `/` of a clean name, which has no repeated `/`.
 - `*` matches zero or more characters other than `/`. `**` matches across `/` and does not match a line terminator, as the JDK does.
 

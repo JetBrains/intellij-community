@@ -194,8 +194,8 @@ pub(crate) fn compute_ide_fingerprint_from_components<S: AsRef<str>>(
     Ok(compute_ide_fingerprint(&entries))
 }
 
-/// Go `strconv.FormatUint(value, 36)`. It is hand-written because std has no base 36 format, and the fingerprint text
-/// is frozen.
+/// Formats `value` in base 36 with the digits `0-9a-z`. It is hand-written because std has no base 36 format, and the
+/// fingerprint text is frozen.
 fn base36(mut value: u64) -> String {
     const DIGITS: &[u8; 36] = b"0123456789abcdefghijklmnopqrstuvwxyz";
     let mut digits = Vec::new();

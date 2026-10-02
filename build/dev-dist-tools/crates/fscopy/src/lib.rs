@@ -116,8 +116,8 @@ pub const fn conventional_mode(executable: bool) -> u32 {
 
 /// Sets the permission bits `mode` of `path`. An error names the path.
 ///
-/// On Windows the function sets only the read-only attribute from the owner write bit, as Go `os.Chmod` does. It reads
-/// the attributes of `path` itself and does not follow a link. A copy on Windows keeps the read-only attribute of the
+/// On Windows the function sets only the read-only attribute from the owner write bit. It reads the attributes of
+/// `path` itself and does not follow a link. A copy on Windows keeps the read-only attribute of the
 /// source, and this call clears it again.
 pub fn set_mode(path: &Path, mode: u32) -> io::Result<()> {
     #[cfg(unix)]
@@ -156,16 +156,16 @@ fn mode_bits(metadata: &fs::Metadata) -> u32 {
     }
 }
 
-/// Creates the symbolic link `link` with the text `target`, as Go `os.Symlink` does.
+/// Creates the symbolic link `link` with the text `target`.
 ///
 /// A relative target starts at the directory of the link. The target does not have to exist.
 /// On Unix a link has no kind, so the function ignores `target_is_directory`.
 ///
 /// On Windows a link is a directory link or a file link, and the system follows it only as that kind. So the function
-/// creates a directory link when `target_is_directory` is true, and a file link in the other case. Go `os.Symlink`
-/// read the kind from the target on the disk. The function also replaces each `/` in the target with `\`, as Go does.
+/// creates a directory link when `target_is_directory` is true, and a file link in the other case. The function also
+/// replaces each `/` in the target with `\`.
 ///
-/// An error has the text of the Go `os.LinkError`: `symlink <target> <link>: <cause>`.
+/// An error reads `symlink <target> <link>: <cause>`.
 pub fn symlink(target: &Path, link: &Path, target_is_directory: bool) -> io::Result<()> {
     #[cfg(unix)]
     let created = {
@@ -184,10 +184,10 @@ pub fn symlink(target: &Path, link: &Path, target_is_directory: bool) -> io::Res
     created.map_err(|error| io::Error::new(error.kind(), format!("symlink {} {}: {error}", target.display(), link.display())))
 }
 
-/// Returns the absolute form of `path`, as Go `filepath.Abs` does.
+/// Returns the absolute form of `path`.
 ///
 /// The function joins a relative path to the current directory. On Unix it then removes `.` and `..` lexically.
-/// On Windows it uses [`std::path::absolute`], which calls `GetFullPathNameW`, as Go does.
+/// On Windows it uses [`std::path::absolute`], which calls `GetFullPathNameW`.
 pub fn absolute_path(path: &Path) -> io::Result<PathBuf> {
     if cfg!(windows) {
         return std::path::absolute(path).map_err(|error| with_path(&error, path));
@@ -208,17 +208,16 @@ pub fn real_path(path: &Path) -> io::Result<PathBuf> {
     resolve_links(&absolute_path(path)?)
 }
 
-/// Returns `path` with every link and junction resolved, as Go `filepath.EvalSymlinks` does.
+/// Returns `path` with every link and junction resolved.
 ///
 /// The result is absolute. On Unix, a `..` after a link goes to the parent of the link target. On Windows, the system
 /// removes a `..` lexically before it follows a link, so `link\..` is the directory that holds `link`.
 ///
-/// On macOS, each name of the result has the case that the file system stores. The Go original kept the case of the
-/// input.
+/// On macOS, each name of the result has the case that the file system stores.
 ///
 /// On Windows, [`fs::canonicalize`] asks `GetFinalPathNameByHandleW` for the final path, which supports a long path
 /// and follows a junction. The function then removes the `\\?\` prefix. It does not use `dunce::canonicalize`.
-/// For a path longer than `MAX_PATH`, `dunce` keeps the prefix, and the Go original removes it from every path.
+/// For a path longer than `MAX_PATH`, `dunce` keeps the prefix, and this function removes it from every path.
 #[expect(clippy::disallowed_methods, reason = "the one call of fs::canonicalize, which removes the prefix")]
 pub fn resolve_links(path: &Path) -> io::Result<PathBuf> {
     let resolved = fs::canonicalize(path).map_err(|error| with_path(&error, path))?;
@@ -247,7 +246,7 @@ fn strip_extended_path_prefix(path: PathBuf) -> PathBuf {
     path
 }
 
-/// Removes `.` and `..` lexically, as Go `filepath.Clean` does for an absolute Unix path.
+/// Removes `.` and `..` lexically from an absolute Unix path.
 ///
 /// `Path::components` already drops a `.` that is not the first component, and an absolute path has no first `.`.
 /// A `..` at the root stays at the root, because `PathBuf::pop` does not remove the root.
@@ -287,8 +286,7 @@ fn set_modification_time(path: &Path, time: SystemTime) -> io::Result<()> {
     fs::File::open(path)?.set_modified(time)
 }
 
-/// Sets the modification time through a handle that has only the right to write the attributes, as Go `os.Chtimes`
-/// does.
+/// Sets the modification time through a handle that has only the right to write the attributes.
 ///
 /// `CopyFileExW` gives the copy the read-only attribute of the source, and a handle with write access cannot open a
 /// read-only file. `File::set_modified` calls `SetFileTime` on the handle, which needs only this right.

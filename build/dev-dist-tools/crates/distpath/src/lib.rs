@@ -27,8 +27,8 @@ pub fn validate_path(name: &str) -> Result<()> {
 
 /// Refuses a path or a link target that is not ASCII or that holds `<`, `>` or `&`.
 ///
-/// No payload name in the repository has such a character. For all other text, `serde_json` writes the bytes of the
-/// Go writer, and ASCII case folding gives the [`path_identity`] of the Go original.
+/// No payload name in the repository has such a character. For all other text, `serde_json` writes the bytes that the
+/// former writer wrote, and ASCII case folding gives the [`path_identity`] that the former tool gave.
 pub fn check_supported_text(text: &str) -> Result<()> {
     if let Some(character) = text
         .chars()
@@ -111,8 +111,8 @@ pub fn validate_links(links: &BTreeMap<String, String>) -> Result<()> {
 
 /// Checks the target of the link `name`.
 ///
-/// The function refuses a target with an empty segment, for example `payload/` or `lib//payload`. The Go composer
-/// refused such a target, because Java `Path` removes the extra slash and the exporter cannot keep the spelling.
+/// The function refuses a target with an empty segment, for example `payload/` or `lib//payload`. Java `Path` removes
+/// the extra slash, so a Java producer of the same tree cannot keep the spelling.
 pub fn validate_link_target(name: &str, target: &str) -> Result<()> {
     if target.is_empty() || target.contains(['\\', ':', '\0']) || target.starts_with('/') {
         bail!("invalid symbolic link target for {name}");
@@ -150,8 +150,7 @@ fn escapes(path: &str) -> bool {
 
 /// Accepts a portable, relative file name. A directory and the generated index are not source entries.
 pub fn validate_entry_name(name: &str) -> Result<()> {
-    // `name.split('/')` finds each component that the Go `path.Clean(name) != name` test finds: an empty one, `.`, or
-    // `..`. The other tests are the ones of the Go function.
+    // `name.split('/')` finds each component that `clean` changes: an empty one, `.`, or `..`.
     let unsafe_name = name.is_empty()
         || name == "."
         || name
@@ -191,7 +190,7 @@ pub fn validate_relative_path(value: &str) -> Result<()> {
     Ok(())
 }
 
-/// Go `path.Clean`: removes repeated slashes, `.` elements, and each inner `..` with the element before it.
+/// Cleans `path` lexically: removes repeated slashes, `.` elements, and each inner `..` with the element before it.
 pub fn clean(path: &str) -> String {
     if path.is_empty() {
         return ".".to_owned();
@@ -221,7 +220,7 @@ pub fn clean(path: &str) -> String {
     }
 }
 
-/// Go `path.Dir`: all but the last element, cleaned. A path with one element gives `.`.
+/// The parent of `path`: all but the last element, cleaned. A path with one element gives `.`.
 pub fn dir(path: &str) -> String {
     match path.rfind('/') {
         Some(index) => clean(&path[..=index]),
@@ -229,7 +228,7 @@ pub fn dir(path: &str) -> String {
     }
 }
 
-/// Go `path.Join` of two elements: the non-empty ones joined by a slash and cleaned. Two empty elements give "".
+/// Joins two elements: the non-empty ones joined by a slash and cleaned. Two empty elements give "".
 pub fn join(first: &str, second: &str) -> String {
     match (first.is_empty(), second.is_empty()) {
         (true, true) => String::new(),

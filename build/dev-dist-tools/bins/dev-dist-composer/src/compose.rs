@@ -327,7 +327,7 @@ fn sorted_difference(first: &[String], second: &[String]) -> Vec<String> {
     sorted(&difference)
 }
 
-/// The values in bytewise order. A fragment kind is ASCII, so this is also the Java string order of the Go tool.
+/// The values in bytewise order. The order is stable and depends on no locale.
 fn sorted<S: AsRef<str>>(values: &[S]) -> Vec<String> {
     let mut result: Vec<String> = values.iter().map(|value| value.as_ref().to_owned()).collect();
     result.sort();

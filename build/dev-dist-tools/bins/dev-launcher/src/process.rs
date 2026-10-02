@@ -1,7 +1,7 @@
 //! The liveness check of a process ID.
 
-/// Tells if the process `pid` runs. On Unix this is `kill(pid, 0)`. A process of another user counts as gone, as in
-/// Go. On Windows a process runs while it can be opened.
+/// Tells if the process `pid` runs. On Unix this is `kill(pid, 0)`. A process of another user counts as gone. On
+/// Windows a process runs while it can be opened.
 #[cfg(unix)]
 pub(crate) fn runs(pid: u32) -> bool {
     let Ok(pid) = libc::pid_t::try_from(pid) else {

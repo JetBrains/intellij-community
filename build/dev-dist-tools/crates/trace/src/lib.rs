@@ -103,7 +103,7 @@ struct Tag {
 
 /// The value of a tag: a string, or an integer that the document writes with the type `long`.
 ///
-/// The Go original recorded only these two kinds, so no other type converts into a tag value.
+/// The tracer records only these two kinds, so no other type converts into a tag value.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TagValue {
     Str(String),
@@ -435,8 +435,8 @@ impl Inner {
             }],
         };
         let text = serde_json::to_string(&document).expect("a trace document has no map with non-string keys");
-        // Go `encoding/json` escaped U+2028 and U+2029, and `serde_json` does not. The two characters occur only in a
-        // JSON string, so this replace gives the bytes of the Go writer.
+        // `serde_json` does not escape U+2028 and U+2029, and the former writer did. The two characters occur only in a
+        // JSON string, so this replace keeps the bytes of the former writer.
         text.replace('\u{2028}', "\\u2028").replace('\u{2029}', "\\u2029").into_bytes()
     }
 }
@@ -444,8 +444,8 @@ impl Inner {
 /// Returns 64 random bits from the operating system.
 ///
 /// The ids are random, not counted, because a different process writes each span file of a build. A counter would
-/// give all packing actions the same ids, and the merge of the files would put their spans on each other. Go
-/// `crypto/rand.Read` also stops the program when the operating system gives no random bytes.
+/// give all packing actions the same ids, and the merge of the files would put their spans on each other. The
+/// function stops the program when the operating system gives no random bytes.
 fn random_u64() -> u64 {
     getrandom::u64().expect("the operating system must give random bytes")
 }

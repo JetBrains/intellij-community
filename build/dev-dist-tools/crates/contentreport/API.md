@@ -1,8 +1,8 @@
 # contentreport API
 
-The Rust port of the Go package `build/internal/content`. The crate reads the executed packaging recipe of a
-dev-distribution fragment, reads a built distribution, and weighs the one against the other. The binary
-`content-report` of the ultimate workspace prints the result. The crate depends on `anyhow`, `saphyr` and `walkdir`.
+The crate reads the executed packaging recipe of a dev-distribution fragment, reads a built distribution, and weighs the
+one against the other. The binary `content-report` of the ultimate workspace prints the result. The crate depends on
+`anyhow`, `saphyr` and `walkdir`.
 
 ## File format
 
@@ -29,8 +29,8 @@ fields of `RecipeSource`: `kind`, `label`, `path`, `file`, `module`, `prefix`, `
 
 ## The subset rule
 
-The Go reader walks any YAML tree, and it reads a field of an unexpected shape as absent. The crate reads only what
-`DevDistRecipe` writes. It refuses every other input with an error that names the file, the line and the field.
+The crate reads only what `DevDistRecipe` writes. It refuses every other input with an error that names the file, the
+line and the field. The column "Former behavior" states what the former reader did with the input.
 
 `testdata/corpus/` holds the three plan files of one flag-on build of `//build:idea_air_dist`: 504 outputs and 824
 sources. The corpus has the entry keys `name`, `kind`, `modules` and `sources`, the entry kinds `jar` and `placed`, the
@@ -38,7 +38,7 @@ source kinds `zip` and `inMemory`, and the filter `unkeyed`. The crate also acce
 can write, because the writer writes it for other fragments. The community schema test compares field names only and
 has no fixture.
 
-| Refused input | Go behavior | Error |
+| Refused input | Former behavior | Error |
 | --- | --- | --- |
 | a plan without the two head comment lines, also a blank file | the fragment is the file stem, and no count check | `the head comment names no fragment`, `states no output count` |
 | a plan with no YAML document, or with more than one | no outputs, or the first document | `the plan holds <n> YAML documents` |
@@ -57,12 +57,12 @@ Two general rules stay by design. An unknown source kind or filter word is a blo
 cannot read as pure. A member name `<module>/<descriptor>` names `<module>`, because a content module name can have
 that form.
 
-## YAML: saphyr and Go yaml v4
+## YAML: saphyr and the former reader
 
-The crate loads the text into `saphyr::MarkedYaml` and interprets the tree afterwards. The Go reader interpreted a
-`yaml.Node` tree. The differences do not change the output for a file that kaml writes.
+The crate loads the text into `saphyr::MarkedYaml` and interprets the tree afterwards. The former reader interpreted a
+`yaml.Node` tree of yaml v4. The differences do not change the output for a file that kaml writes.
 
-| Construct | Go `yaml.Node` and the Go accessors | `saphyr` and the port |
+| Construct | The former reader | `saphyr` and the crate |
 | --- | --- | --- |
 | a plain scalar | YAML 1.2 core schema; a boolean must be the text `true` | the core schema; `True` and `TRUE` are also `true` |
 | an empty plain value `key:` | null, read as absent | null, refused |
@@ -85,10 +85,10 @@ of a distribution build now, and a plan has no `module` key on an entry.
 
 ## The fields that the replay reads
 
-The `replay` command of `dev-dist` reads a plan through `read_recipes`. The Go code compares an absent string field
-with `""`. The port states an absent string field as `None`, and `as_deref().unwrap_or("")` gives the Go value.
+The `replay` command of `dev-dist` reads a plan through `read_recipes`. The crate states an absent string field as
+`None`, and `as_deref().unwrap_or("")` gives the empty text. The former replay compared an absent field with `""`.
 
-| Go access | Rust access |
+| Former access | Crate access |
 | --- | --- |
 | `recipe.Fragment` | `recipe.fragment`, from the first head comment line |
 | `recipe.Entries` | `recipe.entries`. The reader checks the count against the second head comment line. |
@@ -103,5 +103,4 @@ with `""`. The port states an absent string field as `None`, and `as_deref().unw
 | `s.Presigned` | `source.presigned` |
 | `content.RecipeSource{Module: "x"}` in a test | `RecipeSource { module: Some("x".to_owned()), ..RecipeSource::default() }` |
 
-The test `reads_every_source_field_that_the_replay_reads` reads the shapes of the Go replay test plan. The reader also
-reads that complete test plan without a change.
+The test `reads_every_source_field_that_the_replay_reads` reads the shapes of the former replay test plan.

@@ -3,8 +3,8 @@
 //! The command line of the packer.
 //!
 //! A packing action passes `--flagfile=<path>` alone. A one-shot run can add `--trace-file=<path>` and `--verify-crc`.
-//! The Go `flag` package also took one dash, a value in the next argument, a repeated option and `--verify-crc=<bool>`.
-//! No caller uses these forms, so the parser refuses them. A typo then fails the action and does not change it silently.
+//! The parser refuses one dash, a value in the next argument, a repeated option and `--verify-crc=<bool>`, because no
+//! caller uses these forms. A typo then fails the action and does not change it silently.
 
 use std::ffi::OsString;
 use std::path::PathBuf;

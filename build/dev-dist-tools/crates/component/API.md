@@ -28,7 +28,7 @@ Every reader is plain serde. A type refuses an unknown key, and a repeated key o
 `Option` or a default is required, and `null` fails for it. An `Option` key takes `null`, and an absent `Option` key
 is `None`. A quoted number or boolean fails, because no producer writes one. A repeated key inside a runfiles map
 keeps its last value. A Starlark dict cannot repeat a key. `serde` also reads a JSON array in place of an object, in
-the field order, where Go refuses it. No producer writes such an array.
+the field order. No producer writes such an array.
 
 ## Paths (`paths`)
 
