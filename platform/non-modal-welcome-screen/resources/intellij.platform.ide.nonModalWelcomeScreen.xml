@@ -52,6 +52,7 @@
     <projectOpenProcessor implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenCommandLineProjectOpenProcessor" order="first"/>
 
     <actionConfigurationCustomizer implementation="com.intellij.platform.ide.nonModalWelcomeScreen.actions.WelcomeScreenAwareActionsCustomizer" />
+    <actionConfigurationCustomizer implementation="com.intellij.platform.ide.nonModalWelcomeScreen.actions.WelcomeProjectNewActionsCustomizer" order="last"/>
 
     <!-- The welcome tab is a persisted editor tab: the platform restores it by URL through this file system. -->
     <projectViewPane implementation="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel"/>

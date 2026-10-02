@@ -24,8 +24,6 @@ internal class WelcomeScreenAwareActionsCustomizer : ActionConfigurationCustomiz
       replaceExistingAction("CloseProject") { WelcomeScreenAwareCloseProjectAction() }
       replaceExistingAction("CloseAllProjects") { WelcomeScreenAwareCloseAllProjectsAction() }
       replaceExistingAction("RenameProject") { hideActionOnWelcomeScreen(it) }
-      replaceExistingAction("NewDir") { hideActionOnWelcomeScreen(it) }
-      replaceExistingAction("NewFile") { WelcomeProjectHiddenAction(it) }
       if (!ApplicationManager.getApplication().isUnitTestMode) {
         replaceExistingAction("SaveAll") { WelcomeFileProxyAction(it) }
         replaceExistingAction("SaveDocument") { WelcomeFileProxyAction(it) }
@@ -39,6 +37,15 @@ internal class WelcomeScreenAwareActionsCustomizer : ActionConfigurationCustomiz
       replaceExistingAction("ExpandRecursively") { hideActionOnWelcomeScreen(it) }
       replaceExistingAction("ExpandAll") { hideActionOnWelcomeScreen(it) }
       replaceExistingAction("CollapseAll") { hideActionOnWelcomeScreen(it) }
+    }
+  }
+}
+
+internal class WelcomeProjectNewActionsCustomizer : ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
+  override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
+    actionRegistrar.run {
+      replaceExistingAction("NewDir") { WelcomeProjectHiddenAction(it) }
+      replaceExistingAction("NewFile") { WelcomeProjectHiddenAction(it) }
     }
   }
 }
