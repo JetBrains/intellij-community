@@ -17,11 +17,11 @@ pub(crate) const PLUGIN_CLASS_PATH_FORMAT_VERSION: u8 = 3;
 
 /// The declared inputs of the product descriptor, the `META-INF` descriptor of the application-info module.
 ///
-/// The source is the Product DSL content with the module sets and the deprecated includes inlined. It is the text that
-/// `processAndGetProductPluginContentModules` (`productModuleLayout.kt`) loads. The generator writes it, and the plan
-/// states the refusals of the content filter of the product and the scrambled content modules. So the action loads no
-/// project model.
-#[derive(Debug, Default, PartialEq, Eq)]
+/// The source is the Product DSL content with the module sets inlined. It is the text that
+/// `processAndGetProductPluginContentModules` (`productModuleLayout.kt`) loads. The flags compose it, or a file that the
+/// generator writes states it. The plan states the refusals of the content filter of the product and the scrambled
+/// content modules. So the action loads no project model.
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) struct ProductDescriptorRequest {
     pub content: EmbeddedProductRequest,
     pub main_module: String,

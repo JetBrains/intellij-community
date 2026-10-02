@@ -23,6 +23,9 @@
 //! no target sets. The reader of [`descriptorxml`], in the `appinfo` crate, lists the XML constructs that it refuses. A refusal turns a new
 //! input into a build failure. So no code that the tests do not cover writes the bytes of that input.
 //!
+//! The two product modes compose the root element of the descriptor from the flags of [`compose`], or read it from a
+//! `--source` file. The request states exactly one of the two forms.
+//!
 //! ### The stages
 //!
 //! The patch has seven stages, and this binary runs four of them:
@@ -51,6 +54,7 @@
 //! contains none of the four words, and a new name must also avoid them.
 
 mod application_info;
+mod compose;
 mod embedded_product;
 mod markers;
 mod product_descriptor;

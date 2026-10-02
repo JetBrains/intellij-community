@@ -7,7 +7,7 @@ use std::path::Path;
 
 use testkit::{TempDir, read_bytes, read_text, require_absent, write_file};
 
-use crate::embedded_product::EmbeddedProductRequest;
+use crate::embedded_product::{EmbeddedProductRequest, ProductSource};
 use crate::product_descriptor::{
     PLUGIN_CLASS_PATH_FORMAT_VERSION, ProductDescriptorRequest, parse_product_descriptor_request, resolve_product_descriptor,
 };
@@ -193,7 +193,7 @@ fn product_descriptor_request_is_parsed() {
         ProductDescriptorRequest {
             content: EmbeddedProductRequest {
                 output: "out/plugin.xml".into(),
-                source: "source.xml".into(),
+                source: ProductSource::File("source.xml".into()),
                 descriptors: BTreeMap::from([("a.b.xml".into(), "a file=1.xml".into())]),
                 descriptors_in_jar: BTreeMap::from([("META-INF/c.xml".into(), vec!["first.jar".into()])]),
                 separate_jar: BTreeSet::new(),
@@ -329,4 +329,146 @@ fn product_descriptor_failures_write_no_output() {
         assert_eq!(run_request(dir, &request), 1, "{name}");
         require_absent(&output);
     }
+}
+
+/// The composition of `source.xml`: the aliases in reverse order, the inlined region as a required include, and the
+/// rows of the two blocks.
+const SOURCE_COMPOSITION: [&str; 8] = [
+    "--alias=com.intellij.modules.pycharm",
+    "--alias=com.intellij.modules.lang",
+    "--include=required=/META-INF/pycharm-core.xml",
+    "--content-module=intellij.platform.debugger",
+    "--content-module=intellij.fixture.refused",
+    "--content-module=intellij.libraries.blockmap;loading=embedded",
+    "--content-module=intellij.platform.ide.osCertificates;loading=required",
+    "--additional-module=intellij.libraries.sqlite;private",
+];
+
+/// The composition of `composed.xml`: a set alias, an optional include, a `required-if-available` row, and a private
+/// additional module before a `jetbrains` one.
+const FULL_COMPOSITION: [&str; 10] = [
+    "--alias=com.intellij.modules.set.alias",
+    "--alias=com.intellij.modules.pycharm",
+    "--alias=com.intellij.modules.lang",
+    "--include=required=/META-INF/pycharm-core.xml",
+    "--include=optional=/META-INF/pycharm-optional.xml",
+    "--content-module=intellij.platform.debugger",
+    "--content-module=intellij.fixture.refused",
+    "--content-module=intellij.platform.ide.osCertificates;loading=required;required-if-available=intellij.platform.debugger",
+    "--additional-module=intellij.libraries.sqlite;private",
+    "--additional-module=intellij.libraries.blockmap;loading=embedded",
+];
+
+/// A request of the fixture with these lines in place of `--source`. The include file of the fixture is declared too.
+fn composed_request(dir: &Path, form: &[String]) -> Vec<String> {
+    let mut request = vec![
+        "--product-descriptor".to_owned(),
+        "--main-module=intellij.pycharm.community".to_owned(),
+        "--refused-content-module=intellij.fixture.refused".to_owned(),
+        format!(
+            "--descriptor=META-INF/pycharm-core.xml={}",
+            testdata("product_descriptor/META-INF/pycharm-core.xml")
+        ),
+    ];
+    request.extend(form.iter().cloned());
+    request.extend(outputs(dir));
+    request.extend(product_descriptor_inputs());
+    request
+}
+
+/// The three outputs of a request that `outputs` placed in this directory.
+fn output_bytes(dir: &Path) -> [Vec<u8>; 3] {
+    [
+        read_bytes(dir.join("out").join("plugin.xml")),
+        read_bytes(dir.join("plugin-classpath-prefix")),
+        read_bytes(dir.join("classpath.xml")),
+    ]
+}
+
+/// The composition of `source.xml` gives the bytes that the Kotlin fragment packed. The required include resolves in
+/// place to the region that the snapshot inlined.
+#[test]
+fn the_composition_of_the_source_matches_kotlin() {
+    let dir = TempDir::new();
+    let dir = dir.path();
+    assert_eq!(run_request(dir, &composed_request(dir, &lines(&SOURCE_COMPOSITION))), 0);
+    let [descriptor, prefix, classpath] = output_bytes(dir);
+    assert_eq!(
+        String::from_utf8(descriptor).unwrap(),
+        read_text(Path::new(&testdata("product_descriptor/expected.xml")))
+    );
+    assert_eq!(
+        prefix,
+        read_bytes(Path::new(&testdata("product_descriptor/plugin-classpath-prefix.expected")))
+    );
+    assert_eq!(classpath, prefix[5..]);
+}
+
+/// A composition and the source file that states the same element give the same three outputs.
+#[test]
+fn a_composition_and_its_source_give_the_same_outputs() {
+    let from_source = TempDir::new();
+    let source = [format!("--source={}", testdata("product_descriptor/composed.xml"))];
+    assert_eq!(run_request(from_source.path(), &composed_request(from_source.path(), &source)), 0);
+    let from_flags = TempDir::new();
+    assert_eq!(
+        run_request(from_flags.path(), &composed_request(from_flags.path(), &lines(&FULL_COMPOSITION))),
+        0
+    );
+
+    let expected = output_bytes(from_source.path());
+    assert_eq!(output_bytes(from_flags.path()), expected);
+    // The fixture reaches every rule: the optional include stays, and the private block comes before the `jetbrains` one.
+    let descriptor = String::from_utf8(expected[0].clone()).unwrap();
+    for want in [
+        "<module value=\"com.intellij.modules.set.alias\" />",
+        "<xi:include href=\"/META-INF/pycharm-optional.xml\">\n    <xi:fallback />\n  </xi:include>",
+        "<module name=\"intellij.platform.ide.osCertificates\" loading=\"required\" required-if-available=\"intellij.platform.debugger\">",
+        "<content>\n    <module name=\"intellij.libraries.sqlite\">",
+        "</content>\n  <content namespace=\"jetbrains\">\n    <module name=\"intellij.libraries.blockmap\" loading=\"embedded\">",
+    ] {
+        assert!(descriptor.contains(want), "{want:?} is not in\n{descriptor}");
+    }
+    assert!(!descriptor.contains("intellij.fixture.refused"), "{descriptor}");
+}
+
+/// The request states exactly one of `--source` and the composition.
+#[test]
+fn a_request_needs_either_the_source_or_the_composition() {
+    for (name, form, want) in [
+        (
+            "neither",
+            vec![],
+            "--source is required, or the composition flags --alias, --include, --content-module, --additional-module",
+        ),
+        (
+            "both",
+            vec![
+                format!("--source={}", testdata("product_descriptor/source.xml")),
+                SOURCE_COMPOSITION[0].to_owned(),
+            ],
+            "--source and the composition flags --alias, --include, --content-module, --additional-module are exclusive",
+        ),
+    ] {
+        let dir = TempDir::new();
+        let dir = dir.path();
+        let request = composed_request(dir, &form);
+        let lines: Vec<&str> = request.iter().map(String::as_str).collect();
+        match mode_request(&lines).and_then(parse_product_descriptor_request) {
+            Ok(parsed) => panic!("{name}: accepted {parsed:?}"),
+            Err(error) => assert!(format!("{error:#}").contains(want), "{name}: {error:#}"),
+        }
+        assert_eq!(run_request(dir, &request), 2, "{name}");
+        require_absent(dir.join("out").join("plugin.xml"));
+    }
+}
+
+/// A malformed row is a request that the rule cannot state.
+#[test]
+fn a_malformed_row_is_a_request_error() {
+    let dir = TempDir::new();
+    let dir = dir.path();
+    let request = composed_request(dir, &lines(&["--content-module=intellij.platform.debugger;loading=lazy"]));
+    assert_eq!(run_request(dir, &request), 2);
+    require_absent(dir.join("out").join("plugin.xml"));
 }

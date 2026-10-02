@@ -7,7 +7,7 @@ use std::path::Path;
 
 use testkit::{TempDir, read_text, require_absent, write_file};
 
-use crate::embedded_product::{EmbeddedProductRequest, parse_embedded_product_request, resolve_embedded_product};
+use crate::embedded_product::{EmbeddedProductRequest, ProductSource, parse_embedded_product_request, resolve_embedded_product};
 use crate::test_support::{descriptor_jar, lines, mode_request, path_string, run_request, testdata};
 
 /// The inputs of the `source.xml` case: three jars and the declared files. The first jar has neither entry, and the
@@ -140,7 +140,7 @@ fn embedded_product_request() {
         parsed,
         EmbeddedProductRequest {
             output: "out/product.xml".into(),
-            source: "source.xml".into(),
+            source: ProductSource::File("source.xml".into()),
             descriptors: BTreeMap::from([("META-INF/extra.xml".into(), "a file=1.xml".into())]),
             descriptors_in_jar: BTreeMap::from([("a.b.xml".into(), vec!["first.jar".into(), "second.jar".into()])]),
             separate_jar: BTreeSet::from(["a.b".into()]),
@@ -367,5 +367,96 @@ fn embedded_product_failures_write_no_output() {
         }
         assert_eq!(run_request(dir, &request), 1, "{name}");
         require_absent(&output);
+    }
+}
+
+/// The composition of `composed.xml`: the aliases in reverse order, a required include with a nested include from a
+/// jar, an optional include, a set block, and a private additional module before a `jetbrains` one.
+const COMPOSITION: [&str; 8] = [
+    "--alias=embedded.alias.b",
+    "--alias=embedded.alias.a",
+    "--include=required=content.xml",
+    "--include=optional=optional.xml",
+    "--content-module=intellij.embedded.noPackage",
+    "--content-module=intellij.embedded/fragment;loading=embedded",
+    "--additional-module=intellij.embedded.notSeparate;private;loading=on-demand",
+    "--additional-module=intellij.embedded.existing;required-if-available=intellij.embedded.noPackage",
+];
+
+/// A request of the `source.xml` inputs with these lines in place of `--source`.
+fn composed_request(dir: &Path, form: &[String]) -> Vec<String> {
+    let mut request = vec![
+        "--embedded-product".to_owned(),
+        format!("--out={}", path_string(&dir.join("out").join("product.xml"))),
+    ];
+    request.extend(form.iter().cloned());
+    request.extend(embedded_product_inputs(dir));
+    request
+}
+
+/// A composition and the source file that states the same element give the same bytes.
+#[test]
+fn a_composition_and_its_source_give_the_same_output() {
+    let from_source = TempDir::new();
+    let source = [format!("--source={}", testdata("embedded_product/composed.xml"))];
+    assert_eq!(run_request(from_source.path(), &composed_request(from_source.path(), &source)), 0);
+    let from_flags = TempDir::new();
+    assert_eq!(
+        run_request(from_flags.path(), &composed_request(from_flags.path(), &lines(&COMPOSITION))),
+        0
+    );
+
+    let expected = read_text(from_source.path().join("out").join("product.xml"));
+    assert_eq!(read_text(from_flags.path().join("out").join("product.xml")), expected);
+    // The fixture reaches every rule: the nested include resolves, the optional one stays, and the blocks keep their
+    // order.
+    for want in [
+        "<id>com.intellij</id>\n  <module value=\"embedded.alias.a\" />\n  <module value=\"embedded.alias.b\" />",
+        "<module name=\"intellij.embedded.jar\" loading=\"required\"><![CDATA[<idea-plugin \
+         xmlns:xi=\"http://www.w3.org/2001/XInclude\" package=\"from.jar\" separate-jar=\"true\">",
+        "<xi:include href=\"optional.xml\">\n    <xi:fallback />\n  </xi:include>\n  <content namespace=\"jetbrains\">\n    \
+         <module name=\"intellij.embedded.noPackage\">",
+        "<module name=\"intellij.embedded/fragment\" loading=\"embedded\">",
+        "<content>\n    <module name=\"intellij.embedded.notSeparate\" loading=\"on-demand\">",
+        "</content>\n  <content namespace=\"jetbrains\">\n    <module name=\"intellij.embedded.existing\" \
+         required-if-available=\"intellij.embedded.noPackage\">",
+    ] {
+        assert!(expected.contains(want), "{want:?} is not in\n{expected}");
+    }
+}
+
+/// The request states exactly one of `--source` and the composition.
+#[test]
+fn a_request_needs_either_the_source_or_the_composition() {
+    for (name, form, want) in [
+        (
+            "neither",
+            vec![],
+            "--source is required, or the composition flags --alias, --include, --content-module, --additional-module",
+        ),
+        (
+            "both",
+            vec![
+                format!("--source={}", testdata("embedded_product/composed.xml")),
+                COMPOSITION[4].to_owned(),
+            ],
+            "--source and the composition flags --alias, --include, --content-module, --additional-module are exclusive",
+        ),
+        (
+            "malformed row",
+            vec!["--additional-module=intellij.embedded.existing;public".to_owned()],
+            "the row '--additional-module=intellij.embedded.existing;public' states 'public'",
+        ),
+    ] {
+        let dir = TempDir::new();
+        let dir = dir.path();
+        let request = composed_request(dir, &form);
+        let lines: Vec<&str> = request.iter().map(String::as_str).collect();
+        match mode_request(&lines).and_then(parse_embedded_product_request) {
+            Ok(parsed) => panic!("{name}: accepted {parsed:?}"),
+            Err(error) => assert!(format!("{error:#}").contains(want), "{name}: {error:#}"),
+        }
+        assert_eq!(run_request(dir, &request), 2, "{name}");
+        require_absent(dir.join("out").join("product.xml"));
     }
 }

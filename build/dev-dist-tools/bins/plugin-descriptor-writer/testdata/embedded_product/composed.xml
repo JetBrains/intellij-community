@@ -1,0 +1,23 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <id>com.intellij</id>
+  <module value="embedded.alias.a"/>
+  <module value="embedded.alias.b"/>
+  <xi:include href="content.xml"/>
+  <xi:include href="optional.xml">
+    <xi:fallback/>
+  </xi:include>
+  <content namespace="jetbrains">
+    <!-- region embedded.set -->
+    <module name="intellij.embedded.noPackage"/>
+    <module name="intellij.embedded/fragment" loading="embedded"/>
+    <!-- endregion -->
+  </content>
+  <!-- region additional -->
+  <content>
+    <module name="intellij.embedded.notSeparate" loading="on-demand"/>
+  </content>
+  <content namespace="jetbrains">
+    <module name="intellij.embedded.existing" required-if-available="intellij.embedded.noPackage"/>
+  </content>
+  <!-- endregion -->
+</idea-plugin>

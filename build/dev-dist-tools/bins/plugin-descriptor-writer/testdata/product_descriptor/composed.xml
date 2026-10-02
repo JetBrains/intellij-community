@@ -1,0 +1,28 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <id>com.intellij</id>
+  <module value="com.intellij.modules.lang"/>
+  <module value="com.intellij.modules.pycharm"/>
+  <module value="com.intellij.modules.set.alias"/>
+  <xi:include href="/META-INF/pycharm-core.xml"/>
+  <xi:include href="/META-INF/pycharm-optional.xml">
+    <xi:fallback/>
+  </xi:include>
+  <content namespace="jetbrains">
+    <!-- region ide.common -->
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.fixture.refused"/>
+    <!-- endregion -->
+
+    <!-- region ide.nested -->
+    <module name="intellij.platform.ide.osCertificates" loading="required" required-if-available="intellij.platform.debugger"/>
+    <!-- endregion -->
+  </content>
+  <!-- region additional -->
+  <content>
+    <module name="intellij.libraries.sqlite"/>
+  </content>
+  <content namespace="jetbrains">
+    <module name="intellij.libraries.blockmap" loading="embedded"/>
+  </content>
+  <!-- endregion -->
+</idea-plugin>
