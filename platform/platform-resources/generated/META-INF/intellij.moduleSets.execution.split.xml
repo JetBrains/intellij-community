@@ -6,5 +6,6 @@
   <content namespace="jetbrains">
     <module name="intellij.platform.execution.impl.frontend"/>
     <module name="intellij.platform.execution.impl.backend"/>
+    <module name="intellij.platform.execution.rpc"/>
   </content>
 </idea-plugin>

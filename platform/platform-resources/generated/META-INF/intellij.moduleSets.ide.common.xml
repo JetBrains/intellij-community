@@ -342,7 +342,7 @@
     <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.kernel.impl"/>
-    <module name="intellij.platform.rpc.topics" loading="embedded"/>
+    <module name="intellij.platform.rpc.topics"/>
     <module name="intellij.platform.rpc.topics.backend"/>
     <module name="intellij.platform.rpc.topics.frontend"/>
     <!-- endregion -->
@@ -388,6 +388,7 @@
     <!-- region nested: essential > execution.split -->
     <module name="intellij.platform.execution.impl.frontend"/>
     <module name="intellij.platform.execution.impl.backend"/>
+    <module name="intellij.platform.execution.rpc"/>
     <!-- endregion -->
 
     <!-- region nested: essential > ide.internal -->

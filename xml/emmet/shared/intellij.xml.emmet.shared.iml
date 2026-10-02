@@ -53,7 +53,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
-    <orderEntry type="module" module-name="intellij.platform.rpc.topics" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.project" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" scope="PROVIDED" />
     <orderEntry type="module" module-name="fleet.rpc" scope="PROVIDED" />

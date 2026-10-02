@@ -27,11 +27,6 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "platform_remote-topics_rpc-topics_provided",
-    lib = "//platform/remote-topics/shared:rpc-topics",
-)
-
-jvm_provided_library(
     name = "platform_ide-core_provided",
     lib = "//platform/ide-core",
 )
@@ -75,12 +70,12 @@ jvm_library(
         "@lib//:kotlin-stdlib-provided",
         "//xml/emmet",
         "//platform/platform-frontend:frontend",
+        "//platform/remote-topics/shared:rpc-topics",
         "//platform/util/coroutines",
         ":platform_core-ui_provided",
         ":platform_util_provided",
         ":platform_core_provided",
         ":libraries_jetbrains_annotations_provided",
-        ":platform_remote-topics_rpc-topics_provided",
         ":platform_ide-core_provided",
         ":platform_ide_provided",
         ":platform_util-ui_provided",
@@ -114,7 +109,6 @@ jvm_library(
         "//platform/platform-frontend:frontend_test_lib",
         "//libraries/jetbrains/annotations",
         "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/remote-topics/shared:rpc-topics",
         "//platform/remote-topics/shared:rpc-topics_test_lib",
         "//platform/ide-core",
         "//platform/ide-core:ide-core_test_lib",

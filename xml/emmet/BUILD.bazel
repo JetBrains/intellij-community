@@ -107,11 +107,6 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "platform_remote-topics_rpc-topics_provided",
-    lib = "//platform/remote-topics/shared:rpc-topics",
-)
-
-jvm_provided_library(
     name = "platform_project_project_provided",
     lib = "//platform/project/shared:project",
 )
@@ -143,6 +138,7 @@ jvm_library(
         "@lib//:kotlin-stdlib-provided",
         "//xml/xml-ui-common:ui-common",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/remote-topics/shared:rpc-topics",
         ":platform_core_provided",
         ":platform_analysis-impl_provided",
         ":xml_psi_provided",
@@ -163,7 +159,6 @@ jvm_library(
         ":platform_refactoring_provided",
         ":platform_util-ui_provided",
         ":platform_java-guiForms-rt_provided",
-        ":platform_remote-topics_rpc-topics_provided",
         ":platform_project_project_provided",
         ":libraries_kotlinx_serialization_core_provided",
     ],
@@ -225,7 +220,6 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//platform/remote-topics/shared:rpc-topics",
         "//platform/remote-topics/shared:rpc-topics_test_lib",
         "//platform/project/shared:project",
         "//platform/project/shared:project_test_lib",

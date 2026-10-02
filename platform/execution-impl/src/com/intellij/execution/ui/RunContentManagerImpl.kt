@@ -13,7 +13,6 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
-import com.intellij.execution.rpc.emitLiveIconUpdate
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory
@@ -25,6 +24,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -358,7 +358,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
             logger<RunContentManagerImpl>().info("startNotified had already been called")
             return
           }
-          emitLiveIconUpdate(project, toolWindowId, alive = true)
+          serviceOrNull<RunContentLiveIconPublisher>()?.publish(project, toolWindowId, alive = true)
 
           startNotifiedJob = descriptor.coroutineScope.launch {
             withContext(Dispatchers.EDT) {
@@ -735,7 +735,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun setToolWindowIcon(alive: Boolean, toolWindow: ToolWindow) {
-    emitLiveIconUpdate(project, toolWindow.id, alive)
+    serviceOrNull<RunContentLiveIconPublisher>()?.publish(project, toolWindow.id, alive)
   }
 
   private inner class CloseListener(content: Content, private val myExecutor: Executor) : BaseContentCloseListener(content, project) {

@@ -18,7 +18,7 @@
     <orderEntry type="module" module-name="intellij.platform.frontend" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="PROVIDED" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.rpc.topics" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.topics" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.ide" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="PROVIDED" />

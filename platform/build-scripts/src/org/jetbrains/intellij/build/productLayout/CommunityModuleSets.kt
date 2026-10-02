@@ -200,12 +200,14 @@ object CommunityModuleSets {
   /**
    * The backend and frontend split of the execution implementation.
    * The `intellij.platform.execution.impl` module stays in [CoreModuleSets.coreLang].
+   * The `intellij.platform.execution.rpc` module holds the remote topic that syncs the live Run tool window icon, and its publisher.
    *
    * [essential] nests this set. A lean product such as Draft adds the set itself.
    */
   fun executionSplit(): ModuleSet = moduleSet("execution.split") {
     module("intellij.platform.execution.impl.frontend")
     module("intellij.platform.execution.impl.backend")
+    module("intellij.platform.execution.rpc")
   }
 
   /**

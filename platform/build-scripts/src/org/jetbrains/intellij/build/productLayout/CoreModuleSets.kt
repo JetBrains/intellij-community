@@ -408,7 +408,7 @@ object CoreModuleSets {
     module("intellij.platform.kernel.backend")
     module("intellij.platform.kernel.impl")
 
-    embeddedModule("intellij.platform.rpc.topics")
+    module("intellij.platform.rpc.topics")
     module("intellij.platform.rpc.topics.backend")
     module("intellij.platform.rpc.topics.frontend")
   }

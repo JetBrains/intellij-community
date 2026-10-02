@@ -674,16 +674,19 @@ DEV_DIST_MODULE_SETS = {
         modules = [
             "intellij.platform.execution.impl.frontend",
             "intellij.platform.execution.impl.backend",
+            "intellij.platform.execution.rpc",
         ],
         nested = [
         ],
         packed = {
             "intellij.platform.execution.impl.backend": "//platform/execution-impl/backend:backend_content_module_jar",
             "intellij.platform.execution.impl.frontend": "//platform/execution-impl/frontend:frontend_content_module_jar",
+            "intellij.platform.execution.rpc": "//platform/execution-impl/rpc:rpc_content_module_jar",
         },
         module_system_loaded = [
             "intellij.platform.execution.impl.backend",
             "intellij.platform.execution.impl.frontend",
+            "intellij.platform.execution.rpc",
         ],
         mode_refused = {
             "frontend": [
@@ -1572,9 +1575,6 @@ DEV_DIST_MODULE_SETS = {
         ],
         nested = [
         ],
-        loading = {
-            "intellij.platform.rpc.topics": "embedded",
-        },
         packed = {
             "intellij.platform.kernel.backend": "//platform/kernel/backend:backend_content_module_jar",
             "intellij.platform.kernel.impl": "//platform/kernel/intellij.platform.kernel.impl:impl_content_module_jar",
@@ -1587,6 +1587,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.kernel.backend",
             "intellij.platform.kernel.impl",
             "intellij.platform.rpc.backend",
+            "intellij.platform.rpc.topics",
             "intellij.platform.rpc.topics.backend",
             "intellij.platform.rpc.topics.frontend",
         ],

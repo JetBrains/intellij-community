@@ -1,0 +1,65 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.execution.rpc` start
+content_module_jar(module = ":rpc")
+### auto-generated section `dev intellij.platform.execution.rpc` end
+
+### auto-generated section `build intellij.platform.execution.rpc` start
+jvm_library(
+    name = "rpc",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.execution.rpc",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/kotlinx/serialization/core",
+        "//platform/remote-topics/shared:rpc-topics",
+        "//platform/execution-impl",
+        "//platform/core-api:core",
+    ],
+)
+
+jvm_library(
+    name = "rpc_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.execution.rpc",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":rpc",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//platform/remote-topics/shared:rpc-topics_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/core-api:core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.execution.rpc` end
+
+### auto-generated section `iml intellij.platform.execution.rpc` start
+exports_files(
+    [
+        "intellij.platform.execution.rpc.iml",
+        "resources/intellij.platform.execution.rpc.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.execution.rpc` end

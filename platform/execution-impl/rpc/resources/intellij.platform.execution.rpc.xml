@@ -1,0 +1,15 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.rpc.topics"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.execution.ui.RunContentLiveIconPublisher"
+                        serviceImplementation="com.intellij.execution.rpc.RunContentLiveIconPublisherImpl"/>
+  </extensions>
+</idea-plugin>
