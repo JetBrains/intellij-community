@@ -29,6 +29,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.python.pyproject.model.internal.workspaceBridge.affectsWorkspaceLayout
@@ -65,10 +66,11 @@ import org.jetbrains.annotations.TestOnly
  * The entities [PyProject] is derived from ([com.intellij.python.pyproject.model.internal.pyProject.PyProjectImpl]):
  * the module (for its type), its facets (for a Python facet on a module of another type) and its content roots (for
  * the base dir). A change to any of them can add, remove or move a `PyProject`, or repoint one at another interpreter,
- * which a module holds among its dependencies; a change to anything else cannot.
+ * which a module holds among its dependencies. The project settings hold the project interpreter, which a module that
+ * inherits it uses, see [sdkReferenceOf]. A change to anything else cannot.
  */
 private val PY_PROJECT_ENTITIES: List<Class<out WorkspaceEntity>> =
-  listOf(ModuleEntity::class.java, FacetEntity::class.java, ContentRootEntity::class.java)
+  listOf(ModuleEntity::class.java, FacetEntity::class.java, ContentRootEntity::class.java, ProjectSettingsEntity::class.java)
 
 /**
  * Whether this change can alter anything [EvoPyProjectModel.computeSnapshot] reads: the entities a [PyProject] is
