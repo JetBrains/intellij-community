@@ -533,9 +533,8 @@
 
           <reference ref="SwitchIdeScaleAction"/>
 
+          <separator/>
           <group id="UIToggleActions">
-            <separator/>
-            <reference ref="TogglePresentationAssistantAction"/>
             <separator/>
             <reference ref="ViewMainMenu"/>
             <reference ref="ChangeMainMenuModeActionGroup"/>
@@ -1341,8 +1340,6 @@
     </group>
 
     <reference ref="ChangeProjectColorActionGroup"/>
-
-    <reference ref="PresentationAssistantQuickSettingsGroup"/>
 
     <group id="ToolbarPopupActions"/>
 

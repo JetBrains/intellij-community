@@ -216,8 +216,8 @@
         <separator>
         ToggleCompactMode
       SwitchIdeScaleAction
+      <separator>
       UIToggleActions
-        <separator>
         TogglePresentationAssistantAction
         <separator>
         ViewMainMenu
@@ -3204,7 +3204,6 @@
   <separator>
   HierarchyPopupMenu.Common
 [group UIToggleActions]
-  <separator>
   TogglePresentationAssistantAction
   <separator>
   ViewMainMenu
@@ -3254,6 +3253,7 @@
 [group ViewAppearanceGroup]
   ToggleFullScreenGroup
   SwitchIdeScaleAction
+  <separator>
   UIToggleActions
 [group ViewMenu]
   ToolWindowsGroup

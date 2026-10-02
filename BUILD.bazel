@@ -556,6 +556,7 @@ jvm_library(
     ),
     module_name = "intellij.idea.community.main.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-impl/presentation-assistant"],
 )
 
 jvm_library(
@@ -583,6 +584,7 @@ jvm_library(
         "//platform/non-modal-welcome-screen:non-modal-welcome-screen_test_lib",
         "//platform/platform-impl/concurrency:ide-concurrency-tests_test_lib",
         "//platform/non-modal-welcome-screen:ide-nonModalWelcomeScreen-tests_test_lib",
+        "//platform/platform-impl/presentation-assistant:presentation-assistant_test_lib",
     ],
     deps = [
         # do not sort,

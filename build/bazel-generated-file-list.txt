@@ -946,6 +946,7 @@ platform/platform-impl/internal/jcef
 platform/platform-impl/jcef
 platform/platform-impl/os-certificates
 platform/platform-impl/plugin-signature-verifier
+platform/platform-impl/presentation-assistant
 platform/platform-impl/recentProjects
 platform/platform-impl/remote
 platform/platform-impl/rpc

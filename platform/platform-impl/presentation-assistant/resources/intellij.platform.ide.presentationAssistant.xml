@@ -1,0 +1,47 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.observable"/>
+    <module name="intellij.platform.ide.ui"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.resources.en"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistant"/>
+    <applicationSettings service="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistant"/>
+    <applicationConfigurable groupId="appearance"
+                             key="presentation.assistant.settings"
+                             bundle="messages.IdeBundle"
+                             groupWeight="-15"
+                             instance="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantConfigurable"/>
+    <notificationGroup id="Presentation Assistant"
+                       displayType="BALLOON"
+                       bundle="messages.IdeBundle"
+                       key="presentation.assistant.notification"/>
+    <actionConfigurationCustomizer
+      implementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantListenerRegistrar"/>
+  </extensions>
+
+  <actions>
+    <action id="TogglePresentationAssistantAction"
+            class="com.intellij.platform.ide.impl.presentationAssistant.TogglePresentationAssistantAction">
+      <add-to-group group-id="UIToggleActions" anchor="first"/>
+    </action>
+    <group id="PresentationAssistantQuickSettingsGroup"
+           class="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantQuickSettingsGroup" searchable="false"
+           popup="true"/>
+  </actions>
+</idea-plugin>

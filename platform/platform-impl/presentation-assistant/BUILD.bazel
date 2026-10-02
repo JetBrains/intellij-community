@@ -1,0 +1,89 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.ide.presentationAssistant` start
+content_module_jar(module = ":presentation-assistant")
+### auto-generated section `dev intellij.platform.ide.presentationAssistant` end
+
+### auto-generated section `build intellij.platform.ide.presentationAssistant` start
+jvm_library(
+    name = "presentation-assistant",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.presentationAssistant",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-resources-en:resources-en"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/ide-core-impl",
+        "//platform/platform-impl:ide-impl",
+        "//platform/observable",
+        "//platform/platform-impl/ui",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//platform/util/coroutines",
+        "//platform/util:util-ui",
+    ],
+)
+
+jvm_library(
+    name = "presentation-assistant_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.presentationAssistant",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":presentation-assistant",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/observable:observable_test_lib",
+        "//platform/platform-impl/ui:ui_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/platform-resources-en:resources-en_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.ide.presentationAssistant` end
+
+### auto-generated section `iml intellij.platform.ide.presentationAssistant` start
+exports_files(
+    [
+        "intellij.platform.ide.presentationAssistant.iml",
+        "resources/intellij.platform.ide.presentationAssistant.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.ide.presentationAssistant` end

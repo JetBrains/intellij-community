@@ -385,8 +385,6 @@
     <action id="SwitchIdeScaleAction" class="com.intellij.ide.actions.SwitchIdeScaleAction">
       <synonym key="action.SwitchIdeScaleAction.text"/>
     </action>
-    <action id="TogglePresentationAssistantAction"
-            class="com.intellij.platform.ide.impl.presentationAssistant.TogglePresentationAssistantAction"/>
     <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
     <group id="ChangeMainMenuModeActionGroup"
            class="com.intellij.ide.actions.ChangeMainMenuModeActionGroup" searchable="false" popup="true"/>
@@ -716,9 +714,6 @@
            popup="false"/>
     <group id="ChangeProjectColorActionGroup"
            class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.ChangeProjectColorActionGroup" searchable="false" popup="true"/>
-    <group id="PresentationAssistantQuickSettingsGroup"
-           class="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantQuickSettingsGroup" searchable="false"
-           popup="true"/>
     <action id="ColoredHeaderAction" class="com.intellij.ide.ui.customization.UseProjectColorsCheckboxAction"/>
     <action id="MergeMenuWithWindowTitleAction" class="com.intellij.ide.actions.MergeMenuWithWindowTitleAction"/>
     <action id="FocusMainToolbar" class="com.intellij.openapi.wm.impl.headertoolbar.FocusMainToolbarAction">
