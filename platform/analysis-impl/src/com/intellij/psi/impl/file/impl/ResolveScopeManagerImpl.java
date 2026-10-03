@@ -5,6 +5,7 @@ import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.ModuleContext;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
@@ -33,7 +34,6 @@ import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
@@ -64,7 +64,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
 
     myDefaultResolveScopesCache = ConcurrentFactoryMap.create(
       fileWithContext -> ReadAction.computeBlocking(() -> createScopeByFile(fileWithContext)),
-      () -> CollectionFactory.createConcurrentWeakKeySoftValueMap()
+      () -> ConcurrentCollectionFactory.createConcurrentWeakKeySoftValueMap()
     );
 
     myProject.getMessageBus().connect(this).subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {

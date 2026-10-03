@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.CollectionFactory;
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +24,7 @@ public final class PropertyNamePattern {
     final Pair<Pattern, String> pair = JsonSchemaObjectReadingUtils.compilePattern(pattern);
     myPatternError = pair.getSecond();
     myCompiledPattern = pair.getFirst();
-    myValuePatternCache = CollectionFactory.createConcurrentWeakKeyWeakValueMap();
+    myValuePatternCache = ConcurrentCollectionFactory.createConcurrentWeakKeyWeakValueMap();
   }
 
   public @Nullable String getPatternError() {

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
@@ -16,7 +17,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.ui.SimpleEditorCustomization;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -82,7 +82,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
 
   private static class MyInspectionProfileStrategy implements Function<InspectionProfile, InspectionProfileWrapper> {
     private final ConcurrentMap<InspectionProfile, MyInspectionProfileWrapper> myWrappers
-      = CollectionFactory.createConcurrentWeakKeySoftValueMap();
+      = ConcurrentCollectionFactory.createConcurrentWeakKeySoftValueMap();
     private boolean myUseSpellCheck;
 
     @Override

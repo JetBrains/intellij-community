@@ -9,6 +9,7 @@ import com.google.gson.Strictness
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import com.google.gson.stream.MalformedJsonException
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil.showYesNoDialog
 import com.intellij.openapi.application.ApplicationManager
@@ -24,7 +25,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.AppIcon
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.getHostName
 import com.intellij.util.io.origin
 import com.intellij.util.io.referrer
@@ -154,7 +154,7 @@ abstract class RestService : HttpRequestHandler() {
     .expireAfterWrite(1, TimeUnit.DAYS)
     .build<Pair<String, String>, Boolean>()
 
-  private val hostLocks = CollectionFactory.createConcurrentWeakKeyWeakValueMap<String, Any>()
+  private val hostLocks = ConcurrentCollectionFactory.createConcurrentWeakKeyWeakValueMap<String, Any>()
 
   private var isBlockUnknownHosts = false
 

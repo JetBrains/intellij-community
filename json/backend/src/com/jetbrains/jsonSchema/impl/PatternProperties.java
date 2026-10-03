@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.CollectionFactory;
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +28,7 @@ public final class PatternProperties {
     mySchemasMap = new HashMap<>();
     schemasMap.keySet().forEach(key -> mySchemasMap.put(StringUtil.unescapeBackSlashes(key), schemasMap.get(key)));
     myCachedPatterns = new HashMap<>();
-    myCachedPatternProperties = CollectionFactory.createConcurrentWeakKeyWeakValueMap();
+    myCachedPatternProperties = ConcurrentCollectionFactory.createConcurrentWeakKeyWeakValueMap();
     mySchemasMap.keySet().forEach(key -> {
       ProgressManager.checkCanceled();
       final Pair<Pattern, String> pair = JsonSchemaObjectReadingUtils.compilePattern(key);

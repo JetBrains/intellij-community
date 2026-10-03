@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
@@ -55,7 +56,6 @@ import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.NewUI
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
@@ -73,7 +73,7 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 class StripeActionGroup: ActionGroup(), DumbAware {
   private val myFactory: Map<ActivateToolWindowAction, AnAction> = ConcurrentFactoryMap.create(::createAction) {
-    CollectionFactory.createConcurrentWeakKeyWeakValueMap()
+    ConcurrentCollectionFactory.createConcurrentWeakKeyWeakValueMap()
   }
   private val myMore = MyMoreAction()
 

@@ -2,6 +2,7 @@
 package com.intellij.mock;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDirectory;
@@ -9,7 +10,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -43,7 +43,7 @@ public final class MockFileManager implements FileManager {
   public MockFileManager(PsiManagerEx manager) {
     myManager = manager;
     myViewProviders = ConcurrentFactoryMap.create(key->new SingleRootFileViewProvider(myManager, key),
-                                                  () -> CollectionFactory.createConcurrentWeakKeyWeakValueMap());
+                                                  () -> ConcurrentCollectionFactory.createConcurrentWeakKeyWeakValueMap());
   }
 
   @Override
