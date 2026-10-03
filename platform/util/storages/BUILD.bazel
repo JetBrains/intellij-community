@@ -1,5 +1,12 @@
+load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+java_binary(
+    name = "database_dump",
+    main_class = "com.intellij.platform.util.io.storages.database.impl.DatabaseDump",
+    runtime_deps = [":storages"],
+)
 
 ### auto-generated section `dev intellij.platform.util.io.storages` start
 content_module_jar(module = ":storages")
