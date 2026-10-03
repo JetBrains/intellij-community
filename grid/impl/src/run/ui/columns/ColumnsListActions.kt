@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.pom.Navigatable
@@ -52,6 +53,9 @@ internal class ColumnsListActions(
     sink[DatabaseDataKeys.DATA_GRID_KEY] = grid
     // The popup shows a list and not text. An action that needs an editor must stay disabled.
     sink.setNull(CommonDataKeys.EDITOR)
+    sink.setNull(PlatformDataKeys.COPY_PROVIDER)
+    sink.setNull(PlatformDataKeys.PASTE_PROVIDER)
+    sink.setNull(PlatformDataKeys.DELETE_ELEMENT_PROVIDER)
     sink.lazy(CommonDataKeys.PSI_FILE) {
       file?.let { PsiManager.getInstance(grid.project).findFile(it) }
     }
