@@ -41,6 +41,7 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.PyEnumAttributeStub;
 import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyCallableTypeImpl;
@@ -307,7 +308,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
                                           : new PyEnumAttributeStubType().createStub(targetExpression);
       if (attributeStub != null) {
         PyLiteralKind literalKind = attributeStub.getLiteralKind();
-        PyType type = literalKind != null ? PyUtil.convertToType(literalKind, PyBuiltinCache.getInstance(targetExpression)) : null;
+        PyType type = literalKind != null ? PyUtil.convertToType(literalKind, PyBuiltinCache.getInstance(targetExpression)) : PyAnyType.getUnknown();
         return new EnumAttributeInfo(type, attributeStub.isMember() ? EnumAttributeKind.MEMBER : EnumAttributeKind.NONMEMBER);
       }
 
@@ -326,7 +327,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       QualifiedName assignedQName = targetExpression.getAssignedQName();
       if (assignedQName != null) {
         PsiElement resolved = ContainerUtil.getFirstItem(PyResolveUtil.resolveQualifiedNameInScope(assignedQName, enumClass, context));
-        PyType type = resolved instanceof PyTypedElement ? context.getType((PyTypedElement)resolved) : null;
+        PyType type = resolved instanceof PyTypedElement ? context.getType((PyTypedElement)resolved) : PyAnyType.getUnknown();
         return getEnumAttributeInfo(enumClass, type, context);
       }
 
@@ -334,7 +335,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
                                   ? stub.getAssignedLiteralKind()
                                   : PyLiteralKind.fromExpression(targetExpression.findAssignedValue());
       if (literalKind == null) {
-        return new EnumAttributeInfo(null, EnumAttributeKind.MEMBER);
+        return new EnumAttributeInfo(PyAnyType.getUnknown(), EnumAttributeKind.MEMBER);
       }
       PyType type = null;
       if (PyLiteralType.inferLiteralTypeForLiteralExpressions()) {
@@ -407,7 +408,8 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
         return context.getReturnType(generateNextValueMethod);
       }
     }
-    return PyBuiltinCache.getInstance(enumClass).getIntType();
+    final PyType intType = PyBuiltinCache.getInstance(enumClass).getIntType();
+    return intType != null ? intType : PyAnyType.getUnknown();
   }
 
   @ApiStatus.Internal

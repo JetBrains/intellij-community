@@ -5,6 +5,7 @@ import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Nested
@@ -203,6 +204,22 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
         class Color(Enum):
             RED = auto()
             BLUE = auto()
+        """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyStdlibTypeProvider::class])
+    fun `enum member value from a call in another file`() = test("""
+      from color import Color
+
+      expr = Color.RED.value
+      #               └ TYPE Unknown
+      """.trimIndent(),
+      "color.py" to """
+        from enum import Enum
+
+
+        class Color(Enum):
+            RED = make()
         """.trimIndent())
   }
 

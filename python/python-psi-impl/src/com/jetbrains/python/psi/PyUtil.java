@@ -75,6 +75,7 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -1227,24 +1228,14 @@ public final class PyUtil {
 
   @ApiStatus.Internal
   public static @Nullable PyType convertToType(@NotNull PyLiteralKind literalKind, @NotNull PyBuiltinCache builtinCache) {
-    switch (literalKind) {
-      case INT -> {
-        return builtinCache.getIntType();
-      }
-      case FLOAT -> {
-        return builtinCache.getFloatType();
-      }
-      case STRING -> {
-        return builtinCache.getStrType();
-      }
-      case BOOL -> {
-        return builtinCache.getBoolType();
-      }
-      case NONE -> {
-        return builtinCache.getNoneType();
-      }
-      default -> throw new IllegalArgumentException();
-    }
+    var result = switch (literalKind) {
+      case INT -> builtinCache.getIntType();
+      case FLOAT -> builtinCache.getFloatType();
+      case STRING -> builtinCache.getStrType();
+      case BOOL -> builtinCache.getBoolType();
+      case NONE -> builtinCache.getNoneType();
+    };
+    return result != null ? result : PyAnyType.getUnknown();
   }
 
   @ApiStatus.Internal
