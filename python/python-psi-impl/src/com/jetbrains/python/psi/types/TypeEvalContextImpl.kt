@@ -272,7 +272,7 @@ open class TypeEvalContextImpl internal constructor(
     val knownType = getKnownType(element)
     if (knownType != null) {
       PyCodeInsightCounters.inc(Counter.GET_TYPE_CACHE_HITS)
-      return if (knownType === PyNullType) null else knownType
+      return if (knownType === PyNullType) PyAnyType.unknown else knownType
     }
 
     return RecursionManager.doPreventingRecursion(element to this, false) {
@@ -316,7 +316,7 @@ open class TypeEvalContextImpl internal constructor(
 
     val knownReturnType = getKnownReturnType(callable)
     if (knownReturnType != null) {
-      return if (knownReturnType is PyNullType) null else knownReturnType
+      return if (knownReturnType is PyNullType) PyAnyType.unknown else knownReturnType
     }
     return RecursionManager.doPreventingRecursion(callable to this, false) {
       val type = callable.getReturnType(this, KeyImpl)
@@ -332,7 +332,7 @@ open class TypeEvalContextImpl internal constructor(
    */
   private fun <K : Any> publish(cache: MutableMap<K?, PyType?>, key: K, type: PyType?): PyType? {
     val stored = cache.putIfAbsent(key, type ?: PyNullType) ?: return type
-    return if (stored === PyNullType) null else stored
+    return if (stored === PyNullType) PyAnyType.unknown else stored
   }
 
   @get:ApiStatus.Experimental
