@@ -35,24 +35,33 @@ public final class CollectionFactory {
 
   /**
    * Concurrent weak key:K -> strong value:V map.
+   *
+   * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentWeakMap()} instead.
    */
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakMap() {
     return new ConcurrentWeakHashMap<>(ConcurrentRefHashMap.DEFAULT_CAPACITY, ConcurrentRefHashMap.DEFAULT_LOAD_FACTOR, ConcurrentRefHashMap.DEFAULT_CONCURRENCY_LEVEL, null, null);
   }
 
   /**
    * Concurrent weak key:K -> strong value:V map.
+   *
+   * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentWeakMap(HashingStrategy)} instead.
    */
   @Contract(value = "_, -> new", pure = true)
+  @Deprecated
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakMap(@NotNull HashingStrategy<? super K> strategy) {
     return new ConcurrentWeakHashMap<>(ConcurrentRefHashMap.DEFAULT_CAPACITY, ConcurrentRefHashMap.DEFAULT_LOAD_FACTOR, ConcurrentRefHashMap.DEFAULT_CONCURRENCY_LEVEL, strategy, null);
   }
 
   /**
    * Concurrent weak key:String -> strong value:V map with case-insensitive hashing strategy.
+   *
+   * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentWeakCaseInsensitiveMap()} instead.
    */
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static @NotNull <V> ConcurrentMap<@NotNull String, @NotNull V> createConcurrentWeakCaseInsensitiveMap() {
     return createConcurrentWeakMap(HashingStrategy.caseInsensitive());
   }
@@ -95,8 +104,11 @@ public final class CollectionFactory {
 
   /**
    * Concurrent weak key:K -> strong value:V map with identity hashing strategy.
+   *
+   * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentWeakIdentityMap()} instead.
    */
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakIdentityMap() {
     return createConcurrentWeakMap(HashingStrategy.identity());
   }
@@ -104,8 +116,12 @@ public final class CollectionFactory {
   /**
    * Concurrent weak key:K -> strong value:V map with identity hashing strategy.
    * When a key is garbage-collected, the {@code evictionListener} eventually receives its associated value.
+   *
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentWeakIdentityMap(CollectionFactory.EvictionListener)} instead.
    */
   @Contract(value = "_ -> new", pure = true)
+  @Deprecated
   @ApiStatus.Experimental
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakIdentityMap(@NotNull EvictionListener<K, V, ? super V> keyEvictionListener) {
     return new ConcurrentWeakHashMap<>(ConcurrentRefHashMap.DEFAULT_CAPACITY, ConcurrentRefHashMap.DEFAULT_LOAD_FACTOR,
@@ -173,7 +189,12 @@ public final class CollectionFactory {
     return new ConcurrentWeakKeyWeakValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(), HashingStrategy.identity());
   }
 
+  /**
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentWeakMap(int, float, HashingStrategy)} instead.
+   */
   @Contract(value = "_,_,_,_ -> new", pure = true)
+  @Deprecated
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakMap(int initialCapacity,
                                                                                               float loadFactor,
                                                                                               int concurrencyLevel,
@@ -447,8 +468,11 @@ public final class CollectionFactory {
 
   /**
    * Create {@link ConcurrentMap} with soft-referenced keys and hard-referenced values.
+   *
+   * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentSoftMap()} instead.
    */
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap() {
     return new ConcurrentSoftHashMap<>(ConcurrentRefHashMap.DEFAULT_CAPACITY, ConcurrentRefHashMap.DEFAULT_LOAD_FACTOR, ConcurrentRefHashMap.DEFAULT_CONCURRENCY_LEVEL, null, null);
   }
@@ -456,8 +480,12 @@ public final class CollectionFactory {
   /**
    * Create {@link ConcurrentMap} with soft-referenced keys and hard-referenced values.
    * When the key get garbage-collected, the {@code evictionListener} is (eventually) invoked, passing (this map, the evicted key hash code and the associated value) as arguments there.
+   *
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentSoftMap(CollectionFactory.EvictionListener)} instead.
    */
   @Contract(value = "_ -> new", pure = true)
+  @Deprecated
   @ApiStatus.Experimental
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap(@NotNull EvictionListener<K,V,? super V> keyEvictionListener) {
     return new ConcurrentSoftHashMap<>(ConcurrentRefHashMap.DEFAULT_CAPACITY, ConcurrentRefHashMap.DEFAULT_LOAD_FACTOR,
@@ -467,8 +495,13 @@ public final class CollectionFactory {
    * Create {@link ConcurrentMap} with soft-referenced keys and hard-referenced values.
    * Keys are hashed and compared using {@code hashingStrategy}.
    * When the key get garbage-collected, the {@code evictionListener} is (eventually) invoked, passing (this map, the evicted key hash code and the associated value) as arguments there.
+   *
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentSoftMap(HashingStrategy, CollectionFactory.EvictionListener)}
+   * instead.
    */
   @Contract(value = "_,_ -> new", pure = true)
+  @Deprecated
   @ApiStatus.Experimental
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap(@NotNull HashingStrategy<? super K> hashingStrategy,
                                                                                               @NotNull EvictionListener<K,V,? super V> keyEvictionListener) {
@@ -486,7 +519,12 @@ public final class CollectionFactory {
     void evicted(@NotNull Map<K,V> map, int keyHashCode, @Nullable T objectAssociatedWithEvicted);
   }
 
+  /**
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentSoftMap(int, float, HashingStrategy)} instead.
+   */
   @Contract(value = "_,_,_,_-> new", pure = true)
+  @Deprecated
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap(int initialCapacity,
                                                                                               float loadFactor,
                                                                                               int concurrencyLevel,
