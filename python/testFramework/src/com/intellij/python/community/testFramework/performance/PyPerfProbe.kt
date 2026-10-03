@@ -21,6 +21,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import com.intellij.tools.ide.metrics.collector.MetricsCollector
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
 import com.jetbrains.python.psi.PyFunction
@@ -38,7 +41,11 @@ import kotlin.math.roundToLong
  * Measures one scenario of the native Python code insight: wall time, [PyCodeInsightCounters], AST loads and,
  * for an action on the calling thread, the allocated bytes.
  *
- * Each attempt runs `setup` and then the measured `action`. The warm-up attempts are not in the result.
+ * [measure] runs the attempts as an IJ Perf [Benchmark]. The benchmark publishes the time of each attempt and the
+ * median work of [Result.metrics]. On TeamCity, the IJ Perf degradation detector watches the time. Each attempt runs
+ * `setup` and then the measured `action`. The warm-up attempts are not in the result.
+ * [work] runs an action once and returns its work. A test can assert on the counters of the calling thread,
+ * because they do not depend on the machine.
  * [cold] drops the PSI caches and both type context maps, so a `setup` that calls it gives a cold type state.
  * The PSI, the stubs and the control flow of the open file stay.
  *
@@ -94,6 +101,28 @@ class PyPerfProbe(private val project: Project, private val editor: Editor, priv
       get() = counters[nanos.indices.sortedBy { nanos[it] }[nanos.size / 2]]
 
     operator fun get(counter: Counter): Long = medianCounters[counter]
+
+    /** The values that [measure] publishes next to the time: the median counters, allocations and AST loads. */
+    fun metrics(): List<PerformanceMetrics.Metric> {
+      val values = LinkedHashMap<String, Long>()
+      for (counter in Counter.entries) values["counter.${counter.id}"] = this[counter]
+      values["alloc.callingThread.kb"] = median(allocatedBytes).toLong() / 1024
+      values["alloc.allThreads.kb"] = median(allThreadsAllocatedBytes).toLong() / 1024
+      values["astLoads.firstAttempt.project"] = firstAttemptAstLoads.projectFiles
+      values["astLoads.firstAttempt.library"] = firstAttemptAstLoads.libraryFiles
+      return values.map { (name, value) -> PerformanceMetrics.newCounter(name, value.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()) }
+    }
+  }
+
+  /** The work of one run of an action. */
+  class Work(
+    /** The counters of all threads. They also count the background work of the IDE in that time. */
+    val counters: PyCodeInsightCounters.Snapshot,
+    /** The counters of the calling thread. They do not depend on the machine. */
+    val callingThreadCounters: Map<Counter, Long>,
+    val astLoads: AstLoads,
+  ) {
+    operator fun get(counter: Counter): Long = callingThreadCounters.getValue(counter)
   }
 
   init {
@@ -128,7 +157,10 @@ class PyPerfProbe(private val project: Project, private val editor: Editor, priv
     }
   }
 
-  /** Measures [action] in [attempts] attempts after [warmups] warm-up attempts. [setup] runs before each attempt. */
+  /**
+   * Measures [action] in [attempts] attempts after [warmups] warm-up attempts. [setup] runs before each attempt.
+   * The [Benchmark] subtest [scenario] of the calling test method publishes the result.
+   */
   fun measure(
     scenario: String,
     warmups: Int = WARMUPS,
@@ -137,12 +169,33 @@ class PyPerfProbe(private val project: Project, private val editor: Editor, priv
     action: () -> Unit,
   ): Result {
     val series = Series()
-    for (i in 0 until warmups + attempts) {
-      ApplicationManagerEx.runInStressTest<RuntimeException>(true) {
-        runAttempt(i >= warmups, setup, action, series)
-      }
-    }
+    var attempt = 0
+    Benchmark.newBenchmark(scenario) { runAttempt(attempt++ >= warmups, action, series) }
+      .setup { setup() }
+      .warmupIterations(warmups)
+      .attempts(attempts)
+      .runAsStressTest()
+      .withMetricsCollector(object : MetricsCollector {
+        override fun collect(logsDirPath: Path): List<PerformanceMetrics.Metric> = series.result(scenario).metrics()
+      })
+      .startAsSubtest(scenario)
     return series.result(scenario)
+  }
+
+  /** Runs [setup] and then [action] once, and returns the work of [action]. */
+  fun work(setup: () -> Unit = { cold() }, action: () -> Unit): Work {
+    setup()
+    val attemptDisposable = Disposer.newDisposable(parentDisposable, "PyPerfProbe work")
+    try {
+      val astLoads = countAstLoads(attemptDisposable)
+      val before = PyCodeInsightCounters.snapshot()
+      var callingThread = emptyMap<Counter, Long>()
+      ApplicationManagerEx.runInStressTest<RuntimeException>(true) { callingThread = PyCodeInsightCounters.countOnCurrentThread(action) }
+      return Work(PyCodeInsightCounters.snapshot() - before, callingThread, astLoads())
+    }
+    finally {
+      Disposer.dispose(attemptDisposable)
+    }
   }
 
   private class Series {
@@ -153,12 +206,13 @@ class PyPerfProbe(private val project: Project, private val editor: Editor, priv
     var firstAstLoads: AstLoads? = null
     var firstCounters: PyCodeInsightCounters.Snapshot? = null
 
-    fun result(scenario: String): Result =
-      Result(scenario, nanos, counters, allocated, allThreadsAllocated, firstAstLoads!!, firstCounters!!)
+    fun result(scenario: String): Result {
+      check(nanos.isNotEmpty()) { "The benchmark of $scenario ran no attempt. A coverage build skips the benchmarks." }
+      return Result(scenario, nanos, counters, allocated, allThreadsAllocated, firstAstLoads!!, firstCounters!!)
+    }
   }
 
-  private fun runAttempt(timed: Boolean, setup: () -> Unit, action: () -> Unit, series: Series) {
-    setup()
+  private fun runAttempt(timed: Boolean, action: () -> Unit, series: Series) {
     val attemptDisposable = Disposer.newDisposable(parentDisposable, "PyPerfProbe attempt")
     val astLoads = countAstLoads(attemptDisposable)
     try {

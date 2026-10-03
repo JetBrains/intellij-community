@@ -17,6 +17,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters;
 import com.jetbrains.python.codeInsight.completion.PyClassInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PyFunctionInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PyParameterizedTypeInsertHandler;
@@ -85,6 +86,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
   }
 
   private @NotNull LookupElement setupItem(@NotNull LookupElementBuilder item) {
+    PyCodeInsightCounters.inc(PyCodeInsightCounters.Counter.COMPLETION_LOOKUP_ITEMS);
     final PsiElement element = item.getPsiElement();
     final boolean decoratedIntoValue = element instanceof PyFunction function && isDecoratedIntoValue(function);
     if (decoratedIntoValue) {

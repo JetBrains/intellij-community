@@ -19,6 +19,8 @@
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.venv"/>
+    <module name="intellij.tools.ide.metrics.benchmark"/>
+    <module name="intellij.tools.ide.metrics.collector"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

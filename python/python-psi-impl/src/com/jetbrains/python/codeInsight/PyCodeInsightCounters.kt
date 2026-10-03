@@ -8,8 +8,8 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.LongAdder
 
 /**
- * Counts the work of the native Python code insight: type evaluations, type contexts, type matches, overload checks
- * and control flow builds.
+ * Counts the work of the native Python code insight: type evaluations, type contexts, type matches, overload checks,
+ * control flow builds and completion lookup items.
  *
  * The counting is off by default. Then each hook costs one volatile read. A test turns the counting on with [enable],
  * runs an action, and compares two [snapshot] values. The hooks do not change a result.
@@ -31,6 +31,7 @@ object PyCodeInsightCounters {
     OVERLOAD_CANDIDATES_CHECKED("overload.candidatesChecked"),
     CFG_BUILDS("cfg.builds"),
     CFG_INSTRUCTIONS("cfg.instructions"),
+    COMPLETION_LOOKUP_ITEMS("completion.lookupItems"),
   }
 
   /** The counter values at one moment. */
@@ -100,11 +101,14 @@ object PyCodeInsightCounters {
       enablers++
       enabled = true
     }
-    Disposer.register(parentDisposable) {
-      synchronized(enablerLock) {
-        enablers--
-        enabled = enablers > 0
+    // An object, not a lambda: a lambda that captures nothing is one shared instance, and the Disposer keeps an instance once.
+    Disposer.register(parentDisposable, object : Disposable {
+      override fun dispose() {
+        synchronized(enablerLock) {
+          enablers--
+          enabled = enablers > 0
+        }
       }
-    }
+    })
   }
 }

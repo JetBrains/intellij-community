@@ -26,6 +26,7 @@ defect in a test. A work count does not flake like a time.
 | `MATCH_STEPS` | the steps of the type match | `PyTypeChecker.match` |
 | `OVERLOAD_CANDIDATES_CHECKED` | the overload candidates that the argument types check | `PyCallExpressionHelper.matchesByArgumentTypes` |
 | `CFG_BUILDS`, `CFG_INSTRUCTIONS` | the control flow builds and their instructions | `PyControlFlowBuilder.buildControlFlow` |
+| `COMPLETION_LOOKUP_ITEMS` | the lookup items of the Python completion | `CompletionVariantsProcessor.setupItem` |
 
 A cache hit and an evaluation do not add up to the calls. The rest are library delegations and the requests that the
 recursion guard stops.
@@ -53,23 +54,41 @@ assertTrue(delta[Counter.CFG_BUILDS] >= 1)
 The delta also contains the background work of the IDE in that time. Assert an exact count only for the calling thread.
 Otherwise assert a bound or a ratio.
 
-## Measure a scenario
+## Gate a scenario
 
-1. Implement `PyPerfProbe.Editor` over the test fixture. `FixtureEditor` in `PyNativeEngineCountersPerformanceTest` is
-   an example.
-2. Create the probe with a disposable. The probe turns the counting on, turns off the `RecursionManager` test checks and
-   sets the registry keys of `PyPerfProbe.PINNED_REGISTRY` to their IDE values.
-3. Call one of these:
+A gate is a normal test that fails on a performance regression. It runs on each Safe Push, so it must be fast and
+must not depend on the machine.
+
+1. In a `PyCodeInsightTestCase`, register the probe extension:
+   `@JvmField @RegisterExtension val perf = PyPerfProbeExtension { myFixture }`. It gives each test its own probe.
+   The probe turns the counting on, turns off the `RecursionManager` test checks and sets the registry keys of
+   `PyPerfProbe.PINNED_REGISTRY` to their IDE values.
+2. `perf.probe.work { action }` runs the action once after `cold()`. It returns the counters of the calling thread, the
+   counters of all threads and the AST loads.
+3. Check the growth of a counter with `assertGrowth(scenario, sizes, PyGrowth.LINEAR) { size -> ... }`, or a fact
+   with `assertExpectation`. Use small sizes (n, 2n, 4n). The growth is the exponent between the two largest sizes.
+4. When an open issue makes the expectation fail, give `PyKnownDefect(issue, growth)`. The gate then fails when the
+   work is worse than the defect, and also when the expectation holds. So the fix of the issue updates the gate.
+
+`PyCodeInsightScalingPerformanceTest` and `PyEditorFeaturesPerformanceTest` are examples.
+
+## Benchmark a scenario
+
+A benchmark is a `@PerformanceUnitTest` method. The usual test runs skip it, and the performance test builds of
+TeamCity run it. `tests.cmd` runs it when you give its fully qualified name.
+
+1. Call one of these:
    - `measure(scenario) { action }` runs 3 warm-up attempts and 10 attempts. Before each attempt, `setup` runs.
      The default `setup` is `cold()`.
    - `measureEditorFile(name, inspections)` measures a cold highlighting, a highlighting after a one-character edit,
      and one `inferAll` pass.
    - `measureScaled(scenario) { action }` uses fewer attempts when the first run takes more than 10 seconds.
-4. Call `report(result)`. It prints `PYPERF` lines: the time quantiles, the allocations, the AST loads of the first
+2. `measure` runs the attempts as the IJ Perf `Benchmark` subtest `scenario` of the calling test method. Call it from
+   the test method, not from another thread. The benchmark publishes the time and the median counters, allocations and
+   AST loads (`counter.<id>`, `alloc.*.kb`, `astLoads.firstAttempt.*`). The IJ Perf degradation detector watches the
+   time of each benchmark on master.
+3. Call `report(result)`. It prints `PYPERF` lines: the time quantiles, the allocations, the AST loads of the first
    attempt, and each counter with its median, its range and the value of the first attempt.
-
-Mark the test class with `@PerformanceUnitTest`. The usual test runs skip it. `tests.cmd` runs it when you give its
-fully qualified name.
 
 The system property `pyperf.out` names a file that also gets the `PYPERF` lines. The system property
 `pyperf.astload.stacks=true` prints the stack of the first three AST loads of each file.

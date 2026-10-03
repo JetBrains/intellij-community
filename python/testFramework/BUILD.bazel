@@ -43,6 +43,8 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/remote-core",
         "//platform/testFramework",
+        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+        "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
         "//python/python-sdk/backend",
         "//platform/execution",
         "//platform/consoleView",
