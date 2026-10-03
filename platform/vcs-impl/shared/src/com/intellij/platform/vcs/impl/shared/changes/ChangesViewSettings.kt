@@ -11,12 +11,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.XCollection
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface ChangesViewSettings {
   var groupingKeys: Collection<String>
   var showIgnored: Boolean
+  val showIgnoredState: StateFlow<Boolean>
 
   companion object {
     @JvmStatic
@@ -26,6 +30,14 @@ interface ChangesViewSettings {
 
 @State(name = "ChangesViewManager", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 internal class ChangesViewSettingsImpl : SimplePersistentStateComponent<ChangesViewSettingsImpl.State>(State()), ChangesViewSettings {
+  /**
+   * Guards the write of [State.showIgnored] together with the write of [mutableShowIgnoredState],
+   * so the flow always holds the value of the current state.
+   */
+  private val showIgnoredLock = Any()
+  private val mutableShowIgnoredState = MutableStateFlow(state.showIgnored)
+  override val showIgnoredState: StateFlow<Boolean> = mutableShowIgnoredState.asStateFlow()
+
   override var groupingKeys: Collection<String>
     get() = state.groupingKeys
     set(value) {
@@ -35,8 +47,22 @@ internal class ChangesViewSettingsImpl : SimplePersistentStateComponent<ChangesV
   override var showIgnored: Boolean
     get() = state.showIgnored
     set(value) {
-      state.showIgnored = value
+      synchronized(showIgnoredLock) {
+        state.showIgnored = value
+        mutableShowIgnoredState.value = value
+      }
     }
+
+  override fun loadState(state: State) {
+    synchronized(showIgnoredLock) {
+      super.loadState(state)
+      mutableShowIgnoredState.value = state.showIgnored
+    }
+  }
+
+  override fun noStateLoaded() {
+    loadState(State())
+  }
 
   internal class State() : BaseState() {
     @get:XCollection

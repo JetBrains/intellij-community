@@ -17,6 +17,7 @@ import com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi
 import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,7 +25,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -49,7 +52,7 @@ class ChangeListsViewModel(
       combine(
         api.getChangeLists(projectId),
         api.getUnversionedFiles(projectId),
-        api.getIgnoredFiles(projectId)
+        observeIgnoredFiles(ChangesViewSettings.getInstance(project), api, projectId)
       ) { changeListDtos, unversionedDtos, ignoredDtos ->
         val changeLists = changeListDtos.map { it.getChangeList(project) }
         ChangeLists(
@@ -102,3 +105,9 @@ class ChangeListsViewModel(
     }
   }
 }
+
+@OptIn(ExperimentalCoroutinesApi::class)
+internal fun observeIgnoredFiles(settings: ChangesViewSettings, api: ChangeListsApi, projectId: ProjectId): Flow<List<FilePathDto>> =
+  settings.showIgnoredState.flatMapLatest { showIgnored ->
+    if (showIgnored) api.getIgnoredFiles(projectId) else flowOf(emptyList())
+  }
