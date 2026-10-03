@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.spi
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
@@ -12,7 +13,6 @@ import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import com.intellij.platform.ijent.IjentChildProcessAdapter
 import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentScope
-import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.platform.ijent.asyncSafeInParent
 import com.intellij.platform.ijent.coroutineNameAppended
@@ -55,7 +55,7 @@ import kotlin.time.Duration.Companion.seconds
  *
  * [ijentProcessScope] should be used by the [com.intellij.platform.ijent.IjentApi] implementation for launching internal coroutines.
  * No matter if IJent exits expectedly or not, an attempt to do anything with [ijentProcessScope] after the IJent has exited
- * throws [IjentUnavailableException].
+ * throws [EelUnavailableException].
  */
 class IjentSessionProcessMediator private constructor(
   override val ijentProcessScope: IjentScope,
@@ -184,7 +184,7 @@ class IjentSessionProcessMediator private constructor(
      *
      * [ijentLabel] is used only for logging.
      *
-     * Beware that [parentScope] receives [IjentUnavailableException.CommunicationFailure] if IJent _suddenly_ exits, f.i., after SIGKILL.
+     * Beware that [parentScope] receives [EelUnavailableException.CommunicationFailure] if IJent _suddenly_ exits, f.i., after SIGKILL.
      * Nothing happens with [parentScope] if IJent exits expectedly, f.i., after [com.intellij.platform.ijent.IjentApi.close].
      */
     @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
@@ -253,7 +253,7 @@ class IjentSessionProcessMediator private constructor(
         val exitReason = ijentProcessScope.exitReason
           .takeIf { it.isCompleted }
           ?.getCompleted()
-        if (exitReason is IjentUnavailableException.ClosedByApplication) {
+        if (exitReason is EelUnavailableException.ClosedByApplication) {
           ijentProcessScope.destroy(exitReason, isRootCause = true)
         }
         finalizerScope.cancel(if (err != null) CancellationException(err.message, err) else null)

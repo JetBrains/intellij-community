@@ -3,9 +3,10 @@
 
 package com.intellij.platform.ijent
 
+import com.intellij.platform.eel.EelUnavailableException
+import com.intellij.platform.eel.EelUnavailableException.ClosedByApplication
+import com.intellij.platform.eel.EelUnavailableException.CommunicationFailure
 import com.intellij.platform.eel.SafeDeferred
-import com.intellij.platform.ijent.IjentUnavailableException.ClosedByApplication
-import com.intellij.platform.ijent.IjentUnavailableException.CommunicationFailure
 import com.intellij.platform.ijent.spi.IjentSessionMediatorUtils
 import com.intellij.testFramework.common.timeoutRunBlocking
 import io.kotest.assertions.throwables.shouldThrow
@@ -34,9 +35,9 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Tests for the "resolvable canonical exit reason" invariant (see IJPL-245668).
  *
- * The goal is not that every coroutine *throws* [IjentUnavailableException] (cancellation is first-cause-wins and cannot
+ * The goal is not that every coroutine *throws* [EelUnavailableException] (cancellation is first-cause-wins and cannot
  * be rewritten), but that any coroutine which must surface the failure of a dead session can *resolve* the single
- * canonical [IjentUnavailableException] and rethrow it.
+ * canonical [EelUnavailableException] and rethrow it.
  */
 @OptIn(DelicateCoroutinesApi::class)
 class IjentProcessUtilTest {
@@ -55,7 +56,7 @@ class IjentProcessUtilTest {
       }
 
       thrown.cause shouldBe null
-      ijentScope.resolveExitReason(1.seconds).shouldBeInstanceOf<IjentUnavailableException.ClosedByApplication>()
+      ijentScope.resolveExitReason(1.seconds).shouldBeInstanceOf<EelUnavailableException.ClosedByApplication>()
     }
   }
 
@@ -76,7 +77,7 @@ class IjentProcessUtilTest {
 
       val thrown = shouldThrow<SafeDeferred.FailedDeferred> { safeDeferred.await() }
         .cause
-        .shouldBeInstanceOf<IjentUnavailableException>()
+        .shouldBeInstanceOf<EelUnavailableException>()
       thrown shouldBe canonical
     }
   }

@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.ijent.IjentLogger
-import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
@@ -76,8 +76,8 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
 
     val exceptionHandler = object : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
       override fun handleException(context: CoroutineContext, exception: Throwable) {
-        // IjentUnavailableException is silently ignored - it's already logged during its creation.
-        if (exception !is IjentUnavailableException) {
+        // EelUnavailableException is silently ignored - it's already logged during its creation.
+        if (exception !is EelUnavailableException) {
           IjentLogger.OTHER_LOG.error("Uncaught exception in IJent coroutine $context", exception)
         }
       }

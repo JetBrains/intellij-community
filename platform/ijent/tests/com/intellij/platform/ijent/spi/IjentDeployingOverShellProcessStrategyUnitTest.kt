@@ -3,6 +3,7 @@ package com.intellij.platform.ijent.spi
 
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
@@ -19,7 +20,6 @@ import com.intellij.platform.ijent.IjentExecFileProvider
 import com.intellij.platform.ijent.IjentMissingBinary
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentSession
-import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.platform.ijent.tcp.MutualTlsCertificates
 import com.intellij.platform.ijent.tcp.TcpDeployInfo
@@ -92,7 +92,7 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
           val cleanupFailure = IOException("test bootstrap cleanup failure")
           val strategy = TestShellCommandStrategy(this, "malformed", destroyFailure = cleanupFailure)
 
-          val error = shouldThrow<IjentUnavailableException.CommunicationFailure> {
+          val error = shouldThrow<EelUnavailableException.CommunicationFailure> {
             strategy.createIjentSession(failingProvider("Connection must not be attempted when shell detection fails"))
           }
           error.message should include("Malformed target shell marker")
@@ -116,7 +116,7 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
     val strategy = TestShellStrategy(parentScope, shellWriteFailure = expectedFailure)
 
     try {
-      val error = shouldThrow<IjentUnavailableException.CommunicationFailure> {
+      val error = shouldThrow<EelUnavailableException.CommunicationFailure> {
         strategy.createIjentSession(failingProvider("Connection must not be attempted when shell initialization fails"))
       }
       error.cause.shouldBeInstanceOf<EelSendChannelException>().cause shouldBe expectedFailure
@@ -135,7 +135,7 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
     val expectedFailure = IOException("test path mapping failure")
     val strategy = TestShellStrategy(this, pathMapper = { throw expectedFailure })
 
-    val error = shouldThrow<IjentUnavailableException.CommunicationFailure> {
+    val error = shouldThrow<EelUnavailableException.CommunicationFailure> {
       strategy.createIjentSession(failingProvider("Connection must not be attempted when path mapping fails"))
     }
     error.cause shouldBe expectedFailure
@@ -180,7 +180,7 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
       destroyFailure = cleanupFailure,
     )
 
-    val error = shouldThrow<IjentUnavailableException.CommunicationFailure> {
+    val error = shouldThrow<EelUnavailableException.CommunicationFailure> {
       strategy.createIjentSession(failingProvider("Connection must not be attempted when path mapping fails"))
     }
     error.cause shouldBe expectedFailure
@@ -265,7 +265,7 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
       completion.await().shouldBeInstanceOf<Throwable>()
       session.sessionCoroutineScope.s.coroutineContext[IjentScope.Key]!!
         .resolveExitReason(1.seconds)
-        .shouldBeInstanceOf<IjentUnavailableException.ClosedByApplication>()
+        .shouldBeInstanceOf<EelUnavailableException.ClosedByApplication>()
       session.sessionCoroutineScope.s.isActive shouldBe false
       parentScope.isActive shouldBe true
     }
@@ -293,7 +293,7 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
     try {
       strategy.shellProcess.exitUnexpectedly()
 
-      parentFailure.await().shouldBeInstanceOf<IjentUnavailableException.CommunicationFailure>()
+      parentFailure.await().shouldBeInstanceOf<EelUnavailableException.CommunicationFailure>()
     }
     finally {
       parentScope.cancel()
@@ -544,7 +544,7 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
 
     @Test
     fun `no chmod and no busybox`(): Unit = timeoutRunBlocking(10.seconds) {
-      val errorAssertion = shouldThrow<IjentUnavailableException.CommunicationFailure> {
+      val errorAssertion = shouldThrow<EelUnavailableException.CommunicationFailure> {
         createDeployingContext { commands ->
           "busybox" should beIn(commands)
           "chmod" should beIn(commands)

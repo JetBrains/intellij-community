@@ -450,7 +450,15 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 - com.intellij.platform.eel.EelTunnelsApi
 *Fc:com.intellij.platform.eel.EelUnavailableException
 - java.io.IOException
+- *sf:Companion:com.intellij.platform.eel.EelUnavailableException$Companion
 - getMessage():java.lang.String
+*c:com.intellij.platform.eel.EelUnavailableException$ClosedByApplication
+- com.intellij.platform.eel.EelUnavailableException
+*c:com.intellij.platform.eel.EelUnavailableException$CommunicationFailure
+- com.intellij.platform.eel.EelUnavailableException
+- f:getDiagnosed():Z
+- f:setDiagnosed(Z):V
+*f:com.intellij.platform.eel.EelUnavailableException$Companion
 *:com.intellij.platform.eel.EelUserInfo
 - a:getHome():com.intellij.platform.eel.path.EelPath
 *:com.intellij.platform.eel.EelUserPosixInfo

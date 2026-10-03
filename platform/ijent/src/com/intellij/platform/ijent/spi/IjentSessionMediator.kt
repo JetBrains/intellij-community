@@ -2,9 +2,9 @@
 package com.intellij.platform.ijent.spi
 
 import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.ijent.IjentScope
-import com.intellij.platform.ijent.IjentUnavailableException
 import kotlinx.coroutines.CompletableDeferred
 
 /**
@@ -16,7 +16,7 @@ import kotlinx.coroutines.CompletableDeferred
  *
  * [ijentProcessScope] should be used by the [com.intellij.platform.ijent.IjentApi] implementation for launching internal coroutines.
  * No matter if IJent exits expectedly or not, an attempt to do anything with [ijentProcessScope] after the IJent has exited
- * throws [IjentUnavailableException].
+ * throws [EelUnavailableException].
  */
 sealed interface IjentSessionMediator {
   val ijentProcessScope: IjentScope

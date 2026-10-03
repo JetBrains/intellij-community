@@ -2,6 +2,8 @@
 package com.intellij.platform.ijent.spi
 
 import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelUnavailableException
+import com.intellij.platform.eel.EelUnavailableException.CommunicationFailure
 import com.intellij.platform.eel.ReadResult.EOF
 import com.intellij.platform.eel.ReadResult.NOT_EOF
 import com.intellij.platform.eel.SafeDeferred
@@ -12,8 +14,6 @@ import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentSession
-import com.intellij.platform.ijent.IjentUnavailableException
-import com.intellij.platform.ijent.IjentUnavailableException.CommunicationFailure
 import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.platform.ijent.asyncSafe
 import com.intellij.platform.ijent.getIjentGrpcArgv
@@ -355,7 +355,7 @@ private class ShellProcessWrapper(
    * @property processFailure the canonical failure of the process. It exists only if the process failed by itself.
    * @property cleanupFailure a failure of the termination itself. It never describes why the deployment failed.
    */
-  class CleanupResult(val processFailure: IjentUnavailableException?, val cleanupFailure: Exception?)
+  class CleanupResult(val processFailure: EelUnavailableException?, val cleanupFailure: Exception?)
 
   /** Terminates a process that is still owned by the deployer and returns the failures that it observed. */
   @OptIn(InternalCoroutinesApi::class)
@@ -378,7 +378,7 @@ private class ShellProcessWrapper(
         catch (e: Exception) {
           cleanupFailure = e
 
-          val error = IjentUnavailableException.ClosedByApplication(
+          val error = EelUnavailableException.ClosedByApplication(
             "Failed to destroy the shell process during deployment cleanup",
             e,
           )
@@ -391,17 +391,17 @@ private class ShellProcessWrapper(
     if (!processCompleted && cleanupFailure == null) {
       val timeoutFailure = CommunicationFailure("Timed out while terminating the deployment shell process", null)
       cleanupFailure = timeoutFailure
-      terminateProcessScope(IjentUnavailableException.ClosedByApplication(timeoutFailure.message, timeoutFailure))
+      terminateProcessScope(EelUnavailableException.ClosedByApplication(timeoutFailure.message, timeoutFailure))
     }
     val processFailure =
       if (processCompleted && !processTerminationWasRequested) {
-        IjentUnavailableException.unwrapFromCancellationExceptions(job.getCancellationException())
+        EelUnavailableException.unwrapFromCancellationExceptions(job.getCancellationException())
       }
       else null
     CleanupResult(processFailure, cleanupFailure)
   }
 
-  private fun terminateProcessScope(error: IjentUnavailableException) {
+  private fun terminateProcessScope(error: EelUnavailableException) {
     mediator.ijentProcessScope.destroy(error, isRootCause = true)
   }
 
@@ -410,7 +410,7 @@ private class ShellProcessWrapper(
   fun close() {
     if (cleanupStarted.compareAndSet(false, true)) {
       mediator.ijentProcessScope.destroy(
-        IjentUnavailableException.ClosedByApplication("Deployment closed before process handoff", null),
+        EelUnavailableException.ClosedByApplication("Deployment closed before process handoff", null),
         isRootCause = true,
       )
     }
@@ -583,7 +583,7 @@ private suspend fun <T : Any> ShellSession.execCommand(block: suspend ShellSessi
   }
   catch (initialErrorFromStack: Exception) {
     val cleanup = io.process.destroyForciblyAndGetError()
-    val errorFromStack = IjentUnavailableException.unwrapFromCancellationExceptions(initialErrorFromStack)
+    val errorFromStack = EelUnavailableException.unwrapFromCancellationExceptions(initialErrorFromStack)
 
     // A process failure may be hidden behind CancellationException. Prefer the canonical failure from the process scope in that case.
     // Other errors may be programmer bugs and must retain their original type so that they reach the error reporter.
@@ -597,7 +597,7 @@ private suspend fun <T : Any> ShellSession.execCommand(block: suspend ShellSessi
       }
     }
 
-    throw if (mainError is IOException && mainError !is IjentUnavailableException) {
+    throw if (mainError is IOException && mainError !is EelUnavailableException) {
       CommunicationFailure("Deployment shell command failed", mainError)
     }
     else {

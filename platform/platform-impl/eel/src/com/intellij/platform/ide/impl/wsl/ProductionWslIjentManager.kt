@@ -6,11 +6,11 @@ import com.intellij.execution.wsl.WslIjentAvailabilityService
 import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.IjentSessionState
-import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.platform.ijent.currentCoroutineDispatcher
 import com.intellij.platform.ijent.spi.IjentThreadPool
@@ -105,7 +105,7 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
             }
           }
           catch (err: Throwable) {
-            val cause = IjentUnavailableException.unwrapFromCancellationExceptions(err) ?: err
+            val cause = EelUnavailableException.unwrapFromCancellationExceptions(err) ?: err
             slot.mutableSessionState.value = if (!currentCoroutineContext().isActive) {
               IjentSessionState.NotDeployed
             }
@@ -178,7 +178,7 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
         if (it == null) deferredToCancel.getCompleted().close()
       }
       val message = "Explicitly unregistered and closed during initialization: $label"
-      deferredToCancel.cancel(message, IjentUnavailableException.ClosedByApplication(message, null))
+      deferredToCancel.cancel(message, EelUnavailableException.ClosedByApplication(message, null))
     }
   }
 }

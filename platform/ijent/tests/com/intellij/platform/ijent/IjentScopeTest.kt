@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
+import com.intellij.platform.eel.EelUnavailableException.ClosedByApplication
+import com.intellij.platform.eel.EelUnavailableException.CommunicationFailure
 import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.testFramework.bodyLimitedCoroutineScope
 import com.intellij.platform.eel.testFramework.executeAndCollectLoggedErrors
 import com.intellij.platform.eel.testFramework.executeAndReturnLoggedError
-import com.intellij.platform.ijent.IjentUnavailableException.ClosedByApplication
-import com.intellij.platform.ijent.IjentUnavailableException.CommunicationFailure
 import com.intellij.platform.ijent.spi.IjentThreadPool
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.DebugAttachDetectorArgs

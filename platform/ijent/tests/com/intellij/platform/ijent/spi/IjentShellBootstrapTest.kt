@@ -2,9 +2,9 @@
 package com.intellij.platform.ijent.spi
 
 import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.ijent.IjentExecFileProvider
 import com.intellij.platform.ijent.IjentScope
-import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +43,7 @@ class IjentShellBootstrapTest {
   @Test
   fun `malformed tagged marker is rejected`() {
     val marker = "IJENT_SHELL_PROBE_test"
-    assertThrows(IjentUnavailableException.CommunicationFailure::class.java) {
+    assertThrows(EelUnavailableException.CommunicationFailure::class.java) {
       parseShellMarker("$marker malformed", marker)
     }
   }

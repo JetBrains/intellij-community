@@ -8,6 +8,7 @@
 
 package com.intellij.platform.ijent
 
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.toSafeDeferred
 import com.intellij.platform.ijent.spi.IjentThreadPool
@@ -69,8 +70,8 @@ class ParentOfIjentScopes(val s: CoroutineScope) {
       override fun toString(): String = "IjentDummyExceptionHandler"
     }
 
-    // This supervisor scope exists only to prevent automatic propagation of IjentUnavailableException to the parent scope.
-    // Instead, there's a logic below that decides if a specific IjentUnavailableException should be propagated to the parent scope.
+    // This supervisor scope exists only to prevent automatic propagation of EelUnavailableException to the parent scope.
+    // Instead, there's a logic below that decides if a specific EelUnavailableException should be propagated to the parent scope.
     val sessionBoundaryScope = s.childScope(ijentLabel, IjentThreadPool.coroutineContext + dummyExceptionHandler, supervisor = true)
 
     val ijentScope = IjentScope(
@@ -91,9 +92,9 @@ class ParentOfIjentScopes(val s: CoroutineScope) {
             IjentLogger.LIFETIME_LOG.error(
               IllegalStateException("Cancelling IjentScope is prohibited, use IjentScope.destroy() instead", error))
           }
-          // Callers of a dead IJent must get IjentUnavailableException also after a cancel.
+          // Callers of a dead IJent must get EelUnavailableException also after a cancel.
           // This value loses to any exit reason that `destroy` set before.
-          ijentScope.exitReason.complete(IjentUnavailableException.ClosedByApplication("IJent scope $ijentLabel was cancelled", error))
+          ijentScope.exitReason.complete(EelUnavailableException.ClosedByApplication("IJent scope $ijentLabel was cancelled", error))
           error
         }
       }
@@ -126,16 +127,14 @@ class ParentOfIjentScopes(val s: CoroutineScope) {
 
         val canonicalErr =
           if (ijentScope.exitReason.isCompleted) ijentScope.exitReason.await()
-          else err.causeSequence().find { it is IjentUnavailableException }
+          else err.causeSequence().find { it is EelUnavailableException }
                ?: err.causeSequence().find { it !is CancellationException }
                ?: err
 
         val propagateToParentScope = when (canonicalErr) {
           is CancellationException -> false
-          is IjentUnavailableException -> when (canonicalErr) {
-            is IjentUnavailableException.ClosedByApplication -> false
-            is IjentUnavailableException.CommunicationFailure -> !canonicalErr.diagnosed
-          }
+          is EelUnavailableException.ClosedByApplication -> false
+          is EelUnavailableException.CommunicationFailure -> !canonicalErr.diagnosed
           else -> !closedByApplication
         }
 
@@ -201,9 +200,9 @@ class IjentScope internal constructor(
    * It is filled authoritatively by a component that actually knows the truth via [completeExitReason].
    * Boundary code that catches a low-level failure of a dead session
    * may resolve this reason via [resolveExitReason] and rethrow it, so that callers always observe
-   * [IjentUnavailableException] instead of a raw low-level exception.
+   * [EelUnavailableException] instead of a raw low-level exception.
    */
-  internal val exitReason: CompletableDeferred<IjentUnavailableException> = CompletableDeferred()
+  internal val exitReason: CompletableDeferred<EelUnavailableException> = CompletableDeferred()
 
   /**
    * Awaits the canonical [exitReason] for at most [timeout].
@@ -224,7 +223,7 @@ class IjentScope internal constructor(
   suspend fun resolveExitReason(
     timeout: Duration = DEAD_SESSION_RESOLVE_TIMEOUT,
     excludedJob: Job? = null,
-  ): IjentUnavailableException? {
+  ): EelUnavailableException? {
     if (exitReason.isCompleted) {
       return exitReason.await()
     }
@@ -240,7 +239,7 @@ class IjentScope internal constructor(
    * [destroy] uses it, because a concurrent call of [destroy] can bring a root cause while the scope is still alive.
    */
   @OptIn(ExperimentalCoroutinesApi::class)
-  private suspend fun awaitExitReason(timeout: Duration, currentJob: Job): IjentUnavailableException? {
+  private suspend fun awaitExitReason(timeout: Duration, currentJob: Job): EelUnavailableException? {
     if (exitReason.isCompleted) {
       return exitReason.await()
     }
@@ -304,11 +303,11 @@ class IjentScope internal constructor(
 
   /**
    * Scopes of IJent process may not be canceled. They always fail with some error.
-   * In case when the whole machinery of some IJent process should be canceled, the scope must complete with [IjentUnavailableException].
+   * In case when the whole machinery of some IJent process should be canceled, the scope must complete with [EelUnavailableException].
    *
    * The reason:
    * * To avoid "Kotlin silent killers" (see IJPL-253541)
-   * * To throw [IjentUnavailableException] on any call of a destroyed Eel/IJent
+   * * To throw [EelUnavailableException] on any call of a destroyed Eel/IJent
    *
    * Set [isRootCause] to `true` when the exception clearly represents the root cause of the cancellation,
    * and set to `false` if happened something unexpected and unclear.
@@ -322,7 +321,7 @@ class IjentScope internal constructor(
    * So the report of the session still shows both errors.
    */
   @OptIn(ExperimentalCoroutinesApi::class)
-  fun destroy(err: IjentUnavailableException, isRootCause: Boolean) {
+  fun destroy(err: EelUnavailableException, isRootCause: Boolean) {
     s.launch(start = CoroutineStart.UNDISPATCHED) {
       val errorToThrow =
         if (isRootCause) {
@@ -368,7 +367,7 @@ class IjentScope internal constructor(
  * The default [excludedJob] is the job of the caller.
  * It is taken before the switch to [NonCancellable], because inside [NonCancellable] the caller's job is not visible.
  */
-suspend fun IjentScope.resolveExitReasonNonCancellable(excludedJob: Job? = null): IjentUnavailableException? {
+suspend fun IjentScope.resolveExitReasonNonCancellable(excludedJob: Job? = null): EelUnavailableException? {
   val callerJob = excludedJob ?: currentCoroutineContext().job
   return withContext(NonCancellable) {
     resolveExitReason(excludedJob = callerJob)

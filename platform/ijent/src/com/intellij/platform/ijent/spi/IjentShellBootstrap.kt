@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
+import com.intellij.platform.eel.EelUnavailableException.CommunicationFailure
 import com.intellij.platform.eel.channels.EelReceiveChannelException
-import com.intellij.platform.ijent.IjentUnavailableException.CommunicationFailure
 import com.intellij.platform.ijent.spi.IjentSessionMediatorUtils.readLineOrThrow
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.charset.StandardCharsets

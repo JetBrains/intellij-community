@@ -2,9 +2,9 @@
 package com.intellij.platform.ijent.spi
 
 import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.ijent.IjentExecFileProvider
 import com.intellij.platform.ijent.IjentSession
-import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.spi.IjentDeployingStrategy.Companion.deployEvents
 import com.intellij.platform.ijent.spi.IjentDeployingStrategy.DeployEvent
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy
@@ -75,7 +75,7 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
   /**
    * Validates if a process exit code indicates normal termination.
    *
-   * Called when [ProcessExitPolicy] is [CHECK_CODE] to determine if termination should raise [IjentUnavailableException].
+   * Called when [ProcessExitPolicy] is [CHECK_CODE] to determine if termination should raise [EelUnavailableException].
    * By default, only exit code 0 is considered normal.
    *
    * Common case in containerized environments: when stopping container, all processes receive SIGKILL (137).
