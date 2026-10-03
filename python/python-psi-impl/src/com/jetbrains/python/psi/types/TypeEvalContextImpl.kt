@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.types.engine.PyTypeEngine
 import com.jetbrains.python.psi.types.engine.PyTypeEngineProvider
 import com.jetbrains.python.pyi.PyiLanguageDialect
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -90,6 +91,25 @@ open class TypeEvalContextImpl internal constructor(
 
   init {
     PyCodeInsightCounters.inc(Counter.CONTEXTS_CONSTRUCTED)
+  }
+
+  /** The number of entries in each cache of this context. */
+  @TestOnly
+  fun cacheSizes(): Map<String, Int> = mapOf(
+    "types" to myEvaluated.size,
+    "returnTypes" to myEvaluatedReturn.size,
+    "contextTypes" to contextTypeCache.size,
+    "substitutions" to mySubstitutionsCache.size,
+    "variances" to myVarianceCache.size,
+  )
+
+  @TestOnly
+  fun clearCaches() {
+    myEvaluated.clear()
+    myEvaluatedReturn.clear()
+    contextTypeCache.clear()
+    mySubstitutionsCache.clear()
+    myVarianceCache.clear()
   }
 
   internal constructor(

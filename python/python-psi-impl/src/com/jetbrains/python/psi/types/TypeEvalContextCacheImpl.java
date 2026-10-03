@@ -10,8 +10,12 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -25,7 +29,8 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author Ilya.Kazakevich
  */
-final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
+@ApiStatus.Internal
+public final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
   private final @NotNull CachedValue<ConcurrentMap<TypeEvalConstraints, TypeEvalContext>> myCachedMapStorage;
   private final @NotNull CachedValue<ConcurrentMap<TypeEvalConstraints, TypeEvalContext>> myLibrariesCachedMapStorage;
   private final LowMemoryWatcher myLowMemoryWatcher;
@@ -90,5 +95,24 @@ final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
 
   public void dispose() {
     myLowMemoryWatcher.stop();
+  }
+
+  /** The cached contexts of user code and of library code. */
+  @TestOnly
+  public @NotNull Map<String, List<TypeEvalContext>> getCachedContexts() {
+    return Map.of("user", List.copyOf(myCachedMapStorage.getValue().values()),
+                  "library", List.copyOf(myLibrariesCachedMapStorage.getValue().values()));
+  }
+
+  /** Drops both context maps and the caches of each context in them. */
+  @TestOnly
+  public void clear() {
+    for (List<TypeEvalContext> contexts : getCachedContexts().values()) {
+      for (TypeEvalContext context : contexts) {
+        ((TypeEvalContextImpl)context).clearCaches();
+      }
+    }
+    myCachedMapStorage.getValue().clear();
+    myLibrariesCachedMapStorage.getValue().clear();
   }
 }
