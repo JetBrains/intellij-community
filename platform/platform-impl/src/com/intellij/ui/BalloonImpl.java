@@ -1504,8 +1504,16 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   }
 
   private static @NotNull RoundRectangle2D.Double getPointlessShape(BalloonImpl balloon, Rectangle bounds) {
-    return new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width - JBUIScale.scale(1), bounds.height - JBUIScale.scale(1),
-                                       balloon.getArc(), balloon.getArc());
+    // RoundRectangle2D takes the size of the corner ellipse, so the corner radius is doubled.
+    int arc = balloon.getArc() * 2;
+    return new RoundRectangle2D.Double(
+      bounds.x,
+      bounds.y,
+      bounds.width - JBUIScale.scale(1),
+      bounds.height - JBUIScale.scale(1),
+      arc,
+      arc
+    );
   }
 
   static final AbstractPosition BELOW = new Below();
