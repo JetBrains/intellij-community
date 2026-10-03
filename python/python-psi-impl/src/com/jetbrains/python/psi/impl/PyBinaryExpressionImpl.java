@@ -67,10 +67,10 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     if (isOperator(PyNames.AND) || isOperator(PyNames.OR)) {
       final PyExpression left = getLeftExpression();
-      final PyType leftType = left != null ? context.getType(left) : null;
+      final PyType leftType = left != null ? context.getType(left) : PyAnyType.getUnknown();
       final PyExpression right = getRightExpression();
-      final PyType rightType = right != null ? context.getType(right) : null;
-      if (leftType == null && rightType == null) {
+      final PyType rightType = right != null ? context.getType(right) : PyAnyType.getUnknown();
+      if (left == null && right == null) {
         return PyAnyType.getUnknown();
       }
       // `a or b` evaluates to `a` when `a` is truthy and to `b` otherwise.

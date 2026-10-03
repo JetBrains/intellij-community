@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyConditionalExpression;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -21,7 +22,7 @@ public class PyConditionalExpressionImpl extends PyElementImpl implements PyCond
     final PyExpression truePart = getTruePart();
     final PyExpression falsePart = getFalsePart();
     if (truePart == null || falsePart == null) {
-      return null;
+      return PyAnyType.getUnknown();
     }
     return PyUnionType.unionOrUnknown(context.getType(truePart), context.getType(falsePart));
   }

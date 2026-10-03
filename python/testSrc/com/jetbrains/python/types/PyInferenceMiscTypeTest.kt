@@ -7,6 +7,10 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.impl.PyBinaryExpressionImpl
+import com.jetbrains.python.psi.impl.PyConditionalExpressionImpl
+import com.jetbrains.python.psi.impl.PyKeywordArgumentImpl
+import com.jetbrains.python.psi.impl.PyReprExpressionImpl
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -3050,4 +3054,44 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     def a(x: list[int]) -> list[str]:
         return [x] # WARNING Expected type 'list[str]', got 'list[list[int]]' instead
     """.trimIndent())
+
+  @Nested
+  inner class IncompleteCode {
+    @Test
+    @TestFor(classes = [PyKeywordArgumentImpl::class])
+    fun `keyword argument without a value`() = test("""
+      def f(x: int, y: int = 0) -> None: ...
+
+      f(1, y=)
+      #    │ └ ERROR Expression expected
+      #    └ TYPE Unknown
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyConditionalExpressionImpl::class])
+    fun `conditional expression without an else part`() = test("""
+      def f(a: int):
+          expr = a if a
+      #            │   └ ERROR 'else' expected
+      #            └ TYPE Unknown
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyBinaryExpressionImpl::class])
+    fun `or without a right operand`() = test("""
+      def f(a: int):
+          expr = a or
+      #            │ └ ERROR Expression expected
+      #            └ TYPE int | Unknown
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyReprExpressionImpl::class])
+    fun `backtick repr expression`() = test("""
+      a = 1
+      expr = `a`
+      #      ^^^ ERROR Python version 3.15 does not support backquotes, use repr() instead
+      #      └ TYPE Unknown
+      """.trimIndent())
+  }
 }

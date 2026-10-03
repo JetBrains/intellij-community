@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
@@ -29,7 +30,7 @@ public class PyKeywordArgumentImpl extends PyElementImpl implements PyKeywordArg
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression e = getValueExpression();
-    return e != null ? context.getType(e) : null;
+    return e != null ? context.getType(e) : PyAnyType.getUnknown();
   }
 
   @Override
