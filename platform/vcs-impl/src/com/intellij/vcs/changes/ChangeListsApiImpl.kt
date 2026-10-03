@@ -104,7 +104,19 @@ internal class ChangeListsApiImpl : ChangeListsApi {
         }
       }, this@projectScopedCallbackFlow.asDisposable())
       send(onUpdate(changeListManager))
-    }.distinctUntilChanged().map { filePaths -> filePaths.map { FilePathDto.toDto(it) } }
+    }.distinctUntilChanged().map { filePaths -> filePaths.map { it.toDtoWithNoVirtualFile() } }
+
+  /**
+   * Same as [FilePathDto.toDto], but without the virtual file.
+   */
+  private fun FilePath.toDtoWithNoVirtualFile(): FilePathDto {
+    return FilePathDto(
+      virtualFileId = null,
+      path = path,
+      isDirectory = isDirectory,
+      localFilePath = this,
+    )
+  }
 
   private fun LocalChangeList.toDto(): ChangeListDto = ChangeListDto(
     name = name,

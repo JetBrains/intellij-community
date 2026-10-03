@@ -164,11 +164,14 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/editor-ui-ex:editor-ex",
         "//platform/lang-core",
+        "//platform/project/shared:project",
         "//platform/projectModel-api:projectModel",
         "//platform/util/diff",
         "//platform/vcs-api:vcs",
         "//platform/platform-api:ide",
         "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl/rpc",
+        "//platform/kernel/rpc",
         "//platform/lang-api:lang",
         "//jps/model-serialization",
         "//platform/lang-impl",
@@ -196,6 +199,8 @@ jvm_library(
         "//platform/vcs-impl/shared:vcs-impl-shared-tests_test_lib",
         "//libraries/junit4",
         "//libraries/junit6",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.impl.tests` end
