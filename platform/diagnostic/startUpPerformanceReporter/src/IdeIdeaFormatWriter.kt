@@ -210,10 +210,10 @@ private fun writeServiceStats(writer: JsonGenerator) {
         writer.writeNumberField("classLoadingBackgroundTime", TimeUnit.NANOSECONDS.toMillis(stat.backgroundTime))
         writer.writeNumberField("loaderCount", stat.loaders.size)
         writer.array("modules") {
-          for (loader in stat.loaders.filter { it.loadedClassCount > 0L }.sortedByDescending { it.loadedClassCount }) {
+          for (loader in stat.loaders.filter { it.classCount > 0L }.sortedByDescending { it.classCount }) {
             writer.obj {
               writer.writeStringField("name", loader.moduleId ?: stat.pluginId)
-              writer.writeNumberField("classCount", loader.loadedClassCount)
+              writer.writeNumberField("classCount", loader.classCount)
               writer.writeNumberField("classLoadingEdtTime", TimeUnit.NANOSECONDS.toMillis(loader.edtTime))
             }
           }
@@ -223,18 +223,22 @@ private fun writeServiceStats(writer: JsonGenerator) {
   }
 }
 
-private class PluginClassLoadingStat(@JvmField val pluginId: String) {
-  @JvmField val loaders: MutableList<PluginAwareClassLoader> = ArrayList()
-
-  val classCount: Long
-    get() = loaders.sumOf { it.loadedClassCount }
-
-  val edtTime: Long
-    get() = loaders.sumOf { it.edtTime }
-
-  val backgroundTime: Long
-    get() = loaders.sumOf { it.backgroundTime }
+private class PluginClassLoadingStat(@JvmField val pluginId: String, @JvmField val loaders: List<ClassLoaderStat>) {
+  @JvmField val classCount: Long = loaders.sumOf { it.classCount }
+  @JvmField val edtTime: Long = loaders.sumOf { it.edtTime }
+  @JvmField val backgroundTime: Long = loaders.sumOf { it.backgroundTime }
 }
+
+/**
+ * A snapshot of the class-loading counters of one [PluginAwareClassLoader].
+ * Other threads increment the counters while the report is written, so a sort must use a snapshot, not the live counters.
+ */
+private class ClassLoaderStat(
+  @JvmField val moduleId: String?,
+  @JvmField val classCount: Long,
+  @JvmField val edtTime: Long,
+  @JvmField val backgroundTime: Long,
+)
 
 /**
  * Groups the class loaders of [modules] by plugin id.
@@ -243,14 +247,22 @@ private class PluginClassLoadingStat(@JvmField val pluginId: String) {
  */
 private fun collectPluginClassLoadingStats(modules: List<PluginModuleDescriptor>): List<PluginClassLoadingStat> {
   val seen = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
-  val byPlugin = LinkedHashMap<String, PluginClassLoadingStat>()
+  val byPlugin = LinkedHashMap<String, MutableList<ClassLoaderStat>>()
   for (module in modules) {
     val classLoader = module.pluginClassLoader ?: continue
     if (!seen.add(classLoader)) {
       continue
     }
     val pluginClassLoader = classLoader as? PluginAwareClassLoader ?: continue
-    byPlugin.computeIfAbsent(pluginClassLoader.pluginId.idString) { PluginClassLoadingStat(it) }.loaders.add(pluginClassLoader)
+    val loaderStat = ClassLoaderStat(
+      moduleId = pluginClassLoader.moduleId,
+      classCount = pluginClassLoader.loadedClassCount,
+      edtTime = pluginClassLoader.edtTime,
+      backgroundTime = pluginClassLoader.backgroundTime,
+    )
+    byPlugin.computeIfAbsent(pluginClassLoader.pluginId.idString) { ArrayList() }.add(loaderStat)
   }
-  return byPlugin.values.filter { it.classCount > 0L }.sortedByDescending { it.classCount }
+  return byPlugin.map { (pluginId, loaders) -> PluginClassLoadingStat(pluginId, loaders) }
+    .filter { it.classCount > 0L }
+    .sortedByDescending { it.classCount }
 }
