@@ -10,19 +10,19 @@
     <orderEntry type="module" module-name="intellij.libraries.jna" />
     <orderEntry type="module-library" exported="">
       <library name="pty4j" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.pty4j:pty4j:0.13.13">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.pty4j:pty4j:0.14.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.13.13/pty4j-0.13.13.jar">
-              <sha256sum>e9bf5de4703d14e175d846f267e41291896caa9d4cecc365a17178e4612b2fd7</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.14.0/pty4j-0.14.0.jar">
+              <sha256sum>4190d2a6afbfaf80b538fb5dff3978b541c344c07398ed317bb7c87e6d8a6745</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.13.13/pty4j-0.13.13.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.14.0/pty4j-0.14.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.13.13/pty4j-0.13.13-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.14.0/pty4j-0.14.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
