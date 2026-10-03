@@ -1,3 +1,7 @@
+f:com.intellij.concurrency.ConcurrentCollectionFactory
+- *s:createConcurrentSoftMap(com.intellij.util.containers.CollectionFactory$EvictionListener):java.util.concurrent.ConcurrentMap
+- *s:createConcurrentSoftMap(com.intellij.util.containers.HashingStrategy,com.intellij.util.containers.CollectionFactory$EvictionListener):java.util.concurrent.ConcurrentMap
+- *s:createConcurrentWeakIdentityMap(com.intellij.util.containers.CollectionFactory$EvictionListener):java.util.concurrent.ConcurrentMap
 *f:com.intellij.concurrency.virtualThreads.IntelliJVirtualThreads
 - s:ofVirtual():java.lang.Thread$Builder
 *f:com.intellij.concurrency.virtualThreads.VirtualThreads

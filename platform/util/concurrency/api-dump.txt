@@ -13,6 +13,13 @@ f:com.intellij.concurrency.ConcurrentCollectionFactory
 - s:createConcurrentLongObjectMap():com.intellij.util.containers.ConcurrentLongObjectMap
 - s:createConcurrentMap():java.util.concurrent.ConcurrentMap
 - s:createConcurrentSet():java.util.Set
+- s:createConcurrentSoftMap():java.util.concurrent.ConcurrentMap
+- s:createConcurrentSoftMap(I,F,com.intellij.util.containers.HashingStrategy):java.util.concurrent.ConcurrentMap
+- s:createConcurrentWeakCaseInsensitiveMap():java.util.concurrent.ConcurrentMap
+- s:createConcurrentWeakIdentityMap():java.util.concurrent.ConcurrentMap
+- s:createConcurrentWeakMap():java.util.concurrent.ConcurrentMap
+- s:createConcurrentWeakMap(I,F,com.intellij.util.containers.HashingStrategy):java.util.concurrent.ConcurrentMap
+- s:createConcurrentWeakMap(com.intellij.util.containers.HashingStrategy):java.util.concurrent.ConcurrentMap
 c:com.intellij.openapi.util.AsyncResult
 - com.intellij.openapi.util.ActionCallback
 - <init>():V
