@@ -6,6 +6,7 @@ import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -22,7 +23,6 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -356,7 +356,7 @@ public final class FileStatusMap implements Disposable {
   }
 
   // logging
-  private static final ConcurrentMap<Thread, Integer> threads = CollectionFactory.createConcurrentWeakMap();
+  private static final ConcurrentMap<Thread, Integer> threads = ConcurrentCollectionFactory.createConcurrentWeakMap();
 
   private static int getThreadNum() {
     return threads.computeIfAbsent(Thread.currentThread(), thread -> threads.size());

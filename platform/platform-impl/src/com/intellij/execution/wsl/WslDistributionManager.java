@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +12,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.system.WindowsRegistry;
@@ -42,7 +42,7 @@ public abstract class WslDistributionManager implements Disposable {
 
   private volatile CachedDistributions myInstalledDistributions;
   private volatile List<WSLDistribution> myLastInstalledDistributions;
-  private final Map<String, WSLDistribution> myMsIdToDistributionCache = CollectionFactory.createConcurrentWeakCaseInsensitiveMap();
+  private final Map<String, WSLDistribution> myMsIdToDistributionCache = ConcurrentCollectionFactory.createConcurrentWeakCaseInsensitiveMap();
   private final List<@NotNull BiConsumer<@NotNull Set<@NotNull WSLDistribution>, @NotNull Set<@NotNull WSLDistribution>>>
     myWslDistributionsChangeListeners = new CopyOnWriteArrayList<>();
 

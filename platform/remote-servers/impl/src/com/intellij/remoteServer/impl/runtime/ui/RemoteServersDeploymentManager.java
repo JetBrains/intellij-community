@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.ui;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.services.ServiceEventListener;
 import com.intellij.execution.services.ServiceViewManager;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -26,7 +27,6 @@ import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.ui.RemoteServersView;
 import com.intellij.remoteServer.util.CloudApplicationRuntime;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +47,7 @@ public final class RemoteServersDeploymentManager {
 
   private final Project myProject;
   private final ServersTreeNodeManipulator myNodeManipulator;
-  private final Map<RemoteServersServiceViewContributor, Boolean> myContributors = CollectionFactory.createConcurrentWeakMap();
+  private final Map<RemoteServersServiceViewContributor, Boolean> myContributors = ConcurrentCollectionFactory.createConcurrentWeakMap();
   private final Map<RemoteServer<?>, MessagePanel> myServerToContent = new HashMap<>();
 
   public RemoteServersDeploymentManager(@NotNull Project project) {

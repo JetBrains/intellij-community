@@ -6,6 +6,7 @@ package com.intellij.ui
 
 import com.intellij.codeInsight.intention.IntentionActionProvider
 import com.intellij.codeInsight.intention.IntentionActionWithOptions
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -18,7 +19,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -47,7 +47,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider
 import com.intellij.ui.EditorNotifications.getInstance
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -90,7 +89,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
   private val coroutineScope = coroutineScope.childScope("EditorNotificationsImpl")
   private val updateAllRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  private val fileToUpdateNotificationJob = CollectionFactory.createConcurrentWeakMap<VirtualFile, Job>()
+  private val fileToUpdateNotificationJob = ConcurrentCollectionFactory.createConcurrentWeakMap<VirtualFile, Job>()
 
   private val updateAllRequestFlowJob: Job
 

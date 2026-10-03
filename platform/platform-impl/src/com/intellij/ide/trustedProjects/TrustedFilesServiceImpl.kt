@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.ide.TrustedFiles
 import com.intellij.ide.TrustedFilesService
 import com.intellij.ide.lightEdit.LightEdit
@@ -23,11 +24,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.ThreeState
 import com.intellij.util.application
-import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicLong
 
@@ -101,7 +100,7 @@ internal class TrustedFilesCache(private val project: Project, private val scope
    * Only a local file enters the map, see [isTrusted].
    * A write and an invalidation are ordered by [invalidations], see [invalidate].
    */
-  private val verdicts = CollectionFactory.createConcurrentWeakMap<VirtualFile, Boolean>()
+  private val verdicts = ConcurrentCollectionFactory.createConcurrentWeakMap<VirtualFile, Boolean>()
 
   /**
    * Counts the invalidations. A verdict computed before an invalidation is stale, so [isTrusted]

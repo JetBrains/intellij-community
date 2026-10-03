@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.multiverse
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -11,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.AtomicMapCache
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -23,7 +23,7 @@ internal class EditorContextManagerImpl(
 ) : EditorContextManager, Disposable.Default {
 
   // todo IJPL-339 don't drop current contexts entirely on invalidating contexts. try to restore them on the next request
-  private val currentContextCache = AtomicMapCache { CollectionFactory.createConcurrentWeakMap<Editor, EditorSelectedContexts>() }
+  private val currentContextCache = AtomicMapCache { ConcurrentCollectionFactory.createConcurrentWeakMap<Editor, EditorSelectedContexts>() }
 
   private val _eventFlow = MutableSharedFlow<EditorContextManager.ChangeEvent>(extraBufferCapacity = Int.MAX_VALUE)
 

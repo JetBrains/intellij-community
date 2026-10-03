@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -24,7 +25,6 @@ import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.text.StringSearcher;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -255,7 +255,7 @@ public final class LowLevelSearchUtil {
 
   // map (text to be scanned -> list of cached pairs of (searcher used to scan text, occurrences found))
   // occurrences found is an int array of (startOffset used, endOffset used, occurrence 1 offset, occurrence 2 offset,...)
-  private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache = CollectionFactory.createConcurrentWeakIdentityMap();
+  private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache = ConcurrentCollectionFactory.createConcurrentWeakIdentityMap();
 
   public static boolean processTexts(@NotNull CharSequence text,
                                      int startOffset,
@@ -297,7 +297,7 @@ public final class LowLevelSearchUtil {
       }
       cachedOccurrences = occurrences.toIntArray();
       if (cachedMap == null) {
-        cachedMap = ConcurrencyUtil.cacheOrGet(cache, text, CollectionFactory.createConcurrentSoftMap());
+        cachedMap = ConcurrencyUtil.cacheOrGet(cache, text, ConcurrentCollectionFactory.createConcurrentSoftMap());
       }
       cachedMap.put(searcher, cachedOccurrences);
     }

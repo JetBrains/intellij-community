@@ -3,6 +3,7 @@ package com.intellij.execution.console;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.execution.console.ConsoleHistoryModel.Entry;
 import com.intellij.ide.scratch.ScratchFileService;
@@ -57,7 +58,6 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +93,7 @@ public class ConsoleHistoryController implements Disposable {
       return ApplicationManager.getApplication().getService(ControllerRegistry.class);
     }
 
-    private final Map<LanguageConsoleView, ConsoleHistoryController> controllers = CollectionFactory.createConcurrentWeakIdentityMap();
+    private final Map<LanguageConsoleView, ConsoleHistoryController> controllers = ConcurrentCollectionFactory.createConcurrentWeakIdentityMap();
 
     @Override
     public void doSave() {

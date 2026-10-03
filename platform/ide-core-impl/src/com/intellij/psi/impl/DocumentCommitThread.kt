@@ -3,6 +3,7 @@ package com.intellij.psi.impl
 
 import com.intellij.codeInsight.multiverse.isEventSystemEnabled
 import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.diagnostic.PluginException
 import com.intellij.lang.FileASTNode
 import com.intellij.openapi.Disposable
@@ -45,7 +46,6 @@ import com.intellij.psi.text.BlockSupport
 import com.intellij.util.SmartList
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.SequentialTaskExecutor
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -141,7 +141,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
    */
   @Service(Service.Level.PROJECT)
   class PerProjectDocumentCommitRegistry(val scope: CoroutineScope) {
-    val publishedDocumentCommitRequests: ConcurrentMap<Document, Job> = CollectionFactory.createConcurrentWeakMap()
+    val publishedDocumentCommitRequests: ConcurrentMap<Document, Job> = ConcurrentCollectionFactory.createConcurrentWeakMap()
   }
 
   private fun commitDocumentWithCoroutines(document: Document, task: CommitTask, documentManager: PsiDocumentManagerEx) {
