@@ -37,6 +37,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * A scope that owns one or many [IjentScope].
@@ -221,7 +222,7 @@ class IjentScope internal constructor(
    * The wait stops when the calling coroutine is cancelled. Use [resolveExitReasonNonCancellable] in a cancelled coroutine.
    */
   suspend fun resolveExitReason(
-    timeout: Duration = IjentUnavailableException.DEAD_SESSION_RESOLVE_TIMEOUT,
+    timeout: Duration = DEAD_SESSION_RESOLVE_TIMEOUT,
     excludedJob: Job? = null,
   ): IjentUnavailableException? {
     if (exitReason.isCompleted) {
@@ -331,7 +332,7 @@ class IjentScope internal constructor(
           // The scope can already be cancelled. Then a cancellable wait would lose `err`.
           val callerJob = currentCoroutineContext().job
           withContext(NonCancellable) {
-            awaitExitReason(IjentUnavailableException.DEAD_SESSION_RESOLVE_TIMEOUT, callerJob)
+            awaitExitReason(DEAD_SESSION_RESOLVE_TIMEOUT, callerJob)
           } ?: err
         }
 
@@ -348,7 +349,14 @@ class IjentScope internal constructor(
     }
   }
 
-  companion object Key : CoroutineContext.Key<IjentScope>
+  companion object Key : CoroutineContext.Key<IjentScope> {
+    /**
+     * The default bound used by [IjentScope.resolveExitReason] when awaiting the canonical exit reason.
+     * Aligned with the exit-code consumer await in `GrpcIjentChildProcess`.
+     */
+    @Internal
+    val DEAD_SESSION_RESOLVE_TIMEOUT: Duration = 3.seconds  // 3 seconds are taken at random, feel free to experiment with the value.
+  }
 }
 
 /**

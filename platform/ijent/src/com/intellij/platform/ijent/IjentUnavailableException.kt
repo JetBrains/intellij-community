@@ -77,11 +77,5 @@ sealed class IjentUnavailableException : EelUnavailableException, ExceptionWithA
       return null
     }
 
-    /**
-     * The default bound used by [resolveDeadSessionReason] when awaiting the canonical exit reason.
-     * Aligned with the exit-code consumer await in `GrpcIjentChildProcess`.
-     */
-    @Internal
-    val DEAD_SESSION_RESOLVE_TIMEOUT: Duration = 3.seconds  // 3 seconds are taken at random, feel free to experiment with the value.
   }
 }
