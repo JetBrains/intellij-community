@@ -40,6 +40,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefRequestHandlerAdapter
@@ -71,6 +72,7 @@ import java.net.URL
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.round
+import kotlin.time.Duration
 
 class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFile: VirtualFile?) : JCEFHtmlPanel(
   isOffScreenRendering = isOffScreenRendering(),
@@ -261,6 +263,30 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
     val builder = IncrementalDOMBuilder(html, document, imageResourceProvider, resourceProvider)
     val renderClosure = readAction { builder.generateRenderClosure() }
     updateDom(renderClosure, 0, false)
+  }
+
+  /**
+   * Waits until each image of the page loads or fails, but not longer than [timeout].
+   *
+   * A PDF print does not wait for an image. An image that still loads is absent from the PDF.
+   */
+  @ApiStatus.Internal
+  suspend fun waitForImages(timeout: Duration) {
+    // language=JavaScript
+    val code = """
+      (function() {
+        const pending = Array.from(document.images)
+          .filter(image => !image.complete)
+          .map(image => new Promise(resolve => {
+            image.addEventListener("load", resolve, { once: true });
+            image.addEventListener("error", resolve, { once: true });
+          }));
+        return Promise.all(pending);
+      })();
+    """.trimIndent()
+    if (withTimeoutOrNull(timeout) { executeCancellableJavaScript(code) } == null) {
+      logger.warn("Some images of the Markdown preview did not load in $timeout")
+    }
   }
 
   override fun reloadWithOffset(offset: Int) {

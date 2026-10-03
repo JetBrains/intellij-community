@@ -21,7 +21,7 @@ internal class MarkdownPdfExportProvider : MarkdownExportProvider {
     get() = format
 
   override fun exportFile(project: Project, mdFile: VirtualFile, outputFile: String) {
-    withMarkdownPreview(project, mdFile) { htmlPanel, onFinished ->
+    withMarkdownPreview(project, mdFile, waitForImages = true) { htmlPanel, onFinished ->
       htmlPanel.savePdf(outputFile, project, onFinished) { path, ok ->
         if (ok) {
           val file = VfsUtil.findFileByIoFile(File(path), true)
