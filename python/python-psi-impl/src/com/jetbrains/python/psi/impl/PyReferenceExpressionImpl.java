@@ -18,6 +18,7 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
@@ -519,7 +520,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if (!classType.isDefinition() || propertyResult.onMetaclass()) {
         return Ref.create(propertyResult.property().getType(propertyResult.selfType(), context));
       }
-      return Ref.create(PyBuiltinCache.getInstance(anchor).getObjectType(PyNames.PROPERTY));
+      return Ref.create(ObjectUtils.chooseNotNull(PyBuiltinCache.getInstance(anchor).getObjectType(PyNames.PROPERTY), PyAnyType.getUnknown()));
     }
 
     List<? extends RatedResolveResult> resolveResults =
@@ -571,12 +572,12 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if (decoratorList != null) {
         final PyDecorator propertyDecorator = decoratorList.findDecorator(PyNames.PROPERTY);
         if (propertyDecorator != null) {
-          return Ref.create(PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY));
+          return Ref.create(ObjectUtils.chooseNotNull(PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY), PyAnyType.getUnknown()));
         }
         for (PyDecorator decorator : decoratorList.getDecorators()) {
           final QualifiedName qName = decorator.getQualifiedName();
           if (qName != null && (qName.endsWith(PyNames.SETTER) || qName.endsWith(PyNames.DELETER) || qName.endsWith(PyNames.GETTER))) {
-            return Ref.create(PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY));
+            return Ref.create(ObjectUtils.chooseNotNull(PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY), PyAnyType.getUnknown()));
           }
         }
       }

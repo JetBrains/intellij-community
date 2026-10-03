@@ -513,7 +513,7 @@ object PyTypeChecker {
       if (expected.isProtocol(context.context)) {
         return Optional.of(match(expected, actual, context))
       }
-      return match(expected, actual.moduleClassType, context)
+      return match(expected, actual.moduleClassType ?: PyAnyType.unknown, context)
     }
 
     // Handle PyOverloadType matching. Each branch fans out over candidate overloads; we discard the

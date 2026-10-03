@@ -32,6 +32,7 @@ public class PyKeyValueExpressionImpl extends PyElementImpl implements PyKeyValu
     if (value != null) {
       valueType = context.getType(value);
     }
-    return PyTupleType.create(this, Arrays.asList(keyType, valueType));
+    final PyType tupleType = PyTupleType.create(this, Arrays.asList(keyType, valueType));
+    return tupleType != null ? tupleType : PyAnyType.getUnknown();
   }
 }

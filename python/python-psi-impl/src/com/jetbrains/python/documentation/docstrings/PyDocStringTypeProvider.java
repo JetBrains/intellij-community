@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.StructuredDocString;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCloningTypeVisitor;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -47,11 +48,13 @@ public final class PyDocStringTypeProvider extends PyTypeProviderBase {
         final Ref<PyType> typeRef = parseType(func, typeText, context);
 
         if (param.isPositionalContainer()) {
-          return Ref.create(PyTypeUtil.toPositionalContainerType(param, typeRef.get()));
+          final PyType positionalContainerType = PyTypeUtil.toPositionalContainerType(param, typeRef.get());
+          return Ref.create(positionalContainerType != null ? positionalContainerType : PyAnyType.getUnknown());
         }
 
         if (param.isKeywordContainer()) {
-          return Ref.create(PyTypeUtil.toKeywordContainerType(param, typeRef.get()));
+          final PyType keywordContainerType = PyTypeUtil.toKeywordContainerType(param, typeRef.get());
+          return Ref.create(keywordContainerType != null ? keywordContainerType : PyAnyType.getUnknown());
         }
 
         return typeRef;

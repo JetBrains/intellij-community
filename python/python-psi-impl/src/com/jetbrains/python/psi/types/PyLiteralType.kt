@@ -313,7 +313,7 @@ class PyLiteralType private constructor(
         val valueType = PyUnionType.unionOrUnknown(
           elements.mapNotNull { keyValue -> keyValue.value?.let { promoteToType(expectedValueType, it) } }
         )
-        return PyCollectionTypeImpl.createTypeByQName(anchor, PyNames.DICT, false, listOf(keyType, valueType))
+        return PyCollectionTypeImpl.createTypeByQName(anchor, PyNames.DICT, false, listOf(keyType, valueType)) ?: PyAnyType.unknown
       }
 
       private fun promoteTuple(tupleExpression: PyTupleExpression): PyType? {
@@ -323,7 +323,7 @@ class PyLiteralType private constructor(
           return context.getType(tupleExpression)
         }
         val elementTypes = tupleExpression.elements.map { promoteToType(/*TODO*/null, it) }
-        return PyTupleType.create(tupleExpression, elementTypes)
+        return PyTupleType.create(tupleExpression, elementTypes) ?: PyAnyType.unknown
       }
 
       private fun promoteListOrSet(
@@ -339,7 +339,7 @@ class PyLiteralType private constructor(
           null
         }
         val elementType = PyUnionType.unionOrUnknown(elements.map { promoteToType(expectedElementType, it) })
-        return PyCollectionTypeImpl.createTypeByQName(expr, className, false, listOf(elementType))
+        return PyCollectionTypeImpl.createTypeByQName(expr, className, false, listOf(elementType)) ?: PyAnyType.unknown
       }
     }
 

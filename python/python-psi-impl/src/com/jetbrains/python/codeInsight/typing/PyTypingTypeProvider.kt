@@ -216,10 +216,10 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
     val type = getType(typeHint, context).derefOrUnknown()
     if (param.isPositionalContainer && type !is PyParamSpecType) {
-      return Ref(param.toPositionalContainerType(type))
+      return Ref(param.toPositionalContainerType(type) ?: PyAnyType.unknown)
     }
     if (param.isKeywordContainer && type !is PyParamSpecType) {
-      return Ref(param.toKeywordContainerType(type))
+      return Ref(param.toKeywordContainerType(type) ?: PyAnyType.unknown)
     }
     if (PyNames.NONE == param.defaultValueText) {
       return Ref(PyUnionType.unionOrUnknown(type, PyBuiltinCache.getInstance(param).noneType ?: PyAnyType.unknown))
@@ -2930,7 +2930,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     @JvmStatic
     fun removeNarrowedTypeIfNeeded(type: PyType?): PyType? {
       if (type is PyNarrowedType && type.isBound()) {
-        return PyBuiltinCache.getInstance(type.original).boolType
+        return PyBuiltinCache.getInstance(type.original).boolType ?: PyAnyType.unknown
       }
       else {
         return type
