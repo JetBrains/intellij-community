@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import java.lang.management.ManagementFactory
 import java.lang.ref.Reference
+import java.lang.ref.SoftReference
 import java.lang.ref.WeakReference
 import java.util.AbstractMap.SimpleEntry
 import java.util.concurrent.ConcurrentMap
@@ -38,6 +39,56 @@ class ConcurrentCollectionFactoryTest {
       assertThat(map["KEY"]).isEqualTo("value")
       assertThat(map.putIfAbsent("KEY", "other")).isEqualTo("value")
       assertThat(map).hasSize(1)
+    }
+  }
+
+  @Test
+  fun `reference value factories support original keys and custom hashing`() {
+    val maps = referenceValueMaps<String, String>(HashingStrategy.caseInsensitive()) +
+               ConcurrentCollectionFactory.createConcurrentSoftKeySoftValueMap(16, 0.75f, 4, HashingStrategy.caseInsensitive())
+    for (map in maps) {
+      map["key"] = "value"
+      assertThat(map["KEY"]).isEqualTo("value")
+      assertThat(map["missing"]).isNull()
+      assertThat(map.putIfAbsent("KEY", "other")).isEqualTo("value")
+      assertThat(map).hasSize(1)
+    }
+  }
+
+  @Test
+  fun `reference value factories use the requested reference strengths`() {
+    val key = Any()
+    val value = Any()
+    val weakSoft = ConcurrentCollectionFactory.createConcurrentWeakKeySoftValueMap<Any, Any>()
+    val weakWeak = ConcurrentCollectionFactory.createConcurrentWeakKeyWeakValueMap<Any, Any>()
+    val softSoft = ConcurrentCollectionFactory.createConcurrentSoftKeySoftValueMap<Any, Any>()
+    for (map in listOf(weakSoft, weakWeak, softSoft)) {
+      map[key] = value
+    }
+
+    assertThat(reference(weakSoft, key)).isInstanceOf(WeakReference::class.java)
+    assertThat(valueReference(weakSoft)).isInstanceOf(SoftReference::class.java)
+    assertThat(reference(weakWeak, key)).isInstanceOf(WeakReference::class.java)
+    assertThat(valueReference(weakWeak)).isInstanceOf(WeakReference::class.java)
+    assertThat(reference(softSoft, key)).isInstanceOf(SoftReference::class.java)
+    assertThat(valueReference(softSoft)).isInstanceOf(SoftReference::class.java)
+    Reference.reachabilityFence(key)
+    Reference.reachabilityFence(value)
+  }
+
+  @Test
+  fun `reference value identity factories use identity equality`() {
+    val maps = listOf(
+      ConcurrentCollectionFactory.createConcurrentWeakKeySoftValueIdentityMap<String, String>(16, 0.75f, 4),
+      ConcurrentCollectionFactory.createConcurrentWeakKeyWeakValueIdentityMap<String, String>(),
+      ConcurrentCollectionFactory.createConcurrentSoftKeySoftValueIdentityMap<String, String>(16, 0.75f, 4),
+    )
+    for (map in maps) {
+      val key = String(charArrayOf('k', 'e', 'y'))
+      val equalKey = String(charArrayOf('k', 'e', 'y'))
+      map[key] = "value"
+      assertThat(map[key]).isEqualTo("value")
+      assertThat(map[equalKey]).isNull()
     }
   }
 
@@ -87,7 +138,7 @@ class ConcurrentCollectionFactoryTest {
 
   @Test
   fun `atomic mutations use original keys`() {
-    for (map in maps<String, String>(HashingStrategy.caseInsensitive())) {
+    for (map in lookupMaps<String, String>(HashingStrategy.caseInsensitive())) {
       assertThat(map.putIfAbsent("key", "first")).isNull()
       assertThat(map.putIfAbsent("KEY", "second")).isEqualTo("first")
       assertThat(map.replace("KEY", "wrong", "second")).isFalse()
@@ -119,7 +170,7 @@ class ConcurrentCollectionFactoryTest {
 
   @Test
   fun `cleared references do not match live keys`() {
-    for (map in maps<Key, String>(keyStrategy)) {
+    for (map in lookupMaps<Key, String>(keyStrategy)) {
       val key1 = Key(0)
       val key2 = Key(8)
       map[key1] = "first"
@@ -150,6 +201,40 @@ class ConcurrentCollectionFactoryTest {
       assertThat(processQueue(map)).isTrue()
       assertThat(map["key"]).isEqualTo("second")
       assertThat(map).hasSize(1)
+    }
+  }
+
+  @Test
+  fun `reference value queue cleanup preserves a replacement with an equal key`() {
+    for (map in referenceValueMaps<String, String>(HashingStrategy.caseInsensitive())) {
+      map["key"] = "first"
+      val reference = reference(map, "key")
+      assertThat(map.remove("key")).isEqualTo("first")
+      map["KEY"] = "second"
+      reference.clear()
+      assertThat(reference.enqueue()).isTrue()
+
+      processQueue(map)
+      assertThat(map["key"]).isEqualTo("second")
+      assertThat(map).hasSize(1)
+    }
+  }
+
+  @Test
+  fun `collected values remove their entries`() {
+    for (map in referenceValueMaps<Any, Any>(HashingStrategy.canonical())) {
+      val key = Any()
+      val value = Any()
+      map[key] = value
+      val valueReference = valueReference(map)
+      valueReference.clear()
+      assertThat(valueReference.enqueue()).isTrue()
+
+      assertThat(processQueue(map)).isTrue()
+      assertThat(map[key]).isNull()
+      assertThat(map).isEmpty()
+      Reference.reachabilityFence(key)
+      Reference.reachabilityFence(value)
     }
   }
 
@@ -232,7 +317,7 @@ class ConcurrentCollectionFactoryTest {
         return key1 == key2
       }
     }
-    for (candidate in maps<String, String>(strategy)) {
+    for (candidate in lookupMaps<String, String>(strategy)) {
       map = candidate
       map["nested"] = "nested value"
       map["target"] = "target value"
@@ -244,7 +329,7 @@ class ConcurrentCollectionFactoryTest {
 
   @Test
   fun `reference objects can be original keys`() {
-    for (map in maps<WeakReference<Any>, String>(HashingStrategy.identity())) {
+    for (map in lookupMaps<WeakReference<Any>, String>(HashingStrategy.identity())) {
       val key = WeakReference(Any())
       map[key] = "value"
       key.clear()
@@ -255,7 +340,7 @@ class ConcurrentCollectionFactoryTest {
 
   @Test
   fun `concurrent updates preserve lookups during resizing`() {
-    for (map in maps<Key, Int>(keyStrategy)) {
+    for (map in lookupMaps<Key, Int>(keyStrategy)) {
       val keys = List(256) { Key(it) }
       val start = CountDownLatch(1)
       val executor = Executors.newFixedThreadPool(4) { task ->
@@ -297,7 +382,7 @@ class ConcurrentCollectionFactoryTest {
   fun `get allocates no lookup state on a new thread`() {
     val bean = ManagementFactory.getThreadMXBean() as? ThreadMXBean
     assumeTrue(bean != null && bean.isThreadAllocatedMemorySupported && bean.isThreadAllocatedMemoryEnabled)
-    for (map in maps<String, String>(HashingStrategy.canonical())) {
+    for (map in lookupMaps<String, String>(HashingStrategy.canonical())) {
       map["key"] = "value"
       repeat(10_000) { check(map["key"] == "value") }
       val allocated = AtomicLong(-1)
@@ -314,16 +399,24 @@ class ConcurrentCollectionFactoryTest {
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
   private fun <K : Any, V : Any> reference(map: ConcurrentMap<K, V>, key: K): Reference<K> {
+    return storage(map).keys.single { it.get() === key }
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun <K : Any, V : Any> valueReference(map: ConcurrentMap<K, V>): Reference<V> {
+    return storage(map).values.single() as Reference<V>
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun <K : Any, V : Any> storage(map: ConcurrentMap<K, V>): Map<Reference<K>, Any> {
     var type: Class<*>? = map.javaClass
     while (type != null && type.declaredFields.none { it.name == "myMap" }) {
       type = type.superclass
     }
     val field = checkNotNull(type).getDeclaredField("myMap")
     field.isAccessible = true
-    val storage = field.get(map) as Map<Reference<K>, V>
-    return storage.keys.single { it.get() === key }
+    return field.get(map) as Map<Reference<K>, Any>
   }
 
   private fun processQueue(map: ConcurrentMap<*, *>): Boolean = (map as ReferenceQueueable).processQueue()
@@ -332,6 +425,15 @@ class ConcurrentCollectionFactoryTest {
     ConcurrentCollectionFactory.createConcurrentWeakMap(strategy),
     ConcurrentCollectionFactory.createConcurrentSoftMap(16, 0.75f, strategy),
   )
+
+  private fun <K : Any, V : Any> referenceValueMaps(strategy: HashingStrategy<in K>): List<ConcurrentMap<K, V>> = listOf(
+    ConcurrentCollectionFactory.createConcurrentWeakKeySoftValueMap(strategy),
+    ConcurrentCollectionFactory.createConcurrentWeakKeyWeakValueMap(strategy),
+    ConcurrentCollectionFactory.createConcurrentSoftKeySoftValueMap(strategy),
+  )
+
+  private fun <K : Any, V : Any> lookupMaps(strategy: HashingStrategy<in K>): List<ConcurrentMap<K, V>> =
+    maps<K, V>(strategy) + referenceValueMaps(strategy)
 
   private class Key(val id: Int) : Comparable<Key> {
     override fun compareTo(other: Key): Int = id.compareTo(other.id)

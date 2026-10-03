@@ -137,6 +137,117 @@ public final class ConcurrentCollectionFactory {
     return new ConcurrentSoftHashMap<>(initialCapacity, loadFactor, hashingStrategy, null);
   }
 
+  /**
+   * Creates a concurrent map with weak keys and soft values.
+   */
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakKeySoftValueMap() {
+    return createConcurrentWeakKeySoftValueMap(ConcurrentWeakKeySoftValueHashMap.DEFAULT_CAPACITY,
+                                               ConcurrentWeakKeySoftValueHashMap.DEFAULT_LOAD_FACTOR,
+                                               ConcurrentWeakKeySoftValueHashMap.DEFAULT_CONCURRENCY_LEVEL,
+                                               HashingStrategy.canonical());
+  }
+
+  /**
+   * Creates a concurrent map with weak keys, soft values, and the specified hashing strategy.
+   */
+  @Contract(value = "_ -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakKeySoftValueMap(
+    @NotNull HashingStrategy<? super K> hashingStrategy) {
+    return createConcurrentWeakKeySoftValueMap(ConcurrentWeakKeySoftValueHashMap.DEFAULT_CAPACITY,
+                                               ConcurrentWeakKeySoftValueHashMap.DEFAULT_LOAD_FACTOR,
+                                               ConcurrentWeakKeySoftValueHashMap.DEFAULT_CONCURRENCY_LEVEL,
+                                               hashingStrategy);
+  }
+
+  @Contract(value = "_,_,_,_ -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakKeySoftValueMap(
+    int initialCapacity,
+    float loadFactor,
+    int concurrencyLevel,
+    @NotNull HashingStrategy<? super K> hashingStrategy) {
+    return new ConcurrentWeakKeySoftValueHashMap<>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+
+  /**
+   * Creates a concurrent identity map with weak keys and soft values.
+   */
+  @Contract(value = "_,_,_ -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakKeySoftValueIdentityMap(
+    int initialCapacity,
+    float loadFactor,
+    int concurrencyLevel) {
+    return createConcurrentWeakKeySoftValueMap(initialCapacity, loadFactor, concurrencyLevel, HashingStrategy.identity());
+  }
+
+  /**
+   * Creates a concurrent map with weak keys and weak values.
+   */
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakKeyWeakValueMap() {
+    return createConcurrentWeakKeyWeakValueMap(HashingStrategy.canonical());
+  }
+
+  /**
+   * Creates a concurrent map with weak keys, weak values, and the specified hashing strategy.
+   */
+  @Contract(value = "_ -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakKeyWeakValueMap(
+    @NotNull HashingStrategy<? super K> hashingStrategy) {
+    return new ConcurrentWeakKeyWeakValueHashMap<>(ConcurrentWeakKeySoftValueHashMap.DEFAULT_CAPACITY,
+                                                   ConcurrentWeakKeySoftValueHashMap.DEFAULT_LOAD_FACTOR,
+                                                   ConcurrentWeakKeySoftValueHashMap.DEFAULT_CONCURRENCY_LEVEL,
+                                                   hashingStrategy);
+  }
+
+  /**
+   * Creates a concurrent identity map with weak keys and weak values.
+   */
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakKeyWeakValueIdentityMap() {
+    return createConcurrentWeakKeyWeakValueMap(HashingStrategy.identity());
+  }
+
+  /**
+   * Creates a concurrent map with soft keys and soft values.
+   */
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftKeySoftValueMap() {
+    return createConcurrentSoftKeySoftValueMap(HashingStrategy.canonical());
+  }
+
+  /**
+   * Creates a concurrent map with soft keys, soft values, and the specified hashing strategy.
+   */
+  @Contract(value = "_ -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftKeySoftValueMap(
+    @NotNull HashingStrategy<? super K> hashingStrategy) {
+    return createConcurrentSoftKeySoftValueMap(ConcurrentWeakKeySoftValueHashMap.DEFAULT_CAPACITY,
+                                               ConcurrentWeakKeySoftValueHashMap.DEFAULT_LOAD_FACTOR,
+                                               ConcurrentWeakKeySoftValueHashMap.DEFAULT_CONCURRENCY_LEVEL,
+                                               hashingStrategy);
+  }
+
+  @Contract(value = "_,_,_,_ -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftKeySoftValueMap(
+    int initialCapacity,
+    float loadFactor,
+    int concurrencyLevel,
+    @NotNull HashingStrategy<? super K> hashingStrategy) {
+    return new ConcurrentSoftKeySoftValueHashMap<>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+
+  /**
+   * Creates a concurrent identity map with soft keys and soft values.
+   */
+  @Contract(value = "_,_,_ -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftKeySoftValueIdentityMap(
+    int initialCapacity,
+    float loadFactor,
+    int concurrencyLevel) {
+    return createConcurrentSoftKeySoftValueMap(initialCapacity, loadFactor, concurrencyLevel, HashingStrategy.identity());
+  }
+
   @Contract(pure = true)
   public static @NotNull <T> Set<@NotNull T> createConcurrentSet(@NotNull HashingStrategy<? super T> hashStrategy) {
     return Collections.newSetFromMap(createConcurrentMap(hashStrategy));

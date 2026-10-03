@@ -162,11 +162,15 @@ public final class CollectionFactory {
     return new SoftKeySoftValueHashMap<>();
   }
 
+  /**
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentWeakKeySoftValueIdentityMap(int, float, int)} instead.
+   */
   @Contract(value = "_,_,_ -> new", pure = true)
+  @Deprecated
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakKeySoftValueIdentityMap(int initialCapacity,
                                                                                                 float loadFactor,
                                                                                                 int concurrencyLevel) {
-    //noinspection deprecation
     return new ConcurrentWeakKeySoftValueHashMap<>(initialCapacity, loadFactor, concurrencyLevel, HashingStrategy.identity());
   }
 
@@ -174,17 +178,32 @@ public final class CollectionFactory {
     return createWeakMap(initialCapacity, loadFactor, HashingStrategy.identity());
   }
 
+  /**
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentWeakKeyWeakValueMap()} instead.
+   */
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakKeyWeakValueMap() {
     return new ConcurrentWeakKeyWeakValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(), HashingStrategy.canonical());
   }
 
+  /**
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentWeakKeyWeakValueMap(HashingStrategy)} instead.
+   */
   @Contract(value = "_ -> new", pure = true)
+  @Deprecated
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakKeyWeakValueMap(@NotNull HashingStrategy<? super K> strategy) {
     return new ConcurrentWeakKeyWeakValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(), strategy);
   }
 
+  /**
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentWeakKeyWeakValueIdentityMap()} instead.
+   */
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakKeyWeakValueIdentityMap() {
     return new ConcurrentWeakKeyWeakValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(), HashingStrategy.identity());
   }
@@ -202,17 +221,27 @@ public final class CollectionFactory {
     return new ConcurrentWeakHashMap<>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy, null);
   }
 
+  /**
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentWeakKeySoftValueMap()} instead.
+   */
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakKeySoftValueMap() {
     return createConcurrentWeakKeySoftValueMap(100, 0.75f, Runtime.getRuntime().availableProcessors(), HashingStrategy.canonical());
   }
 
+  /**
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentWeakKeySoftValueMap(int, float, int, HashingStrategy)}
+   * instead.
+   */
   @Contract(value = "_,_,_,_-> new", pure = true)
+  @Deprecated
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakKeySoftValueMap(int initialCapacity,
                                                                                         float loadFactor,
                                                                                         int concurrencyLevel,
                                                                                         @NotNull HashingStrategy<? super K> hashingStrategy) {
-    //noinspection deprecation
     return new ConcurrentWeakKeySoftValueHashMap<>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
@@ -267,18 +296,29 @@ public final class CollectionFactory {
     return new Object2ObjectOpenCustomHashMap<>(source, FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
 
+  /**
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentSoftKeySoftValueMap(int, float, int, HashingStrategy)}
+   * with {@link HashingStrategy#canonical()} instead.
+   */
   @Contract(value = "_,_,_ -> new", pure = true)
   @SuppressWarnings("SameParameterValue")
+  @Deprecated
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftKeySoftValueMap(int initialCapacity,
                                                                                         float loadFactor,
                                                                                         int concurrencyLevel) {
     return new ConcurrentSoftKeySoftValueHashMap<>(initialCapacity, loadFactor, concurrencyLevel, HashingStrategy.canonical());
   }
 
+  /**
+   * @deprecated Use
+   * {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentSoftKeySoftValueIdentityMap(int, float, int)} instead.
+   */
   @ApiStatus.Internal
   @VisibleForTesting
   @Contract(value = "_,_,_ -> new", pure = true)
-  @SuppressWarnings("SameParameterValue")
+  @SuppressWarnings({"SameParameterValue", "DeprecatedIsStillUsed"})
+  @Deprecated
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftKeySoftValueIdentityMap(int initialCapacity,
                                                                                          float loadFactor,
                                                                                          int concurrencyLevel) {
