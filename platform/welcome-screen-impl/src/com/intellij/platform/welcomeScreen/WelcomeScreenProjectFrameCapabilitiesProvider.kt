@@ -27,9 +27,7 @@ internal class WelcomeScreenProjectFrameCapabilitiesProvider : ProjectFrameCapab
       add(ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)
       add(ProjectFrameCapability.SUPPRESS_INDEXING_ACTIVITIES)
 
-      if (!WelcomeScreenProjectProvider.isVcsEnabled(project)) {
-        add(ProjectFrameCapability.SUPPRESS_VCS_UI)
-      }
+      add(ProjectFrameCapability.SUPPRESS_VCS_UI)
 
       if (WelcomeScreenProjectProvider.isForceDisabledFileColors()) {
         add(ProjectFrameCapability.FORCE_DISABLE_FILE_COLORS)
