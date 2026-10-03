@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -51,9 +52,11 @@ internal object DestructuringRenameFactory {
         private val targetName: Name,
         private val expectedNames: List<Name>,
         private val mismatchesCount: Int
-    ) : KotlinQuickFixAction<KtDestructuringDeclarationEntry>(entry) {
+    ) : KotlinQuickFixAction<KtDestructuringDeclarationEntry>(entry), PriorityAction {
 
         override fun startInWriteAction(): Boolean = false
+
+        override fun getPriority(): PriorityAction.Priority = PriorityAction.Priority.HIGH
 
         override fun getText(): String =
             if (mismatchesCount > 1) {

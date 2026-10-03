@@ -8898,6 +8898,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/convertMismatchToPositional.kt");
         }
 
+        @TestMetadata("destructuringNameMismatchActionsOrder.kt")
+        public void testDestructuringNameMismatchActionsOrder() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/destructuringNameMismatchActionsOrder.kt");
+        }
+
         @TestMetadata("fullFormLambdaNameMismatch.kt")
         public void testFullFormLambdaNameMismatch() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/fullFormLambdaNameMismatch.kt");

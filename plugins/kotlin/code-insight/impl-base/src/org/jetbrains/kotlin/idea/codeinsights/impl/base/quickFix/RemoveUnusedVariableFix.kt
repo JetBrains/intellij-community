@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix
 
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
@@ -22,10 +23,14 @@ class RemoveUnusedVariableFix(
     isSimpleCase: Boolean,
     val couldBeAnExplicitlyIgnoredValue: Boolean,
     val isNameBasedDestructuringEntry: Boolean
-) : KotlinModCommandQuickFix<KtNamedDeclaration>() {
+) : KotlinModCommandQuickFix<KtNamedDeclaration>(), PriorityAction {
+
+    private val nonremovableDestructuringDeclarationEntry: Boolean =
+        element is KtDestructuringDeclarationEntry && !(isNameBasedDestructuringEntry && element.canBeRemovedFromDestructuring())
+
     private val name: @IntentionName String = when (element) {
         is KtDestructuringDeclarationEntry -> {
-            if (isNameBasedDestructuringEntry && element.canBeRemovedFromDestructuring()) {
+            if (!nonremovableDestructuringDeclarationEntry) {
                 KotlinBundle.message("remove.destructuring.entry")
             } else {
                 KotlinBundle.message("rename.to.underscore")
@@ -48,6 +53,10 @@ class RemoveUnusedVariableFix(
     override fun getFamilyName(): String = KotlinBundle.message("remove.variable")
 
     override fun getName(): String = name
+
+    override fun getPriority(): PriorityAction.Priority =
+        if (nonremovableDestructuringDeclarationEntry) PriorityAction.Priority.HIGH else PriorityAction.Priority.NORMAL
+
     override fun applyFix(
         project: Project,
         element: KtNamedDeclaration,
