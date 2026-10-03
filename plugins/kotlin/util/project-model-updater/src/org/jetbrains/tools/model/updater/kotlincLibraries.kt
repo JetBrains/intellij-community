@@ -17,7 +17,7 @@ internal const val BOOTSTRAP_VERSION = "2.5.255-dev-255"
 // This is the new repository where artifacts SINCE `2.2.20-dev-2414` are published to.
 private val INTELLIJ_DEPENDENCIES_REPOSITORY = JpsRemoteRepository(
     "intellij-dependencies",
-    "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies",
+    "https://cache-redirector.jetbrains.com/maven/ultimate-public",
 )
 
 private val INTELLIJ_EXPERIMENTAL_DEPENDENCIES_REPOSITORY = JpsRemoteRepository(

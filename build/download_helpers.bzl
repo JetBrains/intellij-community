@@ -10,7 +10,7 @@ MAVEN_CENTRAL_URL = "https://cache-redirector.jetbrains.com/repo.maven.apache.or
 INTELLIJ_DEPENDENCIES_URL = "https://cache-redirector.jetbrains.com/intellij-dependencies"
 INTELLIJ_JBR_URL = "https://cache-redirector.jetbrains.com/intellij-jbr"
 JETBRAINS_FILES_URL = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-dependencies"
-JETBRAINS_MAVEN_URL = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies"
+JETBRAINS_MAVEN_URL = "https://cache-redirector.jetbrains.com/maven/ultimate-public"
 INTELLIJ_BUILD_DEPENDENCIES_URL = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies"
 
 # OsFamily.jbrArchiveSuffix

@@ -196,14 +196,14 @@ http_file(
     name = "asm-all_http",
     downloaded_file_path = "asm-all-9.6.1.jar",
     sha256 = "a72e84efb1406a7ab326e0b28c4376e9e1ebfc08c09f23edff5e6e7249588df7",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/asm-all/9.6.1/asm-all-9.6.1.jar",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/intellij/deps/asm-all/9.6.1/asm-all-9.6.1.jar",
 )
 
 http_file(
     name = "asm-all-sources_http",
     downloaded_file_path = "asm-all-9.6.1-sources.jar",
     sha256 = "a880ed438e15111a8ef4cdd450fa529cf80541da515261d24241520dbc4b220b",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/asm-all/9.6.1/asm-all-9.6.1-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/intellij/deps/asm-all/9.6.1/asm-all-9.6.1-sources.jar",
 )
 
 http_file(
@@ -252,14 +252,14 @@ http_file(
     name = "intellij-deps-fastutil_http",
     downloaded_file_path = "intellij-deps-fastutil-8.5.13-jb4.jar",
     sha256 = "46cb3758c236bac0631ae563aab11effce2677b9a010171f02d04f222f2e7bdb",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.13-jb4/intellij-deps-fastutil-8.5.13-jb4.jar",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.13-jb4/intellij-deps-fastutil-8.5.13-jb4.jar",
 )
 
 http_file(
     name = "intellij-deps-fastutil-sources_http",
     downloaded_file_path = "intellij-deps-fastutil-8.5.13-jb4-sources.jar",
     sha256 = "2a2f608aae001ab65238bd1678bea89f211613b2ed10394d6753a39f359cbbb1",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.13-jb4/intellij-deps-fastutil-8.5.13-jb4-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.13-jb4/intellij-deps-fastutil-8.5.13-jb4-sources.jar",
 )
 
 http_file(
@@ -287,7 +287,7 @@ http_file(
     name = "jps-javac-extension_http",
     downloaded_file_path = "jps-javac-extension-11.jar",
     sha256 = "56805dd4b0fbc40988c2d15993ff8f7c7a6609a95a5871d5f67b521f2f6f100e",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jps/jps-javac-extension/11/jps-javac-extension-11.jar",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/jps/jps-javac-extension/11/jps-javac-extension-11.jar",
 )
 
 http_file(
@@ -437,14 +437,14 @@ http_file(
     name = "kotlinx-coroutines-core-jvm_http",
     downloaded_file_path = "kotlinx-coroutines-core-jvm-1.10.1-intellij-4.jar",
     sha256 = "e4861dd9812c08a8f82b597dc04110d81ecd0dd952e3f3f12a053f388bdeaea2",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/intellij/platform/kotlinx-coroutines-core-jvm/1.10.1-intellij-4/kotlinx-coroutines-core-jvm-1.10.1-intellij-4.jar",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/com/intellij/platform/kotlinx-coroutines-core-jvm/1.10.1-intellij-4/kotlinx-coroutines-core-jvm-1.10.1-intellij-4.jar",
 )
 
 http_file(
     name = "kotlinx-coroutines-core-jvm-sources_http",
     downloaded_file_path = "kotlinx-coroutines-core-jvm-1.10.1-intellij-4-sources.jar",
     sha256 = "3a4f4c13f6b7ea5175786fe07a4712def5fef4a8eb8505ace6f7f9ba364e1830",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/intellij/platform/kotlinx-coroutines-core-jvm/1.10.1-intellij-4/kotlinx-coroutines-core-jvm-1.10.1-intellij-4-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/com/intellij/platform/kotlinx-coroutines-core-jvm/1.10.1-intellij-4/kotlinx-coroutines-core-jvm-1.10.1-intellij-4-sources.jar",
 )
 
 http_file(
@@ -781,14 +781,14 @@ http_file(
     name = "amper-async-processes_http",
     downloaded_file_path = "async-processes-0.12.0-dev-4182.jar",
     sha256 = "bbb677483c0b429b4648e1ca312fbd571e97b0b69369da32a07ce43c0184cef7",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/async-processes/0.12.0-dev-4182/async-processes-0.12.0-dev-4182.jar",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/amper/async-processes/0.12.0-dev-4182/async-processes-0.12.0-dev-4182.jar",
 )
 
 http_file(
     name = "amper-async-processes-sources_http",
     downloaded_file_path = "async-processes-0.12.0-dev-4182-sources.jar",
     sha256 = "e086386fee69098e87839a732776fe1506a529121410c71d9de5c6c7723d19a4",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/async-processes/0.12.0-dev-4182/async-processes-0.12.0-dev-4182-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/amper/async-processes/0.12.0-dev-4182/async-processes-0.12.0-dev-4182-sources.jar",
 )
 
 # chrome-devtools-kotlin (Chrome DevTools protocol client) and its ktor/kotlinx closure.
