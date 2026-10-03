@@ -7,7 +7,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
 import java.util.AbstractMap;
 import java.util.AbstractSet;
@@ -25,7 +24,6 @@ import java.util.Set;
 abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, ReferenceQueueable {
   private final MyMap myMap;
   private final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<>();
-  private final HardKey myHardKeyInstance = new HardKey(); // "singleton"
   private final @NotNull HashingStrategy<? super K> myStrategy;
   private Set<Entry<K, V>> entrySet;
   private final CollectionFactory.@Nullable EvictionListener<K, V, ? super V> myEvictionListener;
@@ -49,6 +47,62 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, 
   private class MyMap extends Object2ObjectOpenHashMap<Key<K>, V> {
     private MyMap(int initialCapacity, float loadFactor) {
       super(initialCapacity, loadFactor);
+    }
+
+    private int findKey(@NotNull Object lookupKey) {
+      //noinspection unchecked
+      K key = (K)lookupKey;
+      int position = HashCommon.mix(myStrategy.hashCode(key)) & mask;
+      Object[] keys = this.key;
+      while (true) {
+        //noinspection unchecked
+        Key<K> mapKey = (Key<K>)keys[position];
+        if (mapKey == null) {
+          return -1;
+        }
+        K k2 = mapKey.get();
+        if (k2 != null && keysEqual(key, k2, myStrategy)) {
+          return position;
+        }
+        position = (position + 1) & mask;
+      }
+    }
+
+    private boolean containsLookupKey(@NotNull Object key) {
+      return findKey(key) >= 0;
+    }
+
+    private V getByKey(@NotNull Object key) {
+      int position = findKey(key);
+      return position < 0 ? null : value[position];
+    }
+
+    private V removeByKey(@NotNull Object key) {
+      int position = findKey(key);
+      if (position < 0) {
+        return null;
+      }
+      return removeAt(position);
+    }
+
+    private boolean removeByKey(@NotNull Object key, Object expectedValue) {
+      int position = findKey(key);
+      if (position < 0 || !Objects.equals(value[position], expectedValue)) {
+        return false;
+      }
+      removeAt(position);
+      return true;
+    }
+
+    private V removeAt(int position) {
+      V oldValue = value[position];
+      value[position] = null;
+      size--;
+      shiftKeys(position);
+      if (n > minN && size < maxFill / 4 && n > DEFAULT_INITIAL_SIZE) {
+        rehash(n / 2);
+      }
+      return oldValue;
     }
 
     @Override
@@ -106,45 +160,6 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, 
 
   protected abstract @NotNull <T> Key<T> createKey(@NotNull T k, @NotNull HashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q);
 
-  private class HardKey extends PhantomReference<K> implements Key<K> {
-    private K referent;
-    private int myHash;
-
-    HardKey() {
-      super(null, null);
-    }
-
-    @Override
-    public K get() {
-      return referent;
-    }
-
-    private void set(@NotNull K object) {
-      referent = object;
-      myHash = myStrategy.hashCode(object);
-    }
-
-    @Override
-    public void clear() {
-      referent = null;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof Key)) return false;
-      K t = referent;
-      //noinspection unchecked
-      K u = ((Key<K>)o).get();
-      return keysEqual(t, u, myStrategy);
-    }
-
-    @Override
-    public int hashCode() {
-      return myHash;
-    }
-  }
-
   // returns true if some refs were tossed
   @Override
   public boolean processQueue() {
@@ -187,15 +202,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, 
 
   @Override
   public boolean containsKey(@NotNull Object key) {
-    // optimization:
-    //noinspection unchecked
-    myHardKeyInstance.set((K)key);
-    try {
-      return myMap.containsKey(myHardKeyInstance);
-    }
-    finally {
-      myHardKeyInstance.clear();
-    }
+    return myMap.containsLookupKey(key);
   }
 
   @Override
@@ -205,14 +212,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, 
 
   @Override
   public V get(@NotNull Object key) {
-    //noinspection unchecked
-    myHardKeyInstance.set((K)key);
-    try {
-      return myMap.get(myHardKeyInstance);
-    }
-    finally {
-      myHardKeyInstance.clear();
-    }
+    return myMap.getByKey(key);
   }
 
   @Override
@@ -224,16 +224,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, 
   @Override
   public V remove(@NotNull Object key) {
     processQueue();
-
-    // optimization:
-    //noinspection unchecked
-    myHardKeyInstance.set((K)key);
-    try {
-      return myMap.remove(myHardKeyInstance);
-    }
-    finally {
-      myHardKeyInstance.clear();
-    }
+    return myMap.removeByKey(key);
   }
 
   @Override
@@ -346,24 +337,9 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, 
       if (!(o instanceof Entry)) return false;
       //noinspection unchecked
       Entry<K, V> e = (Entry<K, V>)o;
-      V ev = e.getValue();
-
-      // optimization: do not recreate the key
-      HardKey key = myHardKeyInstance;
-      boolean toRemove;
-      try {
-        key.set(e.getKey());
-
-        V hv = myMap.get(key);
-        toRemove = hv == null ? ev == null && myMap.containsKey(key) : hv.equals(ev);
-        if (toRemove) {
-          myMap.remove(key);
-        }
-      }
-      finally {
-        key.clear();
-      }
-      return toRemove;
+      V value = e.getValue();
+      K key = e.getKey();
+      return myMap.removeByKey(key, value);
     }
 
     @Override

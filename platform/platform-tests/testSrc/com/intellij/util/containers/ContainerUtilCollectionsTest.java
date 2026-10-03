@@ -17,6 +17,7 @@ import org.junit.rules.TestRule;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
+import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -351,9 +352,20 @@ public class ContainerUtilCollectionsTest extends Assert {
     Map<String, String> map = CollectionFactory.createSoftMap(IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
 
     map.put("ab", "ab");
+    map.put("cb", "cb");
+    map.put("db", null);
     assertEquals("ab", map.get("AB"));
+    assertEquals("cb", map.get("CB"));
+    assertTrue(map.containsKey("DB"));
     String removed = map.remove("aB");
     assertEquals("ab", removed);
+    assertEquals("cb", map.get("CB"));
+    assertTrue(map.containsKey("DB"));
+    assertTrue(map.entrySet().remove(new AbstractMap.SimpleEntry<>("cB", "cb")));
+    assertFalse(map.containsKey("CB"));
+    assertTrue(map.containsKey("DB"));
+    assertNull(map.remove("dB"));
+    assertFalse(map.containsKey("DB"));
     assertTrue(map.isEmpty());
   }
 
