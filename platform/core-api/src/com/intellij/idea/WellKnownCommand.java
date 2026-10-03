@@ -81,6 +81,7 @@ public final class WellKnownCommand {
     put("installCoursePlugins", HEADLESS);
     put("createCourse", HEADLESS);
     put("mcpServer", HEADLESS);
+    put("storybook-connect", HEADLESS);
 
     put("thinClient", GUI);
     put("thinClient-headless", HEADLESS);
