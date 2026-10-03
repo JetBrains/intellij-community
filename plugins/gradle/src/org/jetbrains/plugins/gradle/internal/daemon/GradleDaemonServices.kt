@@ -239,17 +239,41 @@ private fun obtainDaemonClientFactory(connection: ConsumerConnection?): Any? {
                             ConsumerConnection::class.java, "delegate")
     if (delegate is AbstractConsumerConnection) {
       val connectionVersion4 = delegate.delegate
-      val providerConnectionField = connectionVersion4.javaClass.getDeclaredField("connection")
-      providerConnectionField.isAccessible = true
-      val providerConnection = getFieldValue<Any?>(providerConnectionField, connectionVersion4)
+      val providerConnection = obtainProviderConnection(connectionVersion4) ?: return null
 
-      val daemonClientFactoryField = providerConnection!!.javaClass.getDeclaredField("daemonClientFactory")
+      val daemonClientFactoryField = providerConnection.javaClass.getDeclaredField("daemonClientFactory")
       daemonClientFactoryField.isAccessible = true
 
       return getFieldValue<Any>(daemonClientFactoryField, providerConnection)!!
     }
   }
   return null
+}
+
+/**
+ * Obtains the provider-side `org.gradle.tooling.internal.provider.ProviderConnection` from the
+ * `org.gradle.tooling.internal.provider.DefaultConnection` instance.
+ *
+ * Gradle 9.4 and older keep it in the `connection` field. Since Gradle 9.5 it is looked up from the
+ * `clientServices` service registry, which is created lazily on the first (non-embedded) operation.
+ */
+@Throws(Exception::class)
+private fun obtainProviderConnection(connectionVersion4: Any): Any? {
+  val defaultConnectionClass = connectionVersion4.javaClass
+  val providerConnectionField = defaultConnectionClass.declaredFields.find { it.name == "connection" }
+  if (providerConnectionField != null) {
+    providerConnectionField.isAccessible = true
+    return getFieldValue<Any?>(providerConnectionField, connectionVersion4)
+  }
+
+  val clientServicesField = defaultConnectionClass.getDeclaredField("clientServices")
+  clientServicesField.isAccessible = true
+  val clientServices = getFieldValue<Any?>(clientServicesField, connectionVersion4) ?: return null
+
+  val classLoader = defaultConnectionClass.classLoader
+  val serviceRegistryClass = classLoader.loadClass("org.gradle.internal.service.ServiceRegistry")
+  val providerConnectionClass = classLoader.loadClass("org.gradle.tooling.internal.provider.ProviderConnection")
+  return serviceRegistryClass.getMethod("get", Class::class.java).invoke(clientServices, providerConnectionClass)
 }
 
 private fun forEachConnection(knownGradleUserHomes: Set<String?>, closure: BiConsumer<ConsumerConnection, String?>) {

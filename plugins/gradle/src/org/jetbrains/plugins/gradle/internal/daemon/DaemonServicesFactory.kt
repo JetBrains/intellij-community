@@ -25,7 +25,7 @@ fun getDaemonServiceFactory(daemonClientFactory: DaemonClientFactory, myServiceD
   val layoutParameters = getBuildLayoutParameters(myServiceDirectoryPath)
   val daemonParameters = getDaemonParameters(layoutParameters)
   return when {
-    GradleVersionUtil.isCurrentGradleAtLeast("8.13") -> getDaemonServicesAfter8Dot13(daemonClientFactory, daemonParameters)
+    GradleVersionUtil.isCurrentGradleAtLeast("8.13") -> getDaemonServicesAfter8Dot13(daemonClientFactory, daemonParameters, layoutParameters)
     GradleVersionUtil.isCurrentGradleAtLeast("8.8") -> getDaemonServicesAfter8Dot8(daemonClientFactory, daemonParameters)
     else -> getDaemonServicesBefore8Dot8(daemonClientFactory, daemonParameters)
   }
@@ -54,10 +54,42 @@ private fun getDaemonServicesBefore8Dot8(daemonClientFactory: DaemonClientFactor
   }
 }
 
-private fun getDaemonServicesAfter8Dot13(daemonClientFactory: DaemonClientFactory, parameters: DaemonParameters): ServiceRegistry {
+private fun getDaemonServicesAfter8Dot13(
+  daemonClientFactory: DaemonClientFactory,
+  parameters: DaemonParameters,
+  layoutParameters: BuildLayoutParameters,
+): ServiceRegistry {
   try {
     val daemonRequestContextClass = Class.forName("org.gradle.launcher.daemon.context.DaemonRequestContext")
     val serviceLookupClass = Class.forName("org.gradle.internal.service.ServiceLookup")
+    val serviceLookupDelegate = getGradleServiceLookup()
+    val serviceLookup: Any = GradleServiceLookupProxy.newProxyInstance(serviceLookupDelegate)
+    val requestContext = getDaemonRequestContextAfter8Dot8()
+
+    // Gradle 9.5 added a BuildLayoutConfiguration parameter
+    val buildLayoutConfigurationClass = findClass("org.gradle.initialization.layout.BuildLayoutConfiguration")
+    val createBuildClientServicesWithLayoutMethod = buildLayoutConfigurationClass?.let {
+      DaemonClientFactory::class.java.declaredMethods.find { method ->
+        method.name == "createBuildClientServices" &&
+        method.parameterTypes.contentEquals(arrayOf(serviceLookupClass, DaemonParameters::class.java, daemonRequestContextClass, it,
+                                                    InputStream::class.java, Optional::class.java))
+      }
+    }
+    if (buildLayoutConfigurationClass != null && createBuildClientServicesWithLayoutMethod != null) {
+      val buildLayoutConfiguration = buildLayoutConfigurationClass
+        .getConstructor(BuildLayoutParameters::class.java)
+        .newInstance(layoutParameters)
+      return createBuildClientServicesWithLayoutMethod.invoke(
+        daemonClientFactory,
+        serviceLookup,
+        parameters,
+        requestContext,
+        buildLayoutConfiguration,
+        ByteArrayInputStream(ByteArray(0)),
+        Optional.empty<InternalBuildProgressListener>()
+      ) as ServiceRegistry
+    }
+
     val createBuildClientServicesMethod: Method = DaemonClientFactory::class.java.getDeclaredMethod(
       "createBuildClientServices",
       serviceLookupClass,
@@ -66,9 +98,6 @@ private fun getDaemonServicesAfter8Dot13(daemonClientFactory: DaemonClientFactor
       InputStream::class.java,
       Optional::class.java
     )
-    val serviceLookupDelegate = getGradleServiceLookup()
-    val serviceLookup: Any = GradleServiceLookupProxy.newProxyInstance(serviceLookupDelegate)
-    val requestContext = getDaemonRequestContextAfter8Dot8()
     return createBuildClientServicesMethod.invoke(
       daemonClientFactory,
       serviceLookup,
@@ -83,6 +112,15 @@ private fun getDaemonServicesAfter8Dot13(daemonClientFactory: DaemonClientFactor
   }
   catch (e: ClassCastException) {
     throw RuntimeException("Unable to cast the result of the invocation to ServiceRegistry. Gradle version: " + GradleVersion.current(), e)
+  }
+}
+
+private fun findClass(name: String): Class<*>? {
+  return try {
+    Class.forName(name)
+  }
+  catch (_: ClassNotFoundException) {
+    null
   }
 }
 
