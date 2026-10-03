@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.UIDefaults;
+import javax.swing.UIManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.LinkedList;
@@ -64,16 +65,22 @@ public abstract class JBValue {
    */
   public static final class UIInteger extends JBValue {
     private final @NotNull String key;
-    private final int defValue;
+    private final @NotNull JBValue defValue;
 
     public UIInteger(@NotNull String key, int defValue) {
+      this(key, new Float(defValue));
+    }
+
+    @ApiStatus.Internal
+    public UIInteger(@NotNull String key, @NotNull JBValue defValue) {
       this.key = key;
       this.defValue = defValue;
     }
 
     @Override
     public float getUnscaled() {
-      return JBUI.getInt(key, defValue);
+      Object value = UIManager.get(key);
+      return value instanceof Integer ? (Integer)value : defValue.getUnscaled();
     }
   }
 

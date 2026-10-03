@@ -262,6 +262,8 @@
     "ToolTip": {
       "background": "TooltipBackground",
       "borderColor": "TooltipBorder",
+      "borderCornerRadius": 6,
+      "multilineBorderCornerRadius": 8,
       "foreground": "#bfbfbf"
     },
 

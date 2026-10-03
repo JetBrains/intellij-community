@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.PopupCornerType
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -37,6 +38,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.HintHint
 import com.intellij.ui.JBColor
 import com.intellij.ui.ScreenUtil
+import com.intellij.ui.WindowRoundedCornersManager
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBHtmlPane
 import com.intellij.ui.components.JBHtmlPaneConfiguration
@@ -697,8 +699,10 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
     tooltip.tipComponent.font = if (tooltip.font == null) getTextFont(awtTooltip = true) else tooltip.font
 
     if (tooltip.isPointerShiftedToStart) {
-      builder.setPointerShiftedToStart(true).setCornerRadius(JBUI.scale(8))
+      builder.setPointerShiftedToStart(true)
     }
+    val cornerType = tooltip.popupCornerType ?: PopupCornerType.RoundedTooltip
+    builder.setCornerRadius(WindowRoundedCornersManager.cornerRadius(cornerType).get())
 
     val balloon = builder.createBalloon()
     this.balloon = balloon

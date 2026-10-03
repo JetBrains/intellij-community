@@ -4902,6 +4902,7 @@ com.intellij.openapi.ui.popup.PopupChooserBuilder$PopupComponentAdapter
 e:com.intellij.openapi.ui.popup.PopupCornerType
 - java.lang.Enum
 - sf:None:com.intellij.openapi.ui.popup.PopupCornerType
+- sf:RoundedMultilineTooltip:com.intellij.openapi.ui.popup.PopupCornerType
 - sf:RoundedTooltip:com.intellij.openapi.ui.popup.PopupCornerType
 - sf:RoundedWindow:com.intellij.openapi.ui.popup.PopupCornerType
 - s:valueOf(java.lang.String):com.intellij.openapi.ui.popup.PopupCornerType

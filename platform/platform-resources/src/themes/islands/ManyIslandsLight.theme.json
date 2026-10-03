@@ -1070,6 +1070,8 @@
 
     "ToolTip":{
       "background": "feedback-bg",
+      "borderCornerRadius": 6,
+      "multilineBorderCornerRadius": 8,
       "foreground": "text-default",
       "infoForeground": "text-muted",
       "shortcutForeground": "text-secondary",

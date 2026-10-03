@@ -4830,6 +4830,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Toolbar
 - s:verticalToolbarInsets():java.awt.Insets
 f:com.intellij.util.ui.JBUI$CurrentTheme$Tooltip
 - sf:CORNER_RADIUS:com.intellij.util.ui.JBValue
+- sf:MULTILINE_CORNER_RADIUS:com.intellij.util.ui.JBValue
 - s:background():java.awt.Color
 - s:borderColor():java.awt.Color
 - s:font():java.awt.Font

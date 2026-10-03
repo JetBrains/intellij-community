@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupCornerType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -223,7 +224,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     }
 
     if (ExperimentalUI.isNewUI()) {
-      tooltip.setPointerSize(JBUI.size(16, 8)).setPointerShiftedToStart(true);
+      tooltip.setPointerSize(JBUI.size(16, 8))
+        .setPointerShiftedToStart(true)
+        .setPopupCornerType(PopupCornerType.RoundedMultilineTooltip);
     }
 
     myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, hintHint.isShowImmediately(), hintHint.isAnimationEnabled());

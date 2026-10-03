@@ -636,7 +636,11 @@ open class HelpTooltip {
       myToolTipText = text
       val tipPanel: JComponent = createTipPanel()
       tipPanel.addMouseListener(createIsOverTipMouseListener())
-      val popupBuilder: ComponentPopupBuilder = initPopupBuilder(tipPanel)
+      val popupCornerType = if (isMultiline)
+                              PopupCornerType.RoundedMultilineTooltip
+                            else
+                              PopupCornerType.RoundedTooltip
+      val popupBuilder: ComponentPopupBuilder = initPopupBuilder(tipPanel, popupCornerType)
       myPopup = popupBuilder.createPopup()
       myPopup!!.show(
         RelativePoint(
@@ -824,13 +828,16 @@ open class HelpTooltip {
 
     @ApiStatus.Internal
     @JvmStatic
-    fun initPopupBuilder(tipPanel: JComponent): ComponentPopupBuilder {
+    fun initPopupBuilder(
+      tipPanel: JComponent,
+      cornerType: PopupCornerType = PopupCornerType.RoundedTooltip,
+    ): ComponentPopupBuilder {
       return JBPopupFactory.getInstance()
         .createComponentPopupBuilder(tipPanel, null)
         .setShowBorder(UIManager.getBoolean("ToolTip.paintBorder"))
         .setBorderColor(JBUI.CurrentTheme.Tooltip.borderColor())
         .setShowShadow(true)
-        .addUserData(PopupCornerType.RoundedTooltip)
+        .addUserData(cornerType)
     }
 
     private fun createLongHtmlTextTitle(
