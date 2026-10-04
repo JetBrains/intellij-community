@@ -614,8 +614,12 @@ class SoftwareBillOfMaterialsImpl(
     }
   }
 
+  // cache-redirector serves an upstream either under its own host (".../repo1.maven.org/maven2") or under an
+  // alias (".../maven/ultimate-public"). Only the first names a host to point the SBOM at; an alias is itself the
+  // public download URL.
   private fun translateRepositoryUrl(url: String): String {
-    return url.replace("https://cache-redirector.jetbrains.com/", "https://")
+    val path = url.removePrefix("https://cache-redirector.jetbrains.com/")
+    return if (path != url && '.' in path.substringBefore('/')) "https://$path" else url
   }
 
   private inner class MavenLibrary(
