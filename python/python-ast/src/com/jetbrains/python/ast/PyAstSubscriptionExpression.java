@@ -28,6 +28,11 @@ public interface PyAstSubscriptionExpression extends PyAstQualifiedExpression, P
 
   @Override
   default @NotNull List<@NotNull PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
+    return Collections.unmodifiableList(getArguments());
+  }
+
+  @ApiStatus.Internal
+  default @NotNull List<? extends @NotNull PyAstExpression> getArguments() {
     List<PyAstExpression> result = new ArrayList<>();
     ContainerUtil.addIfNotNull(result, getIndexExpression());
     if (AccessDirection.of(this) == AccessDirection.WRITE && getParent() instanceof PyAstAssignmentStatement assignment) {

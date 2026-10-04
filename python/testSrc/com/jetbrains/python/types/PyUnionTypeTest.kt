@@ -604,13 +604,13 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    fun `union with LiteralString collapses on string concatenation`() = test("""
+    fun `union with LiteralString preserves string members on concatenation`() = test("""
       from typing import LiteralString
       
       x: LiteralString | str | int
       expr = x + "foo"
       #│       └ WARNING '+' is not supported between 'int' and 'Literal["foo"]'
-      #└ TYPE LiteralString FIXME LiteralString | str | Any # PY-90517
+      #└ TYPE LiteralString | str FIXME LiteralString | str | Any # PY-90517
       """.trimIndent())
   }
 

@@ -996,7 +996,7 @@ class PyTypeHintsInspection : PyInspection() {
                     registerParametrizedGenericsProblem(qName, base)
                   }
                   else if (base is PySubscriptionExpression) {
-                    base.arguments?.forEach {
+                    getArguments(base)?.forEach {
                       argument -> checkInstanceAndClassChecksOn(argument)
                     }
                   }
@@ -1168,7 +1168,7 @@ class PyTypeHintsInspection : PyInspection() {
               it in listOf(genericQName, protocolQName, protocolExtQName)
             }
 
-          val arguments = superSubscription.arguments ?: emptyArray()
+          val arguments = getArguments(superSubscription) ?: emptyArray()
           val superClassTypeVars = arguments
             .asSequence()
             .filterIsInstance<PyReferenceExpression>()
@@ -1638,7 +1638,7 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkGenericTypeArguments(node: PySubscriptionExpression, isCallable: Boolean = false): List<PyType?>? {
-      val arguments = node.arguments ?: return null
+      val arguments = getArguments(node) ?: return null
       val argumentTypes = mutableListOf<PyType?>()
 
       for ((index, argument) in arguments.withIndex()) {
@@ -1704,7 +1704,7 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun checkTupleTypeForm(node: PySubscriptionExpression) {
       if (!node.isBuiltinTupleTypeForm(myTypeEvalContext)) return
-      val arguments = node.arguments ?: return
+      val arguments = getArguments(node) ?: return
 
       for ((index, argument) in arguments.withIndex()) {
         when (val flatArgument = PyPsiUtils.flattenParens(argument)) {
@@ -1753,7 +1753,7 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkTypingGenericParameters(node: PySubscriptionExpression, isProtocol: Boolean) {
-      val typeExpressions = node.arguments ?: return
+      val typeExpressions = getArguments(node) ?: return
       val typeParams = mutableSetOf<PyTypeParameterType>()
       val typeParamDeclarations = mutableSetOf<PyQualifiedNameOwner>()
       var lastIsDefault = false
@@ -2381,11 +2381,10 @@ private val SPECIAL_FORMS_WITHOUT_PARAM_SPEC_ARGUMENTS: Set<String> = setOf(
   PyTypingTypeProvider.TYPE, PyNames.FQN.TYPE,
 )
 
-private val PySubscriptionExpression.arguments: Array<PyExpression>?
-  get() {
-    val flatIndexExpr = PyPsiUtils.flattenParens(this.indexExpression) ?: return null
-    return (flatIndexExpr as? PyTupleExpression)?.elements ?: arrayOf(flatIndexExpr)
-  }
+private fun getArguments(expression: PySubscriptionExpression): Array<PyExpression>? {
+  val flatIndexExpr = PyPsiUtils.flattenParens(expression.indexExpression) ?: return null
+  return (flatIndexExpr as? PyTupleExpression)?.elements ?: arrayOf(flatIndexExpr)
+}
 
 private fun PySubscriptionExpression.isBuiltinTupleTypeForm(context: TypeEvalContext): Boolean {
   val operandType = context.getType(operand)
@@ -2455,7 +2454,7 @@ private class ParamSpecComponent private constructor(
       is PyStringLiteralExpression -> PyUtil.createExpressionFromFragment(expression.stringValue, expression)
       is PySubscriptionExpression if PyTypingTypeProvider.resolveToQualifiedNames(expression.operand, context).any {
         it == PyTypingTypeProvider.ANNOTATED || it == PyTypingTypeProvider.ANNOTATED_EXT
-      } -> expression.arguments?.firstOrNull()?.let { unwrapTypeHint(it, context) }
+      } -> getArguments(expression)?.firstOrNull()?.let { unwrapTypeHint(it, context) }
       else -> expression
     }
 

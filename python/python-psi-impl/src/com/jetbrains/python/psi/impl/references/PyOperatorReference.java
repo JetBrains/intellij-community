@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.impl.references;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,6 +50,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.packNullables;
+import static com.jetbrains.python.ast.PyAstBinaryExpression.getChainedComparisonAwareLeftExpression;
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
@@ -61,27 +62,39 @@ public class PyOperatorReference extends PyReferenceBase {
 
   @Override
   protected @NotNull List<RatedResolveResult> resolveInner() {
-    return ContainerUtil.flatMap(resolveGroupingByReceiver(), it -> it.second);
+    return ContainerUtil.flatMap(resolveOperator(), OperatorResolveResult::resolveResults);
   }
 
-  public @NotNull List<Pair<@NotNull PyType, @NotNull List<RatedResolveResult>>> resolveGroupingByReceiver() {
+  public record OperatorResolveResult(@NotNull PyType selfType,
+                                      @NotNull List<PyExpression> arguments,
+                                      @NotNull OperatorSide side,
+                                      @NotNull List<? extends RatedResolveResult> resolveResults) { }
+
+  public enum OperatorSide {
+    INPLACE,
+    LEFT,
+    RIGHT,
+  }
+
+  public @NotNull List<OperatorResolveResult> resolveOperator() {
     if (myElement instanceof PyAugAssignmentStatement stmt) {
       return resolveInlineAndLeftAndRightOperators(stmt, stmt.getReferencedName());
     }
     else if (myElement instanceof PyBinaryExpression expr) {
       final String name = expr.getReferencedName();
       if (PyNames.STANDALONE_RIGHT_OPERATORS.contains(name)) {
-        return resolveMember(expr.getRightExpression(), name);
+        var leftOperand = (PyExpression)getChainedComparisonAwareLeftExpression(expr);
+        return resolveMember(expr.getRightExpression(), packNullables(leftOperand), OperatorSide.RIGHT, name);
       }
       else {
         return resolveLeftAndRightOperators(expr, name);
       }
     }
     else if (myElement instanceof PySubscriptionExpression expr) {
-      return resolveMember(expr.getOperand(), expr.getReferencedName());
+      return resolveMember(expr.getOperand(), expr.getArguments(), OperatorSide.LEFT, expr.getReferencedName());
     }
     else if (myElement instanceof PyPrefixExpression expr) {
-      return resolveMember(expr.getOperand(), expr.getReferencedName());
+      return resolveMember(expr.getOperand(), List.of(), OperatorSide.LEFT, expr.getReferencedName());
     }
     return Collections.emptyList();
   }
@@ -119,13 +132,13 @@ public class PyOperatorReference extends PyReferenceBase {
     };
   }
 
-  private @NotNull List<Pair<@NotNull PyType, @NotNull List<RatedResolveResult>>>
-  resolveLeftAndRightOperators(@NotNull PyBinaryExpression expr, @Nullable String name) {
-    final @NotNull List<Pair<@NotNull PyType, @NotNull List<RatedResolveResult>>> result = new ArrayList<>();
+  private @NotNull List<OperatorResolveResult> resolveLeftAndRightOperators(@NotNull PyBinaryExpression expr, @Nullable String name) {
+    final @NotNull List<OperatorResolveResult> result = new ArrayList<>();
+    final PyExpression leftOperand = (PyExpression)getChainedComparisonAwareLeftExpression(expr);
 
     final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
     typeEvalContext.traceWithIndent("Trying to resolve left operator", () -> {
-      result.addAll(resolveMember(expr.getReceiver(null), name));
+      result.addAll(resolveMember(leftOperand, packNullables(expr.getRightExpression()), OperatorSide.LEFT, name));
       return Unit.INSTANCE;
     });
 
@@ -133,33 +146,36 @@ public class PyOperatorReference extends PyReferenceBase {
     // reflected operator on the right; skipping it here keeps inherited typeshed signatures
     // out of the inferred type. Instance-receiver paths still need both candidates (e.g. for
     // stub-defined numpy operators).
-    if (isMetaclassDispatch(expr.getReceiver(null)) &&
-        hasUserDefinedResolution(StreamEx.of(result).flatMap(it -> it.second.stream()))) {
+    if (isMetaclassDispatch(leftOperand) &&
+        hasUserDefinedResolution(StreamEx.of(result).flatMap(it -> it.resolveResults().stream()))) {
       return result;
     }
 
     typeEvalContext.traceWithIndent("Trying to resolve right operator", () -> {
-      result.addAll(resolveMember(expr.getRightExpression(), PyNames.leftToRightOperatorName(name)));
+      result.addAll(resolveMember(expr.getRightExpression(), packNullables(leftOperand), OperatorSide.RIGHT,
+                                   PyNames.leftToRightOperatorName(name)));
       return Unit.INSTANCE;
     });
     return result;
   }
 
-  private @NotNull List<Pair<@NotNull PyType, @NotNull List<RatedResolveResult>>>
-  resolveInlineAndLeftAndRightOperators(@NotNull PyAugAssignmentStatement stmt, @Nullable String name) {
-    final @NotNull List<Pair<@NotNull PyType, @NotNull List<RatedResolveResult>>> result = new ArrayList<>();
+  private @NotNull List<OperatorResolveResult> resolveInlineAndLeftAndRightOperators(@NotNull PyAugAssignmentStatement stmt,
+                                                                                     @Nullable String name) {
+    final @NotNull List<OperatorResolveResult> result = new ArrayList<>();
 
     final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
     typeEvalContext.traceWithIndent("Trying to resolve inplace operator", () -> {
-      result.addAll(resolveMember(stmt.getTarget(), name));
+      result.addAll(resolveMember(stmt.getTarget(), packNullables(stmt.getValue()), OperatorSide.INPLACE, name));
       return Unit.INSTANCE;
     });
     typeEvalContext.traceWithIndent("Trying to resolve left operator", () -> {
-      result.addAll(resolveMember(stmt.getTarget(), PyNames.inplaceToLeftOperatorName(name)));
+      result.addAll(resolveMember(stmt.getTarget(), packNullables(stmt.getValue()), OperatorSide.LEFT,
+                                   PyNames.inplaceToLeftOperatorName(name)));
       return Unit.INSTANCE;
     });
     typeEvalContext.traceWithIndent("Trying to resolve right operator", () -> {
-      result.addAll(resolveMember(stmt.getValue(), PyNames.inplaceToRightOperatorName(name)));
+      result.addAll(resolveMember(stmt.getValue(), packNullables(stmt.getTarget()), OperatorSide.RIGHT,
+                                   PyNames.inplaceToRightOperatorName(name)));
       return Unit.INSTANCE;
     });
     return result;
@@ -178,14 +194,16 @@ public class PyOperatorReference extends PyReferenceBase {
     return type instanceof PyClassLikeType classLikeType && classLikeType.isDefinition();
   }
 
-  private @NotNull List<Pair<@NotNull PyType, @NotNull List<RatedResolveResult>>> resolveMember(@Nullable PyExpression object,
-                                                                                                @Nullable String name) {
+  private @NotNull List<OperatorResolveResult> resolveMember(@Nullable PyExpression object,
+                                                             @NotNull List<PyExpression> arguments,
+                                                             @NotNull OperatorSide side,
+                                                             @Nullable String name) {
     if (object != null && name != null) {
       final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
       final PyType type = typeEvalContext.getType(object);
       typeEvalContext.trace("Side text is %s, type is %s", object.getText(), type);
       if (!isAnyOrUnknown(type)) {
-        final List<@NotNull Pair<@NotNull PyType, @NotNull List<? extends RatedResolveResult>>> res = new ArrayList<>();
+        final List<OperatorResolveResult> res = new ArrayList<>();
         for (PyType it : PyTypeUtil.toStream(type)) {
           if (isUnknown(it)) continue;
           var resolved = it instanceof PyClassLikeType && ((PyClassLikeType)it).isDefinition()
@@ -193,12 +211,12 @@ public class PyOperatorReference extends PyReferenceBase {
                          : it.resolveMember(name, object, AccessDirection.of(myElement), myContext);
 
           if (!ContainerUtil.isEmpty(resolved)) {
-            res.add(Pair.create(it, resolved));
+            res.add(new OperatorResolveResult(it, arguments, side, resolved));
           }
         }
 
         if (!res.isEmpty()) {
-          return ContainerUtil.map(res, pair -> Pair.create(pair.first, new ArrayList<>(pair.second)));
+          return res;
         }
         else if (typeEvalContext.tracing()) {
           VirtualFile vFile = null;

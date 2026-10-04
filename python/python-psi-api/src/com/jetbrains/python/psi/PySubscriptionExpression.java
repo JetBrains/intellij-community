@@ -2,12 +2,21 @@
 package com.jetbrains.python.psi;
 
 import com.jetbrains.python.ast.PyAstSubscriptionExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 
 public interface PySubscriptionExpression
   extends PyAstSubscriptionExpression, PyQualifiedExpression, PyCallSiteExpression, PyReferenceOwner {
+
+  @Override
+  @ApiStatus.Internal
+  default @NotNull List<@NotNull PyExpression> getArguments() {
+    //noinspection unchecked
+    return (List)PyAstSubscriptionExpression.super.getArguments();
+  }
 
   /**
    * @return For {@code spam[x][y][n]} will return {@code spam} regardless number of its dimensions

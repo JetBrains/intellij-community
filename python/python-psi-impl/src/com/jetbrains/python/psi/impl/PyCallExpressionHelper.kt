@@ -13,6 +13,7 @@ import com.intellij.util.containers.addIfNotNull
 import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
+import com.jetbrains.python.ast.PyAstBinaryExpression
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
@@ -48,6 +49,7 @@ import com.jetbrains.python.psi.PyTupleParameter
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.references.PyOperatorReference
+import com.jetbrains.python.psi.impl.references.PyOperatorReference.OperatorSide
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult
@@ -183,28 +185,18 @@ object PyCallExpressionHelper {
     }
   }
 
-  private fun multiResolveOperator(operatorOwner: PyQualifiedElement, resolveContext: PyResolveContext): List<PyCallableType> {
-    return multiResolveOperatorGroupedByReceiver(operatorOwner, resolveContext).flatMap { it.second }
-  }
-
-  /**
-   * Like [multiResolveOperator], but keeps the resolved operator callables grouped by their receiver instead of
-   * flattening them. Each pair is a receiver type (a union member when the operand is a union) together with the
-   * operator callables bound to it. This lets a caller enforce union semantics — every union member must accept the
-   * other operand — by checking each group independently, rather than the any-match semantics of the flattened list.
-   */
   @JvmStatic
-  fun multiResolveOperatorGroupedByReceiver(
+  fun multiResolveOperator(
     operatorOwner: PyQualifiedElement,
     resolveContext: PyResolveContext,
-  ): List<Pair<PyType, List<PyCallableType>>> {
+  ): List<ResolvedOperator> {
     val context = resolveContext.typeEvalContext
 
     return PyOperatorReference(operatorOwner, resolveContext)
-      .resolveGroupingByReceiver()
+      .resolveOperator()
       .map {
-        val selfType = it.first
-        val resolveResults = it.second
+        val selfType = it.selfType
+        val resolveResults = it.resolveResults
         val boundType = if (selfType is PyClassType) {
           PyTypeUtil.getTypeOfBoundMember(selfType, resolveResults, context)
         }
@@ -223,7 +215,7 @@ object PyCallExpressionHelper {
             )
           }
         }
-        selfType to PyTypeUtil.getCallableItems(boundType)
+        ResolvedOperator(selfType, boundType, it.arguments, it.side)
       }
   }
 
@@ -578,23 +570,9 @@ object PyCallExpressionHelper {
     return getCallType(multiResolveOperator(expression, resolveContext), expression, context)
   }
 
-  @Deprecated(message = "Use `getCallType(PyType?, List<PyCallableArgument>, TypeEvalContext)`")
-  private fun getCallType(types: List<PyCallableType>, callSite: PyCallSiteOwner, context: TypeEvalContext): PyType? {
-    return types.filter { it.isCallable }
-      .groupBy {
-        val callable = it.callable
-        ScopeUtil.getScopeOwner(callable) to (callable != null && PyiUtil.isOverload(callable, context))
-      }
-      .values.flatMap { sameScopeTypes ->
-        val firstCallable = sameScopeTypes[0].callable
-        if (firstCallable != null && PyiUtil.isOverload(firstCallable, context)) {
-          val arguments = callSite.getCallableArguments(firstCallable)
-          listOf(resolveOverloadsCallType(sameScopeTypes, callSite, arguments, context).type)
-        }
-        else {
-          sameScopeTypes.map { it.getCallType(context, callSite, callSite.getCallableArguments(it.callable)) }
-        }
-      }
+  private fun getCallType(operators: List<ResolvedOperator>, callSite: PyCallSiteOwner, context: TypeEvalContext): PyType? {
+    return operators
+      .map { doGetCallType(it.method, callSite, it.arguments.map(::PyCallableArgument), context).type }
       .let(PyUnionType::unionOrUnknown)
   }
 
@@ -611,12 +589,12 @@ object PyCallExpressionHelper {
   }
 
   private fun getOperatorCallType(expression: PyBinaryExpression, context: TypeEvalContext): PyType? {
-    val leftExpr = expression.leftExpression ?: return PyAnyType.unknown
+    val leftExpr = PyAstBinaryExpression.getChainedComparisonAwareLeftExpression(expression) as? PyExpression ?: return PyAnyType.unknown
     val rightExpr = expression.rightExpression ?: return PyAnyType.unknown
 
     val resolveContext = PyResolveContext.defaultContext(context)
-    val callableTypes = multiResolveOperator(expression, resolveContext)
-    val matchingCallableTypes = callableTypes.filter { matchesByArgumentTypes(it, expression.getCallableArguments(it.callable), context) }
+    val operators = multiResolveOperator(expression, resolveContext)
+    val matchingOperators = operators.filter { matchesByArgumentTypes(it, context) }
 
     val leftType = context.getType(leftExpr)
     val rightType = context.getType(rightExpr)
@@ -626,16 +604,16 @@ object PyCallExpressionHelper {
                              rightType is PyClassType && rightType.isDefinition)
 
     if (PyTypingTypeProvider.isInsideTypeHint(expression, context) || isTypeUnionSyntax) {
-      return getCallType(matchingCallableTypes.ifEmpty { callableTypes }, expression, context)
+      return getCallType(matchingOperators.ifEmpty { operators }, expression, context)
     }
 
-    val normalOperators = matchingCallableTypes.filter { !expression.isRightOperator(it.callable) }
+    val normalOperators = matchingOperators.filter { it.side != OperatorSide.RIGHT }
 
     return if (normalOperators.isNotEmpty() && areAllTypesCoveredByCandidates(leftExpr, normalOperators, context)) {
       getCallType(normalOperators, expression, context)
     }
     else {
-      getCallType(matchingCallableTypes.ifEmpty { callableTypes }, expression, context)
+      getCallType(matchingOperators.ifEmpty { operators }, expression, context)
     }
   }
 
@@ -646,24 +624,16 @@ object PyCallExpressionHelper {
 
   private fun getOperatorCallType(statement: PyAugAssignmentStatement, context: TypeEvalContext): PyType? {
     val resolveContext = PyResolveContext.defaultContext(context)
-    val callableTypes = multiResolveOperator(statement, resolveContext)
+    val operators = multiResolveOperator(statement, resolveContext)
 
-    val matchingCallableTypes = callableTypes.filter { matchesByArgumentTypes(it, statement.getCallableArguments(it.callable), context) }
+    val matchingOperators = operators.filter { matchesByArgumentTypes(it, context) }
 
-    val inplaceOperators = matchingCallableTypes.filter { callableType ->
-      val callable = callableType.callable
-      callable is PyFunction && statement.isInplaceOperator(callable)
-    }
+    val inplaceOperators = matchingOperators.filter { it.side == OperatorSide.INPLACE }
     if (inplaceOperators.isNotEmpty() && areAllTypesCoveredByCandidates(statement.target, inplaceOperators, context)) {
       return getCallType(inplaceOperators, statement, context)
     }
 
-    val normalOperators = matchingCallableTypes.filter { callableType ->
-      val callable = callableType.callable
-      callable is PyFunction &&
-      !statement.isInplaceOperator(callable) &&
-      !statement.isRightOperator(callable)
-    }
+    val normalOperators = matchingOperators.filter { it.side == OperatorSide.LEFT }
     if (normalOperators.isNotEmpty() && areAllTypesCoveredByCandidates(statement.target, normalOperators, context)) {
       return getCallType(normalOperators, statement, context)
     }
@@ -673,7 +643,7 @@ object PyCallExpressionHelper {
       return getCallType(leftOperators, statement, context)
     }
 
-    return getCallType(matchingCallableTypes.ifEmpty { callableTypes }, statement, context)
+    return getCallType(matchingOperators.ifEmpty { operators }, statement, context)
   }
 
   /**
@@ -689,21 +659,11 @@ object PyCallExpressionHelper {
 
   private fun areAllTypesCoveredByCandidates(
     operandExpression: PyExpression,
-    candidates: List<PyCallableType>,
+    candidates: List<ResolvedOperator>,
     context: TypeEvalContext,
   ): Boolean {
-    val operandType = context.getType(operandExpression)
-    val operandMemberTypes = operandType.toStream().toList()
-
-    val candidateOwners = candidates
-      .mapNotNull { ScopeUtil.getScopeOwner(it.callable) as? PyClass }
-      .mapNotNull { it.getType(context)?.toInstance() }
-      .toSet()
-
-    return operandMemberTypes.all { member ->
-      member is PyClassType && candidateOwners.any { owner ->
-        PyTypeChecker.match(owner, member, context)
-      }
+    return context.getType(operandExpression).toStream().allMatch { member ->
+      member is PyClassType && candidates.any { it.selfType == member }
     }
   }
 
@@ -948,7 +908,11 @@ object PyCallExpressionHelper {
     val callableTypes = when (expression) {
       is PyCallExpression -> expression.multiResolveCallee(resolveContext)
       is PyClass -> expression.resolveInitSubclassCallee(resolveContext)
-      is PyQualifiedExpression -> multiResolveOperator(expression, resolveContext)
+      is PyQualifiedExpression -> return multiResolveOperator(expression, resolveContext).flatMap { operator ->
+        PyTypeUtil.getCallableItems(operator.method).map {
+          mapArguments(expression, operator.arguments, it, resolveContext.typeEvalContext)
+        }
+      }
       else -> emptyList()
     }
     return callableTypes.map { mapArguments(expression, it, resolveContext.typeEvalContext) }
@@ -1685,6 +1649,11 @@ object PyCallExpressionHelper {
       }
   }
 
+  private fun matchesByArgumentTypes(operator: ResolvedOperator, context: TypeEvalContext): Boolean {
+    val arguments = operator.arguments.map { PyCallableArgument(it) }
+    return PyTypeUtil.getCallableItems(operator.method).any { matchesByArgumentTypes(it, arguments, context) }
+  }
+
   private fun matchesByArgumentTypes(function: PyCallableType, arguments: List<PyCallableArgument>, context: TypeEvalContext): Boolean {
     PyCodeInsightCounters.inc(Counter.OVERLOAD_CANDIDATES_CHECKED)
     val parameters = function.getParameters(context)?.let { unpackParameters(it, arguments, context) } ?: return true
@@ -1930,7 +1899,7 @@ object PyCallExpressionHelper {
 
     val overloadTypes = callExpression.multiResolveCallee(PyResolveContext.defaultContext(context))
       .filter { it.callable in overloads }
-    return selectMatchingOverloads(overloadTypes, callExpression.getCallableArguments(function), context)
+    return selectMatchingOverloads(overloadTypes, callExpression.getArguments(function).map { PyCallableArgument(it) }, context)
       .singleOrNull()?.callable as? PyFunction
   }
 
@@ -1945,8 +1914,6 @@ object PyCallExpressionHelper {
     return true
   }
 
-  private fun PyCallSiteOwner.getCallableArguments(callable: PyCallable?): List<PyCallableArgument> =
-    getArguments(callable).map { PyCallableArgument(it) }
 }
 
 class ArgumentMappingResults internal constructor(
@@ -1993,4 +1960,12 @@ private class ClarifiedResolveResult(
   val originalResolveResult: QualifiedRatedResolveResult,
   val clarifiedResolved: PsiElement,
   val wrappedModifier: PyAstFunction.Modifier?,
+)
+
+@ApiStatus.Internal
+data class ResolvedOperator(
+  val selfType: PyType,
+  val method: PyType?,
+  val arguments: List<PyExpression>,
+  val side: OperatorSide,
 )
