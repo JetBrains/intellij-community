@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.tests.interpreters.lspTools
 
+import com.intellij.formatting.service.AsyncDocumentFormattingService
+import com.intellij.formatting.service.FormattingService
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -15,6 +17,7 @@ import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.testFramework.awaitDiagnosticsFromLspServer
 import com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
 import com.intellij.platform.lsp.util.messageIfStringOrEmpty
+import com.intellij.psi.PsiManager
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.python.test.env.junit5.LspToolVersions
@@ -156,6 +159,23 @@ internal suspend fun awaitFileOpenedByLspTool(project: Project, file: VirtualFil
       val opened = withTimeoutOrNull(LSP_EVENT_WAIT_LIMIT) { awaitFileOpenedByLspServer(project, file) } != null
     }
     while (!opened)
+  }
+
+/**
+ * Wait until `Reformat Code` on [file] goes to a formatter other than the formatter of the IDE.
+ *
+ * Ruff 0.16.2 and later register the formatting capability after the server starts, so an open file does not
+ * yet mean that the server formats. A reformat before the registration falls back to the IDE formatter.
+ * The Ruff executable and the LSP server both format through an [AsyncDocumentFormattingService].
+ */
+internal suspend fun awaitFormatterOtherThanIde(project: Project, file: VirtualFile): Unit =
+  withTimeout(LSP_EVENT_WAIT_LIMIT) {
+    while (!readAction {
+        val psiFile = PsiManager.getInstance(project).findFile(file) ?: return@readAction false
+        FormattingService.EP_NAME.extensionList.any { it is AsyncDocumentFormattingService && it.canFormat(psiFile) }
+      }) {
+      delay(50.milliseconds)
+    }
   }
 
 /**

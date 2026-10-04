@@ -55,6 +55,7 @@ class RuffLspToolEnvTest {
     enableRuffAndInstall()
     val file = codeInsightFixture.configureByText("quotes.py", "'a'\n")
     awaitFileOpenedByLspTool(project, file.virtualFile)
+    awaitFormatterOtherThanIde(project, file.virtualFile)
     codeInsightFixture.performEditorAction(IdeActions.ACTION_EDITOR_REFORMAT)
     codeInsightFixture.checkResult("\"a\"\n")
   }
