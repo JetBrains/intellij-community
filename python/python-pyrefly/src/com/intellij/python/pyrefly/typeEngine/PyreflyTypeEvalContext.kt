@@ -14,9 +14,6 @@ import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.python.lsp.core.type.LspTypeEvalContext
-import com.intellij.python.lsp.core.type.PyStringTypeResolver
-import com.intellij.python.pyrefly.PyreflyUsageCollector
 import com.intellij.python.pyrefly.lsp.PyreflyLsp4jServer
 import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
@@ -53,12 +50,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.TextDocumentIdentifier
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Unmodifiable
-import org.jetbrains.annotations.VisibleForTesting
-import kotlin.time.measureTimedValue
 
-open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient, psiFile: PsiFile) : LspTypeEvalContext(psiFile) {
+internal class PyreflyTypeEvalContext(val lspClient: LspClient, private val psiFile: PsiFile) {
 
   /**
    * The last snapshot the server reported. The server moves its snapshot forward when it analyzes an
@@ -68,7 +61,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
   @Volatile
   private var snapshot: Int? = null
 
-  override fun provideType(element: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?>? {
+  fun provideType(element: PyTypedElement): Ref<PyType?>? {
     if (element is PsiFile) return null
     val file = psiFile.virtualFile ?: return null
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
@@ -412,41 +405,6 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     return Ref.create(PyOverloadType(items, impl))
   }
 
-  override fun requestTypes(pyTypedElements: @Unmodifiable Collection<PyTypedElement>): List<String?>? {
-    val file = psiFile.virtualFile ?: return null
-    val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
-    val documentRequests = pyTypedElements.mapNotNull { psiElement ->
-      getDocumentRequest(file, document, psiElement)
-    }
-    if (documentRequests.isEmpty()) return emptyList()
-
-    val groupedRequests = LinkedHashMap<String, MutableList<IndexedValue<DocumentRequest>>>()
-    documentRequests.forEachIndexed { index, request ->
-      groupedRequests.computeIfAbsent(request.textDocument.uri) { mutableListOf() }.add(IndexedValue(index, request))
-    }
-
-    val contents = arrayOfNulls<String?>(documentRequests.size)
-    for (group in groupedRequests.values) {
-      val textDocument = group.first().value.textDocument
-      val positions = group.map { it.value.position }
-
-      val response = lspClient.sendRequestSync {
-        (it as PyreflyLsp4jServer).provideType(textDocument, positions)
-      }
-      val groupContents = response?.contents?.map { it.value } ?: return null
-      if (groupContents.size != group.size) return null
-
-      group.zip(groupContents).forEach { (indexedRequest, content) ->
-        contents[indexedRequest.index] = content
-      }
-    }
-    return contents.toList()
-  }
-
-  override fun resolveStringType(element: PyTypedElement, stringType: String): Ref<PyType?>? {
-    return resolveStringTypeImpl(element, stringType)
-  }
-
   /** True for a class object. A server that sends no `flags` reports an instance. */
   private fun PyreflyLsp4jServer.TspType.isInstantiable(): Boolean =
     flags != null && flags.and(PyreflyLsp4jServer.INSTANTIABLE_FLAG) != 0
@@ -473,37 +431,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     return returnType?.hasSourceLocation() == true
   }
 
-  companion object {
-    @ApiStatus.Internal
-    @VisibleForTesting
-    fun resolveStringTypeImpl(
-      element: PyTypedElement,
-      stringType: String,
-    ): Ref<PyType?>? {
-      val (result, duration) = measureTimedValue {
-        PyStringTypeResolver.resolvePyType(element, stringType)
-      }
-      PyreflyUsageCollector.logStringTypeResolutionTime(duration)
-      return result
-    }
-  }
-
   private data class DocumentRequest(val textDocument: TextDocumentIdentifier, val position: Position)
-
-  private fun getDocumentRequest(
-    file: VirtualFile,
-    document: Document,
-    psiElement: PyTypedElement,
-  ): DocumentRequest? {
-    if (psiElement is PsiFile) return null
-
-    val textRange = psiElement.textRange
-    if (textRange.isEmpty) return null
-
-    val offsetDetector = PyreflyOffsetDetectorVisitor()
-    psiElement.accept(offsetDetector)
-    return getDocumentPosition(file, document, offsetDetector.offset)
-  }
 
   private fun getDocumentPosition(
     file: VirtualFile,

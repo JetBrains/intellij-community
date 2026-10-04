@@ -50,6 +50,6 @@ internal class PyreflyLspTypeEngine(private val pyProject: PyProject) : PyLspTyp
     val client = lspClient ?: return null
 
     val context = PyreflyLspTypeEngineFileCache.getInstance(module.project).getContext(realFile, client, isLibrary)
-    return context.provideType(pyTypedElement, isUserInitiated)
+    return context.provideType(pyTypedElement)
   }
 }

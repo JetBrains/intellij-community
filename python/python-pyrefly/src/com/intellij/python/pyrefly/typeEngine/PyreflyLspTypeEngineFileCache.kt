@@ -13,7 +13,6 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.python.lsp.core.type.LspTypeEvalContext
 import com.intellij.python.lsp.core.utils.PyLspServerModificationTracker
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.psi.types.PyLibraryModificationTracker
@@ -30,16 +29,16 @@ internal class PyreflyLspTypeEngineFileCache(val project: Project) : Disposable.
 
 
   private val cachedMapStorage = CachedValuesManager.getManager(project).createCachedValue {
-    val map = ContainerUtil.createConcurrentSoftValueMap<ContextKey, LspTypeEvalContext>()
+    val map = ContainerUtil.createConcurrentSoftValueMap<ContextKey, PyreflyTypeEvalContext>()
     CachedValueProvider.Result.create(map,
                                       PsiModificationTracker.getInstance(project ),
                                       lowMemoryModificationTracker,
                                       PyLspServerModificationTracker.getInstance(project))
   }
 
-  private val librariesCachedMapStorage: CachedValue<ConcurrentMap<ContextKey, LspTypeEvalContext>> =
+  private val librariesCachedMapStorage: CachedValue<ConcurrentMap<ContextKey, PyreflyTypeEvalContext>> =
     CachedValuesManager.getManager(project).createCachedValue {
-      val map = ContainerUtil.createConcurrentSoftValueMap<ContextKey, LspTypeEvalContext>()
+      val map = ContainerUtil.createConcurrentSoftValueMap<ContextKey, PyreflyTypeEvalContext>()
       CachedValueProvider.Result.create(map,
                                         PyLibraryModificationTracker.getInstance(project),
                                         lowMemoryModificationTracker,
@@ -57,7 +56,7 @@ internal class PyreflyLspTypeEngineFileCache(val project: Project) : Disposable.
   }
 
 
-  fun getContext(file: PsiFile, lspClient: LspClient, isLibrary: Boolean): LspTypeEvalContext {
+  fun getContext(file: PsiFile, lspClient: LspClient, isLibrary: Boolean): PyreflyTypeEvalContext {
     val storage = if (isLibrary) librariesCachedMapStorage else cachedMapStorage
     val cache = storage.value
     return cache.getOrPut(ContextKey(file, lspClient)) { PyreflyTypeEvalContext(lspClient, file) }

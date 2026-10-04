@@ -6,11 +6,9 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getPythonInfo
-import kotlin.time.Duration
 
 object PyreflyUsageCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("python.pyrefly.type.inference", 9)
-  private val DURATION = EventFields.Int("duration_basket", "Duration of string type resolution, grouped into 100ms time buckets")
+  private val GROUP = EventLogGroup("python.pyrefly.type.inference", 10)
   private val SUCCESS = EventFields.Boolean("success")
   private val PYTHON_VERSION = EventFields.Version
   private val MEMORY_RSS_MB = EventFields.Long("rss_mb", "Resident set size of the Pyrefly server process in megabytes")
@@ -19,15 +17,9 @@ object PyreflyUsageCollector : CounterUsagesCollector() {
   private val UPTIME_MS = EventFields.Long("uptime_ms", "Time in milliseconds since the Pyrefly server process started")
   private val SERVER_COUNT = EventFields.LimitedInt("server_count", 1..5, "Number of Pyrefly server processes running in the project, this one included. One server serves every module, and a module whose environment pins another Pyrefly version gets a server of its own. The value 5 means five or more")
 
-  private val STRING_TYPE_RESOLUTION_TIME = GROUP.registerEvent("string.type.resolution.time", DURATION)
   private val PYREFLY_AUTO_INSTALLED = GROUP.registerEvent("pyrefly.auto.installed", SUCCESS)
   private val SERVER_STARTUP = GROUP.registerVarargEvent("server.startup", SUCCESS, PYTHON_VERSION)
   private val SERVER_HEARTBEAT = GROUP.registerVarargEvent("server.heartbeat", MEMORY_RSS_MB, CPU_TIME_MS, TIME_SINCE_LAST_MEASUREMENT_MS, UPTIME_MS, SERVER_COUNT)
-
-  fun logStringTypeResolutionTime(duration: Duration) {
-    val basket = duration.inWholeMilliseconds.toInt() / 100
-    STRING_TYPE_RESOLUTION_TIME.log(basket)
-  }
 
   fun logPyreflyAutoInstalled(success: Boolean) {
     PYREFLY_AUTO_INSTALLED.log(success)

@@ -1,10 +1,7 @@
 package com.intellij.python.pyrefly.lsp
 
 import com.intellij.platform.lsp.api.Lsp4jServer
-import org.eclipse.lsp4j.MarkupContent
-import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
-import org.eclipse.lsp4j.TextDocumentIdentifier
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
 import java.util.concurrent.CompletableFuture
 
@@ -14,19 +11,11 @@ import java.util.concurrent.CompletableFuture
  * @see <a href="https://github.com/microsoft/pylance-release/blob/main/docs/tsp/typeServerProtocol.ts">Type Server Protocol</a>
  */
 interface PyreflyLsp4jServer : Lsp4jServer {
-  /**
-   * Requests a type for a given element range.
-   */
-  @JsonRequest("types/provide-type")
-  fun provideType(text_document: TextDocumentIdentifier, positions: List<Position>): CompletableFuture<ProvideTypeResponse>
-
   @JsonRequest("typeServer/getSnapshot")
   fun getSnapshot(): CompletableFuture<Int>
 
   @JsonRequest("typeServer/getComputedType")
   fun getComputedType(params: GetComputedTypeParams): CompletableFuture<TspType?>
-
-  data class ProvideTypeResponse(val contents: List<MarkupContent>)
 
   data class TspNode(val uri: String, val range: Range)
 
