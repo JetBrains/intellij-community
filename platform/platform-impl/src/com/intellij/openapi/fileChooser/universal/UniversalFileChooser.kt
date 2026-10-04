@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.universal
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.dnd.DroppedFileCopy
@@ -17,7 +18,10 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDialog
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
@@ -39,6 +43,8 @@ import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
@@ -47,22 +53,27 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.progress.ProgressState
 import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Consumer
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.toArray
 import com.intellij.util.ui.JBUI
@@ -70,13 +81,16 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -86,6 +100,7 @@ import java.awt.CardLayout
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.Dimension
+import java.awt.GridBagLayout
 import java.awt.Toolkit
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -102,6 +117,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JPanel
+import javax.swing.JProgressBar
 import javax.swing.ListSelectionModel
 import javax.swing.SwingConstants
 import javax.swing.event.DocumentEvent
@@ -892,7 +908,7 @@ object UniversalFileChooser {
 
       var fileToSelect: Path? = null
 
-      /** Completed when the first [loadRoots] pass has populated [roots]. */
+      /** Completed when the first [loadRoots] pass ends. After a load error, [roots] stays empty. */
       val rootsLoaded: CompletableDeferred<Unit> = CompletableDeferred()
 
       internal val pathTextField: NioPathTextField = NioPathTextField(scope, descriptor.isChooseFiles, descriptor.isChooseJarContents)
@@ -927,6 +943,19 @@ object UniversalFileChooser {
       }
 
       private val cardLayout = CardLayout()
+      private val defaultLoadingText = contributor.getCustomLoadingText() ?: IdeBundle.message("universal.file.chooser.label.loading")
+      private val loadingLabel = JBLabel(defaultLoadingText, SwingConstants.CENTER)
+      private val loadingProgressBar = JProgressBar().apply {
+        isIndeterminate = true
+        isVisible = false
+      }
+      private val retryLink = ActionLink(IdeBundle.message("universal.file.chooser.link.retry")) { retryLoadRoots() }.apply {
+        isVisible = false
+      }
+
+      /** The running [loadRoots] pass. Only the last one updates the view. */
+      @Volatile
+      private var loadRootsJob: Job? = null
       private val contentPanel = JPanel(cardLayout)
       private val tree = Tree()
       val mountStatusCache: MutableMap<String, MountStatus> = ConcurrentHashMap()
@@ -1048,10 +1077,12 @@ object UniversalFileChooser {
           }
         })
 
-        val loadingLabel = JBLabel(
-          contributor.getCustomLoadingText() ?: IdeBundle.message("universal.file.chooser.label.loading"),
-          SwingConstants.CENTER)
-        contentPanel.add(loadingLabel, LOADING_CARD)
+        val loadingPanel = JPanel(VerticalLayout(JBUI.scale(4), SwingConstants.CENTER)).apply {
+          add(loadingLabel)
+          add(loadingProgressBar)
+          add(retryLink)
+        }
+        contentPanel.add(JPanel(GridBagLayout()).apply { add(loadingPanel) }, LOADING_CARD)
         contentPanel.add(scrollPane, TREE_CARD)
 
         val mainPanel = panel {
@@ -1077,14 +1108,23 @@ object UniversalFileChooser {
 
       fun loadRoots() {
         cardLayout.show(contentPanel, LOADING_CARD)
-        scope.launch {
+        loadRootsJob?.cancel()
+        val job = scope.launch(start = CoroutineStart.LAZY) {
+          val loadJob = coroutineContext.job
           withContext(Dispatchers.IO) {
-            val allRoots = if (environmentRestricted && !project.isDefault) {
-              val basePath = project.guessProjectDir()?.toNioPathOrNull()
-              if (basePath != null) contributor.getFilteredRoots(basePath) else contributor.getRoots()
+            val allRoots = try {
+              withLoadingProgress { getContributorRoots() }
             }
-            else {
-              contributor.getRoots()
+            catch (e: Exception) {
+              rethrowControlFlowException(e)
+              logger<UniversalFileChooser>().warn("Failed to load the roots of ${contributor.tabTitle}", e)
+              withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+                if (loadRootsJob !== loadJob) return@withContext
+                cacheUpdateJob?.cancel()
+                showLoadingError(e)
+                rootsLoaded.complete(Unit)
+              }
+              return@withContext
             }
             val realRoots = allRoots.filter { it.path != null }
             val presentations = mutableMapOf<String, UniversalFileChooserContributor.Presentation>()
@@ -1098,6 +1138,7 @@ object UniversalFileChooser {
               mountStatuses[rootKey] = contributor.getMountStatus(root.path!!)
             }
             runOnEdt {
+              if (loadRootsJob !== loadJob) return@runOnEdt
               roots.clear()
               roots.addAll(realRoots.map { it.path!!.invariantSeparatorsPathString })
               presentationCache.clear()
@@ -1124,6 +1165,60 @@ object UniversalFileChooser {
             }
           }
         }
+        loadRootsJob = job
+        job.start()
+      }
+
+      @RequiresEdt
+      private fun retryLoadRoots() {
+        retryLink.isVisible = false
+        loadRoots()
+      }
+
+      private suspend fun getContributorRoots(): List<UniversalFileChooserContributor.Root> {
+        val basePath = if (environmentRestricted && !project.isDefault) project.guessProjectDir()?.toNioPathOrNull() else null
+        return if (basePath != null) contributor.getFilteredRoots(basePath) else contributor.getRoots()
+      }
+
+      /**
+       * Shows the progress that [action] reports in the loading card.
+       */
+      private suspend fun <T> withLoadingProgress(action: suspend () -> T): T = coroutineScope {
+        val progressPipe = createProgressPipe()
+        val progressUpdater = launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          updateLoadingProgress(null)
+          progressPipe.progressUpdates().collect(::updateLoadingProgress)
+        }
+        try {
+          progressPipe.collectProgressUpdates { action() }
+        }
+        finally {
+          progressUpdater.cancel()
+        }
+      }
+
+      @RequiresEdt
+      private fun updateLoadingProgress(state: ProgressState?) {
+        val text = state?.text
+        loadingLabel.text = text ?: defaultLoadingText
+        loadingProgressBar.isVisible = text != null
+        loadingLabel.icon = null
+        retryLink.isVisible = false
+      }
+
+      @RequiresEdt
+      private fun showLoadingError(e: Exception) {
+        loadingProgressBar.isVisible = false
+        retryLink.isVisible = true
+        loadingLabel.icon = AllIcons.General.Error
+        val details = e.cause?.message ?: e.javaClass.simpleName
+        loadingLabel.text = HtmlBuilder()
+          .append(IdeBundle.message("universal.file.chooser.label.loading.failed"))
+          .br()
+          .append(details)
+          .wrapWith(HtmlChunk.body().style("width: ${JBUI.scale(400)}px"))
+          .wrapWith(HtmlChunk.html())
+          .toString()
       }
 
       fun startCacheUpdates() {

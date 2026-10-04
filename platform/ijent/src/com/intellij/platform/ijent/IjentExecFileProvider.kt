@@ -4,7 +4,9 @@ package com.intellij.platform.ijent
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelUnavailableException
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
 import java.nio.file.Path
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Gets the path to the IJent binary. See [getIjentBinary].
@@ -16,6 +18,25 @@ interface IjentExecFileProvider {
    */
   @Throws(IjentMissingBinary::class)
   suspend fun getIjentBinary(targetPlatform: EelPlatform): Path
+}
+
+/**
+ * Replaces the modal progress that [IjentExecFileProvider] shows while it provisions the IJent binary.
+ * A caller puts this element into the coroutine context to show the progress in its own UI.
+ *
+ * The IJent session is shared between callers, so only the element of the caller that starts the session takes effect.
+ */
+@Internal
+interface IjentProvisioningProgress : CoroutineContext.Element {
+  /**
+   * Runs [task] and shows [text] as its progress.
+   * A cancellation by the user throws [kotlinx.coroutines.CancellationException].
+   */
+  suspend fun <T> withProgress(text: @Nls String, task: suspend () -> T): T
+
+  override val key: CoroutineContext.Key<*> get() = Key
+
+  companion object Key : CoroutineContext.Key<IjentProvisioningProgress>
 }
 
 @Suppress("HardCodedStringLiteral") // Internal diagnostic message, not user-facing UI text.
