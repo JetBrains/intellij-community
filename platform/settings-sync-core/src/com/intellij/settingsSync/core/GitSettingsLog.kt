@@ -57,6 +57,8 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
                      private val rootConfigPath: Path,
                      parentDisposable: Disposable,
                      private val userDataProvider: () -> SettingsSyncUserData?,
+                     /** `true` when the IDE does not sync plugins, see [SettingsSyncIdeMediator.pluginSyncSupported] */
+                     private val pluginStateFromCloudOnly: () -> Boolean = { false },
                      private val initialSnapshotProvider: (SettingsSnapshot) -> SettingsSnapshot
 ) : SettingsLog, Disposable {
 
@@ -181,7 +183,9 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
   private fun copyExistingSettings() {
     LOG.info("Copying existing settings from $rootConfigPath to $settingsSyncStorage")
     val snapshot = initialSnapshotProvider(collectCurrentSnapshot())
-    applyState(IDE_REF_NAME, snapshot, "Copy current configs", warnAboutEmptySnapshot = false)
+    if (!snapshot.isEmpty()) {
+      applyState(IDE_REF_NAME, snapshot, "Copy current configs")
+    }
   }
 
   private fun addInitialCommit(repository: Repository) {
@@ -217,11 +221,10 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
     return getMasterPosition()
   }
 
-  private fun applyState(refName: String, snapshot: SettingsSnapshot, message: String, warnAboutEmptySnapshot: Boolean = true) {
-    if (snapshot.isEmpty()) {
-      if (warnAboutEmptySnapshot) {
-        LOG.error("Empty snapshot, requested to apply on branch '$refName' with message '$message'")
-      }
+  private fun applyState(refName: String, snapshot: SettingsSnapshot, message: String) {
+    // an empty plugin state is a change: it clears the logged plugin state
+    if (snapshot.isEmpty() && snapshot.plugins == null) {
+      LOG.error("Empty snapshot, requested to apply on branch '$refName' with message '$message'")
       return
     }
 
@@ -472,8 +475,41 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
 
       commit("Merge with conflicts", allowEmpty = true)
     }
+    if (pluginStateFromCloudOnly()) {
+      takePluginStateFromCloud()
+    }
     // todo check other statuses and force consistency if needed
     return getPosition(master)
+  }
+
+  override fun keepPluginStateFromCloud(): SettingsLog.Position {
+    if (pluginStateFromCloudOnly()) {
+      git.checkout().setName(MASTER_REF_NAME).call()
+      takePluginStateFromCloud()
+    }
+    return getPosition(master)
+  }
+
+  /**
+   * The IDE does not author the plugin state, so master keeps the server one as is,
+   * also over a plugin change on the ide branch, for example made by an older build.
+   */
+  private fun takePluginStateFromCloud() {
+    val pluginsJsonPath = "$METAINFO_FOLDER/$PLUGINS_FILE"
+    val cloudContent = TreeWalk.forPath(repository, pluginsJsonPath, getBranchTip(cloud).tree)?.use { treeWalk ->
+      repository.newObjectReader().use { String(it.open(treeWalk.getObjectId(0)).bytes, StandardCharsets.UTF_8) }
+    }
+    val masterContent = if (pluginsFile.exists()) pluginsFile.readText() else null
+    if (cloudContent == masterContent) return
+
+    if (cloudContent == null) {
+      git.rm().addFilepattern(pluginsJsonPath).call()
+    }
+    else {
+      pluginsFile.write(cloudContent)
+      git.add().addFilepattern(pluginsJsonPath).call()
+    }
+    commit("Keep plugin state from server", allowEmpty = false)
   }
 
   override fun restoreStateAt(commitHash: String) {

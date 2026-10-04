@@ -228,6 +228,297 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @Test
+  fun `Push to Server keeps server plugin state if plugin sync is not supported`() = timeoutRunBlockingAndStopBridge {
+    remoteCommunicator.prepareFileOnServer(settingsSnapshot {
+      fileState("options/editor.xml", "Editor from Server")
+      plugin("org.example.disabled", enabled = false)
+    })
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+    ideMediator.pluginSyncSupported = false
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
+      plugin("org.example.disabled", enabled = false)
+    }
+  }
+
+  @Test
+  fun `Push to Server keeps plugin state changed on server right before the push`() = timeoutRunBlockingAndStopBridge {
+    remoteCommunicator.prepareFileOnServer(settingsSnapshot {
+      plugin("org.example.old", enabled = false)
+    })
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+    ideMediator.pluginSyncSupported = false
+    remoteCommunicator.pushInterceptor = {
+      remoteCommunicator.pushInterceptor = null
+      remoteCommunicator.prepareFileOnServer(settingsSnapshot {
+        plugin("org.example.new", enabled = false)
+      })
+    }
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
+      plugin("org.example.new", enabled = false)
+    }
+  }
+
+  @Test
+  fun `failed Push to Server does not resend server plugin state removed later`() = timeoutRunBlockingAndStopBridge {
+    remoteCommunicator.prepareFileOnServer(settingsSnapshot {
+      fileState("options/editor.xml", "Editor from Server")
+      plugin("org.example.disabled", enabled = false)
+    })
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+    ideMediator.pluginSyncSupported = false
+    remoteCommunicator.pushInterceptor = {
+      remoteCommunicator.pushInterceptor = null
+      remoteCommunicator.isConnected = false
+    }
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    // another IDE enables the plugin back, which removes its entry
+    remoteCommunicator.isConnected = true
+    remoteCommunicator.prepareFileOnServer(settingsSnapshot {
+      fileState("options/editor.xml", "Editor from Server")
+      pluginInformationExists = true
+    })
+    syncSettingsAndWait()
+
+    assertServerSnapshot {
+      fileState("options/editor.xml", "Editor from Server")
+      fileState("options/laf.xml", "LaF Initial")
+    }
+  }
+
+  @Test
+  fun `Push to Server clears logged plugin state if server plugin state is empty`() = timeoutRunBlockingAndStopBridge {
+    // emulate a previous session that synced a plugin state
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+    val log = GitSettingsLog(settingsSyncStorage, configDir, disposable, { SettingsSyncUserData("mockId", MOCK_CODE, "empty", "dummy") },
+                             initialSnapshotProvider = { MockSettingsSyncIdeMediator.getAllFilesFromSettingsAsSnapshot(configDir) })
+    log.initialize()
+    log.logExistingSettings()
+    log.applyIdeState(settingsSnapshot { plugin("org.example.disabled", enabled = false) }, "Stale plugin state")
+    log.setCloudPosition(log.advanceMaster())
+
+    ideMediator.pluginSyncSupported = false
+    remoteCommunicator.prepareFileOnServer(settingsSnapshot {
+      fileState("options/editor.xml", "Editor from Server")
+      pluginInformationExists = true
+    })
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+  }
+
+  @Test
+  fun `Push to Server does not send plugin change pending from an older build`() = timeoutRunBlockingAndStopBridge {
+    // emulate a previous session that changed a plugin offline
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+    val log = GitSettingsLog(settingsSyncStorage, configDir, disposable, { SettingsSyncUserData("mockId", MOCK_CODE, "empty", "dummy") },
+                             initialSnapshotProvider = { MockSettingsSyncIdeMediator.getAllFilesFromSettingsAsSnapshot(configDir) })
+    log.initialize()
+    log.logExistingSettings()
+    log.applyIdeState(settingsSnapshot { plugin("org.example.disabled", enabled = false) }, "Offline plugin change")
+
+    ideMediator.pluginSyncSupported = false
+    remoteCommunicator.prepareFileOnServer(settingsSnapshot {
+      fileState("options/editor.xml", "Editor from Server")
+      pluginInformationExists = true
+    })
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+
+    // the next push sends the logged plugin state too
+    syncSettingsAndWait(SyncSettingsEvent.IdeChange(settingsSnapshot { fileState("options/editor.xml", "Editor Local") }))
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
+      fileState("options/editor.xml", "Editor Local")
+    }
+  }
+
+  @Test
+  fun `startup does not send plugin change pending from an older build`() = timeoutRunBlockingAndStopBridge {
+    // emulate a previous session that changed a plugin offline
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+    val log = GitSettingsLog(settingsSyncStorage, configDir, disposable, { SettingsSyncUserData("mockId", MOCK_CODE, "empty", "dummy") },
+                             initialSnapshotProvider = { MockSettingsSyncIdeMediator.getAllFilesFromSettingsAsSnapshot(configDir) })
+    log.initialize()
+    log.logExistingSettings()
+    log.applyIdeState(settingsSnapshot { plugin("org.example.disabled", enabled = false) }, "Offline plugin change")
+
+    ideMediator.pluginSyncSupported = false
+    remoteCommunicator.prepareFileOnServer(settingsSnapshot {
+      fileState("options/editor.xml", "Editor from Server")
+      pluginInformationExists = true
+    })
+    // a settings change between sessions makes the startup merge the ide branch
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Between Sessions")
+    }
+    initSettingsSync()
+    syncSettingsAndWait()
+
+    assertServerSnapshot {
+      fileState("options/editor.xml", "Editor from Server")
+      fileState("options/laf.xml", "LaF Between Sessions")
+    }
+  }
+
+  @Test
+  fun `startup does not send plugin change left unpushed in master by an older build`() = timeoutRunBlockingAndStopBridge {
+    // emulate a previous session that merged a plugin change, but failed to push it
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+    val log = GitSettingsLog(settingsSyncStorage, configDir, disposable, { SettingsSyncUserData("mockId", MOCK_CODE, "empty", "dummy") },
+                             initialSnapshotProvider = { MockSettingsSyncIdeMediator.getAllFilesFromSettingsAsSnapshot(configDir) })
+    log.initialize()
+    log.logExistingSettings()
+    log.setCloudPosition(log.advanceMaster())
+    log.applyIdeState(settingsSnapshot { plugin("org.example.disabled", enabled = false) }, "Unpushed plugin change")
+    log.advanceMaster()
+
+    ideMediator.pluginSyncSupported = false
+    initSettingsSync()
+
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+  }
+
+  @Test
+  fun `Push to Server does not resend logged plugin state after server data deletion`() = timeoutRunBlockingAndStopBridge {
+    // emulate a previous session that synced a plugin state
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+    val log = GitSettingsLog(settingsSyncStorage, configDir, disposable, { SettingsSyncUserData("mockId", MOCK_CODE, "empty", "dummy") },
+                             initialSnapshotProvider = { MockSettingsSyncIdeMediator.getAllFilesFromSettingsAsSnapshot(configDir) })
+    log.initialize()
+    log.logExistingSettings()
+    log.applyIdeState(settingsSnapshot { plugin("org.example.disabled", enabled = false) }, "Synced plugin state")
+    log.setCloudPosition(log.advanceMaster())
+
+    ideMediator.pluginSyncSupported = false
+    remoteCommunicator.prepareFileOnServer(MockRemoteCommunicator.snapshotForDeletion)
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+  }
+
+  @Test
+  fun `restore from history pushes restored settings if plugin sync is not supported`() = timeoutRunBlockingAndStopBridge {
+    remoteCommunicator.prepareFileOnServer(settingsSnapshot {
+      fileState("options/editor.xml", "Editor from Server")
+    })
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+    ideMediator.pluginSyncSupported = false
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+    val initialHash = FileRepositoryBuilder().setGitDir(settingsSyncStorage.resolve(".git").toFile()).build().use {
+      it.resolve(GitSettingsLog.MASTER_REF_NAME).name
+    }
+    syncSettingsAndWait(SyncSettingsEvent.IdeChange(settingsSnapshot { fileState("options/laf.xml", "LaF Changed") }))
+
+    val restored = CountDownLatch(1)
+    syncSettingsAndWait(SyncSettingsEvent.RestoreSettingsSnapshot(initialHash) { restored.countDown() })
+    Assertions.assertTrue(restored.await(5, TimeUnit.SECONDS))
+
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+  }
+
+  @Test
+  fun `Push to Server keeps plugin state uploaded over unreadable server snapshot right before the push`() = timeoutRunBlockingAndStopBridge {
+    remoteCommunicator.prepareUnreadableFileOnServer()
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+    ideMediator.pluginSyncSupported = false
+    // other IDEs upload an unreadable snapshot, then a valid one, each right before a push
+    var pushCount = 0
+    remoteCommunicator.pushInterceptor = {
+      when (++pushCount) {
+        1 -> remoteCommunicator.prepareUnreadableFileOnServer()
+        2 -> remoteCommunicator.prepareFileOnServer(settingsSnapshot {
+          plugin("org.example.new", enabled = false)
+        })
+      }
+    }
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
+      plugin("org.example.new", enabled = false)
+    }
+  }
+
+  @Test
+  fun `Push to Server replaces unreadable server snapshot if plugin sync is not supported`() = timeoutRunBlockingAndStopBridge {
+    remoteCommunicator.prepareUnreadableFileOnServer()
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+    ideMediator.pluginSyncSupported = false
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+  }
+
+  @Test
+  fun `switch to cross-IDE sync keeps shared plugin state if plugin sync is not supported`() = timeoutRunBlockingAndStopBridge {
+    remoteCommunicator.createFile(CROSS_IDE_SYNC_MARKER_FILE, "")
+    remoteCommunicator.prepareFileOnServer(settingsSnapshot {
+      fileState("options/editor.xml", "Editor from Server")
+      plugin("org.example.disabled", enabled = false)
+    })
+    remoteCommunicator.deleteFile(CROSS_IDE_SYNC_MARKER_FILE)
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+    ideMediator.pluginSyncSupported = false
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled = true
+    syncSettingsAndWait(SyncSettingsEvent.CrossIdeSyncStateChanged(true))
+
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
+      plugin("org.example.disabled", enabled = false)
+    }
+  }
+
+  @Test
   fun `enable settings via Take from Server should log existing settings`() = timeoutRunBlockingAndStopBridge {
     val fileName = "options/laf.xml"
     val initialContent = "LaF Initial"

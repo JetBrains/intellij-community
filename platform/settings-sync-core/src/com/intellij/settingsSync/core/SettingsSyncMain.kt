@@ -10,12 +10,21 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
+import com.intellij.util.SystemProperties
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Internal
 fun isSettingsSyncEnabledInSettings(): Boolean = SettingsSyncSettings.getInstance().syncEnabled
+
+/**
+ * `false` when the product does not sync plugins, for example Draft.
+ * Such a product neither applies the synced plugin state nor sends its own, so the plugins of the other IDEs stay as they are.
+ * The flag is a product property and not a category state, because the category state syncs to the other IDEs.
+ */
+internal val isPluginSyncSupported: Boolean
+  get() = SystemProperties.getBooleanProperty("settings.sync.plugins.supported", true)
 
 internal const val SETTINGS_SYNC_STORAGE_FOLDER: String = "settingsSync"
 
@@ -65,6 +74,7 @@ class SettingsSyncMain(coroutineScope: CoroutineScope, appConfigPath: Path) : Di
                                          val userId = RemoteCommunicatorHolder.getRemoteCommunicator()?.userId ?: return@GitSettingsLog null
                                          RemoteCommunicatorHolder.getAuthService()?.getUserData(userId)
                                        },
+                                       pluginStateFromCloudOnly = { !ideMediator.pluginSyncSupported },
                                        initialSnapshotProvider = { currentSnapshot ->
                                          ideMediator.getInitialSnapshot(appConfigPath, currentSnapshot)
                                        })

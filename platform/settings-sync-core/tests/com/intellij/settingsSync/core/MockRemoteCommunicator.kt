@@ -41,6 +41,13 @@ internal class MockRemoteCommunicator(override val userId: String) : AbstractSer
     return super.checkServerState()
   }
 
+  /**
+   * Optional hook invoked at the start of [push].
+   * Useful for simulating a change made by another IDE right before the push.
+   */
+  @Volatile
+  var pushInterceptor: (() -> Unit)? = null
+
   private lateinit var pushedLatch: CompletableDeferred<Unit>
   private lateinit var pushedSnapshot: SettingsSnapshot
 
@@ -109,6 +116,7 @@ internal class MockRemoteCommunicator(override val userId: String) : AbstractSer
   }
 
   override fun push(snapshot: SettingsSnapshot, force: Boolean, expectedServerVersionId: String?): SettingsSyncPushResult {
+    pushInterceptor?.invoke()
     val push = super.push(snapshot, force, expectedServerVersionId)
     settingsPushed(snapshot)
     return push
@@ -124,6 +132,14 @@ internal class MockRemoteCommunicator(override val userId: String) : AbstractSer
       writeFileInternal(snapshotFilePath, System.nanoTime().toString(), ByteArrayInputStream(content))
     }
   }
+
+  fun prepareUnreadableFileOnServer() {
+    val (snapshotFilePath, _) = currentSnapshotFilePath() ?: return
+    versionIdStorage.remove(snapshotFilePath)
+    filesAndVersions.remove(snapshotFilePath)
+    writeFileInternal(snapshotFilePath, null, ByteArrayInputStream("not a zip".toByteArray()))
+  }
+
   private fun getSnapshotFromVersion(version: ByteArray?): SettingsSnapshot? {
     if (version == null) {
       return null

@@ -173,15 +173,18 @@ abstract class AbstractServerCommunicator : SettingsSyncRemoteCommunicator, Disp
 
   open fun getKnownAndAppliedServerId(): String? = SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId
 
-  override fun receiveUpdates(): UpdateResult {
+  override fun receiveUpdates(): UpdateResult = receiveUpdatesWithVersion().first
+
+  override fun receiveUpdatesWithVersion(): Pair<UpdateResult, String?> {
     LOG.info("Receiving settings snapshot from the cloud config server...")
     try {
-      val (snapshotFilePath, isCrossIdeSync) = currentSnapshotFilePath() ?: return UpdateResult.Error("Unknown error during receiveUpdates")
+      val (snapshotFilePath, isCrossIdeSync) = currentSnapshotFilePath()
+                                               ?: return Pair(UpdateResult.Error("Unknown error during receiveUpdates"), null)
       val (stream, version) = readFileInternal(snapshotFilePath)
       requestSuccessful()
       if (stream == null) {
         LOG.info("$snapshotFilePath not found on the server")
-        return UpdateResult.NoFileOnServer
+        return Pair(UpdateResult.NoFileOnServer, null)
       }
 
       val tempFile = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT, UUID.randomUUID().toString() + ".zip")
@@ -190,10 +193,10 @@ abstract class AbstractServerCommunicator : SettingsSyncRemoteCommunicator, Disp
         val snapshot = SettingsSnapshotZipSerializer.extractFromZip(tempFile.toPath())
         if (snapshot == null) {
           LOG.info("cannot extract snapshot from tempFile ${tempFile.toPath()}. Implying there's no snapshot")
-          return UpdateResult.NoFileOnServer
+          return Pair(UpdateResult.NoFileOnServer, version)
         }
         else {
-          return if (snapshot.isDeleted()) UpdateResult.FileDeletedFromServer else UpdateResult.Success(snapshot, version, isCrossIdeSync)
+          return Pair(if (snapshot.isDeleted()) UpdateResult.FileDeletedFromServer else UpdateResult.Success(snapshot, version, isCrossIdeSync), version)
         }
       }
       finally {
@@ -203,7 +206,7 @@ abstract class AbstractServerCommunicator : SettingsSyncRemoteCommunicator, Disp
     catch (e: Throwable) {
       rethrowControlFlowException(e)
       val message = handleRemoteError(e)
-      return UpdateResult.Error(message)
+      return Pair(UpdateResult.Error(message), null)
     }
   }
 

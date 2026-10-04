@@ -14,6 +14,7 @@ import com.intellij.settingsSync.core.SettingsSyncSettings
 import com.intellij.settingsSync.core.SettingsSyncState
 import com.intellij.settingsSync.core.SettingsSyncStateHolder
 import com.intellij.settingsSync.core.SyncSettingsEvent
+import com.intellij.settingsSync.core.isPluginSyncSupported
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.CheckBoxListListener
 import com.intellij.ui.SeparatorComponent
@@ -119,7 +120,8 @@ internal class SettingsSyncPanelHolder() {
   private fun Row.createSyncCategoryCheckbox(holder: SyncCategoryHolder) {
     val checkBox = checkBox(holder.name)
     if (!isModifiable(holder)) {
-      checkBox.enabled(false)
+      // the holder keeps the synced value, so the apply writes it back unchanged
+      checkBox.enabled(false).onReset { holder.reset() }
       comment(holder.description)
       return
     }
@@ -148,7 +150,8 @@ internal class SettingsSyncPanelHolder() {
     topCheckBox.isThirdStateEnabled = false
     topCheckBox.isEnabled = isModifiable(holder)
     if (!isModifiable(holder)) {
-      cell(topCheckBox)
+      // the holder keeps the synced value, so the apply writes it back unchanged
+      cell(topCheckBox).onReset { holder.reset() }
       topCheckBox.state = State.NOT_SELECTED
       addComment()
       return
@@ -214,7 +217,8 @@ internal class SettingsSyncPanelHolder() {
 
   // IJPL-173541 Disable everything except for plugins from Setting Sync in Remote Development
   private fun isModifiable(holder: SyncCategoryHolder) : Boolean {
-    return !AppMode.isRemoteDevHost() || holder.descriptor.category == SettingsCategory.PLUGINS
+    if (holder.descriptor.category == SettingsCategory.PLUGINS) return isPluginSyncSupported
+    return !AppMode.isRemoteDevHost()
   }
 
   private fun getGroupState(descriptor: SyncCategoryHolder): State {
