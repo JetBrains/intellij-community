@@ -261,8 +261,13 @@ sealed interface EelExecApi {
     suspend fun await(): Map<String, String> = try {
       deferred.await()
     }
-    catch (e: SafeDeferred.FailedDeferred) {
-      throw e.cause as EnvironmentVariablesException
+    catch (e: SafeDeferred.DeferredException) {
+      // A broken Eel fails the deferred with its own error, for example `EelUnavailableException`.
+      // The cause chain keeps this error.
+      throw when (val cause = e.cause) {
+        is EnvironmentVariablesException, is EelUnavailableException -> cause
+        else -> EnvironmentVariablesException(e.message ?: "Failed to get environment variables", e)
+      }
     }
   }
 
