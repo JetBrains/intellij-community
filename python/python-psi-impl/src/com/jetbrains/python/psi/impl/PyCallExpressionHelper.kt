@@ -900,9 +900,9 @@ object PyCallExpressionHelper {
     val parameters = callableType.getParameters(context)
         ?.let { unpackParameters(it, wrappedArguments, context) }
 
-    if (parameters == null) return PyArgumentsMapping.empty(expression)
+    if (parameters == null) return PyArgumentsMapping.empty(expression, arguments)
 
-    return mapWrappedArguments(expression, wrappedArguments, callableType, parameters, context)
+    return mapWrappedArguments(expression, arguments, wrappedArguments, callableType, parameters, context)
   }
 
   /**
@@ -918,11 +918,12 @@ object PyCallExpressionHelper {
     parameters: List<PyCallableParameter>,
     context: TypeEvalContext,
   ): PyArgumentsMapping {
-    return mapWrappedArguments(expression, arguments.map { PyCallableArgument(it) }, callableType, parameters, context)
+    return mapWrappedArguments(expression, arguments, arguments.map { PyCallableArgument(it) }, callableType, parameters, context)
   }
 
   private fun mapWrappedArguments(
     expression: PyCallSiteOwner,
+    arguments: List<PyExpression>,
     wrappedArguments: List<PyCallableArgument>,
     callableType: PyCallableType,
     parameters: List<PyCallableParameter>,
@@ -931,6 +932,7 @@ object PyCallExpressionHelper {
     val mappingResults = analyzeArguments(wrappedArguments, parameters, context)
 
     return PyArgumentsMapping(expression,
+                              arguments,
                               callableType,
                               mappingResults.mappedParameters.mapKeys { (argument, _) -> argument.expression!! },
                               mappingResults.unmappedParameters,
@@ -968,8 +970,9 @@ object PyCallExpressionHelper {
     callableType: PyCallableType,
     context: TypeEvalContext,
   ): PyArgumentsMapping {
-    val arguments = call.arguments.asList().map { PyCallableArgument(it) }
-    val rawParameters = callableType.getParameters(context) ?: return PyArgumentsMapping.empty(call)
+    val callArguments = call.arguments.asList()
+    val arguments = callArguments.map { PyCallableArgument(it) }
+    val rawParameters = callableType.getParameters(context) ?: return PyArgumentsMapping.empty(call, callArguments)
     // Unpack the parameters once, so the identity comparisons below see the parameters of the mapping
     val parameters = unpackParameters(rawParameters, arguments, context)
     val mapping = analyzeArguments(arguments, parameters, context)
@@ -991,6 +994,7 @@ object PyCallExpressionHelper {
     }
 
     return PyArgumentsMapping(call,
+                              callArguments,
                               callableType,
                               mappedParameters,
                               mapping.unmappedParameters,
