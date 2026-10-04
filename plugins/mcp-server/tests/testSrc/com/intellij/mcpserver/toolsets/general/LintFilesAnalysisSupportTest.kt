@@ -2,6 +2,8 @@ package com.intellij.mcpserver.toolsets.general
 
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.mcpserver.GeneralMcpToolsetTestBase
+import com.intellij.mcpserver.McpLintFilesPreparation
+import com.intellij.mcpserver.McpLintFilesPreparer
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.openapi.application.WriteAction
@@ -10,7 +12,11 @@ import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -20,15 +26,21 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
@@ -37,11 +49,11 @@ class LintFilesAnalysisSupportTest : GeneralMcpToolsetTestBase() {
   @Test
   fun createLintFilesBatchTimeouts_reserves_clamped_headroom() {
     val shortTimeouts = createLintFilesBatchTimeouts(timeoutMs = 100, currentTimeMs = 1_000)
-    assertThat(shortTimeouts.analysisTimeoutMs).isEqualTo(50)
+    assertThat(shortTimeouts.analysisTimeoutMs).isEqualTo(75)
     assertThat(shortTimeouts.timeoutContext.requestDeadlineMs).isEqualTo(1_050)
 
     val longTimeouts = createLintFilesBatchTimeouts(timeoutMs = 200_000, currentTimeMs = 1_000)
-    assertThat(longTimeouts.analysisTimeoutMs).isEqualTo(195_000)
+    assertThat(longTimeouts.analysisTimeoutMs).isEqualTo(197_500)
     assertThat(longTimeouts.timeoutContext.requestDeadlineMs).isEqualTo(196_000)
   }
 
@@ -410,14 +422,94 @@ class LintFilesAnalysisSupportTest : GeneralMcpToolsetTestBase() {
           put("files", buildJsonArray {
             add(JsonPrimitive(mainPath))
           })
-          put("timeout", JsonPrimitive(100))
+          put("timeout", JsonPrimitive(2_000))
         },
       ) { result ->
-        val text = result.textContent.text
-        assertThat(text).contains(""""items":[]""")
-        assertThat(text).contains(""""more":true""")
+        val json = Json.parseToJsonElement(result.textContent.text).jsonObject
+        val items = json.getValue("items").jsonArray.map { it.jsonObject }
+        assertThat(items.map { it.getValue("filePath").jsonPrimitive.content }).containsExactly(mainPath)
+        assertThat(items[0].getValue("timedOut").jsonPrimitive.boolean).isTrue()
+        assertThat(json["more"]).isNull()
       }
     }
+  }
+
+  @Test
+  fun lint_files_analyzes_ready_files_while_a_preparer_waits_and_reports_the_waiting_file_as_timed_out(): Unit = runBlocking(Dispatchers.Default) {
+    val mainPath = relativePath(mainJavaFile)
+    val testPath = relativePath(testJavaFile)
+    val preparedFiles = AtomicReference<List<VirtualFile>>()
+    val mainWaiting = AtomicBoolean()
+    val mainWaitStarted = CompletableDeferred<Unit>()
+    val analyzedWhileMainWaits = AtomicReference<Boolean>()
+    val analyzedPaths = ConcurrentHashMap.newKeySet<String>()
+    val closeCount = AtomicInteger()
+    val analyzedBeforeClose = AtomicReference<Set<String>>()
+    val preparer = object : McpLintFilesPreparer {
+      override suspend fun prepare(project: Project, files: List<VirtualFile>): McpLintFilesPreparation {
+        preparedFiles.set(files)
+        return object : McpLintFilesPreparation {
+          override suspend fun awaitReady(file: VirtualFile) {
+            if (file != mainJavaFile) return
+            mainWaiting.set(true)
+            mainWaitStarted.complete(Unit)
+            try {
+              awaitCancellation()
+            }
+            finally {
+              mainWaiting.set(false)
+            }
+          }
+
+          override fun close() {
+            closeCount.incrementAndGet()
+            analyzedBeforeClose.set(analyzedPaths.toSet())
+          }
+        }
+      }
+    }
+
+    val disposable = Disposer.newDisposable()
+    try {
+      ExtensionTestUtil.maskExtensions(McpLintFilesPreparer.EP, listOf(preparer), disposable)
+      withLintMainPassesRunnerOverride(
+        project,
+        runner = { request ->
+          analyzedPaths.add(request.filePath)
+          mainWaitStarted.await()
+          analyzedWhileMainWaits.set(mainWaiting.get())
+          emptyList()
+        },
+      ) {
+        testMcpTool(
+          AnalysisToolset::lint_files.name,
+          buildJsonObject {
+            put("files", buildJsonArray {
+              add(JsonPrimitive(mainPath))
+              add(JsonPrimitive(testPath))
+            })
+            put("timeout", JsonPrimitive(2_000))
+          },
+        ) { result ->
+          val json = Json.parseToJsonElement(result.textContent.text).jsonObject
+          val items = json.getValue("items").jsonArray.map { it.jsonObject }
+          assertThat(items.map { it.getValue("filePath").jsonPrimitive.content }).containsExactly(mainPath)
+          assertThat(items[0].getValue("timedOut").jsonPrimitive.boolean).isTrue()
+          assertThat(items[0].getValue("problems").jsonArray).isEmpty()
+          assertThat(json["more"]).isNull()
+        }
+      }
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
+
+    assertThat(preparedFiles.get()).containsExactlyInAnyOrder(mainJavaFile, testJavaFile)
+    assertThat(analyzedPaths).containsExactly(testPath)
+    assertThat(analyzedWhileMainWaits.get()).isTrue()
+    assertThat(mainWaiting.get()).isFalse()
+    assertThat(closeCount.get()).isEqualTo(1)
+    assertThat(analyzedBeforeClose.get()).containsExactly(testPath)
   }
 
   private suspend fun collectResults(
@@ -441,7 +533,7 @@ class LintFilesAnalysisSupportTest : GeneralMcpToolsetTestBase() {
     return filePaths.mapNotNull(results::get)
   }
 
-  private fun relativePath(file: com.intellij.openapi.vfs.VirtualFile): String {
+  private fun relativePath(file: VirtualFile): String {
     return project.projectDirectory.relativizeIfPossible(file)
   }
 }
