@@ -1244,7 +1244,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         for (callable in callables) {
           val mapping = mapArguments(callSite, callable, myTypeEvalContext)
           if (mapping.isComplete) {
-            val analysis = analyzeCallee(callSite, mapping) ?: continue
+            val analysis = analyzeCallee(mapping) ?: continue
             analyzedCallees += PyCalleeResults(memberType, analysis, mapping)
           }
         }
@@ -1665,7 +1665,7 @@ open class PyTypeCheckerInspection : PyInspection() {
           when {
             mapping.isComplete -> calleesResults.single().takeIf { it.first === mapping }?.second
             mapping.unmappedParameters.isNotEmpty() && mapping.unmappedArguments.isEmpty() ->
-              analyzeCallee(callSite, mapping, reportProblems = false)
+              analyzeCallee(mapping, reportProblems = false)
             else -> null
           }
         }
@@ -1681,7 +1681,7 @@ open class PyTypeCheckerInspection : PyInspection() {
     private fun reportArgumentTypeMismatch(callSite: PyCallSiteOwner, argumentsMappings: List<PyArgumentsMapping>): Boolean {
       val (shapeMatches, shapeMismatches) = argumentsMappings.partition { it.isComplete }
 
-      val shapeMatchesCalleesResults = shapeMatches.mapNotNull { mapping -> analyzeCallee(callSite, mapping)?.let { mapping to it } }
+      val shapeMatchesCalleesResults = shapeMatches.mapNotNull { mapping -> analyzeCallee(mapping)?.let { mapping to it } }
       if (shapeMatchesCalleesResults.isNotEmpty()) {
         return reportIfNoCalleeMatches(callSite, shapeMatchesCalleesResults, argumentsMappings)
       }
@@ -1689,7 +1689,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       // We can only reliably report an argument type mismatch if there is a single callable candidate and we have extra arguments
       val onlyShapeMismatch = shapeMismatches.singleOrNull() ?: return false
       if (onlyShapeMismatch.unmappedArguments.isEmpty() || onlyShapeMismatch.unmappedParameters.isNotEmpty()) return false
-      val typeMatchResult = analyzeCallee(callSite, onlyShapeMismatch) ?: return false
+      val typeMatchResult = analyzeCallee(onlyShapeMismatch) ?: return false
       if (areTypesMatched(typeMatchResult)) return false
 
       PyTypeCheckerInspectionProblemRegistrar
@@ -1951,7 +1951,6 @@ open class PyTypeCheckerInspection : PyInspection() {
     }
 
     private fun analyzeCallee(
-      callSite: PyCallSiteOwner,
       mapping: PyArgumentsMapping,
       reportProblems: Boolean = true,
     ): AnalyzeCalleeResults? {
@@ -1965,8 +1964,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       var substitutions = unifyReceiver(mapping, myTypeEvalContext)
 
       val mappedParameters = mapping.mappedParameters
-      val regularMappedParameters =
-        PyCallExpressionHelper.getRegularMappedParameters(mappedParameters)
+      val regularMappedParameters = PyCallExpressionHelper.getRegularMappedParameters(mappedParameters)
 
       for (entry in regularMappedParameters.entries) {
         val argument: PyExpression = entry.key!!
@@ -1975,29 +1973,27 @@ open class PyTypeCheckerInspection : PyInspection() {
         val actual = myTypeEvalContext.getType(argument)
 
         if (expected is PyParamSpecType) {
-          val allArguments = callSite.getArguments(callableType.callable)
           analyzeParamSpec(
-            expected, allArguments, substitutions, result, unexpectedArgumentForParamSpecs,
+            expected, mapping.arguments, substitutions, result, unexpectedArgumentForParamSpecs,
             unfilledParameterFromParamSpecs, reportProblems
           )
           break
         }
         else if (expected is PyConcatenateType) {
-          val allArguments = callSite.getArguments(callableType.callable)
-          if (allArguments.isEmpty()) break
+          if (mapping.arguments.isEmpty()) break
 
           val firstExpectedTypes = expected.firstTypes
           var nonStarCount = 0
-          for (arg in allArguments) {
+          for (arg in mapping.arguments) {
             if (arg is PyStarArgument) break
             nonStarCount++
           }
           val argumentRightBound = min(firstExpectedTypes.size, nonStarCount)
-          val firstArguments = allArguments.subList(0, argumentRightBound)
+          val firstArguments = mapping.arguments.subList(0, argumentRightBound)
           matchArgumentsAndTypes(firstArguments, firstExpectedTypes, substitutions, result, reportProblems)
 
           val paramSpec = expected.paramSpec
-          val restArguments = allArguments.subList(argumentRightBound, allArguments.size)
+          val restArguments = mapping.arguments.subList(argumentRightBound, mapping.arguments.size)
           if (paramSpec != null) {
             if (argumentRightBound < firstExpectedTypes.size) {
               // Not enough positional arguments to satisfy the Concatenate prefix, e.g., int, str in Concatenate[int, str, P]
