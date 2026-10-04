@@ -31,7 +31,10 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
-open class EelUnavailableException @ApiStatus.Internal constructor(override val message: @Nls String, cause: Throwable? = null) : IOException(message, cause) {
+open class EelUnavailableException @ApiStatus.Internal constructor(
+  override val message: @Nls String,
+  cause: Throwable? = null,
+) : IOException(message, cause) {
   /**
    * The environment was closed on purpose by the IDE or by the user.
    * To keep working with the environment, the caller has to start it again.

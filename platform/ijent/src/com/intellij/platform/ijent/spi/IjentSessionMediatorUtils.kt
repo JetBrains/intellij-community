@@ -27,7 +27,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
-import java.beans.ExceptionListener
 import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.US_ASCII

@@ -57,7 +57,7 @@ private val PROCESS_CLEANUP_TIMEOUT: Duration = 3_000.milliseconds
 abstract class IjentDeployingOverShellProcessStrategy(
   parentScope: ParentOfIjentScopes,
   currentDispatcher: CoroutineDispatcher,
-  private val ijentLabel: String
+  private val ijentLabel: String,
 ) : IjentControlledEnvironmentDeployingStrategy() {
 
   /**
@@ -160,10 +160,11 @@ abstract class IjentDeployingOverShellProcessStrategy(
   val communicationStarted: SafeDeferred<Unit> = SafeDeferred(communicationStartedImpl)
 
   private val closed = AtomicBoolean()
+
   /** Non-null while the deployer owns cleanup; cleared on close or when the session takes ownership. */
   private var createdShellProcess: ShellProcessWrapper? = null
 
-    private val ijentProcessScope = parentScope.createIjentScope(ijentLabel)
+  private val ijentProcessScope = parentScope.createIjentScope(ijentLabel)
 
   private val myContext: SafeDeferred<ShellSession> = ijentProcessScope.asyncSafe(currentDispatcher, start = CoroutineStart.LAZY) {
     val processFacade = createShellProcessFacade(ijentProcessScope)
@@ -907,9 +908,9 @@ private class PowerShellSession(
       cache.powerShellRestore()
     )
     uploadedBinaryDirectory = paths.singleOrNull { it.startsWith(directoryMarker) }?.removePrefix(directoryMarker)
-      ?: throw CommunicationFailure("PowerShell did not report the uploaded IJent binary directory", null)
+                              ?: throw CommunicationFailure("PowerShell did not report the uploaded IJent binary directory", null)
     val remoteBinaryPath = paths.singleOrNull { it.startsWith(pathMarker) }?.removePrefix(pathMarker)
-      ?: throw CommunicationFailure("PowerShell did not report the uploaded IJent binary path", null)
+                           ?: throw CommunicationFailure("PowerShell did not report the uploaded IJent binary path", null)
     if (paths.any { it == remoteBinaryPath }) {
       return remoteBinaryPath
     }
@@ -956,7 +957,9 @@ private class PowerShellSession(
       val encoded = Base64.getEncoder().encodeToString(it.serverBootstrapPem().toByteArray(StandardCharsets.UTF_8))
       "[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('$encoded')) | "
     }.orEmpty()
-    val cleanupCommand = uploadedBinaryDirectory?.let { "Remove-Item -LiteralPath ${powerShellQuote(it)} -Recurse -Force -ErrorAction SilentlyContinue; " }.orEmpty()
+    val cleanupCommand = uploadedBinaryDirectory
+      ?.let { "Remove-Item -LiteralPath ${powerShellQuote(it)} -Recurse -Force -ErrorAction SilentlyContinue; " }
+      .orEmpty()
     io.startProcess(
       $$"try { $$tlsBootstrap& $$command; $ijentExitCode = $LASTEXITCODE } " +
       $$"catch { $ijentExitCode = 1; [Console]::Error.WriteLine($_.Exception.ToString()) } " +
@@ -966,6 +969,7 @@ private class PowerShellSession(
     return io.process.processForConnection()
   }
 }
+
 /**
  * [Dash-based shells up to 0.5.12 inclusively have a problem](https://lore.kernel.org/dash/CAMQsgbSZnEac=ETYnR6a_ysnAysaHThwY03pnoDxC=p5FqtAag@mail.gmail.com/).
  *

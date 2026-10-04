@@ -652,7 +652,11 @@ private class TestShellCommandStrategy(
   parentScope: CoroutineScope,
   private val shellProbe: String,
   private val destroyFailure: Exception? = null,
-) : IjentDeployingOverShellProcessStrategy.WithShellBootstrap(ParentOfIjentScopes(parentScope), Dispatchers.Default, "test shell bootstrap") {
+) : IjentDeployingOverShellProcessStrategy.WithShellBootstrap(
+  ParentOfIjentScopes(parentScope),
+  Dispatchers.Default,
+  "test shell bootstrap",
+) {
   lateinit var shellProcess: TestShellProcessFacade
     private set
 
@@ -739,10 +743,10 @@ private class TestShellProcessFacade(
     receivedCommands += command
     val powerShellCommand = "Write-Output" in command
     val lineEnding = if (powerShellCommand) "\r\n" else "\n"
-    val commandBoundary = (
+    val commandBoundary = run {
       Regex("echo ([a-z0-9]{32})_START").find(command)
       ?: Regex("Write-Output '([a-z0-9]{32})_START'").find(command)
-    )?.groupValues?.get(1)
+    }?.groupValues?.get(1)
     if (commandBoundary != null) {
       stdoutPipe.sink.sendWholeText("${commandBoundary}_START$lineEnding")
       when {
@@ -771,10 +775,10 @@ private class TestShellProcessFacade(
       return
     }
 
-    val processBoundary = (
+    val processBoundary = run {
       Regex("^echo ([a-z0-9]{32})(?:;|$)").find(command)
       ?: Regex("^Write-Output '([a-z0-9]{32})';").find(command)
-    )?.groupValues?.get(1)
+    }?.groupValues?.get(1)
     if (processBoundary != null) stdoutPipe.sink.sendWholeText("$processBoundary$lineEnding")
     else if ($$"$ijentOutput.Dispose()" in command) {
       val boundary = Regex("Write-Output '([a-z0-9]{32})'").find(command)?.groupValues?.get(1)

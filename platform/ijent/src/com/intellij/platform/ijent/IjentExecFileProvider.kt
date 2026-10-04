@@ -19,6 +19,9 @@ interface IjentExecFileProvider {
 }
 
 @Suppress("HardCodedStringLiteral") // Internal diagnostic message, not user-facing UI text.
-class IjentMissingBinary(platform: EelPlatform, cause: String? = null) : EelUnavailableException("Failed to get an IJent binary for $platform" + cause?.let { ": $cause" }) {
+class IjentMissingBinary(
+  platform: EelPlatform,
+  cause: String? = null,
+) : EelUnavailableException("Failed to get an IJent binary for $platform" + cause?.let { ": $cause" }) {
   override fun toString(): String = "${javaClass.name}: $message"
 }

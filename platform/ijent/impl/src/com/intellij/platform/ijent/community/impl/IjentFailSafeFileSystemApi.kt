@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -111,8 +111,7 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
         oldDelegate != null && (
           !oldDelegate.isCompleted ||
           oldDelegate.getCompletionExceptionOrNull() == null &&
-          oldDelegate.getCompleted().isRunning
-        )
+          oldDelegate.getCompleted().isRunning)
       )
         oldDelegate
       else
@@ -204,7 +203,7 @@ private fun checkEarlyAccess(callerContext: IjentCallerContextElement?) {
  */
 private class IjentFailSafeFileSystemPosixApiImpl(
   private val holder: DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>,
-  override val descriptor: EelDescriptor
+  override val descriptor: EelDescriptor,
 ) : IjentFileSystemPosixApi {
   // TODO Make user suspendable again?
   override val user: EelUserPosixInfo by lazy {
@@ -228,10 +227,14 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
   }
 
-  override suspend fun streamingWrite(chunks: Flow<ByteBuffer>, targetFileOpenOptions: EelFileSystemApi.WriteOptions): StreamingWriteResult =
+  override suspend fun streamingWrite(
+    chunks: Flow<ByteBuffer>,
+    targetFileOpenOptions: EelFileSystemApi.WriteOptions,
+  ): StreamingWriteResult =
     holder.withDelegateRetrying {
       streamingWrite(chunks, targetFileOpenOptions)
     }
+
   override suspend fun streamingRead(path: EelPath): Flow<StreamingReadResult> =
     holder.withDelegateRetrying {
       streamingRead(path)
@@ -370,9 +373,10 @@ private class IjentFailSafeFileSystemPosixApiImpl(
       createTemporaryDirectory(options)
     }
 
-  override suspend fun createTemporaryFile(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> = holder.withDelegateRetrying {
-    createTemporaryFile(options)
-  }
+  override suspend fun createTemporaryFile(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> =
+    holder.withDelegateRetrying {
+      createTemporaryFile(options)
+    }
 
   override suspend fun watchChanges(): Flow<EelFileSystemApi.PathChange> =
     holder.withDelegateRetrying { watchChanges() }
@@ -390,7 +394,7 @@ private class IjentFailSafeFileSystemPosixApiImpl(
  */
 private class IjentFailSafeFileSystemWindowsApiImpl(
   private val holder: DelegateHolder<IjentWindowsApi, IjentFileSystemWindowsApi>,
-  override val descriptor: EelDescriptor
+  override val descriptor: EelDescriptor,
 ) : IjentFileSystemWindowsApi {
   // TODO Make user suspendable again?
   override val user: EelUserWindowsInfo by lazy {
@@ -414,10 +418,14 @@ private class IjentFailSafeFileSystemWindowsApiImpl(
     }
   }
 
-  override suspend fun streamingWrite(chunks: Flow<ByteBuffer>, targetFileOpenOptions: EelFileSystemApi.WriteOptions): StreamingWriteResult =
+  override suspend fun streamingWrite(
+    chunks: Flow<ByteBuffer>,
+    targetFileOpenOptions: EelFileSystemApi.WriteOptions,
+  ): StreamingWriteResult =
     holder.withDelegateRetrying {
       streamingWrite(chunks, targetFileOpenOptions)
     }
+
   override suspend fun streamingRead(path: EelPath): Flow<StreamingReadResult> =
     holder.withDelegateRetrying {
       streamingRead(path)
@@ -559,9 +567,10 @@ private class IjentFailSafeFileSystemWindowsApiImpl(
       createTemporaryDirectory(options)
     }
 
-  override suspend fun createTemporaryFile(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> = holder.withDelegateRetrying {
-    createTemporaryFile(options)
-  }
+  override suspend fun createTemporaryFile(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> =
+    holder.withDelegateRetrying {
+      createTemporaryFile(options)
+    }
 
   override suspend fun watchChanges(): Flow<EelFileSystemApi.PathChange> =
     holder.withDelegateRetrying { watchChanges() }
