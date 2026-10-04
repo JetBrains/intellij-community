@@ -1134,6 +1134,8 @@
   <applicationListeners>
     <listener class="com.jetbrains.python.psi.types.PyAnyTypeRegistryListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+    <listener class="com.jetbrains.python.psi.types.PyStrictUnionsSettingListener"
+              topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
   </applicationListeners>
 
   <actions resource-bundle="messages.PyPsiBundle">

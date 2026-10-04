@@ -326,7 +326,6 @@ class PyPerfProbe(private val project: Project, private val editor: Editor, priv
       "python.optimized.type.eval.context" to "true",
       "python.use.csp.type.inference" to "true",
       "python.typing.weak.keys.type.eval.context" to "true",
-      "python.typing.strict.unions" to "true",
       "python.strict.type.narrow" to "true",
       // Declared by the type engine module. Without the declaration, each read throws and catches an exception.
       "pycharm.type.engine" to "true",

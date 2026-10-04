@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
@@ -33,9 +33,16 @@ import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 public class PyUnionType extends PyCompositeTypeBase {
 
+  /**
+   * The advanced setting for the strict semantics of union types.
+   * A user can turn it off to go back to the lenient checks of the earlier releases.
+   */
+  @ApiStatus.Internal
+  public static final String STRICT_UNIONS_SETTING = "python.typing.strict.unions";
+
   @ApiStatus.Internal
   public static boolean isStrictSemanticsEnabled() {
-    return Registry.is("python.typing.strict.unions", true);
+    return AdvancedSettings.getBoolean(STRICT_UNIONS_SETTING);
   }
 
   private final @NotNull LinkedHashSet<@Nullable PyType> myMembers;
