@@ -132,6 +132,29 @@ describe('ij MCP proxy lint_files', {timeout: SUITE_TIMEOUT_MS}, () => {
     strictEqual(calls, 0)
   })
 
+  it('surfaces the IDE error text when native lint_files reports isError', async () => {
+    const ideMessage = "File not found: 'src/Missing.kt'"
+
+    await withProxy({
+      tools: [nativeLintTool],
+      onToolCall({name}) {
+        strictEqual(name, 'lint_files')
+        return {result: {isError: true, content: [{type: 'text', text: ideMessage}]}}
+      }
+    }, async ({proxyClient}) => {
+      await proxyClient.send('tools/list')
+      const response = await proxyClient.send('tools/call', {
+        name: 'lint_files',
+        arguments: {files: ['src/Missing.kt']}
+      })
+
+      ok(response.result?.isError)
+      const message = response.result?.content?.[0]?.text ?? ''
+      ok(message.includes(ideMessage), message)
+      ok(!message.includes('Upstream lint_files returned unexpected result'), message)
+    })
+  })
+
   it('calls native lint_files once and preserves request order', async () => {
     const requestedPaths = [
       'src/File1.kt',
