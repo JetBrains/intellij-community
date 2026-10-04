@@ -89,6 +89,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils.flattenParens
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl
 import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
+import com.jetbrains.python.psi.impl.ResolvedOperator
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.PyABCUtil.SUPPORTS_KEYS_AND_GET_ITEM
@@ -1220,7 +1221,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         }
       }
       else if (callSite is PyQualifiedElement) {
-        val resolvedOperators = PyCallExpressionHelper.multiResolveOperatorGroupedByReceiver(callSite, resolveContext)
+        val resolvedOperators = PyCallExpressionHelper.multiResolveOperator(callSite, resolveContext)
         val analyzedCallees = analyzeOperatorCallees(callSite, resolvedOperators)
 
         if (reportStrictUnionOperatorArgumentMismatch(callSite, analyzedCallees)) return
@@ -1235,17 +1236,17 @@ open class PyTypeCheckerInspection : PyInspection() {
 
     private fun analyzeOperatorCallees(
       callSite: PyCallSiteOwner,
-      callablesByMemberType: List<Pair<PyType, List<PyCallableType>>>,
+      operators: List<ResolvedOperator>,
     ): List<PyCalleeResults>? {
-      if (callablesByMemberType.isEmpty()) return null
+      if (operators.isEmpty()) return null
 
       val analyzedCallees = mutableListOf<PyCalleeResults>()
-      for ((memberType, callables) in callablesByMemberType) {
-        for (callable in callables) {
-          val mapping = mapArguments(callSite, callable, myTypeEvalContext)
+      for ((selfType, method, arguments) in operators) {
+        for (callable in getCallableItems(method)) {
+          val mapping = mapArguments(callSite, arguments, callable, myTypeEvalContext)
           if (mapping.isComplete) {
             val analysis = analyzeCallee(mapping) ?: continue
-            analyzedCallees += PyCalleeResults(memberType, analysis, mapping)
+            analyzedCallees += PyCalleeResults(selfType, analysis, mapping)
           }
         }
       }
