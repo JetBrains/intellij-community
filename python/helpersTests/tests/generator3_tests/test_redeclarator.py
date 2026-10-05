@@ -348,6 +348,12 @@ class TestDataOutput(GeneratorTestCase):
         ))
         self.checkFmtValue(data, expected)
 
+    def testNonFiniteFloats(self):
+        self.checkFmtValue(float('inf'), "float('inf')")
+        self.checkFmtValue(float('-inf'), "float('-inf')")
+        self.checkFmtValue(float('nan'), "float('nan')")
+        self.checkFmtValue(1.5, "1.5")
+
 if not IS_CLI:
     class TestReturnTypes(GeneratorTestCase):
         """

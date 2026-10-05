@@ -97,7 +97,12 @@ public abstract class PySkeletonGenerator {
             LOG.warn("Malformed control message: " + line);
             return;
           }
-          final String msgType = controlMessage.get("type").getAsString();
+          final JsonElement msgTypeElement = controlMessage.get("type");
+          if (msgTypeElement == null) {
+            LOG.warn("Control message without a type: " + line);
+            return;
+          }
+          final String msgType = msgTypeElement.getAsString();
           if (msgType.equals("progress") && indicator != null) {
             final JsonElement text = controlMessage.get("text");
             if (text != null) {
@@ -119,8 +124,9 @@ public abstract class PySkeletonGenerator {
             final String level = controlMessage.get("level").getAsString();
             final String message = controlMessage.get("message").getAsString();
             switch (level) {
-              case "debug" -> Run.LOG.debug(message);
               case "trace" -> Run.LOG.trace(message);
+              case "warning", "error", "critical" -> Run.LOG.warn(message);
+              default -> Run.LOG.debug(message);
             }
           }
           else if (msgType.equals("generation_result")) {

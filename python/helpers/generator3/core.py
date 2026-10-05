@@ -113,7 +113,7 @@ def is_debugpy_module(qname):
 
 def is_skipped_module(path, f, qname):
     return (is_mac_skipped_module(path, f) or
-            is_posix_skipped_module(path, f[:f.rindex('.')]) or
+            is_posix_skipped_module(path, f.split('.')[0]) or
             'pynestkernel' in f or
             is_tensorflow_contrib_ops_module(qname) or
             is_debugpy_module(qname))
@@ -236,7 +236,7 @@ def skeleton_status(base_dir, mod_qname, mod_path, sdk_skeleton_state=None):
         return SkeletonStatus.OUTDATED
 
     if skeleton_meta.get('status') == GenerationStatus.FAILED:
-        return SkeletonStatus.OUTDATED if used_version < gen_version else SkeletonStatus.FAILING
+        return SkeletonStatus.OUTDATED if not used_version or used_version < gen_version else SkeletonStatus.FAILING
 
     required_version = read_required_version(mod_qname)
     if required_version and used_version:
@@ -324,6 +324,7 @@ def read_required_version(mod_qname):
     return versions.get(mod_id, versions.get('(default)'))
 
 
+@cached
 def read_required_gen_version_file():
     # type: () -> Dict[str, GeneratorVersion]
     result = {}
@@ -552,7 +553,7 @@ class SkeletonGenerator(object):
         status = self.reuse_or_generate_skeleton(mod_name, mod_path, sdk_skeleton_state)
         control_message('generation_result', {
             'module_name': mod_name,
-            'module_origin': get_module_origin(mod_path, mod_name).replace('%', '%%'),
+            'module_origin': get_module_origin(mod_path, mod_name) or '',
             'generation_status': status
         })
         if mod_path:
@@ -672,7 +673,7 @@ def generate_skeleton(name, mod_file_name, mod_cache_dir, output_dir):
     if redo_imports:
         initial_module_set = set(sys.modules)
         for m in list(sys.modules):
-            if not m.startswith(name):
+            if not m.startswith(name + '.'):
                 continue
             # Python 2 puts dummy None entries in sys.modules for imports of
             # top-level modules made from inside packages unless absolute
