@@ -73,9 +73,31 @@ class BtaFileWatcherTest {
         assertTrue(isCriGenerationEnabled(property = null, "2.4.20", "2.5.0"))
     }
 
+    @Test
+    fun `test Maven CRI generation uses explicit property`() {
+        assertTrue(isMavenCriEnabled(property = "true", incremental = null, kotlinVersion = null))
+        assertFalse(isMavenCriEnabled(property = "false", incremental = "true", kotlinVersion = "2.5.0"))
+    }
+
+    @Test
+    fun `test Maven CRI generation is enabled by default since Kotlin 2_5 with incremental compilation`() {
+        assertFalse(isMavenCriEnabled(property = null, incremental = "true", kotlinVersion = null))
+        assertFalse(isMavenCriEnabled(property = null, incremental = "true", kotlinVersion = "2.4.20"))
+        assertFalse(isMavenCriEnabled(property = null, incremental = null, kotlinVersion = "2.5.0"))
+        assertFalse(isMavenCriEnabled(property = null, incremental = "false", kotlinVersion = "2.5.0"))
+        assertTrue(isMavenCriEnabled(property = null, incremental = "true", kotlinVersion = "2.5.0-Beta2"))
+        assertTrue(isMavenCriEnabled(property = null, incremental = "true", kotlinVersion = "2.6.0"))
+    }
+
     private fun isCriGenerationEnabled(property: String?, vararg kgpVersions: String) = isGradleCriGenerationEnabled(
         property,
         kgpVersions.map(IdeKotlinVersion::get)
+    )
+
+    private fun isMavenCriEnabled(property: String?, incremental: String?, kotlinVersion: String?) = isMavenCriGenerationEnabled(
+        property,
+        incremental,
+        kotlinVersion?.let(IdeKotlinVersion::get)
     )
 
     private fun createCriPath(): Path = tempDir.newDirectoryPath(CriToolchain.DATA_PATH)

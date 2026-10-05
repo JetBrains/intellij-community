@@ -39,6 +39,40 @@ class MavenCompilerReferenceIndexApplicabilityTest(mavenVersion: String, modelVe
         assertFalse(isBtaCriProviderApplicable())
     }
 
+    @Test
+    fun `test BTA CRI provider is applicable by default since Kotlin 2_5 with incremental compilation`() = runTest {
+        maven.importProjectAsync(mavenProjectWithKotlinPlugin(kotlinVersion = "2.5.0", incremental = "true"))
+
+        assertTrue(isBtaCriProviderApplicable())
+    }
+
+    @Test
+    fun `test BTA CRI provider is not applicable by default since Kotlin 2_5 without incremental compilation`() = runTest {
+        maven.importProjectAsync(mavenProjectWithKotlinPlugin(kotlinVersion = "2.5.0", incremental = "false"))
+
+        assertFalse(isBtaCriProviderApplicable())
+    }
+
     private fun isBtaCriProviderApplicable(): Boolean =
         KotlinCompilerReferenceIndexStorageProvider.getApplicableProvider(project).isBtaCriProvider()
+
+    private fun mavenProjectWithKotlinPlugin(kotlinVersion: String, incremental: String): String =
+        $$"""
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1.0.0</version>
+        <properties>
+            <kotlin.version>$$kotlinVersion</kotlin.version>
+            <kotlin.compiler.incremental>$$incremental</kotlin.compiler.incremental>
+        </properties>
+        <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>kotlin-maven-plugin</artifactId>
+                    <version>${kotlin.version}</version>
+                </plugin>
+            </plugins>
+        </build>
+        """.trimIndent()
 }
