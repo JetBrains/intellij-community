@@ -400,7 +400,7 @@ class PyLiteralType private constructor(
 
       if (expression is PyReferenceExpression || expression is PySubscriptionExpression) {
         val subLiteralType = Ref.deref(PyTypingTypeProvider.getType(expression, context, typeRepresentation))
-        if (subLiteralType.toStream().all { it is PyLiteralType }) return subLiteralType
+        if (subLiteralType.toStream().all { it is PyLiteralType || it.isNoneType }) return subLiteralType
       }
 
       return literalType(expression, context, true, typeRepresentation)

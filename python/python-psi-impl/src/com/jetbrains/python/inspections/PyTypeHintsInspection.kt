@@ -17,6 +17,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
@@ -50,20 +51,23 @@ import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyComprehensionElement
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyEllipsisLiteralExpression
+import com.jetbrains.python.psi.PyExceptPart
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyForPart
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyListLiteralExpression
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyNoneLiteralExpression
+import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyPlainStringElement
-import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
 import com.jetbrains.python.psi.PyReferenceExpression
@@ -81,12 +85,15 @@ import com.jetbrains.python.psi.PyTypeParameterListOwner
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.PyWithAncestors
+import com.jetbrains.python.psi.PyWithItem
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.stubs.PyTargetExpressionStub
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameterVariadicType
 import com.jetbrains.python.psi.types.PyClassLikeType
@@ -110,10 +117,12 @@ import com.jetbrains.python.psi.types.PyTypeVarTupleType
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyTypingNewType
+import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyUnpackedTupleType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isUnknown
+import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 class PyTypeHintsInspection : PyInspection() {
@@ -201,7 +210,9 @@ class PyTypeHintsInspection : PyInspection() {
     override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
       super.visitPySubscriptionExpression(node)
 
-      checkParameters(node)
+      if (!isInsideTypingAnnotatedMetadata(node)) {
+        checkParameters(node)
+      }
       checkParameterizedBuiltins(node)
     }
 
@@ -211,13 +222,8 @@ class PyTypeHintsInspection : PyInspection() {
       reportTypeParametersUsedByOuterScope(node)
 
       val typeExpression = node.typeExpression?.let { PyPsiUtils.flattenParens(it) } ?: return
-      if (!isValidTypeHint(typeExpression, myTypeEvalContext)) {
+      if (!isValidTypeHint(typeExpression, myTypeEvalContext) || isAliasOfItself(node)) {
         registerProblem(typeExpression, PyPsiBundle.message("INSP.type.hints.type.hint.is.not.valid"))
-      }
-      else {
-        if (PyTypingTypeProvider.getType(typeExpression, myTypeEvalContext) == null) {
-          registerProblem(typeExpression, PyPsiBundle.message("INSP.type.hints.type.hint.is.not.valid"))
-        }
       }
 
       if (typeExpression is PyBinaryExpression && typeExpression.operator == PyTokenTypes.OR) {
@@ -231,7 +237,7 @@ class PyTypeHintsInspection : PyInspection() {
             }
             is PyParenthesizedExpression -> it.containedExpression?.checkForCircularReference()
             is PySubscriptionExpression -> it.qualifier?.checkForCircularReference()
-            is PyReferenceExpression -> if (it.name == typeAliasName) {
+            is PyReferenceExpression -> if (!it.isQualified && it.name == typeAliasName) {
               registerProblem(it, PyPsiBundle.message("INSP.type.hints.circular.reference"))
             }
           }
@@ -292,9 +298,12 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun checkTypeVarTupleUnpacked(node: PyReferenceExpression) {
       if (PsiTreeUtil.getParentOfType(node, PyStarExpression::class.java) != null) return
-      val subscriptionExpr = PsiTreeUtil.getParentOfType(node, PySubscriptionExpression::class.java)
-      if (subscriptionExpr != null && subscriptionExpr.operand is PyQualifiedExpression &&
-          (subscriptionExpr.operand as PyQualifiedExpression).asQualifiedName()?.endsWith("Unpack") == true) {
+      val unpackOperand = PsiTreeUtil.getParentOfType(node, PySubscriptionExpression::class.java)?.operand as? PyReferenceExpression
+      if (unpackOperand != null &&
+          (unpackOperand.asQualifiedName()?.endsWith("Unpack") == true ||
+           PyTypingTypeProvider.resolveToQualifiedNames(unpackOperand, myTypeEvalContext).any {
+             it == PyTypingTypeProvider.UNPACK || it == PyTypingTypeProvider.UNPACK_EXT
+           })) {
         return
       }
       registerProblem(node, PyPsiBundle.message("INSP.type.hints.type.var.tuple.must.always.be.unpacked"),
@@ -496,12 +505,11 @@ class PyTypeHintsInspection : PyInspection() {
         val parameters = functionParent.parameterList.parameters
         if (parameters.isNotEmpty()) {
           val firstParameter = parameters[0]
-          val annotation = (firstParameter as? PyNamedParameter)?.annotation
+          val annotationValue = (firstParameter as? PyNamedParameter)?.annotation?.value
           if (
-            annotation != null && firstParameter.isSelf &&
-            annotation.value
-              ?.findSelvesInAnnotation(myTypeEvalContext)
-              ?.isEmpty() == true
+            annotationValue != null && firstParameter.isSelf &&
+            annotationValue.findSelvesInAnnotation(myTypeEvalContext).isEmpty() &&
+            Ref.deref(PyTypingTypeProvider.getType(annotationValue, myTypeEvalContext)) !is PySelfType
           ) {
             val message = if (PyAstFunction.Modifier.CLASSMETHOD == functionParent.modifier)
               PyPsiBundle.message("INSP.type.hints.self.use.for.cls.parameter.with.self.annotation")
@@ -580,9 +588,19 @@ class PyTypeHintsInspection : PyInspection() {
           }
         }
         if (!PyUtil.isTopLevel(parent)) {
-          registerProblem(target, PyPsiBundle.message("INSP.type.hints.type.alias.must.be.top.level.declaration"))
+          if (ScopeUtil.getScopeOwner(parent) !is PyClass) {
+            registerProblem(target, PyPsiBundle.message("INSP.type.hints.type.alias.must.be.top.level.declaration"))
+          }
+          else if (assignedValue != null && usesBoundTypeParameters(assignedValue, target)) {
+            registerProblem(target, PyPsiBundle.message("INSP.type.hints.type.alias.in.class.cannot.use.bound.type.variables"))
+          }
         }
       }
+    }
+
+    private fun usesBoundTypeParameters(typeHint: PyExpression, alias: PyTargetExpression): Boolean {
+      val type = Ref.deref(PyTypingTypeProvider.getType(typeHint, myTypeEvalContext)) ?: return false
+      return type.collectGenerics(myTypeEvalContext).allTypeParameters.any { it.scopeOwner.let { owner -> owner != null && owner !== alias } }
     }
 
     private fun checkTypeVarPlacement(call: PyCallExpression, target: PyExpression?) {
@@ -668,7 +686,7 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun checkCastArguments(arguments: Array<PyExpression>) {
       if (arguments.size == 2) {
-        if (PyTypingTypeProvider.getType(arguments[0], myTypeEvalContext) == null) {
+        if (!isValidTypeHint(arguments[0], myTypeEvalContext)) {
           registerProblem(arguments[0], PyPsiBundle.message("INSP.type.hints.expected.a.type"))
         }
       }
@@ -738,8 +756,10 @@ class PyTypeHintsInspection : PyInspection() {
     private fun checkTypeVarDefaultType(defaultExpression: PyExpression, typeVarType: PyTypeVarType) {
       val typeRef = typeVarType.defaultType
       if (typeRef == null) {
-        registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.default.type.must.be.type.expression"),
-                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        if (!isValidTypeHint(defaultExpression, myTypeEvalContext)) {
+          registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.default.type.must.be.type.expression"),
+                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        }
         return
       }
 
@@ -772,7 +792,7 @@ class PyTypeHintsInspection : PyInspection() {
       if (PyPsiUtils.flattenParens(defaultExpression) is PyEllipsisLiteralExpression) return
       if (defaultExpression is PyListLiteralExpression) {
         defaultExpression.elements.forEach {
-          if (PyTypingTypeProvider.getType(it, myTypeEvalContext) == null) {
+          if (!isValidTypeHint(it, myTypeEvalContext)) {
             registerProblem(it, PyPsiBundle.message("INSP.type.hints.default.type.must.be.type.expression"),
                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
           }
@@ -858,9 +878,9 @@ class PyTypeHintsInspection : PyInspection() {
         type is PyClassType && !type.isDefinition && type.classQName.orEmpty() in PyTypingTypeProvider.TYPE_PARAMETER_FACTORIES ||
         // TODO should be caught by the type checker relying on the type hints for `isinstance`
         // p: T; isinstance(x, p)
-        type is PyTypeVarType && !type.isDefinition ||
+        isTypeVarInstance(type) ||
         // T = TypeVar("T"); isinstance(x, list[T])
-        type is PyClassType && type.typeArguments.any { it is PyTypeVarType } && !type.isDefinition
+        type is PyClassType && type.typeArguments.any { isTypeVarInstance(it) } && !type.isDefinition
       ) {
         registerProblem(base,
                         PyPsiBundle.message("INSP.type.hints.type.variables.cannot.be.used.with.instance.class.checks"),
@@ -879,6 +899,24 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
+    /**
+     * Tells if [type] is a value of a type variable, such as `p` in `p: T`.
+     * A type variable bound or constrained to class objects (`type[...]` or `type`) is excluded,
+     * because its values are valid in an instance or class check.
+     */
+    private fun isTypeVarInstance(type: PyType?): Boolean {
+      if (type !is PyTypeVarType || type.isDefinition) return false
+      val upperBounds = type.constraints.ifEmpty { listOfNotNull(type.bound) }
+      return upperBounds.isEmpty() || !upperBounds.all { isClassObjectType(it) }
+    }
+
+    private fun isClassObjectType(type: PyType?): Boolean = when (type) {
+      is PyUnionType -> type.members.all { isClassObjectType(it) }
+      is PyInstantiableType<*> if type.isDefinition -> true
+      is PyClassType -> type.pyClass.isSubclass(PyNames.FQN.TYPE, myTypeEvalContext)
+      else -> false
+    }
+
     private fun checkInstanceAndClassChecksOnReference(base: PyExpression) {
       if (base is PyReferenceExpression) {
         val resolvedBase = multiFollowAssignmentsChain(base)
@@ -887,6 +925,7 @@ class PyTypeHintsInspection : PyInspection() {
           .asSequence()
           .filterIsInstance<PyQualifiedNameOwner>()
           .mapNotNull { it.qualifiedName }
+          .filterNot { it == PyTypingTypeProvider.UNION && LanguageLevel.forElement(base).isAtLeast(LanguageLevel.PYTHON314) }
           .forEach {
             when (it) {
               PyTypingTypeProvider.ANY,
@@ -1284,7 +1323,17 @@ class PyTypeHintsInspection : PyInspection() {
       if (scope is PyClass) {
         val genericType = PyTypeChecker.findGenericDefinitionType(scope, myTypeEvalContext)
         if (genericType != null) {
-          return genericType.typeArguments.filterIsInstance<PyTypeParameterType>().map { it.name }
+          val typeParameters = genericType.typeArguments.filterIsInstance<PyTypeParameterType>()
+          // Without `Generic[...]`, a type parameter from an outer type parameter list does not make this class generic.
+          val listsTypeParameters = scope.superClassExpressions.any { base ->
+            val operand = (base as? PySubscriptionExpression)?.operand as? PyReferenceExpression
+            operand != null && PyResolveUtil.resolveImportedElementQNameLocally(operand).any {
+              it == genericQName || it == protocolQName || it == protocolExtQName
+            }
+          }
+          return typeParameters
+            .filter { listsTypeParameters || it.declarationElement !is PyTypeParameter }
+            .map { it.name }
         }
       }
       if (scope is PyFunction) {
@@ -1385,10 +1434,30 @@ class PyTypeHintsInspection : PyInspection() {
         return
       }
 
-      if (PyLiteralType.fromLiteralParameter(index, myTypeEvalContext) == null) {
+      if (PyLiteralType.fromLiteralParameter(index, myTypeEvalContext) == null && !hasUnresolvedReference(index)) {
         registerProblem(index, PyPsiBundle.message("INSP.type.hints.illegal.literal.parameter"))
       }
     }
+
+    private fun isAliasOfItself(typeAlias: PyTypeAliasStatement): Boolean {
+      val visited = mutableSetOf<PyTypeAliasStatement>()
+      var current = typeAlias
+      while (visited.add(current)) {
+        val typeExpression = PyPsiUtils.flattenParens(current.typeExpression)
+        val reference = when (typeExpression) {
+          is PyStringLiteralExpression -> PyUtil.createExpressionFromFragment(typeExpression.stringValue, typeExpression)
+          else -> typeExpression
+        } as? PyReferenceExpression ?: return false
+        current = PyResolveUtil.resolveDeclaration(reference.getReference(resolveContext), resolveContext) as? PyTypeAliasStatement
+                  ?: return false
+      }
+      return current === typeAlias
+    }
+
+    private fun hasUnresolvedReference(expression: PyExpression): Boolean =
+      PsiTreeUtil.findChildrenOfType(expression, PyReferenceExpression::class.java)
+        .plus(listOfNotNull(expression as? PyReferenceExpression))
+        .any { it.getReference(resolveContext).multiResolve(false).isEmpty() }
 
     private fun checkAnnotatedParameter(index: PyExpression) {
       if (index !is PyTupleExpression) {
@@ -1398,6 +1467,10 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun checkGenericTypeParameterization(node: PySubscriptionExpression) {
       val operandRefExpression = node.operand as? PyReferenceExpression ?: return
+      // A variable with more than one assignment in this file is not a type alias.
+      val targets = PyUtil.multiResolveTopPriority(operandRefExpression, resolveContext)
+      if (targets.size > 1 && targets.all { it is PyTargetExpression && it.containingFile == node.containingFile }) return
+
       val declaration = multiFollowAssignmentsChain(operandRefExpression) {
         return@multiFollowAssignmentsChain when {
           PyTypingTypeProvider.isExplicitTypeAlias(it, myTypeEvalContext) -> false
@@ -1468,9 +1541,10 @@ class PyTypeHintsInspection : PyInspection() {
       val typeParameters = if (namesInValue.size > namesOfType.size && namesInValue.containsAll(namesOfType)) typeParametersInValue
       else typeParametersOfType
       if (typeParameters.isEmpty() && generics.isEmpty) {
-        registerProblem(node.indexExpression,
-                        PyPsiBundle.message("INSP.type.hints.generic.type.alias.is.not.generic.or.already.parameterized"),
-                        ProblemHighlightType.WARNING)
+        registerProblem(
+          node.indexExpression,
+          PyPsiBundle.message("INSP.type.hints.generic.type.alias.is.not.generic.or.already.parameterized"),
+        )
         return
       }
       val typeArguments = checkGenericTypeArguments(node)
@@ -1487,9 +1561,10 @@ class PyTypeHintsInspection : PyInspection() {
       }
                      ?: emptyList()
       if (generics.isEmpty()) {
-        registerProblem(node.indexExpression,
-                        PyPsiBundle.message("INSP.type.hints.generic.type.alias.is.not.generic.or.already.parameterized"),
-                        ProblemHighlightType.WARNING)
+        registerProblem(
+          node.indexExpression,
+          PyPsiBundle.message("INSP.type.hints.generic.type.alias.is.not.generic.or.already.parameterized"),
+        )
         return
       }
       val typeArguments = checkGenericTypeArguments(node)
@@ -1568,20 +1643,14 @@ class PyTypeHintsInspection : PyInspection() {
           is PyCallExpression,
             -> {
             val typeRef = PyTypingTypeProvider.getType(argument, myTypeEvalContext)
-            if (typeRef == null) {
-              val message = when {
-                argument is PyReferenceExpression -> {
-                  val isResolved = PyResolveUtil.resolveDeclaration(argument.reference, resolveContext) != null
-                  val isOpaque = PyTypingTypeProvider.resolveToQualifiedNames(argument, myTypeEvalContext)
-                    .any { qName -> PyTypingTypeProvider.OPAQUE_NAMES.contains(qName) }
-
-                  if (isResolved && !isOpaque) PyPsiBundle.message("INSP.type.hints.parameters.to.generic.types.must.be.types") else null
-                }
-                else -> PyPsiBundle.message("INSP.type.hints.invalid.type.argument")
+            if (typeRef == null && (flatArgument is PyListLiteralExpression || !isValidTypeHint(argument, myTypeEvalContext))) {
+              val message = if (argument is PyReferenceExpression) {
+                PyPsiBundle.message("INSP.type.hints.parameters.to.generic.types.must.be.types")
               }
-              if (message != null) {
-                registerProblem(argument, message, ProblemHighlightType.GENERIC_ERROR)
+              else {
+                PyPsiBundle.message("INSP.type.hints.invalid.type.argument")
               }
+              registerProblem(argument, message, ProblemHighlightType.GENERIC_ERROR)
             }
             if (flatArgument is PyListLiteralExpression) {
               checkNoEllipsisInParameterList(flatArgument)
@@ -1691,6 +1760,7 @@ class PyTypeHintsInspection : PyInspection() {
         }
         val typeParameterType = Ref.deref(PyTypingTypeProvider.getType(typeExpr, myTypeEvalContext))
         if (typeParameterType !is PyTypeParameterType) {
+          if (hasUnresolvedReference(typeExpr)) continue
           registerProblem(typeExpr,
                           PyPsiBundle.problemMessage("INSP.type.hints.parameters.to.generic.must.all.be.type.variables",
                                                      if (isProtocol) 1 else 0),
@@ -1719,6 +1789,9 @@ class PyTypeHintsInspection : PyInspection() {
                             PyPsiBundle.message("INSP.type.hints.default.type.refers.to.type.var.out.of.scope", defaultOutOfScope.name))
           }
         }
+        else if (isParamSpecWithEllipsisDefault(typeExpr)) {
+          lastIsDefault = true
+        }
         else if (lastIsDefault) {
           registerProblem(typeExpr,
                           PyPsiBundle.message("INSP.type.hints.non.default.type.vars.cannot.follow.defaults"),
@@ -1730,6 +1803,15 @@ class PyTypeHintsInspection : PyInspection() {
         }
         lastIsTypeVarTuple = typeParameterType is PyTypeVarTupleType
       }
+    }
+
+    /** Checks that [typeExpression] refers to a `ParamSpec` with `default=...`. The type of this default is not known. */
+    private fun isParamSpecWithEllipsisDefault(typeExpression: PyExpression): Boolean {
+      val reference = typeExpression as? PyReferenceExpression ?: return false
+      val target = PyResolveUtil.resolveDeclaration(reference.getReference(resolveContext), resolveContext) as? PyTargetExpression
+                   ?: return false
+      val call = target.findAssignedValue() as? PyCallExpression ?: return false
+      return call.getKeywordArgument("default") is PyEllipsisLiteralExpression
     }
 
     private fun checkCallableParameters(index: PyExpression) {
@@ -1793,13 +1875,16 @@ class PyTypeHintsInspection : PyInspection() {
     private fun checkRawConcatenateUsage(expression: PyExpression) {
       if (expression is PySubscriptionExpression &&
           Ref.deref(PyTypingTypeProvider.getType(expression, myTypeEvalContext)) is PyConcatenateType) {
-        registerProblem(expression,
-                        PyPsiBundle.message("INSP.type.hints.concatenate.can.only.be.used.inside.callable"),
-                        ProblemHighlightType.WARNING)
+        registerProblem(
+          expression,
+          PyPsiBundle.message("INSP.type.hints.concatenate.can.only.be.used.inside.callable"),
+        )
       }
     }
 
     private fun checkForwardReferencesInBinaryExpression(expression: PyExpression) {
+      // Stub files are never executed, so a string operand of `|` cannot fail at runtime there
+      if (PyiUtil.isInsideStub(expression)) return
       if (expression is PyBinaryExpression && expression.operator == PyTokenTypes.OR) {
         expression.accept(object : PyRecursiveElementVisitor() {
           override fun visitPyStringLiteralExpression(node: PyStringLiteralExpression) {
@@ -2109,7 +2194,7 @@ class PyTypeHintsInspection : PyInspection() {
                                                       typeArguments,
                                                       PyTypeParameterMapping.Option.USE_DEFAULTS)
       if (mapping == null) {
-        registerProblem(flatIndexExpr, message, ProblemHighlightType.WARNING)
+        registerProblem(flatIndexExpr, message)
       }
       else {
         for (pair in mapping.mappedTypes) {
@@ -2118,9 +2203,10 @@ class PyTypeHintsInspection : PyInspection() {
           if (!matched) {
             val expectedName = PythonDocumentationProvider.getVerboseTypeName(pair.getFirst(), myTypeEvalContext)
             val actualName = PythonDocumentationProvider.getTypeName(pair.getSecond(), myTypeEvalContext)
-            registerProblem(flatIndexExpr,
-                            PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName),
-                            ProblemHighlightType.WARNING)
+            registerProblem(
+              flatIndexExpr,
+              PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName),
+            )
             return
           }
         }
@@ -2207,16 +2293,40 @@ class PyTypeHintsInspection : PyInspection() {
   }
 
   object Helper {
-    fun isValidTypeHint(expression: PyExpression, context: TypeEvalContext): Boolean {
-      return when (expression) {
-        is PyListLiteralExpression -> false
-        is PyCallExpression -> Ref.deref(PyTypingTypeProvider.getType(expression, context)) is PyTypeVarType
-        is PySubscriptionExpression -> expression.operand is PyReferenceExpression
-        is PyStringLiteralExpression -> stringLiteralIsCorrectTypeHint(expression, context)
-        is PyReferenceExpression -> referenceIsCorrectTypeHint(expression, context)
-        else -> PyTypingTypeProvider.getType(expression, context) != null
-      }
+    /**
+     * Returns `false` only when [expression] is surely not a valid type expression.
+     * An expression that the type provider cannot evaluate, such as an unresolved reference, is valid.
+     */
+    fun isValidTypeHint(expression: PyExpression, context: TypeEvalContext): Boolean =
+      isValidTypeExpression(expression, context, HashSet())
+  }
+}
+
+/**
+ * [visitedAliases] holds the variables whose values are already under the check. A variable that refers to itself, such as
+ * `int = int`, is then valid, because the check cannot find what it means.
+ */
+private fun isValidTypeExpression(expression: PyExpression, context: TypeEvalContext, visitedAliases: MutableSet<PyTargetExpression>): Boolean {
+  return when (expression) {
+    is PyListLiteralExpression -> false
+    is PyCallExpression -> Ref.deref(PyTypingTypeProvider.getType(expression, context)) is PyTypeVarType
+    is PySubscriptionExpression -> {
+      val operand = expression.operand
+      operand is PyReferenceExpression && referenceIsCorrectTypeHint(operand, context, visitedAliases)
     }
+    is PyStringLiteralExpression -> stringLiteralIsCorrectTypeHint(expression, context, visitedAliases)
+    is PyReferenceExpression -> referenceIsCorrectTypeHint(expression, context, visitedAliases)
+    is PyBinaryExpression if expression.operator == PyTokenTypes.OR -> {
+      val left = expression.leftExpression
+      val right = expression.rightExpression
+      left != null && right != null &&
+      isValidTypeExpression(left, context, visitedAliases) && isValidTypeExpression(right, context, visitedAliases)
+    }
+    is PyStarExpression -> PyTypingTypeProvider.getType(expression, context) != null ||
+                           expression.expression?.let {
+                             PyTypingTypeProvider.getType(it, context) == null && isValidTypeExpression(it, context, visitedAliases)
+                           } == true
+    else -> PyTypingTypeProvider.getType(expression, context) != null
   }
 }
 
@@ -2263,12 +2373,19 @@ private fun PySubscriptionExpression.isParamSpecArgument(argIndex: Int, context:
   val resolveContext = PyResolveContext.defaultContext(context)
   val operandRef = this.operand as? PyReferenceExpression
   if (operandRef != null) {
-    val aliasStatement = PyResolveUtil.resolveDeclaration(operandRef.reference, resolveContext) as? PyTypeAliasStatement
-    if (aliasStatement != null) {
-      val typeParams = aliasStatement.typeParameterList?.typeParameters ?: emptyList()
+    val declaration = PyResolveUtil.resolveDeclaration(operandRef.reference, resolveContext)
+    if (declaration is PyTypeAliasStatement) {
+      val typeParams = declaration.typeParameterList?.typeParameters ?: emptyList()
       if (argIndex in typeParams.indices) {
         return typeParams[argIndex].kind == PyAstTypeParameter.Kind.ParamSpec
       }
+    }
+
+    // Old-style type alias: `Alias = Callable[P, T]`
+    if (declaration is PyTargetExpression) {
+      val aliasValue = PyTypingAliasStubType.getAssignedValueStubLike(declaration) ?: return false
+      val aliasType = Ref.deref(PyTypingTypeProvider.getType(aliasValue, context)) ?: return false
+      return aliasType.collectGenerics(context).allTypeParameters.distinct().getOrNull(argIndex) is PyParamSpecType
     }
   }
 
@@ -2291,7 +2408,19 @@ private class ParamSpecComponent private constructor(
 
     fun getParamSpecComponent(pyNamedParameter: PyNamedParameter, context: TypeEvalContext): ParamSpecComponent? {
       val annotationValue = pyNamedParameter.annotation?.value ?: return null
-      return getParamSpecComponent(annotationValue, context)
+      val typeHint = unwrapTypeHint(annotationValue, context) ?: return null
+      val component = getParamSpecComponent(typeHint, context) ?: return null
+      if (typeHint === annotationValue) return component
+      return ParamSpecComponent(component.refName, annotationValue, annotationValue, component.component)
+    }
+
+    /** Returns the type hint inside a quoted annotation, or inside the first argument of `Annotated`. */
+    private fun unwrapTypeHint(expression: PyExpression, context: TypeEvalContext): PyExpression? = when (expression) {
+      is PyStringLiteralExpression -> PyUtil.createExpressionFromFragment(expression.stringValue, expression)
+      is PySubscriptionExpression if PyTypingTypeProvider.resolveToQualifiedNames(expression.operand, context).any {
+        it == PyTypingTypeProvider.ANNOTATED || it == PyTypingTypeProvider.ANNOTATED_EXT
+      } -> expression.arguments?.firstOrNull()?.let { unwrapTypeHint(it, context) }
+      else -> expression
     }
 
     fun getParamSpecComponent(annotationValue: PyExpression,  context: TypeEvalContext): ParamSpecComponent? {
@@ -2482,7 +2611,11 @@ private class ReplaceWithTypingGenericAliasQuickFix : PsiUpdateModCommandQuickFi
   }
 }
 
-private fun stringLiteralIsCorrectTypeHint(stringLiteral: PyStringLiteralExpression, context: TypeEvalContext): Boolean {
+private fun stringLiteralIsCorrectTypeHint(
+  stringLiteral: PyStringLiteralExpression,
+  context: TypeEvalContext,
+  visitedAliases: MutableSet<PyTargetExpression>,
+): Boolean {
   val embeddedString = stringLiteral.firstChild as? PyPlainStringElement ?: return false // f-strings are not allowed
   if (embeddedString.prefix.isNotEmpty()) return false // prefixed strings are not allowed
   if (stringLiteral.stringElements.size > 1) return false
@@ -2493,26 +2626,41 @@ private fun stringLiteralIsCorrectTypeHint(stringLiteral: PyStringLiteralExpress
     embeddedString.content
   }
   val embeddedExpression = PyUtil.createExpressionFromFragment(expressionText, stringLiteral.containingFile) ?: return false
-  return isValidTypeHint(embeddedExpression, context)
+  return isValidTypeExpression(embeddedExpression, context, visitedAliases)
 }
 
-private fun referenceIsCorrectTypeHint(referenceExpression: PyReferenceExpression, context: TypeEvalContext): Boolean {
+private fun referenceIsCorrectTypeHint(
+  referenceExpression: PyReferenceExpression,
+  context: TypeEvalContext,
+  visitedAliases: MutableSet<PyTargetExpression>,
+): Boolean {
   val resolveContext = PyResolveContext.defaultContext(context)
   val resolvedElement = PyResolveUtil.resolveDeclaration(referenceExpression.reference, resolveContext)
   if (resolvedElement == null) return true // We cannot be sure, let it better be false-negative
+  if (isClassMemberInDeferredAnnotation(referenceExpression, resolvedElement)) return true
+  // A function name is bound after the signature is evaluated, so the signature cannot refer to the function.
+  if (resolvedElement is PyFunction && PsiTreeUtil.isAncestor(resolvedElement, referenceExpression, true) &&
+      !PsiTreeUtil.isAncestor(resolvedElement.statementList, referenceExpression, false)) {
+    return true
+  }
   when (resolvedElement) {
     is PyTargetExpression -> {
       val qName = resolvedElement.qualifiedName ?: return true
       if (PyTypingTypeProvider.OPAQUE_NAMES.contains(qName)) return true
       val assignedTypeAliasValue = PyTypingAliasStubType.getAssignedValueStubLike(resolvedElement)
       if (assignedTypeAliasValue != null) {
+        if (!visitedAliases.add(resolvedElement)) return true
+        val typeAliasTypeValue = (assignedTypeAliasValue as? PyCallExpression)?.let {
+          PyTypingTypeProvider.getTypeAliasTypeValue(it, context)
+        }
         // The placement of a ParamSpec has a separate check
-        return isValidTypeHint(assignedTypeAliasValue, context) ||
+        return isValidTypeExpression(typeAliasTypeValue ?: assignedTypeAliasValue, context, visitedAliases) ||
                Ref.deref(PyTypingTypeProvider.getType(referenceExpression, context)) is PyParamSpecType
       }
       else {
-        val type = Ref.deref(PyTypingTypeProvider.getType(referenceExpression, context))
-        return type is PyClassLikeType
+        val typeRef = PyTypingTypeProvider.getType(referenceExpression, context)
+        if (typeRef == null) return !isVariableOfNonTypeValue(resolvedElement, context)
+        return typeRef.get() is PyClassLikeType
       }
     }
     is PyTypeParameter, is PyClass, is PyTypeAliasStatement -> return true
@@ -2521,6 +2669,73 @@ private fun referenceIsCorrectTypeHint(referenceExpression: PyReferenceExpressio
       return PyTypingTypeProvider.OPAQUE_NAMES.contains(qualifiedName) ||
              qualifiedName != null && (qualifiedName.endsWith("ParamSpec.args") || qualifiedName.endsWith("ParamSpec.kwargs"))
     }
-    else -> return false
+    is PsiFileSystemItem, is PyParameter -> return false
+    else -> return true
   }
 }
+
+/**
+ * Checks that [resolved] is a member of a class that contains [reference], and that [reference] is in a stub
+ * or in an annotation of a file with `from __future__ import annotations`.
+ * Then `typing.get_type_hints` and type checkers can find the name outside the class, for example a builtin `tuple`.
+ */
+private fun isClassMemberInDeferredAnnotation(reference: PyReferenceExpression, resolved: PsiElement): Boolean {
+  val owner = ScopeUtil.getScopeOwner(resolved) as? PyClass ?: return false
+  if (!PsiTreeUtil.isAncestor(owner, reference, true)) return false
+  if (PyiUtil.isInsideStub(reference)) return true
+  return (reference.containingFile as? PyFile)?.hasImportFromFuture(FutureFeature.ANNOTATIONS) == true &&
+         PsiTreeUtil.getParentOfType(reference, PyAnnotation::class.java) != null
+}
+
+/**
+ * Checks that [target] is surely a variable and not a type alias.
+ * Its value has a declared type, is a plain expression such as a literal, or is the result of a call that creates no type.
+ * A target of a loop, of a `with` statement, of an `except` clause or of a comprehension is also a variable.
+ */
+private fun isVariableOfNonTypeValue(target: PyTargetExpression, context: TypeEvalContext): Boolean {
+  if (!target.hasAssignedValue()) return target.stub == null && isLoopOrContextTarget(target)
+  if (target.annotationValue != null || target.typeCommentAnnotation != null) return true
+  if (target.stub?.initializerType == PyTargetExpressionStub.InitializerType.Custom) return false
+  if (PyTargetExpressionImpl.getAssignedReferenceQualifiedName(target) != null) return false
+  val calleeName = PyTargetExpressionImpl.getAssignedCallCalleeQualifiedName(target) ?: return true
+  val calleeQName = calleeName.get() ?: return true
+  val callee = PyUtil.createExpressionFromFragment(calleeQName.toString(), target) as? PyReferenceExpression ?: return false
+  val resolveContext = PyResolveContext.defaultContext(context)
+  return when (val resolved = PyResolveUtil.resolveDeclaration(callee.getReference(resolveContext), resolveContext)) {
+    is PyFunction -> resolved.qualifiedName !in FUNCTIONAL_TYPE_FORMS
+    is PyClass -> createsPlainInstance(resolved, context)
+    else -> false
+  }
+}
+
+private fun isLoopOrContextTarget(target: PyTargetExpression): Boolean {
+  var element: PsiElement = target
+  while (element.parent.let { it is PyTupleExpression || it is PyParenthesizedExpression || it is PyStarExpression }) {
+    element = element.parent
+  }
+  return when (val parent = element.parent) {
+    is PyForPart -> parent.target === element
+    is PyWithItem -> parent.target === element
+    is PyExceptPart -> parent.target === element
+    is PyComprehensionElement -> parent.forComponents.any { it.getIteratorVariable<PyExpression>() === element }
+    else -> false
+  }
+}
+
+/**
+ * Checks that a call of [cls] surely creates an instance that is not a type.
+ * A metaclass, a class with a custom metaclass and a class from `typing` or `typing_extensions` can create a type.
+ */
+private fun createsPlainInstance(cls: PyClass, context: TypeEvalContext): Boolean {
+  val qName = cls.qualifiedName ?: return false
+  if (qName.substringBefore('.') in TYPING_MODULES) return false
+  if (cls.isSubclass(PyNames.FQN.TYPE, context)) return false
+  return cls.getMetaClassType(true, context)?.classQName == PyNames.FQN.TYPE
+}
+
+private val TYPING_MODULES = setOf(PyTypingTypeProvider.TYPING, "typing_extensions")
+
+private val FUNCTIONAL_TYPE_FORMS = setOf(
+  PyNames.FQN.NAMEDTUPLE, PyTypingTypeProvider.NAMEDTUPLE, PyTypingTypeProvider.NEW_TYPE, PyTypingTypeProvider.NEW_TYPE_EXT,
+  PyTypingTypeProvider.TYPED_DICT, PyTypingTypeProvider.TYPED_DICT_EXT,
+)

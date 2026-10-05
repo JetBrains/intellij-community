@@ -52,10 +52,14 @@ public class PyNewStyleGenericSyntaxInspectionTest extends PyInspectionTestCase 
 
   public void testOldStyleTypeVarReportedInTypeAliasStatement() {
     doTestByText("""
-                   from typing import TypeVar
+                   from typing import Annotated, TypeVar
                    T = TypeVar('T')
                    
                    type m = list[<error descr="Traditional TypeVars are not allowed inside new-style type alias statements">T</error>]
+
+                   OldAnnotated = Annotated[T, "metadata"]
+                   type Specialized = OldAnnotated[int]
+                   type Respecialized[K] = OldAnnotated[K]
                    """);
   }
 

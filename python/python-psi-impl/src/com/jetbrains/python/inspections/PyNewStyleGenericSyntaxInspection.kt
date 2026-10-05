@@ -26,6 +26,8 @@ import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyTypeAliasStatement
 import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.PyTypeParameterList
+import com.jetbrains.python.psi.PyTypeParameterListOwner
+import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -81,9 +83,7 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
               val declarationElement = it.declarationElement
               when {
                 scopeOwner != it.scopeOwner || declarationElement is PyTargetExpression ->
-                  registerProblem(node,
-                                  PyPsiBundle.problemMessage("INSP.new.style.type.parameter.out.of.scope", node.name),
-                                  ProblemHighlightType.WARNING)
+                  registerProblem(node, PyPsiBundle.problemMessage("INSP.new.style.type.parameter.out.of.scope", node.name))
                 declarationElement === typeParameter ->
                   registerProblem(node, PyPsiBundle.problemMessage("INSP.new.style.type.parameter.default.refers.to.itself", node.name))
                 declarationElement in laterTypeParameters ->
@@ -135,7 +135,8 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
 
       if (typeParameterList != null) {
         reportOldStyleTypeVarsUsage(node.parameterList,
-                                    PyPsiBundle.message("INSP.new.style.generics.mixing.old.style.and.new.style.type.vars.not.allowed"))
+                                    PyPsiBundle.message("INSP.new.style.generics.mixing.old.style.and.new.style.type.vars.not.allowed"),
+                                    node)
         node.parameterList
           .parameters
           .filterIsInstance<PyNamedParameter>()
@@ -145,7 +146,8 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
           }
         if (returnTypeAnnotation != null) {
           reportOldStyleTypeVarsUsage(returnTypeAnnotation,
-                                      PyPsiBundle.message("INSP.new.style.generics.mixing.old.style.and.new.style.type.vars.not.allowed"))
+                                      PyPsiBundle.message("INSP.new.style.generics.mixing.old.style.and.new.style.type.vars.not.allowed"),
+                                      node)
           reportAssignmentExpressions(returnTypeAnnotation,
                                       PyPsiBundle.message("INSP.new.style.generics.assignment.expressions.not.allowed"))
         }
@@ -176,19 +178,28 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
             }
           }
           reportOldStyleTypeVarsUsage(superClassExpressionList,
-                                      PyPsiBundle.message("INSP.new.style.generics.mixing.old.style.and.new.style.type.vars.not.allowed"))
+                                      PyPsiBundle.message("INSP.new.style.generics.mixing.old.style.and.new.style.type.vars.not.allowed"),
+                                      node)
           reportAssignmentExpressions(superClassExpressionList,
                                       PyPsiBundle.message("INSP.new.style.generics.assignment.expressions.not.allowed"))
         }
       }
     }
 
-    private fun reportOldStyleTypeVarsUsage(element: PsiElement, @InspectionMessage message: String) {
+    /**
+     * Reports references to traditional type variables in [element].
+     * A reference to a type alias that contains a type variable is not reported.
+     * When [owner] is given, a type variable that a class or function around [owner] binds is not reported.
+     */
+    private fun reportOldStyleTypeVarsUsage(element: PsiElement, @InspectionMessage message: String, owner: PyTypeParameterListOwner? = null) {
       element.accept(object : PyRecursiveElementVisitor() {
         override fun visitPyReferenceExpression(node: PyReferenceExpression) {
           node.getTypeParameterType()?.let {
-            if (it.declarationElement is PyTargetExpression
-                && ScopeUtil.getScopeOwner(it.declarationElement) !is PyTypeAliasStatement
+            val declaration = it.declarationElement
+            if (declaration is PyTargetExpression
+                && ScopeUtil.getScopeOwner(declaration) !is PyTypeAliasStatement
+                && PyResolveUtil.resolveDeclaration(node.getReference(resolveContext), resolveContext) === declaration
+                && !isBoundByEnclosingScope(it, owner)
             ) {
               registerProblem(node, message, ProblemHighlightType.GENERIC_ERROR)
             }
@@ -203,6 +214,11 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
           registerProblem(assignmentExpr, message,
                           ProblemHighlightType.GENERIC_ERROR)
         }
+    }
+
+    private fun isBoundByEnclosingScope(typeParameterType: PyTypeParameterType, owner: PyTypeParameterListOwner?): Boolean {
+      val scopeOwner = typeParameterType.scopeOwner ?: return false
+      return owner != null && PsiTreeUtil.isAncestor(scopeOwner, owner, true)
     }
 
     private fun PyReferenceExpression.getTypeParameterType(): PyTypeParameterType? {

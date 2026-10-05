@@ -62,6 +62,7 @@ import com.jetbrains.python.psi.PyExpressionCodeFragment
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyForPart
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyImportElement
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyKnownDecorator
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
@@ -97,6 +98,7 @@ import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
+import com.jetbrains.python.psi.stubs.PyTypingAliasStub
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableParameterListType
@@ -339,6 +341,16 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
           }
         }
         return Ref(PyAnyType.unknown)
+      }
+
+      // Without the AST, only the stub has the value of an implicit type alias such as `Alias = Base[T, int]`
+      if (assignedValue != null &&
+          referenceTarget.stub?.getCustomStub(PyTypingAliasStub::class.java) != null &&
+          !context.typeContext.maySwitchToAST(referenceTarget)) {
+        val type = getType(assignedValue, context)?.get()
+        if (type is PyInstantiableType<*>) {
+          return Ref(type.toClass())
+        }
       }
 
       // Return a type from an immediate type hint, e.g., from a syntactic annotation for
@@ -671,15 +683,19 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return if (typeAliasStack.isEmpty()) null else typeAliasStack.peek()
     }
 
-    fun pushTypeAlias(alias: PyQualifiedNameOwner) {
-      typeAliasStack.push(alias)
+    /** Runs [action] with an empty type alias stack and then restores the stack. */
+    fun <T> withEmptyTypeAliasStack(action: () -> T): T {
+      val saved = typeAliasStack.toList()
+      typeAliasStack.clear()
       recomputeStrongHashValue()
-    }
-
-    fun popTypeAlias(): PyQualifiedNameOwner? {
-      val res = if (typeAliasStack.isEmpty()) null else typeAliasStack.pop()
-      recomputeStrongHashValue()
-      return res
+      try {
+        return action()
+      }
+      finally {
+        typeAliasStack.clear()
+        typeAliasStack.addAll(saved)
+        recomputeStrongHashValue()
+      }
     }
 
     fun setComputeTypeParameterScopeEnabled(value: Boolean): Boolean {
@@ -754,6 +770,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     const val TYPE: String = "typing.Type"
     const val ANY: String = "typing.Any"
     const val NEW_TYPE: String = "typing.NewType"
+    const val NEW_TYPE_EXT: String = "typing_extensions.NewType"
     const val CALLABLE: String = "typing.Callable"
     const val CALLABLE_EXT: String = "typing_extensions.Callable"
     const val MAPPING: String = "typing.Mapping"
@@ -1163,7 +1180,10 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
             .append(StreamEx.of(typeParams.paramSpecs))
         }
         .select(PyTypeParameterType::class.java)
-        .distinct()
+        // A base such as `Base[type[T]]` gives the class object form of `T`. The class has the instance form as its type parameter.
+        .map { if (it is PyTypeVarType && it.isDefinition) it.toInstance() else it }
+        // The name identifies a type parameter of the class. A base such as `Base["Cls[T]"]` can give `T` another scope owner.
+        .distinct { it.name }
         .toList()
     }
 
@@ -2438,7 +2458,9 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
           .toList()
 
       val closestOwner = typeParamOwnerCandidates.firstOrNull()
-      if (closestOwner is PyFunction) {
+      // A class with a type parameter list does not bind traditional type variables, so an outer scope can bind them.
+      val isNewStyleClass = closestOwner is PyClass && closestOwner.typeParameterList != null
+      if (closestOwner is PyFunction || isNewStyleClass) {
         val typeParameterType = typeParamOwnerCandidates.asSequence()
           .drop(1)
           .firstNotNullOfOrNull { findSameTypeParameterInDefinition(it, name, context) }
@@ -2446,14 +2468,20 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
           return typeParameterType.scopeOwner
         }
       }
-      if (closestOwner != null) {
+      // In `def f(x: Unresolved[T])`, the annotation has no type, so the signature does not show `T`. The function still binds it.
+      if (closestOwner is PyFunction && isArgumentOfUnresolvedGenericInSignature(typeHintContext, closestOwner, context.typeContext)) {
+        return closestOwner
+      }
+      if (closestOwner != null && !isNewStyleClass) {
         val prevComputeTypeParameterScope = context.setComputeTypeParameterScopeEnabled(false)
         try {
-          return if (findSameTypeParameterInDefinition(closestOwner, name, context) != null) closestOwner else null
+          if (findSameTypeParameterInDefinition(closestOwner, name, context) != null) return closestOwner
         }
         finally {
           context.setComputeTypeParameterScopeEnabled(prevComputeTypeParameterScope)
         }
+        // A class body can declare an old-style type alias with its own type parameters.
+        if (closestOwner !is PyClass) return null
       }
 
       // old-style type aliases of form `ListOf = list[T]` or `ListOf: TypeAlias = list[T]`
@@ -2480,36 +2508,40 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return null
     }
 
+    private fun isArgumentOfUnresolvedGenericInSignature(typeHint: PsiElement, function: PyFunction, context: TypeEvalContext): Boolean {
+      if (!context.maySwitchToAST(function)) return false
+      val annotation = PsiTreeUtil.getParentOfType(typeHint, PyAnnotation::class.java, true, ScopeOwner::class.java) ?: return false
+      val annotated = annotation.parent
+      if (annotated !== function && !(annotated is PyNamedParameter && annotated.parent?.parent === function)) return false
+      val resolveContext = PyResolveContext.defaultContext(context)
+      return generateSequence(typeHint.parent) { it.parent }
+        .takeWhile { it !== annotation }
+        .filterIsInstance<PySubscriptionExpression>()
+        .mapNotNull { it.operand as? PyReferenceExpression }
+        .any { operand ->
+          PyResolveUtil.multiResolveDeclaration(operand.getReference(resolveContext), resolveContext).all { it is PyImportElement }
+        }
+    }
+
     private fun findSameTypeParameterInDefinition(
       owner: PyQualifiedNameOwner,
       name: String,
       context: Context,
     ): PyTypeParameterType? {
       // At this moment, the definition of the TypeVar should be the type alias at the top of the stack.
-      // While evaluating type hints of enclosing functions' parameters, resolving to the same TypeVar
-      // definition shouldn't trigger the protection against recursive aliases, so we manually remove
-      // it from the top for the time being.
       if (context.isTypeAliasStackEmpty) {
         return null
       }
-      val typeVarDeclaration = context.popTypeAlias() as PyTargetExpression
-      try {
-        val typeParameters: Iterable<PyTypeParameterType>
-        when (owner) {
-          is PyClass -> {
-            typeParameters = collectTypeParameters(owner, context)
-          }
-          is PyFunction -> {
-            typeParameters = collectTypeParameters(owner, context.typeContext)
-          }
-          else -> {
-            typeParameters = mutableListOf()
-          }
+      // The check evaluates the signature of the owner with an empty alias stack.
+      // Otherwise, the protection against recursive aliases hides the type parameters of the signature.
+      // For example, it hides `T` in `def outer() -> Alias[T]` while `def inner(x: Alias[T])` is evaluated.
+      return context.withEmptyTypeAliasStack {
+        val typeParameters: Iterable<PyTypeParameterType> = when (owner) {
+          is PyClass -> collectTypeParameters(owner, context)
+          is PyFunction -> collectTypeParameters(owner, context.typeContext)
+          else -> emptyList()
         }
-        return typeParameters.find { name == it.name }
-      }
-      finally {
-        context.pushTypeAlias(typeVarDeclaration)
+        typeParameters.find { name == it.name }
       }
     }
 
@@ -2833,7 +2865,8 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
           if (element is PyTargetExpression) {
             val assignedValue = PyTypingAliasStubType.getAssignedValueStubLike(element)
             if (assignedValue != null) {
-              elements.add(element to assignedValue)
+              val typeAliasTypeValue = (assignedValue as? PyCallExpression)?.let { getTypeAliasTypeValue(it, context) }
+              elements.add(element to (typeAliasTypeValue ?: assignedValue))
               continue
             }
           }
@@ -3017,6 +3050,17 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       }
 
       return null
+    }
+
+    /**
+     * Returns the value of a `TypeAliasType(name, value, ...)` call, or `null` if [call] does not create a `TypeAliasType`.
+     */
+    @ApiStatus.Internal
+    fun getTypeAliasTypeValue(call: PyCallExpression, context: TypeEvalContext): PyExpression? {
+      if (!call.isCalleeText("TypeAliasType")) return null
+      val callee = call.callee as? PyReferenceExpression ?: return null
+      if (!callee.resolvesToQualifiedNames(context, TYPE_ALIAS_TYPE, TYPE_ALIAS_TYPE_EXT)) return null
+      return call.getArgument(1, "value", PyExpression::class.java)
     }
 
     /**
