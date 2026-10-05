@@ -42,6 +42,7 @@ import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyFunction;
@@ -59,6 +60,7 @@ import com.jetbrains.python.psi.PyTypeParameter;
 import com.jetbrains.python.psi.PyTypeParameterListOwner;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
+import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub;
@@ -944,6 +946,21 @@ public class PyStubsTest extends PyTestCase {
     final PyTargetExpression instanceAttr = pyClass.findInstanceAttribute("inst_attr", false);
     assertHasTypingAliasStub(false, instanceAttr);
     assertNotParsed(file);
+  }
+
+  @TestFor(issues = "PY-87570")
+  public void testTypeAliasValueAfterTreeIsLoaded() {
+    final PyFile file = getTestFile();
+    final PyTargetExpression alias = file.findTopLevelAttribute("Alias");
+    final PyExpression valueFromStub = PyTypingAliasStubType.getAssignedValueStubLike(alias);
+    assertNotNull(valueFromStub);
+    assertNotSame(file, valueFromStub.getContainingFile());
+    assertNotParsed(file);
+
+    assertNotNull(file.getNode()); // Load the tree
+
+    assertNull(alias.getStub());
+    assertSame(alias.findAssignedValue(), PyTypingAliasStubType.getAssignedValueStubLike(alias));
   }
 
   // PY-75291

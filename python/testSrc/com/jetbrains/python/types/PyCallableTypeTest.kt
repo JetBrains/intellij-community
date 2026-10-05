@@ -2766,7 +2766,6 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       type TypeAliasWithP[**P] = Callable[P, None]
       #                          ^^^^^^^^ ERROR Unresolved reference 'Callable'
-      #                          ^^^^^^^^^^^^^^^^^ WARNING Invalid type annotation
 
       def func[**P](proto: ProtocolWithP[P], ta: TypeAliasWithP[P]):
         # These two types are equivalent

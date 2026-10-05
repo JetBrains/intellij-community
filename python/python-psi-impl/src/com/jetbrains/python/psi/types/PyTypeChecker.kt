@@ -2352,6 +2352,7 @@ object PyTypeChecker {
           if (substitution is PyTypeVarType) {
             val sameScopeSubstitution = substitutions.typeVars.keys.firstOrNull { typeVarType2 ->
               (typeVarType2 != substitution) && typeVarType2.declarationElement != null && typeVarType2.declarationElement == substitution.declarationElement
+              && typeVarType2.scopeOwner === substitution.scopeOwner
             }
 
             if (sameScopeSubstitution != null && substitution.defaultType != null) {
@@ -2378,6 +2379,7 @@ object PyTypeChecker {
         if (paramSpecType !in substitutions.paramSpecs) {
           val sameScopeSubstitution = substitutions.paramSpecs.keys.firstOrNull { typeVarType ->
             typeVarType.declarationElement != null && typeVarType.declarationElement == paramSpecType.declarationElement
+            && (paramSpecType.scopeOwner == null || typeVarType.scopeOwner === paramSpecType.scopeOwner)
           }
 
           if (sameScopeSubstitution != null) {

@@ -67,10 +67,7 @@ public class PyEvaluator {
 
   private static final QualifiedName SYS_VERSION_INFO = QualifiedName.fromDottedString("sys.version_info");
 
-  private static final List<QualifiedName> TYPING_TYPE_CHECKING_NAMES = List.of(
-    QualifiedName.fromDottedString("TYPE_CHECKING"),
-    QualifiedName.fromDottedString("typing.TYPE_CHECKING")
-  );
+  private static final String TYPE_CHECKING = "TYPE_CHECKING";
 
   private final @NotNull Set<PyExpression> myVisited = new HashSet<>();
 
@@ -588,6 +585,8 @@ public class PyEvaluator {
 
   private static boolean isTypeCheckingExpression(@NotNull PyReferenceExpression expression) {
     QualifiedName qualifiedName = expression.asQualifiedName();
-    return qualifiedName != null && TYPING_TYPE_CHECKING_NAMES.contains(qualifiedName);
+    // The control flow, the scopes and the lists of file and class members use this check, and name resolution uses them.
+    // Thus, the check cannot resolve `t` in `t.TYPE_CHECKING` to `typing`, and it accepts any qualifier. mypy also does this.
+    return qualifiedName != null && qualifiedName.getComponentCount() <= 2 && TYPE_CHECKING.equals(qualifiedName.getLastComponent());
   }
 }

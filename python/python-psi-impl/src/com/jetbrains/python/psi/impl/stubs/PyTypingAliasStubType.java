@@ -16,10 +16,12 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -38,6 +40,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyExpressionCodeFragment;
 import com.jetbrains.python.psi.PyListLiteralExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -45,6 +48,7 @@ import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub.InitializerType;
@@ -65,6 +69,8 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypingAliasStub> {
   private static final int STRING_LITERAL_LENGTH_THRESHOLD = 100;
+  private static final Key<CachedValue<PyExpression>> ASSIGNED_VALUE_FROM_STUB = Key.create("PyTypingAliasStubType.assignedValueFromStub");
+  private static final Key<CachedValue<PyExpression>> ASSIGNED_VALUE_FROM_AST = Key.create("PyTypingAliasStubType.assignedValueFromAst");
 
   public static final Pattern RE_TYPE_HINT_LIKE_STRING = Pattern.compile(
     """
@@ -109,11 +115,12 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
       return null;
     }
     final PyExpression value = target.findAssignedValue();
+    final PyExpression unwrappedValue = unwrapParentheses(value);
 
     // Plain reference expressions are handled by PyTargetExpressionStub.getInitializer()
     // when initializer type is ReferenceExpression. We don't want to override these stubs,
     // so as not to break existing resolve functionality (see PyTargetExpression.getAssignedQName()).
-    if (value == null || forStubCreation && value instanceof PyReferenceExpression) {
+    if (unwrappedValue == null || forStubCreation && value instanceof PyReferenceExpression) {
       return null;
     }
 
@@ -128,10 +135,20 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
     //
     // is not considered a valid type alias, even though the string content looks like a type hint.
     // See "BadTypeAlias14" in aliases_implicit.py of the conformance test suite.
-    if (target.getAnnotation() == null && !(value instanceof PyStringLiteralExpression) && looksLikeTypeHint(value)) {
+    if (target.getAnnotation() == null && !(unwrappedValue instanceof PyStringLiteralExpression) && looksLikeTypeHint(unwrappedValue)) {
       return value;
     }
     return null;
+  }
+
+  /**
+   * Unwraps a value such as {@code (int | str)}. A parenthesized tuple stays as it is, because a tuple is not a type expression.
+   * The stub keeps the text with the parentheses, because the inner text can span lines and hold comments.
+   */
+  private static @Nullable PyExpression unwrapParentheses(@Nullable PyExpression value) {
+    if (!(value instanceof PyParenthesizedExpression)) return value;
+    final PyExpression contained = PyPsiUtils.flattenParens(value);
+    return contained instanceof PyTupleExpression ? value : contained;
   }
 
   private static boolean looksLikeTypeAliasTarget(@NotNull PyTargetExpression target) {
@@ -174,7 +191,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
       final PyReferenceExpression callee = as(call.getCallee(), PyReferenceExpression.class);
       return callee != null &&
              ("TypeVar".equals(callee.getReferencedName()) || "TypeVarTuple".equals(callee.getReferencedName()) ||
-              "ParamSpec".equals(callee.getReferencedName()));
+              "ParamSpec".equals(callee.getReferencedName()) || "TypeAliasType".equals(callee.getReferencedName()));
     }
     return isSyntacticallyValidAnnotation(expression);
   }
@@ -270,27 +287,27 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
    * @see PyTypingAliasStub
    */
   public static @Nullable PyExpression getAssignedValueStubLike(@NotNull PyTargetExpression target) {
-    return CachedValuesManager.getCachedValue(target, () -> {
-      final PyTargetExpressionStub stub = target.getStub();
-      PyExpression result = null;
-      if (stub != null) {
-        final PyTypingAliasStub aliasStub = stub.getCustomStub(PyTypingAliasStub.class);
-        String aliasText = null;
-        if (aliasStub != null) {
-          aliasText = aliasStub.getText();
-        }
-        else if (stub.getInitializerType() == InitializerType.ReferenceExpression && stub.isTypeAliasLikeReference()) {
-          aliasText = Objects.toString(stub.getInitializer(), null);
-        }
-        if (aliasText != null) {
-          result = PyUtil.createExpressionFromFragment(aliasText, target.getContainingFile());
-        }
+    // The stub and the AST give different expressions, so each one has its own cached value.
+    // A value from the stub must not stay in use after the AST is loaded.
+    final Key<CachedValue<PyExpression>> key = target.getStub() != null ? ASSIGNED_VALUE_FROM_STUB : ASSIGNED_VALUE_FROM_AST;
+    return CachedValuesManager.getCachedValue(target, key, () -> CachedValueProvider.Result.create(
+      computeAssignedValueStubLike(target), PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  private static @Nullable PyExpression computeAssignedValueStubLike(@NotNull PyTargetExpression target) {
+    final PyTargetExpressionStub stub = target.getStub();
+    if (stub != null) {
+      final PyTypingAliasStub aliasStub = stub.getCustomStub(PyTypingAliasStub.class);
+      String aliasText = null;
+      if (aliasStub != null) {
+        aliasText = aliasStub.getText();
       }
-      else {
-        // Use PSI to get the assigned value but only if the same expression would be saved in stubs
-        result = getAssignedValueIfTypeAliasLike(target, false);
+      else if (stub.getInitializerType() == InitializerType.ReferenceExpression && stub.isTypeAliasLikeReference()) {
+        aliasText = Objects.toString(stub.getInitializer(), null);
       }
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
-    });
+      return aliasText != null ? unwrapParentheses(PyUtil.createExpressionFromFragment(aliasText, target.getContainingFile())) : null;
+    }
+    // Use PSI to get the assigned value but only if the same expression would be saved in stubs
+    return unwrapParentheses(getAssignedValueIfTypeAliasLike(target, false));
   }
 }

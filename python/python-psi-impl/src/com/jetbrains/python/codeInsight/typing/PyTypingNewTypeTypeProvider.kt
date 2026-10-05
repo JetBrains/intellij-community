@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.getStringBasedType
 import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.StubAwareComputation
 import com.jetbrains.python.psi.impl.stubs.PyTypingNewTypeStubImpl
 import com.jetbrains.python.psi.stubs.PyTypingNewTypeStub
@@ -40,8 +41,16 @@ class PyTypingNewTypeTypeProvider : PyTypeProviderBase() {
       context: TypeEvalContext,
     ): PyTypingNewType? {
       if (stub == null) return null
+      val unresolvedCalleeName = stub.unresolvedCalleeName
+      if (unresolvedCalleeName != null && !resolvesToNewType(unresolvedCalleeName, target, context)) return null
       val type = Ref.deref(getStringBasedType(stub.classType, target, context))
       return if (type is PyClassType) PyTypingNewType(type.toClass(), stub.name, target) else null
+    }
+
+    private fun resolvesToNewType(calleeName: String, target: PyTargetExpression, context: TypeEvalContext): Boolean {
+      val callee = PyUtil.createExpressionFromFragment(calleeName, target) ?: return false
+      val qualifiedNames = PyTypingTypeProvider.resolveToQualifiedNames(callee, context)
+      return PyTypingTypeProvider.NEW_TYPE in qualifiedNames || PyTypingTypeProvider.NEW_TYPE_EXT in qualifiedNames
     }
   }
 }
