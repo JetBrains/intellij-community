@@ -308,20 +308,7 @@ internal class ProjectViewToolWindowServiceImpl(
     else {
       LOG.debug { "To select $nodePath, need to change the pane from ${currentPane?.id} to ${nodePath.paneId}" }
       withContext(Dispatchers.UI) {
-        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)
-        if (toolWindow == null) {
-          LOG.error("The Project View tool window is not found")
-          return@withContext null
-        }
-        val contentManager = toolWindow.contentManager
-        val content = contentManager.contents.firstOrNull { content ->
-          content.getUserData(PANE_KEY)?.id == nodePath.paneId
-        }
-        if (content == null) {
-          return@withContext null
-        }
-        contentManager.setSelectedContent(content)
-        content.getUserData(PANE_KEY)
+        selectPane(nodePath.paneId)
       }
     }
     if (pane == null) {
@@ -334,6 +321,29 @@ internal class ProjectViewToolWindowServiceImpl(
     }
     LOG.debug { "Selecting $nodePath" }
     pane.selectNode(nodePath)
+  }
+
+  @RequiresEdt
+  fun selectDefaultPane() {
+    selectPane(defaultSelection)
+  }
+
+  @RequiresEdt
+  private fun selectPane(paneId: ProjectViewPaneId): FrontendProjectViewPane? {
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)
+    if (toolWindow == null) {
+      LOG.error("The Project View tool window is not found")
+      return null
+    }
+    val contentManager = toolWindow.contentManager
+    val content = contentManager.contents.firstOrNull { content ->
+      content.getUserData(PANE_KEY)?.id == paneId
+    }
+    if (content == null) {
+      return null
+    }
+    contentManager.setSelectedContent(content)
+    return content.getUserData(PANE_KEY)
   }
 
   override suspend fun save() {

@@ -2,6 +2,7 @@
 package com.intellij.platform.projectView.frontend.impl
 
 import com.intellij.ide.DefaultTreeExpander
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.SelectInTarget
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -23,6 +24,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.id
+import com.intellij.platform.projectView.frontend.window.ProjectViewToolWindowServiceImpl
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
@@ -37,6 +39,7 @@ import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
 import com.intellij.ui.AutoScrollToSourceHandler
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.stripe.ErrorStripe
 import com.intellij.ui.stripe.ErrorStripePainter
 import com.intellij.ui.stripe.TreeUpdater
@@ -203,6 +206,15 @@ internal class TreeBasedFrontendProjectViewPane(
     }
     tree.addTreeSelectionListener(RestoreSelectionListener())
     enableDnD(tree, paneTreeModel)
+    if (!descriptor.isDefault) {
+      tree.emptyText
+        .setText(IdeBundle.message("scope.view.empty.text"))
+        .appendSecondaryText(IdeBundle.message("scope.view.empty.link"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+          if (!project.isDisposed) {
+            ProjectViewToolWindowServiceImpl.getInstance(project).selectDefaultPane()
+          }
+        }
+    }
   }
 
   override suspend fun manage() {
