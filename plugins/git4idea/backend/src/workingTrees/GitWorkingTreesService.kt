@@ -112,6 +112,7 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
         override fun applicationActivated(ideFrame: IdeFrame) {
           trySend(true)
         }
+
         override fun delayedApplicationDeactivated(window: Window) {
           trySend(false)
         }
@@ -244,8 +245,10 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     companion object {
       val SUCCESS: Result = Result(true, "")
 
-      fun createFailure(@NlsContexts.NotificationContent errorOutputAsHtmlString: @NlsSafe String,
-                        errorOutput: List<String> = emptyList()): Result {
+      fun createFailure(
+        @NlsContexts.NotificationContent errorOutputAsHtmlString: @NlsSafe String,
+        errorOutput: List<String> = emptyList(),
+      ): Result {
         return Result(false, errorOutputAsHtmlString, errorOutput)
       }
     }
@@ -256,7 +259,11 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
    * when the caller already runs its own background progress (e.g. checking out a PR branch into a new worktree),
    * so this step just runs as part of it instead of opening a second progress window.
    */
-  internal suspend fun createWorkingTree(request: GitWorktreeCreationRequest, force: Boolean = false, reportOwnProgress: Boolean = true): Result {
+  internal suspend fun createWorkingTree(
+    request: GitWorktreeCreationRequest,
+    force: Boolean = false,
+    reportOwnProgress: Boolean = true,
+  ): Result {
     val runCommand: suspend () -> Result = {
       val branch = request.branch
       val newBranchName = when (branch) {
@@ -264,7 +271,8 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
         // A remote branch is checked out into a new local branch tracking it.
         is WorktreeBranchSpec.CheckoutExisting -> (branch.sourceRef as? GitRemoteBranch)?.nameForRemoteOperations
       }
-      val commandResult = Git.getInstance().createWorkingTree(request.repository, request.workingTreePath, branch.sourceRef, newBranchName, force)
+      val commandResult =
+        Git.getInstance().createWorkingTree(request.repository, request.workingTreePath, branch.sourceRef, newBranchName, force)
       if (commandResult.success()) {
         Result.SUCCESS
       }
@@ -289,7 +297,7 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
   fun deleteCurrentProjectWorktree() {
     val currentProject = project
     val worktrees = GitRepositoryManager.getInstance(currentProject).repositories.singleOrNull()
-      ?.workingTreeHolder?.getWorkingTrees() ?: return
+                      ?.workingTreeHolder?.getWorkingTrees() ?: return
     val currentWorktree = worktrees.find { it.isCurrent && !it.isMain } ?: return
     val mainWorktreePath = worktrees.find { it.isMain }?.path?.path ?: return
 
@@ -502,11 +510,13 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
       return false
     }
 
-    try  {
+    try {
       EelFileUtils.deleteRecursively(Path(tree.path.path))
-    } catch (c: CancellationException) {
+    }
+    catch (c: CancellationException) {
       throw c
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
       notifyWorkingTreeDeletedError(project, e.message ?: "Unknown error while deleting working tree")
       return false
     }
