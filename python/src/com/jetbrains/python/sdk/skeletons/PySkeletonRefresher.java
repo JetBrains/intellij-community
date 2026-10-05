@@ -262,8 +262,7 @@ public final class PySkeletonRefresher {
         boolean canLive = header != null;
         if (canLive) {
           binaryFile = header.getBinaryFile();
-          canLive = PySkeletonHeader.PREGENERATED.equals(binaryFile) ||
-                    PySkeletonHeader.BUILTIN_NAME.equals(binaryFile) ||
+          canLive = PySkeletonHeader.BUILTIN_NAME.equals(binaryFile) ||
                     mySkeletonsGenerator.exists(binaryFile);
         }
         if (!canLive) {

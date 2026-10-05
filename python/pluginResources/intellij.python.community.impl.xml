@@ -611,8 +611,6 @@
     <registryKey key="python.detect.cross.module.dependencies" defaultValue="false"
                  description="Try to detect and automatically set-up module dependencies in a multi-module project"/>
 
-    <registryKey key="python.prebuilt.skeletons.minor.version.aware" defaultValue="false"
-                 description="When disabled stripes minor version to look for prebuilt skeletons"/>
     <registryKey key="python.activate.virtualenv.on.run" defaultValue="true"
                  description="Whether enabled activates virtualenv before script execution and passes environment to the process"/>
 
@@ -680,9 +678,6 @@
     <extensionPoint qualifiedName="Pythonid.debugSessionFactory" interface="com.jetbrains.python.debugger.PyDebugSessionFactory"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pythonDebugBackendRunner" interface="com.jetbrains.python.debugger.PyDebugBackendRunner"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.pyPregeneratedSkeletonsProvider"
-                    interface="com.jetbrains.python.sdk.skeletons.PyPregeneratedSkeletonsProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.packageManagerProvider"
                     interface="com.jetbrains.python.packaging.PyPackageManagerProvider"
@@ -807,7 +802,6 @@
 
     <!-- Other -->
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MayaFlavorProvider"/>
-    <pyPregeneratedSkeletonsProvider id="default" implementation="com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider"/>
 
     <pep8ProblemSuppressor implementation="com.jetbrains.python.validation.Pep8TypeParameterProblemSuppressor"/>
 
