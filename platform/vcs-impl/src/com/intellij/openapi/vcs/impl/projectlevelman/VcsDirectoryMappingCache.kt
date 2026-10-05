@@ -11,7 +11,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 
 @Service(Service.Level.PROJECT)
-@State(name = "VcsDirectoryMappingCache", storages = [Storage(StoragePathMacros.CACHE_FILE)])
+@State(name = "VcsDirectoryMappingCacheV2", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 internal class VcsDirectoryMappingCache : PersistentStateComponent<VcsDirectoryMappingCache.MyState> {
   class MyState : BaseState() {
     var vcsName: String? by string()
