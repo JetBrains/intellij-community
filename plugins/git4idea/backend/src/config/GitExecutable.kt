@@ -15,7 +15,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
@@ -24,6 +23,7 @@ import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.spawnProcess
+import com.intellij.platform.util.annotations.paths.NioPath
 import com.intellij.vcs.VcsLocaleHelper
 import git4idea.commands.GitHandler
 import git4idea.i18n.GitBundle
@@ -34,7 +34,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -55,7 +54,7 @@ sealed class GitExecutable {
     private const val SETSID_PATH = "/usr/bin/setsid"
     private val hasSetSid by lazy { Files.exists(Path.of(SETSID_PATH)) }
 
-    private fun setupLowPriorityExecution(commandLine: GeneralCommandLine, isWindows: Boolean, nicePath: () -> @MultiRoutingFileSystemPath String?) {
+    private fun setupLowPriorityExecution(commandLine: GeneralCommandLine, isWindows: Boolean, nicePath: () -> @NioPath String?) {
       if (Registry.`is`("ide.allow.low.priority.process")) {
         if (isWindows) {
           commandLine.withWrappingCommand(CommandLineUtil.getWinShellName(), "/c", "start", "/b", "/low", "/wait", GeneralCommandLine.inescapableQuote(""))
@@ -68,7 +67,7 @@ sealed class GitExecutable {
       }
     }
 
-    private fun setupNoTtyExecution(commandLine: GeneralCommandLine, wait: Boolean, setSidPath: () -> @MultiRoutingFileSystemPath String?) {
+    private fun setupNoTtyExecution(commandLine: GeneralCommandLine, wait: Boolean, setSidPath: () -> @NioPath String?) {
       setSidPath()?.let { setSidPathValue ->
         if (wait) {
           commandLine.withWrappingCommand(setSidPathValue, "-w")

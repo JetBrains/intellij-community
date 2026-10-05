@@ -16,8 +16,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.EelOsFamily;
-import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
 import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
+import com.intellij.platform.util.annotations.paths.NioPath;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -528,14 +528,14 @@ public class GitExecutableDetector {
     return PathEnvironmentVariableUtil.getPathVariableValue();
   }
 
-  private static Path takeGitPathIfWindows(@Nullable Project project, @NotNull @MultiRoutingFileSystemPath String pathString) {
+  private static Path takeGitPathIfWindows(@Nullable Project project, @NotNull @NioPath String pathString) {
     Path path = Path.of(pathString.trim());
     EelOsFamily osFamily = EelNioBridgeServiceKt.asEelPath(path).getDescriptor().getOsFamily();
     if (osFamily != EelOsFamily.Windows) return null;
     return path;
   }
 
-  static @Nullable @MultiRoutingFileSystemPath String patchExecutablePath(@NotNull Project project, @NotNull @MultiRoutingFileSystemPath String pathString) {
+  static @Nullable @NioPath String patchExecutablePath(@NotNull Project project, @NotNull @NioPath String pathString) {
     Path path = Path.of(pathString.trim());
     EelOsFamily osFamily = EelNioBridgeServiceKt.asEelPath(path).getDescriptor().getOsFamily();
     if (osFamily != EelOsFamily.Windows) return null;

@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
+import com.intellij.platform.util.annotations.paths.NioPath;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -177,7 +177,7 @@ public class VcsExecutablePathSelector {
   }
 
   public interface ExecutableHandler {
-    default @Nullable String patchExecutable(@NotNull @MultiRoutingFileSystemPath String executable) {
+    default @Nullable String patchExecutable(@NotNull @NioPath String executable) {
       return null;
     }
 

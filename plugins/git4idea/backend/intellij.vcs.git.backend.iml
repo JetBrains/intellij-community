@@ -123,6 +123,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.eel.impl" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
+    <orderEntry type="module" module-name="intellij.platform.util.annotations" />
     <orderEntry type="module" module-name="intellij.platform.ide.recentProjects" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl.wsl" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
