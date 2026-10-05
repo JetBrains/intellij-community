@@ -283,7 +283,6 @@ private fun androidDesignPlugin(mainModuleName: String = "intellij.android.desig
     spec.withModule("intellij.android.designer")
     spec.withModule("intellij.android.designer.gradle")
     spec.withModule("intellij.android.glance-designer")
-    spec.withModule("intellij.android.layoutlib")
     spec.withModule("intellij.android.nav.editor")
     spec.withModule("intellij.android.nav.editor.gradle")
     spec.withModule("intellij.android.preview-designer")
@@ -592,6 +591,7 @@ private fun createAndroidPluginLayout(
     spec.withModule("intellij.android.projectSystem", "android.jar")
     spec.withModule("intellij.android.render-resources", "android.jar")
     spec.withModule("intellij.android.rendering", "android.jar")
+    spec.withModule("intellij.android.layoutlib", "android.jar")
     spec.withModule("intellij.android.room", "android.jar")
     //spec.withModule("intellij.android.samples-browser", "android.jar") AS Koala Merge
     spec.withModule("intellij.android.screenshot-test", "android.jar")
