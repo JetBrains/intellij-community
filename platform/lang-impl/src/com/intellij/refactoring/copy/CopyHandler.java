@@ -101,7 +101,7 @@ public final class CopyHandler {
     String id = ToolWindowManager.getInstance(project).getActiveToolWindowId();
     if (id != null) {
       ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(id);
-      Content selectedContent = window.getContentManager().getSelectedContent();
+      Content selectedContent = window == null ? null : window.getContentManager().getSelectedContent();
       if (selectedContent != null) {
         JComponent component = selectedContent.getComponent();
         if (component instanceof TwoPaneIdeView) {
