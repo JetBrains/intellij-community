@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostic.compiler.based.DiagnosticCompilerTestFE10TestdataTestGenerated$Tests$Multiplatform" tests="1" skipped="0" failures="1" errors="0" timestamp="2024-05-31T14:31:45" hostname="NVC00775" time="1.583">
+  <properties/>
+  <testcase name="testPrivateExpectFakeOverride_incompatibleReturnType()" classname="org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostic.compiler.based.DiagnosticCompilerTestFE10TestdataTestGenerated$Tests$Multiplatform" time="1.583">
+    <failure message="com.intellij.rt.execution.junit.FileComparisonFailure: Actual data differs from file content: privateExpectFakeOverride_incompatibleReturnType.fir.kt expected:&lt;...ExpectClass(val [&lt;!ACTUAL_WITHOUT_EXPECT!&gt;x&lt;!&gt;]: Int)...&gt; but was:&lt;...ExpectClass(val [x]: Int)...&gt;" type="com.intellij.rt.execution.junit.FileComparisonFailure">com.intellij.rt.execution.junit.FileComparisonFailure: Actual data differs from file content: privateExpectFakeOverride_incompatibleReturnType.fir.kt expected:&lt;...ExpectClass(val [&lt;!ACTUAL_WITHOUT_EXPECT!&gt;x&lt;!&gt;]: Int)...&gt; but was:&lt;...ExpectClass(val [x]: Int)...&gt;
+      at org.jetbrains.kotlin.test.services.GlobalMetadataInfoHandler.compareAllMetaDataInfos(GlobalMetadataInfoHandler.kt:77)
+      at org.jetbrains.kotlin.test.TestRunner.runTestPipeline(TestRunner.kt:106)
+      at org.jetbrains.kotlin.test.TestRunner.runTestImpl(TestRunner.kt:69)
+    </failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
