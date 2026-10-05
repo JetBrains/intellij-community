@@ -5,7 +5,6 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.impl.createBuildContext
-import org.jetbrains.intellij.build.pycharm.PyCharmBuildUtils
 import org.jetbrains.intellij.build.pycharm.PyCharmCommunityProperties
 
 object PyCharmCommunityInstallersBuildTarget {
@@ -21,7 +20,6 @@ object PyCharmCommunityInstallersBuildTarget {
         buildStepsToSkip += listOf(
           BuildOptions.MAC_SIGN_STEP,
           BuildOptions.WIN_SIGN_STEP,
-          PyCharmBuildUtils.SKELETONS_COPY_STEP,
           BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP,
           BuildOptions.WINDOWS_ZIP_STEP,
         )

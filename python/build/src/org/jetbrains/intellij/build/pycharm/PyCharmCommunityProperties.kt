@@ -7,7 +7,6 @@ import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.FileAssociation
-import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LinuxDistributionCustomizer
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
@@ -108,10 +107,6 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     fullName { "PyCharm Open Source" }
     installDirNameHandler { "PyCharm OSS" }
 
-    copyAdditionalFiles { targetDir, _, context ->
-      PyCharmBuildUtils.copySkeletons(context, targetDir, "skeletons-win*.zip")
-    }
-
     uninstallFeedbackUrl { appInfo ->
       "https://www.jetbrains.com/pycharm/uninstall/?version=${appInfo.productCode}-${appInfo.majorVersion}.${appInfo.minorVersion}"
     }
@@ -126,11 +121,6 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     }
 
     override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "PyCharm OSS.app"
-
-    override fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
-      super.copyAdditionalFiles(context, targetDir, arch)
-      PyCharmBuildUtils.copySkeletons(context, targetDir, "skeletons-mac*.zip")
-    }
 
     override fun getCustomIdeaProperties(appInfo: ApplicationInfoProperties): Map<String, String> = mapOf(
       "ide.mac.useNativeClipboard" to "false"
