@@ -8,6 +8,7 @@ load("@rules_pkg//pkg:pkg.bzl", "pkg_zip")
 load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_javac_options", "kt_kotlinc_options")
 load("//:rules/assert_maven_coordinates_match.bzl", "assert_maven_coordinates_match_jar")
 load("//:rules/impl/transitions.bzl", "scrubbed_host_tool")
+load("//:rules/proto_toolchain_guard.bzl", "proto_toolchain_guard")
 
 jvm_import(
     name = "protobuf_java",
@@ -26,6 +27,23 @@ proto_lang_toolchain(
     runtime = ":protobuf_java",
     toolchain_type = "@protobuf//bazel/private:java_toolchain_type",
     visibility = ["//visibility:public"],
+)
+
+# The protobuf code of the monorepo takes a prebuilt protobuf-java runtime, not the protobuf module's source build, that
+# runtime is the release of the protobuf module the rules_kotlin builder compiles its own code against, and protoc is
+# never built from source: the guard fails the analysis otherwise, in the target configuration and, through
+# its exec_check instance, in the exec configuration where tools and their protos are built. Build it to check
+# the toolchain registration of a root module.
+proto_toolchain_guard(
+    name = "proto_toolchain_guard",
+    exec_check = ":proto_toolchain_guard_exec",
+    toolchain_registration = "@rules_jvm//:protoc_java_toolchain_toolchain",
+    visibility = ["//visibility:public"],
+)
+
+proto_toolchain_guard(
+    name = "proto_toolchain_guard_exec",
+    toolchain_registration = "@rules_jvm//:protoc_java_toolchain_toolchain",
 )
 
 kt_kotlinc_options(

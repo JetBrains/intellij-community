@@ -76,6 +76,12 @@ def _kt_kotlinc_options_with_extra_impl(ctx):
 
 _KT_KOTLINC_OPTIONS_WITH_EXTRA_ATTRS = dict(_EXTRA_OPTION_ATTRS)
 _KT_KOTLINC_OPTIONS_WITH_EXTRA_ATTRS.update({
+    # Every jvm_library names a kotlinc options target on both backends, so a dependency here makes every
+    # build analyze the guard of the protobuf toolchains (//:proto_toolchain_guard): a lost toolchain
+    # registration or a protoc built from source fails the build instead of passing silently.
+    "_proto_toolchain_guard": attr.label(
+        default = Label("//:proto_toolchain_guard"),
+    ),
     "kotlinc_options": attr.label(
         mandatory = True,
         providers = [KotlincOptions],

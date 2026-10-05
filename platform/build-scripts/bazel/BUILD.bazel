@@ -4,6 +4,7 @@ load("@rules_java//java:defs.bzl", "java_binary", "java_import", "java_test")
 load("@rules_java//toolchains:default_java_toolchain.bzl", "default_java_toolchain")
 load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin", "kt_kotlinc_options")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("//:proto_toolchain_guard.bzl", "proto_toolchain_guard")
 
 exports_files(
     ["intellij.platform.buildScripts.bazel.iml"],
@@ -25,6 +26,23 @@ proto_lang_toolchain(
     runtime = ":protobuf_java",
     toolchain_type = "@protobuf//bazel/private:java_toolchain_type",
     visibility = ["//visibility:public"],
+)
+
+# The protobuf code of the monorepo takes a prebuilt protobuf-java runtime, not the protobuf module's source build, that
+# runtime is the release of the protobuf module the rules_kotlin builder compiles its own code against, and protoc is
+# never built from source: the guard fails the analysis otherwise, in the target configuration and, through
+# its exec_check instance, in the exec configuration where tools and their protos are built. Build it to check
+# the toolchain registration of a root module.
+proto_toolchain_guard(
+    name = "proto_toolchain_guard",
+    exec_check = ":proto_toolchain_guard_exec",
+    toolchain_registration = "//:protoc_java_toolchain_toolchain",
+    visibility = ["//visibility:public"],
+)
+
+proto_toolchain_guard(
+    name = "proto_toolchain_guard_exec",
+    toolchain_registration = "//:protoc_java_toolchain_toolchain",
 )
 
 # see usage in .bazelrc
@@ -85,6 +103,8 @@ kt_kotlinc_options(
 kt_jvm_library(
     name = "jps_to_bazel-lib",
     srcs = glob(["src/**/*.kt"]),
+    # Every build of this workspace analyzes the guard of the protobuf toolchains.
+    data = [":proto_toolchain_guard"],
     kotlinc_opts = ":jps_to_bazel_kotlinc_options",
     runtime_deps = [],
     deps = [
