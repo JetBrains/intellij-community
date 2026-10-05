@@ -31,6 +31,10 @@ public abstract class PushActionBase extends DumbAwareAction {
 
   protected abstract boolean isEnabled(@NotNull VcsPushUi dialog);
 
+  protected boolean isVisible(@NotNull VcsPushUi dialog) {
+    return true;
+  }
+
   protected @Nls @NotNull String getText(@NotNull VcsPushUi dialog, boolean enabled) {
     return Objects.requireNonNull(getTemplatePresentation().getTextWithMnemonic());
   }
@@ -60,7 +64,7 @@ public abstract class PushActionBase extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    e.getPresentation().setVisible(true);
+    e.getPresentation().setVisible(isVisible(dialog));
 
     boolean enabled = isEnabled(dialog);
     e.getPresentation().setEnabled(enabled);

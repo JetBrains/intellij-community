@@ -51,6 +51,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.AbstractAction;
@@ -270,6 +271,42 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
   }
 
   @Override
+  @ApiStatus.Internal
+  public boolean isFetchRequired() {
+    return myController.isFetchRequired();
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public int getRemoteCommitCount(@NotNull Repository repository) {
+    return myController.getRemoteCommitCount(repository);
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void fetchRemoteCommits() {
+    myController.fetchRemoteCommits();
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public @NotNull PushController getController() {
+    return myController;
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public boolean isRemoteCheckFinished() {
+    return myController.isRemoteCheckFinished();
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public @Nls @NotNull String getDefaultActionText() {
+    return String.valueOf(myMainAction.getValue(Action.NAME));
+  }
+
+  @Override
   public @NotNull Map<PushSupport<Repository, PushSource, PushTarget>, Collection<PushInfo>> getSelectedPushSpecs() {
     return myController.getSelectedPushSpecs();
   }
@@ -446,12 +483,11 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
     }
 
     public void update() {
-      int firstEnabled = ContainerUtil.indexOf(myActions, it -> it.isEnabled());
-      if (firstEnabled >= 0) {
-        myDefaultAction = myActions.get(firstEnabled);
-        myOptions = new ArrayList<>();
-        myOptions.addAll(myActions.subList(0, firstEnabled));
-        myOptions.addAll(myActions.subList(firstEnabled + 1, myActions.size()));
+      // a required fetch disables the plain push and Force Push, so Fetch becomes the first enabled action
+      ActionWrapper defaultAction = ContainerUtil.find(myActions, Action::isEnabled);
+      if (defaultAction != null) {
+        myDefaultAction = defaultAction;
+        myOptions = ContainerUtil.filter(myActions, action -> action != defaultAction && action.isVisible());
       }
       setEnabled(myDefaultAction.myDialog.canPush());
 
@@ -475,6 +511,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
     private final @NotNull Project myProject;
     private final @NotNull VcsPushDialog myDialog;
     private final @NotNull PushActionBase myRealAction;
+    private boolean myVisible = true;
 
     ActionWrapper(@NotNull Project project, @NotNull VcsPushDialog dialog, @NotNull PushActionBase realAction) {
       myProject = project;
@@ -492,6 +529,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
     public void update() {
       Presentation presentation = buildActionPresentation(myRealAction, myProject, myDialog);
       setEnabled(presentation.isEnabled());
+      myVisible = presentation.isVisible();
 
       TextWithMnemonic textWithMnemonic = presentation.getTextWithPossibleMnemonic().get();
       putValue(NAME, textWithMnemonic.getText());
@@ -499,6 +537,10 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
       putValue(DISPLAYED_MNEMONIC_INDEX_KEY, textWithMnemonic.getMnemonicIndex());
 
       putValue(SHORT_DESCRIPTION, presentation.getDescription());
+    }
+
+    public boolean isVisible() {
+      return myVisible;
     }
 
     public @Nls @NotNull String getName() {

@@ -47,5 +47,20 @@ public abstract class Pusher<Repo extends Repository, Source extends PushSource,
                    @NotNull Map<String, VcsPushOptionValue> customParams) {
     push(pushSpecs, additionalOption, force);
   }
+
+  /**
+   * Performs the push like {@link #push(Map, VcsPushOptionValue, boolean, Map)}.
+   *
+   * @param divergences the remote commits that the push dialog warned about, for each repository.
+   *                    A force push must not drop other commits.
+   */
+  @ApiStatus.Experimental
+  public void push(@NotNull @Unmodifiable Map<Repo, PushSpec<Source, Target>> pushSpecs,
+                   @Nullable VcsPushOptionValue additionalOption,
+                   boolean force,
+                   @NotNull Map<String, VcsPushOptionValue> customParams,
+                   @NotNull Map<Repo, PushDivergence> divergences) {
+    push(pushSpecs, additionalOption, force, customParams);
+  }
 }
 

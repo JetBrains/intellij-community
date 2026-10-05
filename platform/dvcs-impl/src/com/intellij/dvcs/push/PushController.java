@@ -5,8 +5,12 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.CheckBoxModel;
 import com.intellij.dvcs.push.ui.CommitNode;
+import com.intellij.dvcs.push.ui.DivergedRepository;
+import com.intellij.dvcs.push.ui.PushDialogTasks;
+import com.intellij.dvcs.push.ui.PushDivergenceRules;
 import com.intellij.dvcs.push.ui.PushLog;
 import com.intellij.dvcs.push.ui.PushLogTreeUtil;
+import com.intellij.dvcs.push.ui.PushRepositoryState;
 import com.intellij.dvcs.push.ui.RepositoryNode;
 import com.intellij.dvcs.push.ui.RepositoryWithBranchPanel;
 import com.intellij.dvcs.push.ui.SingleRepositoryNode;
@@ -15,14 +19,23 @@ import com.intellij.dvcs.push.ui.VcsLinkListener;
 import com.intellij.dvcs.push.ui.VcsLinkedTextComponent;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -33,17 +46,25 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.progress.StepsProgressIndicator;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.commit.PostCommitChecksHandler;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.impl.VcsProjectLog;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import kotlin.Unit;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.JComponent;
@@ -52,6 +73,7 @@ import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -65,9 +87,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
+import static com.intellij.dvcs.push.ui.PushDivergenceBannerKt.createDivergenceBanner;
 
 public final class PushController implements Disposable {
   private static final Logger LOG = Logger.getInstance(PushController.class);
@@ -84,13 +110,16 @@ public final class PushController implements Disposable {
   private final @Nullable Repository myCurrentlyOpenedRepository;
   private final boolean mySingleRepoProject;
   private static final int DEFAULT_CHILDREN_PRESENTATION_NUMBER = 20;
+  private static final @NonNls String DIVERGENCE_BANNER_PLACE = "VcsPushDialog.DivergenceBanner";
   private final @NonNls ExecutorService myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("DVCS Push");
+  private final @NotNull PushDialogTasks myDialogTasks;
 
   private final Map<RepositoryNode, MyRepoModel<Repository, PushSource, PushTarget>> myView2Model = new TreeMap<>();
   private @NotNull Map<RepositoryNode, MyRepoModel<?, ?, ?>> myPriorityRepositories;
   private @NotNull Map<RepositoryNode, MyRepoModel<?, ?, ?>> myOtherRepositories;
 
   private boolean myHasCommitWarning;
+  private final @NotNull JPanel myDivergenceBannerHolder = new JBPanel<>(new BorderLayout());
 
   public PushController(@NotNull Project project,
                         @NotNull VcsPushDialog dialog,
@@ -109,6 +138,7 @@ public final class PushController implements Disposable {
                         @Nullable PushSource pushSource,
                         @Nullable PushTarget target) {
     myProject = project;
+    myDialogTasks = PushDialogTasks.getInstance(project);
     myAllRepos = allRepos;
     myPreselectedRepositories = preselectedRepositories;
     myCurrentlyOpenedRepository = currentRepo;
@@ -270,13 +300,23 @@ public final class PushController implements Disposable {
           model.clearErrors();
           loadCommits(model, repoNode, false);
         }
+        else {
+          // setChecked doesn't notify the listeners, and the commits don't load again, so update the dialog for the selected repository
+          updateDivergenceBanner();
+          myDialog.updateOkActions();
+          startRemoteCheck(model, repoNode);
+        }
       }
 
       @Override
       public void onSelectionChanged(boolean isSelected) {
+        updateDivergenceBanner();
         myDialog.updateOkActions();
         if (isSelected && !model.hasCommitInfo() && !model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories()) {
           loadCommits(model, repoNode, false);
+        }
+        else if (isSelected) {
+          startRemoteCheck(model, repoNode);
         }
       }
 
@@ -334,6 +374,9 @@ public final class PushController implements Disposable {
 
     node.cancelLoading();
     node.setEnabled(true);
+    int generation = model.startLoading();
+    updateRemoteCommitCount(node, model);
+    updateDivergenceBanner();
 
     final T target = model.getTarget();
     if (target == null) {
@@ -344,18 +387,20 @@ public final class PushController implements Disposable {
     final AtomicReference<OutgoingResult> result = new AtomicReference<>();
     Runnable task = () -> {
       final R repository = model.getRepository();
-      OutgoingResult outgoing = support.getOutgoingCommitsProvider()
-        .getOutgoingCommits(repository, new PushSpec<>(model.getSource(), model.getTarget()), initial);
+      PushSpec<S, T> spec = new PushSpec<>(model.getSource(), target);
+      OutgoingResult outgoing = support.getOutgoingCommitsProvider().getOutgoingCommits(repository, spec, initial);
       result.compareAndSet(null, outgoing);
+      PushDivergence localDivergence = outgoing.getErrors().isEmpty() ? detectDivergence(model, spec, false, null) : null;
       try {
         ApplicationManager.getApplication().invokeAndWait(() -> {
-          if (myDialog.isDisposed()) return;
+          if (myDialog.isDisposed() || model.isOutdatedLoading(generation)) return;
           OutgoingResult outgoing1 = result.get();
           List<VcsError> errors = outgoing1.getErrors();
           boolean shouldBeSelected;
           if (!errors.isEmpty()) {
             shouldBeSelected = false;
             model.setLoadedCommits(ContainerUtil.emptyList());
+            model.setDivergence(null);
             myPushLog.setChildren(node, ContainerUtil.map(errors, error -> {
               VcsLinkedTextComponent errorLinkText = new VcsLinkedTextComponent(error.getText(), new VcsLinkListener() {
                 @Override
@@ -378,8 +423,10 @@ public final class PushController implements Disposable {
           else {
             List<? extends VcsFullCommitDetails> commits = outgoing1.getCommits();
             model.setLoadedCommits(commits);
+            model.setDivergence(localDivergence);
+            model.finishLoading();
             shouldBeSelected = shouldSelectNodeAfterLoad(model);
-            myPushLog.setChildren(node, getPresentationForCommits(myProject, model.getLoadedCommits(), model.getNumberOfShownCommits()));
+            setCommitNodes(node, model);
             if (!commits.isEmpty() && shouldBeSelected) {
               myPushLog.selectIfNothingSelected(node);
             }
@@ -393,7 +440,9 @@ public final class PushController implements Disposable {
             //do not un-check if user checked manually and no errors occurred, only initial check may be changed
             node.setChecked(false);
           }
+          updateDivergenceBanner();
           myDialog.updateOkActions();
+          startRemoteCheck(model, node);
         }, myModalityState);
       }
       catch (ProcessCanceledException ignore) {
@@ -520,7 +569,7 @@ public final class PushController implements Disposable {
     Pusher<R, S, T> pusher = support.getPusher();
     Map<R, PushSpec<S, T>> specs = collectPushSpecsForVcs(support);
     if (!specs.isEmpty()) {
-      pusher.push(specs, options, force, myDialog.getCustomParams());
+      pusher.push(specs, options, force, myDialog.getCustomParams(), collectDivergencesForVcs(support));
     }
   }
 
@@ -584,6 +633,308 @@ public final class PushController implements Disposable {
            Collections.emptyMap();
   }
 
+  private @NotNull <R extends Repository, S extends PushSource, T extends PushTarget> Map<R, PushDivergence> collectDivergencesForVcs(@NotNull PushSupport<R, S, T> pushSupport) {
+    Map<R, PushDivergence> result = new HashMap<>();
+    for (MyRepoModel<Repository, PushSource, PushTarget> model : getSelectedRepoNode()) {
+      PushDivergence divergence = model.getDivergence();
+      if (model.getSupport() == pushSupport && divergence != null) {
+        //noinspection unchecked // the model can store entries of different types (if push supports are different)
+        result.put((R)model.getRepository(), divergence);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Asks the remote for commits in the push target that are not fetched, after the commits from the local repository are shown.
+   * The remote check uses the network, so it runs once per load, and only for a repository that is selected for the push.
+   */
+  @RequiresEdt
+  private <R extends Repository, S extends PushSource, T extends PushTarget> void startRemoteCheck(@NotNull MyRepoModel<R, S, T> model,
+                                                                                                    @NotNull RepositoryNode node) {
+    T target = model.getTarget();
+    if (target == null || !model.isSelected() || !model.canStartRemoteCheck()) return;
+    PushSpec<S, T> spec = new PushSpec<>(model.getSource(), target);
+    PushDivergence localDivergence = model.getDivergence();
+    // the remote check uses the network, so it runs apart from the commit loading and doesn't delay the commits of other repositories
+    model.setRemoteCheck(myDialogTasks.runInBackground(this, () -> detectDivergence(model, spec, true, localDivergence), divergence -> {
+      model.setDivergence(divergence);
+      updateRemoteCommitCount(node, model);
+      updateDivergenceBanner();
+      myDialog.updateOkActions();
+      return Unit.INSTANCE;
+    }));
+  }
+
+  /**
+   * Finds the remote commits of the repository, or returns {@code fallback} if the detection failed.
+   */
+  private static <R extends Repository, S extends PushSource, T extends PushTarget> @Nullable PushDivergence detectDivergence(
+    @NotNull MyRepoModel<R, S, T> model,
+    @NotNull PushSpec<S, T> spec,
+    boolean checkRemote,
+    @Nullable PushDivergence fallback
+  ) {
+    try {
+      return model.getSupport().getOutgoingCommitsProvider().detectDivergence(model.getRepository(), spec, checkRemote);
+    }
+    catch (Exception e) {
+      rethrowControlFlowException(e);
+      LOG.warn("Couldn't find the remote commits of " + model.getRepository(), e);
+      return fallback;
+    }
+  }
+
+  /**
+   * Returns true when a selected repository has remote commits that are not fetched. A push fails until the user fetches them.
+   */
+  @ApiStatus.Internal
+  public boolean isFetchRequired() {
+    return PushDivergenceRules.INSTANCE.isFetchRequired(getSelectedRepositoryStates());
+  }
+
+  /**
+   * Returns true when the commits of the selected repositories are loaded, and the remote was asked for commits that are not fetched.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  public boolean isRemoteCheckFinished() {
+    Collection<MyRepoModel<Repository, PushSource, PushTarget>> selected = getSelectedRepoNode();
+    return !selected.isEmpty() && ContainerUtil.and(myView2Model.entrySet(), entry -> {
+      return !selected.contains(entry.getValue()) || !entry.getKey().isLoading() && entry.getValue().isRemoteChecked();
+    });
+  }
+
+  /**
+   * Returns true when the commits of the repository are loaded and shown.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  public boolean isCommitsLoaded(@NotNull Repository repository) {
+    RepositoryNode node = Objects.requireNonNull(findNodeByRepo(repository));
+    return !node.isLoading() && myView2Model.get(node).isCommitsLoaded();
+  }
+
+  /**
+   * Returns true when the remote was asked for the commits of the repository that are not fetched.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  public boolean isRemoteChecked(@NotNull Repository repository) {
+    return myView2Model.get(Objects.requireNonNull(findNodeByRepo(repository))).isRemoteChecked();
+  }
+
+  /**
+   * Selects the repository for the push, or removes it from the push, as a click on its checkbox does.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  public void setRepositorySelected(@NotNull Repository repository, boolean selected) {
+    RepositoryNode node = Objects.requireNonNull(findNodeByRepo(repository));
+    node.setChecked(selected);
+    node.fireOnSelectionChange(selected);
+  }
+
+  /**
+   * Confirms the push target of the repository without a change, as Enter in the editor of the target does.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  public void confirmTarget(@NotNull Repository repository) {
+    Objects.requireNonNull(findNodeByRepo(repository)).fireOnChange();
+  }
+
+  /**
+   * Shows more commits of the repository, as the link below its commits does.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  public void showMoreCommits(@NotNull Repository repository) {
+    addMoreCommits(Objects.requireNonNull(findNodeByRepo(repository)));
+  }
+
+  /**
+   * Returns true when the tree shows the error of the last fetch of the remote commits of the repository.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  public boolean hasFetchErrorRow(@NotNull Repository repository) {
+    RepositoryNode node = Objects.requireNonNull(findNodeByRepo(repository));
+    return ContainerUtil.exists(TreeUtil.listChildren(node), child -> child instanceof FetchErrorNode);
+  }
+
+  /**
+   * Returns the number of the remote commits that a force push of the repository replaces.
+   */
+  @ApiStatus.Internal
+  public int getRemoteCommitCount(@NotNull Repository repository) {
+    MyRepoModel<Repository, PushSource, PushTarget> model = ContainerUtil.find(myView2Model.values(), it -> it.getRepository().equals(repository));
+    return model != null && model.getDivergence() instanceof PushDivergence.Diverged diverged ? diverged.getRemoteCommitCount() : 0;
+  }
+
+  private @NotNull List<PushRepositoryState> getSelectedRepositoryStates() {
+    Collection<MyRepoModel<Repository, PushSource, PushTarget>> selected = getSelectedRepoNode();
+    List<PushRepositoryState> states = new ArrayList<>();
+    for (Map.Entry<RepositoryNode, MyRepoModel<Repository, PushSource, PushTarget>> entry : myView2Model.entrySet()) {
+      if (selected.contains(entry.getValue())) {
+        states.add(getRepositoryState(entry.getValue()));
+      }
+    }
+    return states;
+  }
+
+  private static @NotNull PushRepositoryState getRepositoryState(@NotNull MyRepoModel<?, ?, ?> model) {
+    @SuppressWarnings("unchecked") MyRepoModel<Repository, PushSource, PushTarget> typedModel = (MyRepoModel<Repository, PushSource, PushTarget>)model;
+    PushTarget target = typedModel.getTarget();
+    boolean forcePushAllowed = target != null && typedModel.getSupport().isForcePushAllowed(typedModel.getRepository(), target);
+    return new PushRepositoryState(model.isFetchFailed(), model.getDivergence(), forcePushAllowed);
+  }
+
+  /**
+   * Fetches the remote commits of the selected repositories that require a fetch, then loads the commits again.
+   */
+  @RequiresEdt
+  @ApiStatus.Internal
+  public void fetchRemoteCommits() {
+    Map<RepositoryNode, MyRepoModel<Repository, PushSource, PushTarget>> toFetch = new LinkedHashMap<>();
+    for (Map.Entry<RepositoryNode, MyRepoModel<Repository, PushSource, PushTarget>> entry : myView2Model.entrySet()) {
+      MyRepoModel<Repository, PushSource, PushTarget> model = entry.getValue();
+      if (model.getDivergence() instanceof PushDivergence.FetchRequired && getSelectedRepoNode().contains(model)) {
+        toFetch.put(entry.getKey(), model);
+      }
+    }
+    if (toFetch.isEmpty()) return;
+
+    Map<RepositoryNode, VcsError> errors = new ConcurrentHashMap<>();
+    myDialogTasks.runWithModalProgress(this, DvcsBundle.message("push.divergence.fetch.progress"), () -> {
+      for (Map.Entry<RepositoryNode, MyRepoModel<Repository, PushSource, PushTarget>> entry : toFetch.entrySet()) {
+        ProgressManager.checkCanceled();
+        MyRepoModel<Repository, PushSource, PushTarget> model = entry.getValue();
+        VcsError error = model.getSupport().fetchPushTarget(model.getRepository(), Objects.requireNonNull(model.getTarget()));
+        if (error != null) {
+          errors.put(entry.getKey(), error);
+        }
+      }
+      return Unit.INSTANCE;
+    }, () -> {
+      if (myDialog.isDisposed()) return Unit.INSTANCE;
+      for (Map.Entry<RepositoryNode, MyRepoModel<Repository, PushSource, PushTarget>> entry : toFetch.entrySet()) {
+        RepositoryNode node = entry.getKey();
+        VcsError error = errors.get(node);
+        if (error == null) {
+          loadCommits(entry.getValue(), node, false);
+        }
+        else {
+          entry.getValue().setFetchError(error);
+          setCommitNodes(node, entry.getValue());
+        }
+      }
+      updateDivergenceBanner();
+      myDialog.updateOkActions();
+      return Unit.INSTANCE;
+    });
+  }
+
+  private @NotNull DefaultMutableTreeNode createFetchErrorNode(@NotNull VcsError error) {
+    // the tree shows the error text as it is, and takes the link from the "a" tag
+    String text = DvcsBundle.message("push.divergence.fetch.failed", error.getText(),
+                                     HtmlChunk.link("retry", DvcsBundle.message("push.divergence.fetch.retry")).toString());
+    return new FetchErrorNode(new VcsLinkedTextComponent(text, (sourceNode, event) -> fetchRemoteCommits()));
+  }
+
+  /**
+   * The error of the last fetch of the remote commits, with a link to fetch again.
+   */
+  private static final class FetchErrorNode extends TextWithLinkNode {
+    private FetchErrorNode(@NotNull VcsLinkedTextComponent linkedText) {
+      super(linkedText);
+    }
+  }
+
+  /**
+   * Shows the loaded commits of the repository, and the error of the last fetch of the remote commits, if the fetch failed.
+   */
+  private void setCommitNodes(@NotNull RepositoryNode node, @NotNull MyRepoModel<?, ?, ?> model) {
+    List<DefaultMutableTreeNode> children =
+      new ArrayList<>(getPresentationForCommits(myProject, model.getLoadedCommits(), model.getNumberOfShownCommits()));
+    VcsError fetchError = model.getFetchError();
+    if (fetchError != null) {
+      children.add(createFetchErrorNode(fetchError));
+    }
+    myPushLog.setChildren(node, children);
+    updateRemoteCommitCount(node, model);
+  }
+
+  private void updateRemoteCommitCount(@NotNull RepositoryNode node, @NotNull MyRepoModel<?, ?, ?> model) {
+    node.setRemoteCommitCount(!mySingleRepoProject && model.getDivergence() instanceof PushDivergence.Diverged diverged
+                              ? diverged.getRemoteCommitCount() : 0);
+    ((DefaultTreeModel)myPushLog.getTree().getModel()).nodeChanged(node);
+  }
+
+  @RequiresEdt
+  private void updateDivergenceBanner() {
+    Collection<MyRepoModel<Repository, PushSource, PushTarget>> selected = getSelectedRepoNode();
+    List<DivergedRepository> diverged = new ArrayList<>();
+    for (Map.Entry<RepositoryNode, MyRepoModel<Repository, PushSource, PushTarget>> entry : myView2Model.entrySet()) {
+      MyRepoModel<Repository, PushSource, PushTarget> model = entry.getValue();
+      PushDivergence divergence = model.getDivergence();
+      if (divergence == null || !selected.contains(model)) continue;
+      diverged.add(new DivergedRepository(model.getSource().getBranchName(),
+                                          divergence,
+                                          PushDivergenceRules.INSTANCE.canForcePush(getRepositoryState(model)),
+                                          model.isFetchFailed()));
+    }
+    MyRepoModel<Repository, PushSource, PushTarget> logModel = findLogModel();
+    String vcsName = logModel != null ? logModel.getSupport().getVcs().getDisplayName() : "";
+    JComponent banner = createDivergenceBanner(diverged, this::updateProject, vcsName, logModel != null ? this::openLog : null);
+
+    myDivergenceBannerHolder.removeAll();
+    if (banner != null) {
+      myDivergenceBannerHolder.add(banner, BorderLayout.CENTER);
+    }
+    myDivergenceBannerHolder.setVisible(banner != null);
+    myDivergenceBannerHolder.revalidate();
+    myDivergenceBannerHolder.repaint();
+  }
+
+  /**
+   * Returns the first diverged selected repository whose divergence the VCS log can show.
+   */
+  private @Nullable MyRepoModel<Repository, PushSource, PushTarget> findLogModel() {
+    return ContainerUtil.find(getSelectedRepoNode(), model ->
+      model.getDivergence() instanceof PushDivergence.Diverged diverged && !diverged.getLogBranchNames().isEmpty());
+  }
+
+  /**
+   * Closes the push dialog, because the VCS log can't get the focus while a modal dialog is open, and shows the divergence there.
+   */
+  private @NotNull Unit openLog() {
+    MyRepoModel<Repository, PushSource, PushTarget> model = findLogModel();
+    if (model != null && model.getDivergence() instanceof PushDivergence.Diverged diverged) {
+      VcsLogFilterCollection filters =
+        VcsLogFilterObject.collection(VcsLogFilterObject.fromBranches(diverged.getLogBranchNames()),
+                                      VcsLogFilterObject.fromRoot(model.getRepository().getRoot()));
+      myDialog.doCancelAction();
+      VcsProjectLog.Companion.runWhenLogIsReady(myProject, manager -> {
+        VcsProjectLog.getInstance(myProject).openLogTab(filters);
+        return Unit.INSTANCE;
+      });
+    }
+    return Unit.INSTANCE;
+  }
+
+  private @NotNull Unit updateProject() {
+    myDialog.doCancelAction();
+    AnAction action = ActionManager.getInstance().getAction("Vcs.UpdateProject");
+    if (action != null) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        DataContext context = SimpleDataContext.getProjectContext(myProject);
+        ActionUtil.performAction(action, AnActionEvent.createEvent(action, context, null, DIVERGENCE_BANNER_PLACE, ActionUiKind.NONE, null));
+      }, myProject.getDisposed());
+    }
+    return Unit.INSTANCE;
+  }
+
   private @Unmodifiable Collection<MyRepoModel<Repository, PushSource, PushTarget>> getSelectedRepoNode() {
     //return all selected despite a loading state;
     return ContainerUtil.filter(myView2Model.values(), model -> {
@@ -604,12 +955,7 @@ public final class PushController implements Disposable {
   private void addMoreCommits(RepositoryNode repositoryNode) {
     MyRepoModel<?, ?, ?> repoModel = myView2Model.get(repositoryNode);
     repoModel.increaseShownCommits();
-    myPushLog.setChildren(repositoryNode,
-                          getPresentationForCommits(
-                            myProject,
-                            repoModel.getLoadedCommits(),
-                            repoModel.getNumberOfShownCommits()
-                          ));
+    setCommitNodes(repositoryNode, repoModel);
   }
 
 
@@ -669,14 +1015,19 @@ public final class PushController implements Disposable {
       }
     }
 
-    notifications = DiffUtil.wrapEditorNotificationBorders(notifications);
-    JPanel panel = new JBPanel<>(new VerticalLayout(2, VerticalLayout.FILL));
-    for (JComponent component : notifications) {
-      panel.add(component);
-    }
+    JPanel panel = new JBPanel<>(new VerticalLayout(0, VerticalLayout.FILL));
     if (!notifications.isEmpty()) {
-      panel.setBorder(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()));
+      JPanel notificationsPanel = new JBPanel<>(new VerticalLayout(2, VerticalLayout.FILL));
+      for (JComponent component : DiffUtil.wrapEditorNotificationBorders(notifications)) {
+        notificationsPanel.add(component);
+      }
+      notificationsPanel.setBorder(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()));
+      panel.add(notificationsPanel);
     }
+    myDivergenceBannerHolder.setOpaque(false);
+    myDivergenceBannerHolder.setBorder(JBUI.Borders.empty(10, 12, 0, 12));
+    myDivergenceBannerHolder.setVisible(myDivergenceBannerHolder.getComponentCount() > 0);
+    panel.add(myDivergenceBannerHolder);
     return panel;
   }
 
@@ -719,6 +1070,11 @@ public final class PushController implements Disposable {
 
     int myNumberOfShownCommits;
     @NotNull List<? extends VcsFullCommitDetails> myLoadedCommits = Collections.emptyList();
+    private @Nullable PushDivergence myDivergence;
+    private int myLoadGeneration;
+    private boolean myCommitsLoaded;
+    private @Nullable Job myRemoteCheck;
+    private @Nullable VcsError myFetchError;
     private final @NotNull CheckBoxModel myCheckBoxModel;
 
     MyRepoModel(@NotNull Repo repository,
@@ -784,6 +1140,80 @@ public final class PushController implements Disposable {
 
     public void setLoadedCommits(@NotNull List<? extends VcsFullCommitDetails> loadedCommits) {
       myLoadedCommits = loadedCommits;
+    }
+
+    public @Nullable PushDivergence getDivergence() {
+      return myDivergence;
+    }
+
+    public void setDivergence(@Nullable PushDivergence divergence) {
+      myDivergence = divergence;
+    }
+
+    /**
+     * Forgets the remote commits before the commits load again, and returns the number of this load.
+     */
+    public int startLoading() {
+      myDivergence = null;
+      myCommitsLoaded = false;
+      // the new load starts its own remote check, so the old one doesn't need to finish
+      if (myRemoteCheck != null) myRemoteCheck.cancel(null);
+      myRemoteCheck = null;
+      myFetchError = null;
+      return ++myLoadGeneration;
+    }
+
+    /**
+     * Marks that the dialog shows the commits of the current load, so the remote check can start.
+     */
+    public void finishLoading() {
+      myCommitsLoaded = true;
+    }
+
+    @TestOnly
+    public boolean isCommitsLoaded() {
+      return myCommitsLoaded;
+    }
+
+    /**
+     * Returns true when the commits of the current load are shown and the remote check of this load didn't start.
+     */
+    public boolean canStartRemoteCheck() {
+      return myCommitsLoaded && myRemoteCheck == null;
+    }
+
+    public void setRemoteCheck(@NotNull Job remoteCheck) {
+      myRemoteCheck = remoteCheck;
+    }
+
+    /**
+     * Returns true when a newer load started after the load with the given number, so its result is outdated.
+     */
+    public boolean isOutdatedLoading(int generation) {
+      return myLoadGeneration != generation;
+    }
+
+    /**
+     * Returns true when the remote check of the current load finished and its result is shown.
+     */
+    @TestOnly
+    public boolean isRemoteChecked() {
+      return myRemoteCheck != null && myRemoteCheck.isCompleted() && !myRemoteCheck.isCancelled();
+    }
+
+    public boolean isFetchFailed() {
+      return myFetchError != null;
+    }
+
+    /**
+     * Returns the error of the last fetch of the remote commits, or {@code null} if the fetch didn't fail.
+     */
+    public @Nullable VcsError getFetchError() {
+      return myFetchError;
+    }
+
+    public void setFetchError(@Nullable VcsError fetchError) {
+      myFetchError = fetchError;
     }
 
     public boolean hasCommitInfo() {

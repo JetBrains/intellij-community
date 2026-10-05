@@ -39,6 +39,13 @@ public abstract class GitPushSource implements PushSource {
   public abstract boolean isBranchRef();
 
   @Override
+  @ApiStatus.Experimental
+  public @NlsSafe @Nullable String getBranchName() {
+    GitLocalBranch branch = getBranch();
+    return isBranchRef() && branch != null ? branch.getName() : null;
+  }
+
+  @Override
   public String toString() {
     return getPresentation();
   }

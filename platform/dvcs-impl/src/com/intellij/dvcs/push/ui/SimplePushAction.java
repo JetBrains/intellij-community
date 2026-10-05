@@ -21,7 +21,7 @@ public final class SimplePushAction extends PushActionBase {
 
   @Override
   protected boolean isEnabled(@NotNull VcsPushUi dialog) {
-    return dialog.canPush();
+    return dialog.canPush() && !dialog.isFetchRequired();
   }
 
   @Override
@@ -36,7 +36,7 @@ public final class SimplePushAction extends PushActionBase {
 
   @Override
   protected @Nls @Nullable String getDescription(@NotNull VcsPushUi dialog, boolean enabled) {
-    return null;
+    return dialog.isFetchRequired() ? DvcsBundle.message("action.push.fetch.first.description") : null;
   }
 
   @Override

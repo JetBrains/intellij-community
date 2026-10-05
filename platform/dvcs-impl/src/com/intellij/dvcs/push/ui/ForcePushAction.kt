@@ -20,10 +20,13 @@ internal class ForcePushAction : PushActionBase() {
   }
 
   override fun isEnabled(ui: VcsPushUi): Boolean {
-    return ui.canPush() && getProhibitedTarget(ui) == null
+    return ui.canPush() && getProhibitedTarget(ui) == null && !ui.isFetchRequired
   }
 
   override fun getDescription(ui: VcsPushUi, enabled: Boolean): String? {
+    if (ui.isFetchRequired) {
+      return DvcsBundle.message("action.push.fetch.first.description")
+    }
     val prohibitedTarget = getProhibitedTarget(ui)
     val configurablePath = getProhibitedTargetConfigurablePath(ui)
     if (!enabled && prohibitedTarget != null) {
@@ -41,7 +44,7 @@ internal class ForcePushAction : PushActionBase() {
 
   private fun confirmForcePush(project: Project, ui: VcsPushUi): Boolean {
     val silentForcePushIsNotAllowed = ui.selectedPushSpecs
-      .mapValues { (support, pushInfos) ->
+      .mapValues { [support, pushInfos] ->
         pushInfos.filter { !support.isSilentForcePushAllowed(it.pushSpec.target) }
       }
       .filterValues { it.isNotEmpty() }
@@ -63,8 +66,15 @@ internal class ForcePushAction : PushActionBase() {
       commonTarget = silentForcePushIsNotAllowed[aSupport]!!.map { it.pushSpec.target }.distinct().singleOrNull()
     }
 
-    val message = if (commonTarget != null) {
-      val presentation = "'${commonTarget.presentation}'"
+    // the count of one repository only, because the message names one target
+    val pushInfo = silentForcePushIsNotAllowed.values.flatten().singleOrNull()
+    val remoteCommitCount = if (pushInfo != null) ui.getRemoteCommitCount(pushInfo.repository) else 0
+    val message = if (commonTarget != null && remoteCommitCount > 0) {
+      DvcsBundle.message("action.force.push.to.confirmation.text.with.commits", "'${XmlStringUtil.escapeString(commonTarget.presentation)}'",
+                         remoteCommitCount)
+    }
+    else if (commonTarget != null) {
+      val presentation = "'${XmlStringUtil.escapeString(commonTarget.presentation)}'"
       DvcsBundle.message("action.force.push.to.confirmation.text", presentation)
     }
     else {

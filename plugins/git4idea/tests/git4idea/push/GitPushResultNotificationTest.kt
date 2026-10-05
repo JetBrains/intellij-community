@@ -68,7 +68,8 @@ internal class GitPushResultNotificationTest {
     ))
     assertPushNotification(NotificationType.WARNING, "Push partially rejected",
                            "ultimate: Pushed 1 commit to origin/master<br/>" +
-                           "community: Push to origin/master was rejected", notification)
+                           "community: " + GitBundle.message("push.notification.description.rejected.fetch.first", "origin/master"),
+                           notification)
   }
 
   @Test

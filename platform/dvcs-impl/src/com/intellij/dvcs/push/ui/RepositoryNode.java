@@ -4,6 +4,8 @@ package com.intellij.dvcs.push.ui;
 import com.intellij.dvcs.push.OutgoingResult;
 import com.intellij.dvcs.push.PushTarget;
 import com.intellij.dvcs.push.PushTargetPanel;
+import com.intellij.dvcs.ui.DvcsIncomingOutgoingColors;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -27,6 +29,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
 
   private final @NotNull RepositoryWithBranchPanel myRepositoryPanel;
   private @Nullable Future<AtomicReference<OutgoingResult>> myFuture;
+  private int myRemoteCommitCount;
 
   @ApiStatus.Internal
   public RepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, @NotNull CheckBoxModel model, boolean enabled) {
@@ -71,6 +74,20 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     renderer.append(myRepositoryPanel.getArrow(), repositoryDetailsTextAttributes);
     PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();
     pushTargetPanel.render(renderer, renderer.getTree().isPathSelected(TreeUtil.getPathFromRoot(this)), isChecked(), syncEditingText);
+    if (myRemoteCommitCount > 0) {
+      SimpleTextAttributes incomingAttributes =
+        new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, DvcsIncomingOutgoingColors.INCOMING_FOREGROUND);
+      @NlsSafe String counter = "  ↓" + myRemoteCommitCount;
+      renderer.append(counter, PushLogTreeUtil.addTransparencyIfNeeded(renderer, incomingAttributes, isChecked()));
+    }
+  }
+
+  /**
+   * Sets the number of the commits in the push target that are not in the pushed source.
+   */
+  @ApiStatus.Internal
+  public void setRemoteCommitCount(int remoteCommitCount) {
+    myRemoteCommitCount = remoteCommitCount;
   }
 
   private @Nls @NotNull String getRepoName(@NotNull ColoredTreeCellRenderer renderer, int maxWidth) {

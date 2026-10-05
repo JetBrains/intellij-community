@@ -7,6 +7,7 @@ import com.intellij.dvcs.push.PushSettings;
 import com.intellij.dvcs.push.PushSupport;
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.Pusher;
+import com.intellij.dvcs.push.VcsError;
 import com.intellij.dvcs.push.VcsPushOptionsPanel;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,7 @@ import git4idea.repo.GitHooksInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -205,5 +207,11 @@ public final class GitPushSupport extends PushSupport<GitRepository, GitPushSour
   @Override
   public boolean mayChangeTargetsSync() {
     return true;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public @Nullable VcsError fetchPushTarget(@NotNull GitRepository repository, @NotNull GitPushTarget target) {
+    return GitPushDivergenceDetector.getInstance(repository.getProject()).fetchTargetBlocking(repository, target);
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.AbstractVcs;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,5 +79,17 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
 
   public boolean mayChangeTargetsSync() {
     return false;
+  }
+
+  /**
+   * Fetches the commits of the push target, so that the push dialog can count them.
+   * The push dialog calls it on a background thread for a {@link PushDivergence.FetchRequired}.
+   * The call can ask the user for credentials.
+   *
+   * @return the error to show for the repository, or {@code null} if the fetch succeeded
+   */
+  @ApiStatus.Experimental
+  public @Nullable VcsError fetchPushTarget(@NotNull Repo repository, @NotNull Target target) {
+    return null;
   }
 }

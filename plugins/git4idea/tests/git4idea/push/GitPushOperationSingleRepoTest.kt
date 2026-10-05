@@ -1,16 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push
 
+import com.intellij.dvcs.push.PushDivergence
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.update.FileGroup
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.testFramework.junit5.EnableTracingFor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
+import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.test.refresh
 import com.intellij.vcs.test.updateChangeListManager
 import git4idea.GitTag
@@ -18,6 +22,7 @@ import git4idea.actions.tag.GitPushTagAction
 import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVersionSpecialty
 import git4idea.config.UpdateMethod
+import git4idea.i18n.GitBundle
 import git4idea.push.GitPushRepoResult.Type.FORCED
 import git4idea.push.GitPushRepoResult.Type.NEW_BRANCH
 import git4idea.push.GitPushRepoResult.Type.REJECTED_NO_FF
@@ -295,6 +300,179 @@ internal class GitPushOperationSingleRepoTest {
   }
 
   @Test
+  fun `test rejected push offers force push when the remote commits are local`(): Unit = with(context) {
+    assumeForceWithLeaseSupported()
+    git("checkout -b feature")
+    makeCommit("file.txt")
+    git("push -u origin feature")
+    git("commit --amend -m amended")
+    val amended = last()
+
+    var dialogMessage = ""
+    TestDialogManager.setTestDialog { message ->
+      dialogMessage = message
+      PushRejectedExitCode.FORCE_PUSH.exitCode
+    }
+    val result = pushWithForceOnRejection("feature", "origin/feature")
+
+    assertThat(dialogMessage).contains("1 commit", GitBundle.message("push.rejected.force.or.update"))
+    assertResult(FORCED, -1, "feature", "origin/feature", result)
+    assertPushed(amended, "feature")
+  }
+
+  @Test
+  fun `test rejected push doesnt offer force push when the remote commits are not fetched`(): Unit = with(context) {
+    val broHash = pushCommitFromBro()
+    cd(repository)
+    makeCommit("file.txt")
+
+    TestDialogManager.setTestDialog { PushRejectedExitCode.CANCEL.exitCode }
+    val result = pushWithForceOnRejection("master", "origin/master")
+
+    assertResult(REJECTED_NO_FF, -1, "master", "origin/master", result)
+    assertPushed(broHash, "master")
+  }
+
+  @Test
+  fun `test rejected push with fetch first doesnt offer force push for the fetched commits`(): Unit = with(context) {
+    divergeWithUnfetchedCommitOnFeature()
+
+    var dialogMessage = ""
+    TestDialogManager.setTestDialog { message ->
+      dialogMessage = message
+      PushRejectedExitCode.CANCEL.exitCode
+    }
+    val result = pushWithForceOnRejection("feature", "origin/feature")
+
+    assertThat(dialogMessage).isNotEmpty().doesNotContain(GitBundle.message("push.rejected.force.or.update"))
+    assertResult(REJECTED_NO_FF, -1, "feature", "origin/feature", result)
+  }
+
+  @Test
+  fun `test notification for fetch first offers fetch and review instead of force push`(): Unit = with(context) {
+    divergeWithUnfetchedCommitOnFeature()
+    TestDialogManager.setTestDialog { PushRejectedExitCode.CANCEL.exitCode }
+
+    val operation = createPushWithForceOnRejection("feature", "origin/feature")
+    val notification = notify(operation, runUnderProgress { operation.execute() })
+
+    assertThat(notification.actions.map { it.templateText })
+      .contains(GitBundle.message("push.notification.fetch.and.review.action"))
+      .doesNotContain(GitBundle.message("push.notification.force.push.action"))
+    assertThat(notification.content).contains("not fetched")
+  }
+
+  @Test
+  fun `test notification for fetch first keeps the plain rejection when the registry turns the check off`(): Unit = with(context) {
+    Registry.get("git.push.divergence.check").setValue(false, disposableFixture.get())
+    divergeWithUnfetchedCommitOnFeature()
+    TestDialogManager.setTestDialog { PushRejectedExitCode.CANCEL.exitCode }
+
+    val operation = createPushWithForceOnRejection("feature", "origin/feature")
+    val notification = notify(operation, runUnderProgress { operation.execute() })
+
+    assertThat(notification.actions.map { it.templateText })
+      .doesNotContain(GitBundle.message("push.notification.fetch.and.review.action"), GitBundle.message("push.notification.force.push.action"))
+    assertThat(notification.content).contains("was rejected").doesNotContain("not fetched")
+  }
+
+  @Test
+  fun `test notification for a cancelled dialog offers force push for the shown commits`(): Unit = with(context) {
+    git("checkout -b feature")
+    makeCommit("file.txt")
+    git("push -u origin feature")
+    git("commit --amend -m amended")
+    TestDialogManager.setTestDialog { PushRejectedExitCode.CANCEL.exitCode }
+
+    val operation = createPushWithForceOnRejection("feature", "origin/feature")
+    val notification = notify(operation, runUnderProgress { operation.execute() })
+
+    assertThat(notification.actions.map { it.templateText })
+      .contains(GitBundle.message("push.notification.force.push.action"))
+      .doesNotContain(GitBundle.message("push.notification.fetch.and.review.action"))
+    assertThat(notification.content).contains("1 commit")
+  }
+
+  @Test
+  fun `test notification doesnt offer force push without lease`(): Unit = with(context) {
+    (AdvancedSettings.getInstance() as AdvancedSettingsImpl)
+      .setSetting("git.use.push.force.with.lease", false, disposableFixture.get())
+    git("checkout -b feature")
+    makeCommit("file.txt")
+    git("push -u origin feature")
+    git("commit --amend -m amended")
+    TestDialogManager.setTestDialog { PushRejectedExitCode.CANCEL.exitCode }
+
+    val operation = createPushWithForceOnRejection("feature", "origin/feature")
+    val notification = notify(operation, runUnderProgress { operation.execute() })
+
+    assertThat(notification.actions.map { it.templateText }).doesNotContain(GitBundle.message("push.notification.force.push.action"))
+  }
+
+  @Test
+  fun `test force push from the notification expects the remote at the position of the rejection`(): Unit = with(context) {
+    assumeForceWithLeaseSupported()
+    git("checkout -b feature")
+    makeCommit("file.txt")
+    git("push -u origin feature")
+    git("commit --amend -m amended")
+    TestDialogManager.setTestDialog { PushRejectedExitCode.CANCEL.exitCode }
+    val operation = createPushWithForceOnRejection("feature", "origin/feature")
+    runUnderProgress { operation.execute() }
+
+    val broHash = pushOnTopOfFeatureFromBro()
+    git("fetch")
+    updateRepositories()
+    val result = runUnderProgress { operation.deriveForcePush(listOf(repository)).execute() }
+
+    assertResult(REJECTED_STALE_INFO, -1, "feature", "origin/feature", result)
+    assertPushed(broHash, "feature")
+  }
+
+  @Test
+  fun `test force push from the push dialog expects the remote at the shown position`(): Unit = with(context) {
+    assumeForceWithLeaseSupported()
+    git("checkout -b feature")
+    val shown = makeCommit("file.txt")
+    git("push -u origin feature")
+    val broHash = pushOnTopOfFeatureFromBro()
+    git("fetch")
+    makeCommit("mine.txt")
+    updateRepositories()
+
+    val spec = makePushSpec(repository, "feature", "origin/feature")
+    val shownDivergence = PushDivergence.Diverged(1, HashImpl.build(shown), emptyList())
+    runUnderProgress {
+      (pushSupport.pusher as GitPusher).push(singletonMap(repository, spec), null, true, emptyMap(), singletonMap(repository, shownDivergence))
+    }
+
+    assertPushed(broHash, "feature")
+  }
+
+  @Test
+  fun `test force push expects the remote at the shown position`(): Unit = with(context) {
+    assumeForceWithLeaseSupported()
+    val shown = makeCommit("file.txt")
+    git("push origin master")
+    cd(broRepo)
+    git("pull")
+    makeCommit("bro.txt")
+    git("push")
+    cd(repository)
+    git("fetch")
+    makeCommit("mine.txt")
+
+    updateRepositories()
+    val spec = makePushSpec(repository, "master", "origin/master")
+    val result = runUnderProgress {
+      GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, true, false,
+                       singletonMap(repository, HashImpl.build(shown)), false).execute()
+    }
+
+    assertResult(REJECTED_STALE_INFO, -1, "master", "origin/master", result)
+  }
+
+  @Test
   fun `test dont propose to update if force push is rejected`(): Unit = with(context) {
     var dialogShown = false
     TestDialogManager.setTestDialog {
@@ -302,7 +480,7 @@ internal class GitPushOperationSingleRepoTest {
       PushRejectedExitCode.CANCEL.exitCode
     }
 
-    val (pushedHash, pushResult) = forcePushWithReject(true)
+    val [pushedHash, pushResult] = forcePushWithReject(true)
     assertResult(REJECTED_NO_FF, -1, "master", "origin/master", pushResult)
     assertThat(dialogShown).describedAs("Rejected push dialog should not be shown").isFalse()
     cd(parentRepo)
@@ -314,7 +492,7 @@ internal class GitPushOperationSingleRepoTest {
     settings.updateMethod = UpdateMethod.REBASE
     settings.setAutoUpdateIfPushRejected(true)
 
-    val (pushedHash, pushResult) = forcePushWithReject(true)
+    val [pushedHash, pushResult] = forcePushWithReject(true)
 
     assertResult(REJECTED_NO_FF, -1, "master", "origin/master", pushResult)
     cd(parentRepo)
@@ -328,7 +506,7 @@ internal class GitPushOperationSingleRepoTest {
     settings.updateMethod = UpdateMethod.REBASE
     settings.setAutoUpdateIfPushRejected(true)
 
-    val (pushedHash, pushResult) = forcePushWithReject(false)
+    val [pushedHash, pushResult] = forcePushWithReject(false)
 
     assertResult(REJECTED_STALE_INFO, -1, "master", "origin/master", pushResult)
     cd(parentRepo)
@@ -545,6 +723,50 @@ internal class GitPushOperationSingleRepoTest {
     return runUnderProgress {
       GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, force, skipHook).execute()
     }
+  }
+
+  private fun GitPushSingleRepoContext.pushWithForceOnRejection(from: String, to: String): GitPushResult {
+    val operation = createPushWithForceOnRejection(from, to)
+    return runUnderProgress { operation.execute() }
+  }
+
+  private fun GitPushSingleRepoContext.createPushWithForceOnRejection(from: String, to: String): GitPushOperation {
+    updateRepositories()
+    val spec = makePushSpec(repository, from, to)
+    return GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, false, false, emptyMap(), true)
+  }
+
+  private fun GitPushSingleRepoContext.notify(operation: GitPushOperation, result: GitPushResult): GitPushResultNotification =
+    invokeAndWaitIfNeeded { GitPushResultNotification.create(project, result, operation, false, null, emptyMap()) }
+
+  /**
+   * Pushes a commit on top of `origin/feature` from the other clone, and returns its hash.
+   */
+  private fun GitPushSingleRepoContext.pushOnTopOfFeatureFromBro(): String {
+    cd(broRepo)
+    git("fetch")
+    git("checkout -B feature origin/feature")
+    val hash = makeCommit("bro.txt")
+    git("push origin feature")
+    cd(repository)
+    return hash
+  }
+
+  /**
+   * Pushes a commit to `origin/feature`, amends it locally, and pushes another commit on top of it from the other clone.
+   * The local repository knows the replaced commit, but not the commit from the other clone.
+   */
+  private fun GitPushSingleRepoContext.divergeWithUnfetchedCommitOnFeature() {
+    git("checkout -b feature")
+    makeCommit("file.txt")
+    git("push -u origin feature")
+    git("commit --amend -m amended")
+    cd(broRepo)
+    git("fetch")
+    git("checkout -b feature origin/feature")
+    makeCommit("bro.txt")
+    git("push origin feature")
+    cd(repository)
   }
 
   private fun GitPushSingleRepoContext.pushCommitFromBro(): String {

@@ -3,9 +3,12 @@ package git4idea.push
 
 import com.intellij.CommonBundle
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.dvcs.push.PushDivergence
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -16,13 +19,35 @@ import git4idea.config.UpdateMethod
 import git4idea.i18n.GitBundle
 import git4idea.i18n.GitBundleExtensions.html
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-class GitRejectedPushUpdateDialog(
+/**
+ * The remote commits of a rejected push, with the names of the pushed source and the target for the dialog text.
+ */
+@ApiStatus.Internal
+class RejectedPushDivergence(
+  val sourcePresentation: @NlsSafe String,
+  val targetPresentation: @NlsSafe String,
+  val divergence: PushDivergence.Diverged,
+)
+
+/**
+ * Asks how to continue after the remote rejected a push, because the target has commits that are not in the pushed source.
+ *
+ * @param divergences the remote commits of each rejected repository, when the local repository has them
+ * @param offerForcePush true to offer a force push. Offer it only for one repository whose remote commits the local repository has.
+ * Force Push is never the default, because the user often chose a plain push over a force push to get here.
+ * @param forcePushProhibitedTarget the target where a force push is prohibited, to explain why there is no force push
+ */
+class GitRejectedPushUpdateDialog @ApiStatus.Internal constructor(
   private val project: Project,
   private val repositories: Set<GitRepository>,
   private val initialSettings: PushUpdateSettings,
-  private val rebaseOverMergeProblemDetected: Boolean
+  private val rebaseOverMergeProblemDetected: Boolean,
+  private val divergences: Map<GitRepository, RejectedPushDivergence>,
+  private val offerForcePush: Boolean,
+  private val forcePushProhibitedTarget: @NlsSafe String?,
 ) {
   @NlsContexts.DialogTitle
   private val title: String = GitBundle.message("push.rejected.dialog.title")
@@ -36,6 +61,9 @@ class GitRejectedPushUpdateDialog(
     else GitBundle.message("push.rejected.rebase")
 
   @Nls
+  private val forcePushButtonText: String = GitBundle.message("push.rejected.force.push")
+
+  @Nls
   private val cancelButtonText: String = CommonBundle.getCancelButtonText()
 
   private val helpButtonId: String = "reference.VersionControl.Git.UpdateOnRejectedPushDialog"
@@ -46,19 +74,39 @@ class GitRejectedPushUpdateDialog(
     private set
 
   fun showAndGet(): PushRejectedExitCode {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return showInTests()
+    }
+    val buttons = if (offerForcePush) arrayOf(mergeButtonText, rebaseButtonText, forcePushButtonText, cancelButtonText)
+    else arrayOf(mergeButtonText, rebaseButtonText, cancelButtonText)
     val exitCode: String? = MessageDialogBuilder.Message(title, makeDescription())
-      .buttons(mergeButtonText, rebaseButtonText, cancelButtonText)
+      .buttons(*buttons)
       .setDefaultAndFocusedActions(initialSettings.updateMethod)
       .help(helpButtonId)
       .doNotAsk(doNotAsk)
       .asWarning()
       .show(project)
 
-    return when (exitCode) {
+    val result = when (exitCode) {
       mergeButtonText -> PushRejectedExitCode.MERGE
       rebaseButtonText -> PushRejectedExitCode.REBASE
+      forcePushButtonText -> PushRejectedExitCode.FORCE_PUSH
       else -> PushRejectedExitCode.CANCEL
     }
+    if (result == PushRejectedExitCode.FORCE_PUSH) {
+      shouldAutoUpdateInFuture = false
+    }
+    return result
+  }
+
+  /**
+   * In tests, [TestDialogManager] answers with [PushRejectedExitCode.exitCode], whatever the buttons are.
+   */
+  private fun showInTests(): PushRejectedExitCode {
+    val exitCode = TestDialogManager.getTestImplementation().show(makeDescription())
+    val result = PushRejectedExitCode.entries.firstOrNull { it.exitCode == exitCode } ?: PushRejectedExitCode.CANCEL
+    check(result != PushRejectedExitCode.FORCE_PUSH || offerForcePush) { "The dialog doesn't offer a force push" }
+    return result
   }
 
   private fun makeDescription(): @Nls String {
@@ -96,7 +144,7 @@ class GitRejectedPushUpdateDialog(
       }
       else {
         description.append(GitBundle.message("push.rejected.many.repos")).br()
-        for ((repository, branch) in currentBranches) {
+        for ([repository, branch] in currentBranches) {
           description.nbsp(4).appendRaw(GitBundle.message(
             "push.rejected.many.repos.item",
             branch.name,
@@ -106,12 +154,43 @@ class GitRejectedPushUpdateDialog(
       }
     }
 
-    return description.appendRaw(descriptionEnding()).toString()
+    if (divergences.isEmpty()) {
+      description.appendRaw(descriptionEnding())
+    }
+    else {
+      description.appendRemoteCommits()
+    }
+    return description.toString()
   }
 
   private fun descriptionEnding(): @NlsContexts.Label String =
     if (rebaseOverMergeProblemDetected) GitBundle.message("push.rejected.merge.needed.with.problem")
     else GitBundle.message("push.rejected.merge.needed")
+
+  private fun HtmlBuilder.appendRemoteCommits() {
+    br().br()
+    val single = divergences.values.singleOrNull()
+    if (single != null) {
+      append(GitBundle.message("push.rejected.remote.commits", single.targetPresentation,
+                               single.divergence.remoteCommitCount, single.sourcePresentation)).br()
+    }
+    else {
+      append(GitBundle.message("push.rejected.remote.commits.many")).br()
+    }
+    br()
+    if (offerForcePush) {
+      append(GitBundle.message("push.rejected.force.or.update"))
+    }
+    else {
+      append(GitBundle.message("push.rejected.update.to.keep"))
+      if (forcePushProhibitedTarget != null) {
+        nbsp().append(GitBundle.message("push.rejected.force.prohibited", forcePushProhibitedTarget))
+      }
+    }
+    if (rebaseOverMergeProblemDetected) {
+      br().br().appendRaw(GitBundle.message("push.rejected.merge.recommended"))
+    }
+  }
 
   private fun getCurrentBranch(repository: GitRepository): @NlsSafe GitBranch {
     return repository.currentBranch ?: error("Current branch can't be null here. $repository")
@@ -164,10 +243,16 @@ class GitRejectedPushUpdateDialog(
   }
 
   companion object {
+    /**
+     * The choice in the dialog. In tests, [TestDialogManager] returns [exitCode] for the choice.
+     */
     enum class PushRejectedExitCode(val exitCode: Int) {
       MERGE(0),
       REBASE(1),
-      CANCEL(2)
+      CANCEL(2),
+
+      @ApiStatus.Internal
+      FORCE_PUSH(3)
     }
   }
 }

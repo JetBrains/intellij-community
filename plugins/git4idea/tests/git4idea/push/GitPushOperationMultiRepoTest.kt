@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push
 
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.testFramework.junit5.EnableTracingFor
@@ -8,6 +9,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.test.refresh
 import com.intellij.vcs.test.updateChangeListManager
 import git4idea.commands.GitCommandResult
+import git4idea.i18n.GitBundle
 import git4idea.push.GitRejectedPushUpdateDialog.Companion.PushRejectedExitCode
 import git4idea.repo.GitRepository
 import git4idea.test.GitPlatformTestContext
@@ -48,7 +50,7 @@ internal class GitPushOperationMultiRepoTest {
   @BeforeEach
   fun beforeEach() {
     with(context) {
-      val mainRepo = setupRepositories(projectPath, "parent", "bro")
+      (val projectRepo, val bro) = setupRepositories(projectPath, "parent", "bro")
 
       val communityDir = File(projectPath, "community")
       check(communityDir.mkdir()) { "Couldn't create $communityDir" }
@@ -59,9 +61,9 @@ internal class GitPushOperationMultiRepoTest {
       updateRepositories()
 
       pushSupport = gitPushSupport()
-      ultimate = mainRepo.projectRepo
+      ultimate = projectRepo
       community = enclosingRepo.projectRepo
-      brultimate = mainRepo.bro
+      brultimate = bro
       brommunity = enclosingRepo.bro
     }
 
@@ -71,6 +73,33 @@ internal class GitPushOperationMultiRepoTest {
   @AfterEach
   fun afterEach() {
     TestDialogManager.setTestDialog(TestDialog.DEFAULT)
+  }
+
+  @Test
+  fun `test rejected push of several repositories doesnt offer force push`(): Unit = with(context) {
+    for (repository in listOf(ultimate, community)) {
+      cd(repository)
+      git("checkout -b feature")
+      makeCommit("file.txt")
+      git("push -u origin feature")
+      git("commit --amend -m amended")
+    }
+    var dialogMessage = ""
+    TestDialogManager.setTestDialog { message ->
+      dialogMessage = message
+      PushRejectedExitCode.CANCEL.exitCode
+    }
+    updateRepositories()
+    val specs = mapOf(ultimate to makePushSpec(ultimate, "feature", "origin/feature"),
+                      community to makePushSpec(community, "feature", "origin/feature"))
+    val operation = GitPushOperation(project, pushSupport, specs, null, false, false, emptyMap(), true)
+
+    val result = runUnderProgress { operation.execute() }
+    val notification = invokeAndWaitIfNeeded { GitPushResultNotification.create(project, result, operation, true, null, emptyMap()) }
+
+    assertThat(dialogMessage).isNotEmpty().doesNotContain(GitBundle.message("push.rejected.force.or.update"))
+    assertThat(result.results.values.map { it.type }).containsOnly(GitPushRepoResult.Type.REJECTED_NO_FF)
+    assertThat(notification.actions.map { it.templateText }).doesNotContain(GitBundle.message("push.notification.force.push.action"))
   }
 
   @Test

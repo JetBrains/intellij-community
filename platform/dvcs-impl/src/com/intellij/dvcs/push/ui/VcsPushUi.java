@@ -60,6 +60,32 @@ public interface VcsPushUi {
   }
 
   /**
+   * Returns true when a selected repository has remote commits that are not fetched. A push fails until the user fetches them.
+   */
+  @RequiresEdt
+  @ApiStatus.Internal
+  default boolean isFetchRequired() {
+    return false;
+  }
+
+  /**
+   * Returns the number of the remote commits that a force push of the repository replaces.
+   */
+  @RequiresEdt
+  @ApiStatus.Internal
+  default int getRemoteCommitCount(@NotNull Repository repository) {
+    return 0;
+  }
+
+  /**
+   * Fetches the remote commits that are not fetched, then loads the commits of the repositories again.
+   */
+  @RequiresEdt
+  @ApiStatus.Internal
+  default void fetchRemoteCommits() {
+  }
+
+  /**
    * Returns special push options, usually selected by user at the bottom of the push dialog.
    */
   @Nullable

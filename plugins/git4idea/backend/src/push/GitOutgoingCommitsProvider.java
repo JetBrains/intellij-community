@@ -3,6 +3,7 @@ package git4idea.push;
 
 import com.intellij.dvcs.push.OutgoingCommitsProvider;
 import com.intellij.dvcs.push.OutgoingResult;
+import com.intellij.dvcs.push.PushDivergence;
 import com.intellij.dvcs.push.PushSpec;
 import com.intellij.dvcs.push.VcsError;
 import com.intellij.openapi.project.Project;
@@ -11,7 +12,9 @@ import git4idea.GitCommit;
 import git4idea.GitUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,8 +30,7 @@ public class GitOutgoingCommitsProvider extends OutgoingCommitsProvider<GitRepos
   @Override
   public @NotNull OutgoingResult getOutgoingCommits(@NotNull GitRepository repository, @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec,
                                                     boolean initial) {
-    GitPushSource gitPushSource = pushSpec.getSource();
-    String source = gitPushSource.getRevision();
+    String source = pushSpec.getSource().getRevision();
     GitPushTarget target = pushSpec.getTarget();
     String destination = target.getBranch().getFullName();
     try {
@@ -46,5 +48,13 @@ public class GitOutgoingCommitsProvider extends OutgoingCommitsProvider<GitRepos
       return new OutgoingResult(Collections.emptyList(),
                                 Collections.singletonList(new VcsError(GitUtil.cleanupErrorPrefixes(e.getMessage()))));
     }
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public @Nullable PushDivergence detectDivergence(@NotNull GitRepository repository,
+                                                   @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec,
+                                                   boolean checkRemote) {
+    return GitPushDivergenceDetector.getInstance(myProject).detectBlocking(repository, pushSpec.getSource(), pushSpec.getTarget(), checkRemote);
   }
 }

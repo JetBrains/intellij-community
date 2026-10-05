@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push
 
+import com.intellij.dvcs.push.PushDivergence
 import com.intellij.dvcs.push.PushSpec
 import com.intellij.dvcs.push.Pusher
 import com.intellij.dvcs.push.VcsPushOptionValue
@@ -16,6 +17,7 @@ import git4idea.repo.GitRepository
 import git4idea.update.GitUpdateInfoAsLog
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CancellationException
 
 private val LOG = logger<GitPusher>()
@@ -40,16 +42,28 @@ class GitPusher(
     force: Boolean,
     customParams: Map<String, VcsPushOptionValue>
   ) {
+    push(pushSpecs, optionValue, force, customParams, emptyMap())
+  }
+
+  @ApiStatus.Internal
+  override fun push(
+    pushSpecs: Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>>,
+    optionValue: VcsPushOptionValue?,
+    force: Boolean,
+    customParams: Map<String, VcsPushOptionValue>,
+    divergences: Map<GitRepository, PushDivergence>,
+  ) {
     expireExistingErrorsAndWarnings()
 
-    val (pushTagMode: GitPushTagMode?, skipHook: Boolean) = when (optionValue) {
+    val [pushTagMode: GitPushTagMode?, skipHook: Boolean] = when (optionValue) {
       is GitVcsPushOptionValue -> optionValue.pushTagMode to optionValue.isSkipHook
       else -> null to false
     }
 
     settings.pushTagMode = pushTagMode
 
-    val pushOperation = GitPushOperation(project, pushSupport, pushSpecs, pushTagMode, force, skipHook)
+    val expectedRemoteHashes = divergences.mapNotNull { [repository, divergence] -> divergence.remoteTip?.let { repository to it } }.toMap()
+    val pushOperation = GitPushOperation(project, pushSupport, pushSpecs, pushTagMode, force, skipHook, expectedRemoteHashes, true)
     pushAndNotify(project, pushOperation, customParams)
   }
 
@@ -72,7 +86,7 @@ class GitPusher(
     ) {
       val pushResult = pushOperation.execute()
       val pushListener = project.messageBus.syncPublisher(GitPushListener.TOPIC)
-      pushResult.results.forEach { (gitRepository, pushRepoResult) ->
+      pushResult.results.forEach { [gitRepository, pushRepoResult] ->
         pushListener.onCompleted(gitRepository, pushRepoResult, customParams)
       }
 
@@ -86,7 +100,7 @@ class GitPusher(
 
       val actions = runBlockingCancellable {
         GitPushNotificationCustomizer.EP_NAME.getExtensions(project).flatMap { extension ->
-          pushResult.results.flatMap { (gitRepository, pushRepoResult) ->
+          pushResult.results.flatMap { [gitRepository, pushRepoResult] ->
             try {
               extension.getActions(gitRepository, pushRepoResult, customParams)
             }

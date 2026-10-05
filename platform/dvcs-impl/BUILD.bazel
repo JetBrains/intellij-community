@@ -95,7 +95,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.vcs.dvcs.impl.tests",
+    associates = ["//platform/dvcs-impl:vcs-dvcs-impl"],
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -116,7 +116,6 @@ jvm_library(
         "//platform/core-ui",
         "//platform/kernel/rpc.backend",
         "//platform/lang-core",
-        "//platform/dvcs-impl:vcs-dvcs-impl",
         "//libraries/junit4",
         "//libraries/junit6",
     ],

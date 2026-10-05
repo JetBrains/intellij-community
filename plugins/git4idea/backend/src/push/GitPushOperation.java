@@ -2,6 +2,7 @@
 package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.push.PushDivergence;
 import com.intellij.dvcs.push.PushSpec;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.history.Label;
@@ -51,6 +52,7 @@ import git4idea.update.GitUpdateResult;
 import git4idea.update.GitUpdater;
 import git4idea.update.HashRange;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -61,6 +63,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.filter;
@@ -99,6 +102,9 @@ public class GitPushOperation {
   private final GitVcsSettings mySettings;
   private final GitRepositoryManager myRepositoryManager;
   private final @NotNull Map<GitRepository, HashRange> myUpdatedRanges = new LinkedHashMap<>();
+  private final @NotNull Map<GitRepository, Hash> myExpectedRemoteHashes = new HashMap<>();
+  private final @NotNull Map<GitRepository, RejectedPushDivergence> myRejectedDivergences = new HashMap<>();
+  private final boolean myAllowForceOnRejection;
 
   public GitPushOperation(@NotNull Project project,
                           @NotNull GitPushSupport pushSupport,
@@ -115,11 +121,39 @@ public class GitPushOperation {
   }
 
   GitPushOperation(@NotNull Project project,
+                   @NotNull GitPushSupport pushSupport,
+                   @NotNull @Unmodifiable Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
+                   @Nullable GitPushTagMode tagMode,
+                   @NotNull ForceMode forceMode,
+                   boolean skipHook) {
+    this(project, pushSupport, pushSpecs, tagMode, forceMode, skipHook, Map.of(), false);
+  }
+
+  /**
+   * @param expectedRemoteHashes  the positions of the targets that the user saw before the push.
+   *                              A force push with lease expects the remote to be at these positions.
+   * @param allowForceOnRejection true to offer a force push when the remote rejects the push
+   */
+  @ApiStatus.Internal
+  public GitPushOperation(@NotNull Project project,
                           @NotNull GitPushSupport pushSupport,
                           @NotNull @Unmodifiable Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
                           @Nullable GitPushTagMode tagMode,
-                          @NotNull ForceMode forceMode,
-                          boolean skipHook) {
+                          boolean force,
+                          boolean skipHook,
+                          @NotNull Map<GitRepository, Hash> expectedRemoteHashes,
+                          boolean allowForceOnRejection) {
+    this(project, pushSupport, pushSpecs, tagMode, getForceMode(force), skipHook, expectedRemoteHashes, allowForceOnRejection);
+  }
+
+  private GitPushOperation(@NotNull Project project,
+                           @NotNull GitPushSupport pushSupport,
+                           @NotNull @Unmodifiable Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
+                           @Nullable GitPushTagMode tagMode,
+                           @NotNull ForceMode forceMode,
+                           boolean skipHook,
+                           @NotNull Map<GitRepository, Hash> expectedRemoteHashes,
+                           boolean allowForceOnRejection) {
     myProject = project;
     myPushSupport = pushSupport;
     myPushSpecs = pushSpecs;
@@ -130,6 +164,8 @@ public class GitPushOperation {
     myProgressIndicator = ObjectUtils.notNull(ProgressManager.getInstance().getProgressIndicator(), new EmptyProgressIndicator());
     mySettings = GitVcsSettings.getInstance(myProject);
     myRepositoryManager = GitRepositoryManager.getInstance(myProject);
+    myExpectedRemoteHashes.putAll(expectedRemoteHashes);
+    myAllowForceOnRejection = allowForceOnRejection;
   }
 
   public @NotNull GitPushResult execute() {
@@ -170,10 +206,16 @@ public class GitPushOperation {
           if (pushAttempt == 0 && !mySettings.autoUpdateIfPushRejected()) {
             // the dialog will be shown => check for rebase-over-merge problem in advance to avoid showing several dialogs in a row
             rebaseOverMergeProblemDetected = !findRootsWithMergeCommits(myRepositoryManager.getRepositories()).isEmpty();
+            Map<GitRepository, RejectedPushDivergence> divergences = detectRejectedDivergences(result.rejected);
 
-            updateSettings = showDialogAndGetExitCode(result.rejected.keySet(), updateSettings,
-                                                      rebaseOverMergeProblemDetected.booleanValue());
-            if (updateSettings == null) break;
+            RejectedPushChoice choice = showDialogAndGetExitCode(result.rejected.keySet(), updateSettings,
+                                                                 rebaseOverMergeProblemDetected.booleanValue(), divergences);
+            if (choice == null) break;
+            if (choice.forcePush()) {
+              forcePushRejected(divergences, results);
+              break;
+            }
+            updateSettings = Objects.requireNonNull(choice.updateSettings());
             savePushUpdateSettings(updateSettings, rebaseOverMergeProblemDetected.booleanValue());
           }
 
@@ -203,6 +245,7 @@ public class GitPushOperation {
         repository.update();
       }
     }
+    collectRejectedDivergences(results, updatedRoots);
     recordRecentPushTargets(results);
     return prepareCombinedResult(results, updatedRoots, preUpdatePositions, beforePushLabel, afterPushLabel);
   }
@@ -254,6 +297,40 @@ public class GitPushOperation {
       String currentRef = pushSpec.getSource().getRevision();
       return GitRebaseOverMergeProblem.hasProblem(myProject, repo.getRoot(), baseRef, currentRef) ? repo.getRoot() : null;
     });
+  }
+
+  /**
+   * Creates a force push of the given repositories.
+   * The force push expects the remote at the position that the user saw, if the settings allow a force push with lease.
+   */
+  @ApiStatus.Internal
+  public @NotNull GitPushOperation deriveForcePush(@NotNull List<GitRepository> newRepositories) {
+    Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> newPushSpec = filter(myPushSpecs, newRepositories::contains);
+    Map<GitRepository, Hash> expectedRemoteHashes = new HashMap<>(filter(myExpectedRemoteHashes, newRepositories::contains));
+    for (GitRepository repository : newRepositories) {
+      RejectedPushDivergence divergence = myRejectedDivergences.get(repository);
+      Hash remoteTip = divergence != null ? divergence.getDivergence().getRemoteTip() : null;
+      if (remoteTip != null) {
+        expectedRemoteHashes.put(repository, remoteTip);
+      }
+    }
+    return new GitPushOperation(myProject, myPushSupport, newPushSpec, myTagMode, getForceMode(true), mySkipHook, expectedRemoteHashes,
+                                false);
+  }
+
+  boolean isForcePushAllowed(@NotNull GitRepository repository) {
+    PushSpec<GitPushSource, GitPushTarget> spec = myPushSpecs.get(repository);
+    return spec != null && myPushSupport.isForcePushAllowed(repository, spec.getTarget());
+  }
+
+  @Nullable GitPushSource getSource(@NotNull GitRepository repository) {
+    PushSpec<GitPushSource, GitPushTarget> spec = myPushSpecs.get(repository);
+    return spec != null ? spec.getSource() : null;
+  }
+
+  @Nullable GitPushTarget getTarget(@NotNull GitRepository repository) {
+    PushSpec<GitPushSource, GitPushTarget> spec = myPushSpecs.get(repository);
+    return spec != null ? spec.getTarget() : null;
   }
 
   public @NotNull GitPushOperation deriveForceWithoutLease(@NotNull List<GitRepository> newRepositories) {
@@ -320,6 +397,11 @@ public class GitPushOperation {
   }
 
   private @NotNull Map<GitRepository, GitPushRepoResult> push(@NotNull List<? extends GitRepository> repositories) {
+    return push(repositories, myForceMode);
+  }
+
+  private @NotNull Map<GitRepository, GitPushRepoResult> push(@NotNull List<? extends GitRepository> repositories,
+                                                              @NotNull ForceMode forceMode) {
     Map<GitRepository, GitPushRepoResult> results = new LinkedHashMap<>();
     for (GitRepository repository : repositories) {
       PushSpec<GitPushSource, GitPushTarget> spec = myPushSpecs.get(repository);
@@ -329,7 +411,7 @@ public class GitPushOperation {
       StructuredIdeActivity pushActivity = GitOperationsCollector.startLogPush(repository.getProject());
       boolean setUpstream = spec.getTarget().shouldSetUpstream(spec.getSource(), repository);
       try {
-        resultWithOutput = doPush(repository, spec, setUpstream);
+        resultWithOutput = doPush(repository, spec, setUpstream, forceMode);
         LOG.debug("Pushed to " + DvcsUtil.getShortRepositoryName(repository) + ": " + resultWithOutput);
 
         GitPushSource pushSource = spec.getSource();
@@ -449,7 +531,10 @@ public class GitPushOperation {
     }
   }
 
-  private @NotNull ResultWithOutput doPush(@NotNull GitRepository repository, @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec, boolean setUpstream) {
+  private @NotNull ResultWithOutput doPush(@NotNull GitRepository repository,
+                                          @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec,
+                                          boolean setUpstream,
+                                          @NotNull ForceMode forceMode) {
     GitPushTarget pushTarget = pushSpec.getTarget();
     GitRemoteBranch targetBranch = pushTarget.getBranch();
 
@@ -460,13 +545,14 @@ public class GitPushOperation {
     GitRemote remote = targetBranch.getRemote();
 
     List<GitPushParams.ForceWithLease> forceWithLease = emptyList();
-    if (myForceMode == ForceMode.FORCE_WITH_LEASE) {
-      Hash hash = repository.getBranches().getHash(targetBranch);
-      String expectedHash = hash != null ? hash.asString() : "";
-      forceWithLease = singletonList(new ForceWithLeaseReference(targetBranch.getNameForRemoteOperations(), expectedHash));
+    if (forceMode == ForceMode.FORCE_WITH_LEASE) {
+      Hash expectedHash = myExpectedRemoteHashes.get(repository);
+      Hash hash = expectedHash != null ? expectedHash : repository.getBranches().getHash(targetBranch);
+      String expectedValue = hash != null ? hash.asString() : "";
+      forceWithLease = singletonList(new ForceWithLeaseReference(targetBranch.getNameForRemoteOperations(), expectedValue));
     }
 
-    GitPushParamsImpl params = new GitPushParamsImpl(remote, spec, myForceMode.isForce(), setUpstream, mySkipHook, tagMode, forceWithLease);
+    GitPushParamsImpl params = new GitPushParamsImpl(remote, spec, forceMode.isForce(), setUpstream, mySkipHook, tagMode, forceWithLease);
 
     GitCommandResult res = myGit.push(repository, params, progressListener);
 
@@ -510,22 +596,125 @@ public class GitPushOperation {
     return new PushUpdateSettings(updateMethod);
   }
 
-  private @Nullable PushUpdateSettings showDialogAndGetExitCode(final @NotNull Set<? extends GitRepository> repositories,
+  /**
+   * Finds the remote commits of the rejected pushes, if a force push can be offered for each of them.
+   */
+  private @NotNull Map<GitRepository, RejectedPushDivergence> detectRejectedDivergences(@NotNull Map<GitRepository, GitPushRepoResult> rejected) {
+    Map<GitRepository, RejectedPushDivergence> divergences = new LinkedHashMap<>();
+    for (Map.Entry<GitRepository, GitPushRepoResult> entry : rejected.entrySet()) {
+      RejectedPushDivergence divergence = detectRejectedDivergence(entry.getKey(), entry.getValue());
+      if (divergence == null) return Map.of();
+      divergences.put(entry.getKey(), divergence);
+    }
+    return divergences;
+  }
+
+  /**
+   * Finds the remote commits of a rejected push, if the local repository has all of them.
+   * A rejection with "fetch first" means that the local repository doesn't have the remote commits, so they can't be shown.
+   */
+  private @Nullable RejectedPushDivergence detectRejectedDivergence(@NotNull GitRepository repository, @NotNull GitPushRepoResult result) {
+    if (!myAllowForceOnRejection || isFetchFirstRejection(result)) return null;
+    RejectedPushDivergence known = myRejectedDivergences.get(repository);
+    if (known != null) return known;
+
+    PushSpec<GitPushSource, GitPushTarget> spec = myPushSpecs.get(repository);
+    if (spec == null) return null;
+    if (!(GitPushDivergenceDetector.getInstance(myProject).detectBlocking(repository, spec.getSource(), spec.getTarget(), false)
+            instanceof PushDivergence.Diverged divergence)) {
+      return null;
+    }
+
+    RejectedPushDivergence rejectedDivergence =
+      new RejectedPushDivergence(spec.getSource().getPresentation(), spec.getTarget().getPresentation(), divergence);
+    myRejectedDivergences.put(repository, rejectedDivergence);
+    return rejectedDivergence;
+  }
+
+  /**
+   * Finds the remote commits of the rejected pushes that were not updated, so that the notification can tell about them.
+   */
+  private void collectRejectedDivergences(@NotNull Map<GitRepository, GitPushRepoResult> results,
+                                          @NotNull Map<GitRepository, GitUpdateResult> updatedRoots) {
+    for (Map.Entry<GitRepository, GitPushRepoResult> entry : results.entrySet()) {
+      if (entry.getValue().getType() == REJECTED_NO_FF && !updatedRoots.containsKey(entry.getKey())) {
+        detectRejectedDivergence(entry.getKey(), entry.getValue());
+      }
+    }
+  }
+
+  static boolean isFetchFirstRejection(@NotNull GitPushRepoResult result) {
+    String reason = result.getError();
+    return result.getType() == REJECTED_NO_FF && reason != null && StringUtil.containsIgnoreCase(reason, GitPushNativeResult.FETCH_FIRST_REASON);
+  }
+
+  /**
+   * Returns the remote commits of a rejected push, if the local repository has all of them.
+   */
+  @Nullable RejectedPushDivergence getRejectedDivergence(@NotNull GitRepository repository) {
+    return myRejectedDivergences.get(repository);
+  }
+
+  /**
+   * Pushes the rejected repositories again with force. The force push expects the remote to be at the position that the dialog showed.
+   */
+  private void forcePushRejected(@NotNull Map<GitRepository, RejectedPushDivergence> divergences,
+                                 @NotNull Map<GitRepository, GitPushRepoResult> results) {
+    for (Map.Entry<GitRepository, RejectedPushDivergence> entry : divergences.entrySet()) {
+      Hash remoteTip = entry.getValue().getDivergence().getRemoteTip();
+      if (remoteTip != null) {
+        myExpectedRemoteHashes.put(entry.getKey(), remoteTip);
+      }
+    }
+    LOG.debug("Force pushing rejected repositories: " + divergences.keySet());
+    results.putAll(push(myRepositoryManager.sortByDependency(divergences.keySet()), getForceMode(true)));
+  }
+
+  /**
+   * Returns true when the dialog can offer a force push: one repository, and lease on.
+   */
+  private boolean canOfferForcePush(@NotNull Map<GitRepository, RejectedPushDivergence> divergences) {
+    return divergences.size() == 1 && ContainerUtil.and(divergences.entrySet(), entry ->
+      entry.getValue().getDivergence().getRemoteTip() != null &&
+      myPushSupport.isForcePushAllowed(entry.getKey(), myPushSpecs.get(entry.getKey()).getTarget()));
+  }
+
+  private @Nullable String findForcePushProhibitedTarget(@NotNull Map<GitRepository, RejectedPushDivergence> divergences) {
+    for (GitRepository repository : divergences.keySet()) {
+      GitPushTarget target = myPushSpecs.get(repository).getTarget();
+      if (!myPushSupport.isForcePushAllowed(repository, target)) return target.getPresentation();
+    }
+    return null;
+  }
+
+  /**
+   * @return the choice of the user, or {@code null} if the user canceled
+   */
+  private @Nullable RejectedPushChoice showDialogAndGetExitCode(final @NotNull Set<? extends GitRepository> repositories,
                                                                 final @NotNull PushUpdateSettings initialSettings,
-                                                                final boolean rebaseOverMergeProblemDetected) {
-    Ref<PushUpdateSettings> updateSettings = Ref.create();
+                                                                final boolean rebaseOverMergeProblemDetected,
+                                                                final @NotNull Map<GitRepository, RejectedPushDivergence> divergences) {
+    boolean offerForcePush = canOfferForcePush(divergences);
+    String prohibitedTarget = offerForcePush ? null : findForcePushProhibitedTarget(divergences);
+    Ref<RejectedPushChoice> choice = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(
-        myProject, repositories, initialSettings, rebaseOverMergeProblemDetected
+        myProject, repositories, initialSettings, rebaseOverMergeProblemDetected, divergences, offerForcePush, prohibitedTarget
       );
 
       PushRejectedExitCode exitCode = dialog.showAndGet();
-      if (!exitCode.equals(PushRejectedExitCode.CANCEL)) {
+      if (exitCode == PushRejectedExitCode.FORCE_PUSH) {
+        choice.set(new RejectedPushChoice(null, true));
+      }
+      else if (!exitCode.equals(PushRejectedExitCode.CANCEL)) {
         mySettings.setAutoUpdateIfPushRejected(dialog.getShouldAutoUpdateInFuture());
-        updateSettings.set(new PushUpdateSettings(convertUpdateMethodFromDialogExitCode(exitCode)));
+        choice.set(new RejectedPushChoice(new PushUpdateSettings(convertUpdateMethodFromDialogExitCode(exitCode)), false));
       }
     });
-    return updateSettings.get();
+    return choice.get();
+  }
+
+  private record RejectedPushChoice(@Nullable PushUpdateSettings updateSettings, boolean forcePush) {
   }
 
   private static @NotNull UpdateMethod convertUpdateMethodFromDialogExitCode(PushRejectedExitCode exitCode) {

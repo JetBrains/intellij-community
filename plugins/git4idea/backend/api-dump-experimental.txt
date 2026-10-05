@@ -72,6 +72,9 @@ git4idea.push.GitPushListener
 - *:onCompleted(git4idea.repo.GitRepository,git4idea.push.GitPushRepoResult,java.util.Map):V
 f:git4idea.push.GitPushNotificationCustomizerKt
 - *sf:isSuccessful(git4idea.push.GitPushRepoResult):Z
+a:git4idea.push.GitPushSource
+- com.intellij.dvcs.push.PushSource
+- *:getBranchName():java.lang.String
 *f:git4idea.repo.GitConfigurationCache
 - git4idea.repo.GitConfigurationCacheBase
 - *sf:Companion:git4idea.repo.GitConfigurationCache$Companion

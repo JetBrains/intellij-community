@@ -3525,7 +3525,6 @@ f:git4idea.push.GitPusher$Companion
 - f:pushAndNotify(com.intellij.openapi.project.Project,git4idea.push.GitPushOperation,java.util.Map):V
 f:git4idea.push.GitRejectedPushUpdateDialog
 - sf:Companion:git4idea.push.GitRejectedPushUpdateDialog$Companion
-- <init>(com.intellij.openapi.project.Project,java.util.Set,git4idea.push.PushUpdateSettings,Z):V
 - f:getShouldAutoUpdateInFuture():Z
 - f:showAndGet():git4idea.push.GitRejectedPushUpdateDialog$Companion$PushRejectedExitCode
 f:git4idea.push.GitRejectedPushUpdateDialog$Companion

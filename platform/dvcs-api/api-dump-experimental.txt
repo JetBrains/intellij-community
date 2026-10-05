@@ -4,5 +4,24 @@
 - a:createOptionsPanel(com.intellij.openapi.Disposable,java.util.Collection):com.intellij.dvcs.push.VcsPushOptionsPanel
 - a:getId():java.lang.String
 *f:com.intellij.dvcs.push.CustomPushOptionsPanelFactory$Companion
+a:com.intellij.dvcs.push.OutgoingCommitsProvider
+- *:detectDivergence(com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushSpec,Z):com.intellij.dvcs.push.PushDivergence
+*:com.intellij.dvcs.push.PushDivergence
+- a:getRemoteTip():com.intellij.vcs.log.Hash
+*f:com.intellij.dvcs.push.PushDivergence$Diverged
+- com.intellij.dvcs.push.PushDivergence
+- <init>(I,com.intellij.vcs.log.Hash,java.util.List):V
+- f:getLogBranchNames():java.util.List
+- f:getRemoteCommitCount():I
+- getRemoteTip():com.intellij.vcs.log.Hash
+*f:com.intellij.dvcs.push.PushDivergence$FetchRequired
+- com.intellij.dvcs.push.PushDivergence
+- <init>(com.intellij.vcs.log.Hash):V
+- getRemoteTip():com.intellij.vcs.log.Hash
+com.intellij.dvcs.push.PushSource
+- *:getBranchName():java.lang.String
+a:com.intellij.dvcs.push.PushSupport
+- *:fetchPushTarget(com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushTarget):com.intellij.dvcs.push.VcsError
 a:com.intellij.dvcs.push.Pusher
 - *:push(java.util.Map,com.intellij.dvcs.push.VcsPushOptionValue,Z,java.util.Map):V
+- *:push(java.util.Map,com.intellij.dvcs.push.VcsPushOptionValue,Z,java.util.Map,java.util.Map):V

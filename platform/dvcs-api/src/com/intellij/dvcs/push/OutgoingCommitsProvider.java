@@ -2,7 +2,9 @@
 package com.intellij.dvcs.push;
 
 import com.intellij.dvcs.repo.Repository;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Provider for outgoing commits
@@ -21,5 +23,20 @@ public abstract class OutgoingCommitsProvider<Repo extends Repository, Source ex
    *                request in the error field of the OutgoingResult.
    */
   public abstract @NotNull OutgoingResult getOutgoingCommits(@NotNull Repo repository, @NotNull PushSpec<Source, Target> pushSpec, boolean initial);
+
+  /**
+   * Finds the commits in the push target that are not in the pushed source.
+   * The push dialog calls it after {@link #getOutgoingCommits(Repository, PushSpec, boolean)}: first without the remote, then with it.
+   * With {@code checkRemote}, implementations can use the network, but must not interact with the user.
+   *
+   * @param checkRemote true to ask the remote for the position of the target
+   * @return the divergence, or {@code null} if a plain push can succeed
+   */
+  @ApiStatus.Experimental
+  public @Nullable PushDivergence detectDivergence(@NotNull Repo repository,
+                                                   @NotNull PushSpec<Source, Target> pushSpec,
+                                                   boolean checkRemote) {
+    return null;
+  }
 
 }

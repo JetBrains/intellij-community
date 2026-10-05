@@ -109,7 +109,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
 
   //store map from local branch to related cached remote branch hash per repository
   private final @NotNull Map<GitRepository, Map<GitLocalBranch, Integer>> myLocalBranchesWithIncoming = new ConcurrentHashMap<>();
-  private final @NotNull Map<GitRepository, Map<GitLocalBranch, Hash>> myLocalBranchesToFetch = new ConcurrentHashMap<>();
+  private final @NotNull Map<GitRepository, Map<GitLocalBranch, UnfetchedRemoteState>> myLocalBranchesToFetch = new ConcurrentHashMap<>();
   private final @NotNull Map<GitRepository, Map<GitLocalBranch, Integer>> myLocalBranchesWithOutgoing = new ConcurrentHashMap<>();
   private final @NotNull Project myProject;
   private @Nullable ScheduledFuture<?> myPeriodicalUpdater;
@@ -158,6 +158,45 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
 
   public boolean hasOutgoingFor(@Nullable GitRepository repository, @NotNull String localBranchName) {
     return getBranchesWithOutgoing(repository).contains(new GitLocalBranch(localBranchName));
+  }
+
+  /**
+   * Returns the hash of the tracked remote branch on the remote, when the last remote check found that the remote has moved
+   * and nothing was fetched after that check. The commit for the returned hash can be absent in the local repository.
+   */
+  @ApiStatus.Internal
+  public @Nullable Hash getUnfetchedRemoteHash(@NotNull GitRepository repository, @NotNull GitLocalBranch localBranch) {
+    Map<GitLocalBranch, UnfetchedRemoteState> toFetch = myLocalBranchesToFetch.get(repository);
+    if (toFetch == null) return null;
+    UnfetchedRemoteState state = toFetch.get(localBranch);
+    if (state == null) return null;
+    GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, localBranch);
+    if (trackInfo == null) return null;
+    Hash trackedHash = repository.getBranches().getHash(trackInfo.getRemoteBranch());
+    return isStillUnfetched(state, trackedHash) ? state.remoteHash() : null;
+  }
+
+  /**
+   * Asks the remote for the position of its branches, without user interaction.
+   * Uses the same authentication rules as the periodic remote check, and asks nothing when the user turned the remote check off.
+   *
+   * @param branchNames the names of the branches on the remote, such as {@code feature}
+   * @return the hashes by the full reference names, such as {@code refs/heads/feature}, or {@code null} if the request failed or
+   * can't be made without user interaction. A branch that is absent on the remote is absent in the result.
+   */
+  @ApiStatus.Internal
+  public @Nullable Map<String, Hash> requestRemoteBranchHashes(@NotNull GitRepository repository,
+                                                              @NotNull GitRemote remote,
+                                                              @NotNull List<String> branchNames) {
+    if (!supportsIncomingOutgoing() || shouldAvoidUserInteraction(remote)) return null;
+    if (getIncomingRemoteCheckStrategy() == GitIncomingRemoteCheckStrategy.NONE) return null;
+    AtomicBoolean failed = new AtomicBoolean();
+    Map<String, Hash> result = lsRemote(repository, remote, branchNames, () -> failed.set(true));
+    return failed.get() ? null : result;
+  }
+
+  private static boolean isStillUnfetched(@Nullable UnfetchedRemoteState state, @Nullable Hash trackedHash) {
+    return state != null && state.trackedHash().equals(trackedHash);
   }
 
   /**
@@ -387,19 +426,19 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
     scheduleUpdate();
   }
 
-  private @NotNull Map<GitLocalBranch, Hash> calculateBranchesToFetch(@NotNull GitRepository repository,
-                                                                      @NotNull Runnable onError) {
-    Map<GitLocalBranch, Hash> result = new HashMap<>();
+  private @NotNull Map<GitLocalBranch, UnfetchedRemoteState> calculateBranchesToFetch(@NotNull GitRepository repository,
+                                                                                      @NotNull Runnable onError) {
+    Map<GitLocalBranch, UnfetchedRemoteState> result = new HashMap<>();
     groupTrackInfoByRemotes(repository).entrySet()
       .forEach(entry -> result.putAll(calcBranchesToFetchForRemote(repository, entry.getKey(), entry.getValue(), onError)));
     return result;
   }
 
-  private @NotNull Map<GitLocalBranch, Hash> calcBranchesToFetchForRemote(@NotNull GitRepository repository,
-                                                                          @NotNull GitRemote gitRemote,
-                                                                          @NotNull Collection<? extends GitBranchTrackInfo> trackInfoList,
-                                                                          @NotNull Runnable onError) {
-    Map<GitLocalBranch, Hash> result = new HashMap<>();
+  private @NotNull Map<GitLocalBranch, UnfetchedRemoteState> calcBranchesToFetchForRemote(@NotNull GitRepository repository,
+                                                                                          @NotNull GitRemote gitRemote,
+                                                                                          @NotNull Collection<? extends GitBranchTrackInfo> trackInfoList,
+                                                                                          @NotNull Runnable onError) {
+    Map<GitLocalBranch, UnfetchedRemoteState> result = new HashMap<>();
     GitBranchesCollection branchesCollection = repository.getBranches();
     final Map<String, Hash> remoteNameWithHash =
       lsRemote(repository, gitRemote, ContainerUtil.map(trackInfoList, info -> info.getRemoteBranch().getNameForRemoteOperations()), onError);
@@ -415,7 +454,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
 
         if (StringUtil.equals(remoteBranchName, addRefsHeadsPrefixIfNeeded(remoteBranch.getNameForRemoteOperations()))) {
           if (!localHashForRemoteBranch.equals(remoteHash)) {
-            result.put(info.getLocalBranch(), localHashForRemoteBranch);
+            result.put(info.getLocalBranch(), new UnfetchedRemoteState(localHashForRemoteBranch, remoteHash));
           }
         }
       });
@@ -426,7 +465,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   private @NotNull Map<GitLocalBranch, Integer> calcBranchesWithIncoming(@NotNull GitRepository repository) {
     Map<GitLocalBranch, Integer> result = new HashMap<>();
     GitBranchesCollection branchesCollection = repository.getBranches();
-    Map<GitLocalBranch, Hash> cachedBranchesToFetch = myLocalBranchesToFetch.get(repository);
+    Map<GitLocalBranch, UnfetchedRemoteState> cachedBranchesToFetch = myLocalBranchesToFetch.get(repository);
 
     branchesCollection.getLocalBranches().forEach(localBranch -> {
       GitBranchTrackInfo info = GitBranchUtil.getTrackInfoForBranch(repository, localBranch);
@@ -439,7 +478,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
       if (commits != null && commits > 0) {
         result.put(info.getLocalBranch(), commits);
       }
-      else if (cachedBranchesToFetch != null && localHashForRemoteBranch.equals(cachedBranchesToFetch.get(localBranch))) {
+      else if (cachedBranchesToFetch != null && isStillUnfetched(cachedBranchesToFetch.get(localBranch), localHashForRemoteBranch)) {
         // In this case, we know that the remote branch has some new commits,
         // but they aren't fetched yet, so we can't count them
         // TODO: fetch?
@@ -593,5 +632,12 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
       }
       manager.markDirty(updatedRepos, updatedRepos, false);
     }
+  }
+
+  /**
+   * @param trackedHash the local hash of the remote-tracking branch at the moment of the remote check
+   * @param remoteHash  the hash of the branch on the remote at the moment of the remote check
+   */
+  private record UnfetchedRemoteState(@NotNull Hash trackedHash, @NotNull Hash remoteHash) {
   }
 }

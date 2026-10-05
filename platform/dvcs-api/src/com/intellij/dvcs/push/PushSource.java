@@ -15,8 +15,11 @@
  */
 package com.intellij.dvcs.push;
 
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Source to push from. For example, local branch for git or branch/bookmark for mercurial.
@@ -25,4 +28,13 @@ public interface PushSource {
   @Nls
   @NotNull
   String getPresentation();
+
+  /**
+   * Returns the name of the local branch that is pushed.
+   * Returns {@code null} when the source is not a branch, for example a revision or a detached HEAD.
+   */
+  @ApiStatus.Experimental
+  default @NlsSafe @Nullable String getBranchName() {
+    return null;
+  }
 }
