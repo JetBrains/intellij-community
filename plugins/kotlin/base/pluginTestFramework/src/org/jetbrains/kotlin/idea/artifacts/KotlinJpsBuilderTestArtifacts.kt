@@ -70,7 +70,7 @@ object KotlinJpsBuilderTestArtifacts {
 
     private const val MAVEN_CENTRAL_URL = "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2"
     private const val INTELLIJ_DEPENDENCIES_URL =
-        "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies"
+        "https://cache-redirector.jetbrains.com/maven/ultimate-public"
 
     /** A complete directory has this file. A directory without it is left from an interrupted run. */
     private const val COMPLETE_MARKER = ".complete"

@@ -116,7 +116,7 @@ public final class MavenDependencyUtil {
     new RemoteRepositoryDescription("central-proxy", "Maven Central Proxy",
                                     "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2"),
     new RemoteRepositoryDescription("intellij-dependencies", "IntelliJ Dependencies",
-                                    "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+                                    "https://cache-redirector.jetbrains.com/maven/ultimate-public")
   );
 
   public static @NotNull List<RemoteRepositoryDescription> getRemoteRepositoryDescriptions() {

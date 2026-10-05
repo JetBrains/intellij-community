@@ -20,11 +20,6 @@ private val INTELLIJ_DEPENDENCIES_REPOSITORY = JpsRemoteRepository(
     "https://cache-redirector.jetbrains.com/maven/ultimate-public",
 )
 
-private val INTELLIJ_EXPERIMENTAL_DEPENDENCIES_REPOSITORY = JpsRemoteRepository(
-    "kotlin-experimental",
-    "https://packages.jetbrains.team/maven/p/kt/experimental",
-)
-
 internal class ArtifactCoordinates(private val originalVersion: String, val mode: ArtifactMode, val repository: JpsRemoteRepository) {
     val version: String
         get() = when (mode) {
@@ -38,8 +33,7 @@ internal val GeneratorPreferences.kotlincArtifactCoordinates: ArtifactCoordinate
 
 private val GeneratorPreferences.kotlincRepository: JpsRemoteRepository?
     get() = when (kotlincArtifactsMode) {
-        ArtifactMode.MAVEN_EXPERIMENTAL -> INTELLIJ_EXPERIMENTAL_DEPENDENCIES_REPOSITORY
-        ArtifactMode.MAVEN -> INTELLIJ_DEPENDENCIES_REPOSITORY
+        ArtifactMode.MAVEN, ArtifactMode.MAVEN_EXPERIMENTAL -> INTELLIJ_DEPENDENCIES_REPOSITORY
         ArtifactMode.BOOTSTRAP -> null
     }
 

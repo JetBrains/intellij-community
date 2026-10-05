@@ -766,14 +766,14 @@ http_file(
     name = "teamcity-service-messages_http",
     downloaded_file_path = "serviceMessages-2024.07.jar",
     sha256 = "5280d3e4bae23c4f1cc59bab77dab9f7a9626aeceeaa0bb07a9868bcedae2da9",
-    url = "https://cache-redirector.jetbrains.com/intellij-dependencies/org/jetbrains/teamcity/serviceMessages/2024.07/serviceMessages-2024.07.jar",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/teamcity/serviceMessages/2024.07/serviceMessages-2024.07.jar",
 )
 
 http_file(
     name = "teamcity-service-messages-sources_http",
     downloaded_file_path = "serviceMessages-2024.07-sources.jar",
     sha256 = "38f4ec9c53269331a3e0c399b0cc8d74f75087cae6c998f15634da0fbf9be591",
-    url = "https://cache-redirector.jetbrains.com/intellij-dependencies/org/jetbrains/teamcity/serviceMessages/2024.07/serviceMessages-2024.07-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/teamcity/serviceMessages/2024.07/serviceMessages-2024.07-sources.jar",
 )
 
 # Coroutine/cancellation-friendly process handling (browser process ownership).

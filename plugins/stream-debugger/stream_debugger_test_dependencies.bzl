@@ -19,7 +19,7 @@ download_file(
 
 download_file(
     name = "org/jetbrains/mockjdk/mockjdk-base-java/21.0.0/mockjdk-base-java-21.0.0.jar",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/mockjdk/mockjdk-base-java/21.0.0/mockjdk-base-java-21.0.0.jar",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/mockjdk/mockjdk-base-java/21.0.0/mockjdk-base-java-21.0.0.jar",
     sha256 = "32e2469e2c2fb8b494e2cd1c94584c3b76dc3bdc1ad4fcc010537eb446aea292",
 )
 

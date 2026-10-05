@@ -62,7 +62,7 @@ object GradleKotlinTestUtils {
             RemoteRepositoryDescription(
                 "experimental",
                 "experimental repository for dev versions",
-                "https://packages.jetbrains.team/maven/p/kt/experimental"
+                "https://cache-redirector.jetbrains.com/maven/ultimate-public"
             )
         )
     }
@@ -97,7 +97,7 @@ object GradleKotlinTestUtils {
                     }
 
                     kotlinVersion.isDev -> {
-                        addMavenRepository("https://packages.jetbrains.team/maven/p/kt/experimental", kotlinContentConstraint)
+                        addMavenRepository("https://cache-redirector.jetbrains.com/maven/ultimate-public", kotlinContentConstraint)
                     }
                 }
 
