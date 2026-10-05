@@ -1001,8 +1001,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       if (view != null && view.isRerun()) {
         myViewClosed = true;
         myView = null;
-      }
-      if (myView == null) {
         return;
       }
     }
