@@ -888,6 +888,19 @@ public class GitImpl extends GitImplBase {
   }
 
   @Override
+  public @NotNull GitCommandResult deleteWorkingTreeWithoutProject(@NotNull Path mainWorktreePath, @NotNull GitWorkingTree tree) {
+    GitLineHandler handler = new GitLineHandler(null, mainWorktreePath, GitExecutableManager.getInstance().getExecutable(null),
+                                                GitCommand.WORKTREE, emptyList());
+    handler.setSilent(false);
+    handler.setStdoutSuppressed(false);
+    handler.setStderrSuppressed(false);
+    handler.addParameters("remove");
+    handler.addAbsoluteFile(tree.getPath().getIOFile());
+    handler.addParameters("--force");
+    return runCommand(handler);
+  }
+
+  @Override
   public @NotNull List<GitWorkingTree> listWorktrees(@NotNull GitRepository repository) throws VcsException {
     GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.WORKTREE);
     handler.addParameters("list");

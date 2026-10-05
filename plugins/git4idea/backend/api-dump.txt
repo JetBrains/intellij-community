@@ -113,6 +113,7 @@ c:git4idea.checkout.GitCloneDialog
 git4idea.commands.Git
 - a:checkout(git4idea.repo.GitRepository,java.lang.String,java.lang.String,Z,Z,Z,Z,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
 - a:createWorkingTree(git4idea.repo.GitRepository,com.intellij.openapi.vcs.FilePath,git4idea.GitReference,java.lang.String,Z):git4idea.commands.GitCommandResult
+- a:deleteWorkingTreeWithoutProject(java.nio.file.Path,git4idea.GitWorkingTree):git4idea.commands.GitCommandResult
 - a:getUnmergedFiles(git4idea.repo.GitRepository):git4idea.commands.GitCommandResult
 - a:lockWorkingTree(git4idea.repo.GitRepository,git4idea.GitWorkingTree):git4idea.commands.GitCommandResult
 - a:runCommand(com.intellij.openapi.util.Computable):git4idea.commands.GitCommandResult
@@ -140,6 +141,7 @@ git4idea.commands.GitHttpAuthenticator
 c:git4idea.commands.GitImpl
 - checkout(git4idea.repo.GitRepository,java.lang.String,java.lang.String,Z,Z,Z,Z,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
 - createWorkingTree(git4idea.repo.GitRepository,com.intellij.openapi.vcs.FilePath,git4idea.GitReference,java.lang.String,Z):git4idea.commands.GitCommandResult
+- deleteWorkingTreeWithoutProject(java.nio.file.Path,git4idea.GitWorkingTree):git4idea.commands.GitCommandResult
 - lockWorkingTree(git4idea.repo.GitRepository,git4idea.GitWorkingTree):git4idea.commands.GitCommandResult
 - runHook(git4idea.repo.GitRepository,java.lang.String,java.util.List,java.util.List):git4idea.commands.GitCommandResult
 - unlockWorkingTree(git4idea.repo.GitRepository,git4idea.GitWorkingTree):git4idea.commands.GitCommandResult

@@ -9,6 +9,7 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UI
@@ -301,15 +302,41 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     val currentWorktree = worktrees.find { it.isCurrent && !it.isMain } ?: return
     val mainWorktreePath = worktrees.find { it.isMain }?.path?.path ?: return
 
-    // Runs on the application scope, not the closing project's scope, and removes the worktree through the still-open
-    // main project so the git command and notifications don't target the disposed worktree project.
+    // Runs on the application scope, not the closing project's scope. The worktree is removed through the service of the
+    // still-open main project, or without a project when no open project owns the main worktree.
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       closeProject(currentProject)
 
-      val mainProject = ProjectUtil.findProject(Path(mainWorktreePath)) ?: return@launch
-      val mainRepository = GitRepositoryManager.getInstance(mainProject).repositories.singleOrNull() ?: return@launch
+      val mainProject = ProjectUtil.findProject(Path(mainWorktreePath))
+      val mainRepository = mainProject?.let { GitRepositoryManager.getInstance(it).repositories.singleOrNull() }
+      if (mainProject != null && mainRepository != null) {
+        getInstance(mainProject).deleteWorkingTrees(mainProject, listOf(currentWorktree), mainRepository).join()
+      }
+      else {
+        deleteWorkingTreeWithoutProject(Path(mainWorktreePath), currentWorktree)
+      }
+    }
+  }
 
-      deleteWorkingTrees(mainProject, listOf(currentWorktree), mainRepository).join()
+  private suspend fun deleteWorkingTreeWithoutProject(mainWorktreePath: Path, tree: GitWorkingTree) {
+    val commandResult = withContext(Dispatchers.IO) {
+      Git.getInstance().deleteWorkingTreeWithoutProject(mainWorktreePath, tree)
+    }
+
+    if (commandResult.success()) {
+      removeFromRecentProjects(tree)
+      VcsNotifier.standardNotification()
+        .createNotification(GitBundle.message("Git.WorkingTrees.delete.worktree.success.message", tree.path.name),
+                            NotificationType.INFORMATION)
+        .setDisplayId(GitNotificationIdsHolder.WORKING_TREE_DELETED)
+        .notify(null)
+    }
+    else {
+      VcsNotifier.importantNotification()
+        .createNotification(GitBundle.message("Git.WorkingTrees.delete.worktrees.failure.notification.title"),
+                            commandResult.errorOutputAsHtmlString, NotificationType.ERROR)
+        .setDisplayId(GitNotificationIdsHolder.WORKING_TREE_COULD_NOT_DELETE)
+        .notify(null)
     }
   }
 
@@ -466,6 +493,10 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
   private fun onWorkingTreeDeleted(repository: GitRepository, tree: GitWorkingTree) {
     rootsAwaitingRemovalFromModel[tree.path] = repository.repositoryId()
     repository.workingTreeHolder.scheduleReload()
+    removeFromRecentProjects(tree)
+  }
+
+  private fun removeFromRecentProjects(tree: GitWorkingTree) {
     val recentProjectsManager = RecentProjectsManagerBase.getInstanceEx()
     recentProjectsManager.removePath(tree.path.path)
     for (recentPath in recentProjectsManager.getRecentPaths()) {

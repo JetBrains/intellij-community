@@ -347,6 +347,20 @@ public interface Git {
   @NotNull
   GitCommandResult deleteWorkingTree(@NotNull GitRepository repository, @NotNull GitWorkingTree tree);
 
+  /**
+   * Use it when you don't have a project or no open project owns the main worktree. Otherwise, use {@link #deleteWorkingTree}.
+   * Runs {@code git worktree remove --force} for {@code tree} without a project.
+   * <p>
+   * The command runs in {@code mainWorktreePath} with the application-level Git executable.
+   * The {@code --force} flag also deletes the uncommitted changes in {@code tree}.
+   *
+   * @param mainWorktreePath the root of the main worktree of the repository that owns {@code tree}
+   * @param tree             the linked worktree to delete
+   * @return the result of the git command
+   */
+  @NotNull
+  GitCommandResult deleteWorkingTreeWithoutProject(@NotNull Path mainWorktreePath, @NotNull GitWorkingTree tree);
+
   @NotNull
   List<GitWorkingTree> listWorktrees(@NotNull GitRepository repository) throws VcsException;
 

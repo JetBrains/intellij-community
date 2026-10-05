@@ -19,6 +19,7 @@ import git4idea.rebase.GitInteractiveRebaseEditorHandler
 import git4idea.rebase.GitRebaseEditorHandler
 import git4idea.repo.GitRepository
 import java.io.File
+import java.nio.file.Path
 
 /**
  * Any unknown error that could be returned by Git.
@@ -47,6 +48,8 @@ class TestGitImpl : GitImpl() {
    */
   @Volatile
   var deleteWorkingTreeListener: ((repository: GitRepository, tree: GitWorkingTree) -> Unit)? = null
+  @Volatile
+  var deleteWorkingTreeWithoutProjectListener: ((mainWorktreePath: Path, tree: GitWorkingTree) -> Unit)? = null
 
   /**
    * Called before `git worktree list`. A test can block here to keep the working trees model stale.
@@ -193,6 +196,11 @@ class TestGitImpl : GitImpl() {
     return super.deleteWorkingTree(repository, tree)
   }
 
+  override fun deleteWorkingTreeWithoutProject(mainWorktreePath: Path, tree: GitWorkingTree): GitCommandResult {
+    deleteWorkingTreeWithoutProjectListener?.invoke(mainWorktreePath, tree)
+    return super.deleteWorkingTreeWithoutProject(mainWorktreePath, tree)
+  }
+
   @Throws(VcsException::class)
   override fun listWorktrees(repository: GitRepository): List<GitWorkingTree> {
     listWorktreesListener?.invoke(repository)
@@ -232,6 +240,7 @@ class TestGitImpl : GitImpl() {
     mergeListener = null
     runHookListener = null
     deleteWorkingTreeListener = null
+    deleteWorkingTreeWithoutProjectListener = null
     listWorktreesListener = null
   }
 
