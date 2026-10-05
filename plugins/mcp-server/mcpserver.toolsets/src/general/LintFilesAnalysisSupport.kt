@@ -358,6 +358,42 @@ private suspend fun collectLintFileResult(
 }
 
 /**
+ * Runs the main highlighting passes for [psiFile] in the same way as `lint_files`.
+ *
+ * The run waits for the other MCP main-pass runs of the [project], and it releases the read lock for each write action.
+ * After the write action, the run starts again.
+ * Use this function in an MCP tool that needs the [HighlightInfo] objects, for example to show quick fixes.
+ * The caller sets the timeout.
+ *
+ * @param filePath the file path for log messages and for [withLintMainPassesRunnerOverride]
+ * @param minSeverity the minimum severity of the highlighting session, or `null` to collect all highlights
+ */
+@Internal
+suspend fun runMainPassesYieldingToWriteActions(
+  project: Project,
+  filePath: String,
+  psiFile: PsiFile,
+  document: Document,
+  minSeverity: HighlightSeverity?,
+  inspectionProfile: InspectionProfile,
+): List<HighlightInfo> {
+  val codeAnalyzer = project.serviceAsync<DaemonCodeAnalyzer>() as DaemonCodeAnalyzerImpl
+  val codeAnalyzerSettings = serviceAsync<DaemonCodeAnalyzerSettings>()
+  return getLintFilesMainPassesMutex(project).withLock {
+    runLintMainPassesLocked(
+      project = project,
+      relativePath = filePath,
+      psiFile = psiFile,
+      document = document,
+      minSeverity = minSeverity,
+      inspectionProfile = inspectionProfile,
+      codeAnalyzer = codeAnalyzer,
+      codeAnalyzerSettings = codeAnalyzerSettings,
+    )
+  }
+}
+
+/**
  * Keep MCP's main-pass orchestration local. `DaemonCodeAnalyzerImpl.runMainPasses()` resets shared daemon state,
  * so concurrent MCP lint requests contend badly and can freeze the IDE. We intentionally do not reuse or edit the
  * legacy `MainPassesRunner` implementation for this tool.
@@ -411,7 +447,7 @@ private suspend fun runLintMainPassesLocked(
   relativePath: String,
   psiFile: PsiFile,
   document: Document,
-  minSeverity: HighlightSeverity,
+  minSeverity: HighlightSeverity?,
   inspectionProfile: InspectionProfile,
   codeAnalyzer: DaemonCodeAnalyzerImpl,
   codeAnalyzerSettings: DaemonCodeAnalyzerSettings,
@@ -494,7 +530,7 @@ private suspend fun runLintMainPassesAttempt(
   attempt: Int,
   psiFile: PsiFile,
   document: Document,
-  minSeverity: HighlightSeverity,
+  minSeverity: HighlightSeverity?,
   daemonIndicator: DaemonProgressIndicator,
   profileProvider: Function<InspectionProfile, InspectionProfileWrapper>,
   codeAnalyzer: DaemonCodeAnalyzerImpl,
