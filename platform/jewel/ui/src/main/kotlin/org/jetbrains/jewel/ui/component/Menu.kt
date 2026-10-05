@@ -428,7 +428,7 @@ private fun PopupMenuImpl(
     val menuController = remember(onDismissRequest) { DefaultMenuController(onDismissRequest = onDismissRequest) }
 
     PopupContainer(
-        onDismissRequest = { onDismissRequest(InputMode.Touch) },
+        onDismissRequest = { inputMode -> onDismissRequest(inputMode) },
         horizontalAlignment = Alignment.Start,
         modifier = modifier,
         maxHeight = maxHeight,
@@ -1228,7 +1228,7 @@ internal fun Submenu(
         remember(parentMenuController, onDismissRequest) { parentMenuController.submenuController(onDismissRequest) }
 
     PopupContainer(
-        onDismissRequest = { menuController.closeAll(InputMode.Touch, false) },
+        onDismissRequest = { inputMode -> menuController.closeAll(inputMode, false) },
         horizontalAlignment = Alignment.Start,
         modifier = modifier,
         useIntrinsicWidth = true,

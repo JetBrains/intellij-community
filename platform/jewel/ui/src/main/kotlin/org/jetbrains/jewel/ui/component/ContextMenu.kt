@@ -88,7 +88,7 @@ internal fun ContextMenu(
     PopupContainer(
         modifier = modifier,
         popupPositionProvider = rememberPopupPositionProviderAtPosition(position, style.metrics.offset),
-        onDismissRequest = { currentOnDismissRequest(InputMode.Touch) },
+        onDismissRequest = { inputMode -> currentOnDismissRequest(inputMode) },
         onPreviewKeyEvent = { false },
         popupProperties = PopupProperties(focusable = focusable),
         onKeyEvent = {
