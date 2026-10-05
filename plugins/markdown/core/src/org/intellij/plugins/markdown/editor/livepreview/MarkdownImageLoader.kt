@@ -18,8 +18,9 @@ import java.io.ByteArrayInputStream
 import javax.imageio.ImageIO
 import kotlin.math.roundToInt
 
+/** The [file] of an image and its [size]. No size means that the file is outside the limits. */
 @ApiStatus.Internal
-class LoadedImage(val file: VirtualFile, val width: Int, val height: Int)
+class LoadedImage(val file: VirtualFile, val size: Pair<Int, Int>?)
 
 private const val SCALE_FACTOR = 1024 * 1024
 
@@ -31,19 +32,22 @@ object MarkdownImageLoader {
   suspend fun load(project: Project, file: VirtualFile, destination: String): LoadedImage? {
     ThreadingAssertions.assertBackgroundThread()
     return try {
-      val projectRoot = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(file)
-                        ?: project.guessProjectDir()
-                        ?: return null
-      val imageFile = (resolve(file, projectRoot, destination) as? Resolution.Found)?.file ?: return null
-      if (!imageFile.isValid || imageFile.isDirectory) return null
-      val (width, height) = readSize(imageFile) ?: return null
-      LoadedImage(imageFile, width, height)
+      val imageFile = findImageFile(project, file, destination) ?: return null
+      LoadedImage(imageFile, readSize(imageFile))
     }
     catch (e: Throwable) {
       rethrowControlFlowException(e)
       LOG.warn("Failed to resolve Markdown image $destination", e)
       null
     }
+  }
+
+  suspend fun findImageFile(project: Project, file: VirtualFile, destination: String): VirtualFile? {
+    val projectRoot = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(file)
+                      ?: project.guessProjectDir()
+                      ?: return null
+    val imageFile = (resolve(file, projectRoot, destination) as? Resolution.Found)?.file ?: return null
+    return imageFile.takeIf { it.isValid && !it.isDirectory }
   }
 
   /** The intrinsic size of [file], or null when it is not an image inside the registry limits. */

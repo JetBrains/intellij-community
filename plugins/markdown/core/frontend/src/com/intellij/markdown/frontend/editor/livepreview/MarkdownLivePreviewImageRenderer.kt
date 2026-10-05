@@ -140,8 +140,7 @@ internal class MarkdownLivePreviewImageRenderer(project: Project, private val ed
   }
 
   private fun imageUrl(destination: String, stamp: Long): String {
-    val resourceName = MarkdownImageResourceProvider.resourceName(destination)
-    return "${PreviewStaticServer.getStaticUrl(resourceProvider, resourceName)}?refresh=$stamp"
+    return MarkdownImageResourceProvider.imageUrl(resourceProvider, destination, stamp)
   }
 
   private fun updateGeometry() {

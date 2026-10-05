@@ -9,10 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.getOrCreateUserData
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -26,6 +22,7 @@ import org.intellij.plugins.markdown.editor.livepreview.LoadedImage
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownImageLoader
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
+import org.intellij.plugins.markdown.ui.preview.MarkdownImageWatcher
 import org.intellij.plugins.markdown.util.MarkdownApplicationScope
 import java.util.concurrent.ConcurrentHashMap
 
@@ -36,43 +33,45 @@ internal class MarkdownLivePreviewImageManager(
 ) : Disposable {
   private val file = FileDocumentManager.getInstance().getFile(editor.document)
     ?: error("Markdown live preview editor has no document file")
-  private val loadedSources = ConcurrentHashMap<String, LoadedImage>()
-  private val loadingSources = ConcurrentHashMap<String, Deferred<LoadedImage?>>()
+  private val loadingSources = ConcurrentHashMap<String, Deferred<MarkdownLivePreviewSpec.ImageSource?>>()
   private val coroutineScope = MarkdownApplicationScope.createChildScope()
 
+  /** Keeps the size of each loaded image. */
+  private val watcher = MarkdownImageWatcher<MarkdownLivePreviewSpec.ImageSource>(
+    coroutineScope,
+    onChanged = ::reload,
+    resolve = { destination -> MarkdownImageLoader.findImageFile(project, file, destination) },
+  )
+
   init {
-    project.messageBus.connect(coroutineScope).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: List<VFileEvent>) = reload(events.mapNotNullTo(HashSet()) { it.file })
-    })
     coroutineScope.launch {
       editor.livePreviewSpecSetFlow().collect { specSet ->
-        loadedSources.keys.retainAll(specSet?.imageDestinations().orEmpty())
+        watcher.watch(specSet?.imageDestinations().orEmpty())
       }
     }
   }
 
   suspend fun load(destination: String) {
-    val source = loadedSources[destination]?.takeIf { it.file.isValid } ?: startLoading(destination).await()
+    val source = watcher.loadedValueOf(destination) ?: startLoading(destination).await()
     publishSource(destination, source)
   }
 
   /** The [MarkdownLivePreviewSpec.ImageSource] already loaded source of [destination], or null when none is loaded. */
-  fun findImageData(destination: String): MarkdownLivePreviewSpec.ImageSource? {
-    return loadedSources[destination]?.takeIf { it.file.isValid }?.toImageSource()
-  }
+  fun findImageData(destination: String): MarkdownLivePreviewSpec.ImageSource? = watcher.loadedValueOf(destination)
 
-  private fun startLoading(destination: String): Deferred<LoadedImage?> {
+  private fun startLoading(destination: String): Deferred<MarkdownLivePreviewSpec.ImageSource?> {
     return loadingSources.computeIfAbsent(destination) {
       coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) { loadImage(destination) }
     }.also { it.start() }
   }
 
-  private suspend fun loadImage(destination: String): LoadedImage? {
+  private suspend fun loadImage(destination: String): MarkdownLivePreviewSpec.ImageSource? {
     try {
-      val source = withBackgroundProgress(project, MarkdownBundle.message("markdown.image.loading"), cancellable = true) {
+      val image = withBackgroundProgress(project, MarkdownBundle.message("markdown.image.loading"), cancellable = true) {
         MarkdownImageLoader.load(project, file, destination)
       }
-      if (source == null) loadedSources.remove(destination) else loadedSources[destination] = source
+      val source = image?.toImageSource()
+      watcher.onImageLoaded(destination, image?.file, source)
       return source
     }
     finally {
@@ -80,24 +79,19 @@ internal class MarkdownLivePreviewImageManager(
     }
   }
 
-  /** Reloads every image that is still unresolved or whose source is one of [changedFiles]. */
-  private fun reload(changedFiles: Set<VirtualFile>) {
-    if (changedFiles.isEmpty()) return
-    val destinations = editor.livePreviewSpecSetFlow().value?.imageDestinations() ?: return
+  private fun reload(destinations: Set<String>) {
     for (destination in destinations) {
-      val source = loadedSources[destination]
-      if (source != null && source.file !in changedFiles) continue
       val deferred = startLoading(destination)
       coroutineScope.launch { publishSource(destination, deferred.await()) }
     }
   }
 
-  private fun publishSource(destination: String, source: LoadedImage?) {
+  private fun publishSource(destination: String, source: MarkdownLivePreviewSpec.ImageSource?) {
     editor.livePreviewSpecSetFlow().update { specSet ->
       if (specSet == null) return@update null
       val elements = specSet.elements.map { spec ->
         if (spec is MarkdownLivePreviewSpec.Image && spec.destination == destination) {
-          spec.copy(source = source?.toImageSource())
+          spec.copy(source = source)
         } else spec
       }
       MarkdownLivePreviewSpecSet(specSet.documentVersion, elements)
@@ -113,7 +107,8 @@ private fun MarkdownLivePreviewSpecSet.imageDestinations(): Set<String> {
   return elements.filterIsInstance<MarkdownLivePreviewSpec.Image>().mapTo(HashSet()) { it.destination }
 }
 
-private fun LoadedImage.toImageSource(): MarkdownLivePreviewSpec.ImageSource {
+private fun LoadedImage.toImageSource(): MarkdownLivePreviewSpec.ImageSource? {
+  val (width, height) = size ?: return null
   return MarkdownLivePreviewSpec.ImageSource(file.modificationStamp, width, height)
 }
 
