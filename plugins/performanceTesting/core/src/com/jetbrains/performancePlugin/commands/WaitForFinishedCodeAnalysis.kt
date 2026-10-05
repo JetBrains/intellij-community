@@ -10,7 +10,7 @@ import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -261,7 +261,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
 
   fun registerDaemonStarted(fileEditors: Collection<TextEditor>) {
     val errors = mutableListOf<AssertionError>()
-    val isStartedInDumbMode = !isDumbModeHighlightingFinal() && runReadAction { DumbService.isDumb(project) }
+    val isStartedInDumbMode = !isDumbModeHighlightingFinal() && runReadActionBlocking { DumbService.isDumb(project) }
     synchronized(stateLock) {
       for (editor in fileEditors) {
         val previousSessionStartTrace = sessions.put(editor, ExceptionWithTime.createForAnalysisStart(editor, isStartedInDumbMode))
@@ -300,14 +300,21 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     }
 
     companion object {
-      @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-      fun create(editor: TextEditor, project: Project, isCancelled: Boolean, isFinishedInDumbMode: Boolean): HighlightedEditor {
+      fun createCancelled(editor: TextEditor): HighlightedEditor {
         if (!UIUtil.isShowing(editor.getComponent())) {
-          LOG.info("Creating invisible editor ${editor.description}")
-          return InvisibleEditor(editor)
+          return createInvisible(editor)
         }
-        else if (isFinishedInDumbMode || isCancelled) {
-          LOG.info("Creating unfinished editor isFinishedInDumbMode=$isFinishedInDumbMode, isCancelled=$isCancelled ${editor.description}")
+        LOG.info("Creating unfinished editor isCancelled=true ${editor.description}")
+        return IncompletelyHighlightedEditor(editor)
+      }
+
+      @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+      fun create(editor: TextEditor, project: Project, isFinishedInDumbMode: Boolean): HighlightedEditor {
+        if (!UIUtil.isShowing(editor.getComponent())) {
+          return createInvisible(editor)
+        }
+        else if (isFinishedInDumbMode) {
+          LOG.info("Creating unfinished editor isFinishedInDumbMode=true ${editor.description}")
           return IncompletelyHighlightedEditor(editor)
         }
         else {
@@ -315,6 +322,11 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
           LOG.info("Creating visible editor ${editor.description}\nisHighlighted $isHighlighted")
           return VisibleEditor(editor, isHighlighted)
         }
+      }
+
+      private fun createInvisible(editor: TextEditor): HighlightedEditor {
+        LOG.info("Creating invisible editor ${editor.description}")
+        return InvisibleEditor(editor)
       }
     }
   }
@@ -456,15 +468,19 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
     val worthy = fileEditors.getWorthy()
     if (worthy.isEmpty()) return
 
-    val highlightedEditors: Map<TextEditor, CodeAnalysisStateListener.HighlightedEditor> = runReadAction {
-      val isFinishedInDumbMode = !isDumbModeHighlightingFinal() && DumbService.isDumb(project)
-      worthy.associateWith {
-        CodeAnalysisStateListener.HighlightedEditor.create(it,
-                                                           project,
-                                                           isCancelled = isCancelled,
-                                                           isFinishedInDumbMode = isFinishedInDumbMode)
+    val highlightedEditors: Map<TextEditor, CodeAnalysisStateListener.HighlightedEditor> =
+      if (isCancelled) {
+        // Take no read lock here. daemonCanceled can run under the DaemonCodeAnalyzerImpl monitor.
+        worthy.associateWith { CodeAnalysisStateListener.HighlightedEditor.createCancelled(it) }
       }
-    }
+      else {
+        runReadActionBlocking {
+          val isFinishedInDumbMode = !isDumbModeHighlightingFinal() && DumbService.isDumb(project)
+          worthy.associateWith {
+            CodeAnalysisStateListener.HighlightedEditor.create(it, project, isFinishedInDumbMode = isFinishedInDumbMode)
+          }
+        }
+      }
 
     project.service<CodeAnalysisStateListener>().registerDaemonFinishedOrCancelled(highlightedEditors, status, traceId)
   }
