@@ -2,7 +2,6 @@
 package com.intellij.json.networknt.wrapper
 
 import com.intellij.json.JsonBundle
-import com.intellij.json.networknt.wrapper.NetworkntErrorMapper.Companion.getRawErrorCap
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
@@ -17,6 +16,7 @@ import com.jetbrains.jsonSchema.impl.JsonValidationError.TypeMismatchIssueData
 import com.networknt.schema.Error
 import org.jetbrains.annotations.NonNls
 import tools.jackson.databind.JsonNode
+import tools.jackson.databind.node.ArrayNode
 
 /**
  * Converts networknt validation errors to IntelliJ JsonValidationError format.
@@ -439,7 +439,12 @@ class NetworkntErrorMapper(
       val missingPropName = error.property ?: return@mapNotNull null
       // Use getPropertySchema() which correctly reads from parentSchemaNode.get("properties")
       val propertySchema = error.getPropertySchema(missingPropName)
-      val type = propertySchema?.get("type")?.asText()?.let { parseSchemaType(it) }
+      val typeNode = propertySchema?.get("type")
+      val typeString = when (typeNode) {
+        is ArrayNode -> typeNode.get(0)?.asString(null)
+        else -> typeNode?.asString(null)
+      }
+      val type = typeString?.let { parseSchemaType(it) }
       // Extract default value as a JVM primitive so AddMissingPropertyFix.formatDefaultValue()
       // can handle it — the tools.jackson.databind.JsonNode type is not recognized by that method
       // which expects com.fasterxml.jackson.databind.JsonNode.

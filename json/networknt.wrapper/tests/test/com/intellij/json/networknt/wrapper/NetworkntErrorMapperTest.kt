@@ -175,6 +175,14 @@ class NetworkntErrorMapperTest : BasePlatformTestCase() {
     assertThat(error.fixableIssueKind).isEqualTo(FixableIssueKind.ProhibitedType)
   }
 
+  fun `test missing union type value`() {
+    val schema = """{"type": "object", "properties": {"value": {"type": ["string", "number"]}}, "required": ["value"] }"""
+    val mapped = validateAndMap(schema, """{}""")
+
+    assertThat(mapped).isNotEmpty
+    assertThat(mapped.size).isGreaterThanOrEqualTo(1)
+  }
+
   fun `test top-level type mismatch`() {
     val schema = """{"type": "object"}"""
     val mapped = validateAndMap(schema, """[1, 2, 3]""")
