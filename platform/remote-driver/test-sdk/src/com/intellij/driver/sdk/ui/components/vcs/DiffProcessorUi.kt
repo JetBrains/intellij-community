@@ -3,17 +3,19 @@ package com.intellij.driver.sdk.ui.components.vcs
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.logicalPosition
+import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.UiComponent.Companion.waitFound
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
-import com.intellij.driver.sdk.ui.components.common.editor
 import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
 import com.intellij.driver.sdk.ui.components.elements.WindowUiComponent
 import com.intellij.driver.sdk.ui.components.elements.actionButton
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.ui.xQuery
+import com.intellij.driver.sdk.waitFor
+import org.intellij.lang.annotations.Language
 
 private const val DIFF_REQUEST_PROCESSOR_PANEL = $$"com.intellij.diff.impl.DiffRequestProcessor$MyPanel"
 private const val DIFF_PANEL_BASE = "com.intellij.diff.tools.util.base.DiffPanelBase"
@@ -21,9 +23,10 @@ private const val ONE_SIDE_CONTENT_PANEL = "com.intellij.diff.tools.util.side.On
 private const val TWO_SIDE_CONTENT_PANEL = "com.intellij.diff.tools.util.side.TwosideContentPanel"
 private const val THREE_SIDE_CONTENT_PANEL = "com.intellij.diff.tools.util.side.ThreesideContentPanel"
 private const val DIFF_CONTENT_LAYOUT_PANEL = "com.intellij.diff.tools.util.side.DiffContentLayoutPanel"
+private const val EDITOR_COMPONENT = "com.intellij.openapi.editor.impl.EditorComponentImpl"
 private const val FRAME_WRAPPER_FRAME = "com.intellij.openapi.ui.MyJFrame"
 
-class DiffProcessorUi(data: ComponentData) : UiComponent(data) {
+class DiffProcessorUi(private val data: ComponentData) : UiComponent(data) {
 
   val previousDifferenceButton: ActionButtonUi = actionButton { byAccessibleName("Previous Difference") }
   val nextDifferenceButton: ActionButtonUi = actionButton { byAccessibleName("Next Difference") }
@@ -31,14 +34,16 @@ class DiffProcessorUi(data: ComponentData) : UiComponent(data) {
   val compareNextFileButton: ActionButtonUi = actionButton { byAccessibleName("Compare Next File") }
   val collapseUnchangedFragmentsButton: ActionButtonUi = actionButton { byAccessibleName("Collapse Unchanged Fragments") }
 
-  fun isEmpty(): Boolean = !x { byType(DIFF_PANEL_BASE) }.present()
+  fun isEmpty(): Boolean = !data.descendant(UiComponent::class.java, DIFF_PANEL_BASE).present()
 
-  val isSideBySide: Boolean get() = x { byType(TWO_SIDE_CONTENT_PANEL) }.present()
+  val isOneSide: Boolean get() = data.descendant(UiComponent::class.java, ONE_SIDE_CONTENT_PANEL).present()
 
-  val isThreeSide: Boolean get() = x { byType(THREE_SIDE_CONTENT_PANEL) }.present()
+  val isSideBySide: Boolean get() = data.descendant(UiComponent::class.java, TWO_SIDE_CONTENT_PANEL).present()
+
+  val isThreeSide: Boolean get() = data.descendant(UiComponent::class.java, THREE_SIDE_CONTENT_PANEL).present()
 
   fun oneSide(): OneSideDiffContentPanelUi =
-    x(OneSideDiffContentPanelUi::class.java) { byType(ONE_SIDE_CONTENT_PANEL) }.waitFound()
+    data.descendant(OneSideDiffContentPanelUi::class.java, ONE_SIDE_CONTENT_PANEL).waitFound()
 
   @Suppress("unused")
   fun oneSide(action: OneSideDiffContentPanelUi.() -> Unit) {
@@ -46,14 +51,14 @@ class DiffProcessorUi(data: ComponentData) : UiComponent(data) {
   }
 
   fun twoSide(): TwoSideDiffContentPanelUi =
-    x(TwoSideDiffContentPanelUi::class.java) { byType(TWO_SIDE_CONTENT_PANEL) }.waitFound()
+    data.descendant(TwoSideDiffContentPanelUi::class.java, TWO_SIDE_CONTENT_PANEL).waitFound()
 
   fun twoSide(action: TwoSideDiffContentPanelUi.() -> Unit) {
     twoSide().action()
   }
 
   fun threeSide(): ThreeSideDiffContentPanelUi =
-    x(ThreeSideDiffContentPanelUi::class.java) { byType(THREE_SIDE_CONTENT_PANEL) }.waitFound()
+    data.descendant(ThreeSideDiffContentPanelUi::class.java, THREE_SIDE_CONTENT_PANEL).waitFound()
 
   @Suppress("unused")
   fun threeSide(action: ThreeSideDiffContentPanelUi.() -> Unit) {
@@ -63,30 +68,63 @@ class DiffProcessorUi(data: ComponentData) : UiComponent(data) {
   fun settingsButton(): ActionButtonUi = actionButton { byAccessibleName("Settings") }
 }
 
-fun DiffProcessorUi.changedContentEditor(): JEditorUiComponent = when {
-  isThreeSide -> threeSide().rightContent().editor()
-  isSideBySide -> twoSide().rightContent().editor()
-  else -> oneSide().content().editor()
+/**
+ * Returns the editor of the changed side of the diff.
+ *
+ * The diff viewer can show some time after the [DiffProcessorUi]. For example, in the Split mode the backend sends the viewer later.
+ * Thus, the function waits until one of the viewer panels shows, and then selects the panel.
+ */
+fun DiffProcessorUi.changedContentEditor(): JEditorUiComponent {
+  waitFor("Diff viewer is shown", DEFAULT_FIND_TIMEOUT) { isThreeSide || isSideBySide || isOneSide }
+  return when {
+    isThreeSide -> threeSide().rightEditor()
+    isSideBySide -> twoSide().rightEditor()
+    else -> oneSide().contentEditor()
+  }
 }
 
-class OneSideDiffContentPanelUi(data: ComponentData) : UiComponent(data) {
-  fun content(): UiComponent = x { byType(DIFF_CONTENT_LAYOUT_PANEL) }
+class OneSideDiffContentPanelUi(private val data: ComponentData) : UiComponent(data) {
+  fun content(): UiComponent = data.descendant(UiComponent::class.java, DIFF_CONTENT_LAYOUT_PANEL)
+  fun contentEditor(): JEditorUiComponent = editorAt(1)
 }
 
-class TwoSideDiffContentPanelUi(data: ComponentData) : UiComponent(data) {
-  fun leftContent(): UiComponent = contentAt(1)
-  fun rightContent(): UiComponent = contentAt(2)
+class TwoSideDiffContentPanelUi(private val data: ComponentData) : UiComponent(data) {
+  fun leftContent(): UiComponent = data.contentAt(1)
+  fun rightContent(): UiComponent = data.contentAt(2)
+  fun leftEditor(): JEditorUiComponent = editorAt(1)
+  fun rightEditor(): JEditorUiComponent = editorAt(2)
 }
 
 @Suppress("unused")
-class ThreeSideDiffContentPanelUi(data: ComponentData) : UiComponent(data) {
-  fun leftContent(): UiComponent = contentAt(1)
-  fun baseContent(): UiComponent = contentAt(2)
-  fun rightContent(): UiComponent = contentAt(3)
+class ThreeSideDiffContentPanelUi(private val data: ComponentData) : UiComponent(data) {
+  fun leftContent(): UiComponent = data.contentAt(1)
+  fun baseContent(): UiComponent = data.contentAt(2)
+  fun rightContent(): UiComponent = data.contentAt(3)
+  fun leftEditor(): JEditorUiComponent = editorAt(1)
+  fun baseEditor(): JEditorUiComponent = editorAt(2)
+  fun rightEditor(): JEditorUiComponent = editorAt(3)
 }
 
-private fun UiComponent.contentAt(ordinal: Int): UiComponent =
-  x("(${xQuery { byType(DIFF_CONTENT_LAYOUT_PANEL) }})[$ordinal]")
+private fun ComponentData.contentAt(ordinal: Int): UiComponent =
+  UiComponent(copy(xpath = "(($xpath)[1]${xQuery { byType(DIFF_CONTENT_LAYOUT_PANEL) }})[$ordinal]", foundComponent = null, readableName = null))
+
+/**
+ * Finds the editor of one side of the diff. The [ordinal] counts the sides from the left, starting from 1.
+ *
+ * The search runs inside this panel. In the Split mode, an editor that a search from the parent context finds can give the editor of another side.
+ */
+private fun UiComponent.editorAt(ordinal: Int): JEditorUiComponent =
+  x("(${xQuery { byType(EDITOR_COMPONENT) }})[$ordinal]", JEditorUiComponent::class.java)
+
+/**
+ * Finds a descendant of the [panelClass] class inside the first component that matches this data.
+ *
+ * The search starts from the parent search context, with a joined XPath. In the Split mode, a diff panel is a BeControl.
+ * A search inside a BeControl does not see the backend classes of the descendants, but a search from the parent context sees them.
+ */
+private fun <T : UiComponent> ComponentData.descendant(componentType: Class<T>, @Language("jvm-class-name") panelClass: String): T =
+  componentType.getConstructor(ComponentData::class.java)
+    .newInstance(copy(xpath = "($xpath)[1]${xQuery { byType(panelClass) }}", foundComponent = null, readableName = null))
 
 fun Finder.diffProcessor(): DiffProcessorUi =
   x(DiffProcessorUi::class.java) { byType(DIFF_REQUEST_PROCESSOR_PANEL) }.waitFound()
