@@ -2,9 +2,11 @@
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.util.indexing.diagnostic.dto.JsonDateTime
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.time.ZonedDateTime
 
+@ApiStatus.Internal
 class ChangedFilesPushingStatistics(val reason: @NonNls String) {
   var startTime: JsonDateTime = JsonDateTime(ZonedDateTime.now())
   var duration: TimeNano = System.nanoTime()

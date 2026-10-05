@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import org.jetbrains.annotations.ApiStatus
 import tools.jackson.core.JsonGenerator
 import tools.jackson.core.JsonParser
 import tools.jackson.databind.DeserializationContext
@@ -15,6 +16,7 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
+@ApiStatus.Internal
 @JsonSerialize(using = JsonDateTime.Serializer::class)
 @JsonDeserialize(using = JsonDateTime.Deserializer::class)
 @JsonIgnoreProperties(ignoreUnknown = true)

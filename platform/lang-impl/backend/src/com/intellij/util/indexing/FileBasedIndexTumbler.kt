@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.SortedSet
 
+@ApiStatus.Internal
 class FileBasedIndexTumbler(private val reason: @NonNls String) {
   private val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
   private val dumbModeSemaphore = Semaphore()
