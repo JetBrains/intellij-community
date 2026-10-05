@@ -174,6 +174,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   @TestOnly
   public static volatile boolean TESTING_VIEW;
 
+  @SuppressWarnings("StaticNonFinalField")
+  @TestOnly
+  public static volatile boolean TESTING_NON_HEADLESS;
+
   public static final String NOTIFICATION_GROUP = "Inspection Results";
 
   private final NotNullLazyValue<? extends ContentManager> myContentManager;
@@ -407,7 +411,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       }
     }
 
-    boolean headlessEnvironment = ApplicationManager.getApplication().isHeadlessEnvironment();
+    //noinspection TestOnlyProblems
+    boolean headlessEnvironment = ApplicationManager.getApplication().isHeadlessEnvironment() && !TESTING_NON_HEADLESS;
 
     Map<String, InspectionToolWrapper<?, ?>> map = getInspectionWrappersMap(localTools);
 
@@ -1312,7 +1317,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
   private void addProblemsToView(@NotNull List<? extends Tools> tools) {
     //noinspection TestOnlyProblems
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() && !TESTING_VIEW) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() && !TESTING_VIEW && !TESTING_NON_HEADLESS) {
       return;
     }
     if (isExportRun()) {

@@ -4,19 +4,24 @@ package com.intellij.java.codeInspection;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolsSupplier;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.testFramework.InspectionTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.siyeh.ig.controlflow.SimplifiableConditionalExpressionInspection;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -43,7 +48,35 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
   }
 
   public void testExport() throws Exception {
+    doTestExport(true, getTools());
+  }
 
+  public void testExportWithoutResultsView() throws Exception {
+    doTestExportWithoutResultsView(false, getTools());
+  }
+
+  public void testOfflineExportWithoutResultsView() throws Exception {
+    doTestExportWithoutResultsView(true, getTools());
+  }
+
+  public void testExportWithGlobalToolWithoutResultsView() throws Exception {
+    var tools = new ArrayList<>(getTools());
+    tools.add(new GlobalInspectionToolWrapper(new UnusedDeclarationInspection()));
+    doTestExportWithoutResultsView(false, tools);
+  }
+
+  private void doTestExportWithoutResultsView(boolean offline, List<InspectionToolWrapper<?, ?>> tools) throws Exception {
+    var previous = GlobalInspectionContextImpl.TESTING_NON_HEADLESS;
+    GlobalInspectionContextImpl.TESTING_NON_HEADLESS = true;
+    try {
+      doTestExport(offline, tools);
+    }
+    finally {
+      GlobalInspectionContextImpl.TESTING_NON_HEADLESS = previous;
+    }
+  }
+
+  private void doTestExport(boolean offline, List<InspectionToolWrapper<?, ?>> tools) throws Exception {
     addTestFile("Foo.java", """
       class Foo {
 
@@ -62,21 +95,40 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
     Path outputPath = FileUtil.createTempDirectory("inspection", "results").toPath();
 
     GlobalInspectionContextImpl context = (GlobalInspectionContextImpl)im.createNewGlobalContext();
+    Disposer.register(getTestRootDisposable(), () -> context.close(true));
+    assertTrue(context.isViewClosed());
+    assertNull(context.getView());
 
-    InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(getTools());
+    InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(tools);
     Disposer.register(getTestRootDisposable(), toolSupplier);
     InspectionProfileImpl profile = new InspectionProfileImpl("test", toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
-    for (InspectionToolWrapper<?, ?> t : getTools()) {
+    for (InspectionToolWrapper<?, ?> t : tools) {
       profile.enableTool(t.getShortName(), getProject());
     }
 
     context.setExternalProfile(profile);
 
-    ActionUtil.underModalProgress(myFixture.getProject(), "", () -> {
-      context.launchInspectionsOffline(scope, outputPath, false, resultFiles);
-      return null;
+    ProgressManager.getInstance().run(new Task.Modal(getProject(), "", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        if (offline) {
+          context.launchInspectionsOffline(scope, outputPath, false, resultFiles);
+        }
+        else {
+          context.performInspectionsWithProgressAndExportResults(scope, false, false, outputPath, resultFiles);
+        }
+      }
     });
-    assertSize(2, resultFiles);
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    assertTrue(context.isViewClosed());
+    assertNull(context.getView());
+    assertSize(tools.size(), resultFiles);
+    for (var tool : tools) {
+      var resultFile = resultFiles.stream()
+        .filter(f -> f.getFileName().toString().equals(tool.getShortName() + ".xml"))
+        .findAny().orElseThrow(AssertionError::new);
+      assertFalse(loadFile(resultFile).getChildren("problem").isEmpty());
+    }
 
     Element dfaResults = resultFiles.stream().filter(f -> f.getFileName().toString().equals("ConstantValue.xml")).findAny().map(InspectionResultExportTest::loadFile).orElseThrow(AssertionError::new);
     Element unnCondResults = resultFiles.stream().filter(f -> f.getFileName().toString().equals("SimplifiableConditionalExpression.xml")).findAny().map(InspectionResultExportTest::loadFile).orElseThrow(AssertionError::new);
@@ -146,6 +198,7 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
 
     InspectionTestUtil.compareWithExpected(expectedDfaResults, dfaResults, false);
     InspectionTestUtil.compareWithExpected(expectedUnnCondResults, unnCondResults, false);
+    context.close(false);
   }
 
   static @NotNull Element loadFile(@NotNull Path file) {
