@@ -4,8 +4,11 @@ package org.jetbrains.kotlin.idea.search.refIndex.bta
 import com.intellij.testFramework.rules.TempDirectory
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
@@ -53,6 +56,27 @@ class BtaFileWatcherTest {
 
         assertNull(getCriArtifactTimestamp(nonexistentPath))
     }
+
+    @Test
+    fun `test Gradle CRI generation uses explicit property`() {
+        assertTrue(isCriGenerationEnabled(property = "true", "2.4.20"))
+        assertFalse(isCriGenerationEnabled(property = "false", "2.5.0"))
+        assertTrue(isCriGenerationEnabled(property = "true"))
+    }
+
+    @Test
+    fun `test Gradle CRI generation is enabled by default since KGP 2_5`() {
+        assertFalse(isCriGenerationEnabled(property = null))
+        assertFalse(isCriGenerationEnabled(property = null, "2.4.20"))
+        assertTrue(isCriGenerationEnabled(property = null, "2.5.0-Beta2"))
+        assertTrue(isCriGenerationEnabled(property = null, "2.6.0"))
+        assertTrue(isCriGenerationEnabled(property = null, "2.4.20", "2.5.0"))
+    }
+
+    private fun isCriGenerationEnabled(property: String?, vararg kgpVersions: String) = isGradleCriGenerationEnabled(
+        property,
+        kgpVersions.map(IdeKotlinVersion::get)
+    )
 
     private fun createCriPath(): Path = tempDir.newDirectoryPath(CriToolchain.DATA_PATH)
 

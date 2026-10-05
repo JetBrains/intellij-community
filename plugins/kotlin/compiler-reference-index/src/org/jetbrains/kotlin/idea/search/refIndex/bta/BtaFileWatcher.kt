@@ -16,6 +16,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
+import org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider
+import org.jetbrains.kotlin.idea.base.util.isGradleModule
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.gradle.configuration.readGradleProperty
 import org.jetbrains.kotlin.idea.search.refIndex.bta.BtaFileWatcher.Companion.ENABLE_BTA_CRI_KEY
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -100,9 +103,16 @@ internal class BtaFileWatcher(private val project: Project) {
         internal fun isApplicable(project: Project): Boolean =
             Registry.`is`(ENABLE_BTA_CRI_KEY) && (isGradleCriEnabled(project) || isMavenCriEnabled(project))
 
+        // TODO KTIJ-40389: Use the effective CRI generation value from the new Kotlin Gradle import once available
+        // This approximation ignores `kotlin.compiler.runViaBuildToolsApi`, CI detection, and other property sources
         private fun isGradleCriEnabled(project: Project): Boolean = runReadActionBlocking {
-            GradleSettings.getInstance(project).linkedProjectsSettings.isNotEmpty()
-                    && (readGradleProperty(project, KOTLIN_CRI_GENERATION_PROPERTY)?.toBoolean() ?: false)
+            val kotlinGradlePluginVersions = ModuleManager.getInstance(project).modules
+                .filter(Module::isGradleModule)
+                .mapNotNull(KotlinCompilerVersionProvider::getVersion)
+            GradleSettings.getInstance(project).linkedProjectsSettings.isNotEmpty() && isGradleCriGenerationEnabled(
+                readGradleProperty(project, KOTLIN_CRI_GENERATION_PROPERTY),
+                kotlinGradlePluginVersions
+            )
         }
 
         private fun isMavenCriEnabled(project: Project): Boolean = runReadActionBlocking {
@@ -133,6 +143,18 @@ fun getCriArtifactTimestamp(criPath: Path): FileTime? {
         }
         .maxOrNull()
 }
+
+/**
+ * Returns `true` when the Kotlin Gradle plugin generates CRI artifacts.
+ *
+ * An explicit [generateCompilerRefIndex] value wins; without it, the result is `true` when CRI generation is enabled by default
+ * for one of the [kotlinGradlePluginVersions].
+ */
+@ApiStatus.Internal
+fun isGradleCriGenerationEnabled(
+    generateCompilerRefIndex: String?,
+    kotlinGradlePluginVersions: List<IdeKotlinVersion>,
+): Boolean = generateCompilerRefIndex?.toBoolean() ?: kotlinGradlePluginVersions.any { it.kotlinVersion.isAtLeast(2, 5) }
 
 /**
  * Returns modules whose path's [getTimestamp] is newer than the receiver's cached value.

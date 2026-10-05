@@ -79,6 +79,7 @@ jvm_library(
         "//plugins/gradle",
         "//plugins/kotlin/gradle/gradle",
         "//plugins/maven",
+        "//plugins/kotlin/base/plugin",
     ],
 )
 
@@ -124,6 +125,7 @@ jvm_library(
         "//plugins/gradle:gradle_test_lib",
         "//plugins/kotlin/gradle/gradle:gradle_test_lib",
         "//plugins/maven:maven_test_lib",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.compilerReferenceIndex` end
