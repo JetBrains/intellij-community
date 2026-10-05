@@ -66,9 +66,12 @@ class PyCompositeMatchCostTest : PyCodeInsightTestCase() {
     }
   }
 
-  /** The intersection walk is the same either way, so recording its breakdown is free. */
+  /**
+   * Provided side only: it records one summary frame, so the walk is the same either way. A required-side
+   * intersection costs more to explain, because every unmet member earns its own frame.
+   */
   @Test
-  fun `explaining an intersection costs what deciding it costs`() = withCounter { fixture ->
+  fun `explaining a provided-side intersection costs what deciding it costs`() = withCounter { fixture ->
     for (width in WIDTHS) {
       val intersection = PyIntersectionType.intersectionOrTop(fixture.actualMembers(width))!!
       val verdict = count { PyTypeChecker.match(fixture.int, intersection, fixture.context) }
@@ -92,59 +95,50 @@ class PyCompositeMatchCostTest : PyCodeInsightTestCase() {
     }
   }
 
-  /** The bound is configurable, so a lowered one must move where the per-member detail stops. */
+  /** A union wider than the bound costs the same to explain as to decide; one at the bound keeps its detail. */
   @Test
   fun `the breakdown bound follows its registry value`() {
-    val singlePass = Registry.get("python.typing.composite.single.pass")
-    val maxMembers = Registry.get("python.typing.composite.breakdown.max.members")
-    singlePass.setValue(true)
-    maxMembers.setValue(2)
-    try {
+    val bound = 3
+    withBound(bound) {
       withCounter { fixture ->
-        // Three members is past a bound of two, so it collapses, although the default bound of five allows it.
-        val union = PyUnionType.unionOrUnknown(fixture.actualMembers(3))!!
-        val verdict = count { PyTypeChecker.match(fixture.int, union, fixture.context) }
-        val breakdown = count { PyTypeChecker.explainMismatch(fixture.int, union, fixture.context) }
-        assertEquals(verdict, breakdown, "A lowered bound must collapse a union the default bound would explain")
-      }
-    }
-    finally {
-      maxMembers.resetToDefault()
-      singlePass.resetToDefault()
-    }
-  }
+        val wide = PyUnionType.unionOrUnknown(fixture.actualMembers(bound + 1))!!
+        assertEquals(count { PyTypeChecker.match(fixture.int, wide, fixture.context) },
+                     count { PyTypeChecker.explainMismatch(fixture.int, wide, fixture.context) },
+                     "A union past the bound must not be broken down member by member")
 
-  /** Past the bound the breakdown is not collected, so explaining costs what deciding costs. */
-  @Test
-  fun `past the breakdown bound explaining a union costs what deciding it costs`() {
-    val registry = Registry.get("python.typing.composite.single.pass")
-    registry.setValue(true)
-    try {
-      withCounter { fixture ->
-        val bound = PyTypeChecker.maxBreakdownMembers()
-        val width = bound + 1
-        val union = PyUnionType.unionOrUnknown(fixture.actualMembers(width))!!
-        val verdict = count { PyTypeChecker.match(fixture.int, union, fixture.context) }
-        val breakdown = count { PyTypeChecker.explainMismatch(fixture.int, union, fixture.context) }
-        assertEquals(verdict, breakdown, "A union of $width members must not be broken down member by member")
-
-        // At the bound the per-member detail survives, so the two costs still differ.
         val atBound = PyUnionType.unionOrUnknown(fixture.actualMembers(bound))!!
-        val atBoundVerdict = count { PyTypeChecker.match(fixture.int, atBound, fixture.context) }
-        val atBoundBreakdown = count { PyTypeChecker.explainMismatch(fixture.int, atBound, fixture.context) }
-        assertTrue(atBoundBreakdown > atBoundVerdict,
-                   "A union at the bound must keep its per-member breakdown")
+        val verdict = count { PyTypeChecker.match(fixture.int, atBound, fixture.context) }
+        val breakdown = count { PyTypeChecker.explainMismatch(fixture.int, atBound, fixture.context) }
+        assertTrue(breakdown > verdict, "A union at the bound must keep its per-member breakdown")
       }
-    }
-    finally {
-      registry.resetToDefault()
     }
   }
 
-  /**
-   * A PEP 604 annotation is a union form, not a chain of `__or__` calls, so declaring one must cost no match.
-   * Checking those calls used to make an annotation of n members cost O(n^2).
-   */
+  /** With no bound, which is the default, even a wide union keeps its per-member breakdown. */
+  @Test
+  fun `an unbounded union keeps its breakdown`() {
+    withBound(0) {
+      withCounter { fixture ->
+        val union = PyUnionType.unionOrUnknown(fixture.actualMembers(WIDTHS.max()))!!
+        val verdict = count { PyTypeChecker.match(fixture.int, union, fixture.context) }
+        val breakdown = count { PyTypeChecker.explainMismatch(fixture.int, union, fixture.context) }
+        assertTrue(breakdown > verdict, "Without a bound a wide union must still be explained member by member")
+      }
+    }
+  }
+
+  private fun withBound(members: Int, body: () -> Unit) {
+    val disposable = Disposer.newDisposable("PY-91327 breakdown bound")
+    try {
+      Registry.get("python.typing.composite.breakdown.max.members").setValue(members, disposable)
+      body()
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
+  }
+
+  /** A PEP 604 annotation is a union form, not a chain of `__or__` calls, so declaring one costs no match. */
   @Test
   fun `declaring a pep604 union annotation costs no match`() {
     val width = WIDTHS.max()
