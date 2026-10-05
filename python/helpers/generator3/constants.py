@@ -681,7 +681,7 @@ TYPELIB_MODULE_FNAME_PAT = re.compile("([a-zA-Z_]+[0-9a-zA-Z]*)[0-9a-zA-Z-.]*\\.
 MODULES_INSPECT_DIR = ['gi.repository']
 TENSORFLOW_CONTRIB_OPS_MODULE_PATTERN = re.compile(r'tensorflow\.contrib\.(?:.+)\.(?:python\.ops\.|_dataset_ops$)')
 
-DEBUGPY_PATTERN = re.compile(r"debugpy(?:..+)?$")
+DEBUGPY_PATTERN = re.compile(r"debugpy(?:\..+)?$")
 
 CLASS_ATTR_BLACKLIST = [
     'google.protobuf.pyext._message.Message._extensions_by_name',

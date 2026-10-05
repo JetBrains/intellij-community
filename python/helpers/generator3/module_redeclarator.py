@@ -631,6 +631,7 @@ class ModuleRedeclarator(object):
             skip_qualifiers = [p_modname, BUILTIN_MOD_NAME, 'exceptions']
             skip_qualifiers.extend(KNOWN_FAKE_REEXPORTERS.get(p_modname, ()))
             bases_list = [] # what we'll render in the class decl
+            local_bases = [] # bases defined in the same module, each in its own file when the module is split
             for base in bases:
                 if [1 for (cls, mdl) in KNOWN_FAKE_BASES if cls == base and mdl != self.module]:
                     # our base is a wrapper and our module is not its defining module
@@ -652,10 +653,12 @@ class ModuleRedeclarator(object):
                         self.hidden_imports[qual_module_name] = mangled_qualifier
                 else:
                     bases_list.append(base_name)
+                    if getattr(base, '__module__', None) == p_modname:
+                        local_bases.append(base_name)
             base_def = "(" + ", ".join(bases_list) + ")"
 
             if self.split_modules:
-                for base in bases_list:
+                for base in local_bases:
                     local_import = self.create_local_import(base)
                     if local_import:
                         out(indent, local_import)

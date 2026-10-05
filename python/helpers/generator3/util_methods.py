@@ -312,6 +312,9 @@ def reliable_repr(value):
     # so we need to sanitize the output
     if type(bool) == type and isinstance(value, bool):
         return repr(bool(value))
+    if isinstance(value, float) and (value != value or value in (float('inf'), float('-inf'))):
+        # repr() gives "nan" and "inf", which are not valid expressions
+        return "float('{!r}')".format(float(value))
     for num_type in NUM_TYPES:
         if isinstance(value, num_type):
             return repr(num_type(value))
@@ -908,7 +911,7 @@ class StandaloneWorkerProcessExecutor(WorkerProcessExecutor):
         recv_conn, send_conn = mp.Pipe(duplex=False)
         data = _MainProcessData(result_conn=send_conn,
                                 logging_config=get_logging_config())
-        p = mp.Process(name=name,
+        p = mp.Process(name='{}({})'.format(fn.__name__, args[0] if args else ''),
                        target=_standalone_wrapper,
                        args=(data, fn) + args,
                        kwargs=kwargs,

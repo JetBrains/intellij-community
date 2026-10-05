@@ -356,6 +356,10 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
     def test_static_method(self):
         self.check_generator_output('mod', 'mod.py')
 
+    def test_split_module_imports_only_local_bases(self):
+        # A module with 30 classes or more is split into a package with a module per class
+        self.check_generator_output('mod', 'mod.py')
+
 
 class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
     default_generator_extra_args = ['--name-pattern', 'mod?']
