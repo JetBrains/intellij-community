@@ -41,8 +41,8 @@ public class AntTestContentHandler extends DefaultHandler {
           rooName[0] = name;
         }
       });
-      return TESTSUITES.equals(rooName[0]) ? new AntTestContentHandler(processor)
-                                           : null;
+      return (TESTSUITES.equals(rooName[0]) || TESTSUITE.equals(rooName[0])) ? new AntTestContentHandler(processor)
+                                                                               : null;
     }
   }
 
