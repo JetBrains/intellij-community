@@ -27,6 +27,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.VirtualFileUrlWithVirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.psi.search.GlobalSearchScope
@@ -191,6 +192,10 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
   }
 
   override fun getFileSetsAt(url: VirtualFileUrl): WorkspaceFileSets {
+    if (url is VirtualFileUrlImpl && !url.isRegistered()) {
+      return WorkspaceFileSets.EMPTY
+    }
+
     val file = (url as? VirtualFileUrlWithVirtualFile)?.getCachedVirtualFile() ?: findFileByUrlIfCached(url.url)
     if (file != null) {
       return getMainIndexData().getFileSetsAt(file)
