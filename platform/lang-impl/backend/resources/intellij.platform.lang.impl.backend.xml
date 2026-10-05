@@ -42,6 +42,26 @@
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.lang.impl.backend.QuestionHintApiProvider"
                                             apiInterfaces="com.intellij.codeInsight.hint.QuestionHintApi"/>
 
+    <projectService serviceInterface="com.intellij.openapi.project.UnindexedFilesScannerExecutor"
+                    serviceImplementation="com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl"/>
+    <applicationService serviceImplementation="com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper"/>
+    <applicationService serviceInterface="com.intellij.psi.stubs.StubIndex"
+                        serviceImplementation="com.intellij.psi.stubs.StubIndexImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.stubs.StubUpdatableIndexFactory"
+                        serviceImplementation="com.intellij.psi.stubs.StubUpdatableIndexFactoryImpl"/>
+    <projectService serviceImplementation="com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHealthCheck"/>
+    <applicationService serviceInterface="com.intellij.psi.stubs.StubTreeLoader"
+                        serviceImplementation="com.intellij.psi.stubs.StubTreeLoaderImpl"/>
+    <projectFileScanner implementation="com.intellij.ide.analysisignore.AnalysisIgnoreIndexableFileScanner"/>
+    <fileBasedIndex implementation="com.intellij.psi.search.FileTypeIndexImpl"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.projectFilter.IndexableFilesFilterHealthCheckCollector"/>
+    <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.events.FileBasedIndexTreeChangePreprocessor"/>
+    <projectIndexingActivityHistoryListener implementation="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporterListener"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.IndexesScanningSkipCollector"/>
+    <recoveryAction implementation="com.intellij.util.indexing.RescanIndexesAction"/>
+    <recoveryAction implementation="com.intellij.util.indexing.ReindexAction"/>
+    <recoveryAction implementation="com.intellij.util.indexing.RefreshIndexableFilesAction"/>
+
     <intentionAction>
       <language/>
       <className>com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction</className>
@@ -89,6 +109,15 @@
       <skipBeforeAfter>true</skipBeforeAfter>
     </intentionAction>
   </extensions>
+
+  <actions>
+    <action id="SwitchFileBasedIndexStorageAction" internal="true"
+            class="com.intellij.util.indexing.impl.storage.SwitchFileBasedIndexStorageAction"/>
+    <action id="ForceIndexRescanning" internal="true" class="com.intellij.util.indexing.ForceIndexRescanningAction" icon="AllIcons.Actions.Refresh"/>
+    <action id="ForceIndexRebuild" internal="true" class="com.intellij.util.indexing.ForceIndexRebuildAction" icon="AllIcons.Actions.Refresh"/>
+    <action id="ToggleFileBasedIndexes" internal="true" class="com.intellij.util.indexing.internal.ToggleFileBasedIndexesAction"/>
+    <action id="PauseScanningAndIndexing" internal="true" class="com.intellij.util.indexing.internal.PauseScanningAndIndexingAction"/>
+  </actions>
 
   <applicationListeners>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>

@@ -583,8 +583,6 @@
                         serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlTabsCustomizationStrategy"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorPaletteFactory"
                         serviceImplementation="com.intellij.openapi.options.colors.EditorColorPaletteFactoryImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.project.UnindexedFilesScannerExecutor"
-                    serviceImplementation="com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
     <applicationService serviceInterface="com.intellij.psi.search.scope.packageSet.PackageSetFactory"
@@ -681,11 +679,6 @@
       serviceImplementation="com.intellij.codeInspection.ui.UiDslOptPaneRenderer"/>
     <psi.declarationProvider implementation="com.intellij.model.psi.impl.DefaultPsiSymbolDeclarationProvider" order="last"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.NonPhysicalReferenceSearcher"/>
-    <applicationService serviceImplementation="com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper" preload="notLightEdit"/>
-    <applicationService serviceInterface="com.intellij.psi.stubs.StubIndex"
-                        serviceImplementation="com.intellij.psi.stubs.StubIndexImpl" preload="notLightEdit"/>
-    <applicationService serviceInterface="com.intellij.psi.stubs.StubUpdatableIndexFactory"
-                        serviceImplementation="com.intellij.psi.stubs.StubUpdatableIndexFactoryImpl"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.TargetElementUtil" open="true"/>
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService"
                         serviceImplementation="com.intellij.codeInsight.completion.impl.CompletionServiceImpl"
@@ -715,7 +708,6 @@
                         serviceImplementation="com.intellij.util.indexing.EntityIndexingServiceImpl"/>
     <projectService serviceInterface="com.intellij.util.indexing.IndexingIteratorsProvider"
                     serviceImplementation="com.intellij.util.indexing.roots.IndexingIteratorsProviderImpl"/>
-    <projectService serviceImplementation="com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHealthCheck"/>
     <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
     <applicationService serviceImplementation="com.intellij.refactoring.rename.RenameHandlerRegistry" open="true"/>
     <projectService serviceInterface="com.intellij.ide.fileTemplates.FileTemplateManager"
@@ -773,8 +765,6 @@
                         serviceImplementation="com.intellij.psi.search.PredefinedSearchScopeProviderImpl"/>
     <applicationService serviceInterface="com.intellij.patterns.compiler.PatternCompilerFactory"
                         serviceImplementation="com.intellij.patterns.compiler.PatternCompilerFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.psi.stubs.StubTreeLoader"
-                        serviceImplementation="com.intellij.psi.stubs.StubTreeLoaderImpl"/>
     <applicationService serviceInterface="com.intellij.platform.backend.navigation.NavigationRequests"
                         serviceImplementation="com.intellij.platform.backend.navigation.impl.NavigationRequestsImpl"/>
     <applicationService serviceInterface="com.intellij.l10n.LocalizationStateService"
@@ -864,7 +854,6 @@
                  description="Exclude the default names, as 'node_modules' and '.venv', from a project root without a '.analysisignore' file in the root directory."/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.ide.analysisignore.AnalysisIgnoreWorkspaceFileIndexContributor"/>
     <postStartupActivity implementation="com.intellij.ide.analysisignore.AnalysisIgnoreStartupActivity"/>
-    <projectFileScanner implementation="com.intellij.ide.analysisignore.AnalysisIgnoreIndexableFileScanner"/>
     <vfs.asyncListenerBackgroundable implementation="com.intellij.ide.analysisignore.AnalysisIgnoreVfsListener"/>
     <editorFactoryDocumentListener implementation="com.intellij.ide.analysisignore.AnalysisIgnoreDocumentListener"/>
     <fileType name="AnalysisIgnore" language="AnalysisIgnore" fileNames=".analysisignore;default.analysisignore" fieldName="INSTANCE"
@@ -1036,7 +1025,6 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CommentMacro$AnyCommentEnd"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.EnumMacro"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndexImpl"/>
-    <fileBasedIndex implementation="com.intellij.psi.search.FileTypeIndexImpl"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.include.FileIncludeIndex"/>
     <lang.elementManipulator forClass="com.intellij.psi.PsiPlainTextFile"
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PlainFileManipulator"/>
@@ -1375,7 +1363,6 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.DaemonFusCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.IdentifierHighlightingFUSCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInspection.ex.GlobalInspectionContextImpl$InspectionPerformanceCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.projectFilter.IndexableFilesFilterHealthCheckCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.completion.command.CommandCompletionCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.codeInsight.completion.command.CommandCompletionStateCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.multiverse.CodeInsightContextFusCollector"/>
@@ -1626,19 +1613,13 @@
     <platform.backend.documentation.inlineDocumentationProvider order="last"
       implementation="com.intellij.codeInsight.documentation.render.CompatibilityInlineDocumentationProvider"/>
     <psi.treeChangeListener implementation="com.intellij.openapi.fileEditor.impl.FileEditorPsiTreeChangeListener"/>
-    <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.events.FileBasedIndexTreeChangePreprocessor"/>
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor$Factory"/>
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor$Factory"/>
-    <projectIndexingActivityHistoryListener implementation="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporterListener"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.IndexesScanningSkipCollector"/>
     <actionOnSaveInfoProvider id="FormatOnSaveInfoProvider"
                               implementation="com.intellij.codeInsight.actions.onSave.FormatOnSaveInfoProvider"
                               order="first"/>
     <actionOnSave id="FormatOnSaveAction" implementation="com.intellij.codeInsight.actions.onSave.FormatOnSaveAction" order="first"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.actions.onSave.FormatOnSaveUsagesCollector"/>
-    <recoveryAction implementation="com.intellij.util.indexing.RescanIndexesAction"/>
-    <recoveryAction implementation="com.intellij.util.indexing.ReindexAction"/>
-    <recoveryAction implementation="com.intellij.util.indexing.RefreshIndexableFilesAction"/>
     <postStartupActivity implementation="com.intellij.codeInsight.documentation.DocumentationSettingsListener"/>
     <projectService serviceInterface="com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider" open="true"
                     serviceImplementation="com.intellij.lang.documentation.ide.impl.IdeDocumentationTargetProviderImpl"/>
