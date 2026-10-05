@@ -532,6 +532,11 @@ class ModuleRedeclarator(object):
             deco_comment = " # known case of __new__"
 
         action("redoing innards of func %r of class %r", p_name, p_class)
+        # Constructors and class methods take the class doc and the class itself into account, see below
+        if deco == "classmethod" or p_name in ("__init__", "__new__"):
+            text_signature = None
+        else:
+            text_signature = restore_by_text_signature(p_func, p_class)
         if deco and HAS_DECORATORS:
             out(indent, "@", deco, deco_comment)
         if inspect and inspect.isfunction(p_func):
@@ -548,6 +553,9 @@ class ModuleRedeclarator(object):
             else:
                 ofwhat = "%s.%s" % (p_modname, p_name)
             out(indent, "def ", p_name, sig, ": # known case of ", ofwhat)
+            out_doc_attr(out, p_func, indent + 1, p_class)
+        elif text_signature is not None:
+            out(indent, "def ", p_name, text_signature, ": # restored from __text_signature__")
             out_doc_attr(out, p_func, indent + 1, p_class)
         else:
             # __doc__ is our best source of arglist

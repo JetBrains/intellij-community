@@ -658,7 +658,7 @@ def generate_skeleton(name, mod_file_name, mod_cache_dir, output_dir):
         mkdir(output_dir)
 
     action("importing")
-    old_modules = list(sys.modules.keys())
+    old_modules = worker_baseline_modules() or frozenset(sys.modules)
     with imported_names_collected() as imported_module_names:
         __import__(name)  # sys.modules will fill up with what we want
 

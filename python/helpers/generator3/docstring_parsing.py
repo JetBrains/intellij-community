@@ -7,6 +7,10 @@ from six import PY2
 
 if PY2:
     from generator3._vendor.pyparsing_py2 import *
+elif sys.version_info < (3, 9):
+    # The bundled pyparsing 3 requires Python 3.9+
+    # noinspection PyUnresolvedReferences
+    from generator3._vendor.pyparsing_py3 import *
 else:
     # noinspection PyUnresolvedReferences
     from generator3._vendor.pyparsing import *
@@ -190,7 +194,7 @@ def has_item_starting_with(p_seq, p_start):
 
 def sanitize_ident(x):
     """Takes an identifier and returns it sanitized"""
-    if x in ("class", "object", "def", "list", "tuple", "int", "float", "str", "unicode" "None"):
+    if x in ("class", "object", "def", "list", "tuple", "int", "float", "str", "unicode", "None"):
         return "p_" + x
     else:
         return x.replace("-", "_").replace(" ", "_").replace(".", "_") # for things like "list-or-tuple" or "list or tuple"

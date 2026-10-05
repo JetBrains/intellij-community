@@ -422,6 +422,51 @@ def restore_predefined_builtin(class_name, func_name):
     note = "known special case of " + (class_name and class_name + "." or "") + func_name
     return (spec, note)
 
+class _SourceText(object):
+    """
+    A parameter default that `str(inspect.Signature)` writes out as it is.
+
+    The signature writes a default with `repr()`, which would put quotes around a default already rendered as source text.
+    """
+
+    def __init__(self, text):
+        self.text = text
+
+    def __repr__(self):
+        return self.text
+
+
+def restore_by_text_signature(p_func, p_class=None):
+    """
+    Returns the parameter list of a function implemented in C from its `__text_signature__`, or None.
+
+    Argument Clinic, Cython and other tools give native functions such a signature,
+    and CPython then removes the signature from `__doc__`.
+    """
+    if not hasattr(inspect, 'signature'):
+        return None
+    try:
+        # An object with a custom __getattr__ can raise anything here
+        if not isinstance(getattr(p_func, '__text_signature__', None), STR_TYPES):
+            return None
+        signature = inspect.signature(p_func)
+    except Exception:
+        return None
+    params = list(signature.parameters.values())
+    if p_class is not None and (not params or params[0].kind not in (inspect.Parameter.POSITIONAL_ONLY,
+                                                                     inspect.Parameter.POSITIONAL_OR_KEYWORD)):
+        # A method must take the instance first
+        return None
+    params = [p.replace(default=_SourceText(reliable_repr(p.default) if isinstance(p.default, SIMPLEST_TYPES) else 'None'))
+              if p.default is not p.empty else p
+              for p in params]
+    if sys.version_info < (3, 8):
+        # The IDE parses a skeleton with the language level of its interpreter, and "/" needs Python 3.8
+        params = [p.replace(kind=inspect.Parameter.POSITIONAL_OR_KEYWORD) if p.kind == inspect.Parameter.POSITIONAL_ONLY else p
+                  for p in params]
+    return str(signature.replace(parameters=params, return_annotation=inspect.Signature.empty))
+
+
 def restore_by_inspect(p_func):
     """
     Returns paramlist restored by inspect.
@@ -814,7 +859,7 @@ class PooledWorkerProcessExecutor(WorkerProcessExecutor):
 
     def shutdown(self):
         if self._executor:
-            self._executor.shutdown(wait=True, cancel_futures=False)
+            self._executor.shutdown(wait=True)
             self._executor = None
 
 
@@ -822,10 +867,26 @@ def _pool_worker_wrapper(func, *args, **kwargs):
     return func(*args, **kwargs)
 
 
+_worker_baseline_modules = None
+
+
+def worker_baseline_modules():
+    # type: () -> frozenset[str] | None
+    """
+    Names in `sys.modules` when a pooled worker process started.
+
+    A pooled worker processes many modules, so `sys.modules` also contains whatever the previous
+    tasks imported. These modules must not hide the submodules of the module processed next.
+    """
+    return _worker_baseline_modules
+
+
 def _pool_worker_initializer(logging_config):
     # type: (dict[str, int]) -> None
+    global _worker_baseline_modules
     _configure_logging(logging_config)
     _enable_segfault_tracebacks()
+    _worker_baseline_modules = frozenset(sys.modules)
 
 
 class StandaloneWorkerProcessExecutor(WorkerProcessExecutor):
