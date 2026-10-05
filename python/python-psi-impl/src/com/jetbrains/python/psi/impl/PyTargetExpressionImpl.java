@@ -273,7 +273,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     if (iterType != null) {
       return iterType;
     }
-    PyType excType = getTypeFromExcept();
+    PyType excType = getTypeFromExcept(context);
     if (excType != null) {
       return excType;
     }
@@ -544,17 +544,23 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return PyCallExpressionHelper.getSpecialMethodCallType(type, nextMethodName, List.of(), context);
   }
 
-  private @Nullable PyType getTypeFromExcept() {
+  private @Nullable PyType getTypeFromExcept(@NotNull TypeEvalContext context) {
     PyExceptPart exceptPart = PsiTreeUtil.getParentOfType(this, PyExceptPart.class);
     if (exceptPart == null || exceptPart.getTarget() != this) {
       return PyAnyType.getUnknown();
     }
-    final PyExpression exceptClass = exceptPart.getExceptClass();
-    if (exceptClass instanceof PyReferenceExpression) {
-      final PsiElement element = ((PyReferenceExpression)exceptClass).getReference().resolve();
-      if (element instanceof PyClass) {
-        return new PyClassTypeImpl((PyClass)element, false);
-      }
+    final PyExpression exceptClass = PyPsiUtils.flattenParens(exceptPart.getExceptClass());
+    if (exceptClass instanceof PyTupleExpression tuple) {
+      List<PyType> members = ContainerUtil.map(tuple.getElements(), element -> getExceptionInstanceType(element, context));
+      return PyUnionType.unionOrUnknown(members);
+    }
+    return getExceptionInstanceType(exceptClass, context);
+  }
+
+  private static @Nullable PyType getExceptionInstanceType(@Nullable PyExpression exceptClass, @NotNull TypeEvalContext context) {
+    if (exceptClass == null) return PyAnyType.getUnknown();
+    if (context.getType(exceptClass) instanceof PyClassType classType && classType.isDefinition()) {
+      return classType.toInstance();
     }
     return PyAnyType.getUnknown();
   }

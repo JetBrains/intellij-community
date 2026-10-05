@@ -1214,6 +1214,70 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-79756"])
+    fun `except target of class alias`() = test("""
+      class MyError(Exception): ...
+
+      Alias = MyError
+
+      try:
+          pass
+      except Alias as expr:
+      #               └ TYPE MyError
+          pass
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-79756"])
+    fun `except target of qualified class`() = test("""
+      import errors
+
+      try:
+          pass
+      except errors.MyError as expr:
+      #                        └ TYPE MyError
+          pass
+      """.trimIndent(),
+      "errors.py" to "class MyError(Exception): ...",
+    )
+
+    @Test
+    @TestFor(issues = ["PY-79756"])
+    fun `except target of tuple of classes`() = test("""
+      class FirstError(Exception): ...
+      class SecondError(Exception): ...
+
+      try:
+          pass
+      except (FirstError, SecondError) as expr:
+      #                                   └ TYPE FirstError | SecondError
+          pass
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-79756"])
+    fun `except target of class re-exported as alias under TYPE_CHECKING`() = test("""
+      from pkg import ValidationError
+
+      try:
+          pass
+      except ValidationError as expr:
+      #                         └ TYPE ValidationError
+          pass
+      """.trimIndent(),
+      "pkg.py" to """
+        from typing import TYPE_CHECKING
+
+        if TYPE_CHECKING:
+            import core
+            ValidationError = core.ValidationError
+
+        def __getattr__(name: str) -> object: ...
+        """.trimIndent(),
+      "core.py" to "class ValidationError(ValueError): ...",
+    )
+
+    @Test
     @TestCaseOptions(languageLevel = LanguageLevel.PYTHON27, assertRecursionPrevention = false)
     fun `except type with python2 comma syntax`() = test("""
       try:
