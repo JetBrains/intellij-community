@@ -2,14 +2,11 @@
 package org.jetbrains.plugins.gradle.execution.build.output
 
 import com.intellij.build.events.StartId
-import com.intellij.build.output.BuildOutputInstantReader
 import com.intellij.build.output.BuildOutputInstantReaderImpl.BuildOutputLineParserBridge
 import com.intellij.build.output.BuildOutputMulticaster
 import com.intellij.build.output.BuildOutputReplayableLineReader
 import com.intellij.build.output.BuildOutputText
 import com.intellij.build.output.JavacOutputParser
-import com.intellij.openapi.util.NlsSafe
-import java.util.function.Consumer
 
 class GradleCompilationReportParser : BuildOutputLineParserBridge() {
 
@@ -32,23 +29,21 @@ class GradleCompilationReportParser : BuildOutputLineParserBridge() {
     }
     val parser by lazy { JavacOutputParser() }
     var parsed = false
-    drainCompilationErrors(reader) { error ->
-      parsed = true
-      if (error.isNotEmpty()) {
-        parser.parse(error.first(), ErrorHolder(error, taskId)) { event ->
-          multicaster.notifyBuildEvent(event)
-        }
-      }
+    drainCompilationErrors(reader) { subLine, boundedReader ->
+      parsed = parser.parse(subLine, boundedReader, taskId, multicaster, isSingleFlow)
     }
     return parsed
   }
 
-  private suspend fun drainCompilationErrors(reader: BuildOutputReplayableLineReader, errorConsumer: Consumer<List<String>>) {
-    val buffer = mutableListOf<String>()
+  private suspend fun drainCompilationErrors(
+    reader: BuildOutputReplayableLineReader,
+    errorConsumer: suspend (BuildOutputText, BuildOutputReplayableLineReader) -> Unit,
+  ) {
+    val buffer = mutableListOf<BuildOutputText>()
     do {
       val line = reader.readLine()
       if (line == null) {
-        errorConsumer.accept(buffer)
+        errorConsumer(buffer.first(), ArrayBackedReader(buffer))
         return
       }
       val text = line.text
@@ -57,36 +52,30 @@ class GradleCompilationReportParser : BuildOutputLineParserBridge() {
           return
         }
         text.trim() == ERROR_CURSOR -> {
-          buffer.add(text)
-          errorConsumer.accept(buffer)
+          buffer.add(line)
+          errorConsumer(buffer.first(), ArrayBackedReader(buffer))
           buffer.clear()
         }
-        else -> buffer.add(text)
+        else -> buffer.add(line)
       }
     }
     while (true)
   }
 
-  private class ErrorHolder(val errors: List<String>, val parentId: Any) : BuildOutputInstantReader {
-    private var index = 0
-    override fun getParentEventId(): Any {
-      return parentId
-    }
+  private class ArrayBackedReader(private val source: List<BuildOutputText>) : BuildOutputReplayableLineReader {
 
-    override fun readLine(): @NlsSafe String? {
-      if (index + 1 < errors.size) {
+    private var index = 0
+
+    override suspend fun readLine(): BuildOutputText? {
+      if (index + 1 < source.size) {
         index++
-        return errors[index]
+        return source[index]
       }
       return null
     }
 
-    override fun pushBack() {
-      index--
-    }
-
     override fun pushBack(numberOfLines: Int) {
-      index = index - numberOfLines
+      index -= numberOfLines
     }
   }
 }
