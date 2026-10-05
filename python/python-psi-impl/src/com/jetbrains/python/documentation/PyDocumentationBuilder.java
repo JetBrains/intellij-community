@@ -706,6 +706,10 @@ public final class PyDocumentationBuilder {
       classes = ContainerUtil.prepend(classes, pyClass);
     }
     for (PyClass ancestor : classes) {
+      // The docstrings of `object` and its constructor describe no particular class
+      if (isConstructor && PyUtil.isObjectClass(ancestor)) {
+        continue;
+      }
       PyStringLiteralExpression docstringElement = null;
       PyFunction inherited = null;
       boolean isFromClass = false;
