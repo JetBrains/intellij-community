@@ -75,18 +75,16 @@ import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrElse
 
 object PyTypeChecker {
-  /** Whether the per-member breakdown of a composite type is bounded by [maxBreakdownMembers] (PY-91327). */
-  @ApiStatus.Internal
-  @JvmStatic
-  fun isCompositeSinglePassEnabled(): Boolean = Registry.`is`("python.typing.composite.single.pass", false)
-
   /**
-   * The widest composite that still gets a per-member breakdown. Past it, matching short-circuits and records
-   * one summarizing reason.
+   * The widest composite type that still gets a per-member breakdown (PY-91327). Past it, matching
+   * short-circuits and records one summarizing reason.
+   *
+   * `0`, the default, means no bound: bounding drops detail the reader sees, so it waits for a decision.
+   * 5 is the measured width to bound at — the breakdown costs ~9x the verdict there, and ~20x by 8 members.
    */
   @ApiStatus.Internal
   @JvmStatic
-  fun maxBreakdownMembers(): Int = Registry.intValue("python.typing.composite.breakdown.max.members", 5)
+  fun maxBreakdownMembers(): Int = Registry.intValue("python.typing.composite.breakdown.max.members", 0)
 
   /**
    * The largest number of parameter combinations that [matchSingleCallableAgainstOverloads] checks.
@@ -1015,8 +1013,10 @@ object PyTypeChecker {
   }
 
   /** Whether [composite] is too wide for a per-member breakdown. See [maxBreakdownMembers]. */
-  private fun exceedsBreakdownBound(composite: PyCompositeTypeBase): Boolean =
-    isCompositeSinglePassEnabled() && composite.members.size > maxBreakdownMembers()
+  private fun exceedsBreakdownBound(composite: PyCompositeTypeBase): Boolean {
+    val bound = maxBreakdownMembers()
+    return bound > 0 && composite.members.size > bound
+  }
 
   private fun match(expected: PyType, actual: PyUnionType, context: MatchContext): Boolean {
     if (expected is PyTupleType) {

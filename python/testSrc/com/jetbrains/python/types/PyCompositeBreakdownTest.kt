@@ -95,7 +95,6 @@ class PyCompositeBreakdownTest : PyCodeInsightTestCase() {
     val disposable = Disposer.newDisposable()
     val steps = AtomicLong()
     try {
-      Registry.get("python.typing.composite.single.pass").setValue(true, disposable)
       Registry.get("python.typing.composite.breakdown.max.members").setValue(limit, disposable)
       val settings = AdvancedSettings.getInstance() as AdvancedSettingsImpl
       settings.setSetting(PyUnionType.STRICT_UNIONS_SETTING, true, disposable)
