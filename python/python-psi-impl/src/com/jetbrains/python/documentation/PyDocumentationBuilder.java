@@ -29,6 +29,7 @@ import com.jetbrains.python.PythonDocumentationHighlightingService;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.decorator.PyFunctoolsWrapsDecoratedFunctionTypeProvider;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.Property;
@@ -881,14 +882,53 @@ public final class PyDocumentationBuilder {
     return PyDocumentationLink.toTypeAliasStatement(linkText, typeAliasStatement);
   }
 
+  /**
+   * Returns the docstring of {@code owner}, or of its implementation if {@code owner} is in a stub.
+   * <p>
+   * The bundled typeshed has the docstrings of the newest Python, so an implementation of the interpreter wins over it.
+   * A generated skeleton does not win over it, because the docstring of a skeleton often comes from {@code object}.
+   * Another stub wins over its implementation. A stub overload without a docstring takes the docstring of an overload
+   * of the same function, because a stub documents only one of them.
+   */
   static @Nullable PyStringLiteralExpression getEffectiveDocStringExpression(@NotNull PyDocStringOwner owner) {
     final PyStringLiteralExpression expression = owner.getDocStringExpression();
-    if (expression != null) {
+    if (expression != null && !isInBundledTypeshed(owner)) {
       return expression;
     }
     final PsiElement original = PyiUtil.getOriginalElement(owner);
-    final PyDocStringOwner originalOwner = as(original, PyDocStringOwner.class);
-    return originalOwner != null ? originalOwner.getDocStringExpression() : null;
+    if (original instanceof PyDocStringOwner originalOwner && (expression == null || !PyiUtil.isInSkeleton(original))) {
+      final PyStringLiteralExpression originalExpression = originalOwner.getDocStringExpression();
+      if (originalExpression != null) {
+        return originalExpression;
+      }
+    }
+    if (expression != null) {
+      return expression;
+    }
+    return owner instanceof PyFunction function ? getDocStringExpressionOfOverload(function) : null;
+  }
+
+  private static boolean isInBundledTypeshed(@NotNull PsiElement element) {
+    final PsiFile file = element.getContainingFile();
+    final VirtualFile virtualFile = file != null ? file.getVirtualFile() : null;
+    return virtualFile != null && PyTypeShed.INSTANCE.isInside(virtualFile);
+  }
+
+  private static @Nullable PyStringLiteralExpression getDocStringExpressionOfOverload(@NotNull PyFunction function) {
+    if (!PyiUtil.isInsideStub(function)) {
+      return null;
+    }
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(function.getProject());
+    if (!PyiUtil.isOverload(function, context)) {
+      return null;
+    }
+    for (PyFunction overload : PyiUtil.getOverloads(function, context)) {
+      final PyStringLiteralExpression docstring = overload != function ? overload.getDocStringExpression() : null;
+      if (docstring != null) {
+        return docstring;
+      }
+    }
+    return null;
   }
 
   private enum FormatterDocFragmentType {

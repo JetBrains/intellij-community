@@ -34,6 +34,7 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.classRoots
 import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.skeletonsPath
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
 import com.intellij.testFramework.LightPlatformTestCase
@@ -103,6 +104,7 @@ import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrIn
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.TypeEvalContext.Companion.codeAnalysis
 import com.jetbrains.python.psi.types.TypeEvalContext.Companion.userInitiated
+import com.jetbrains.python.tools.sdkTools.deriveRootsForTests
 import com.jetbrains.python.tools.sdkTools.writeAddedPathsForTests
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Unmodifiable
@@ -113,6 +115,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.fail
+import java.io.IOException
 import java.lang.reflect.Method
 import kotlin.reflect.KClass
 import kotlin.time.Duration
@@ -489,6 +492,24 @@ abstract class PyCodeInsightTestCase {
       fail("Problems in the test assertions:\n" + result.diagnostics.joinToString("\n"))
     }
     return result
+  }
+
+  /**
+   * Creates a file at [relativePath] in the skeletons directory of the interpreter, and deletes it when [disposable] goes.
+   *
+   * A missing skeletons directory is made first, and the roots of the interpreter follow it.
+   */
+  protected fun createFileInSkeletonsDir(relativePath: String, text: String, disposable: Disposable): VirtualFile {
+    val interpreter = findPythonInterpreterForTests(myFixture.module)!!
+    val skeletonsPath = interpreter.skeletonsPath ?: fail("The interpreter has no skeletons path")
+    val skeletonsDir = WriteAction.computeAndWait<VirtualFile?, IOException> { VfsUtil.createDirectoryIfMissing(skeletonsPath.toString()) }
+                       ?: fail("Could not create the skeletons directory at $skeletonsPath")
+    deriveRootsForTests(myFixture.project, interpreter)
+    syncPythonInterpreterLibraries()
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
+    val file = VfsTestUtil.createFile(skeletonsDir, relativePath, text)
+    Disposer.register(disposable) { VfsTestUtil.deleteFile(file) }
+    return file
   }
 
   /**

@@ -2793,6 +2793,7 @@ f:com.jetbrains.python.pyi.PyiUtil
 - s:getOriginalElementOrLeaveAsIs(com.jetbrains.python.psi.PyElement,java.lang.Class):com.jetbrains.python.psi.PyElement
 - s:getOverloads(com.jetbrains.python.psi.PyFunction,com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
 - s:getPythonStub(com.jetbrains.python.psi.PyElement):com.intellij.psi.PsiElement
+- s:isInSkeleton(com.intellij.psi.PsiElement):Z
 - s:isInsideStub(com.intellij.psi.PsiElement):Z
 - s:isOverload(com.intellij.psi.PsiElement,com.jetbrains.python.psi.types.TypeEvalContext):Z
 - s:isPyiFileOfPackage(com.intellij.psi.PsiElement):Z

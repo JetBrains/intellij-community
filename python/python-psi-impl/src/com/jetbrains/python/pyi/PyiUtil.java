@@ -117,7 +117,10 @@ public final class PyiUtil {
     return original == null || isInSkeleton(original) ? target : original;
   }
 
-  private static boolean isInSkeleton(@NotNull PsiElement element) {
+  /**
+   * Checks if {@code element} is in a skeleton that the IDE generated for a binary module of the interpreter.
+   */
+  public static boolean isInSkeleton(@NotNull PsiElement element) {
     if (!(element.getContainingFile() instanceof PyFile file) || file instanceof PyiFile) return false;
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;
