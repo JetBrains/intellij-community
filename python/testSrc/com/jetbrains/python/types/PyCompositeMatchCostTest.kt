@@ -58,11 +58,13 @@ class PyCompositeMatchCostTest : PyCodeInsightTestCase() {
 
   /** `n+1`, because the walk records as it goes. It was `2n+1`: each failing member was matched twice. */
   @Test
-  fun `explaining a union costs one match per member`() = withCounter { fixture ->
-    for (width in WIDTHS) {
-      val union = PyUnionType.unionOrUnknown(fixture.actualMembers(width))!!
-      val cost = count { PyTypeChecker.explainMismatch(fixture.int, union, fixture.context) }
-      assertEquals(width + 1L, cost, "A union of $width members must be explained in one walk")
+  fun `explaining a union costs one match per member`() = withBound(0) {
+    withCounter { fixture ->
+      for (width in WIDTHS) {
+        val union = PyUnionType.unionOrUnknown(fixture.actualMembers(width))!!
+        val cost = count { PyTypeChecker.explainMismatch(fixture.int, union, fixture.context) }
+        assertEquals(width + 1L, cost, "A union of $width members must be explained in one walk")
+      }
     }
   }
 
@@ -71,12 +73,14 @@ class PyCompositeMatchCostTest : PyCodeInsightTestCase() {
    * intersection costs more to explain, because every unmet member earns its own frame.
    */
   @Test
-  fun `explaining a provided-side intersection costs what deciding it costs`() = withCounter { fixture ->
-    for (width in WIDTHS) {
-      val intersection = PyIntersectionType.intersectionOrTop(fixture.actualMembers(width))!!
-      val verdict = count { PyTypeChecker.match(fixture.int, intersection, fixture.context) }
-      val breakdown = count { PyTypeChecker.explainMismatch(fixture.int, intersection, fixture.context) }
-      assertEquals(verdict, breakdown, "Recording an intersection breakdown of $width members must be free")
+  fun `explaining a provided-side intersection costs what deciding it costs`() = withBound(0) {
+    withCounter { fixture ->
+      for (width in WIDTHS) {
+        val intersection = PyIntersectionType.intersectionOrTop(fixture.actualMembers(width))!!
+        val verdict = count { PyTypeChecker.match(fixture.int, intersection, fixture.context) }
+        val breakdown = count { PyTypeChecker.explainMismatch(fixture.int, intersection, fixture.context) }
+        assertEquals(verdict, breakdown, "Recording an intersection breakdown of $width members must be free")
+      }
     }
   }
 
@@ -85,13 +89,15 @@ class PyCompositeMatchCostTest : PyCodeInsightTestCase() {
    * bound, not the exact `n^2+n+1`, so a later improvement does not fail it.
    */
   @Test
-  fun `explaining a union against a union stays within the pairwise bound`() = withCounter { fixture ->
-    for (width in WIDTHS) {
-      val actual = PyUnionType.unionOrUnknown(fixture.actualMembers(width))!!
-      val expected = PyUnionType.unionOrUnknown(fixture.expectedMembers(width))!!
-      val cost = count { PyTypeChecker.explainMismatch(expected, actual, fixture.context) }
-      val bound = width.toLong() * width + width + 1
-      assertTrue(cost <= bound, "Explaining union($width) against union($width) took $cost, over the $bound bound")
+  fun `explaining a union against a union stays within the pairwise bound`() = withBound(0) {
+    withCounter { fixture ->
+      for (width in WIDTHS) {
+        val actual = PyUnionType.unionOrUnknown(fixture.actualMembers(width))!!
+        val expected = PyUnionType.unionOrUnknown(fixture.expectedMembers(width))!!
+        val cost = count { PyTypeChecker.explainMismatch(expected, actual, fixture.context) }
+        val bound = width.toLong() * width + width + 1
+        assertTrue(cost <= bound, "Explaining union($width) against union($width) took $cost, over the $bound bound")
+      }
     }
   }
 
@@ -114,7 +120,7 @@ class PyCompositeMatchCostTest : PyCodeInsightTestCase() {
     }
   }
 
-  /** With no bound, which is the default, even a wide union keeps its per-member breakdown. */
+  /** `0` means no bound, so even a wide union keeps its per-member breakdown. */
   @Test
   fun `an unbounded union keeps its breakdown`() {
     withBound(0) {

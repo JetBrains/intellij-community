@@ -76,15 +76,12 @@ import kotlin.jvm.optionals.getOrElse
 
 object PyTypeChecker {
   /**
-   * The widest composite type that still gets a per-member breakdown (PY-91327). Past it, matching
-   * short-circuits and records one summarizing reason.
-   *
-   * `0`, the default, means no bound: bounding drops detail the reader sees, so it waits for a decision.
-   * 5 is the measured width to bound at — the breakdown costs ~9x the verdict there, and ~20x by 8 members.
+   * The widest composite type that still gets a per-member breakdown. Past it, matching short-circuits and
+   * records one summarizing reason. `0` means no bound.
    */
   @ApiStatus.Internal
   @JvmStatic
-  fun maxBreakdownMembers(): Int = Registry.intValue("python.typing.composite.breakdown.max.members", 0)
+  fun maxBreakdownMembers(): Int = Registry.intValue("python.typing.composite.breakdown.max.members", 5)
 
   /**
    * The largest number of parameter combinations that [matchSingleCallableAgainstOverloads] checks.

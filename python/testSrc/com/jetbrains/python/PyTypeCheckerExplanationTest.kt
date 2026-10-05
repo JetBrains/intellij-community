@@ -203,10 +203,13 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
     sink(C())  # WARNING TOOLTIP C does not satisfy every member of HasA & HasB \n C lacks attribute a, which HasA requires \n C lacks attribute b, which HasB requires
     """.trimIndent())
 
-  /** With the flag off, a wide union keeps the unbounded breakdown it has always had. */
+  /**
+   * Pins the summary header a union past the bound reports. A TOOLTIP fragment is a substring check, so this
+   * cannot see the per-member lines go away; PyCompositeBreakdownTest asserts the tree.
+   */
   @Test
   @TestFor(issues = ["PY-91327"])
-  fun `a wide union keeps its full breakdown while the bound is disabled`() = test("""
+  fun `a union past the breakdown bound reports the summary header`() = test("""
     from typing import Protocol
     class A(Protocol):
         a: int
@@ -217,7 +220,7 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
     class C5: pass
     class C6: pass
     def get_six() -> C1 | C2 | C3 | C4 | C5 | C6: ...
-    x: A = get_six()  # WARNING TOOLTIP C1 lacks attribute a, which A requires
+    x: A = get_six()  # WARNING TOOLTIP Not all members of C1 | C2 | C3 | C4 | C5 | C6 are assignable to A
     """.trimIndent())
 
   @Test
