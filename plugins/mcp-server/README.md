@@ -793,7 +793,7 @@ There are **two audiences** for a tool's text, and they use **two different chan
 | Channel                                            | Audience             | Nullability | i18n                    | Where it shows                                                        |
 |----------------------------------------------------|----------------------|-------------|-------------------------|-----------------------------------------------------------------------|
 | `@McpDescription` / `@McpTool(title=…)`            | the **LLM / agent**  | `@NlsSafe`  | **not** localized       | sent on the wire to MCP clients                                       |
-| `McpToolset.displayName()` / `displayDescription()`| a **human**          | `@Nls`      | localized (bundle)      | Settings \| Tools \| MCP Server \| Exposed Tools, and other UI surfaces |
+| `McpToolset.displayName()` / `displayDescription()`| a **human**          | `@Nls`      | localized (bundle)      | Settings \| AI \| MCP Server \| Exposed Tools, and other UI surfaces    |
 
 `@McpDescription` is prose engineered for a model and must stay stable English; localizing it
 would change what the LLM sees. The UI, on the other hand, wants a short, human-friendly,
@@ -1096,7 +1096,7 @@ Visible tools are resolved by composing every `McpToolFilterProvider` extension.
 `plugin.xml`](resources/META-INF/plugin.xml):
 
 - `DisallowListBasedMcpToolFilterProvider` — hardcoded deny list for tools known to misbehave.
-- `SettingsBasedMcpToolFilterProvider` — reflects the Tools → MCP Server settings UI.
+- `SettingsBasedMcpToolFilterProvider` — reflects the AI → MCP Server settings UI.
 - `RegistryKeyMcpToolFilterProvider` — reads the `mcp.server.tools.filter` mask (see [§12.2](#122-registry-based-mask-filter)).
 - `IndividualRegistryKeyMcpToolFilterProvider` — per-tool registry overrides.
 

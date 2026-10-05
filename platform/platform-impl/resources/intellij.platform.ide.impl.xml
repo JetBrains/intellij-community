@@ -641,6 +641,9 @@
                        helpTopic="configurable.group.language.help.topic"
                        displayNameKey="configurable.group.language.settings.display.name"
                        descriptionKey="configurable.group.language.settings.description"/>
+    <groupConfigurable id="ai" weight="15"
+                       displayNameKey="configurable.group.ai.settings.display.name"
+                       descriptionKey="configurable.group.ai.settings.description"/>
     <groupConfigurable id="tools" weight="10"
                        helpTopic="configurable.group.tools.help.topic"
                        displayNameKey="configurable.group.tools.settings.display.name"

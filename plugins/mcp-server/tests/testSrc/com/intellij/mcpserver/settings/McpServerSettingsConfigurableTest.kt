@@ -11,6 +11,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
@@ -76,6 +77,12 @@ class McpServerSettingsConfigurableTest {
     val configurable = McpServerSettingsConfigurable()
     assertThat(configurable.getDisplayName()).isNotEmpty()
     assertThat(configurable.getId()).isEqualTo("com.intellij.mcpserver.settings")
+  }
+
+  @Test
+  fun mcpServerSettingsConfigurableIsInTheAiGroup() {
+    assertThat(Configurable.APPLICATION_CONFIGURABLE.extensionList.single { it.id == "com.intellij.mcpserver.settings" }.parentId)
+      .isEqualTo("ai")
   }
 
   @Test

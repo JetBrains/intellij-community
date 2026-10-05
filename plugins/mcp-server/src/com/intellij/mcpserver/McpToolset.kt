@@ -72,7 +72,7 @@ interface McpToolset {
 
   /**
    * Human-readable display name for this toolset group, shown in
-   * Settings | Tools | MCP Server | Exposed Tools and other UI surfaces.
+   * Settings | AI | MCP Server | Exposed Tools and other UI surfaces.
    *
    * Return a localized string (typically from your plugin's message bundle).
    * When `null`, the name is derived from the implementing class' simple name.
@@ -81,7 +81,7 @@ interface McpToolset {
 
   /**
    * Human-readable description for this toolset group, shown in
-   * Settings | Tools | MCP Server | Exposed Tools and other UI surfaces.
+   * Settings | AI | MCP Server | Exposed Tools and other UI surfaces.
    *
    * Return a localized string (typically from your plugin's message bundle).
    * When `null`, no group description is shown.

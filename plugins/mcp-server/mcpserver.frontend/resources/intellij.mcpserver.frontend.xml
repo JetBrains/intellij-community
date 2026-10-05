@@ -41,7 +41,7 @@
       key="mcp.server.configurable.name"
       bundle="messages.McpServerBundle"
       dynamic="true"
-      parentId="tools"/>
+      parentId="ai"/>
 
     <applicationConfigurable
       instance="com.intellij.mcpserver.frontend.settings.McpToolFilterConfigurable"
