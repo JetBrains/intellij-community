@@ -25,7 +25,7 @@ class BuildOutputLineProcessor(
 
   private suspend fun notifyLineOrPrefixAvailable(outputIds: List<OutputId>, outputText: String, isLine: Boolean) {
     val buffer = buffer.get() ?: throw ClosedException()
-    buffer.outputIds.add(outputIds)
+    buffer.outputIds.addAll(outputIds)
     buffer.outputText.append(outputText)
     if (isLine) {
       buffer.flush()
