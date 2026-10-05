@@ -445,6 +445,10 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
         # (no skeleton for mod1.so is generated) regardless of the new discovery logic.
         self.check_generator_output()
 
+    def test_binaries_with_own_stubs_are_skipped(self):
+        # "mod1.so" has "mod1.pyi" next to it, and "mod3/ext.so" is covered by the stub-only
+        # package "mod3-stubs". The skeleton generated for "mod1" earlier is also removed.
+        self.check_generator_output(extra_args=['--name-pattern', 'mod*'])
 
 class StatePassingGenerationTest(FunctionalGeneratorTestCase):
     default_generator_extra_args = ['--state-file', '-',

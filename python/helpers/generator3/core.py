@@ -119,6 +119,25 @@ def is_skipped_module(path, f, qname):
             is_debugpy_module(qname))
 
 
+def has_own_stub(roots, dir_path, short_mod_name, qname):
+    # type: (List[str], str, str, str) -> bool
+    """
+    Checks if a binary module already has type information from a ".pyi" file next to it
+    or from a stub-only "<package>-stubs" distribution (PEP 561).
+    """
+    if os.path.exists(os.path.join(dir_path, short_mod_name + '.pyi')):
+        return True
+    top_level_name, _, rest = qname.partition('.')
+    for root in roots:
+        stub_pkg_dir = os.path.join(root, top_level_name + '-stubs')
+        if not os.path.isdir(stub_pkg_dir):
+            continue
+        stub_path = os.path.join(stub_pkg_dir, *rest.split('.')) if rest else stub_pkg_dir
+        if os.path.exists(stub_path + '.pyi') or os.path.exists(os.path.join(stub_path, '__init__.pyi')):
+            return True
+    return False
+
+
 def is_module(d, root):
     return (os.path.exists(os.path.join(root, d, "__init__.py")) or
             os.path.exists(os.path.join(root, d, "__init__.pyc")) or
@@ -433,6 +452,7 @@ class SkeletonGenerator(object):
         self.roots = roots
         self.in_state_json = state_json
         self.out_state_json = {'sdk_skeletons': {}}
+        self.modules_with_own_stubs = []  # type: List[BinaryModule]
         self.write_state_json = write_state_json
         if use_worker_process_pool and sys.version_info >= (3, 7):
             self.executor = PooledWorkerProcessExecutor(
@@ -462,6 +482,10 @@ class SkeletonGenerator(object):
             all_modules.extend(sorted(self.discover_binary_modules(), key=(lambda b: b.qname)))
 
         matching_modules = [m for m in all_modules if fnmatch.fnmatchcase(m.qname, name_pattern)]
+
+        for mod in self.modules_with_own_stubs:
+            if fnmatch.fnmatchcase(mod.qname, name_pattern):
+                self.delete_skeleton(mod.qname)
 
         progress("Updating skeletons...")
         for i, mod in enumerate(matching_modules):
@@ -530,6 +554,10 @@ class SkeletonGenerator(object):
                         if is_skipped_module(dir_path, file_name, full_mod_name):
                             trace('skipping module %s', full_mod_name)
                             continue
+                        if has_own_stub(self.roots, dir_path, short_mod_name, full_mod_name):
+                            trace('skipping module %s because it has its own stubs', full_mod_name)
+                            self.modules_with_own_stubs.append(BinaryModule(full_mod_name, os.path.join(dir_path, file_name)))
+                            continue
                         trace("cutout: %s", short_mod_name)
                         if preprefix:
                             trace("prefixes: %s %s", prefix, preprefix)
@@ -541,6 +569,14 @@ class SkeletonGenerator(object):
 
                         res[full_mod_name.upper()] = BinaryModule(full_mod_name, file_path)
         return list(res.values())
+
+    def delete_skeleton(self, mod_qname):
+        # type: (str) -> None
+        base_path = os.path.join(self.output_dir, *mod_qname.split('.'))
+        for path in (base_path + '.py', base_path):
+            if os.path.exists(path):
+                logging.info('Deleting the skeleton of %s at %r', mod_qname, path)
+                delete(path)
 
     def process_module(self, mod_name, mod_path=None):
         # type: (str, str) -> GenerationStatusId
