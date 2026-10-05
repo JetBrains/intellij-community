@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
+import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel.FilePathCounts
 import com.intellij.platform.vcs.impl.shared.changes.TreeModelBuilderEx
 import com.intellij.platform.vcs.impl.shared.commit.PartialCommitChangeNodeDecorator
 import org.jetbrains.annotations.ApiStatus
@@ -27,13 +28,20 @@ object ChangesViewUtil {
     changeLists: List<LocalChangeList>,
     unversionedFiles: List<FilePath>,
     ignoredFiles: List<FilePath>,
-    isAllowExcludeFromCommit: () -> Boolean
+    unversionedFileCounts: FilePathCounts? = null,
+    isAllowExcludeFromCommit: () -> Boolean,
   ): DefaultTreeModel {
     val skipSingleDefaultChangeList = !ChangeListsViewModel.getInstance(project).areChangeListsEnabled.value
     val treeModelBuilder = TreeModelBuilder(project, grouping)
       .setChangeLists(changeLists, skipSingleDefaultChangeList, getChangeDecoratorProvider(project, isAllowExcludeFromCommit))
       .also { TreeModelBuilderEx.getInstanceOrNull(project)?.modifyTreeModelBuilder(it) }
-      .setUnversioned(unversionedFiles)
+
+    if (unversionedFileCounts != null) {
+      treeModelBuilder.setUnversionedFileCounts(unversionedFileCounts.fileCount, unversionedFileCounts.directoryCount)
+    }
+    else {
+      treeModelBuilder.setUnversioned(unversionedFiles)
+    }
 
     treeModelBuilder.setIgnored(ignoredFiles)
 

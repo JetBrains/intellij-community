@@ -183,6 +183,15 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return insertSpecificFilePathNodeToModel(ignoredFiles, node, FileStatus.IGNORED);
   }
 
+  @ApiStatus.Internal
+  public @NotNull TreeModelBuilder setUnversionedFileCounts(int fileCount, int directoryCount) {
+    assert myProject != null;
+    if (fileCount + directoryCount > 0) {
+      insertSubtreeRoot(new ChangesBrowserUnversionedFilesNode(myProject, fileCount, directoryCount));
+    }
+    return this;
+  }
+
   private @NotNull TreeModelBuilder insertSpecificFilePathNodeToModel(@NotNull List<? extends FilePath> specificFiles,
                                                                       @NotNull ChangesBrowserSpecificFilePathsNode<?> node,
                                                                       @NotNull FileStatus status) {

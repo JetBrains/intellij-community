@@ -28,6 +28,7 @@ import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.requestNavigate
 import com.intellij.platform.vcs.impl.shared.SingleTaskRunner
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
+import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel.FilePathCounts
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.platform.vcs.impl.shared.changes.PartialChangesHolder
@@ -170,6 +171,7 @@ abstract class CommitChangesViewWithToolbarPanel(
         modelData.changeLists,
         modelData.unversionedFiles,
         modelData.ignoredFiles,
+        modelData.unversionedFileCounts,
         modelData.isAllowExcludeFromCommit,
       )
     }
@@ -226,6 +228,7 @@ abstract class CommitChangesViewWithToolbarPanel(
     val changeLists: List<LocalChangeList>,
     val unversionedFiles: List<FilePath>,
     val ignoredFiles: List<FilePath>,
+    val unversionedFileCounts: FilePathCounts? = null,
     val isAllowExcludeFromCommit: () -> Boolean,
   )
 }

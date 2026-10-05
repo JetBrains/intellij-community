@@ -23,7 +23,11 @@ interface ChangeListsApi : RemoteApi<Unit> {
 
   suspend fun getChangeLists(projectId: ProjectId): Flow<List<ChangeListDto>>
 
-  suspend fun getUnversionedFiles(projectId: ProjectId): Flow<List<FilePathDto>>
+  /**
+   * Sends only the counts when there are more than [maxFilesInTree] unversioned files.
+   * The client passes its own value of the `vcs.unversioned.files.max.intree` registry key.
+   */
+  suspend fun getUnversionedFiles(projectId: ProjectId, maxFilesInTree: Int): Flow<UnversionedFilesDto>
 
   suspend fun getIgnoredFiles(projectId: ProjectId): Flow<List<FilePathDto>>
 

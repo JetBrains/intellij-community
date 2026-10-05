@@ -88,6 +88,7 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
       changeLists = changeListsState.changeLists,
       unversionedFiles = changeListsState.unversionedFiles,
       ignoredFiles = changeListsState.ignoredFiles.takeIf { ChangesViewSettings.getInstance(project).showIgnored }.orEmpty(),
+      unversionedFileCounts = changeListsState.unversionedFileCounts,
     ) { true }
   }
 

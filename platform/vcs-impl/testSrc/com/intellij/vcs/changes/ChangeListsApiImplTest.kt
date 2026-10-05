@@ -2,7 +2,6 @@
 package com.intellij.vcs.changes
 
 import com.intellij.ide.vfs.VirtualFileId
-import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
@@ -14,6 +13,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
+import com.intellij.platform.vcs.impl.shared.rpc.UnversionedFilesDto
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -22,11 +22,14 @@ import com.intellij.testFramework.registerOrReplaceServiceInstance
 import com.intellij.testFramework.vcs.MockChangeListManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.yield
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
@@ -111,6 +114,75 @@ internal class ChangeListsApiImplTest {
       }
     }
 
+  @Test
+  fun `large unversioned lists send only counts without reading paths`(): Unit = timeoutRunBlocking {
+    manager.setPaths(FileList.UNVERSIONED, listOf(countedPath(false), countedPath(true), countedPath(false), countedPath(true)))
+
+    val dto = ChangeListsApiImpl().getUnversionedFiles(project.projectId(), 2).first()
+
+    assertEquals(UnversionedFilesDto.Counts(2, 2), dto)
+    val serialized = Json.encodeToString(UnversionedFilesDto.serializer(), dto)
+    assertEquals(dto, Json.decodeFromString(UnversionedFilesDto.serializer(), serialized))
+  }
+
+  @Test
+  fun `unversioned lists at the limit still send paths`(@TempDir directory: Path): Unit = timeoutRunBlocking {
+    val paths = listOf(unresolvedPath(directory.resolve("first.txt")), unresolvedPath(directory.resolve("second.txt")))
+    manager.setPaths(FileList.UNVERSIONED, paths)
+
+    val dto = ChangeListsApiImpl().getUnversionedFiles(project.projectId(), 2).first()
+
+    val files = assertInstanceOf(UnversionedFilesDto.Files::class.java, dto).files
+    assertEquals(paths.size, files.size)
+    paths.zip(files).forEach { (path, file) -> assertDto(path, file, null) }
+  }
+
+  @Test
+  fun `unversioned updates switch between counts paths and an empty list`(@TempDir directory: Path): Unit = timeoutRunBlocking {
+    val large = listOf(countedPath(false), countedPath(true), countedPath(false))
+    val small = listOf(unresolvedPath(directory.resolve("file.txt")))
+    val snapshots = listOf(large, small, emptyList(), listOf(countedPath(true), countedPath(true), countedPath(true)))
+    manager.setPaths(FileList.UNVERSIONED, snapshots.first())
+    val remainingSnapshots = snapshots.drop(1).iterator()
+
+    val updates = ChangeListsApiImpl().getUnversionedFiles(project.projectId(), 2).onEach {
+      if (remainingSnapshots.hasNext()) {
+        manager.setPaths(FileList.UNVERSIONED, remainingSnapshots.next())
+        manager.listener!!.unchangedFileStatusChanged(true)
+      }
+    }.take(snapshots.size).toList()
+
+    assertEquals(UnversionedFilesDto.Counts(2, 1), updates[0])
+    assertDto(small.single(), assertInstanceOf(UnversionedFilesDto.Files::class.java, updates[1]).files.single(), null)
+    assertEquals(UnversionedFilesDto.Files(emptyList()), updates[2])
+    assertEquals(UnversionedFilesDto.Counts(0, 3), updates[3])
+  }
+
+  @Test
+  fun `changed unversioned paths with the same counts send no update`(): Unit = timeoutRunBlocking {
+    manager.setPaths(FileList.UNVERSIONED, listOf(countedPath(false), countedPath(true), countedPath(false)))
+
+    val updates = ChangeListsApiImpl().getUnversionedFiles(project.projectId(), 2).onEach {
+      if (manager.unversionedReads == 1) {
+        manager.setPaths(FileList.UNVERSIONED, listOf(countedPath(true), countedPath(false), countedPath(false)))
+        manager.listener!!.unchangedFileStatusChanged(true)
+        while (manager.unversionedReads < 2) yield()
+        manager.setPaths(FileList.UNVERSIONED, listOf(countedPath(true), countedPath(false), countedPath(true)))
+        manager.listener!!.unchangedFileStatusChanged(true)
+      }
+    }.take(2).toList()
+
+    assertEquals(listOf(
+      UnversionedFilesDto.Counts(2, 1),
+      UnversionedFilesDto.Counts(1, 2)
+    ), updates)
+  }
+
+  private fun countedPath(isDirectory: Boolean): FilePath = object : FilePath by LocalFilePath("/counted", isDirectory) {
+    override fun getPath(): String = error("A count must not read the path")
+    override fun getVirtualFile(): VirtualFile = error("A count must not resolve a virtual file")
+  }
+
   private fun checkNoVirtualFilePaths(list: FileList, directory: Path): Unit =
     timeoutRunBlocking {
       val paths = listOf(
@@ -163,7 +235,7 @@ internal class ChangeListsApiImplTest {
   private suspend fun observe(list: FileList): Flow<List<FilePathDto>> {
     val api = ChangeListsApiImpl()
     return when (list) {
-      FileList.UNVERSIONED -> api.getUnversionedFiles(project.projectId())
+      FileList.UNVERSIONED -> api.getUnversionedFiles(project.projectId(), Int.MAX_VALUE).map { assertInstanceOf(UnversionedFilesDto.Files::class.java, it).files }
       FileList.IGNORED -> api.getIgnoredFiles(project.projectId())
     }
   }
@@ -190,6 +262,9 @@ internal class ChangeListsApiImplTest {
     private var unversionedPaths: List<FilePath> = emptyList()
     private var ignoredPaths: List<FilePath> = emptyList()
     var listener: ChangeListListener? = null
+    @Volatile
+    var unversionedReads: Int = 0
+      private set
 
     fun setPaths(list: FileList, paths: List<FilePath>) {
       when (list) {
@@ -198,7 +273,10 @@ internal class ChangeListsApiImplTest {
       }
     }
 
-    override fun getUnversionedFilesPaths(): List<FilePath> = unversionedPaths
+    override fun getUnversionedFilesPaths(): List<FilePath> {
+      unversionedReads++
+      return unversionedPaths
+    }
 
     override fun getIgnoredFilePaths(): List<FilePath> = ignoredPaths
 

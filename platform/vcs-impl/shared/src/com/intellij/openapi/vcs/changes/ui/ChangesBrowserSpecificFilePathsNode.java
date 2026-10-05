@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.FilePath;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -11,5 +12,10 @@ import static com.intellij.util.containers.ContainerUtil.count;
 public class ChangesBrowserSpecificFilePathsNode<T> extends ChangesBrowserSpecificNode<T, FilePath> {
   protected ChangesBrowserSpecificFilePathsNode(@NotNull T userObject, @NotNull Collection<FilePath> files, @NotNull Runnable shower) {
     super(userObject,  files, count(files, it -> it.isDirectory()), shower);
+  }
+
+  @ApiStatus.Internal
+  protected ChangesBrowserSpecificFilePathsNode(@NotNull T userObject, int fileCount, int directoryCount, @NotNull Runnable shower) {
+    super(userObject, fileCount, directoryCount, shower);
   }
 }
