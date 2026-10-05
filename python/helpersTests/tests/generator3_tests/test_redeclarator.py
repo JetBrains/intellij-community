@@ -227,6 +227,28 @@ class TestAnnotatedParameters(GeneratorTestCase):
         self.assertEqual(note, M.SIG_DOC_NOTE)
 
 
+class TestTextSignature(GeneratorTestCase):
+    @unittest.skipIf(VERSION < (3, 4), "inspect.signature is needed")
+    def testModuleFunction(self):
+        import math
+        self.assertEqual("(x, /)", restore_by_text_signature(math.acos))
+
+    @unittest.skipIf(VERSION < (3, 4), "inspect.signature is needed")
+    def testMethod(self):
+        self.assertEqual("(self, /, sep=None, maxsplit=-1)", restore_by_text_signature(str.split, str))
+
+    @unittest.skipIf(VERSION < (3, 4), "inspect.signature is needed")
+    def testMethodWithoutInstanceParameter(self):
+        import os
+        self.assertIsNone(restore_by_text_signature(os.getcwd, str))
+
+    def testFunctionWithoutTextSignature(self):
+        def target(a, b=1):
+            return a, b
+
+        self.assertIsNone(restore_by_text_signature(target))
+
+
 if not IS_CLI and VERSION < (3, 0):
     class TestInspect(GeneratorTestCase):
         """
