@@ -3,12 +3,17 @@ package com.intellij.maven.completion.contributor
 
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionService
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.maven.completion.MAVEN_DEPENDENCY_COMPLETION
 import com.intellij.maven.completion.icon
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.xml.XmlTag
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionEvent
@@ -46,8 +51,8 @@ open class MavenVersionCompletionContributor : MavenCoordinateCompletionContribu
 
   override fun fillAfter(result: CompletionResultSet) {
     if (MavenServerManager.getInstance().isUseMaven2) {
-      result.addElement(LookupElementBuilder.create("RELEASE").withStrikeoutness(true))
-      result.addElement(LookupElementBuilder.create("LATEST").withStrikeoutness(true))
+      result.addElement(LookupElementBuilder.create("RELEASE").withStrikeoutness(true).withInsertHandler(MavenVersionInsertHandler))
+      result.addElement(LookupElementBuilder.create("LATEST").withStrikeoutness(true).withInsertHandler(MavenVersionInsertHandler))
     }
   }
 
@@ -55,6 +60,7 @@ open class MavenVersionCompletionContributor : MavenCoordinateCompletionContribu
                           completionPrefix: String) =
     MLRankingIgnorable.wrap(LookupElementBuilder.create(version)
       .withIcon(source.icon)
+      .withInsertHandler(MavenVersionInsertHandler)
       .also {
         it.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix)
         it.putUserData(SUPPRESS_QUICK_DEFINITION, true)
@@ -65,5 +71,19 @@ open class MavenVersionCompletionContributor : MavenCoordinateCompletionContribu
   override fun amendResultSet(result: CompletionResultSet, completionPrefix: String): CompletionResultSet {
     result.restartCompletionWhenNothingMatches()
     return result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(MavenVersionNegatingWeigher()))
+  }
+}
+
+/**
+ * Replaces the whole value of the `version` tag with the selected version.
+ */
+private object MavenVersionInsertHandler : InsertHandler<LookupElement> {
+  override fun handleInsert(context: InsertionContext, item: LookupElement) {
+    context.commitDocument()
+    val tag = PsiTreeUtil.getParentOfType(context.file.findElementAt(context.startOffset), XmlTag::class.java, false) ?: return
+    if (tag.name != "version") return
+    val range = tag.value.textRange
+    context.document.replaceString(range.startOffset, range.endOffset, item.lookupString)
+    context.editor.caretModel.moveToOffset(range.startOffset + item.lookupString.length)
   }
 }

@@ -8,8 +8,11 @@ import com.intellij.maven.testFramework.fixtures.MavenDomTestFixtureIndices
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.configConfirmationForYesAnswer
+import com.intellij.maven.testFramework.fixtures.configTest
 import com.intellij.maven.testFramework.fixtures.configureProjectPom
 import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createPomXml
+import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.findPsiFile
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.importProjectsAsync
@@ -129,6 +132,41 @@ class MavenDependencyCompletionAndResolutionTest(mavenVersion: String, modelVers
 
     val variants = maven.getCompletionVariants(maven.projectPom)
     assertEquals(mutableListOf("4.0", "3.8.2", "3.8.1"), variants)
+  }
+
+  @Test
+  fun testVersionCompletionReplacesValueAfterCaret() = runBlocking {
+    assertVersionCompletionResult("<version><caret>3.8.1</version>", "4.0", "<version>4.0<caret></version>")
+  }
+
+  @Test
+  fun testVersionCompletionReplacesValueBeforeCaret() = runBlocking {
+    assertVersionCompletionResult("<version>3.8.<caret></version>", "3.8.2", "<version>3.8.2<caret></version>")
+  }
+
+  private suspend fun assertVersionCompletionResult(versionTag: String, selectedVersion: String, expectedVersionTag: String) {
+    fun pom(version: String) = """
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId>junit</artifactId>
+                           $version
+                         </dependency>
+                       </dependencies>
+                       """.trimIndent()
+
+    maven.createProjectPom(pom(versionTag))
+    maven.configTest(maven.projectPom)
+    val elements = maven.fixture.completeBasic()
+    val item = elements.first { it.lookupString == selectedVersion }
+    withContext(Dispatchers.EDT) {
+      maven.fixture.lookup.currentItem = item
+      maven.fixture.finishLookup('\n')
+    }
+    maven.fixture.checkResult(maven.createPomXml(pom(expectedVersionTag)))
   }
 
   @Test
