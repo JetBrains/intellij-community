@@ -27,6 +27,8 @@ import org.jetbrains.jewel.samples.showcase.components.Scrollbars
 import org.jetbrains.jewel.samples.showcase.components.SegmentedControls
 import org.jetbrains.jewel.samples.showcase.components.Sliders
 import org.jetbrains.jewel.samples.showcase.components.SplitLayouts
+import org.jetbrains.jewel.samples.showcase.components.Tables
+import org.jetbrains.jewel.samples.showcase.components.TablesMenu
 import org.jetbrains.jewel.samples.showcase.components.Tabs
 import org.jetbrains.jewel.samples.showcase.components.TextAreas
 import org.jetbrains.jewel.samples.showcase.components.TextFields
@@ -117,6 +119,12 @@ public class ComponentsViewModel(
             ),
             ViewInfo(title = "Badges", iconKey = ShowcaseIcons.Components.badge, content = { Badges() }),
             ViewInfo(title = "Got It", iconKey = ShowcaseIcons.Components.gotIt, content = { GotItTooltipShowcase() }),
+            ViewInfo(
+                title = "Table",
+                iconKey = ShowcaseIcons.Components.table,
+                content = { Tables() },
+                titlebarMenu = { TablesMenu() },
+            ),
         )
 
     private var _currentView: ViewInfo by mutableStateOf(views.first())

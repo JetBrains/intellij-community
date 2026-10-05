@@ -63,6 +63,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalSelectableLazyColumnStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSimpleListItemStyleStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSliderStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSpeedSearchStyle
+import org.jetbrains.jewel.ui.component.styling.LocalTableStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
@@ -83,6 +84,7 @@ import org.jetbrains.jewel.ui.component.styling.SliderStyle
 import org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle
 import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TabStyle
+import org.jetbrains.jewel.ui.component.styling.TableStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
@@ -93,6 +95,7 @@ import org.jetbrains.jewel.ui.component.styling.fallbackPopupAdStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSearchMatchStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSearchTextField
 import org.jetbrains.jewel.ui.component.styling.fallbackSpeedSearchStyle
+import org.jetbrains.jewel.ui.component.styling.fallbackTableStyle
 
 /** Default implementation of [ComponentStyling] that aggregates style objects for all built-in Jewel components. */
 @Stable
@@ -183,7 +186,99 @@ public class DefaultComponentStyling(
     public val gotItButtonStyle: ButtonStyle,
     /** The style for search text fields. */
     public val searchTextFieldStyle: SearchTextFieldStyle,
+    /** The style for lazy table. */
+    public val tableStyle: TableStyle,
 ) : ComponentStyling {
+    @Deprecated(message = "Please use the variant with `tableStyle`.", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        checkboxStyle: CheckboxStyle,
+        chipStyle: ChipStyle,
+        circularProgressStyle: CircularProgressStyle,
+        defaultBannerStyle: DefaultBannerStyles,
+        comboBoxStyle: ComboBoxStyle,
+        defaultButtonStyle: ButtonStyle,
+        defaultDropdownStyle: DropdownStyle,
+        defaultSplitButtonStyle: SplitButtonStyle,
+        defaultTabStyle: TabStyle,
+        dividerStyle: DividerStyle,
+        editorTabStyle: TabStyle,
+        groupHeaderStyle: GroupHeaderStyle,
+        horizontalProgressBarStyle: HorizontalProgressBarStyle,
+        iconButtonStyle: IconButtonStyle,
+        transparentIconButtonStyle: IconButtonStyle,
+        inlineBannerStyle: InlineBannerStyles,
+        lazyTreeStyle: LazyTreeStyle,
+        linkStyle: LinkStyle,
+        menuStyle: MenuStyle,
+        outlinedButtonStyle: ButtonStyle,
+        popupContainerStyle: PopupContainerStyle,
+        outlinedSplitButtonStyle: SplitButtonStyle,
+        radioButtonStyle: RadioButtonStyle,
+        scrollbarStyle: ScrollbarStyle,
+        segmentedControlButtonStyle: SegmentedControlButtonStyle,
+        segmentedControlStyle: SegmentedControlStyle,
+        selectableLazyColumnStyle: SelectableLazyColumnStyle,
+        simpleListItemStyle: SimpleListItemStyle,
+        sliderStyle: SliderStyle,
+        textAreaStyle: TextAreaStyle,
+        textFieldStyle: TextFieldStyle,
+        tooltipStyle: TooltipStyle,
+        undecoratedDropdownStyle: DropdownStyle,
+        speedSearchStyle: SpeedSearchStyle,
+        searchMatchStyle: SearchMatchStyle,
+        popupAdStyle: PopupAdStyle,
+        defaultSlimButtonStyle: ButtonStyle,
+        outlinedSlimButtonStyle: ButtonStyle,
+        badgeStyle: BadgeStyles,
+        gotItTooltipStyle: GotItTooltipStyle,
+        gotItButtonStyle: ButtonStyle,
+        searchTextFieldStyle: SearchTextFieldStyle,
+    ) : this(
+        checkboxStyle,
+        chipStyle,
+        circularProgressStyle,
+        defaultBannerStyle,
+        comboBoxStyle,
+        defaultButtonStyle,
+        defaultDropdownStyle,
+        defaultSplitButtonStyle,
+        defaultTabStyle,
+        dividerStyle,
+        editorTabStyle,
+        groupHeaderStyle,
+        horizontalProgressBarStyle,
+        iconButtonStyle,
+        transparentIconButtonStyle,
+        inlineBannerStyle,
+        lazyTreeStyle,
+        linkStyle,
+        menuStyle,
+        outlinedButtonStyle,
+        popupContainerStyle,
+        outlinedSplitButtonStyle,
+        radioButtonStyle,
+        scrollbarStyle,
+        segmentedControlButtonStyle,
+        segmentedControlStyle,
+        selectableLazyColumnStyle,
+        simpleListItemStyle,
+        sliderStyle,
+        textAreaStyle,
+        textFieldStyle,
+        tooltipStyle,
+        undecoratedDropdownStyle,
+        speedSearchStyle,
+        searchMatchStyle,
+        popupAdStyle,
+        defaultSlimButtonStyle,
+        outlinedSlimButtonStyle,
+        badgeStyle,
+        gotItTooltipStyle,
+        gotItButtonStyle,
+        searchTextFieldStyle,
+        fallbackTableStyle(),
+    )
+    
     @Deprecated(message = "Please use the variant with `searchTextFieldStyle`.", level = DeprecationLevel.HIDDEN)
     public constructor(
         checkboxStyle: CheckboxStyle,
@@ -270,6 +365,7 @@ public class DefaultComponentStyling(
         gotItTooltipStyle,
         gotItButtonStyle,
         fallbackSearchTextField(),
+        fallbackTableStyle(),
     )
 
     @Deprecated(
@@ -359,6 +455,7 @@ public class DefaultComponentStyling(
         fallbackGotItTooltipStyle(),
         fallbackGotItTooltipButtonStyle(),
         fallbackSearchTextField(),
+        fallbackTableStyle(),
     )
 
     @Deprecated("Use the variant with badgeStyle.", level = DeprecationLevel.HIDDEN)
@@ -444,6 +541,7 @@ public class DefaultComponentStyling(
         fallbackGotItTooltipStyle(),
         fallbackGotItTooltipButtonStyle(),
         fallbackSearchTextField(),
+        fallbackTableStyle(),
     )
 
     @Deprecated(
@@ -530,6 +628,7 @@ public class DefaultComponentStyling(
         fallbackGotItTooltipStyle(),
         fallbackGotItTooltipButtonStyle(),
         fallbackSearchTextField(),
+        fallbackTableStyle(),
     )
 
     @Deprecated("Use the variant with popupAdStyle and gotItTooltipStyle.", level = DeprecationLevel.HIDDEN)
@@ -612,6 +711,7 @@ public class DefaultComponentStyling(
         fallbackGotItTooltipStyle(),
         fallbackGotItTooltipButtonStyle(),
         fallbackSearchTextField(),
+        fallbackTableStyle(),
     )
 
     @Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.HIDDEN)
@@ -692,6 +792,7 @@ public class DefaultComponentStyling(
         fallbackGotItTooltipStyle(),
         fallbackGotItTooltipButtonStyle(),
         fallbackSearchTextField(),
+        fallbackTableStyle(),
     )
 
     @Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.HIDDEN)
@@ -771,6 +872,7 @@ public class DefaultComponentStyling(
         fallbackGotItTooltipStyle(),
         fallbackGotItTooltipButtonStyle(),
         fallbackSearchTextField(),
+        fallbackTableStyle(),
     )
 
     @Composable
@@ -820,6 +922,7 @@ public class DefaultComponentStyling(
             LocalGotItTooltipStyle provides gotItTooltipStyle,
             LocalGotItButtonStyle provides gotItButtonStyle,
             LocalSearchTextFieldStyle provides searchTextFieldStyle,
+            LocalTableStyle provides tableStyle,
         )
 
     override fun equals(other: Any?): Boolean {
@@ -870,6 +973,7 @@ public class DefaultComponentStyling(
         if (gotItTooltipStyle != other.gotItTooltipStyle) return false
         if (gotItButtonStyle != other.gotItButtonStyle) return false
         if (searchTextFieldStyle != other.searchTextFieldStyle) return false
+        if (tableStyle != other.tableStyle) return false
 
         return true
     }
@@ -917,6 +1021,7 @@ public class DefaultComponentStyling(
         result = 31 * result + gotItTooltipStyle.hashCode()
         result = 31 * result + gotItButtonStyle.hashCode()
         result = 31 * result + searchTextFieldStyle.hashCode()
+        result = 31 * result + tableStyle.hashCode()
         return result
     }
 
@@ -963,6 +1068,7 @@ public class DefaultComponentStyling(
             "badgeStyle=$badgeStyle, " +
             "gotItTooltipStyle=$gotItTooltipStyle, " +
             "gotItButtonStyle=$gotItButtonStyle, " +
-            "searchTextFieldStyle=$searchTextFieldStyle" +
+            "searchTextFieldStyle=$searchTextFieldStyle, " +
+            "tableStyle=$tableStyle" +
             ")"
 }

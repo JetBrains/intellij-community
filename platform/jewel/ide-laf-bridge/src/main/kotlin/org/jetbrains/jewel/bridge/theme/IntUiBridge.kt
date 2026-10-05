@@ -115,6 +115,7 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
         gotItTooltipStyle = readGotItTooltipStyle(),
         gotItButtonStyle = readGotItButtonStyle(),
         searchTextFieldStyle = readSearchTextFieldStyle(),
+        tableStyle = readTableStyle(),
     )
 }
 

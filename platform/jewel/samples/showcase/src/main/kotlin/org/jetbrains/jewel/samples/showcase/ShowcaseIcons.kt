@@ -112,6 +112,9 @@ public object ShowcaseIcons {
 
         /** Icon for the SpeedSearch component section. */
         public val speedSearch: PathIconKey = PathIconKey("icons/components/speedSearch.svg", ShowcaseIcons::class.java)
+
+        /** Icon for the LazyTable component section. */
+        public val table: PathIconKey = PathIconKey("icons/components/dataTables.svg", ShowcaseIcons::class.java)
     }
 
     /** Icon keys for programming language representations used in the showcase. */
