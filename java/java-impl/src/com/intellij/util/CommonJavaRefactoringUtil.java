@@ -38,6 +38,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.PsiDirectory;
@@ -382,8 +383,11 @@ public final class CommonJavaRefactoringUtil {
     while (true) {
       if (parent == null) return null;
       if (parent instanceof PsiStatement) break;
-      if (parent instanceof PsiExpression && parent.getParent() instanceof PsiLambdaExpression) return parent;
-      parent = parent.getParent();
+      PsiElement grandparent = parent.getParent();
+      if (parent instanceof PsiExpression && (grandparent instanceof PsiLambdaExpression || grandparent instanceof PsiCodeFragment)) {
+        return parent;
+      }
+      parent = grandparent;
     }
     PsiElement parentStatement = parent;
     while (parent instanceof PsiStatement && !(parent instanceof PsiSwitchLabeledRuleStatement)) {
