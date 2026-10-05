@@ -18,6 +18,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 public final class PyTypeParameterMapping {
@@ -27,7 +28,7 @@ public final class PyTypeParameterMapping {
     for (Couple<PyType> couple : mapping) {
       PyType expectedType = couple.getFirst();
       PyType actualType = couple.getSecond();
-      if (!isUnknown(expectedType) && !isUnknown(actualType) && haveIncompatibleVariadicKinds(expectedType, actualType)) {
+      if (!isAnyOrUnknown(expectedType) && !isAnyOrUnknown(actualType) && haveIncompatibleVariadicKinds(expectedType, actualType)) {
         throw new IllegalArgumentException("Mapping of incompatible types: " + expectedType + " -> " + actualType);
       }
     }
@@ -65,7 +66,7 @@ public final class PyTypeParameterMapping {
       }
       PyType leftmostActual = actualTypesDeque.peekFirst();
       if (leftmostExpected != null &&
-          !isUnknown(leftmostActual) &&
+          !isAnyOrUnknown(leftmostActual) &&
           leftmostExpected instanceof PyCallableParameterVariadicType ^ leftmostActual instanceof PyCallableParameterVariadicType) {
         break;
       }
@@ -85,7 +86,7 @@ public final class PyTypeParameterMapping {
       }
       PyType rightmostActual = actualTypesDeque.peekLast();
       if (rightmostExpected != null &&
-          !isUnknown(rightmostActual) &&
+          !isAnyOrUnknown(rightmostActual) &&
           rightmostExpected instanceof PyCallableParameterVariadicType ^ rightmostActual instanceof PyCallableParameterVariadicType) {
         break;
       }

@@ -393,6 +393,29 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
   @Nested
   inner class BitwiseOrUnions {
     @Test
+    @TestFor(issues = ["PY-92882"])
+    @TestCaseOptions(testFileName = "aaa.pyi")
+    fun `string operand of union in stub`() = test("""
+      class A: ...
+
+      def f(x: "A" | None) -> "A" | int: ...
+      #            └ WARNING Class 'Literal["A"]' does not define '__or__', so the '|' operator cannot be used on its instances FIXME # PY-92882
+      y: "A" | None
+      #      └ WARNING Class 'Literal["A"]' does not define '__or__', so the '|' operator cannot be used on its instances FIXME # PY-92882
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-92883"])
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON314)
+    fun `isinstance with bare Union since 314`() = test("""
+      from typing import Union
+
+      def f(x: object) -> bool:
+          return isinstance(x, Union)
+      #                        ^^^^^ WARNING Expected type 'type | UnionType | tuple[Unknown, ...]', got '_SpecialForm' instead FIXME # PY-92883
+      """)
+
+    @Test
     @TestFor(issues = ["PY-44974"])
     @TestCaseOptions(languageLevel = LanguageLevel.PYTHON39, assertRecursionPrevention = false)
     fun `bitwise-or union from branches with from future import`() = test("""
@@ -464,7 +487,6 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       
       Alias = Foo | None
       expr: Alias
-      #│    ^^^^^ WARNING Invalid type annotation
       #└ TYPE Unknown
       """.trimIndent())
 
@@ -481,7 +503,6 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
           ...
       
       expr: Foo | None
-      # │   ^^^^^^^^^^ WARNING Invalid type annotation
       # └ TYPE Unknown
       """.trimIndent())
 

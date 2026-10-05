@@ -522,30 +522,38 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     cache.put(type, Ref.create());
     List<PyClassLikeType> result = null;
     try {
-      final List<PyClassLikeType> bases = moveTypingGenericToTheEnd(removeNotNullDuplicates(type.getSuperClassTypes(context)));
-      final List<List<PyClassLikeType>> lines = new ArrayList<>();
+      final List<PyClassLikeType> bases = removeNotNullDuplicates(type.getSuperClassTypes(context));
+      final List<List<PyClassLikeType>> baseClassMROs = new ArrayList<>(bases.size());
       for (PyClassLikeType base : bases) {
-        if (base != null) {
+        if (base == null) {
+          baseClassMROs.add(Collections.emptyList());
+        }
+        else if (base.isDefinition()) {
+          baseClassMROs.add(mroLinearize(base, true, context, cache));
+        }
+        else {
           // Don't include ancestors of a metaclass instance
-          final List<PyClassLikeType> baseClassMRO;
-          if (base.isDefinition()) {
-            baseClassMRO = mroLinearize(base, true, context, cache);
-          }
-          else {
-            List<PyClassLikeType> metaclassInstanceMro = new ArrayList<>();
-            metaclassInstanceMro.add(base);
-            if (base instanceof PyClassType) {
-              final PyClassImpl pyClass = as(((PyClassType)base).getPyClass(), PyClassImpl.class);
-              if (pyClass != null) {
-                ContainerUtil.addIfNotNull(metaclassInstanceMro, pyClass.getImplicitSuper());
-              }
+          List<PyClassLikeType> metaclassInstanceMro = new ArrayList<>();
+          metaclassInstanceMro.add(base);
+          if (base instanceof PyClassType) {
+            final PyClassImpl pyClass = as(((PyClassType)base).getPyClass(), PyClassImpl.class);
+            if (pyClass != null) {
+              ContainerUtil.addIfNotNull(metaclassInstanceMro, pyClass.getImplicitSuper());
             }
-            baseClassMRO = metaclassInstanceMro;
           }
-          if (!baseClassMRO.isEmpty()) {
-            // mroMerge() updates passed MRO lists internally
-            lines.add(new LinkedList<>(baseClassMRO));
-          }
+          baseClassMROs.add(metaclassInstanceMro);
+        }
+      }
+      final int skippedGenericPos = findTypingGenericSkippedInMRO(bases, baseClassMROs);
+      if (skippedGenericPos >= 0) {
+        bases.remove(skippedGenericPos);
+        baseClassMROs.remove(skippedGenericPos);
+      }
+      final List<List<PyClassLikeType>> lines = new ArrayList<>();
+      for (List<PyClassLikeType> baseClassMRO : baseClassMROs) {
+        if (!baseClassMRO.isEmpty()) {
+          // mroMerge() updates passed MRO lists internally
+          lines.add(new LinkedList<>(baseClassMRO));
         }
       }
       if (!bases.isEmpty()) {
@@ -563,18 +571,26 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return result;
   }
 
-  private static @NotNull List<PyClassLikeType> moveTypingGenericToTheEnd(@NotNull List<PyClassLikeType> bases) {
-    int genericPos = ContainerUtil.indexOf(bases,
-                                           base -> base instanceof PyCustomType customType &&
-                                                   PyTypingTypeProvider.GENERIC.equals(customType.getClassQName()));
-    if (genericPos >= 0) {
-      List<PyClassLikeType> reorderedBases = new ArrayList<>(bases.size());
-      reorderedBases.addAll(bases.subList(0, genericPos));
-      reorderedBases.addAll(bases.subList(genericPos + 1, bases.size()));
-      reorderedBases.add(bases.get(genericPos));
-      return reorderedBases;
+  /**
+   * Returns the position of {@code typing.Generic} in {@code bases} when the MRO of a later base also contains it, or -1.
+   * At runtime, {@code __mro_entries__} of {@code typing.Generic[...]} removes this entry
+   * when a later base is a parameterized generic class.
+   * Otherwise, {@code typing.Generic} keeps its position.
+   */
+  private static int findTypingGenericSkippedInMRO(@NotNull List<PyClassLikeType> bases,
+                                                   @NotNull List<List<PyClassLikeType>> baseClassMROs) {
+    int genericPos = ContainerUtil.indexOf(bases, PyClassImpl::isTypingGeneric);
+    if (genericPos < 0) return -1;
+    for (int i = genericPos + 1; i < bases.size(); i++) {
+      if (ContainerUtil.exists(baseClassMROs.get(i), PyClassImpl::isTypingGeneric)) {
+        return genericPos;
+      }
     }
-    return bases;
+    return -1;
+  }
+
+  private static boolean isTypingGeneric(@Nullable PyClassLikeType type) {
+    return type instanceof PyCustomType customType && PyTypingTypeProvider.GENERIC.equals(customType.getClassQName());
   }
 
   private static @NotNull <T> List<T> removeNotNullDuplicates(@NotNull List<T> list) {

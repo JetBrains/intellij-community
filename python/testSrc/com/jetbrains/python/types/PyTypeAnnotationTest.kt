@@ -6,7 +6,10 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.inspections.PyNewStyleGenericSyntaxInspection
+import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.inspections.PyTypeHintsInspection
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Test
 
@@ -196,7 +199,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
   )
 
   @Test
-  @TestFor(issues = ["PY-28227"])
+  @TestFor(issues = ["PY-28227", "PY-87570"])
   fun `plain Generic inheritance`() = test("""
     from typing import Generic
 
@@ -208,6 +211,9 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class C(B):
     #       └ ERROR Cannot inherit from plain 'Generic'
         pass
+
+    d: Generic
+    #  ^^^^^^^ WARNING 'Generic' cannot be used as a type expression
     """.trimIndent())
 
   @Test
@@ -389,7 +395,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestFor(issues = ["PY-76866"])
+  @TestFor(issues = ["PY-76866", "PY-87570"])
   fun `unbound type parameter`() = test("""
     from typing import Generic, TypeVar, TypeVarTuple, ParamSpec, TypeAlias, Unpack
 
@@ -439,10 +445,20 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
         def do_something(self, x: S) -> S: ...
         def do_something_else(self, other: 'Bar[T]'): ...
+
+    def f3(x: Missing[T]) -> Missing[T]: ...
+    #         │              ^^^^^^^ ERROR Unresolved reference 'Missing'
+    #         ^^^^^^^ ERROR Unresolved reference 'Missing'
+
+    from missing_module import Imported
+    #    │                     ^^^^^^^^ ERROR Unresolved reference 'Imported'
+    #    ^^^^^^^^^^^^^^ ERROR Unresolved reference 'missing_module'
+
+    def f4(x: Imported[T]) -> Imported[T]: ...
     """.trimIndent())
 
   @Test
-  @TestFor(issues = ["PY-78878"])
+  @TestFor(issues = ["PY-78878", "PY-87570"])
   fun `Generic class can not use type variables from outer scope`() = test("""
     from typing import TypeVar, Generic
 
@@ -462,6 +478,13 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     def a_fun_new_syntax2[U](u: U) -> None:
         class MyGeneric(Generic[U]): ...
     #         ^^^^^^^^^ WARNING Some type variables (U) are already in use by an outer scope
+
+    class Box[U]:
+        def get(self, u: U) -> U: ...
+
+    def a_fun_new_syntax3[U]() -> None:
+        class Child(Box[U]):
+            def get(self, u: U) -> U: ...
 
     class Outer(Generic[T]):
         class Bad(list[T]): ...
@@ -679,6 +702,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-44974"])
+  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
   fun `instance and class checks on Union`() = test("""
     from typing import Union
 
@@ -1212,7 +1236,6 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
         pass
 
     def e(x: Annotated[str, list[dict(key="value")]]):
-    #                            ^^^^^^^^^^^^^^^^^ ERROR Invalid type argument
        pass
 
     def f(x: Annotated[dict(key=1), ""]):
@@ -1621,7 +1644,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestFor(issues = ["PY-35235"])
+  @TestFor(issues = ["PY-35235", "PY-87570"])
   fun `typing extensions Literal`() = test("""
     from typing_extensions import Literal, LiteralString
 
@@ -1649,6 +1672,8 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     j: Literal[False]
     k: Literal[None]
     l: Literal[Literal[-3]]
+    o = Literal["x", Literal["y", None]]
+    p: o
 
     ONE = Literal[1]
 
@@ -3534,6 +3559,11 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class MyList(list): ...
     x = MyList[int]()
     #          ^^^ WARNING Class 'MyList' is not generic
+
+    class Plain: ...
+    y: Plain[int]
+    #       │^^^ WARNING FIXME Class 'Plain' is not generic # PY-92894
+    #       └ WARNING Class 'type' does not define '__getitem__', so the '[]' operator cannot be used on its instances
     """)
 
   @Test
@@ -4151,11 +4181,10 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestFor(issues = ["PY-93096"], classes = [PyTypingAnnotationInjector::class])
+  @TestFor(issues = ["PY-93096", "PY-87570"], classes = [PyTypingAnnotationInjector::class])
   fun `quoted type in a type alias statement is resolved`() = test("""
     type X = list["Undefined"]
-    #             │^^^^^^^^^ WARNING Unresolved reference 'Undefined'
-    #             ^^^^^^^^^^^ ERROR Invalid type argument
+    #              ^^^^^^^^^ WARNING Unresolved reference 'Undefined'
     """.trimIndent())
 
   @Test
@@ -4231,11 +4260,25 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestFor(issues = ["PY-76851"])
+  @TestFor(issues = ["PY-76851", "PY-87570"])
   fun `class bound mismatch`() = test("""
+    from typing import Generic, TypeVar
+
     class C[T: str]: ...
     c = C[int]()
     #     ^^^ WARNING Expected type 'T ≤: str', got 'int' instead
+
+    class Base: ...
+    class Thing(Base): ...
+
+    K = TypeVar("K")
+    V = TypeVar("V")
+    B = TypeVar("B", bound=Base)
+
+    class Registry(Generic[K, V]): ...
+    class BaseRegistry(Registry[type[B], B]): ...
+
+    r: BaseRegistry[Thing]
     """.trimIndent())
 
   @Test
@@ -4279,10 +4322,12 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestFor(issues = ["PY-76851"])
+  @TestFor(issues = ["PY-76851", "PY-87570"])
   fun `simple recursive type alias statement`() = test("""
     type TypeAlias = TypeAlias
     #                ^^^^^^^^^ WARNING Invalid type annotation
+    type Quoted = "Quoted"
+    #             ^^^^^^^^ WARNING Invalid type annotation
     """.trimIndent())
 
   @Test
@@ -5011,11 +5056,17 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestFor(issues = ["PY-86310"])
+  @TestFor(issues = ["PY-86310", "PY-87570"])
   fun `target expression with reassignment not processed as implicit type alias`() = test("""
     b = []
     a = b
     _ = a[0] # No error expected
+
+    c = None
+    if b:
+        c = [1, 2]
+    _ = c[0]
+    #    └ WEAK-WARNING Member 'None' of 'list[int] | None' does not have attribute '__getitem__'
     """.trimIndent())
 
   @Test
@@ -5374,9 +5425,9 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestFor(issues = ["PY-76850"])
+  @TestFor(issues = ["PY-76850", "PY-87570"])
   fun `ParamSpec components valid usage`() = test("""
-    from typing import Callable, ParamSpec
+    from typing import Annotated, Callable, ParamSpec
 
     P = ParamSpec("P")
 
@@ -5388,6 +5439,15 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
 
     def twice(f: Callable[P, int], *args: P.args, **kwargs: P.kwargs) -> int:
         return f(*args, **kwargs)
+
+    def outer(f: Callable[P, int]) -> None:
+        def quoted(*args: "P.args", **kwargs: P.kwargs) -> None:
+            f(*args, **kwargs)
+    #         ^^^^^ WARNING Unexpected argument (from ParamSpec 'P') FIXME # PY-92888
+        def annotated(*args: Annotated[P.args, ""], **kwargs: "P.kwargs") -> None:
+            f(*args, **kwargs)
+    #         │      ^^^^^^^^ WARNING Unexpected argument (from ParamSpec 'P') FIXME # PY-92888
+    #         ^^^^^ WARNING Unexpected argument (from ParamSpec 'P') FIXME # PY-92888
     """.trimIndent())
 
   @Test
@@ -5475,6 +5535,817 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
       def f(Color: Literal[Color.RED]) -> None: ...
       """.trimIndent(),
   )
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  @TestCaseOptions(testFileName = "aaa.pyi")
+  @TestInspections(disableInspections = [PyUnresolvedReferencesInspection::class])
+  fun `string operand of union not reported in stub`() = test("""
+    class A: ...
+
+    def f(x: "A" | None) -> "A" | int: ...
+    y: "A" | None
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `qualified reference with alias name is not circular reference`() = test(
+    """
+    import other
+
+    type A = int | other.A
+    type B = int | B
+    #              └ WARNING Circular reference
+    """.trimIndent(),
+    "other.py" to """
+      type A = str
+      """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `TypeAlias in class body`() = test("""
+    from typing import TypeAlias
+
+    class C:
+        Alias: TypeAlias = int
+
+        def m(self, x: Alias) -> None: ...
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  @TestInspections(disableInspections = [PyTypeCheckerInspection::class])
+  fun `TypeAlias in class body uses bound type variable`() = test("""
+    from typing import Generic, TypeAlias, TypeVar
+
+    T = TypeVar("T")
+    S = TypeVar("S")
+
+    class Outer(Generic[T]):
+        a1: TypeAlias = list[T]
+    #   ^^ WARNING Type alias in a class body cannot use bound type variables
+        a2: TypeAlias = list[int]
+        a3: TypeAlias = list[S]
+        a4: TypeAlias = "dict[S, T]"
+    #   ^^ WARNING Type alias in a class body cannot use bound type variables
+
+        def m(self, x: a3[int]) -> None: ...
+    #               └ TYPE list[int]
+
+    class Plain:
+        b1: TypeAlias = list[T]
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `typing Self with quoted Self annotation of self and cls`() = test("""
+    from typing import Self
+
+    class A:
+        def m(self: "Self", other: Self) -> Self: ...
+
+        @classmethod
+        def c(cls: "type[Self]") -> Self: ...
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `TypeVarTuple unpacked with aliased Unpack`() = test("""
+    from typing import TypeVarTuple, Unpack as U
+
+    Ts = TypeVarTuple("Ts")
+
+    def f(*args: U[Ts]) -> tuple[U[Ts]]: ...
+    def g(*args: Ts) -> None: ...
+    #            ^^ WARNING Invalid type annotation
+    #            ^^ WARNING TypeVarTuple must always be unpacked
+    def h(*args: *int) -> tuple[*int]: ...
+    #            │              ^^^^ ERROR Invalid type argument
+    #            ^^^^ WARNING Invalid type annotation
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `subscription in Annotated metadata is not checked as type`() = test("""
+    from typing import Annotated, Generic, TypeVar
+
+    T = TypeVar("T")
+
+    class Box(Generic[T]): ...
+
+    x: Annotated[int, Box[1]]
+    y: Annotated[Box[1], "meta"]
+    #                └ ERROR Invalid type argument
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `ellipsis for ParamSpec of old-style type alias`() = test("""
+    from collections.abc import Callable
+    from typing import ParamSpec, TypeVar
+
+    P = ParamSpec("P")
+    T = TypeVar("T")
+
+    Alias = Callable[P, T]
+
+    x: Alias[..., int]
+    y: Alias[[int, str], int]
+    z: Alias[[int], ...]
+    #               ^^^ ERROR Invalid type argument
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `instance and class checks on type variables bound to class objects`() = test("""
+    from typing import Generic, TypeVar
+
+    T = TypeVar("T")
+    U = TypeVar("U")
+    TClass = TypeVar("TClass", bound=type)
+    TFoo = TypeVar("TFoo", bound=type[int] | type[str])
+
+    def f1(a: type[T], b: type[U], x: object) -> bool:
+        return isinstance(x, (a, b))
+
+    def f2(c: TClass, d: TFoo, x: object) -> bool:
+        return isinstance(x, c) or isinstance(x, d)
+
+    def f3[C: type](c: C, x: object) -> bool:
+        return isinstance(x, c)
+
+    class Registry(Generic[T]):
+        def __init__(self, types: tuple[type[T], ...]) -> None:
+            self.types = types
+
+        def check(self, x: object) -> bool:
+            return isinstance(x, self.types)
+
+    def f4(p: T, x: object) -> bool:
+        return isinstance(x, p)
+    #                        └ ERROR Type variables cannot be used with instance and class checks
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-86793"])
+  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON314)
+  @TestInspections(disableInspections = [PyTypeCheckerInspection::class])
+  fun `instance and class checks on bare Union since 314`() = test("""
+    from typing import Optional, Union
+
+    B = Union
+
+    def f(x: object, c: type) -> bool:
+        return isinstance(x, Union) or issubclass(c, B) or isinstance(x, Optional)
+    #                                                                    ^^^^^^^^ ERROR 'Optional' cannot be used with instance and class checks
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"], classes = [PyNewStyleGenericSyntaxInspection::class])
+  fun `new-style method uses type variable of old-style generic class`() = test("""
+    from collections.abc import Callable
+    from typing import Generic, TypeVar
+
+    T = TypeVar("T")
+    K = TypeVar("K")
+
+    class Old(Generic[T]):
+        def map[U](self, f: Callable[[T], U]) -> "Old[U]": ...
+
+        def bad[U](self, k: K) -> U: ...
+    #                       └ ERROR Mixing traditional and new-style type variables is not allowed
+
+    def outer(x: T) -> None:
+        def inner[U](y: T, z: U) -> T: ...
+
+    class Outer(Generic[T]):
+        class Inner[U](dict[T, U]):
+            def method[V](self, a: T, b: U, c: V) -> T | U | V: ...
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `TypeAliasType is a type alias`() = test("""
+    from typing import TypeAliasType, TypeVar
+    import typing_extensions
+
+    T = TypeVar("T")
+
+    TA1 = TypeAliasType("TA1", list[int])
+    TA2 = TypeAliasType("TA2", dict[str, T], type_params=(T,))
+    TA3 = typing_extensions.TypeAliasType("TA3", int | str)
+
+    r1: TA1
+    #\ TYPE list[int]
+    r2: TA2[int]
+    #\ TYPE dict[str, int]
+    r3: list[TA3]
+    #\ TYPE list[int | str]
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `TypeAliasType is a type alias multi-file`() = test(
+    """
+    from aliases import TA1, TA2
+
+    r1: list[TA1]
+    #\ TYPE list[list[int]]
+    r2: TA2[str]
+    #\ TYPE dict[str, str]
+    """.trimIndent(),
+    "aliases.py" to """
+      from typing import TypeAliasType, TypeVar
+
+      T = TypeVar("T")
+
+      TA1 = TypeAliasType("TA1", list[int])
+      TA2 = TypeAliasType("TA2", dict[str, T], type_params=(T,))
+      """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-91093"])
+  fun `NewType re-exported from another module`() = test(
+    """
+    from mytyping import NewType
+
+    UserId = NewType("UserId", int)
+    a: UserId
+    #\ TYPE UserId
+    b: list[UserId]
+    """.trimIndent(),
+    "mytyping.py" to """
+      from typing import NewType as NewType
+      """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-91093"])
+  fun `NewType re-exported from another module and declared in another module`() = test(
+    """
+    from models import UserId
+
+    a: UserId
+    #\ TYPE UserId
+    b: list[UserId]
+    """.trimIndent(),
+    "models.py" to """
+      from mytyping import NewType
+
+      UserId = NewType("UserId", int)
+      """.trimIndent(),
+    "mytyping.py" to """
+      from typing import NewType as NewType
+      """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-91093"])
+  fun `function named NewType is not typing NewType`() = test(
+    """
+    from factories import NewType
+
+    UserId = NewType("UserId", int)
+    a: UserId
+    #  ^^^^^^ WARNING Invalid type annotation
+    """.trimIndent(),
+    "factories.py" to """
+      def NewType(name: str, tp: type) -> object: ...
+      """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-90370"])
+  fun `typing_extensions NewType in type statement`() = test("""
+    import typing_extensions
+
+    _Name = typing_extensions.NewType("_Name", str)
+    type D = dict[_Name, str]
+    d: D
+    #\ TYPE dict[_Name, str]
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-84275"])
+  fun `parenthesized implicit type alias`() = test("""
+    MyType = (int | float)
+
+    def fn(v: MyType) -> MyType: ...
+    x: MyType
+    #\ TYPE int | float
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-90951"])
+  fun `implicit type alias parameterized with TypeVar that has default`() = test("""
+    from typing import TypeVar
+
+    T = TypeVar("T", default=int)
+    Foo = list[T]
+    Bar = list[Foo[T]]
+
+    b: Bar[str]
+    #\ TYPE list[list[str]]
+    c: Bar
+    #\ TYPE list[list[int]]
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `unresolved references in type expressions are reported only as unresolved references`() = test("""
+    from typing import cast, TypeVar, ParamSpec, Callable
+
+    a1: Unresolved | int
+    #   ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    a2: list[Unresolved[int]]
+    #        ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    a3: dict[str, Unresolved | None]
+    #             ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    a4: "list[Unresolved]"
+    #         ^^^^^^^^^^ WARNING Unresolved reference 'Unresolved'
+    a5: tuple[int, *Unresolved]
+    #               ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    a6: Callable[[Unresolved], int]
+    #             ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    def f(*args: *Unresolved): ...
+    #             ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    c1 = cast(Unresolved, 1)
+    #         ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    c2 = cast("Unresolved", 1)
+    #          ^^^^^^^^^^ WARNING Unresolved reference 'Unresolved'
+    c3 = cast(Unresolved[int], 1)
+    #         ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    type S1 = Unresolved[int]
+    #         ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    type S2 = Unresolved
+    #         ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    T1 = TypeVar("T1", default=Unresolved)
+    #                          ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    T2 = TypeVar("T2", default=Unresolved[int])
+    #                          ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    P1 = ParamSpec("P1", default=[Unresolved])
+    #                             ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    def g[T = Unresolved](): ...
+    #         ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `names from module with __getattr__ are not reported in type expressions`() = test(
+    """
+    from typing import cast
+    import mod
+    from mod import X
+
+    a1: X
+    a2: list[mod.X]
+    a3: mod.X | None
+    c1 = cast(X, 1)
+    c2 = cast(mod.X, 1)
+    type S1 = X[int]
+    """.trimIndent(),
+    "mod.pyi" to """
+      from typing import Any
+      def __getattr__(name: str) -> Any: ...
+      """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `functional type forms and calls of unknown functions are not reported in type expressions`() = test(
+    """
+    from typing import Literal
+    from forms import Built, Color, Made, Point, Pt, Unknown
+
+    a1: Color
+    a2: Literal[Color.RED]
+    a3: Point
+    a4: list[Pt]
+    a5: Unknown | None
+    a6: Made
+    a7: Built
+    type S1 = Unknown[int]
+    """.trimIndent(),
+    "forms.py" to """
+      import collections
+      from enum import Enum
+      from typing import NamedTuple
+      from missing import factory
+
+      class Meta(type): ...
+
+      Color = Enum("Color", "RED GREEN")
+      Point = collections.namedtuple("Point", "x y")
+      Pt = NamedTuple("Pt", [("x", int)])
+      Unknown = factory()
+      Made = Meta("Made", (), {})
+      Built = type("Built", (), {})
+      """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `variables, functions and modules in type expressions are reported`() = test("""
+    import os
+    from typing import cast, TypeVar
+
+    var = 1
+    def func(): ...
+    def make(): ...
+    made = make()
+    count: int = 0
+    class Thing: ...
+    thing = Thing()
+    for item in range(3): ...
+    with open("f") as handle: ...
+
+    a1: var
+    #   ^^^ WARNING Invalid type annotation
+    a2: func
+    #   ^^^^ WARNING Invalid type annotation
+    a3: os
+    #   ^^ WARNING Invalid type annotation
+    a4: var | int
+    #   ^^^^^^^^^ WARNING Invalid type annotation
+    a5: var[int]
+    #   │  └ WARNING Class 'Literal[1]' does not define '__getitem__', so the '[]' operator cannot be used on its instances
+    #   ^^^^^^^^ WARNING Invalid type annotation
+    a6: func[int]
+    #   │   └ WARNING Cannot find reference '[' in '() -> Unknown'
+    #   ^^^^^^^^^ WARNING Invalid type annotation
+    a7: list[var]
+    #        ^^^ ERROR Parameters to generic types must be types
+    a8: made
+    #   ^^^^ WARNING Invalid type annotation
+    a9: count
+    #   ^^^^^ WARNING Invalid type annotation
+    a10: thing
+    #    ^^^^^ WARNING Invalid type annotation
+    a11: item
+    #    ^^^^ WARNING Invalid type annotation
+    a12: handle
+    #    ^^^^^^ WARNING Invalid type annotation
+    c1 = cast(var, 1)
+    #         ^^^ WARNING Expected a type
+    type S1 = var
+    #         ^^^ WARNING Invalid type annotation
+    type S2 = var[int]
+    #         │  └ WARNING Class 'Literal[1]' does not define '__getitem__', so the '[]' operator cannot be used on its instances
+    #         ^^^^^^^^ WARNING Invalid type annotation
+    T1 = TypeVar("T1", default=var)
+    #                          ^^^ WARNING Default type must be a type expression
+
+    class Shapes:
+        def object[S](self, target: object, new: S) -> S: ...
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `multi-line parenthesized type alias with comments`() = test("""
+    from typing import TypeAlias
+
+    RGBAColorType: TypeAlias = (
+        str |  # a hex string
+        tuple[int, int, int, int]
+    )
+    ColorType: TypeAlias = RGBAColorType | None
+    Shade = (
+        int  # an implicit alias
+        | str
+    )
+
+    def paint(color: ColorType | None = None) -> None: ...
+    x: ColorType
+    #\ TYPE str | tuple[int, int, int, int] | None
+    y: Shade
+    #\ TYPE int | str
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `multi-line parenthesized type alias with comments from another module`() = test(
+    """
+    from colors import ColorType, Shade
+
+    def paint(color: ColorType | None = None) -> None: ...
+    x: ColorType
+    #\ TYPE str | tuple[int, int, int, int] | None
+    y: Shade
+    #\ TYPE int | str
+    """.trimIndent(),
+    "colors.py" to """
+      from typing import TypeAlias
+
+      RGBAColorType: TypeAlias = (
+          str |  # a hex string
+          tuple[int, int, int, int]
+      )
+      ColorType: TypeAlias = RGBAColorType | None
+      Shade = (
+          int  # an implicit alias
+          | str
+      )
+      """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  @TestCaseOptions(testFileName = "aaa.pyi")
+  fun `multi-line parenthesized type alias as TypeVar bound in stub`() = test(
+    """
+    from defs import Series
+
+    def area() -> Series[float]: ...
+    """.trimIndent(),
+    "defs.pyi" to """
+      import datetime
+      from typing import Generic, TypeAlias
+      from typing_extensions import TypeVar
+
+      SeriesDType: TypeAlias = (
+          str
+          | bytes
+          | float
+          | datetime.date  # a comment
+      )
+      S1 = TypeVar("S1", bound=SeriesDType)
+
+      class Series(Generic[S1]): ...
+      """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  @TestCaseOptions(assertRecursionPrevention = false)
+  fun `name assigned to itself in type expressions`() = test(
+    """
+    import shim as cython
+
+    str = str
+    flag = cython.declare(cython.const[cython.char], 0)
+    a: cython.char
+    b: list[cython.int]
+    c: list[str]
+    """.trimIndent(),
+    "shim.py" to """
+      from typing import Any, Generic, TypeVar
+
+      _T = TypeVar("_T")
+
+      int = int
+      char = int
+
+      class const(Generic[_T]): ...
+
+      def declare(t: Any, value: Any = None) -> Any: ...
+      """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  @TestCaseOptions(testFileName = "aaa.pyi")
+  fun `class members do not shadow names in stub annotations`() = test("""
+    class Envelope:
+        @property
+        def ur(self) -> tuple[float, float]: ...
+    #                        └ WEAK-WARNING Member 'property' of 'property | type[tuple]' does not have attribute '__getitem__' FIXME # PY-92889
+        @property
+        def tuple(self) -> tuple[float, float]: ...
+    #                           └ WEAK-WARNING Member 'property' of 'property | type[tuple]' does not have attribute '__getitem__' FIXME # PY-92889
+
+    class Finder:
+        def check(self) -> list[str]: ...
+    #                          └ WEAK-WARNING Member '(self: Self@Finder) -> list[Unknown]' of '(self: Self@Finder) -> list[Unknown] | type[list]' does not have attribute '__getitem__' FIXME # PY-92889
+        def list(self) -> list[str]: ...
+    #                         └ WEAK-WARNING Member '(self: Self@Finder) -> list[Unknown]' of '(self: Self@Finder) -> list[Unknown] | type[list]' does not have attribute '__getitem__' FIXME # PY-92889
+        def after(self) -> list[str]: ...
+    #                          └ WARNING Cannot find reference '[' in '(self: Self) -> list' FIXME # PY-92889
+
+    _str = str
+
+    def str(value: float) -> _str: ...
+    #                        ^^^^ WARNING Invalid type annotation FIXME # PY-92891
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `class members do not shadow names in postponed annotations`() = test("""
+    from __future__ import annotations
+
+    class Model:
+        def model_fields(self) -> dict[str, int]:
+    #                                 └ WEAK-WARNING Member '(self: Self@Model) -> dict[str, int]' of '(self: Self@Model) -> dict[str, int] | type[dict]' does not have attribute '__getitem__' FIXME # PY-92889
+            return {}
+
+        def dict(self) -> dict[str, int]:
+    #                         └ WEAK-WARNING Member '(self: Self@Model) -> dict[str, int]' of '(self: Self@Model) -> dict[str, int] | type[dict]' does not have attribute '__getitem__' FIXME # PY-92889
+            return {}
+
+        def after(self) -> dict[str, int]:
+    #                          └ WARNING Cannot find reference '[' in '(self: Self) -> dict' FIXME # PY-92889
+            return {}
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
+  fun `class member shadows name in annotations evaluated at definition time`() = test("""
+    class Envelope:
+        @property
+        def ur(self) -> tuple[float, float]:
+            return 0.0, 0.0
+
+        @property
+        def tuple(self) -> tuple[float, float]:
+            return 0.0, 0.0
+
+        @property
+        def after(self) -> tuple[float, float]:
+    #                      │    └ WARNING Class 'property' does not define '__getitem__', so the '[]' operator cannot be used on its instances
+    #                      ^^^^^^^^^^^^^^^^^^^ WARNING Invalid type annotation
+            return 0.0, 0.0
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `Any as ParamSpec argument`() = test("""
+    from typing import Any, Generic, ParamSpec, TypeVar
+
+    _P = ParamSpec("_P")
+    _R = TypeVar("_R")
+
+    class Task(Generic[_P, _R]): ...
+
+    def f(a: staticmethod[Any, Any], b: classmethod[Any, Any, Any], c: Task[Any, Any]) -> None: ...
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  @TestCaseOptions(testFileName = "aaa.pyi")
+  fun `type alias of union of Concatenate aliases`() = test("""
+    from collections.abc import Callable
+    from typing import Any, Concatenate, ParamSpec, TypeAlias, TypeVar
+
+    _R = TypeVar("_R")
+    _P = ParamSpec("_P")
+
+    _Handler: TypeAlias = Callable[Concatenate[_R, _P], str]
+    _Method: TypeAlias = Callable[Concatenate[Any, _R, _P], str]
+    _Either: TypeAlias = _Handler[_R, _P] | _Method[_R, _P]
+
+    def wrap(func: _Either[int, _P]) -> None: ...
+    def plain(func: _Either[int, []]) -> None: ...
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `TypeVar with default under TYPE_CHECKING in another module`() = test(
+    """
+    from defs import ParamType
+
+    class EmailParamType(ParamType[str]): ...
+    """.trimIndent(),
+    "defs.py" to """
+      import sys
+      import typing as t
+
+      import typing_extensions as te
+
+      _V = t.TypeVar("_V", covariant=True)
+
+      if t.TYPE_CHECKING:
+          _In = te.TypeVar("_In", contravariant=True, default=t.Any)
+      elif sys.version_info >= (3, 13):
+          _In = t.TypeVar("_In", contravariant=True, default=t.Any)
+      else:
+          _In = t.TypeVar("_In", contravariant=True)
+
+      class ParamType(t.Generic[_V, _In]): ...
+      """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `implicit generic type alias from another module as base class`() = test(
+    """
+    from typing import TypeVar
+    from box import Box1
+    from io_box import IO
+
+    _T = TypeVar("_T")
+
+    def f(x: IO[_T]) -> IO[_T]: ...
+    x: IO[int]
+    #\ TYPE IO[int]
+    Box1
+    #\ TYPE type[Box[_A, int]]
+    """.trimIndent(),
+    "box.py" to """
+      from typing import Generic, TypeVar
+
+      _A = TypeVar("_A")
+      _B = TypeVar("_B")
+
+      class Box(Generic[_A, _B]): ...
+
+      Box1 = Box[_A, int]
+      """.trimIndent(),
+    "io_box.py" to """
+      from typing import TypeVar
+      from box import Box1
+
+      _V = TypeVar("_V")
+
+      class IO(Box1[_V]): ...
+      """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  @TestCaseOptions(assertRecursionPrevention = false)
+  fun `base class parameterized with quoted reference to its subclass`() = test(
+    """
+    from typing import TypeVar
+    from bundle import Bundle
+
+    _T = TypeVar("_T")
+
+    class CompositeBundle(Bundle[_T]): ...
+    b: Bundle[int]
+    #\ TYPE Bundle[int]
+    """.trimIndent(),
+    "bundle.py" to """
+      from typing import Generic, TypeVar
+
+      _T = TypeVar("_T")
+
+      class Inspectable(Generic[_T]): ...
+      class Role(Generic[_T]): ...
+      class Bundle(Role[_T], Inspectable["Bundle[_T]"]): ...
+      """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `nested function uses type variables from return type of outer function through generic alias`() = test(
+    """
+    from collections.abc import Callable
+    from typing import TypeVar
+    from kinds import Kind2
+
+    _T1 = TypeVar("_T1")
+    _T2 = TypeVar("_T2")
+    _K = TypeVar("_K")
+
+    def outer(function: Callable[[_T1], int]) -> Callable[[Kind2[_K, _T1, _T2]], Kind2[_K, _T1, _T2]]:
+        def factory(container: Kind2[_K, _T1, _T2]) -> Kind2[_K, _T1, _T2]:
+            return container
+
+        return factory
+    """.trimIndent(),
+    "kinds.py" to """
+      from typing import Any, Generic, TypeVar
+
+      _I = TypeVar("_I")
+      _A1 = TypeVar("_A1")
+      _A2 = TypeVar("_A2")
+      _A3 = TypeVar("_A3")
+
+      class KindN(Generic[_I, _A1, _A2, _A3]): ...
+
+      Kind2 = KindN[_I, _A1, _A2, Any]
+      """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-87570"])
+  fun `class with generic bases that list Generic before a non-generic base`() = test("""
+    from typing import Generic, TypeVar
+
+    T = TypeVar("T")
+    K = TypeVar("K")
+
+    class Common: ...
+    class Selectable(Common): ...
+    class FromClause(Generic[K], Selectable): ...
+    class Expression(Generic[T]): ...
+    class Column(Expression[T], Common): ...
+
+    class Function(FromClause, Column[T]): ...
+
+    f: Function[int]
+    #\ TYPE Function[int]
+
+    class Base:
+        def __init__(self, x: int) -> None: ...
+
+    class Box(Generic[T], Base): ...
+
+    Box("x")
+    #   ^^^ WARNING Expected type 'int', got 'Literal["x"]' instead
+    """.trimIndent())
 
   companion object {
     private const val TRIPLE_QUOTE = "\"\"\""

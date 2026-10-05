@@ -23,6 +23,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.PyCustomMemberUtils;
@@ -256,6 +257,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     if (inherited) {
       for (PyClassLikeType type : myClass.getAncestorTypes(context)) {
+        // `typing.Generic` gives the members of `object`, so it must not hide the members of the later bases
+        if (type instanceof PyCustomType customType && PyTypingTypeProvider.GENERIC.equals(customType.getClassQName())) {
+          continue;
+        }
         if (type instanceof PyClassType) {
           if (!myIsDefinition) {
             type = type.toInstance();
