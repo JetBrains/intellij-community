@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.idea.AppMode
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.Service
@@ -9,12 +10,14 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.xmlb.annotations.XMap
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmStatic
 
 @Service(Service.Level.APP)
 @State(name = "PluginUpdateExclusionService", storages = [Storage("pluginUpdateExclusions.xml", roamingType = RoamingType.DISABLED)])
@@ -31,6 +34,11 @@ class PluginUpdateExclusionService :
   companion object {
     @JvmStatic
     fun getInstance(): PluginUpdateExclusionService = service()
+
+    @JvmStatic
+    fun isFunctionalitySupported(): Boolean {
+      return AppMode.isMonolith() && Registry.`is`("platform.enable.plugin.update.mode.feature", false)
+    }
   }
 
   val updateExclusionChanges: Flow<Unit>
@@ -40,18 +48,19 @@ class PluginUpdateExclusionService :
     )
 
   fun getExclusion(pluginId: PluginId): Exclusion? {
-    return state.excludedPlugins[pluginId.idString]
+    return if (!isFunctionalitySupported()) null else state.excludedPlugins[pluginId.idString]
   }
 
   fun allowedUpdate(pluginId: PluginId): Boolean {
-    return getExclusion(pluginId) != Exclusion.FromUpdate
+    return if (!isFunctionalitySupported()) true else getExclusion(pluginId) != Exclusion.FromUpdate
   }
 
   fun allowedAutoupdate(pluginId: PluginId): Boolean {
-    return getExclusion(pluginId) == null
+    return if (!isFunctionalitySupported()) true else getExclusion(pluginId) == null
   }
 
   fun setExcluded(pluginId: PluginId, exclusion: Exclusion?) {
+    if (!isFunctionalitySupported()) return
     val oldValue = state.excludedPlugins[pluginId.idString]
     if (oldValue == exclusion) return
     if (exclusion == null) {
@@ -60,15 +69,16 @@ class PluginUpdateExclusionService :
     else {
       state.excludedPlugins[pluginId.idString] = exclusion
     }
-    updateExclusionChanges.tryEmit(Unit)
+    notifyStateUpdated()
   }
 
   override fun loadState(state: PluginUpdateExclusionState) {
     super.loadState(state)
-    notifyStateUpdated(updateExclusionChanges)
+    notifyStateUpdated()
   }
 
-  private fun notifyStateUpdated(updateExclusionChanges: MutableSharedFlow<Unit>) {
+  private fun notifyStateUpdated() {
+    if (!isFunctionalitySupported()) return
     updateExclusionChanges.tryEmit(Unit)
   }
 }

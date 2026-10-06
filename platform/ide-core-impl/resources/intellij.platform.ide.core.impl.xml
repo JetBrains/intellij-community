@@ -316,6 +316,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                   Set to 0 to show immediately; the value is capped at the system multi-click interval."/>
     <registryKey key="platform.enable.plugin.update.source.feature" defaultValue="true"
                  description="Enables plugin update sources feature (IJPL-171317)"/>
+    <registryKey key="platform.enable.plugin.update.mode.feature" defaultValue="true"
+                 description="Enables plugin update mode feature (IJPL-239473)"/>
     <registryKey key="platform.limit.plugin.update.source.by.configured.one" defaultValue="true"
                  description="Restricts updating plugins to the configured source (IJPL-171317)"/>
     <registryKey key="platform.make.plugin.update.source.visible.in.ui" defaultValue="true"

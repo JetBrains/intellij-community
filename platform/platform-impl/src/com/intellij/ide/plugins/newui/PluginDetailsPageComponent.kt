@@ -46,6 +46,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.updateSettings.impl.PluginUpdateExclusionService
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.getPresentableName
 import com.intellij.openapi.util.Disposer
@@ -637,7 +638,7 @@ class PluginDetailsPageComponent private constructor(
     nameAndButtons.addButtonComponent(enableDisableController!!.uninstallButton.also { myUninstallButton = it })
 
     val autoUpdateEnabledProvider = pluginsAutoUpdateEnabledProvider
-    if (autoUpdateEnabledProvider != null) {
+    if (PluginUpdateExclusionService.isFunctionalitySupported() && autoUpdateEnabledProvider != null) {
       val updateButton = PluginUpdateModeButton(
         pluginIdProvider = { plugin?.pluginId },
         pluginModel = pluginModel,

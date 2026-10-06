@@ -898,6 +898,7 @@ Untested: No focused test verifies text selection and copying in Additional Info
 
 - Unified installed plugin details must show an update-mode action.
 - The update-mode action must be hidden when the plugin is not installed or is pending uninstall.
+- The update-mode action must be hidden when plugin update exclusions are not supported.
 - The popup must show Manual Update and Ignore Updates.
 - The popup must show Auto-Update only when automatic plugin updates are enabled.
 - Ignore Updates is the No Updates mode.
