@@ -22,7 +22,7 @@ internal class TyLspTypeEngine(override val module: Module, override val lspClie
     return PyTypeEngineProjectSettings.getInstance(pyTypedElement.project).typeEngine == PyTypeEngineType.TY
   }
 
-  override fun resolveType(pyTypedElement: PyTypedElement, isLibrary: Boolean, isUserInitiated: Boolean): Ref<PyType?>? {
+  override fun resolveType(pyTypedElement: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?>? {
     val context = TyTypeContext(pyTypedElement.containingFile, lspClient)
     return context.provideType(pyTypedElement, isUserInitiated)
   }

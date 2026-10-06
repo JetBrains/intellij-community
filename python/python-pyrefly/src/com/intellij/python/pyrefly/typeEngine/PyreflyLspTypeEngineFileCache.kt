@@ -8,15 +8,12 @@ import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.platform.lsp.api.LspClient
-import com.intellij.psi.PsiFile
-import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.python.lsp.core.utils.PyLspServerModificationTracker
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.psi.types.PyLibraryModificationTracker
-import java.util.concurrent.ConcurrentMap
 
 /**
  * Pyrefly contains own cache for resolved types,
@@ -27,23 +24,14 @@ import java.util.concurrent.ConcurrentMap
 internal class PyreflyLspTypeEngineFileCache(val project: Project) : Disposable.Default {
   private val lowMemoryModificationTracker = SimpleModificationTracker()
 
-
   private val cachedMapStorage = CachedValuesManager.getManager(project).createCachedValue {
-    val map = ContainerUtil.createConcurrentSoftValueMap<ContextKey, PyreflyTypeEvalContext>()
+    val map = ContainerUtil.createConcurrentSoftValueMap<LspClient, PyreflyTypeEvalContext>()
     CachedValueProvider.Result.create(map,
                                       PsiModificationTracker.getInstance(project ),
+                                      PyLibraryModificationTracker.getInstance(project),
                                       lowMemoryModificationTracker,
                                       PyLspServerModificationTracker.getInstance(project))
   }
-
-  private val librariesCachedMapStorage: CachedValue<ConcurrentMap<ContextKey, PyreflyTypeEvalContext>> =
-    CachedValuesManager.getManager(project).createCachedValue {
-      val map = ContainerUtil.createConcurrentSoftValueMap<ContextKey, PyreflyTypeEvalContext>()
-      CachedValueProvider.Result.create(map,
-                                        PyLibraryModificationTracker.getInstance(project),
-                                        lowMemoryModificationTracker,
-                                        PyLspServerModificationTracker.getInstance(project))
-    }
 
 
   init {
@@ -51,25 +39,18 @@ internal class PyreflyLspTypeEngineFileCache(val project: Project) : Disposable.
       {
         lowMemoryModificationTracker.incModificationCount()
         cachedMapStorage.value
-        librariesCachedMapStorage.value
       }, LowMemoryWatcherType.ALWAYS, this)
   }
 
 
-  fun getContext(file: PsiFile, lspClient: LspClient, isLibrary: Boolean): PyreflyTypeEvalContext {
-    val storage = if (isLibrary) librariesCachedMapStorage else cachedMapStorage
-    val cache = storage.value
-    return cache.getOrPut(ContextKey(file, lspClient)) { PyreflyTypeEvalContext(lspClient, file) }
-  }
-
   /**
-   * The client is part of the key because a project can run more than one Pyrefly server. One server
-   * holds every served module, but a module that server cannot serve gets one of its own, and a
-   * server whose folder set went stale keeps running next to the new one until the restart completes.
-   * With the file alone as the key, the first module to resolve a file would bind its own client for
-   * every later requester, and the other modules would resolve to `Any`.
+   * The client is the key because a project can run more than one Pyrefly server. One server holds
+   * every served module, but a module that server cannot serve gets one of its own, and a server whose
+   * folder set went stale keeps running next to the new one until the restart completes.
    */
-  private data class ContextKey(val file: PsiFile, val lspClient: LspClient)
+  fun getContext(lspClient: LspClient): PyreflyTypeEvalContext {
+    return cachedMapStorage.value.getOrPut(lspClient) { PyreflyTypeEvalContext(lspClient) }
+  }
 
   companion object {
     fun getInstance(project: Project): PyreflyLspTypeEngineFileCache = project.service()

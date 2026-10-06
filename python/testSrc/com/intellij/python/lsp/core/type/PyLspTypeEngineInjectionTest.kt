@@ -47,7 +47,7 @@ class PyLspTypeEngineInjectionTest : PyCodeInsightTestCase() {
     override val lspClient: LspClient,
   ) : PyLspTypeEngine {
     override val name: String get() = "test"
-    override fun resolveType(pyTypedElement: PyTypedElement, isLibrary: Boolean, isUserInitiated: Boolean): Ref<PyType?>? = null
+    override fun resolveType(pyTypedElement: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?>? = null
   }
 
   /** An engine whose server serves the module of the fixture, so only the two guards can reject an element. */

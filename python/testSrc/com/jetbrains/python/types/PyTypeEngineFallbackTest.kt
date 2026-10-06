@@ -159,7 +159,7 @@ class PyTypeEngineFallbackTest : PyCodeInsightTestCase() {
 
     override fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean = sees(pyTypedElement)
 
-    override fun resolveType(pyTypedElement: PyTypedElement, isLibrary: Boolean, isUserInitiated: Boolean): Ref<PyType?> {
+    override fun resolveType(pyTypedElement: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?> {
       return Ref.create(answer(pyTypedElement))
     }
   }

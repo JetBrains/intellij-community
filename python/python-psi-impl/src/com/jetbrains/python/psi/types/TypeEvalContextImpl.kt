@@ -306,7 +306,7 @@ open class TypeEvalContextImpl internal constructor(
       else if (engine.isReady) {
         PyTypeEvaluationAggregatesCollector.recordHybridTypeEngineTime(engine) {
           val isUserInitiated = constraints.myAllowStubToAST && constraints.myAllowDataFlow
-          val resolvedType = engine.resolveType(element, this is LibraryTypeEvalContext, isUserInitiated)
+          val resolvedType = engine.resolveType(element, isUserInitiated)
           // resolvedType is null when the engine could not evaluate at all, in contrast to Ref(null) which means the type is legitimately null
           if (resolvedType == null) evaluateWithBuiltInEngine(element) else resolvedType.get()
         }

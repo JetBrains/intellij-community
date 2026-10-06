@@ -13,6 +13,7 @@ import com.intellij.platform.lsp.util.getLsp4jPosition
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.python.pyrefly.lsp.PyreflyLsp4jServer
 import com.jetbrains.python.PyCustomType
@@ -51,19 +52,15 @@ import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.TextDocumentIdentifier
 
-internal class PyreflyTypeEvalContext(val lspClient: LspClient, private val psiFile: PsiFile) {
+internal class PyreflyTypeEvalContext(val lspClient: LspClient) {
+  private val psiManager = PsiManager.getInstance(lspClient.project)
 
-  /**
-   * The last snapshot the server reported. The server moves its snapshot forward when it analyzes an
-   * opened file, and it rejects a request that names an older one. This context lives as long as the
-   * PSI of its file, and a library context longer, so the value goes stale. See [requestComputedType].
-   */
   @Volatile
   private var snapshot: Int? = null
 
   fun provideType(element: PyTypedElement): Ref<PyType?>? {
     if (element is PsiFile) return null
-    val file = psiFile.virtualFile ?: return null
+    val file = element.containingFile?.originalFile?.virtualFile ?: return null
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
 
     val textRange = element.textRange
@@ -129,7 +126,7 @@ internal class PyreflyTypeEvalContext(val lspClient: LspClient, private val psiF
 
   private fun findElement(tspNode: PyreflyLsp4jServer.TspNode): PsiElement? {
     val virtualFile = VirtualFileManager.getInstance().findFileByUrl(tspNode.uri) ?: return null
-    val file = psiFile.manager.findFile(virtualFile) ?: return null
+    val file = psiManager.findFile(virtualFile) ?: return null
     val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return null
     val startOffset = getOffsetInDocument(document, tspNode.range.start) ?: return null
     val endOffset = getOffsetInDocument(document, tspNode.range.end) ?: return null

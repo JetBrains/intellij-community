@@ -147,6 +147,6 @@ internal class PyLspTypeEngineTest {
   ) : PyLspTypeEngine {
     override val name: String = "fake"
 
-    override fun resolveType(pyTypedElement: PyTypedElement, isLibrary: Boolean, isUserInitiated: Boolean): Ref<PyType?>? = null
+    override fun resolveType(pyTypedElement: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?>? = null
   }
 }

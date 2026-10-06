@@ -33,5 +33,5 @@ interface PyTypeEngine {
    * [allowsBuiltInTypeEngineFallbackWhenUnavailable] says.
    */
   fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean
-  fun resolveType(pyTypedElement: PyTypedElement, isLibrary: Boolean, isUserInitiated: Boolean): Ref<PyType?>?
+  fun resolveType(pyTypedElement: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?>?
 }

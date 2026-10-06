@@ -45,11 +45,9 @@ internal class PyreflyLspTypeEngine(private val pyProject: PyProject) : PyLspTyp
     return true
   }
 
-  override fun resolveType(pyTypedElement: PyTypedElement, isLibrary: Boolean, isUserInitiated: Boolean): Ref<PyType?>? {
-    val realFile = pyTypedElement.containingFile?.originalFile ?: return null
+  override fun resolveType(pyTypedElement: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?>? {
     val client = lspClient ?: return null
-
-    val context = PyreflyLspTypeEngineFileCache.getInstance(module.project).getContext(realFile, client, isLibrary)
+    val context = PyreflyLspTypeEngineFileCache.getInstance(module.project).getContext(client)
     return context.provideType(pyTypedElement)
   }
 }
