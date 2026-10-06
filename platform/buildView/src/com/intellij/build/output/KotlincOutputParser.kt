@@ -2,8 +2,10 @@
 package com.intellij.build.output
 
 import com.intellij.build.FilePosition
+import com.intellij.build.eventBuilders.MessageEventBuilder
 import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.OutputId
 import com.intellij.build.events.StartId
 import com.intellij.build.output.BuildOutputInstantReaderImpl.BuildOutputLineParserBridge
 import com.intellij.lang.LangBundle
@@ -77,7 +79,7 @@ class KotlincOutputParser : BuildOutputLineParserBridge() {
         MessageEvent.builder(lineWoSeverity.trim(), getMessageKind(severity)) //NON-NLS
           .withParentId(taskId)
           .withGroup(COMPILER_MESSAGES_GROUP)
-          .withDescription(lineWoSeverity.amendNextLinesIfNeeded(reader))
+          .withDescription(lineWoSeverity.amendNextLinesIfNeeded(line.ids, reader), isSingleFlow)
           .build()
       )
       return true
@@ -115,9 +117,9 @@ class KotlincOutputParser : BuildOutputLineParserBridge() {
       }
     }
     if (lineWoPositionIndex >= 0) {
-      val relatedNextLines = "".amendNextLinesIfNeeded(reader)
-      val message = lineWoPath.substringAfterAndTrim(lineWoPositionIndex) + relatedNextLines
-      val details = line.text + relatedNextLines
+      val relatedNextLines = "".amendNextLinesIfNeeded(line.ids, reader)
+      val message = lineWoPath.substringAfterAndTrim(lineWoPositionIndex) + relatedNextLines.text
+      val details = (listOf(line) + relatedNextLines).joinToText()
 
       if (matcher != null && matcher.matches()) {
         val lineNumber = matcher.group(1)
@@ -128,7 +130,7 @@ class KotlincOutputParser : BuildOutputLineParserBridge() {
             MessageEvent.builder(message.trim(), getMessageKind(severity)) //NON-NLS
               .withParentId(taskId)
               .withGroup(COMPILER_MESSAGES_GROUP)
-              .withDescription(details)
+              .withDescription(details, isSingleFlow)
               .withFilePosition(FilePosition(file, lineNumber.toInt() - 1, symbolNumberText - 1))
               .build()
           )
@@ -140,7 +142,7 @@ class KotlincOutputParser : BuildOutputLineParserBridge() {
         MessageEvent.builder(message.trim(), getMessageKind(severity)) //NON-NLS
           .withParentId(taskId)
           .withGroup(COMPILER_MESSAGES_GROUP)
-          .withDescription(details)
+          .withDescription(details, isSingleFlow)
           .build()
       )
       return true
@@ -150,7 +152,7 @@ class KotlincOutputParser : BuildOutputLineParserBridge() {
         MessageEvent.builder(lineWoSeverity.trim(), getMessageKind(severity)) //NON-NLS
           .withParentId(taskId)
           .withGroup(COMPILER_MESSAGES_GROUP)
-          .withDescription(lineWoSeverity.amendNextLinesIfNeeded(reader))
+          .withDescription(lineWoSeverity.amendNextLinesIfNeeded(line.ids, reader), isSingleFlow)
           .build()
       )
       return true
@@ -163,22 +165,38 @@ class KotlincOutputParser : BuildOutputLineParserBridge() {
   private val JAVAC_POSITION_PATTERN = Pattern.compile("([0-9]+)")
   private val LINE_COLON_COLUMN_POSITION_PATTERN = Pattern.compile("([0-9]*):([0-9]*)")
 
-  private suspend fun String.amendNextLinesIfNeeded(reader: BuildOutputReplayableLineReader): @NlsSafe String {
-    var nextLine = reader.readLine()?.text
+  private suspend fun String.amendNextLinesIfNeeded(
+    sourceLineOutputIds: List<OutputId>,
+    reader: BuildOutputReplayableLineReader,
+  ): BuildOutputText = buildList {
+    add(BuildOutputText.createOutputText(sourceLineOutputIds, this@amendNextLinesIfNeeded))
 
-    val builder = StringBuilder(this)
+    var nextLine = reader.readLine()
     while (nextLine != null) {
-      if (nextLine.isNextMessage()) {
+      if (nextLine.text.isNextMessage()) {
         reader.pushBack(1)
         break
       }
       else {
-        builder.append("\n").append(nextLine)
-        nextLine = reader.readLine()?.text
+        add(nextLine)
+        nextLine = reader.readLine()
       }
     }
-    return builder.toString()
-  }
+  }.joinToText()
+
+  private fun List<BuildOutputText>.joinToText(): BuildOutputText =
+    BuildOutputText.createOutputText(
+      flatMap { it.ids },
+      map { it.text }
+        .filter { it.isNotBlank() }
+        .joinToString()
+    )
+
+  private fun MessageEventBuilder.withDescription(line: BuildOutputText, isSingleFlow: Boolean): MessageEventBuilder =
+    when (isSingleFlow) {
+      true -> withOutputIds(line.ids)
+      else -> withDescription(line.text)
+    }
 
   private fun String.isNextMessage(): Boolean {
     val colonIndex1 = indexOf(COLON)
