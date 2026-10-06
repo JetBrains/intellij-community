@@ -329,6 +329,7 @@ decrypter
 deepcopy
 deepvalues
 defaultaction
+defaultdict
 defaultfilename
 defaultmod
 defaultrecursion

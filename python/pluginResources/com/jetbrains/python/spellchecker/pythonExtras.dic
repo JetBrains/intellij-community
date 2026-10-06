@@ -5,6 +5,7 @@ doctest
 doctests
 idna
 noqa
+pycharm
 pycon
 rtype
 teardown
