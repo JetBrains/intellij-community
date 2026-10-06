@@ -7,14 +7,20 @@ import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.dnd.DnDManager
 import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.ide.dnd.DnDSource
+import com.intellij.ide.dnd.TransferableWrapper
 import com.intellij.ide.projectView.impl.ProjectViewDragImageUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Pair
-import com.intellij.platform.projectView.pane.ProjectViewNodeModel
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
+import com.intellij.psi.PsiElement
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Image
 import java.awt.Point
+import java.io.File
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 
 internal fun enableDnD(tree: FrontendProjectViewTree, model: FrontendProjectViewPaneTreeModel) {
@@ -31,9 +37,9 @@ internal class FrontendProjectViewDragSource(private val tree: FrontendProjectVi
   }
 
   override fun startDragging(action: DnDAction, dragOrigin: Point): DnDDragStartBean? {
-    val ids = tree.selectionPaths?.mapNotNull { it.id }
-    if (ids.isNullOrEmpty()) return null
-    return DnDDragStartBean(DraggedNodes(ids))
+    val nodes = tree.selectionPaths?.mapNotNull { it.lastPathComponent as? DefaultMutableTreeNode }
+    if (nodes.isNullOrEmpty()) return null
+    return DnDDragStartBean(DraggedNodes(nodes))
   }
 
   override fun createDraggedImage(
@@ -46,8 +52,20 @@ internal class FrontendProjectViewDragSource(private val tree: FrontendProjectVi
 }
 
 private data class DraggedNodes(
-  val ids: List<Long>,
-)
+  val nodes: List<DefaultMutableTreeNode>,
+) : TransferableWrapper {
+  override fun getTreeNodes(): Array<out TreeNode> = nodes.toTypedArray()
+
+  override fun getPsiElements(): Array<out PsiElement?> = emptyArray()
+
+  override fun asFileList(): List<File> = emptyList()
+
+  override fun getVirtualFiles(): Array<out VirtualFile> {
+    return nodes.mapNotNull { 
+      it.pvNode?.userObject?.getVirtualFile()
+    }.toTypedArray()
+  }
+}
 
 internal class FrontendProjectViewDropTarget(
   private val tree: FrontendProjectViewTree,
@@ -62,7 +80,7 @@ internal class FrontendProjectViewDropTarget(
     if (point.y < targetBounds.y || point.y >= targetBounds.y + targetBounds.height) return false
 
     val source = event.attachedObject as? DraggedNodes ?: return false
-    if (targetPath.id == source.ids.singleOrNull()) return false // no DnD to itself
+    if (targetPath.pvNode?.id == source.nodes.singleOrNull()?.pvNode?.id) return false // no DnD to itself
     
     event.setHighlighting(RelativeRectangle(tree, targetBounds), DnDEvent.DropTargetHighlightingType.RECTANGLE)
     event.setDropPossible(true, "")
@@ -72,10 +90,13 @@ internal class FrontendProjectViewDropTarget(
   override fun drop(event: DnDEvent) {
     val source = event.attachedObject as? DraggedNodes ?: return
     val point = event.point ?: return
-    val targetID = tree.getClosestPathForLocation(point.x, point.y)?.id ?: return
-    model.requestDnD(source.ids, targetID, event.action)
+    val targetID = tree.getClosestPathForLocation(point.x, point.y)?.pvNode?.id ?: return
+    model.requestDnD(source.nodes.mapNotNull { it.pvNode?.id }, targetID, event.action)
   }
 }
 
-private val TreePath.id: Long?
-  get() = (TreeUtil.getLastUserObject(this) as? ProjectViewNodeModel)?.id
+private val TreePath.pvNode: ProjectViewNodeModelImpl<*>?
+  get() = (lastPathComponent as? DefaultMutableTreeNode)?.pvNode
+
+private val DefaultMutableTreeNode.pvNode: ProjectViewNodeModelImpl<*>?
+  get() = TreeUtil.getUserObject(this) as? ProjectViewNodeModelImpl<*>
