@@ -409,6 +409,60 @@ class KeyHashLogTest {
     }
   }
 
+  @Test
+  fun testPackedAndPerKeyCollectionsAgree() {
+    val dir = temporaryDirectory.createDir()
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use {
+      it.addKeyHashToVirtualFileMapping("qwe", 1)
+      it.addKeyHashToVirtualFileMapping("qwe", 1)
+      it.addKeyHashToVirtualFileMapping("qwe", 2)
+      it.removeKeyHashToVirtualFileMapping("qwe", 1)
+      //"Aa" and "BB" have the same hash: the hash must stay while one file still has it
+      it.addKeyHashToVirtualFileMapping("Aa", 3)
+      it.addKeyHashToVirtualFileMapping("BB", 4)
+      it.removeKeyHashToVirtualFileMapping("Aa", 3)
+      it.addKeyHashToVirtualFileMapping("zxc", 5)
+      it.removeKeyHashToVirtualFileMapping("zxc", 5)
+      it.removeKeyHashToVirtualFileMapping("asd", 6)
+      it.addKeyHashToVirtualFileMapping("filtered", 7)
+
+      val allFiles = setOf(1, 2, 3, 4, 5, 6).toFilter()
+      val expectedForAllFiles = setOf("qwe", "BB").toHashes()
+      TestCase.assertEquals("The packed collection must keep the hashes of the files that still have them",
+                            expectedForAllFiles, it.getSuitableKeyHashes(allFiles, true))
+      TestCase.assertEquals("The per-key collection must keep the hashes of the files that still have them",
+                            expectedForAllFiles, it.getSuitableKeyHashes(allFiles, false))
+
+      //The file 4 is outside the filter, so the shared hash of "Aa" and "BB" must go
+      val someFiles = setOf(1, 2, 3).toFilter()
+      val expectedForSomeFiles = setOf("qwe").toHashes()
+      TestCase.assertEquals("The packed collection must skip the files outside the filter",
+                            expectedForSomeFiles, it.getSuitableKeyHashes(someFiles, true))
+      TestCase.assertEquals("The per-key collection must skip the files outside the filter",
+                            expectedForSomeFiles, it.getSuitableKeyHashes(someFiles, false))
+    }
+  }
+
+  @Test
+  fun testBothCollectionsReturnOwnedMutableSet() {
+    val dir = temporaryDirectory.createDir()
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use {
+      it.addKeyHashToVirtualFileMapping("qwe", 1)
+      val filter = setOf(1).toFilter()
+
+      for (packedCollection in listOf(true, false)) {
+        //The cached project state updates the set with `addAll` on a tail replay, so `add` must work
+        val keyHashes = it.getSuitableKeyHashes(filter, packedCollection)
+        TestCase.assertTrue("The set must accept a new hash (packedCollection = $packedCollection)",
+                            keyHashes.add("added".hashCode()))
+
+        //A key view of an internal map would share the change with the next scan, or reject it
+        TestCase.assertEquals("The next scan must not see the change of a previous result (packedCollection = $packedCollection)",
+                              setOf("qwe").toHashes(), it.getSuitableKeyHashes(filter, packedCollection))
+      }
+    }
+  }
+
   private val project = ProjectManager.getInstance().defaultProject
 
   private fun openFileKeyHashLog(baseStorageFile: Path): KeyHashLog<String> {
