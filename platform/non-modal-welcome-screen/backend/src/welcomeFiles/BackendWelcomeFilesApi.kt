@@ -23,25 +23,26 @@ internal class BackendWelcomeFilesApi : WelcomeFilesApi {
   }
 
   override suspend fun saveAs(projectId: ProjectId, file: VirtualFileId) {
-    val (project, welcomeFile) = findWelcomeFile(projectId, file) ?: return
     withContext(Dispatchers.EDT) {
+      val (project, welcomeFile) = findWelcomeFile(projectId, file) ?: return@withContext
       saveWelcomeFileAs(project, welcomeFile, closeCurrentTab = true)
     }
   }
 
   override suspend fun discard(projectId: ProjectId, file: VirtualFileId) {
-    val (project, welcomeFile) = findWelcomeFile(projectId, file) ?: return
     withContext(Dispatchers.EDT) {
+      val (project, welcomeFile) = findWelcomeFile(projectId, file) ?: return@withContext
       deleteWelcomeFile(project, welcomeFile)
     }
   }
 
   /**
-   * Returns the project and the file only for a Home file of the welcome project.
+   * Returns the project and the file only for a valid Home file of the welcome project.
+   * For an action, call it on the EDT right before the action, because an earlier action can delete the file.
    */
   private fun findWelcomeFile(projectId: ProjectId, fileId: VirtualFileId): Pair<Project, VirtualFile>? {
     val project = projectId.findProjectOrNull() ?: return null
-    val file = fileId.virtualFile() ?: return null
+    val file = fileId.virtualFile()?.takeIf { it.isValid } ?: return null
     return if (WelcomeFilesRootType.Util.isWelcomeFile(project, file)) project to file else null
   }
 }

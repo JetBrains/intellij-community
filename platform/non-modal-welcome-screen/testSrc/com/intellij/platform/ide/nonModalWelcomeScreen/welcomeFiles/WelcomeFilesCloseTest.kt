@@ -6,8 +6,13 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.fileChooser.FileChooserFactory
+import com.intellij.openapi.fileChooser.FileSaverDescriptor
+import com.intellij.openapi.fileChooser.FileSaverDialog
+import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.tabActions.ALWAYS_SHOW_MODIFIED_MARKER
@@ -17,6 +22,7 @@ import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWrapper
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
@@ -30,6 +36,8 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.replaceService
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.AfterEach
@@ -37,11 +45,12 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
 
 /**
  * Checks the Home files of the welcome project: the modified marker on the tab, and the prompt when the tab closes.
- * The "Save" answer is not checked, because it needs a file chooser.
+ * A test save dialog replaces the real one. It selects no target, so the tests check no copy of a file.
  */
 @TestApplication
 internal class WelcomeFilesCloseTest {
@@ -144,6 +153,62 @@ internal class WelcomeFilesCloseTest {
   }
 
   @Test
+  fun `a second close during the save asks nothing`(): Unit = timeoutRunBlocking {
+    markAsWelcomeProject(project)
+    val file = createWelcomeFile()
+    openAndAwaitMarker(file)
+    val answers = listOf(Messages.OK, Messages.CANCEL)
+    var questionCount = 0
+    TestDialogManager.setTestDialog({ answers[questionCount++] }, disposable)
+    val closedDuringSave = CompletableDeferred<Boolean>()
+    replaceSaveDialog {
+      closedDuringSave.complete(manager.closeFileWithChecks(file, manager.currentWindow!!))
+    }
+
+    val closed = withContext(Dispatchers.UiWithModelAccess) {
+      manager.closeFileWithChecks(file, manager.currentWindow!!)
+    }
+
+    assertFalse(closed)
+    assertFalse(closedDuringSave.await())
+    assertEquals(1, questionCount)
+    // The save dialog selects no target, so a close after the dialog asks again.
+    waitUntil("The close after the save dialog does not ask", timeout = 5.seconds) {
+      withContext(Dispatchers.UiWithModelAccess) {
+        manager.closeFileWithChecks(file, manager.currentWindow!!)
+        questionCount == 2
+      }
+    }
+    assertTrue(withContext(Dispatchers.UiWithModelAccess) { manager.isFileOpen(file) })
+  }
+
+  @Test
+  fun `a failed save does not stop the next saves`(): Unit = timeoutRunBlocking {
+    markAsWelcomeProject(project)
+    val failedFile = createWelcomeFile()
+    val nextFile = createWelcomeFile()
+    for (file in listOf(failedFile, nextFile)) {
+      openAndAwaitMarker(file)
+    }
+    TestDialogManager.setTestDialog(TestDialog.OK, disposable)
+    val savedFileNames = ArrayList<String>()
+    replaceSaveDialog { fileName ->
+      savedFileNames += fileName
+      check(fileName != failedFile.name) { "The test save dialog fails" }
+    }
+
+    withContext(Dispatchers.UiWithModelAccess) {
+      val window = manager.currentWindow!!
+      manager.closeFilesWithChecks(listOf(failedFile, nextFile).map { Pair.create(window.getComposite(it)!!, window) })
+    }
+
+    waitUntil("The save of the next file does not start", timeout = 5.seconds) {
+      withContext(Dispatchers.UiWithModelAccess) { savedFileNames.size == 2 }
+    }
+    assertEquals(listOf(failedFile.name, nextFile.name), savedFileNames)
+  }
+
+  @Test
   fun `backend finds a Home file only in the welcome project`(): Unit = timeoutRunBlocking {
     val file = createWelcomeFile()
     val api = WelcomeFilesApi.getInstance()
@@ -168,6 +233,28 @@ internal class WelcomeFilesCloseTest {
     waitUntil("The Home file tab has no modified marker", timeout = 5.seconds) {
       file.getUserData(ALWAYS_SHOW_MODIFIED_MARKER) == true
     }
+  }
+
+  /**
+   * Replaces the save dialog with a dialog that calls [onShow] with the file name and selects no target.
+   */
+  private fun replaceSaveDialog(onShow: (String) -> Unit) {
+    val factory = object : FileChooserFactoryImpl() {
+      override fun createSaveFileDialog(descriptor: FileSaverDescriptor, project: Project?): FileSaverDialog {
+        return object : FileSaverDialog {
+          override fun save(baseDir: VirtualFile?, filename: String?): VirtualFileWrapper? {
+            onShow(filename.orEmpty())
+            return null
+          }
+
+          override fun save(baseDir: Path?, filename: String?): VirtualFileWrapper? {
+            onShow(filename.orEmpty())
+            return null
+          }
+        }
+      }
+    }
+    ApplicationManager.getApplication().replaceService(FileChooserFactory::class.java, factory, disposable)
   }
 
   // A fresh mask replaces the provider list, so the service drops the capabilities it cached for the project.

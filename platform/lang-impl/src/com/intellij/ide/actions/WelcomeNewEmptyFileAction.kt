@@ -207,7 +207,7 @@ private fun doCloseFilesOnExit(project: Project, files: List<VirtualFile>): Bool
 
 /**
  * Shows the save dialog and copies the Home [file] to the target. Then it opens the target and deletes [file].
- * Returns false when the user cancels the dialog.
+ * Returns false when the user cancels the dialog. Nothing is copied when [file] is deleted before the copy starts.
  */
 @ApiStatus.Internal
 fun saveWelcomeFileAs(project: Project, file: VirtualFile, closeCurrentTab: Boolean): Boolean {
@@ -216,6 +216,9 @@ fun saveWelcomeFileAs(project: Project, file: VirtualFile, closeCurrentTab: Bool
   ApplicationManager.getApplication().invokeLater(
     {
       ApplicationManager.getApplication().runWriteAction(Runnable {
+        if (!file.isValid) {
+          return@Runnable
+        }
         writeFile(FileDocumentManager.getInstance(), file, targetFile)
 
         ApplicationManager.getApplication().invokeLater(

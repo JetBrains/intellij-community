@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFilePreCloseCheck
 /**
  * Asks the user to save each Home file before its tab closes. The check acts only on a file with [ALWAYS_SHOW_MODIFIED_MARKER].
  * The first "Cancel" stops the questions. The files with "Save" and "Don't save" answers before it still get their action.
+ * A file stays open without a question while its save dialog is not closed.
  */
 internal class WelcomeFilePreCloseCheck : VirtualFilePreCloseCheck {
   override fun canCloseFile(file: VirtualFile): Boolean = canCloseFiles(listOf(file))
@@ -31,7 +32,7 @@ internal class WelcomeFilePreCloseCheck : VirtualFilePreCloseCheck {
         continue
       }
       val project = findWelcomeProject(file) ?: continue
-      if (cancelled) {
+      if (cancelled || FrontendWelcomeFilesService.getInstance(project).isSaving(file)) {
         filesToKeep += file
         continue
       }
