@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.findFile
 import com.intellij.platform.PROJECT_CLOSE_WITH_CONFIRMATION
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
+import com.intellij.ui.tabs.TabInfo
 import com.intellij.util.Consumer
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.toArray
@@ -111,24 +112,34 @@ class WelcomeFilesRootType : RootType("HomeFiles", "") {
     for (fileEditor in source.getAllEditors(file)) {
       if (fileEditor is TextEditor) {
         for (window in fileEditorManager.windows) {
-          val tabs = window.tabbedPane.tabs.tabs
-          for (tab in tabs) {
-            if (tab.`object` == file) {
-              val actions = tab.tabLabelActions
-              if (actions is DefaultActionGroup) {
-                for (action in actions.getChildren(ActionManager.getInstance())) {
-                  if (action is CloseTab) {
-                    action.showModifier = true
-                    return
-                  }
-                }
-              }
-              return
+          if (configureEditor(file, window.tabbedPane.tabs.tabs)) {
+            return
+          }
+        }
+      }
+    }
+    for (composite in fileEditorManager.splitters.getAllComposites(file)) {
+      if (configureEditor(file, composite.tabs?.tabs ?: continue)) {
+        return
+      }
+    }
+  }
+
+  private fun configureEditor(file: VirtualFile, tabs: List<TabInfo>): Boolean {
+    for (tab in tabs) {
+      if (tab.`object` == file) {
+        val actions = tab.tabLabelActions
+        if (actions is DefaultActionGroup) {
+          for (action in actions.getChildren(ActionManager.getInstance())) {
+            if (action is CloseTab && !action.showModifier) {
+              action.showModifier = true
+              return true
             }
           }
         }
       }
     }
+    return false
   }
 }
 
@@ -142,7 +153,16 @@ internal class WelcomeNonProjectFileWritingAccessExtension : NonProjectFileWriti
 internal class WelcomeFilePreCloseCheck : VirtualFilePreCloseCheck {
   override fun canCloseFile(file: VirtualFile): Boolean {
     val project = ProjectUtil.getActiveProject()
-    return project == null || !WelcomeFilesRootType.Util.isWelcomeFile(project, file) || doCloseFile(project, file)
+    if (project == null || !WelcomeFilesRootType.Util.isWelcomeFile(project, file)) {
+      return true
+    }
+
+    val composites = (FileEditorManager.getInstance(project) as FileEditorManagerEx).splitters.getAllComposites(file)
+    if (composites.size > 1) {
+      return true
+    }
+
+    return doCloseFile(project, file)
   }
 }
 
