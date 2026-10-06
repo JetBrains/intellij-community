@@ -13937,6 +13937,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/incompleteProperty.kt");
         }
 
+        @TestMetadata("infixFun.kt")
+        public void testInfixFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/infixFun.kt");
+        }
+
         @TestMetadata("lastFunFromCompanionObject.kt")
         public void testLastFunFromCompanionObject() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/lastFunFromCompanionObject.kt");
@@ -14028,6 +14033,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("inObject.kt")
         public void testInObject() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/inObject.kt");
+        }
+
+        @TestMetadata("infixFun.kt")
+        public void testInfixFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/infixFun.kt");
         }
 
         @TestMetadata("memberFunction.kt")
@@ -14176,6 +14186,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("inObject.kt")
         public void testInObject() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/inObject.kt");
+        }
+
+        @TestMetadata("infixFun.kt")
+        public void testInfixFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/infixFun.kt");
         }
 
         @TestMetadata("localFunction.kt")
