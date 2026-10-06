@@ -44,6 +44,11 @@
   </dependencies>
   <!-- endregion -->
 
+  <extensionPoints>
+    <extensionPoint name="projectIndexingActivityHistoryListener"
+                    interface="com.intellij.util.indexing.diagnostic.ProjectIndexingActivityHistoryListener" dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <!-- FileBasedIndex / SerializationManager is quite important and in any case will be used better to preload it -->
     <applicationService serviceInterface="com.intellij.util.indexing.FileBasedIndex"
