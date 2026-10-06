@@ -710,6 +710,11 @@ public abstract class K2JvmOptimizeImportsTestGenerated extends AbstractK2JvmOpt
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/DefaultObjectReference.kt");
             }
 
+            @TestMetadata("EnumEntryWithConstructorArguments.kt")
+            public void testEnumEntryWithConstructorArguments() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/EnumEntryWithConstructorArguments.kt");
+            }
+
             @TestMetadata("EnumStaticMembersUsedInsideEnum.kt")
             public void testEnumStaticMembersUsedInsideEnum() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/EnumStaticMembersUsedInsideEnum.kt");

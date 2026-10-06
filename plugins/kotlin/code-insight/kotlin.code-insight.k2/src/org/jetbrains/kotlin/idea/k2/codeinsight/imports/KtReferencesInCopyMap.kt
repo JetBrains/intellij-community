@@ -3,8 +3,11 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.descendants
 import org.jetbrains.kotlin.idea.references.KtReference
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
+import org.jetbrains.kotlin.psi.KtEnumEntrySuperclassReferenceExpression
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.Objects
 
@@ -39,14 +42,14 @@ internal class KtReferencesInCopyMap(originalReferenceMap: Map<KtReference, KtRe
 
             return reference.javaClass == other.reference.javaClass &&
                     reference.element == other.reference.element &&
-                    reference.rangeInElement == other.reference.rangeInElement &&
+                    reference.rangeInElementPatched == other.reference.rangeInElementPatched &&
                     reference.resolvesByNames.toSet() == other.reference.resolvesByNames.toSet()
         }
 
         override fun hashCode(): Int = Objects.hash(
             reference.javaClass,
             reference.element,
-            reference.rangeInElement,
+            reference.rangeInElementPatched,
             reference.resolvesByNames.toSet(),
         )
     }
@@ -97,3 +100,21 @@ internal class KtReferencesInCopyMap(originalReferenceMap: Map<KtReference, KtRe
         }
     }
 }
+
+/**
+ * A replacement for [KtReference.getRangeInElement] which does not throw.
+ *
+ * The referenced name element of a [KtEnumEntrySuperclassReferenceExpression] is the owner enum class.
+ * The enum class lies outside the expression, so [KtSimpleNameReference.getRangeInElement] throws on it (see KT-37151).
+ * For such a reference, this property returns the range of the whole expression instead.
+ *
+ * TODO: remove this property when KT-37151 is fixed.
+ */
+private val KtReference.rangeInElementPatched: TextRange
+    get() {
+        if (this is KtSimpleNameReference && element is KtEnumEntrySuperclassReferenceExpression) {
+            return TextRange(0, element.textLength)
+        }
+
+        return rangeInElement
+    }
