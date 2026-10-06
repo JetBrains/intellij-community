@@ -741,8 +741,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         return null
       }
     }
-
-    confirmTrustedStateOrCancel(projectIdentityFile, options)
+    else {
+      confirmTrustedStateOrCancel(projectIdentityFile, options)
+    }
 
     return span("ProjectManager.openAsync") {
       FUSProjectHotStartUpMeasurer.withProjectContextElement(projectIdentityFile) {
@@ -1221,9 +1222,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
    *
    * `false` if [projectToClose]'s frame was successfully freed up for reuse, or the user chose "New Window" and
    * it can be opened in this same process — either way, the caller should proceed to open [projectDir] here.
+   *
+   * The function confirms the trusted state of [projectDir] when [projectDir] opens in this process.
    */
   private suspend fun attachToExistingOrOpenInTheSameFrame(projectToClose: Project, options: OpenProjectTask, projectDir: Path): Boolean {
     if (options.forceReuseFrame || WelcomeUtils.noCheckOpenConfirmation(projectToClose)) {
+      confirmTrustedStateOrCancel(projectDir, options)
       return !closeAndDisposeKeepingFrame(projectToClose, options.forceReuseFrame)
     }
 
@@ -1237,12 +1241,16 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         return true
       }
       GeneralSettings.OPEN_PROJECT_SAME_WINDOW -> {
+        val perProcessSupport = processPerProjectSupport()
+        val canBeOpenedInThisProcess = perProcessSupport.canBeOpenedInThisProcess(projectDir)
+        if (canBeOpenedInThisProcess) {
+          confirmTrustedStateOrCancel(projectDir, options)
+        }
         if (!closeAndDisposeKeepingFrame(projectToClose)) {
           return true
         }
 
-        val perProcessSupport = processPerProjectSupport()
-        if (!perProcessSupport.canBeOpenedInThisProcess(projectDir)) {
+        if (!canBeOpenedInThisProcess) {
           perProcessSupport.openInChildProcess(projectDir)
 
           val app = ApplicationManagerEx.getApplicationEx()
@@ -1263,6 +1271,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           return true
         }
 
+        confirmTrustedStateOrCancel(projectDir, options)
         return false
       }
       else -> {
