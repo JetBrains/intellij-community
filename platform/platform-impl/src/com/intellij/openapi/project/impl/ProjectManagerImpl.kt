@@ -742,6 +742,16 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
     }
 
+    confirmTrustedStateOrCancel(projectIdentityFile, options)
+
+    return span("ProjectManager.openAsync") {
+      FUSProjectHotStartUpMeasurer.withProjectContextElement(projectIdentityFile) {
+        doOpenAsync(options, projectIdentityFile)
+      }
+    }
+  }
+
+  private suspend fun confirmTrustedStateOrCancel(projectIdentityFile: Path, options: OpenProjectTask) {
     span("checkTrustedState") {
       if (!checkTrustedState(projectIdentityFile, options.projectName)) {
         LOG.info("Project is not trusted, aborting")
@@ -758,12 +768,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         cancelProjectOpening(options.project, it)
       }
       throw it
-    }
-
-    return span("ProjectManager.openAsync") {
-      FUSProjectHotStartUpMeasurer.withProjectContextElement(projectIdentityFile) {
-        doOpenAsync(options, projectIdentityFile)
-      }
     }
   }
 
