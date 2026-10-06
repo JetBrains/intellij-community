@@ -644,6 +644,56 @@ internal class UnifiedPluginsPageRealRowsTest {
   }
 
   @Test
+  fun `source refresh reveals a replaced selected row below the sticky header`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val factory = RecordingRowFactory()
+    val items = (1..20).map { item("plugin.$it") }
+    val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, *items.toTypedArray())))
+    controller.setSectionExpanded(PluginSectionId.Installed, true)
+    val selectedItem = items[9]
+    controller.selectOccurrence(PluginOccurrenceId(PluginSectionId.Installed, selectedItem.pluginId))
+    val view = createView(factory)
+    view.render(controller.state.value)
+    prepareForScrolling(view)
+
+    val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
+    val previousRow = factory.row(PluginSectionId.Installed, selectedItem)
+    scrollToComponent(scrollPane, previousRow.component)
+    val refreshedItems = items.map { item ->
+      if (item.pluginId == selectedItem.pluginId) item.copy(name = "Updated plugin") else item
+    }
+    controller.updateSection(section(PluginSectionId.Installed, *refreshedItems.toTypedArray()))
+    view.render(controller.state.value)
+
+    val selectedRow = factory.row(PluginSectionId.Installed, selectedItem)
+    assertThat(selectedRow).isNotSameAs(previousRow)
+    assertThat(selectedRow.selected).isTrue()
+    assertRowVisibleBelowStickyHeader(scrollPane, selectedRow.component)
+    view.close()
+  }
+
+  @Test
+  fun `source refresh does not reveal a replaced offscreen selected row`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val factory = RecordingRowFactory()
+    val items = (1..20).map { item("plugin.$it") }
+    val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, *items.toTypedArray())))
+    controller.setSectionExpanded(PluginSectionId.Installed, true)
+    val view = createView(factory)
+    view.render(controller.state.value)
+    prepareForScrolling(view)
+
+    val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
+    scrollToComponent(scrollPane, factory.row(PluginSectionId.Installed, items[9]).component)
+    val position = scrollPane.viewport.viewPosition
+    val refreshedItems = listOf(items.first().copy(name = "Updated plugin")) + items.drop(1)
+    controller.updateSection(section(PluginSectionId.Installed, *refreshedItems.toTypedArray()))
+    view.render(controller.state.value)
+
+    assertThat(factory.row(PluginSectionId.Installed, items.first()).selected).isTrue()
+    assertThat(scrollPane.viewport.viewPosition).isEqualTo(position)
+    view.close()
+  }
+
+  @Test
   fun `new query reveals its default selection after the previous anchor disappears`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UI) {
       val factory = RecordingRowFactory()

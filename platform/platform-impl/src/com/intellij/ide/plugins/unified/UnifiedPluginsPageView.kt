@@ -235,6 +235,13 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun render(state: UnifiedPluginsPageState) {
     val viewportAnchor = captureViewportAnchor()
+    val selectedOccurrence = state.selectedOccurrence?.takeIf { it == renderedState?.selectedOccurrence }
+    val visibleSelectedRow = selectedOccurrence?.let { occurrenceId ->
+      rowReconciler?.row(occurrenceId)?.takeIf {
+        sectionViews[occurrenceId.sectionId]?.occurrenceBounds(occurrenceId, sectionsPanel)
+          ?.intersects(scrollPane.viewport.viewRect) == true
+      }
+    }
     val previousQueryRevision = renderedState?.query?.revision
     if (previousQueryRevision != null && previousQueryRevision != state.query.revision) {
       pendingSelectionRevealRevision = state.query.revision
@@ -284,6 +291,9 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     layoutRenderedSections()
     restoreViewportAnchor(viewportAnchor)
     updateStickyHeader()
+    if (visibleSelectedRow != null && rowReconciler?.row(selectedOccurrence) !== visibleSelectedRow) {
+      pendingSelectionRevealRevision = state.query.revision
+    }
     revealPendingSelection()
     sectionsPanel.repaint()
     scheduleResultsAnnouncement()

@@ -589,6 +589,13 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
     `keyboard navigation reveals a row below the sticky header`
   )
 
+- When a source refresh replaces a visible selected row, the row must remain visible below the sticky header.
+- A source refresh must not scroll to a selected row outside the viewport.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
+    `source refresh reveals a replaced selected row below the sticky header`;
+    `source refresh does not reveal a replaced offscreen selected row`
+  )
+
 - Shift-selection may cross section headers but must skip plugins from the other selection group.
 - Select All must expand visible sections in the focused plugin's selection group.
 - It must select all displayed plugins in those sections, up to each section's 1,000-plugin limit.
