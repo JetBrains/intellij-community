@@ -76,6 +76,7 @@ object MavenImportUtil {
 
   private const val PHASE_COMPILE = "compile"
   private const val PHASE_TEST_COMPILE = "test-compile"
+  private const val PHASE_NONE = "none"
 
   private const val GOAL_COMPILE = "compile"
   private const val GOAL_TEST_COMPILE = "testCompile"
@@ -157,8 +158,20 @@ object MavenImportUtil {
     return checkExecution(e, PHASE_COMPILE, GOAL_COMPILE, EXECUTION_COMPILE)
   }
 
+  /**
+   * Tells if Maven skips the execution.
+   *
+   * Maven runs an execution only if the phase of the execution is a lifecycle phase.
+   * A POM disables an execution that it inherits with `none` or with an empty phase.
+   * A null phase keeps the default phase of the goal, so Maven runs the execution.
+   */
+  internal fun isDisabledExecution(e: MavenPlugin.Execution): Boolean {
+    val phase = e.phase ?: return false
+    return phase.isBlank() || PHASE_NONE.equals(phase.trim(), ignoreCase = true)
+  }
+
   private fun checkExecution(e: MavenPlugin.Execution, phase: String, goal: String, defaultExecId: String): Boolean {
-    return "none" != e.phase &&
+    return !isDisabledExecution(e) &&
            (phase == e.phase ||
             (e.goals != null && e.goals.contains(goal)) ||
             (defaultExecId == e.executionId)

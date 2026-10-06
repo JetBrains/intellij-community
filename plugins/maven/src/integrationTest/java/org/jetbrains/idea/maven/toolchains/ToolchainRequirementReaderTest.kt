@@ -4,9 +4,14 @@ package org.jetbrains.idea.maven.toolchains
 import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.createProjectSubFile
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.moduleTag
+import com.intellij.maven.testFramework.fixtures.modulesTag
+import com.intellij.maven.testFramework.fixtures.projectsTree
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -439,6 +444,133 @@ class ToolchainRequirementReaderTest(mavenVersion: String, modelVersion: String)
     assertEquals(compilerRequirement,
                  finder.searchToolchainRequirementForExecution(mavenProject, "some-execution"),
                  "Compiler execution toolchain does not match")
+  }
+
+  /** IDEA-394354: a child POM disables the inherited execution, so the child needs no toolchain. */
+  @Test
+  fun testIgnoreSelectJdkToolchainExecutionDisabledByPhase() = runBlocking {
+    val finder = ToolchainFinder()
+
+    maven.createProjectPom("""
+      <groupId>test</groupId>
+      <artifactId>parent</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <${maven.modulesTag}>
+        <${maven.moduleTag}>none-phase</${maven.moduleTag}>
+        <${maven.moduleTag}>empty-phase</${maven.moduleTag}>
+        <${maven.moduleTag}>uppercase-none-phase</${maven.moduleTag}>
+      </${maven.modulesTag}>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-toolchains-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>select-jdk</id>
+                <goals>
+                  <goal>select-jdk-toolchain</goal>
+                </goals>
+                <configuration>
+                  <version>99</version>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+""")
+
+    val nonePhasePom = maven.createModulePom("none-phase", """
+      <artifactId>none-phase</artifactId>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>parent</artifactId>
+        <version>1</version>
+      </parent>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-toolchains-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>select-jdk</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+""")
+
+    val emptyPhasePom = maven.createModulePom("empty-phase", """
+      <artifactId>empty-phase</artifactId>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>parent</artifactId>
+        <version>1</version>
+      </parent>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-toolchains-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>select-jdk</id>
+                <phase/>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+""")
+
+    val uppercaseNonePhasePom = maven.createModulePom("uppercase-none-phase", """
+      <artifactId>uppercase-none-phase</artifactId>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>parent</artifactId>
+        <version>1</version>
+      </parent>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-toolchains-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>select-jdk</id>
+                <phase>NONE</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+""")
+
+    maven.importProjectAsync()
+
+    val expectedRequirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
+      .set("version", "99")
+      .useImporterJdkIfMatches(true)
+      .discoverJdks(true)
+      .build()
+
+    val parentProject = maven.projectsTree.findProject(maven.projectPom)!!
+    assertUnorderedElementsAreEqual(finder.allToolchainRequirements(parentProject), expectedRequirement)
+
+    for (pom in listOf(nonePhasePom, emptyPhasePom, uppercaseNonePhasePom)) {
+      val childProject = maven.projectsTree.findProject(pom)!!
+      val name = childProject.mavenId.artifactId
+      assertEquals(emptySet<ToolchainRequirement>(),
+                   finder.allToolchainRequirements(childProject),
+                   "$name keeps a toolchain requirement")
+      assertNull(finder.searchToolchainRequirementForMain(childProject), "$name keeps a main toolchain")
+      assertNull(finder.searchToolchainRequirementForTest(childProject), "$name keeps a test toolchain")
+    }
   }
 
 }

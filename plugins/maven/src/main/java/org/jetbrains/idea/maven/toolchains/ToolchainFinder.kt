@@ -5,6 +5,7 @@ import org.jdom.Element
 import org.jetbrains.idea.maven.importing.MavenImportUtil.findCompilerPlugin
 import org.jetbrains.idea.maven.importing.MavenImportUtil.findToolchainPlugin
 import org.jetbrains.idea.maven.importing.MavenImportUtil.isCompileExecution
+import org.jetbrains.idea.maven.importing.MavenImportUtil.isDisabledExecution
 import org.jetbrains.idea.maven.importing.MavenImportUtil.isTestCompileExecution
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.MavenProject
@@ -15,7 +16,7 @@ class ToolchainFinder {
   fun allToolchainRequirements(mavenProject: MavenProject): Set<ToolchainRequirement> {
     val compilerPlugin = mavenProject.findCompilerPlugin()
     val result = HashSet<ToolchainRequirement>()
-    compilerPlugin?.executions
+    compilerPlugin?.enabledExecutions
       ?.mapNotNull { getToolchain(it) }?.let { result.addAll(it) }
     fromToolchainPluginConfiguration(mavenProject)?.let { result.add(it) }
     fromToolchainSelectGoal(mavenProject)?.let { result.add(it) }
@@ -56,16 +57,20 @@ class ToolchainFinder {
   }
 
 
+  /** The executions that Maven runs. A disabled execution asks for no toolchain. */
+  private val MavenPlugin.enabledExecutions: List<MavenPlugin.Execution>
+    get() = executions.filter { !isDisabledExecution(it) }
+
   private fun fromCompilePlugin(mavenProject: MavenProject, predicate: (MavenPlugin.Execution) -> Boolean): ToolchainRequirement? {
     val compilerPlugin = mavenProject.findCompilerPlugin()
-    return compilerPlugin?.executions
+    return compilerPlugin?.enabledExecutions
       ?.filter(predicate)
       ?.firstNotNullOfOrNull { getToolchain(it) }
   }
 
   private fun fromToolchainPluginConfiguration(mavenProject: MavenProject): ToolchainRequirement? {
     val toolchainPlugin = mavenProject.findToolchainPlugin() ?: return null
-    if (toolchainPlugin.executions.none { it.goals.contains(TOOLCHAIN_GOAL) }) return null
+    if (toolchainPlugin.enabledExecutions.none { it.goals.contains(TOOLCHAIN_GOAL) }) return null
     val toolchains = toolchainPlugin.configurationElement?.getChild("toolchains") ?: return null
     val jdkToolchain = toolchains.getChild("jdk") ?: return null
     return fromToolchainConfig(jdkToolchain)
@@ -73,7 +78,7 @@ class ToolchainFinder {
 
   private fun fromToolchainSelectGoal(mavenProject: MavenProject): ToolchainRequirement? {
     val toolchainPlugin = mavenProject.findToolchainPlugin() ?: return null
-    val execution = toolchainPlugin.executions.firstOrNull {
+    val execution = toolchainPlugin.enabledExecutions.firstOrNull {
       it.goals.contains(SELECT_JDK_TOOLCHAIN_GOAL)
     } ?: return null
     val builder = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
