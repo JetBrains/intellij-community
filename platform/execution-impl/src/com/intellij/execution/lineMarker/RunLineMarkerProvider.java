@@ -96,7 +96,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
   @Override
   public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
                                      @NotNull Collection<? super LineMarkerInfo<?>> result) {
-    if (!elements.isEmpty() && isUntrustedFile(elements.getFirst())) return;
+    Boolean untrusted = null;
     for (PsiElement element : elements) {
       List<RunLineMarkerContributor> contributors = DumbService.getInstance(element.getProject())
         .filterByDumbAwareness(RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage()));
@@ -116,9 +116,12 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
         }
         infos.add(info);
       }
-      if (icon != null) {
-        result.add(doCreateLineMarker(element, icon, infos));
+      if (icon == null) continue;
+      if (untrusted == null) {
+        untrusted = isUntrustedFile(element);
       }
+      if (untrusted) return;
+      result.add(doCreateLineMarker(element, icon, infos));
     }
 
   }
