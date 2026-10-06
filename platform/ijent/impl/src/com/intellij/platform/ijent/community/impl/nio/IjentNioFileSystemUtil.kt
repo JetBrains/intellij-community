@@ -5,6 +5,8 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.CeProcessCanceledException
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOwnedBuilder
@@ -21,6 +23,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.milliseconds
 
 internal fun Path.toEelPath(): EelPath =
@@ -112,12 +115,20 @@ fun IjentCallerContext.Companion.computeCallerContext(): IjentCallerContext {
 @ApiStatus.Internal
 fun <T> fsBlockingWithoutParallelismCompensation(callerContext: IjentCallerContext, body: suspend (IjentCallerContext) -> T): T {
   if (callerContext.allowCancellableNio()) {
-    return prepareThreadContext { ctx ->
-      resetThreadLocalEventLoop {
-        runBlocking(ctx + IjentCallerContextElement(callerContext)) {
-          body(callerContext)
+    try {
+      return prepareThreadContext { ctx ->
+        resetThreadLocalEventLoop {
+          runBlocking(ctx + IjentCallerContextElement(callerContext)) {
+            body(callerContext)
+          }
         }
       }
+    }
+    catch (pce: ProcessCanceledException) {
+      throw pce
+    }
+    catch (ce: CancellationException) {
+      throw CeProcessCanceledException(ce)
     }
   }
   return resetThreadLocalEventLoop {
