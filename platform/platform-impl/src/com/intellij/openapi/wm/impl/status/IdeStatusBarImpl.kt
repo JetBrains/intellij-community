@@ -360,7 +360,7 @@ open class IdeStatusBarImpl @Internal constructor(
    *
    * This repeats the approach of [com.intellij.toolWindow.innerDrag.ToolWindowInnerDragHelper] for tool window tabs.
    */
-  private inner class WidgetDragHelper(parent: Disposable) : MouseDragHelper<JPanel>(parent, rightPanel) {
+  private inner class WidgetDragHelper(private val parentDisposable: Disposable) : MouseDragHelper<JPanel>(parentDisposable, rightPanel) {
     private val placeholder = WidgetDropPlaceholder()
     private val initialOffset = Point()
 
@@ -372,6 +372,9 @@ open class IdeStatusBarImpl @Internal constructor(
     private var dragOrder: List<WidgetBean> = emptyList()
     private var dropIndex = -1
     private var dragImageView: DragImageView? = null
+
+    /** The glass pane skips a release over a balloon, so a release listener on the event queue ends the drag. */
+    private var releaseListenerDisposable: Disposable? = null
 
     override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean =
       widgetIdAt(dragComponentPoint) != null
@@ -397,7 +400,7 @@ open class IdeStatusBarImpl @Internal constructor(
 
       try {
         if (sourceId == null || willDragOutStart || targetIndex == -1) return
-        reorderWidgets(sourceId, targetIndex)
+        reorderWidgets(sourceId, targetIndex, event)
       }
       finally {
         endDrag()
@@ -440,6 +443,15 @@ open class IdeStatusBarImpl @Internal constructor(
 
       isWidgetDragInProgress = true
       applyWidgetEffect(null, null)
+
+      val releaseListener = Disposer.newDisposable(parentDisposable, "status bar widget drag")
+      releaseListenerDisposable = releaseListener
+      IdeEventQueue.getInstance().addPostprocessor(IdeEventQueue.EventDispatcher { e ->
+        if (e is MouseEvent && e.id == MouseEvent.MOUSE_RELEASED && e.button == MouseEvent.BUTTON1 && draggedComponent != null) {
+          mouseReleased(e)
+        }
+        false
+      }, releaseListener)
 
       relocate(event)
       dragImageView?.show()
@@ -503,6 +515,9 @@ open class IdeStatusBarImpl @Internal constructor(
 
       dragImageView?.hide()
       dragImageView = null
+
+      releaseListenerDisposable?.let { Disposer.dispose(it) }
+      releaseListenerDisposable = null
 
       rightPanel.remove(placeholder)
       component.isVisible = true
