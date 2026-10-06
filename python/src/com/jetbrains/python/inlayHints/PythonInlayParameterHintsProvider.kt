@@ -76,7 +76,8 @@ class PythonInlayParameterHintsProvider : InlayParameterHintsProvider {
         }
         if (argument !is PyKeywordArgument) {
           if (argument.isLiteralArgument() || Helper.showForNonLiteralArguments.isEnabled()) {
-            info.add(InlayInfo("${parameter.name}", argument.textOffset))
+            if (parameter.name != argument.text)
+              parameter.name?.let { info.add(InlayInfo(it, argument.textOffset)) }
           }
         }
       }
