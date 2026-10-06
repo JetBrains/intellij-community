@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.WriteIntentReadAction;
@@ -13,6 +15,11 @@ import org.jetbrains.annotations.NotNull;
 
 
 public final class SaveDocumentAction extends DumbAwareAction {
+  /** Returns whether the action is a Save Document action or its registered replacement. */
+  public static boolean isSaveDocumentAction(@NotNull AnAction action) {
+    return action instanceof SaveDocumentAction || "SaveDocument".equals(ActionManager.getInstance().getId(action));
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Document doc = getDocument(e);

@@ -405,7 +405,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
 private class CurrentActionListener : AnActionListener {
   override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
     val project = event.project
-    if (project != null && action is SaveDocumentAction) {
+    if (project != null && SaveDocumentAction.isSaveDocumentAction(action)) {
       ActionsOnSaveManager.getInstance(project).runningSaveDocumentAction = true
     }
   }

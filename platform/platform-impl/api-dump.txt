@@ -819,10 +819,15 @@ Fc:com.intellij.ide.actions.SaveAllAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.ide.lightEdit.LightEditCompatible
 - com.intellij.openapi.project.DumbAware
+- sf:Companion:com.intellij.ide.actions.SaveAllAction$Companion
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- sf:isSaveAllAction(com.intellij.openapi.actionSystem.AnAction):Z
+f:com.intellij.ide.actions.SaveAllAction$Companion
+- f:isSaveAllAction(com.intellij.openapi.actionSystem.AnAction):Z
 f:com.intellij.ide.actions.SaveDocumentAction
 - com.intellij.openapi.project.DumbAwareAction
+- s:isSaveDocumentAction(com.intellij.openapi.actionSystem.AnAction):Z
 c:com.intellij.ide.actions.SearchWebAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware

@@ -5,6 +5,7 @@ import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.lightEdit.LightEditService
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -31,6 +32,14 @@ open class SaveAllAction : AnAction(), DumbAware, LightEditCompatible {
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
+  }
+
+  @Suppress("CompanionObjectInExtension")
+  companion object {
+    /** Returns whether [action] is a Save All action or its registered replacement. */
+    @JvmStatic
+    fun isSaveAllAction(action: AnAction): Boolean =
+      action is SaveAllAction || ActionManager.getInstance().getId(action) == "SaveAll"
   }
 }
 
