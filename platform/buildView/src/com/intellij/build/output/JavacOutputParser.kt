@@ -2,19 +2,18 @@
 package com.intellij.build.output
 
 import com.intellij.build.FilePosition
+import com.intellij.build.eventBuilders.MessageEventBuilder
 import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.StartId
 import com.intellij.build.output.BuildOutputInstantReaderImpl.BuildOutputLineParserBridge
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toNioPathOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.util.LinkedList
 import kotlin.io.path.extension
-import kotlin.io.path.pathString
 
 /**
  * Parses javac's output.
@@ -45,7 +44,7 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
           MessageEvent.builder(text, MessageEvent.Kind.ERROR)
             .withParentId(taskId)
             .withGroup(COMPILER_MESSAGES_GROUP)
-            .withDescription(line.text)
+            .withDescription(line, isSingleFlow)
             .build()
         )
         return true
@@ -57,7 +56,7 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
           MessageEvent.builder(text, MessageEvent.Kind.WARNING)
             .withParentId(taskId)
             .withGroup(COMPILER_MESSAGES_GROUP)
-            .withDescription(line.text)
+            .withDescription(line, isSingleFlow)
             .build()
         )
         return true
@@ -67,7 +66,7 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
           MessageEvent.builder(line.text, MessageEvent.Kind.ERROR)
             .withParentId(taskId)
             .withGroup(COMPILER_MESSAGES_GROUP)
-            .withDescription(line.text)
+            .withDescription(line, isSingleFlow)
             .build()
         )
         return true
@@ -79,12 +78,12 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
           val path = note.substring(0, javaFileExtensionIndex + JAVA_EXTENSION.length).toNioPathOrNull()
           if (path != null && Files.isRegularFile(path)) {
             val message = note.substring(javaFileExtensionIndex + JAVA_EXTENSION.length + 1)
-            val detailedMessage = amendNextInfoLinesIfNeeded("${path.pathString}:\n$message", reader)
+            val detailedMessage = amendNextInfoLinesIfNeeded(line, reader)
             multicaster.notifyBuildEvent(
               MessageEvent.builder(message, MessageEvent.Kind.INFO)
                 .withParentId(taskId)
                 .withGroup(COMPILER_MESSAGES_GROUP)
-                .withDescription(detailedMessage)
+                .withDescription(detailedMessage, isSingleFlow)
                 .withFilePosition(FilePosition(path, 0, 0))
                 .build()
             )
@@ -151,12 +150,12 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
 
           if (column >= 0) {
             val message = convertMessages(messageList).joinToString("\n")
-            val detailedMessage = "${line.text}\n${outputCollector.getOutput()}".trimIndent()
+            val detailedMessage = (listOf(line) + outputCollector.getOutput()).joinToText("\n")
             multicaster.notifyBuildEvent(
               MessageEvent.builder(message, kind)
                 .withParentId(taskId)
                 .withGroup(COMPILER_MESSAGES_GROUP)
-                .withDescription(detailedMessage)
+                .withDescription(detailedMessage, isSingleFlow)
                 .withFilePosition(FilePosition(path, lineNumber - 1, column))
                 .build()
             )
@@ -171,7 +170,7 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
         MessageEvent.builder(LangBundle.message("build.event.message.out.memory"), MessageEvent.Kind.ERROR)
           .withParentId(taskId)
           .withGroup(COMPILER_MESSAGES_GROUP)
-          .withDescription(line.text)
+          .withDescription(line, isSingleFlow)
           .build()
       )
       return true
@@ -197,7 +196,7 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
       repeat(numberOfLines) { readLines.pollLast() ?: return@repeat }
     }
 
-    fun getOutput(): @NlsSafe String = readLines.joinToString(separator = "\n") { it.text }
+    fun getOutput(): List<BuildOutputText> = readLines
   }
 
   private companion object {
@@ -213,19 +212,20 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
     private val COMPILER_MESSAGES_GROUP: @BuildEventsNls.Title String
       get() = LangBundle.message("build.event.title.compiler")
 
-    private suspend fun amendNextInfoLinesIfNeeded(str: String, reader: BuildOutputReplayableLineReader): @NlsSafe String = buildString {
-      append(str)
-      var nextLine = reader.readLine()?.text
-      while (nextLine != null) {
-        if (nextLine.startsWith(NOTE_LINE_PREFIX) && !nextLine.contains(JAVA_EXTENSION)) {
-          append("\n").append(nextLine.substring(NOTE_LINE_PREFIX.length))
-          nextLine = reader.readLine()?.text
-          continue
+    private suspend fun amendNextInfoLinesIfNeeded(line: BuildOutputText, reader: BuildOutputReplayableLineReader): BuildOutputText =
+      buildList {
+        add(line)
+        var nextLine: BuildOutputText? = reader.readLine()
+        while (nextLine != null) {
+          if (nextLine.text.startsWith(NOTE_LINE_PREFIX) && !nextLine.text.contains(JAVA_EXTENSION)) {
+            add(nextLine)
+            nextLine = reader.readLine()
+            continue
+          }
+          reader.pushBack(1)
+          break
         }
-        reader.pushBack(1)
-        break
-      }
-    }
+      }.joinToText("\n")
 
     private fun String.isMessageEnd(): Boolean = firstOrNull()?.isWhitespace() == true
 
@@ -250,5 +250,19 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
       }
       return messages
     }
+
+    private fun List<BuildOutputText>.joinToText(separator: String = ", "): BuildOutputText =
+      BuildOutputText.createOutputText(
+        flatMap { it.ids },
+        map { it.text }
+          .filter { it.isNotBlank() }
+          .joinToString(separator = separator) { it }
+      )
+
+    private fun MessageEventBuilder.withDescription(line: BuildOutputText, isSingleFlow: Boolean): MessageEventBuilder =
+      when (isSingleFlow) {
+        true -> withOutputIds(line.ids)
+        else -> withDescription(line.text)
+      }
   }
 }
