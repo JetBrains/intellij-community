@@ -165,7 +165,7 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
         RootType rootType = getRootType(file);
         // an opened text file already has its document cached
         Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-        if (document == null || rootType == null || (rootType.isHidden() && !rootType.allowOpenFileEventsForHidden())) return;
+        if (document == null || rootType == null || rootType.isHidden()) return;
         rootType.fileOpened(file, source);
       }
 

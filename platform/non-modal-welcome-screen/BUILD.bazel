@@ -147,6 +147,8 @@ jvm_library(
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//platform/non-modal-welcome-screen:non-modal-welcome-screen_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/non-modal-welcome-screen/frontend:frontend_test_lib",
+        "//platform/non-modal-welcome-screen/backend:backend_test_lib",
     ],
     deps = [
         # do not sort,
@@ -196,6 +198,8 @@ jvm_library(
         "//fleet/rhizomedb",
         "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/ide-core",
+        "//platform/non-modal-welcome-screen/frontend",
+        "//platform/non-modal-welcome-screen/backend",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.tests` end

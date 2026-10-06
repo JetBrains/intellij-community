@@ -22,5 +22,11 @@
     <project.view.pane.pure.ui
       implementation="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.leftPanel.FrontendWelcomeScreenLeftPanelProvider"
     />
+    <virtualFilePreCloseCheck implementation="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.welcomeFiles.WelcomeFilePreCloseCheck"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.welcomeFiles.WelcomeFilesEditorListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
 </idea-plugin>

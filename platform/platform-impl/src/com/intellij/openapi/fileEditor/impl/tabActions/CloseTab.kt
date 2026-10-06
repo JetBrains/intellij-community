@@ -16,6 +16,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.ShadowAction
 import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
@@ -43,6 +44,13 @@ import java.awt.geom.Ellipse2D
 import javax.swing.Icon
 import javax.swing.JComponent
 
+/**
+ * Makes every tab of the file show the modified marker instead of the close button.
+ * Put `true` in the user data of the [VirtualFile]. The tabs show the change on the next update of the tab actions.
+ */
+@ApiStatus.Internal
+val ALWAYS_SHOW_MODIFIED_MARKER: Key<Boolean> = Key.create("editor.tab.always.show.modified.marker")
+
 @ApiStatus.Internal
 class CloseTab(
   component: JComponent,
@@ -50,8 +58,6 @@ class CloseTab(
   private val editorWindow: EditorWindow,
   parentDisposable: Disposable,
 ) : AnAction(), DumbAware {
-
-  var showModifier: Boolean = false
 
   init {
     ShadowAction(this, IdeActions.ACTION_CLOSE, component, parentDisposable)
@@ -86,7 +92,9 @@ class CloseTab(
 
   private fun isPinned() = editorWindow.isFilePinned(file)
 
-  private fun isModified() = showModifier || UISettings.getInstance().markModifiedTabsWithAsterisk && editorWindow.getComposite(file)?.isModified == true
+  private fun isAlwaysModified() = file.getUserData(ALWAYS_SHOW_MODIFIED_MARKER) == true
+
+  private fun isModified() = isAlwaysModified() || UISettings.getInstance().markModifiedTabsWithAsterisk && editorWindow.getComposite(file)?.isModified == true
 
   /**
    * Whether to restrict the user to close the tab or not.
@@ -139,7 +147,7 @@ class CloseTab(
   }
 
   fun getIcon(isHovered: Boolean): Icon {
-    if (showModifier) {
+    if (isAlwaysModified()) {
       return AllIcons.General.Modified
     }
     val pinned = isPinned()

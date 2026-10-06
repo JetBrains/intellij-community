@@ -12,11 +12,9 @@ import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.ide.util.DeleteHandler
 import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.undo.UndoUtil
@@ -25,13 +23,10 @@ import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
-import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseHandler
@@ -42,12 +37,10 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFilePreCloseCheck
 import com.intellij.openapi.vfs.findFile
 import com.intellij.platform.PROJECT_CLOSE_WITH_CONFIRMATION
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
-import com.intellij.ui.tabs.TabInfo
 import com.intellij.util.Consumer
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.toArray
@@ -104,65 +97,12 @@ class WelcomeFilesRootType : RootType("HomeFiles", "") {
       return WelcomeUtils.isWelcomeProject(project) && instance.containsFile(file)
     }
   }
-
-  override fun allowOpenFileEventsForHidden(): Boolean = true
-
-  override fun fileOpened(file: VirtualFile, source: FileEditorManager) {
-    val fileEditorManager = source as FileEditorManagerEx
-    for (fileEditor in source.getAllEditors(file)) {
-      if (fileEditor is TextEditor) {
-        for (window in fileEditorManager.windows) {
-          if (configureEditor(file, window.tabbedPane.tabs.tabs)) {
-            return
-          }
-        }
-      }
-    }
-    for (composite in fileEditorManager.splitters.getAllComposites(file)) {
-      if (configureEditor(file, composite.tabs?.tabs ?: continue)) {
-        return
-      }
-    }
-  }
-
-  private fun configureEditor(file: VirtualFile, tabs: List<TabInfo>): Boolean {
-    for (tab in tabs) {
-      if (tab.`object` == file) {
-        val actions = tab.tabLabelActions
-        if (actions is DefaultActionGroup) {
-          for (action in actions.getChildren(ActionManager.getInstance())) {
-            if (action is CloseTab && !action.showModifier) {
-              action.showModifier = true
-              return true
-            }
-          }
-        }
-      }
-    }
-    return false
-  }
 }
 
 internal class WelcomeNonProjectFileWritingAccessExtension : NonProjectFileWritingAccessExtension {
   override fun isWritable(file: VirtualFile): Boolean {
     val project = ProjectUtil.getActiveProject()
     return project != null && WelcomeFilesRootType.Util.isWelcomeFile(project, file)
-  }
-}
-
-internal class WelcomeFilePreCloseCheck : VirtualFilePreCloseCheck {
-  override fun canCloseFile(file: VirtualFile): Boolean {
-    val project = ProjectUtil.getActiveProject()
-    if (project == null || !WelcomeFilesRootType.Util.isWelcomeFile(project, file)) {
-      return true
-    }
-
-    val composites = (FileEditorManager.getInstance(project) as FileEditorManagerEx).splitters.getAllComposites(file)
-    if (composites.size > 1) {
-      return true
-    }
-
-    return doCloseFile(project, file)
   }
 }
 
@@ -179,7 +119,7 @@ class WelcomeSaveFileAction : DumbAwareAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
     val file = getFile(project, event) ?: return
-    doSaveFile(project, file, true)
+    saveWelcomeFileAs(project, file, true)
   }
 
   @ApiStatus.Internal
@@ -221,22 +161,8 @@ internal class WelcomeProjectCloseHandler : ProjectCloseHandler {
   }
 }
 
-private fun doCloseFile(project: Project, file: VirtualFile): Boolean {
-  val result = askSaveFile(file, project)
-
-  if (result == Messages.CANCEL) {
-    return false
-  }
-  if (result == Messages.OK) {
-    return doSaveFile(project, file, false)
-  }
-
-  ApplicationManager.getApplication().invokeLater({ deleteFile(project, file) }, project.disposed)
-  return true
-}
-
 private fun doCloseFileOnExit(project: Project, file: VirtualFile): Boolean {
-  val result = askSaveFile(file, project)
+  val result = askSaveWelcomeFile(file, project)
 
   if (result == Messages.CANCEL) {
     return false
@@ -249,8 +175,13 @@ private fun doCloseFileOnExit(project: Project, file: VirtualFile): Boolean {
   return true
 }
 
+/**
+ * Asks the user to save the Home [file].
+ * Returns [Messages.OK] for "Save", [Messages.NO] for "Don't save", and [Messages.CANCEL] for "Cancel".
+ */
+@ApiStatus.Internal
 @YesNoCancelResult
-private fun askSaveFile(file: VirtualFile, project: Project): Int {
+fun askSaveWelcomeFile(file: VirtualFile, project: Project): Int {
   return MessageDialogBuilder.yesNoCancel(IdeBundle.message("welcome.file.dialog.title", file.name),
                                           IdeBundle.message("welcome.file.dialog.messages"))
     .yesText(IdeBundle.message("button.save")).noText(ApplicationBundle.message("settings.switch.project.button.dont.save")).show(project)
@@ -274,7 +205,12 @@ private fun doCloseFilesOnExit(project: Project, files: List<VirtualFile>): Bool
   return true
 }
 
-private fun doSaveFile(project: Project, file: VirtualFile, closeCurrentTab: Boolean): Boolean {
+/**
+ * Shows the save dialog and copies the Home [file] to the target. Then it opens the target and deletes [file].
+ * Returns false when the user cancels the dialog.
+ */
+@ApiStatus.Internal
+fun saveWelcomeFileAs(project: Project, file: VirtualFile, closeCurrentTab: Boolean): Boolean {
   val targetFile = showSaveFileDialog(project, file) ?: return false
 
   ApplicationManager.getApplication().invokeLater(
@@ -293,7 +229,7 @@ private fun doSaveFile(project: Project, file: VirtualFile, closeCurrentTab: Boo
 
             IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace()
 
-            deleteFile(project, file)
+            deleteWelcomeFile(project, file)
           }, project.disposed)
       })
     }, project.disposed)
@@ -386,7 +322,11 @@ private fun writeFile(manager: FileDocumentManager, file: VirtualFile, targetFil
   }
 }
 
-private fun deleteFile(project: Project, file: VirtualFile) {
+/**
+ * Deletes the Home [file] without a confirmation.
+ */
+@ApiStatus.Internal
+fun deleteWelcomeFile(project: Project, file: VirtualFile) {
   if (file.isValid()) {
     val psiFile = PsiManager.getInstance(project).findFile(file)
     if (psiFile != null) {

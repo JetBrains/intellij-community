@@ -38,6 +38,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/util:util-ui",
         "//platform/platform-impl/rpc",
+        "//platform/lang-impl",
     ],
 )
 
@@ -66,6 +67,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.backend` end

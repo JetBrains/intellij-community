@@ -56,6 +56,8 @@
     <orderEntry type="module" module-name="intellij.platform.ide.nonModalWelcomeScreen" scope="TEST" />
     <orderEntry type="module" module-name="fleet.rhizomedb" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.nonModalWelcomeScreen.frontend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.nonModalWelcomeScreen.backend" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.ide.nonModalWelcomeScreen" />
 </module>
