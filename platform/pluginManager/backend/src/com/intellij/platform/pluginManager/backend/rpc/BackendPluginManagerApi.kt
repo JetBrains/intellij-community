@@ -19,6 +19,7 @@ import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateExclusionService.Exclusion
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
@@ -282,5 +283,13 @@ class BackendPluginManagerApi : PluginManagerApi {
 
   override suspend fun getAllPluginUpdateSources(): List<PluginUpdateSource> {
     return DefaultUiPluginManagerController.getAllPluginUpdateSources()
+  }
+
+  override suspend fun getPluginUpdateExclusion(sessionId: String, pluginId: PluginId): Exclusion? {
+    return DefaultUiPluginManagerController.getPluginUpdateExclusion(sessionId, pluginId)
+  }
+
+  override suspend fun persistPluginUpdateExclusion(sessionId: String, pluginId: PluginId, exclusion: Exclusion?) {
+    DefaultUiPluginManagerController.persistPluginUpdateExclusion(sessionId, pluginId, exclusion)
   }
 }

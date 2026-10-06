@@ -30,6 +30,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.PluginUpdateExclusionService.Exclusion
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi
@@ -365,6 +366,14 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
 
   override suspend fun getAllPluginUpdateSources(): List<PluginUpdateSource> {
     return PluginManagerApi.getInstance().getAllPluginUpdateSources()
+  }
+
+  override suspend fun getPluginUpdateExclusion(sessionId: String, pluginId: PluginId): Exclusion? {
+    return PluginManagerApi.getInstance().getPluginUpdateExclusion(sessionId, pluginId)
+  }
+
+  override suspend fun persistPluginUpdateExclusion(sessionId: String, pluginId: PluginId, exclusion: Exclusion?) {
+    PluginManagerApi.getInstance().persistPluginUpdateExclusion(sessionId, pluginId, exclusion)
   }
 
   private fun List<PluginUiModel>.withSource(): List<PluginUiModel> {

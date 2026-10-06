@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.marketplace.InstallPluginResult
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateExclusionService.Exclusion
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
@@ -245,6 +246,14 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
   suspend fun persistPluginUpdateSource(pluginId: PluginId, pluginUpdateSource: PluginUpdateSource?){
     UiPluginManager.getInstance().persistPluginUpdateSource(pluginModel.sessionId, pluginId, pluginUpdateSource)
     pluginModel.updateSourceFilter.sourcePersisted(pluginId)
+  }
+
+  suspend fun getPluginUpdateExclusion(pluginId: PluginId): Exclusion? {
+    return UiPluginManager.getInstance().getPluginUpdateExclusion(pluginModel.sessionId, pluginId)
+  }
+
+  suspend fun persistPluginUpdateExclusion(pluginId: PluginId, exclusion: Exclusion?) {
+    UiPluginManager.getInstance().persistPluginUpdateExclusion(pluginModel.sessionId, pluginId, exclusion)
   }
 
   fun getModel(): MyPluginModel = pluginModel

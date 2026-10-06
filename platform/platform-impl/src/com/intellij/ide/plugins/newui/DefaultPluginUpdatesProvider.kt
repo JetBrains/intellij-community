@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateExclusionService
 import com.intellij.openapi.updateSettings.impl.PluginUpdateHandler
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceListener
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
@@ -86,6 +87,9 @@ class DefaultPluginUpdatesProvider(private val coroutineScope: CoroutineScope) :
     application.messageBus.connect(coroutineScope).subscribe(PluginUpdateSourceListener.TOPIC, PluginUpdateSourceListener {
       coroutineScope.launch { update() }
     })
+    coroutineScope.launch {
+      PluginUpdateExclusionService.getInstance().updateExclusionChanges.collect { _ -> update() }
+    }
     collectUpdateRequests()
   }
 

@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateExclusionService.Exclusion
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
@@ -76,6 +77,8 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun isPluginUpdateSourceVisibleInUI(): Boolean
   suspend fun isMissingUpdateSourceWarningEnabled(): Boolean
   suspend fun getAllPluginUpdateSources(): List<PluginUpdateSource>
+  suspend fun getPluginUpdateExclusion(sessionId: String, pluginId: PluginId): Exclusion?
+  suspend fun persistPluginUpdateExclusion(sessionId: String, pluginId: PluginId, exclusion: Exclusion?)
 
   companion object {
     suspend fun getInstance(): PluginManagerApi {

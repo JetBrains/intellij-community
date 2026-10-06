@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.PluginUpdateExclusionService.Exclusion
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -318,6 +319,14 @@ class UiPluginManager {
 
   suspend fun getAllPluginUpdateSources(): List<PluginUpdateSource> {
     return getController().getAllPluginUpdateSources()
+  }
+
+  suspend fun getPluginUpdateExclusion(sessionId: String, pluginId: PluginId): Exclusion? {
+    return getController().getPluginUpdateExclusion(sessionId, pluginId)
+  }
+
+  suspend fun persistPluginUpdateExclusion(sessionId: String, pluginId: PluginId, exclusion: Exclusion?) {
+    getController().persistPluginUpdateExclusion(sessionId, pluginId, exclusion)
   }
 
   companion object {

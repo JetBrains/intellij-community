@@ -18,6 +18,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.PluginUpdateExclusionService.Exclusion
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import org.jetbrains.annotations.ApiStatus
@@ -121,6 +122,8 @@ interface UiPluginManagerController {
   fun isPluginUpdateSourceVisibleInUI(): Boolean
   fun isMissingUpdateSourceWarningEnabled(): Boolean
   suspend fun getAllPluginUpdateSources(): List<PluginUpdateSource>
+  suspend fun getPluginUpdateExclusion(sessionId: String, pluginId: PluginId): Exclusion?
+  suspend fun persistPluginUpdateExclusion(sessionId: String, pluginId: PluginId, exclusion: Exclusion?)
 
   companion object {
     val EP_NAME: ExtensionPointName<UiPluginManagerController> = ExtensionPointName("com.intellij.uiPluginManagerController")

@@ -62,6 +62,8 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginAutoUpdateService
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
+import com.intellij.openapi.updateSettings.impl.PluginUpdateExclusionService
+import com.intellij.openapi.updateSettings.impl.PluginUpdateExclusionService.Exclusion
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
@@ -119,6 +121,8 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     session.pluginStates.putAll(initialPluginState.pluginStates)
     val initialPluginUpdateSourceStates = collectInitialPluginUpdateSources()
     session.pluginUpdateSourceStates.putAll(initialPluginUpdateSourceStates)
+    val initialPluginUpdateExclusionStates = collectInitialPluginUpdateExclusions()
+    session.pluginUpdateExclusionStates.putAll(initialPluginUpdateExclusionStates)
     return InitSessionResult(initialPluginState.visiblePlugins,
                              session.pluginStates.mapValues { it.value?.isEnabled })
   }
@@ -1035,6 +1039,17 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return PluginUpdateSourceService.getInstance().getAllSources()
   }
 
+  override suspend fun getPluginUpdateExclusion(sessionId: String, pluginId: PluginId): Exclusion? {
+    val session = findSession(sessionId) ?: return null
+    return session.pluginUpdateExclusionStates[pluginId]?.value
+  }
+
+  override suspend fun persistPluginUpdateExclusion(sessionId: String, pluginId: PluginId, exclusion: Exclusion?) {
+    PluginUpdateExclusionService.getInstance().setExcluded(pluginId, exclusion)
+    val session = findSession(sessionId) ?: return
+    session.pluginUpdateExclusionStates[pluginId] = PluginUpdateExclusionState(exclusion)
+  }
+
   private fun getContextElement(modalityState: ModalityState?): CoroutineContext {
     return modalityState?.let { Dispatchers.EDT + it.asContextElement() } ?: Dispatchers.EDT
   }
@@ -1583,6 +1598,16 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       sources[pluginId] = PluginUpdateSourceState(pluginUpdateSourceId)
     }
     return sources
+  }
+
+  private fun collectInitialPluginUpdateExclusions(): Map<PluginId, PluginUpdateExclusionState> {
+    val exclusions = mutableMapOf<PluginId, PluginUpdateExclusionState>()
+    val service = PluginUpdateExclusionService.getInstance()
+    for (plugin in getInstalledAndPendingPlugins()) {
+      val pluginId = plugin.pluginId
+      exclusions[pluginId] = PluginUpdateExclusionState(service.getExclusion(pluginId))
+    }
+    return exclusions
   }
 
   private fun isDisabled(pluginId: PluginId): Boolean = PluginManagerCore.isDisabled(pluginId)

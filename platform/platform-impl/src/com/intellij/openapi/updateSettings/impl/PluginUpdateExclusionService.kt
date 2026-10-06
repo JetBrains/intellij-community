@@ -10,6 +10,10 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.xmlb.annotations.XMap
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.APP)
@@ -18,6 +22,7 @@ import org.jetbrains.annotations.ApiStatus
 class PluginUpdateExclusionService :
   SimplePersistentStateComponent<PluginUpdateExclusionState>(PluginUpdateExclusionState()) {
 
+  @Serializable
   enum class Exclusion {
     FromAutoUpdate,
     FromUpdate,
@@ -27,6 +32,12 @@ class PluginUpdateExclusionService :
     @JvmStatic
     fun getInstance(): PluginUpdateExclusionService = service()
   }
+
+  val updateExclusionChanges: Flow<Unit>
+    field = MutableSharedFlow<Unit>(
+      extraBufferCapacity = 1,
+      onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
 
   fun getExclusion(pluginId: PluginId): Exclusion? {
     return state.excludedPlugins[pluginId.idString]
@@ -41,12 +52,24 @@ class PluginUpdateExclusionService :
   }
 
   fun setExcluded(pluginId: PluginId, exclusion: Exclusion?) {
+    val oldValue = state.excludedPlugins[pluginId.idString]
+    if (oldValue == exclusion) return
     if (exclusion == null) {
       state.excludedPlugins.remove(pluginId.idString)
     }
     else {
       state.excludedPlugins[pluginId.idString] = exclusion
     }
+    updateExclusionChanges.tryEmit(Unit)
+  }
+
+  override fun loadState(state: PluginUpdateExclusionState) {
+    super.loadState(state)
+    notifyStateUpdated(updateExclusionChanges)
+  }
+
+  private fun notifyStateUpdated(updateExclusionChanges: MutableSharedFlow<Unit>) {
+    updateExclusionChanges.tryEmit(Unit)
   }
 }
 

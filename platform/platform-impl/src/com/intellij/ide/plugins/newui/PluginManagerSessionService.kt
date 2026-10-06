@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateExclusionService.Exclusion
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.util.Pair
 import kotlinx.serialization.Serializable
@@ -83,6 +84,7 @@ class PluginManagerSession(val sessionId: String) {
 
   val pluginUpdateSourceStates: MutableMap<PluginId, PluginUpdateSourceState> = ConcurrentHashMap()
   val pluginUpdateSourceStatesDiff: MutableMap<PluginId, PluginUpdateSourceChangedState> = ConcurrentHashMap()
+  val pluginUpdateExclusionStates: MutableMap<PluginId, PluginUpdateExclusionState> = ConcurrentHashMap()
 
   fun isPluginDisabled(pluginId: PluginId): Boolean = !isPluginEnabled(pluginId)
   
@@ -101,3 +103,7 @@ class PluginUpdateSourceChangedState(val initialValue: PluginUpdateSourceState, 
     return initialValue != newValue
   }
 }
+
+@Serializable
+@ApiStatus.Internal
+data class PluginUpdateExclusionState(val value: Exclusion?)
