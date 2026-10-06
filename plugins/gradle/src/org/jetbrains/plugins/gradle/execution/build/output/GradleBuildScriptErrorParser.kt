@@ -5,6 +5,7 @@ import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.DuplicateMessageAware
 import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.OutputId
 import com.intellij.build.events.StartId
 import com.intellij.build.events.impl.BuildIssueEventImpl
 import com.intellij.build.events.impl.FileMessageEventImpl
@@ -135,35 +136,70 @@ class GradleBuildScriptErrorParser : BuildOutputLineParserBridge() {
       }
     }
 
-    val detailedMessage = StringBuilder(errorText)
+    val buildEventDescription: String?
+    val outputIds: List<OutputId>
+    if (isSingleFlow) {
+      outputIds = line.ids
+      buildEventDescription = null
+    }
+    else {
+      outputIds = emptyList()
 
-    if (!trySuggestions.isNullOrBlank()) {
-      detailedMessage.append("\n* Try:\n$trySuggestions")
+      val detailedMessage = StringBuilder(errorText)
+      if (!trySuggestions.isNullOrBlank()) {
+        detailedMessage.append("\n* Try:\n$trySuggestions")
+      }
+      if (!exception.isNullOrBlank()) {
+        detailedMessage.append("\n* Exception is:\n$exception")
+      }
+      buildEventDescription = detailedMessage.toString()
     }
-    if (!exception.isNullOrBlank()) {
-      detailedMessage.append("\n* Exception is:\n$exception")
-    }
+
     if (filePosition != null) {
       //TODO: Used english suggestions and exceptions:
-      multicaster.notifyBuildEvent(object : FileMessageEventImpl(
-        parentId, MessageEvent.Kind.ERROR, null, reason, detailedMessage.toString(), filePosition), DuplicateMessageAware {} //NON-NLS
+      multicaster.notifyBuildEvent(
+        object : FileMessageEventImpl(
+          /* id = */ null,
+          /* parentId = */ parentId,
+          /* time = */ null,
+          /* message = */ reason,
+          /* hint = */ null,
+          /* description = */ buildEventDescription,
+          /* kind = */ MessageEvent.Kind.ERROR,
+          /* group = */ null,
+          /* navigatable = */ null,
+          /* outputIds = */ outputIds,
+          /* filePosition = */ filePosition
+        ), DuplicateMessageAware {} //NON-NLS
       )
     }
     else {
-      val unresolvedMessageEvent = checkUnresolvedDependencyError(reason, errorText, parentId)
+      val unresolvedMessageEvent = checkUnresolvedDependencyError(reason, errorText, parentId, outputIds)
       if (unresolvedMessageEvent != null) {
         multicaster.notifyBuildEvent(unresolvedMessageEvent)
       }
       else {
         //TODO: Used english suggestions and exceptions:
-        multicaster.notifyBuildEvent(object : MessageEventImpl(parentId, MessageEvent.Kind.ERROR, null, reason,
-                                                         detailedMessage.toString()), DuplicateMessageAware {}) //NON-NLS
+        multicaster.notifyBuildEvent(
+          object : MessageEventImpl(
+            /* id = */ null,
+            /* parentId = */ parentId,
+            /* time = */ null,
+            /* message = */ reason,
+            /* hint = */ null,
+            /* description = */ buildEventDescription,
+            /* kind = */ MessageEvent.Kind.ERROR,
+            /* group = */ null,
+            /* navigatable = */ null,
+            /* outputIds = */ outputIds
+          ), DuplicateMessageAware {}
+        ) //NON-NLS
       }
     }
     return true
   }
 
-  private fun checkUnresolvedDependencyError(reason: String, description: String, parentId: Any): BuildEvent? {
+  private fun checkUnresolvedDependencyError(reason: String, description: String, parentId: Any, outputIds: List<OutputId>): BuildEvent? {
     val noCachedVersionPrefix = "No cached version of "
     val couldNotFindPrefix = "Could not find "
     val cannotResolvePrefix = "Cannot resolve external dependency "
@@ -178,7 +214,15 @@ class GradleBuildScriptErrorParser : BuildOutputLineParserBridge() {
     val indexOfSuffix = reason.indexOf(" available for offline mode")
     val dependencyName = if (indexOfSuffix > 0) reason.substring(prefix.length, indexOfSuffix) else reason.substring(prefix.length)
     val unresolvedDependencyIssue = UnresolvedDependencyBuildIssue(dependencyName, description, indexOfSuffix > 0)
-    return BuildIssueEventImpl(parentId, unresolvedDependencyIssue, MessageEvent.Kind.ERROR)
+    return BuildIssueEventImpl(
+      /* id = */ null,
+      /* parentId = */ parentId,
+      /* time = */ null,
+      /* hint = */ null,
+      /* outputIds = */ outputIds,
+      /* buildIssue = */ unresolvedDependencyIssue,
+      /* kind = */ MessageEvent.Kind.ERROR
+    )
   }
 }
 
