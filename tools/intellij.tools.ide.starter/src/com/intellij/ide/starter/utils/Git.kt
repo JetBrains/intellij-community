@@ -166,7 +166,7 @@ object Git {
    * git sent. This report lists the public keys of the agent and the identity files of the configuration.
    * It prints no private key.
    */
-  private fun sshIdentityReport(repoUrl: String): String {
+  internal fun sshIdentityReport(repoUrl: String): String {
     val authority = repoUrl.substringAfter("://").substringBefore("/")
     val host = authority.substringAfter("@").substringBefore(":")
 
