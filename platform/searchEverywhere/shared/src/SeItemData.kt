@@ -4,17 +4,14 @@ package com.intellij.platform.searchEverywhere
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
 import com.intellij.openapi.application.readAction
-import com.intellij.platform.searchEverywhere.impl.SeItemEntity
+import com.intellij.platform.searchEverywhere.impl.SeItemId
+import com.intellij.platform.searchEverywhere.impl.SeItemRegistry
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
-import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.computeCatchingOrNull
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetItem
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetPresentableItem
-import com.jetbrains.rhizomedb.DbContext
-import fleet.kernel.DurableRef
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Serializable data interface for search everywhere results
@@ -46,7 +43,7 @@ class SeItemDataFactory {
     providerId: SeProviderId,
     additionalInfo: Map<String, String>,
   ): SeItemData? {
-    val entityRef = SeItemEntity.createWith(session, item) ?: return null
+    val itemId = SeItemRegistry.getInstance().register(session, item) ?: return null
     val additionalInfo = additionalInfo.toMutableMap()
 
     // The language holds for every item, because it comes out of the raw object.
@@ -77,7 +74,7 @@ class SeItemDataFactory {
       additionalInfo[SeItemDataKeys.IS_EXACT_MATCH] = true.toString()
     }
 
-    return SeItemDataImpl(uuid, providerId, SeComposedWeight.from(item), item.presentation(), emptyList(), additionalInfo, entityRef)
+    return SeItemDataImpl(uuid, providerId, SeComposedWeight.from(item), item.presentation(), emptyList(), additionalInfo, itemId)
   }
 }
 
@@ -90,42 +87,31 @@ class SeItemDataImpl internal constructor(
   override val presentation: SeItemPresentation,
   override val uuidsToReplace: List<String>,
   override val additionalInfo: Map<String, String>,
-  private val itemRef: DurableRef<SeItemEntity>,
+  private val itemId: SeItemId,
 ): SeItemData {
   override val weight: Int get() = composedWeight.first
   val isCommand: Boolean get() = additionalInfo[SeItemDataKeys.IS_COMMAND]?.toBoolean() == true
   val isSemantic: Boolean get() = additionalInfo[SeItemDataKeys.IS_SEMANTIC]?.toBoolean() == true
   val isExactMatch: Boolean get() = additionalInfo[SeItemDataKeys.IS_EXACT_MATCH]?.toBoolean() == true
 
-  override fun fetchItemIfExists(): SeItem? =
-    try {
-      itemRef.derefOrNull()?.findItemOrNull()
-    }
-    catch (e: CancellationException) {
-      // `poison` is the Throwable the read tripped over; for the match-invalidation case it is a
-      // `fleet.kernel.rete.UnsatisfiedMatchException` ("match invalidated by rete"). It also serves
-      // as the discriminator: a non-poisoned context means this is a real cancellation -> rethrow.
-      val poison = DbContext.threadBoundOrNull?.poison ?: throw e
-      SeLog.warn("Couldn't fetch SE item ${providerId.value}/$uuid, DB context is poisoned: $poison")
-      null
-    }
+  override fun fetchItemIfExists(): SeItem? = SeItemRegistry.getInstance().find(itemId)
 
   fun withUuidToReplace(uuidToReplace: List<String>): SeItemDataImpl {
-    return SeItemDataImpl(uuid, providerId, composedWeight, presentation, uuidToReplace, additionalInfo, itemRef)
+    return SeItemDataImpl(uuid, providerId, composedWeight, presentation, uuidToReplace, additionalInfo, itemId)
   }
 
   fun withPresentation(presentation: SeItemPresentation): SeItemDataImpl {
-    return SeItemDataImpl(uuid, providerId, composedWeight, presentation, uuidsToReplace, additionalInfo, itemRef)
+    return SeItemDataImpl(uuid, providerId, composedWeight, presentation, uuidsToReplace, additionalInfo, itemId)
   }
 
   /** Replaces the first component of [composedWeight] with [weight], and keeps the other components. */
   fun withWeight(weight: Int): SeItemDataImpl {
     val components = composedWeight.components.drop(1) + SeWeightComponent(weight)
-    return SeItemDataImpl(uuid, providerId, SeComposedWeight.of(components), presentation, uuidsToReplace, additionalInfo, itemRef)
+    return SeItemDataImpl(uuid, providerId, SeComposedWeight.of(components), presentation, uuidsToReplace, additionalInfo, itemId)
   }
 
   fun withWeight(weight: SeComposedWeight): SeItemDataImpl {
-    return SeItemDataImpl(uuid, providerId, weight, presentation, uuidsToReplace, additionalInfo, itemRef)
+    return SeItemDataImpl(uuid, providerId, weight, presentation, uuidsToReplace, additionalInfo, itemId)
   }
 
   fun contentEquals(other: Any?): Boolean {

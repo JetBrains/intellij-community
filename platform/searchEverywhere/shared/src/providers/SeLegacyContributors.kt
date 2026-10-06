@@ -8,9 +8,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSession
-import com.intellij.platform.searchEverywhere.SeSessionEntity
-import com.intellij.platform.searchEverywhere.asRef
-import fleet.kernel.DurableRef
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
@@ -29,18 +26,17 @@ class SeLegacyContributors(
 @ApiStatus.Internal
 @Service(Service.Level.APP)
 class SeLegacyContributorsRegistry {
-  private val contributorsBySession = ConcurrentHashMap<DurableRef<SeSessionEntity>, SeLegacyContributors>()
+  private val contributorsBySession = ConcurrentHashMap<SeSession, SeLegacyContributors>()
 
   /** Publishes [contributors] until [parentDisposable] is disposed. */
   fun register(session: SeSession, contributors: SeLegacyContributors, parentDisposable: Disposable) {
-    val sessionRef = session.asRef()
-    contributorsBySession[sessionRef] = contributors
+    contributorsBySession[session] = contributors
     Disposer.register(parentDisposable) {
-      contributorsBySession.remove(sessionRef)
+      contributorsBySession.remove(session)
     }
   }
 
-  fun get(session: SeSession): SeLegacyContributors? = contributorsBySession[session.asRef()]
+  fun get(session: SeSession): SeLegacyContributors? = contributorsBySession[session]
 
   companion object {
     fun getInstance(): SeLegacyContributorsRegistry = service()

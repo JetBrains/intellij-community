@@ -25,6 +25,15 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.Internal
 @Rpc
 interface SeRemoteApi : RemoteApi<Unit> {
+
+  /**
+   * Keeps [session] open on the backend while the frontend collects the flow.
+   * The flow emits nothing and stays active.
+   * When the collection stops or the connection is lost, the backend closes the session and disposes its providers.
+   * After that, the backend ignores the session.
+   */
+  suspend fun openSession(projectId: ProjectId, session: SeSession): Flow<Unit>
+
   // In the case of sending search results via RPC,
   // we can't limit the flow buffer on the backend side
   // and somehow suspend generating new search results while the UI has enough of them to present.

@@ -23,6 +23,11 @@ import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 class SeRemoteApiImpl : SeRemoteApi {
+  override suspend fun openSession(projectId: ProjectId, session: SeSession): Flow<Unit> {
+    val project = projectId.findProjectOrNull() ?: return emptyFlow()
+    return SeBackendService.getInstance(project).openSession(session)
+  }
+
   override suspend fun itemSelected(
     projectId: ProjectId,
     session: SeSession,

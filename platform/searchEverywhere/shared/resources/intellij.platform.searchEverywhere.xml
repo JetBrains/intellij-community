@@ -61,7 +61,6 @@
                  restartRequired="false"
                  description="Use the coroutine based goto providers in Search Everywhere. Such a provider drives the ChooseByName model itself and computes the item presentation on a background thread. When the key is off, Search Everywhere wraps the legacy SearchEverywhereContributor instead."/>
 
-    <platform.entityTypes implementation="com.intellij.platform.searchEverywhere.SeEntityTypeProvider"/>
     <remote.customDataContextSerializer implementation="com.intellij.platform.searchEverywhere.data.SeSelectedItemsDataContextSerializer" />
     <remote.customDataContextSerializer implementation="com.intellij.platform.searchEverywhere.data.SeSessionDataContextSerializer" />
     <remote.customDataContextSerializer implementation="com.intellij.platform.searchEverywhere.data.SeIsAllTabDataContextSerializer" />

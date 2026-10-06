@@ -21,7 +21,6 @@ import com.intellij.platform.searchEverywhere.SeLegacyItemPresentationProvider
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.SeSession
-import com.intellij.platform.searchEverywhere.asRef
 import com.intellij.platform.searchEverywhere.toProviderId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -91,7 +90,7 @@ class SeProvidersHolder(
       val allTabProviders = mutableMapOf<SeProviderId, SeLocalItemDataProvider>()
       val separateTabProviders = mutableMapOf<SeProviderId, SeLocalItemDataProvider>()
       val initializationGuard = SeProviderInitializationGuard.getInstance()
-      val openingId = session.asRef()
+      val openingId = session.id
 
       SeItemsProviderFactory.EP_NAME.extensionList.forEach { providerFactory ->
         val provider: SeItemsProvider?

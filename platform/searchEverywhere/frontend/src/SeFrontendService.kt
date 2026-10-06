@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.SearchEverywhereManagerFactory
 import com.intellij.ide.actions.searcheverywhere.PreviewExperiment.isExperimentEnabled
@@ -25,8 +26,7 @@ import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.project.projectId
 import com.intellij.platform.searchEverywhere.SeSession
-import com.intellij.platform.searchEverywhere.SeSessionEntity
-import com.intellij.platform.searchEverywhere.asRef
+import com.intellij.platform.searchEverywhere.SeSessionImpl
 import com.intellij.platform.searchEverywhere.frontend.ml.SeMlService
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.DataContextWithRpcId
 import com.intellij.platform.searchEverywhere.frontend.tabs.SeAdaptedTab
@@ -42,6 +42,7 @@ import com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupHeaderPane
 import com.intellij.platform.searchEverywhere.frontend.vm.SeDummyTabVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
+import com.intellij.platform.searchEverywhere.impl.SeItemRegistry
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLegacyContributorsRegistry
 import com.intellij.platform.searchEverywhere.providers.SeLog
@@ -58,11 +59,10 @@ import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
-import fleet.kernel.change
-import fleet.kernel.rebase.shared
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -73,6 +73,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -83,6 +84,7 @@ import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import java.awt.Point
 import java.awt.event.MouseEvent
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -169,7 +171,11 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     popupInstanceFuture = popupFuture
 
     coroutineScope.launch {
-      val session = SeSessionEntity.createSession()
+      val session = SeSessionImpl(UUID.randomUUID().toString())
+      // Start at once, so that the backend gets the session before the other calls for it.
+      val backendSessionJob = launch(start = CoroutineStart.UNDISPATCHED) {
+        keepBackendSessionOpen(session)
+      }
       var sessionProvidersHolder: SeProvidersHolder? = null
       var initFailure: Throwable? = null
 
@@ -272,14 +278,21 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       }
       finally {
         sessionProvidersHolder?.let { Disposer.dispose(it) }
-        withContext(NonCancellable) {
-          change {
-            shared {
-              session.asRef().derefOrNull()?.delete()
-            }
-          }
-        }
+        backendSessionJob.cancel()
+        SeItemRegistry.getInstance().closeSession(session)
       }
+    }
+  }
+
+  private suspend fun keepBackendSessionOpen(session: SeSession) {
+    val project = project ?: return
+    val remoteApi = SeRemoteApi.tryGetInstance() ?: return
+    try {
+      remoteApi.openSession(project.projectId(), session).collect()
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      SeLog.warn("The backend session ended before the popup closed: $e")
     }
   }
 
