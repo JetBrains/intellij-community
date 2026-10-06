@@ -1,0 +1,98 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+# Reports where the actions came from, and the largest blobs the Bazel remote cache can hold, from compact Bazel execution logs.
+# Write the logs first:
+#
+#   ./bazel-build-all.cmd --execution_log_compact_file=<file>
+#
+# Then read them. The tool reads one log, or every `*.zst` file directly in a directory, and merges the logs into one report.
+# The path is resolved against the directory Bazel runs the binary in, so pass an absolute one.
+# From the root of the ultimate repository, the label is `@community//platform/build-scripts/bazel-execution-report:bazel_execution_report`.
+#
+#   ./bazel.cmd run //platform/build-scripts/bazel-execution-report:bazel_execution_report -- <exec log or directory with them> [--largest-blobs-count N] [--blob-size-limit-mb N] [--blob-size-limit-extensions LIST] [--html-report-path FILE]
+java_binary(
+    name = "bazel_execution_report",
+    main_class = "com.intellij.platform.buildScripts.bazelExecutionReport.BazelExecutionReport",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":bazel-execution-report"],
+)
+
+### auto-generated section `build intellij.platform.buildScripts.bazelExecutionReport` start
+jvm_library(
+    name = "bazel-execution-report",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.buildScripts.bazelExecutionReport",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/zstd-jni",
+        "//libraries/protobuf",
+        "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
+    ],
+)
+### auto-generated section `build intellij.platform.buildScripts.bazelExecutionReport` end
+
+### auto-generated section `iml intellij.platform.buildScripts.bazelExecutionReport` start
+exports_files(
+    [
+        "intellij.platform.buildScripts.bazelExecutionReport.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.buildScripts.bazelExecutionReport` end
+
+### auto-generated section `build intellij.platform.buildScripts.bazelExecutionReport.tests` start
+jvm_library(
+    name = "buildScripts-bazelExecutionReport-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//platform/build-scripts/bazel-execution-report"],
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/junit6",
+        "//libraries/assertj-core",
+        "//libraries/protobuf",
+        "//libraries/zstd-jni",
+    ],
+)
+### auto-generated section `build intellij.platform.buildScripts.bazelExecutionReport.tests` end
+
+### auto-generated section `iml intellij.platform.buildScripts.bazelExecutionReport.tests` start
+exports_files(
+    [
+        "intellij.platform.buildScripts.bazelExecutionReport.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.buildScripts.bazelExecutionReport.tests` end
+
+### auto-generated section `test intellij.platform.buildScripts.bazelExecutionReport.tests` start
+jps_test(
+    name = "buildScripts-bazelExecutionReport-tests_test",
+    runtime_deps = [":buildScripts-bazelExecutionReport-tests_test_lib"],
+)
+### auto-generated section `test intellij.platform.buildScripts.bazelExecutionReport.tests` end

@@ -746,6 +746,7 @@ platform/bootstrap/dev
 platform/bootstrap/dev-legacy
 platform/build-scripts
 platform/build-scripts/api
+platform/build-scripts/bazel-execution-report
 platform/build-scripts/bazel-rules/searchable-options-injector
 platform/build-scripts/codeOptimizer
 platform/build-scripts/concurrency
