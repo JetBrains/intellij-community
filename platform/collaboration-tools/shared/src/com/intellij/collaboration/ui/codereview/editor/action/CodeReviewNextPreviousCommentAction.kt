@@ -15,6 +15,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -47,7 +49,7 @@ internal abstract class CodeReviewNextPreviousCommentAction(
   private val canGotoLineComment: CodeReviewNavigableEditorViewModel.(Int) -> Boolean,
   private val gotoThreadComment: CodeReviewNavigableEditorViewModel.(String) -> Unit,
   private val gotoLineComment: CodeReviewNavigableEditorViewModel.(Int) -> Unit,
-) : DumbAwareAction(text, description, null), ActionPromoter {
+) : DumbAwareAction(text, description, null), ActionPromoter, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
@@ -58,6 +60,7 @@ internal abstract class CodeReviewNextPreviousCommentAction(
       e.presentation.isEnabledAndVisible = false
       return
     }
+    e.presentation.putClientProperty(ActionRemoteBehavior.SKIP_FALLBACK_UPDATE, true)
 
     val focused = findFocusedThreadId(project)
     e.presentation.isEnabled = if (focused != null) {
