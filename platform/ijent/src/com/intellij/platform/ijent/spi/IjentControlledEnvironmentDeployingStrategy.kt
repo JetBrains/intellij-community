@@ -4,6 +4,7 @@ package com.intellij.platform.ijent.spi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.ijent.IjentExecFileProvider
+import com.intellij.platform.ijent.IjentIncompatibleBinary
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.spi.IjentDeployingStrategy.Companion.deployEvents
 import com.intellij.platform.ijent.spi.IjentDeployingStrategy.DeployEvent
@@ -106,19 +107,25 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
     try {
       val targetPlatform = getPlatform()
       deployEvents.emit(DeployEvent.DEPLOY_STARTED)
-      val remotePathToBinary = copyFile(ijentExecFileProvider.getIjentBinary(targetPlatform))
+      val localPathToBinary = ijentExecFileProvider.getIjentBinary(targetPlatform)
+      val remotePathToBinary = copyFile(localPathToBinary)
       val mediator = createProcess(remotePathToBinary)
       val connectionStrategy = getConnectionStrategy()
       deployEvents.emit(DeployEvent.DEPLOY_FINISHED)
 
       deployEvents.emit(DeployEvent.CONNECT_STARTED)
-      val ijentSession = provider.connect(IjentConnectionContext(
-        mediator = mediator,
-        targetPlatform = targetPlatform,
-        connectionStrategy = connectionStrategy,
-        noShutdownOnDisconnect = noShutdownOnDisconnect,
-        remoteTerminationSettled = remoteTerminationSettled,
-      ))
+      val ijentSession = try {
+        provider.connect(IjentConnectionContext(
+          mediator = mediator,
+          targetPlatform = targetPlatform,
+          connectionStrategy = connectionStrategy,
+          noShutdownOnDisconnect = noShutdownOnDisconnect,
+          remoteTerminationSettled = remoteTerminationSettled,
+        ))
+      }
+      catch (error: IjentIncompatibleBinary) {
+        throw ijentExecFileProvider.reportIncompatibleBinary(localPathToBinary, error)
+      }
       deployEvents.emit(DeployEvent.CONNECT_FINISHED)
       onSessionConnected(ijentSession)
       ijentSession
