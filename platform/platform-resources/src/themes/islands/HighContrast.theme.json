@@ -311,7 +311,9 @@
       "infoBackground": "#450073",
       "infoBorderColor": "#e6e6e6",
       "infoMutedBackground": "#450073",
-      "infoMutedBorderColor": "#e6e6e6"
+      "infoMutedBorderColor": "#e6e6e6",
+      "neutralMutedBackground": "#450073",
+      "neutralMutedBorderColor": "#e6e6e6"
     },
 
     "NotificationsToolwindow": {
