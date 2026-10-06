@@ -12178,16 +12178,16 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.android.tools.layoutlib/layoutlib-16.2.4.jar_copy",
-    src = "@com_android_tools_layoutlib-layoutlib-16_2_4_http//file",
-    out = "com.android.tools.layoutlib/layoutlib-16.2.4.jar",
+    name = "com.android.tools.layoutlib/layoutlib-17.0.0.jar_copy",
+    src = "@com_android_tools_layoutlib-layoutlib-17_0_0_http//file",
+    out = "com.android.tools.layoutlib/layoutlib-17.0.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-layoutlib-layoutlib",
-    jar = "@com_android_tools_layoutlib-layoutlib-16_2_4_http//file",
+    jar = "@com_android_tools_layoutlib-layoutlib-17_0_0_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -19846,17 +19846,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps/studio-platform-2026.1.2-456.jar_copy",
-    src = "@org_jetbrains_intellij_deps-studio-platform-2026_1_2-456_http//file",
-    out = "org.jetbrains.intellij.deps/studio-platform-2026.1.2-456.jar",
+    name = "org.jetbrains.intellij.deps/studio-platform-2026.1.3-464.jar_copy",
+    src = "@org_jetbrains_intellij_deps-studio-platform-2026_1_3-464_http//file",
+    out = "org.jetbrains.intellij.deps/studio-platform-2026.1.3-464.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "studio-platform",
-    jar = "@org_jetbrains_intellij_deps-studio-platform-2026_1_2-456_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-studio-platform-2026_1_2-456-sources_http//file",
+    jar = "@org_jetbrains_intellij_deps-studio-platform-2026_1_3-464_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-studio-platform-2026_1_3-464-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -19868,17 +19868,17 @@ java_library(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps/studio-test-platform-2026.1.2-456.jar_copy",
-    src = "@org_jetbrains_intellij_deps-studio-test-platform-2026_1_2-456_http//file",
-    out = "org.jetbrains.intellij.deps/studio-test-platform-2026.1.2-456.jar",
+    name = "org.jetbrains.intellij.deps/studio-test-platform-2026.1.3-464.jar_copy",
+    src = "@org_jetbrains_intellij_deps-studio-test-platform-2026_1_3-464_http//file",
+    out = "org.jetbrains.intellij.deps/studio-test-platform-2026.1.3-464.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "studio-test-platform",
-    jar = "@org_jetbrains_intellij_deps-studio-test-platform-2026_1_2-456_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-studio-test-platform-2026_1_2-456-sources_http//file",
+    jar = "@org_jetbrains_intellij_deps-studio-test-platform-2026_1_3-464_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-studio-test-platform-2026_1_3-464-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
