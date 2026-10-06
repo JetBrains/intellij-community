@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyDeprecationProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.PyBinaryExpression;
@@ -159,6 +160,10 @@ public final class PyDeprecationInspection extends PyInspection {
       }
       else if (resolveResult instanceof PyFile) {
         deprecationMessage = ((PyFile)resolveResult).getDeprecationMessage();
+      }
+      // TODO consult PyDeprecationProvider on the operator, call-site and property paths too, through one shared lookup
+      if (deprecationMessage == null && resolveResult != null) {
+        deprecationMessage = PyDeprecationProvider.findDeprecationMessage(resolveResult, myTypeEvalContext);
       }
       if (deprecationMessage == null) return;
 
