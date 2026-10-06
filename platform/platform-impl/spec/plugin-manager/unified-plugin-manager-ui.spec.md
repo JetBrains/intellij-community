@@ -568,6 +568,11 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
     `installing publication preserves empty selection across later source updates`
   )
 
+- A source refresh must update the selected plugin's details without requiring reselection.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
+    `selected details receive an update after repository refresh`
+  )
+
 - The details panel closes without an error while a request runs.
   [@test] ../../testSrc/com/intellij/ide/plugins/newui/PluginDetailsPageComponentTest.kt (
     `the detached details panel ignores an update source result`

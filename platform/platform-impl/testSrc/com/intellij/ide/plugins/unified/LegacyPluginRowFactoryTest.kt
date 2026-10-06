@@ -1223,6 +1223,66 @@ internal class LegacyPluginRowFactoryTest {
     }
 
   @Test
+  fun `selected details receive an update after repository refresh`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this, unifiedDetailsPageLayout = true)
+      try {
+        val pluginId = PluginId.getId("details.refresh.plugin")
+        val installed = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+          .setName("Details Refresh Plugin")
+          .setVersion("1.0")
+          .setIsConverted(true)
+          .build()
+        val update = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+          .setName("Details Refresh Plugin")
+          .setVersion("2.0")
+          .setIsConverted(true)
+          .build()
+        val listModel = ListPluginModel().apply {
+          setPluginInstallationState(pluginId, PluginInstallationState(true))
+        }
+        val input = PluginRowInput(
+          installedPlugin = installed,
+          installationState = PluginInstallationState(true),
+          errors = emptyList(),
+          updateDescriptor = null,
+          enabled = true,
+          restrictedByProduct = false,
+        )
+        val item = PluginItemState(pluginId, installed.name, modelHandle = PluginItemModelHandle(installed), rowInput = input)
+        val listener = LinkListener<Any> { _, _ -> }
+        val factory = LegacyPluginRowFactory(host, listModel, listener, onSelectionChanged = {})
+        val presenter = LegacyPluginDetailsPresenter(host, listener)
+        UnifiedPluginsPageView({}, {}, { _, _ -> }, rowFactory = factory, detailsPresenter = presenter).use { view ->
+          val controller = UnifiedPluginsPageController(listOf(PluginSectionState(PluginSectionId.Installed, items = listOf(item))))
+          view.render(controller.state.value)
+          val row = componentsOfType(view.component, ListPluginComponent::class.java).single()
+          val details = componentsOfType(presenter.component, PluginDetailsPageComponent::class.java).single { it.isVisible }
+          waitUntilAssertSucceeds {
+            assertThat(componentsOfType(details, JLabel::class.java).map(JLabel::getText)).contains("1.0")
+          }
+
+          controller.updateSection(PluginSectionState(
+            PluginSectionId.Installed,
+            items = listOf(item.copy(contentRevision = 1, rowInput = input.copy(updateDescriptor = update))),
+          ))
+          view.render(controller.state.value)
+          yield()
+
+          assertThat(componentsOfType(view.component, ListPluginComponent::class.java).single()).isSameAs(row)
+          assertThat(row.myUpdateButton?.isVisible).isTrue()
+          waitUntilAssertSucceeds {
+            assertThat(componentsOfType(details, JLabel::class.java).map(JLabel::getText))
+              .anyMatch { it?.contains("2.0") == true }
+          }
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
+
+  @Test
   fun `active update renders row and details progress without action overlap`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       ApplicationManager.getApplication().replaceService(PluginInfoProvider::class.java, object : PluginInfoProvider {

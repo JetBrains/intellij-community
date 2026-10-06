@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.newui.LegacyPluginUiHost
 import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
 import com.intellij.ide.plugins.newui.PluginPreparedUpdateState
 import com.intellij.ide.plugins.newui.PluginProgressState
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.CardLayout
@@ -48,10 +49,13 @@ internal class LegacyPluginDetailsPresenter @RequiresEdt(generateAssertion = fal
     val slot = slots.getValue(mode)
     val readOnlyProgress = selectedRows.singleOrNull()?.detailsProgress
     val preparedUpdate = selectedRows.singleOrNull()?.preparedUpdate
+    val updateDescriptor = selectedRows.singleOrNull()?.component?.getUpdatePluginDescriptor()
     if (!sameRows(slot.selectedRows, selectedRows) ||
+        slot.updateDescriptor !== updateDescriptor ||
         slot.readOnlyProgress != readOnlyProgress ||
         slot.preparedUpdate != preparedUpdate) {
       slot.selectedRows = selectedRows
+      slot.updateDescriptor = updateDescriptor
       slot.readOnlyProgress = readOnlyProgress
       slot.preparedUpdate = preparedUpdate
       slot.referencedRows.addAll(selectedRows)
@@ -113,6 +117,7 @@ internal class LegacyPluginDetailsPresenter @RequiresEdt(generateAssertion = fal
     var details: PluginDetailsPageComponent,
   ) {
     var selectedRows: List<LegacyPluginRow> = emptyList()
+    var updateDescriptor: PluginUiModel? = null
     var readOnlyProgress: PluginProgressState? = null
     var preparedUpdate: PluginPreparedUpdateState? = null
     val referencedRows: MutableSet<LegacyPluginRow> = Collections.newSetFromMap(IdentityHashMap())
