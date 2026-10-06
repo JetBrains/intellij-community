@@ -13952,6 +13952,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/lastFunFromCompanionObject.kt");
         }
 
+        @TestMetadata("memberExtensionFun.kt")
+        public void testMemberExtensionFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/memberExtensionFun.kt");
+        }
+
+        @TestMetadata("memberExtensionProp.kt")
+        public void testMemberExtensionProp() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/memberExtensionProp.kt");
+        }
+
         @TestMetadata("memberFunctionWithNoParams.kt")
         public void testMemberFunctionWithNoParams() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/memberFunctionWithNoParams.kt");
@@ -14058,6 +14068,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("invokeOperator.kt")
         public void testInvokeOperator() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/invokeOperator.kt");
+        }
+
+        @TestMetadata("memberExtensionFun.kt")
+        public void testMemberExtensionFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/memberExtensionFun.kt");
         }
 
         @TestMetadata("memberFunction.kt")
@@ -14231,6 +14246,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("localFunction.kt")
         public void testLocalFunction() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/localFunction.kt");
+        }
+
+        @TestMetadata("memberExtensionFun.kt")
+        public void testMemberExtensionFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/memberExtensionFun.kt");
         }
 
         @TestMetadata("ofOperator.kt")

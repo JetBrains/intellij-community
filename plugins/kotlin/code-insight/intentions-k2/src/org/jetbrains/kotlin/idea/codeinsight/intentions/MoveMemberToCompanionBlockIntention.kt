@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isFromCompanionBlock
 import java.util.function.Supplier
 
@@ -27,6 +28,7 @@ internal open class MoveMemberToCompanionBlockIntention(textGetter: Supplier<@In
         if (element is KtClassOrObject) return null
         if (element.isFromCompanionBlock) return null
         if (!isApplicableForMoveMember(element)) return null
+        if (element.isExtensionDeclaration()) return null // member extension
         val containingClassOrObject = element.containingClassOrObject
         if (containingClassOrObject is KtObjectDeclaration && !containingClassOrObject.isCompanion()) return null
         return findTextRangeForMoveMemberIntention(element)

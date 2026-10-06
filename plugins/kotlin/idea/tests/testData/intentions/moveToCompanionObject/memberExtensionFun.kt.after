@@ -1,0 +1,15 @@
+import Sample.Companion.cbFunL
+
+// K2_AFTER_ERROR: ARGUMENT_TYPE_MISMATCH
+class Sample {
+    val v = 1
+
+    companion object {
+        fun Int.cbFunL(sample: Sample) = sample.v + this
+    }
+}
+
+fun Sample.use() {
+    // Incorrect argument substitution after move, issue: KTIJ-39338
+    5.cbFunL(5)
+}
