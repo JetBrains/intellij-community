@@ -2,12 +2,11 @@
 package com.intellij.python.junit5Tests.env.systemPython.impl
 
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.testFramework.junit5.eel.params.api.DockerTest
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelSource
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
-import com.intellij.platform.testFramework.junit5.eel.params.api.WslTest
 import com.intellij.python.community.services.systemPython.impl.binaryStamp
+import com.intellij.python.junit5Tests.framework.env.EelsWithPython
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.params.ParameterizedTest
@@ -23,8 +22,7 @@ internal class BinaryStampEelTest {
 
   @ParameterizedTest
   @EelSource
-  @DockerTest("python:3.14.2-trixie", mandatory = false)
-  @WslTest("Ubuntu-22.04", mandatory = false)
+  @EelsWithPython
   fun testStampOfAFileOnEel(eelHolder: EelHolder) {
     val file = eelHolder.eel.userInfo.home.asNioPath().resolve("binary-stamp-test")
     try {

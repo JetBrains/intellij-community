@@ -1,14 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.systemPython.impl
 
-import com.intellij.platform.testFramework.junit5.eel.params.api.DockerTest
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelSource
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
-import com.intellij.platform.testFramework.junit5.eel.params.api.WslTest
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl
 import com.intellij.python.community.services.systemPython.impl.UpdateCacheDelayer
 import com.intellij.python.junit5Tests.framework.applicationScope
+import com.intellij.python.junit5Tests.framework.env.EelsWithPython
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.sync.Mutex
 import org.junit.jupiter.api.AfterAll
@@ -49,8 +48,7 @@ internal class SystemPythonServiceStaleDescriptorTest {
 
   @ParameterizedTest
   @EelSource
-  @DockerTest("python:3.14.2-trixie", mandatory = false)
-  @WslTest("Ubuntu-22.04", mandatory = false)
+  @EelsWithPython
   fun testPythonOnDocker(eelHolder: EelHolder): Unit = timeoutRunBlocking {
     Assertions.assertTrue(sut.findSystemPythons(eelHolder.eel).isNotEmpty(), "No pythons found on ${eelHolder.eel}")
   }
