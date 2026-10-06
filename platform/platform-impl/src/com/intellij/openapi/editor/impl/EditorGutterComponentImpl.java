@@ -574,16 +574,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
         g.setClip(clip.x, startY, clip.width, endY - startY);
       }
 
-      if (ExperimentalUI.isNewUI() && myPaintBackground && !DistractionFreeModeController.shouldMinimizeCustomHeader()) {
-        if (!myEditor.isStickyLinePainting()) { // suppress vertical line between gutter and editor on the sticky lines panel
-          g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
-          int separatorX = gutterSeparatorX;
-          if (JBUIScale.scale(1f) > 1) {
-            separatorX++;
-          }
-          LinePainter2D.paint(g, separatorX, clip.y, separatorX, clip.y + clip.height);
-        }
-      }
+      paintWhitespaceSeparator(g, clip.y, clip.height);
 
       paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset, startVisualLine, endVisualLine);
 
@@ -1808,6 +1799,19 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     else {
       return (int)Math.round(getFoldingMarkerCenterOffset2D());
     }
+  }
+
+  void paintWhitespaceSeparator(@NotNull Graphics2D g, int y, int height) {
+    if (!ExperimentalUI.isNewUI() || !myPaintBackground ||
+        DistractionFreeModeController.shouldMinimizeCustomHeader() || myEditor.isStickyLinePainting()) {
+      return;
+    }
+    g.setColor(myEditor.getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
+    int separatorX = getWhitespaceSeparatorOffset();
+    if (JBUIScale.scale(1f) > 1) {
+      separatorX++;
+    }
+    LinePainter2D.paint(g, separatorX, y, separatorX, y + height);
   }
 
   private double getFoldingMarkerCenterOffset2D() {
