@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("IO_FILE_USAGE")
+
 package com.intellij.platform.projectView.frontend.impl
 
 import com.intellij.ide.dnd.DnDAction
@@ -12,6 +14,7 @@ import com.intellij.ide.projectView.impl.ProjectViewDragImageUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
 import com.intellij.psi.PsiElement
 import com.intellij.ui.awt.RelativeRectangle
@@ -58,7 +61,18 @@ private data class DraggedNodes(
 
   override fun getPsiElements(): Array<out PsiElement?> = emptyArray()
 
-  override fun asFileList(): List<File> = emptyList()
+  override fun asFileList(): List<File> {
+    if (!IdeProductMode.isMonolith) return emptyList() // the ancient File API only makes sense locally
+    // a piece of legacy logic copied from com.intellij.ide.PsiCopyPasteManager.asFileList
+    return virtualFiles.mapNotNull { 
+      if (it.isInLocalFileSystem) {
+        File(it.path)
+      }
+      else {
+        null
+      }
+    }
+  }
 
   override fun getVirtualFiles(): Array<out VirtualFile> {
     return nodes.mapNotNull { 
