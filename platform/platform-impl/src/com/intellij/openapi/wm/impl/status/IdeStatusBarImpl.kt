@@ -223,6 +223,12 @@ open class IdeStatusBarImpl @Internal constructor(
   private val centerPanel: JPanel
   private val effectRenderer = WidgetEffectRenderer(this)
   private var isWidgetDragInProgress = false
+
+  /**
+   * The id of the widget under the last left-button press. A click is logged on the release, so a drag of the widget does not count as a click.
+   * A drag start clears it. The id instead of the component keeps a removed widget from being held.
+   */
+  private var clickPressedWidgetId: String? = null
   private var info: @NlsContexts.StatusBarText String? = null
 
   private var preferredTextHeight: Int = 0
@@ -331,11 +337,12 @@ open class IdeStatusBarImpl @Internal constructor(
 
   private val widgetSorter = WidgetSorter()
 
-  private fun reorderWidgets(sourceWidgetId: String, targetIndex: Int) {
+  private fun reorderWidgets(sourceWidgetId: String, targetIndex: Int, dropEvent: MouseEvent) {
     val sourceBean = widgetRegistry.get(sourceWidgetId) ?: return
     if (sourceBean.position != Position.RIGHT) return
 
     widgetSorter.reorderToIndex(sourceWidgetId, targetIndex, visibleRightWidgetIds())
+    logWidgetDragged(sourceBean.widget, dropEvent)
 
     sortRightWidgets()
     rightPanel.revalidate()
@@ -442,6 +449,7 @@ open class IdeStatusBarImpl @Internal constructor(
       rightPanel.add(placeholder)
 
       isWidgetDragInProgress = true
+      clickPressedWidgetId = null
       applyWidgetEffect(null, null)
 
       val releaseListener = Disposer.newDisposable(parentDisposable, "status bar widget drag")
@@ -1144,11 +1152,28 @@ open class IdeStatusBarImpl @Internal constructor(
     val targetWidget = widget.takeIf { it !== rightPanel }
     if (e.clickCount == 0 || e.id == MouseEvent.MOUSE_RELEASED) {
       applyWidgetEffect(targetWidget, WidgetEffect.HOVER)
+      if (e.id == MouseEvent.MOUSE_RELEASED && e.button == MouseEvent.BUTTON1) {
+        val pressedWidgetId = clickPressedWidgetId
+        clickPressedWidgetId = null
+
+        if (
+          targetWidget != null
+          && pressedWidgetId != null
+          && pressedWidgetId == ClientProperty.get(targetWidget, WIDGET_ID) &&
+          !isWidgetDragInProgress
+          && !e.isPopupTrigger
+        ) {
+          logWidgetActivated(targetWidget, e)
+        }
+      }
     }
     else if (e.clickCount == 1 && e.id == MouseEvent.MOUSE_PRESSED) {
       applyWidgetEffect(targetWidget, WidgetEffect.PRESSED)
-      if (targetWidget != null && e.button == MouseEvent.BUTTON1 && !e.isPopupTrigger) {
-        logWidgetActivated(targetWidget, e)
+
+      clickPressedWidgetId = targetWidget?.takeIf {
+        e.button == MouseEvent.BUTTON1 && !e.isPopupTrigger
+      }?.let {
+        ClientProperty.get(it, WIDGET_ID)
       }
     }
 
@@ -1172,10 +1197,22 @@ open class IdeStatusBarImpl @Internal constructor(
 
   private fun logWidgetActivated(component: JComponent, inputEvent: InputEvent?) {
     val widget = ClientProperty.get(component, WIDGET_ID)?.let { widgetRegistry.getWidget(it) } ?: return
-    // WidgetPresentationWrapper is a single generic wrapper shared by all V2 widgets, so report the concrete factory class
-    val widgetClass = (widget as? WidgetPresentationWrapper)?.factoryClass ?: widget.javaClass
-    UIEventLogger.StatusBarWidgetClicked.log(widgetClass, inputEvent?.let { FusInputEvent(it, ActionPlaces.STATUS_BAR_PLACE) })
+    UIEventLogger.StatusBarWidgetClicked.log(widgetStatisticsClass(widget), inputEvent?.let { FusInputEvent(it, ActionPlaces.STATUS_BAR_PLACE) })
   }
+
+  /**
+   * The drop arrives as a button release, which the statistics report as a plain click.
+   * Report it as a drag of the left button with the modifiers of the drop.
+   */
+  private fun logWidgetDragged(widget: StatusBarWidget, dropEvent: MouseEvent) {
+    val dragEvent = MouseEvent(dropEvent.component, MouseEvent.MOUSE_DRAGGED, dropEvent.`when`, dropEvent.modifiersEx,
+                               dropEvent.x, dropEvent.y, 0, false, MouseEvent.BUTTON1)
+    UIEventLogger.StatusBarWidgetDragged.log(widgetStatisticsClass(widget), FusInputEvent(dragEvent, ActionPlaces.STATUS_BAR_PLACE))
+  }
+
+  // WidgetPresentationWrapper is a single generic wrapper shared by all V2 widgets, so report the concrete factory class
+  private fun widgetStatisticsClass(widget: StatusBarWidget): Class<*> =
+    (widget as? WidgetPresentationWrapper)?.factoryClass ?: widget.javaClass
 
   override fun getUIClassID(): String = UI_CLASS_ID
 
