@@ -89,20 +89,15 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   private lateinit var nothingFoundRow: Row
   private var onlyShowModified = false
 
-  private var searchAlarm = SingleAlarm(
-    task = ::updateSearch,
-    delay = 300,
-    parentDisposable = null,
-    threadToUse = Alarm.ThreadToUse.SWING_THREAD,
-    modalityState = ModalityState.defaultModalityState(),
-  )
+  private var searchAlarm: SingleAlarm? = null
 
   private val searchField = SearchTextField().apply {
     textEditor.emptyText.text = ApplicationBundle.message("search.advanced.settings")
 
     addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
-        searchAlarm.cancelAndRequest()
+        val alarm = searchAlarm ?: createSearchAlarm().also { searchAlarm = it }
+        alarm.cancelAndRequest()
       }
     })
   }
@@ -205,6 +200,17 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
     applyFilter(searchField.text, onlyShowModified)
   }
 
+  private fun createSearchAlarm(): SingleAlarm {
+    // The configurable can be created before the Settings dialog is modal, so the modality comes from the shown component
+    return SingleAlarm(
+      task = ::updateSearch,
+      delay = 300,
+      parentDisposable = disposable,
+      threadToUse = Alarm.ThreadToUse.SWING_THREAD,
+      modalityState = ModalityState.stateForComponent(searchField),
+    )
+  }
+
   private fun resetFilter() {
     for (settingsGroup in settingsGroups) {
       settingsGroup.groupRow.visible(true)
@@ -270,6 +276,11 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   override fun getId(): String = ADVANCED_SETTINGS_CONFIGURABLE_ID
 
   override fun getHelpTopic(): String = "Advanced_settings"
+
+  override fun disposeUIResources() {
+    super<DslConfigurableBase>.disposeUIResources()
+    searchAlarm = null
+  }
 
   override fun enableSearch(option: String?): Runnable {
     if (option != null && displayName.startsWith(option, ignoreCase = true)) {
