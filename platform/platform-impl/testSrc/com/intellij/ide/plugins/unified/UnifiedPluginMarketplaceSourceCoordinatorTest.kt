@@ -273,6 +273,111 @@ internal class UnifiedPluginMarketplaceSourceCoordinatorTest {
   }
 
   @Test
+  fun `Marketplace vendors load independently from content and tags`() = runTest {
+    val vendors = CompletableDeferred<List<String>>()
+    val popularTags = CompletableDeferred<List<String>>()
+    val provider = FakeMarketplaceDataProvider(
+      suggested = fetch("suggested.plugin"),
+      loadPopularTags = { popularTags.await() },
+      loadMarketplaceVendors = { vendors.await() },
+    )
+    val coordinator = coordinator(provider)
+    assertThat(coordinator.state.value.marketplaceVendorsLoading).isTrue()
+
+    coordinator.start()
+    runCurrent()
+
+    assertThat(coordinator.state.value.section.status).isEqualTo(PluginSectionStatus.Ready)
+    assertThat(coordinator.state.value.marketplaceVendorsLoading).isTrue()
+
+    vendors.complete(listOf("Marketplace Vendor", "JetBrains"))
+    runCurrent()
+
+    assertThat(coordinator.state.value.marketplaceVendors).containsExactly("Marketplace Vendor", "JetBrains")
+    assertThat(coordinator.state.value.marketplaceVendorsLoading).isFalse()
+    assertThat(coordinator.state.value.popularTagsLoading).isTrue()
+    assertThat(coordinator.state.value.section.status).isEqualTo(PluginSectionStatus.Ready)
+    assertThat(provider.marketplaceVendorsLoadCount).isEqualTo(1)
+    coordinator.close()
+  }
+
+  @Test
+  fun `Marketplace vendors load once for inactive queries without enrichment readiness`() = runTest {
+    val vendors = CompletableDeferred<List<String>>()
+    val enrichmentReady = CompletableDeferred<Unit>()
+    val provider = FakeMarketplaceDataProvider(loadMarketplaceVendors = { vendors.await() })
+    val coordinator = coordinator(
+      provider.withEnrichmentReadiness { enrichmentReady.await() },
+      initialQuery = PluginsQueryState("/disabled", "/disabled", 0),
+    )
+    coordinator.start()
+    runCurrent()
+
+    assertThat(provider.marketplaceVendorsLoadCount).isEqualTo(1)
+    assertThat(provider.suggestedCount).isZero()
+    assertThat(provider.searchQueries).isEmpty()
+
+    coordinator.setQuery(PluginsQueryState("/enabled", "/enabled", 1))
+    runCurrent()
+    vendors.complete(listOf("Marketplace Vendor"))
+    runCurrent()
+
+    assertThat(coordinator.state.value.marketplaceVendors).containsExactly("Marketplace Vendor")
+    assertThat(coordinator.state.value.marketplaceVendorsLoading).isFalse()
+    assertThat(coordinator.state.value.queryRevision).isEqualTo(1)
+    assertThat(coordinator.state.value.section.status).isEqualTo(PluginSectionStatus.Ready)
+
+    coordinator.setQuery(PluginsQueryState("/disabled", "/disabled", 2))
+    runCurrent()
+
+    assertThat(provider.marketplaceVendorsLoadCount).isEqualTo(1)
+    assertThat(coordinator.state.value.marketplaceVendors).containsExactly("Marketplace Vendor")
+    coordinator.close()
+  }
+
+  @Test
+  fun `Marketplace vendor failure keeps content ready`() = runTest {
+    val provider = FakeMarketplaceDataProvider(
+      suggested = fetch("suggested.plugin"),
+      loadMarketplaceVendors = { error("offline") },
+    )
+    val coordinator = coordinator(provider)
+    coordinator.start()
+    runCurrent()
+
+    assertThat(coordinator.state.value.section.status).isEqualTo(PluginSectionStatus.Ready)
+    assertThat(coordinator.state.value.section.items.map { it.pluginId.idString }).containsExactly("suggested.plugin")
+    assertThat(coordinator.state.value.marketplaceVendors).isEmpty()
+    assertThat(coordinator.state.value.marketplaceVendorsLoading).isFalse()
+    coordinator.close()
+  }
+
+  @Test
+  fun `disposal cancels Marketplace vendor loading without publication`() = runTest {
+    var cancelled = false
+    val provider = FakeMarketplaceDataProvider(
+      loadMarketplaceVendors = {
+        try {
+          awaitCancellation()
+        }
+        finally {
+          cancelled = true
+        }
+      },
+    )
+    val coordinator = coordinator(provider)
+    coordinator.start()
+    runCurrent()
+    val beforeClose = coordinator.state.value
+
+    coordinator.close()
+    runCurrent()
+
+    assertThat(cancelled).isTrue()
+    assertThat(coordinator.state.value).isEqualTo(beforeClose)
+  }
+
+  @Test
   fun `updates re-enrich fetched models without another request`() = runTest {
     val updates = MutableSharedFlow<PluginUpdatesEvent>(extraBufferCapacity = 1)
     val provider = FakeMarketplaceDataProvider(suggested = fetch("suggested.plugin"))
@@ -352,10 +457,11 @@ internal class UnifiedPluginMarketplaceSourceCoordinatorTest {
     provider: UnifiedPluginMarketplaceDataProvider,
     updates: Flow<PluginUpdatesEvent> = emptyFlow(),
     debounceMillis: Long = 300,
+    initialQuery: PluginsQueryState = PluginsQueryState(),
   ): UnifiedPluginMarketplaceSourceCoordinator {
     return UnifiedPluginMarketplaceSourceCoordinator(
       scope = backgroundScope,
-      initialQuery = PluginsQueryState(),
+      initialQuery = initialQuery,
       dataProvider = provider,
       updates = updates,
       loadErrorMessage = "Unable to load Marketplace plugins",
@@ -369,6 +475,7 @@ internal class UnifiedPluginMarketplaceSourceCoordinatorTest {
     private val search: (suspend (String, Int) -> UnifiedPluginMarketplaceFetchResult)? = null,
     private val beforeEnrich: suspend (Int) -> Unit = {},
     private val loadPopularTags: suspend () -> List<String> = { emptyList() },
+    private val loadMarketplaceVendors: suspend () -> List<String> = { emptyList() },
   ) : UnifiedPluginMarketplaceDataProvider {
     constructor(
       suggested: UnifiedPluginMarketplaceFetchResult,
@@ -378,6 +485,7 @@ internal class UnifiedPluginMarketplaceSourceCoordinatorTest {
     var suggestedCount = 0
     var enrichCount = 0
     var popularTagsLoadCount = 0
+    var marketplaceVendorsLoadCount = 0
     val searchQueries = ArrayList<String>()
     private val queryCounts = HashMap<String, Int>()
 
@@ -395,6 +503,11 @@ internal class UnifiedPluginMarketplaceSourceCoordinatorTest {
     override suspend fun loadPopularTags(): List<String> {
       popularTagsLoadCount++
       return loadPopularTags.invoke()
+    }
+
+    override suspend fun loadMarketplaceVendors(): List<String> {
+      marketplaceVendorsLoadCount++
+      return loadMarketplaceVendors.invoke()
     }
 
     override suspend fun enrich(

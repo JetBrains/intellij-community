@@ -250,8 +250,8 @@ class UiPluginManager {
     return getController().getMarketplaceTagCounts()
   }
 
-  fun getAllVendors(): Set<String> {
-    return getController().getAllVendors()
+  suspend fun getMarketplaceVendors(): Set<String> {
+    return getController().getMarketplaceVendors()
   }
 
   fun updateDescriptorsForInstalledPlugins() {

@@ -99,7 +99,7 @@ interface UiPluginManagerController {
   fun filterPluginsRequiringUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId>
   fun getAllPluginsTags(): Set<String>
   suspend fun getMarketplaceTagCounts(): Map<String, Int>
-  fun getAllVendors(): Set<String>
+  suspend fun getMarketplaceVendors(): Set<String>
 
   suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult>
   suspend fun loadErrors(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, CheckErrorsResult>

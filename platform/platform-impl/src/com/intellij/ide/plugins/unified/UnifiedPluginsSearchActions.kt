@@ -3,7 +3,9 @@ package com.intellij.ide.plugins.unified
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.MarketplaceTabSearchSortByOptions
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CheckedActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -19,7 +21,7 @@ internal fun createUnifiedPluginFilterActionGroup(
   onIntent: (UnifiedPluginSearchControlIntent) -> Unit,
 ): DefaultActionGroup {
   return FilterActionGroup().apply {
-    add(createFacetGroup(
+    add(FacetActionGroup(
       IdeBundle.message("plugins.configurable.filter.tag"),
       state.options.tags,
       state.selectedTags,
@@ -27,8 +29,16 @@ internal fun createUnifiedPluginFilterActionGroup(
     ) { value, selected ->
       onIntent(UnifiedPluginSearchControlIntent.ToggleAttribute(UnifiedPluginQueryAttribute.Tag, value, selected))
     })
+    add(FacetActionGroup(
+      IdeBundle.message("plugins.configurable.filter.vendor"),
+      state.options.vendors,
+      state.selectedVendors,
+      state.options.facetValuesLoading,
+    ) { value, selected ->
+      onIntent(UnifiedPluginSearchControlIntent.ToggleAttribute(UnifiedPluginQueryAttribute.Vendor, value, selected))
+    })
     if (state.options.repositories.isNotEmpty()) {
-      add(createFacetGroup(
+      add(FacetActionGroup(
         IdeBundle.message("plugins.configurable.filter.repository"),
         state.options.repositories,
         state.selectedRepositories,
@@ -39,15 +49,7 @@ internal fun createUnifiedPluginFilterActionGroup(
       })
     }
     add(Separator(IdeBundle.message("plugins.configurable.filter.installed")))
-    add(createFacetGroup(
-      IdeBundle.message("plugins.configurable.filter.vendor"),
-      state.options.vendors,
-      state.selectedVendors,
-      state.options.facetValuesLoading,
-    ) { value, selected ->
-      onIntent(UnifiedPluginSearchControlIntent.ToggleAttribute(UnifiedPluginQueryAttribute.Vendor, value, selected))
-    })
-    add(createFacetGroup(
+    add(FacetActionGroup(
       IdeBundle.message("plugins.configurable.filter.category"),
       state.options.categories,
       state.selectedCategories,
@@ -90,32 +92,42 @@ internal fun createUnifiedPluginSortActionGroup(
   }
 }
 
-private fun createFacetGroup(
+private class FacetActionGroup(
   title: @Nls String,
   values: List<String>,
   selectedValues: Set<String>,
   loading: Boolean,
   shortenValues: Boolean = false,
   onSelected: (String, Boolean) -> Unit,
-): DefaultActionGroup {
-  return DefaultActionGroup(title, true).apply {
+): ActionGroup(title, true) {
+  init {
+    // All children stay visible, including the empty-list placeholder.
+    templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
+  }
+
+  private val children: Array<AnAction> by lazy {
     if (values.isEmpty()) {
-      add(DisabledAction(IdeBundle.message(
+      arrayOf(DisabledAction(IdeBundle.message(
         if (loading) "plugins.configurable.filter.options.loading" else "plugins.configurable.filter.options.empty"
       )))
     }
     else {
-      values.forEach { value ->
+      Array(values.size) { index ->
+        val value = values[index]
         val text = if (shortenValues) shortenFilterValue(value) else value
-        add(FilterToggleAction(
+        FilterToggleAction(
           text = text,
           description = value.takeIf { it != text },
           selected = value in selectedValues,
           onSelected = { selected -> onSelected(value, selected) },
-        ))
+        )
       }
     }
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> = children
 }
 
 internal fun shortenFilterValue(value: String): String {
@@ -128,14 +140,14 @@ internal fun shortenFilterValue(value: String): String {
 private class FilterToggleAction(
   text: @NlsSafe String,
   description: @NlsSafe String? = null,
-  private var selected: Boolean,
+  @Volatile private var selected: Boolean,
   private val onSelected: (Boolean) -> Unit,
 ) : DumbAwareToggleAction(text, description, null) {
   init {
     templatePresentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, description)
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun isSelected(e: AnActionEvent): Boolean = selected
 
@@ -146,7 +158,7 @@ private class FilterToggleAction(
   }
 }
 
-private class ExclusiveSelection<T : Any>(var value: T?)
+private class ExclusiveSelection<T : Any>(@Volatile var value: T?)
 
 private class ExclusiveToggleAction<T : Any>(
   text: @NlsSafe String,
@@ -155,7 +167,7 @@ private class ExclusiveToggleAction<T : Any>(
   private val allowEmpty: Boolean,
   private val onSelected: (Boolean) -> Unit,
 ) : DumbAwareToggleAction(text) {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun isSelected(e: AnActionEvent): Boolean = selection.value == value
 
@@ -167,7 +179,7 @@ private class ExclusiveToggleAction<T : Any>(
 }
 
 private class DisabledAction(text: @Nls String) : DumbAwareAction(text) {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = false

@@ -48,6 +48,7 @@ import com.intellij.openapi.application.ModalityState.any
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
@@ -487,7 +488,7 @@ internal class MarketplacePluginsTab @RequiresEdt(generateAssertion = false /* I
       val vendors = LinkedHashSet<String>()
       try {
         ProcessIOExecutorService.INSTANCE.submit {
-          vendors.addAll(UiPluginManager.getInstance().getAllVendors())
+          vendors.addAll(runBlockingMaybeCancellable { UiPluginManager.getInstance().getMarketplaceVendors() })
         }.get()
       }
       catch (e: InterruptedException) {

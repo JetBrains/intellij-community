@@ -64,6 +64,8 @@ internal interface UnifiedPluginMarketplaceDataProvider : UnifiedPluginRemoteDat
   suspend fun searchMarketplace(query: String): UnifiedPluginMarketplaceFetchResult
 
   suspend fun loadPopularTags(): List<String> = emptyList()
+
+  suspend fun loadMarketplaceVendors(): List<String> = emptyList()
 }
 
 internal fun UnifiedPluginMarketplaceDataProvider.withEnrichmentReadiness(
@@ -76,6 +78,8 @@ internal fun UnifiedPluginMarketplaceDataProvider.withEnrichmentReadiness(
     override suspend fun searchMarketplace(query: String): UnifiedPluginMarketplaceFetchResult = delegate.searchMarketplace(query)
 
     override suspend fun loadPopularTags(): List<String> = delegate.loadPopularTags()
+
+    override suspend fun loadMarketplaceVendors(): List<String> = delegate.loadMarketplaceVendors()
 
     override suspend fun loadSharedFacts(): UnifiedPluginRemoteSharedFacts {
       awaitEnrichmentReady()
@@ -163,6 +167,10 @@ internal class DefaultUnifiedPluginMarketplaceDataProvider(
 
   override suspend fun loadPopularTags(): List<String> {
     return sortMarketplaceTags(pluginManager.getMarketplaceTagCounts())
+  }
+
+  override suspend fun loadMarketplaceVendors(): List<String> {
+    return pluginManager.getMarketplaceVendors().toList()
   }
 
   override suspend fun loadSharedFacts(): UnifiedPluginRemoteSharedFacts = coroutineScope {

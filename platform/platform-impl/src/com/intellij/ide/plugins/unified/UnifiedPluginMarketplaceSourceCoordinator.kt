@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.unified
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUpdatesEvent
 import com.intellij.openapi.diagnostic.logger
@@ -41,6 +42,7 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
   private var processorJob: Job? = null
   private var updatesJob: Job? = null
   private var popularTagsJob: Job? = null
+  private var marketplaceVendorsJob: Job? = null
   private var requestJob: Job? = null
   private var requestKind: RequestKind? = null
   private var started = false
@@ -54,6 +56,8 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
   private var suggestedFacetsLoading = initialQuery.marketplaceSourceMode() == UnifiedPluginMarketplaceSourceMode.Suggested
   private var popularTags: List<String> = emptyList()
   private var popularTagsLoading = true
+  private var marketplaceVendors: List<String> = emptyList()
+  private var marketplaceVendorsLoading = true
   private var latestUpdates: PluginUpdatesEvent? = null
   private var updateRevision = 0L
   private var sharedFactsRevision = 0L
@@ -79,6 +83,15 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
         commands.trySend(Command.PopularTagsFailed(t))
       }
     }
+    marketplaceVendorsJob = scope.launch {
+      try {
+        commands.trySend(Command.MarketplaceVendorsLoaded(dataProvider.loadMarketplaceVendors()))
+      }
+      catch (t: Throwable) {
+        rethrowControlFlowException(t)
+        commands.trySend(Command.MarketplaceVendorsFailed(t))
+      }
+    }
     commands.trySend(Command.Fetch)
   }
 
@@ -99,6 +112,7 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
     closed = true
     requestJob?.cancel()
     popularTagsJob?.cancel()
+    marketplaceVendorsJob?.cancel()
     updatesJob?.cancel()
     processorJob?.cancel()
     commands.close()
@@ -111,6 +125,8 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
         is Command.UpdatesChanged -> acceptUpdates(command.updates)
         is Command.PopularTagsLoaded -> acceptPopularTagsLoaded(command.tags)
         is Command.PopularTagsFailed -> acceptPopularTagsFailed(command.cause)
+        is Command.MarketplaceVendorsLoaded -> acceptMarketplaceVendorsLoaded(command.vendors)
+        is Command.MarketplaceVendorsFailed -> acceptMarketplaceVendorsFailed(command.cause)
         Command.RefreshEnrichment -> {
           sharedFactsRevision++
           if (requestKind != RequestKind.Fetch) fetchedModels?.let(::startEnrichment)
@@ -153,6 +169,20 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
     popularTagsJob = null
     popularTagsLoading = false
     LOG.warn("Failed to load popular Marketplace tags for the unified Plugins page", cause)
+    publish(mutableState.value.section.status)
+  }
+
+  private fun acceptMarketplaceVendorsLoaded(vendors: List<String>) {
+    marketplaceVendorsJob = null
+    marketplaceVendors = vendors
+    marketplaceVendorsLoading = false
+    publish(mutableState.value.section.status)
+  }
+
+  private fun acceptMarketplaceVendorsFailed(cause: Throwable) {
+    marketplaceVendorsJob = null
+    marketplaceVendorsLoading = false
+    LOG.warn("Failed to load Marketplace vendors for the unified Plugins page", cause)
     publish(mutableState.value.section.status)
   }
 
@@ -318,6 +348,8 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
       suggestedFacetsLoading = suggestedFacetsLoading,
       popularTags = popularTags,
       popularTagsLoading = popularTagsLoading,
+      marketplaceVendors = marketplaceVendors,
+      marketplaceVendorsLoading = marketplaceVendorsLoading,
     )
   }
 
@@ -326,6 +358,8 @@ internal class UnifiedPluginMarketplaceSourceCoordinator(
     data class UpdatesChanged(val updates: PluginUpdatesEvent) : Command
     data class PopularTagsLoaded(val tags: List<String>) : Command
     data class PopularTagsFailed(val cause: Throwable) : Command
+    data class MarketplaceVendorsLoaded(val vendors: List<String>) : Command
+    data class MarketplaceVendorsFailed(val cause: Throwable) : Command
     data object RefreshEnrichment : Command
     data object Fetch : Command
     data class FetchProgress(
@@ -373,5 +407,6 @@ private fun initialMarketplaceSourceState(query: PluginsQueryState): UnifiedPlug
     listModelData = PluginListModelData.EMPTY,
     suggestedFacetsLoading = query.marketplaceSourceMode() == UnifiedPluginMarketplaceSourceMode.Suggested,
     popularTagsLoading = true,
+    marketplaceVendorsLoading = true,
   )
 }

@@ -19,6 +19,22 @@ import java.util.ArrayList
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class UnifiedPluginMarketplaceDataProviderTest {
   @Test
+  fun `Marketplace preserves a selected vendor with spaces and a hyphen`() {
+    val vendor = "Example Vendor - examplevendor"
+    val query = UnifiedPluginsQuery.parse("").withAttribute(UnifiedPluginQueryAttribute.Vendor, vendor, selected = true)
+    assertThat(query).isEqualTo("/vendor:\"Example Vendor - examplevendor\"")
+
+    val route = initialPluginsQueryState(query).sourceRoute()
+    assertThat(route.marketplace.eligible).isTrue()
+    assertThat(route.marketplaceMode).isEqualTo(UnifiedPluginMarketplaceSourceMode.Search)
+    val request = buildUnifiedMarketplaceSearchRequest(route.marketplace.query)
+
+    assertThat(request.parser.vendors).containsExactly(vendor)
+    assertThat(request.parser.searchQuery).isNull()
+    assertThat(request.urlQuery).isEqualTo("organization=Example%20Vendor%20-%20examplevendor")
+  }
+
+  @Test
   fun `Marketplace maps category filters to tags without changing text search`() {
     val request = buildUnifiedMarketplaceSearchRequest(
       "Kotlin /tag:\"Developer Tools\" /category:\"Programming Language\" /category:Tools /sortBy:rating"

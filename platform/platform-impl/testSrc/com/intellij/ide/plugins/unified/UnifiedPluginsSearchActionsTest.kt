@@ -2,16 +2,27 @@
 package com.intellij.ide.plugins.unified
 
 import com.intellij.ide.plugins.MarketplaceTabSearchSortByOptions
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CheckedActionGroup
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.TestActionEvent
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
 internal class UnifiedPluginsSearchActionsTest {
@@ -32,11 +43,11 @@ internal class UnifiedPluginsSearchActionsTest {
     val group = createUnifiedPluginFilterActionGroup(state, intents::add)
     val rootActions = group.getChildren(TestActionEvent.createTestEvent())
     assertThat(rootActions.map { (it as? Separator)?.text ?: it.templatePresentation.text }).containsExactly(
-      "Tag", "Repository", "Installed", "Vendor", "Category",
+      "Tag", "Vendor", "Repository", "Installed", "Category",
       "Update available", "Enabled", "Disabled", "Invalid", "Updated bundled",
     )
 
-    val vendorGroup = rootActions[3] as DefaultActionGroup
+    val vendorGroup = rootActions[1] as ActionGroup
     val vendorActions = vendorGroup.getChildren(TestActionEvent.createTestEvent())
     assertThat(vendorActions.map { it.templatePresentation.text }).containsExactly("Acme", "JetBrains")
     val jetBrains = vendorActions[1] as ToggleAction
@@ -69,7 +80,7 @@ internal class UnifiedPluginsSearchActionsTest {
     assertThat(jetBrains.isSelected(event)).isTrue()
     assertThat(Toggleable.isSelected(event.presentation)).isTrue()
 
-    val categoryGroup = rootActions[4] as DefaultActionGroup
+    val categoryGroup = rootActions[4] as ActionGroup
     val categoryAction = categoryGroup.getChildren(TestActionEvent.createTestEvent()).single() as ToggleAction
     val categoryEvent = TestActionEvent.createTestEvent(categoryAction)
     assertThat(categoryAction.isSelected(categoryEvent)).isTrue()
@@ -99,9 +110,104 @@ internal class UnifiedPluginsSearchActionsTest {
       val group = createUnifiedPluginFilterActionGroup(state) {}
       assertThat(group.getChildren(TestActionEvent.createTestEvent()).map { (it as? Separator)?.text ?: it.templatePresentation.text })
         .containsExactly(
-          "Tag", "Installed", "Vendor", "Category",
+          "Tag", "Vendor", "Installed", "Category",
           "Update available", "Enabled", "Disabled", "Invalid", "Updated bundled",
         )
+    }
+  }
+
+  @Test
+  fun `local vendor actions remain enabled while the catalog loads`() {
+    val intents = ArrayList<UnifiedPluginSearchControlIntent>()
+    val state = UnifiedPluginsSearchControlsState(
+      options = UnifiedPluginFilterOptions(vendors = listOf("Local Vendor"), facetValuesLoading = true),
+    )
+    val group = createUnifiedPluginFilterActionGroup(state, intents::add)
+    val vendorGroup = group.getChildren(TestActionEvent.createTestEvent())[1] as ActionGroup
+    val vendor = vendorGroup.getChildren(TestActionEvent.createTestEvent()).single() as ToggleAction
+    val event = TestActionEvent.createTestEvent(vendor)
+    vendor.update(event)
+
+    assertThat(event.presentation.isEnabled).isTrue()
+
+    vendor.actionPerformed(event)
+
+    assertThat(intents).containsExactly(
+      UnifiedPluginSearchControlIntent.ToggleAttribute(UnifiedPluginQueryAttribute.Vendor, "Local Vendor", selected = true)
+    )
+  }
+
+  @Test
+  fun `large vendor catalogs update without EDT access`(): Unit = timeoutRunBlocking {
+    val vendors = (1..6_000).map { index -> "Vendor $index" }
+    val state = UnifiedPluginsSearchControlsState(
+      options = UnifiedPluginFilterOptions(vendors = vendors, categories = listOf("Tools"), tags = listOf("Theme")),
+      selectedVendors = setOf(vendors.last()),
+    )
+    val group = createUnifiedPluginFilterActionGroup(state) {}
+    val event = TestActionEvent.createTestEvent()
+    val vendorGroup = group.getChildren(event)[1] as ActionGroup
+    assertThat(vendorGroup.getChildren(event)).hasSize(vendors.size)
+
+    withContext(Dispatchers.Default) {
+      assertBackgroundUpdates(group)
+      assertBackgroundUpdates(createUnifiedPluginSortActionGroup(state) {})
+      assertBackgroundUpdates(createUnifiedPluginFilterActionGroup(UnifiedPluginsSearchControlsState()) {})
+
+      val selected = vendorGroup.getChildren(event).last() as ToggleAction
+      assertThat(selected.isSelected(TestActionEvent.createTestEvent(selected))).isTrue()
+    }
+  }
+
+  @Test
+  fun `opening Filter does not read choices from closed submenus`(): Unit = timeoutRunBlocking {
+    val vendorReads = AtomicInteger()
+    val tagReads = AtomicInteger()
+    val vendorCount = 6_000
+    val state = UnifiedPluginsSearchControlsState(
+      options = UnifiedPluginFilterOptions(
+        vendors = countedFacetValues("Vendor", vendorCount, vendorReads),
+        tags = countedFacetValues("Tag", 200, tagReads),
+      ),
+      selectedVendors = setOf("Vendor ${vendorCount - 1}"),
+    )
+    val group = createUnifiedPluginFilterActionGroup(state) {}
+    assertThat(vendorReads.get()).isZero()
+    assertThat(tagReads.get()).isZero()
+
+    val rootActions = expandPopup(group)
+
+    assertThat(vendorReads.get()).isZero()
+    assertThat(tagReads.get()).isZero()
+    assertThat(rootActions[1].templatePresentation.text).isEqualTo("Vendor")
+    val vendorGroup = rootActions[1] as ActionGroup
+    val vendorActions = expandPopup(vendorGroup)
+
+    assertThat(vendorActions).hasSize(vendorCount)
+    assertThat(vendorReads.get()).isEqualTo(vendorCount)
+    assertThat(tagReads.get()).isZero()
+    val selected = vendorActions.last() as ToggleAction
+    assertThat(selected.isSelected(TestActionEvent.createTestEvent(selected))).isTrue()
+    val event = TestActionEvent.createTestEvent(vendorGroup)
+    val children = vendorGroup.getChildren(event)
+    assertThat(vendorGroup.getChildren(event)).isSameAs(children)
+    assertThat(vendorReads.get()).isEqualTo(vendorCount)
+  }
+
+  @Test
+  fun `empty facet submenus keep visible disabled placeholders`(): Unit = timeoutRunBlocking {
+    for (loading in listOf(false, true)) {
+      val state = UnifiedPluginsSearchControlsState(options = UnifiedPluginFilterOptions(facetValuesLoading = loading))
+      val rootActions = expandPopup(createUnifiedPluginFilterActionGroup(state) {})
+      val facetGroups = rootActions.filterIsInstance<ActionGroup>()
+      assertThat(facetGroups.map { it.templatePresentation.text }).containsExactly("Tag", "Vendor", "Category")
+
+      for (facetGroup in facetGroups) {
+        val presentations = PresentationFactory()
+        val placeholder = expandPopup(facetGroup, presentations).single()
+        assertThat(presentations.getPresentation(placeholder).isEnabled).isFalse()
+        assertThat(placeholder.templatePresentation.text).isEqualTo(if (loading) "Loading options\u2026" else "No options")
+      }
     }
   }
 
@@ -113,7 +219,7 @@ internal class UnifiedPluginsSearchActionsTest {
     )
 
     val group = createUnifiedPluginFilterActionGroup(state) {}
-    val tagGroup = group.getChildren(TestActionEvent.createTestEvent()).first() as DefaultActionGroup
+    val tagGroup = group.getChildren(TestActionEvent.createTestEvent()).first() as ActionGroup
 
     assertThat(tagGroup.getChildren(TestActionEvent.createTestEvent()).map { it.templatePresentation.text })
       .containsExactlyElementsOf(tags)
@@ -192,7 +298,7 @@ internal class UnifiedPluginsSearchActionsTest {
     )
 
     val group = createUnifiedPluginFilterActionGroup(state) {}
-    val repositoryGroup = group.getChildren(TestActionEvent.createTestEvent())[1] as DefaultActionGroup
+    val repositoryGroup = group.getChildren(TestActionEvent.createTestEvent())[2] as ActionGroup
     val action = repositoryGroup.getChildren(TestActionEvent.createTestEvent()).single()
 
     assertThat(action.templatePresentation.text)
@@ -203,6 +309,31 @@ internal class UnifiedPluginsSearchActionsTest {
     assertThat(action.templatePresentation.description).isEqualTo(repository)
     assertThat(action.templatePresentation.getClientProperty(ActionUtil.TOOLTIP_TEXT)).isEqualTo(repository)
     assertThat((action as ToggleAction).isSelected(TestActionEvent.createTestEvent(action))).isTrue()
+  }
+
+  private fun countedFacetValues(prefix: String, count: Int, reads: AtomicInteger): List<String> {
+    return object : AbstractList<String>() {
+      override val size: Int = count
+
+      override fun get(index: Int): String {
+        reads.incrementAndGet()
+        return "$prefix $index"
+      }
+    }
+  }
+
+  private suspend fun expandPopup(
+    group: ActionGroup,
+    presentations: PresentationFactory = PresentationFactory(),
+  ): List<AnAction> = withContext(Dispatchers.EDT) {
+    Utils.expandActionGroupSuspend(group, presentations, DataContext.EMPTY_CONTEXT, "UnifiedPlugins.SearchToolbar", ActionUiKind.POPUP, false)
+  }
+
+  private fun assertBackgroundUpdates(action: AnAction) {
+    assertThat(action.actionUpdateThread).isEqualTo(ActionUpdateThread.BGT)
+    val event = TestActionEvent.createTestEvent(action)
+    action.update(event)
+    if (action is ActionGroup) action.getChildren(event).forEach(::assertBackgroundUpdates)
   }
 
   private fun assertPresentationSelection(action: ToggleAction, selected: Boolean) {

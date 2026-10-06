@@ -609,7 +609,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return MarketplaceRequests.getInstance().marketplaceTagCountsSupplier.get()
   }
 
-  override fun getAllVendors(): Set<String> {
+  override suspend fun getMarketplaceVendors(): Set<String> {
     return MarketplaceRequests.getInstance().marketplaceVendorsSupplier.get()
   }
 

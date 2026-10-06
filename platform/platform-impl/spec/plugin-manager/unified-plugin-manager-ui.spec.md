@@ -244,6 +244,7 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
   )
 
 - The filter control must offer Tag, Vendor, Category, Repository, and installed-status filters.
+- Vendor must appear beside Tag, before the Installed separator.
 - Repository choices must appear only when repository values exist.
 - Tag, Vendor, Category, and Repository filters must allow multiple selections.
 - Installed-status filters must allow one optional selection.
@@ -271,6 +272,34 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginMarketplaceDataProviderTest.kt (
     `Marketplace tags keep all values in count order`;
     `Marketplace tags use name order for equal counts`
+  )
+
+- Vendor choices must contain all Marketplace vendors and retain vendors from other available sources.
+- Installed and Bundled vendors must come first. Each vendor group must use name order without case sensitivity.
+- Local and selected vendor choices must remain available while the Marketplace catalog loads or fails.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
+    `vendor options put local vendors before all Marketplace vendors`;
+    `local vendor options remain available without a Marketplace catalog`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsSearchActionsTest.kt (
+    `local vendor actions remain enabled while the catalog loads`
+  )
+
+- The Filter popup must stay responsive with thousands of vendor choices.
+- The time to open Filter must not grow with the number of vendor choices.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsSearchActionsTest.kt (
+    `large vendor catalogs update without EDT access`;
+    `opening Filter does not read choices from closed submenus`
+  )
+
+- An empty facet submenu must keep a visible, disabled loading or empty-list placeholder.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsSearchActionsTest.kt (
+    `empty facet submenus keep visible disabled placeholders`
+  )
+
+- A selected vendor with spaces and a hyphen must remain one Marketplace organization constraint, without a text constraint.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginMarketplaceDataProviderTest.kt (
+    `Marketplace preserves a selected vendor with spaces and a hyphen`
   )
 
 - A long Repository choice must expose its full value in its accessible description and popup tooltip.
@@ -804,6 +833,16 @@ Untested: No focused test verifies that Internal ignores the legacy Show All que
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginMarketplaceSourceCoordinatorTest.kt (
     `popular tags load independently from Marketplace content`;
     `popular tag failure keeps Marketplace content ready`
+  )
+
+- Marketplace vendor loading and failure must not delay or fail plugin content or tag loading.
+- The page must load the vendor catalog once, including when Marketplace content is inactive.
+- Closing the page must cancel vendor loading and prevent later publication.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginMarketplaceSourceCoordinatorTest.kt (
+    `Marketplace vendors load independently from content and tags`;
+    `Marketplace vendors load once for inactive queries without enrichment readiness`;
+    `Marketplace vendor failure keeps content ready`;
+    `disposal cancels Marketplace vendor loading without publication`
   )
 
 - A custom repository retry must reload only that repository.

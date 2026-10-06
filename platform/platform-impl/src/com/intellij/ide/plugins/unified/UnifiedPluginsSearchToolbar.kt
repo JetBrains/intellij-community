@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CheckedActionGroup
@@ -25,7 +26,7 @@ import javax.swing.SwingConstants
 internal class UnifiedPluginsSearchToolbar(
   private val onIntent: (UnifiedPluginSearchControlIntent) -> Unit,
 ) {
-  private var state = UnifiedPluginsSearchControlsState()
+  @Volatile private var state = UnifiedPluginsSearchControlsState()
   private var rendered = false
 
   private val sortActionGroup = SortActionGroup()
@@ -82,12 +83,16 @@ internal class UnifiedPluginsSearchToolbar(
   }
 
   private inner class SortActionGroup : ActionGroup(null, true), CheckedActionGroup {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
     override fun getChildren(event: AnActionEvent?): Array<AnAction> {
       return createUnifiedPluginSortActionGroup(state, onIntent).getChildren(event)
     }
   }
 
   private inner class FilterActionGroup : ActionGroup(null, true), CheckedActionGroup {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
     override fun getChildren(event: AnActionEvent?): Array<AnAction> {
       return createUnifiedPluginFilterActionGroup(state, onIntent).getChildren(event)
     }

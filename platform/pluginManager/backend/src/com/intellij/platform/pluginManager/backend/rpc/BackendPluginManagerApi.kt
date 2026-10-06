@@ -220,7 +220,7 @@ class BackendPluginManagerApi : PluginManagerApi {
   }
 
   override suspend fun getAllVendors(): Set<String> {
-    return DefaultUiPluginManagerController.getAllVendors()
+    return DefaultUiPluginManagerController.getMarketplaceVendors()
   }
 
   override suspend fun updateDescriptorsForInstalledPlugins() {
