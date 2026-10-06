@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.build.output
 
+import com.intellij.build.eventBuilders.MessageEventBuilder
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.StartId
 import com.intellij.build.output.BuildOutputInstantReaderImpl.BuildOutputLineParserBridge
@@ -41,9 +42,15 @@ class GradleSyncOutputParser : BuildOutputLineParserBridge() {
     multicaster.notifyBuildEvent(
       MessageEvent.builder(text, kind)
         .withParentId(taskId)
-        .withDescription(text)
+        .withDescription(BuildOutputText.createOutputText(line.ids, text), isSingleFlow)
         .build()
     )
     return true
   }
+
+  private fun MessageEventBuilder.withDescription(line: BuildOutputText, isSingleFlow: Boolean): MessageEventBuilder =
+    when (isSingleFlow) {
+      true -> withOutputIds(line.ids)
+      else -> withDescription(line.text)
+    }
 }
