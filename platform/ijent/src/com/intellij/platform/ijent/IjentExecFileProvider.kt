@@ -18,6 +18,18 @@ interface IjentExecFileProvider {
    */
   @Throws(IjentMissingBinary::class)
   suspend fun getIjentBinary(targetPlatform: EelPlatform): Path
+
+  /** Reports a protocol mismatch for [binary] and returns the failure for the caller. */
+  fun reportIncompatibleBinary(binary: Path, error: IjentIncompatibleBinary): EelUnavailableException {
+    IjentLogger.LIFETIME_LOG.error(error.message, error)
+    return error
+  }
+}
+
+/** The IJent binary uses a protocol that is incompatible with this IDE. Absence of this exception does not mean that the binary is compatible. */
+@Internal
+class IjentIncompatibleBinary(message: String, cause: Throwable? = null) : EelUnavailableException.Conclusive(message, cause) {
+  override fun copyForCaller(): EelUnavailableException = IjentIncompatibleBinary(message, this)
 }
 
 /**
