@@ -8,7 +8,7 @@ import com.intellij.driver.sdk.waitForIndicators
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-@Remote("org.jetbrains.idea.maven.performancePlugin.ImportMavenProjectUtil", plugin = "org.jetbrains.idea.maven")
+@Remote("com.intellij.maven.performanceTesting.ImportMavenProjectUtil", plugin = "org.jetbrains.idea.maven/intellij.maven.performanceTesting")
 interface ImportMavenProjectUtil {
   fun importProject(project: Project)
 }
