@@ -16,6 +16,7 @@ targets:
   - ../../src/com/intellij/ide/plugins/newui/ListPluginComponent.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginDetailsPageComponent.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginImagesComponent.kt
+  - ../../src/com/intellij/ide/plugins/newui/PluginUpdateModeButton.kt
   - ../../src/com/intellij/ide/plugins/unified/LegacyPluginDetailsPresenter.kt
   - ../../src/com/intellij/ide/plugins/unified/PluginRowReconciler.kt
   - ../../src/com/intellij/ide/plugins/unified/PluginRowView.kt
@@ -45,8 +46,10 @@ targets:
   - ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageFeatureTest.kt
   - ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt
   - ../../testSrc/com/intellij/ide/plugins/marketplace/statistics/UnifiedPluginSearchStatisticsTest.kt
+  - ../../testSrc/com/intellij/ide/plugins/newui/PluginDetailsPageComponentTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/PluginImagesComponentTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/PluginRowRenderKeyTest.kt
+  - ../../testSrc/com/intellij/ide/plugins/newui/PluginUpdateModeButtonTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginInternalSourceCoordinatorTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginInventoryTest.kt
@@ -891,6 +894,20 @@ Untested: No focused test verifies text selection and copying in Additional Info
 - The first action in unified plugin details must show its complete focus outline.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
     `unified details actions align their visible leading edge`
+  )
+
+- Unified installed plugin details must show an update-mode action.
+- The update-mode action must be hidden when the plugin is not installed or is pending uninstall.
+- The popup must show Manual Update and Ignore Updates.
+- The popup must show Auto-Update only when automatic plugin updates are enabled.
+- Ignore Updates is the No Updates mode.
+- Details must hide Update when Ignore Updates removes the plugin from the update snapshot.
+- Details must show Update when Manual Update or Auto-Update restores the plugin update.
+  [@test] ../../testSrc/com/intellij/ide/plugins/newui/PluginUpdateModeButtonTest.kt (
+    `unified installed details show the update mode action`;
+    `marketplace details hide the update mode action for a plugin that is not installed`;
+    `unified details hide the update mode action for a plugin that is pending uninstall`;
+    `update mode popup offers auto update only when automatic updates are enabled`
   )
 
 - The screenshot carousel must fit inside both details insets so that its controls remain available.

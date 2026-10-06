@@ -42,6 +42,26 @@ internal class UnifiedPluginUpdateAllControllerTest {
   }
 
   @Test
+  fun `button hides when the last update leaves the enabled snapshot`() {
+    controller.acceptUpdates(updates(plugin("only")))
+    assertThat(controller.state.value.presentation).isEqualTo(UnifiedPluginUpdateAllPresentation.Available)
+
+    controller.acceptUpdates(updates())
+
+    assertThat(controller.state.value.presentation).isEqualTo(UnifiedPluginUpdateAllPresentation.Hidden)
+  }
+
+  @Test
+  fun `button becomes available when an update returns to the enabled snapshot`() {
+    controller.acceptUpdates(updates())
+    assertThat(controller.state.value.presentation).isEqualTo(UnifiedPluginUpdateAllPresentation.Hidden)
+
+    controller.acceptUpdates(updates(plugin("returned")))
+
+    assertThat(controller.state.value.presentation).isEqualTo(UnifiedPluginUpdateAllPresentation.Available)
+  }
+
+  @Test
   fun `request captures one snapshot before executor starts`() {
     val first = plugin("first")
     val second = plugin("second")

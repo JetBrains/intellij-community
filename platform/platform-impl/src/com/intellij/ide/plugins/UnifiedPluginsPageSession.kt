@@ -167,6 +167,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     unifiedDetailsPageLayout = true,
     pluginIconScale = densityVariant.pluginIconScale,
     compactRows = densityVariant.compactRows,
+    pluginsAutoUpdateEnabledProvider = { actions.isPluginsAutoUpdateEnabled() },
   )
   private var updateAllOperationEventSink: (PluginModelEvent) -> Unit = {}
   private val sessionPluginUpdates = host.filterPluginUpdates(pluginUpdates)

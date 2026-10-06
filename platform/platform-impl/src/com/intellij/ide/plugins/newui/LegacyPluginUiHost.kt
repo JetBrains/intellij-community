@@ -52,6 +52,7 @@ class LegacyPluginUiHost @RequiresEdt constructor(
   unifiedDetailsPageLayout: Boolean = false,
   private val pluginIconScale: Float = 1.0f,
   private val compactRows: Boolean = false,
+  private val pluginsAutoUpdateEnabledProvider: (() -> Boolean)? = null,
 ) {
   private val detailsPageLayout = if (unifiedDetailsPageLayout) {
     PluginDetailsPageLayout.Unified
@@ -366,6 +367,7 @@ class LegacyPluginUiHost @RequiresEdt constructor(
       secondaryButtons = true,
       badgeTags = true,
       layout = detailsPageLayout,
+      pluginsAutoUpdateEnabledProvider = pluginsAutoUpdateEnabledProvider,
     )
     model.addDetailPanel(component)
     details.add(component)

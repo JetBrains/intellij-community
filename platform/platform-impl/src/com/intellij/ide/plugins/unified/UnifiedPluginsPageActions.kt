@@ -46,6 +46,11 @@ internal class UnifiedPluginsPageActions @RequiresEdt constructor(
     return pluginsAutoUpdateEnabled?.let { it != UpdateSettings.getInstance().state.isPluginsAutoUpdateEnabled } == true
   }
 
+  fun isPluginsAutoUpdateEnabled(): Boolean {
+    return PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed() &&
+           (pluginsAutoUpdateEnabled ?: UpdateSettings.getInstance().state.isPluginsAutoUpdateEnabled)
+  }
+
   fun apply() {
     val enabled = pluginsAutoUpdateEnabled ?: return
     if (UpdateSettings.getInstance().state.isPluginsAutoUpdateEnabled != enabled) {

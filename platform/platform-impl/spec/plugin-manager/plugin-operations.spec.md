@@ -10,6 +10,7 @@ targets:
   - ../../src/com/intellij/ide/plugins/newui/ListPluginComponent.kt
   - ../../src/com/intellij/ide/plugins/newui/MyPluginModel.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginDetailsPageComponent.kt
+  - ../../src/com/intellij/ide/plugins/newui/PluginUpdateModeButton.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginManagerCustomizer.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginModelAsyncOperationsExecutor.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginModelEvents.kt
@@ -346,10 +347,16 @@ Untested: No focused test covers every management edit and refresh path.
 
 - Update All must capture the current enabled update set when the user starts it.
 - Disabled updates must not enter an Update All request.
+- Update All must hide when Ignore Updates removes the last enabled update.
+- Update All must show when Manual Update or Auto-Update restores an enabled update.
 - Update All must use pending enablement changes from the current settings session.
 - Enabling a plugin must admit its cached update even when the update check classified the plugin as disabled.
   [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
     `Update All follows session enablement with cached disabled updates`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginUpdateAllControllerTest.kt (
+    `button hides when the last update leaves the enabled snapshot`;
+    `button becomes available when an update returns to the enabled snapshot`;
   )
 
 - Update All must exclude updates that are downloading, prepared, or already applied to their targets.

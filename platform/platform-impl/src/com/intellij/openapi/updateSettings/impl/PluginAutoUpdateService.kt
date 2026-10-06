@@ -109,6 +109,9 @@ class PluginAutoUpdateService(private val coroutineScope: CoroutineScope) {
           withContext(Dispatchers.IO) {
             val updates = updatesState.mapNotNull {
               val plugin = PluginManagerCore.getPlugin(it.key) ?: return@mapNotNull null
+              if (!PluginUpdateExclusionService.getInstance().allowedUpdate(it.key)) {
+                return@mapNotNull null
+              }
               it.key to PluginAutoUpdateRepository.PluginUpdateInfo(
                 pluginPath = plugin.pluginPath.absolutePathString(),
                 updateFilename = it.value.updatePath.name
