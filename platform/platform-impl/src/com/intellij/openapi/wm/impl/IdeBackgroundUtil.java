@@ -42,6 +42,7 @@ import javax.swing.JTree;
 import javax.swing.JViewport;
 import javax.swing.UIManager;
 import javax.swing.text.JTextComponent;
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -305,6 +306,17 @@ public final class IdeBackgroundUtil {
     }
   };
 
+  /**
+   * The opaque color that the current fill painted under the background painters.
+   * The first painter can use it to draw a precomposed opaque image instead of a translucent one.
+   */
+  static final RenderingHints.Key BASE_COLOR_HINT = new RenderingHints.Key(3) {
+    @Override
+    public boolean isCompatibleValue(Object val) {
+      return val == null || val instanceof Color;
+    }
+  };
+
   private static final class MyGraphics extends Graphics2DDelegate {
     final PainterHelper helper;
     final PainterHelper.Offsets offsets;
@@ -345,7 +357,18 @@ public final class IdeBackgroundUtil {
     @Override
     public void fillRect(int x, int y, int width, int height) {
       super.fillRect(x, y, width, height);
-      runAllPainters(x, y, width, height, null, getColor());
+      runAllPainters(x, y, width, height, null, getColor(), getOpaqueFillColor());
+    }
+
+    /**
+     * Returns the fill color when the fill leaves exactly this color in every pixel of its clip.
+     * An antialiased fill blends its edge pixels with the old content, so it does not qualify.
+     */
+    private @Nullable Color getOpaqueFillColor() {
+      return getPaint() instanceof Color color && color.getAlpha() == 255 &&
+             getRenderingHint(RenderingHints.KEY_ANTIALIASING) != RenderingHints.VALUE_ANTIALIAS_ON &&
+             getComposite() instanceof AlphaComposite composite && composite.getAlpha() == 1f &&
+             (composite.getRule() == AlphaComposite.SRC_OVER || composite.getRule() == AlphaComposite.SRC) ? color : null;
     }
 
     @Override
@@ -437,6 +460,12 @@ public final class IdeBackgroundUtil {
     }
 
     void runAllPainters(int x, int y, int width, int height, @Nullable Shape sourceShape, @Nullable Object reason) {
+      runAllPainters(x, y, width, height, sourceShape, reason, null);
+    }
+
+    void runAllPainters(
+      int x, int y, int width, int height, @Nullable Shape sourceShape, @Nullable Object reason, @Nullable Color baseColor
+    ) {
       if (width <= 1 || height <= 1 || isNoBackground()) return;
       boolean hasAlpha;
       if (reason instanceof Color) {
@@ -460,6 +489,9 @@ public final class IdeBackgroundUtil {
       }
       PaintUtil.useCopy(myDelegate, clipped -> {
         clipped.clip(sourceShape != null ? sourceShape : new Rectangle(x, y, width, height));
+        if (baseColor != null) {
+          clipped.setRenderingHint(BASE_COLOR_HINT, baseColor);
+        }
         helper.runAllPainters(clipped, offsets);
       });
       if (preserve) {
