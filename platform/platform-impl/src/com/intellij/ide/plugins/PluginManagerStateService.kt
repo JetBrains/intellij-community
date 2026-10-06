@@ -187,13 +187,13 @@ class PluginManagerStateService {
     val exclusionReason = resolvedPluginSet.getExclusionReason(descriptor)
     when (exclusionReason) {
       is PartOfDependencyCycle -> {
-        val error = createCyclePluginLoadingError(exclusionReason.dependencyCycle.nodesWithDependenciesOnCycle.keys.filterIsInstance<PluginModuleDescriptor>())
+        val error = createCyclePluginLoadingError(exclusionReason.dependencyCycle.nodes.filterIsInstance<PluginModuleDescriptor>())
         if (error !in cycleErrors) { // slow path anyway
           cycleErrors.add(error)
         }
       }
       is PartOfRuntimeModuleGroupDependencyCycle -> {
-        val cycle = exclusionReason.dependencyCycle.nodesWithDependenciesOnCycle.keys.asSequence()
+        val cycle = exclusionReason.dependencyCycle.nodes.asSequence()
           .flatMap { it.sortedDescriptors }.distinct().filterIsInstance<PluginModuleDescriptor>().toList()
         val error = createCyclePluginLoadingError(cycle)
         if (error !in cycleErrors) { // slow path anyway

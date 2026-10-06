@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.pluginSystem.testFramework.PseudoProductTestPluginInitContext
 import com.intellij.platform.productMode.ProductMode
@@ -20,6 +21,7 @@ import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -767,6 +769,57 @@ class PluginInitializationTargetStateTest {
         .isSameAs(cycleReasons.getValue("cycle-e").dependencyCycle)
       assertThat(result.resolvedPluginSet.getExclusionReason(result.getCandidatePlugin("dependent")))
         .isInstanceOf(DependencyIsExcluded::class.java)
+    }
+
+    @Test
+    fun `information about cycle between classloaders`() {
+      plugin("foo") {
+        content(namespace = "jetbrains") {
+          module("foo.a", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
+            dependencies { module("bar.a") }
+          }
+          module("foo.b", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
+            moduleVisibility = ModuleVisibilityValue.PUBLIC
+          }
+        }
+      }.installAt(pluginsDirPath)
+      plugin("bar") {
+        content(namespace = "jetbrains") {
+          module("bar.a", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
+            moduleVisibility = ModuleVisibilityValue.PUBLIC
+          }
+          module("bar.b", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
+            dependencies { module("foo.b") }
+          }
+        }
+      }.installAt(pluginsDirPath)
+      val result = computeTargetState()
+      assertThat(result).doesNotHaveEnabledPlugins()
+      val fooPlugin = result.getCandidatePlugin("foo")
+      val fooReason = result.resolvedPluginSet.getExclusionReason(fooPlugin) as PartOfRuntimeModuleGroupDependencyCycle
+      val barPlugin = result.getCandidatePlugin("bar")
+      fun contentModule(plugin: PluginMainDescriptor, name: String) = plugin.contentModules.single { it.moduleId.name == name }
+      val fooA = contentModule(fooPlugin, "foo.a")
+      val fooB = contentModule(fooPlugin, "foo.b")
+      val barA = contentModule(barPlugin, "bar.a")
+      val barB = contentModule(barPlugin, "bar.b")
+
+      val cycle = fooReason.dependencyCycle
+      assertThat(cycle.nodes.map { it.representativeModule }).containsExactly(barPlugin, fooPlugin)
+      assertThat(cycle.descriptorsToTheirDependenciesFromCycle).containsOnly(
+        entry(fooA, listOf(barA)),
+        entry(barB, listOf(fooB)),
+      )
+      val fooGroup = cycle.nodes.single { it.representativeModule === fooPlugin }
+      val barGroup = cycle.nodes.single { it.representativeModule === barPlugin }
+      assertThat(fooReason.descriptorFromCycleToGroup).containsOnly(
+        entry(fooA, fooGroup),
+        entry(fooB, fooGroup),
+        entry(barA, barGroup),
+        entry(barB, barGroup),
+      )
+      val barReason = result.resolvedPluginSet.getExclusionReason(barPlugin) as PartOfRuntimeModuleGroupDependencyCycle
+      assertThat(barReason.dependencyCycle).isSameAs(cycle)
     }
 
     @Test

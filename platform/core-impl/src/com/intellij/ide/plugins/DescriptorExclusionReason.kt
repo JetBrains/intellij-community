@@ -77,6 +77,7 @@ class PartOfDependencyCycle(
 class PartOfRuntimeModuleGroupDependencyCycle(
   override val descriptor: IdeaPluginDescriptorImpl,
   val dependencyCycle: DependencyCycleInfo<RuntimeModuleGroup>,
+  val descriptorFromCycleToGroup: Map<IdeaPluginDescriptorImpl, RuntimeModuleGroup>,
 ) : DescriptorExclusionReason
 
 @ApiStatus.Internal
@@ -163,5 +164,6 @@ fun IdeaPluginDescriptorImpl.sequenceDescriptorExclusionChain(
 
 @ApiStatus.Internal
 class DependencyCycleInfo<N>(
-  val nodesWithDependenciesOnCycle: Map<N, List<N>>
+  val nodes: List<N>,
+  val descriptorsToTheirDependenciesFromCycle: Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>
 )
