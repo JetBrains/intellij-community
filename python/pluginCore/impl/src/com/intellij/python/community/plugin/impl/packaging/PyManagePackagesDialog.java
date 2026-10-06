@@ -42,7 +42,7 @@ final class PyManagePackagesDialog extends DialogWrapper {
     super(project, true);
     setTitle(PyBundle.message("manage.python.packages"));
 
-    List<Sdk> sdks = new ArrayList<>(ContainerUtil.sorted(PythonSdkUtil.getAllSdks(), new PreferredSdkComparator()));
+    List<Sdk> sdks = new ArrayList<>(ContainerUtil.sorted(PythonSdkUtil.getAllSdks(project), new PreferredSdkComparator()));
     // The combo holds items, not SDKs: a row states whether its interpreter can be used, which takes running it.
     List<PyInterpreterItem> items = PySdkRenderingKt.interpreterItemsUnderProgress(sdks, project);
     PyInterpreterItem selected = null;

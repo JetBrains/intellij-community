@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2.hatch
 
 import com.intellij.openapi.observable.properties.ObservableProperty
@@ -62,11 +62,11 @@ internal class HatchExistingEnvironmentSelector<P : PathHolder>(
     }
 
     val venvPythonBinaryPathString = withContext(Dispatchers.IO) {
-      model.fileSystem.resolvePythonBinary(existingHatchVenv.pythonHomePath)
-        ?.takeIf { model.fileSystem.validateExecutable(it).isSuccess }
+      model.fileSystem.resolvePythonBinary(existingHatchVenv.pythonHomePath)?.takeIf { model.fileSystem.validateExecutable(it).isSuccess }
         ?.toStringForUI()
     } ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
 
+    // Look in the full SDK table, not only in the SDKs for this module: a new SDK with the same home is a duplicate.
     val existingInterpreter = PythonSdkUtil.getAllSdks().find { it.homePath == venvPythonBinaryPathString }?.pythonInterpreterAsync()
     val result = when {
       existingInterpreter != null -> Result.success(existingInterpreter)
@@ -89,14 +89,12 @@ internal class HatchExistingEnvironmentSelector<P : PathHolder>(
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
     val statisticsTarget = target.toStatisticsField()
-    return InterpreterStatisticsInfo(
-      type = InterpreterType.HATCH,
-      target = statisticsTarget,
-      globalSitePackage = false,
-      makeAvailableToAllProjects = false,
-      previouslyConfigured = true,
-      isWSLContext = false,
-      creationMode = InterpreterCreationMode.CUSTOM
-    )
+    return InterpreterStatisticsInfo(type = InterpreterType.HATCH,
+                                     target = statisticsTarget,
+                                     globalSitePackage = false,
+                                     makeAvailableToAllProjects = false,
+                                     previouslyConfigured = true,
+                                     isWSLContext = false,
+                                     creationMode = InterpreterCreationMode.CUSTOM)
   }
 }

@@ -1,6 +1,7 @@
 package com.jetbrains.python.sdk;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,6 +11,7 @@ import com.intellij.python.sdk.backend.PythonEnvironmentExtKt;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterKt;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.jetbrains.python.project.PyProject;
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +26,9 @@ import java.util.List;
 @SuppressWarnings("unused")
 public final class PythonSdkUtil {
 
+  private PythonSdkUtil() {
+  }
+
   /** The `id` the venv provider declares in `intellij.python.venv.xml`. */
   private static final String VENV_KIND_ID = "venv";
   /** The `id` the conda provider declares in `intellij.python.community.impl.conda.xml`. */
@@ -33,8 +38,22 @@ public final class PythonSdkUtil {
     return com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk(sdk);
   }
 
+  /**
+   * @deprecated Use {@link #getAllSdks(Project)} or {@link #getAllSdks(PyProject)}
+   */
+  @Deprecated(forRemoval = true)
   public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks() {
     return com.jetbrains.python.sdk.legacy.PythonSdkUtil.getAllSdks();
+  }
+
+  @ApiStatus.Experimental
+  public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks(@NotNull Project project) {
+    return com.jetbrains.python.sdk.legacy.PythonSdkUtil.getAllSdks(project);
+  }
+
+  @ApiStatus.Experimental
+  public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks(@NotNull PyProject pyProject) {
+    return com.jetbrains.python.sdk.legacy.PythonSdkUtil.getAllSdks(pyProject);
   }
 
   public static @Nullable Sdk findPythonSdk(@Nullable Module module) {

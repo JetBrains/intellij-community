@@ -2,6 +2,7 @@
 package com.jetbrains.python.run.configuration
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Computable
@@ -28,6 +29,7 @@ import java.util.function.Consumer
  */
 class PySdkComboBox(
   private val addDefault: Boolean,
+  private val project: Project,
   private val moduleProvider: Computable<out Module?>,
 ) : ComboBox<PyInterpreterItem?>(), PyInterpreterModeNotifier {
   private val interpreterModeListeners: MutableList<Consumer<Boolean>> = mutableListOf()
@@ -44,7 +46,13 @@ class PySdkComboBox(
   }
 
   fun initList() {
-    val items: MutableList<PyInterpreterItem?> = readInterpreters { PythonSdkUtil.getAllSdks().pyInterpreterItems() }.toMutableList()
+    // The module provider reads Swing components, so call it on the EDT, before the read of the interpreters.
+    val module: Module? = moduleProvider.compute()
+    val items: MutableList<PyInterpreterItem?> =
+      readInterpreters {
+        val sdks = if (module != null) PythonSdkUtil.getAllSdks(module) else PythonSdkUtil.getAllSdks(project)
+        sdks.pyInterpreterItems()
+      }.toMutableList()
     if (addDefault) {
       items.add(0, null)
     }

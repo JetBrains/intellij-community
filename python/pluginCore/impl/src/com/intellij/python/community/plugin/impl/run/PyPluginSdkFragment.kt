@@ -95,7 +95,7 @@ internal class PyPluginSdkFragment<T : AbstractPythonRunConfiguration<*>> : Sett
     hints[modulesComponent] = PyBundle.message("python.run.configuration.fragments.plugin.sdk.of.module.hint")
     modulesCombo?.addActionListener { updateRemoteInterpreterMode() }
 
-    val interpreterComponent = PySdkComboBox(false) { modulesComponent.selectedModule }
+    val interpreterComponent = PySdkComboBox(false, config.project) { modulesComponent.selectedModule }
     initComponent(interpreterComponent, SDK_FROM_LIST)
     interpreterComponent.reset(config)
     fields[SDK_FROM_LIST] = interpreterComponent

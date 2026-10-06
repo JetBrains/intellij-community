@@ -85,12 +85,12 @@ import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.ToolProbeResult
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.getSdksToInstall
 import com.jetbrains.python.sdk.isSystemWide
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import com.jetbrains.python.target.ui.TargetPanelExtension
@@ -204,7 +204,7 @@ data class EelFileSystem(
     if (!isLocal) return@withContext emptyList()
 
     val allValidSdks = PythonSdkUtil
-      .getAllSdks()
+      .getAllSdksOn(eelApi.descriptor)
       .filter { sdk ->
         if (sdk.isCondaVirtualEnv) return@filter false
         if (sdk.sdkAdditionalData is PyRemoteSdkAdditionalDataMarker) return@filter false

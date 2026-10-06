@@ -61,7 +61,7 @@ import com.jetbrains.python.project.PyProject.Companion.getPyProjects
 import com.jetbrains.python.sdk.asModuleOrProject
 import com.jetbrains.python.sdk.associatedModuleNioPath
 import com.jetbrains.python.sdk.collectAddInterpreterActions
-import com.jetbrains.python.sdk.filterAssignablePythonSdks
+import com.jetbrains.python.sdk.filter.filterAssignablePythonSdks
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

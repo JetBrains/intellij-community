@@ -202,7 +202,7 @@ private suspend fun ensureModuleHasRoot(module: Module, root: VirtualFile): Unit
 
 private suspend fun getSdk(pythonPath: PythonBinary, module: Module): PyResult<PythonInterpreter> =
   withProgressText(ProjectBundle.message("progress.text.configuring.sdk")) {
-    val allJdks = PythonSdkUtil.getAllSdks().toTypedArray()
+    val allJdks = PythonSdkUtil.getAllSdks(module).toTypedArray()
     val currentSdk = allJdks.firstOrNull { sdk -> sdk.homeDirectory?.toNioPath() == pythonPath }
     if (currentSdk != null) return@withProgressText PyResult.success(currentSdk.pythonInterpreterAsync())
 

@@ -27,6 +27,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
@@ -712,7 +713,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
                                workspace.baseDir)
       }.getOr { return@withSdkConfigurationLock it.error.toSelectError(workspace.project) }
       val pythonInterpreter = when (ref) {
-        is PyInterpreterRef.ExistingSdk -> PythonSdkUtil.getAllSdks().find { it.name == ref.sdkName }?.pythonInterpreterAsync()
+        is PyInterpreterRef.ExistingSdk -> PythonSdkUtil.getAllSdks(workspace.module).find { it.name == ref.sdkName }?.pythonInterpreterAsync()
                                            ?: return@withSdkConfigurationLock EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.sdk.not.found",
                                                                                                                            ref.sdkName))
         // Every environment row belongs to a tool node, and each provider owns both building an SDK for an existing
@@ -835,7 +836,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
    * `AccessDeniedException`, naming the environment as in use rather than saying only that a delete failed.
    */
   private suspend fun awaitSdkQuiet(homePath: Path) {
-    val sdk = PythonSdkUtil.getAllSdks().firstOrNull { it.homePath?.toNioPathOrNull() == homePath } ?: return
+    val sdk = PythonSdkUtil.getAllSdksOn(homePath.getEelDescriptor()).firstOrNull { it.homePath?.toNioPathOrNull() == homePath } ?: return
     withTimeoutOrNull(SDK_QUIESCE_TIMEOUT) {
       while (PythonSdkUpdater.isUpdateScheduled(sdk)) {
         delay(SDK_QUIESCE_POLL)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +22,7 @@ import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.python.sdk.common.PyInterpreterItem;
 import com.intellij.python.sdk.common.PyInterpreterRef;
+import com.jetbrains.python.sdk.ModuleOrProject;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PySdkRenderingKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
@@ -57,7 +58,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   public PyIdeCommonOptionsForm(PyCommonOptionsFormData data) {
     myProject = data.getProject();
-    myInterpreterItems = PySdkRenderingKt.interpreterItemsUnderProgress(PythonSdkUtil.getAllSdks(), myProject);
+    myInterpreterItems = PySdkRenderingKt.interpreterItemsUnderProgress(PythonSdkUtil.getAllSdks(myProject), myProject);
     List<PyInterpreterItem> rows = new ArrayList<>(myInterpreterItems);
     rows.addFirst(null);
     Module[] modules = ModuleManager.getInstance(data.getProject()).getModules();
@@ -222,7 +223,9 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   public void updateSdkList(boolean preserveSelection) {
-    myInterpreterItems = PySdkRenderingKt.interpreterItemsUnderProgress(PythonSdkUtil.getAllSdks(), content.panel);
+    var module = getModule();
+    var mOrP = module != null ? new ModuleOrProject.ModuleAndProject(module) : new ModuleOrProject.ProjectOnly(myProject);
+    myInterpreterItems = PySdkRenderingKt.interpreterItemsUnderProgress(PythonSdkUtil.getAllSdks(mOrP), content.panel);
     PyInterpreterItem selection =
       preserveSelection && content.interpreterComboBox.getSelectedItem() instanceof PyInterpreterItem item ? item : null;
     if (!myInterpreterItems.contains(selection)) {

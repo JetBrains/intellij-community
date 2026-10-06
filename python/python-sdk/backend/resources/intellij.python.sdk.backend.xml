@@ -67,6 +67,9 @@
     <extensionPoint qualifiedName="Pythonid.pythonEnvironmentProvider"
                     interface="com.intellij.python.sdk.backend.PythonEnvironmentProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.targetSupportsFilter"
+                    interface="com.jetbrains.python.sdk.filter.TargetSupportsFilterExtension"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">

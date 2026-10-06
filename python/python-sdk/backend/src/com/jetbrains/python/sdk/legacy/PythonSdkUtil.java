@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
@@ -15,16 +16,22 @@ import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyInternalExecApi;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.module.PyModuleService;
+import com.jetbrains.python.project.PyProject;
+import com.jetbrains.python.sdk.ModuleOrProject;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.filter.SdkFiltersKt;
 import com.jetbrains.python.venvReader.VirtualEnvReaderKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -85,8 +92,33 @@ public final class PythonSdkUtil {
            PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID);
   }
 
+  /**
+   * Returns <strong>all</strong> SDKs for all eels.
+   * Most probably you need {@link #getAllSdks(Project)} or {@link #getAllSdks(PyProject)}
+   */
+  @PyInternalExecApi
   public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks() {
     return ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(), sdk -> isPythonSdk(sdk, false));
+  }
+
+  public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks(@NotNull Project project) {
+    return getAllSdks(new ModuleOrProject.ProjectOnly(project));
+  }
+
+  public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks(@NotNull PyProject module) {
+    return getAllSdks(new ModuleOrProject.ModuleAndProject(module));
+  }
+
+  public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks(@NotNull Module module) {
+    return getAllSdks(new ModuleOrProject.ModuleAndProject(module));
+  }
+
+  public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks(@NotNull ModuleOrProject moduleOrProject) {
+    return SdkFiltersKt.filterAssignablePythonSdks(moduleOrProject, List.of(ProjectJdkTable.getInstance().getAllJdks()));
+  }
+
+  public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdksOn(@NotNull EelDescriptor eelDescriptor) {
+    return SdkFiltersKt.filterAssignablePythonSdks(eelDescriptor, List.of(ProjectJdkTable.getInstance().getAllJdks()));
   }
 
   /**
@@ -193,7 +225,7 @@ public final class PythonSdkUtil {
   }
 
   public static List<Sdk> getAllLocalCPythons() {
-    return getAllSdks().stream().filter(REMOTE_SDK_PREDICATE.negate()).collect(Collectors.toList());
+    return getAllSdksOn(LocalEelDescriptor.INSTANCE).stream().filter(REMOTE_SDK_PREDICATE.negate()).collect(Collectors.toList());
   }
 
   // It is only here for external plugins

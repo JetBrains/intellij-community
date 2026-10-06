@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
-import com.intellij.execution.target.sdkMatchesEel
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -9,13 +8,11 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.run.codeCouldProbablyBeRunWithConfig
+import com.jetbrains.python.sdk.filter.filterAssignablePythonSdks
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -84,21 +81,5 @@ fun Project.renameSdk(oldName: String, newName: String): PyResult<Unit> {
  * the module resides on (only for [ModuleOrProject.ModuleAndProject]). Remote interpreters are sorted last, then by name.
  */
 @Internal
-fun ModuleOrProject.getAssignablePythonSdks(): List<Sdk> = filterAssignablePythonSdks(PythonSdkUtil.getAllSdks())
+fun ModuleOrProject.getAssignablePythonSdks(): List<Sdk> = filterAssignablePythonSdks(PythonSdkUtil.getAllSdks(this))
 
-/**
- * Filters and sorts [sdks] the same way [getAssignablePythonSdks] does. The "Python Interpreters" dialog passes the editable
- * copies from its own `ProjectSdksModel` here, so the displayed list matches the live one.
- */
-@Internal
-fun ModuleOrProject.filterAssignablePythonSdks(sdks: Collection<Sdk>): List<Sdk> {
-  val eelMachine = project.getEelMachine()
-  val targetModuleSitsOn = moduleIfExists?.let { PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(it) }
-  return sdks
-    .filter { sdk ->
-      PythonSdkUtil.isPythonSdk(sdk) &&
-      sdkMatchesEel(eelMachine, sdk) &&
-      (targetModuleSitsOn == null || targetModuleSitsOn.codeCouldProbablyBeRunWithConfig(sdk.targetEnvConfiguration))
-    }
-    .sortedWith(compareBy({ PythonSdkUtil.isRemote(it) }, { it.name }))
-}

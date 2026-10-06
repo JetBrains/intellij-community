@@ -38,7 +38,7 @@ import com.jetbrains.python.sdk.ModuleOrProject.ProjectOnly
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.collectAddInterpreterActions
 import com.jetbrains.python.sdk.customizeWithSdkValue
-import com.jetbrains.python.sdk.filterAssignablePythonSdks
+import com.jetbrains.python.sdk.filter.filterAssignablePythonSdks
 import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.noInterpreterMarker

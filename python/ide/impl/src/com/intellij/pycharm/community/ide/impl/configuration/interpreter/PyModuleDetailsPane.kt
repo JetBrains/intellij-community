@@ -38,7 +38,7 @@ import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.collectAddInterpreterActions
-import com.jetbrains.python.sdk.filterAssignablePythonSdks
+import com.jetbrains.python.sdk.filter.filterAssignablePythonSdks
 import com.jetbrains.python.sdk.findPythonSdk
 import com.jetbrains.python.sdk.interpreterItemsUnderProgress
 import kotlinx.coroutines.Dispatchers

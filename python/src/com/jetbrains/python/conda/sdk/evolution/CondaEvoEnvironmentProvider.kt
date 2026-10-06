@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.conda.sdk.evolution
 
 import kotlin.io.path.pathString
@@ -114,7 +115,8 @@ internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
         is PyCondaEnvIdentity.NamedEnv -> envDir.fileName?.toString() == identity.envName
       }
     } ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.env.not.found", envDir.toString()))
-    return env.createSdkFromThisEnv(context.workspace.moduleOrProject, null, PythonSdkUtil.getAllSdks(), context.workspace.baseDir)
+    return env.createSdkFromThisEnv(context.workspace.moduleOrProject, null, PythonSdkUtil.getAllSdks(context.workspace.pyProject),
+                                    context.workspace.baseDir)
   }
 
   /**
@@ -133,7 +135,7 @@ internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
       .createCondaSdkAlongWithNewEnv(
         context.workspace.moduleOrProject,
         NewCondaEnvRequest.EmptyNamedEnv(languageLevel, envName),
-        PythonSdkUtil.getAllSdks(),
+        PythonSdkUtil.getAllSdks(context.workspace.pyProject),
         context.workspace.baseDir,
       )
   }
