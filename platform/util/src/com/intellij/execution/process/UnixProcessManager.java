@@ -9,7 +9,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.system.NativeAccess;
 import com.intellij.util.system.OS;
-import kotlin.NotImplementedError;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -325,8 +324,7 @@ public final class UnixProcessManager {
       return new String[]{psCommand, "-ax", "-o", commandLineOnly ? command : "ppid,pid," + command};
     }
     else if (OS.CURRENT == OS.OHOS) {
-      //todo[kb] support HarmonyOS
-      throw new NotImplementedError(System.getProperty("os.name") + " is not implemented.");
+      throw new UnsupportedOperationException("use ProcessHandle API instead");
     }
     else {
       throw new IllegalStateException(System.getProperty("os.name") + " is not supported.");
