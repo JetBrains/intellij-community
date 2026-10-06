@@ -104,6 +104,11 @@ open class PyDataclassVisitor(holder: ProblemsHolder?, context: TypeEvalContext)
                       ProblemHighlightType.GENERIC_ERROR)
     }
 
+    processFrozenInheritance(cls, dataclassParameters)
+  }
+
+  /** Reports a class whose explicit `frozen` state differs from one declared elsewhere in its dataclass hierarchy. */
+  protected fun processFrozenInheritance(cls: PyClass, dataclassParameters: PyDataclassParameters) {
     var frozenInHierarchy: Boolean? = null
     for (current in StreamEx.of(cls).append(cls.getAncestorClasses(myTypeEvalContext))) {
       val currentFrozen = parseStdOrDataclassTransformDataclassParameters(current, myTypeEvalContext)?.frozen ?: continue

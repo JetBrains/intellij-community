@@ -12,7 +12,9 @@ import com.jetbrains.python.codeInsight.getDataclassKind
 import com.jetbrains.python.codeInsight.parseDataclassParameters
 import com.jetbrains.python.codeInsight.resolveDataclassFieldParameters
 import com.jetbrains.python.codeInsight.stdlib.PyAttrsDataclassType
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassResolver
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibDataclassType
+import com.jetbrains.python.codeInsight.stdlib.isFrozenInAnyDataclassOfHierarchy
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.psi.AccessDirection
@@ -181,15 +183,22 @@ internal open class PyCommonDataclassVisitor(holder: ProblemsHolder?, context: T
 
   private fun checkMutatingFrozenAttribute(expression: PyQualifiedExpression) {
     val cls = getInstancePyClass(expression.qualifier) ?: return
+    val isFrozen = frozenResolver(cls)?.isFrozenInstance(cls, myTypeEvalContext)
+                   ?: isFrozenInAnyDataclassOfHierarchy(cls, myTypeEvalContext)
 
-    val allClasses = listOf(cls) + cls.getAncestorClasses(myTypeEvalContext)
-    val allClassesAttributes = allClasses.mapNotNull { parseDataclassParameters(it, myTypeEvalContext) }
-    if (allClassesAttributes.any { it.frozen == true }) {
+    if (isFrozen) {
       registerProblem(expression,
                       PyPsiBundle.problemMessage("INSP.dataclasses.object.attribute.read.only", CodifiedParam.ofReference(cls), expression.name),
                       ProblemHighlightType.GENERIC_ERROR)
     }
   }
+
+  /** The resolver of the nearest dataclass in the MRO of [cls]: a plain subclass follows the rules of its dataclass base. */
+  private fun frozenResolver(cls: PyClass): PyDataclassResolver? =
+    (sequenceOf(cls) + cls.getAncestorClasses(myTypeEvalContext))
+      .firstNotNullOfOrNull { parseDataclassParameters(it, myTypeEvalContext) }
+      ?.type
+      ?.resolver
 
   private fun getDataclassHierarchyOrder(cls: PyClass, operator: String?): Pair<ClassOrder, PyDataclassParameters.Type?> {
     var seenUnordered: Pair<ClassOrder, PyDataclassParameters.Type?>? = null
