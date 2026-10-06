@@ -15,6 +15,10 @@ kotlin {
 
 tasks.withType<JavaCompile>().configureEach { options.release.set(21) }
 
+// The rule sources live under build-scripts/bazel now (see JEWEL-1309). This way we can keep `./gradlew detekt`
+// working until this entire Gradle module is dropped from the face of the earth.
+sourceSets.main { kotlin.srcDir("../build-scripts/bazel/src/main/kotlin/org/jetbrains/jewel/detekt") }
+
 dependencies {
     compileOnly(libs.detekt.api)
 

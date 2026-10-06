@@ -1,5 +1,8 @@
 package org.jetbrains.jewel.detekt.rules
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionPoint
+import com.intellij.psi.impl.source.tree.TreeCopyHandler
 import dev.detekt.api.Config
 import dev.detekt.api.Rule
 import dev.detekt.api.modifiedText
@@ -19,6 +22,16 @@ abstract class JewelBaseRule(config: Config, description: String, url: URI? = nu
         val startingText = root.modifiedText ?: root.text
         workingFile =
             if (autoCorrect) {
+                val extensionArea = ApplicationManager.getApplication().extensionArea
+                val extensionName = TreeCopyHandler.EP_NAME.name
+                if (!extensionArea.hasExtensionPoint(extensionName)) {
+                    extensionArea.registerExtensionPoint(
+                        extensionName,
+                        TreeCopyHandler::class.java.name,
+                        ExtensionPoint.Kind.INTERFACE,
+                        true,
+                    )
+                }
                 KtPsiFactory(root.project).createPhysicalFile(fileName = root.name, text = startingText)
             } else {
                 root

@@ -55,17 +55,6 @@ fun resolvePath(path: String): File {
     return if (file.isAbsolute) file else File(getBuildWorkspaceDirectory(), path)
 }
 
-/**
- * Gets the runfiles directory for the current `bazel run` invocation.
- *
- * @return The runfiles directory path, read from the `RUNFILES_DIR` or `JAVA_RUNFILES` environment variable. Throws if
- *   neither is set — this only works when run via `bazel run`.
- */
-fun getRunfilesDir(): String =
-    System.getenv("RUNFILES_DIR")
-        ?: System.getenv("JAVA_RUNFILES")
-        ?: error("RUNFILES_DIR is not set. Run via `bazel run`.")
-
 val isWindows: Boolean = "windows" in System.getProperty("os.name").lowercase()
 
 private val stylingSupported = doesTerminalSupportStyling()
