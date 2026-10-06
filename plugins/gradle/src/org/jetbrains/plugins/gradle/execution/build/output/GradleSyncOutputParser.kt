@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.execution.build.output
 
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.StartId
-import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.build.output.BuildOutputInstantReaderImpl.BuildOutputLineParserBridge
 import com.intellij.build.output.BuildOutputMulticaster
 import com.intellij.build.output.BuildOutputReplayableLineReader
@@ -39,7 +38,12 @@ class GradleSyncOutputParser : BuildOutputLineParserBridge() {
     }
 
     val text = line.text.substring(prefixIndex + prefix.length).trim()
-    multicaster.notifyBuildEvent(MessageEventImpl(taskId, kind, null, text, text))
+    multicaster.notifyBuildEvent(
+      MessageEvent.builder(text, kind)
+        .withParentId(taskId)
+        .withDescription(text)
+        .build()
+    )
     return true
   }
 }
