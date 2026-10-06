@@ -4,7 +4,9 @@ package com.intellij.platform.projectView.frontend.impl
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SelectInTarget
+import com.intellij.ide.actions.OpenInRightSplitActionProvider
 import com.intellij.ide.util.treeView.TreeState
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -452,6 +454,17 @@ internal class TreeBasedFrontendProjectViewPane(
     }
     sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY) {
       selectedNodes.mapNotNull { it.projectViewNode.userObject.getVirtualFile() }.toTypedArray()
+    }
+    val selectedFileNodes = selectedNodes.map { it.projectViewNode }.filter { !it.isDirectory() && it.canNavigateToSource() }
+    if (selectedFileNodes.isNotEmpty()) {
+      sink[OpenInRightSplitActionProvider.DATA_KEY] = object : OpenInRightSplitActionProvider {
+        override fun canOpenInRightSplit(e: AnActionEvent): Boolean = true
+
+        override fun openInRightSplit(e: AnActionEvent): Boolean {
+          paneTreeModel.openInRightSplit(selectedFileNodes)
+          return true
+        }
+      }
     }
   }
 

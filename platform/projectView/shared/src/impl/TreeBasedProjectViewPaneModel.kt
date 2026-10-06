@@ -681,7 +681,7 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
       // In the monolith, for legacy reasons we open the file immediately and synchronously in MyIdeView.
       if (!isDir && !IdeProductMode.isMonolith) {
         withContext(request.clientId.asContextElement()) { // the editor has to know the client ID to focus it on the frontend
-          if (!navigate(nodePath.nodeIds.last(), ProjectViewPaneNavigateOptionsImpl(requestFocus = true))) {
+          if (!navigate(listOf(nodePath.nodeIds.last()), ProjectViewPaneNavigateOptionsImpl(requestFocus = true))) {
             // If the editor can't be opened, focus the new file in the PV at least.
             requestFocus = true
           }

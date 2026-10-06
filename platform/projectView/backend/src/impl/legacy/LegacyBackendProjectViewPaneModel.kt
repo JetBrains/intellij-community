@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.projectView.actions.legacyProjectViewOption
 import com.intellij.platform.projectView.impl.DataContextCutCopyPasteDeleteHandler
 import com.intellij.platform.projectView.impl.navigateSafely
+import com.intellij.platform.projectView.impl.rightSplitNavigationRequest
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewDnDOptions
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
@@ -228,11 +229,11 @@ private class LegacyBackendProjectViewPaneModel(
   }
 
   override suspend fun navigate(
-      nodeId: Long,
+      nodeIds: List<Long>,
       options: ProjectViewPaneNavigateOptions,
   ): Boolean {
     return withContext(Dispatchers.UI) {
-      legacyPaneManager.navigate(nodeId, options.requestFocus)
+      legacyPaneManager.navigate(nodeIds, options)
     }
   }
 
@@ -639,11 +640,14 @@ private class AbstractProjectViewPaneStateManager(
 
   private fun isExpandOnDoubleClick(node: Any): Boolean = (TreeUtil.getUserObject(node) as? NodeDescriptor<*>)?.expandOnDoubleClick() != false
 
-  suspend fun navigate(id: Long, requestFocus: Boolean): Boolean {
-    val node = nodeById[id] ?: return false
-    val navigatable = TreeUtil.getUserObject(node.modelNode) as? Navigatable? ?: return false
-    val navigationRequest = readAction { navigatable.navigationRequest() } ?: return false
-    return navigateSafely(project, navigationRequest, requestFocus)
+  suspend fun navigate(ids: List<Long>, options: ProjectViewPaneNavigateOptions): Boolean {
+    val navigatables = ids.mapNotNull { id -> nodeById[id]?.let { TreeUtil.getUserObject(it.modelNode) as? Navigatable? } }
+    val navigationRequests = readAction {
+      navigatables.mapNotNull {
+        if (options.openInRightSplit) rightSplitNavigationRequest(project, it) else it.navigationRequest()
+      }
+    }
+    return navigateSafely(project, navigationRequests, options)
   }
 
   private fun loadInitialState() {

@@ -27,8 +27,9 @@ data class ProjectViewPaneLoadChildrenRequest(
 @ApiStatus.Internal
 @Serializable
 data class ProjectViewPaneNavigateRequest(
-  val nodeId: Long,
+  val nodeIds: List<Long>,
   val requestFocus: Boolean,
+  val openInRightSplit: Boolean = false,
 ) : ProjectViewPaneRequest()
 
 @ApiStatus.Internal

@@ -333,7 +333,10 @@ private class ProjectViewPaneManager(
               selectedCallback()
             }
           }
-          is ProjectViewPaneNavigateRequest -> pane.navigate(request.nodeId, ProjectViewPaneNavigateOptionsImpl(request.requestFocus))
+          is ProjectViewPaneNavigateRequest -> pane.navigate(
+            request.nodeIds,
+            ProjectViewPaneNavigateOptionsImpl(request.requestFocus, request.openInRightSplit),
+          )
           is ProjectViewPaneChangeOptionValueRequest -> pane.setOptionValue(request.option.fromDTO(), request.newValue)
           is ProjectViewPaneChangeSortKeyRequest -> pane.setSortKey(request.sortKey.toSettingValue())
           is ProjectViewPaneChangeFileNestingRequest -> pane.setFileNesting(

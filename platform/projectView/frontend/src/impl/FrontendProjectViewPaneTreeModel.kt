@@ -398,9 +398,13 @@ internal class FrontendProjectViewPaneTreeModel(
 
   internal fun createNavigatable(model: ProjectViewNodeModel): Navigatable = NavigatableNode(model)
 
+  internal fun openInRightSplit(models: List<ProjectViewNodeModel>) {
+    sendRequest(ProjectViewPaneNavigateRequest(models.map { it.id }, requestFocus = true, openInRightSplit = true))
+  }
+
   private inner class NavigatableNode(private val model: ProjectViewNodeModel) : Navigatable {
     override fun navigate(requestFocus: Boolean) {
-      sendRequest(ProjectViewPaneNavigateRequest(model.id, requestFocus))
+      sendRequest(ProjectViewPaneNavigateRequest(listOf(model.id), requestFocus))
     }
 
     override fun canNavigate(): Boolean = model.canNavigate()

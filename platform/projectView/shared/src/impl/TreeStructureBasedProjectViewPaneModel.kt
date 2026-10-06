@@ -52,8 +52,8 @@ abstract class TreeStructureBasedProjectViewPaneModel(project: Project) : TreeBa
     }
   }
 
-  override suspend fun navigate(nodeId: Long, options: ProjectViewPaneNavigateOptions): Boolean {
-    return navigateToTreeStructureNode(project, suspendingState?.getNodeById(nodeId), options)
+  override suspend fun navigate(nodeIds: List<Long>, options: ProjectViewPaneNavigateOptions): Boolean {
+    return navigateToTreeStructureNodes(project, nodeIds.mapNotNull { suspendingState?.getNodeById(it) }, options)
   }
 
   override fun createSelectNodeVisitorProvider(): ProjectViewSelectNodeVisitorProvider<TreeStructureProjectViewNode> {
@@ -61,16 +61,20 @@ abstract class TreeStructureBasedProjectViewPaneModel(project: Project) : TreeBa
   }
 }
 
-/** Navigates to the legacy node descriptor behind a [TreeStructureProjectViewNode], if it's navigatable. */
+/** Navigates to the legacy node descriptors behind [nodes] that are navigatable. */
 @ApiStatus.Experimental
-suspend fun navigateToTreeStructureNode(
+suspend fun navigateToTreeStructureNodes(
   project: Project,
-  node: BackendProjectViewNodeModel<TreeStructureProjectViewNode>?,
+  nodes: List<BackendProjectViewNodeModel<TreeStructureProjectViewNode>>,
   options: ProjectViewPaneNavigateOptions,
 ): Boolean {
-  val navigatable = node?.userObject?.elementDescriptor as? Navigatable? ?: return false
-  val navigationRequest = readAction { navigatable.navigationRequest() } ?: return false
-  return navigateSafely(project, navigationRequest, options.requestFocus)
+  val navigationRequests = readAction {
+    nodes.mapNotNull { node ->
+      val navigatable = node.userObject.elementDescriptor as? Navigatable? ?: return@mapNotNull null
+      if (options.openInRightSplit) rightSplitNavigationRequest(project, navigatable) else navigatable.navigationRequest()
+    }
+  }
+  return navigateSafely(project, navigationRequests, options)
 }
 
 @ApiStatus.Experimental

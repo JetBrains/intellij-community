@@ -24,7 +24,7 @@ import com.intellij.platform.projectView.impl.ProjectViewUpdater
 import com.intellij.platform.projectView.impl.TreeBasedProjectViewPaneModel
 import com.intellij.platform.projectView.impl.TreeStructureProjectViewNode
 import com.intellij.platform.projectView.impl.TreeStructureSelectNodeVisitorProvider
-import com.intellij.platform.projectView.impl.navigateToTreeStructureNode
+import com.intellij.platform.projectView.impl.navigateToTreeStructureNodes
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder
@@ -118,8 +118,8 @@ class ScopePaneModel(
     "The scope tree model of $paneId is only available while the pane is being managed"
   }
 
-  override suspend fun navigate(nodeId: Long, options: ProjectViewPaneNavigateOptions): Boolean {
-    return navigateToTreeStructureNode(project, suspendingState?.getNodeById(nodeId), options)
+  override suspend fun navigate(nodeIds: List<Long>, options: ProjectViewPaneNavigateOptions): Boolean {
+    return navigateToTreeStructureNodes(project, nodeIds.mapNotNull { suspendingState?.getNodeById(it) }, options)
   }
 
   override fun supportsOption(option: ProjectViewPaneOption): Boolean {

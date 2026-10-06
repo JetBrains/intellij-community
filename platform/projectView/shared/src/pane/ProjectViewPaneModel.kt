@@ -24,7 +24,7 @@ interface ProjectViewPaneModel {
 
   suspend fun loadChildren(parentId: Long, options: ProjectViewPaneLoadChildrenOptions)
 
-  suspend fun navigate(nodeId: Long, options: ProjectViewPaneNavigateOptions): Boolean
+  suspend fun navigate(nodeIds: List<Long>, options: ProjectViewPaneNavigateOptions): Boolean
 
   suspend fun setOptionValue(option: ProjectViewPaneOption, newValue: Boolean)
 
@@ -59,8 +59,10 @@ internal data object ProjectViewPaneLoadChildrenOptionsImpl : ProjectViewPaneLoa
 @ApiStatus.NonExtendable
 interface ProjectViewPaneNavigateOptions {
   val requestFocus: Boolean
+  val openInRightSplit: Boolean
 }
 
 internal data class ProjectViewPaneNavigateOptionsImpl(
   override val requestFocus: Boolean,
+  override val openInRightSplit: Boolean = false,
 ) : ProjectViewPaneNavigateOptions
