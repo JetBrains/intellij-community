@@ -30,21 +30,27 @@ import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsigh
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.Hover
 import org.eclipse.lsp4j.MarkupContent
 import org.eclipse.lsp4j.MarkupKind
+import org.eclipse.lsp4j.ShowDocumentParams
 import org.eclipse.lsp4j.TextDocumentContentRefreshParams
 import org.eclipse.lsp4j.TextDocumentContentRegistrationOptions
 import org.eclipse.lsp4j.TextDocumentContentResult
 import org.eclipse.lsp4j.WorkspaceServerCapabilities
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.eclipse.lsp4j.jsonrpc.messages.Either
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseError
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -55,6 +61,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.util.Collections
+import java.util.concurrent.CompletableFuture
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -367,6 +374,75 @@ internal class LspDynamicFilesTest {
     // a refresh for a URI without a content file completes without an error
     serverSession.sendRequest(serverSession.TEXT_DOCUMENT_CONTENT_REFRESH) { TextDocumentContentRefreshParams("jar:///nowhere.jar!/x/Y.class") }
   }
+
+  @Test
+  fun `showDocument opens a file with server content`() = timeoutRunBlocking {
+    val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
+    val serverSession = configureServerSession(project, virtualFile)
+
+    val uri = "jar:///lib/foo.jar!/com/foo/Bar.txt"
+    serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
+      TextDocumentContentResult("served text")
+    }
+    serverSession.expectNotification(serverSession.DID_OPEN) { it.textDocument.uri == uri }
+    val result = serverSession.sendRequest(serverSession.SHOW_DOCUMENT) { ShowDocumentParams(uri) }
+    serverSession.awaitExpected()
+
+    assertTrue(result.isSuccess)
+    val file = withContext(Dispatchers.EDT) { findOpenDynamicFile(uri) }
+    assertNotNull(file)
+    assertEquals("served text", VfsUtilCore.loadText(file!!))
+  }
+
+  @Test
+  fun `showDocument fails when the server answers the content request with an error`() = timeoutRunBlocking {
+    val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
+    val serverSession = configureServerSession(project, virtualFile)
+
+    val uri = "jar:///lib/foo.jar!/com/foo/Unknown.txt"
+    serverSession.expectRequestAsync(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
+      CompletableFuture.failedFuture(ResponseErrorException(ResponseError(ResponseErrorCode.InvalidParams, "unknown uri", null)))
+    }
+    // an error response is a normal server answer: it must give a negative result, not an IDE error
+    val result = serverSession.sendRequest(serverSession.SHOW_DOCUMENT) { ShowDocumentParams(uri) }
+    serverSession.awaitExpected()
+
+    assertFalse(result.isSuccess)
+    assertNull(withContext(Dispatchers.EDT) { findOpenDynamicFile(uri) })
+  }
+
+  @Test
+  fun `a server cancel of showDocument cancels the content request`() = timeoutRunBlocking {
+    val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
+    val serverSession = configureServerSession(project, virtualFile)
+
+    val uri = "jar:///lib/foo.jar!/com/foo/Slow.txt"
+    val pendingContent = CompletableFuture<TextDocumentContentResult>()
+    val contentRequested = serverSession.expectRequestAsync(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) { pendingContent }
+    val showDocument = async { serverSession.sendRequest(serverSession.SHOW_DOCUMENT) { ShowDocumentParams(uri) } }
+    contentRequested.await()
+
+    // the cancel of the server-side future sends `$/cancelRequest` for showDocument
+    showDocument.cancel()
+
+    waitUntilAssertSucceeds(message = "the client must cancel the content request via $/cancelRequest") {
+      assertTrue(pendingContent.isCancelled)
+    }
+    assertNull(withContext(Dispatchers.EDT) { findOpenDynamicFile(uri) })
+  }
+
+  @Test
+  fun `showDocument fails for a scheme without server content`() = timeoutRunBlocking {
+    val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
+    val serverSession = configureServerSession(project, virtualFile)
+
+    val result = serverSession.sendRequest(serverSession.SHOW_DOCUMENT) { ShowDocumentParams("zip:///lib/foo.zip!/com/foo/Bar.txt") }
+
+    assertFalse(result.isSuccess)
+  }
+
+  private fun findOpenDynamicFile(uri: String): VirtualFile? =
+    FileEditorManager.getInstance(project).openFiles.firstOrNull { LspDynamicFiles.getDynamicFileUri(it) == uri }
 
   private fun createJarEntry(): VirtualFile {
     val entryPath = "com/foo/Bar.txt"
