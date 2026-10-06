@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -18,14 +17,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-import static com.intellij.concurrency.ThreadContext.withThreadLocal;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 
@@ -103,10 +100,7 @@ public abstract class EditorAction extends AnAction implements DumbAware, LightE
     if (this.getTemplatePresentation().isRWLockRequired()) {
       WriteIntentReadAction.run(() -> actionPerformed(editor, dataContext));
     } else {
-      AccessToken token = withThreadLocal(ThreadingAssertions.inputEventWithoutWriteIntentLock, (__) -> (exception) -> LockFreeEditorActionsCore.INSTANCE.showBalloonWithAdvice(exception));
-      try (token) {
-        actionPerformed(editor, dataContext);
-      }
+      actionPerformed(editor, dataContext);
     }
   }
 
