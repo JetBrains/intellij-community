@@ -10,7 +10,6 @@ import com.intellij.settingsSync.core.SettingsSyncBridge.PushRequestMode.MUST_PU
 import com.intellij.settingsSync.core.SettingsSyncBridge.PushRequestMode.PUSH_IF_NEEDED
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
-import com.intellij.settingsSync.core.plugins.SettingsSyncPluginsState
 import com.intellij.settingsSync.core.statistics.SettingsSyncEventsStatistics
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CancellationException
@@ -207,7 +206,7 @@ class SettingsSyncBridge(
 
       when (initMode) {
         is InitMode.TakeFromServer -> applySnapshotFromServer(initMode.cloudEvent)
-        InitMode.PushToServer -> forcePushKeepingServerPlugins(previousState)
+        InitMode.PushToServer -> mergeAndPush(previousState.idePosition, previousState.cloudPosition, FORCE_PUSH)
         InitMode.JustInit -> mergeAndPush(previousState.idePosition, previousState.cloudPosition, PUSH_IF_NEEDED)
         is InitMode.MigrateFromOldStorage -> migrateFromOldStorage(initMode.migration)
       }
@@ -280,50 +279,6 @@ class SettingsSyncBridge(
     }
   }
 
-  /**
-   * Force-pushes the log to the server.
-   * If the IDE does not sync plugins, master takes the plugin state from the cloud branch (see [GitSettingsLog]),
-   * but that state may be stale, and a force push would overwrite a newer one. Instead, logs the server plugin state
-   * as a cloud change, and pushes only if the server still has the file that state was read from; re-reads it on reject.
-   * The state is logged on the cloud branch, so after a failed push the next merge does not treat it as a local change.
-   */
-  private suspend fun forcePushKeepingServerPlugins(previousState: CurrentState) {
-    if (ideMediator.pluginSyncSupported) {
-      mergeAndPush(previousState.idePosition, previousState.cloudPosition, FORCE_PUSH)
-      return
-    }
-    var statePositions = previousState
-    repeat(KEEP_SERVER_PLUGINS_PUSH_ATTEMPTS) {
-      val (updateResult, serverVersionId) = withRemoteCommunicator { receiveUpdatesWithVersion() }
-      val serverPlugins = when (updateResult) {
-        is UpdateResult.Success -> updateResult.settingsSnapshot.plugins
-        // no file, a deletion marker, or an unreadable file has no plugins: clear the logged ones, as a ZIP without plugins reads
-        UpdateResult.NoFileOnServer, UpdateResult.FileDeletedFromServer -> SettingsSyncPluginsState(emptyMap())
-        is UpdateResult.Error -> throw IllegalStateException("Cannot read plugin state from server: ${updateResult.message}")
-      }
-      if (serverPlugins != null) {
-        val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()),
-                                        emptySet(), serverPlugins, emptyMap(), emptySet())
-        settingsLog.applyCloudState(snapshot, "Keep plugin state from server")
-      }
-      // the server has no versions to push against
-      val force = updateResult is UpdateResult.Success && serverVersionId == null
-      val masterPosition = advanceMasterAndPushToIde(statePositions.idePosition, statePositions.cloudPosition)
-      // a null version expects no file on the server
-      val pushResult = withRemoteCommunicator { push(settingsLog.collectCurrentSnapshot(), force, serverVersionId) }
-      if (force || pushResult != SettingsSyncPushResult.Rejected) {
-        handlePushResult(pushResult, masterPosition, onRejectedPush = {
-          LOG.error("Reject shouldn't happen when force push is used")
-          SettingsSyncStatusTracker.getInstance().updateOnError(SettingsSyncBundle.message("notification.title.push.error"))
-        })
-        return
-      }
-      LOG.info("Push keeping server plugin state was rejected: the server has changed, retrying")
-      statePositions = collectCurrentState()
-    }
-    SettingsSyncStatusTracker.getInstance().updateOnError(SettingsSyncBundle.message("notification.title.push.error"))
-  }
-
   private suspend fun forcePushToCloud(masterPosition: SettingsLog.Position) {
     pushAndHandleResult(true, masterPosition, onRejectedPush = {
       LOG.error("Reject shouldn't happen when force push is used")
@@ -355,13 +310,7 @@ class SettingsSyncBridge(
         else {
           withRemoteCommunicator { deleteFile(CROSS_IDE_SYNC_MARKER_FILE) }
         }
-        if (ideMediator.pluginSyncSupported) {
-          forcePushToCloud(settingsLog.getMasterPosition())
-        }
-        else {
-          // the snapshot path on the server has changed, so the server plugin state may differ from the logged one
-          forcePushKeepingServerPlugins(collectCurrentState())
-        }
+        forcePushToCloud(settingsLog.getMasterPosition())
       }
       is SyncSettingsEvent.SyncRequest -> {
         checkServer()
@@ -544,8 +493,21 @@ class SettingsSyncBridge(
     previousCloudPosition: SettingsLog.Position,
     pushRequestMode: PushRequestMode,
   ) {
+    val newIdePosition = settingsLog.getIdePosition()
     val newCloudPosition = settingsLog.getCloudPosition()
-    val masterPosition = advanceMasterAndPushToIde(previousIdePosition, previousCloudPosition)
+    val masterPosition: SettingsLog.Position
+    if (newIdePosition != previousIdePosition || newCloudPosition != previousCloudPosition) {
+      // move master to the actual position. It can be a fast-forward to either ide, or cloud changes, or it can be a merge
+      masterPosition = settingsLog.advanceMaster()
+    }
+    else {
+      // there were only fake events without actual changes to the repository => master doesn't need to be changed either
+      masterPosition = settingsLog.getMasterPosition()
+    }
+
+    if (newIdePosition != masterPosition) { // master has advanced further that ide => the ide needs to be updated
+      pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition, null)
+    }
 
     if (newCloudPosition != masterPosition || pushRequestMode == MUST_PUSH || pushRequestMode == FORCE_PUSH) {
       pushAndHandleResult(pushRequestMode == FORCE_PUSH, masterPosition, onRejectedPush = {
@@ -565,34 +527,8 @@ class SettingsSyncBridge(
     }
   }
 
-  private suspend fun advanceMasterAndPushToIde(
-    previousIdePosition: SettingsLog.Position,
-    previousCloudPosition: SettingsLog.Position,
-  ): SettingsLog.Position {
-    val newIdePosition = settingsLog.getIdePosition()
-    val newCloudPosition = settingsLog.getCloudPosition()
-    val masterPosition: SettingsLog.Position
-    if (newIdePosition != previousIdePosition || newCloudPosition != previousCloudPosition) {
-      // move master to the actual position. It can be a fast-forward to either ide, or cloud changes, or it can be a merge
-      masterPosition = settingsLog.advanceMaster()
-    }
-    else {
-      // there were only fake events without actual changes to the repository => master doesn't need to be merged,
-      // but it may be pushed, and it may hold a plugin state of its own: left by an older build, or by a restore from history
-      masterPosition = settingsLog.keepPluginStateFromCloud()
-    }
-
-    if (newIdePosition != masterPosition) { // master has advanced further that ide => the ide needs to be updated
-      pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition, null)
-    }
-    return masterPosition
-  }
-
   private suspend fun pushAndHandleResult(force: Boolean, positionToSetCloudBranch: SettingsLog.Position, onRejectedPush: () -> Unit) {
-    handlePushResult(pushToCloud(settingsLog.collectCurrentSnapshot(), force), positionToSetCloudBranch, onRejectedPush)
-  }
-
-  private fun handlePushResult(pushResult: SettingsSyncPushResult, positionToSetCloudBranch: SettingsLog.Position, onRejectedPush: () -> Unit) {
+    val pushResult: SettingsSyncPushResult = pushToCloud(settingsLog.collectCurrentSnapshot(), force)
     LOG.debug("Result of pushing settings to the cloud: $pushResult")
     when (pushResult) {
       is SettingsSyncPushResult.Success -> {
@@ -702,7 +638,6 @@ class SettingsSyncBridge(
 
   companion object {
     private val LOG = logger<SettingsSyncBridge>()
-    private const val KEEP_SERVER_PLUGINS_PUSH_ATTEMPTS = 3
 
     fun removeRemoteData(userData: SettingsSyncUserData): DeleteServerDataResult {
       if (RemoteCommunicatorHolder.getCurrentUserData() != userData) {

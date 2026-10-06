@@ -50,9 +50,6 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   @VisibleForTesting
   internal val files2applyLast = mutableListOf(EditorColorsManagerImpl.STORAGE_NAME)
 
-  @VisibleForTesting
-  override var pluginSyncSupported: Boolean = isPluginSyncSupported
-
   override val isExclusive: Boolean
     get() = true
 
@@ -87,7 +84,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     }
 
     // 2. update plugins
-    if (snapshot.plugins != null && pluginSyncSupported) {
+    if (snapshot.plugins != null) {
       SettingsSyncPluginManager.getInstance().pushChangesToIde(snapshot.plugins)
     }
 
@@ -146,8 +143,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     val fileStates = collectFileStatesFromFiles(filesToExport, appConfigPath)
     LOG.debug("Collected files for the following fileSpecs: ${fileStates.map { it.file }}")
 
-    // null leaves the synced plugin state as it is
-    val pluginsState = if (pluginSyncSupported) SettingsSyncPluginManager.getInstance().updateStateFromIdeOnStart(lastSavedSnapshot.plugins) else null
+    val pluginsState = SettingsSyncPluginManager.getInstance().updateStateFromIdeOnStart(lastSavedSnapshot.plugins)
     LOG.debug("Collected following plugin state: $pluginsState")
 
     val settingsFromProviders = mutableMapOf<String, Any>()

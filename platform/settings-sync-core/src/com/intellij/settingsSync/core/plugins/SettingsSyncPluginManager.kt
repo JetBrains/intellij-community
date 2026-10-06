@@ -25,7 +25,6 @@ import com.intellij.settingsSync.core.SyncSettingsEvent
 import com.intellij.settingsSync.core.config.BUNDLED_PLUGINS_ID
 import com.intellij.settingsSync.core.enabledOrDisabled
 import com.intellij.settingsSync.core.getLocalApplicationInfo
-import com.intellij.settingsSync.core.isPluginSyncSupported
 import com.intellij.settingsSync.core.plugins.SettingsSyncPluginsState.PluginData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -157,7 +156,6 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
     !(PluginManagerProxy.getInstance().isEssential(pluginId) || PLUGIN_EXCEPTIONS.contains(pluginId.idString))
 
   private fun firePluginsStateChangeEvent(pluginsState: SettingsSyncPluginsState) {
-    if (!isPluginSyncSupported) return
     val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()),
                                     emptySet(), pluginsState, emptyMap(), emptySet())
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))

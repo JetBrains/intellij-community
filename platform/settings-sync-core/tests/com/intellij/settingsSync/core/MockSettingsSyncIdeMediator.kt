@@ -10,8 +10,6 @@ import kotlin.io.path.relativeTo
 internal class MockSettingsSyncIdeMediator : SettingsSyncIdeMediator {
   internal val files = mutableMapOf<String, String>()
 
-  override var pluginSyncSupported: Boolean = true
-
   private var exceptionToThrowOnApply: Exception? = null
   private var exceptionToThrowOnGetInitial: Exception? = null
 

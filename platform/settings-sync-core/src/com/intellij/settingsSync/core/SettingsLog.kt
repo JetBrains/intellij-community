@@ -72,14 +72,6 @@ interface SettingsLog {
   fun advanceMaster(): Position
 
   /**
-   * If the IDE does not sync plugins, makes the plugin state on master equal to the one on the cloud branch, without merging,
-   * as [advanceMaster] does at its end. Otherwise, does nothing.
-   *
-   * @return New position of 'master'.
-   */
-  fun keepPluginStateFromCloud(): Position
-
-  /**
    * Restores the repository's state to match that of a specific commit, identified by its hash.
    *
    * This method emulates the behavior of the Git command `git checkout <hash> -- .`, which resets the state of the

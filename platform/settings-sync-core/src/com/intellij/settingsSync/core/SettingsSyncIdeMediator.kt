@@ -27,9 +27,4 @@ interface SettingsSyncIdeMediator {
    */
   fun getInitialSnapshot(appConfigPath: Path, lastSavedSnapshot: SettingsSnapshot): SettingsSnapshot
 
-  /**
-   * `false` when the IDE neither applies nor sends the plugin state, see [isPluginSyncSupported].
-   */
-  val pluginSyncSupported: Boolean
-    get() = true
 }

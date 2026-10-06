@@ -42,17 +42,6 @@ interface SettingsSyncRemoteCommunicator {
   fun receiveUpdates(): UpdateResult
 
   /**
-   * Same as [receiveUpdates], but also returns the version of the snapshot file that was read, or null if there is no file.
-   * It covers the files that [UpdateResult] reports without a version: a deletion marker, and a file that cannot be read,
-   * which is reported as [UpdateResult.NoFileOnServer]. A push against this version replaces only the file that was read.
-   */
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  fun receiveUpdatesWithVersion(): Pair<UpdateResult, String?> {
-    val result = receiveUpdates()
-    return Pair(result, (result as? UpdateResult.Success)?.serverVersionId)
-  }
-
-  /**
    * Pushes the settings snapshot to the remote cloud server only if its remote version is "expectedServerVersionId" or
    * "expectedServerVersionId" is null
    *

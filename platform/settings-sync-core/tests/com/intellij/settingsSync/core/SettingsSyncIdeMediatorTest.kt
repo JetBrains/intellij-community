@@ -13,10 +13,6 @@ import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.impl.stores.stateStore
-import com.intellij.openapi.extensions.PluginId
-import com.intellij.settingsSync.core.plugins.SettingsSyncPluginManager
-import com.intellij.settingsSync.core.plugins.SettingsSyncPluginsState
-import com.intellij.settingsSync.core.plugins.SettingsSyncPluginsState.PluginData
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.registerComponentInstance
 import com.intellij.testFramework.rules.InMemoryFsRule
@@ -131,44 +127,6 @@ class SettingsSyncIdeMediatorTest : BasePlatformTestCase() {
 
     Assert.assertTrue(SettingsSyncSettings.getInstance().isSubcategoryEnabled(SettingsCategory.PLUGINS, "org.vlang"))
     Assert.assertFalse(SettingsSyncSettings.getInstance().isSubcategoryEnabled(SettingsCategory.PLUGINS, "IdeaVIM"))
-  }
-
-  @Test
-  fun `no plugin sync - initial snapshot has no plugin state`() {
-    val mediator = SettingsSyncIdeMediatorImpl(appStore(), memoryFs.fs.getPath("/noPluginSync/initial"), enabledCondition = { true })
-    mediator.pluginSyncSupported = false
-    val lastSaved = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), null), emptySet(),
-                                     SettingsSyncPluginsState(mapOf(PluginId.getId("org.example.synced") to PluginData())),
-                                     emptyMap(), emptySet())
-
-    val snapshot = mediator.getInitialSnapshot(memoryFs.fs.getPath("/noPluginSync/initial"), lastSaved)
-
-    assertThat(snapshot.plugins).isNull()
-  }
-
-  @Test
-  fun `no plugin sync - synced plugin state does not reach the IDE`() {
-    val mediator = SettingsSyncIdeMediatorImpl(appStore(), memoryFs.fs.getPath("/noPluginSync/apply"), enabledCondition = { true })
-    mediator.pluginSyncSupported = false
-    val pluginId = PluginId.getId("org.example.synced")
-    val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), null), emptySet(),
-                                    SettingsSyncPluginsState(mapOf(pluginId to PluginData())), emptyMap(), emptySet())
-
-    testScope.launch {
-      mediator.applyToIde(snapshot, null)
-    }
-    testScope.runCurrent()
-
-    assertThat(SettingsSyncPluginManager.getInstance().state.plugins).doesNotContainKey(pluginId)
-  }
-
-  private fun appStore(): ComponentStoreImpl = object : ComponentStoreImpl() {
-    override val storageManager: StateStorageManager
-      get() = ApplicationManager.getApplication().stateStore.storageManager
-
-    override fun setPath(path: Path) {
-      TODO("Not yet implemented")
-    }
   }
 
   @TestFor(issues = ["IDEA-324914"])
