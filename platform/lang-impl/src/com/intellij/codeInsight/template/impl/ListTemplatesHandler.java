@@ -18,7 +18,6 @@ import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
@@ -110,11 +109,6 @@ public final class ListTemplatesHandler implements CodeInsightActionHandler {
         }
       }
       else {
-        if (!ClientId.isCurrentlyUnderLocalId() && prefixWithoutDots.isEmpty()) {
-          matchingTemplates.put(template, prefixWithoutDots);
-          continue;
-        }
-
         for (int i = templateKey.length(); i > 0; i--) {
           ProgressManager.checkCanceled();
           String prefix = templateKey.substring(0, i);
