@@ -26,6 +26,8 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.platform.vcs.impl.shared.log.VcsCopiedCommit;
+import com.intellij.platform.vcs.impl.shared.log.VcsCopiedCommits;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ExperimentalUI;
@@ -100,7 +102,6 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -705,7 +706,8 @@ public class VcsLogGraphTable extends TableWithProgress
       if (i != selectedRows.length - 1) sb.append("\n");
     }
 
-    CopyPasteManager.getInstance().setContents(new StringSelection(sb.toString()));
+    List<VcsCopiedCommit> commits = VcsLogCopiedCommitsKt.toCopiedCommits(getSelection(), VcsLogUtil.MAX_SELECTED_COMMITS);
+    CopyPasteManager.getInstance().setContents(VcsCopiedCommits.createTransferable(sb.toString(), commits));
   }
 
   @Override
