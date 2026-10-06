@@ -67,6 +67,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
@@ -125,6 +126,8 @@ import javax.swing.tree.TreePath;
 import java.awt.AWTEvent;
 import java.awt.EventQueue;
 import java.awt.event.InvocationEvent;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -133,6 +136,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -144,6 +148,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
@@ -1063,6 +1068,66 @@ public final class PlatformTestUtil {
       var vfsPaths = Stream.of(vfs).map(VirtualFile::getPath).sorted().toList();
       var ioPaths = NioFiles.list(dir.toNioPath()).stream().map(Path::toString).map(FileUtilRt::toSystemIndependentName).sorted().toList();
       assertEquals(vfsPaths, ioPaths);
+    }
+  }
+
+  /**
+   * Compares {@code actualText} with the text of the file at {@code filePath}.
+   * The comparison trims both texts and ignores the line separator style.
+   * When the file is missing, a local run creates it from {@code actualText} and fails.
+   */
+  public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText) {
+    assertSameLinesWithFile(filePath, actualText, true);
+  }
+
+  public static void assertSameLinesWithFile(@NotNull String filePath,
+                                             @NotNull String actualText,
+                                             @NotNull Supplier<String> messageProducer) {
+    assertSameLinesWithFile(filePath, actualText, true, messageProducer);
+  }
+
+  public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText, boolean trimBeforeComparing) {
+    assertSameLinesWithFile(filePath, actualText, trimBeforeComparing, null);
+  }
+
+  public static void assertSameLinesWithFile(@NotNull String filePath,
+                                             @NotNull String actualText,
+                                             boolean trimBeforeComparing,
+                                             @Nullable Supplier<String> messageProducer) {
+    String fileText;
+    try {
+      if (UsefulTestCase.OVERWRITE_TESTDATA) {
+        VfsTestUtil.overwriteTestData(filePath, actualText, trimBeforeComparing);
+        //noinspection UseOfSystemOutOrSystemErr
+        System.out.println("File " + filePath + " created.");
+      }
+      File file = new File(filePath);
+      checkCaseSensitiveFS(filePath, file);
+      fileText = FileUtil.loadFile(file, StandardCharsets.UTF_8);
+    }
+    catch (FileNotFoundException e) {
+      String message = "No output text found.";
+      if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
+        VfsTestUtil.overwriteTestData(filePath, actualText);
+        message += " File " + filePath + " created.";
+      }
+      throw new AssertionFailedError(message);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
+    String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
+    if (!Objects.equals(expected, actual)) {
+      throw new FileComparisonFailedError(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
+    }
+  }
+
+  static void checkCaseSensitiveFS(@NotNull String fullOrRelativePath, @NotNull File ioFile) throws IOException {
+    fullOrRelativePath = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(fullOrRelativePath));
+    var canonicalPath = ioFile.getCanonicalPath();
+    if (!canonicalPath.endsWith(fullOrRelativePath) && StringUtil.endsWithIgnoreCase(canonicalPath, fullOrRelativePath)) {
+      throw new RuntimeException("Queried for: " + fullOrRelativePath + "; but found: " + canonicalPath);
     }
   }
 

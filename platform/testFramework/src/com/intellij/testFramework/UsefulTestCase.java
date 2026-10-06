@@ -67,13 +67,11 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -1004,58 +1002,28 @@ Most likely there was an uncaught exception in asynchronous execution that resul
   }
 
   public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText) {
-    assertSameLinesWithFile(filePath, actualText, true);
+    PlatformTestUtil.assertSameLinesWithFile(filePath, actualText);
   }
 
   public static void assertSameLinesWithFile(@NotNull String filePath,
                                              @NotNull String actualText,
                                              @NotNull Supplier<String> messageProducer) {
-    assertSameLinesWithFile(filePath, actualText, true, messageProducer);
+    PlatformTestUtil.assertSameLinesWithFile(filePath, actualText, messageProducer);
   }
 
   public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText, boolean trimBeforeComparing) {
-    assertSameLinesWithFile(filePath, actualText, trimBeforeComparing, null);
+    PlatformTestUtil.assertSameLinesWithFile(filePath, actualText, trimBeforeComparing);
   }
 
   protected static void checkCaseSensitiveFS(@NotNull String fullOrRelativePath, @NotNull File ioFile) throws IOException {
-    fullOrRelativePath = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(fullOrRelativePath));
-    var canonicalPath = ioFile.getCanonicalPath();
-    if (!canonicalPath.endsWith(fullOrRelativePath) && StringUtil.endsWithIgnoreCase(canonicalPath, fullOrRelativePath)) {
-      throw new RuntimeException("Queried for: " + fullOrRelativePath + "; but found: " + canonicalPath);
-    }
+    PlatformTestUtil.checkCaseSensitiveFS(fullOrRelativePath, ioFile);
   }
 
   public static void assertSameLinesWithFile(@NotNull String filePath,
                                              @NotNull String actualText,
                                              boolean trimBeforeComparing,
                                              @Nullable Supplier<String> messageProducer) {
-    String fileText;
-    try {
-      if (OVERWRITE_TESTDATA) {
-        VfsTestUtil.overwriteTestData(filePath, actualText, trimBeforeComparing);
-        //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("File " + filePath + " created.");
-      }
-      File file = new File(filePath);
-      checkCaseSensitiveFS(filePath, file);
-      fileText = FileUtil.loadFile(file, StandardCharsets.UTF_8);
-    }
-    catch (FileNotFoundException e) {
-      String message = "No output text found.";
-      if (!IS_UNDER_TEAMCITY) {
-        VfsTestUtil.overwriteTestData(filePath, actualText);
-        message += " File " + filePath + " created.";
-      }
-      throw new AssertionFailedError(message);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
-    String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
-    if (!Objects.equals(expected, actual)) {
-      throw new FileComparisonFailedError(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
-    }
+    PlatformTestUtil.assertSameLinesWithFile(filePath, actualText, trimBeforeComparing, messageProducer);
   }
 
   public static void assertTextEquals(@NotNull String expectedText, @NotNull String actualText) {
