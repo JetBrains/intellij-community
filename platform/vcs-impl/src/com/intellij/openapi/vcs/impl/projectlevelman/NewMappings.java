@@ -67,6 +67,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.intellij.ide.impl.ProjectUtil.isRealProject;
+
 /**
  * A project-level holder of VCS mappings
  */
@@ -419,7 +421,7 @@ public final class NewMappings implements Disposable {
     Map<VirtualFile, MappedRoot> mappedRoots = new HashMap<>();
     Disposable pointerDisposable = Disposer.newDisposable();
 
-    if (!TrustedProjects.isProjectTrusted(myProject) || myProject.isDefault() || WelcomeUtils.isWelcomeProject(myProject)) {
+    if (!TrustedProjects.isProjectTrusted(myProject) || !isRealProject(myProject)) {
       return new Mappings(Collections.emptyList(), pointerDisposable);
     }
 

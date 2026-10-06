@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.configurable;
 import com.intellij.ide.ui.OptionsSearchTopHitProvider;
 import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.TopHitCache;
-import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
@@ -16,9 +15,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.ide.impl.ProjectUtil.isRealProject;
+
 public abstract class VcsOptionsTopHitProviderBase implements OptionsSearchTopHitProvider.ProjectLevelProvider {
   protected boolean isEnabled(@NotNull Project project, @Nullable VcsKey vcsKey) {
-    if (project.isDefault() || WelcomeUtils.isWelcomeProject(project)) return true;
+    if (!isRealProject(project)) return true;
     if (vcsKey == null) return false;
     List<VcsDirectoryMapping> mappings = ProjectLevelVcsManager.getInstance(project).getDirectoryMappings();
     return ContainerUtil.exists(mappings, it -> vcsKey.getName().equals(it.getVcs()));

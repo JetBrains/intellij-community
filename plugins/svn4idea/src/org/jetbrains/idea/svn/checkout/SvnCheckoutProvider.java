@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.checkout;
 
-import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -53,6 +52,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
+import static com.intellij.ide.impl.ProjectUtil.isRealProject;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.ModalityState.any;
 import static com.intellij.openapi.ui.Messages.showErrorDialog;
@@ -165,7 +165,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
   private static void notifyRootManagerIfUnderProject(@NotNull Project project, @NotNull File directory) {
-    if (project.isDefault() || WelcomeUtils.isWelcomeProject(project)) return;
+    if (!isRealProject(project)) return;
 
     VirtualFile[] files = SvnVcs.getInstance(project).getSvnFileUrlMapping().getNotFilteredRoots();
     for (VirtualFile file : files) {

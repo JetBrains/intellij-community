@@ -14,6 +14,7 @@ import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.TrustedFiles
+import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
@@ -104,6 +105,13 @@ object ProjectUtil {
 
   private const val PROJECTS_DIR = "projects"
   private const val PROPERTY_PROJECT_PATH = "%s.project.path"
+
+  /**
+   * Returns `true` for a project that is neither the default project nor the welcome project.
+   */
+  @Internal
+  @JvmStatic
+  fun isRealProject(project: Project): Boolean = !project.isDefault && !WelcomeUtils.isWelcomeProject(project)
 
   @JvmStatic
   fun updateLastProjectLocation(lastProjectLocation: Path) {

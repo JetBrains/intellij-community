@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.diagnostic.CoroutineTracerShim
+import com.intellij.ide.impl.ProjectUtil.isRealProject
 import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -141,7 +142,7 @@ class VcsInitialization(private val project: Project, private val coroutineScope
   }
 
   private suspend fun execute() {
-    LOG.assertTrue(!project.isDefault && !WelcomeUtils.isWelcomeProject(project))
+    LOG.assertTrue(isRealProject(project))
     try {
       runInitStep(current = Status.PENDING,
                   next = Status.RUNNING_INIT,
@@ -242,7 +243,7 @@ class VcsInitialization(private val project: Project, private val coroutineScope
   }
 
   private fun waitFor(predicate: (Status) -> Boolean): Boolean {
-    require(!project.isDefault && !WelcomeUtils.isWelcomeProject(project))
+    require(isRealProject(project))
     // have to wait for task completion to avoid running it in the background for a closed project
     val start = System.currentTimeMillis()
     while (System.currentTimeMillis() < start + 10000) {

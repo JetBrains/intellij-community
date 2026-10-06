@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.conflicts
 
-import com.intellij.ide.welcomeScreen.WelcomeUtils
+import com.intellij.ide.impl.ProjectUtil.isRealProject
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.BoundSearchableConfigurable
@@ -42,16 +42,16 @@ class ChangelistConflictConfigurable(val project: Project)
     val vcsConfiguration = VcsConfiguration.getInstance(project)
 
     val changeListsEnabledPredicate = when {
-      project.isDefault || WelcomeUtils.isWelcomeProject(project) -> ComponentPredicate.TRUE
+      !isRealProject(project) -> ComponentPredicate.TRUE
       else -> ChangeListsEnabledPredicate(project, disposable!!)
     }
     val canTrackChangelistConflicts = when {
-      project.isDefault || WelcomeUtils.isWelcomeProject(project) -> ComponentPredicate.TRUE
+      !isRealProject(project) -> ComponentPredicate.TRUE
       else -> CanTrackChangelistConflictsPredicate(project, disposable!!)
     }
 
     val conflictTracker = when {
-      project.isDefault || WelcomeUtils.isWelcomeProject(project) -> null
+      !isRealProject(project) -> null
       else -> ChangelistConflictTracker.getInstance(project)
     }
 

@@ -2,7 +2,6 @@
 package git4idea;
 
 import com.intellij.dvcs.commit.DvcsCommitModeProvider;
-import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -74,6 +73,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.intellij.ide.impl.ProjectUtil.isRealProject;
 import static com.intellij.util.concurrency.AppJavaExecutorUtil.executeOnPooledIoThread;
 
 /**
@@ -126,7 +126,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   public @Nullable CheckinEnvironment getCheckinEnvironment() {
-    if (myProject.isDefault() || WelcomeUtils.isWelcomeProject(myProject)) return null;
+    if (!isRealProject(myProject)) return null;
     return myProject.getService(GitCheckinEnvironment.class);
   }
 

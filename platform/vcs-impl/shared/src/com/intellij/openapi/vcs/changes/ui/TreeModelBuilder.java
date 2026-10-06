@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
@@ -39,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+import static com.intellij.ide.impl.ProjectUtil.isRealProject;
 import static com.intellij.openapi.vcs.changes.ui.TreeModelBuilderKeys.IS_CACHING_ROOT;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.sorted;
@@ -94,7 +94,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
    * Requires non-null Project for local changes.
    */
   public TreeModelBuilder(@Nullable Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
-    myProject = project != null && !project.isDefault() && !WelcomeUtils.isWelcomeProject(project) ? project : null;
+    myProject = project != null && isRealProject(project) ? project : null;
     myRoot = ChangesBrowserNode.createRoot();
     myModel = new ChangesTreeModel(myRoot);
     myGroupingPolicyFactory = grouping;

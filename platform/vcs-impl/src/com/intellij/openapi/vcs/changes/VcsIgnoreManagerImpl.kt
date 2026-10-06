@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.configurationStore.OLD_NAME_CONVERTER
-import com.intellij.ide.welcomeScreen.WelcomeUtils
+import com.intellij.ide.impl.ProjectUtil.isRealProject
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
@@ -222,7 +222,7 @@ private fun configurationNameToFileName(configurationName: String): String {
 }
 
 private fun checkProjectNotDefault(project: Project) {
-  if (project.isDefault || WelcomeUtils.isWelcomeProject(project)) {
+  if (!isRealProject(project)) {
     throw UnsupportedOperationException(VcsBundle.message("changes.error.default.project.not.supported"))
   }
 }

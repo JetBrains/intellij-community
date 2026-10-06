@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.NlsSafe;
@@ -25,6 +24,8 @@ import javax.swing.Icon;
 import javax.swing.JTree;
 import java.awt.Color;
 import java.awt.Graphics2D;
+
+import static com.intellij.ide.impl.ProjectUtil.isRealProject;
 
 public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
 
@@ -66,7 +67,7 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
 
   public void appendFileName(@Nullable VirtualFile vFile, @NotNull @NlsSafe String fileName, Color color) {
     ChangesFileNameDecorator decorator =
-      myProject != null && !myProject.isDefault() && !WelcomeUtils.isWelcomeProject(myProject) && !myProject.isDisposed()
+      myProject != null && isRealProject(myProject) && !myProject.isDisposed()
       ? ChangesFileNameDecorator.getInstance(myProject)
       : null;
 

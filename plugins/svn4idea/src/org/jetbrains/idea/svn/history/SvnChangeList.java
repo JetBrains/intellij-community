@@ -2,7 +2,6 @@
 
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -55,6 +54,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import static com.intellij.ide.impl.ProjectUtil.isRealProject;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
@@ -304,7 +304,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
   private @Nullable FilePath getLocalPath(@NotNull String path, final NotNullFunction<File, Boolean> detector) {
     Project project = myVcs.getProject();
-    if (project.isDefault() || WelcomeUtils.isWelcomeProject(project)) return null;
+    if (!isRealProject(project)) return null;
 
     Url absoluteUrl = parseUrl(myRepositoryRoot + path, false);
     final RootUrlInfo rootForUrl = myVcs.getSvnFileUrlMapping().getWcRootForUrl(absoluteUrl);
