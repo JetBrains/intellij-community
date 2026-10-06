@@ -88,6 +88,10 @@ class KaptMavenProjectPostConfigurator : AbstractKotlinCompilerProjectPostConfig
 }
 
 private fun Module.hasMavenKaptConfigured(): Boolean {
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(this)
+    val effectivePlugin = mavenProject?.findPlugin(kotlinPluginId.groupId, kotlinPluginId.artifactId)
+    if (effectivePlugin?.executions?.any { KAPT_PLUGIN_ID in it.goals } == true) return true
+
     val xmlFile = findModulePomFileWithLocalOrInheritedKotlinPlugin() ?: return false
     val pom = PomFile.forFileOrNull(xmlFile) ?: return false
     val kotlinPlugin = pom.findPlugin(kotlinPluginId) ?: return false
