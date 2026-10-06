@@ -425,17 +425,28 @@ internal class TreeBasedFrontendProjectViewPane(
   override fun uiDataSnapshot(sink: DataSink) {
     sink[ProjectViewPaneId.DATA_KEY] = paneTreeModel.descriptor.id
     sink[ProjectViewPaneKind.DATA_KEY] = paneTreeModel.descriptor.kind
-    sink[PROJECT_VIEW_SELECTED_NODE_IDS_KEY] = tree.selectionPaths?.mapNotNull { path ->
-      (path?.lastPathComponent as? Node)?.projectViewNode?.id
-    }
     sink[PlatformDataKeys.CUT_PROVIDER] = cutCopyPasteDeleteProvider
     sink[PlatformDataKeys.COPY_PROVIDER] = cutCopyPasteDeleteProvider
     sink[PlatformDataKeys.PASTE_PROVIDER] = cutCopyPasteDeleteProvider
     sink[PlatformDataKeys.DELETE_ELEMENT_PROVIDER] = cutCopyPasteDeleteProvider
-    sink[CommonDataKeys.NAVIGATABLE_ARRAY] = tree.selectionPaths?.mapNotNull { path ->
-      (path?.lastPathComponent as? Node)?.projectViewNode?.let { paneTreeModel.createNavigatable(it) }
-    }?.toTypedArray()
     sink[PlatformDataKeys.TREE_EXPANDER] = treeExpander
+    val selectionPaths = tree.selectionPaths ?: return
+    uiDataSnapshotForSelection(sink, selectionPaths)
+  }
+
+  private fun uiDataSnapshotForSelection(
+    sink: DataSink,
+    selectionPaths: Array<out TreePath>,
+  ) {
+    val selectedNodes = selectionPaths.mapNotNull { path ->
+      path.lastPathComponent as? Node
+    }
+    sink[PROJECT_VIEW_SELECTED_NODE_IDS_KEY] = selectedNodes.map { node ->
+      node.projectViewNode.id
+    }
+    sink[CommonDataKeys.NAVIGATABLE_ARRAY] = selectedNodes.map { node ->
+      node.projectViewNode.let { paneTreeModel.createNavigatable(it) }
+    }.toTypedArray()
   }
 
   override fun saveStateTo(element: Element) {
