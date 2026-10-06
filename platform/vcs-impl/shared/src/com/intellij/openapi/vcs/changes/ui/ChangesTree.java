@@ -913,6 +913,28 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
     return -1;
   }
 
+  /**
+   * {@link #updateTreeModel} makes new nodes for the same items on every refresh. A refresh between the press
+   * and the release must not lose the click, e.g. on a checkbox.
+   * <p>
+   * The paths are the same if each node is the same, or has an equal user object.
+   * A node without a user object is only the same as itself.
+   * An item that moved to another parent, e.g. to another changelist, is not the same.
+   */
+  @Override
+  protected boolean isSamePathUnderMouse(@Nullable TreePath pressed, @Nullable TreePath released) {
+    if (Objects.equals(pressed, released)) return true;
+    if (pressed == null || released == null || pressed.getPathCount() != released.getPathCount()) return false;
+    for (TreePath p1 = pressed, p2 = released; p1 != null && p2 != null; p1 = p1.getParentPath(), p2 = p2.getParentPath()) {
+      Object node1 = p1.getLastPathComponent();
+      Object node2 = p2.getLastPathComponent();
+      if (node1 == node2) continue;
+      Object userObject1 = TreeUtil.getUserObject(node1);
+      if (userObject1 == null || !userObject1.equals(TreeUtil.getUserObject(node2))) return false;
+    }
+    return true;
+  }
+
   @Override
   protected void processEvent(AWTEvent e) {
     myEventProcessingInProgress = e;

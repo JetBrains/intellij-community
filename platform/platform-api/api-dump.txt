@@ -10832,6 +10832,7 @@ c:com.intellij.ui.treeStructure.Tree
 - isExpanded(javax.swing.tree.TreePath):Z
 - isFileColorsEnabled():Z
 - isHorizontalAutoScrollingEnabled():Z
+- p:isSamePathUnderMouse(javax.swing.tree.TreePath,javax.swing.tree.TreePath):Z
 - p:isWideSelection():Z
 - paint(java.awt.Graphics):V
 - p:paintComponent(java.awt.Graphics):V

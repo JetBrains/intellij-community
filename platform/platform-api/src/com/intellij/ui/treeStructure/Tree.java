@@ -1133,7 +1133,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     @Override
     public void mouseReleased(MouseEvent event) {
       TreePath treePathUnderMouseAfterEvent = getPathForLocation(event.getX(), event.getY());
-      if (!Comparing.equal(treePathUnderMouse, treePathUnderMouseAfterEvent)) {
+      if (!isSamePathUnderMouse(treePathUnderMouse, treePathUnderMouseAfterEvent)) {
         event.consume(); // IDEA-338787: BasicTreeUI.checkForClickInExpandControl does not consume the event
       }
       treePathUnderMouse = null;
@@ -1187,6 +1187,18 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         }
       }
     }
+  }
+
+  /**
+   * Tells if the mouse release is on the same path as the press. If it is not, the tree consumes the release
+   * (IDEA-338787), and click listeners do not get the click.
+   * <p>
+   * The check runs on every click, so it must be fast and must not need a read action.
+   * By default, the paths are the same only if they contain the same nodes.
+   * Override it in a tree that replaces its model often, and thus makes new nodes for the same items.
+   */
+  protected boolean isSamePathUnderMouse(@Nullable TreePath pressed, @Nullable TreePath released) {
+    return Comparing.equal(pressed, released);
   }
 
   /**

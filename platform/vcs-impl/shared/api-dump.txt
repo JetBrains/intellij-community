@@ -480,6 +480,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesTree
 - p:isInclusionVisible(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):Z
 - isKeepTreeState():Z
 - isModelUpdateInProgress():Z
+- p:isSamePathUnderMouse(javax.swing.tree.TreePath,javax.swing.tree.TreePath):Z
 - isScrollToSelection():Z
 - isShowCheckboxes():Z
 - isShowFlatten():Z
