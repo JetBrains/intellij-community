@@ -4,7 +4,7 @@ use anyhow::bail;
 use appinfo::{ApplicationInfo, linux_frame_class};
 use serde::Serialize;
 
-use crate::model::{CustomCommand, IdeaProperties, JvmArguments, LaunchModel, LaunchProperty};
+use crate::model::{BUILD_NUMBER_TOKEN, CustomCommand, IdeaProperties, JvmArguments, JvmArgumentsRef, LaunchModel, LaunchProperty};
 
 // OS names are `OsFamily.osName`, and architecture names are `JvmArchitecture.dirName`.
 pub(crate) const OS_MAC: &str = "macOS";
@@ -54,20 +54,27 @@ pub(crate) struct Product<'a> {
     pub build_number: &'a str,
 }
 
+/// Renders the four files. `common_vm_options_file` is the text of `bin/common.vmoptions`.
 pub(crate) fn render_launch_files(
     product: &Product<'_>,
     target: Platform,
     opened_packages_file: &str,
     idea_properties_base: &str,
+    common_vm_options_file: &str,
 ) -> anyhow::Result<LaunchFiles> {
     let model = product.model;
-    let Some(vm_options) = model.vm_options.get(target.os) else {
-        bail!("the model states no vmoptions for {}", target.os);
-    };
     let separator = if target.os == OS_WINDOWS { "\r\n" } else { "\n" };
-    let mut vm_options = vm_options.clone();
+    let mut vm_options = model.vm_options.memory.clone();
+    vm_options.extend(common_vm_options(common_vm_options_file));
+    vm_options.extend(model.vm_options.product.iter().cloned());
+    if let Some(os_vm_options) = model.vm_options.os.get(target.os) {
+        vm_options.extend(os_vm_options.iter().cloned());
+    }
     if product.application_info.is_eap {
         insert_eap_vm_options(&mut vm_options);
+    }
+    if model.language_server {
+        apply_headless_vm_options(&mut vm_options);
     }
     let mut vm_options_text = String::new();
     for line in &vm_options {
@@ -80,10 +87,40 @@ pub(crate) fn render_launch_files(
     let product_info = render_product_info(product, target, &opened_packages(opened_packages_file, target.os)?)?;
     Ok(LaunchFiles {
         build_txt: format!("{}-{}", model.product_code, product.build_number),
-        idea_properties: render_idea_properties(&model.idea_properties, idea_properties_base, product.application_info.is_eap),
+        idea_properties: render_idea_properties(
+            &model.idea_properties,
+            idea_properties_base,
+            &model.data_directory_base_name,
+            product.application_info.is_eap,
+        ),
         vm_options: vm_options_text,
         product_info,
     })
+}
+
+/// The data directory name of the product: the base name, then the major version and the main part of the minor version.
+///
+/// It equals `ProductProperties.getSystemSelector`. The plan generator checks that for every product.
+fn data_directory_name(product: &Product<'_>) -> String {
+    let application_info = product.application_info;
+    format!(
+        "{}{}.{}",
+        product.model.data_directory_base_name, application_info.major_version, application_info.minor_version_main_part
+    )
+}
+
+/// The lines of `bin/common.vmoptions`, without the blank lines and the `#` lines, as `VmOptionsGenerator.kt` reads them.
+pub(crate) fn common_vm_options(text: &str) -> impl Iterator<Item = String> + '_ {
+    text.lines()
+        .filter(|line| !line.trim().is_empty() && !line.starts_with('#'))
+        .map(str::to_owned)
+}
+
+/// The headless rule of `generateVmOptions` in `VmOptionsGenerator.kt` for a language server: drop every line that
+/// names an AWT, Swing, Java2D or Skiko property, then add `-Djava.awt.headless=true`.
+fn apply_headless_vm_options(lines: &mut Vec<String>) {
+    lines.retain(|line| !["awt.", "swing.", "java2d.", "skiko."].iter().any(|part| line.contains(part)));
+    lines.push("-Djava.awt.headless=true".to_owned());
 }
 
 /// `insertEapVmOptions` of `VmOptionsGenerator.kt`: the line of an EAP build goes before `-ea`, else before the first
@@ -112,13 +149,13 @@ const FATAL_ERROR_NOTIFICATION_RELEASE: &str = "\n#-----------------------------
 #-----------------------------------------------------------------------\n\
 idea.fatal.error.notification=disabled\n";
 
-fn render_idea_properties(properties: &IdeaProperties, base: &str, is_eap: bool) -> String {
+fn render_idea_properties(properties: &IdeaProperties, base: &str, data_directory_base_name: &str, is_eap: bool) -> String {
     let mut text = base.to_owned();
     for addition in &properties.additions {
         text.push('\n');
         text.push_str(addition);
     }
-    let mut text = text.replace("@@settings_dir@@", &properties.settings_dir);
+    let mut text = text.replace("@@settings_dir@@", data_directory_base_name);
     if properties.fatal_error_notification {
         text.push_str(if is_eap {
             FATAL_ERROR_NOTIFICATION_EAP
@@ -158,7 +195,13 @@ pub(crate) fn opened_packages(text: &str, os: &str) -> anyhow::Result<Vec<String
 
 /// `renderAdditionalJvmArguments` of `ProductLaunchRenderer.kt`, for a launcher that is not a script and a
 /// distribution that is not portable.
-pub(crate) fn additional_jvm_arguments(jvm: &JvmArguments, target: Platform, opened_packages: &[String], qodana: bool) -> Vec<String> {
+pub(crate) fn additional_jvm_arguments(
+    jvm: &JvmArguments,
+    names: &LaunchNames<'_>,
+    target: Platform,
+    opened_packages: &[String],
+    qodana: bool,
+) -> Vec<String> {
     let mut result = Vec::new();
     let macro_name = match target.os {
         OS_WINDOWS => "%IDE_HOME%",
@@ -174,8 +217,8 @@ pub(crate) fn additional_jvm_arguments(jvm: &JvmArguments, target: Platform, ope
         result.push(format!("-Djava.system.class.loader={class_loader}"));
     }
 
-    result.push(format!("-Didea.vendor.name={}", jvm.vendor_name));
-    result.push(format!("-Didea.paths.selector={}", jvm.paths_selector));
+    result.push(format!("-Didea.vendor.name={}", names.vendor_name));
+    result.push(format!("-Didea.paths.selector={}", names.data_directory_name));
     if let Some(jna_native_dir) = &jvm.jna_native_dir {
         result.push(format!("-Djna.boot.library.path={macro_name}/{jna_native_dir}/{}", target.arch));
         result.push("-Djna.nosys=true".to_owned());
@@ -214,6 +257,12 @@ pub(crate) fn additional_jvm_arguments(jvm: &JvmArguments, target: Platform, ope
     }
     result.extend(opened_packages.iter().cloned());
     result
+}
+
+/// The names that every launch of a product states: the vendor and the data directory name, which is the paths selector.
+pub(crate) struct LaunchNames<'a> {
+    pub vendor_name: &'a str,
+    pub data_directory_name: &'a str,
 }
 
 /// `ProductInfoData` of `ProductInfoGenerator.kt` for a launch that bundles a runtime, with no built-in modules.
@@ -297,6 +346,11 @@ struct Flavor<'a> {
 fn render_product_info(product: &Product<'_>, target: Platform, opened_packages: &[String]) -> anyhow::Result<String> {
     let model = product.model;
     let application_info = product.application_info;
+    let data_directory_name = data_directory_name(product);
+    let names = LaunchNames {
+        vendor_name: &application_info.short_company_name,
+        data_directory_name: &data_directory_name,
+    };
     let to_root = if target.os == OS_MAC && !model.language_server { "../" } else { "" };
     let (launcher_path, java_executable_path) = match target.os {
         OS_MAC => {
@@ -320,14 +374,14 @@ fn render_product_info(product: &Product<'_>, target: Platform, opened_packages:
         vm_options_file_path: vm_options_file_path(target.os, &model.base_file_name, model.language_server),
         startup_wm_class: (target.os == OS_LINUX).then(|| linux_frame_class(&application_info.product_name_with_edition())),
         boot_class_path_jar_names: &model.launch.boot_class_path_jar_names,
-        additional_jvm_arguments: additional_jvm_arguments(&model.launch.jvm_arguments, target, opened_packages, false),
+        additional_jvm_arguments: additional_jvm_arguments(&model.launch.jvm_arguments, &names, target, opened_packages, false),
         main_class: &model.launch.main_class,
         stdio_redirect_arg: model.launch.stdio_redirect_arg.as_deref(),
         custom_commands: model
             .custom_commands
             .iter()
-            .map(|command| render_custom_command(command, target, opened_packages))
-            .collect(),
+            .map(|command| render_custom_command(command, product, &names, target, opened_packages))
+            .collect::<anyhow::Result<_>>()?,
     };
     let info = ProductInfo {
         name: &application_info.full_product_name,
@@ -336,7 +390,7 @@ fn render_product_info(product: &Product<'_>, target: Platform, opened_packages:
         build_number: product.build_number,
         product_code: &model.product_code,
         env_var_base_name: &model.env_var_base_name,
-        data_directory_name: &model.data_directory_name,
+        data_directory_name: &data_directory_name,
         svg_icon_path: application_info
             .svg_icon
             .as_ref()
@@ -351,24 +405,51 @@ fn render_product_info(product: &Product<'_>, target: Platform, opened_packages:
     Ok(serde_json::to_string_pretty(&info)?)
 }
 
-fn render_custom_command<'a>(command: &'a CustomCommand, target: Platform, opened_packages: &[String]) -> Command<'a> {
+/// Renders one custom command. The command takes the JVM arguments of the block it names, and a command that states an
+/// environment variable name states the data directory name of the product.
+fn render_custom_command<'a>(
+    command: &'a CustomCommand,
+    product: &Product<'a>,
+    names: &LaunchNames<'a>,
+    target: Platform,
+    opened_packages: &[String],
+) -> anyhow::Result<Command<'a>> {
+    let model = product.model;
     let mut arguments = Vec::new();
-    if let Some(jvm) = &command.jvm_arguments {
-        arguments.extend(additional_jvm_arguments(jvm, target, opened_packages, command.qodana));
+    let jvm = match command.jvm_arguments {
+        None => None,
+        Some(JvmArgumentsRef::Launch) => Some(&model.launch.jvm_arguments),
+        Some(JvmArgumentsRef::Frontend) => {
+            let Some(jvm) = &model.frontend_jvm_arguments else {
+                bail!(
+                    "the custom command {:?} names the frontend JVM arguments, but the model states no frontendJvmArguments",
+                    command.commands
+                );
+            };
+            Some(jvm)
+        }
+    };
+    if let Some(jvm) = jvm {
+        arguments.extend(additional_jvm_arguments(jvm, names, target, opened_packages, command.qodana));
     }
     if target.os == OS_MAC {
         arguments.extend(command.mac_jvm_arguments.iter().cloned());
     }
-    arguments.extend(command.extra_jvm_arguments.iter().cloned());
-    Command {
+    arguments.extend(
+        command
+            .extra_jvm_arguments
+            .iter()
+            .map(|argument| argument.replace(BUILD_NUMBER_TOKEN, product.build_number)),
+    );
+    Ok(Command {
         commands: &command.commands,
         vm_options_file_path: command.vm_options_file_path.get(target.os).map(String::as_str),
         boot_class_path_jar_names: &command.boot_class_path_jar_names,
         additional_jvm_arguments: arguments,
         main_class: command.main_class.as_deref(),
         env_var_base_name: command.env_var_base_name.as_deref(),
-        data_directory_name: command.data_directory_name.as_deref(),
-    }
+        data_directory_name: command.env_var_base_name.as_ref().map(|_| names.data_directory_name),
+    })
 }
 
 /// `vmOptionsFilePath` of `ProductLaunchModel.kt` for a launch of the product itself.

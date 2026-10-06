@@ -436,6 +436,8 @@ class BuildContextImpl internal constructor(
   override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isScript: Boolean, isPortableDist: Boolean, isQodana: Boolean): List<String> {
     return renderAdditionalJvmArguments(
       jvm = productJvmArguments(launchInputs(), bundledRuntime.version),
+      vendorName = applicationInfo.shortCompanyName,
+      pathsSelector = systemSelector,
       os = os,
       arch = arch,
       openedPackages = getCommandLineArgumentsForOpenPackages(context = this, os),

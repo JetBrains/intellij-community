@@ -1,0 +1,28 @@
+# The vmoptions lines of every product, after the memory lines and before the product lines.
+# The build scripts and the dev distribution read this file. They skip a blank line and a "#" line.
+# IJPL-181469. AppIdleMemoryCleaner.runGc() works together with this option.
+-XX:JbrShrinkingGcMaxHeapFreeRatio=40
+-XX:ReservedCodeCacheSize=512m
+-XX:+HeapDumpOnOutOfMemoryError
+-XX:-OmitStackTraceInFastThrow
+-XX:CICompilerCount=2
+# It lets the JVM start with outdated options in the user configuration.
+-XX:+IgnoreUnrecognizedVMOptions
+-XX:+UnlockDiagnosticVMOptions
+-XX:TieredOldPercentage=100000
+# It is expected to become the default in JBR 29.
+-XX:+UseCompactObjectHeaders
+# A temporary option. Remove it before the adoption of JBR 29.
+--sun-misc-unsafe-memory-access=allow
+-ea
+-Dsun.io.useCanonCaches=false
+-Dsun.java2d.metal=true
+-Djbr.catch.SIGABRT=true
+-Djdk.http.auth.tunneling.disabledSchemes=""
+-Djdk.attach.allowAttachSelf=true
+-Djdk.module.illegalAccess.silent=true
+-Djdk.nio.maxCachedBufferSize=2097152
+# IJPL-149160.
+-Djava.util.zip.use.nio.for.zip.file.access=true
+-Dkotlinx.coroutines.debug=off
+-Dskiko.rendering.useScreenMenuBar=false

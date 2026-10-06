@@ -51,7 +51,7 @@
           "additionalJvmArguments": [
             "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
             "-Didea.vendor.name=JetBrains",
-            "-Didea.paths.selector=Qodana2026.3",
+            "-Didea.paths.selector=IntelliJServer2026.3",
             "-Dio.netty.allocator.type=pooled",
             "-Dintellij.platform.root.module=intellij.qodana",
             "-Dintellij.platform.product.mode=",
@@ -63,7 +63,7 @@
           ],
           "mainClass": "com.intellij.qodana.Main",
           "envVarBaseName": "QODANA",
-          "dataDirectoryName": "Qodana2026.3"
+          "dataDirectoryName": "IntelliJServer2026.3"
         },
         {
           "commands": []

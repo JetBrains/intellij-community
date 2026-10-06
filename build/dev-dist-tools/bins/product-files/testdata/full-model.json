@@ -1,7 +1,7 @@
 {
   "productCode": "IIS",
   "envVarBaseName": "IDEA_SERVER",
-  "dataDirectoryName": "IntelliJServer2026.3",
+  "dataDirectoryBaseName": "IntelliJServer",
   "minRequiredJavaVersion": 21,
   "customProperties": [
     {
@@ -23,10 +23,7 @@
     "mainClass": "com.intellij.platform.runtime.loader.IntellijLoader",
     "bootClassPathJarNames": [],
     "jvmArguments": {
-      "multiRoutingFileSystem": true,
       "classLoader": "com.example.ServerClassLoader",
-      "vendorName": "JetBrains",
-      "pathsSelector": "IntelliJServer2026.3",
       "jnaNativeDir": "plugins/jna-plugin/lib/jna",
       "pty4jNativeDir": "plugins/pty4j-plugin/lib/pty4j",
       "skikoNativeDir": "plugins/skiko-plugin/lib/skiko-awt-runtime-all",
@@ -38,10 +35,13 @@
         "-Dfirst=1",
         "-Dsecond=\"2\""
       ],
-      "splash": true,
-      "nativeAccess": true
+      "splash": true
     },
     "stdioRedirectArg": "--stdio"
+  },
+  "frontendJvmArguments": {
+    "rootModule": "intellij.qodana",
+    "nativeAccess": false
   },
   "customCommands": [
     {
@@ -52,13 +52,7 @@
       "vmOptionsFilePath": {
         "Linux": "bin/qodana.vmoptions"
       },
-      "jvmArguments": {
-        "multiRoutingFileSystem": true,
-        "classLoader": "com.intellij.util.lang.PathClassLoader",
-        "vendorName": "JetBrains",
-        "pathsSelector": "Qodana2026.3",
-        "rootModule": "intellij.qodana"
-      },
+      "jvmArguments": "frontend",
       "qodana": true,
       "macJvmArguments": [
         "-Dapple.awt.application.icon=$APP_PACKAGE/Contents/Resources/x.icns"
@@ -67,30 +61,30 @@
         "-Dextra=1"
       ],
       "mainClass": "com.intellij.qodana.Main",
-      "envVarBaseName": "QODANA",
-      "dataDirectoryName": "Qodana2026.3"
+      "envVarBaseName": "QODANA"
     },
     {
       "commands": []
     }
   ],
   "vmOptions": {
-    "macOS": [
-      "-Xmx4g",
-      "-Dmac=1"
+    "memory": [
+      "-Xmx4g"
     ],
-    "Linux": [],
-    "Windows": [
-      "-Xmx4g",
-      "-Dwindows=\"1\""
-    ]
+    "os": {
+      "macOS": [
+        "-Dmac=1"
+      ],
+      "Windows": [
+        "-Dwindows=\"1\""
+      ]
+    }
   },
   "ideaProperties": {
     "languageServerBase": true,
     "additions": [
       "x=@@settings_dir@@/x",
       ""
-    ],
-    "settingsDir": "IntelliJServer"
+    ]
   }
 }

@@ -36,6 +36,8 @@ struct Options {
     build_date_seconds: i64,
     opened_packages: PathBuf,
     idea_properties: PathBuf,
+    /// `community/bin/common.vmoptions`: the vmoptions lines of every product.
+    common_vm_options: PathBuf,
     build_txt_out: PathBuf,
     idea_properties_out: PathBuf,
     vm_options_out: PathBuf,
@@ -80,6 +82,7 @@ fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Opt
     let build_date_seconds = options.require("--build-date-seconds")?;
     let opened_packages = options.require("--opened-packages")?.into();
     let idea_properties = options.require("--idea-properties")?.into();
+    let common_vm_options = options.require("--common-vmoptions")?.into();
     let build_txt_out = options.require("--build-txt-out")?.into();
     let idea_properties_out = options.require("--idea-properties-out")?.into();
     let vm_options_out = options.require("--vmoptions-out")?.into();
@@ -101,6 +104,7 @@ fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Opt
         build_date_seconds,
         opened_packages,
         idea_properties,
+        common_vm_options,
         build_txt_out,
         idea_properties_out,
         vm_options_out,
@@ -138,12 +142,13 @@ fn render_to_files(options: &Options) -> anyhow::Result<()> {
     // The base file that the model names by `languageServerBase`. The caller passes it, so an action reads only its
     // own base file.
     let idea_properties = read_text(&options.idea_properties)?;
+    let common_vm_options = read_text(&options.common_vm_options)?;
     let product = render::Product {
         model: &model,
         application_info: &application_info,
         build_number: &build_number,
     };
-    let files = render::render_launch_files(&product, target, &opened_packages, &idea_properties)
+    let files = render::render_launch_files(&product, target, &opened_packages, &idea_properties, &common_vm_options)
         .with_context(|| options.model.display().to_string())?;
     for (path, content) in [
         (&options.build_txt_out, &files.build_txt),

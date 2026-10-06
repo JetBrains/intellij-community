@@ -1,25 +1,17 @@
 {
   "productCode": "IC",
   "envVarBaseName": "IDEA",
-  "dataDirectoryName": "IdeaIC2026.3",
+  "dataDirectoryBaseName": "IdeaIC",
   "minRequiredJavaVersion": 25,
   "baseFileName": "idea",
   "launch": {
     "mainClass": "com.intellij.idea.Main",
-    "bootClassPathJarNames": [
-      "platform-loader.jar"
-    ],
     "jvmArguments": {
-      "multiRoutingFileSystem": true,
-      "classLoader": "com.intellij.util.lang.PathClassLoader",
-      "vendorName": "JetBrains",
-      "pathsSelector": "IdeaIC2026.3",
       "jnaNativeDir": "plugins/jna-plugin/lib/jna",
       "pty4jNativeDir": "plugins/pty4j-plugin/lib/pty4j",
       "skikoNativeDir": "plugins/platform-compose-plugin/lib/skiko-awt-runtime-all",
       "platformPrefix": "Idea",
-      "splash": true,
-      "nativeAccess": true
+      "splash": true
     }
   },
   "customCommands": [
@@ -31,18 +23,7 @@
         "platform-loader.jar",
         "nio-fs.jar"
       ],
-      "jvmArguments": {
-        "multiRoutingFileSystem": true,
-        "classLoader": "com.intellij.util.lang.PathClassLoader",
-        "vendorName": "JetBrains",
-        "pathsSelector": "IdeaIC2026.3",
-        "jnaNativeDir": "plugins/jna-plugin/lib/jna",
-        "pty4jNativeDir": "plugins/pty4j-plugin/lib/pty4j",
-        "skikoNativeDir": "plugins/platform-compose-plugin/lib/skiko-awt-runtime-all",
-        "platformPrefix": "Idea",
-        "splash": true,
-        "nativeAccess": true
-      },
+      "jvmArguments": "launch",
       "qodana": true,
       "extraJvmArguments": [
         "-Dqodana.application=true",
@@ -65,7 +46,7 @@
         "-Dmaven.default.headless.import=true",
         "-Dide.do.not.check.ls.on.startup=true",
         "-Dqodana.product.name=Qodana Community for JVM",
-        "-Dqodana.build.number=QDJVMC-263.SNAPSHOT",
+        "-Dqodana.build.number=QDJVMC-@@build_number@@",
         "-Dqodana.eap=true"
       ]
     },
@@ -89,95 +70,27 @@
     }
   ],
   "vmOptions": {
-    "Windows": [
+    "memory": [
       "-Xms128m",
-      "-Xmx2048m",
-      "-XX:JbrShrinkingGcMaxHeapFreeRatio=40",
-      "-XX:ReservedCodeCacheSize=512m",
-      "-XX:+HeapDumpOnOutOfMemoryError",
-      "-XX:-OmitStackTraceInFastThrow",
-      "-XX:CICompilerCount=2",
-      "-XX:+IgnoreUnrecognizedVMOptions",
-      "-XX:+UnlockDiagnosticVMOptions",
-      "-XX:TieredOldPercentage=100000",
-      "-XX:+UseCompactObjectHeaders",
-      "--sun-misc-unsafe-memory-access=allow",
-      "-ea",
-      "-Dsun.io.useCanonCaches=false",
-      "-Dsun.java2d.metal=true",
-      "-Djbr.catch.SIGABRT=true",
-      "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
-      "-Djdk.attach.allowAttachSelf=true",
-      "-Djdk.module.illegalAccess.silent=true",
-      "-Djdk.nio.maxCachedBufferSize=2097152",
-      "-Djava.util.zip.use.nio.for.zip.file.access=true",
-      "-Dkotlinx.coroutines.debug=off",
-      "-Dskiko.rendering.useScreenMenuBar=false",
+      "-Xmx2048m"
+    ],
+    "product": [
       "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
       "-Dllm.show.ai.promotion.window.on.start=false"
     ],
-    "macOS": [
-      "-Xms128m",
-      "-Xmx2048m",
-      "-XX:JbrShrinkingGcMaxHeapFreeRatio=40",
-      "-XX:ReservedCodeCacheSize=512m",
-      "-XX:+HeapDumpOnOutOfMemoryError",
-      "-XX:-OmitStackTraceInFastThrow",
-      "-XX:CICompilerCount=2",
-      "-XX:+IgnoreUnrecognizedVMOptions",
-      "-XX:+UnlockDiagnosticVMOptions",
-      "-XX:TieredOldPercentage=100000",
-      "-XX:+UseCompactObjectHeaders",
-      "--sun-misc-unsafe-memory-access=allow",
-      "-ea",
-      "-Dsun.io.useCanonCaches=false",
-      "-Dsun.java2d.metal=true",
-      "-Djbr.catch.SIGABRT=true",
-      "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
-      "-Djdk.attach.allowAttachSelf=true",
-      "-Djdk.module.illegalAccess.silent=true",
-      "-Djdk.nio.maxCachedBufferSize=2097152",
-      "-Djava.util.zip.use.nio.for.zip.file.access=true",
-      "-Dkotlinx.coroutines.debug=off",
-      "-Dskiko.rendering.useScreenMenuBar=false",
-      "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
-      "-Dllm.show.ai.promotion.window.on.start=false",
-      "-Dapple.awt.application.appearance=system"
-    ],
-    "Linux": [
-      "-Xms128m",
-      "-Xmx2048m",
-      "-XX:JbrShrinkingGcMaxHeapFreeRatio=40",
-      "-XX:ReservedCodeCacheSize=512m",
-      "-XX:+HeapDumpOnOutOfMemoryError",
-      "-XX:-OmitStackTraceInFastThrow",
-      "-XX:CICompilerCount=2",
-      "-XX:+IgnoreUnrecognizedVMOptions",
-      "-XX:+UnlockDiagnosticVMOptions",
-      "-XX:TieredOldPercentage=100000",
-      "-XX:+UseCompactObjectHeaders",
-      "--sun-misc-unsafe-memory-access=allow",
-      "-ea",
-      "-Dsun.io.useCanonCaches=false",
-      "-Dsun.java2d.metal=true",
-      "-Djbr.catch.SIGABRT=true",
-      "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
-      "-Djdk.attach.allowAttachSelf=true",
-      "-Djdk.module.illegalAccess.silent=true",
-      "-Djdk.nio.maxCachedBufferSize=2097152",
-      "-Djava.util.zip.use.nio.for.zip.file.access=true",
-      "-Dkotlinx.coroutines.debug=off",
-      "-Dskiko.rendering.useScreenMenuBar=false",
-      "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
-      "-Dllm.show.ai.promotion.window.on.start=false",
-      "-Dsun.tools.attach.tmp.only=true",
-      "-Dawt.lock.fair=true",
-      "-Dawt.toolkit.name=auto",
-      "-Dsun.java2d.vulkan=True"
-    ]
+    "os": {
+      "macOS": [
+        "-Dapple.awt.application.appearance=system"
+      ],
+      "Linux": [
+        "-Dsun.tools.attach.tmp.only=true",
+        "-Dawt.lock.fair=true",
+        "-Dawt.toolkit.name=auto",
+        "-Dsun.java2d.vulkan=True"
+      ]
+    }
   },
   "ideaProperties": {
-    "settingsDir": "IdeaIC",
     "fatalErrorNotification": true
   }
 }

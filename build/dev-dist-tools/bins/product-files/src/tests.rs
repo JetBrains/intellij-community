@@ -6,10 +6,10 @@ use appinfo::{ApplicationInfo, Replacement};
 use serde_json::Value;
 use testkit::{read_text, testdata};
 
-use crate::model::{JvmArguments, LaunchModel, parse_launch_model};
+use crate::model::{JvmArguments, JvmArgumentsRef, LaunchModel, parse_launch_model};
 use crate::render::{
-    LaunchFiles, OS_LINUX, OS_MAC, OS_WINDOWS, Platform, Product, additional_jvm_arguments, insert_eap_vm_options, opened_packages,
-    parse_platform, render_launch_files,
+    LaunchFiles, LaunchNames, OS_LINUX, OS_MAC, OS_WINDOWS, Platform, Product, additional_jvm_arguments, common_vm_options,
+    insert_eap_vm_options, opened_packages, parse_platform, render_launch_files,
 };
 use crate::run;
 
@@ -96,6 +96,18 @@ impl Fixture {
     }
 
     fn render(&self, model: &LaunchModel, platform: &str, opened: &str, idea_properties: &str) -> anyhow::Result<LaunchFiles> {
+        self.render_with_common(model, platform, opened, idea_properties, "")
+    }
+
+    /// Renders with `common` as the text of `bin/common.vmoptions`.
+    fn render_with_common(
+        &self,
+        model: &LaunchModel,
+        platform: &str,
+        opened: &str,
+        idea_properties: &str,
+        common: &str,
+    ) -> anyhow::Result<LaunchFiles> {
         let application_info = self.read_application_info();
         let build_number = self.build_number();
         let product = Product {
@@ -103,7 +115,7 @@ impl Fixture {
             application_info: &application_info,
             build_number: &build_number,
         };
-        render_launch_files(&product, parse_platform(platform)?, opened, idea_properties)
+        render_launch_files(&product, parse_platform(platform)?, opened, idea_properties, common)
     }
 
     /// The options of the tool, without the model and the outputs.
@@ -190,17 +202,18 @@ fn opened_packages_drop_the_packages_of_other_systems() {
 
 #[test]
 fn jvm_arguments_follow_the_system_conventions() {
+    // The defaults turn on the multi-routing file system and the native access, and name the path class loader.
     let jvm = JvmArguments {
-        multi_routing_file_system: true,
-        class_loader: Some("com.intellij.util.lang.PathClassLoader".to_owned()),
-        vendor_name: "JetBrains".to_owned(),
-        paths_selector: "IntelliJIdea2026.3".to_owned(),
         jna_native_dir: Some("plugins/jna-plugin/lib/jna".to_owned()),
-        native_access: true,
         ..JvmArguments::default()
+    };
+    let names = LaunchNames {
+        vendor_name: "JetBrains",
+        data_directory_name: "IntelliJIdea2026.3",
     };
     let windows = additional_jvm_arguments(
         &jvm,
+        &names,
         Platform {
             os: OS_WINDOWS,
             arch: "amd64",
@@ -225,6 +238,7 @@ fn jvm_arguments_follow_the_system_conventions() {
     assert_eq!(windows, expected);
     let qodana = additional_jvm_arguments(
         &jvm,
+        &names,
         Platform {
             os: OS_MAC,
             arch: "aarch64",
@@ -302,10 +316,84 @@ fn full_model_renders_the_other_three_files() {
     let model = test_model(SERVER.model);
     let windows = SERVER.render(&model, "windows_x64", "", "a=@@settings_dir@@\n").unwrap();
     assert_eq!(windows.build_txt, "IIS-263.1234");
-    assert_eq!(windows.vm_options, "-Xmx4g\r\n-Dwindows=\"1\"\r\n");
+    assert_eq!(windows.vm_options, "-Xmx4g\r\n-Dwindows=\"1\"\r\n-Djava.awt.headless=true\r\n");
     assert_eq!(windows.idea_properties, "a=IntelliJServer\n\nx=IntelliJServer/x\n");
+    // The model states no Linux lines, so the file has the memory lines and the headless line.
     let linux = SERVER.render(&model, "linux_x64", "", "").unwrap();
-    assert_eq!(linux.vm_options, "");
+    assert_eq!(linux.vm_options, "-Xmx4g\n-Djava.awt.headless=true\n");
+}
+
+/// The vmoptions file is the memory lines, the common lines, the product lines, then the lines of the OS.
+#[test]
+fn vm_options_compose_the_common_file_and_the_model() {
+    let common = "# A note.\n\n-XX:+Common\n  \n-ea\n-Dsun.java2d.metal=true\n";
+    assert_eq!(
+        common_vm_options(common).collect::<Vec<_>>(),
+        strings(&["-XX:+Common", "-ea", "-Dsun.java2d.metal=true"])
+    );
+    let mut model = test_model(RELEASE.model);
+    model.vm_options.product = strings(&["-Dproduct=1"]);
+    let mac = RELEASE.render_with_common(&model, "darwin_aarch64", "", "", common).unwrap();
+    assert_eq!(
+        mac.vm_options,
+        "-Xmx2048m\n-XX:+Common\n-ea\n-Dsun.java2d.metal=true\n-Dproduct=1\n-Dx=mac\n"
+    );
+    // The model states no Windows lines.
+    let windows = RELEASE.render_with_common(&model, "windows_x64", "", "", common).unwrap();
+    assert_eq!(
+        windows.vm_options,
+        "-Xmx2048m\r\n-XX:+Common\r\n-ea\r\n-Dsun.java2d.metal=true\r\n-Dproduct=1\r\n"
+    );
+}
+
+/// A language server drops the lines of a desktop toolkit after the EAP line goes in, then adds the headless line.
+#[test]
+fn language_server_vm_options_are_headless() {
+    let mut model = test_model(IDEA.model);
+    model.language_server = true;
+    model.vm_options.product = strings(&["-Dawt.lock.fair=true", "-Dswing.x=1", "-Dskiko.y=2", "-Dkept=1"]);
+    let files = IDEA
+        .render_with_common(&model, "linux_x64", "", "", "-ea\n-Dsun.java2d.metal=true\n")
+        .unwrap();
+    assert_eq!(
+        files.vm_options,
+        format!("-Xmx2048m\n{EAP_LINE}\n-ea\n-Dkept=1\n-Dx=linux\n-Djava.awt.headless=true\n")
+    );
+}
+
+/// A custom command renders the block it names, and the build number replaces the token in its extra arguments.
+#[test]
+fn custom_commands_resolve_the_jvm_arguments_block() {
+    let mut model = test_model(SERVER.model);
+    let qodana = &mut model.custom_commands[0];
+    qodana.jvm_arguments = Some(JvmArgumentsRef::Launch);
+    qodana.extra_jvm_arguments = strings(&["-Dqodana.build.number=QDJVM-@@build_number@@"]);
+    let files = SERVER.render(&model, "linux_x64", "", "").unwrap();
+    let info: Value = serde_json::from_str(&files.product_info).unwrap();
+    let command = &info["launch"][0]["customCommands"][0];
+    let arguments: Vec<&str> = command["additionalJvmArguments"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|argument| argument.as_str().unwrap())
+        .collect();
+    assert_eq!(arguments[0], "-Djava.system.class.loader=com.example.ServerClassLoader");
+    assert!(
+        arguments.contains(&"-Dintellij.platform.root.module=intellij.server.main"),
+        "{arguments:?}"
+    );
+    assert_eq!(arguments.last(), Some(&"-Dqodana.build.number=QDJVM-263.1234"));
+    assert_eq!(command["dataDirectoryName"], "IntelliJServer2026.3");
+    // A command without an environment variable name states no data directory name.
+    assert_eq!(info["launch"][0]["customCommands"][1]["dataDirectoryName"], Value::Null);
+
+    model.frontend_jvm_arguments = None;
+    model.custom_commands[0].jvm_arguments = Some(JvmArgumentsRef::Frontend);
+    let error = SERVER.render(&model, "linux_x64", "", "").unwrap_err();
+    assert_eq!(
+        error.to_string(),
+        r#"the custom command ["qodana", "inspect"] names the frontend JVM arguments, but the model states no frontendJvmArguments"#
+    );
 }
 
 /// The EAP flag of the application info decides the vmoptions line and the fatal error block. The model states neither.
@@ -314,7 +402,8 @@ fn eap_parts_follow_the_application_info() {
     let mut model = test_model(IDEA.model);
     model
         .vm_options
-        .insert(OS_MAC.to_owned(), strings(&["-Xmx2048m", "-XX:+A", "-ea", "-Dx=mac"]));
+        .os
+        .insert(OS_MAC.to_owned(), strings(&["-XX:+A", "-ea", "-Dx=mac"]));
     let eap = IDEA.render(&model, "darwin_aarch64", "", "a=@@settings_dir@@\n").unwrap();
     assert_eq!(eap.vm_options, format!("-Xmx2048m\n-XX:+A\n{EAP_LINE}\n-ea\n-Dx=mac\n"));
     assert_eq!(eap.idea_properties, format!("a=IntelliJIdea\n\nb=1{EAP_BLOCK}"));
@@ -341,14 +430,9 @@ fn eap_parts_follow_the_application_info() {
 
 #[test]
 fn render_refusals() {
-    let mut model = test_model(IDEA.model);
-    model.vm_options.get_mut(OS_MAC).unwrap().push("-Dname=ü".to_owned());
-    let error = IDEA.render(&model, "darwin_x64", "", "").unwrap_err();
+    let model = test_model(IDEA.model);
+    let error = IDEA.render_with_common(&model, "darwin_x64", "", "", "-Dname=ü\n").unwrap_err();
     assert_eq!(error.to_string(), r#"the vmoptions line "-Dname=ü" is not ASCII"#);
-    model.vm_options.get_mut(OS_MAC).unwrap().pop();
-    model.vm_options.remove(OS_LINUX);
-    let error = IDEA.render(&model, "linux_x64", "", "").unwrap_err();
-    assert_eq!(error.to_string(), "the model states no vmoptions for Linux");
     for name in ["darwin", "darwin_x86", "macos_x64", "linux-x64", ""] {
         let error = parse_platform(name).unwrap_err();
         assert_eq!(error.to_string(), format!("{name:?} is not a host platform such as darwin_aarch64"));
@@ -376,6 +460,20 @@ fn render_refusals() {
         (r#""launch": {"linuxStartupWmClass": "jetbrains-idea"}"#, "linuxStartupWmClass"),
         // The EAP flag of the application info decides the fatal error block.
         (r#""ideaProperties": {"suffix": "x"}"#, "suffix"),
+        // The action appends the version to the base name and reads the vendor from the application info.
+        (r#""dataDirectoryName": "IntelliJIdea2026.3""#, "dataDirectoryName"),
+        (
+            r#""launch": {"jvmArguments": {"pathsSelector": "IntelliJIdea2026.3"}}"#,
+            "pathsSelector",
+        ),
+        (r#""launch": {"jvmArguments": {"vendorName": "JetBrains"}}"#, "vendorName"),
+        (r#""ideaProperties": {"settingsDir": "IntelliJIdea"}"#, "settingsDir"),
+        (
+            r#""customCommands": [{"commands": [], "dataDirectoryName": "IntelliJIdea2026.3"}]"#,
+            "dataDirectoryName",
+        ),
+        // The model states the common vmoptions lines once, in a file of their own, not once per OS.
+        (r#""vmOptions": {"macOS": ["-Xmx2048m"]}"#, "macOS"),
     ] {
         let error = parse_launch_model(format!(r#"{{"productCode": "IU", {field}}}"#).as_bytes()).unwrap_err();
         assert!(
@@ -422,6 +520,7 @@ fn the_tool_writes_the_four_files() {
             write("opened.txt", "--add-opens=java.base/java.lang=ALL-UNNAMED\n")
         ),
         format!("--idea-properties={}", write("idea.properties", "a=@@settings_dir@@\n")),
+        format!("--common-vmoptions={}", write("common.vmoptions", "# A note.\n-XX:+Common\n")),
         format!("--build-txt-out={}", out("build.txt")),
         format!("--idea-properties-out={}", out("out.properties")),
         format!("--vmoptions-out={}", out("out.vmoptions")),
@@ -433,7 +532,7 @@ fn the_tool_writes_the_four_files() {
     assert_eq!(result.output, format!("Rendered the launch files of {model} for darwin_aarch64\n"));
     assert_eq!(
         std::fs::read_to_string(out("out.vmoptions")).unwrap(),
-        format!("-Xmx2048m\n{EAP_LINE}\n-Dx=mac\n")
+        format!("-Xmx2048m\n-XX:+Common\n{EAP_LINE}\n-Dx=mac\n")
     );
     assert_eq!(std::fs::read_to_string(out("build.txt")).unwrap(), "IU-263.SNAPSHOT");
     assert_eq!(
@@ -578,6 +677,7 @@ impl ToolRun {
             "--platform=linux_x64".to_owned(),
             format!("--opened-packages={}", self.write("opened.txt", "")),
             format!("--idea-properties={}", self.write("idea.properties", "")),
+            format!("--common-vmoptions={}", self.write("common.vmoptions", "")),
             format!("--build-txt-out={}", self.out("build.txt")),
             format!("--idea-properties-out={}", self.out("out.properties")),
             format!("--vmoptions-out={}", self.out("out.vmoptions")),

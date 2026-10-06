@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.isLanguageServer
 import java.nio.charset.StandardCharsets
@@ -14,29 +15,10 @@ import kotlin.io.path.name
 private const val DEFAULT_MIN_HEAP = "128m"
 private const val DEFAULT_MAX_HEAP = "2048m"
 
-private val COMMON_VM_OPTIONS: List<String> = listOf(
-  "-XX:JbrShrinkingGcMaxHeapFreeRatio=40", // IJPL-181469. Used in a couple with AppIdleMemoryCleaner.runGc()
-  "-XX:ReservedCodeCacheSize=512m",
-  "-XX:+HeapDumpOnOutOfMemoryError",
-  "-XX:-OmitStackTraceInFastThrow",
-  "-XX:CICompilerCount=2",
-  "-XX:+IgnoreUnrecognizedVMOptions",  // allowing the JVM to start even with outdated options stuck in user configs
-  "-XX:+UnlockDiagnosticVMOptions",
-  "-XX:TieredOldPercentage=100000",
-  "-XX:+UseCompactObjectHeaders",  // expected to become the default in JBR 29
-  "--sun-misc-unsafe-memory-access=allow",  // temporary option, to be removed before adopting JBR 29
-  "-ea",
-  "-Dsun.io.useCanonCaches=false",
-  "-Dsun.java2d.metal=true",
-  "-Djbr.catch.SIGABRT=true",
-  "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
-  "-Djdk.attach.allowAttachSelf=true",
-  "-Djdk.module.illegalAccess.silent=true",
-  "-Djdk.nio.maxCachedBufferSize=2097152",
-  "-Djava.util.zip.use.nio.for.zip.file.access=true", // IJPL-149160
-  "-Dkotlinx.coroutines.debug=off",
-  "-Dskiko.rendering.useScreenMenuBar=false",
-)
+/** The lines of `bin/common.vmoptions` under the community root, without the blank lines and the `#` lines. */
+private val COMMON_VM_OPTIONS: List<String> by lazy {
+  Files.readAllLines(COMMUNITY_ROOT.communityRoot.resolve("bin/common.vmoptions")).filter { it.isNotBlank() && !it.startsWith('#') }
+}
 
 /** duplicates `RepositoryHelper.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY` */
 private const val CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url"
@@ -56,17 +38,10 @@ internal fun generateVmOptions(
   platformPrefix: String?,
   isHeadless: Boolean,
 ): List<String> {
-  val memoryOptions = LinkedHashMap<String, String>(customMemoryVmOptions).apply {
-    putIfAbsent("-Xms", DEFAULT_MIN_HEAP)
-    putIfAbsent("-Xmx", DEFAULT_MAX_HEAP)
-  }
-
   val result = ArrayList<String>(50)
-  result += memoryOptions.map { (k, v) -> k + v }
+  result += memoryVmOptions(customMemoryVmOptions)
   result += COMMON_VM_OPTIONS
-  if (isMultiRoutingFileSystemEnabledForProduct(platformPrefix)) {
-    result += MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
-  }
+  result += multiRoutingFileSystemVmOptions(platformPrefix)
   result += additionalVmOptions
   if (isEAP) {
     insertEapVmOptions(result)
@@ -76,6 +51,19 @@ internal fun generateVmOptions(
     result += "-Djava.awt.headless=true"
   }
   return result
+}
+
+/** The memory lines: [customMemoryVmOptions], then the default `-Xms` and `-Xmx` when they do not state them. */
+internal fun memoryVmOptions(customMemoryVmOptions: Map<String, String>): List<String> {
+  val memoryOptions = LinkedHashMap<String, String>(customMemoryVmOptions)
+  memoryOptions.putIfAbsent("-Xms", DEFAULT_MIN_HEAP)
+  memoryOptions.putIfAbsent("-Xmx", DEFAULT_MAX_HEAP)
+  return memoryOptions.map { (key, value) -> key + value }
+}
+
+/** The lines that turn on the multi-routing file system, when the product of [platformPrefix] uses it. */
+internal fun multiRoutingFileSystemVmOptions(platformPrefix: String?): List<String> {
+  return if (isMultiRoutingFileSystemEnabledForProduct(platformPrefix)) MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS else emptyList()
 }
 
 /**

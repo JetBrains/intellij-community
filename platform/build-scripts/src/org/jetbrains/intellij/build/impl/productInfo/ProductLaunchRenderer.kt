@@ -10,12 +10,16 @@ import org.jetbrains.intellij.build.impl.moduleRepository.MODULE_DESCRIPTORS_COM
 /**
  * The JVM arguments of [jvm] for [os] and [arch], as `BuildContext.getAdditionalJvmArguments` states them.
  *
+ * [vendorName] is the short company name of the application info. [pathsSelector] is the system selector of the product.
+ *
  * [openedPackages] are the `--add-opens` lines of [os]. [isScript] quotes the arguments that hold a path macro.
  * [isPortableDist] drops `/Contents` from the macOS macro. [isQodana] leaves the multi-routing file system out.
  */
 @ApiStatus.Internal
 fun renderAdditionalJvmArguments(
   jvm: ProductJvmArguments,
+  vendorName: String,
+  pathsSelector: String,
   os: OsFamily,
   arch: JvmArchitecture,
   openedPackages: List<String>,
@@ -50,8 +54,8 @@ fun renderAdditionalJvmArguments(
     }
   }
 
-  result.add("-Didea.vendor.name=${jvm.vendorName}")
-  result.add("-Didea.paths.selector=${jvm.pathsSelector}")
+  result.add("-Didea.vendor.name=$vendorName")
+  result.add("-Didea.paths.selector=$pathsSelector")
 
   jvm.jnaNativeDir?.let {
     result.add("-Djna.boot.library.path=$macroName/$it/${arch.dirName}".quoteIfNeeded())

@@ -5,6 +5,12 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 
+# The common vmoptions lines, which the `product-files` action of a dev distribution reads.
+exports_files(
+    ["common.vmoptions"],
+    visibility = ["//visibility:public"],
+)
+
 # The native files a distribution's `bin` directory takes, see `nativeBinFiles` in `OsSpecificDistributionBuilder.kt`.
 # The plan generator names each one in the `platform_assets` map of a split dev distribution, so the component places
 # it by its own label.

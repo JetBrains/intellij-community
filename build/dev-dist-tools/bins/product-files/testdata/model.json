@@ -1,21 +1,12 @@
 {
   "productCode": "IU",
   "envVarBaseName": "IDEA",
-  "dataDirectoryName": "IntelliJIdea2026.3",
+  "dataDirectoryBaseName": "IntelliJIdea",
   "minRequiredJavaVersion": 25,
   "baseFileName": "idea",
   "launch": {
     "mainClass": "com.intellij.idea.Main",
-    "bootClassPathJarNames": [
-      "platform-loader.jar"
-    ],
-    "jvmArguments": {
-      "multiRoutingFileSystem": true,
-      "classLoader": "com.intellij.util.lang.PathClassLoader",
-      "vendorName": "JetBrains",
-      "pathsSelector": "IntelliJIdea2026.3",
-      "nativeAccess": true
-    }
+    "jvmArguments": {}
   },
   "customCommands": [
     {
@@ -35,23 +26,22 @@
     }
   ],
   "vmOptions": {
-    "macOS": [
-      "-Xmx2048m",
-      "-Dx=mac"
-    ],
-    "Linux": [
-      "-Xmx2048m",
-      "-Dx=linux"
-    ],
-    "Windows": [
+    "memory": [
       "-Xmx2048m"
-    ]
+    ],
+    "os": {
+      "macOS": [
+        "-Dx=mac"
+      ],
+      "Linux": [
+        "-Dx=linux"
+      ]
+    }
   },
   "ideaProperties": {
     "additions": [
       "b=1"
     ],
-    "settingsDir": "IntelliJIdea",
     "fatalErrorNotification": true
   }
 }
