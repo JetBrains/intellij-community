@@ -28,6 +28,7 @@ internal fun isApplicableForMoveMember(element: KtNamedDeclaration): Boolean {
     if ((element is KtNamedFunction || element is KtProperty) && element.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return false
     if (element.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
     if (element.hasModifier(KtTokens.INFIX_KEYWORD)) return false
+    if (element.hasModifier(KtTokens.OPERATOR_KEYWORD)) return false
     val containingClass = element.containingClassOrObject ?: return false
     if (containingClass.isLocal) return false
     if (containingClass is KtClass && containingClass.isInner()) return false
