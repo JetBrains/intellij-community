@@ -12,10 +12,15 @@ import com.intellij.util.io.ResizeableMappedFile
 import com.intellij.util.io.StorageLockContext
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile
 import junit.framework.TestCase
+import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import java.lang.ref.SoftReference
 import java.nio.file.Files
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class KeyHashLogTest {
   companion object {
@@ -198,6 +203,123 @@ class KeyHashLogTest {
   }
 
   @Test
+  fun testProjectAndLibrariesCacheReadsAppendedTail() {
+    assumeProjectAndLibrariesCacheEnabled()
+
+    val dir = temporaryDirectory.createDir()
+    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use { keyHashLog ->
+      val filter = setOf(1, 2).toFilter(FilterScopeType.PROJECT_AND_LIBRARIES)
+      keyHashLog.addKeyHashToVirtualFileMapping("qwe", 1)
+      keyHashLog.addKeyHashToVirtualFileMapping("asd", 2)
+
+      val initialHashes = keyHashLog.getSuitableKeyHashes(filter, project)
+      TestCase.assertEquals("The initial scan must return an exact hash set", setOf("qwe", "asd").toHashes(), initialHashes)
+
+      val initialCache = keyHashLog.getCachedProjectKeyHashes()
+      keyHashLog.removeKeyHashToVirtualFileMapping("qwe", 1)
+      keyHashLog.addKeyHashToVirtualFileMapping("zxc", 1)
+
+      val updatedHashes = keyHashLog.getSuitableKeyHashes(filter, project)
+      TestCase.assertEquals(
+        "The incremental cache must add hashes from the tail and can retain a removed hash",
+        setOf("qwe", "asd", "zxc").toHashes(),
+        updatedHashes,
+      )
+
+      val updatedCache = keyHashLog.getCachedProjectKeyHashes()
+      TestCase.assertSame("The tail scan must update the existing cache", initialCache, updatedCache)
+      val removesUnaccountedFor: Int = updatedCache.getFieldValue("removesUnaccountedFor")
+      TestCase.assertEquals(
+        "The cache must account for one removal that it could not apply exactly",
+        1,
+        removesUnaccountedFor,
+      )
+
+      val mapping = keyHashLog.getFieldValue<AppendableStorageBackedByResizableMappedFile<IntArray>>("myKeyHashToVirtualFileMapping")
+      val scannedUpToOffsetExclusive: Long = updatedCache.getFieldValue("scannedUpToOffsetExclusive")
+      TestCase.assertEquals(
+        "The cache offset must advance to the end of the appended tail",
+        mapping.currentLength.toLong(),
+        scannedUpToOffsetExclusive,
+      )
+    }
+  }
+
+  @Test
+  fun testProjectAndLibrariesCacheRestoresCheckpointAfterSoftReferenceIsCleared() {
+    assumeProjectAndLibrariesCacheEnabled()
+
+    val dir = temporaryDirectory.createDir()
+    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use { keyHashLog ->
+      val filter = setOf(1, 2, 3).toFilter(FilterScopeType.PROJECT_AND_LIBRARIES)
+      keyHashLog.addKeyHashToVirtualFileMapping("qwe", 1)
+      keyHashLog.addKeyHashToVirtualFileMapping("asd", 2)
+      keyHashLog.addKeyHashToVirtualFileMapping("zxc", 3)
+      keyHashLog.getSuitableKeyHashes(filter, project)
+
+      keyHashLog.removeKeyHashToVirtualFileMapping("qwe", 1)
+      keyHashLog.addKeyHashToVirtualFileMapping("new", 1)
+      val updatedHashes = keyHashLog.getSuitableKeyHashes(filter, project)
+      TestCase.assertTrue("The weakly actual cache must retain the removed hash", updatedHashes.contains("qwe".hashCode()))
+
+      val reference = keyHashLog.getCachedProjectKeyHashesReference()
+      val cacheBeforeClear = requireNotNull(reference.get()) { "The project key hashes cache must exist before it is cleared" }
+      reference.clear()
+
+      val restoredHashes = keyHashLog.getSuitableKeyHashes(filter, project)
+      TestCase.assertEquals("The disk checkpoint must restore the weakly actual hash set", updatedHashes, restoredHashes)
+
+      val cacheAfterClear = keyHashLog.getCachedProjectKeyHashes()
+      TestCase.assertNotSame("A cleared soft reference must load a new cache object", cacheBeforeClear, cacheAfterClear)
+      val removesUnaccountedFor: Int = cacheAfterClear.getFieldValue("removesUnaccountedFor")
+      TestCase.assertEquals(
+        "The disk checkpoint must restore the removal counter",
+        1,
+        removesUnaccountedFor,
+      )
+    }
+  }
+
+  @Test
+  fun testParallelTailScansUseOneCacheState() {
+    assumeProjectAndLibrariesCacheEnabled()
+
+    val dir = temporaryDirectory.createDir()
+    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use { keyHashLog ->
+      val filter = setOf(1).toFilter(FilterScopeType.PROJECT_AND_LIBRARIES)
+      keyHashLog.addKeyHashToVirtualFileMapping("initial", 1)
+      keyHashLog.getSuitableKeyHashes(filter, project)
+
+      val appendedKeys = (0 until 500).map { "appended-$it" }
+      appendedKeys.forEach { keyHashLog.addKeyHashToVirtualFileMapping(it, 1) }
+      val expectedHashes = (appendedKeys + "initial").toSet().toHashes()
+
+      val executor = Executors.newFixedThreadPool(8)
+      try {
+        val start = CountDownLatch(1)
+        val results = List(8) {
+          executor.submit<Set<Int>> {
+            start.await()
+            HashSet(keyHashLog.getSuitableKeyHashes(filter, project))
+          }
+        }
+        start.countDown()
+
+        results.forEach { future ->
+          TestCase.assertEquals(expectedHashes, future.get(30, TimeUnit.SECONDS))
+        }
+      }
+      finally {
+        executor.shutdownNow()
+        TestCase.assertTrue("The cache test executor must stop", executor.awaitTermination(30, TimeUnit.SECONDS))
+      }
+
+      keyHashLog.getCachedProjectKeyHashesReference().clear()
+      TestCase.assertEquals(expectedHashes, keyHashLog.getSuitableKeyHashes(filter, project))
+    }
+  }
+
+  @Test
   fun testVfsAwareStoragePropagatesStorageLockContextToKeyHashMapping() {
     val dir = temporaryDirectory.createDir()
     val storageLockContext = StorageLockContext(false)
@@ -222,6 +344,13 @@ class KeyHashLogTest {
 
   private val project = ProjectManager.getInstance().defaultProject
 
+  private fun assumeProjectAndLibrariesCacheEnabled() {
+    assumeTrue(
+      "The project and libraries cache is disabled",
+      KeyHashLog.ENABLE_CACHED_HASH_IDS,
+    )
+  }
+
   private fun Set<Int>.toFilter(type: FilterScopeType = FilterScopeType.PROJECT): IdFilter = object : IdFilter() {
     override fun containsFileId(id: Int): Boolean {
       return contains(id)
@@ -234,6 +363,15 @@ class KeyHashLogTest {
 
   private fun Set<String>.toHashes(): Set<Int> {
     return map { it.hashCode() }.toSet()
+  }
+
+  private fun KeyHashLog<*>.getCachedProjectKeyHashes(): Any {
+    return requireNotNull(getCachedProjectKeyHashesReference().get()) { "The project key hashes cache must be available" }
+  }
+
+  private fun KeyHashLog<*>.getCachedProjectKeyHashesReference(): SoftReference<*> {
+    val cache = getFieldValue<Any>("myPerProjectKeyHashes")
+    return cache.getFieldValue("stateRef")
   }
 
   @Suppress("UNCHECKED_CAST")
