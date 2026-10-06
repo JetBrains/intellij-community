@@ -1,0 +1,7 @@
+call text: Object result = new Test().invoke(Inner.this);
+class: 
+public class GeneratedEvaluationClass {
+    public Object invoke(Object outerContext0) {
+        return outerContext0;
+    }
+}

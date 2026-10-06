@@ -13,6 +13,7 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSuperExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -33,6 +34,11 @@ public final class MemberQualifierUtil {
 
     PsiExpression qualifierExpression = reference.getQualifierExpression();
     if (qualifierExpression != null) {
+      if (qualifierExpression instanceof PsiSuperExpression superExpression &&
+          superExpression.getQualifier() != null &&
+          superExpression.getQualifier().resolve() instanceof PsiClass referencedClass) {
+        return handleThisReference(reference, referencedClass, outerClass, generatedCall, elementFactory);
+      }
       PsiType expressionType = qualifierExpression.getType();
       return expressionType == null ? null : qualifierExpression.getText();
     }

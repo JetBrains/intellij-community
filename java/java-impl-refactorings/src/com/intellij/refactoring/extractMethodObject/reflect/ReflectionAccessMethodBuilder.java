@@ -67,7 +67,14 @@ public class ReflectionAccessMethodBuilder {
   }
 
   public ReflectionAccessMethodBuilder accessedMethod(@NotNull String jvmClassName, @NotNull String methodName) {
-    myBodyProvider = new MyMethodAccessor(jvmClassName, methodName);
+    myBodyProvider = new MyMethodAccessor(jvmClassName, methodName, null);
+    return this;
+  }
+
+  public ReflectionAccessMethodBuilder accessedSuperMethod(@NotNull String jvmClassName,
+                                                           @NotNull String methodName,
+                                                           @NotNull String jvmCallerClassName) {
+    myBodyProvider = new MyMethodAccessor(jvmClassName, methodName, jvmCallerClassName);
     return this;
   }
 
@@ -281,10 +288,12 @@ public class ReflectionAccessMethodBuilder {
   private class MyMethodAccessor extends MyMemberAccessor {
     private final String myClassName;
     private final String myMethodName;
+    private final String mySuperCallerClassName;
 
-    MyMethodAccessor(@NotNull String className, @NotNull String methodName) {
+    MyMethodAccessor(@NotNull String className, @NotNull String methodName, @Nullable String superCallerClassName) {
       myClassName = className;
       myMethodName = methodName;
+      mySuperCallerClassName = superCallerClassName;
     }
 
     @Override
@@ -308,13 +317,39 @@ public class ReflectionAccessMethodBuilder {
 
     @Override
     public List<String> getPossibleExceptions() {
-      return Collections.singletonList("java.lang.ReflectiveOperationException");
+      return Collections.singletonList(mySuperCallerClassName == null ? "java.lang.ReflectiveOperationException" : "java.lang.Throwable");
     }
 
     @Override
     String getReturnExpression(String returnType) {
+      if (mySuperCallerClassName != null) {
+        return createSuperInvocationBody(returnType, mySuperCallerClassName);
+      }
       String invokeString = "member.invoke" + parametersStringForInvoke();
       return "void".equals(returnType) ? invokeString : "return (" + returnType + ")" + invokeString;
+    }
+
+    private String createSuperInvocationBody(String returnType, @NotNull String superCallerClassName) {
+      var callerClass = PsiReflectionAccessUtil.classForName(superCallerClassName);
+      var invokeString = "methodHandle.invokeWithArguments" + parametersStringForInvoke();
+      var returnStatement = "void".equals(returnType) ? invokeString : "return (" + returnType + ")" + invokeString;
+      return """
+        java.lang.Class<?> callerClass = %s;
+        java.lang.invoke.MethodHandles.Lookup lookup;
+        try {
+          java.lang.reflect.Method privateLookupIn = java.lang.invoke.MethodHandles.class.getMethod(
+            "privateLookupIn", java.lang.Class.class, java.lang.invoke.MethodHandles.Lookup.class
+          );
+          lookup = (java.lang.invoke.MethodHandles.Lookup)privateLookupIn.invoke(null, callerClass, java.lang.invoke.MethodHandles.lookup());
+        }
+        catch (java.lang.NoSuchMethodException e) {
+          java.lang.reflect.Constructor<java.lang.invoke.MethodHandles.Lookup> lookupConstructor =
+            java.lang.invoke.MethodHandles.Lookup.class.getDeclaredConstructor(java.lang.Class.class);
+          lookupConstructor.setAccessible(true);
+          lookup = lookupConstructor.newInstance(callerClass);
+        }
+        java.lang.invoke.MethodHandle methodHandle = lookup.unreflectSpecial(member, callerClass).asFixedArity();
+        %s""".formatted(callerClass, returnStatement);
     }
   }
 

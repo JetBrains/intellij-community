@@ -1,0 +1,7 @@
+call text: int result = new Test().invoke();
+class: 
+class Test {
+          public int invoke() {
+              return PrivateSuperMethod.Inner.super.hashCode();
+          }
+      }

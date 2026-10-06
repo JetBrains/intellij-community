@@ -59,6 +59,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
+import com.intellij.refactoring.extractMethodObject.reflect.PsiReflectionAccessUtil;
 import com.intellij.refactoring.extractMethodObject.reflect.ReflectionAccessorToEverything;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.usageView.UsageInfo;
@@ -106,6 +107,13 @@ public final class ExtractLightMethodObjectHandler {
     if (originalContext == null) {
       return null;
     }
+
+    boolean useReflection = javaVersion == null || javaVersion.isAtLeast(JavaSdkVersion.JDK_1_9) ||
+                            javaVersion.isAtLeast(JavaSdkVersion.JDK_1_7) &&
+                            Registry.is("debugger.compiling.evaluator.reflection.access.with.java8");
+    boolean shouldExtractGeneratedClass = useReflection &&
+                                          (javaVersion == null || javaVersion.isAtLeast(JavaSdkVersion.JDK_11) ||
+                                           Registry.is("debugger.compiling.evaluator.extract.generated.class"));
 
     PsiFile file = originalContext.getContainingFile();
 
@@ -199,12 +207,12 @@ public final class ExtractLightMethodObjectHandler {
     PsiElement lastElement = ArrayUtil.getLastElement(elementsCopy);
     if (lastElement instanceof PsiExpressionStatement expressionStatement) {
       PsiExpression expr = expressionStatement.getExpression();
-      generateResult(project, expr, elementsCopy, elementFactory);
+      generateResult(project, expr, elementsCopy, elementFactory, shouldExtractGeneratedClass);
     }
     else if (lastElement instanceof PsiReturnStatement returnStatement) {
       PsiExpression expr = returnStatement.getReturnValue();
       if (expr != null) {
-        generateResult(project, expr, elementsCopy, elementFactory);
+        generateResult(project, expr, elementsCopy, elementFactory, shouldExtractGeneratedClass);
       }
     }
 
@@ -316,8 +324,6 @@ public final class ExtractLightMethodObjectHandler {
     final PsiClass inner = extractMethodObjectProcessor.getInnerClass();
     final PsiMethod[] methods = inner.findMethodsByName("invoke", false);
 
-    boolean useReflection = javaVersion == null || javaVersion.isAtLeast(JavaSdkVersion.JDK_1_9) ||
-                            Registry.is("debugger.compiling.evaluator.reflection.access.with.java8");
     PsiClass generatedClass = extractMethodObjectProcessor.getInnerClass();
     if (useReflection && methods.length == 1) {
       final PsiMethod method = methods[0];
@@ -325,8 +331,7 @@ public final class ExtractLightMethodObjectHandler {
       if (callExpression != null) {
         LOG.info("Use reflection to evaluate inaccessible members");
         new ReflectionAccessorToEverything(generatedClass, elementFactory).grantAccessThroughReflection(callExpression);
-        boolean isJdkAtLeast11 = javaVersion == null || javaVersion.isAtLeast(JavaSdkVersion.JDK_11);
-        if (isJdkAtLeast11 || Registry.is("debugger.compiling.evaluator.extract.generated.class")) {
+        if (shouldExtractGeneratedClass) {
           generatedClass = ExtractGeneratedClassUtil.extractGeneratedClass(generatedClass, elementFactory, anchor, explicitGeneratedEvaluationClassName);
         }
       }
@@ -344,14 +349,19 @@ public final class ExtractLightMethodObjectHandler {
   private static void generateResult(@NotNull Project project,
                                      @NotNull PsiExpression expr,
                                      PsiElement[] elementsCopy,
-                                     @NotNull PsiElementFactory elementFactory) {
+                                     @NotNull PsiElementFactory elementFactory,
+                                     boolean useAccessibleResultType) {
     PsiType expressionType = GenericsUtil.getVariableTypeByExpressionType(expr.getType());
     if (expressionType instanceof PsiDisjunctionType) {
       expressionType = ((PsiDisjunctionType)expressionType).getLeastUpperBound();
     }
     if (isValidVariableType(expressionType)) {
       String uniqueResultName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("result", elementsCopy[0], true);
-      String text = PsiTypes.nullType().equals(expressionType) ? CommonClassNames.JAVA_LANG_OBJECT : expressionType.getCanonicalText();
+      PsiType resultType = expressionType;
+      if (useAccessibleResultType && !PsiTypes.nullType().equals(resultType)) {
+        resultType = PsiReflectionAccessUtil.nearestAccessibleType(resultType, expr);
+      }
+      String text = PsiTypes.nullType().equals(resultType) ? CommonClassNames.JAVA_LANG_OBJECT : resultType.getCanonicalText();
       String statementText = text + " " + uniqueResultName + " = " + expr.getText() + ";";
       elementsCopy[elementsCopy.length - 1] = elementsCopy[elementsCopy.length - 1]
         .replace(elementFactory.createStatementFromText(statementText, elementsCopy[elementsCopy.length - 1]));

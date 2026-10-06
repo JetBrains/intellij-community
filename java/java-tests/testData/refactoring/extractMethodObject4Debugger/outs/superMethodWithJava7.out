@@ -1,0 +1,52 @@
+call text: int result = new Test().invoke(Inner.this);
+class: 
+public class GeneratedEvaluationClass {
+    public int invoke(Object outerContext0) {
+        return callHashCode1(outerContext0);
+    }
+
+    public int callHashCode1(Object object) {
+        try {
+            Class<?> klass = Class.forName("PrivateSuperMethod$Base");
+            java.lang.reflect.Method member = null;
+            int interfaceNumber = -1;
+            Class<?>[] interfaces = null;
+            while (member == null) {
+                try {
+                    member = klass.getDeclaredMethod("hashCode");
+                } catch (ReflectiveOperationException e) {
+                    if (interfaceNumber == -1) {
+                        interfaces = klass.getInterfaces();
+                        interfaceNumber = 0;
+                    }
+                    if (interfaceNumber < interfaces.length) {
+                        klass = interfaces[interfaceNumber];
+                        interfaceNumber += 1;
+                    } else {
+                        klass = klass.getSuperclass();
+                        if (klass == null) throw e;
+                        interfaceNumber = -1;
+                    }
+                }
+            }
+            member.setAccessible(true);
+            Class<?> callerClass = Class.forName("PrivateSuperMethod$Inner");
+            java.lang.invoke.MethodHandles.Lookup lookup;
+            try {
+                java.lang.reflect.Method privateLookupIn = java.lang.invoke.MethodHandles.class.getMethod(
+                        "privateLookupIn", Class.class, java.lang.invoke.MethodHandles.Lookup.class
+                );
+                lookup = (java.lang.invoke.MethodHandles.Lookup) privateLookupIn.invoke(null, callerClass, java.lang.invoke.MethodHandles.lookup());
+            } catch (NoSuchMethodException e) {
+                java.lang.reflect.Constructor<java.lang.invoke.MethodHandles.Lookup> lookupConstructor =
+                        java.lang.invoke.MethodHandles.Lookup.class.getDeclaredConstructor(Class.class);
+                lookupConstructor.setAccessible(true);
+                lookup = lookupConstructor.newInstance(callerClass);
+            }
+            java.lang.invoke.MethodHandle methodHandle = lookup.unreflectSpecial(member, callerClass).asFixedArity();
+            return (int) methodHandle.invokeWithArguments(object);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+}

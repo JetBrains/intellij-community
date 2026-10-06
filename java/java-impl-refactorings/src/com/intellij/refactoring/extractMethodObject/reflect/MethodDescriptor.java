@@ -5,12 +5,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSuperExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -73,8 +75,14 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
     }
 
     String newMethodName = PsiReflectionAccessUtil.getUniqueMethodName(outerClass, "call" + StringUtil.capitalize(name));
-    ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder(newMethodName);
-    PsiMethod newMethod = methodBuilder.accessedMethod(containingClassName, myMethod.getName())
+    String superCallerClassName = getSuperCallerClassName();
+
+    ReflectionAccessMethodBuilder methodBuilder =
+      superCallerClassName == null
+      ? new ReflectionAccessMethodBuilder(newMethodName).accessedMethod(containingClassName, myMethod.getName())
+      : new ReflectionAccessMethodBuilder(newMethodName).accessedSuperMethod(containingClassName, myMethod.getName(), superCallerClassName);
+
+    PsiMethod newMethod = methodBuilder
       .setStatic(outerClass.hasModifierProperty(PsiModifier.STATIC))
       .addParameter(CommonClassNames.JAVA_LANG_OBJECT, "object")
       .addParameters(myMethod.getParameterList())
@@ -91,6 +99,14 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
     String newMethodCallExpression = newMethod.getName() + args;
 
     myCallExpression.replace(elementFactory.createExpressionFromText(newMethodCallExpression, myCallExpression));
+  }
+
+  private @Nullable String getSuperCallerClassName() {
+    if (myMethod.hasModifierProperty(PsiModifier.STATIC)) return null;
+    PsiExpression qualifier = myCallExpression.getMethodExpression().getQualifierExpression();
+    if (!(qualifier instanceof PsiSuperExpression superExpression) || superExpression.getQualifier() == null) return null;
+    PsiElement resolvedQualifier = superExpression.getQualifier().resolve();
+    return resolvedQualifier instanceof PsiClass psiClass ? ClassUtil.getJVMClassName(psiClass) : null;
   }
 
   private static boolean needReplace(@NotNull PsiClass outerClass,
