@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,6 +14,7 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiParserFacade;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -20,7 +23,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlProcessingInstruction;
 import com.intellij.psi.xml.XmlProlog;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
@@ -74,8 +76,10 @@ public final class JavaFxInjectPageLanguageIntention extends PsiElementBaseInten
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
     final XmlFile containingFile = (XmlFile)element.getContainingFile();
     final Set<String> availableLanguages = getAvailableLanguages(project);
-
-    LOG.assertTrue(availableLanguages != null);
+    if (availableLanguages == null || availableLanguages.isEmpty()) {
+      HintManager.getInstance().showErrorHint(editor, JavaFXBundle.message("javafx.inject.page.language.intention.no.engines"));
+      return;
+    }
     final List<String> list = new ArrayList<>(availableLanguages);
 
     if (availableLanguages.size() == 1) {
@@ -113,11 +117,14 @@ public final class JavaFxInjectPageLanguageIntention extends PsiElementBaseInten
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (ContainerUtil.isEmpty(getAvailableLanguages(project))) {
-      return false;
-    }
     setText(getFamilyName());
     return element.isValid();
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    // the default preview calls invoke(), which would instantiate the project ScriptEngineFactory providers
+    return IntentionPreviewInfo.EMPTY;
   }
 
   @Override
