@@ -149,6 +149,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
     var blockCatalog = DurableMapBlockCatalog.open(blocksStore);
     var recordIndexStorage = new ExtendibleHashMapStorageOverLookupBlocks(
       blockCatalog.lookupBlocks(mapMetadata.lookupImplementationId(), mapMetadata.lookupGeneration()),
+      ExtendibleHashMapInt32ToInt64.REQUIRED_HEADER_SIZE,
       SEGMENT_SIZE
     );
     var rebuildIndex = recordIndexStorage.isEmpty();

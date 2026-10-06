@@ -58,7 +58,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
   }
 
   public static ExtendibleMapFactory mediumSize() {
-    //approx. 16M (key,value) pairs
+    //approx. 32M (key,value) pairs
     return new ExtendibleMapFactory(
       ExtendibleHashMap.DEFAULT_STORAGE_PAGE_SIZE,
       ExtendibleHashMap.DEFAULT_SEGMENT_SIZE,
@@ -69,7 +69,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
   }
 
   public static ExtendibleMapFactory largeSize() {
-    //approx. 64M (key,value) pairs
+    //approx. 128M (key,value) pairs
     int segmentSize = ExtendibleHashMap.DEFAULT_SEGMENT_SIZE * 2;
     int pageSize = segmentSize * ExtendibleHashMap.DEFAULT_SEGMENTS_PER_PAGE;
     return new ExtendibleMapFactory(
@@ -128,7 +128,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
         storagePath,
         mappedStorage -> {
           ExtendibleHashMap map = new ExtendibleHashMap(
-            new ExtendibleHashMapStorageOverMMappedFile(mappedStorage, segmentSize)
+            new ExtendibleHashMapStorageOverMMappedFile(mappedStorage, ExtendibleHashMap.REQUIRED_HEADER_SIZE, segmentSize)
           );
           if (!map.wasProperlyClosed()
               && notClosedProperlyAction != IGNORE_AND_HOPE_FOR_THE_BEST) {
@@ -149,7 +149,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
         return mappedStorageFactory.wrapStorageSafely(
           storagePath,
           mappedStorage -> new ExtendibleHashMap(
-            new ExtendibleHashMapStorageOverMMappedFile(mappedStorage, segmentSize)
+            new ExtendibleHashMapStorageOverMMappedFile(mappedStorage, ExtendibleHashMap.REQUIRED_HEADER_SIZE, segmentSize)
           )
         );
       }

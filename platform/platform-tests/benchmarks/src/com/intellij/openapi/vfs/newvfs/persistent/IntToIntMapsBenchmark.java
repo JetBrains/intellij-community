@@ -44,7 +44,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap.NO_VALUE;
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64.DEFAULT_SEGMENT_SIZE;
-import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64.DEFAULT_STORAGE_PAGE_SIZE;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -178,11 +177,13 @@ public class IntToIntMapsBenchmark {
     public void setup() throws Exception {
       file = FileUtil.createTempFile("ExtendibleHashMapInt32ToInt64", "tst", /*deleteOnExit: */ true);
       map = MMappedFileStorageFactory.withDefaults()
-        .pageSize(DEFAULT_STORAGE_PAGE_SIZE)
+        .pageSize(DEFAULT_SEGMENT_SIZE * 32)
         .wrapStorageSafely(
           file.toPath(),
           mappedStorage -> new ExtendibleHashMapInt32ToInt64(
-            new ExtendibleHashMapStorageOverMMappedFile(mappedStorage, DEFAULT_SEGMENT_SIZE)
+            new ExtendibleHashMapStorageOverMMappedFile(
+              mappedStorage, ExtendibleHashMapInt32ToInt64.REQUIRED_HEADER_SIZE, DEFAULT_SEGMENT_SIZE
+            )
           )
         );
 

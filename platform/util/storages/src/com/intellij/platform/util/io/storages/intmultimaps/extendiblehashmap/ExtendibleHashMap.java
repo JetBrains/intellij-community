@@ -43,20 +43,25 @@ import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 @ApiStatus.Internal
 public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   /** Version of binary format used by this class */
-  public static final int IMPLEMENTATION_VERSION = 1;
+  public static final int IMPLEMENTATION_VERSION = 2;
+  /** {@link ExtendibleHashMapStorage#headerSize()} must be not less than this number */
+  public static final int REQUIRED_HEADER_SIZE = HeaderLayout.STATIC_HEADER_SIZE;
 
   /** First header int32 to recognize this file type */
   public static final int MAGIC_WORD = IOUtil.asciiToMagicWord("EHMM");
 
-  //Binary layout: (header segment) (data segment)+
-  //  Header segment: (fixed header fields) (segments table)
-  //                  fixed header fields: 80 bytes
-  //                                       magicWord, versions, etc...
-  //                                       segmentsTableSize: int32
-  //                                       segmentsCount:     int32
-  //                                       globalDepth:       int8
-  //                                       ...
-  //                  segments table: int16[N], contains data segment directory
+  //Binary layout: (header) (segmentsTable) (data segment)+
+  //  Header: (fixed header fields): 80 bytes   (=HeaderLayout)
+  //           magicWord, versions, etc...
+  //           segmentSize:                   int32
+  //           actualSegmentsCount:           int32
+  //           globalHashSuffixDepth:         int8
+  //           fileStatus:                    int8
+  //           ...
+  //
+  //  Segments table: data segment directory
+  //                  segmentsTable(slotIndex->segmentIndex): int16[N]
+  //
   //  Data segment:  (fixed segment header) (hashtable data)
   //                 fixed segment header: 16 bytes
   //                                       segment live entries count: int32
@@ -65,15 +70,12 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   //                                       ...
   //                 hashtable slots: int32[N]
   //
-  //Header and data segments are of same size -- this simplifies overall layout, since we need to align everything
-  // to a page size, and it is much easier to align fixed size segments -- just (pageSize % segmentSize = 0).
+  //(SegmentsTable) and (data segments) are of same size -- this simplifies overall layout
 
-
-  //Segment size: 32K seems like a good segment size: header segment could address (32k-80)/2 ~= 16k segments,
+  //About segment size choice: 32K lets the table address 16k segments,
   // each segment contains (32k-16)/4/2 ~= 4k of (key:int32,value:int32) entries.
   // Open addressing hashmaps usually sized with loadFactor ~= 0.5, so 4k entries mean ~2k useful payload.
   // In total, ~16k segments of ~2k key-value pairs each gives us 32M entries max -- suitable for most purposes
-  // (BEWARE: currently only 16M entries could be used, see comment in HeaderLayout)
   // 64k segments make it 4x, which should be enough for everyone.
 
   public static final int DEFAULT_SEGMENT_SIZE = 1 << 15;   // =32k
@@ -87,7 +89,6 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   //        0) remove 'synchronized' and put synchronization on clients to decide?
   //        1) prune tombstones (see comment in a .split() method for details)
   //        2) .size() is now O(N), make it O(1)
-  //        3) Under-utilized (< 50%-utilized) segmentTable room (see HeaderLayout comments)
 
   private final ExtendibleHashMapStorage storage;
 
@@ -112,12 +113,17 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     if (Integer.bitCount(segmentSize) != 1) {
       throw new IllegalArgumentException("segmentSize(=" + segmentSize + ") must be a power of 2");
     }
+    int headerSize = storage.headerSize();
+    if (headerSize < REQUIRED_HEADER_SIZE) {
+      throw new IllegalArgumentException("headerSize(=" + headerSize + ") must be >= " + REQUIRED_HEADER_SIZE);
+    }
 
     synchronized (this) {
       this.storage = storage;
       boolean storageIsEmpty = storage.isEmpty();
-      MemorySegment headerSegment = storageIsEmpty ? storage.allocateSegment(0) : storage.segment(0);
-      header = new HeaderLayout(headerSegment, segmentSize);
+      MemorySegment headerSegment = storage.header().asSlice(0, REQUIRED_HEADER_SIZE);
+      MemorySegment segmentsTable = storage.segmentsTable();
+      header = new HeaderLayout(headerSegment, segmentsTable, segmentSize);
 
       if (storageIsEmpty) {
         initEmptyMap(segmentSize);
@@ -256,7 +262,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     //FIXME RC: it is O(#segments) now, but O(1) would be better -> just keep recordsCount in a header
     int segmentsCount = header.actualSegmentsCount();
     int totalEntries = 0;
-    for (int segmentIndex = 1; segmentIndex <= segmentsCount; segmentIndex++) {
+    for (int segmentIndex = 0; segmentIndex < segmentsCount; segmentIndex++) {
       totalEntries += HashMapSegmentLayout.aliveEntriesCount(storage.segment(segmentIndex));
     }
     return totalEntries;
@@ -266,7 +272,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   public synchronized boolean isEmpty() throws IOException {
     checkNotClosed();
     int segmentsCount = header.actualSegmentsCount();
-    for (int segmentIndex = 1; segmentIndex <= segmentsCount; segmentIndex++) {
+    for (int segmentIndex = 0; segmentIndex < segmentsCount; segmentIndex++) {
       int aliveEntriesCount = HashMapSegmentLayout.aliveEntriesCount(storage.segment(segmentIndex));
       if (aliveEntriesCount > 0) {
         return false;
@@ -281,7 +287,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     checkNotClosed();
     int segmentSize = header.segmentSize();
     int segmentsCount = header.actualSegmentsCount();
-    for (int segmentIndex = 1; segmentIndex <= segmentsCount; segmentIndex++) {
+    for (int segmentIndex = 0; segmentIndex < segmentsCount; segmentIndex++) {
       HashMapSegmentLayout segment = new HashMapSegmentLayout(segmentIndex, segmentSize, storage.segment(segmentIndex));
       if (segment.aliveEntriesCount() > 0) {
         if (!hashMapAlgo.forEach(segment, processor)) {
@@ -310,7 +316,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     segmentsCache.clear();
 
     storage.clear();
-    header = new HeaderLayout(storage.allocateSegment(0), segmentSize);
+    MemorySegment headerSegment = storage.header().asSlice(0, REQUIRED_HEADER_SIZE);
+    header = new HeaderLayout(headerSegment, storage.segmentsTable(), segmentSize);
     initEmptyMap(segmentSize);
     dirty = false;
     markModified();
@@ -500,12 +507,11 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   private HashMapSegmentLayout allocateSegment(int hashSuffix,
                                                byte hashSuffixDepth) throws IOException {
     int segmentsCount = header.actualSegmentsCount();
-    int segmentIndex = segmentsCount + 1;// segmentIndex starts with 1 (segmentIndex=0 is the header)
 
     HashMapSegmentLayout segment = new HashMapSegmentLayout(
-      segmentIndex,
+      segmentsCount,
       header.segmentSize(),
-      storage.allocateSegment(segmentIndex)
+      storage.allocateSegment(segmentsCount)
     );
     segment.updateHashSuffix(hashSuffix, hashSuffixDepth);
 
@@ -638,47 +644,29 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     private static final VarHandle GLOBAL_HASH_SUFFIX_DEPTH_HANDLE = fieldHandle("globalHashSuffixDepth");
     private static final VarHandle FILE_STATUS_HANDLE              = fieldHandle("fileStatus");
 
-    public  static final int STATIC_HEADER_SIZE                    = Math.toIntExact(LAYOUT.byteSize());
-    private static final int SEGMENTS_TABLE_OFFSET                 = STATIC_HEADER_SIZE; //int16[N]
+    public  static final int STATIC_HEADER_SIZE                    = (int)LAYOUT.byteSize();
 
 
     public static final byte FILE_STATUS_PROPERLY_CLOSED           = 1;
     public static final byte FILE_STATUS_OPENED                    = 0;
     //@formatter:on
 
-    //TODO RC: segmentSize is 2^N, and segmentsTable also must have 2^M entries -- but since we use few bytes
-    // for static header, this means M <= N-1 -- i.e. we waste _almost half_ of header segment space because
-    // segmentsTable must have power-of-2 size.
-    // We could solve that by using some compression -- we need to win just 80 bytes out of 32-64k, it seems
-    // quite doable, and we could cache uncompressed segmentsTable in memory -- 32-64k heap usage is OK given
-    // it makes hashtable almost 2x larger for same segmentSize, and likely also speeds up segmentTable lookup
-    // a bit.
-    // Alternative solution would be to untie (headerSegment.size == dataSegment.size) constraint: i.e. allow
-    // header to be (80 + dataSegment.size) bytes. Such a change of layout means we can't align segments to the
-    // first page anymore -- so there will be (dataSegment.size-80) wasted bytes at the end of the first page.
-    // But this still seems a better tradeoff than the first option. And even better: since OS virtual memory page
-    // size (4k-16k) usually smaller than segmentSize (32k-64k) - only a part (< 50%) of those 32k-64k of wasted
-    // space would really waste _RAM_.
-
     private final MemorySegment headerSegment;
-
-    /** headerSegmentSize == {@link #segmentSize()} (we check that in ctor), but we cache it in field since it is frequently used */
-    private final transient int headerSegmentSize;
+    private final MemorySegment segmentsTableSegment;
+    private final int segmentSize;
 
     HeaderLayout(@NotNull MemorySegment headerSegment,
-                 int headerSegmentSize) {
-      if (headerSegmentSize <= STATIC_HEADER_SIZE) {
-        throw new IllegalArgumentException("headerSize(=" +
-                                           headerSegmentSize + ") must be > STATIC_HEADER_SIZE(=" + STATIC_HEADER_SIZE + ")");
+                 @NotNull MemorySegment segmentsTableSegment,
+                 int segmentSize) {
+      if (headerSegment.byteSize() != STATIC_HEADER_SIZE) {
+        throw new IllegalArgumentException("header size(=" + headerSegment.byteSize() + ") must be " + STATIC_HEADER_SIZE);
       }
-      if (headerSegment.byteSize() != headerSegmentSize) {
-        throw new IllegalArgumentException(
-          "headerSegment.byteSize()(=" + headerSegment.byteSize() + ") must be " + headerSegmentSize
-        );
+      if (segmentsTableSegment.byteSize() != segmentSize) {
+        throw new IllegalArgumentException("segments table size(=" + segmentsTableSegment.byteSize() + ") must be " + segmentSize);
       }
-
-      this.headerSegmentSize = headerSegmentSize;
+      this.segmentSize = segmentSize;
       this.headerSegment = headerSegment;
+      this.segmentsTableSegment = segmentsTableSegment;
     }
 
     public int magicWord() {
@@ -751,20 +739,20 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       GLOBAL_HASH_SUFFIX_DEPTH_HANDLE.set(headerSegment, 0L, (byte)depth);
     }
 
-    /** @return segmentIndex in [1..actualSegmentsCount], for slotIndex in [0..segmentTableSize) */
-    public int segmentIndex(int slotIndex) throws IOException {
+    /** @return segmentIndex in [0..actualSegmentsCount), for slotIndex in [0..segmentTableSize) */
+    public int segmentIndex(int slotIndex) {
       Objects.checkIndex(slotIndex, segmentTableSize());
-      return Short.toUnsignedInt(headerSegment.get(JAVA_SHORT, SEGMENTS_TABLE_OFFSET + slotIndex * (long)Short.BYTES));
+      return Short.toUnsignedInt(segmentsTableSegment.get(JAVA_SHORT, slotIndex * (long)Short.BYTES));
     }
 
     public int segmentIndexByHash(int hash) throws IOException {
       int hashSuffixDepth = globalHashSuffixDepth();
       int segmentSlotIndex = segmentSlotIndex(hash, hashSuffixDepth);
       int segmentIndex = segmentIndex(segmentSlotIndex);
-      if (segmentIndex < 1) {
+      if (segmentIndex >= actualSegmentsCount()) {
         throw new CorruptedException(
           "segmentIndex[hash: " + hash + ", suffix: " + hashSuffixDepth + ", slotIndex: " + segmentSlotIndex + "](= " + segmentIndex + ")" +
-          " must be >=1 => .segmentsTable is corrupted"
+          " must be in [0.." + actualSegmentsCount() + ") => .segmentsTable is corrupted"
         );
       }
       return segmentIndex;
@@ -773,10 +761,10 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     public void updateSegmentIndex(int slotIndex,
                                    int segmentIndex) {
       Objects.checkIndex(slotIndex, segmentTableSize());
-      if (segmentIndex < 1 || segmentIndex > 0xFFFF) {
-        throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be in [1..0xFFFF]");
+      if (segmentIndex < 0 || segmentIndex >= 0x10000) {
+        throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be in [0..0x10000)");
       }
-      headerSegment.set(JAVA_SHORT, SEGMENTS_TABLE_OFFSET + slotIndex * (long)Short.BYTES, (short)segmentIndex);
+      segmentsTableSegment.set(JAVA_SHORT, slotIndex * (long)Short.BYTES, (short)segmentIndex);
     }
 
     public int segmentTableSize() {
@@ -784,17 +772,17 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     }
 
     public int maxSegmentTableSize() {
-      return (headerSegmentSize - STATIC_HEADER_SIZE) / Short.BYTES;
+      return segmentSize / Short.BYTES;
     }
 
     @Override
     public String toString() {
-      return "HeaderLayout[headerSize=" + headerSegmentSize + ']';
+      return "HeaderLayout[segmentSize=" + segmentSize + ']';
     }
 
     public String dump() throws IOException {
       StringBuilder sb =
-        new StringBuilder("HeaderLayout[size: " + headerSegmentSize + "b, globalHashSuffixSize: " + globalHashSuffixDepth() + "]");
+        new StringBuilder("HeaderLayout[size: " + segmentSize + "b, globalHashSuffixSize: " + globalHashSuffixDepth() + "]");
       sb.append("[tableSize: " + segmentTableSize() + ", actualSegments: " + actualSegmentsCount() + "]\n");
       for (int i = 0; i < segmentTableSize(); i++) {
         sb.append("\t[" + i + "]=" + segmentIndex(i) + "\n");
@@ -837,8 +825,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     //@formatter:on
 
     public HashMapSegmentLayout {
-      if (segmentIndex < 1) {
-        throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be >=1 (0-th segment is a header)");
+      if (segmentIndex < 0) {
+        throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must not be negative");
       }
       if (segment.byteSize() != segmentSize) {
         throw new IllegalArgumentException(

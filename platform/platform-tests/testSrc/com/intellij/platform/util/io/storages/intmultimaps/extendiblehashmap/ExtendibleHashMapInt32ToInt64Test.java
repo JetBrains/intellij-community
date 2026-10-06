@@ -19,8 +19,9 @@ import java.util.List;
 
 import static com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap.NO_VALUE;
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64.DEFAULT_SEGMENT_SIZE;
-import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64.DEFAULT_STORAGE_PAGE_SIZE;
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -28,11 +29,64 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ExtendibleHashMapInt32ToInt64Test extends DurableIntToMultiIntMapTestBase<ExtendibleHashMapInt32ToInt64Test.Int32View> {
   private static final int ENTRIES_TO_FORCE_SPLITS = 4_000;
+  private static final int MAP_HEADER_SIZE = 76;
 
   @TempDir Path tempDir;
 
   ExtendibleHashMapInt32ToInt64Test() {
     super(/*entriesCountToTest: */4_000_000);
+  }
+
+  @Test
+  void fullSegmentTableRejectsFurtherExpansion() throws IOException {
+    var storage = new TestStorage();
+    var map = new ExtendibleHashMapInt32ToInt64(storage);
+    try {
+      var failure = assertThrows(IllegalStateException.class, () -> {
+        for (int key = 1; key <= 100_000; key++) {
+          map.put(key, key);
+        }
+      }, "The map must stop when 512 table slots cannot be doubled");
+      assertTrue(failure.getMessage().contains("currentSize=512"), "The table must use all 512 slots before expansion fails");
+      assertTrue(Short.toUnsignedInt(storage.segmentsTable().get(JAVA_SHORT, 1022)) > 0,
+                 "The last table slot must hold a segment index");
+    }
+    finally {
+      map.closeAndClean();
+    }
+  }
+
+  @Test
+  void mappedStorageKeepsHeaderSeparateFromSegmentsTable(@TempDir @NotNull Path tempDir) throws IOException {
+    var path = tempDir.resolve("segments.map");
+    var factory = MMappedFileStorageFactory.withDefaults().pageSize(4096);
+    try (var mappedStorage = factory.open(tempDir.resolve("invalid-header.map"))) {
+      assertThrows(IllegalArgumentException.class, () -> {
+        try (var invalid = new ExtendibleHashMapStorageOverMMappedFile(mappedStorage, 1025, 1024)) {
+          assertEquals(1025, invalid.headerSize());
+        }
+      });
+    }
+    try (var storage = new ExtendibleHashMapStorageOverMMappedFile(factory.open(path), MAP_HEADER_SIZE, 1024)) {
+      assertTrue(storage.isEmpty());
+      assertThrows(IllegalStateException.class, storage::segmentsTable);
+      assertThrows(IllegalStateException.class, () -> storage.allocateSegment(0));
+      var header = storage.header();
+      var table = storage.segmentsTable();
+      assertEquals(MAP_HEADER_SIZE, storage.headerSize());
+      assertEquals(MAP_HEADER_SIZE, header.byteSize());
+      assertEquals(1024, table.byteSize());
+      header.set(JAVA_INT, 0, 42);
+      table.set(JAVA_INT, 0, 73);
+      assertEquals(42, storage.header().get(JAVA_INT, 0));
+      storage.flush();
+    }
+    try (var reopened = new ExtendibleHashMapStorageOverMMappedFile(factory.open(path), MAP_HEADER_SIZE, 1024)) {
+      assertEquals(42, reopened.header().get(JAVA_INT, 0));
+      assertEquals(73, reopened.segmentsTable().get(JAVA_INT, 0));
+      reopened.clear();
+      assertEquals(0, reopened.header().get(JAVA_INT, 0));
+    }
   }
 
   @Override
@@ -285,11 +339,11 @@ class ExtendibleHashMapInt32ToInt64Test extends DurableIntToMultiIntMapTestBase<
 
   private static @NotNull ExtendibleHashMapInt32ToInt64 open(@NotNull Path storagePath) throws IOException {
     return MMappedFileStorageFactory.withDefaults()
-      .pageSize(DEFAULT_STORAGE_PAGE_SIZE)
+      .pageSize(DEFAULT_SEGMENT_SIZE * 32)
       .wrapStorageSafely(
         storagePath,
         mappedStorage -> new ExtendibleHashMapInt32ToInt64(
-          new ExtendibleHashMapStorageOverMMappedFile(mappedStorage, DEFAULT_SEGMENT_SIZE)
+          new ExtendibleHashMapStorageOverMMappedFile(mappedStorage, MAP_HEADER_SIZE, DEFAULT_SEGMENT_SIZE)
         )
       );
   }
@@ -390,6 +444,8 @@ class ExtendibleHashMapInt32ToInt64Test extends DurableIntToMultiIntMapTestBase<
 
     private final Arena arena = Arena.ofConfined();
     private final List<MemorySegment> segments = new ArrayList<>();
+    private MemorySegment header;
+    private MemorySegment segmentsTable;
 
     private boolean open = true;
     private boolean failFlush;
@@ -403,12 +459,39 @@ class ExtendibleHashMapInt32ToInt64Test extends DurableIntToMultiIntMapTestBase<
 
     @Override
     public boolean isEmpty() {
-      return segments.isEmpty();
+      return header == null && segmentsTable == null && segments.isEmpty();
     }
 
     @Override
     public int segmentSize() {
       return SEGMENT_SIZE;
+    }
+
+    @Override
+    public int headerSize() {
+      return MAP_HEADER_SIZE;
+    }
+
+    @Override
+    public @NotNull MemorySegment header() {
+      if (header == null) {
+        if (!segments.isEmpty()) {
+          throw new IllegalStateException("Segments exist without a header");
+        }
+        header = arena.allocate(headerSize(), Integer.BYTES);
+      }
+      return header;
+    }
+
+    @Override
+    public @NotNull MemorySegment segmentsTable() {
+      if (header == null) {
+        throw new IllegalStateException("Call header() first");
+      }
+      if (segmentsTable == null) {
+        segmentsTable = arena.allocate(SEGMENT_SIZE, Long.BYTES);
+      }
+      return segmentsTable;
     }
 
     @Override
@@ -428,6 +511,8 @@ class ExtendibleHashMapInt32ToInt64Test extends DurableIntToMultiIntMapTestBase<
 
     @Override
     public void clear() {
+      header = null;
+      segmentsTable = null;
       segments.clear();
     }
 
@@ -452,10 +537,12 @@ class ExtendibleHashMapInt32ToInt64Test extends DurableIntToMultiIntMapTestBase<
     public void closeAndClean() {
       close();
       segments.clear();
+      header = null;
+      segmentsTable = null;
     }
 
     private byte fileStatus() {
-      return segments.getFirst().get(JAVA_BYTE, FILE_STATUS_OFFSET);
+      return header.get(JAVA_BYTE, FILE_STATUS_OFFSET);
     }
   }
 }

@@ -9,23 +9,32 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 
-/// Stores the fixed-size logical segments of an extendible hash map
+/// Stores the header, segments table, and fixed-size segments of an extendible hash map
 @ApiStatus.Internal
 public interface ExtendibleHashMapStorage extends Durable, CleanableStorage {
   boolean isOpen();
 
-  /// @return `true` when the storage has no logical segments
+  /// @return `true` when the storage has no header, segments table, or hash map segments
   boolean isEmpty() throws IOException;
 
-  /// @return the size of each logical segment
+  /// @return the size of the segments table and each hash map segment
   int segmentSize();
 
-  /// @return the specified existing logical segment
+  /// @return the size of the header
+  int headerSize();
+
+  /// @return the fixed-size header, creating it if absent
+  @NotNull MemorySegment header() throws IOException;
+
+  /// @return the segments table, creating it if absent
+  @NotNull MemorySegment segmentsTable() throws IOException;
+
+  /// @return the specified existing hash map segment
   @NotNull MemorySegment segment(int segmentIndex) throws IOException;
 
-  /// Allocates and returns the specified logical segment
+  /// Allocates and returns the specified hash map segment
   @NotNull MemorySegment allocateSegment(int segmentIndex) throws IOException;
 
-  /// Removes all logical segments and keeps the storage open
+  /// Removes the header, segments table, and hash map segments, and keeps the storage open
   void clear() throws IOException;
 }

@@ -2,18 +2,23 @@
 package com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap;
 
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
+import com.intellij.util.io.CorruptedException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 
+//Binary layout: (header) (segmentsTable) (data segment)+
 @ApiStatus.Internal
 public final class ExtendibleHashMapStorageOverMMappedFile implements ExtendibleHashMapStorage {
   private final @NotNull MMappedFileStorage storage;
+  private final int headerSize;
   private final int segmentSize;
+  private boolean headerAccessed;
 
   public ExtendibleHashMapStorageOverMMappedFile(@NotNull MMappedFileStorage storage,
+                                                 int headerSize,
                                                  int segmentSize) {
     if (Integer.bitCount(segmentSize) != 1) {
       throw new IllegalArgumentException("segmentSize(=" + segmentSize + ") must be a power of 2");
@@ -25,7 +30,11 @@ public final class ExtendibleHashMapStorageOverMMappedFile implements Extendible
     if (pageSize % segmentSize != 0) {
       throw new IllegalArgumentException("segmentSize(=" + segmentSize + ") must align with pageSize(=" + pageSize + ")");
     }
+    if (headerSize <= 0 || headerSize > segmentSize) {
+      throw new IllegalArgumentException("headerSize(=" + headerSize + ") must be in [1.." + segmentSize + "]");
+    }
     this.storage = storage;
+    this.headerSize = headerSize;
     this.segmentSize = segmentSize;
   }
 
@@ -40,11 +49,37 @@ public final class ExtendibleHashMapStorageOverMMappedFile implements Extendible
   }
 
   @Override
+  public int headerSize() {
+    return headerSize;
+  }
+
+  @Override
+  public @NotNull MemorySegment header() throws IOException {
+    long fileSize = storage.actualFileSize();
+    if (fileSize > 0 && fileSize < segmentSize) {
+      throw new CorruptedException("Hashmap storage (=" + fileSize + "b) contains an incomplete header (" + segmentSize + "b)");
+    }
+    var page = storage.pageByOffset(0);
+    headerAccessed = true;
+    return page.rawPageSegment().asSlice(0, headerSize);
+  }
+
+  @Override
+  public @NotNull MemorySegment segmentsTable() throws IOException {
+    ensureHeaderAccessed();
+    return segmentByOffset(segmentSize);
+  }
+
+  @Override
   public @NotNull MemorySegment segment(int segmentIndex) throws IOException {
+    ensureHeaderAccessed();
     if (segmentIndex < 0) {
       throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be >= 0");
     }
-    var offsetInFile = segmentIndex * (long)segmentSize;
+    return segmentByOffset((segmentIndex + 2L) * segmentSize);
+  }
+
+  private @NotNull MemorySegment segmentByOffset(long offsetInFile) throws IOException {
     var page = storage.pageByOffset(offsetInFile);
     var offsetInPage = storage.toOffsetInPage(offsetInFile);
     return page.rawPageSegment().asSlice(offsetInPage, segmentSize);
@@ -58,6 +93,13 @@ public final class ExtendibleHashMapStorageOverMMappedFile implements Extendible
   @Override
   public void clear() throws IOException {
     storage.zeroizeTillEOF(/*startingOffset: */0L);
+    headerAccessed = false;
+  }
+
+  private void ensureHeaderAccessed() {
+    if (!headerAccessed) {
+      throw new IllegalStateException("Call header() before accessing the segments table or hash map segments");
+    }
   }
 
   @Override

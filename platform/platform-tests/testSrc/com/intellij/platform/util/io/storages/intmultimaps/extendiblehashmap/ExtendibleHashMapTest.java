@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehash
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.FAIL_SPECTACULARLY;
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.IGNORE_AND_HOPE_FOR_THE_BEST;
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -32,6 +35,39 @@ public class ExtendibleHashMapTest extends DurableIntToMultiIntMapTestBase<Exten
 
   public ExtendibleHashMapTest() {
     super(/*entriesToTest: */4_000_000);
+  }
+
+  @Test
+  public void fullSegmentTableUsesItsLastSlot() throws IOException {
+    var storage = new TestStorage();
+    var map = new ExtendibleHashMap(storage);
+    try {
+      var failure = assertThrows(IllegalStateException.class, () -> {
+        for (int key = 1; key <= 100_000; key++) {
+          map.put(key, key);
+        }
+      });
+      assertTrue(failure.getMessage().contains("currentSize=512"), "The map must fill the table before expansion fails");
+      assertTrue(Short.toUnsignedInt(storage.segmentsTable().get(JAVA_SHORT, 1022)) > 0,
+                 "The last table slot must hold a segment index");
+    }
+    finally {
+      map.closeAndClean();
+    }
+  }
+
+  @Test
+  public void oldFileVersionIsRejectedBeforeMapping() throws IOException {
+    var oldPath = storagePath.resolveSibling("old-version.map");
+    var oldHeader = ByteBuffer.allocate(80).order(ByteOrder.nativeOrder());
+    oldHeader.putInt(ExtendibleHashMap.MAGIC_WORD);
+    oldHeader.putInt(1);
+    oldHeader.putInt(ExtendibleHashMap.DEFAULT_SEGMENT_SIZE);
+    Files.write(oldPath, oldHeader.array());
+
+    assertThrows(IOException.class, () -> ExtendibleMapFactory.mediumSize().open(oldPath));
+    assertEquals(oldHeader.capacity(), Files.size(oldPath),
+                 "The version check must not map or extend an old file");
   }
 
   @Test
@@ -262,6 +298,8 @@ public class ExtendibleHashMapTest extends DurableIntToMultiIntMapTestBase<Exten
 
     private final Arena arena = Arena.ofConfined();
     private final List<MemorySegment> segments = new ArrayList<>();
+    private MemorySegment header;
+    private MemorySegment segmentsTable;
 
     private boolean open = true;
     private boolean failFlush;
@@ -275,12 +313,39 @@ public class ExtendibleHashMapTest extends DurableIntToMultiIntMapTestBase<Exten
 
     @Override
     public boolean isEmpty() {
-      return segments.isEmpty();
+      return header == null && segmentsTable == null && segments.isEmpty();
     }
 
     @Override
     public int segmentSize() {
       return SEGMENT_SIZE;
+    }
+
+    @Override
+    public int headerSize() {
+      return ExtendibleHashMap.REQUIRED_HEADER_SIZE;
+    }
+
+    @Override
+    public @NotNull MemorySegment header() {
+      if (header == null) {
+        if (!segments.isEmpty()) {
+          throw new IllegalStateException("Segments exist without a header");
+        }
+        header = arena.allocate(headerSize(), Integer.BYTES);
+      }
+      return header;
+    }
+
+    @Override
+    public @NotNull MemorySegment segmentsTable() {
+      if (header == null) {
+        throw new IllegalStateException("Call header() first");
+      }
+      if (segmentsTable == null) {
+        segmentsTable = arena.allocate(SEGMENT_SIZE, Long.BYTES);
+      }
+      return segmentsTable;
     }
 
     @Override
@@ -300,6 +365,8 @@ public class ExtendibleHashMapTest extends DurableIntToMultiIntMapTestBase<Exten
 
     @Override
     public void clear() {
+      header = null;
+      segmentsTable = null;
       segments.clear();
     }
 
@@ -324,10 +391,12 @@ public class ExtendibleHashMapTest extends DurableIntToMultiIntMapTestBase<Exten
     public void closeAndClean() {
       close();
       segments.clear();
+      header = null;
+      segmentsTable = null;
     }
 
     private byte fileStatus() {
-      return segments.getFirst().get(JAVA_BYTE, FILE_STATUS_OFFSET);
+      return header.get(JAVA_BYTE, FILE_STATUS_OFFSET);
     }
   }
 }

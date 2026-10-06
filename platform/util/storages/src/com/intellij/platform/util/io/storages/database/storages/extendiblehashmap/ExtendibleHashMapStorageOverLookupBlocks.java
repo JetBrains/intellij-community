@@ -16,9 +16,12 @@ import java.lang.foreign.MemorySegment;
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ACTIVE;
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ALLOCATED;
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.RETIRED;
-import static com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapSegmentBlockLayout.HEADER_SIZE;
+import static com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapBlockLayout.BLOCK_HEADER_SIZE;
+import static com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapBlockLayout.HEADER_AND_SEGMENTS_TABLE_BLOCK_MARKER;
+import static com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapBlockLayout.headerAndSegmentsTableBlockPayloadSize;
+import static com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapBlockLayout.segmentsTableOffset;
 
-/// Maps fixed-size logical segments to scoped lookup blocks
+/// Uses single block for the hash map header and segments table, and a separate block for each hash map data-segment
 @ApiStatus.Internal
 public final class ExtendibleHashMapStorageOverLookupBlocks implements ExtendibleHashMapStorage {
   /// Persistent identifier of the extendible hash map lookup format
@@ -27,26 +30,47 @@ public final class ExtendibleHashMapStorageOverLookupBlocks implements Extendibl
   /// Generation used before a map descriptor selects a generation
   public static final int INITIAL_GENERATION = 1;
 
+
   private final @NotNull LookupBlocks lookupBlocks;
+  private final int headerSize;
   private final int segmentSize;
 
-  /// Blocks are added here after their segment-header is initialized
+
   private final Int2ObjectMap<LookupBlocks.Block> blocksBySegmentIndex = new Int2ObjectOpenHashMap<>();
+
+  /// Block that contains static header + segmentsTable
+  private LookupBlocks.Block metadataBlock;
+  /// segments table offset in [#metadataBlock] payload
+  private final int metadataBlockSegmentsTableOffset;
+  /// total size of [#metadataBlock]'s payload: headerSize & segmentSize, but with alignment
+  private final int metadataBlockTotalPayloadSize;
 
   private boolean open = true;
 
   public ExtendibleHashMapStorageOverLookupBlocks(@NotNull LookupBlocks lookupBlocks,
+                                                  int headerSize,
                                                   int segmentSize) throws IOException {
     if (segmentSize <= 0) {
       throw new IllegalArgumentException("segmentSize(=" + segmentSize + ") must be positive");
     }
+    if (headerSize <= 0 || headerSize > segmentSize) {
+      throw new IllegalArgumentException("headerSize(=" + headerSize + ") must be in [1.." + segmentSize + "]");
+    }
+
+    metadataBlockSegmentsTableOffset = segmentsTableOffset(headerSize);
+    metadataBlockTotalPayloadSize = headerAndSegmentsTableBlockPayloadSize(headerSize, segmentSize);
+
     this.lookupBlocks = lookupBlocks;
+    this.headerSize = headerSize;
     this.segmentSize = segmentSize;
 
     for (var block : lookupBlocks.blocks()) {
       if (block.state() != RETIRED) {
         addExistingBlock(block);
       }
+    }
+    if (metadataBlock == null && !blocksBySegmentIndex.isEmpty()) {
+      throw new CorruptedException("Hash map data exists without a header (metadata) block");
     }
   }
 
@@ -58,7 +82,7 @@ public final class ExtendibleHashMapStorageOverLookupBlocks implements Extendibl
   @Override
   public boolean isEmpty() throws IOException {
     ensureOpen();
-    return blocksBySegmentIndex.isEmpty();
+    return metadataBlock == null && blocksBySegmentIndex.isEmpty();
   }
 
   @Override
@@ -67,12 +91,34 @@ public final class ExtendibleHashMapStorageOverLookupBlocks implements Extendibl
   }
 
   @Override
+  public int headerSize() {
+    return headerSize;
+  }
+
+  @Override
+  public @NotNull MemorySegment header() throws IOException {
+    ensureOpen();
+    if (metadataBlock == null) {
+      allocateMetadataBlock();
+    }
+    return headerPayload(metadataBlock);
+  }
+
+  @Override
+  public @NotNull MemorySegment segmentsTable() throws IOException {
+    ensureOpen();
+    ensureHeaderAllocated();
+    return segmentsTablePayload(metadataBlock);
+  }
+
+  @Override
   public @NotNull MemorySegment segment(int segmentIndex) throws IOException {
     ensureOpen();
+    ensureHeaderAllocated();
     checkSegmentIndex(segmentIndex);
     var block = blocksBySegmentIndex.get(segmentIndex);
     if (block == null) {
-      throw new CorruptedException("Missing hashmap segment #" + segmentIndex);
+      throw new CorruptedException("Missing hash map segment #" + segmentIndex);
     }
     return segmentPayload(block);
   }
@@ -80,16 +126,17 @@ public final class ExtendibleHashMapStorageOverLookupBlocks implements Extendibl
   @Override
   public @NotNull MemorySegment allocateSegment(int segmentIndex) throws IOException {
     ensureOpen();
+    ensureHeaderAllocated();
     checkSegmentIndex(segmentIndex);
     if (blocksBySegmentIndex.containsKey(segmentIndex)) {
-      throw new IllegalArgumentException("Hashmap segment #" + segmentIndex + " already exists");
+      throw new IllegalArgumentException("Hash map segment #" + segmentIndex + " already exists");
     }
 
-    var block = lookupBlocks.allocate(Math.addExact(HEADER_SIZE, segmentSize));
+    var block = lookupBlocks.allocate(BLOCK_HEADER_SIZE + segmentSize);
     var initialized = false;
     try {
       var content = block.payload();
-      ExtendibleHashMapSegmentBlockLayout.initializeSegmentIndex(content, segmentIndex);
+      ExtendibleHashMapBlockLayout.initializeSegmentIndex(content, segmentIndex);
       var payload = segmentPayload(block);
       block.activate();
       blocksBySegmentIndex.put(segmentIndex, block);
@@ -118,6 +165,7 @@ public final class ExtendibleHashMapStorageOverLookupBlocks implements Extendibl
   @Override
   public void close() {
     open = false;
+    metadataBlock = null;
     blocksBySegmentIndex.clear();
   }
 
@@ -127,21 +175,53 @@ public final class ExtendibleHashMapStorageOverLookupBlocks implements Extendibl
     open = false;
   }
 
+  private void allocateMetadataBlock() throws IOException {
+    var block = lookupBlocks.allocate(metadataBlockTotalPayloadSize);
+    var initialized = false;
+    try {
+      var content = block.payload();
+      if (content.byteSize() < metadataBlockTotalPayloadSize) {
+        throw corrupted(block, "the content is too small for the header and segments table");
+      }
+      ExtendibleHashMapBlockLayout.initializeHeaderAndSegmentsTable(content);
+      block.activate();
+      metadataBlock = block;
+      initialized = true;
+    }
+    finally {
+      if (!initialized && block.state() == ALLOCATED) {
+        block.discard();
+      }
+    }
+  }
+
   private void addExistingBlock(@NotNull LookupBlocks.Block block) throws IOException {
     if (block.state() != ACTIVE) {
       // SEALED blocks can't be used in Indexes because sealed means 'read-only', and Index impl
       // usually do modify its blocks
       throw corrupted(block, "the block is not active");
     }
+
     var content = block.payload();
-    if (content.byteSize() < HEADER_SIZE) {
-      throw corrupted(block, "the content is too small for the block header");
+    if (content.byteSize() < BLOCK_HEADER_SIZE) {
+      throw corrupted(block, "the content(=" + content.byteSize() + "b) is too small for the block header(=" + BLOCK_HEADER_SIZE + "b)");
     }
-    var segmentIndex = ExtendibleHashMapSegmentBlockLayout.segmentIndex(content);
+    var segmentIndex = ExtendibleHashMapBlockLayout.segmentIndex(content);
+
+    if (segmentIndex == HEADER_AND_SEGMENTS_TABLE_BLOCK_MARKER) {
+      if (metadataBlock != null) {
+        throw corrupted(block, "header and segments table also belong to block " + metadataBlock.id());
+      }
+      headerPayload(block);
+      segmentsTablePayload(block);
+      metadataBlock = block;
+      return;
+    }
+
     if (segmentIndex < 0) {
       throw corrupted(block, "segment index " + segmentIndex + " is negative");
     }
-    if (content.byteSize() < HEADER_SIZE + (long)segmentSize) {
+    if (content.byteSize() < BLOCK_HEADER_SIZE + (long)segmentSize) {
       throw corrupted(block, "the content is too small for a " + segmentSize + "-byte segment");
     }
     var previous = blocksBySegmentIndex.putIfAbsent(segmentIndex, block);
@@ -150,17 +230,42 @@ public final class ExtendibleHashMapStorageOverLookupBlocks implements Extendibl
     }
   }
 
+  /// @return payload of a segment-block
   private @NotNull MemorySegment segmentPayload(@NotNull LookupBlocks.Block block) throws IOException {
     var content = block.payload();
-    if (content.byteSize() < HEADER_SIZE + (long)segmentSize) {
+    if (content.byteSize() < BLOCK_HEADER_SIZE + (long)segmentSize) {
       throw corrupted(block, "the content is too small for a " + segmentSize + "-byte segment");
     }
-    return content.asSlice(HEADER_SIZE, segmentSize);
+    return content.asSlice(BLOCK_HEADER_SIZE, segmentSize);
+  }
+
+  /// @return the header region of the metadata block
+  private @NotNull MemorySegment headerPayload(@NotNull LookupBlocks.Block block) throws IOException {
+    var content = block.payload();
+    if (content.byteSize() < metadataBlockTotalPayloadSize) {
+      throw corrupted(block, "the content is too small for the header and segments table");
+    }
+    return content.asSlice(BLOCK_HEADER_SIZE, headerSize);
+  }
+
+  private @NotNull MemorySegment segmentsTablePayload(@NotNull LookupBlocks.Block block) throws IOException {
+    var content = block.payload();
+    if (content.byteSize() < metadataBlockTotalPayloadSize) {
+      throw corrupted(block, "the content is too small for the header and segments table");
+    }
+    return content.asSlice(metadataBlockSegmentsTableOffset, segmentSize);
   }
 
   private void retireOwnedBlocks() {
     lookupBlocks.retireAll();
+    metadataBlock = null;
     blocksBySegmentIndex.clear();
+  }
+
+  private void ensureHeaderAllocated() {
+    if (metadataBlock == null) {
+      throw new IllegalStateException("Call header() before accessing the segments table or hash map segments");
+    }
   }
 
   private void ensureOpen() throws ClosedStorageException {
@@ -176,7 +281,7 @@ public final class ExtendibleHashMapStorageOverLookupBlocks implements Extendibl
   }
 
   private static @NotNull CorruptedException corrupted(@NotNull LookupBlocks.Block block,
-                                                        @NotNull String details) {
-    return new CorruptedException("Invalid hashmap segment block #" + block.id() + ": " + details);
+                                                       @NotNull String details) {
+    return new CorruptedException("Invalid hash map block #" + block.id() + ": " + details);
   }
 }

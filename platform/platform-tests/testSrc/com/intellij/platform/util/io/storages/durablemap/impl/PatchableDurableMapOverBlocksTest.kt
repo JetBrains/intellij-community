@@ -436,6 +436,7 @@ class PatchableDurableMapOverBlocksTest {
         ExtendibleHashMapStorageOverLookupBlocks.IMPLEMENTATION_ID,
         ExtendibleHashMapStorageOverLookupBlocks.INITIAL_GENERATION,
       ),
+      ExtendibleHashMapInt32ToInt64.REQUIRED_HEADER_SIZE,
       DurableMapOverBlocks.SEGMENT_SIZE,
     )
   )
