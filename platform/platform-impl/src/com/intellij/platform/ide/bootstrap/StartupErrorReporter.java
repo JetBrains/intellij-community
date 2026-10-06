@@ -137,7 +137,7 @@ public final class StartupErrorReporter {
 
     message.append("\n-----\n").append(message("bootstrap.error.appendix.jre", jreDetails()));
 
-    showError(title, message.toString(), t); //NON-NLS
+    showError(title, message.toString(), null, t); //NON-NLS
   }
 
   private static @NlsSafe String jreDetails() {
@@ -150,15 +150,20 @@ public final class StartupErrorReporter {
   }
 
   public static void showError(@Nls(capitalization = Title) String title, @Nls(capitalization = Sentence) String message) {
-    showError(title, message, null);
+    showError(title, message, null, null);
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "UseHtmlChunkToolTip"})
-  private static void showError(@Nls(capitalization = Title) String title, @Nls(capitalization = Sentence) String message, @Nullable Throwable error) {
+  private static void showError(@Nls(capitalization = Title) String title, @Nls(capitalization = Sentence) String message,
+                                @NonNls @Nullable String additionalDiagnostics,
+                                @Nullable Throwable error) {
     System.err.println();
     System.err.println("**" + title + "**");
     System.err.println();
     System.err.println(message);
+    if (additionalDiagnostics != null) {
+      System.err.println(additionalDiagnostics);
+    }
 
     if (!hasGraphics || AppMode.isCommandLine() || GraphicsEnvironment.isHeadless() || AppMode.isRemoteDevHost()) {
       return;
@@ -365,7 +370,9 @@ public final class StartupErrorReporter {
       var pluginIds = essentialPluginMissingException.getPluginIds();
       showError(
         message("bootstrap.error.title.corrupted"),
-        message("bootstrap.error.essential.plugins", pluginIds.size(), "  " + String.join("\n  ", pluginIds) + "\n\n")
+        message("bootstrap.error.essential.plugins", pluginIds.size(), "  " + String.join("\n  ", pluginIds) + "\n\n"),
+        essentialPluginMissingException.getDiagnostic(),
+        null
       );
       System.exit(AppExitCodes.INSTALLATION_CORRUPTED);
     }
