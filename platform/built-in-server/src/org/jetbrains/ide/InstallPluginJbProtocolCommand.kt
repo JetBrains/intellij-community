@@ -13,13 +13,10 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.NlsContexts.DialogMessage
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AppIcon
-import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Handles `jetbrains://tool/plugin/install?id=<pluginId>[&ids=<id1>,<id2>,…]` URLs.
@@ -28,8 +25,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * we do not enforce a host allowlist here because OS-level protocol handlers do not provide
  * a verifiable origin.
  */
-@Internal
-class InstallPluginJbProtocolCommand : JBProtocolCommand("plugin") {
+internal class InstallPluginJbProtocolCommand : JBProtocolCommand("plugin") {
   override suspend fun execute(target: String?, parameters: Map<String, String>, fragment: String?): @DialogMessage String? {
     if (target != "install") {
       return IdeBundle.message("jb.protocol.unknown.target", target)
@@ -42,9 +38,9 @@ class InstallPluginJbProtocolCommand : JBProtocolCommand("plugin") {
     val toInstall = ids.filterNot { PluginManagerCore.isPluginInstalled(it) }.toSet()
     if (toInstall.isEmpty()) {
       val names = ids.joinToString(", ") {
-        HtmlChunk.text(PluginManagerCore.getPlugin(it)?.name ?: it.idString).bold().toString()
+        PluginManagerCore.getPlugin(it)?.name ?: it.idString
       }
-      return XmlStringUtil.wrapInHtml(IdeBundle.message("jb.protocol.plugin.install.already.installed", names))
+      return IdeBundle.message("jb.protocol.plugin.install.already.installed", names)
     }
 
     warmUpPluginStates(toInstall)
