@@ -4,12 +4,13 @@ package com.intellij.platform.projectView.pane
 
 import com.intellij.ide.util.treeView.ExpandOnDoubleClickSupport
 import com.intellij.openapi.ui.Queryable
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 import com.intellij.ui.treeStructure.TreeNodeWithPresentation
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-fun <T : Any> buildProjectViewNodeModel(id: Long, userObject: T, build: (ProjectViewNodeModelBuilder) -> Unit): BackendProjectViewNodeModel<T> {
+fun <T : ProjectViewNodeUserObject> buildProjectViewNodeModel(id: Long, userObject: T, build: (ProjectViewNodeModelBuilder) -> Unit): BackendProjectViewNodeModel<T> {
   val builder = ProjectViewNodeModelBuilderImpl(id, userObject)
   build(builder)
   return builder.build()
@@ -40,6 +41,11 @@ sealed interface ProjectViewNodeModel : ExpandOnDoubleClickSupport, TreeNodeWith
 }
 
 @ApiStatus.Experimental
-sealed interface BackendProjectViewNodeModel<out T> : ProjectViewNodeModel {
+sealed interface BackendProjectViewNodeModel<out T : ProjectViewNodeUserObject> : ProjectViewNodeModel {
   val userObject: T
+}
+
+@ApiStatus.Experimental
+interface ProjectViewNodeUserObject {
+  fun getVirtualFile(): VirtualFile? = null
 }

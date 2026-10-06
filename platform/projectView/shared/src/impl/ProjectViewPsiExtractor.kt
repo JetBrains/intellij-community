@@ -8,13 +8,14 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.UnloadedModuleDescription
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
+import com.intellij.platform.projectView.pane.ProjectViewNodeUserObject
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-interface ProjectViewPsiExtractor<T> {
+interface ProjectViewPsiExtractor<T : ProjectViewNodeUserObject> {
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun extractPsiElements(nodes: List<BackendProjectViewNodeModel<T>>): List<PsiElement>
 

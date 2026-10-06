@@ -3,6 +3,7 @@
 
 package com.intellij.platform.projectView.tests
 
+import com.intellij.platform.projectView.pane.ProjectViewNodeUserObject
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilderImpl
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.buildProjectViewNodeModel
@@ -31,12 +32,12 @@ internal class ProjectViewPaneStateBuilderTest {
   
   private class TestFixture {
     val sut = ProjectViewPaneStateBuilderImpl(projectViewPaneId("TestPane"))
-    val state = sut.asBackendStateAccessor<String>()
+    val state = sut.asBackendStateAccessor<ProjectViewTestUserObject>()
     val id = AtomicLong(0L)
 
     suspend fun addNode(parentId: Long, text: String): Long {
       val id = id.incrementAndFetch()
-      sut.addNode(parentId, 0, buildProjectViewNodeModel(id, text) { builder ->
+      sut.addNode(parentId, 0, buildProjectViewNodeModel(id, ProjectViewTestUserObject(text)) { builder ->
         builder.buildPresentation { presentationBuilder ->
           presentationBuilder.setMainText(text)
         }
@@ -45,3 +46,5 @@ internal class ProjectViewPaneStateBuilderTest {
     }
   }
 }
+
+private data class ProjectViewTestUserObject(val value: String) : ProjectViewNodeUserObject

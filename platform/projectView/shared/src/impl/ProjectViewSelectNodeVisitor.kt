@@ -3,6 +3,7 @@ package com.intellij.platform.projectView.impl
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
+import com.intellij.platform.projectView.pane.ProjectViewNodeUserObject
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.ui.tree.TreeVisitor
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
  * so a provider is stateless and reusable.
  */
 @ApiStatus.Experimental
-interface ProjectViewSelectNodeVisitorProvider<T> {
+interface ProjectViewSelectNodeVisitorProvider<T : ProjectViewNodeUserObject> {
   fun createSelectNodeVisitor(elementPointer: SmartPsiElementPointer<PsiElement>?, file: VirtualFile?): ProjectViewSelectNodeVisitor<T>
 }
 
@@ -29,7 +30,7 @@ interface ProjectViewSelectNodeVisitorProvider<T> {
  * - [TreeVisitor.Action.SKIP_SIBLINGS] - the element is no longer valid, abort the search.
  */
 @ApiStatus.Experimental
-abstract class ProjectViewSelectNodeVisitor<T>(
+abstract class ProjectViewSelectNodeVisitor<T : ProjectViewNodeUserObject>(
   protected val elementPointer: SmartPsiElementPointer<PsiElement>?,
   protected val file: VirtualFile?,
 ) {

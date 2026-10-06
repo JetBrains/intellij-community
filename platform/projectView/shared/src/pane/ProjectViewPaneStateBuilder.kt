@@ -18,19 +18,19 @@ sealed interface ProjectViewPaneStateBuilder {
   suspend fun selectNode(nodePath: ProjectViewNodePath, options: ((SelectInProjectViewRequestBuilder) -> Unit)? = null)
   suspend fun updateSettingsState(build: (ProjectViewPaneSettingsStateBuilder) -> Unit)
   suspend fun clear()
-  fun <T> asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<T>
-  fun <T> asSuspendingBackendStateAccessor(): SuspendingBackendProjectViewPaneStateAccessor<T>
+  fun <T : ProjectViewNodeUserObject> asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<T>
+  fun <T : ProjectViewNodeUserObject> asSuspendingBackendStateAccessor(): SuspendingBackendProjectViewPaneStateAccessor<T>
   fun asSettingsAccessor(): ProjectViewPaneSettingsAccessor
 }
 
 @ApiStatus.Experimental
-sealed interface BackendProjectViewPaneStateAccessor<T> {
+sealed interface BackendProjectViewPaneStateAccessor<T : ProjectViewNodeUserObject> {
   fun getNodeById(id: Long): BackendProjectViewNodeModel<T>?
   fun getParentByChildId(childId: Long): BackendProjectViewNodeModel<T>?
 }
 
 @ApiStatus.Experimental
-sealed interface SuspendingBackendProjectViewPaneStateAccessor<T> {
+sealed interface SuspendingBackendProjectViewPaneStateAccessor<T : ProjectViewNodeUserObject> {
   suspend fun getNodeById(id: Long): BackendProjectViewNodeModel<T>?
   suspend fun getNodePathById(id: Long): ProjectViewNodePath?
   suspend fun getNodeByUserObject(userObject: T): BackendProjectViewNodeModel<T>?

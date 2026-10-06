@@ -17,6 +17,7 @@ import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
+import com.intellij.ide.projectView.impl.nodes.getVirtualFileForNodeOrItsPSI
 import com.intellij.ide.scopeView.ScopeViewPane
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.NodeDescriptor
@@ -38,6 +39,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.projectView.actions.legacyProjectViewOption
 import com.intellij.platform.projectView.impl.DataContextCutCopyPasteDeleteHandler
 import com.intellij.platform.projectView.impl.navigateSafely
@@ -45,6 +47,7 @@ import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewDnDOptions
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
+import com.intellij.platform.projectView.pane.ProjectViewNodeUserObject
 import com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
@@ -557,7 +560,7 @@ private class AbstractProjectViewPaneStateManager(
       treeModel.isLeaf(node)
     }
     return readAction {
-      buildProjectViewNodeModel(id, node) { nodeBuilder ->
+      buildProjectViewNodeModel(id, LegacyProjectViewNodeUserObject(nodeByModelNode)) { nodeBuilder ->
         nodeBuilder.buildPresentation { presentationBuilder ->
           buildNodePresentation(node, presentationBuilder, isLeaf)
         }
@@ -971,6 +974,14 @@ private data class LegacyProjectViewNode(
   val modelNode: Any,
   var childrenState: ChildrenState = ChildrenState.NOT_LOADED,
 )
+
+private data class LegacyProjectViewNodeUserObject(
+  val modelNode: Any,
+) : ProjectViewNodeUserObject {
+  override fun getVirtualFile(): VirtualFile? {
+    return (modelNode as? AbstractTreeNode<*>)?.getVirtualFileForNodeOrItsPSI()
+  }
+}
 
 private enum class ChildrenState {
   NOT_LOADED,

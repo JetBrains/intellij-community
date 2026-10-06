@@ -173,11 +173,11 @@ class ProjectViewPaneStateBuilderImpl(
       }
     }
 
-    fun <T> asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<T> {
+    fun <T : ProjectViewNodeUserObject> asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<T> {
       return BackendProjectViewPaneStateAccessorImpl(nodeById)
     }
 
-    fun <T> asSuspendingBackendStateAccessor(flowProducer: IncrementalUpdateFlowProducer<ProjectViewPaneStateEvent, State>): SuspendingBackendProjectViewPaneStateAccessor<T> {
+    fun <T : ProjectViewNodeUserObject> asSuspendingBackendStateAccessor(flowProducer: IncrementalUpdateFlowProducer<ProjectViewPaneStateEvent, State>): SuspendingBackendProjectViewPaneStateAccessor<T> {
       return SuspendingBackendProjectViewPaneStateAccessorImpl(paneId, flowProducer)
     }
 
@@ -185,7 +185,7 @@ class ProjectViewPaneStateBuilderImpl(
       return ProjectViewPaneSettingsAccessorImpl { actionState }
     }
 
-    private class BackendProjectViewPaneStateAccessorImpl<T>(
+    private class BackendProjectViewPaneStateAccessorImpl<T : ProjectViewNodeUserObject>(
       private val nodeById: ConcurrentHashMap<Long, Node>,
     ) : BackendProjectViewPaneStateAccessor<T> {
       @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
@@ -199,7 +199,7 @@ class ProjectViewPaneStateBuilderImpl(
       }
     }
 
-    private class SuspendingBackendProjectViewPaneStateAccessorImpl<T>(
+    private class SuspendingBackendProjectViewPaneStateAccessorImpl<T : ProjectViewNodeUserObject>(
       private val paneId: ProjectViewPaneId,
       private val flowProducer: IncrementalUpdateFlowProducer<ProjectViewPaneStateEvent, State>,
     ) : SuspendingBackendProjectViewPaneStateAccessor<T> {
@@ -308,12 +308,12 @@ class ProjectViewPaneStateBuilderImpl(
     flowProducer.handleUpdate(update)
   }
 
-  override fun <T> asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<T> {
+  override fun <T : ProjectViewNodeUserObject> asBackendStateAccessor(): BackendProjectViewPaneStateAccessor<T> {
     return state.asBackendStateAccessor()
   }
 
   @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
-  override fun <T> asSuspendingBackendStateAccessor(): SuspendingBackendProjectViewPaneStateAccessor<T> {
+  override fun <T : ProjectViewNodeUserObject> asSuspendingBackendStateAccessor(): SuspendingBackendProjectViewPaneStateAccessor<T> {
     return state.asSuspendingBackendStateAccessor(flowProducer)
   }
 

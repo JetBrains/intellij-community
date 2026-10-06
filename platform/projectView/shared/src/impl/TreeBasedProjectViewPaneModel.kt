@@ -59,6 +59,7 @@ import com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccesso
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
+import com.intellij.platform.projectView.pane.ProjectViewNodeUserObject
 import com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
@@ -126,13 +127,13 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
 
 @ApiStatus.Experimental
-interface ProjectViewTreeNodeProvider<T> {
+interface ProjectViewTreeNodeProvider<T : ProjectViewNodeUserObject> {
   suspend fun getChildren(parent: T?): List<T>?
   suspend fun getNodeModelFlow(id: Long, node: T): Flow<BackendProjectViewNodeModel<T>>
 }
 
 @ApiStatus.Experimental
-abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Project) : ProjectViewPaneModel {
+abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(override val project: Project) : ProjectViewPaneModel {
   private val currentTreeState = AtomicReference<ProjectViewPaneTreeState?>(null)
 
   override val cutCopyPasteDeleteHandler: ProjectViewPaneCutCopyPasteDeleteHandler = MyCutCopyPasteDeleteHandler()
@@ -1179,7 +1180,7 @@ private data class UpdateSettingsRequest(override val epoch: Long) : StateUpdate
 private data class SetOptionRequest(override val epoch: Long, val option: ProjectViewPaneOption, val newValue: Boolean) : StateUpdateRequest()
 private data class SetSortKeyRequest(override val epoch: Long, val sortKey: ProjectViewPaneSortKey) : StateUpdateRequest()
 private data class SelectNodeRequest(override val epoch: Long, val nodePath: ProjectViewNodePath, val requestFocus: Boolean) : StateUpdateRequest()
-private data class UpdateNodeModelRequest<T>(override val epoch: Long, val id: Long, val model: BackendProjectViewNodeModel<T>) : StateUpdateRequest()
+private data class UpdateNodeModelRequest<T : ProjectViewNodeUserObject>(override val epoch: Long, val id: Long, val model: BackendProjectViewNodeModel<T>) : StateUpdateRequest()
 
 private val LOG = logger<TreeBasedProjectViewPaneModel<*>>()
 

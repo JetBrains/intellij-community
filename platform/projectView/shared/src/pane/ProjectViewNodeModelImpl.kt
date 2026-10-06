@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 
 
-internal class ProjectViewNodeModelBuilderImpl<T : Any>(private val id: Long, private val userObject: T) : ProjectViewNodeModelBuilder {
+internal class ProjectViewNodeModelBuilderImpl<T : ProjectViewNodeUserObject>(private val id: Long, private val userObject: T) : ProjectViewNodeModelBuilder {
   private val presentationBuilder = TreeNodePresentationBuilderImpl()
   private var pathElementType: String? = null
   private var pathElementId: String? = null
@@ -79,7 +79,7 @@ internal class ProjectViewNodeModelBuilderImpl<T : Any>(private val id: Long, pr
                         ?: (userObject as? PathElementIdProvider)?.pathElementId
                         ?: TreeState.defaultPathElementId(userObject)
     return ProjectViewNodeModelImpl(
-      maybeUserObject = userObject,
+      userObject = userObject,
       id = id,
       presentation = presentationBuilder.build(),
       pathElementType = pathElementType,
@@ -95,8 +95,8 @@ internal class ProjectViewNodeModelBuilderImpl<T : Any>(private val id: Long, pr
 }
 
 @ApiStatus.Internal
-data class ProjectViewNodeModelImpl<T : Any>(
-  private val maybeUserObject: T?,
+data class ProjectViewNodeModelImpl<T : ProjectViewNodeUserObject>(
+  override val userObject: T,
   override val id: Long,
   override val presentation: TreeNodePresentationImpl,
   private val pathElementType: String,
@@ -104,7 +104,7 @@ data class ProjectViewNodeModelImpl<T : Any>(
   val flags: Int = 0,
 ) : BackendProjectViewNodeModel<T>, PathElementIdProvider, BackgroundSupplier {
   constructor(
-    maybeUserObject: T?,
+    userObject: T,
     id: Long,
     presentation: TreeNodePresentationImpl,
     pathElementType: String,
@@ -116,7 +116,7 @@ data class ProjectViewNodeModelImpl<T : Any>(
     isExpandOnDoubleClick: Boolean,
     shouldBeInitiallyExpanded: Boolean,
   ) : this(
-    maybeUserObject,
+    userObject,
     id,
     presentation,
     pathElementType,
@@ -132,9 +132,6 @@ data class ProjectViewNodeModelImpl<T : Any>(
   )
 
   override fun getElementBackground(row: Int): Color? = presentation.background
-
-  override val userObject: T
-    get() = checkNotNull(maybeUserObject) { "The user object is only available on the backend" }
 
   override fun getPathElementType(): String {
     return pathElementType
@@ -195,4 +192,7 @@ val SuperRootPresentation: TreeNodePresentationImpl = TreeNodePresentationBuilde
 }.build()
 
 @ApiStatus.Internal
-val SuperRootModel: ProjectViewNodeModel = ProjectViewNodeModelImpl(null, SUPER_ROOT_ID, SuperRootPresentation, "", "")
+val SuperRootModel: ProjectViewNodeModel = ProjectViewNodeModelImpl(SuperRootUserObject, SUPER_ROOT_ID, SuperRootPresentation, "", "")
+
+@ApiStatus.Internal
+object SuperRootUserObject : ProjectViewNodeUserObject

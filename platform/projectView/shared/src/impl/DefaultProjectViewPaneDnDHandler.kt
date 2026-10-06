@@ -12,6 +12,7 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 import com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
 import com.intellij.platform.projectView.pane.ProjectViewDnDOptions
+import com.intellij.platform.projectView.pane.ProjectViewNodeUserObject
 import com.intellij.platform.projectView.pane.ProjectViewPaneDnDHandler
 import com.intellij.platform.projectView.pane.ProjectViewPaneModel
 import com.intellij.psi.PsiDirectory
@@ -40,7 +41,7 @@ internal object NoOpDnDHandler : ProjectViewPaneDnDHandler {
   }
 }
 
-internal class DefaultProjectViewPaneDnDHandler<T>(
+internal class DefaultProjectViewPaneDnDHandler<T : ProjectViewNodeUserObject>(
   private val pane: ProjectViewPaneModel,
   private val state: BackendProjectViewPaneStateAccessor<T>,
   private val psi: ProjectViewPsiExtractor<T>,
@@ -86,18 +87,18 @@ internal class DefaultProjectViewPaneDnDHandler<T>(
     return Target(node, psiElement.createSmartPointer(), targetModule)
   }
   
-  private data class DnDContext<T>(
+  private data class DnDContext<T : ProjectViewNodeUserObject>(
     val sources: List<Source<T>>,
     val target: Target<T>,
   )
   
-  private data class Source<T>(val node: BackendProjectViewNodeModel<T>, val psi: SmartPsiElementPointer<PsiElement>) {
+  private data class Source<T : ProjectViewNodeUserObject>(val node: BackendProjectViewNodeModel<T>, val psi: SmartPsiElementPointer<PsiElement>) {
     @get:RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     val psiElement: PsiElement?
       get() = psi.dereference()
   }
 
-  private data class Target<T>(val node: BackendProjectViewNodeModel<T>, val psi: SmartPsiElementPointer<PsiElement>, val module: Module?) {
+  private data class Target<T : ProjectViewNodeUserObject>(val node: BackendProjectViewNodeModel<T>, val psi: SmartPsiElementPointer<PsiElement>, val module: Module?) {
     @get:RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     val psiElement: PsiElement?
       get() = psi.dereference()

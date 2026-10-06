@@ -8,6 +8,7 @@ import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
 import com.intellij.ide.projectView.impl.GroupByTypeComparator
 import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
+import com.intellij.ide.projectView.impl.nodes.getVirtualFileForNodeOrItsPSI
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
@@ -15,7 +16,9 @@ import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.ide.util.treeView.ValidateableNode
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
+import com.intellij.platform.projectView.pane.ProjectViewNodeUserObject
 import com.intellij.platform.projectView.pane.buildProjectViewNodeModel
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
@@ -33,8 +36,12 @@ import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-interface TreeStructureProjectViewNode {
+interface TreeStructureProjectViewNode : ProjectViewNodeUserObject {
   val elementDescriptor: NodeDescriptor<*>
+
+  override fun getVirtualFile(): VirtualFile? {
+    return (elementDescriptor as? AbstractTreeNode<*>)?.getVirtualFileForNodeOrItsPSI()
+  }
 }
 
 private data class TreeStructureProjectViewNodeImpl(
