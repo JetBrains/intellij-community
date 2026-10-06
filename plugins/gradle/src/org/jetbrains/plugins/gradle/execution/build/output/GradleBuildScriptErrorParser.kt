@@ -17,7 +17,7 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.gradle.execution.GradleConsoleFilter
 import org.jetbrains.plugins.gradle.issue.GradleIssueChecker
 import org.jetbrains.plugins.gradle.issue.UnresolvedDependencyBuildIssue
-import java.io.File
+import java.nio.file.Path
 import java.util.function.Consumer
 
 /**
@@ -116,7 +116,7 @@ class GradleBuildScriptErrorParser : BuildOutputLineParserBridge() {
 
     val filePosition: FilePosition?
     if (filter != null) {
-      filePosition = FilePosition(File(filter.filteredFileName), filter.filteredLineNumber - 1, 0)
+      filePosition = FilePosition(Path.of(filter.filteredFileName), filter.filteredLineNumber - 1, 0)
     }
     else {
       filePosition = null
