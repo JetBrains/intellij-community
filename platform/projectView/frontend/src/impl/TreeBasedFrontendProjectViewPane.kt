@@ -447,6 +447,12 @@ internal class TreeBasedFrontendProjectViewPane(
     sink[CommonDataKeys.NAVIGATABLE_ARRAY] = selectedNodes.map { node ->
       node.projectViewNode.let { paneTreeModel.createNavigatable(it) }
     }.toTypedArray()
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE) {
+      selectedNodes.firstOrNull()?.projectViewNode?.userObject?.getVirtualFile() 
+    }
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY) {
+      selectedNodes.mapNotNull { it.projectViewNode.userObject.getVirtualFile() }.toTypedArray()
+    }
   }
 
   override fun saveStateTo(element: Element) {
