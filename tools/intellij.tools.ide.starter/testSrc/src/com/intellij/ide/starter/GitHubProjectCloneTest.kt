@@ -43,6 +43,13 @@ class GitHubProjectCloneTest {
     GitHubProject.fromGithubOverSsh(repoRelativeUrl = REPOSITORY).repositoryUrl shouldBe "ssh://git@github.com/DataGrip/dumps.git"
   }
 
+  /** Some test projects give the repository path with a leading slash, such as `/urfave/cli`. */
+  @Test
+  fun `a leading slash gives the same URL`() {
+    GitHubProject.fromGithub(repoRelativeUrl = "/$REPOSITORY").repositoryUrl shouldBe "https://github.com/DataGrip/dumps.git"
+    GitHubProject.fromGithubOverSsh(repoRelativeUrl = "/$REPOSITORY").repositoryUrl shouldBe "ssh://git@github.com/DataGrip/dumps.git"
+  }
+
   @Test
   @Timeout(value = 10, unit = TimeUnit.MINUTES)
   fun `the SSH URL checks out the project`(@TempDir cache: Path) {

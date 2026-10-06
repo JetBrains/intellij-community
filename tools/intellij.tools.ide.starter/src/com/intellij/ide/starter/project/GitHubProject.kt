@@ -7,6 +7,9 @@ import kotlin.time.Duration.Companion.minutes
 
 object GitHubProject {
   /**
+   * Git clones the repo over HTTPS, so a machine needs no SSH key. A machine that holds an SSH key for
+   * github.com must use [fromGithubOverSsh], because HTTPS shares the rate limit of github.com.
+   *
    * [repoRelativeUrl] - Relative path to GitHub repo. Eg: "alexholmes/avro-maven"
    * [projectDirRelativePath] - Relative path from repo root. Eg: { it.resolve("path/to/deeply/hidden/project") }
    */
