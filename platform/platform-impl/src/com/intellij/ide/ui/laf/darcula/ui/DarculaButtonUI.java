@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DrawUtil;
 import com.intellij.ui.JBColor;
@@ -194,7 +195,9 @@ public class DarculaButtonUI extends BasicButtonUI {
 
       Paint paint = getBackground(c, r);
       if(paint != null) {
-        if (!c.hasFocus() && !isSmallVariant(c) && UIManager.getBoolean("Button.paintShadow")) {
+        if (!c.hasFocus() && !isSmallVariant(c) &&
+            !ClientProperty.isFalse(c, "JButton.paintShadow") &&
+            UIManager.getBoolean("Button.paintShadow")) {
           Color shadowColor = JBColor.namedColor("Button.shadowColor", JBColor.namedColor("Button.darcula.shadowColor",
                                                                                           new JBColor(new Color(0xa6a6a633, true), new Color(0x36363680, true))));
 

@@ -817,6 +817,11 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   public enum Status {
     Info(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, () -> AllIcons.General.BalloonInformation),
+
+    /**
+     * A softer alternative to {@link Status#Info} for informational content
+     * that needs less visual emphasis.
+     */
     InfoMuted(JBUI.CurrentTheme.Banner.INFO_MUTED_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_MUTED_BORDER_COLOR, () -> AllIcons.General.BalloonInformation),
     Success(JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND, JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR, () -> AllIcons.Status.Success),
     Warning(JBUI.CurrentTheme.Banner.WARNING_BACKGROUND, JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR, () -> AllIcons.General.BalloonWarning),

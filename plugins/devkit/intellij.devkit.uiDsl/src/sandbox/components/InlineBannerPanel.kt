@@ -30,7 +30,7 @@ internal class InlineBannerPanel : UISandboxPanel {
             for (status in listOfNotNull(allStatuses[index++], allStatuses.getOrNull(index++))) {
               inlineBanner(DevkitUiDslBundle.message("sandbox.inline.banner.status.0", "EditorNotificationPanel.Status." + status.name),
                            status).applyToComponent {
-                addDefaultButtonAction(DevkitUiDslBundle.message("sandbox.inline.banner.button")) {}
+                addButtonAction(DevkitUiDslBundle.message("sandbox.inline.banner.button")) {}
                 addAction(DevkitUiDslBundle.message("sandbox.inline.banner.action")) {}
               }.resizableColumn()
             }
@@ -44,7 +44,7 @@ internal class InlineBannerPanel : UISandboxPanel {
                        EditorNotificationPanel.Status.Info).applyToComponent {
             setGearAction(DevkitUiDslBundle.message("sandbox.inline.banner.gear.action")) {}
             setMenu(DevkitUiDslBundle.message("sandbox.inline.banner.menu"), createMenu())
-            addDefaultButtonAction(DevkitUiDslBundle.message("sandbox.inline.banner.the.button")) {}
+            addButtonAction(DevkitUiDslBundle.message("sandbox.inline.banner.button")) {}
             addAction(DevkitUiDslBundle.message("sandbox.inline.banner.learn.more")) {}
             addAction(DevkitUiDslBundle.message("sandbox.inline.banner.additional.action")) {}
             addAction(DevkitUiDslBundle.message("sandbox.inline.banner.very.long.action")) {}

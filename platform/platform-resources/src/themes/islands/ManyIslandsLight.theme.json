@@ -262,7 +262,7 @@
     "feedback-warning-border": "accent-warning-border-secondary",
     "feedback-error-bg": "accent-error-bg-secondary",
     "feedback-error-border": "accent-error-border-secondary",
-    "feedback-control-border": "control-border",
+    "feedback-control-border": "transparent-black-40",
     "feedback-ai-bg": "accent-ai-bg",
     "feedback-ai-border": "accent-ai-border",
 
