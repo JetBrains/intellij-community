@@ -1,19 +1,15 @@
 package com.intellij.python.pyrefly.typeEngine
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.LowMemoryWatcher
-import com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType
-import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.python.lsp.core.utils.PyLspServerModificationTracker
-import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.psi.types.PyLibraryModificationTracker
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Pyrefly contains own cache for resolved types,
@@ -21,27 +17,13 @@ import com.jetbrains.python.psi.types.PyLibraryModificationTracker
  * as we do for the built-in resolver
  */
 @Service(Service.Level.PROJECT)
-internal class PyreflyTypeEvalContextCache(val project: Project) : Disposable.Default {
-  private val lowMemoryModificationTracker = SimpleModificationTracker()
-
+internal class PyreflyTypeEvalContextCache(val project: Project) {
   private val cachedMapStorage = CachedValuesManager.getManager(project).createCachedValue {
-    val map = ContainerUtil.createConcurrentSoftValueMap<LspClient, PyreflyTypeEvalContext>()
-    CachedValueProvider.Result.create(map,
+    CachedValueProvider.Result.create(ConcurrentHashMap<LspClient, PyreflyTypeEvalContext>(),
                                       PsiModificationTracker.getInstance(project ),
                                       PyLibraryModificationTracker.getInstance(project),
-                                      lowMemoryModificationTracker,
                                       PyLspServerModificationTracker.getInstance(project))
   }
-
-
-  init {
-    LowMemoryWatcher.register(
-      {
-        lowMemoryModificationTracker.incModificationCount()
-        cachedMapStorage.value
-      }, LowMemoryWatcherType.ALWAYS, this)
-  }
-
 
   /**
    * The client is the key because a project can run more than one Pyrefly server. One server holds
