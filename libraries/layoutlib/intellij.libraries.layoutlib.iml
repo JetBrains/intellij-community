@@ -9,15 +9,15 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="layoutlib" type="repository">
-        <properties maven-id="com.android.tools.layoutlib:layoutlib:16.2.4">
+        <properties maven-id="com.android.tools.layoutlib:layoutlib:17.0.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/android/tools/layoutlib/layoutlib/16.2.4/layoutlib-16.2.4.jar">
-              <sha256sum>7ba5541db4c9e9c1104ce7e5d22bb3e738818e88d9bba86796bf16ff30a3b3eb</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/android/tools/layoutlib/layoutlib/17.0.0/layoutlib-17.0.0.jar">
+              <sha256sum>856f2694a496ba8c9492b5c84af963e8bfeaa48d80f694d492a609f236a9a340</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/layoutlib/layoutlib/16.2.4/layoutlib-16.2.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/layoutlib/layoutlib/17.0.0/layoutlib-17.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
