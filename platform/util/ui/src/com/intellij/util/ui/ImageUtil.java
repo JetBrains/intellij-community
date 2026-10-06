@@ -9,10 +9,13 @@ import com.intellij.ui.scale.ScaleType;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
+import com.intellij.util.system.OS;
 import org.imgscalr.Scalr;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.awt.image.SunVolatileImage;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -31,6 +34,7 @@ import java.awt.image.BufferedImageOp;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageFilter;
 import java.awt.image.ImageObserver;
+import java.awt.image.VolatileImage;
 
 import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 import static java.lang.Math.min;
@@ -336,5 +340,14 @@ public final class ImageUtil {
     g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
     g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
     g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+  }
+
+  @ApiStatus.Internal
+  public static boolean isVolatileImageValid(@NotNull VolatileImage image, @Nullable GraphicsConfiguration gc) {
+    if (OS.CURRENT == OS.Windows && image instanceof SunVolatileImage volatileImage) { // JBR-1540
+      GraphicsConfiguration imageConfig = volatileImage.getGraphicsConfig();
+      if (imageConfig != null && gc != null && imageConfig.getDevice() != gc.getDevice()) return false;
+    }
+    return image.validate(gc) != VolatileImage.IMAGE_INCOMPATIBLE;
   }
 }

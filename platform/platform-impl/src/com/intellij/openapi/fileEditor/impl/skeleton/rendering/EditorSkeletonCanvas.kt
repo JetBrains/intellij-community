@@ -1,29 +1,29 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
-
 package com.intellij.openapi.fileEditor.impl.skeleton.rendering
 
-import com.intellij.openapi.application.UI
 import com.intellij.ui.paint.use
 import com.intellij.ui.scale.JBUIScale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import sun.awt.SunToolkit
 import java.awt.Canvas
 import java.awt.Graphics
 import java.awt.Graphics2D
+import java.awt.Rectangle
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import javax.swing.JRootPane
+import javax.swing.SwingUtilities
 
 internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
   override val component: Canvas
     get() = this
 
   private val renderingStarted = AtomicBoolean()
+  private val removedArea = AtomicReference<RemovedArea?>()
+  private val backBuffer = EditorSkeletonBackBuffer()
 
   init {
     isFocusable = false
@@ -31,10 +31,9 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
   }
 
   override fun removeNotify() {
-    synchronized(treeLock) {
-      bufferStrategy?.dispose()
-      super.removeNotify()
-    }
+    super.removeNotify()
+    val rootPane = SwingUtilities.getRootPane(this) ?: return
+    removedArea.set(RemovedArea(rootPane, SwingUtilities.convertRectangle(this, Rectangle(width, height), rootPane)))
   }
 
   override fun paint(g: Graphics) {}
@@ -51,40 +50,33 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
         }
       }
       finally {
-        withContext(NonCancellable + Dispatchers.UI) {
-          bufferStrategy?.dispose()
-        }
+        backBuffer.release()
+        removedArea.set(null)
       }
     }
   }
 
   private fun renderFrame(paintFrame: (Graphics2D, Int, Int, Float) -> Unit) {
-    synchronized(treeLock) {
-      val w = width
-      val h = height
-      if (!isDisplayable || w <= 0 || h <= 0) return
-      tryWithAwtLock {
-        val buffer = bufferStrategy ?: run {
-          createBufferStrategy(2)
-          bufferStrategy
-        }
-        (buffer.drawGraphics as Graphics2D).use { graphics ->
-          paintFrame(graphics, w, h, JBUIScale.scale(1f))
-        }
-        if (!buffer.contentsRestored()) {
-          buffer.show()
-        }
-      }
+    val w = width
+    val h = height
+    val gc = graphicsConfiguration
+    if (!isDisplayable || gc == null || w <= 0 || h <= 0) {
+      backBuffer.release()
+      return
     }
+
+    val buffer = backBuffer.createOrUpdateImageBuffer(gc, w, h)
+    buffer.createGraphics().use { g ->
+      paintFrame(g, w, h, JBUIScale.scale(1f))
+    }
+
+    if (buffer.contentsLost()) return
+    val screen = graphics ?: return
+    screen.use { it.drawImage(buffer, 0, 0, null) }
+    removedArea.getAndSet(null)?.repaintBounds()
   }
 
-  private inline fun tryWithAwtLock(action: () -> Unit) {
-    if (!SunToolkit.awtTryLock()) return
-    try {
-      action()
-    }
-    finally {
-      SunToolkit.awtUnlock()
-    }
+  private data class RemovedArea(private val rootPane: JRootPane, private val bounds: Rectangle) {
+    fun repaintBounds() = rootPane.repaint(bounds)
   }
 }

@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.EditorTextField;
@@ -40,31 +39,27 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
-import sun.awt.image.SunVolatileImage;
-
-import java.awt.geom.GeneralPath;
-import java.util.Objects;
-import java.util.function.Consumer;
 
 import javax.swing.JComponent;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Toolkit;
+import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.VolatileImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * @author Pavel Fatin
@@ -293,7 +288,7 @@ public final class ImmediatePainter {
       if (myImage == null) {
         myImage = component.createVolatileImage(size.width, size.height);
       }
-      else if (!isLargeEnough(myImage, size) || !isImageValid((VolatileImage)myImage, component)) {
+      else if (!isLargeEnough(myImage, size) || !ImageUtil.isVolatileImageValid((VolatileImage)myImage, component.getGraphicsConfiguration())) {
         myImage.flush();
         myImage = component.createVolatileImage(size.width, size.height);
       }
@@ -307,15 +302,6 @@ public final class ImmediatePainter {
       throw new IllegalArgumentException("Image size is undefined");
     }
     return width >= size.width && height >= size.height;
-  }
-
-  private static boolean isImageValid(VolatileImage image, Component component) {
-    GraphicsConfiguration componentConfig = component.getGraphicsConfiguration();
-    if (SystemInfo.isWindows && image instanceof SunVolatileImage volatileImage) { // JBR-1540
-      GraphicsConfiguration imageConfig = volatileImage.getGraphicsConfig();
-      if (imageConfig != null && componentConfig != null && imageConfig.getDevice() != componentConfig.getDevice()) return false;
-    }
-    return image.validate(componentConfig) != VolatileImage.IMAGE_INCOMPATIBLE;
   }
 
   private static void paintCaretBar(final Graphics2D g, final Rectangle2D r, final Color color) {
