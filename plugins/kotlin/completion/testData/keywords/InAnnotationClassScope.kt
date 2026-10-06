@@ -38,4 +38,5 @@ annotation class Test {
 // EXIST:  companion
 // EXIST:  data object
 // EXIST:  context
+// EXIST:  error
 // NOTHING_ELSE

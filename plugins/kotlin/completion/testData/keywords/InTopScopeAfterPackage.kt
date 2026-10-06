@@ -47,4 +47,5 @@ package Test
 // EXIST:  actual
 // EXIST:  lateinit var
 // EXIST:  context
+// EXIST:  error
 // NOTHING_ELSE
