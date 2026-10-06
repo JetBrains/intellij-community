@@ -3,6 +3,10 @@ package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.Configurable
@@ -51,17 +55,14 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
 
   /** [PyWorkspaceStructureModel]'s view of the editable-SDK pool — a thin adapter over [projectSdksModel]. */
   private val sdksTable: PyWorkspaceStructureModel.SdksTable = object : PyWorkspaceStructureModel.SdksTable {
-    override fun trackedNames(): Set<String> =
-      projectSdksModel.projectSdks.keys.mapTo(HashSet()) { it.name }
+    override fun trackedNames(): Set<SdkName> =
+      projectSdksModel.projectSdks.keys.mapTo(HashSet()) { SdkName(it.name) }
 
-    override fun add(jdk: PyJdkHandle) {
-      val original = jdk.originalSdk ?: return
-      projectSdksModel.addSdk(original)
-    }
-
-    override fun removeByName(name: String) {
-      val editable = projectSdksModel.projectSdks.entries.firstOrNull { it.key.name == name }?.value
-      if (editable != null) projectSdksModel.removeSdk(editable)
+    override fun syncFromJdkTable() {
+      // Wizard commits new SDKs directly to `ProjectJdkTable`; `reset(project)` re-reads the live
+      // table so the editable pool reflects the new SDK (with its `PythonSdkUpdater`-filled paths)
+      // without the add-time clone that caused PY-92599.
+      projectSdksModel.reset(project)
     }
   }
   private val model: PyWorkspaceStructureModel = PyWorkspaceStructureModel(
@@ -104,9 +105,26 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
     ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(
       ProjectJdkTable.JDK_TABLE_TOPIC,
       object : ProjectJdkTable.Listener {
-        override fun jdkAdded(jdk: Sdk) = model.onJdkAdded(PyJdkHandle.of(jdk))
-        override fun jdkRemoved(jdk: Sdk) = model.onJdkRemoved(PyJdkHandle.of(jdk))
-        override fun jdkNameChanged(jdk: Sdk, previousName: String) = model.onJdkRenamed()
+        // JDK-table listeners fire under the write action `ProjectJdkTableImpl.addJdk` holds,
+        // and `refreshAllModuleCombos` walks each pane's `reloadSdkComboItems`, which starts a
+        // modal progress in `interpreterItemsUnderProgress` — forbidden under a write action
+        // (PY-92598). Hop onto `Dispatchers.EDT` through the project's coroutine scope so the
+        // combo refresh runs after the write action releases.
+        override fun jdkAdded(jdk: Sdk) {
+          PyPackageCoroutine.launch(project) {
+            withContext(Dispatchers.EDT) { model.onJdkAdded(SdkName(jdk.name)) }
+          }
+        }
+        override fun jdkRemoved(jdk: Sdk) {
+          PyPackageCoroutine.launch(project) {
+            withContext(Dispatchers.EDT) { model.onJdkRemoved(SdkName(jdk.name)) }
+          }
+        }
+        override fun jdkNameChanged(jdk: Sdk, previousName: String) {
+          PyPackageCoroutine.launch(project) {
+            withContext(Dispatchers.EDT) { model.onJdkRenamed() }
+          }
+        }
       },
     )
 
@@ -121,10 +139,9 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
     }
   }
 
-  override fun isModified(): Boolean {
-    if (projectSdksModel.isModified) return true
-    return modulePanes.values.any { it.isModified() }
-  }
+  // Add / Remove / Edit mutate `ProjectJdkTable` and real SDKs directly, so nothing in
+  // `projectSdksModel` ever needs an apply or a revert — the model is a lazy re-readable view.
+  override fun isModified(): Boolean = modulePanes.values.any { it.isModified() }
 
   override fun reset() {
     projectSdksModel.reset(project)
@@ -134,7 +151,6 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
 
   @Throws(ConfigurationException::class)
   override fun apply() {
-    projectSdksModel.apply(null)
     for (pane in modulePanes.values) {
       pane.apply()
     }
@@ -155,6 +171,7 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
   private fun refreshAllModuleCombos() {
     modulePanes.values.forEach { it.refreshSdkCombo() }
   }
+
 
 
   /** Memoized to keep `getDisplayName` and layout branches consistent for a single dialog session. */

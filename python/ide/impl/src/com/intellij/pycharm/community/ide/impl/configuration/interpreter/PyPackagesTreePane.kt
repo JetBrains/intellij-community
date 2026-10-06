@@ -656,6 +656,7 @@ internal class PyPackagesTreePane(
   private fun triggerInstallPackageDialog() {
     val sdkToOpenOn = currentSdk
     val moduleForPreselect = preselectModuleName
+    val prefill = searchQuery.trim().takeIf { it.isNotEmpty() }
     // Taken at the click, so the dialog opens over a modal Settings window instead of waiting for it to close.
     val modality = ModalityState.current().asContextElement()
     PyPackageCoroutine.launch(project) {
@@ -664,6 +665,7 @@ internal class PyPackagesTreePane(
         PyInstallPackageDialogLauncher.open(
           project = project,
           interpreter = interpreterToOpenOn,
+          initialSearchText = prefill,
           preselectModuleName = moduleForPreselect,
         )
       }

@@ -25,13 +25,20 @@ internal class PySourcesConfigurable(module: Module) : Configurable {
   private val model = PySourcesModel(module)
   private val topPanel: JPanel = JPanel(BorderLayout())
 
+  /**
+   * Lazy-built once on the first [createComponent] call: launches the async editor build and
+   * returns the stable [topPanel]. Keeps `createComponent` idempotent — the platform may invoke
+   * it twice per settings open, which previously grew a second content-root panel (PY-92513).
+   */
+  private val panel: JPanel by lazy {
+    launchEditorAttach()
+    topPanel
+  }
+
   override fun getDisplayName(): String = PyBundle.message("configurable.PyWorkspaceStructureConfigurable.tab.sources")
   override fun getHelpTopic(): String? = null
 
-  override fun createComponent(): JComponent {
-    launchEditorAttach()
-    return topPanel
-  }
+  override fun createComponent(): JComponent = panel
 
   override fun isModified(): Boolean = model.isModified()
 
@@ -70,6 +77,10 @@ internal class PySourcesConfigurable(module: Module) : Configurable {
     PyPackageCoroutine.launch(model.moduleProject()) {
       val editor = model.createEditor()
       withContext(Dispatchers.EDT) {
+        // Belt-and-suspenders: another attach may have won the EDT hop first (e.g. reset ran
+        // while this coroutine was suspended in `createEditor`). Skip when `topPanel` already
+        // owns a component so the tree never grows a second content-root panel.
+        if (topPanel.componentCount > 0) return@withContext
         val component = editor.createComponent() ?: return@withContext
         topPanel.add(component, BorderLayout.CENTER)
         topPanel.revalidate()

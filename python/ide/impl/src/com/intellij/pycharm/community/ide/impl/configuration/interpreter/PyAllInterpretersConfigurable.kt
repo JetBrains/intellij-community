@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.Configurable
@@ -22,6 +23,7 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.DialogWrapper
@@ -247,7 +249,11 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     perRowSdkModified = true
   }
 
-  override fun isModified(): Boolean = projectSdksModel.isModified || perRowSdkModified
+  // Add / Remove / Edit flows mutate `ProjectJdkTable` and real SDKs directly, so there is nothing
+  // pending in `projectSdksModel` to apply or revert — the model only serves as a lazy source for
+  // the list and gets re-read via `reset(project)` whenever the JDK table or the per-row dialogs
+  // change state.
+  override fun isModified(): Boolean = perRowSdkModified
 
   override fun reset() {
     projectSdksModel.reset(project)
@@ -256,7 +262,6 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
   }
 
   override fun apply() {
-    projectSdksModel.apply(null)
     perRowSdkModified = false
   }
 
@@ -296,7 +301,10 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     override fun actionPerformed(e: AnActionEvent) {
       val group = DefaultActionGroup().apply {
         addAll(collectAddInterpreterActions(project.asModuleOrProject) { newSdk ->
-          projectSdksModel.addSdk(newSdk)
+          // Wizard already committed `newSdk` to `ProjectJdkTable`. Re-reading `projectSdksModel`
+          // from the live table picks it up (with its `PythonSdkUpdater`-filled paths) without
+          // going through the add-time clone that caused PY-92599.
+          projectSdksModel.reset(project)
           reloadList(preferredSelection = newSdk)
         })
         // Optional third-party extras (AI Assistant / Toolbox / others). The group is declared
@@ -345,7 +353,8 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     AllIcons.General.Remove,
   ) {
     override fun perform(interpreter: PythonInterpreter) {
-      interpreter.removeFrom(projectSdksModel)
+      interpreter.removeFromJdkTable()
+      projectSdksModel.reset(project)
       reloadList()
     }
   }
@@ -578,9 +587,12 @@ private object RowActionMetrics {
 private val PythonInterpreter.sdk: Sdk
   get() = getSdkAPI()
 
-/** Removes the underlying SDK from [model]. */
-internal fun PythonInterpreter.removeFrom(model: ProjectSdksModel) {
-  model.removeSdk(sdk)
+/** Removes the underlying SDK from `ProjectJdkTable`. */
+internal fun PythonInterpreter.removeFromJdkTable() {
+  val target = sdk
+  WriteAction.runAndWait<RuntimeException> {
+    ProjectJdkTable.getInstance().removeJdk(target)
+  }
 }
 
 /**

@@ -159,7 +159,7 @@ internal class PyModuleDetailsPane(
     override fun actionPerformed(e: AnActionEvent) {
       val group = DefaultActionGroup().apply {
         addAll(collectAddInterpreterActions(moduleOrProject) { newSdk ->
-          projectSdksModel.addSdk(newSdk)
+          projectSdksModel.reset(project)
           reloadSdkComboItems()
           resetSdkComboSelection()
           findExistingByName(newSdk.name)?.let { sdkComboModel.selectedItem = it }
@@ -295,8 +295,13 @@ internal class PyModuleDetailsPane(
 
   private fun reloadSdkComboItems() {
     val availableSdks = collectAvailablePythonSdks()
-    cacheInterpreterItems(availableSdks)
-    val items = buildComboItems(availableSdks)
+    val sdkByName = buildSdkLookup(availableSdks)
+    // Cache items for every SDK that can end up in the combo, not just the filter-passed subset.
+    // `buildSdkLookup` also carries the module's forced SDK (e.g. a WSL interpreter the association
+    // filter stripped from `availableSdks`), and the renderer's `getValue(sdk.name)` would throw
+    // `NoSuchElementException` on that name otherwise (WSL crash reported by Ilya).
+    cacheInterpreterItems(sdkByName.values.toList())
+    val items = buildComboItems(availableSdks, sdkByName)
     publishComboItems(items)
   }
 
@@ -316,12 +321,11 @@ internal class PyModuleDetailsPane(
     interpreterItemsBySdkName = sdks.zip(items).associate { (sdk, item) -> sdk.name to item }
   }
 
-  private fun buildComboItems(availableSdks: List<Sdk>): List<SdkComboItem> {
+  private fun buildComboItems(availableSdks: List<Sdk>, sdkByName: Map<String, Sdk>): List<SdkComboItem> {
     val contents = model.buildComboContents(
       pythonSdkNames = availableSdks.map { it.name },
       currentModuleSdkName = currentModuleSdk()?.name,
     )
-    val sdkByName = buildSdkLookup(availableSdks)
     val items: MutableList<SdkComboItem> = contents.orderedSdkNames
       .mapNotNullTo(mutableListOf()) { name -> sdkByName[name]?.let { SdkComboItem.Existing(it) } }
     if (contents.includeNoInterpreter) items.add(SdkComboItem.NoInterpreter)
