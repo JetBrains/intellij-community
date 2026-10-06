@@ -17,6 +17,7 @@ import com.intellij.debugger.ui.tree.LocalVariableDescriptor
 import com.intellij.debugger.ui.tree.ValueDescriptor
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
@@ -62,6 +63,7 @@ fun scheduleMagicConstantSuffix(
 
     // Off the manager thread, under a non-blocking read action: resolve PSI and consult MagicConstantUtils.
     val magicText = readAction {
+      if (DumbService.isDumb(project)) return@readAction null
       val owner = resolveOwner(info, project) ?: return@readAction null
       MagicConstantUtils.getPresentableText(boxed, owner)
     }
