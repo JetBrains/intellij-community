@@ -201,6 +201,18 @@ class SmartPointerTracker(initialModCount: Long) {
   @Synchronized
   fun getSize(): Int = selfInfoList.size
 
+  /**
+   * Puts [mapping] into the queue of the pending context mappings.
+   *
+   * A benchmark needs this entry point, because a real context change costs much more than the
+   * composition of the queued mappings. See `SmartPointerRevalidationPerformanceTest`.
+   */
+  @TestOnly
+  @Synchronized
+  fun pushContextMappingForTests(mapping: Map<CodeInsightContext, CodeInsightContext?>) {
+    pushContextMapping(mapping)
+  }
+
   fun isPossiblyInvalidated(manager: SmartPointerManagerEx): Boolean =
     manager.possiblyInvalidationModCounter.modificationCount > validationModCount
 
