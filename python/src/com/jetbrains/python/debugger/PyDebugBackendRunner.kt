@@ -2,25 +2,48 @@
 package com.jetbrains.python.debugger
 
 import com.intellij.execution.configurations.RunProfile
-import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.configurations.WrappingRunConfiguration
 import com.intellij.execution.executors.DefaultDebugExecutor
-import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.concurrency.Promise
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.DebugAwareConfiguration
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Python-owned debug backend runner selected by [PythonDebugProgramRunner] at execution time.
+ * How one Python debugger backend starts a debug session. [PythonDebugProgramRunner] picks one at execution time.
  *
- * Implementations are not registered as platform program runners directly, so stopped-session rerun keeps a stable Python runner
- * and re-evaluates backend availability before each launch. Debugpy gets the first chance to run, and pydevd is used as the
- * fallback backend when debugpy is not applicable.
+ * This is deliberately **not** a [com.intellij.execution.runners.ProgramRunner]: the platform registers exactly
+ * one Python debug runner, so stopped-session rerun keeps a stable runner id and the backend is re-chosen from
+ * current settings on every launch. `platform/dap` is built the same way — one `DapProgramRunner`, and its
+ * extension point supplies launch data rather than another runner.
+ *
+ * Debugpy gets the first chance to run, and pydevd is the fallback when debugpy is not applicable.
  */
 @ApiStatus.Internal
-interface PyDebugBackendRunner : ProgramRunner<RunnerSettings> {
+interface PyDebugBackendRunner {
   val backend: PyDebuggerBackend
+
+  /**
+   * Whether this backend can start [profile]. Answered per launch, never cached in the [ExecutionEnvironment].
+   */
+  fun isApplicable(executorId: String, profile: RunProfile): Boolean
+
+  /**
+   * Starts this backend and returns the launch.
+   *
+   * [PythonDebugProgramRunner] is the runner the platform registers, and as an
+   * [com.intellij.execution.runners.AsyncProgramRunner] it owns the one
+   * [com.intellij.execution.ExecutionManager.startRunProfile] of a launch. A backend therefore returns its
+   * launch instead of opening a run profile of its own — two of them would report the launch twice.
+   *
+   * The facade's [com.intellij.execution.configurations.RunProfileState] is not passed in: a backend takes the
+   * state from [environment] itself, because only the backend knows whether it wants the state to spawn the
+   * debuggee or to leave that to a debug adapter.
+   */
+  fun startSession(environment: ExecutionEnvironment): Promise<RunContentDescriptor?>
 
   companion object {
     @JvmField
@@ -54,14 +77,14 @@ internal fun findPyDebugBackendRunner(executorId: String, profile: RunProfile): 
   val runners = PyDebugBackendRunner.EP_NAME.extensionList
   return runners.findBackendRunner(PyDebuggerBackend.DEBUGPY, executorId, profile)
          ?: runners.findBackendRunner(PyDebuggerBackend.PYDEVD, executorId, profile)
-         ?: runners.firstOrNull { it.canRun(executorId, profile) }
+         ?: runners.firstOrNull { it.isApplicable(executorId, profile) }
 }
 
 private fun List<PyDebugBackendRunner>.findBackendRunner(
   backend: PyDebuggerBackend,
   executorId: String,
   profile: RunProfile,
-): PyDebugBackendRunner? = firstOrNull { it.backend == backend && it.canRun(executorId, profile) }
+): PyDebugBackendRunner? = firstOrNull { it.backend == backend && it.isApplicable(executorId, profile) }
 
 internal fun canRunPythonDebug(executorId: String, profile: RunProfile): Boolean {
   if (executorId != DefaultDebugExecutor.EXECUTOR_ID) return false

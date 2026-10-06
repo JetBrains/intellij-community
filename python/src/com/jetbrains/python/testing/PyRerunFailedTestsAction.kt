@@ -9,7 +9,6 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
@@ -91,9 +90,6 @@ class PyRerunFailedTestsAction(componentContainer: ComponentContainer) : Abstrac
       }
       return super.execute(executor, converter)
     }
-
-    @Throws(ExecutionException::class)
-    override fun execute(executor: Executor, runner: ProgramRunner<*>): ExecutionResult = execute(executor, *arrayOfNulls<CommandLinePatcher>(0))
 
     /**
      * *To be deprecated. The part of the legacy implementation based on [GeneralCommandLine].*

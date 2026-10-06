@@ -44,6 +44,7 @@ private enum class ClientModeDebuggerStatus {
   DISCONNECTION_INITIATED
 }
 
+@Deprecated("The single-port/client-mode launch path is no longer wired up; nothing in the IDE constructs this any more.")
 internal class ClientModeDebuggerStatusHolder {
   private val lock: ReentrantLock = ReentrantLock()
 

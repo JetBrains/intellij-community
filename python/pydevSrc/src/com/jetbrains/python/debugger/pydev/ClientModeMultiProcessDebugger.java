@@ -37,7 +37,10 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * @see com.jetbrains.python.debugger.pydev.transport.ClientModeDebuggerTransport
+ * @deprecated the single-port/client-mode launch path is no longer wired up; nothing in the IDE constructs this
+ * any more.
  */
+@Deprecated(forRemoval = true)
 public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   private static final Logger LOG = Logger.getInstance(ClientModeMultiProcessDebugger.class);
 

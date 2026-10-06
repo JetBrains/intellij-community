@@ -163,10 +163,16 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
          executionConsole, processHandler);
   }
 
+  /**
+   * @deprecated the single-port/client-mode launch path is no longer wired up; nothing in the IDE constructs this
+   * any more.
+   */
+  @Deprecated(forRemoval = true)
   public PyDebugProcess(final @NotNull XDebugSession session,
                         final @NotNull ExecutionConsole executionConsole,
                         final @Nullable ProcessHandler processHandler,
                         @NotNull String serverHost, int serverPort) {
+    //noinspection deprecation
     this(session, process -> new ClientModeMultiProcessDebugger(process, serverHost, serverPort), executionConsole, processHandler);
   }
 
@@ -355,12 +361,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void sessionInitialized() {
-    if (PyDebuggerOptionsProvider.getInstance(getProject()).isRunDebuggerInServerMode() &&
-        Registry.is("python.debug.use.single.port")) {
-      // In the case of a single port, the debugger is already connected at this point.
-      // An additional connection attempt will result in an error.
-      return;
-    }
     waitForConnection(getConnectionMessage(), getConnectionTitle());
   }
 

@@ -18,10 +18,8 @@ import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.jetbrains.python.HelperPackage;
@@ -39,12 +37,10 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 
 import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
@@ -153,7 +149,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
   public ExecutionResult execute(Executor executor, PythonProcessStarter processStarter, CommandLinePatcher... patchers)
     throws ExecutionException {
     final ProcessHandler processHandler = startProcess(processStarter, patchers);
-    ConsoleView console = invokeAndWait(() -> createAndAttachConsole(myConfiguration.getProject(), processHandler, executor));
+    ConsoleView console = createAndAttachConsoleInEDT(myConfiguration.getProject(), processHandler, executor);
 
     DefaultExecutionResult executionResult =
       new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
@@ -172,7 +168,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
   public @Nullable ExecutionResult execute(@NotNull Executor executor, @NotNull PythonScriptTargetedCommandLineBuilder converter)
     throws ExecutionException {
     ProcessHandler processHandler = startProcess(converter);
-    ConsoleView console = invokeAndWait(() -> createAndAttachConsole(myConfiguration.getProject(), processHandler, executor));
+    ConsoleView console = createAndAttachConsoleInEDT(myConfiguration.getProject(), processHandler, executor);
 
     DefaultExecutionResult executionResult =
       new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
@@ -185,19 +181,6 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
 
     executionResult.setRestartActions(rerunFailedTestsAction, new ToggleAutoTestAction());
     return executionResult;
-  }
-
-  protected static <T, E extends Throwable> @NotNull T invokeAndWait(ThrowableComputable<@NotNull T, E> computable) {
-    AsyncPromise<T> promise = new AsyncPromise<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      try {
-        promise.setResult(computable.compute());
-      }
-      catch (Throwable error) {
-        promise.setError(error);
-      }
-    });
-    return Objects.requireNonNull(promise.get(), "The execution was cancelled");
   }
 
   /**

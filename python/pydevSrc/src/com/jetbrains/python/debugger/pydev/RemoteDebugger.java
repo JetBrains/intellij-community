@@ -70,7 +70,9 @@ public class RemoteDebugger implements ProcessDebugger {
    *
    * @see #handshake()
    * @see ClientModeDebuggerTransport
+   * @deprecated the single-port/client-mode launch path is no longer wired up; see {@link #RemoteDebugger(IPyDebugProcess, String, int)}.
    */
+  @Deprecated(forRemoval = true)
   private static final long CLIENT_MODE_HANDSHAKE_TIMEOUT_IN_MILLIS = 5000;
 
   private static final Logger LOG = Logger.getInstance(RemoteDebugger.class);
@@ -105,12 +107,18 @@ public class RemoteDebugger implements ProcessDebugger {
    */
   private final long myHandshakeTimeout;
 
+  /**
+   * @deprecated the single-port/client-mode launch path is no longer wired up; nothing in the IDE constructs this
+   * any more.
+   */
+  @Deprecated(forRemoval = true)
   public RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull String host, int port) {
     int connectRetryTimeout = Registry.intValue("python.debugger.remote.connect.retry.timeout.ms", 1000);
     int connectMaxAttempts = Registry.intValue("python.debugger.remote.connect.max.attempts", 30);
 
     myDebugProcess = debugProcess;
     myDebuggerTransport = new ClientModeDebuggerTransport(this, host, port, Duration.ofMillis(connectRetryTimeout), connectMaxAttempts);
+    //noinspection deprecation
     myHandshakeTimeout = CLIENT_MODE_HANDSHAKE_TIMEOUT_IN_MILLIS;
   }
 

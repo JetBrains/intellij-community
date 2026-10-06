@@ -15,6 +15,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyLocalPositionConverter;
 import com.jetbrains.python.debugger.PyRemoteDebugProcess;
+import com.jetbrains.python.run.CommandLinePatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +62,7 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
 
     PyAttachToProcessCommandLineState state = PyAttachToProcessCommandLineState.create(myProject, mySdk, serverSocket.getLocalPort(), myPid);
 
-    final ExecutionResult result = state.execute(state.getEnvironment().getExecutor(), this);
+    final ExecutionResult result = state.execute(state.getEnvironment().getExecutor(), new CommandLinePatcher[0]);
 
     //start remote debug server
     XDebugProcessStarter starter = new XDebugProcessStarter() {

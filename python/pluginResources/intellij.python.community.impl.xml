@@ -759,10 +759,6 @@
     <registryKey defaultValue="true" description="Halt variable resolve threads on step/resume" restartRequired="false"
                  key="python.debug.halt.variable.resolve.threads.on.step.resume"/>
 
-    <!-- Retaining the feature flag for FL-29868 -->
-    <registryKey defaultValue="false" description="Use a single port for communication between PyCharm and the debugger"
-                 restartRequired="false" key="python.debug.use.single.port"/>
-
     <registryKey defaultValue="1000" description="Timeout between attempts to connect to remote debugger server"
                  restartRequired="false" key="python.debugger.remote.connect.retry.timeout.ms"/>
     <registryKey defaultValue="30" description="Max attempts to connect to remote debugger server"

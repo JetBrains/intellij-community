@@ -39,7 +39,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author Alexander Koshevoy
  * @see ClientModeMultiProcessDebugger
+ * @deprecated the single-port/client-mode launch path is no longer wired up; nothing in the IDE constructs this
+ * any more.
  */
+@Deprecated(forRemoval = true)
 public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
   private static final Logger LOG = Logger.getInstance(ClientModeDebuggerTransport.class);
 

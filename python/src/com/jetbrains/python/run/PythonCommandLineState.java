@@ -55,6 +55,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -64,6 +65,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.remote.ProcessControlWithMappings;
 import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.remote.TargetAwarePathMappingProvider;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -72,7 +74,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
-import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.debugger.PyTargetPathMapper;
 import com.jetbrains.python.facet.LibraryContributingFacet;
@@ -199,11 +200,12 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return myConfig;
   }
 
+  /**
+   * Builds the result for a launch whose debuggee somebody else spawns — a debug adapter, or a debuggee that is
+   * already running. The console and a placeholder process handler are all this state contributes.
+   */
   @Override
   public @NotNull ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
-    if (runner instanceof PyDebugRunner || runner instanceof PythonRunner) {
-      return execute(executor, new CommandLinePatcher[0]);
-    }
     return executeWithoutStartProcess(executor);
   }
 
@@ -247,26 +249,42 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
   }
 
+  /**
+   * Builds the console on the EDT and hands it back to the calling background thread.
+   */
   @ApiStatus.Internal
   public @NotNull ConsoleView createAndAttachConsoleInEDT(@NotNull Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
-    final Ref<Object> consoleRef = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(
-      () -> {
-        try {
-          consoleRef.set(createAndAttachConsole(project, processHandler, executor));
-        }
-        catch (ExecutionException | RuntimeException e) {
-          consoleRef.set(e);
-        }
-      });
+    return computeOnEdt(() -> createAndAttachConsole(project, processHandler, executor));
+  }
 
-    if (consoleRef.get() instanceof ExecutionException) {
-      throw (ExecutionException)consoleRef.get();
+  /**
+   * Runs {@code computable} on the EDT and gives the caller its value, or the failure it ended with.
+   */
+  // Package-private: the hop belongs to this class, and its test sits in the same package under testSrc.
+  static <T> @NotNull T computeOnEdt(@NotNull ThrowableComputable<@NotNull T, ExecutionException> computable)
+    throws ExecutionException {
+    Ref<T> value = Ref.create();
+    Ref<Throwable> failure = Ref.create();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        value.set(computable.compute());
+      }
+      catch (Throwable e) {
+        failure.set(e);
+      }
+    });
+
+    Throwable error = failure.get();
+    if (error != null) {
+      ExceptionUtil.rethrowUnchecked(error);
+      throw (ExecutionException)error;
     }
-    else if (consoleRef.get() instanceof RuntimeException) throw (RuntimeException)consoleRef.get();
-
-    return (ConsoleView)consoleRef.get();
+    T result = value.get();
+    if (result == null) {
+      throw new ExecutionException(PyBundle.message("runcfg.error.message.console.was.not.created"));
+    }
+    return result;
   }
 
   /**

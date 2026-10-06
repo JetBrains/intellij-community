@@ -56,6 +56,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -118,7 +119,8 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
 
   private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
 
-  private final PythonCommandQueuePanel myCommandQueuePanel;
+  private @Nullable PythonCommandQueuePanel myCommandQueuePanel;
+  private @Nullable ConsoleCommunication myCommandQueueCommunication;
   private JBPopup myCommandQueue;
   private Dimension commandQueueDimension;
   private boolean isShowQueue;
@@ -151,7 +153,6 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
   public PythonConsoleView(final Project project, final String title, final @Nullable Sdk sdk, final boolean testMode) {
     super(createHelper(project, title));
     try {
-      myCommandQueuePanel = new PythonCommandQueuePanel(this);
       myHistoryPsiFile = new PyExpressionCodeFragmentImpl(project, "dummy.py", "", true);
       if (PsiUtilCore.getPsiFile(project, getVirtualFile()) instanceof PyExpressionCodeFragmentImpl codeFragment) {
         codeFragment.setContext(myHistoryPsiFile);
@@ -217,7 +218,10 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
     }
 
     if (communication instanceof PydevConsoleCommunication || communication instanceof PythonDebugConsoleCommunication) {
-      myCommandQueuePanel.setCommunication(communication);
+      myCommandQueueCommunication = communication;
+      if (myCommandQueuePanel != null) {
+        myCommandQueuePanel.setCommunication(communication);
+      }
     }
 
     addCommandQueuePanelListener(communication);
@@ -229,23 +233,29 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
         @Override
         public void removeCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            myCommandQueuePanel.removeCommand(command);
+            if (myCommandQueuePanel != null) {
+              myCommandQueuePanel.removeCommand(command);
+            }
           });
         }
 
         @Override
         public void addCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
-          myCommandQueuePanel.addCommand(command);
+          getOrCreateCommandQueuePanel().addCommand(command);
         }
 
         @Override
         public void removeAll() {
-          myCommandQueuePanel.removeAllCommands();
+          if (myCommandQueuePanel != null) {
+            myCommandQueuePanel.removeAllCommands();
+          }
         }
 
         @Override
         public void disableConsole() {
-          myCommandQueuePanel.removeAllCommands();
+          if (myCommandQueuePanel != null) {
+            myCommandQueuePanel.removeAllCommands();
+          }
           isShowQueue = false;
           restoreQueueWindow(false);
         }
@@ -620,6 +630,20 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
     });
   }
 
+  /**
+   * Builds the command-queue panel the first time something needs it.
+   */
+  @RequiresEdt
+  private @NotNull PythonCommandQueuePanel getOrCreateCommandQueuePanel() {
+    if (myCommandQueuePanel == null) {
+      myCommandQueuePanel = new PythonCommandQueuePanel(this);
+      if (myCommandQueueCommunication != null) {
+        myCommandQueuePanel.setCommunication(myCommandQueueCommunication);
+      }
+    }
+    return myCommandQueuePanel;
+  }
+
   //the main function for drawing the queue
   public void showQueue() {
     JBPopupListener listener = new JBPopupListener() {
@@ -631,7 +655,7 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
     };
     String commandQueueName = getConsoleDisplayName(getProject());
     myCommandQueue = JBPopupFactory.getInstance()
-      .createComponentPopupBuilder(myCommandQueuePanel, null)
+      .createComponentPopupBuilder(getOrCreateCommandQueuePanel(), null)
       .setMovable(true)
       .setResizable(true)
       .setShowShadow(true)
