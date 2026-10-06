@@ -13882,6 +13882,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("actualFun.kt")
+        public void testActualFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/actualFun.kt");
+        }
+
         @TestMetadata("comments.kt")
         public void testComments() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/comments.kt");
@@ -13900,6 +13905,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("existingMultipleCompanionBlocks.kt")
         public void testExistingMultipleCompanionBlocks() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/existingMultipleCompanionBlocks.kt");
+        }
+
+        @TestMetadata("expectFun.kt")
+        public void testExpectFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/expectFun.kt");
         }
 
         @TestMetadata("funFromCompanionObject.kt")
@@ -13985,6 +13995,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("actualFun.kt")
+        public void testActualFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/actualFun.kt");
+        }
+
         @TestMetadata("disabledCompanionExtensions.kt")
         public void testDisabledCompanionExtensions() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/disabledCompanionExtensions.kt");
@@ -13998,6 +14013,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("existingCompanionBlock.kt")
         public void testExistingCompanionBlock() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/existingCompanionBlock.kt");
+        }
+
+        @TestMetadata("expectFun.kt")
+        public void testExpectFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/expectFun.kt");
         }
 
         @TestMetadata("fromCompanionBlock.kt")
@@ -14068,6 +14088,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/abstractProperty.kt");
         }
 
+        @TestMetadata("actualFun.kt")
+        public void testActualFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/actualFun.kt");
+        }
+
         @TestMetadata("avoidNameCapture.kt")
         public void testAvoidNameCapture() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/avoidNameCapture.kt");
@@ -14096,6 +14121,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("expectClass.kt")
         public void testExpectClass() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/expectClass.kt");
+        }
+
+        @TestMetadata("expectFun.kt")
+        public void testExpectFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/expectFun.kt");
         }
 
         @TestMetadata("functionWithOverride.kt")

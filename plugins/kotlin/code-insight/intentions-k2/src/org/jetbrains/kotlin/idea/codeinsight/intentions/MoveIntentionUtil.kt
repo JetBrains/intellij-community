@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.intentions
 
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -22,6 +23,7 @@ internal fun isApplicableForMoveMember(element: KtNamedDeclaration): Boolean {
     if (element !is KtNamedFunction && element !is KtProperty && element !is KtClassOrObject) return false
     if (element is KtEnumEntry) return false
     if (element is KtNamedFunction && element.bodyExpression == null) return false
+    if (element.isEffectivelyActual(checkConstructor = false)) return false
     if (element is KtNamedFunction && element.valueParameterList == null) return false
     if ((element is KtNamedFunction || element is KtProperty) && element.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return false
     if (element.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false

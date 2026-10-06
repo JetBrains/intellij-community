@@ -1,0 +1,8 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+// IS_APPLICABLE: false
+// NOT_A_MULTIPLATFORM_COMPILATION
+// K2_ERROR: NOT_A_MULTIPLATFORM_COMPILATION
+
+expect class Foo {
+    fun ba<caret>r()
+}
