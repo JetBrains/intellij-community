@@ -6,6 +6,7 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
@@ -104,7 +105,6 @@ import com.intellij.util.ui.JBRectangle
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.jsonDomToXml
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -115,6 +115,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -638,6 +639,12 @@ open class EditorsSplitters internal constructor(
         }
       }
     }
+  }
+
+  @Internal
+  @TestOnly
+  suspend fun createTestEditors(state: EditorSplitterState) {
+    createEditors(state)
   }
 
   internal suspend fun createEditors(state: EditorSplitterState) {
@@ -1466,9 +1473,11 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
     }
 
     val windowCoroutineScope = splitters.coroutineScope.childScope("EditorWindow")
+    var windowCreationStarted = false
 
     val windowDeferred = windowCoroutineScope.async(Dispatchers.UI + ModalityState.any().asContextElement()) {
       splitters.insideChange++
+      windowCreationStarted = true
       val editorWindow = EditorWindow(owner = splitters, coroutineScope = windowCoroutineScope)
       editorWindow.component.isFocusable = false
       if (tabSizeLimit != 1) {
@@ -1478,61 +1487,118 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
     }
 
     val delayedTasks = ConcurrentLinkedQueue<Job>()
-    val items = span("editor file entries compute") {
-      coroutineScope {
-        val placeholderIcon by lazy { EmptyIcon.create(AllIcons.FileTypes.Text) }
-        fileEntries.map { fileEntry ->
-          async(CoroutineName("editor file entry compute")) {
-            computeFileEntry(
-              virtualFileManager = virtualFileManager,
-              fileEntry = fileEntry,
-              fileEditorManager = fileEditorManager,
-              delayedTasks = delayedTasks,
-              placeholderIcon = placeholderIcon,
-              splitters = splitters,
-              isLazyComposite = isLazyComposite,
-            )
+    val compositeScopes = ConcurrentLinkedQueue<CoroutineScope>()
+    val createdComposites = mutableListOf<EditorComposite>()
+    val windowAddedDeferred = CompletableDeferred<Unit>()
+    try {
+      val items = span("editor file entries compute") {
+        coroutineScope {
+          val placeholderIcon by lazy { EmptyIcon.create(AllIcons.FileTypes.Text) }
+          fileEntries.map { fileEntry ->
+            async(CoroutineName("editor file entry compute")) {
+              computeFileEntry(
+                virtualFileManager = virtualFileManager,
+                fileEntry = fileEntry,
+                fileEditorManager = fileEditorManager,
+                delayedTasks = delayedTasks,
+                placeholderIcon = placeholderIcon,
+                splitters = splitters,
+                windowAdded = windowAddedDeferred,
+                compositeScopes = compositeScopes,
+                isLazyComposite = isLazyComposite,
+              )
+            }
           }
-        }
-      }.mapNotNull { it.getCompleted() }
-    }
-
-    span("file opening in EDT", Dispatchers.EDT) {
-      var window: EditorWindow? = null
-      val windowAddedDeferred = CompletableDeferred<Unit>()
-      try {
-        window = windowDeferred.await()
-        val openedFiles = fileEditorManager.prepareFilesOnStartupForOpen(
-          items = items,
-          window = window,
-          isLazyComposite = isLazyComposite,
-        )
-        fileEditorManager.openTabsOnStartup(
-          window = window,
-          requestFocus = requestFocus,
-          windowAdded = suspend { windowAddedDeferred.await() },
-          openedFiles = openedFiles.filterNotNull(),
-        )
-        window.updateTabsVisibility()
-        addChild(window.component)
-        splitters.addWindow(window)
-        windowAddedDeferred.complete(Unit)
+        }.mapNotNull { it.getCompleted() }
       }
-      finally {
-        splitters.insideChange--
-        if (window != null) {
-          splitters.validate()
 
-          window.tabbedPane.editorTabs.updateListeners()
+      span("file opening in EDT", Dispatchers.EDT) {
+        var window: EditorWindow? = null
+        try {
+          window = windowDeferred.await()
+          val openedFiles = fileEditorManager.prepareFilesOnStartupForOpen(
+            items = items,
+            window = window,
+            isLazyComposite = isLazyComposite,
+            createdComposites = createdComposites,
+          )
+          fileEditorManager.openTabsOnStartup(
+            window = window,
+            requestFocus = requestFocus,
+            windowAdded = suspend { windowAddedDeferred.await() },
+            openedFiles = openedFiles.filterNotNull(),
+          )
+          window.updateTabsVisibility()
+          addChild(window.component)
+          splitters.addWindow(window)
+          windowAddedDeferred.complete(Unit)
+        }
+        finally {
+          if (windowCreationStarted) {
+            splitters.insideChange--
+            windowCreationStarted = false
+          }
+          if (window != null && windowAddedDeferred.isCompleted) {
+            splitters.validate()
 
-          window.coroutineScope.launch {
-            for (delayedTask in delayedTasks) {
-              delayedTask.start()
+            window.tabbedPane.editorTabs.updateListeners()
+
+            window.coroutineScope.launch {
+              for (delayedTask in delayedTasks) {
+                delayedTask.start()
+              }
             }
           }
         }
       }
     }
+    finally {
+      if (!windowAddedDeferred.isCompleted) {
+        windowAddedDeferred.cancel()
+        windowCoroutineScope.cancel()
+        for (scope in compositeScopes) {
+          scope.cancel()
+        }
+        withContext(NonCancellable + Dispatchers.EDT) {
+          windowDeferred.join()
+          if (windowCreationStarted) {
+            splitters.insideChange--
+          }
+          val window = if (windowDeferred.isCancelled) null else windowDeferred.getCompleted()
+          disposeFailedRestore(window, createdComposites)
+        }
+      }
+    }
+  }
+
+  @RequiresEdt
+  private fun disposeFailedRestore(window: EditorWindow?, composites: List<EditorComposite>) {
+    val fileEditorManager = splitters.manager
+    for (composite in composites) {
+      if (!composite.isDisposeStarted) {
+        fileEditorManager.disposeComposite(composite)
+      }
+    }
+    if (window == null) {
+      return
+    }
+    for (composite in composites) {
+      fileEditorManager.removeSelectionRecord(composite.file, window)
+    }
+    window.tabbedPane.editorTabs.removeAllTabs()
+
+    when (val parent = window.component.parent) {
+      is Splitter -> {
+        if (parent.firstComponent === window.component) {
+          parent.firstComponent = null
+        }
+        else if (parent.secondComponent === window.component) {
+          parent.secondComponent = null
+        }
+      }
+      else -> parent?.remove(window.component)
+    }
+    window.dispose()
   }
 }
 
@@ -1543,56 +1609,64 @@ private fun computeFileEntry(
   delayedTasks: MutableCollection<Job>,
   placeholderIcon: EmptyIcon,
   splitters: EditorsSplitters,
+  windowAdded: Deferred<Unit>,
+  compositeScopes: MutableCollection<CoroutineScope>,
   isLazyComposite: Boolean,
 ): FileToOpen? {
-  val compositeCoroutineScope = splitters.coroutineScope.childScope("EditorComposite(file=${fileEntry.url})")
-
   val notFullyPreparedFile = resolveFileOrLogError(fileEntry, virtualFileManager, fileEditorManager.project) ?: return null
+  val compositeCoroutineScope = splitters.coroutineScope.childScope("EditorComposite(file=${fileEntry.url})")
+  compositeScopes.add(compositeCoroutineScope)
 
-  // do not expose `file` variable to avoid using it instead of `fileProvider`
-  val fileProviderDeferred =
-    compositeCoroutineScope.async(
-      context = CoroutineName("editor file content preload"),
-      start = if (fileEntry.currentInTab) CoroutineStart.DEFAULT else CoroutineStart.LAZY,
-    ) {
-      // https://youtrack.jetbrains.com/issue/IJPL-157845/Incorrect-encoding-of-file-during-project-opening
-      // In the case of the JetBrains client, it's better to avoid a blocking protocol call inside [VirtualFile.contentsToByteArray]
-      if (!PlatformUtils.isJetBrainsClient() && notFullyPreparedFile !is VirtualFileWithoutContent && !notFullyPreparedFile.isCharsetSet) {
-        ProjectLocator.withPreferredProject(notFullyPreparedFile, fileEditorManager.project).use {
-          try {
-            notFullyPreparedFile.contentsToByteArray(true)
-          }
-          catch (e: CancellationException) {
-            throw e
-          }
-          catch (ignore: FileTooBigException) {
-          }
-          catch (e: Throwable) {
-            LOG.error(e)
-          }
-        }
-      }
-      notFullyPreparedFile
-    }
+  val fileProviderDeferred = CompletableDeferred<VirtualFile>(compositeCoroutineScope.coroutineContext.job)
 
-  val hint = when {
+  // https://youtrack.jetbrains.com/issue/IJPL-157845/Incorrect-encoding-of-file-during-project-opening
+  // In the case of the JetBrains client, it's better to avoid a blocking protocol call inside [VirtualFile.contentsToByteArray]
+  val (tabFileDeferred, hint) = when {
     PlatformUtils.isJetBrainsClient() -> {
-      null // In the case of the JetBrains client, the model isn't used since the editor composite is requested from the backend
+      fileProviderDeferred.complete(notFullyPreparedFile)
+      fileProviderDeferred to null // In the case of the JetBrains client, the editor composite is requested from the backend
     }
     else -> {
+      val prepareFile: suspend () -> VirtualFile = {
+        windowAdded.await()
+        if (notFullyPreparedFile !is VirtualFileWithoutContent && !notFullyPreparedFile.isCharsetSet) {
+          withContext(Dispatchers.IO) {
+            withProgressReport {
+              ProjectLocator.withPreferredProject(notFullyPreparedFile, fileEditorManager.project).use {
+                try {
+                  notFullyPreparedFile.contentsToByteArray(true)
+                }
+                catch (_: FileTooBigException) {
+                }
+                catch (e: Throwable) {
+                  rethrowControlFlowException(e)
+                  LOG.error(e)
+                }
+              }
+            }
+          }
+        }
+        fileProviderDeferred.complete(notFullyPreparedFile)
+        notFullyPreparedFile
+      }
+      val doBackgroundPreload = if (fileEntry.currentInTab || !isLazyComposite) { // for eager init
+        null
+      } else {
+        compositeCoroutineScope.async(CoroutineName("editor file content preload"), start = CoroutineStart.LAZY) { prepareFile() }
+      }
+
       val model = fileEditorManager.createEditorCompositeModelOnStartup(
         compositeCoroutineScope = compositeCoroutineScope,
-        fileProvider = suspend { fileProviderDeferred.await() },
+        fileProvider = { doBackgroundPreload?.await() ?: prepareFile() },
         fileEntry = fileEntry,
-        isLazy = !fileEntry.currentInTab && isLazyComposite,
       )
-      StartupFileEditorOpenOptionsHint(compositeCoroutineScope, model)
+      (doBackgroundPreload ?: fileProviderDeferred) to StartupFileEditorOpenOptionsHint(compositeCoroutineScope, model)
     }
   }
 
   return setupFileTab(compositeCoroutineScope,
                       fileEditorManager,
-                      fileProviderDeferred,
+                      tabFileDeferred,
                       fileEntry,
                       delayedTasks,
                       notFullyPreparedFile,
@@ -1752,8 +1826,8 @@ data class FileToOpen(
   @JvmField val file: VirtualFile,
   @JvmField val hint: FileEditorOpenOptionsHint?,
   @JvmField val fileEntry: FileEntry,
-  @JvmField val customizer: (TabInfo) -> Unit,
   @JvmField val cachedTabIcon: Icon? = null,
+  @JvmField val customizer: (TabInfo) -> Unit,
 )
 
 private fun resolveFileOrLogError(fileEntry: FileEntry, virtualFileManager: VirtualFileManager, project: Project): VirtualFile? {
