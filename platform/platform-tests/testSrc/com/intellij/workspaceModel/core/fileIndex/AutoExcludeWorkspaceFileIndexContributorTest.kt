@@ -7,6 +7,7 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.workspaceModel.ide.toLocalFileSystemPathOrNull
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
@@ -14,6 +15,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY
 import com.intellij.workspaceModel.ide.registerProjectRoot
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -86,4 +89,13 @@ class AutoExcludeWorkspaceFileIndexContributorTest {
     assertFalse(readAction { fileIndex.isInContent(customDir) })
     assertTrue(readAction { fileIndex.isInContent(worktreesDir) })
   }
+
+  @Test
+  fun `only a file URL becomes a path for the prefetch`() {
+    val urlManager = projectModel.project.workspaceModel.getVirtualFileUrlManager()
+    assertNull(urlManager.storeAndGet("temp:///src/.worktrees").toLocalFileSystemPathOrNull())
+    assertNull(urlManager.storeAndGet("jar:///lib/a.jar!/").toLocalFileSystemPathOrNull())
+    assertNotNull(urlManager.storeAndGet("file:///src/.worktrees").toLocalFileSystemPathOrNull())
+  }
+
 }
