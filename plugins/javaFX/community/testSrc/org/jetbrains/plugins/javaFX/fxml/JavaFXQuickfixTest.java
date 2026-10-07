@@ -153,6 +153,14 @@ public class JavaFXQuickfixTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(true) + ".fxml", getTestName(true) + "_after.fxml", true);
   }
 
+  public void testRegisterPageLanguageAfterXmlDeclaration() {
+    myFixture.configureByFile(getTestName(true) + ".fxml");
+    JavaFxInjectPageLanguageIntention languageIntention =
+      (JavaFxInjectPageLanguageIntention)IntentionActionDelegate.unwrap(myFixture.findSingleIntention("Specify page language"));
+    languageIntention.registerPageLanguage(getProject(), (XmlFile)myFixture.getFile(), "groovy");
+    myFixture.checkResultByFile(getTestName(true) + ".fxml", getTestName(true) + "_after.fxml", true);
+  }
+
   public void testAvailableLanguagesDoNotLoadProviderClasses() throws Exception {
     Path classesDir = FileUtil.createTempDirectory("javaFxScriptEngines", "").toPath();
     assertEquals("testData sources failed to compile", 0, Main.compile(new String[]{
