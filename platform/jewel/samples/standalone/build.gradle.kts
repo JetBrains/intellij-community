@@ -34,13 +34,6 @@ dependencies {
 
 val jdkLevel = project.property("jdk.level") as String
 
-kotlin {
-    jvmToolchain {
-        languageVersion = JavaLanguageVersion.of(jdkLevel)
-        vendor = JvmVendorSpec.JETBRAINS
-    }
-}
-
 compose.desktop {
     application {
         mainClass = "org.jetbrains.jewel.samples.standalone.MainKt"
@@ -67,8 +60,14 @@ tasks {
         // afterEvaluate is needed because the Compose Gradle Plugin
         // register the task in the afterEvaluate block
         afterEvaluate {
-            javaLauncher = project.javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(jdkLevel) }
-            setExecutable(javaLauncher.map { it.executablePath.asFile.absolutePath }.get())
+            // The sample needs the UI fixes in the JetBrains Runtime. Compilation works with any JDK.
+            javaLauncher =
+                project.javaToolchains.launcherFor {
+                    languageVersion = JavaLanguageVersion.of(jdkLevel)
+                    vendor = JvmVendorSpec.JETBRAINS
+                }
+            // Resolve the launcher only when the task runs, so a build that does not run the sample needs no JBR.
+            doFirst { setExecutable(javaLauncher.get().executablePath.asFile.absolutePath) }
         }
         jvmArgs("-Dcompose.interop.blending=true")
     }
