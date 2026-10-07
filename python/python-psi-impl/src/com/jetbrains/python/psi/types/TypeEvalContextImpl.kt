@@ -298,7 +298,7 @@ open class TypeEvalContextImpl internal constructor(
 
       assertValid(type, element)
       PyAnyType.validate(type, element)
-      publish(myEvaluated, element, type)
+      publish(myEvaluated, element, type ?: PyAnyType.unknown)
     } ?: PyAnyType.unknown
   }
 
