@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +22,7 @@ import javax.swing.JComponent;
  * @author Konstantin Bulenkov
  * @see EmptyActionGroup
  */
-public final class EmptyAction extends AnAction {
+public final class EmptyAction extends AnAction implements DumbAware {
   private final boolean myEnabled;
 
   /** Always hidden in the UI! */

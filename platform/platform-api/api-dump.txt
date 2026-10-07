@@ -1731,6 +1731,7 @@ c:com.intellij.openapi.actionSystem.DefaultCompactActionGroup
 - <init>(com.intellij.openapi.actionSystem.AnAction[]):V
 f:com.intellij.openapi.actionSystem.EmptyAction
 - com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.project.DumbAware
 - <init>():V
 - <init>(Z):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
