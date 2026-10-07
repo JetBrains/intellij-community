@@ -692,15 +692,7 @@
       <add-to-group group-id="ActivateToolWindowActions"/>
     </reference>
 
-    <reference ref="SwitchFileBasedIndexStorageAction"/>
-
     <reference ref="ClickLink"/>
-
-    <reference ref="ForceIndexRescanning"/>
-    <reference ref="ForceIndexRebuild"/>
-
-    <reference ref="ToggleFileBasedIndexes"/>
-    <reference ref="PauseScanningAndIndexing"/>
 
     <reference ref="Internal.Dump">
       <add-to-group group-id="Internal" anchor="last"/>
