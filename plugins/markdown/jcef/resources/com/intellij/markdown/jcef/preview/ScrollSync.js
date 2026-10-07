@@ -5,6 +5,7 @@ class ScrollController {
   #targetSourceOffset = 0;
   #isFrameRequested = false;
   #followY = null;
+  #appliedY = 0;
   #lastFrameTime = 0;
   // #nextScrollElement = null;
 
@@ -200,13 +201,11 @@ class ScrollController {
   }
 
   #followFrame(time) {
-    const target = this.#sourceOffsetToY(this.#targetSourceOffset);
-    if (target === null) {
+    const target = this.#followTarget();
+    if (target === null || (this.#followY !== null && Math.abs(window.scrollY - this.#appliedY) > 1)) {
+      this.#followY = null;
       this.#isFrameRequested = false;
       return;
-    }
-    if (this.#followY !== null && Math.abs(window.scrollY - this.#followY) > 1) {
-      this.#followY = null;
     }
     const current = this.#followY ?? window.scrollY;
     const elapsed = Math.min(Math.max(time - this.#lastFrameTime, 0), 100);
@@ -216,6 +215,7 @@ class ScrollController {
     this.#followY = isDone ? null : next;
     this.currentScrollElement = null;
     window.scrollTo({ top: isDone ? target : next, behavior: "instant" });
+    this.#appliedY = window.scrollY;
     if (isDone) {
       this.#isFrameRequested = false;
       return;
@@ -224,6 +224,15 @@ class ScrollController {
   }
 
   static #FOLLOW_TIME_MS = 40;
+
+  #followTarget() {
+    const y = this.#sourceOffsetToY(this.#targetSourceOffset);
+    if (y === null) {
+      return null;
+    }
+    const root = document.scrollingElement;
+    return Math.min(Math.max(y, 0), Math.max(root.scrollHeight - root.clientHeight, 0));
+  }
 
   #sourceOffsetToY(offset) {
     let node = document.body.firstElementChild;
