@@ -8,6 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.util" scope="PROVIDED" />
     <orderEntry type="module-library" exported="">
       <library name="jna" type="repository">
         <properties maven-id="net.java.dev.jna:jna-platform:5.19.1">

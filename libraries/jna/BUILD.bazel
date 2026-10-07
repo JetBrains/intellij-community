@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.libraries.jna` start
@@ -11,6 +11,11 @@ content_module_jar(
 ### auto-generated section `dev intellij.libraries.jna` end
 
 ### auto-generated section `build intellij.libraries.jna` start
+jvm_provided_library(
+    name = "platform_util_provided",
+    lib = "//platform/util",
+)
+
 jvm_library(
     name = "jna",
     srcs = glob(
@@ -29,7 +34,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jna-jna"],
-    deps = ["@lib//:libraries-jna-jna"],
+    deps = [
+        # do not sort,
+        "@lib//:libraries-jna-jna",
+        ":platform_util_provided",
+    ],
 )
 
 jvm_library(
@@ -43,7 +52,12 @@ jvm_library(
     module_name = "intellij.libraries.jna",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jna-jna"],
-    runtime_deps = [":jna"],
+    runtime_deps = [
+        # do not sort,
+        ":jna",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.jna` end
 
