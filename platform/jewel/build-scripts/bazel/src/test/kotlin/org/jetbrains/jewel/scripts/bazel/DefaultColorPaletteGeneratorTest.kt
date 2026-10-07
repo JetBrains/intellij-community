@@ -1,3 +1,4 @@
+@file:Suppress("SSBasedInspection")
 package org.jetbrains.jewel.scripts.bazel
 
 import java.io.File
@@ -29,6 +30,29 @@ class DefaultColorPaletteGeneratorTest {
         val colors = mapOf("a" to "b", "b" to "a")
 
         assertFailsWith<IllegalStateException> { resolveHex("a", colors) }
+    }
+
+    @Test
+    fun `toArgbLiteral adds an opaque alpha to an RRGGBB value`() {
+        assertEquals("0xFF3871E1", toArgbLiteral("#3871E1"))
+    }
+
+    @Test
+    fun `toArgbLiteral moves the alpha of an RRGGBBAA value to the front`() {
+        assertEquals("0x00191A1C", toArgbLiteral("#191A1C00"))
+        assertEquals("0x3BFFFFFF", toArgbLiteral("#FFFFFF3B"))
+    }
+
+    @Test
+    fun `toArgbLiteral throws on a hex value with an unsupported length`() {
+        assertFailsWith<IllegalStateException> { toArgbLiteral("#FFF") }
+    }
+
+    @Test
+    fun `buildRawMapBlock emits RRGGBBAA values in ARGB order`() {
+        val block = buildRawMapBlock(mapOf("transparent" to "#191A1C00")).toString()
+
+        assertTrue(block.contains("Color(0x00191A1C)"))
     }
 
     @Test

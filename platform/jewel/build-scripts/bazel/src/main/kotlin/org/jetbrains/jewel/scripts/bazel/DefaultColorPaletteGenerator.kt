@@ -135,13 +135,13 @@ internal fun buildColorGroupBlocks(colors: Map<String, String>): List<CodeBlock>
         .mapValues { (_, entries) -> entries.sortedBy { it.key.takeLastWhile(Char::isDigit).toInt() } }
         .map { (groupName, entries) ->
             entries
-                .map { (_, value) -> CodeBlock.of("Color(%L)", resolveHex(value, colors).replace("#", "0xFF")) }
+                .map { (_, value) -> CodeBlock.of("Color(%L)", toArgbLiteral(resolveHex(value, colors))) }
                 .joinToCode(prefix = "\n${groupName.lowercase()} = listOf(\n", separator = ",\n", suffix = "\n)")
         }
 
 internal fun buildRawMapBlock(colors: Map<String, String>): CodeBlock =
     colors.entries
-        .map { (key, value) -> CodeBlock.of("%S to Color(%L)", key, resolveHex(value, colors).replace("#", "0xFF")) }
+        .map { (key, value) -> CodeBlock.of("%S to Color(%L)", key, toArgbLiteral(resolveHex(value, colors))) }
         .joinToCode(prefix = "\nrawMap = mapOf(\n", separator = ",\n", suffix = "\n)")
 
 /**
@@ -155,4 +155,17 @@ internal fun resolveHex(value: String, colors: Map<String, String>, depth: Int =
 
     val aliased = colors[value] ?: error("Unresolved color alias '$value'")
     return resolveHex(aliased, colors, depth + 1)
+}
+
+/**
+ * Converts a theme JSON hex color to a Compose `Color` literal. Theme JSONs use `#RRGGBB` or `#RRGGBBAA`, but Compose
+ * expects `0xAARRGGBB`.
+ */
+internal fun toArgbLiteral(hex: String): String {
+    val digits = hex.removePrefix("#")
+    return when (digits.length) {
+        6 -> "0xFF$digits"
+        8 -> "0x${digits.substring(6)}${digits.substring(0, 6)}"
+        else -> error("Unsupported color hex '$hex'")
+    }
 }
