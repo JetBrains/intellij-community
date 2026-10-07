@@ -6,8 +6,6 @@ import com.intellij.platform.util.io.storages.intmultimaps.RecordRefIndex;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.CorruptedException;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +15,7 @@ import java.io.IOException;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.VarHandle;
+import java.util.Arrays;
 import java.util.Objects;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
@@ -71,12 +70,9 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
 
   private transient HeaderLayout header;
 
-  /**
-   * Map[segmentIndex -> HashMapSegmentLayout]
-   * Segments are quite light, but queried very frequently -- and there are not too many of them.
-   * So cache them instead of allocating a new instance each time.
-   */
-  private final transient Int2ObjectMap<HashMapSegmentLayout> segmentsCache = new Int2ObjectOpenHashMap<>();
+  /// Layouts are cached by segment index.
+  /// Segment indices form the continuous range `[0..actualSegmentsCount)`.
+  private transient HashMapSegmentLayout[] segmentsCache = new HashMapSegmentLayout[2];
 
   private final transient HashMapAlgo hashMapAlgo = new HashMapAlgo(0.5f);
 
@@ -116,6 +112,12 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
       //and reset the file status to default 'properly closed'
       header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
     }
+    int segmentsCount = header.actualSegmentsCount();
+    int maxSegmentsCount = header.maxSegmentsCount();
+    if (segmentsCount > maxSegmentsCount) {
+      throw new CorruptedException("actualSegmentsCount(=" + segmentsCount + ") must be <= " + maxSegmentsCount);
+    }
+    ensureSegmentsCacheHasCapacityFor(segmentsCount - 1);
     size = calculateSize();
   }
 
@@ -277,7 +279,7 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
     }
     int segmentSize = header.segmentSize();
 
-    segmentsCache.clear();
+    segmentsCache = new HashMapSegmentLayout[2];
 
     storage.clear();
     MemorySegment headerSegment = storage.header().asSlice(0, REQUIRED_HEADER_SIZE);
@@ -312,7 +314,7 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
     if (storage.isOpen()) {
       markDirty();
       storage.close();
-      segmentsCache.clear();
+      segmentsCache = new HashMapSegmentLayout[0];
       header = null;
     }
   }
@@ -323,7 +325,7 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
       flushStorage( /*markProperlyClosed: */ true );
       storage.close();
 
-      segmentsCache.clear();
+      segmentsCache = new HashMapSegmentLayout[0];
       header = null;
     }
   }
@@ -387,12 +389,21 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
     int hash = hash(key);
     int segmentIndex = header.segmentIndexByHash(hash);
 
-    HashMapSegmentLayout layout = segmentsCache.get(segmentIndex);
+    HashMapSegmentLayout layout = segmentsCache[segmentIndex];
     if (layout == null) {
       layout = new HashMapSegmentLayout(segmentIndex, header.segmentSize(), storage.segment(segmentIndex));
-      segmentsCache.put(segmentIndex, layout);
+      segmentsCache[segmentIndex] = layout;
     }
     return layout;
+  }
+
+  /// Ensures segments cache can accommodate `segmentIndex`.
+  private void ensureSegmentsCacheHasCapacityFor(int segmentIndex) {
+    if (segmentIndex >= segmentsCache.length) {
+      int maxLength = header.maxSegmentsCount();
+      int newLength = Math.clamp(segmentsCache.length * 2L, segmentIndex + 1, maxLength);
+      segmentsCache = Arrays.copyOf(segmentsCache, newLength);
+    }
   }
 
   private void splitAndRearrangeEntries(HashMapSegmentLayout segment) throws IOException {
@@ -477,6 +488,7 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
   private HashMapSegmentLayout allocateSegment(int hashSuffix,
                                                byte hashSuffixDepth) throws IOException {
     int segmentsCount = header.actualSegmentsCount();
+    ensureSegmentsCacheHasCapacityFor(segmentsCount);
 
     HashMapSegmentLayout segment = new HashMapSegmentLayout(
       segmentsCount,
@@ -486,6 +498,7 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
     segment.updateHashSuffix(hashSuffix, hashSuffixDepth);
 
     header.actualSegmentsCount(segmentsCount + 1);
+    segmentsCache[segmentsCount] = segment;
 
     return segment;
   }
@@ -552,10 +565,10 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
   private void doubleSegmentsTable() {
     int hashSuffixDepth = header.globalHashSuffixDepth();
     int oldTableSize = header.segmentTableSize();
-    if (oldTableSize * 2 > header.maxSegmentTableSize()) {
+    if (oldTableSize * 2 > header.maxSegmentTableCapacity()) {
       throw new IllegalStateException(
         "Can't expand table: currentSize=" + header.segmentTableSize() +
-        " x2 > maxSize=" + header.maxSegmentTableSize() +
+        " x2 > maxSize=" + header.maxSegmentTableCapacity() +
         " -> try increase segmentSize(=" + header.segmentSize() + ") if you need to store more keys"
       );
     }
@@ -711,10 +724,11 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
       int hashSuffixDepth = globalHashSuffixDepth();
       int segmentSlotIndex = segmentSlotIndex(hash, hashSuffixDepth);
       int segmentIndex = segmentIndex(segmentSlotIndex);
-      if (segmentIndex >= actualSegmentsCount()) {
+      int segmentIndexLimit = actualSegmentsCount();
+      if (segmentIndex >= segmentIndexLimit) {
         throw new CorruptedException(
           "segmentIndex[hash: " + hash + ", suffix: " + hashSuffixDepth + ", slotIndex: " + segmentSlotIndex + "](= " + segmentIndex + ")" +
-          " must be in [0.." + actualSegmentsCount() + ") => .segmentsTable is corrupted"
+          " must be in [0.." + segmentIndexLimit + ") => .segmentsTable is corrupted"
         );
       }
       return segmentIndex;
@@ -733,8 +747,17 @@ public class ExtendibleHashMapInt32ToInt64 implements RecordRefIndex, CleanableS
       return 1 << globalHashSuffixDepth();
     }
 
-    public int maxSegmentTableSize() {
+    /// @return maximum # of slots segmentsTable could contain;
+    public int maxSegmentTableCapacity() {
       return segmentSize / Short.BYTES;
+    }
+
+    /// @return maximum number of data segments (with current `segmentSize`)
+    /// Max segments count is limited by 2 factors:
+    /// 1. segmentsTable capacity: each data segment needs at least one segmentTable slot;
+    /// 2. segmentsTable slot width: segmentsTable stores segment indexes as uint16, so it could be no more than 2^16 `segmentIndex`es
+    public int maxSegmentsCount() {
+      return Math.min(maxSegmentTableCapacity(), 1 << Short.SIZE);
     }
 
     @Override
