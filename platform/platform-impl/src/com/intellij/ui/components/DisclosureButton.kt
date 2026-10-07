@@ -35,10 +35,13 @@ open class DisclosureButton(@NlsContexts.Button text: String? = null) : JButton(
     }
   }
 
-  var textRightIconGap: Int = JBValue.UIInteger("DisclosureButton.textRightIconGap", 8).get()
+  private var textRightIconGapValue: JBValue = JBValue.UIInteger("DisclosureButton.textRightIconGap", 8)
+
+  var textRightIconGap: Int
+    get() = textRightIconGapValue.get()
     set(value) {
-      if (field != value) {
-        field = value
+      if (textRightIconGap != value) {
+        textRightIconGapValue = JBValue.Float(value.toFloat(), true)
         revalidate()
         repaint()
       }
@@ -80,37 +83,49 @@ open class DisclosureButton(@NlsContexts.Button text: String? = null) : JButton(
       }
     }
 
-  var arc: Int = JBValue.UIInteger("DisclosureButton.arc", 16).get()
+  private var arcValue: JBValue = JBValue.UIInteger("DisclosureButton.arc", 16)
+
+  var arc: Int
+    get() = arcValue.get()
     set(value) {
-      if (field != value) {
-        field = value
+      if (arc != value) {
+        arcValue = JBValue.Float(value.toFloat(), true)
         revalidate()
         repaint()
       }
     }
 
-  var buttonHeight: Int = JBUIScale.scale(34)
+  private var buttonHeightValue: JBValue = JBValue.Float(34f)
+
+  var buttonHeight: Int
+    get() = buttonHeightValue.get()
     set(value) {
-      if (field != value) {
-        field = value
+      if (buttonHeight != value) {
+        buttonHeightValue = JBValue.Float(value.toFloat(), true)
         revalidate()
         repaint()
       }
     }
 
-  var leftMargin: Int = JBUIScale.scale(14)
+  private var leftMarginValue: JBValue = JBValue.Float(14f)
+
+  var leftMargin: Int
+    get() = leftMarginValue.get()
     set(value) {
-      if (field != value) {
-        field = value
+      if (leftMargin != value) {
+        leftMarginValue = JBValue.Float(value.toFloat(), true)
         revalidate()
         repaint()
       }
     }
 
-  var rightMargin: Int = JBUIScale.scale(12)
+  private var rightMarginValue: JBValue = JBValue.Float(12f)
+
+  var rightMargin: Int
+    get() = rightMarginValue.get()
     set(value) {
-      if (field != value) {
-        field = value
+      if (rightMargin != value) {
+        rightMarginValue = JBValue.Float(value.toFloat(), true)
         revalidate()
         repaint()
       }

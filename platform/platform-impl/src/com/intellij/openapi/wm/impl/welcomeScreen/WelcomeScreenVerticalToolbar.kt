@@ -173,7 +173,7 @@ private class VerticalToolbarLayoutStrategy(
       width = maxOf(width, JBUI.scale(unscaledPreferredButtonWidth))
     }
 
-    val result = JBUI.size(width, height)
+    val result = Dimension(width, height)
     JBInsets.addTo(result, toolbar.component.insets)
     return result
   }

@@ -217,7 +217,7 @@ class DarculaDisclosureButtonUI(val uiComponent: JComponent) : BasicButtonUI() {
 
   override fun getMinimumSize(c: JComponent?): Dimension {
     if (c !is DisclosureButton) return super.getMinimumSize(c)
-    return JBDimension(72, c.buttonHeight)
+    return Dimension(JBUI.scale(72), c.buttonHeight)
   }
 
   private fun paintBackground(g: Graphics, c: DisclosureButton) {
