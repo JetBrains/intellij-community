@@ -19,6 +19,7 @@ import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.target.TargetedCommandLine;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
@@ -63,6 +64,7 @@ import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
@@ -92,6 +94,8 @@ import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.PyEelDebuggerTunnel;
+import com.jetbrains.python.debugger.PyEelSdkKt;
 import com.jetbrains.python.debugger.PyVariableViewSettings;
 import com.jetbrains.python.debugger.ValuesPolicy;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
@@ -121,6 +125,8 @@ import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -466,7 +472,37 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareRequest.getTargetEnvironmentRequest();
     TargetEnvironment.LocalPortBinding ideServerPortBinding = new TargetEnvironment.LocalPortBinding(ideServerPort, null);
     targetEnvironmentRequest.getLocalPortBindings().add(ideServerPortBinding);
+    // The local environment does not forward ports, but an SDK without a target can run the console on a remote eel
+    EelDescriptor eel = targetEnvironmentRequest instanceof LocalTargetEnvironmentRequest ? PyEelSdkKt.remoteEelOrNull(sdk) : null;
+    // The local environment resolves the console server to the loopback, see the server start below
+    PyEelDebuggerTunnel eelTunnel =
+      eel != null ? PyEelDebuggerTunnel.open(eel, new InetSocketAddress(InetAddress.getLoopbackAddress(), ideServerPort)) : null;
+    try {
+      ConsoleProcessCreationResult result = createProcessUsingTargetsAPI(sdk, helpersAwareRequest, ideServerPort, ideServerPortBinding, eelTunnel);
+      if (eelTunnel != null) {
+        result.myProcess.onExit().whenComplete((ignoredProcess, ignoredError) -> eelTunnel.close());
+      }
+      return result;
+    }
+    catch (ExecutionException | RuntimeException e) {
+      if (eelTunnel != null) {
+        eelTunnel.close();
+      }
+      throw e;
+    }
+  }
+
+  private @NotNull ConsoleProcessCreationResult createProcessUsingTargetsAPI(@NotNull Sdk sdk,
+                                                                             @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareRequest,
+                                                                             int ideServerPort,
+                                                                             @NotNull TargetEnvironment.LocalPortBinding ideServerPortBinding,
+                                                                             @Nullable PyEelDebuggerTunnel eelTunnel)
+    throws ExecutionException {
+    TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareRequest.getTargetEnvironmentRequest();
     Function<TargetEnvironment, HostPort> ideServerHostPortOnTarget = targetEnvironment -> {
+      if (eelTunnel != null) {
+        return eelTunnel.getHostPort();
+      }
       ResolvedPortBinding resolvedPortBinding = targetEnvironment.getLocalPortBindings().get(ideServerPortBinding);
       if (resolvedPortBinding == null) {
         throw new IllegalStateException(MessageFormat.format("Local port binding \"{0}\" must be registered", ideServerPortBinding));

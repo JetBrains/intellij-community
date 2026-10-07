@@ -11,7 +11,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.nio.charset.Charset
 import kotlin.time.Duration.Companion.seconds
 
-class PyDebugProcessHandler : PythonProcessHandler {
+internal open class PyDebugProcessHandler : PythonProcessHandler {
   constructor(commandLine: GeneralCommandLine) : super(commandLine)
   constructor(process: Process, commandLine: String, charset: Charset) : super(process, commandLine, charset)
 

@@ -12,12 +12,17 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.jetbrains.python.run.target.HelpersAwareEelTargetEnvironmentRequest
 import com.jetbrains.python.run.target.HelpersAwareLocalTargetEnvironmentRequest
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.targetWithVfs.TargetWithMappedLocalVfs
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 @ApiStatus.Internal
 interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
@@ -98,11 +103,6 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
       ExtensionPointName("Pythonid.interpreterTargetEnvironmentFactory")
 
     /**
-     * Use only for a local SDK.
-     */
-    fun createLocalTargetRequest(): HelpersAwareTargetEnvironmentRequest = HelpersAwareLocalTargetEnvironmentRequest()
-
-    /**
      * Returns a request for [sdk].
      * For a remote SDK, the plugin for its target must be loaded. If it is not loaded, this function throws an exception.
      * If the plugin can be unavailable, use the overload with [PyTargetAwareAdditionalData]. It returns `null` in that case.
@@ -112,7 +112,11 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
       when (val data = sdk.sdkAdditionalData) {
         is PyTargetAwareAdditionalData -> findPythonTargetInterpreter(data, project)
                                           ?: error("No plugin loaded for $data")
-        else -> createLocalTargetRequest()
+        // In the eel native mode, an SDK without a target can sit on a remote eel
+        else -> when (val eel = sdk.remoteEelOrNull()) {
+          null -> HelpersAwareLocalTargetEnvironmentRequest()
+          else -> HelpersAwareEelTargetEnvironmentRequest(eel)
+        }
       }
 
     @JvmStatic
@@ -172,3 +176,11 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
   }
 }
 
+
+/**
+ * The eel of an SDK without a target, if it is not the local eel. It is the eel of the home path of the SDK.
+ * Some callers of the factory run on the EDT, for example the skeleton generator in a test setup.
+ * So this reads only the home path, and does not detect the interpreter.
+ */
+private fun Sdk.remoteEelOrNull(): EelDescriptor? =
+  Path.of(homePath!!).getEelDescriptor().takeIf { it != LocalEelDescriptor }

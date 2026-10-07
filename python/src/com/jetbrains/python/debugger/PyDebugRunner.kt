@@ -16,7 +16,9 @@ import com.intellij.execution.console.LanguageConsoleBuilder
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.impl.ExecutionManagerImpl
+import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.runners.AsyncProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.HostPort
@@ -94,6 +96,7 @@ import org.jetbrains.concurrency.resolvedPromise
 import java.io.File
 import java.io.IOException
 import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.nio.file.Files
 import java.nio.file.Path
@@ -178,13 +181,19 @@ open class PyDebugRunner : AsyncProgramRunner<RunnerSettings>() {
           try {
             val serverLocalPort = serverSocket.localPort
             val localPortBinding = TargetEnvironment.LocalPortBinding(serverLocalPort, null)
+            // The local environment does not forward ports, but an SDK without a target can run pydevd on a remote eel
+            val eelTunnel = pyState.sdk?.remoteEelOrNull()?.let {
+              PyEelDebuggerTunnel.open(it, InetSocketAddress(serverSocket.inetAddress, serverLocalPort))
+            }
             val builder = PythonDebuggerClientModeTargetedCommandLineBuilder(
-              this@PyDebugRunner, environment.project, pyState, profile, localPortBinding, serverSocket)
+              this@PyDebugRunner, environment.project, pyState, profile, localPortBinding, serverSocket, eelTunnel)
             debuggerScriptCommandLineBuilder = builder
             val result = pyState.execute(environment.executor, builder)!!
+            builder.closeEelTunnelOnTermination(result.processHandler)
             Pair(builder.serverSocketForDebugging, result)
           }
           catch (err: Exception) {
+            debuggerScriptCommandLineBuilder?.closeEelTunnel()
             closeServerSocket(debuggerScriptCommandLineBuilder?.serverSocketForDebugging ?: serverSocket, err)
             throw err
           }
@@ -789,6 +798,10 @@ private class PythonDebuggerClientModeTargetedCommandLineBuilder(
    * The server socket reserved before creation of the environment and adjusted after it's prepared.
    */
   @Volatile var serverSocketForDebugging: ServerSocket,
+  /**
+   * The tunnel from the remote eel of an SDK without a target to the IDE server socket, or `null` for any other SDK.
+   */
+  private val eelTunnel: PyEelDebuggerTunnel?,
 ) : PythonScriptTargetedCommandLineBuilder {
 
   override fun build(
@@ -826,14 +839,38 @@ private class PythonDebuggerClientModeTargetedCommandLineBuilder(
       }
     }
     helpersAwareTargetRequest.targetEnvironmentRequest.localPortBindings.add(localPortBinding)
+    val tunnel = eelTunnel
+    if (tunnel != null && helpersAwareTargetRequest.targetEnvironmentRequest is LocalTargetEnvironmentRequest) {
+      return Function { tunnel.hostPort }
+    }
     return localPortBinding.getTargetEnvironmentValue()
+  }
+
+  /**
+   * Closes the tunnel to the eel of the SDK, if there is one, when the debugged process terminates.
+   */
+  fun closeEelTunnelOnTermination(processHandler: ProcessHandler) {
+    val tunnel = eelTunnel ?: return
+    processHandler.addProcessListener(object : ProcessListener {
+      override fun processTerminated(event: ProcessEvent) {
+        tunnel.close()
+      }
+    })
+    if (processHandler.isProcessTerminated) {
+      tunnel.close()
+    }
+  }
+
+  fun closeEelTunnel() {
+    eelTunnel?.close()
   }
 
   private fun createInterpreterParametersToPreventPycGenerationInHelpersDir(
     existingInterpreterParameters: List<String>,
   ): List<String> {
     val sdk = pyState.sdk ?: return emptyList()
-    if (PythonSdkUtil.isRemote(sdk)) return emptyList()
+    // The cache directory is on the IDE machine, so an interpreter on a remote eel cannot use it
+    if (PythonSdkUtil.isRemote(sdk) || sdk.remoteEelOrNull() != null) return emptyList()
 
     sdk.versionString ?: return emptyList()
 

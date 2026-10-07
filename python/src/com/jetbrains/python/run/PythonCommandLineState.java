@@ -62,6 +62,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.remote.ProcessControlWithMappings;
 import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.remote.TargetAwarePathMappingProvider;
@@ -75,6 +76,7 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
+import com.jetbrains.python.debugger.PyEelSdkKt;
 import com.jetbrains.python.debugger.PyTargetPathMapper;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
@@ -572,6 +574,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
       // TODO This special treatment of local target must be replaced with a generalized approach
       //  (f.e. with an ability of a target environment to match arbitrary local path to a target one)
       if (isDebug()) {
+        Sdk sdk = myConfig.getSdk();
+        EelDescriptor eel = sdk != null ? PyEelSdkKt.remoteEelOrNull(sdk) : null;
+        if (eel != null) {
+          return new PyEelDebugProcessHandler(process, commandLineString, commandLine.getCharset(), eel);
+        }
         return new PyDebugProcessHandler(process, commandLineString, commandLine.getCharset());
       }
       return new PythonProcessHandler(process, commandLineString, commandLine.getCharset());
