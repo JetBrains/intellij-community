@@ -275,8 +275,8 @@ internal fun NewGitLabNoteViewModel.submitActionIn(cs: CoroutineScope, actionNam
                                                    project: Project, type: NewGitLabNoteType,
                                                    place: GitLabStatistics.MergeRequestNoteActionPlace): Action =
   submitActionIn(cs, actionName) {
-    submit()
     GitLabStatistics.logMrActionExecuted(project, type.toStatAction(false), place)
+    submit()
   }
 
 internal fun NewGitLabNoteViewModel.submitAsDraftActionIn(cs: CoroutineScope, actionName: @Nls String,
@@ -284,8 +284,8 @@ internal fun NewGitLabNoteViewModel.submitAsDraftActionIn(cs: CoroutineScope, ac
                                                           place: GitLabStatistics.MergeRequestNoteActionPlace): Action? {
   if (!canSubmitAsDraft) return null
   return submitActionIn(cs, actionName) {
-    submitAsDraft()
     GitLabStatistics.logMrActionExecuted(project, type.toStatAction(true), place)
+    submitAsDraft()
   }
 }
 

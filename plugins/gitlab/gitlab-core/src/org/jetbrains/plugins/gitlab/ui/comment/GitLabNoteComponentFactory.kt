@@ -97,8 +97,8 @@ internal object GitLabNoteComponentFactory {
       val actionsVm = vm.actionsVm
       if (vm.isDraft && actionsVm != null) {
         add(CodeReviewCommentUIUtil.createPostNowButton { _ ->
-          actionsVm.submitDraft()
           GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.POST_DRAFT_NOTE, place)
+          actionsVm.submitDraft()
         }.apply {
           isVisible = actionsVm.canSubmit()
           if (actionsVm.canSubmit()) {
@@ -131,8 +131,8 @@ internal object GitLabNoteComponentFactory {
                 }
               }.also(::add)
               CodeReviewCommentUIUtil.createDeleteCommentIconButton { _ ->
-                actionVm.delete()
                 GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.DELETE_NOTE, place)
+                actionVm.delete()
               }.apply {
                 bindDisabledIn(buttonsCs, actionVm.busy)
               }.also(::add)

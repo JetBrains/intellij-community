@@ -66,10 +66,10 @@ internal class GitLabMergeRequestBranchesViewModel(
   override val showBranchesRequests: SharedFlow<CodeReviewBranches> = _showBranchesRequests
 
   override fun fetchAndCheckoutRemoteBranch() {
+    GitLabStatistics.logMrActionExecuted(gitRemote.repository.project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
     cs.launch {
       val details = mergeRequest.details.first()
       GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(gitRemote, details)
-      GitLabStatistics.logMrActionExecuted(gitRemote.repository.project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
     }
   }
 
@@ -78,21 +78,21 @@ internal class GitLabMergeRequestBranchesViewModel(
     get() = GitWorkingTreesService.isWorktreeCreationSupported(gitRemote.repository) && !isCheckedOut.value
 
   override fun checkoutInNewWorktree() {
+    GitLabStatistics.logMrActionExecuted(gitRemote.repository.project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
     cs.launch {
       val details = mergeRequest.details.first()
       GitLabMergeRequestBranchUtil.fetchAndCheckoutBranchInNewWorktree(gitRemote,
                                                                        details,
                                                                        preferredProjectAndAccount)
-      GitLabStatistics.logMrActionExecuted(gitRemote.repository.project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
     }
   }
 
   override val canShowInLog: Boolean = true
   override fun fetchAndShowInLog() {
+    GitLabStatistics.logMrActionExecuted(gitRemote.repository.project, GitLabStatistics.MergeRequestAction.SHOW_BRANCH_IN_LOG)
     cs.launch {
       val details = mergeRequest.details.first()
       GitLabMergeRequestBranchUtil.fetchAndShowRemoteBranchInLog(gitRemote, details)
-      GitLabStatistics.logMrActionExecuted(gitRemote.repository.project, GitLabStatistics.MergeRequestAction.SHOW_BRANCH_IN_LOG)
     }
   }
 

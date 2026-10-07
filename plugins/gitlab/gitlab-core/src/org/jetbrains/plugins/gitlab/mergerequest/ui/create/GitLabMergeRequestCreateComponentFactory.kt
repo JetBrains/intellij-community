@@ -46,9 +46,9 @@ internal object GitLabMergeRequestCreateComponentFactory {
     val branchState = BranchState.fromDirectionModel(directionModel)
     createVm.updateBranchState(branchState)
     directionModel.addDirectionChangesListener {
+      GitLabStatistics.logMrCreationBranchesChanged(project)
       val branchState = BranchState.fromDirectionModel(directionModel)
       createVm.updateBranchState(branchState)
-      GitLabStatistics.logMrCreationBranchesChanged(project)
     }
 
     val directionSelector = createDirectionSelector(directionModel)

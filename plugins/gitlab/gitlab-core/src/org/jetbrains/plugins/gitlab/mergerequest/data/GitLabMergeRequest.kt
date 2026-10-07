@@ -308,6 +308,7 @@ internal class LoadedGitLabMergeRequest(
   }
 
   override suspend fun merge(commitMessage: String?, removeSourceBranch: Boolean) {
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.MERGE)
     val sha = mergeRequestDetailsState.value.diffRefs?.headSha ?: return
     cs.async(Dispatchers.IO) {
       api.graphQL.mergeRequestAccept(projectCoordinates.projectPath, iid, commitMessage, sha, removeSourceBranch)
@@ -315,10 +316,10 @@ internal class LoadedGitLabMergeRequest(
       awaitMerged()
     }.await()
     discussionsContainer.requestDiscussionsRefresh()
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.MERGE)
   }
 
   override suspend fun squashAndMerge(commitMessage: String?, removeSourceBranch: Boolean, squashCommitMessage: String?) {
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.SQUASH_MERGE)
     val sha = mergeRequestDetailsState.value.diffRefs?.headSha ?: return
     cs.async(Dispatchers.IO) {
       api.graphQL.mergeRequestAcceptSquash(projectCoordinates.projectPath, iid, commitMessage, squashCommitMessage, sha, removeSourceBranch)
@@ -326,18 +327,18 @@ internal class LoadedGitLabMergeRequest(
       awaitMerged()
     }.await()
     discussionsContainer.requestDiscussionsRefresh()
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.SQUASH_MERGE)
   }
 
   override suspend fun rebase() {
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.REBASE)
     withContext(cs.coroutineContext + Dispatchers.IO) {
       runRebase()
     }
     discussionsContainer.requestDiscussionsRefresh()
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.REBASE)
   }
 
   override suspend fun approve() {
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.APPROVE)
     try {
       withContext(cs.coroutineContext + Dispatchers.IO) {
         api.rest.mergeRequestApprove(projectId, iid)
@@ -345,11 +346,11 @@ internal class LoadedGitLabMergeRequest(
     }
     finally {
       updateData()
-      GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.APPROVE)
     }
   }
 
   override suspend fun unApprove() {
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UNAPPROVE)
     try {
       withContext(cs.coroutineContext + Dispatchers.IO) {
         api.rest.mergeRequestUnApprove(projectId, iid)
@@ -357,11 +358,11 @@ internal class LoadedGitLabMergeRequest(
     }
     finally {
       updateData()
-      GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UNAPPROVE)
     }
   }
 
   override suspend fun close() {
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.CLOSE)
     withContext(cs.coroutineContext + Dispatchers.IO) {
       val updatedMergeRequest =
         api.graphQL.mergeRequestUpdate(projectCoordinates.projectPath, iid, GitLabMergeRequestNewState.CLOSED)
@@ -369,10 +370,10 @@ internal class LoadedGitLabMergeRequest(
       updateMergeRequestData(updatedMergeRequest)
       stateEventsRefreshRequest.emit(Unit)
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.CLOSE)
   }
 
   override suspend fun reopen() {
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.REOPEN)
     withContext(cs.coroutineContext + Dispatchers.IO) {
       val updatedMergeRequest =
         api.graphQL.mergeRequestUpdate(projectCoordinates.projectPath, iid, GitLabMergeRequestNewState.OPEN)
@@ -380,10 +381,10 @@ internal class LoadedGitLabMergeRequest(
       updateMergeRequestData(updatedMergeRequest)
       stateEventsRefreshRequest.emit(Unit)
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.REOPEN)
   }
 
   override suspend fun postReview() {
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.POST_REVIEW)
     withContext(cs.coroutineContext + Dispatchers.IO) {
       val updatedMergeRequest =
         api.graphQL.mergeRequestSetDraft(projectCoordinates.projectPath, iid, isDraft = false)
@@ -391,10 +392,10 @@ internal class LoadedGitLabMergeRequest(
       updateMergeRequestData(updatedMergeRequest)
     }
     discussionsContainer.requestDiscussionsRefresh()
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.POST_REVIEW)
   }
 
   override suspend fun setReviewers(reviewers: List<GitLabUserDTO>) {
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.SET_REVIEWERS)
     withContext(cs.coroutineContext + Dispatchers.IO) {
       val updatedMergeRequest = if (glMetadata != null && GitLabVersion(15, 3) <= glMetadata.version) {
         api.graphQL.mergeRequestSetReviewers(projectCoordinates.projectPath, iid, reviewers).getResultOrThrow()
@@ -407,10 +408,10 @@ internal class LoadedGitLabMergeRequest(
       updateMergeRequestData(updatedMergeRequest)
     }
     discussionsContainer.requestDiscussionsRefresh()
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.SET_REVIEWERS)
   }
 
   override suspend fun reviewerRereview(reviewers: Collection<GitLabReviewerDTO>) {
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.REVIEWER_REREVIEW)
     withContext(cs.coroutineContext + Dispatchers.IO) {
       reviewers.forEach { reviewer ->
         val updatedMergeRequest =
@@ -420,7 +421,6 @@ internal class LoadedGitLabMergeRequest(
       }
     }
     discussionsContainer.requestDiscussionsRefresh()
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.REVIEWER_REREVIEW)
   }
 
   override val discussions: Flow<Result<Collection<GitLabMergeRequestDiscussion>>> = discussionsContainer.discussions

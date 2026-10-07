@@ -236,6 +236,7 @@ internal class GitLabProjectImpl(
   }
 
   override suspend fun uploadFile(path: Path): String {
+    GitLabStatistics.logFileUploadActionExecuted(project)
     val uploadRestDTO = cs.async(Dispatchers.IO) {
       val filename = path.fileName.toString()
       val mimeType = Files.probeContentType(path) ?: "application/octet-stream"
@@ -243,11 +244,11 @@ internal class GitLabProjectImpl(
         api.rest.markdownUploadFile(projectId, filename, mimeType, it)
       }
     }.await()
-    GitLabStatistics.logFileUploadActionExecuted(project)
     return uploadRestDTO.markdown
   }
 
   override suspend fun uploadImage(image: BufferedImage): String {
+    GitLabStatistics.logFileUploadActionExecuted(project)
     val uploadRestDTO = cs.async(Dispatchers.IO) {
       val byteArray = ByteArrayOutputStream().use { outputStream ->
         ImageIO.write(image, "PNG", outputStream)
@@ -257,7 +258,6 @@ internal class GitLabProjectImpl(
         api.rest.markdownUploadFile(projectId, "image.png", "image/png", it)
       }
     }.await()
-    GitLabStatistics.logFileUploadActionExecuted(project)
     return uploadRestDTO.markdown
   }
 

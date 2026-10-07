@@ -208,8 +208,8 @@ private class DiffEditorModel(
   }
 
   override fun toggleComments(lineIdx: Int) {
-    inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
     GitLabStatistics.logToggledComments(project)
+    inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
   }
 
   override val canNavigate: Boolean get() = diffReviewVm.isCumulativeChange

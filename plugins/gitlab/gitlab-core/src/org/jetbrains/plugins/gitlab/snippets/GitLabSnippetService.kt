@@ -165,6 +165,8 @@ internal class GitLabSnippetService(private val project: Project, private val se
       )
     }
 
+    logSnippetActionExecuted(project, CREATE_CREATED)
+
     val snippet = apiCallWithReLogin(apiManager, accountManager, result.account) {
       graphQL.createSnippet(
         result.onProject,
@@ -182,8 +184,6 @@ internal class GitLabSnippetService(private val project: Project, private val se
     if (data.isOpenInBrowser) {
       BrowserUtil.browse(url)
     }
-
-    logSnippetActionExecuted(project, CREATE_CREATED)
 
     if (data.isOpenInBrowser) return
 

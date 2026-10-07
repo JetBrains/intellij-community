@@ -159,8 +159,8 @@ private fun CoroutineScope.createResolveAction(
   place: GitLabStatistics.MergeRequestNoteActionPlace,
 ) =
   swingAction(CollaborationToolsBundle.message("review.comments.resolve.action")) {
-    resolveVm.changeResolvedState()
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.CHANGE_DISCUSSION_RESOLVE, place)
+    resolveVm.changeResolvedState()
   }.apply {
     bindEnabledIn(this@createResolveAction, resolveVm.isBusy.inverted())
     bindTextIn(this@createResolveAction, resolveVm.isResolved.map(CodeReviewCommentUIUtil::getResolveToggleActionText))

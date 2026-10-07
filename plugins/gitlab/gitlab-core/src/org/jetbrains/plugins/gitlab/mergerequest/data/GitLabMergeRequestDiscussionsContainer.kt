@@ -265,6 +265,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   }
 
   override suspend fun submitDraftNotes() {
+    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.SUBMIT_DRAFT_NOTES)
     withContext(cs.coroutineContext) {
       // Don't do anything if the endpoint is not implemented
       if (glMetadata == null || glMetadata.version < GitLabVersion(15, 11)) {
@@ -279,7 +280,6 @@ class GitLabMergeRequestDiscussionsContainerImpl(
         requestDiscussionsRefresh()
       }
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.SUBMIT_DRAFT_NOTES)
   }
 
   suspend fun requestDiscussionsReload() {
