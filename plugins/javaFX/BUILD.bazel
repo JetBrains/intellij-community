@@ -79,6 +79,8 @@ jvm_library(
         "//platform/execution",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/asm",
     ],
 )
 
@@ -140,6 +142,8 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/asm:asm_test_lib",
     ],
 )
 ### auto-generated section `build intellij.javaFX` end

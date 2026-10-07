@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -11,6 +11,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,12 +27,17 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.VisibilityUtil;
+import com.sun.tools.javac.Main;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolvedFxIdReferenceInspection;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxInjectPageLanguageIntention;
+import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxScriptEngineService;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class JavaFXQuickfixTest extends LightJavaCodeInsightFixtureTestCase {
   public static final DefaultLightProjectDescriptor JAVA_FX_WITH_GROOVY_DESCRIPTOR = new DefaultLightProjectDescriptor() {
@@ -139,11 +146,32 @@ public class JavaFXQuickfixTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.configureByFile(getTestName(true) + ".fxml");
     final IntentionAction intention = myFixture.findSingleIntention("Specify page language");
     assertNotNull(intention);
-    Set<String> languages = JavaFxInjectPageLanguageIntention.getAvailableLanguages(getProject());
+    Set<String> languages = findEngineNames();
     assertContainsElements(languages, "groovy");
     JavaFxInjectPageLanguageIntention languageIntention = (JavaFxInjectPageLanguageIntention)IntentionActionDelegate.unwrap(intention);
     languageIntention.registerPageLanguage(getProject(), (XmlFile)myFixture.getFile(), "groovy");
     myFixture.checkResultByFile(getTestName(true) + ".fxml", getTestName(true) + "_after.fxml", true);
+  }
+
+  public void testAvailableLanguagesDoNotLoadProviderClasses() throws Exception {
+    Path classesDir = FileUtil.createTempDirectory("javaFxScriptEngines", "").toPath();
+    assertEquals("testData sources failed to compile", 0, Main.compile(new String[]{
+      "-d", classesDir.toString(), getTestDataPath() + "scriptEngineFactory/rocq/TestRocqScriptEngineFactory.java"}));
+    Path serviceFile = classesDir.resolve("META-INF/services/javax.script.ScriptEngineFactory");
+    Files.createDirectories(serviceFile.getParent());
+    Files.writeString(serviceFile, "# a comment\norg.example.MissingScriptEngineFactory\nrocq.TestRocqScriptEngineFactory # a comment\n");
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(classesDir);
+    PsiTestUtil.addLibrary(getTestRootDisposable(), getModule(), "scriptEngines", classesDir.getParent().toString(),
+                           classesDir.getFileName().toString());
+
+    assertSameElements(findEngineNames(), "groovy", "rocq");
+  }
+
+  private Set<String> findEngineNames() {
+    final AtomicReference<Set<String>> result = new AtomicReference<>();
+    JavaFxScriptEngineService.getInstance(getProject()).findEngineNames(result::set);
+    PlatformTestUtil.waitWithEventsDispatching("The script engines are not found in time", () -> result.get() != null, 10);
+    return result.get();
   }
 
   public void testWrapWithDefine() {
