@@ -51,9 +51,16 @@ public final class KeyRecordLayout {
     if (target.byteSize() != expectedSize) {
       throw new IllegalArgumentException("Key record size(=" + target.byteSize() + ") must be " + expectedSize);
     }
+    initialize(target, keyHash);
+    MemorySegment.copy(keyPayload, 0, target, HEADER_SIZE, keyPayload.byteSize());
+  }
+
+  static void initialize(@NotNull MemorySegment target, int keyHash) {
+    if (target.byteSize() < HEADER_SIZE) {
+      throw new IllegalArgumentException("Key record size(=" + target.byteSize() + ") must be at least " + HEADER_SIZE);
+    }
     VALUE_RECORD_REF_HANDLE.set(target, 0L, NO_VALUE_RECORD_REF);
     KEY_HASH_HANDLE.set(target, 0L, keyHash);
-    MemorySegment.copy(keyPayload, 0, target, HEADER_SIZE, keyPayload.byteSize());
   }
 
   /// Updates the value head while the map lock is held.

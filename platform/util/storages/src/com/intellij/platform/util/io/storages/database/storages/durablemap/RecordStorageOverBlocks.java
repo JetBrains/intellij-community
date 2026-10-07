@@ -139,6 +139,19 @@ public final class RecordStorageOverBlocks {
     return log.readRecord(recordOffset(recordRef));
   }
 
+  /// Updates a committed payload without changing its size or record header.
+  public void updatePayload(long recordRef, @NotNull RecordWriter updater) throws IOException {
+    var blockId = blockId(recordRef);
+    AppendOnlyLogOverBlock log;
+    synchronized (logsByBlockIdLock) {
+      log = logsByBlockId.get(blockId);
+    }
+    if (log == null) {
+      throw new IllegalArgumentException("Unknown " + recordBlockRole + " block " + blockId);
+    }
+    log.updatePayload(recordOffset(recordRef), updater);
+  }
+
   /// Processes committed records in block allocation order
   public void forEachCommittedRecord(@NotNull RecordReader reader) throws IOException {
     forEachCommittedRecordWithLinks((recordRef, record) -> reader.process(recordRef, record.payload()));
