@@ -51,10 +51,10 @@ internal val AnActionEvent.contextBookmark: Bookmark?
     val editor = getData(CommonDataKeys.EDITOR) ?: getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE)
     val project = editor?.project ?: project ?: return null
     val manager = BookmarksManager.getInstance(project) ?: return null
-    val window = getData(PlatformDataKeys.TOOL_WINDOW)
-    if (window?.id == ToolWindowId.BOOKMARKS) return null
+    val windowId = getData(PlatformDataKeys.TOOL_WINDOW_ID)
+    if (windowId == ToolWindowId.BOOKMARKS) return null
 
-    if (place == ActionPlaces.EDITOR_TAB_POPUP || window?.id == ToolWindowId.PROJECT_VIEW) {
+    if (place == ActionPlaces.EDITOR_TAB_POPUP || windowId == ToolWindowId.PROJECT_VIEW) {
       // Create file bookmark
       val file = getData(CommonDataKeys.VIRTUAL_FILE) ?: return null
       return manager.createBookmark(file)
@@ -67,7 +67,7 @@ internal val AnActionEvent.contextBookmark: Bookmark?
     }
 
     val component = getData(PlatformDataKeys.CONTEXT_COMPONENT)
-    val allowed = UIUtil.getClientProperty(component, BookmarksManager.ALLOWED) ?: (window?.id == ToolWindowId.PROJECT_VIEW)
+    val allowed = UIUtil.getClientProperty(component, BookmarksManager.ALLOWED) ?: (windowId == ToolWindowId.PROJECT_VIEW)
     if (!allowed) return null
 
     // TODO mouse shortcuts as in gutter/LOGICAL_LINE_AT_CURSOR
@@ -84,13 +84,13 @@ internal val AnActionEvent.contextBookmark: Bookmark?
 
 internal val AnActionEvent.contextBookmarks: List<Bookmark>?
   get() {
-    val window = getData(PlatformDataKeys.TOOL_WINDOW)
-    if (window?.id != ToolWindowId.PROJECT_VIEW) return null
+    if (getData(PlatformDataKeys.TOOL_WINDOW_ID) != ToolWindowId.PROJECT_VIEW) return null
+    val project = project ?: return null
 
     val files = getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return null
     if (files.size < 2) return null
 
-    val manager = BookmarksManager.getInstance(window.project) ?: return null
+    val manager = BookmarksManager.getInstance(project) ?: return null
     return files.mapNotNull { manager.createBookmark(it) }
   }
 
