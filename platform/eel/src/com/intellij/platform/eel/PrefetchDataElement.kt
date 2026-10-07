@@ -4,6 +4,7 @@ package com.intellij.platform.eel
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi.SymlinkPolicy
 import com.intellij.platform.eel.fs.EelPosixFileInfo
+import com.intellij.platform.eel.fs.PrefetchedStat
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.ThreadContextElement
 import kotlinx.coroutines.currentCoroutineContext
@@ -18,6 +19,9 @@ import kotlin.coroutines.CoroutineContext
  *
  * The cache trusts the components above the shallowest cached directory as plain directories,
  * the same way it trusts the parent of a cached entry.
+ *
+ * The cache holds two kinds of entries. A directory listing is complete: a name that is not in it does not exist.
+ * A stat cached on its own answers only for its path and says nothing about a sibling.
  */
 @ApiStatus.Internal
 abstract class PrefetchDataElement :
@@ -26,6 +30,9 @@ abstract class PrefetchDataElement :
 
   /** The cached entries of a directory, or null when the directory is not cached. */
   protected abstract fun cachedChildren(path: EelPath): Map<String, EelFileInfo>?
+
+  /** The stat cached for [path] on its own, or null when it is not cached. */
+  protected abstract fun cachedStat(path: EelPath): PrefetchedStat?
 
   /** The child names do not depend on a symlink policy. */
   fun getChildNames(path: EelPath): Set<String>? {
@@ -50,6 +57,16 @@ abstract class PrefetchDataElement :
   }
 
   fun lookupStat(path: EelPath, symlinkPolicy: SymlinkPolicy): StatLookup {
+    // A stat cached on its own answers for its literal path, the way the server statted it.
+    // It is final: a listing below either agrees with it or does not hold the path at all.
+    when (val stat = cachedStat(path)) {
+      is PrefetchedStat.Present -> return when (symlinkPolicy) {
+        SymlinkPolicy.DO_NOT_RESOLVE, SymlinkPolicy.JUST_RESOLVE -> StatLookup.Hit(stat.info)
+        SymlinkPolicy.RESOLVE_AND_FOLLOW -> stat.target?.let { StatLookup.Hit(it) } ?: StatLookup.Miss
+      }
+      PrefetchedStat.Absent -> return StatLookup.Absent
+      null -> Unit
+    }
     val resolved = resolve(path, followLast = symlinkPolicy == SymlinkPolicy.RESOLVE_AND_FOLLOW)
     if (resolved != null) return resolved.info?.let { StatLookup.Hit(it) } ?: StatLookup.Miss
     // A missing child of a cached directory is a known absence only when no symlink took part in the lookup.

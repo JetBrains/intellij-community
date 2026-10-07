@@ -27,7 +27,6 @@ import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.EelMountProvider
 import com.intellij.platform.eel.provider.EelMountRoot
 import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.PrefetchContextBuilder
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.canReadPermissionsDirectly
@@ -35,6 +34,7 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.transformPath
+import com.intellij.platform.eel.provider.withPrefetchedTrees
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.ijent.community.impl.nio.fsBlocking
@@ -134,63 +134,12 @@ fun listWithAttributesUsingEel(eelPath: EelPath, filter: Set<String>?): Map<Stri
 }
 
 /**
- * Prefetches remote directory trees for VFS refresh and runs [block] with the
- * prefetch cache installed in the thread context. The cache propagates automatically
- * to child threads via [com.intellij.concurrency.IntelliJContextElement] (through context-propagating executors).
- *
- * If no remote roots are found among [roots], [block] is called directly without prefetching.
+ * Prefetches the remote directory trees under [roots] for a VFS refresh or a scan and runs [block] with the cache
+ * in the thread context. See [withPrefetchedTrees].
  */
 @ApiStatus.Internal
 fun withPrefetchForRemoteRoots(roots: Collection<@JvmWildcard VirtualFile>, block: () -> Unit) {
-  if (!Registry.`is`("vfs.eel.scanning.prefetch.enabled", true)) {
-    block()
-    return
-  }
-  val remoteRoots = roots.mapNotNull { root ->
-    try {
-      val nioPath = root.fileSystem.getNioPath(root) ?: return@mapNotNull null
-      val descriptor = nioPath.getEelDescriptor()
-      if (descriptor === LocalEelDescriptor) return@mapNotNull null
-        @OptIn(EelDelicateApi::class)
-      val eelPath = nioPath.asEelPath()
-      // skip FS root — prefetching entire remote filesystem is wasteful; VFS refresh from root only checks cached children anyway
-      if (eelPath.parent == null) return@mapNotNull null
-      // skip paths with direct local mount — they bypass gRPC entirely
-      if ((nioPath.fileSystem as? EelMountProvider)?.getMountRoot(eelPath) != null) return@mapNotNull null
-      descriptor to eelPath
-    }
-    catch (_: Exception) {
-      null
-    }
-  }
-  if (remoteRoots.isEmpty()) {
-    block()
-    return
-  }
-
-  val element = try {
-    PrefetchContextBuilder(remoteRoots).apply {
-      rootsByDescriptor.keys.forEach { descriptor ->
-        descriptor.fsBlocking {
-          prefetchForDescriptor(descriptor)
-        }
-      }
-    }.toElement()
-  }
-  catch (e: Exception) {
-    @Suppress("removal", "DEPRECATION")
-    LocalFileSystemBase.LOG.warn("Failed to prefetch remote roots for VFS refresh", e)
-    null
-  }
-  if (element != null) {
-    @Suppress("removal", "DEPRECATION")
-    LocalFileSystemBase.LOG.info("VFS refresh prefetch: ${element.size} directories cached for ${remoteRoots.size} remote roots")
-    val context = com.intellij.concurrency.currentThreadContext() + element
-    com.intellij.concurrency.installThreadContext(context, replace = true, block)
-  }
-  else {
-    block()
-  }
+  withPrefetchedTrees(roots.mapNotNull { root -> root.fileSystem.getNioPath(root) }, block)
 }
 
 /**

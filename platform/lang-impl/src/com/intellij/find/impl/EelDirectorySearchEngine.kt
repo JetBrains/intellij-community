@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl
 
-import com.intellij.concurrency.currentThreadContext
-import com.intellij.concurrency.installThreadContext
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.find.DirectorySearchEngine
 import com.intellij.find.DirectorySearchEngine.FileSearchCandidate
@@ -23,7 +21,7 @@ import com.intellij.platform.eel.fs.EelSearchEvent.Skipped.Reason
 import com.intellij.platform.eel.fs.EelSearchOptions
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.prefetchDataElement
+import com.intellij.platform.eel.provider.withPrefetchedStats
 import java.io.IOException
 import java.util.function.Consumer
 import org.jetbrains.annotations.ApiStatus
@@ -136,8 +134,7 @@ class EelDirectorySearchEngine @VisibleForTesting constructor(private val edges:
             else {
               // The hit and the directories above it carry their attributes, so the resolution does not stat the remote path.
               // The thread context, not the coroutine context, is what DiskQueryRelay hands to the thread that does the lookup.
-              val attributes = prefetchDataElement(hitAttributes(eelRoot, event.path, info, directories))
-              val file = installThreadContext(currentThreadContext() + attributes, replace = true) {
+              val file = withPrefetchedStats(hitStats(eelRoot, event.path, info, directories)) {
                 LocalFileSystem.getInstance().findFileByPathWithoutCaching(nioPath.toString())
               }
               if (file != null) consumer.accept(FileSearchCandidate.fromVirtualFile(file))
@@ -176,21 +173,18 @@ private fun ignoredNameGlobs(): List<String> {
 }
 
 /**
- * The attributes of a hit and of the directories between [root] and the hit, as `directory -> (name -> info)`.
+ * The attributes of a hit and of the directories between [root] and the hit, as `path -> info`.
  * [directories] holds the attributes the search reported; a directory it does not hold ends the chain, and
  * [root] itself is a [VirtualFile] already, so it is not included.
  */
 @VisibleForTesting
-internal fun hitAttributes(root: EelPath, path: EelPath, info: EelFileInfo, directories: Map<EelPath, EelFileInfo>): Map<EelPath, Map<String, EelFileInfo>> {
-  val result = HashMap<EelPath, Map<String, EelFileInfo>>()
-  var child = path
-  var childInfo = info
-  while (true) {
-    val parent = child.parent ?: break
-    result[parent] = mapOf(child.fileName to childInfo)
-    if (parent == root) break
-    child = parent
-    childInfo = directories[parent] ?: break
+internal fun hitStats(root: EelPath, path: EelPath, info: EelFileInfo, directories: Map<EelPath, EelFileInfo>): Map<EelPath, EelFileInfo> {
+  val result = HashMap<EelPath, EelFileInfo>()
+  result[path] = info
+  var directory = path.parent
+  while (directory != null && directory != root) {
+    result[directory] = directories[directory] ?: break
+    directory = directory.parent
   }
   return result
 }
