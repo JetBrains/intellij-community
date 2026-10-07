@@ -13,6 +13,8 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8;
+import static com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_SEPARATELY;
+import static com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_TOGETHER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -32,6 +34,61 @@ public class DurableDatabaseTest {
       assertSame(first, second);
       first.put("key", "value");
       assertEquals("value", second.get("key"));
+    }
+  }
+
+  @Test
+  public void oldOverloadUsesKeyValueTogether(@TempDir Path databaseDirectory) throws Exception {
+    try (var database = new DurableDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
+      var implicit = openStringMap(database, 1);
+      var explicit = openStringMap(database, KEY_VALUE_TOGETHER);
+
+      assertSame(implicit, explicit, "The old overload must select the existing map implementation");
+    }
+  }
+
+  @Test
+  public void unsupportedImplementationDoesNotCreateAMap(@TempDir Path databaseDirectory) throws Exception {
+    try (var database = new DurableDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
+      assertThrows(
+        UnsupportedFormatException.class,
+        () -> openStringMap(database, KEY_VALUE_SEPARATELY)
+      );
+
+      assertTrue(database.mapNames().isEmpty(), "A rejected implementation must not create a store");
+    }
+  }
+
+  @Test
+  public void openMapCacheRejectsAnotherImplementation(@TempDir Path databaseDirectory) throws Exception {
+    try (var database = new DurableDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
+      var map = openStringMap(database, KEY_VALUE_TOGETHER);
+
+      assertThrows(
+        UnsupportedFormatException.class,
+        () -> openStringMap(database, KEY_VALUE_SEPARATELY)
+      );
+      assertSame(map, openStringMap(database, 1), "A rejected selector must preserve the cached map");
+    }
+  }
+
+  @Test
+  public void versionOneMetadataSelectsKeyValueTogether(@TempDir Path databaseDirectory) throws Exception {
+    var factory = new DurableDatabaseFactory(CHUNK_SIZE);
+    try (var database = factory.open(databaseDirectory)) {
+      openStringMap(database, 1).put("key", "value");
+    }
+
+    try (var database = factory.open(databaseDirectory)) {
+      assertThrows(
+        UnsupportedFormatException.class,
+        () -> openStringMap(database, KEY_VALUE_SEPARATELY)
+      );
+      assertEquals(
+        "value",
+        openStringMap(database, KEY_VALUE_TOGETHER).get("key"),
+        "A rejected selector must not change legacy metadata or map data"
+      );
     }
   }
 
@@ -154,5 +211,11 @@ public class DurableDatabaseTest {
                                                                    int dataVersion) throws IOException {
     KeyDescriptorEx<String> descriptor = stringAsUTF8();
     return database.openMap(name, dataVersion, descriptor, descriptor);
+  }
+
+  private static @NotNull DurableMap<String, String> openStringMap(@NotNull DurableDatabase database,
+                                                                   @NotNull DurableMapImplementation implementation) throws IOException {
+    KeyDescriptorEx<String> descriptor = stringAsUTF8();
+    return database.openMap("map", 1, implementation, descriptor, descriptor);
   }
 }

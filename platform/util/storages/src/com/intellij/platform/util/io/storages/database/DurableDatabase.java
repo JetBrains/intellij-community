@@ -23,12 +23,28 @@ public interface DurableDatabase extends Flushable, Closeable, DatabaseMetricsPr
                                            @NotNull KeyDescriptorEx<K> keyDescriptor,
                                            @NotNull DataExternalizerEx<V> valueExternalizer) throws IOException;
 
+  /// Opens the named map with the selected persistent layout, or creates it if it does not exist yet
+  <K, V> @NotNull DurableMap<K, V> openMap(@NotNull String name,
+                                           int dataVersion,
+                                           @NotNull DurableMapImplementation implementation,
+                                           @NotNull KeyDescriptorEx<K> keyDescriptor,
+                                           @NotNull DataExternalizerEx<V> valueExternalizer) throws IOException;
+
   /// Opens a named map that accepts patches encoded by the supplied codec
   <K, V, P> @NotNull PatchableDurableMap<K, V, P> openMap(@NotNull String name,
                                                           int dataVersion,
                                                           @NotNull KeyDescriptorEx<K> keyDescriptor,
                                                           @NotNull PatchableDurableMap.PatchableValueExternalizer<V, P> valueExternalizer)
     throws IOException;
+
+  /// Opens a named map with the selected persistent layout and a codec that accepts patches
+  <K, V, P> @NotNull PatchableDurableMap<K, V, P> openMap(
+    @NotNull String name,
+    int dataVersion,
+    @NotNull DurableMapImplementation implementation,
+    @NotNull KeyDescriptorEx<K> keyDescriptor,
+    @NotNull PatchableDurableMap.PatchableValueExternalizer<V, P> valueExternalizer
+  ) throws IOException;
 
   /// @return a snapshot of the current map names
   @NotNull List<String> mapNames();
