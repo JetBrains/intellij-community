@@ -15,7 +15,11 @@ import java.awt.Graphics2D
 import javax.swing.JComponent
 
 /**
- * Paints on the EDT so Swing submits each painted frame to Wayland.
+ * Paints the skeleton on the EDT with Swing `repaint()`. It does not use a heavyweight `java.awt.Canvas`.
+ *
+ * ## Wayland
+ *
+ * Swing submits each painted frame to Wayland. A `Canvas` buffer strategy does not do this.
  *
  * 1. `WLToolkit.createCanvas()` delegates to `LWToolkit.createCanvas()`, which creates an `LWCanvasPeer`.
  *    This peer inherits `LWComponentPeer.flip()`.
@@ -73,8 +77,12 @@ import javax.swing.JComponent
  * // After releasing the peer lock
  * ((WLToolkit) Toolkit.getDefaultToolkit()).flush();
  * ```
+ *
+ * ## Windows
+ *
+ * This renderer creates no `Canvas`, so it avoids JBR-10643
  */
-internal class EditorSkeletonWaylandRenderer : JComponent(), EditorSkeletonRenderer {
+internal class EditorSkeletonFallbackRenderer : JComponent(), EditorSkeletonRenderer {
   override val component: JComponent
     get() = this
 
