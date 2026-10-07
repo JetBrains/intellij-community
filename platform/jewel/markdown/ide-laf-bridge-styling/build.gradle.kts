@@ -1,4 +1,5 @@
 import java.net.URI
+import org.jetbrains.intellij.platform.gradle.attributes.ComposedJarRule
 
 plugins {
     jewel
@@ -39,4 +40,10 @@ dependencies {
     intellijPlatform { intellijIdea(libs.versions.idea) }
 
     testImplementation(compose.desktop.uiTestJUnit4)
+
+    // ide-laf-bridge requests a composed-jar from the ui module, which publishes a plain jar. Only the
+    // IntelliJ Platform module plugin registers the rule that accepts it. Remove this when the base plugin does too.
+    attributesSchema {
+        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE) { compatibilityRules.add(ComposedJarRule::class) }
+    }
 }
