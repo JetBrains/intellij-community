@@ -4,6 +4,7 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.frontend.welcomeFiles
 import com.intellij.ide.actions.askSaveWelcomeFile
 import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.tabActions.ALWAYS_SHOW_MODIFIED_MARKER
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
@@ -32,6 +33,10 @@ internal class WelcomeFilePreCloseCheck : VirtualFilePreCloseCheck {
         continue
       }
       val project = findWelcomeProject(file) ?: continue
+      // A split copy closes without a question. The last tab of the file asks.
+      if (FileEditorManagerEx.getInstanceEx(project).splitters.getAllComposites(file).size > 1) {
+        continue
+      }
       if (cancelled || FrontendWelcomeFilesService.getInstance(project).isSaving(file)) {
         filesToKeep += file
         continue

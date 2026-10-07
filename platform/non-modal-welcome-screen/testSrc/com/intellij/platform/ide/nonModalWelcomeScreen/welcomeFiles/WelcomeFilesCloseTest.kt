@@ -48,6 +48,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import java.util.concurrent.CopyOnWriteArrayList
+import javax.swing.SwingConstants
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -220,6 +221,39 @@ internal class WelcomeFilesCloseTest {
 
     assertEquals(listOf(failedFile.name, nextFile.name), savedFileNames)
     assertEquals(listOf("Cannot save the Home file ${failedFile.name}"), loggedErrors)
+  }
+
+  @Test
+  fun `a split copy closes without a question`(): Unit = timeoutRunBlocking {
+    markAsWelcomeProject(project)
+    val file = createWelcomeFile()
+    openAndAwaitMarker(file)
+    var questionCount = 0
+    TestDialogManager.setTestDialog({ questionCount++; Messages.NO }, disposable)
+    val (firstWindow, secondWindow) = withContext(Dispatchers.UiWithModelAccess) {
+      val window = manager.currentWindow!!
+      window to window.split(SwingConstants.VERTICAL, true, file, true)!!
+    }
+    waitUntil("The file is not open in two windows", timeout = 5.seconds) {
+      withContext(Dispatchers.UiWithModelAccess) { manager.splitters.getAllComposites(file).size == 2 }
+    }
+
+    val closedCopy = withContext(Dispatchers.UiWithModelAccess) {
+      manager.closeFileWithChecks(file, secondWindow)
+    }
+
+    assertTrue(closedCopy)
+    assertEquals(0, questionCount)
+    assertTrue(withContext(Dispatchers.UiWithModelAccess) { manager.isFileOpen(file) })
+    assertTrue(file.isValid)
+
+    val closedLast = withContext(Dispatchers.UiWithModelAccess) {
+      manager.closeFileWithChecks(file, firstWindow)
+    }
+
+    assertTrue(closedLast)
+    assertEquals(1, questionCount)
+    waitUntil("The Home file is not deleted", timeout = 5.seconds) { !file.isValid }
   }
 
   @Test
