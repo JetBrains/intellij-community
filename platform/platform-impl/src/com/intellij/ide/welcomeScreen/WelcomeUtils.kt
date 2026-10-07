@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.HTMLVirtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
@@ -70,7 +71,11 @@ object WelcomeUtils {
 
   private fun isNoUserDataOpened(manager: FileEditorManager): Boolean {
     val editors = manager.allEditors
-    return editors.isEmpty() || editors.all { it.getFile() is HTMLVirtualFile }
+    return editors.isEmpty() || editors.all { it.getFile() is HTMLVirtualFile || isAirWelcomeTab(it.file) }
+  }
+
+  private fun isAirWelcomeTab(file: VirtualFile): Boolean {
+    return file.name == "welcome" && file.fileSystem.protocol == "air-welcome"
   }
 
   fun getWelcomeProjectIcon(project: Project): Icon? {
