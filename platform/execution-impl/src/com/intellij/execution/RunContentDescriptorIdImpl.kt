@@ -8,10 +8,10 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.ExecutionDataKeys
 import com.intellij.openapi.actionSystem.UiDataRule
-import com.intellij.platform.kernel.ids.BackendValueIdType
-import com.intellij.platform.kernel.ids.findValueById
-import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.rpc.UID
+import com.intellij.platform.rpc.ids.BackendValueIdType
+import com.intellij.platform.rpc.ids.findValueById
+import com.intellij.platform.rpc.ids.storeValueGlobally
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable

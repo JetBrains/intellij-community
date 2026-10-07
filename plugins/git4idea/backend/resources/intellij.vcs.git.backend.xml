@@ -4,7 +4,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
-    <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.gson"/>
@@ -50,7 +49,6 @@
     <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.ide.ui"/>
     <module name="intellij.platform.ide.util.netty"/>
-    <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.lvcs"/>

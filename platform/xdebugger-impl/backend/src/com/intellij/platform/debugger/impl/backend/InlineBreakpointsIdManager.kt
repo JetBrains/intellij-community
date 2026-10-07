@@ -11,9 +11,9 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XInlineBreakpointVariantId
-import com.intellij.platform.kernel.ids.BackendValueIdType
-import com.intellij.platform.kernel.ids.findValueById
-import com.intellij.platform.kernel.ids.storeValueGlobally
+import com.intellij.platform.rpc.ids.BackendValueIdType
+import com.intellij.platform.rpc.ids.findValueById
+import com.intellij.platform.rpc.ids.storeValueGlobally
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import kotlinx.coroutines.CoroutineScope

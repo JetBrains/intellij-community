@@ -26,7 +26,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
-        "//platform/kernel/shared:kernel",
+        "//fleet/rpc",
         "//platform/platform-impl:ide-impl",
         "//platform/pluginManager/shared",
         "//platform/core-impl",
@@ -36,7 +36,6 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/lang-impl",
         "//platform/platform-impl/update-checker",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -53,7 +52,7 @@ jvm_library(
         # do not sort,
         ":frontend",
         "//platform/core-api:core_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
+        "//fleet/rpc:rpc_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/pluginManager/shared:shared_test_lib",
         "//platform/core-impl:core-impl_test_lib",
@@ -63,7 +62,6 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/platform-impl/update-checker:update-checker_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.pluginManager.frontend` end

@@ -35,15 +35,12 @@ import com.intellij.openapi.progress.util.awaitWithCheckCanceled
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.platform.ide.bootstrap.kernel.startClientKernel
-import com.intellij.platform.ide.bootstrap.kernel.startServerKernel
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.util.EnvironmentUtil
-import com.intellij.util.PlatformUtils
 import com.intellij.util.ShellEnvironmentReader
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.lang.ZipFilePool
@@ -304,17 +301,6 @@ fun startApplication(
     }
   }
 
-  val kernelStarted = scope.async {
-    span("Starting Kernel") {
-      if (PlatformUtils.isJetBrainsClient()) {
-        startClientKernel(mainScope)
-      }
-      else {
-        startServerKernel(mainScope)
-      }
-    }
-  }
-
   val appRegisteredJob = CompletableDeferred<Unit>()
 
   val appLoaded = scope.async {
@@ -331,7 +317,7 @@ fun startApplication(
     val app = span("app instantiation") {
       // we don't want to inherit mainScope Dispatcher and CoroutineTimeMeasurer, we only want the job
       @Suppress("SSBasedInspection")
-      ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job + kernelStarted.await().coroutineContext).childScope("Application"), isInternal)
+      ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job).childScope("Application"), isInternal)
     }
 
     val args = ApplicationStartArguments.stripKnownArguments(args)
@@ -365,8 +351,7 @@ fun startApplication(
 
   // out of appLoaded scope
   scope.launch {
-    // wait for the kernel to start
-    withContext(kernelStarted.await().coroutineContext) {
+    coroutineScope {
       // starter is used later, but we need to wait for appLoaded completion
       val starter = appLoaded.await()
 

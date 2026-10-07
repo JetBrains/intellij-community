@@ -52,7 +52,6 @@
     <module name="intellij.platform.foldings"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.bootstrap"/>
-    <module name="intellij.platform.ide.bootstrap.kernel"/>
     <module name="intellij.platform.ide.codeinsight.inline"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>

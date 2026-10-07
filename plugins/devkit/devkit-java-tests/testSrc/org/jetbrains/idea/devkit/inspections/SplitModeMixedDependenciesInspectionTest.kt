@@ -115,10 +115,10 @@ Computed module kind reasoning:
 
 Frontend dependency 'intellij.platform.frontend.split' from descriptor 'unique.module.name.19.xml' in module 'unique.module.name.19'
 
-Backend dependency 'intellij.platform.kernel.backend' from descriptor 'unique.module.name.19.xml' in module 'unique.module.name.19'">idea-plugin</error>>
+Backend dependency 'intellij.platform.backend' from descriptor 'unique.module.name.19.xml' in module 'unique.module.name.19'">idea-plugin</error>>
           <dependencies>
             <module name="intellij.platform.frontend.split"/>
-            <module name="intellij.platform.kernel.backend"/>
+            <module name="intellij.platform.backend"/>
           </dependencies>
         </idea-plugin>
       """.trimIndent()
@@ -211,9 +211,9 @@ Computed module kind reasoning:
 
 Frontend dependency 'intellij.platform.frontend' from containing plugin descriptor 'plugin.xml' in module 'unique.module.name.23'
 
-Backend dependency 'intellij.platform.kernel.backend' from descriptor 'unique.module.name.24.xml' in module 'unique.module.name.24'">idea-plugin</error>>
+Backend dependency 'intellij.platform.backend' from descriptor 'unique.module.name.24.xml' in module 'unique.module.name.24'">idea-plugin</error>>
           <dependencies>
-            <module name="intellij.platform.kernel.backend"/>
+            <module name="intellij.platform.backend"/>
           </dependencies>
         </idea-plugin>
       """.trimIndent()

@@ -48,9 +48,7 @@ jvm_library(
         "//platform/workspace/storage",
         "//platform/workspace/jps",
         "//platform/backend/workspace",
-        "//platform/kernel/shared:kernel",
         "//platform/eel-nioFs",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -89,9 +87,7 @@ jvm_library(
         "//platform/workspace/storage:storage_test_lib",
         "//platform/workspace/jps:jps_test_lib",
         "//platform/backend/workspace:workspace_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/eel-nioFs:eel-nioFs_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.core` end

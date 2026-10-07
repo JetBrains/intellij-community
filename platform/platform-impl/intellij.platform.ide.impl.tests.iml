@@ -145,7 +145,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.nio.fs" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ijent.community.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ijent.community.buildConstants" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.kernel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.project" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jbr" scope="TEST" />
@@ -183,7 +182,6 @@
     <orderEntry type="module" module-name="intellij.libraries.rd.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
-    <orderEntry type="module" module-name="fleet.rhizomedb" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />

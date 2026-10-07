@@ -140,7 +140,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.nio.fs" />
     <orderEntry type="module" module-name="intellij.platform.ijent.community.impl" />
     <orderEntry type="module" module-name="intellij.platform.ijent.community.buildConstants" />
-    <orderEntry type="module" module-name="intellij.platform.kernel" />
+    <orderEntry type="module" module-name="fleet.rpc" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.platform.project" />
     <orderEntry type="module" module-name="intellij.platform.jbr" />
@@ -171,7 +171,6 @@
     <orderEntry type="module" module-name="intellij.platform.runtime.product" />
     <orderEntry type="module" module-name="intellij.libraries.rd.core" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
-    <orderEntry type="module" module-name="fleet.rhizomedb" />
     <orderEntry type="library" name="jetbrains.intellij.deps.java.atk.wrapper.linux" level="project" />
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs.impl" />
   </component>

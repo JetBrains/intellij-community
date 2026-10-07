@@ -28,7 +28,6 @@
     <module name="intellij.platform.klogger" loading="embedded"/>
     <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.rpc.lite" loading="embedded"/>
-    <module name="intellij.platform.kernel" loading="embedded"/>
     <!-- endregion -->
   </content>
 </idea-plugin>

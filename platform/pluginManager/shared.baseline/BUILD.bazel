@@ -27,7 +27,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/kernel/rpc.lite",
         "//platform/core-api:core",
-        "//platform/kernel/shared:kernel",
         "//platform/platform-impl/rpc",
         "//platform/platform-impl:ide-impl",
         "//libraries/kotlinx/serialization/core",
@@ -36,7 +35,6 @@ jvm_library(
         "//platform/core-impl",
         "//platform/project/shared:project",
         "//platform/platform-impl/update-checker",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -54,7 +52,6 @@ jvm_library(
         ":shared.baseline",
         "//platform/kernel/rpc.lite:rpc.lite_test_lib",
         "//platform/core-api:core_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
@@ -63,7 +60,6 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//platform/project/shared:project_test_lib",
         "//platform/platform-impl/update-checker:update-checker_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.pluginManager.shared.baseline` end

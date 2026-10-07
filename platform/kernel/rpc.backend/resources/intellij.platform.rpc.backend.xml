@@ -5,7 +5,6 @@
     <module name="fleet.rpc.server"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.core"/>
-    <module name="intellij.platform.kernel.backend.baseline"/>
     <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.rpc.lite"/>
   </dependencies>

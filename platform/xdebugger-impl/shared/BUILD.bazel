@@ -31,7 +31,6 @@ jvm_library(
         "//platform/core-ui",
         "//platform/util:util-ui",
         "//platform/platform-api:ide",
-        "//platform/kernel/shared:kernel",
         "//platform/util/concurrency",
         "//platform/xdebugger-api:debugger",
         "//libraries/kotlinx/serialization/core",
@@ -52,7 +51,7 @@ jvm_library(
         "//platform/consoleView",
         "//platform/statistics",
         "//platform/ide-core",
-        "//fleet/rhizomedb",
+        "//fleet/rpc",
     ],
 )
 
@@ -74,7 +73,6 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/platform-api:ide_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/xdebugger-api:debugger_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
@@ -95,7 +93,7 @@ jvm_library(
         "//platform/consoleView:consoleView_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/ide-core:ide-core_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//fleet/rpc:rpc_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.debugger.impl.shared` end

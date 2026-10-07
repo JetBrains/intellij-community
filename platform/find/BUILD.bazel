@@ -31,7 +31,6 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/indexing-api:indexing",
-        "//platform/kernel/shared:kernel",
         "//platform/project/shared:project",
         "//libraries/kotlinx/serialization/core",
         "//platform/core-impl",
@@ -42,7 +41,6 @@ jvm_library(
         "//platform/ide-core",
         "//platform/editor-ui-api:editor-ui",
         "//platform/util/coroutines",
-        "//fleet/rhizomedb",
         "//platform/platform-impl/rpc",
     ],
 )
@@ -65,7 +63,6 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/indexing-api:indexing_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/project/shared:project_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
@@ -76,7 +73,6 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
     ],
 )

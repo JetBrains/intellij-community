@@ -32,7 +32,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/vcs-impl/shared",
         "//platform/platform-api:ide",
-        "//platform/kernel/shared:kernel",
         "//platform/platform-impl/rpc",
         "//platform/project/shared:project",
         "//platform/platform-impl:ide-impl",
@@ -49,7 +48,6 @@ jvm_library(
         "//libraries/opentelemetry",
         "//platform/vcs-api/shared",
         "//platform/util:util-ui",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -72,7 +70,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/vcs-impl/shared:shared_test_lib",
         "//platform/platform-api:ide_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//platform/project/shared:project_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
@@ -89,7 +86,6 @@ jvm_library(
         "//libraries/opentelemetry:opentelemetry_test_lib",
         "//platform/vcs-api/shared:shared_test_lib",
         "//platform/util:util-ui_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.vcs.git.shared` end

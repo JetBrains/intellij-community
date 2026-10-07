@@ -32,9 +32,7 @@ jvm_library(
         "//platform/platform-api:ide",
         "//platform/platform-impl/rpc",
         "//platform/platform-impl:ide-impl",
-        "//platform/kernel/shared:kernel",
         "//platform/project/shared:project",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -58,9 +56,7 @@ jvm_library(
         "//platform/platform-api:ide_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/project/shared:project_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.execution.impl.shared` end

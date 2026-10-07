@@ -44,10 +44,8 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/project/shared:project",
         "//platform/util:util-ui",
-        "//platform/kernel/shared:kernel",
         "//platform/platform-frontend:frontend",
         "//platform/util",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -82,10 +80,8 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/project/shared:project_test_lib",
         "//platform/util:util-ui_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/platform-frontend:frontend_test_lib",
         "//platform/util:util_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.execution.dashboard.frontend` end

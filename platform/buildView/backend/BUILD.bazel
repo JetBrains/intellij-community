@@ -25,14 +25,12 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/kernel/backend",
         "//platform/buildView",
         "//platform/core-api:core",
         "//platform/platform-impl:ide-impl",
         "//platform/lang-api:lang",
         "//platform/lang-impl",
         "//platform/project/shared:project",
-        "//fleet/rhizomedb",
         "//platform/kernel/rpc.backend",
     ],
 )
@@ -49,14 +47,12 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":backend",
-        "//platform/kernel/backend:backend_test_lib",
         "//platform/buildView:buildView_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/project/shared:project_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",
     ],
 )

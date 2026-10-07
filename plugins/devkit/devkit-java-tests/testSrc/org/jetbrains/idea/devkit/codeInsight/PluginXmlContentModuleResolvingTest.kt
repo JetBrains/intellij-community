@@ -73,7 +73,7 @@ class PluginXmlContentModuleResolvingTest : JavaCodeInsightFixtureTestCase() {
       <idea-plugin>
           <dependencies>
               <module name="intellij.platform.backend"/>
-              <module name="intellij.platform.kernel.backend"/>
+              <module name="intellij.platform.rpc.backend"/>
               <module name="SplitPlugin.shared"/>
           </dependencies>
       </idea-plugin>

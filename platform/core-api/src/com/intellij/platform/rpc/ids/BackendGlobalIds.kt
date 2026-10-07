@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.kernel.ids
+package com.intellij.platform.rpc.ids
 
 import com.intellij.platform.rpc.Id
 import kotlinx.coroutines.CoroutineScope
@@ -41,9 +41,6 @@ import org.jetbrains.annotations.ApiStatus
  *   // some code which uses backendObject
  * }
  * ```
- *
- * If you need something more powerful than just storing references for the backend objects,
- * it is better to use pure rhizomeDB API.
  *
  * @see BackendValueIdType
  */
@@ -104,9 +101,6 @@ fun <TID : Id, Value : Any> findValueById(id: TID, type: BackendValueIdType<TID,
  *
  * This is important to call [deleteValueById] when reference is no longer needed/valid!
  * Otherwise, it will be stored in a local in memory storage forever.
- *
- * If you need something more powerful than just storing references for the backend objects,
- * it is better to use pure rhizomeDB API.
  *
  * This API should be used only on the backend side.
  * It locates in shared parts, since most parts of the platform is not split yet.

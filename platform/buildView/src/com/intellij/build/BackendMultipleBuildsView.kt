@@ -21,10 +21,10 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.kernel.ids.BackendValueIdType
-import com.intellij.platform.kernel.ids.deleteValueById
-import com.intellij.platform.kernel.ids.findValueById
-import com.intellij.platform.kernel.ids.storeValueGlobally
+import com.intellij.platform.rpc.ids.BackendValueIdType
+import com.intellij.platform.rpc.ids.deleteValueById
+import com.intellij.platform.rpc.ids.findValueById
+import com.intellij.platform.rpc.ids.storeValueGlobally
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.EdtExecutorService

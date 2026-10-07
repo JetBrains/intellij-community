@@ -25,7 +25,6 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/kernel/shared:kernel",
         "//platform/problemsView/shared",
         "//libraries/kotlinx/coroutines/core",
         "//platform/core-api:core",
@@ -53,7 +52,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":collector",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/problemsView/shared:shared_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/core-api:core_test_lib",

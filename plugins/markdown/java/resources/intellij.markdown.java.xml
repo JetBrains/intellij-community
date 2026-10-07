@@ -13,7 +13,6 @@
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.rpc"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
   </dependencies>
   <!-- endregion -->

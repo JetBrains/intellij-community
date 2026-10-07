@@ -28,12 +28,10 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
-        "//platform/kernel/shared:kernel",
         "//platform/util",
         "//platform/projectModel-api:projectModel",
         "//platform/util/coroutines",
         "//platform/core-api:core",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -52,12 +50,10 @@ jvm_library(
         "//platform/kernel/rpc.lite:rpc.lite_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/util:util_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/core-api:core_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.project` end

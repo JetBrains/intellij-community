@@ -26,8 +26,6 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/kernel/rpc.backend",
-        "//platform/kernel/shared:kernel",
-        "//platform/kernel/backend",
         "//platform/platform-impl/rpc",
         "//plugins/stream-debugger/shared",
         "//libraries/kotlinx/coroutines/core",
@@ -38,7 +36,6 @@ jvm_library(
         "//platform/util",
         "//platform/xdebugger-impl/rpc",
         "//platform/xdebugger-impl/shared",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -55,8 +52,6 @@ jvm_library(
         # do not sort,
         ":backend",
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
-        "//platform/kernel/backend:backend_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//plugins/stream-debugger/shared:shared_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
@@ -67,7 +62,6 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//platform/xdebugger-impl/rpc:rpc_test_lib",
         "//platform/xdebugger-impl/shared:shared_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.debugger.streams.backend` end

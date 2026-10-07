@@ -37,8 +37,7 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.bootstrap.eel" />
-    <orderEntry type="module" module-name="fleet.kernel" />
-    <orderEntry type="module" module-name="intellij.platform.ide.bootstrap.kernel" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="module" module-name="intellij.libraries.jbr" />
@@ -49,7 +48,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.welcomeScreen" />
-    <orderEntry type="module" module-name="fleet.rhizomedb" />
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs.impl" />
     <orderEntry type="module" module-name="intellij.platform.icons.impl" />
     <orderEntry type="module" module-name="intellij.platform.icons.impl.intellij" />

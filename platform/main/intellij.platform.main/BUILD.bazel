@@ -15,8 +15,6 @@ jvm_library(
         "//platform/remote-servers/clouds",
         "//platform/execution.dashboard",
         "//platform/execution.serviceView",
-        "//platform/kernel/shared:kernel",
-        "//platform/kernel/intellij.platform.kernel.impl:impl",
         "//platform/platform-impl/ui-inspector:ide-ui-inspector",
         "//platform/inline-completion/shared:inline-completion",
         "//platform/bookmarks",
@@ -27,7 +25,6 @@ jvm_library(
         "//platform/xdebugger-impl/rpc",
         "//platform/remote-topics/shared:rpc-topics",
         "//platform/pluginManager/shared",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -47,8 +44,6 @@ jvm_library(
         "//platform/remote-servers/clouds:clouds_test_lib",
         "//platform/execution.dashboard:execution.dashboard_test_lib",
         "//platform/execution.serviceView:execution.serviceView_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
-        "//platform/kernel/intellij.platform.kernel.impl:impl_test_lib",
         "//platform/platform-impl/ui-inspector:ide-ui-inspector_test_lib",
         "//platform/inline-completion/shared:inline-completion_test_lib",
         "//platform/bookmarks:bookmarks_test_lib",
@@ -59,7 +54,6 @@ jvm_library(
         "//platform/xdebugger-impl/rpc:rpc_test_lib",
         "//platform/remote-topics/shared:rpc-topics_test_lib",
         "//platform/pluginManager/shared:shared_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.main` end

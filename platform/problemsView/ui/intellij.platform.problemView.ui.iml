@@ -33,7 +33,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.kernel" />
     <orderEntry type="module" module-name="intellij.platform.problemView.collector" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.problemView.shared" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />

@@ -35,7 +35,6 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/kernel/shared:kernel",
         "//libraries/jetbrains/annotations",
         "//xml/xml-ui-common:ui-common",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
@@ -57,7 +56,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":shared",
-        "//platform/kernel/shared:kernel_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//xml/xml-ui-common:ui-common_test_lib",
         "//platform/platform-impl:ide-impl",

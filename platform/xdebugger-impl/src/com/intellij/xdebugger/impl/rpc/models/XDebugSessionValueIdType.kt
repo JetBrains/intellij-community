@@ -3,9 +3,9 @@ package com.intellij.xdebugger.impl.rpc.models
 
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionDataId
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
-import com.intellij.platform.kernel.ids.BackendValueIdType
-import com.intellij.platform.kernel.ids.findValueById
-import com.intellij.platform.kernel.ids.storeValueGlobally
+import com.intellij.platform.rpc.ids.BackendValueIdType
+import com.intellij.platform.rpc.ids.findValueById
+import com.intellij.platform.rpc.ids.storeValueGlobally
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import kotlinx.coroutines.CoroutineScope

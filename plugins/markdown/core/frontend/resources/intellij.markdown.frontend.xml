@@ -3,7 +3,7 @@
   <dependencies>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.markdown"/>
-    <module name="fleet.rhizomedb"/>
+    <module name="fleet.rpc"/>
     <module name="intellij.libraries.miglayout.swing"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
@@ -18,7 +18,6 @@
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.ide.util.netty"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.productMode"/>

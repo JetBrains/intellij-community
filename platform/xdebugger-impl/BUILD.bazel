@@ -88,7 +88,7 @@ jvm_library(
         "//platform/editor-ui-ex:editor-ex",
         "//platform/platform-impl/ui",
         "//platform/refactoring",
-        "//platform/kernel/shared:kernel",
+        "//fleet/rpc",
         "//platform/forms_rt:java-guiForms-rt",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
@@ -102,7 +102,6 @@ jvm_library(
         "//platform/consoleView",
         "//platform/ide-core",
         "//platform/util:util-ui",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -154,7 +153,7 @@ jvm_library(
         "//platform/editor-ui-ex:editor-ex_test_lib",
         "//platform/platform-impl/ui:ui_test_lib",
         "//platform/refactoring:refactoring_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
+        "//fleet/rpc:rpc_test_lib",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
@@ -168,7 +167,6 @@ jvm_library(
         "//platform/consoleView:consoleView_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/util:util-ui_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.debugger.impl` end
@@ -310,8 +308,6 @@ jvm_library(
         "//platform/platform-impl/ui",
         "//platform/refactoring",
         "//platform/refactoring:refactoring_test_lib",
-        "//platform/kernel/shared:kernel",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//platform/platform-impl/internal",
@@ -334,8 +330,6 @@ jvm_library(
         "//platform/remote-topics/shared:rpc-topics_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
-        "//fleet/rhizomedb",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6",

@@ -22,8 +22,6 @@ object ProductModeEnvironmentModules {
     return buildMap {
       this["intellij.platform.frontend"] = providesFrontend
       this["intellij.platform.backend"] = providesBackend
-      // temporary marker, see community/platform/backend/baseline/README.md
-      this["intellij.platform.backend.baseline"] = providesBackend || mode == ProductMode.LIGHT_MONOLITH
       this["intellij.platform.backend.split"] = mode == ProductMode.BACKEND
       this["intellij.platform.frontend.split.baseline"] = mode.isFrontendProcess
       if (mode.isLight) {

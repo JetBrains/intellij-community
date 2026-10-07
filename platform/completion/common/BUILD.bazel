@@ -37,7 +37,6 @@ jvm_library(
         "//platform/kernel/rpc",
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
-        "//platform/kernel/shared:kernel",
         "//platform/lang-impl",
         "//platform/core-api:core",
         "//platform/platform-impl:ide-impl",
@@ -48,7 +47,6 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/platform-impl/rpc",
         "//platform/lang-api:lang",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -66,7 +64,6 @@ jvm_library(
         ":common",
         "//platform/kernel/rpc:rpc_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
@@ -77,7 +74,6 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//platform/lang-api:lang_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.completion.common` end
@@ -130,8 +126,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/kernel/shared:kernel",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/core-api:core",
@@ -154,8 +148,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
-        "//fleet/rhizomedb",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.completion.common.tests` end

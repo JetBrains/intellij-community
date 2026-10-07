@@ -33,12 +33,10 @@ jvm_library(
         "//platform/ide-core",
         "//platform/platform-api:ide",
         "//platform/platform-impl/rpc",
-        "//platform/kernel/shared:kernel",
         "//platform/projectModel-api:projectModel",
         "//platform/util:util-ui",
         "//platform/core-impl",
         "//platform/xdebugger-impl:debugger-impl",
-        "//platform/kernel/backend",
         "//platform/kernel/rpc.backend",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
@@ -58,7 +56,6 @@ jvm_library(
         "//platform/consoleView",
         "//platform/xdebugger-impl/shared",
         "//platform/xdebugger-impl/rpc",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -82,12 +79,10 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-api:ide_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/xdebugger-impl:debugger-impl_test_lib",
-        "//platform/kernel/backend:backend_test_lib",
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
@@ -107,7 +102,6 @@ jvm_library(
         "//platform/consoleView:consoleView_test_lib",
         "//platform/xdebugger-impl/shared:shared_test_lib",
         "//platform/xdebugger-impl/rpc:rpc_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.debugger.impl.backend` end

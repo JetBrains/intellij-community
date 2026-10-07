@@ -141,7 +141,6 @@ object CommunityModuleSets {
 
     module("intellij.platform.settings.local")
     module("intellij.platform.backend")
-    module("intellij.platform.backend.baseline")
     module("intellij.platform.project.backend")
     module("intellij.platform.progress.backend")
     module("intellij.platform.lang.impl.backend")

@@ -2,7 +2,6 @@
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <dependencies>
       <module name="intellij.markdown"/>
-      <module name="fleet.rhizomedb"/>
       <module name="intellij.libraries.kotlinx.coroutines.core"/>
       <module name="intellij.libraries.markdown"/>
       <module name="intellij.markdown.execution"/>
@@ -22,7 +21,6 @@
       <module name="intellij.platform.ide.progress"/>
       <module name="intellij.platform.ide.rpc"/>
       <module name="intellij.platform.indexing"/>
-      <module name="intellij.platform.kernel.backend"/>
       <module name="intellij.platform.lang"/>
       <module name="intellij.platform.lang.impl"/>
       <module name="intellij.platform.project"/>

@@ -1,7 +1,6 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="fleet.rhizomedb"/>
     <module name="intellij.debugger.streams.shared"/>
     <module name="intellij.java.debugger.impl.shared"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
@@ -11,11 +10,11 @@
     <module name="intellij.platform.debugger.impl.rpc"/>
     <module name="intellij.platform.debugger.impl.shared"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.rpc"/>
-    <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.statistics"/>
   </dependencies>
   <!-- endregion -->

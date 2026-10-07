@@ -1283,9 +1283,7 @@
             <module name="intellij.platform.lang.core" />
             <module name="intellij.platform.editor.ui" />
             <module name="intellij.platform.codeStyle.impl" />
-            <module name="intellij.platform.codeStyle" />
-            <module name="intellij.platform.kernel.impl" />
-            <module name="intellij.platform.settings.local" />
+            <module name="intellij.platform.codeStyle" />            <module name="intellij.platform.settings.local" />
             <module name="intellij.platform.statistics" />
             <module name="intellij.platform.polySymbols" />
             <module name="intellij.platform.polySymbols.backend" />
@@ -1567,9 +1565,7 @@
           <module name="intellij.platform.lang.core" />
           <module name="intellij.platform.editor.ui" />
           <module name="intellij.platform.codeStyle.impl" />
-          <module name="intellij.platform.codeStyle" />
-          <module name="intellij.platform.kernel.impl" />
-          <module name="intellij.platform.settings.local" />
+          <module name="intellij.platform.codeStyle" />          <module name="intellij.platform.settings.local" />
           <module name="intellij.platform.statistics" />
           <module name="intellij.platform.polySymbols" />
           <module name="intellij.platform.polySymbols.backend" />

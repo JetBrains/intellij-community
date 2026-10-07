@@ -34,7 +34,6 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/kernel/rpc",
-        "//platform/kernel/shared:kernel",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
         "//platform/platform-impl/rpc",
@@ -66,7 +65,6 @@ jvm_library(
         # do not sort,
         ":shared",
         "//platform/kernel/rpc:rpc_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",

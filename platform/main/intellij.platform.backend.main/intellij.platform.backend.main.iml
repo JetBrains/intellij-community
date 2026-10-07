@@ -6,7 +6,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.main" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.kernel.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.navbar.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.project.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.progress.backend" scope="RUNTIME" />
@@ -29,6 +29,5 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.pluginManager.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace.impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="fleet.rhizomedb" />
   </component>
 </module>

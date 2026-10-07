@@ -34,7 +34,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "//platform/kernel/shared:kernel",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//platform/problemsView/collector",
@@ -78,7 +77,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":backend",
-        "//platform/kernel/shared:kernel_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/problemsView/collector:collector_test_lib",
         "//platform/problemsView/shared:shared_test_lib",

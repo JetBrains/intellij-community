@@ -26,7 +26,6 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/kernel/shared:kernel",
         "//platform/extensions",
         "//platform/util",
         "//platform/core-api:core",
@@ -34,7 +33,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/core",
         "//platform/remote-topics/shared:rpc-topics",
         "//platform/kernel/rpc.backend",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -50,7 +48,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":backend",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/extensions:extensions_test_lib",
         "//platform/util:util_test_lib",
         "//platform/core-api:core_test_lib",
@@ -59,7 +56,6 @@ jvm_library(
         "//platform/remote-topics/shared:rpc-topics_test_lib",
         "//platform/backend:backend_test_lib",
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.rpc.topics.backend` end

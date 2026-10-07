@@ -25,7 +25,6 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/kernel/shared:kernel",
         "//platform/platform-impl/rpc",
         "//platform/platform-api:ide",
         "//plugins/markdown/core:markdown",
@@ -54,7 +53,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":java",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//platform/platform-api:ide_test_lib",
         "//plugins/markdown/core:markdown_test_lib",

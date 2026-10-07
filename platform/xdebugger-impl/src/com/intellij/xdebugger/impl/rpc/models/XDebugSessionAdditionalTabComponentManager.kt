@@ -13,9 +13,9 @@ import com.intellij.platform.debugger.impl.rpc.XDebugSessionAdditionalTabCompone
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabDto
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabEvent
 import com.intellij.platform.debugger.impl.rpc.XDebuggerTabId
-import com.intellij.platform.kernel.ids.BackendValueIdType
-import com.intellij.platform.kernel.ids.findValueById
-import com.intellij.platform.kernel.ids.storeValueGlobally
+import com.intellij.platform.rpc.ids.BackendValueIdType
+import com.intellij.platform.rpc.ids.findValueById
+import com.intellij.platform.rpc.ids.storeValueGlobally
 import com.intellij.ui.content.Content
 import com.intellij.util.asDisposable
 import com.intellij.xdebugger.impl.util.createEdtDisposable

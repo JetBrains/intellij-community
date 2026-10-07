@@ -4,7 +4,7 @@
   <dependencies>
     <module name="intellij.java.frontback.impl"/>
     <module name="intellij.platform.frontend"/>
-    <module name="fleet.rhizomedb"/>
+    <module name="fleet.rpc"/>
     <module name="intellij.java.execution.impl.shared"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
@@ -14,7 +14,6 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.rpc"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.testRunner"/>
     <module name="intellij.platform.util.ui"/>

@@ -191,7 +191,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.ijent.community.impl",
             "intellij.platform.wsl.impl",
             "intellij.platform.ide.bootstrap.eel",
-            "intellij.platform.ide.bootstrap.kernel",
             "intellij.platform.diff",
             "intellij.platform.diff.impl",
             "intellij.platform.util.diff",
@@ -220,7 +219,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.icons.impl.intellij": "embedded",
             "intellij.platform.ide.bootstrap": "embedded",
             "intellij.platform.ide.bootstrap.eel": "embedded",
-            "intellij.platform.ide.bootstrap.kernel": "embedded",
             "intellij.platform.ide.codeinsight.inline": "embedded",
             "intellij.platform.ide.concurrency": "embedded",
             "intellij.platform.ide.dnd": "embedded",
@@ -279,7 +277,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.icons.impl.intellij": "//platform/icons-impl/intellij:intellij_content_module_jar",
             "intellij.platform.ide.bootstrap": "//platform/platform-impl/bootstrap:bootstrap_content_module_jar",
             "intellij.platform.ide.bootstrap.eel": "//platform/platform-impl/bootstrap/eel:eel_content_module_jar",
-            "intellij.platform.ide.bootstrap.kernel": "//platform/platform-impl/bootstrap/kernel:kernel_content_module_jar",
             "intellij.platform.ide.codeinsight.inline": "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline_content_module_jar",
             "intellij.platform.ide.colorPicker": "//platform/platform-impl/color-picker:color-picker_content_module_jar",
             "intellij.platform.ide.concurrency": "//platform/platform-impl/concurrency:concurrency_content_module_jar",
@@ -1597,9 +1594,6 @@ DEV_DIST_MODULE_SETS = {
     "intellij.moduleSets.rpc.backend.extended": struct(
         modules = [
             "intellij.platform.rpc.backend",
-            "intellij.platform.kernel.backend.baseline",
-            "intellij.platform.kernel.backend",
-            "intellij.platform.kernel.impl",
             "intellij.platform.rpc.topics",
             "intellij.platform.rpc.topics.backend",
             "intellij.platform.rpc.topics.frontend",
@@ -1607,18 +1601,12 @@ DEV_DIST_MODULE_SETS = {
         nested = [
         ],
         packed = {
-            "intellij.platform.kernel.backend": "//platform/kernel/backend:backend_content_module_jar",
-            "intellij.platform.kernel.backend.baseline": "//platform/kernel/backend/baseline:baseline_content_module_jar",
-            "intellij.platform.kernel.impl": "//platform/kernel/intellij.platform.kernel.impl:impl_content_module_jar",
             "intellij.platform.rpc.backend": "//platform/kernel/rpc.backend:rpc.backend_content_module_jar",
             "intellij.platform.rpc.topics": "//platform/remote-topics/shared:rpc-topics_content_module_jar",
             "intellij.platform.rpc.topics.backend": "//platform/remote-topics/backend:backend_content_module_jar",
             "intellij.platform.rpc.topics.frontend": "//platform/remote-topics/frontend:frontend_content_module_jar",
         },
         module_system_loaded = [
-            "intellij.platform.kernel.backend",
-            "intellij.platform.kernel.backend.baseline",
-            "intellij.platform.kernel.impl",
             "intellij.platform.rpc.backend",
             "intellij.platform.rpc.topics",
             "intellij.platform.rpc.topics.backend",
@@ -1626,8 +1614,6 @@ DEV_DIST_MODULE_SETS = {
         ],
         mode_refused = {
             "frontend": [
-                "intellij.platform.kernel.backend",
-                "intellij.platform.kernel.backend.baseline",
                 "intellij.platform.rpc.backend",
                 "intellij.platform.rpc.topics.backend",
             ],
@@ -1638,18 +1624,15 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.klogger",
             "intellij.platform.rpc",
             "intellij.platform.rpc.lite",
-            "intellij.platform.kernel",
         ],
         nested = [
             "intellij.moduleSets.fleet",
         ],
         loading = {
-            "intellij.platform.kernel": "embedded",
             "intellij.platform.klogger": "embedded",
             "intellij.platform.rpc.lite": "embedded",
         },
         packed = {
-            "intellij.platform.kernel": "//platform/kernel/shared:kernel_content_module_jar",
             "intellij.platform.klogger": "//platform/kernel/klogger:klogger_content_module_jar",
             "intellij.platform.rpc": "//platform/kernel/rpc:rpc_content_module_jar",
             "intellij.platform.rpc.lite": "//platform/kernel/rpc.lite:rpc.lite_content_module_jar",
@@ -1744,7 +1727,6 @@ DEV_DIST_MODULE_SETS = {
         modules = [
             "intellij.platform.settings.local",
             "intellij.platform.backend",
-            "intellij.platform.backend.baseline",
             "intellij.platform.project.backend",
             "intellij.platform.progress.backend",
             "intellij.platform.lang.impl.backend",
@@ -1756,7 +1738,6 @@ DEV_DIST_MODULE_SETS = {
         ],
         packed = {
             "intellij.platform.backend": "//platform/backend:backend_content_module_jar",
-            "intellij.platform.backend.baseline": "//platform/backend/baseline:baseline_content_module_jar",
             "intellij.platform.frontend": "//platform/platform-frontend:frontend_content_module_jar",
             "intellij.platform.lang.impl.backend": "//platform/lang-impl/backend:backend_content_module_jar",
             "intellij.platform.monolith": "//platform/monolith:monolith_content_module_jar",
@@ -1766,7 +1747,6 @@ DEV_DIST_MODULE_SETS = {
         },
         module_system_loaded = [
             "intellij.platform.backend",
-            "intellij.platform.backend.baseline",
             "intellij.platform.frontend",
             "intellij.platform.lang.impl.backend",
             "intellij.platform.monolith",
@@ -1777,7 +1757,6 @@ DEV_DIST_MODULE_SETS = {
         mode_refused = {
             "frontend": [
                 "intellij.platform.backend",
-                "intellij.platform.backend.baseline",
                 "intellij.platform.lang.impl.backend",
                 "intellij.platform.monolith",
                 "intellij.platform.progress.backend",

@@ -37,7 +37,6 @@ jvm_library(
         "//fleet/rpc.server",
         "//platform/core-api:core",
         "//platform/kernel/rpc.lite",
-        "//platform/kernel/backend/baseline",
     ],
 )
 
@@ -68,7 +67,6 @@ jvm_library(
         "//fleet/rpc.server:rpc.server_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/kernel/rpc.lite:rpc.lite_test_lib",
-        "//platform/kernel/backend/baseline:baseline_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.rpc.backend` end

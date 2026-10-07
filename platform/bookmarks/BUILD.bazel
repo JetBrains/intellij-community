@@ -32,7 +32,6 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/core-impl",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/kernel/shared:kernel",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
         "//platform/lang-core",
@@ -50,7 +49,6 @@ jvm_library(
         "//platform/util/diff",
         "//platform/editor-ui-ex:editor-ex",
         "//platform/execution",
-        "//fleet/rhizomedb",
         "//platform/util/coroutines",
     ],
 )
@@ -74,7 +72,6 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//platform/lang-core:lang-core_test_lib",
@@ -92,7 +89,6 @@ jvm_library(
         "//platform/util/diff:diff_test_lib",
         "//platform/editor-ui-ex:editor-ex_test_lib",
         "//platform/execution:execution_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
     ],
 )

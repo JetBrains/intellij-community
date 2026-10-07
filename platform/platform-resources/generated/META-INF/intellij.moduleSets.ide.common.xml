@@ -168,7 +168,6 @@
     <module name="intellij.platform.klogger" loading="embedded"/>
     <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.rpc.lite" loading="embedded"/>
-    <module name="intellij.platform.kernel" loading="embedded"/>
     <!-- endregion -->
     <!-- endregion -->
 
@@ -343,7 +342,6 @@
     <module name="intellij.platform.ijent.community.impl" loading="embedded"/>
     <module name="intellij.platform.wsl.impl"/>
     <module name="intellij.platform.ide.bootstrap.eel" loading="embedded"/>
-    <module name="intellij.platform.ide.bootstrap.kernel" loading="embedded"/>
     <module name="intellij.platform.diff" loading="embedded"/>
     <module name="intellij.platform.diff.impl" loading="embedded"/>
     <module name="intellij.platform.util.diff" loading="embedded"/>
@@ -354,9 +352,6 @@
     <!-- region nested: essential > split.core -->
     <!-- region nested: essential > split.core > rpc.backend.extended -->
     <module name="intellij.platform.rpc.backend"/>
-    <module name="intellij.platform.kernel.backend.baseline"/>
-    <module name="intellij.platform.kernel.backend"/>
-    <module name="intellij.platform.kernel.impl"/>
     <module name="intellij.platform.rpc.topics"/>
     <module name="intellij.platform.rpc.topics.backend"/>
     <module name="intellij.platform.rpc.topics.frontend"/>
@@ -365,7 +360,6 @@
     <!-- region direct modules -->
     <module name="intellij.platform.settings.local"/>
     <module name="intellij.platform.backend"/>
-    <module name="intellij.platform.backend.baseline"/>
     <module name="intellij.platform.project.backend"/>
     <module name="intellij.platform.progress.backend"/>
     <module name="intellij.platform.lang.impl.backend"/>

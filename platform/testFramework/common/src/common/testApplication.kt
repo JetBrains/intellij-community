@@ -53,8 +53,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.platform.ide.bootstrap.callAppInitialized
 import com.intellij.platform.ide.bootstrap.getAppInitializedListeners
 import com.intellij.platform.ide.bootstrap.initConfigurationStore
-import com.intellij.platform.ide.bootstrap.kernel.startClientKernel
-import com.intellij.platform.ide.bootstrap.kernel.startServerKernel
 import com.intellij.platform.ide.bootstrap.preloadCriticalServices
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -68,7 +66,6 @@ import com.intellij.testFramework.UITestUtil
 import com.intellij.testFramework.dispatchAllEventsInIdeEventQueue
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.UiInterceptors
-import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.WalkingState
 import com.intellij.util.concurrency.AppScheduledExecutorService
@@ -95,6 +92,7 @@ import org.jetbrains.annotations.TestOnly
 import sun.awt.AWTAutoShutdown
 import java.time.Duration
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.jvm.internal.CoroutineDumpState
 
 private var appInitResult: Result<Unit>? = null
@@ -155,7 +153,6 @@ ${dumpCoroutines(stripDump = false)}
   loadAppInUnitTestMode(isHeadless)
 }
 
-@OptIn(DelicateCoroutinesApi::class)
 @TestOnly
 private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   val loadedModuleFuture = PluginManagerCore.initPluginFuture
@@ -167,15 +164,6 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
     AWTAutoShutdown.getInstance().notifyThreadBusy(awtBusyThread)
   }
 
-  val kernelStarted = runBlocking {
-    if (PlatformUtils.isJetBrainsClient()) {
-      startClientKernel(GlobalScope)
-    }
-    else {
-      startServerKernel(GlobalScope)
-    }
-  }
-
   val alreadyPreExistingApplication = ApplicationManager.getApplication() as? ApplicationImpl
   if (alreadyPreExistingApplication != null) {
     assert(alreadyPreExistingApplication.isUnitTestMode) {
@@ -183,7 +171,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
     }
   }
 
-  val app = alreadyPreExistingApplication ?: ApplicationImpl(kernelStarted.coroutineContext, isHeadless)
+  val app = alreadyPreExistingApplication ?: ApplicationImpl(EmptyCoroutineContext, isHeadless)
   Disposer.register(app) {
     AWTAutoShutdown.getInstance().notifyThreadFree(awtBusyThread)
   }

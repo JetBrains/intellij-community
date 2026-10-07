@@ -2,11 +2,11 @@
 package com.intellij.platform.execution.dashboard.splitApi
 
 import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.platform.kernel.ids.BackendValueIdType
-import com.intellij.platform.kernel.ids.findValueById
-import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.UID
+import com.intellij.platform.rpc.ids.BackendValueIdType
+import com.intellij.platform.rpc.ids.findValueById
+import com.intellij.platform.rpc.ids.storeValueGlobally
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus

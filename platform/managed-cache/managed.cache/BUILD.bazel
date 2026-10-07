@@ -27,12 +27,10 @@ jvm_library(
         "//platform/kernel/rpc",
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
-        "//platform/kernel/shared:kernel",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/coroutines/core",
         "//platform/project/shared:project",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -50,12 +48,10 @@ jvm_library(
         ":managed.cache",
         "//platform/kernel/rpc:rpc_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/project/shared:project_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.managed.cache` end

@@ -29,7 +29,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
         "//platform/execution.dashboard",
         "//platform/kernel/rpc.backend",
-        "//platform/kernel/backend",
         "//libraries/kotlinx/coroutines/core",
         "//platform/project/shared:project",
         "//platform/core-api:core",
@@ -48,7 +47,6 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/execution.serviceView",
         "//platform/util:util-ui",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -68,7 +66,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//platform/execution.dashboard:execution.dashboard_test_lib",
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",
-        "//platform/kernel/backend:backend_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/project/shared:project_test_lib",
         "//platform/core-api:core_test_lib",
@@ -87,7 +84,6 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/execution.serviceView:execution.serviceView_test_lib",
         "//platform/util:util-ui_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.execution.dashboard.backend` end

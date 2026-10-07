@@ -4,9 +4,9 @@ package com.intellij.xdebugger.impl.rpc.models
 import com.intellij.execution.ui.RunnerLayoutUi
 import com.intellij.platform.debugger.impl.rpc.XDebugTabLayouterEvent
 import com.intellij.platform.debugger.impl.rpc.XDebugTabLayouterId
-import com.intellij.platform.kernel.ids.BackendValueIdType
-import com.intellij.platform.kernel.ids.findValueById
-import com.intellij.platform.kernel.ids.storeValueGlobally
+import com.intellij.platform.rpc.ids.BackendValueIdType
+import com.intellij.platform.rpc.ids.findValueById
+import com.intellij.platform.rpc.ids.storeValueGlobally
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow

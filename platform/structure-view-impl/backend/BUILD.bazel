@@ -29,7 +29,6 @@ jvm_library(
         "//platform/structure-view-impl:structureView",
         "//platform/platform-impl:ide-impl",
         "//platform/platform-impl/rpc",
-        "//platform/kernel/shared:kernel",
         "//platform/kernel/rpc.backend",
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-api:ide",
@@ -46,7 +45,6 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/remote-topics/shared:rpc-topics",
         "//platform/util:util-ui",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -65,7 +63,6 @@ jvm_library(
         "//platform/structure-view-impl:structureView_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/backend:backend_test_lib",
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
@@ -83,7 +80,6 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//platform/remote-topics/shared:rpc-topics_test_lib",
         "//platform/util:util-ui_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.structureView.backend` end
