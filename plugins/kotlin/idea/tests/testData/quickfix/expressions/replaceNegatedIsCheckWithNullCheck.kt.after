@@ -3,7 +3,7 @@ class A
 class B
 
 fun test(a: A?) {
-    if (a == null) {
+    if (a != null) {
     }
 }
 

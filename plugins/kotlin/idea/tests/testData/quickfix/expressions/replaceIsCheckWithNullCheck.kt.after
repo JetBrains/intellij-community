@@ -4,7 +4,7 @@ class B
 
 fun test(obj: Any?) {
     if (obj is A?) {
-        if (obj != null) {
+        if (obj == null) {
         }
     }
 }

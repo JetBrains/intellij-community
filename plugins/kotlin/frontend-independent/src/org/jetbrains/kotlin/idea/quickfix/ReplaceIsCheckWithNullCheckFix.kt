@@ -21,7 +21,7 @@ class ReplaceIsCheckWithNullCheckFix(
         element: KtIsExpression,
         updater: ModPsiUpdater,
     ) {
-        val operator = if (element.isNegated) "==" else "!="
+        val operator = if (element.isNegated) "!=" else "=="
         val newExpression = KtPsiFactory(context.project).createExpressionByPattern("$0 $operator null", element.leftHandSide)
         element.replace(newExpression)
     }
