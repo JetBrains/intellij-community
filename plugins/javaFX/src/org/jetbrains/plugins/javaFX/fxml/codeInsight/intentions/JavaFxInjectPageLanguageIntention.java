@@ -22,6 +22,7 @@ import com.intellij.psi.xml.XmlProcessingInstruction;
 import com.intellij.psi.xml.XmlProlog;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 import java.util.ArrayList;
@@ -69,12 +70,30 @@ public final class JavaFxInjectPageLanguageIntention extends PsiElementBaseInten
         if (xmlDocument != null) {
           final XmlProlog xmlProlog = xmlDocument.getProlog();
           if (xmlProlog != null) {
-            final PsiElement element = xmlProlog.addBefore(instructions.iterator().next(), xmlProlog.getFirstChild());
-            xmlProlog.addAfter(PsiParserFacade.getInstance(project).createWhiteSpaceFromText("\n\n"), element);
+            final PsiParserFacade parserFacade = PsiParserFacade.getInstance(project);
+            final XmlProcessingInstruction xmlDeclaration = findXmlDeclaration(xmlProlog);
+            if (xmlDeclaration != null) {
+              // the XML declaration must stay the first item of the file
+              final PsiElement element = xmlProlog.addAfter(instructions.iterator().next(), xmlDeclaration);
+              xmlProlog.addBefore(parserFacade.createWhiteSpaceFromText("\n"), element);
+            }
+            else {
+              final PsiElement element = xmlProlog.addBefore(instructions.iterator().next(), xmlProlog.getFirstChild());
+              xmlProlog.addAfter(parserFacade.createWhiteSpaceFromText("\n\n"), element);
+            }
           }
         }
       }
     });
+  }
+
+  private static @Nullable XmlProcessingInstruction findXmlDeclaration(@NotNull XmlProlog prolog) {
+    final XmlProcessingInstruction first = PsiTreeUtil.getChildOfType(prolog, XmlProcessingInstruction.class);
+    if (first == null) return null;
+    final String text = first.getText();
+    if (!text.startsWith("<?xml") || text.length() <= 5) return null;
+    final char next = text.charAt(5);
+    return Character.isWhitespace(next) || next == '?' ? first : null;
   }
 
   @Override
