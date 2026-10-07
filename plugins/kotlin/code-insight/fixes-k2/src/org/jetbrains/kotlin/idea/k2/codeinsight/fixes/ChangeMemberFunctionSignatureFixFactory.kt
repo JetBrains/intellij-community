@@ -339,7 +339,12 @@ internal object ChangeMemberFunctionSignatureFixFactory {
                     val newContextParameterList = newModifierList.contextParameterList
                     if (newContextParameterList != null) {
                         val contextParameters = if (contextParameterList == null) {
-                            modifierList.addBefore(newContextParameterList, modifierList.firstChild)
+                            val insertPoint = modifierList.getModifier(KtTokens.MODIFIER_KEYWORDS)
+                            if (insertPoint != null) {
+                                modifierList.addBefore(newContextParameterList, insertPoint)
+                            } else {
+                                modifierList.add(newContextParameterList)
+                            }
                         } else {
                             contextParameterList.replace(newContextParameterList)
                         }
