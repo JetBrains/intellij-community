@@ -9,8 +9,9 @@ import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 /**
  * Pure logic for the install dialog results list.
  *
- * Drains every cached page of every repository into a single list sorted by the legacy
- * `createNameComparator` priority (exact → prefix → substring → name). Pages are read from
+ * Drains every cached page of every repository into a single list sorted by
+ * `createNameComparator` (exact → prefix → rest; within a group by [downloads], then shorter
+ * prefix match, then name). Pages are read from
  * the in-memory cache built by [aggregateInstallDialogSearch], so this is bounded by the
  * number of matches the cache returns for [query] — typed queries on PyPI yield hundreds,
  * not the full 800k index. Cross-repo merge + global sort matches the pre-pagination
@@ -28,6 +29,7 @@ internal fun buildInstallDialogResults(
   results: Map<PyPackageRepository, PythonPackageSearchResult>,
   managedRepositories: Set<PyPackageRepository>,
   query: String,
+  downloads: Map<String, Int> = emptyMap(),
 ): List<PackageLeafNode> {
   val nodes = mutableListOf<PackageLeafNode>()
   for ((repo, result) in results) {
@@ -41,7 +43,7 @@ internal fun buildInstallDialogResults(
       }
     }
   }
-  val comparator = PyPackagingToolWindowService.createNameComparator(query)
+  val comparator = PyPackagingToolWindowService.createNameComparator(query, downloads)
   nodes.sortWith(compareBy(comparator) { it.packageName })
   return nodes
 }

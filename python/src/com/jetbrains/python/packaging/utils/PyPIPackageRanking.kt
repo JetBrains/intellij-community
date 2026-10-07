@@ -21,6 +21,9 @@ fun PyPIPackageRanking(): PyPIPackageRanking = service<PyPIPackageRankingImpl>()
 @ApiStatus.Internal
 interface PyPIPackageRanking {
   val rankedPackages: Deferred<Set<PyPackageName>>
+
+  /** PyPI download counts keyed by normalized package name ([PyPackageName.name]). */
+  val downloads: Deferred<Map<String, Int>>
 }
 
 @Serializable
@@ -37,13 +40,22 @@ private data class PackageEntry(
 @Service(Service.Level.APP)
 private class PyPIPackageRankingImpl(coroutineScope: CoroutineScope) : PyPIPackageRanking {
 
-  override val rankedPackages: Deferred<HashSet<PyPackageName>> = coroutineScope.async(Dispatchers.IO) {
+  override val downloads: Deferred<Map<String, Int>> = coroutineScope.async(Dispatchers.IO) {
     loadAndParseRankingData()
   }
 
-  private suspend fun loadAndParseRankingData(): HashSet<PyPackageName> = withContext(Dispatchers.IO) {
+  override val rankedPackages: Deferred<HashSet<PyPackageName>> = coroutineScope.async {
+    downloads.await().keys.mapTo(HashSet()) { PyPackageName.from(it) }
+  }
+
+  private suspend fun loadAndParseRankingData(): Map<String, Int> = withContext(Dispatchers.IO) {
     val resource = loadResource()
-    parseJsonToList(resource).packages.map { PyPackageName.from(it.name) }.toHashSet()
+    // Entries are sorted by downloads descending; keep the first one if two names normalize to the same key.
+    buildMap {
+      for (entry in parseJsonToList(resource).packages) {
+        putIfAbsent(PyPackageName.from(entry.name).name, entry.downloads)
+      }
+    }
   }
 
   private fun loadResource(): URL =

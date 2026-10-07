@@ -81,6 +81,23 @@ internal class PyInstallDialogResultsPresenterTest {
   }
 
   @Test
+  fun `popular packages are ranked first across merged repositories`() {
+    val pypi = repo("pypi")
+    val extra = repo("mirror", url = "https://internal/simple")
+    val results = mapOf(
+      pypi to result(page("requesck", "requesst", "request2")),
+      extra to result(page("requests", "urllib3")),
+    )
+
+    val nodes = buildInstallDialogResults(results, managedRepositories = setOf(pypi), query = "reques",
+                                          downloads = mapOf("requests" to 1000))
+
+    assertEquals(listOf(PackageLeafNode("requests", "mirror"), PackageLeafNode("requesck", "pypi"),
+                        PackageLeafNode("requesst", "pypi"), PackageLeafNode("request2", "pypi")),
+                 nodes)
+  }
+
+  @Test
   fun `ties on the priority key fall back to lexicographic name order`() {
     val pypi = repo("pypi")
     val results = mapOf(pypi to result(page("charlie-lib", "alpha-lib", "bravo-lib")))

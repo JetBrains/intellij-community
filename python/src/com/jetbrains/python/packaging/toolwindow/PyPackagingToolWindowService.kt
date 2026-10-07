@@ -49,6 +49,7 @@ import com.jetbrains.python.packaging.management.ui.notify
 import com.jetbrains.python.packaging.packageRequirements.PackagesUnavailableNode
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.packaging.toolwindow.packages.PackagesUnavailableAction
+import com.jetbrains.python.packaging.utils.PyPIPackageRanking
 import com.jetbrains.python.showProcessExecutionErrorDialog
 import com.intellij.python.requirements.pyRequirement
 import com.jetbrains.python.packaging.repository.PyPackageRepositories
@@ -310,6 +311,7 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     searchJob = serviceScope.launch {
       if (query.isNotEmpty()) {
         val allMatches = pruneTreeByQuery(installedPackages, query)
+        val comparator = createNameComparator(query, PyPIPackageRanking().downloads.await())
         var shouldRerun = false
         val packagesFromRepos =
           packageManager
@@ -335,7 +337,6 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
                 shouldRerun = true
                 return@mapNotNull null
               }
-              val comparator = createNameComparator(query)
               val sortedAll = allNames.asSequence()
                 .filterOutInstalled(repository)
                 .sortedWith(compareBy(comparator) { it.name })
@@ -821,19 +822,22 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     fun packageKey(packageName: String): String = PyActiveInstalls.packageKey(packageName)
 
     /**
-     * Query-aware comparator over package names: prefix matches first (shortest wins), then plain
-     * lexicographic name fallback so the sort is stable when two items tie on the primary key.
+     * Query-aware comparator over package names: exact match first, then prefix matches, then the rest.
+     * Within each group more popular packages (by [downloads], keyed by normalized name) come first,
+     * then shorter prefix matches, then plain lexicographic name order so the sort is stable.
      */
-    internal fun createNameComparator(query: String): Comparator<String> {
+    internal fun createNameComparator(query: String, downloads: Map<String, Int> = emptyMap()): Comparator<String> {
       val queryLowerCase = query.lowercase()
-      return Comparator<String> { name1, name2 ->
+      return compareBy<String> {
         when {
-          name1.startsWith(queryLowerCase) && name2.startsWith(queryLowerCase) -> name1.length - name2.length
-          name1.startsWith(queryLowerCase) -> -1
-          name2.startsWith(queryLowerCase) -> 1
-          else -> 0
+          it.equals(queryLowerCase, ignoreCase = true) -> 0
+          it.startsWith(queryLowerCase) -> 1
+          else -> 2
         }
-      }.thenBy { it }
+      }
+        .thenByDescending { if (downloads.isEmpty()) 0 else downloads[PyPackageName.normalizePackageName(it)] ?: 0 }
+        .thenBy { if (it.startsWith(queryLowerCase)) it.length else 0 }
+        .thenBy { it }
     }
   }
 }

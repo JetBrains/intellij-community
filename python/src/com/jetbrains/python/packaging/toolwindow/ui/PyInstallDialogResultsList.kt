@@ -13,6 +13,7 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.packaging.repository.PyPackageRepositories
 import com.jetbrains.python.packaging.toolwindow.PyPackageIcons
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
+import com.jetbrains.python.packaging.utils.PyPIPackageRanking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -118,8 +119,9 @@ internal class PyInstallDialogResultsList(
         extraRepositories = repoService.repositories,
         query = query,
       )
+      val downloads = PyPIPackageRanking().downloads.await()
       val sorted = withContext(Dispatchers.Default) {
-        buildInstallDialogResults(results, managedSet, query)
+        buildInstallDialogResults(results, managedSet, query, downloads)
       }
       withContext(Dispatchers.EDT) { updateResults(sorted) }
     }
