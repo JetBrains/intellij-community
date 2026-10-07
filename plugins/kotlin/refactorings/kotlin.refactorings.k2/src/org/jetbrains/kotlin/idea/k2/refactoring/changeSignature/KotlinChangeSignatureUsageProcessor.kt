@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
+import org.jetbrains.kotlin.idea.base.psi.addContextParameterList
 import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.getOrCreatePrimaryConstructor
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
@@ -545,12 +546,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             if (modifierList != null) {
                 val contextParameterList = modifierList.contextParameterList
                 val contextReceivers = if (contextParameterList == null) {
-                    val firstModifier = modifierList.getModifier(KtTokens.MODIFIER_KEYWORDS)
-                    if (firstModifier != null) {
-                        modifierList.addBefore(newModifierList.contextParameterList!!, firstModifier)
-                    } else {
-                        modifierList.addAfter(newModifierList.contextParameterList!!, modifierList.lastChild)
-                    }
+                    modifierList.addContextParameterList(newModifierList.contextParameterList!!)
                 } else {
                     contextParameterList.replace(newModifierList.contextParameterList!!)
                 }

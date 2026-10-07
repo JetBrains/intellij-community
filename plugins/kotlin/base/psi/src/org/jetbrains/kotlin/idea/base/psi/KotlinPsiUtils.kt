@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtContainerNode
 import org.jetbrains.kotlin.psi.KtContainerNodeForControlStructureBody
+import org.jetbrains.kotlin.psi.KtContextParameterList
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
@@ -59,6 +60,7 @@ import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -712,4 +714,14 @@ private fun getPriority(expression: KtExpression): Int {
     }
 
     return MAX_PRIORITY
+}
+
+fun KtModifierList.addContextParameterList(newContextClause: KtContextParameterList): KtContextParameterList? {
+    // insert before the first modifier keyword
+    val insertPoint = getModifier(KtTokens.MODIFIER_KEYWORDS)
+    return if (insertPoint != null) {
+        addBefore(newContextClause, insertPoint)
+    } else {
+        add(newContextClause)
+    } as? KtContextParameterList
 }

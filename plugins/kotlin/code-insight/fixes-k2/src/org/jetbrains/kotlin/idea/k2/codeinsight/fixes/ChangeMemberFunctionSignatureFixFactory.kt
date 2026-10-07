@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.addContextParameterList
 import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.setCallableReceiverTypeReference
 import org.jetbrains.kotlin.idea.base.psi.setFunctionTypeReference
@@ -339,12 +340,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
                     val newContextParameterList = newModifierList.contextParameterList
                     if (newContextParameterList != null) {
                         val contextParameters = if (contextParameterList == null) {
-                            val insertPoint = modifierList.getModifier(KtTokens.MODIFIER_KEYWORDS)
-                            if (insertPoint != null) {
-                                modifierList.addBefore(newContextParameterList, insertPoint)
-                            } else {
-                                modifierList.add(newContextParameterList)
-                            }
+                            modifierList.addContextParameterList(newContextParameterList)
                         } else {
                             contextParameterList.replace(newContextParameterList)
                         }

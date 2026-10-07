@@ -7,12 +7,12 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.addContextParameterList
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.render
-import org.jetbrains.kotlin.psi.KtContextParameterList
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -83,13 +83,7 @@ sealed class AddContextParameterFix(
                 (targetFunction.addBefore(templateModifierList, funKeyword) as? KtModifierList)?.contextParameterList
             } else {
                 val newContextClause = templateModifierList.contextParameterList ?: return null
-                // insert before the first modifier keyword
-                val insertPoint = targetModifierList.getModifier(KtTokens.MODIFIER_KEYWORDS)
-                if (insertPoint != null) {
-                    targetModifierList.addBefore(newContextClause, insertPoint)
-                } else {
-                    targetModifierList.add(newContextClause)
-                } as? KtContextParameterList
+                targetModifierList.addContextParameterList(newContextClause)
             } ?: return null
             inserted.contextParameters.firstOrNull()
         }
