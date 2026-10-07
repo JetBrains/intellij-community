@@ -392,6 +392,7 @@ open class IdeStatusBarImpl @Internal constructor(
     }
 
     override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
+      if (!checkModifiers(event)) return
       if (isDragJustStarted) {
         startDrag(event, startScreenPoint)
       }
@@ -406,7 +407,7 @@ open class IdeStatusBarImpl @Internal constructor(
       pressedWidgetId = null
 
       try {
-        if (sourceId == null || willDragOutStart || targetIndex == -1) return
+        if (sourceId == null || willDragOutStart || targetIndex == -1 || !checkModifiers(event)) return
         reorderWidgets(sourceId, targetIndex, event)
       }
       finally {
