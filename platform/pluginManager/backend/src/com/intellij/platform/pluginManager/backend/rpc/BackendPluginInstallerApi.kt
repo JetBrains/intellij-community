@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.pluginManager.backend.rpc
 
+import com.intellij.ide.plugins.CustomPluginRepositoryService
 import com.intellij.ide.plugins.DynamicPlugins
 import com.intellij.ide.plugins.InstallFromDiskAction
 import com.intellij.ide.plugins.InstalledPluginsTableModel
@@ -17,6 +18,7 @@ import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.SessionStatePluginEnabler
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
@@ -30,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
 internal class BackendPluginInstallerApi : PluginInstallerApi {
@@ -66,12 +69,12 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
     return installPlugin(sessionId) { enabler ->
       DefaultUiPluginManagerController.installOrUpdatePlugin(sessionId,
                                                              null,
-                                                             descriptor,
-                                                             updateDescriptor,
+                                                             resolveHostBuild(descriptor),
+                                                             updateDescriptor?.let { resolveHostBuild(it) },
                                                              installSource,
                                                              null,
                                                              enabler,
-                                                             customRepoPlugins)
+                                                             customRepoPlugins?.map { resolveHostBuild(it) })
     }
   }
 
@@ -84,8 +87,14 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
                                                             enabler,
                                                             null,
                                                             null,
-                                                            customRepoPlugins)
+                                                            customRepoPlugins?.map { resolveHostBuild(it) })
     }
+  }
+
+  private suspend fun resolveHostBuild(model: PluginUiModel): PluginUiModel {
+    if (model.repositoryName == null) return model
+    val hostRepositories = withContext(Dispatchers.IO) { CustomPluginRepositoryService.getInstance().customRepositoryPluginMap }
+    return resolveHostCustomRepositoryBuild(model, hostRepositories)
   }
 
   override suspend fun isRestartRequired(sessionId: String): Boolean {
@@ -135,6 +144,18 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
     val pluginDescriptor = PluginManagerCore.findPlugin(pluginId) ?: return false
     return DynamicPlugins.allowLoadUnloadSynchronously(pluginDescriptor)
   }
+}
+
+/**
+ * Returns the host build of a plugin [model] from a custom repository.
+ *
+ * The host build is the model in [hostRepositories] with the same repository and the same plugin ID.
+ * The function returns [model] when it has no repository, or when the host has no build in that repository.
+ */
+@ApiStatus.Internal
+fun resolveHostCustomRepositoryBuild(model: PluginUiModel, hostRepositories: Map<String, List<PluginUiModel>>): PluginUiModel {
+  val repository = model.repositoryName ?: return model
+  return hostRepositories[repository]?.find { it.pluginId == model.pluginId } ?: model
 }
 
 private val LOG = Logger.getInstance(BackendPluginInstallerApi::class.java)
