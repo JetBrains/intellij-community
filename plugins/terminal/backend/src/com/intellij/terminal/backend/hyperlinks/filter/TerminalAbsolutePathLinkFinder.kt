@@ -156,8 +156,14 @@ internal class TerminalAbsolutePathLinkFinder(
         ParsingState.NORMAL -> {
           when {
             line[i] == '/' -> {
-              // Start parsing a Linux path
-              startPathMode()
+              if (line.isCharAt(i + 1, '/')) {
+                // Skip paths starting with //
+                startCanceledMode()
+              }
+              else {
+                // Start parsing a Linux path
+                startPathMode()
+              }
             }
             line[i] == '~' && (line.getOrNull(i + 1) == '/' || line.getOrNull(i + 1) == '\\') -> {
               // Start parsing a home-relative path, e.g. "~/foo" or "~\foo"
