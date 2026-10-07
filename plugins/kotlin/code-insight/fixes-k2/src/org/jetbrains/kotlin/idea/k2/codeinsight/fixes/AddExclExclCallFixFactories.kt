@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isDefinitelyNull
@@ -24,7 +25,6 @@ import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtUnaryExpression
 import org.jetbrains.kotlin.psi.psiUtil.unwrapParenthesesLabelsAndAnnotations
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object AddExclExclCallFixFactories {
 
@@ -54,6 +54,9 @@ object AddExclExclCallFixFactories {
             is KtArrayAccessExpression -> unwrapped.arrayExpression to false
 
             is KtCallableReferenceExpression -> unwrapped.lhs.let { lhs ->
+                // `String?::length` should not be fixed as `String!!?::length`
+                if (lhs is LeafPsiElement) return emptyList()
+
                 if (lhs != null) {
                     // `foo::bar` -> `foo!!::bar`
                     lhs to false
@@ -100,7 +103,7 @@ object AddExclExclCallFixFactories {
         //   if (nullableInt == null) {
         //     val x = nullableInt.length  // No AddExclExclCallFix here
         //   }
-        if (target?.safeAs<KtExpression>()?.isDefinitelyNull == true) {
+        if ((target as? KtExpression)?.isDefinitelyNull == true) {
             return emptyList()
         }
 

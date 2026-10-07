@@ -481,6 +481,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(RemoveCallableReferenceStaticLhsFixFactories.warning)
         registerFactory(RemoveCallableReferenceStaticLhsFixFactories.error)
         registerFactory(RemoveCallableReferenceStaticLhsFixFactories.wrongReceiver)
+        registerFactory(RemoveCallableReferenceStaticLhsFixFactories.unsafeCallableReference)
 
         registerFactory(ConvertToBlockBodyFixFactory.convertToBlockBodyFixFactory)
         registerFactory(SimplifyComparisonFixFactory.simplifyComparisonFixFactory)
