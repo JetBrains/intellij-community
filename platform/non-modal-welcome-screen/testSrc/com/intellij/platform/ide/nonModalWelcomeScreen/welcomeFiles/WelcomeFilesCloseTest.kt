@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
 import com.intellij.platform.project.projectId
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestApplication
@@ -46,6 +47,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -197,15 +199,27 @@ internal class WelcomeFilesCloseTest {
       check(fileName != failedFile.name) { "The test save dialog fails" }
     }
 
-    withContext(Dispatchers.UiWithModelAccess) {
-      val window = manager.currentWindow!!
-      manager.closeFilesWithChecks(listOf(failedFile, nextFile).map { Pair.create(window.getComposite(it)!!, window) })
+    val loggedErrors = CopyOnWriteArrayList<String>()
+    val errorProcessor = object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
+        loggedErrors += message
+        return Action.NONE
+      }
     }
 
-    waitUntil("The save of the next file does not start", timeout = 5.seconds) {
-      withContext(Dispatchers.UiWithModelAccess) { savedFileNames.size == 2 }
+    LoggedErrorProcessor.executeWith(errorProcessor).use {
+      withContext(Dispatchers.UiWithModelAccess) {
+        val window = manager.currentWindow!!
+        manager.closeFilesWithChecks(listOf(failedFile, nextFile).map { Pair.create(window.getComposite(it)!!, window) })
+      }
+
+      waitUntil("The save of the next file does not start", timeout = 5.seconds) {
+        withContext(Dispatchers.UiWithModelAccess) { savedFileNames.size == 2 }
+      }
     }
+
     assertEquals(listOf(failedFile.name, nextFile.name), savedFileNames)
+    assertEquals(listOf("Cannot save the Home file ${failedFile.name}"), loggedErrors)
   }
 
   @Test

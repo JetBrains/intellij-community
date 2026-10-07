@@ -58,17 +58,21 @@ internal class FrontendWelcomeFilesService(private val project: Project, private
     val projectId = project.projectId()
     val fileIds = files.associateWith { it.rpcId() }
     scope.launch {
-      for ((file, fileId) in fileIds) {
-        try {
-          WelcomeFilesApi.getInstance().saveAs(projectId, fileId)
-        }
-        catch (e: Throwable) {
-          rethrowControlFlowException(e)
-          LOG.warn("Cannot save the Home file ${file.name}", e)
-        }
-        finally {
+      try {
+        for ((file, fileId) in fileIds) {
+          try {
+            WelcomeFilesApi.getInstance().saveAs(projectId, fileId).await()
+          }
+          catch (e: Throwable) {
+            rethrowControlFlowException(e)
+            LOG.error("Cannot save the Home file ${file.name}", e)
+          }
           savingFiles -= file
         }
+      }
+      finally {
+        // A cancellation stops the queue, so the files after it leave the saving state here.
+        savingFiles -= fileIds.keys
       }
     }
   }
@@ -90,7 +94,7 @@ internal class FrontendWelcomeFilesService(private val project: Project, private
         }
         catch (e: Throwable) {
           rethrowControlFlowException(e)
-          LOG.warn("Cannot delete the Home file ${file.name}", e)
+          LOG.error("Cannot delete the Home file ${file.name}", e)
         }
       }
     }

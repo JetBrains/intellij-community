@@ -8,6 +8,8 @@ import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -24,9 +26,9 @@ interface WelcomeFilesApi : RemoteApi<Unit> {
   /**
    * Shows the save dialog and copies [file] to the target.
    * Then it opens the target, closes the tab of [file], and deletes [file].
-   * The call returns when the user closes the save dialog.
+   * The call returns at once. The returned deferred completes when the user closes the save dialog.
    */
-  suspend fun saveAs(projectId: ProjectId, file: VirtualFileId)
+  suspend fun saveAs(projectId: ProjectId, file: VirtualFileId): Deferred<Unit>
 
   /**
    * Deletes [file] without a confirmation.
@@ -48,8 +50,7 @@ interface WelcomeFilesApi : RemoteApi<Unit> {
 private object NoBackendWelcomeFilesApi : WelcomeFilesApi {
   override suspend fun isWelcomeFile(projectId: ProjectId, file: VirtualFileId): Boolean = false
 
-  override suspend fun saveAs(projectId: ProjectId, file: VirtualFileId) {
-  }
+  override suspend fun saveAs(projectId: ProjectId, file: VirtualFileId): Deferred<Unit> = CompletableDeferred(Unit)
 
   override suspend fun discard(projectId: ProjectId, file: VirtualFileId) {
   }
