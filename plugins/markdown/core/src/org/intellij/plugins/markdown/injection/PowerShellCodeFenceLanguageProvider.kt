@@ -9,10 +9,14 @@ import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageAliases
 internal class PowerShellCodeFenceLanguageProvider : CodeFenceLanguageProvider {
   override fun getLanguageByInfoString(infoString: String): Language? {
     val name = infoString.trim().takeWhile { !it.isWhitespace() }
-    return PowerShellRunnerLanguage.takeIf { CodeFenceLanguageAliases.findRegisteredEntry(name) == "PowerShell" }
+    if (CodeFenceLanguageAliases.findRegisteredEntry(name) == "PowerShell") {
+      return PowerShellRunnerLanguage
+    }
+    return null
   }
 
   override fun getCompletionVariantsForInfoString(parameters: CompletionParameters): List<LookupElement> = emptyList()
 
-  private object PowerShellRunnerLanguage : Language("PowerShell", false)
 }
+
+private object PowerShellRunnerLanguage : Language("PowerShell", false)
