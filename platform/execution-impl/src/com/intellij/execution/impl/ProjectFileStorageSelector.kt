@@ -16,11 +16,6 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.BrowseFolderRunnable
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.ComponentValidator
-import com.intellij.openapi.ui.TextComponentAccessor
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -28,7 +23,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -39,7 +33,6 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.popup.PopupState
 import com.intellij.util.PathUtil
 import com.intellij.util.ThreeState
-import com.intellij.util.UriUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.JBUI
@@ -57,7 +50,6 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.SwingConstants
-import javax.swing.text.JTextComponent
 
 @ApiStatus.Internal
 abstract class ProjectFileStorageSelector @JvmOverloads constructor(
@@ -245,23 +237,12 @@ private class StoragePathPopup(
   pathToErrorMessage: (String) -> @NlsContexts.DialogMessage String?,
   uiDisposable: Disposable,
 ) {
-  private val pathComboBox = ComboBox<String>(JBUI.scale(500)).apply {
-    isEditable = true
-    val selectPathAction = BrowseFolderRunnable(project, descriptor, this, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT)
-    initBrowsableEditor(selectPathAction, uiDisposable)
-  }
+  private val pathEditor = ProjectFileStoragePathEditor(project, descriptor, pathToErrorMessage, uiDisposable)
+  private val pathComboBox = pathEditor.component
   private lateinit var closePopupAction: () -> Unit
   val mainPanel: JPanel
 
   init {
-    val validator = ComponentValidator(uiDisposable)
-    val comboBoxEditorComponent = pathComboBox.editor.editorComponent as JTextComponent
-    validator.withValidator {
-      pathToErrorMessage(getPath())?.let { ValidationInfo(it, pathComboBox) }
-    }
-      .andRegisterOnDocumentListener(comboBoxEditorComponent)
-      .installOn(comboBoxEditorComponent)
-
     val comboBoxPanel = UI.PanelFactory.panel(pathComboBox).withLabel(pathLabel).moveLabelOnTop().apply {
       if (pathComment != null) withComment(StringUtil.escapeXmlEntities(pathComment))
     }.createPanel()
@@ -281,20 +262,16 @@ private class StoragePathPopup(
         pathComboBox.isPopupVisible = false
       }
       else {
-        validator.updateInfo(null)
+        pathEditor.clearValidation()
         closePopupAction()
       }
     }.registerCustomShortcutSet(CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.ESCAPE), mainPanel, uiDisposable)
   }
 
   fun reset(path: String, pathsToSuggest: Collection<String>, closePopupAction: () -> Unit) {
-    pathComboBox.selectedItem = FileUtil.toSystemDependentName(path)
-    for (suggestion in pathsToSuggest) {
-      pathComboBox.addItem(FileUtil.toSystemDependentName(suggestion))
-    }
+    pathEditor.reset(path, pathsToSuggest)
     this.closePopupAction = closePopupAction
   }
 
-  fun getPath(): String =
-    UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(pathComboBox.editor.item.toString().trim { it <= ' ' }))
+  fun getPath(): String = pathEditor.getPath()
 }
