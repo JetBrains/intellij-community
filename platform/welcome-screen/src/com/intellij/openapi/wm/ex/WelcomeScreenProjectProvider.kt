@@ -20,7 +20,9 @@ import kotlin.io.path.absolute
 import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
+import kotlin.io.path.extension
 import kotlin.io.path.forEachDirectoryEntry
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 
 private val LOG = logger<WelcomeScreenProjectProvider>()
@@ -158,6 +160,9 @@ abstract class WelcomeScreenProjectProvider {
         projectPath.forEachDirectoryEntry { child ->
           val name = child.name
           if (name == ".idea") {
+            return@forEachDirectoryEntry
+          }
+          if (child.extension == "iml" && child.isRegularFile(LinkOption.NOFOLLOW_LINKS)) {
             return@forEachDirectoryEntry
           }
           if (PlatformUtils.isPyCharm() && name == ".venv") {

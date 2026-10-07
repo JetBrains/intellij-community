@@ -16,12 +16,15 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.ThreeState
 import com.intellij.util.application
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.writeText
 
 /**
  * The welcome-screen ("Home") project directory is a system path: it is trusted implicitly,
@@ -62,6 +65,27 @@ internal class WelcomeProjectTrustTest {
     // both stores are application-level and would leak into the next test
     TrustedPaths.getInstance().loadState(TrustedPaths.State())
     TrustedPathsSettings.getInstance().loadState(TrustedPathsSettings.State())
+  }
+
+  @Test
+  fun `welcome cleanup preserves module configuration and removes user files`() {
+    val ideaPath = welcomePath.resolve(".idea").createDirectories()
+    val modules = ideaPath.resolve("modules.xml").also { it.writeText("module registration") }
+    val module = welcomePath.resolve("testHome.iml").also { it.writeText("<module type=\"PYTHON_MODULE\" version=\"4\" />") }
+    val untypedModule = welcomePath.resolve("empty.iml").also { it.writeText("<module version=\"4\" />") }
+    val script = welcomePath.resolve("script.py").also { it.writeText("print(1)") }
+    val directory = welcomePath.resolve("directory.iml").createDirectories()
+    directory.resolve("script.py").writeText("print(2)")
+    val provider = TestWelcomeScreenProjectProvider(welcomePath)
+
+    repeat(2) {
+      assertThat(provider.getWelcomeScreenProjectPathForInternalUsage()).isEqualTo(welcomePath)
+      assertThat(modules).hasContent("module registration")
+      assertThat(module).hasContent("<module type=\"PYTHON_MODULE\" version=\"4\" />")
+      assertThat(untypedModule).hasContent("<module version=\"4\" />")
+      assertThat(script).doesNotExist()
+      assertThat(directory).doesNotExist()
+    }
   }
 
   @Test
