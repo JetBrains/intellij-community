@@ -118,12 +118,25 @@ internal class TerminalGenericFileFilterAbsolutePathTest {
   }
 
   @Test
-  fun `URL followed by prose is looked up a bounded number of times`() {
+  fun `URL is not looked up`() {
     val run = getFilterResultAndCheckHighlightPositions(
       "see https://example.com/docs/setup for more information about the setup", emptyList(), checkHighlights = false
     )
     run.checkFileLinks()
-    Assertions.assertThat(run.lookedUpPaths).containsExactly(run.path("//example.com/docs/setup"), run.path("//example.com/docs"))
+    Assertions.assertThat(run.lookedUpPaths).isEmpty()
+  }
+
+  @Test
+  fun `text starting with double slash is not looked up`() {
+    fun check(windows: Boolean, filePath: String) {
+      val run = getFilterResultAndCheckHighlightPositions(
+        "connect to //127.0.0.1 or //server/share, then open $filePath", listOf(filePath), checkHighlights = false, windows = windows
+      )
+      run.checkFileLinks(filePath)
+      Assertions.assertThat(run.lookedUpPaths).containsExactly(run.path(filePath))
+    }
+    check(false, "/path/to/file")
+    check(true, "C:\\path\\to\\file")
   }
 
   @Test
