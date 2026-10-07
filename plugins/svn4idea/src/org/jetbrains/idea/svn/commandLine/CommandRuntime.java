@@ -2,7 +2,6 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.ide.trustedProjects.TrustedProjects;
-import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -47,7 +46,7 @@ public class CommandRuntime {
 
   public @NotNull CommandExecutor runWithAuthenticationAttempt(@NotNull Command command) throws SvnBindException {
     Project project = myVcs.getProject();
-    if (!project.isDefault() && (!TrustedProjects.isProjectTrusted(project) || WelcomeUtils.isWelcomeProject(project))) {
+    if (!project.isDefault() && !TrustedProjects.isProjectTrusted(project)) {
       throw new IllegalStateException("Shouldn't be possible to run a SVN command in the safe mode");
     }
 
