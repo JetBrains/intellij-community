@@ -14,6 +14,8 @@ import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.Ext
 import com.intellij.util.Processor;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.io.CorruptedException;
+import it.unimi.dsi.fastutil.longs.Long2LongMap;
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,10 +153,8 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
       throw failure;
     }
 
+    var requiresRecovery = !freshLookup && !recordRefIndex.wasProperlyClosed();
     try {
-      if (!freshLookup && !recordRefIndex.wasProperlyClosed()) {
-        throw new CorruptedException("The key catalog LOOKUP requires recovery");
-      }
       var keyCatalog = KeyCatalogOverBlocks.open(blockCatalog, preferredBlockContentLength, recordRefIndex, keyDescriptor);
       var values = RecordStorageOverBlocks.open(blockCatalog, VALUES, preferredBlockContentLength);
       DurableMapWithKeyCatalogOverBlocks<K, V> map;
@@ -175,20 +175,25 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
           return false;
         });
         if (hasKeys.get()) {
-          throw new CorruptedException("The key catalog LOOKUP is missing");
+          requiresRecovery = true;
         }
       }
-      map.restoreActiveEntryCount();
+      if (requiresRecovery) {
+        map.rebuildFromCommittedRecords();
+      }
+      else {
+        map.restoreActiveEntryCount();
+      }
       return map;
     }
-    catch (IOException | RuntimeException | Error failure) {
+    catch (Throwable failure) {
       try {
         recordRefIndex.closeKeepingDirty();
         if (freshLookup) {
           recordIndexStorage.closeAndClean();
         }
       }
-      catch (IOException | RuntimeException | Error closeFailure) {
+      catch (Throwable closeFailure) {
         failure.addSuppressed(closeFailure);
       }
       throw failure;
@@ -536,6 +541,64 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
       });
       activeEntryCount = count[0];
     }
+  }
+
+  /// Rebuilds all derived state from the committed `KEYS` and `VALUES` records.
+  private void rebuildFromCommittedRecords() throws IOException {
+    synchronized (lock) {
+      keyCatalog.rebuildLookupAndResetValueRecordRefs();
+      Long2LongMap keyRecordRefsByActiveHead = new Long2LongOpenHashMap();
+
+      values.forEachCommittedRecord((valueRecordRef, record) -> {
+        replayValueRecord(valueRecordRef, record, keyRecordRefsByActiveHead);
+        return true;
+      });
+      activeEntryCount = keyRecordRefsByActiveHead.size();
+    }
+  }
+
+  private void replayValueRecord(long valueRecordRef,
+                                 @NotNull MemorySegment record,
+                                 @NotNull Long2LongMap keyRecordRefsByActiveHead) throws IOException {
+    var valueRecord = ValueRecordLayout.read(record);
+    switch (valueRecord.kind()) {
+      case SNAPSHOT -> {
+        var keyRecordRef = valueRecord.reference();
+        keyCatalog.requireKeyRecord(keyRecordRef);
+        replaceRecoveredHead(keyRecordRef, valueRecordRef, keyRecordRefsByActiveHead);
+        keyRecordRefsByActiveHead.put(valueRecordRef, keyRecordRef);
+      }
+      case PATCH -> {
+        var previousValueRef = valueRecord.reference();
+        if (previousValueRef >= valueRecordRef) {
+          throw new CorruptedException("Invalid value predecessor: " + valueRecordRef + " -> " + previousValueRef);
+        }
+        var keyRecordRef = keyRecordRefsByActiveHead.remove(previousValueRef);
+        if (keyRecordRef == NO_VALUE || keyCatalog.valueRecordRef(keyRecordRef) != previousValueRef) {
+          throw new CorruptedException("The patch does not continue the current value chain: " + valueRecordRef);
+        }
+        keyCatalog.updateValueRecordRef(keyRecordRef, valueRecordRef);
+        keyRecordRefsByActiveHead.put(valueRecordRef, keyRecordRef);
+      }
+      case TOMBSTONE -> {
+        var keyRecordRef = valueRecord.reference();
+        keyCatalog.requireKeyRecord(keyRecordRef);
+        replaceRecoveredHead(keyRecordRef, valueRecordRef, keyRecordRefsByActiveHead);
+      }
+    }
+  }
+
+  private void replaceRecoveredHead(long keyRecordRef,
+                                    long valueRecordRef,
+                                    @NotNull Long2LongMap keyRecordRefsByActiveHead) throws IOException {
+    var previousHead = keyCatalog.valueRecordRef(keyRecordRef);
+    if (previousHead != NO_VALUE) {
+      var previousOwner = keyRecordRefsByActiveHead.remove(previousHead);
+      if (previousOwner != NO_VALUE && previousOwner != keyRecordRef) {
+        throw new CorruptedException("Value head " + previousHead + " belongs to key " + previousOwner + ", expected " + keyRecordRef);
+      }
+    }
+    keyCatalog.updateValueRecordRef(keyRecordRef, valueRecordRef);
   }
 
   private void markDirty() throws IOException {

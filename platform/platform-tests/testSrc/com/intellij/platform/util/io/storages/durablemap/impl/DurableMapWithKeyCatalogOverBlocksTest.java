@@ -4,13 +4,25 @@ package com.intellij.platform.util.io.storages.durablemap.impl;
 import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.database.DurableDatabase;
 import com.intellij.platform.util.io.storages.database.DurableDatabaseFactory;
+import com.intellij.platform.util.io.storages.database.spi.BlocksDatabase;
+import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory;
+import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
+import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog;
+import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapWithKeyCatalogOverBlocks;
+import com.intellij.platform.util.io.storages.database.storages.durablemap.KeyRecordLayout;
+import com.intellij.platform.util.io.storages.database.storages.durablemap.RecordStorageOverBlocks;
+import com.intellij.platform.util.io.storages.database.storages.durablemap.ValueRecordLayout;
+import com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapStorageOverLookupBlocks;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
 import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap;
+import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64;
+import com.intellij.util.io.CorruptedException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -20,9 +32,16 @@ import java.util.List;
 
 import static com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8;
 import static com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_SEPARATELY;
+import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.KEYS;
+import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.VALUES;
+import static com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapStorageOverLookupBlocks.IMPLEMENTATION_ID;
+import static com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapStorageOverLookupBlocks.INITIAL_GENERATION;
+import static com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap.NO_VALUE;
+import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64.DEFAULT_SEGMENT_SIZE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Verifies the map API over separate key and value records.
@@ -102,9 +121,152 @@ public class DurableMapWithKeyCatalogOverBlocksTest {
     }
   }
 
+  @Test
+  public void dirtyOpenReplaysSnapshotsPatchesAndTombstones(@TempDir Path databaseDirectory) throws Exception {
+    var factory = new BlocksDatabaseFactory(CHUNK_SIZE);
+    var database = factory.open(databaseDirectory);
+    var map = openPatchableStringMap(database.openStore("map", 1), new AppendStringCodec());
+    map.put("patched", "base");
+    map.patchValue("patched", "+patch");
+    map.put("removed", "value");
+    map.remove("removed");
+    map.put("restored", "old");
+    map.remove("restored");
+    map.put("restored", "new");
+
+    database.close(); // Leave the map lookup dirty to simulate a process failure.
+
+    try (var reopenedDatabase = factory.open(databaseDirectory);
+         var recoveredMap = openPatchableStringMap(requireMapStore(reopenedDatabase), new AppendStringCodec())) {
+      assertEquals("base+patch", recoveredMap.get("patched"));
+      assertNull(recoveredMap.get("removed"));
+      assertEquals("new", recoveredMap.get("restored"));
+      assertEquals(2, recoveredMap.size());
+    }
+  }
+
+  @Test
+  public void dirtyReplayPublishesCommittedSnapshotWithoutKeyHeadUpdate(@TempDir Path databaseDirectory) throws Exception {
+    var factory = new BlocksDatabaseFactory(CHUNK_SIZE);
+    try (var database = factory.open(databaseDirectory)) {
+      var store = database.openStore("map", 1);
+      try (var map = openStringMap(store)) {
+        map.put("key", "old");
+      }
+
+      var blockCatalog = DurableMapBlockCatalog.open(store);
+      var keyRecordRef = onlyKeyRecordRef(blockCatalog);
+      var lookup = openLookup(blockCatalog);
+      lookup.markDirty();
+      var values = RecordStorageOverBlocks.open(
+        blockCatalog, VALUES, DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH
+      );
+      var payload = serializedString("new");
+      values.append(ValueRecordLayout.recordSize(Math.toIntExact(payload.byteSize())), record ->
+        ValueRecordLayout.writeSnapshot(record, keyRecordRef, payload)
+      );
+      lookup.closeKeepingDirty();
+    }
+
+    try (var database = factory.open(databaseDirectory);
+         var map = openStringMap(requireMapStore(database))) {
+      assertEquals("new", map.get("key"), "Recovery must publish a committed value record that was not stored in the key head");
+    }
+  }
+
+  @Test
+  public void dirtyReplayRejectsPatchForAnOldHead(@TempDir Path databaseDirectory) throws Exception {
+    var factory = new BlocksDatabaseFactory(CHUNK_SIZE);
+    try (var database = factory.open(databaseDirectory)) {
+      var store = database.openStore("map", 1);
+      try (var map = openStringMap(store)) {
+        map.put("key", "base");
+      }
+
+      var blockCatalog = DurableMapBlockCatalog.open(store);
+      var keys = RecordStorageOverBlocks.open(blockCatalog, KEYS, DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH);
+      var keyRecordRef = onlyKeyRecordRef(blockCatalog);
+      var oldHead = KeyRecordLayout.valueRecordRef(keys.read(keyRecordRef));
+      var lookup = openLookup(blockCatalog);
+      lookup.markDirty();
+      var values = RecordStorageOverBlocks.open(
+        blockCatalog, VALUES, DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH
+      );
+      var firstPatch = serializedString("first");
+      values.append(ValueRecordLayout.recordSize(Math.toIntExact(firstPatch.byteSize())), record ->
+        ValueRecordLayout.writePatch(record, oldHead, firstPatch)
+      );
+      var stalePatch = serializedString("stale");
+      values.append(ValueRecordLayout.recordSize(Math.toIntExact(stalePatch.byteSize())), record ->
+        ValueRecordLayout.writePatch(record, oldHead, stalePatch)
+      );
+      lookup.closeKeepingDirty();
+    }
+
+    try (var database = factory.open(databaseDirectory)) {
+      var failure = assertThrows(CorruptedException.class, () -> openStringMap(requireMapStore(database)));
+      assertTrue(failure.getMessage().contains("does not continue the current value chain"));
+    }
+  }
+
+  @Test
+  public void dirtyReplayKeepsKeyWhoseFirstValueWriteFailed(@TempDir Path databaseDirectory) throws Exception {
+    var factory = new BlocksDatabaseFactory(CHUNK_SIZE);
+    var database = factory.open(databaseDirectory);
+    var store = database.openStore("map", 1);
+    var descriptor = stringAsUTF8();
+    var failingExternalizer = new DataExternalizerEx<String>() {
+      @Override
+      public String read(@NotNull ByteBuffer input) throws IOException {
+        return descriptor.read(input);
+      }
+
+      @Override
+      public @NotNull KnownSizeRecordWriter writerFor(@NotNull String value) {
+        return new KnownSizeRecordWriter() {
+          @Override
+          public ByteBuffer write(@NotNull ByteBuffer data) throws IOException {
+            throw new IOException("simulated value write failure");
+          }
+
+          @Override
+          public int recordSize() {
+            return 1;
+          }
+        };
+      }
+    };
+    var map = DurableMapWithKeyCatalogOverBlocks.open(
+      store, DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH, descriptor, null, failingExternalizer
+    );
+    assertThrows(IOException.class, () -> map.put("key", "value"));
+    assertTrue(map.isClosed(), "A failed value publication must close the map");
+    database.close();
+
+    try (var reopenedDatabase = factory.open(databaseDirectory);
+         var recoveredMap = openStringMap(requireMapStore(reopenedDatabase))) {
+      assertNull(recoveredMap.get("key"));
+      var keys = new ArrayList<String>();
+      assertTrue(recoveredMap.processKeys(keys::add));
+      assertEquals(List.of("key"), keys, "Recovery must preserve the committed key record");
+
+      recoveredMap.put("key", "recovered");
+      keys.clear();
+      assertTrue(recoveredMap.processKeys(keys::add));
+      assertEquals(List.of("key"), keys, "The next put must reuse the recovered key record");
+    }
+  }
+
   private static @NotNull DurableMap<String, String> openStringMap(@NotNull DurableDatabase database) throws IOException {
     var descriptor = stringAsUTF8();
     return database.openMap("map", 1, KEY_VALUE_SEPARATELY, descriptor, descriptor);
+  }
+
+  private static @NotNull DurableMapWithKeyCatalogOverBlocks<String, String> openStringMap(@NotNull BlocksStore store) throws IOException {
+    var descriptor = stringAsUTF8();
+    return DurableMapWithKeyCatalogOverBlocks.open(
+      store, DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH, descriptor, descriptor, descriptor
+    );
   }
 
   private static @NotNull PatchableDurableMap<String, String, String> openPatchableStringMap(
@@ -112,6 +274,57 @@ public class DurableMapWithKeyCatalogOverBlocksTest {
     @NotNull AppendStringCodec codec
   ) throws IOException {
     return database.openMap("map", 1, KEY_VALUE_SEPARATELY, stringAsUTF8(), codec);
+  }
+
+  private static @NotNull PatchableDurableMap<String, String, String> openPatchableStringMap(
+    @NotNull BlocksStore store,
+    @NotNull AppendStringCodec codec
+  ) throws IOException {
+    return DurableMapWithKeyCatalogOverBlocks.openPatchable(
+      store, DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH, stringAsUTF8(), null, codec
+    );
+  }
+
+  private static @NotNull BlocksStore requireMapStore(@NotNull BlocksDatabase database) {
+    var store = database.findStore("map");
+    if (store == null) {
+      throw new AssertionError("Missing store map");
+    }
+    return store;
+  }
+
+  private static long onlyKeyRecordRef(@NotNull DurableMapBlockCatalog blockCatalog) throws IOException {
+    var keys = RecordStorageOverBlocks.open(
+      blockCatalog, KEYS, DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH
+    );
+    var keyRecordRef = new long[]{NO_VALUE};
+    keys.forEachCommittedRecord((recordRef, _) -> {
+      if (keyRecordRef[0] != NO_VALUE) {
+        throw new AssertionError("Expected one key record");
+      }
+      keyRecordRef[0] = recordRef;
+      return true;
+    });
+    if (keyRecordRef[0] == NO_VALUE) {
+      throw new AssertionError("Missing key record");
+    }
+    return keyRecordRef[0];
+  }
+
+  private static @NotNull ExtendibleHashMapInt32ToInt64 openLookup(@NotNull DurableMapBlockCatalog blockCatalog) throws IOException {
+    var storage = new ExtendibleHashMapStorageOverLookupBlocks(
+      blockCatalog.lookupBlocks(IMPLEMENTATION_ID, INITIAL_GENERATION),
+      ExtendibleHashMapInt32ToInt64.REQUIRED_HEADER_SIZE,
+      DEFAULT_SEGMENT_SIZE * 2
+    );
+    return new ExtendibleHashMapInt32ToInt64(storage);
+  }
+
+  private static @NotNull MemorySegment serializedString(@NotNull String value) throws IOException {
+    var writer = stringAsUTF8().writerFor(value);
+    var bytes = new byte[writer.recordSize()];
+    writer.write(ByteBuffer.wrap(bytes));
+    return MemorySegment.ofArray(bytes);
   }
 
   private static final class AppendStringCodec implements PatchableDurableMap.PatchableValueExternalizer<String, String> {

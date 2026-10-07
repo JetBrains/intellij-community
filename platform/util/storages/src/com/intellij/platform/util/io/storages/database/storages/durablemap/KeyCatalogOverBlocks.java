@@ -80,6 +80,34 @@ public final class KeyCatalogOverBlocks<K> {
     keys.updatePayload(keyRecordRef, record -> KeyRecordLayout.updateValueRecordRef(record, valueRecordRef));
   }
 
+  /// Rebuilds `LOOKUP` from stable key records and resets value heads before value replay.
+  void rebuildLookupAndResetValueRecordRefs() throws IOException {
+    keyHashToRecordRefIndex.clear();
+    keys.forEachCommittedRecord((keyRecordRef, readOnlyRecord) -> {
+      var keyHash = KeyRecordLayout.keyHash(readOnlyRecord);
+      //TODO RC: its quite ineffective to request the same record again just to update it -- better have a write-allowed
+      //         keys.forEachCommittedRecord() variant
+      keys.updatePayload(keyRecordRef, writableRecord -> KeyRecordLayout.updateValueRecordRef(writableRecord, NO_VALUE));
+      if (!keyHashToRecordRefIndex.put(keyHash, keyRecordRef)) {
+        // (keyHash, keyRecordRef) pair should be unique!
+        throw new CorruptedException("The key-record reference is already in LOOKUP: " + keyRecordRef);
+      }
+      return true;
+    });
+  }
+
+  /// Verifies that the reference identifies a committed key record
+  /// @throws CorruptedException if keyRecordRef does NOT refer a committed key record
+  void requireKeyRecord(long keyRecordRef) throws IOException {
+    //FIXME RC: read key just to check keyRecordRef seems like an overkill!
+    try {
+      KeyRecordLayout.keyHash(keys.read(keyRecordRef));
+    }
+    catch (IllegalArgumentException e) {
+      throw new CorruptedException("Unknown key record reference " + keyRecordRef, e);
+    }
+  }
+
   /// Processes keys in their append order without reading `LOOKUP` or `VALUES`.
   public boolean processKeys(@NotNull Processor<? super K> processor) throws IOException {
     return keys.forEachCommittedRecord((_, record) -> processor.process(readKey(record)));
