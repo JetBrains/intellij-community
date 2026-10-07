@@ -63,13 +63,14 @@ class GitStageDiffRequestProcessor(val stageTree: GitStageTree,
   }
 
   private fun getChanges(): ListSelection<Wrapper> {
-    return stageTree.listSelection(false).map {
+    val changes = stageTree.listSelection(false).map {
       when (it) {
         is GitFileStatusNode -> GitFileStatusNodeWrapper(it)
         is Change -> ChangeWrapper(it)
         else -> null
       }
     }
+    return ListSelection.create(changes.list, currentChange).withExplicitSelection(changes.isExplicitSelection)
   }
 
   private inner class MyGoToChangePopupController : GoToChangePopupController<Wrapper> {
