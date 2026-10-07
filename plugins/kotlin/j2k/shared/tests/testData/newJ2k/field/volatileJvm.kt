@@ -6,6 +6,9 @@ internal class A {
     @Volatile
     private var field2 = ""
 
+    @Volatile
+    private var neverWritten = ""
+
     init {
         field2 = "new"
     }

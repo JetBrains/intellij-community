@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.j2k.conversions
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.j2k.ConverterContext
-import org.jetbrains.kotlin.j2k.MUTABLE_FIELD_ANNOTATIONS
 import org.jetbrains.kotlin.j2k.NON_PERSISTENT_FIELD_ANNOTATIONS
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.j2k.PERSISTENT_CLASS_ANNOTATIONS
@@ -108,7 +107,6 @@ class ClassMemberConversion(context: ConverterContext) : RecursiveConversion(con
             hasOtherModifier(LATEINIT) -> MUTABLE
             isPersistentField() -> MUTABLE
             modality == FINAL -> IMMUTABLE
-            hasAnnotation(MUTABLE_FIELD_ANNOTATIONS) -> MUTABLE
             mutability != UNKNOWN -> mutability
             else -> UNKNOWN
         }

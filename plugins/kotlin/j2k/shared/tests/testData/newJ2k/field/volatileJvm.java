@@ -5,6 +5,8 @@ class A {
 
     private volatile String field2 = "";
 
+    private volatile String neverWritten = "";
+
     A() {
         field2 = "new";
     }
