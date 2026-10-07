@@ -68,6 +68,22 @@ object PluginAutoUpdateRepository {
     writeUpdates(PluginUpdatesData(result.mapKeys { it.key.idString }))
   }
 
+  @Synchronized
+  fun filterUpdates(predicate: (PluginId, PluginUpdateInfo) -> Boolean): Boolean {
+    val existing = readUpdates()
+    val result = existing.filter { (pluginId, updateInfo) -> predicate(pluginId, updateInfo) }
+    if (result.size == existing.size) {
+      return false
+    }
+    if (result.isEmpty()) {
+      clearState()
+    }
+    else {
+      writeUpdates(PluginUpdatesData(result.mapKeys { it.key.idString }))
+    }
+    return true
+  }
+
   suspend fun safeConsumeUpdates(logDeferred: Deferred<Logger>): Map<PluginId, PluginUpdateInfo> {
     val (readResult, clearResult) = synchronized(this) {
       runCatching { readUpdates() } to runCatching { clearState() }

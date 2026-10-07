@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
@@ -31,6 +32,7 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -60,6 +62,16 @@ class PluginAutoUpdateService(private val coroutineScope: CoroutineScope) {
   private val pendingDownloads: Channel<List<PluginDownloader>> = Channel(capacity = Channel.UNLIMITED)
   private var downloadManagerJob: Job? = null
 
+  init {
+    coroutineScope.launch(CoroutineName("Plugin auto-update exclusion listener"), start = CoroutineStart.UNDISPATCHED) {
+      PluginUpdateExclusionService.getInstance().updateExclusionChanges.collect {
+        withContext(Dispatchers.IO) {
+          patchDownloadedUpdatesByExclusions()
+        }
+      }
+    }
+  }
+
   fun isAutoUpdateEnabled(): Boolean = com.intellij.openapi.updateSettings.impl.isAutoUpdateEnabled()
 
   private fun setupDownloadManager() {
@@ -69,7 +81,8 @@ class PluginAutoUpdateService(private val coroutineScope: CoroutineScope) {
           LOG.debug { "setting up download manager" }
           downloadManagerJob = coroutineScope.launchDownloadManager()
         }
-      } else {
+      }
+      else {
         val job = downloadManagerJob
         job?.cancel()
         while (true) { // drain pending downloads
@@ -100,7 +113,8 @@ class PluginAutoUpdateService(private val coroutineScope: CoroutineScope) {
             LOG.debug { "downloading with background progress in project $activeProject" }
             downloadUpdates(downloaders)
           }
-        } else {
+        }
+        else {
           LOG.debug { "downloading without background progress" }
           downloadUpdates(downloaders)
         }
@@ -190,12 +204,37 @@ class PluginAutoUpdateService(private val coroutineScope: CoroutineScope) {
             updateFile.move(updatePathInAutoUpdatesDir)
             updatePathInAutoUpdatesDir
           }
-          updatesState[downloader.id] = DownloadedUpdate(downloader.id, requireNotNull(downloader.pluginVersion), updatePathInAutoUpdateDir)
-          downloadedList.add(downloader)
+          if (!updateExclusionService.allowedAutoupdate(downloader.id)) {
+            LOG.debug { "deleting downloaded update for plugin ${downloader.pluginName}, as it is excluded from auto-update" }
+            updatePathInAutoUpdateDir.delete()
+          }
+          else {
+            updatesState[downloader.id] =
+              DownloadedUpdate(downloader.id, requireNotNull(downloader.pluginVersion), updatePathInAutoUpdateDir)
+            downloadedList.add(downloader)
+          }
         }
       }
     }
     return downloadedList
+  }
+
+  private fun patchDownloadedUpdatesByExclusions() {
+    val updateExclusionService = PluginUpdateExclusionService.getInstance()
+    val excludedDownloadedPluginIds = updatesState.keys.filter { !updateExclusionService.allowedAutoupdate(it) }
+    excludedDownloadedPluginIds.forEach(updatesState::remove)
+    try {
+      val filteredStateFile = PluginAutoUpdateRepository.filterUpdates { pluginId, _ ->
+        updateExclusionService.allowedAutoupdate(pluginId)
+      }
+      if (excludedDownloadedPluginIds.isNotEmpty() || filteredStateFile) {
+        LOG.info("Prepared auto-updates for excluded plugins were removed")
+      }
+    }
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      LOG.warn("Failed to patch plugin auto-update state after update exclusions changed", e)
+    }
   }
 
   private fun notifyUpdatesDownloaded(downloaded: List<PluginDownloader>) {
@@ -213,9 +252,11 @@ class PluginAutoUpdateService(private val coroutineScope: CoroutineScope) {
   }
 
   fun onSettingsChanged() {
-    LOG.debug { "onSettingsChanged: " +
-                "allowed=${PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed()} " +
-                "enabled=${UpdateSettings.getInstance().isPluginsAutoUpdateEnabled} " }
+    LOG.debug {
+      "onSettingsChanged: " +
+      "allowed=${PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed()} " +
+      "enabled=${UpdateSettings.getInstance().isPluginsAutoUpdateEnabled} "
+    }
     // should erase already downloaded updates if the setting gets disabled
     // TODO this thing is not bullet-proof, only explicit setting change from the UI is tracked
     coroutineScope.launch {
@@ -231,7 +272,8 @@ class PluginAutoUpdateService(private val coroutineScope: CoroutineScope) {
       LOG.info("plugin auto-update repository is deleted because auto-update is disabled")
       try {
         PluginAutoUpdateRepository.clearUpdates()
-      } catch (e: Exception) {
+      }
+      catch (e: Exception) {
         LOG.error(e)
       }
     }

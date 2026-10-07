@@ -22,8 +22,10 @@ import com.intellij.openapi.application.PluginAutoUpdateRepository.getAutoUpdate
 import com.intellij.openapi.application.PluginAutoUpdateRepository.safeConsumeUpdates
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrHandleException
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateExclusionEarlyStartupReader
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import kotlinx.coroutines.CompletableDeferred
@@ -48,26 +50,37 @@ object PluginAutoUpdater {
    * This method is called during startup, before the plugins are loaded.
    */
   suspend fun applyPluginUpdates(logDeferred: Deferred<Logger>) {
-    val updates = safeConsumeUpdates(logDeferred).filter { (_, info) ->
+    suspend fun logger() = logDeferred.await()
+    val exclusions = runCatching { PluginUpdateExclusionEarlyStartupReader.read() }.getOrLogException(logger()) ?: emptyMap()
+    val allUpdates = safeConsumeUpdates(logDeferred)
+    val updates = mutableMapOf<PluginId, PluginUpdateInfo>()
+
+    for ([pluginId, info] in allUpdates.entries) {
       runCatching {
-        Path.of(info.pluginPath).exists() && getAutoUpdateDirPath().resolve(info.updateFilename).exists()
-      }.getOrElse { e ->
-        logDeferred.await().warn(e)
-        false
-      }
+        when {
+          !Path.of(info.pluginPath).exists() ->
+            logger().info("Skip plugin $pluginId update: plugin path does not exist: ${info.pluginPath}")
+          !getAutoUpdateDirPath().resolve(info.updateFilename).exists() ->
+            logger().info("Skip plugin $pluginId update: update file does not exist: ${info.updateFilename}")
+          exclusions.containsKey(pluginId) ->
+            logger().info("Skip plugin $pluginId update: excluded from (auto)update by user")
+          else -> updates[pluginId] = info
+        }
+      }.getOrHandleException { e -> logger().warn(e) }
     }
+
     pluginAutoUpdateResult = runCatching {
       val updatesApplied = applyPluginUpdates(updates, logDeferred)
       PluginAutoUpdateStatistics(updatesPrepared = updates.size, pluginsUpdated = updatesApplied)
     }.apply {
       getOrHandleException { e ->
-        logDeferred.await().error("Error occurred during application of plugin updates", e)
+        logger().error("Error occurred during application of plugin updates", e)
       }
     }
     runCatching {
       clearUpdates()
     }.getOrHandleException { e ->
-      logDeferred.await().warn("Failed to clear plugin auto update directory", e)
+      logger().warn("Failed to clear plugin auto update directory", e)
     }
   }
 
