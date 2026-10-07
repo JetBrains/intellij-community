@@ -65,13 +65,6 @@
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.csat.CsatFeedbackSurvey"/>
     <backgroundPostStartupActivity implementation="com.intellij.platform.feedback.csat.CsatNewUserTracker"/>
 
-    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.editor.smoothcaret.SmoothCaretFeedbackSurvey"/>
-    <backgroundPostStartupActivity implementation="com.intellij.platform.feedback.editor.smoothcaret.SmoothCaretFirstRunActivity"/>
-    <applicationService serviceImplementation="com.intellij.platform.feedback.editor.smoothcaret.SmoothCaretUsageLocalStorage"/>
-
-    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.editor.ux.EditorUxFeedbackSurvey"/>
-    <registryKey key="editor.ux.survey.enabled" defaultValue="false" description="Enables Editor UX survey for 10% users"/>
-
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.wsl.WslSatisfactionSurvey"/>
     <backgroundPostStartupActivity implementation="com.intellij.platform.feedback.wsl.WslSatisfactionSurveyProjectActivity"/>
     <applicationService serviceImplementation="com.intellij.platform.feedback.wsl.WslSatisfactionSurveyStore"/>
@@ -86,41 +79,42 @@
     <registryKey key="csat.survey.today" defaultValue="" description="ISO Formatted today date such as 2011-12-03"/>
     <registryKey key="csat.survey.user.created.date" defaultValue="" description="ISO Formatted date when user created such as 2011-12-03"/>
     <registryKey key="csat.survey.show.probability" defaultValue="" description="Override probability of survey, double value from 0 to 1"/>
-    <registryKey key="smooth.caret.survey.first.run.date" defaultValue="" description="ISO Formatted first EAP run date such as 2026-02-10 (for testing)"/>
-    <applicationSettings service="com.intellij.platform.feedback.editor.smoothcaret.SmoothCaretUsageLocalStorage"/>
+
     <applicationSettings service="com.intellij.platform.feedback.localization.LocalizationFeedbackService"/>
     <applicationSettings service="com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService"/>
     <applicationSettings service="com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService"/>
     <applicationSettings service="com.intellij.platform.feedback.wsl.WslSatisfactionSurveyStore"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.DemoFeedbackMessagesBundle">
     <group id="FeedbackDialogGroup" internal="true">
       <separator/>
-      <action id="com.intellij.platform.feedback.demo.action.ShowDemoFeedbackDialogAction"
+      <action id="ShowDemoFeedbackDialog"
               class="com.intellij.platform.feedback.demo.ShowDemoFeedbackDialogAction" internal="true"/>
-      <action id="com.intellij.platform.feedback.demo.action.ShowDemoFeedbackDialogWithEmailAction"
+      <action id="ShowDemoFeedbackDialogWithEmail"
               class="com.intellij.platform.feedback.demo.ShowDemoFeedbackDialogWithEmailAction" internal="true"/>
-      <action id="com.intellij.platform.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
-              class="com.intellij.platform.feedback.localization.ShowLocalizationFeedbackDialog"
-              internal="true"/>
-      <action id="Editor.ShowSmoothCaretFeedbackNotification"
-              class="com.intellij.platform.feedback.editor.smoothcaret.ShowSmoothCaretFeedbackNotificationAction"
-              internal="true"/>
-      <action id="Editor.ShowEditorUxFeedbackNotification"
-              class="com.intellij.platform.feedback.editor.ux.ShowEditorUxFeedbackNotificationAction"
-              internal="true"/>
-      <action id="ShowWslSatisfactionDialog"
-              class="com.intellij.platform.feedback.wsl.ShowWslSatisfactionDialogAction"
-              internal="true"/>
+      <action id="ShowExternalDemoFeedbackWithStatsAction"
+              class="com.intellij.platform.feedback.demo.ShowExternalDemoFeedbackWithStatsAction" internal="true"/>
+      <action id="ShowInIdeDemoFeedbackWithStats"
+              class="com.intellij.platform.feedback.demo.ShowInIdeDemoFeedbackWithStatsAction" internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
+  </actions>
 
-    <action class="com.intellij.platform.feedback.demo.ShowExternalDemoFeedbackWithStatsAction" internal="true"/>
-    <action class="com.intellij.platform.feedback.demo.ShowInIdeDemoFeedbackWithStatsAction" internal="true"/>
-    <action class="com.intellij.platform.feedback.csat.CsatFeedbackAction" internal="true"
-            text="Show CSAT Feedback Dialog"/>
-    <action class="com.intellij.platform.feedback.csat.CsatFeedbackNextDayAction" internal="true"
-            text="Show Next Date for CSAT Feedback Dialog"/>
+  <actions resource-bundle="messages.LocalizationFeedbackMessagesBundle">
+    <action id="ShowLocalizationFeedbackDialog"
+            class="com.intellij.platform.feedback.localization.ShowLocalizationFeedbackDialog"
+            internal="true"/>
+  </actions>
+
+  <actions resource-bundle="messages.CsatFeedbackMessagesBundle">
+    <action id="CsatFeedbackAction" class="com.intellij.platform.feedback.csat.CsatFeedbackAction" internal="true"/>
+    <action id="CsatFeedbackNextDayAction" class="com.intellij.platform.feedback.csat.CsatFeedbackNextDayAction" internal="true"/>
+  </actions>
+
+  <actions resource-bundle="messages.WslSatisfactionFeedbackBundle">
+    <action id="ShowWslSatisfactionDialog"
+            class="com.intellij.platform.feedback.wsl.ShowWslSatisfactionDialogAction"
+            internal="true"/>
   </actions>
 </idea-plugin>

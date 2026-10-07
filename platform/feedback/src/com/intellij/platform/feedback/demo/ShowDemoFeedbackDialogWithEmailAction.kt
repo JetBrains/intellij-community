@@ -4,7 +4,7 @@ package com.intellij.platform.feedback.demo
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-internal class ShowDemoFeedbackDialogWithEmailAction : AnAction(DemoFeedbackBundle.message("show.demo.dialog.with.email.action.name")) {
+internal class ShowDemoFeedbackDialogWithEmailAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     DemoFeedbackDialogWithEmail(e.project, true).show()
   }

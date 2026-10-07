@@ -4,7 +4,7 @@ package com.intellij.platform.feedback.demo
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-internal class ShowExternalDemoFeedbackWithStatsAction : AnAction(DemoFeedbackBundle.message("show.external.demo.survey.action.name")) {
+internal class ShowExternalDemoFeedbackWithStatsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     if (project != null) {
