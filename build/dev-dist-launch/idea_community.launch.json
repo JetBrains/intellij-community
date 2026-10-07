@@ -65,7 +65,7 @@
         "-Dmaven.default.headless.import=true",
         "-Dide.do.not.check.ls.on.startup=true",
         "-Dqodana.product.name=Qodana Community for JVM",
-        "-Dqodana.build.number=QDJVMC-263.SNAPSHOT",
+        "-Dqodana.build.number=QDJVMC-263.6800.SNAPSHOT",
         "-Dqodana.eap=true"
       ]
     },
