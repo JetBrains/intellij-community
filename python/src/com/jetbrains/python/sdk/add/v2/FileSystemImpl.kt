@@ -31,6 +31,7 @@ import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
@@ -235,7 +236,7 @@ data class EelFileSystem(
     catch (_: InvalidPathException) {
       null
     }
-    if (mayBeFull != null && mayBeFull.getEelDescriptor() == eelDescriptor) {
+    if (mayBeFull != null && mayBeFull.getEelDescriptor().equalsMayBeUsingMachine(eelDescriptor)) {
       return PyResult.success(PathHolder.Eel(mayBeFull))
     }
     else {
@@ -329,7 +330,7 @@ data class EelFileSystem(
     val context: UserDataHolder = UserDataHolderBase()
     context.putUserData(BASE_DIR, projectPathPrefix)
     val pythonBinaries = VirtualEnvSdkFlavor.getInstance().suggestLocalHomePaths(null, context)
-      .filter { it.getEelDescriptor() == this.eelDescriptor }
+      .filter { it.getEelDescriptor().equalsMayBeUsingMachine(this.eelDescriptor) }
     val suggestedPythonBinaries = VanillaPythonWithPythonInfoImpl.createByPythonBinaries(pythonBinaries)
 
     val venvs: List<VanillaPythonWithPythonInfo> = suggestedPythonBinaries.mapNotNull { (venv, r) ->

@@ -14,6 +14,7 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.spawnProcess
@@ -93,7 +94,7 @@ internal fun startProcessBlockingUsingEel(
 
       // The argument is a nio path on the same eel, so the remote process needs the eel path.
       // On WSL, `\\wsl$\debian\tmp\1` almost always means `/tmp/1` for a remote command.
-      if (argDescriptor == descriptor) {
+      if (argDescriptor.equalsMayBeUsingMachine(descriptor)) {
         val nativePath = path.asEelPath().toString()
         if (arg != nativePath) {
           Logger.getInstance(GeneralCommandLine::class.java)
@@ -137,7 +138,7 @@ private fun toEelPath(path: Path, descriptor: EelDescriptor, role: String): EelP
   catch (e: EelPathException) {
     throw IllegalArgumentException("$role `$path` is not a path on $descriptor", e)
   }
-  require(eelPath.descriptor == descriptor) { "$role `$path` does not belong to $descriptor" }
+  require(eelPath.descriptor.equalsMayBeUsingMachine(descriptor)) { "$role `$path` does not belong to $descriptor" }
   return eelPath
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 @file:JvmName("GradleJvmValidationUtil")
 package org.jetbrains.plugins.gradle.util
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil.isAncestor
 import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.psi.PsiManager
 import com.intellij.util.lang.JavaVersion
@@ -69,7 +70,7 @@ fun validateJavaHome(project: Project, externalProjectPath: Path, gradleVersion:
 
 fun validateGradleJavaHome(project: Project, gradleVersion: GradleVersion, javaHome: String?): JavaHomeValidationStatus {
   if (javaHome == null) return JavaHomeValidationStatus.Undefined
-  if (Path.of(javaHome).getEelDescriptor() != project.getEelDescriptor()) return JavaHomeValidationStatus.Invalid
+  if (!Path.of(javaHome).getEelDescriptor().equalsMayBeUsingMachine(project.getEelDescriptor())) return JavaHomeValidationStatus.Invalid
   if (!ExternalSystemJdkUtil.isValidJdk(javaHome)) return JavaHomeValidationStatus.Invalid
   val versionInfo = SdkVersionUtil.getJdkVersionInfo(javaHome) ?: return JavaHomeValidationStatus.Invalid
   if (!GradleJvmSupportMatrix.isSupported(gradleVersion, versionInfo.version)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
 import com.intellij.openapi.diagnostic.fileLogger
@@ -11,9 +11,9 @@ import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
-import com.jetbrains.python.PathShortener.Companion.create
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.pathString
@@ -73,7 +73,7 @@ class PathShortener private constructor(private val map: List<Pair<EelPath, Stri
     }
     var result = path.asEelPath().toString()
     for ((key, replaceWith) in map) {
-      assert(pathDescriptor == key.descriptor) { "path is on $pathDescriptor, replacer is on ${key.descriptor}" }
+      assert(pathDescriptor.equalsMayBeUsingMachine(key.descriptor)) { "path is on $pathDescriptor, replacer is on ${key.descriptor}" }
       result = result.replace(key.toString(), replaceWith, ignoreCase = ignoreCase)
     }
     return result

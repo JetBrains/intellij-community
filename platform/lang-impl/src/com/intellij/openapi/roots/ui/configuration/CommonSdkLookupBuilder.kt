@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.progress.ProgressIndicator
@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import org.jetbrains.annotations.Nls
 
@@ -114,7 +115,7 @@ internal data class CommonSdkLookupBuilder(
   private companion object {
     fun ensureDoesNotContradict(eelDescriptor: EelDescriptor?, project: Project?) {
       val projEelDescriptor = project?.getEelDescriptor()
-      if (projEelDescriptor != null && eelDescriptor != null && projEelDescriptor != eelDescriptor) {
+      if (projEelDescriptor != null && eelDescriptor != null && !projEelDescriptor.equalsMayBeUsingMachine(eelDescriptor)) {
         throw IllegalArgumentException("Eel is $eelDescriptor , project is $projEelDescriptor , they must be the same")
       }
     }

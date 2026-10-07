@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.application.ApplicationInfo
@@ -39,6 +39,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.util.SuspendingLazy
@@ -394,7 +395,7 @@ class JdkAuto : UnknownSdkResolver {
       }
 
       private fun List<JavaLocalSdkFix>.filterByEelDescriptor(): List<JavaLocalSdkFix> {
-        return filter { projectEelDescriptor == Path.of(it.homeDir).getEelDescriptor() }
+        return filter { projectEelDescriptor.equalsMayBeUsingMachine(Path.of(it.homeDir).getEelDescriptor()) }
       }
     }
   }

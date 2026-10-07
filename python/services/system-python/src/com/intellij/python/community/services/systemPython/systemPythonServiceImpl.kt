@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.services.systemPython
 
 import com.intellij.openapi.application.EDT
@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
@@ -180,7 +181,7 @@ class SystemPythonServiceImpl internal constructor(
           pythons
         }
 
-      val pythons = (pythonsFromExtensions + state.userProvidedPythonsAsPath.filter { it.getEelDescriptor() == eelApi.descriptor }).toSet()
+      val pythons = (pythonsFromExtensions + state.userProvidedPythonsAsPath.filter { it.getEelDescriptor().equalsMayBeUsingMachine(eelApi.descriptor) }).toSet()
       val badPythons = mutableSetOf<PythonBinary>()
       val result = VanillaPythonWithPythonInfoImpl.mapConcurrently(pythons) { python -> systemPythonOrNull(python, pythonsUi[python]) }
         .mapNotNull { (python, r) ->
@@ -197,7 +198,7 @@ class SystemPythonServiceImpl internal constructor(
             }
           }
         }.toSet()
-      pythonInfoCache.keys.removeAll { it !in pythons && it.getEelDescriptor() == eelApi.descriptor }
+      pythonInfoCache.keys.removeAll { it !in pythons && it.getEelDescriptor().equalsMayBeUsingMachine(eelApi.descriptor) }
 
       // Remove stale pythons from the cache
       val newPaths = state.userProvidedPythons.distinct().toMutableList()

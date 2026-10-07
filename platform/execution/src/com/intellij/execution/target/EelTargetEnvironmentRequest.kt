@@ -150,7 +150,10 @@ class EelTargetEnvironmentRequest(
     override fun getTargetPathIfLocalPathIsOnTarget(probablyPathOnTarget: Path): FullPathOnTarget? {
       val eelPath = probablyPathOnTarget.asEelPath()
       val targetMachine = descriptor.getResolvedEelMachine()
-      return eelPath.takeIf { it.descriptor == descriptor || targetMachine?.ownsDescriptor(it.descriptor) == true }?.toString()
+      return eelPath.takeIf {
+        @Suppress("EelDescriptorEquality")
+        it.descriptor == descriptor || targetMachine?.ownsDescriptor(it.descriptor) == true
+      }?.toString()
     }
 
     override fun getState(): PersistentState {
@@ -336,6 +339,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
         val remoteRoot = when (val targetRootPath = targetPathGetter()) {
           is TargetPath.Temporary -> {
             val localEelPath = localRootPath.asEelPath()
+            @Suppress("EelDescriptorEquality")
             if (localEelPath.descriptor == eel.descriptor || eelMachine.ownsDescriptor(localEelPath.descriptor)) {
               localEelPath.toString()
             }

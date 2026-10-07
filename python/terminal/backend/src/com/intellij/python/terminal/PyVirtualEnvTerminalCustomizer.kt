@@ -16,6 +16,7 @@ import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.entities
@@ -171,7 +172,7 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
       return
     }
 
-    if (pythonEnvironment.pythonBinaryPath.getEelDescriptor() != terminalEelDescriptor) {
+    if (!pythonEnvironment.pythonBinaryPath.getEelDescriptor().equalsMayBeUsingMachine(terminalEelDescriptor)) {
       logger.info("Skipping virtual env activation: interpreter ${pythonEnvironment.pythonBinaryPath} runs " +
                   "in a different environment than the terminal ($terminalEelDescriptor)")
       return

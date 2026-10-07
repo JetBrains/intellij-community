@@ -14,6 +14,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.getShell
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.stdoutString
@@ -64,7 +65,7 @@ sealed interface BinaryToExec
  */
 data class BinOnEel(val path: Path, internal val workDir: EelPath? = null) : BinaryToExec {
   init {
-    require(workDir == null || workDir.descriptor == path.getEelDescriptor()) {
+    require(workDir == null || workDir.descriptor.equalsMayBeUsingMachine(path.getEelDescriptor())) {
       "The work directory $workDir and the binary $path are on two different eels"
     }
   }

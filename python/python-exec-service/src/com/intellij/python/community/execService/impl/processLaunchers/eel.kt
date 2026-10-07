@@ -18,6 +18,7 @@ import com.intellij.platform.eel.impl.base.ProcessFunctions
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.EelFileTransferAttributesStrategy
@@ -85,7 +86,7 @@ internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchReques
 
 
     override suspend fun uploadDir(localDir: Directory): PathMapper {
-      val remoteDir = if (eel.descriptor == localDir.getEelDescriptor()) {
+      val remoteDir = if (eel.descriptor.equalsMayBeUsingMachine(localDir.getEelDescriptor())) {
         // In persistent mode, `transferLocalContentToRemote` copies the files also when the eel is local.
         // Do this check to prevent a copy from local to local.
         localDir
@@ -228,7 +229,7 @@ private suspend fun getProhibitedPaths(): List<Path> = withContext(Dispatchers.D
  */
 @ApiStatus.Internal
 suspend fun getHelpersRootOnEel(eel: EelApi, helpersRoot: Path = PythonHelpersLocator.getCommunityHelpersRoot()): EelPath =
-  if (eel.descriptor == helpersRoot.getEelDescriptor()) helpersRoot.asEelPath() else uploadToEelOnce(eel, helpersRoot).asEelPath()
+  if (eel.descriptor.equalsMayBeUsingMachine(helpersRoot.getEelDescriptor())) helpersRoot.asEelPath() else uploadToEelOnce(eel, helpersRoot).asEelPath()
 
 /**
  * Uploads [localDir] to `~/.pycharm/<build>/<hash>` on [eel] and returns the copy.

@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.uv.impl
 
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.execService.Args
 import com.intellij.python.pyproject.PyDependencyGroup
@@ -419,7 +420,7 @@ internal fun <P : PathHolder> createUvLowLevel(cwd: Path?, uvCli: UvCli<P>, venv
   UvLowLevelImpl(cwd, venvPath, uvCli, uvCli.fileSystem)
 
 internal suspend fun createUvLowLevelOnEel(eelApi: EelApi, cwd: Path? = null): PyResult<UvLowLevel<PathHolder.Eel>> {
-  check(cwd == null || cwd.getEelDescriptor() == eelApi.descriptor) { "$cwd is not on $eelApi" }
+  check(cwd == null || cwd.getEelDescriptor().equalsMayBeUsingMachine(eelApi.descriptor)) { "$cwd is not on $eelApi" }
   return validateAndCreateUvCli(null, EelFileSystem(eelApi)).mapSuccess { createUvLowLevel(cwd, it) }
 }
 

@@ -6,6 +6,7 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.jetbrains.python.remote.PyRemotePathMapper
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -38,6 +39,6 @@ internal class PyEelPathMapper(private val eel: EelDescriptor) : PyRemotePathMap
       // The debugger asks for any position, and not every position is a file path
       return null
     }
-    return path.takeIf { it.isAbsolute }?.asEelPath()?.takeIf { it.descriptor == eel }?.toString()
+    return path.takeIf { it.isAbsolute }?.asEelPath()?.takeIf { it.descriptor.equalsMayBeUsingMachine(eel) }?.toString()
   }
 }

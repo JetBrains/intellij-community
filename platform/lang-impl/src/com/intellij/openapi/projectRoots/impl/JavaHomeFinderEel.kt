@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("JavaHomeFinderEel")
 
 package com.intellij.openapi.projectRoots.impl
@@ -22,6 +22,7 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
@@ -53,7 +54,7 @@ private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.Sy
     val hostVar = System.getenv(name) ?: return@runBlockingMaybeCancellable null
     try {
       val path = Path.of(hostVar)
-      if (path.getEelDescriptor() == eel.descriptor) { // Same descriptor
+      if (path.getEelDescriptor().equalsMayBeUsingMachine(eel.descriptor)) { // Same descriptor
         return@runBlockingMaybeCancellable path.asEelPath().toString() // Path on eel (i.e /home/..)
       }
     }
