@@ -56,7 +56,7 @@ internal object RemoveCallableReferenceStaticLhsFixFactories {
         @Nls private val text: String,
     ) : KotlinPsiUpdateModCommandAction.ElementContextless<PsiElement>(element) {
         override fun getFamilyName(): @IntentionFamilyName String =
-            KotlinBundle.message("remove.element")
+            KotlinBundle.message("remove.question.and.type.arguments.from.invalid.callable.references")
 
         override fun getActionPresentation(context: ActionContext, element: PsiElement): Presentation =
             Presentation.of(text)
