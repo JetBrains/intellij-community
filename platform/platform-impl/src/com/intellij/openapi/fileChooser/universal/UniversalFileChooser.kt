@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -1631,7 +1632,10 @@ object UniversalFileChooser {
           }
           catch (e: Exception) {
             isMountActionInProgress = false
-            fileTree.setRootError(root, e.localizedMessage ?: e.message ?: e.javaClass.simpleName)
+            // Modality state is probably wrong, but consistent with `runOnEdt`
+            withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
+              fileTree.setRootError(root, e.localizedMessage ?: e.message ?: e.javaClass.simpleName)
+            }
           }
           finally {
             topComponent.cursor = Cursor.getDefaultCursor()

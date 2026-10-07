@@ -32,6 +32,7 @@ import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
@@ -277,6 +278,7 @@ class NioFileSystemTree(
     fileTreeModel.setContributorRoots(roots)
   }
 
+  @RequiresEdt
   fun setRootError(path: Path, message: String? = null) {
     fileTreeModel.setRootError(path)
     if (!message.isNullOrBlank()) {
@@ -284,6 +286,7 @@ class NioFileSystemTree(
     }
   }
 
+  @RequiresEdt
   private fun showErrorBalloon(path: Path, @Nls message: String) {
     if (!myTree.isShowing) return
     var anchorRow = 0
