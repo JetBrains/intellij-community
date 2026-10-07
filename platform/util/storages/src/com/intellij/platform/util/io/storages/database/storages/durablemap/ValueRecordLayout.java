@@ -76,25 +76,26 @@ public final class ValueRecordLayout {
                             @NotNull Kind kind,
                             long reference,
                             @NotNull MemorySegment payload) {
-    if (reference <= 0) {
-      throw new IllegalArgumentException("reference(=" + reference + ") must be positive");
-    }
-    switch (kind) {
-      case SNAPSHOT, PATCH -> {
-      }
-      case TOMBSTONE -> {
-        if (payload.byteSize() != 0) {
-          throw new IllegalArgumentException("TOMBSTONE value record must not have a payload");
-        }
-      }
-    }
     var expectedSize = recordSize(Math.toIntExact(payload.byteSize()));
     if (target.byteSize() != expectedSize) {
       throw new IllegalArgumentException("Value record size(=" + target.byteSize() + ") must be " + expectedSize);
     }
+    initialize(target, kind, reference);
+    MemorySegment.copy(payload, 0, target, HEADER_SIZE, payload.byteSize());
+  }
+
+  static void initialize(@NotNull MemorySegment target, @NotNull Kind kind, long reference) {
+    if (reference <= 0) {
+      throw new IllegalArgumentException("reference(=" + reference + ") must be positive");
+    }
+    if (target.byteSize() < HEADER_SIZE) {
+      throw new IllegalArgumentException("Value record size(=" + target.byteSize() + ") must be at least " + HEADER_SIZE);
+    }
+    if (kind == Kind.TOMBSTONE && target.byteSize() != HEADER_SIZE) {
+      throw new IllegalArgumentException("TOMBSTONE value record must not have a payload");
+    }
     KIND_HANDLE.set(target, 0L, kind.persistentCode);
     REFERENCE_HANDLE.set(target, 0L, reference);
-    MemorySegment.copy(payload, 0, target, HEADER_SIZE, payload.byteSize());
   }
 
   public record ValueRecord(@NotNull Kind kind,

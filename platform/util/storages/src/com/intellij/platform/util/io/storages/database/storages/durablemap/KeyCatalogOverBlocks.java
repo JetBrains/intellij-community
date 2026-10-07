@@ -85,6 +85,18 @@ public final class KeyCatalogOverBlocks<K> {
     return keys.forEachCommittedRecord((_, record) -> processor.process(readKey(record)));
   }
 
+  /// Processes key records in append order and includes their current value references.
+  /// @return `true` if all records were processed, or `false` if the processor stopped the traversal.
+  public boolean processKeyRecords(@NotNull KeyRecordProcessor<? super K> processor) throws IOException {
+    return keys.forEachCommittedRecord(
+      (recordRef, record) -> {
+        K key = readKey(record);
+        long valueRecordRef = KeyRecordLayout.valueRecordRef(record);
+        return processor.process(recordRef, key, valueRecordRef);
+      }
+    );
+  }
+
   private long findRecordRef(@NotNull K key, int keyHash) throws IOException {
     return keyHashToRecordRefIndex.lookup(keyHash, candidateRef -> {
       var record = keys.read(candidateRef);
@@ -106,5 +118,11 @@ public final class KeyCatalogOverBlocks<K> {
 
   private int adjustedHash(@NotNull K key) {
     return HashUtils.adjustHash(keyDescriptor.getHashCode(key));
+  }
+
+  @FunctionalInterface
+  public interface KeyRecordProcessor<K> {
+    /// @return `true` to process the next record, or `false` to stop the traversal.
+    boolean process(long keyRecordRef, @NotNull K key, long valueRecordRef) throws IOException;
   }
 }

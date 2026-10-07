@@ -2,6 +2,7 @@
 package com.intellij.platform.util.io.storages.durablemap;
 
 import com.intellij.platform.util.io.storages.KeyValueStoreTestContext;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -12,6 +13,13 @@ public interface DurableMapTestContext<K, V, M extends DurableMap<K, V>> extends
 
   ///should return true if the map is mostly append-only
   boolean isAppendOnlyStorage();
+
+  /// @return true if `processKeys()` can report keys without active mappings.
+  ///         ([DurableMap#processKeys(Processor)] _allows_ reporting of removed keys -- but some implementation may have
+  ///         stronger guarantee)
+  default boolean processKeysMayContainRemovedKeys() {
+    return false;
+  }
 
   /// @return _new_ storage, without replacing [storageUnderTest];
   ///         Caller is responsible for closing the returned storage with [closeStorage]

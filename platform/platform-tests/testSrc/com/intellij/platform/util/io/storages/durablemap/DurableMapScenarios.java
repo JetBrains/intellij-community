@@ -176,8 +176,16 @@ public final class DurableMapScenarios {
         keys.add(key);
         return true;
       });
-      assertTrue(keys.isEmpty(),
-                 ".processKeys() must list nothing after removing all the entries");
+      if (processKeysMayContainRemovedKeys()) {
+        for (K key : keys) {
+          assertFalse(storageUnderTest().containsMapping(key),
+                      ".processKeys() must not turn a removed key into an active mapping");
+        }
+      }
+      else {
+        assertTrue(keys.isEmpty(),
+                   ".processKeys() must list nothing after removing all the entries");
+      }
     }
 
     @Test

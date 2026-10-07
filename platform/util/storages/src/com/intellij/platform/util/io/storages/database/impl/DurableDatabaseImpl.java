@@ -15,7 +15,9 @@ import com.intellij.platform.util.io.storages.database.spi.BlocksDatabase;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.platform.util.io.storages.database.spi.StoreMetadata;
 import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics;
+import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapMetadata;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapOverBlocks;
+import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapWithKeyCatalogOverBlocks;
 import com.intellij.platform.util.io.storages.durablemap.DefaultEntryExternalizer;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
 import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap;
@@ -87,35 +89,50 @@ public final class DurableDatabaseImpl implements DurableDatabase {
         return cachedMap.ifCompatible(name, dataVersion, implementation);
       }
 
-      var existingStore = blocksDatabase.findStore(name);
-      if (existingStore == null) {
-        ensureImplementationSupported(name, implementation);
-      }
       var blocksStore = new HousekeepingBlocksStore(
         blocksDatabase.openStore(name, dataVersion),
         housekeepingCoordinator
       );
+
+      //check implementation is consistent with requested one:
       var storedImplementation = implementationFromMetadata(blocksStore.storeMetadata(), implementation);
       if (storedImplementation != implementation) {
         throw implementationMismatch(name, implementation, storedImplementation);
       }
-      ensureImplementationSupported(name, storedImplementation);
 
-      var entryExternalizer = new DefaultEntryExternalizer<>(keyDescriptor, valueExternalizer);
-      DurableMap<K, V> map;
       EqualityPolicy<? super V> valueEquality = equalityIfSupported(valueExternalizer);
-      if (valueExternalizer instanceof PatchableDurableMap.PatchableValueExternalizer<V, ?> patchExternalizer) {
-        map = DurableMapOverBlocks.openPatchable(
-          blocksStore, DurableMapOverBlocks.DEFAULT_ENTRIES_BLOCK_CONTENT_LENGTH, keyDescriptor,
-          valueEquality, entryExternalizer, patchExternalizer
-        );
-      }
-      else {
-        map = DurableMapOverBlocks.open(
-          blocksStore, DurableMapOverBlocks.DEFAULT_ENTRIES_BLOCK_CONTENT_LENGTH, keyDescriptor,
-          valueEquality, entryExternalizer
-        );
-      }
+      DurableMap<K, V> map = switch (storedImplementation) {
+        case KEY_VALUE_TOGETHER -> {
+          var entryExternalizer = new DefaultEntryExternalizer<>(keyDescriptor, valueExternalizer);
+          if (valueExternalizer instanceof PatchableDurableMap.PatchableValueExternalizer<V, ?> patchExternalizer) {
+            yield DurableMapOverBlocks.openPatchable(
+              blocksStore, DurableMapOverBlocks.DEFAULT_ENTRIES_BLOCK_CONTENT_LENGTH, keyDescriptor,
+              valueEquality, entryExternalizer, patchExternalizer
+            );
+          }
+          else {
+            yield DurableMapOverBlocks.open(
+              blocksStore, DurableMapOverBlocks.DEFAULT_ENTRIES_BLOCK_CONTENT_LENGTH, keyDescriptor,
+              valueEquality, entryExternalizer
+            );
+          }
+        }
+        case KEY_VALUE_SEPARATELY -> {
+          if (valueExternalizer instanceof PatchableDurableMap.PatchableValueExternalizer<V, ?> patchExternalizer) {
+            yield DurableMapWithKeyCatalogOverBlocks.openPatchable(
+              blocksStore, DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH,
+              keyDescriptor, valueEquality, patchExternalizer
+            );
+          }
+          else {
+            yield DurableMapWithKeyCatalogOverBlocks.open(
+              blocksStore, DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH,
+              keyDescriptor, valueEquality, valueExternalizer
+            );
+          }
+        }
+      };
+
       openedMapsByName.put(name, new OpenedMap(blocksStore.dataVersion(), storedImplementation, map));
       return map;
     }
@@ -146,26 +163,17 @@ public final class DurableDatabaseImpl implements DurableDatabase {
   }
 
   private static @NotNull DurableMapImplementation implementationFromMetadata(@NotNull StoreMetadata metadata,
-                                                                               @NotNull DurableMapImplementation requested)
-    throws UnsupportedFormatException {
-    return switch (metadata.version()) {
-      case 0 -> requested;
-      case 1 -> KEY_VALUE_TOGETHER;
-      default -> throw new UnsupportedFormatException("durable map store metadata", 1, metadata.version());
-    };
-  }
-
-  private static void ensureImplementationSupported(@NotNull String name,
-                                                    @NotNull DurableMapImplementation implementation)
-    throws UnsupportedFormatException {
-    if (implementation != KEY_VALUE_TOGETHER) {
-      throw implementationMismatch(name, KEY_VALUE_TOGETHER, implementation);
+                                                                              @NotNull DurableMapImplementation requested)
+    throws IOException {
+    if (metadata.version() == 0) {
+      return requested;
     }
+    return DurableMapMetadata.fromStoreMetadata(metadata).mapImplementation();
   }
 
   private static @NotNull UnsupportedFormatException implementationMismatch(@NotNull String name,
-                                                                              @NotNull DurableMapImplementation expected,
-                                                                              @NotNull DurableMapImplementation actual) {
+                                                                            @NotNull DurableMapImplementation expected,
+                                                                            @NotNull DurableMapImplementation actual) {
     return new UnsupportedFormatException("map '" + name + "' implementation", expected.name(), actual.name());
   }
 
@@ -288,9 +296,9 @@ public final class DurableDatabaseImpl implements DurableDatabase {
                            @NotNull DurableMapImplementation implementation,
                            @NotNull DurableMap<?, ?> map) {
 
-    @NotNull<K, V> DurableMap<K, V> ifCompatible(@NotNull String name,
-                                                 int dataVersion,
-                                                 @NotNull DurableMapImplementation implementation) throws UnsupportedFormatException {
+    @NotNull <K, V> DurableMap<K, V> ifCompatible(@NotNull String name,
+                                                  int dataVersion,
+                                                  @NotNull DurableMapImplementation implementation) throws UnsupportedFormatException {
       if (this.dataVersion != dataVersion) {
         throw new UnsupportedFormatException("store '" + name + "'", dataVersion, this.dataVersion);
       }

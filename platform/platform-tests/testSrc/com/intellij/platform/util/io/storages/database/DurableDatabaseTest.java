@@ -48,14 +48,16 @@ public class DurableDatabaseTest {
   }
 
   @Test
-  public void unsupportedImplementationDoesNotCreateAMap(@TempDir Path databaseDirectory) throws Exception {
+  public void selectedImplementationsCreateIndependentMaps(@TempDir Path databaseDirectory) throws Exception {
     try (var database = new DurableDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
-      assertThrows(
-        UnsupportedFormatException.class,
-        () -> openStringMap(database, KEY_VALUE_SEPARATELY)
-      );
+      var together = openStringMap(database, "together", KEY_VALUE_TOGETHER);
+      var separately = openStringMap(database, "separately", KEY_VALUE_SEPARATELY);
+      together.put("key", "together");
+      separately.put("key", "separately");
 
-      assertTrue(database.mapNames().isEmpty(), "A rejected implementation must not create a store");
+      assertEquals("together", together.get("key"));
+      assertEquals("separately", separately.get("key"));
+      assertEquals(List.of("together", "separately"), database.mapNames());
     }
   }
 
@@ -73,7 +75,7 @@ public class DurableDatabaseTest {
   }
 
   @Test
-  public void versionOneMetadataSelectsKeyValueTogether(@TempDir Path databaseDirectory) throws Exception {
+  public void metadataSelectsKeyValueTogether(@TempDir Path databaseDirectory) throws Exception {
     var factory = new DurableDatabaseFactory(CHUNK_SIZE);
     try (var database = factory.open(databaseDirectory)) {
       openStringMap(database, 1).put("key", "value");
@@ -87,8 +89,24 @@ public class DurableDatabaseTest {
       assertEquals(
         "value",
         openStringMap(database, KEY_VALUE_TOGETHER).get("key"),
-        "A rejected selector must not change legacy metadata or map data"
+        "A rejected selector must not change metadata or map data"
       );
+    }
+  }
+
+  @Test
+  public void metadataSelectsKeyValueSeparately(@TempDir Path databaseDirectory) throws Exception {
+    var factory = new DurableDatabaseFactory(CHUNK_SIZE);
+    try (var database = factory.open(databaseDirectory)) {
+      openStringMap(database, KEY_VALUE_SEPARATELY).put("key", "value");
+    }
+
+    try (var database = factory.open(databaseDirectory)) {
+      assertThrows(
+        UnsupportedFormatException.class,
+        () -> openStringMap(database, KEY_VALUE_TOGETHER)
+      );
+      assertEquals("value", openStringMap(database, KEY_VALUE_SEPARATELY).get("key"));
     }
   }
 
@@ -215,7 +233,13 @@ public class DurableDatabaseTest {
 
   private static @NotNull DurableMap<String, String> openStringMap(@NotNull DurableDatabase database,
                                                                    @NotNull DurableMapImplementation implementation) throws IOException {
+    return openStringMap(database, "map", implementation);
+  }
+
+  private static @NotNull DurableMap<String, String> openStringMap(@NotNull DurableDatabase database,
+                                                                   @NotNull String name,
+                                                                   @NotNull DurableMapImplementation implementation) throws IOException {
     KeyDescriptorEx<String> descriptor = stringAsUTF8();
-    return database.openMap("map", 1, implementation, descriptor, descriptor);
+    return database.openMap(name, 1, implementation, descriptor, descriptor);
   }
 }
