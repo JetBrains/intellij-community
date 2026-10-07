@@ -98,6 +98,17 @@ class PrefetchCache private constructor(
       return this
     }
 
+    /**
+     * Stats [paths] and every ancestor of them in one RPC and caches each answer on its own.
+     * The VFS stats every path component it does not hold, so the ancestors are part of the question.
+     */
+    suspend fun prefetchStats(api: EelPrefetchApi, paths: Collection<EelPath>): Builder {
+      val withAncestors = LinkedHashSet<EelPath>()
+      for (path in paths) withAncestors.addAll(generateSequence(path) { it.parent })
+      for ((path, stat) in api.statMany(withAncestors)) stats[path] = stat
+      return this
+    }
+
     /** The cache, or null when nothing was cached. */
     fun build(): PrefetchCache? {
       if (listings.isEmpty() && stats.isEmpty()) return null
@@ -115,6 +126,22 @@ class PrefetchCache private constructor(
 fun <T> withPrefetchedTrees(roots: Collection<Path>, block: () -> T): T {
   return withPrefetch(roots, skipFsRoots = true, block) { api, eelPaths -> prefetchTrees(api, eelPaths) }
 }
+
+/**
+ * Stats the remote [paths] with their ancestors in one RPC and runs [block] with the cache in the thread context.
+ * A path that does not exist is cached as absent. A local path and a path under a direct local mount are skipped.
+ */
+@ApiStatus.Internal
+fun <T> withPrefetchedStats(paths: Collection<Path>, block: () -> T): T {
+  return withPrefetch(paths, skipFsRoots = false, block) { api, eelPaths -> prefetchStats(api, eelPaths) }
+}
+
+/**
+ * Runs [block] with the [stats] the caller already holds in the thread context, for example the attributes a search
+ * reports with its hits. No request is made.
+ */
+@ApiStatus.Internal
+fun <T> withPrefetchedStats(stats: Map<EelPath, EelFileInfo>, block: () -> T): T = PrefetchCache.of(stats).runWith(block)
 
 private fun <T> withPrefetch(
   paths: Collection<Path>,

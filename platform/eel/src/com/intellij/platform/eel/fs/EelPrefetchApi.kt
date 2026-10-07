@@ -20,6 +20,12 @@ interface EelPrefetchApi {
    * The server walks the roots concurrently. The info does not follow a symlink, but it carries the link target.
    */
   suspend fun prefetchDirectories(roots: Collection<EelPath>): Flow<Pair<EelPath, EelFileInfo>>
+
+  /**
+   * Stats every path in one RPC. A path that does not exist maps to [PrefetchedStat.Absent].
+   * A path with another error has no entry.
+   */
+  suspend fun statMany(paths: Collection<EelPath>): Map<EelPath, PrefetchedStat>
 }
 
 /** The result of a stat cached on its own. It says nothing about a sibling of the path. */

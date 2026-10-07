@@ -246,6 +246,9 @@ private class IjentFailSafeFileSystemPosixApiImpl(
   override suspend fun prefetchDirectories(roots: Collection<EelPath>): Flow<Pair<EelPath, EelFileInfo>> =
     holder.withDelegateRetrying { prefetchDirectories(roots) }
 
+  override suspend fun statMany(paths: Collection<EelPath>): Map<EelPath, com.intellij.platform.eel.fs.PrefetchedStat> =
+    holder.withDelegateRetrying { statMany(paths) }
+
   // Obtain-only retry, deliberately without the mid-collect replay walkDirectory gets: a search
   // that dies mid-stream cannot be replayed without re-emitting the events already delivered,
   // and both consumers fall back to local enumeration on a failed stream anyway.
@@ -436,6 +439,9 @@ private class IjentFailSafeFileSystemWindowsApiImpl(
 
   override suspend fun prefetchDirectories(roots: Collection<EelPath>): Flow<Pair<EelPath, EelFileInfo>> =
     holder.withDelegateRetrying { prefetchDirectories(roots) }
+
+  override suspend fun statMany(paths: Collection<EelPath>): Map<EelPath, com.intellij.platform.eel.fs.PrefetchedStat> =
+    holder.withDelegateRetrying { statMany(paths) }
 
   // Obtain-only retry, deliberately without the mid-collect replay walkDirectory gets: a search
   // that dies mid-stream cannot be replayed without re-emitting the events already delivered,
