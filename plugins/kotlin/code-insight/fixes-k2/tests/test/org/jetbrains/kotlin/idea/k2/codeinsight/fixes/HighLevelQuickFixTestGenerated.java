@@ -11788,6 +11788,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/nullables/removeCallableReferenceStaticLhsNullable.kt");
             }
 
+            @TestMetadata("removeCallableReferenceStaticLhsNullableTypeArgument.kt")
+            public void testRemoveCallableReferenceStaticLhsNullableTypeArgument() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/nullables/removeCallableReferenceStaticLhsNullableTypeArgument.kt");
+            }
+
             @TestMetadata("removeCompanionExtensionNullableReceiver.kt")
             public void testRemoveCompanionExtensionNullableReceiver() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/nullables/removeCompanionExtensionNullableReceiver.kt");
