@@ -34,10 +34,6 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/core-api:core",
         "//fleet/rhizomedb",
-        "//fleet/rhizomedb.transactor",
-        "//fleet/rhizomedb.transactor.rebase",
-        "//platform/core-impl",
-        "//platform/productMode",
     ],
 )
 
@@ -62,10 +58,6 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/core-api:core_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
-        "//fleet/rhizomedb.transactor:rhizomedb.transactor_test_lib",
-        "//fleet/rhizomedb.transactor.rebase:rhizomedb.transactor.rebase_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/productMode:productMode_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.project` end

@@ -119,7 +119,6 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.isProjectOpenWithoutModule
-import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.projectImport.ProjectAttachProcessor
@@ -1487,8 +1486,6 @@ private suspend fun initProject(
   }
 
   project.putUserDataIfAbsent(PROJECT_PATH, file)
-
-  serviceAsync<ProjectEntitiesStorage>().createEntity(project)
 
   project.registerComponents()
   registerComponentActivity?.end()
