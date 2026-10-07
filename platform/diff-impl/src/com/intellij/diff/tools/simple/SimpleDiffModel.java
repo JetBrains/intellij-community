@@ -119,7 +119,8 @@ public class SimpleDiffModel {
     @Override
     public void process(@NotNull DiffDividerDrawUtil.DividerPaintable.Handler handler) {
       for (SimpleDiffChangeUi diffChange : myPresentations) {
-        if (diffChange == null) continue;
+        // a damaged change keeps its old lines until the next rediff, and the document might no longer have them
+        if (diffChange == null || !diffChange.myChange.isValid()) continue;
         boolean keepWalk = diffChange.drawDivider(handler);
         if (!keepWalk) return;
       }
