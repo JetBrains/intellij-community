@@ -67,7 +67,10 @@ public class DurableMapOverBlocksTest {
 
       var recordRefs = new ArrayList<Long>();
       var records = RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), ENTRIES_BLOCK_CONTENT_LENGTH);
-      records.forEachCommittedRecord((recordRef, _) -> recordRefs.add(recordRef));
+      records.forEachCommittedRecord((recordRef, _) -> {
+        recordRefs.add(recordRef);
+        return true;
+      });
       assertEquals(1, recordRefs.size());
     }
   }

@@ -15,12 +15,15 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
 
 import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -93,6 +96,24 @@ public class RecordStorageOverBlocksTest {
       assertEquals(2, blockCatalog.blocks(ENTRIES).size());
       assertEquals(BlocksStore.Block.LifecycleState.SEALED, blockCatalog.blocks(ENTRIES).getFirst().state());
       assertEquals(BlocksStore.Block.LifecycleState.ACTIVE, blockCatalog.blocks(ENTRIES).getLast().state());
+    }
+  }
+
+  @Test
+  public void recordTraversalStopsBeforeReadingTheNextBlock(@TempDir Path databaseDirectory) throws Exception {
+    try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
+      var blockCatalog = DurableMapBlockCatalog.open(database.openStore("map", 1));
+      var records = RecordStorageOverBlocks.open(blockCatalog, ENTRIES_BLOCK_CONTENT_LENGTH);
+      var first = append(records, new byte[40]);
+      append(records, new byte[40]);
+
+      var visited = new ArrayList<Long>();
+      var allRecordsProcessed = records.forEachCommittedRecord((recordRef, _) -> {
+        visited.add(recordRef);
+        return false;
+      });
+      assertFalse(allRecordsProcessed);
+      assertEquals(List.of(first), visited);
     }
   }
 

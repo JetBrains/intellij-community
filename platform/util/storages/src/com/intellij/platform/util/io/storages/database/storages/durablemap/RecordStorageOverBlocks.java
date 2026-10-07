@@ -153,11 +153,15 @@ public final class RecordStorageOverBlocks {
   }
 
   /// Processes committed records in block allocation order
-  public void forEachCommittedRecord(@NotNull RecordReader reader) throws IOException {
-    forEachCommittedRecordWithLinks((recordRef, record) -> reader.process(recordRef, record.payload()));
+  /// @return `true` if all records were processed, or `false` if the reader stopped the traversal.
+  public boolean forEachCommittedRecord(@NotNull RecordReader reader) throws IOException {
+    return forEachCommittedRecordWithLinks(
+      (recordRef, record) -> reader.process(recordRef, record.payload())
+    );
   }
 
-  public void forEachCommittedRecordWithLinks(@NotNull LinkedRecordReader reader) throws IOException {
+  /// @return `true` if all records were processed, or `false` if the reader stopped the traversal.
+  public boolean forEachCommittedRecordWithLinks(@NotNull LinkedRecordReader reader) throws IOException {
     synchronized (appendLock){
       //actual order in blockCatalog could be changed by evacuations
       var blocksInAllocationOrder = blockCatalog.blocks(recordBlockRole).stream()
@@ -168,14 +172,22 @@ public final class RecordStorageOverBlocks {
           continue;
         }
         AppendOnlyLogOverBlock log;
+        //noinspection NestedSynchronizedStatement
         synchronized (logsByBlockIdLock) {
           log = logsByBlockId.get(block.id());
         }
         if (log == null) {
           throw new CorruptedException("Missing " + recordBlockRole + " block " + block.id());
         }
-        log.forEachCommittedRecordWithLinks((recordOffset, record) -> reader.process(recordRef(block.id(), recordOffset), record));
+        var blockId = block.id();
+        var allBlockRecordsProcessed = log.forEachCommittedRecordWithLinks(
+          (recordOffset, record) -> reader.process(recordRef(blockId, recordOffset), record)
+        );
+        if (!allBlockRecordsProcessed) {
+          return false;
+        }
       }
+      return true;
     }
   }
 
@@ -212,11 +224,13 @@ public final class RecordStorageOverBlocks {
   /// Processes one committed record.
   @FunctionalInterface
   public interface RecordReader {
-    void process(long recordRef, @NotNull MemorySegment payload) throws IOException;
+    /// @return `true` to process the next record, or `false` to stop the traversal.
+    boolean process(long recordRef, @NotNull MemorySegment payload) throws IOException;
   }
 
   @FunctionalInterface
   public interface LinkedRecordReader {
-    void process(long recordRef, @NotNull AppendOnlyLogOverBlock.Record record) throws IOException;
+    /// @return `true` to process the next record, or `false` to stop the traversal.
+    boolean process(long recordRef, @NotNull AppendOnlyLogOverBlock.Record record) throws IOException;
   }
 }

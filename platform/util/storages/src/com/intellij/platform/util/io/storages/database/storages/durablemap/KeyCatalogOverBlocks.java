@@ -82,13 +82,7 @@ public final class KeyCatalogOverBlocks<K> {
 
   /// Processes keys in their append order without reading `LOOKUP` or `VALUES`.
   public boolean processKeys(@NotNull Processor<? super K> processor) throws IOException {
-    var completed = new boolean[]{true};
-    keys.forEachCommittedRecord((_, record) -> {
-      if (completed[0]) {
-        completed[0] = processor.process(readKey(record));
-      }
-    });
-    return completed[0];
+    return keys.forEachCommittedRecord((_, record) -> processor.process(readKey(record)));
   }
 
   private long findRecordRef(@NotNull K key, int keyHash) throws IOException {

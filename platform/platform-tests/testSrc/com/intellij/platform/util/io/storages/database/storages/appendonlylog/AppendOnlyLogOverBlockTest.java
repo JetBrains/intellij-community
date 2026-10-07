@@ -126,8 +126,20 @@ public class AppendOnlyLogOverBlockTest {
       assertEquals(22, reopened.read(linkedOffset).get(ValueLayout.JAVA_BYTE, 0));
 
       var values = new ArrayList<Byte>();
-      reopened.forEachCommittedRecord((_, payload) -> values.add(payload.get(ValueLayout.JAVA_BYTE, 0)));
+      var allRecordsProcessed = reopened.forEachCommittedRecord((_, payload) -> {
+        values.add(payload.get(ValueLayout.JAVA_BYTE, 0));
+        return true;
+      });
+      assertTrue(allRecordsProcessed);
       assertEquals(List.of((byte)11, (byte)22), values);
+
+      values.clear();
+      allRecordsProcessed = reopened.forEachCommittedRecord((_, payload) -> {
+        values.add(payload.get(ValueLayout.JAVA_BYTE, 0));
+        return false;
+      });
+      assertFalse(allRecordsProcessed);
+      assertEquals(List.of((byte)11), values);
       assertEquals(8, RecordHeaderLayout.RecordHeader.totalLength(1));
       assertEquals(16, RecordHeaderLayout.RecordHeader.totalLength(1, true));
     }

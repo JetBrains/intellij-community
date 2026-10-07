@@ -583,7 +583,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
             // both records shouldn't be reachable at all from LOOKUP -- but on recovery we scan all
             // the records.
             orphanedPatchRefs.add(recordRef);
-            return;
+            return true;
           }
           throw new CorruptedException("The patch does not continue the current chain: " + recordRef);
         }
@@ -592,7 +592,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
         }
         publishHead(previous.hash(), previousRef, recordRef);
         heads.put(recordRef, previous);
-        return;
+        return true;
       }
 
       var key = entryExternalizer.readKey(record.payload().asByteBuffer());
@@ -618,6 +618,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
       if (!deleted) {
         heads.put(recordRef, new HeadState(keyHash, recordRef));
       }
+      return true;
     });
   }
 
