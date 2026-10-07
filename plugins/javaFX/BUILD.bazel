@@ -49,6 +49,7 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//xml/xml-psi-api:psi",
     "//platform/util/jdom",
+    "//libraries/asm",
   ]
 )
 
@@ -100,6 +101,7 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//xml/xml-psi-api:psi",
     "//platform/util/jdom",
+    "//libraries/asm",
   ]
 )
 ### auto-generated section `build intellij.javaFX` end
