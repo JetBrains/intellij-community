@@ -40,6 +40,10 @@ final class UiThreadPriority {
    * References:
    * <a href="https://learn.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities">Scheduling Priorities</a>,
    * <a href="https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setthreadpriority">SetThreadPriority</a>.
+   * <p>
+   * The native priority is raised directly, not via {@link Thread#setPriority}: a Java priority is copied to every thread the EDT
+   * creates, which put the lazily started {@code kotlinx.coroutines} workers at {@code THREAD_PRIORITY_HIGHEST} above the threads
+   * that feed their queue, and their spin-wait on a preempted producer then held every CPU for seconds. A native priority is not inherited.
    */
   private static void setWindowsThreadPriority() {
     var debug = Boolean.getBoolean("ide.set.qos.for.edt.debug");
@@ -48,7 +52,9 @@ final class UiThreadPriority {
     var jvmPriorityBefore = currentThread.getPriority();
     var nativePriorityBefore = debug ? WindowsThread.currentPriority() : -1;
 
-    currentThread.setPriority(Thread.MAX_PRIORITY);  // the actual work
+    if (!WindowsThread.setCurrentPriority(WindowsThread.THREAD_PRIORITY_HIGHEST)) {  // the actual work
+      logError("Unable to set priority for thread #" + currentThread.getId() + " (" + currentThread.getName() + ")");
+    }
 
     if (debug) {
       var nativeThreadId = WindowsThread.currentId();
@@ -60,7 +66,7 @@ final class UiThreadPriority {
        *
        * EDT JVM ID = 66, Native ID = 1234, Name = AWT-EventQueue-0
        *   Before: JVM Priority = 6, Native Priority = 0
-       *   After: JVM Priority = 10, Native Priority = 2
+       *   After: JVM Priority = 6, Native Priority = 2
        */
       logDebug(
         "EDT JVM ID = " + currentThread.getId() + ", Native ID = " + nativeThreadId + ", Name = " + currentThread.getName() +
@@ -96,8 +102,11 @@ final class UiThreadPriority {
     }
   }
 
-  /** {@code kernel32.dll} downcalls for the debug output; {@code HANDLE} is an address. */
+  /** {@code kernel32.dll} downcalls; {@code HANDLE} is an address. */
   private static final class WindowsThread {
+    /** {@code THREAD_PRIORITY_HIGHEST}, the level HotSpot maps {@code Thread.MAX_PRIORITY} to */
+    static final int THREAD_PRIORITY_HIGHEST = 2;
+
     private static final Linker LINKER = Linker.nativeLinker();
     private static final SymbolLookup KERNEL32 = WindowsSystemLibraries.kernel32();
 
@@ -107,11 +116,23 @@ final class UiThreadPriority {
     static final MethodHandle GET_CURRENT_THREAD_ID = LINKER.downcallHandle(KERNEL32.findOrThrow("GetCurrentThreadId"), FunctionDescriptor.of(JAVA_INT));
     /** {@code int GetThreadPriority(HANDLE)} */
     static final MethodHandle GET_THREAD_PRIORITY = LINKER.downcallHandle(KERNEL32.findOrThrow("GetThreadPriority"), FunctionDescriptor.of(JAVA_INT, ADDRESS));
+    /** {@code BOOL SetThreadPriority(HANDLE, int)} */
+    static final MethodHandle SET_THREAD_PRIORITY = LINKER.downcallHandle(KERNEL32.findOrThrow("SetThreadPriority"), FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT));
 
     static int currentPriority() {
       try {
         var thread = (MemorySegment)GET_CURRENT_THREAD.invokeExact();
         return (int)GET_THREAD_PRIORITY.invokeExact(thread);
+      }
+      catch (Throwable t) {
+        throw new IllegalStateException(t);
+      }
+    }
+
+    static boolean setCurrentPriority(int priority) {
+      try {
+        var thread = (MemorySegment)GET_CURRENT_THREAD.invokeExact();
+        return (int)SET_THREAD_PRIORITY.invokeExact(thread, priority) != 0;
       }
       catch (Throwable t) {
         throw new IllegalStateException(t);
