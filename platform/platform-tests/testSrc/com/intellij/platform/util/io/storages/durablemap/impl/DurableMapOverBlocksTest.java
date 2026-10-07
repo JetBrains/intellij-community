@@ -26,13 +26,13 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Verifies the DATA log and the persistent record reference index of a database map. */
+/** Verifies the ENTRIES log and the persistent record reference index of a database map. */
 public class DurableMapOverBlocksTest {
   private static final int CHUNK_SIZE = 1024 * 1024;
-  private static final int DATA_BLOCK_CONTENT_LENGTH = 128;
+  private static final int ENTRIES_BLOCK_CONTENT_LENGTH = 128;
 
   @Test
-  public void putUpdateAndRemoveUseDataRecords(@TempDir Path databaseDirectory) throws Exception {
+  public void putUpdateAndRemoveUseEntryRecords(@TempDir Path databaseDirectory) throws Exception {
     try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory);
          var map = createMap(database.openStore("map", 1))) {
       assertTrue(map.isEmpty());
@@ -57,7 +57,7 @@ public class DurableMapOverBlocksTest {
   }
 
   @Test
-  public void sameValueDoesNotAddAnotherDataRecord(@TempDir Path databaseDirectory) throws Exception {
+  public void sameValueDoesNotAddAnotherEntryRecord(@TempDir Path databaseDirectory) throws Exception {
     try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
       var store = database.openStore("map", 1);
       try (var map = createMap(store)) {
@@ -66,7 +66,7 @@ public class DurableMapOverBlocksTest {
       }
 
       var recordRefs = new ArrayList<Long>();
-      var records = RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), DATA_BLOCK_CONTENT_LENGTH);
+      var records = RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), ENTRIES_BLOCK_CONTENT_LENGTH);
       records.forEachCommittedRecord((recordRef, _) -> recordRefs.add(recordRef));
       assertEquals(1, recordRefs.size());
     }
@@ -111,7 +111,7 @@ public class DurableMapOverBlocksTest {
   }
 
   @Test
-  public void firstPersistentRecordRefIndexRebuildsFromExistingDataRecords(@TempDir Path databaseDirectory) throws Exception {
+  public void firstPersistentRecordRefIndexRebuildsFromExistingEntryRecords(@TempDir Path databaseDirectory) throws Exception {
     var factory = new BlocksDatabaseFactory(CHUNK_SIZE);
     try (var database = factory.open(databaseDirectory);
          var map = createMap(database.openStore("map", 1), new TrackingRecordRefIndex(), true)) {
@@ -133,7 +133,7 @@ public class DurableMapOverBlocksTest {
         map.put("stable", "value");
       }
 
-      var records = RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), DATA_BLOCK_CONTENT_LENGTH);
+      var records = RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), ENTRIES_BLOCK_CONTENT_LENGTH);
       assertThrows(IOException.class, () -> records.append(16, _ -> {
         throw new IOException("simulated write failure");
       }));
@@ -166,7 +166,7 @@ public class DurableMapOverBlocksTest {
       index.mutationCount = 0;
       try (var reopenedMap = createMap(store, index)) {
         assertEquals("value", reopenedMap.get("key"));
-        assertEquals(0, index.mutationCount, "Opening the record reference index must not rebuild it from DATA records");
+        assertEquals(0, index.mutationCount, "Opening the record reference index must not rebuild it from ENTRIES records");
       }
     }
   }
@@ -174,7 +174,7 @@ public class DurableMapOverBlocksTest {
   private static @NotNull DurableMapOverBlocks<String, String> createMap(@NotNull BlocksStore store) throws IOException {
     KeyDescriptorEx<String> descriptor = stringAsUTF8();
     var entryExternalizer = new DefaultEntryExternalizer<>(descriptor, descriptor);
-    return DurableMapOverBlocks.open(store, DATA_BLOCK_CONTENT_LENGTH, descriptor, descriptor, entryExternalizer);
+    return DurableMapOverBlocks.open(store, ENTRIES_BLOCK_CONTENT_LENGTH, descriptor, descriptor, entryExternalizer);
   }
 
   private static @NotNull DurableMapOverBlocks<String, String> createMap(@NotNull BlocksStore store,
@@ -188,7 +188,7 @@ public class DurableMapOverBlocksTest {
     KeyDescriptorEx<String> descriptor = stringAsUTF8();
     var entryExternalizer = new DefaultEntryExternalizer<>(descriptor, descriptor);
     return DurableMapOverBlocks.open(
-      store, DATA_BLOCK_CONTENT_LENGTH, index, rebuildIndex, descriptor, descriptor, entryExternalizer
+      store, ENTRIES_BLOCK_CONTENT_LENGTH, index, rebuildIndex, descriptor, descriptor, entryExternalizer
     );
   }
 

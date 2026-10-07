@@ -14,9 +14,9 @@ import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 import java.util.Comparator;
 
-import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.DATA;
+import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES;
 
-/// Append-only record storage over _multiple_ durable map `DATA` blocks.
+/// Append-only record storage over _multiple_ durable map `ENTRIES` blocks.
 /// Uses [AppendOnlyLogOverBlock] for each block, allocates new block as current one gets exhausted,
 /// and keeps filled up blocks connected in a sequence.
 @ApiStatus.Internal
@@ -38,7 +38,7 @@ public final class RecordStorageOverBlocks {
     this.preferredBlockContentLength = preferredBlockContentLength;
   }
 
-  /// Opens the storage and validates the committed record prefix in each non-retired `DATA` block.
+  /// Opens the storage and validates the committed record prefix in each non-retired `ENTRIES` block.
   public static @NotNull RecordStorageOverBlocks open(@NotNull DurableMapBlockCatalog blockCatalog,
                                                       int preferredBlockContentLength) throws IOException {
     var minimumContentLength = AppendOnlyLogOverBlock.minimumBlockContentLengthFor(0);
@@ -51,7 +51,7 @@ public final class RecordStorageOverBlocks {
 
     var storage = new RecordStorageOverBlocks(blockCatalog, preferredBlockContentLength);
     //restore filled-up and currently appendable blocks:
-    for (var block : blockCatalog.blocks(DATA)) {
+    for (var block : blockCatalog.blocks(ENTRIES)) {
       if (block.state() == BlocksStore.Block.LifecycleState.RETIRED) {
         continue;
       }
@@ -118,7 +118,7 @@ public final class RecordStorageOverBlocks {
       log = logsByBlockId.get(blockId);
     }
     if (log == null) {
-      throw new IllegalArgumentException("Unknown DATA block " + blockId);
+      throw new IllegalArgumentException("Unknown ENTRIES block " + blockId);
     }
     return log.readRecord(recordOffset(recordRef));
   }
@@ -131,7 +131,7 @@ public final class RecordStorageOverBlocks {
   public void forEachCommittedRecordWithLinks(@NotNull LinkedRecordReader reader) throws IOException {
     synchronized (appendLock){
       //actual order in blockCatalog could be changed by evacuations
-      var blocksInAllocationOrder = blockCatalog.blocks(DATA).stream()
+      var blocksInAllocationOrder = blockCatalog.blocks(ENTRIES).stream()
         .sorted(Comparator.comparingInt(BlocksStore.Block::id))
         .toList();
       for (var block : blocksInAllocationOrder) {
@@ -143,7 +143,7 @@ public final class RecordStorageOverBlocks {
           log = logsByBlockId.get(block.id());
         }
         if (log == null) {
-          throw new CorruptedException("Missing DATA block " + block.id());
+          throw new CorruptedException("Missing ENTRIES block " + block.id());
         }
         log.forEachCommittedRecordWithLinks((recordOffset, record) -> reader.process(recordRef(block.id(), recordOffset), record));
       }
@@ -153,7 +153,7 @@ public final class RecordStorageOverBlocks {
   private @NotNull AppendOnlyLogOverBlock allocateLog(int payloadLength, boolean hasLink) throws IOException {
     var minimumContentLength = AppendOnlyLogOverBlock.minimumBlockContentLengthFor(payloadLength, hasLink);
     var contentLength = Math.max(preferredBlockContentLength, minimumContentLength);
-    var block = blockCatalog.allocateBlock(DATA, contentLength);
+    var block = blockCatalog.allocateBlock(ENTRIES, contentLength);
     var log = AppendOnlyLogOverBlock.create(block);
     synchronized (logsByBlockIdLock) {
       logsByBlockId.put(block.id(), log);

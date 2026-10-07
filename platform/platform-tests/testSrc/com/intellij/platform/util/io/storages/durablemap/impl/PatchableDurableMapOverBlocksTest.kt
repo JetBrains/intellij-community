@@ -9,7 +9,7 @@ import com.intellij.platform.util.io.storages.database.spi.BlocksStore
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ACTIVE
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.RETIRED
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog
-import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.DATA
+import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.LOOKUP
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapOverBlocks
 import com.intellij.platform.util.io.storages.database.storages.durablemap.RecordStorageOverBlocks
@@ -97,7 +97,7 @@ class PatchableDurableMapOverBlocksTest {
           map.patchValue("FB", listOf(i))
           map.patchValue("Ea", listOf(i + 100))
         }
-        assertTrue(store.blocks().count { it.role() == DATA.persistentCode() } > 1)
+        assertTrue(store.blocks().count { it.role() == ENTRIES.persistentCode() } > 1)
       }
       dropRecordRefIndex(store)
       val codec = SetCodec().apply { failReads = true }
@@ -141,14 +141,14 @@ class PatchableDurableMapOverBlocksTest {
   }
 
   @Test
-  fun replayOrdersDataBlocksByLogicalBlockId() {
+  fun replayOrdersEntriesBlocksByLogicalBlockId() {
     BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
       val store = database.openStore("map", 1)
       openMap(store).use { map ->
         map.put("key", setOf(1))
         for (value in 2..50) map.patchValue("key", listOf(value))
       }
-      assertTrue(store.blocks().count { it.role() == DATA.persistentCode() } > 1)
+      assertTrue(store.blocks().count { it.role() == ENTRIES.persistentCode() } > 1)
       dropRecordRefIndex(store)
 
       val storeWithReorderedBlocks = object : BlocksStore by store {
@@ -170,9 +170,9 @@ class PatchableDurableMapOverBlocksTest {
         map.put("key", setOf(1000))
         map.put("filler", (1..50).toSet())
       }
-      val dataBlocks = store.blocks().filter { it.role() == DATA.persistentCode() }
-      assertTrue(dataBlocks.size >= 3, "The records must span three DATA blocks")
-      dataBlocks.first().retire()
+      val entriesBlocks = store.blocks().filter { it.role() == ENTRIES.persistentCode() }
+      assertTrue(entriesBlocks.size >= 3, "The records must span three ENTRIES blocks")
+      entriesBlocks.first().retire()
       dropRecordRefIndex(store)
 
       openMap(store).use { map ->

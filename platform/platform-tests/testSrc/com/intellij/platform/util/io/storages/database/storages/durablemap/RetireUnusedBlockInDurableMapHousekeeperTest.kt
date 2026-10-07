@@ -6,7 +6,7 @@ import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ACTIVE
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.RETIRED
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.SEALED
-import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.DATA
+import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES
 import com.intellij.platform.util.io.storages.durablemap.DefaultEntryExternalizer
 import com.intellij.platform.util.io.storages.intmultimaps.InMemoryIntToMultiLongMap
 import com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap
@@ -23,8 +23,8 @@ class RetireUnusedBlockInDurableMapHousekeeperTest {
   fun `sweep keeps every block in a live patch chain`(@TempDir directory: Path) {
     BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
       val store = database.openStore("map", 1)
-      val records = RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), DATA_BLOCK_SIZE)
-      records.append(2 * DATA_BLOCK_SIZE) { payload -> payload.fill(0) }
+      val records = RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), ENTRIES_BLOCK_SIZE)
+      records.append(2 * ENTRIES_BLOCK_SIZE) { payload -> payload.fill(0) }
 
       val descriptor = stringAsUTF8()
       val entryExternalizer = DefaultEntryExternalizer(descriptor, descriptor)
@@ -32,7 +32,7 @@ class RetireUnusedBlockInDurableMapHousekeeperTest {
       val baseRef = records.append(baseWriter.recordSize()) { payload -> baseWriter.write(payload.asByteBuffer()) }
       var headRef = baseRef
       repeat(5) {
-        headRef = records.append(DATA_BLOCK_SIZE, headRef) { payload ->
+        headRef = records.append(ENTRIES_BLOCK_SIZE, headRef) { payload ->
           payload.fill(0)
           payload.set(JAVA_LONG_UNALIGNED, 0, baseRef)
         }
@@ -40,19 +40,19 @@ class RetireUnusedBlockInDurableMapHousekeeperTest {
 
       val index = InMemoryRecordRefIndex()
       index.put(descriptor.getHashCode("key"), headRef)
-      DurableMapOverBlocks.open(store, DATA_BLOCK_SIZE, index, false, descriptor, entryExternalizer).use { map ->
-        val dataBlocks = store.blocks().filter { it.role() == DATA.persistentCode() }
-        assertTrue(dataBlocks.count { it.state() == SEALED } > 2, "The chain must span sealed DATA blocks")
+      DurableMapOverBlocks.open(store, ENTRIES_BLOCK_SIZE, index, false, descriptor, entryExternalizer).use { map ->
+        val entriesBlocks = store.blocks().filter { it.role() == ENTRIES.persistentCode() }
+        assertTrue(entriesBlocks.count { it.state() == SEALED } > 2, "The chain must span sealed ENTRIES blocks")
 
         val housekeeper = RetireUnusedBlockInDurableMapHousekeeper(map)
-        val statesBeforeSweep = dataBlocks.map { it.state() }
+        val statesBeforeSweep = entriesBlocks.map { it.state() }
         housekeeper.runHousekeeping { true }
-        assertEquals(statesBeforeSweep, dataBlocks.map { it.state() }, "Cancellation before the run must prevent retirement")
+        assertEquals(statesBeforeSweep, entriesBlocks.map { it.state() }, "Cancellation before the run must prevent retirement")
 
         housekeeper.runHousekeeping { false }
 
-        assertEquals(RETIRED, dataBlocks.first().state(), "The sweep must retire the unreachable block")
-        assertTrue(dataBlocks.drop(1).all { it.state() == SEALED || it.state() == ACTIVE },
+        assertEquals(RETIRED, entriesBlocks.first().state(), "The sweep must retire the unreachable block")
+        assertTrue(entriesBlocks.drop(1).all { it.state() == SEALED || it.state() == ACTIVE },
                    "The sweep must retain every block in the live patch chain")
       }
     }
@@ -88,6 +88,6 @@ class RetireUnusedBlockInDurableMapHousekeeperTest {
 
   companion object {
     private const val CHUNK_SIZE = 1024 * 1024
-    private const val DATA_BLOCK_SIZE = 128
+    private const val ENTRIES_BLOCK_SIZE = 128
   }
 }

@@ -85,13 +85,13 @@ public final class DurableDatabaseImpl implements DurableDatabase {
       EqualityPolicy<? super V> valueEquality = equalityIfSupported(valueExternalizer);
       if (valueExternalizer instanceof PatchableDurableMap.PatchableValueExternalizer<V, ?> patchExternalizer) {
         map = DurableMapOverBlocks.openPatchable(
-          blocksStore, DurableMapOverBlocks.DEFAULT_DATA_BLOCK_CONTENT_LENGTH, keyDescriptor,
+          blocksStore, DurableMapOverBlocks.DEFAULT_ENTRIES_BLOCK_CONTENT_LENGTH, keyDescriptor,
           valueEquality, entryExternalizer, patchExternalizer
         );
       }
       else {
         map = DurableMapOverBlocks.open(
-          blocksStore, DurableMapOverBlocks.DEFAULT_DATA_BLOCK_CONTENT_LENGTH, keyDescriptor,
+          blocksStore, DurableMapOverBlocks.DEFAULT_ENTRIES_BLOCK_CONTENT_LENGTH, keyDescriptor,
           valueEquality, entryExternalizer
         );
       }

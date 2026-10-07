@@ -316,8 +316,8 @@ class ExtendibleHashMapStorageOverLookupBlocksTest {
   void clear_RetiresOnlyOwnedRoleBlocks(@TempDir @NotNull Path databaseDirectory) throws Exception {
     try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
       var store = database.openStore("map", 1);
-      var dataBlock = store.allocateBlock(DurableMapBlockRole.DATA.persistentCode(), SEGMENT_SIZE);
-      dataBlock.activate();
+      var entriesBlock = store.allocateBlock(DurableMapBlockRole.ENTRIES.persistentCode(), SEGMENT_SIZE);
+      entriesBlock.activate();
       try (var storage = new ExtendibleHashMapStorageOverLookupBlocks(lookupBlocks(store), MAP_HEADER_SIZE, SEGMENT_SIZE)) {
         storage.header();
         storage.segmentsTable();
@@ -326,7 +326,7 @@ class ExtendibleHashMapStorageOverLookupBlocksTest {
         storage.clear();
 
         assertTrue(storage.isEmpty());
-        assertEquals(ACTIVE, dataBlock.state());
+        assertEquals(ACTIVE, entriesBlock.state());
         assertEquals(RETIRED, lookupBlock.state());
       }
     }

@@ -36,18 +36,18 @@ import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
 
 import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
-import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.DATA;
+import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES;
 import static com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapStorageOverLookupBlocks.IMPLEMENTATION_ID;
 import static com.intellij.platform.util.io.storages.intmultimaps.IntToMultiLongMap.NO_VALUE;
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64.DEFAULT_SEGMENT_SIZE;
 import static com.intellij.util.io.IOUtil.KiB;
 
 /// Stores
-/// - key-value entries in `DATA` blocks
+/// - key-value entries in `ENTRIES` blocks
 /// - `key.hash -> RecordRef` index in `LOOKUP` blocks
 @ApiStatus.Internal
 public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
-  public static final int DEFAULT_DATA_BLOCK_CONTENT_LENGTH = 64 * KiB;
+  public static final int DEFAULT_ENTRIES_BLOCK_CONTENT_LENGTH = 64 * KiB;
 
   /// 32K is not enough for indexes
   public static final int SEGMENT_SIZE = DEFAULT_SEGMENT_SIZE * 2;
@@ -191,7 +191,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
   }
 
   /// Opens the map with the specified recordRefIndex.
-  /// The caller explicitly selects whether to rebuild the recordRefIndex from committed DATA records.
+  /// The caller explicitly selects whether to rebuild the recordRefIndex from committed ENTRIES records.
   public static <K, V> @NotNull DurableMapOverBlocks<K, V> open(@NotNull BlocksStore store,
                                                                 int preferredBlockContentLength,
                                                                 @NotNull RecordRefIndex recordRefIndex,
@@ -202,7 +202,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
   }
 
   /// Opens the map with the specified recordRefIndex.
-  /// The caller explicitly selects whether to rebuild the recordRefIndex from committed DATA records.
+  /// The caller explicitly selects whether to rebuild the recordRefIndex from committed ENTRIES records.
   public static <K, V> @NotNull DurableMapOverBlocks<K, V> open(@NotNull BlocksStore blocksStore,
                                                                 int preferredBlockContentLength,
                                                                 @NotNull RecordRefIndex recordRefIndex,
@@ -505,7 +505,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
         return true;
       });
       //TODO RC: check is it needed to be done under the lock -- there are some races, but seems like it could be worked around
-      var blocksToCheckForRetirement = blockCatalog.blocks(DATA).stream()
+      var blocksToCheckForRetirement = blockCatalog.blocks(ENTRIES).stream()
         .filter(block -> block.state() == BlocksStore.Block.LifecycleState.SEALED)
         .toList();
       snapshot = new DeadBlocksSweepSnapshot(headRefs, blocksToCheckForRetirement);

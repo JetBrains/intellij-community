@@ -18,7 +18,7 @@ import java.nio.file.Path;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
 
-import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.DATA;
+import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -26,16 +26,16 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Verifies append and recovery for records in durable map DATA blocks. */
+/** Verifies append and recovery for records in durable map ENTRIES blocks. */
 public class RecordStorageOverBlocksTest {
   private static final int CHUNK_SIZE = 1024 * 1024;
-  private static final int DATA_BLOCK_CONTENT_LENGTH = 64;
+  private static final int ENTRIES_BLOCK_CONTENT_LENGTH = 64;
 
   @Test
   public void appendReturnsReadablePayload(@TempDir Path databaseDirectory) throws Exception {
     try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
       var blockCatalog = DurableMapBlockCatalog.open(database.openStore("map", 1));
-      var records = RecordStorageOverBlocks.open(blockCatalog, DATA_BLOCK_CONTENT_LENGTH);
+      var records = RecordStorageOverBlocks.open(blockCatalog, ENTRIES_BLOCK_CONTENT_LENGTH);
       var expected = "record payload".getBytes(StandardCharsets.UTF_8);
 
       var pointer = append(records, expected);
@@ -64,13 +64,13 @@ public class RecordStorageOverBlocksTest {
     long recordRef;
     try (var database = factory.open(databaseDirectory)) {
       var blockCatalog = DurableMapBlockCatalog.open(database.openStore("map", 1));
-      recordRef = append(RecordStorageOverBlocks.open(blockCatalog, DATA_BLOCK_CONTENT_LENGTH), expected);
+      recordRef = append(RecordStorageOverBlocks.open(blockCatalog, ENTRIES_BLOCK_CONTENT_LENGTH), expected);
     }
 
     try (var database = factory.open(databaseDirectory)) {
       var store = database.findStore("map");
       assertNotNull(store);
-      var records = RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), DATA_BLOCK_CONTENT_LENGTH);
+      var records = RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), ENTRIES_BLOCK_CONTENT_LENGTH);
 
       assertArrayEquals(expected, records.read(recordRef).toArray(ValueLayout.JAVA_BYTE));
     }
@@ -80,7 +80,7 @@ public class RecordStorageOverBlocksTest {
   public void appendUsesANewBlockWhenTheCurrentBlockIsFull(@TempDir Path databaseDirectory) throws Exception {
     try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
       var blockCatalog = DurableMapBlockCatalog.open(database.openStore("map", 1));
-      var records = RecordStorageOverBlocks.open(blockCatalog, DATA_BLOCK_CONTENT_LENGTH);
+      var records = RecordStorageOverBlocks.open(blockCatalog, ENTRIES_BLOCK_CONTENT_LENGTH);
 
       var first = append(records, new byte[40]);
       var second = append(records, new byte[8]);
@@ -90,9 +90,9 @@ public class RecordStorageOverBlocksTest {
         RecordStorageOverBlocks.blockId(second),
         "The full block must not accept the second record: " + first + ", " + second
       );
-      assertEquals(2, blockCatalog.blocks(DATA).size());
-      assertEquals(BlocksStore.Block.LifecycleState.SEALED, blockCatalog.blocks(DATA).getFirst().state());
-      assertEquals(BlocksStore.Block.LifecycleState.ACTIVE, blockCatalog.blocks(DATA).getLast().state());
+      assertEquals(2, blockCatalog.blocks(ENTRIES).size());
+      assertEquals(BlocksStore.Block.LifecycleState.SEALED, blockCatalog.blocks(ENTRIES).getFirst().state());
+      assertEquals(BlocksStore.Block.LifecycleState.ACTIVE, blockCatalog.blocks(ENTRIES).getLast().state());
     }
   }
 
@@ -101,7 +101,7 @@ public class RecordStorageOverBlocksTest {
     try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory);
          var executor = Executors.newFixedThreadPool(2)) {
       var blockCatalog = DurableMapBlockCatalog.open(database.openStore("map", 1));
-      var records = RecordStorageOverBlocks.open(blockCatalog, DATA_BLOCK_CONTENT_LENGTH);
+      var records = RecordStorageOverBlocks.open(blockCatalog, ENTRIES_BLOCK_CONTENT_LENGTH);
       var recordsToRead = new ArrayBlockingQueue<ExpectedRecord>(1);
       var recordCount = 64;
 
@@ -133,20 +133,20 @@ public class RecordStorageOverBlocksTest {
     int incompleteBlockId;
     try (var database = factory.open(databaseDirectory)) {
       var blockCatalog = DurableMapBlockCatalog.open(database.openStore("map", 1));
-      var records = RecordStorageOverBlocks.open(blockCatalog, DATA_BLOCK_CONTENT_LENGTH);
+      var records = RecordStorageOverBlocks.open(blockCatalog, ENTRIES_BLOCK_CONTENT_LENGTH);
       var failure = assertThrows(IOException.class, () -> records.append(16, payload -> {
         payload.set(ValueLayout.JAVA_BYTE, 0, (byte)1);
         throw new IOException("simulated write failure");
       }));
       assertEquals("simulated write failure", failure.getMessage());
-      incompleteBlockId = blockCatalog.blocks(DATA).getFirst().id();
+      incompleteBlockId = blockCatalog.blocks(ENTRIES).getFirst().id();
     }
 
     try (var database = factory.open(databaseDirectory)) {
       var store = database.findStore("map");
       assertNotNull(store);
       var blockCatalog = DurableMapBlockCatalog.open(store);
-      var records = RecordStorageOverBlocks.open(blockCatalog, DATA_BLOCK_CONTENT_LENGTH);
+      var records = RecordStorageOverBlocks.open(blockCatalog, ENTRIES_BLOCK_CONTENT_LENGTH);
 
       assertThrows(CorruptedException.class,
                    () -> records.read(RecordStorageOverBlocks.recordRef(incompleteBlockId, 16)));

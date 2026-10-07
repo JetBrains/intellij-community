@@ -130,7 +130,7 @@ public class DurableMapOverBlocksScenariosTest
     var entryExternalizer = new DefaultEntryExternalizer<>(descriptor, descriptor);
     return DurableMapOverBlocks.open(
       store,
-      DurableMapOverBlocks.DEFAULT_DATA_BLOCK_CONTENT_LENGTH,
+      DurableMapOverBlocks.DEFAULT_ENTRIES_BLOCK_CONTENT_LENGTH,
       descriptor,
       descriptor,
       entryExternalizer
