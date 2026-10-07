@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.validation.CHECK_NO_RESERVED_WORDS
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
@@ -78,7 +79,7 @@ class ProjectPathFlows private constructor(val projectPath: Flow<Path?>) {
         return PyResult.failure(ProjectFlowValidationError(e.reason))
       }
       val eelDescriptor = path.getEelDescriptor()
-      if (eelDescriptor != onlyAllowPathsOn) {
+      if (!eelDescriptor.equalsMayBeUsingMachine(onlyAllowPathsOn)) {
         return PyResult.failure(ProjectFlowValidationError(PyBundle.message("python.sdk.new.error.not.supported", eelDescriptor.name),
                                                            wrongEelDescriptor = eelDescriptor))
       }

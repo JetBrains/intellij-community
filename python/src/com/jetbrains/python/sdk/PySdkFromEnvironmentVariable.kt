@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.diagnostic.Logger
@@ -9,6 +9,7 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.Path
 import com.intellij.util.EnvironmentUtil
@@ -42,7 +43,7 @@ class PySdkFromEnvironmentVariable private constructor(
   private val python: PythonBinary,
 ) {
   init {
-    check(project.getEelDescriptor() == python.getEelDescriptor()) { "$python can't be used for $project" }
+    check(project.getEelDescriptor().equalsMayBeUsingMachine(python.getEelDescriptor())) { "$python can't be used for $project" }
   }
 
   companion object {
@@ -85,14 +86,14 @@ class PySdkFromEnvironmentVariable private constructor(
          }
        } ?: return PyResult.localizedError(PyBundle.message("sdk.configuration.path.wrong", pathStr, descriptor.name))
 
-      if (pythonBinary.getEelDescriptor() != project.getEelDescriptor()) {
+      if (! pythonBinary.getEelDescriptor().equalsMayBeUsingMachine(project.getEelDescriptor())) {
         return PyResult.localizedError(
           PyBundle.message("sdk.configuration.path.on.wrong.descriptor",
                            pythonBinary,
                            project.getEelDescriptor().name)
         )
       }
-      if (pythonBinary.getEelDescriptor() != LocalEelDescriptor) {
+      if (! pythonBinary.getEelDescriptor().equalsMayBeUsingMachine(LocalEelDescriptor)) {
         return PyResult.localizedError(PyBundle.message("sdk.configuration.path.remote.not.supported", pythonBinary))
       }
 

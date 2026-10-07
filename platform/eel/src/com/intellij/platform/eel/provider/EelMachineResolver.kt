@@ -117,3 +117,19 @@ interface EelMachineResolver {
 fun interface EelMachineResolverProvider {
   fun getAll(): List<EelMachineResolver>
 }
+
+/**
+ * Compares this with [they] descriptor using deepest possible method.
+ * Bare `==` makes different between `wsl.localhost` and `wsl$` for example, and Docker might also have similar issues.
+ * This method does its best and usually works.
+ */
+@ApiStatus.Internal
+@Suppress("EelDescriptorEquality")
+fun EelDescriptor.equalsMayBeUsingMachine(they: EelDescriptor): Boolean {
+  if (they == this) {
+    return true
+  }
+  val myMachine = getResolvedEelMachine()
+  val theirMachine = they.getResolvedEelMachine()
+  return myMachine?.ownsDescriptor(they) ?: (theirMachine?.ownsDescriptor(this) ?: false)
+}
