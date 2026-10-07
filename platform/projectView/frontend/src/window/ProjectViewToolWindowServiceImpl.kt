@@ -45,6 +45,7 @@ import com.intellij.platform.projectView.pane.ProjectViewClearStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
+import com.intellij.platform.projectView.pane.ProjectViewPaneKind
 import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.projectView.runSafelyCancellable
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
@@ -268,11 +269,12 @@ internal class ProjectViewToolWindowServiceImpl(
     if (newPane != null) {
       persistentState.putSelectedPaneState(newPane.id)
     }
-    updateMenuActions()
+    updateMenuActions(newPane)
   }
 
-  private fun updateMenuActions() {
+  private fun updateMenuActions(newPane: FrontendProjectViewPane?) {
     menuActionGroup.removeAll()
+    if ((newPane?.descriptor as ProjectViewPaneDescriptorImpl?)?.kind == ProjectViewPaneKind.UI_ONLY) return
     val group = ActionManager.getInstance().getAction("ProjectView.ToolWindow.SecondaryActions") as DefaultActionGroup
     for (action in group.getChildActionsOrStubs()) {
       menuActionGroup.addAction(action).setAsSecondary(true)
