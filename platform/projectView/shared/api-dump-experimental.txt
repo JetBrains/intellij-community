@@ -340,6 +340,7 @@
 - f:isOptionAlwaysVisible(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
 - f:isOptionEnabled(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
 - f:isOptionSelected(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
+- f:setFileNesting(com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue):V
 - f:setOptionSelected(com.intellij.platform.projectView.settings.ProjectViewPaneOption,Z):V
 - f:setSortKey(com.intellij.platform.projectView.settings.ProjectViewPaneSortKey):V
 *f:com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService$Companion

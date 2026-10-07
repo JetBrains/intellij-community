@@ -185,4 +185,9 @@ class ProjectViewPaneSettingsService(private val project: Project) {
       ProjectViewFileNestingService.getInstance().getRules(),
     )
   }
+  
+  fun setFileNesting(fileNesting: ProjectViewPaneFileNestingValue) {
+    state.useFileNestingRules = fileNesting.isFileNestingOn
+    ProjectViewFileNestingService.getInstance().setRules(fileNesting.nestingRules)
+  }
 }

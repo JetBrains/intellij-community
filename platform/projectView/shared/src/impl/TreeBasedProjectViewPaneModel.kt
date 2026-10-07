@@ -265,7 +265,7 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
   }
 
   override suspend fun setFileNesting(fileNestingValue: ProjectViewPaneFileNestingValue) {
-    ProjectViewFileNestingService.getInstance().setRules(fileNestingValue.nestingRules)
+    currentTreeState.load()?.scheduleSetFileNesting(fileNestingValue)
   }
 
   suspend fun visitTree(allowLoading: Boolean, visitNode: suspend (BackendProjectViewNodeModel<T>) -> TreeVisitor.Action): BackendProjectViewNodeModel<T>? {
@@ -525,6 +525,9 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
                   is SetSortKeyRequest -> {
                     applySortKeyChange(request.sortKey)
                   }
+                  is SetFileNestingRequest -> {
+                    applyFileNestingChange(request.fileNesting)
+                  }
                   is SelectNodeRequest -> {
                     builder.selectNode(request.nodePath) { options -> 
                       options.requestFocus = request.requestFocus
@@ -593,6 +596,10 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
 
     fun scheduleSetSortKey(sortKey: ProjectViewPaneSortKey) {
       schedule { SetSortKeyRequest(it, sortKey) }
+    }
+
+    fun scheduleSetFileNesting(fileNesting: ProjectViewPaneFileNestingValue) {
+      schedule { SetFileNestingRequest(it, fileNesting) }
     }
 
     fun scheduleSelectElement(element: PsiElement) {
@@ -884,6 +891,13 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
       // then rebuild the tree with the new comparator.
       applySettings()
       updateAll(withComparator = true)
+    }
+
+    private suspend fun applyFileNestingChange(fileNesting: ProjectViewPaneFileNestingValue) {
+      val settingsService = ProjectViewPaneSettingsService.getInstance(project)
+      settingsService.setFileNesting(fileNesting)
+      applySettings()
+      updateAll(withComparator = false)
     }
 
     private fun updateAll(withComparator: Boolean) {
@@ -1179,6 +1193,7 @@ private data class ProcessPendingUpdatesRequest(override val epoch: Long) : Stat
 private data class UpdateSettingsRequest(override val epoch: Long) : StateUpdateRequest()
 private data class SetOptionRequest(override val epoch: Long, val option: ProjectViewPaneOption, val newValue: Boolean) : StateUpdateRequest()
 private data class SetSortKeyRequest(override val epoch: Long, val sortKey: ProjectViewPaneSortKey) : StateUpdateRequest()
+private data class SetFileNestingRequest(override val epoch: Long, val fileNesting: ProjectViewPaneFileNestingValue) : StateUpdateRequest()
 private data class SelectNodeRequest(override val epoch: Long, val nodePath: ProjectViewNodePath, val requestFocus: Boolean) : StateUpdateRequest()
 private data class UpdateNodeModelRequest<T : ProjectViewNodeUserObject>(override val epoch: Long, val id: Long, val model: BackendProjectViewNodeModel<T>) : StateUpdateRequest()
 
