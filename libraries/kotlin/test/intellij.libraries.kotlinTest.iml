@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlin-test" type="repository">
-        <properties maven-id="org.jetbrains.kotlin:kotlin-test:2.4.21-RC">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-test:2.5.0-Beta1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.4.21-RC/kotlin-test-2.4.21-RC.jar">
-              <sha256sum>0100cb4188276f2b5e4d450dd63c41c31679f374e9d887945cbf5f0b5f2f7b24</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.5.0-Beta1/kotlin-test-2.5.0-Beta1.jar">
+              <sha256sum>a474d7b277f24267ed50c8f99dfa18b2f8a357d8959e4993716037ff74197512</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -20,11 +20,11 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.4.21-RC/kotlin-test-2.4.21-RC.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.5.0-Beta1/kotlin-test-2.5.0-Beta1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.4.21-RC/kotlin-test-2.4.21-RC-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.5.0-Beta1/kotlin-test-2.5.0-Beta1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -4005,17 +4005,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_21-RC_http",
-    downloaded_file_path = "kotlin-compiler-embeddable-2.4.21-RC.jar",
-    sha256 = "0bfd7a573eb94751463c76841ed0a799d50e91751ee27baa4ce1a894aa3ea144",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.4.21-RC/kotlin-compiler-embeddable-2.4.21-RC.jar",
+    name = "org_jetbrains_kotlin-kotlin-compiler-embeddable-2_5_0-Beta1_http",
+    downloaded_file_path = "kotlin-compiler-embeddable-2.5.0-Beta1.jar",
+    sha256 = "7ff9e101a719f22ffad9e90596e4b9ed33468e1078f8cef78004d8984fd2f7b8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.5.0-Beta1/kotlin-compiler-embeddable-2.5.0-Beta1.jar",
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-compiler-embeddable-2_4_21-RC-sources_http",
-    downloaded_file_path = "kotlin-compiler-embeddable-2.4.21-RC-sources.jar",
-    sha256 = "c7d2fe069589de7cefdc9aaea962b12ee0b61022749dee15e64ff809f2cd6c0e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.4.21-RC/kotlin-compiler-embeddable-2.4.21-RC-sources.jar",
+    name = "org_jetbrains_kotlin-kotlin-compiler-embeddable-2_5_0-Beta1-sources_http",
+    downloaded_file_path = "kotlin-compiler-embeddable-2.5.0-Beta1-sources.jar",
+    sha256 = "fd6634e32968000b090c680bc2b8e548f9f95543c080b877dc921e77fec30e3b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.5.0-Beta1/kotlin-compiler-embeddable-2.5.0-Beta1-sources.jar",
 )
 
 http_file(
@@ -4033,17 +4033,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-stdlib-2_4_21-RC_http",
-    downloaded_file_path = "kotlin-stdlib-2.4.21-RC.jar",
-    sha256 = "1ac10d64c98f420b80f6b54add4dad1f0bbf96a18c94ec3d3212035681741439",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.4.21-RC/kotlin-stdlib-2.4.21-RC.jar",
+    name = "org_jetbrains_kotlin-kotlin-stdlib-2_5_0-Beta1_http",
+    downloaded_file_path = "kotlin-stdlib-2.5.0-Beta1.jar",
+    sha256 = "f8130e1c56e38cb895b738cc49615e568f51f7a26bbca771a5ec80629535f8ed",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.5.0-Beta1/kotlin-stdlib-2.5.0-Beta1.jar",
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-stdlib-2_4_21-RC-sources_http",
-    downloaded_file_path = "kotlin-stdlib-2.4.21-RC-sources.jar",
-    sha256 = "1e29c0668b0aa555e7b154e5da2e8094e1b755cfee25737839195bbbdad8a4a2",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.4.21-RC/kotlin-stdlib-2.4.21-RC-sources.jar",
+    name = "org_jetbrains_kotlin-kotlin-stdlib-2_5_0-Beta1-sources_http",
+    downloaded_file_path = "kotlin-stdlib-2.5.0-Beta1-sources.jar",
+    sha256 = "7acc63138496413011c8d8545861b679d272ae60bc8212717dd0d94421269b95",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.5.0-Beta1/kotlin-stdlib-2.5.0-Beta1-sources.jar",
 )
 
 http_file(
@@ -8856,45 +8856,45 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-metadata-jvm-2_4_21-RC_http",
-    downloaded_file_path = "kotlin-metadata-jvm-2.4.21-RC.jar",
-    sha256 = "ce7a0385fb0f803a887f64019b8bdd911ac803c31ff3d3eb54e1a913641679da",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.4.21-RC/kotlin-metadata-jvm-2.4.21-RC.jar",
+    name = "org_jetbrains_kotlin-kotlin-metadata-jvm-2_5_0-Beta1_http",
+    downloaded_file_path = "kotlin-metadata-jvm-2.5.0-Beta1.jar",
+    sha256 = "5267da2c66435a51c8c46153f0ae386754c65e87506a303dc476a8f54a7bf388",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.5.0-Beta1/kotlin-metadata-jvm-2.5.0-Beta1.jar",
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-metadata-jvm-2_4_21-RC-sources_http",
-    downloaded_file_path = "kotlin-metadata-jvm-2.4.21-RC-sources.jar",
-    sha256 = "084094bc2bdeda110da57c8c44747aa6a8a31bdf233e9ef49388992315443624",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.4.21-RC/kotlin-metadata-jvm-2.4.21-RC-sources.jar",
+    name = "org_jetbrains_kotlin-kotlin-metadata-jvm-2_5_0-Beta1-sources_http",
+    downloaded_file_path = "kotlin-metadata-jvm-2.5.0-Beta1-sources.jar",
+    sha256 = "bd5134ba99b12c8c81beaafac0497e7e0c37849b867d1f2ddfca798bcf496f76",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.5.0-Beta1/kotlin-metadata-jvm-2.5.0-Beta1-sources.jar",
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-reflect-2_4_21-RC_http",
-    downloaded_file_path = "kotlin-reflect-2.4.21-RC.jar",
-    sha256 = "b48a382c9714a766bc68d3f4698b2b3a37e88e9a927f795606d37a0dccc077be",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-reflect/2.4.21-RC/kotlin-reflect-2.4.21-RC.jar",
+    name = "org_jetbrains_kotlin-kotlin-reflect-2_5_0-Beta1_http",
+    downloaded_file_path = "kotlin-reflect-2.5.0-Beta1.jar",
+    sha256 = "83859abb720a2ed3e85ae50737731c79bb15d00f0311dca1a098c1e5cfc4f4e1",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-reflect/2.5.0-Beta1/kotlin-reflect-2.5.0-Beta1.jar",
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-reflect-2_4_21-RC-sources_http",
-    downloaded_file_path = "kotlin-reflect-2.4.21-RC-sources.jar",
-    sha256 = "478739aaf0310de32de799625f173f3f665cce9cf540735f9a81cb5ad05bc8c4",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-reflect/2.4.21-RC/kotlin-reflect-2.4.21-RC-sources.jar",
+    name = "org_jetbrains_kotlin-kotlin-reflect-2_5_0-Beta1-sources_http",
+    downloaded_file_path = "kotlin-reflect-2.5.0-Beta1-sources.jar",
+    sha256 = "8523245276248ac2e08d22290da369055d5ea68e6c24c8ed4ebb40ddf348c54a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-reflect/2.5.0-Beta1/kotlin-reflect-2.5.0-Beta1-sources.jar",
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-test-junit-2_4_21-RC_http",
-    downloaded_file_path = "kotlin-test-junit-2.4.21-RC.jar",
-    sha256 = "8c33e891b03c995faa78c711b9d34b08a599ae13d72653763ce94a9ab82bf2a0",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-junit/2.4.21-RC/kotlin-test-junit-2.4.21-RC.jar",
+    name = "org_jetbrains_kotlin-kotlin-test-junit-2_5_0-Beta1_http",
+    downloaded_file_path = "kotlin-test-junit-2.5.0-Beta1.jar",
+    sha256 = "8ccd72d20df53b8bee86ed4093b05765e826d26dc798e289b731eb0835f09c8b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-junit/2.5.0-Beta1/kotlin-test-junit-2.5.0-Beta1.jar",
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-test-junit-2_4_21-RC-sources_http",
-    downloaded_file_path = "kotlin-test-junit-2.4.21-RC-sources.jar",
+    name = "org_jetbrains_kotlin-kotlin-test-junit-2_5_0-Beta1-sources_http",
+    downloaded_file_path = "kotlin-test-junit-2.5.0-Beta1-sources.jar",
     sha256 = "3fd39bbf3f8283cf7b7759e02abdd752ddde9964352f645467b779257bccef20",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-junit/2.4.21-RC/kotlin-test-junit-2.4.21-RC-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-junit/2.5.0-Beta1/kotlin-test-junit-2.5.0-Beta1-sources.jar",
 )
 
 http_file(
@@ -8912,17 +8912,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-test-2_4_21-RC_http",
-    downloaded_file_path = "kotlin-test-2.4.21-RC.jar",
-    sha256 = "0100cb4188276f2b5e4d450dd63c41c31679f374e9d887945cbf5f0b5f2f7b24",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test/2.4.21-RC/kotlin-test-2.4.21-RC.jar",
+    name = "org_jetbrains_kotlin-kotlin-test-2_5_0-Beta1_http",
+    downloaded_file_path = "kotlin-test-2.5.0-Beta1.jar",
+    sha256 = "a474d7b277f24267ed50c8f99dfa18b2f8a357d8959e4993716037ff74197512",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test/2.5.0-Beta1/kotlin-test-2.5.0-Beta1.jar",
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-test-2_4_21-RC-sources_http",
-    downloaded_file_path = "kotlin-test-2.4.21-RC-sources.jar",
-    sha256 = "c1f6593aade90f8a3ea9669f60eebdcff231b534169dd0d15873410f337f0937",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test/2.4.21-RC/kotlin-test-2.4.21-RC-sources.jar",
+    name = "org_jetbrains_kotlin-kotlin-test-2_5_0-Beta1-sources_http",
+    downloaded_file_path = "kotlin-test-2.5.0-Beta1-sources.jar",
+    sha256 = "5f07a22abe6b6eb8f6edcf99b670380df6b9d97c800beccd1ad57c8da27abfe8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test/2.5.0-Beta1/kotlin-test-2.5.0-Beta1-sources.jar",
 )
 
 http_file(
