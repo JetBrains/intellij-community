@@ -25,6 +25,8 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
+import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.platform.projectView.pane.ProjectViewPaneKind
 import com.intellij.platform.projectView.settings.ProjectViewOptionStateDTO
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
@@ -271,11 +273,17 @@ private open class FrontendOption(private val event: AnActionEvent, private val 
   }
 
   override fun setSelected(selected: Boolean) {
+    val project = event.project ?: return
     service()?.requestOptionValueChange(option, selected)
-    val project = event.project
-    project?.let { project -> ProjectViewPaneSettingsService.getInstance(project).setOptionSelected(option.fromDTO(), selected) }
+    val paneKind = event.getData(ProjectViewPaneKind.DATA_KEY)
+    // The pane will change the option. But if the pane is on the backend, and we're running in remdev,
+    // we need to set it on the frontend as well, because some options are used on the frontend (and the sync is not instant).
+    // In the monolith, we shouldn't do this because it'll confuse the pane if the setting is changed in advance.
+    if (paneKind == ProjectViewPaneKind.BACKEND && !IdeProductMode.isMonolith) {
+      ProjectViewPaneSettingsService.getInstance(project).setOptionSelected(option.fromDTO(), selected)
+    }
     val menu = event.getActionMenu()
-    if (project != null && menu != null) {
+    if (menu != null) {
       LOG.debug { "Requested $option to change its value to $selected, action menu update pending" }
       ProjectViewOptionMenuUpdater.getInstance(project).markMenuNeedsUpdating(menu)
     }
