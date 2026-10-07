@@ -52,6 +52,7 @@ jvm_library(
     "//platform/util/jdom",
     "//xml/xml-analysis-api:analysis",
     "//platform/execution",
+    "//libraries/asm",
   ]
 )
 
@@ -107,6 +108,7 @@ jvm_library(
     "//platform/util/jdom",
     "//xml/xml-analysis-api:analysis",
     "//platform/execution",
+    "//libraries/asm",
   ]
 )
 ### auto-generated section `build intellij.javaFX` end

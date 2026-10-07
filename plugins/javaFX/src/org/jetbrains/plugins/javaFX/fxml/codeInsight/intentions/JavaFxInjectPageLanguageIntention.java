@@ -10,9 +10,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -26,71 +24,35 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
-import javax.script.ScriptEngineManager;
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 public final class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAction {
   public static final Logger LOG = Logger.getInstance(JavaFxInjectPageLanguageIntention.class);
-
-  public static Set<String> getAvailableLanguages(Project project) {
-    final List<ScriptEngineFactory> engineFactories = new ScriptEngineManager(composeUserClassLoader(project)).getEngineFactories();
-
-    if (engineFactories != null) {
-      final Set<String> availableNames = new TreeSet<>();
-      for (ScriptEngineFactory factory : engineFactories) {
-        final String engineName = (String)factory.getParameter(ScriptEngine.NAME);
-        availableNames.add(engineName);
-      }
-      return availableNames;
-    }
-
-    return null;
-  }
-
-  private static ClassLoader composeUserClassLoader(Project project) {
-    final List<URL> urls = new ArrayList<>();
-    final List<String> list = OrderEnumerator.orderEntries(project).recursively().librariesOnly().runtimeOnly().getPathsList().getPathList();
-    for (String path : list) {
-      try {
-        urls.add(new File(FileUtil.toSystemIndependentName(path)).toURI().toURL());
-      }
-      catch (MalformedURLException e1) {
-        LOG.info(e1);
-      }
-    }
-    return new URLClassLoader(urls.toArray(new URL[0]));
-  }
 
   @Override
   public void invoke(final @NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
     final XmlFile containingFile = (XmlFile)element.getContainingFile();
-    final Set<String> availableLanguages = getAvailableLanguages(project);
-    if (availableLanguages == null || availableLanguages.isEmpty()) {
-      HintManager.getInstance().showErrorHint(editor, JavaFXBundle.message("javafx.inject.page.language.intention.no.engines"));
-      return;
-    }
-    final List<String> list = new ArrayList<>(availableLanguages);
+    JavaFxScriptEngineService.getInstance(project).findEngineNames(availableLanguages -> {
+      if (editor.isDisposed() || !containingFile.isValid()) return;
+      if (availableLanguages.isEmpty()) {
+        HintManager.getInstance().showErrorHint(editor, JavaFXBundle.message("javafx.inject.page.language.intention.no.engines"));
+        return;
+      }
+      final List<String> list = new ArrayList<>(availableLanguages);
 
-    if (availableLanguages.size() == 1) {
-      registerPageLanguage(project, containingFile, availableLanguages.iterator().next());
-    } else {
-      JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(list)
-        .setItemChosenCallback(
-          (selectedValue) -> registerPageLanguage(project, containingFile, selectedValue))
-        .createPopup().showInBestPositionFor(editor);
-    }
+      if (availableLanguages.size() == 1) {
+        registerPageLanguage(project, containingFile, availableLanguages.iterator().next());
+      } else {
+        JBPopupFactory.getInstance()
+          .createPopupChooserBuilder(list)
+          .setItemChosenCallback(
+            (selectedValue) -> registerPageLanguage(project, containingFile, selectedValue))
+          .createPopup().showInBestPositionFor(editor);
+      }
+    });
   }
 
   public void registerPageLanguage(final Project project, final XmlFile containingFile, final String languageName) {
@@ -123,7 +85,7 @@ public final class JavaFxInjectPageLanguageIntention extends PsiElementBaseInten
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
-    // the default preview calls invoke(), which would instantiate the project ScriptEngineFactory providers
+    // the default preview calls invoke(), which shows a popup or a hint
     return IntentionPreviewInfo.EMPTY;
   }
 
