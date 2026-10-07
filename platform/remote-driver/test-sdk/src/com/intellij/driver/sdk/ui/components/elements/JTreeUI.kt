@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui.components.elements
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.impl.RefWrapper
+import com.intellij.driver.model.DriverIllegalStateException
 import com.intellij.driver.sdk.SimpleTextAttributes
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.TreePath
@@ -29,6 +30,7 @@ import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
 import java.awt.Point
+import java.util.concurrent.TimeoutException
 import javax.swing.JTree
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -80,6 +82,12 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     val filteredPaths = rowFilter(treePaths.map { it.path.last() }).toSet()
     val rows = treePaths.filter { it.path.last() in filteredPaths }.map { it.row }.toIntArray()
     driver.withContext(OnDispatcher.EDT) { treeComponent.setSelectionRows(rows) }
+  }
+
+  /** Selects exactly one matching visible row without a mouse click. Fails if the match is missing or ambiguous. */
+  fun selectRow(predicate: (String) -> Boolean) {
+    val row = findRow(predicate) ?: throw rowNotFoundException("select exactly one row matching predicate")
+    driver.withContext(OnDispatcher.EDT) { treeComponent.setSelectionRows(intArrayOf(row)) }
   }
 
   fun rightClickRow(row: Int, point: Point? = null) {
@@ -263,6 +271,46 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   fun waitForNodesLoaded(timeout: Duration = 10.seconds) {
     waitFor("tree nodes are loaded", timeout) { fixture.areTreeNodesLoaded() }
   }
+
+  /**
+   * Waits for the visible paths to match [expectedPaths] with no visible loading placeholders.
+   * Leaves selection and expansion unchanged.
+   * [normalize] transforms collected paths only. It can return null to retry a snapshot that cannot yet be compared.
+   */
+  fun waitForVisiblePaths(
+    expectedPaths: Set<List<String>>,
+    timeout: Duration = 10.seconds,
+    normalize: (List<List<String>>) -> Set<List<String>>? = { it.toSet() },
+  ): Set<List<String>> {
+    val paths = waitFor(
+      message = "The visible tree paths match the expected paths",
+      timeout = timeout,
+      errorMessage = { actualPaths ->
+        if (actualPaths == null) "The visible tree nodes are still loading or their paths cannot yet be compared."
+        else """
+          The visible tree paths did not match the expected paths.
+          Missing paths: ${expectedPaths - actualPaths}
+          Unexpected paths: ${actualPaths - expectedPaths}
+        """.trimIndent()
+      },
+      getter = {
+        try {
+          normalize(collectExpandedPaths().map { it.path })?.takeIf { fixture.areTreeNodesLoaded() }
+        }
+        catch (e: DriverIllegalStateException) {
+          if (!e.isRetryableTreeLoadingFailure()) throw e
+          null
+        }
+      },
+      checker = { it == expectedPaths },
+    )
+    return checkNotNull(paths)
+  }
+
+  private fun Throwable.isRetryableTreeLoadingFailure(): Boolean =
+    generateSequence(this) { it.cause }.any {
+      it is TimeoutException || it.message.orEmpty().contains("cancel loading", ignoreCase = true)
+    }
 
   private fun findRow(predicate: (String) -> Boolean): Int? {
     return collectExpandedPaths().singleOrNull { predicate(it.path.last()) }?.row
