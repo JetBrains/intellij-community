@@ -3,6 +3,7 @@ package com.intellij.platform.compose.swing.components
 
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
+import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.RowLayout
@@ -122,15 +123,17 @@ internal class FormGridLayout : GridLayout(), MeasurementLayoutManager {
         return
       }
 
+      // The spacing is read afresh here because two of its values are derived from the look and feel's
+      // checkbox metrics, so a form built after a theme change is built to the new ones.
+      val spacing = IntelliJSpacingConfiguration()
+      // Read before the grid is reset, so a declaration that cannot be laid out leaves the grid out of date.
+      val form = toGridForm(readItems(parent), spacing)
+
       // Cleared first: the cells are registered through addLayoutComponent, which would otherwise take them
       // for components still to be placed and ask for the grid to be built again.
       gridOutOfDate = false
       resetRootGrid()
-
-      // The spacing is read afresh here because two of its values are derived from the look and feel's
-      // checkbox metrics, so a form built after a theme change is built to the new ones.
-      val spacing = IntelliJSpacingConfiguration()
-      buildGridForm(toGridForm(readItems(parent), spacing), RowsGridBuilder(checkJComponent(parent)), spacing)
+      buildGridForm(form, RowsGridBuilder(checkJComponent(parent)), spacing)
     }
   }
 
@@ -152,30 +155,69 @@ internal class FormGridLayout : GridLayout(), MeasurementLayoutManager {
     val comment = row.comment
     // As `cell(c).comment(...)` does, the comment describes the control it stands under.
     row.cells.firstOrNull()?.component?.let { marks.getValue(it).updateAccessibleContextDescription(it, comment) }
+    row.label?.let { label ->
+      label.labelFor = null
+      row.cells.firstOrNull()?.let { labelComponent(label, it.component) }
+    }
     val controls = row.cells.mapIndexed { index, cell ->
+      check(cell.mark.widthGroup == null || cell.mark.alignX != FormAlignX.FILL) {
+        "The control ${cell.component} is in the width group '${cell.mark.widthGroup}' and fills the width. " +
+        "Drop widthGroup or align(FormAlignX.FILL)."
+      }
+      // As CellImpl.align does, an alignment that is declared decides whether a wrapping comment is held to
+      // its width; one that is not declared leaves the value Comment gave it.
+      (cell.component as? DslLabel)?.takeIf { it.maxLineLength == MAX_LINE_LENGTH_WORD_WRAP }?.let {
+        it.limitPreferredSize = limitsPreferredSize(it.maxLineLength, cell.mark.alignX)
+      }
       GridFormComponentCell(
         component = cell.component,
         comment = if (index == 0) comment else null,
-        horizontalAlign = if (cell.fill) HorizontalAlign.FILL else HorizontalAlign.LEFT,
-        rightGap = if (cell.smallGapAfter) RightGap.SMALL else null,
+        label = if (index == 0 && row.labelPosition == FormLabelPosition.TOP) row.label else null,
+        labelPosition = when (row.labelPosition) {
+          FormLabelPosition.LEFT -> LabelPosition.LEFT
+          FormLabelPosition.TOP -> LabelPosition.TOP
+        },
+        widthGroup = cell.mark.widthGroup,
+        horizontalAlign = when (cell.mark.alignX) {
+          null, FormAlignX.LEFT -> HorizontalAlign.LEFT
+          FormAlignX.CENTER -> HorizontalAlign.CENTER
+          FormAlignX.RIGHT -> HorizontalAlign.RIGHT
+          FormAlignX.FILL -> HorizontalAlign.FILL
+        },
+        verticalAlign = when (cell.mark.alignY) {
+          FormAlignY.TOP -> VerticalAlign.TOP
+          FormAlignY.CENTER -> VerticalAlign.CENTER
+          FormAlignY.BOTTOM -> VerticalAlign.BOTTOM
+          FormAlignY.FILL -> VerticalAlign.FILL
+        },
+        resizableColumn = cell.mark.resizableColumn,
+        rightGap = when (cell.mark.rightGap) {
+          null -> null
+          FormRightGap.SMALL -> RightGap.SMALL
+          FormRightGap.COLUMNS -> RightGap.COLUMNS
+        },
+        customGaps = null,
       )
     }
-    val label = row.label
+    val topLabel = row.label.takeIf { row.labelPosition == FormLabelPosition.TOP }
+    val label = row.label.takeIf { row.labelPosition == FormLabelPosition.LEFT }
       ?: return GridFormRow(
         rowLayout = RowLayout.INDEPENDENT,
         // A row holding nothing but its comment has nothing to put the comment under, so the comment is
-        // what the row holds - the row FormComment writes.
-        cells = if (controls.isEmpty() && comment != null) listOf(toCommentCell(comment)) else controls,
+        // what the row holds - the row FormComment writes. A top label with no control to stand over is what
+        // the row holds in the same way, with the comment under it.
+        cells = when {
+          controls.isNotEmpty() -> controls
+          topLabel != null -> listOf(GridFormComponentCell(component = topLabel, comment = comment))
+          comment != null -> listOf(toCommentCell(comment))
+          else -> controls
+        },
         indent = row.indent * spacing.horizontalIndent,
         resizableRow = row.resizable,
         topGap = row.topGap?.toTopGap(),
         bottomGap = row.bottomGap?.toBottomGap(),
       )
 
-    // As `row("Label:") { }` does, the label is given to the first control, when that control can take it.
-    // The label outlives a rebuild, and the control it was given to may be gone.
-    label.labelFor = null
-    row.cells.firstOrNull()?.let { labelComponent(label, it.component) }
     // A row that holds nothing but a label still has somewhere to put its comment.
     val labelCell = GridFormComponentCell(component = label, comment = if (controls.isEmpty()) comment else null)
     return GridFormRow(
@@ -218,7 +260,7 @@ internal class FormGridLayout : GridLayout(), MeasurementLayoutManager {
    * it replaces holds one per state and hides all but the applicable one, so the same comment that fills a
    * middle column there would fill to the end of the row here - and a row whose last cell claims the rest of
    * the width stands 3px narrower and shorter than its neighbours. A row that wants it says
-   * [FormRowScope.cell] with `fillWidth`.
+   * [FormRowScope.align] with [FormAlignX.FILL].
    */
   private fun JComponent.wrapsToTheWidthItIsGiven(): Boolean =
     this is DslLabel && maxLineLength == MAX_LINE_LENGTH_WORD_WRAP
@@ -266,7 +308,7 @@ internal class FormGridLayout : GridLayout(), MeasurementLayoutManager {
         continue
       }
       val row = rows.getOrPut(rowMark.token) {
-        FormRowContent(rowMark.indent, rowMark.resizable, rowMark.topGap, rowMark.bottomGap)
+        FormRowContent(rowMark.indent, rowMark.resizable, rowMark.topGap, rowMark.bottomGap, rowMark.labelPosition)
           .also { itemsOf(rowMark.group, root, groups) += it }
       }
       when (val mark = childMarks.mark) {
@@ -274,8 +316,8 @@ internal class FormGridLayout : GridLayout(), MeasurementLayoutManager {
         is FormRowMark -> row.label = child as JLabel
         // The only comment a form makes is the one FormRow asks for, and that is a DslLabel.
         is FormCommentMark -> row.comment = child as DslLabel
-        is FormCellMark -> row.cells += FormCellContent(child, mark.fillWidth, mark.smallGapAfter)
-        null -> row.cells += FormCellContent(child, fill = false, smallGapAfter = false)
+        is FormCellMark -> row.cells += FormCellContent(child, mark)
+        null -> row.cells += FormCellContent(child, FormCellMark())
       }
     }
 
@@ -363,6 +405,7 @@ internal class FormRowContent(
   val resizable: Boolean,
   val topGap: FormGap?,
   val bottomGap: FormGap?,
+  val labelPosition: FormLabelPosition,
 ) : FormItem {
   var label: JLabel? = null
   var comment: DslLabel? = null
@@ -376,6 +419,5 @@ internal class FormGroupContent(val indent: Int) : FormItem {
 /** One control of a row, and what it asked of the cell it is given. */
 internal class FormCellContent(
   val component: JComponent,
-  val fill: Boolean,
-  val smallGapAfter: Boolean,
+  val mark: FormCellMark,
 )

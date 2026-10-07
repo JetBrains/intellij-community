@@ -207,7 +207,7 @@ class FormPanelStructureTest {
     setContent {
       Form {
         FormRow("Log:") {
-          TextFieldControl("log", if (fill.value) SwingModifier.cell(fillWidth = true) else SwingModifier)
+          TextFieldControl("log", if (fill.value) SwingModifier.align(FormAlignX.FILL) else SwingModifier)
         }
       }
     }

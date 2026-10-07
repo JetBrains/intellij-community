@@ -37,6 +37,27 @@ f:com.intellij.platform.compose.swing.components.CommentKt
 - *sf:Comment(java.lang.String,org.jetbrains.compose.swing.modifier.SwingModifier,I,androidx.compose.runtime.Composer,I,I):V
 f:com.intellij.platform.compose.swing.components.DropDownLinkKt
 - *sf:DropDownLink(java.util.List,java.lang.Object,kotlin.jvm.functions.Function1,org.jetbrains.compose.swing.modifier.SwingModifier,Z,androidx.compose.runtime.Composer,I,I):V
+*:com.intellij.platform.compose.swing.components.FormAlign
+*e:com.intellij.platform.compose.swing.components.FormAlignX
+- java.lang.Enum
+- com.intellij.platform.compose.swing.components.FormAlign
+- sf:CENTER:com.intellij.platform.compose.swing.components.FormAlignX
+- sf:FILL:com.intellij.platform.compose.swing.components.FormAlignX
+- sf:LEFT:com.intellij.platform.compose.swing.components.FormAlignX
+- sf:RIGHT:com.intellij.platform.compose.swing.components.FormAlignX
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.compose.swing.components.FormAlignX
+- s:values():com.intellij.platform.compose.swing.components.FormAlignX[]
+*e:com.intellij.platform.compose.swing.components.FormAlignY
+- java.lang.Enum
+- com.intellij.platform.compose.swing.components.FormAlign
+- sf:BOTTOM:com.intellij.platform.compose.swing.components.FormAlignY
+- sf:CENTER:com.intellij.platform.compose.swing.components.FormAlignY
+- sf:FILL:com.intellij.platform.compose.swing.components.FormAlignY
+- sf:TOP:com.intellij.platform.compose.swing.components.FormAlignY
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.compose.swing.components.FormAlignY
+- s:values():com.intellij.platform.compose.swing.components.FormAlignY[]
 *e:com.intellij.platform.compose.swing.components.FormGap
 - java.lang.Enum
 - sf:MEDIUM:com.intellij.platform.compose.swing.components.FormGap
@@ -45,20 +66,36 @@ f:com.intellij.platform.compose.swing.components.DropDownLinkKt
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.platform.compose.swing.components.FormGap
 - s:values():com.intellij.platform.compose.swing.components.FormGap[]
+*e:com.intellij.platform.compose.swing.components.FormLabelPosition
+- java.lang.Enum
+- sf:LEFT:com.intellij.platform.compose.swing.components.FormLabelPosition
+- sf:TOP:com.intellij.platform.compose.swing.components.FormLabelPosition
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.compose.swing.components.FormLabelPosition
+- s:values():com.intellij.platform.compose.swing.components.FormLabelPosition[]
 f:com.intellij.platform.compose.swing.components.FormPanelKt
 - *sf:FormPanel(org.jetbrains.compose.swing.modifier.SwingModifier,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+*e:com.intellij.platform.compose.swing.components.FormRightGap
+- java.lang.Enum
+- sf:COLUMNS:com.intellij.platform.compose.swing.components.FormRightGap
+- sf:SMALL:com.intellij.platform.compose.swing.components.FormRightGap
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.compose.swing.components.FormRightGap
+- s:values():com.intellij.platform.compose.swing.components.FormRightGap[]
 *:com.intellij.platform.compose.swing.components.FormRowScope
-- a:cell(org.jetbrains.compose.swing.modifier.SwingModifier,Z,Z):org.jetbrains.compose.swing.modifier.SwingModifier
-- bs:cell$default(com.intellij.platform.compose.swing.components.FormRowScope,org.jetbrains.compose.swing.modifier.SwingModifier,Z,Z,I,java.lang.Object):org.jetbrains.compose.swing.modifier.SwingModifier
+- a:align(org.jetbrains.compose.swing.modifier.SwingModifier,com.intellij.platform.compose.swing.components.FormAlign):org.jetbrains.compose.swing.modifier.SwingModifier
+- a:gap(org.jetbrains.compose.swing.modifier.SwingModifier,com.intellij.platform.compose.swing.components.FormRightGap):org.jetbrains.compose.swing.modifier.SwingModifier
+- a:resizableColumn(org.jetbrains.compose.swing.modifier.SwingModifier):org.jetbrains.compose.swing.modifier.SwingModifier
+- a:widthGroup(org.jetbrains.compose.swing.modifier.SwingModifier,java.lang.String):org.jetbrains.compose.swing.modifier.SwingModifier
 *:com.intellij.platform.compose.swing.components.FormScope
 - a:FormComment(java.lang.String,androidx.compose.runtime.Composer,I):V
 - a:FormGroup(java.lang.String,Z,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I):V
 - a:FormIndent(kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I):V
-- a:FormRow(java.lang.String,java.lang.String,Z,com.intellij.platform.compose.swing.components.FormGap,com.intellij.platform.compose.swing.components.FormGap,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I):V
+- a:FormRow(java.lang.String,java.lang.String,Z,com.intellij.platform.compose.swing.components.FormGap,com.intellij.platform.compose.swing.components.FormGap,com.intellij.platform.compose.swing.components.FormLabelPosition,I,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I):V
 - a:FormSeparator(androidx.compose.runtime.Composer,I):V
 *f:com.intellij.platform.compose.swing.components.FormScope$ComposeDefaultImpls
 - sf:FormGroup$default(java.lang.String,Z,kotlin.jvm.functions.Function3,com.intellij.platform.compose.swing.components.FormScope,androidx.compose.runtime.Composer,I,I):V
-- sf:FormRow$default(java.lang.String,java.lang.String,Z,com.intellij.platform.compose.swing.components.FormGap,com.intellij.platform.compose.swing.components.FormGap,kotlin.jvm.functions.Function3,com.intellij.platform.compose.swing.components.FormScope,androidx.compose.runtime.Composer,I,I):V
+- sf:FormRow$default(java.lang.String,java.lang.String,Z,com.intellij.platform.compose.swing.components.FormGap,com.intellij.platform.compose.swing.components.FormGap,com.intellij.platform.compose.swing.components.FormLabelPosition,I,kotlin.jvm.functions.Function3,com.intellij.platform.compose.swing.components.FormScope,androidx.compose.runtime.Composer,I,I):V
 f:com.intellij.platform.compose.swing.components.OptionButtonKt
 - *sf:OptionButton(java.lang.String,kotlin.jvm.functions.Function0,org.jetbrains.compose.swing.modifier.SwingModifier,java.util.List,Z,androidx.compose.runtime.Composer,I,I):V
 f:com.intellij.platform.compose.swing.components.SearchTextFieldKt

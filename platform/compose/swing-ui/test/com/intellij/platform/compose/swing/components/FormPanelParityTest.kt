@@ -5,9 +5,11 @@ import androidx.compose.runtime.Composable
 import com.intellij.icons.AllIcons
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
+import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.TopGap
@@ -103,12 +105,86 @@ class FormPanelParityTest {
       }
     },
     form = {
-      FormRow("Filled:") { TextFieldControl(SwingModifier.cell(fillWidth = true)) }
-      FormRow { TextFieldControl(SwingModifier.cell(fillWidth = true)) }
+      FormRow("Filled:") { TextFieldControl(SwingModifier.align(FormAlignX.FILL)) }
+      FormRow { TextFieldControl(SwingModifier.align(FormAlignX.FILL)) }
       FormRow("Filled, then not:") {
-        TextFieldControl(SwingModifier.cell(fillWidth = true))
+        TextFieldControl(SwingModifier.align(FormAlignX.FILL))
         LabelControl("after")
       }
+    },
+  )
+
+  @Test
+  fun widthGroupsAcrossRows() = assertParity(
+    dsl = {
+      row("Short:") { cell(newLabel("short")).widthGroup("fields") }
+      row("Long:") { cell(newLabel("a much longer field")).widthGroup("fields") }
+    },
+    form = {
+      FormRow("Short:") { LabelControl("short", SwingModifier.widthGroup("fields")) }
+      FormRow("Long:") { LabelControl("a much longer field", SwingModifier.widthGroup("fields")) }
+    },
+  )
+
+  @Test
+  fun columnsThatUseTheSpareWidth() = assertParity(
+    dsl = {
+      row {
+        cell(newTextField()).resizableColumn().align(AlignX.FILL)
+        cell(newLabel("after"))
+      }
+    },
+    form = {
+      FormRow {
+        TextFieldControl(SwingModifier.align(FormAlignX.FILL).resizableColumn())
+        LabelControl("after")
+      }
+    },
+  )
+
+  @Test
+  fun labelsAboveControls() = assertParity(
+    dsl = {
+      row { cell(newTextField()).label("Above:", LabelPosition.TOP).align(AlignX.FILL) }
+    },
+    form = {
+      FormRow("Above:", labelPosition = FormLabelPosition.TOP) { TextFieldControl(SwingModifier.align(FormAlignX.FILL)) }
+    },
+  )
+
+  @Test
+  fun controlsThatFillBothAxes() = assertParity(
+    dsl = {
+      row { cell(newScrollPane()).resizableColumn().align(Align.FILL) }.resizableRow()
+    },
+    form = {
+      FormRow(resizable = true) { ScrollPaneControl(SwingModifier.align(FormAlignX.FILL).align(FormAlignY.FILL).resizableColumn()) }
+    },
+  )
+
+  @Test
+  fun columnGaps() = assertParity(
+    dsl = {
+      row {
+        cell(newTextField()).gap(RightGap.COLUMNS)
+        cell(newLabel("after"))
+      }
+    },
+    form = {
+      FormRow {
+        TextFieldControl(SwingModifier.gap(FormRightGap.COLUMNS))
+        LabelControl("after")
+      }
+    },
+  )
+
+  @Test
+  fun commentsWithCustomWrapWidths() = assertParity(
+    dsl = {
+      row("Output:") { cell(newTextField()).comment(LONG_COMMENT, 120) }
+    },
+    form = {
+      FormRow("Output:", comment = LONG_COMMENT, commentMaxLineLength = 120) { TextFieldControl() }
     },
   )
 
@@ -236,7 +312,7 @@ class FormPanelParityTest {
    * the controls it was written with, where the row it replaces holds one comment per state and hides all but
    * one, so a comment that fills a middle column there fills to the end of the row here - and a row whose last
    * cell claims the rest of the width stands 3px narrower and shorter than the rows around it. A row that
-   * wants the width says `cell(fillWidth = true)`.
+   * wants the width says `align(FormAlignX.FILL)`.
    *
    * Which is why only the `panel {}` side names a line length: it fills whenever the length is
    * [com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP], so it has to be told not to. `Comment` keeps that
@@ -260,6 +336,31 @@ class FormPanelParityTest {
     },
   )
 
+  /** A wrapping comment with an explicit alignment other than FILL is no longer held to the width it is given. */
+  @Test
+  fun wrappingCommentAlignedRight() = assertParity(
+    dsl = {
+      row { comment(LONG_COMMENT).align(AlignX.RIGHT) }
+      row("After:") { cell(newTextField()) }
+    },
+    form = {
+      FormRow { Comment(LONG_COMMENT, SwingModifier.align(FormAlignX.RIGHT)) }
+      FormRow("After:") { TextFieldControl() }
+    },
+  )
+
+  @Test
+  fun wrappingCommentAlignedCenter() = assertParity(
+    dsl = {
+      row { comment(LONG_COMMENT).align(AlignX.CENTER) }
+      row("After:") { cell(newTextField()) }
+    },
+    form = {
+      FormRow { Comment(LONG_COMMENT, SwingModifier.align(FormAlignX.CENTER)) }
+      FormRow("After:") { TextFieldControl() }
+    },
+  )
+
   /** An icon before the text it belongs to keeps a small gap, not the gap between two unrelated controls. */
   @Test
   fun aControlThatKeepsASmallGapFromTheNextOne() = assertParity(
@@ -278,7 +379,7 @@ class FormPanelParityTest {
     form = {
       FormRow {
         TextFieldControl()
-        IconControl(SwingModifier.cell(smallGapAfter = true))
+        IconControl(SwingModifier.gap(FormRightGap.SMALL))
         Comment("Something is wrong with it")
       }
       FormRow {
@@ -378,7 +479,7 @@ class FormPanelParityTest {
       row("After:") { cell(newTextField()) }
     },
     form = {
-      FormRow("Log:", resizable = true) { ScrollPaneControl(SwingModifier.cell(fillWidth = true)) }
+      FormRow("Log:", resizable = true) { ScrollPaneControl(SwingModifier.align(FormAlignX.FILL)) }
       FormRow("After:") { TextFieldControl() }
     },
   )
@@ -533,6 +634,9 @@ class FormPanelParityTest {
 }
 
 private const val FORM_TAG = "form-under-test"
+
+/** Longer than the default wrap width of 70 characters and shorter than 120, so only the explicit width keeps it on one line. */
+private const val LONG_COMMENT = "A comment with the page's explicit wrap width, which is wider than the default one is"
 
 /** The width a settings page gives its content; wide enough for a filled cell to have room to fill. */
 private const val WIDTH = 500

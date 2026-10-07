@@ -45,6 +45,7 @@ import com.intellij.platform.compose.swing.components.BrowserLink
 import com.intellij.platform.compose.swing.components.Comment
 import com.intellij.platform.compose.swing.components.FormGap
 import com.intellij.platform.compose.swing.components.FormPanel
+import com.intellij.platform.compose.swing.components.FormRightGap
 import com.intellij.platform.compose.swing.components.FormScope
 import com.intellij.platform.compose.swing.components.OptionButton
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -224,7 +225,7 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
         text = if (serverRunning) McpServerBundle.message("enable.mcp.server.when.enabled")
         else McpServerBundle.message("enable.mcp.server"),
         checked = enabled,
-        modifier = SwingModifier.cell(smallGapAfter = true),
+        modifier = SwingModifier.gap(FormRightGap.SMALL),
         onCheckedChange = ::requestEnabledChange,
       )
     }
@@ -236,7 +237,7 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
             onValueChange = { newVal ->
               newVal.toIntOrNull()?.let { parsedPort -> if (isValidPort(parsedPort)) port = parsedPort }
             },
-            modifier = SwingModifier.cell(smallGapAfter = true),
+            modifier = SwingModifier.gap(FormRightGap.SMALL),
             columns = PORT_TXT_WIDTH
           )
         }
@@ -244,7 +245,7 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
           BrowserLink(
             text = sseUrl,
             url = sseUrl,
-            modifier = SwingModifier.cell(smallGapAfter = true).toolTip(sseUrl),
+            modifier = SwingModifier.gap(FormRightGap.SMALL).toolTip(sseUrl),
           )
           BrowserLink(text = streamUrl, url = streamUrl, modifier = SwingModifier.toolTip(streamUrl))
         }
@@ -361,7 +362,7 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
         modifier = SwingModifier.enabled(serverRunning),
       )
       state.statusIcon?.let {
-        Label(text = "", modifier = SwingModifier.cell(smallGapAfter = true).icon(it))
+        Label(text = "", modifier = SwingModifier.gap(FormRightGap.SMALL).icon(it))
       }
       if (state.statusText.isNotEmpty()) {
         if (state.statusIsComment) Comment(state.statusText) else Label(state.statusText)

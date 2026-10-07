@@ -41,9 +41,17 @@ public fun Comment(
       // the one it gets; the width is set before the text so the text is laid out to it straight away.
       set(maxLineLength) {
         this.maxLineLength = it
-        limitPreferredSize = it == MAX_LINE_LENGTH_WORD_WRAP
+        limitPreferredSize = limitsPreferredSize(it, alignX = null)
       }
       set(text) { this.text = it }
     },
   )
 }
+
+/**
+ * Whether a comment is held to the width it is given. `CellImpl.align` makes the same choice: only a comment
+ * that wraps to its width, and is not given an explicit alignment other than [FormAlignX.FILL], is held.
+ * [alignX] is `null` when the cell declares no alignment.
+ */
+internal fun limitsPreferredSize(maxLineLength: Int, alignX: FormAlignX?): Boolean =
+  maxLineLength == MAX_LINE_LENGTH_WORD_WRAP && (alignX == null || alignX == FormAlignX.FILL)

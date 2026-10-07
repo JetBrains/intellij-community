@@ -256,12 +256,14 @@ Two consequences decide whether a settings page should be split this way at all:
 
 | DSL | Compose | Notes |
 |---|---|---|
-| `align(AlignX.FILL)` | `SwingModifier.cell(fillWidth = true)` | `AlignX.LEFT` is the default. `AlignX.CENTER`, `AlignX.RIGHT` and every `AlignY` are gaps |
-| `resizableColumn()` | **gap** | No column claims the spare width. `FormRow(resizable = true)` is the row-wise `resizableRow()` |
-| `gap(RightGap.SMALL)` | `SwingModifier.cell(smallGapAfter = true)` | An icon before the text it belongs to; `RightGap.COLUMNS` is a gap |
-| `customize(UnscaledGaps)` | **gap** | Only the named steps; a cell wanting an exact distance stays with `panel {}` |
-| `label(text, position)` | `FormRow(label = ...)` | `LabelPosition.TOP` is a gap |
-| `comment(...)` / `commentRight(...)` | `FormRow(comment = ...)` | `commentRight` is a gap |
+| `align(AlignX.*)` | `SwingModifier.align(FormAlignX.*)` | The default is `FormAlignX.LEFT` |
+| `align(AlignY.*)` | `SwingModifier.align(FormAlignY.*)` | The default is `FormAlignY.CENTER` |
+| `align(Align.FILL)` | `SwingModifier.align(FormAlignX.FILL).align(FormAlignY.FILL)` | The two calls combine on one chain |
+| `resizableColumn()` | `SwingModifier.resizableColumn()` | The column takes spare horizontal space |
+| `gap(rightGap)` | `SwingModifier.gap(FormRightGap.*)` | `FormRightGap` names `SMALL` and `COLUMNS`. Copy `FormRightGap.SMALL` between an icon and its text |
+| `customize(UnscaledGaps)` | **Gap** | No exact-gap override. Use `gap` or `FormRow` gaps, or keep the row in `panel {}` |
+| `label(text, position)` | `FormRow(label = text, labelPosition = FormLabelPosition.X)` | The default position is `FormLabelPosition.LEFT` |
+| `comment(...)` / `commentRight(...)` | `FormRow(comment = ..., commentMaxLineLength = ...)` | **Gap** for `commentRight`: a `Comment` placed as a second control gets the default gap, not the comment gap, and does not describe the control for accessibility |
 | `focused()` | `SwingModifier.initialFocus()` | |
 | `applyToComponent { }` | the `update` block of `SwingNode` | |
 | `bold()` | `SwingModifier.font(...)` | |
@@ -271,7 +273,7 @@ Two consequences decide whether a settings page should be split this way at all:
 | `onChanged` / `onChangedContext` | the component's own callback | |
 | `onApply` / `onReset` / `onIsModified` | override on the configurable | |
 | `bind(get, set, prop)` and every `bind*` extension | `bind(...)` on the configurable | `bindSelected`, `bindText`, `bindIntText`, `bindItem`, `bindValue`, `bindIntValue`, `bindState` |
-| `widthGroup(group)` | **gap** | The form API has no width-group parameter |
+| `widthGroup(group)` | `SwingModifier.widthGroup(group)` | Controls in the group have the same width. A cell cannot also use `FormAlignX.FILL` |
 | `validationOnApply` / `errorOnApply` / `addValidationRule` | `ConfigurationException` from `apply` | See [Refusing a value](#refusing-a-value) |
 | `validationOnInput` / `validationRequestor` / `cellValidation` / `validationInfo` / `validation` | **gap** | No on-input validation framework; `SwingModifier.errorOutline(...)` for the look |
 

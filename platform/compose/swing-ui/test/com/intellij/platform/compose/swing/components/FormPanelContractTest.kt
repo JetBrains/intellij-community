@@ -6,18 +6,29 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.components.DslLabel
+import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.compose.swing.components.Label
+import org.jetbrains.compose.swing.modifier.SwingModifier
+import org.jetbrains.compose.swing.modifier.appearance.testTag
 import org.jetbrains.compose.swing.node.SwingNode
 import org.jetbrains.compose.swing.test.ComposeSwingTest
 import org.jetbrains.compose.swing.test.onNodeOfType
 import org.jetbrains.compose.swing.test.runComposeSwingTest
 import org.junit.jupiter.api.Test
 import javax.swing.JCheckBox
+import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JTextField
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
@@ -32,6 +43,78 @@ import kotlin.test.assertTrue
  */
 @TestApplication
 class FormPanelContractTest {
+  @Test
+  fun theRowLabelFollowsItsFirstControlAndPosition() = runComposeSwingTest {
+    var firstVisible by mutableStateOf(true)
+    var label by mutableStateOf("Name:")
+    var position by mutableStateOf(FormLabelPosition.LEFT)
+    setContent {
+      FormPanel {
+        FormRow(label, labelPosition = position) {
+          if (firstVisible) {
+            SwingNode(factory = { JTextField(10) }, modifier = SwingModifier.testTag("first"))
+          }
+          SwingNode(factory = { JTextField(10) }, modifier = SwingModifier.testTag("second"))
+        }
+      }
+    }
+    val first = onNodeWithTag("first").fetch<JTextField>()
+    val second = onNodeWithTag("second").fetch<JTextField>()
+    assertEquals("Name:", first.accessibleContext.accessibleName)
+    assertNull(second.accessibleContext.accessibleName)
+
+    label = "Path:"
+    position = FormLabelPosition.TOP
+    awaitIdle()
+    assertEquals("Path:", first.accessibleContext.accessibleName)
+
+    firstVisible = false
+    awaitIdle()
+    assertEquals("Path:", second.accessibleContext.accessibleName)
+    assertNull(first.accessibleContext.accessibleName)
+  }
+
+  @Test
+  fun conflictingWidthGroupAndFillIsReportedWhenTheFormLaysTheControlOut() = runComposeSwingTest {
+    val failure = assertFailsWith<IllegalStateException> {
+      setContent {
+        FormPanel(modifier = SwingModifier.testTag("form")) {
+          FormRow {
+            SwingNode(
+              factory = { JTextField(10) },
+              modifier = SwingModifier.testTag("field").widthGroup("buttons").align(FormAlignX.FILL),
+            )
+          }
+        }
+      }
+      onNodeWithTag("form").fetch<JComponent>().preferredSize
+    }
+    val message = failure.message!!
+    assertTrue(message.contains("JTextField"), "the message names the control: $message")
+    assertTrue(message.contains("Drop widthGroup or align(FormAlignX.FILL)"), message)
+  }
+
+  @Test
+  fun modifiersOnOneChainCombine() = runComposeSwingTest {
+    setContent {
+      FormPanel(modifier = SwingModifier.testTag("form")) {
+        FormRow {
+          SwingNode(
+            factory = { JTextField(10) },
+            modifier = SwingModifier.testTag("field").align(FormAlignX.FILL).align(FormAlignY.FILL).gap(FormRightGap.COLUMNS),
+          )
+          SwingNode(factory = { JTextField(10) }, modifier = SwingModifier.testTag("plain"))
+          Label("after")
+        }
+      }
+    }
+    val layout = onNodeWithTag("form").fetch<JComponent>().layout as GridLayout
+    val constraints = checkNotNull(layout.getConstraints(onNodeWithTag("field").fetch<JTextField>()))
+    val plain = checkNotNull(layout.getConstraints(onNodeWithTag("plain").fetch<JTextField>()))
+    assertEquals(HorizontalAlign.FILL, constraints.horizontalAlign)
+    assertEquals(VerticalAlign.FILL, constraints.verticalAlign)
+    assertTrue(constraints.gaps.right > plain.gaps.right, "the column gap is wider than the default one: ${constraints.gaps} vs ${plain.gaps}")
+  }
 
   @Test
   fun aComponentEmittedOutsideARowIsReportedAndTheRestOfTheFormIsStillLaidOut() = runComposeSwingTest {
@@ -67,6 +150,69 @@ class FormPanelContractTest {
 
     assertTrue(reported.isEmpty(), "a row holding only its comment is a form, not a fault:\n${reported.joinToString("\n")}")
     onNodeOfType<DslLabel>().assertIsDisplayed()
+  }
+
+  @Test
+  fun aRowWithATopLabelAndNoControlsShowsItsLabel() = runComposeSwingTest {
+    val reported = reportedErrorsFrom {
+      setContent {
+        FormPanel {
+          // The row holds nothing else, the way a row whose only control is behind a condition holds nothing.
+          FormRow("Only a label:", labelPosition = FormLabelPosition.TOP) { }
+          FormRow("After it:") { Label("after") }
+        }
+      }
+    }
+
+    assertTrue(reported.isEmpty(), "a row holding only a top label is a form, not a fault:\n${reported.joinToString("\n")}")
+    onNodeWithText("Only a label:").assertIsDisplayed()
+  }
+
+  @Test
+  fun changingOnlyTheCommentWrapWidthRelaysTheForm() = runComposeSwingTest {
+    var maxLineLength by mutableStateOf(MAX_LINE_LENGTH_WORD_WRAP)
+    setContent {
+      FormPanel(modifier = SwingModifier.testTag("form")) {
+        // A comment standing alone fills the form only when the form is the one that wraps it.
+        FormRow(comment = "A short comment", commentMaxLineLength = maxLineLength) { }
+        // A wide row, so the form is wider than the comment asks to be.
+        FormRow { SwingNode(factory = { JTextField(40) }) }
+      }
+    }
+    val comment = onNodeOfType<DslLabel>().fetch()
+    val wrappedByTheForm = comment.width
+    val formWidth = onNodeWithTag("form").fetch<JComponent>().width
+    assertTrue(wrappedByTheForm > formWidth / 2, "the form wraps the comment, but it is $wrappedByTheForm of $formWidth")
+
+    maxLineLength = DEFAULT_COMMENT_WIDTH
+    awaitIdle()
+    assertTrue(comment.width < wrappedByTheForm, "the comment keeps its own width, but is ${comment.width} of $wrappedByTheForm")
+  }
+
+  @Test
+  fun recomposingARowWithEqualCellOptionsKeepsTheGrid() = runComposeSwingTest {
+    var tick by mutableStateOf(0)
+    setContent {
+      FormPanel(modifier = SwingModifier.testTag("form")) {
+        FormRow {
+          // Every composition makes a new modifier, equal to the last one in what it says.
+          SwingNode(
+            factory = { JTextField(10) },
+            modifier = SwingModifier.testTag("field").align(FormAlignX.FILL).align(FormAlignY.FILL).gap(FormRightGap.SMALL),
+          )
+          Label("tick $tick")
+        }
+      }
+    }
+    val form = onNodeWithTag("form").fetch<JComponent>()
+    val field = onNodeWithTag("field").fetch<JTextField>()
+    val layout = form.layout as GridLayout
+    val before = layout.getConstraints(field)
+
+    tick = 1
+    awaitIdle()
+    onNodeWithText("tick 1").assertIsDisplayed()
+    assertSame(before, layout.getConstraints(field), "the grid was built again though no cell option changed")
   }
 
   @Test
