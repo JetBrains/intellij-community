@@ -204,7 +204,11 @@ public final class DurableMapBlockCatalog {
     /** Blocks with key-value records */
     ENTRIES(1),
     /** Blocks with persistent lookup structures */
-    LOOKUP(2);
+    LOOKUP(2),
+    /** Blocks with (unique) key records */
+    KEYS(3),
+    /** Blocks with value & patches records */
+    VALUES(4);
 
     private final int persistentCode;
 
@@ -220,6 +224,8 @@ public final class DurableMapBlockCatalog {
       return switch (persistentCode) {
         case 1 -> ENTRIES;
         case 2 -> LOOKUP;
+        case 3 -> KEYS;
+        case 4 -> VALUES;
         default -> throw new CorruptedException("Unknown durable map block role " + persistentCode);
       };
     }

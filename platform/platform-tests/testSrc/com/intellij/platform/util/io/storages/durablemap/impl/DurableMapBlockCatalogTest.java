@@ -43,10 +43,16 @@ public class DurableMapBlockCatalogTest {
       var entriesBlock = blockCatalog.allocateBlock(DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES, BLOCK_CONTENT_LENGTH);
       entriesBlock.activate();
       var lookupBlock = blockCatalog.allocateBlock(DurableMapBlockCatalog.DurableMapBlockRole.LOOKUP, BLOCK_CONTENT_LENGTH);
+      var keysBlock = blockCatalog.allocateBlock(DurableMapBlockCatalog.DurableMapBlockRole.KEYS, BLOCK_CONTENT_LENGTH);
+      var valuesBlock = blockCatalog.allocateBlock(DurableMapBlockCatalog.DurableMapBlockRole.VALUES, BLOCK_CONTENT_LENGTH);
 
-      assertEquals(List.of(entriesBlock, lookupBlock), blockCatalog.blocks());
+      assertEquals(3, DurableMapBlockCatalog.DurableMapBlockRole.KEYS.persistentCode());
+      assertEquals(4, DurableMapBlockCatalog.DurableMapBlockRole.VALUES.persistentCode());
+      assertEquals(List.of(entriesBlock, lookupBlock, keysBlock, valuesBlock), blockCatalog.blocks());
       assertEquals(List.of(entriesBlock), blockCatalog.blocks(DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES));
       assertEquals(List.of(lookupBlock), blockCatalog.blocks(DurableMapBlockCatalog.DurableMapBlockRole.LOOKUP));
+      assertEquals(List.of(keysBlock), blockCatalog.blocks(DurableMapBlockCatalog.DurableMapBlockRole.KEYS));
+      assertEquals(List.of(valuesBlock), blockCatalog.blocks(DurableMapBlockCatalog.DurableMapBlockRole.VALUES));
       assertEquals(blockCatalog.blocks(), store.blocks());
     }
   }
