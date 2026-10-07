@@ -148,6 +148,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/addConstructorParameterForValueClass.kt");
         }
 
+        @TestMetadata("addContextParameterWithAnnotation.kt")
+        public void testAddContextParameterWithAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addContextParameterWithAnnotation.kt");
+        }
+
         @TestMetadata("addEnumConstructorParameter.kt")
         public void testAddEnumConstructorParameter() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/addEnumConstructorParameter.kt");
