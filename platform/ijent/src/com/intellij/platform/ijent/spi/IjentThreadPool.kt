@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.spi
 
 import com.intellij.platform.eel.EelUnavailableException
+import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.ijent.IjentLogger
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -9,6 +10,7 @@ import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
 import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
@@ -77,7 +79,10 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
     val exceptionHandler = object : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
       override fun handleException(context: CoroutineContext, exception: Throwable) {
         // EelUnavailableException is silently ignored - it's already logged during its creation.
-        if (exception !is EelUnavailableException) {
+        val unwrapped = generateSequence(exception, Throwable::cause).find {
+          it !is CancellationException && it !is SafeDeferred.FailedDeferred
+        }
+        if (unwrapped !is EelUnavailableException) {
           IjentLogger.OTHER_LOG.error("Uncaught exception in IJent coroutine $context", exception)
         }
       }
