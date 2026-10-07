@@ -237,14 +237,14 @@ internal class TerminalTypingTrackerTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `modified enter is ignored even with a session pending`(): Unit = doTest { fixture ->
+  fun `modified enter invalidates pending input`(): Unit = doTest { fixture ->
     fixture.type('a', TerminalOffset.ZERO)
     fixture.assertTrackerState(hasInputSession = true, pendingEventsCount = 1, predictionsCount = 1)
 
     fixture.press(KeyEvent.VK_ENTER, TerminalOffset.ZERO, InputEvent.SHIFT_DOWN_MASK)
 
-    assertThat(fixture.events.tryReceive().getOrNull()).isNull()
-    fixture.assertTrackerState(hasInputSession = true, pendingEventsCount = 1, predictionsCount = 1)
+    assertThat(fixture.events.receive()).isEqualTo(RecordedMismatch)
+    fixture.assertTrackerState(hasInputSession = false, pendingEventsCount = 0, predictionsCount = 0)
   }
 
   @Test
@@ -314,7 +314,7 @@ internal class TerminalTypingTrackerTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `control typed keys and modified backspace are ignored`(): Unit = doTest { fixture ->
+  fun `control typed keys and modified backspace invalidate pending input`(): Unit = doTest { fixture ->
     fixture.type('\n', TerminalOffset.ZERO)
     for (modifiersEx in listOf(
       InputEvent.ALT_DOWN_MASK,
@@ -324,10 +324,11 @@ internal class TerminalTypingTrackerTest : BasePlatformTestCase() {
       InputEvent.SHIFT_DOWN_MASK,
     )) {
       fixture.press(KeyEvent.VK_BACK_SPACE, TerminalOffset.ZERO, modifiersEx)
+      assertThat(fixture.events.receive()).isEqualTo(RecordedMismatch)
+      fixture.assertTrackerState(hasInputSession = false, pendingEventsCount = 0, predictionsCount = 0)
     }
 
     assertThat(fixture.events.tryReceive().getOrNull()).isNull()
-    fixture.assertTrackerState(hasInputSession = false, pendingEventsCount = 0, predictionsCount = 0)
   }
 
   @Test

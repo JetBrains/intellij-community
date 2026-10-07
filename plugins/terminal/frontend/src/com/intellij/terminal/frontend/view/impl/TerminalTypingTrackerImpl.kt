@@ -80,11 +80,21 @@ class TerminalTypingTrackerImpl(
         handleTyping(event, event.awtEvent.keyChar, event.cursorOffset)
       }
       KeyEvent.KEY_PRESSED -> when (event.awtEvent.keyCode) {
-        KeyEvent.VK_BACK_SPACE -> if (event.awtEvent.hasNoModifiers()) {
-          handleBackspace(event, event.cursorOffset)
+        KeyEvent.VK_BACK_SPACE -> {
+          if (event.awtEvent.hasNoModifiers()) {
+            handleBackspace(event, event.cursorOffset)
+          }
+          else {
+            cancelSessionAndNotifyMismatch()
+          }
         }
-        KeyEvent.VK_ENTER -> if (event.awtEvent.hasNoModifiers()) {
-          handleNewLine(event)
+        KeyEvent.VK_ENTER -> {
+          if (event.awtEvent.hasNoModifiers()) {
+            handleNewLine(event)
+          }
+          else {
+            cancelSessionAndNotifyMismatch()
+          }
         }
         KeyEvent.VK_TAB,
         KeyEvent.VK_LEFT,

@@ -95,8 +95,9 @@ class TerminalInlineCompletionController(
         invokeTyping(keyEvent.awtEvent.keyChar, documentOffset)
       }
       KeyEvent.KEY_PRESSED -> {
-        if (keyEvent.awtEvent.keyCode == KeyEvent.VK_BACK_SPACE) {
-          invokeBackspace()
+        when (keyEvent.awtEvent.keyCode) {
+          KeyEvent.VK_BACK_SPACE -> invokeBackspace()
+          KeyEvent.VK_ENTER -> cancelActiveInlineCompletion()
         }
       }
     }
