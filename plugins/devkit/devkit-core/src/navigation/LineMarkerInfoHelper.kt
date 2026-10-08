@@ -1,172 +1,155 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.navigation;
+package org.jetbrains.idea.devkit.navigation
 
-import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
-import com.intellij.codeInsight.navigation.DomGotoRelatedItem;
-import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
-import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer;
-import com.intellij.devkit.core.icons.DevkitCoreIcons;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.dom.Action;
-import org.jetbrains.idea.devkit.dom.Component;
-import org.jetbrains.idea.devkit.dom.Extension;
-import org.jetbrains.idea.devkit.dom.ExtensionPoint;
-import org.jetbrains.idea.devkit.dom.Group;
-import org.jetbrains.idea.devkit.dom.Listeners;
-import org.jetbrains.idea.devkit.util.ActionCandidate;
-import org.jetbrains.idea.devkit.util.ComponentCandidate;
-import org.jetbrains.idea.devkit.util.ListenerCandidate;
-import org.jetbrains.idea.devkit.util.PointableCandidate;
+import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo
+import com.intellij.codeInsight.navigation.DomGotoRelatedItem
+import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
+import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer
+import com.intellij.devkit.core.icons.DevkitCoreIcons
+import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.psi.PsiElement
+import com.intellij.util.xml.DomElement
+import com.intellij.util.xml.DomUtil
+import org.jetbrains.annotations.Nls
+import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.dom.Action
+import org.jetbrains.idea.devkit.dom.Component
+import org.jetbrains.idea.devkit.dom.Extension
+import org.jetbrains.idea.devkit.dom.ExtensionPoint
+import org.jetbrains.idea.devkit.dom.Group
+import org.jetbrains.idea.devkit.dom.Listeners
+import org.jetbrains.idea.devkit.util.ActionCandidate
+import org.jetbrains.idea.devkit.util.ComponentCandidate
+import org.jetbrains.idea.devkit.util.ListenerCandidate
+import org.jetbrains.idea.devkit.util.PointableCandidate
+import javax.swing.Icon
 
-import javax.swing.Icon;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+internal object LineMarkerInfoHelper {
 
-final class LineMarkerInfoHelper {
-
-  private LineMarkerInfoHelper() {
+  @JvmStatic
+  fun createExtensionLineMarkerInfo(targets: List<PointableCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement> {
+    return createPluginLineMarkerInfo<Extension>(
+      targets, element,
+      popup = DevKitBundle.message("gutter.related.navigation.choose.extension"),
+      icon = DevkitCoreIcons.Gutter.Plugin,
+      namer = { getExtensionPointName(it.extensionPoint) }
+    )
   }
 
-  private static final NotNullFunction<PointableCandidate, Collection<? extends PsiElement>> CONVERTER =
-    candidate -> ContainerUtil.createMaybeSingletonList(candidate.pointer.getElement());
-
-  private static @NotNull String getExtensionPointName(DomElement element) {
-    if (!(element instanceof ExtensionPoint)) return "?";
-    return ((ExtensionPoint)element).getEffectiveQualifiedName();
+  @JvmStatic
+  fun createExtensionPointLineMarkerInfo(targets: List<PointableCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement> {
+    return createPluginLineMarkerInfo<ExtensionPoint>(
+      targets, element,
+      popup = DevKitBundle.message("gutter.related.navigation.choose.extension.point"),
+      icon = DevkitCoreIcons.Gutter.ExtensionPoint,
+      namer = { getExtensionPointName(it) }
+    )
   }
 
-  static @NotNull RelatedItemLineMarkerInfo<PsiElement> createExtensionLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,
-                                                                                      @NotNull PsiElement element) {
-    return createPluginLineMarkerInfo(targets, element,
-                                      DevKitBundle.message("gutter.related.navigation.choose.extension"),
-                                      DevkitCoreIcons.Gutter.Plugin,
-                                      (NullableFunction<Extension, String>)extension ->
-                                        getExtensionPointName(extension.getExtensionPoint()));
+  @JvmStatic
+  fun createListenerLineMarkerInfo(targets: List<ListenerCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement> {
+    return createPluginLineMarkerInfo<Listeners.Listener>(
+      targets, element,
+      popup = DevKitBundle.message("gutter.related.navigation.choose.listener"),
+      icon = DevkitCoreIcons.Gutter.Plugin,
+      namer = { it.topicClassName.stringValue }
+    )
   }
 
-  static @NotNull RelatedItemLineMarkerInfo<PsiElement> createExtensionPointLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,
-                                                                                           @NotNull PsiElement element) {
-    return createPluginLineMarkerInfo(targets, element,
-                                      DevKitBundle.message("gutter.related.navigation.choose.extension.point"),
-                                      DevkitCoreIcons.Gutter.ExtensionPoint,
-                                      (NullableFunction<ExtensionPoint, String>)extensionPoint -> getExtensionPointName(extensionPoint));
+  @JvmStatic
+  fun createListenerTopicLineMarkerInfo(targets: List<ListenerCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement> {
+    return createPluginLineMarkerInfo<Listeners.Listener>(
+      targets, element,
+      popup = DevKitBundle.message("gutter.related.navigation.choose.listener"),
+      icon = DevkitCoreIcons.Gutter.Plugin,
+      namer = { it.listenerClassName.stringValue }
+    )
   }
 
-  static RelatedItemLineMarkerInfo<PsiElement> createListenerLineMarkerInfo(@NotNull List<? extends ListenerCandidate> targets,
-                                                                            @NotNull PsiElement element) {
-    return createPluginLineMarkerInfo(targets, element,
-                                      DevKitBundle.message("gutter.related.navigation.choose.listener"),
-                                      DevkitCoreIcons.Gutter.Plugin,
-                                      (NullableFunction<Listeners.Listener, String>)listener ->
-                                        listener.getTopicClassName().getStringValue());
+  @JvmStatic
+  fun createActionLineMarkerInfo(targets: List<ActionCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement> {
+    return createPluginLineMarkerInfo(
+      targets, element,
+      popup = DevKitBundle.message("gutter.related.navigation.choose.action"),
+      icon = DevkitCoreIcons.Gutter.Plugin,
+      namer = Action::getEffectiveId
+    )
   }
 
-  static RelatedItemLineMarkerInfo<PsiElement> createListenerTopicLineMarkerInfo(@NotNull List<? extends ListenerCandidate> targets,
-                                                                                 @NotNull PsiElement element) {
-    return createPluginLineMarkerInfo(targets, element,
-                                      DevKitBundle.message("gutter.related.navigation.choose.listener"),
-                                      DevkitCoreIcons.Gutter.Plugin,
-                                      (NullableFunction<Listeners.Listener, String>)listener ->
-                                        listener.getListenerClassName().getStringValue());
+  @JvmStatic
+  fun createActionGroupLineMarkerInfo(targets: List<ActionCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement> {
+    return createPluginLineMarkerInfo(
+      targets, element,
+      popup = DevKitBundle.message("gutter.related.navigation.choose.action.group"),
+      icon = DevkitCoreIcons.Gutter.Plugin,
+      namer = Group::getEffectiveId
+    )
   }
 
-  static RelatedItemLineMarkerInfo<?> createActionLineMarkerInfo(List<? extends ActionCandidate> targets, PsiElement element) {
-    return createPluginLineMarkerInfo(targets, element,
-                                      DevKitBundle.message("gutter.related.navigation.choose.action"),
-                                      DevkitCoreIcons.Gutter.Plugin,
-                                      (NullableFunction<Action, String>)action -> action.getEffectiveId());
+  @JvmStatic
+  fun createComponentLineMarkerInfo(targets: List<ComponentCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement> {
+    return createPluginLineMarkerInfo<Component>(
+      targets, element,
+      popup = DevKitBundle.message("gutter.related.navigation.choose.component"),
+      icon = DevkitCoreIcons.Gutter.Plugin,
+      namer = { it.implementationClass.stringValue }
+    )
   }
 
-  static RelatedItemLineMarkerInfo<?> createActionGroupLineMarkerInfo(List<? extends ActionCandidate> targets, PsiElement element) {
-    return createPluginLineMarkerInfo(targets, element,
-                                      DevKitBundle.message("gutter.related.navigation.choose.action.group"),
-                                      DevkitCoreIcons.Gutter.Plugin,
-                                      (NullableFunction<Group, String>)group -> group.getEffectiveId());
+  private fun getExtensionPointName(element: DomElement?): String {
+    return (element as? ExtensionPoint)?.effectiveQualifiedName ?: "?"
   }
 
-  static RelatedItemLineMarkerInfo<?> createComponentLineMarkerInfo(List<? extends ComponentCandidate> targets, PsiElement element) {
-    return createPluginLineMarkerInfo(targets, element,
-                                      DevKitBundle.message("gutter.related.navigation.choose.component"),
-                                      DevkitCoreIcons.Gutter.Plugin,
-                                      (NullableFunction<Component, String>)component ->
-                                        component.getImplementationClass().getStringValue());
-  }
-
-
-  private static <T extends DomElement> @NotNull RelatedItemLineMarkerInfo<PsiElement> createPluginLineMarkerInfo(
-    @NotNull List<? extends PointableCandidate> targets,
-    @NotNull PsiElement element,
-    @Nls(capitalization = Nls.Capitalization.Title) String popup,
-    Icon icon,
-    NullableFunction<T, @NlsSafe String> namer
-  ) {
+  private fun <T : DomElement> createPluginLineMarkerInfo(
+    targets: List<PointableCandidate>,
+    element: PsiElement,
+    @Nls(capitalization = Nls.Capitalization.Title) popup: String,
+    icon: Icon,
+    namer: (T) -> @NlsSafe String?,
+  ): RelatedItemLineMarkerInfo<PsiElement> {
     return NavigationGutterIconBuilder
-      .create(icon, CONVERTER, target -> {
-        DomElement domElement = DomUtil.getDomElement(target.pointer.getElement());
-        return Collections.singletonList(new DomGotoRelatedItem(domElement, "DevKit") {
-          @Override
-          public String getCustomName() {
-            //noinspection unchecked
-            return getDomElementName((T)domElement, namer);
-          }
+      .create<PointableCandidate>(icon, { listOfNotNull(it.pointer.element) }) { target ->
+        val domElement = DomUtil.getDomElement(target.pointer.element)
+        listOf(object : DomGotoRelatedItem(domElement, "DevKit") {
+          override fun getCustomName(): String = getDomElementName(domElement, namer)
 
-          @Override
-          public @Nls @Nullable String getCustomContainerName() {
-            PsiElement psiElement = getElement();
-            if (psiElement == null) return null;
-            return UniqueVFilePathBuilder.getInstance()
-              .getUniqueVirtualFilePath(psiElement.getProject(), psiElement.getContainingFile().getVirtualFile());
-          }
-        });
-      })
+          override fun getCustomContainerName(): @Nls String? = this.element?.let { getContainerPath(it) }
+        })
+      }
       .setTargets(targets)
       .setPopupTitle(popup)
-      .setNamer(candidate -> {
-        DomElement domElement = DomUtil.getDomElement(candidate.pointer.getElement());
-        //noinspection unchecked
-        return getDomElementName((T)domElement, namer);
-      })
-      .setTargetRenderer(() -> new PsiTargetPresentationRenderer<>() {
-        @Override
-        public @Nls @NotNull String getElementText(@NotNull PsiElement element) {
-          DomElement domElement = DomUtil.getDomElement(element);
-          //noinspection unchecked
-          return getDomElementName((T)domElement, namer);
-        }
+      .setNamer {
+        val domElement = DomUtil.getDomElement(it.pointer.element)
+        getDomElementName(domElement, namer)
+      }
+      .setTargetRenderer {
+        object : PsiTargetPresentationRenderer<PsiElement>() {
+          override fun getElementText(element: PsiElement): @Nls String {
+            val domElement = DomUtil.getDomElement(element)
+            return getDomElementName(domElement, namer)
+          }
 
-        @Override
-        public @Nls String getContainerText(@NotNull PsiElement element) {
-          return UniqueVFilePathBuilder.getInstance()
-            .getUniqueVirtualFilePath(element.getProject(), element.getContainingFile().getVirtualFile());
-        }
+          override fun getContainerText(element: PsiElement): @Nls String = getContainerPath(element)
 
-        @Override
-        protected @Nullable Icon getIcon(@NotNull PsiElement element) {
-          DomElement domElement = DomUtil.getDomElement(element);
-          assert domElement != null;
-          return ObjectUtils.chooseNotNull(domElement.getPresentation().getIcon(), element.getIcon(0));
+          override fun getIcon(element: PsiElement): Icon? {
+            val domElement = DomUtil.getDomElement(element)
+            checkNotNull(domElement)
+            return domElement.presentation.icon ?: element.getIcon(0)
+          }
         }
-      })
+      }
       .setAlignment(GutterIconRenderer.Alignment.RIGHT)
-      .createLineMarkerInfo(element);
+      .createLineMarkerInfo(element)
   }
 
-  private static @NlsSafe <T extends DomElement> String getDomElementName(T domElement, NullableFunction<T, @NlsSafe String> namer) {
-    return StringUtil.defaultIfEmpty(namer.fun(domElement), "?");
+  private fun getContainerPath(element: PsiElement): @NlsSafe String {
+    return UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(element.project, element.containingFile.virtualFile)
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun <T : DomElement> getDomElementName(domElement: DomElement?, namer: (T) -> @NlsSafe String?): @NlsSafe String {
+    return namer(domElement as T).takeUnless { it.isNullOrEmpty() } ?: "?"
   }
 }
