@@ -244,6 +244,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    * The action attaches the first archive that contains the package of the handled class.
    * A jar can merge IntelliJ Platform classes with a third-party library, such as `lib/intellij.platform.ide.impl.jar`.
    * When no archive contains the package, the action runs [platformAction] instead.
+   * When no archive downloads at all, the action reports it first, because the library repository is missing in the project.
    *
    * @param psiFile The PSI file that represents the currently handled class.
    * @param platformAction The action that attaches the IntelliJ Platform sources of the same library.
@@ -262,6 +263,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
       name = DevKitGradleBundle.message("attachSources.library.action.name"),
       busyText = DevKitGradleBundle.message("attachSources.library.action.busyText"),
       notations = coordinates.map { "$it:sources" },
+      failure = DownloadFailure("attachSources.library.failed.title", "attachSources.library.failed.content"),
       accept = { path -> containsPackageSources(path, classPath) },
       fallback = platformAction,
     )
@@ -286,8 +288,20 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         "$productCoordinates:$closeVersion:sources",
         "$productCoordinates:$snapshotVersion:sources", // last chance, nightly snapshot
       ),
+      failure = DownloadFailure("attachSources.intellijPlatform.failed.title", "attachSources.intellijPlatform.failed.content"),
     )
   }
+
+  /**
+   * The notification shown when a download action downloads no archive.
+   *
+   * @param titleKey The bundle key of the notification title.
+   * @param contentKey The bundle key of the notification content. It takes the notation, the Gradle project, and the documentation URL.
+   */
+  private class DownloadFailure(
+    @PropertyKey(resourceBundle = DevKitGradleBundle.BUNDLE) val titleKey: String,
+    @PropertyKey(resourceBundle = DevKitGradleBundle.BUNDLE) val contentKey: String,
+  )
 
   /**
    * Creates an action that downloads the first available sources archive from [notations] and attaches it to the library.
@@ -296,14 +310,16 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    * @param name The name of the action.
    * @param busyText The text shown while the action runs.
    * @param notations The Gradle artifact notations to try in order.
+   * @param failure The notification shown when no archive from [notations] downloads.
    * @param accept Checks a downloaded archive. The action skips the archive and tries the next notation when it returns `false`.
-   * @param fallback The action to run when no archive from [notations] is attached. Without it, the action reports the failure.
+   * @param fallback The action to run when no archive from [notations] is attached.
    */
   private fun createDownloadSourcesAction(
     psiFile: PsiFile,
     name: @Nls String,
     busyText: @Nls String,
     notations: List<String>,
+    failure: DownloadFailure,
     accept: (Path) -> Boolean = { true },
     fallback: AttachSourcesAction? = null,
   ) =
@@ -335,7 +351,8 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
       /**
        * Downloads and attaches the first accepted archive.
-       * When none is accepted, runs [performFallback] and joins its result, or reports the failure when it returns `null`.
+       * When no archive downloads, reports [failure]. A downloaded archive that [accept] rejects is not a failure.
+       * When no archive is attached, runs [performFallback] and joins its result, or rejects the result when it returns `null`.
        */
       private fun performInternal(module: Module, libraries: Collection<Library>, performFallback: () -> ActionCallback?): ActionCallback {
         val moduleData = CachedModuleDataFinder.getGradleModuleData(module)
@@ -343,16 +360,19 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
         val executionResult = ActionCallback()
         val project = psiFile.project
+        var downloaded = false
 
         fun downloadAndAttach(index: Int) {
           val artifactNotation = notations.getOrNull(index)
           if (artifactNotation == null) {
+            if (!downloaded) {
+              notifyDownloadFailed(project, moduleData, notations.first(), failure)
+            }
             val fallbackResult = performFallback()
             if (fallbackResult != null) {
               fallbackResult.notify(executionResult)
             }
             else {
-              notifyDownloadFailed(project, moduleData, notations.first())
               executionResult.setRejected()
             }
             return
@@ -360,6 +380,9 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
           GradleArtifactDownloader.downloadArtifact(project, name, artifactNotation, moduleData,
                                                     GradleDependencySourceDownloaderErrorHandler.Noop)
             .whenComplete { path, error ->
+              if (error == null && path != null) {
+                downloaded = true
+              }
               when {
                 error == null && path != null && accept(path) -> attachSources(path, libraries) { executionResult.setDone() }
                 else -> downloadAndAttach(index + 1)
@@ -404,12 +427,12 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
     }
   }
 
-  private fun notifyDownloadFailed(project: Project, moduleData: GradleModuleData, notation: String) {
+  private fun notifyDownloadFailed(project: Project, moduleData: GradleModuleData, notation: String, failure: DownloadFailure) {
     val gradleProject = moduleData.gradlePathOrNull ?: moduleData.gradleProjectDir
     GradleNotification.gradleNotificationGroup
       .createNotification(
-        title = DevKitGradleBundle.message("attachSources.intellijPlatform.failed.title"),
-        content = DevKitGradleBundle.message("attachSources.intellijPlatform.failed.content", notation, gradleProject, REPOSITORIES_DOCUMENTATION_URL),
+        title = DevKitGradleBundle.message(failure.titleKey),
+        content = DevKitGradleBundle.message(failure.contentKey, notation, gradleProject, REPOSITORIES_DOCUMENTATION_URL),
         type = NotificationType.WARNING
       )
       .setDisplayId("devkit.gradle.attachSources.intellijPlatform.failed")

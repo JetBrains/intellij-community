@@ -199,8 +199,8 @@ class IntelliJPlatformAuxiliaryArtifactProviderTest : BuildViewMessagesImporting
   }
 
   /**
-   * Returns the sources URLs of every `localIde` library of every module, by the file name of its classes jar.
-   * The Gradle import creates one library per jar of the component.
+   * Returns the sources URLs of the `localIde` library of every module, by the file name of each classes jar.
+   * The Gradle import merges the jars of one component into one library, so every jar maps to the sources roots of the whole library.
    */
   private fun getLocalIdeSourceUrls(): Map<String, List<String>> {
     val result = ModuleManager.getInstance(myProject).modules
