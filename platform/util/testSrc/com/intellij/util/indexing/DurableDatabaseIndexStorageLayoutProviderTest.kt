@@ -3,26 +3,44 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.util.io.storages.UnsupportedFormatException
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation
 import com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_SEPARATELY
 import com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_TOGETHER
 import com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator
 import com.intellij.util.indexing.impl.storage.durablemap.database.DurableDatabaseIndexLayoutProvider
-import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import java.nio.file.Path
 import kotlin.io.path.exists
 
-class DurableDatabaseIndexStorageLayoutProviderTest : IndexStorageLayoutProviderTestBase(
-  PROVIDER,
+@ParameterizedClass(name = "forward={0}, inverted={1}")
+@MethodSource("mapImplementations")
+class DurableDatabaseIndexStorageLayoutProviderTest(
+  private val forwardMapImplementation: DurableMapImplementation,
+  private val invertedMapImplementation: DurableMapImplementation,
+) : IndexStorageLayoutProviderTestBase(
+  DurableDatabaseIndexLayoutProvider(
+    databasePath = PathManager.getIndexRoot().resolve("test-indexing-database-$forwardMapImplementation-$invertedMapImplementation"),
+    forwardMapImplementation = forwardMapImplementation,
+    invertedMapImplementation = invertedMapImplementation,
+  ),
   INPUTS_COUNT_TO_TEST_WITH,
 ) {
   @TempDir
   private lateinit var tempDir: Path
+
+  @AfterEach
+  fun closeProvider() {
+    storageLayoutProviderToTest.closeAndClearData()
+  }
 
   @Test
   fun providerIsRegisteredByPlatform() {
@@ -34,7 +52,11 @@ class DurableDatabaseIndexStorageLayoutProviderTest : IndexStorageLayoutProvider
   fun databaseOpensAgainAfterDataIsCleared() {
     val databasePath = tempDir.resolve("indexing-database")
     val extension = SingleEntryIntegerValueIndexExtension()
-    DurableDatabaseIndexLayoutProvider(databasePath).use { provider ->
+    DurableDatabaseIndexLayoutProvider(
+      databasePath,
+      forwardMapImplementation,
+      invertedMapImplementation,
+    ).use { provider ->
       provider.getLayout(extension, emptyList()).openIndexStorage().use { it.addValue(1, 1, 42) }
       assertTrue(databasePath.exists(), "The first index must create the database")
 
@@ -74,15 +96,13 @@ class DurableDatabaseIndexStorageLayoutProviderTest : IndexStorageLayoutProvider
   companion object {
     private const val PROVIDER_ID = "memory-mapped-database-impl"
     private const val INPUTS_COUNT_TO_TEST_WITH = 30_000
-    private val PROVIDER = DurableDatabaseIndexLayoutProvider(
-      databasePath = PathManager.getIndexRoot().resolve("test-indexing-database")
-      //TODO RC: test with different map implementations
-    )
 
     @JvmStatic
-    @AfterAll
-    fun closeProvider() {
-      PROVIDER.close()
-    }
+    fun mapImplementations(): List<Arguments> =
+      DurableMapImplementation.entries.flatMap { forwardImplementation ->
+        DurableMapImplementation.entries.map { invertedImplementation ->
+          Arguments.of(forwardImplementation, invertedImplementation)
+        }
+      }
   }
 }

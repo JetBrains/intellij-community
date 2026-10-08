@@ -5,6 +5,8 @@ import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_SEPARATELY
 import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.indexing.impl.IndexStorage
@@ -94,6 +96,7 @@ class DurableDatabaseIndexLayoutLoadTest {
     val durationSeconds: Int,
     val reportSeconds: Int,
     val flushSeconds: Int,
+    val invertedMapImplementation: DurableMapImplementation,
   ) {
     companion object {
       fun fromProperties(): LoadConfig {
@@ -117,6 +120,7 @@ class DurableDatabaseIndexLayoutLoadTest {
           durationSeconds = intProperty("durationSeconds", DEFAULT_ROUND_DURATION_SECONDS),
           reportSeconds = intProperty("reportSeconds", DEFAULT_REPORT_SECONDS),
           flushSeconds = intProperty("flushSeconds", DEFAULT_FLUSH_SECONDS),
+          invertedMapImplementation = mapImplementationProperty(),
         )
       }
 
@@ -135,6 +139,14 @@ class DurableDatabaseIndexLayoutLoadTest {
       private fun debugDatabaseLogsProperty(): Boolean {
         val value = System.getProperty(PROPERTY_PREFIX + "debugDatabaseLogs") ?: return DEFAULT_DEBUG_DATABASE_LOGS
         return value.toBooleanStrictOrNull() ?: throw IllegalArgumentException("debugDatabaseLogs must be true or false")
+      }
+
+      private fun mapImplementationProperty(): DurableMapImplementation {
+        val propertyName = PROPERTY_PREFIX + "invertedMapImplementation"
+        val value = requireNotNull(System.getProperty(propertyName, KEY_VALUE_SEPARATELY.name)) {
+          "Set $propertyName to one of ${DurableMapImplementation.entries.joinToString()}"
+        }
+        return DurableMapImplementation.valueOf(value)
       }
     }
   }
@@ -155,6 +167,7 @@ class DurableDatabaseIndexLayoutLoadTest {
             "\tdelete ${config.deletePercent}% records after each round\n" +
             "\tat the end: ${config.steadyStateRoundsCount} steadyStateRounds\n" +
             "\treportSeconds=${config.reportSeconds} flushSeconds=${config.flushSeconds}\n" +
+            "\tinvertedMapImplementation=${config.invertedMapImplementation}\n" +
             "\tdebugDatabaseLogs=${config.debugDatabaseLogs}")
 
     val extensions = List(config.indexCount) { LoadIndexExtension(it) }
@@ -168,7 +181,7 @@ class DurableDatabaseIndexLayoutLoadTest {
       val round = roundIndex + 1
       val openStarted = System.nanoTime()
       var closeStartedNs = 0L
-      openSession(directory, extensions).use { session ->
+      openSession(directory, extensions, config.invertedMapImplementation).use { session ->
         val openMillis = millis(System.nanoTime() - openStarted)
         val preparationDetails = if (round == 1) {
           val existingEntries = initialize(session, config, values, present)
@@ -204,7 +217,7 @@ class DurableDatabaseIndexLayoutLoadTest {
       val round = roundIndex + 1
       val openStartedNs = System.nanoTime()
       var closeStartedNs = 0L
-      openSession(directory, extensions).use { session ->
+      openSession(directory, extensions, config.invertedMapImplementation).use { session ->
         val openMillis = millis(System.nanoTime() - openStartedNs)
         verifyAll(session, config, values, present)
         report("Steady-state round #$round opened", directory, "open=$openMillis ms verifiedKeys=$totalEntries", session)
@@ -473,8 +486,16 @@ class DurableDatabaseIndexLayoutLoadTest {
     return result
   }
 
-  private fun openSession(directory: Path, extensions: List<LoadIndexExtension>): Session {
-    val provider = DurableDatabaseIndexLayoutProvider(directory)
+  private fun openSession(
+    directory: Path,
+    extensions: List<LoadIndexExtension>,
+    invertedMapImplementation: DurableMapImplementation,
+  ): Session {
+    val provider = DurableDatabaseIndexLayoutProvider(
+      databasePath = directory,
+      forwardMapImplementation = KEY_VALUE_SEPARATELY,
+      invertedMapImplementation = invertedMapImplementation,
+    )
     val storages = ArrayList<IndexStorage<Int, Int>>(extensions.size)
     try {
       for (extension in extensions) {

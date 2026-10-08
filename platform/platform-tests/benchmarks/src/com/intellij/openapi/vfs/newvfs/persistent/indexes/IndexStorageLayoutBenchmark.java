@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.indexes;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.IdFilter;
@@ -14,6 +16,7 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.storage.durablemap.database.DurableDatabaseIndexLayoutProvider;
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
@@ -54,6 +57,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @Measurement(iterations = 2, time = 15, timeUnit = SECONDS)
 @Fork(1)
 public class IndexStorageLayoutBenchmark {
+
+  private static final String DURABLE_DATABASE_PROVIDER_CLASS_NAME =
+    "com.intellij.util.indexing.impl.storage.durablemap.database.DurableDatabaseIndexLayoutProvider";
 
 
   @State(Scope.Benchmark)
@@ -109,7 +115,8 @@ public class IndexStorageLayoutBenchmark {
 
     @Param({
       "com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProvider",
-      "com.intellij.util.indexing.impl.storage.durablemap.database.DurableDatabaseIndexLayoutProvider",
+      DURABLE_DATABASE_PROVIDER_CLASS_NAME + "#KEY_VALUE_TOGETHER",
+      DURABLE_DATABASE_PROVIDER_CLASS_NAME + "#KEY_VALUE_SEPARATELY",
       //RC: for the file-based provider to work, add 'index.storages.plugin.mmapped' to the classpath
       "com.intellij.index.storages.plugin.mmapped.DurableMapBasedFileIndexLayoutProvider"
     })
@@ -143,16 +150,36 @@ public class IndexStorageLayoutBenchmark {
       extension = new SampleIndexExtension(cacheSize);
 
       latencyProfile = IoLatencyProfile.parse(ioDelayProfile);
-      if (IndexStorageLayoutBenchmarkStorageContexts.isDefaultProvider(storageLayoutProviderClassName)) {
+      int configurationSeparator = storageLayoutProviderClassName.lastIndexOf('#');
+      String providerClassName = configurationSeparator < 0
+                                 ? storageLayoutProviderClassName
+                                 : storageLayoutProviderClassName.substring(0, configurationSeparator);
+      String mapImplementationName = configurationSeparator < 0
+                                     ? null
+                                     : storageLayoutProviderClassName.substring(configurationSeparator + 1);
+      if (IndexStorageLayoutBenchmarkStorageContexts.isDefaultProvider(providerClassName)) {
         storageLayoutProviderToTest = IndexStorageLayoutBenchmarkStorageContexts.defaultProvider(
           walMode,
           latencyProfile,
           /*async WAL flusher: */ true
         );
       }
+      else if (DURABLE_DATABASE_PROVIDER_CLASS_NAME.equals(providerClassName)) {
+        if (mapImplementationName == null) {
+          throw new IllegalArgumentException("The durable database provider requires an explicit map implementation");
+        }
+        storageLayoutProviderToTest = new DurableDatabaseIndexLayoutProvider(
+          PathManager.getIndexRoot().resolve("indexing-database-" + mapImplementationName),
+          DurableMapImplementation.KEY_VALUE_SEPARATELY,
+          DurableMapImplementation.valueOf(mapImplementationName)
+        );
+      }
       else {
+        if (mapImplementationName != null) {
+          throw new IllegalArgumentException("A map implementation is not supported for " + providerClassName);
+        }
         @SuppressWarnings("unchecked")
-        Class<FileBasedIndexLayoutProvider> providerClass = (Class)Class.forName(storageLayoutProviderClassName);
+        Class<FileBasedIndexLayoutProvider> providerClass = (Class)Class.forName(providerClassName);
         storageLayoutProviderToTest = providerClass.getDeclaredConstructor().newInstance();
       }
 
@@ -325,7 +352,7 @@ public class IndexStorageLayoutBenchmark {
   }
 
 
-  public static void main(String[] args) throws RunnerException, CommandLineOptionException {
+  static void main(String[] args) throws RunnerException, CommandLineOptionException {
     var optionsBuilder = new OptionsBuilder();
     optionsBuilder.jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED",
                            "--add-opens=java.base/java.util=ALL-UNNAMED",

@@ -27,6 +27,10 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.io.TempDir
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.MethodSource
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -49,9 +53,10 @@ class DurableDatabaseIndexStorageTest {
     database.close()
   }
 
-  @Test
-  fun valuesSurviveReopenAndFurtherChanges() {
-    openStorage(KEY_VALUE_SEPARATELY).use { storage ->
+  @ParameterizedTest
+  @EnumSource(DurableMapImplementation::class)
+  fun valuesSurviveReopenAndFurtherChanges(implementation: DurableMapImplementation) {
+    openStorage(implementation).use { storage ->
       assertTrue(Files.isDirectory(directory.resolve("database")))
       storage.addValue("key", 1, "first")
       storage.addValue("key", 2, "second")
@@ -60,20 +65,21 @@ class DurableDatabaseIndexStorageTest {
       assertFalse(storage.isDirty)
     }
 
-    openStorage(KEY_VALUE_SEPARATELY).use { storage ->
+    openStorage(implementation).use { storage ->
       assertEquals(mapOf(1 to "first", 2 to "second"), read(storage))
       storage.updateValue("key", 1, "updated")
       storage.removeAllValues("key", 2)
     }
 
-    openStorage(KEY_VALUE_SEPARATELY).use { storage ->
+    openStorage(implementation).use { storage ->
       assertEquals(mapOf(1 to "updated"), read(storage))
     }
   }
 
-  @Test
-  fun clearCreatesAnEmptyReusableStorage() {
-    openStorage(KEY_VALUE_SEPARATELY).use { storage ->
+  @ParameterizedTest
+  @EnumSource(DurableMapImplementation::class)
+  fun clearCreatesAnEmptyReusableStorage(implementation: DurableMapImplementation) {
+    openStorage(implementation).use { storage ->
       storage.addValue("key", 1, "before clear")
       storage.flush()
       storage.clear()
@@ -84,21 +90,25 @@ class DurableDatabaseIndexStorageTest {
       assertEquals(mapOf(2 to "after clear"), read(storage))
     }
 
-    openStorage(KEY_VALUE_SEPARATELY).use { storage ->
+    openStorage(implementation).use { storage ->
       assertEquals(mapOf(2 to "after clear"), read(storage))
     }
   }
 
-  @Test
-  fun clearIndexDataRecoversAfterOpenFailure() {
+  @ParameterizedTest(name = "inverted={0}, forward={1}")
+  @MethodSource("mapImplementationPairs")
+  fun clearIndexDataRecoversAfterOpenFailure(
+    invertedMapImplementation: DurableMapImplementation,
+    forwardMapImplementation: DurableMapImplementation,
+  ) {
     val extension = ManyKeysIntegerToIntegerIndexExtension()
-    val mapAccessor = DurableDatabaseMapAccessors.forwardMapAccessor(database, extension.name, KEY_VALUE_SEPARATELY)
+    val mapAccessor = DurableDatabaseMapAccessors.forwardMapAccessor(database, extension.name, forwardMapImplementation)
     mapAccessor.open().close()
     val mapName = database.mapNames().single()
     database.dropMap(mapName)
-    database.openMap(mapName, 2, KEY_VALUE_SEPARATELY, integer(), integer()).close()
+    database.openMap(mapName, 2, forwardMapImplementation, integer(), integer()).close()
 
-    val failedLayout = DurableDatabaseStorageLayout(database, extension, KEY_VALUE_SEPARATELY, KEY_VALUE_SEPARATELY)
+    val failedLayout = DurableDatabaseStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation)
     failedLayout.openIndexStorage().use {
       assertThrows(IOException::class.java) { failedLayout.openForwardIndex() }
     }
@@ -107,25 +117,26 @@ class DurableDatabaseIndexStorageTest {
     failedLayout.clearIndexData()
     assertTrue(database.mapNames().isEmpty(), "Cleanup must remove data after a partial open failure")
 
-    val recoveredLayout = DurableDatabaseStorageLayout(database, extension, KEY_VALUE_SEPARATELY, KEY_VALUE_SEPARATELY)
+    val recoveredLayout = DurableDatabaseStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation)
     recoveredLayout.openIndexStorage().use { }
     recoveredLayout.openForwardIndex().use { }
   }
 
-  @Test
-  fun differentIndexIdsUseDifferentMaps() {
+  @ParameterizedTest
+  @EnumSource(DurableMapImplementation::class)
+  fun differentIndexIdsUseDifferentMaps(implementation: DurableMapImplementation) {
     val firstIndexId = IndexId.create<String, String>("test-values:first")
     val secondIndexId = IndexId.create<String, String>("test-values")
 
-    openStorage(KEY_VALUE_SEPARATELY, firstIndexId).use { storage ->
+    openStorage(implementation, firstIndexId).use { storage ->
       storage.addValue("key", 1, "first index")
       storage.flush()
     }
 
-    openStorage(KEY_VALUE_SEPARATELY, secondIndexId).use { storage ->
+    openStorage(implementation, secondIndexId).use { storage ->
       assertEquals(emptyMap<Int, String>(), read(storage), "Each IndexId must address a separate map")
     }
-    openStorage(KEY_VALUE_SEPARATELY, firstIndexId).use { storage ->
+    openStorage(implementation, firstIndexId).use { storage ->
       assertEquals(mapOf(1 to "first index"), read(storage), "Opening another IndexId must preserve the first map")
     }
   }
@@ -146,23 +157,24 @@ class DurableDatabaseIndexStorageTest {
     assertTrue(database.mapNames().isEmpty(), "Cleaning a missing accessor must not register a map")
   }
 
-  @Test
-  fun cleaningAnIndexPreservesAnIndexWithACommonNamePrefix() {
+  @ParameterizedTest
+  @EnumSource(DurableMapImplementation::class)
+  fun cleaningAnIndexPreservesAnIndexWithACommonNamePrefix(implementation: DurableMapImplementation) {
     val firstIndexId = IndexId.create<String, String>("test:values")
     val secondIndexId = IndexId.create<String, String>("test")
-    openStorage(KEY_VALUE_SEPARATELY, firstIndexId).use { storage ->
+    openStorage(implementation, firstIndexId).use { storage ->
       storage.addValue("key", 1, "first index")
     }
-    openStorage(KEY_VALUE_SEPARATELY, secondIndexId).use { storage ->
+    openStorage(implementation, secondIndexId).use { storage ->
       storage.addValue("key", 2, "second index")
     }
 
     DurableDatabaseMapAccessors.cleanIndexData(database, firstIndexId)
 
-    openStorage(KEY_VALUE_SEPARATELY, firstIndexId).use { storage ->
+    openStorage(implementation, firstIndexId).use { storage ->
       assertEquals(emptyMap<Int, String>(), read(storage), "Cleaning must remove the selected index")
     }
-    openStorage(KEY_VALUE_SEPARATELY, secondIndexId).use { storage ->
+    openStorage(implementation, secondIndexId).use { storage ->
       assertEquals(mapOf(2 to "second index"), read(storage), "Cleaning must preserve a different namespace")
     }
   }
@@ -187,36 +199,76 @@ class DurableDatabaseIndexStorageTest {
     assertTrue(database.mapNames().isEmpty(), "Repeated namespace cleanup must not recreate obsolete shard maps")
   }
 
-  @Test
-  fun regularLayoutUsesSelectedMapImplementations() {
+  @ParameterizedTest(name = "inverted={0}, forward={1}")
+  @MethodSource("mapImplementationPairs")
+  fun regularLayoutUsesSelectedMapImplementations(
+    invertedMapImplementation: DurableMapImplementation,
+    forwardMapImplementation: DurableMapImplementation,
+  ) {
     val extension = ManyKeysIntegerToIntegerIndexExtension()
-    val selectedLayout = DurableDatabaseStorageLayout(database, extension, KEY_VALUE_TOGETHER, KEY_VALUE_SEPARATELY)
+    val selectedLayout = DurableDatabaseStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation)
     selectedLayout.openIndexStorage().use { storage ->
       storage.addValue(1, 1, 42)
     }
     selectedLayout.openForwardIndex().use { }
 
-    val otherInvertedLayout = DurableDatabaseStorageLayout(database, extension, KEY_VALUE_SEPARATELY, KEY_VALUE_SEPARATELY)
+    val otherInvertedLayout = DurableDatabaseStorageLayout(
+      database,
+      extension,
+      otherImplementation(invertedMapImplementation),
+      forwardMapImplementation,
+    )
     assertThrows(UnsupportedFormatException::class.java) {
       otherInvertedLayout.openIndexStorage()
     }
     otherInvertedLayout.openForwardIndex().use { }
+
+    val otherForwardLayout = DurableDatabaseStorageLayout(
+      database,
+      extension,
+      invertedMapImplementation,
+      otherImplementation(forwardMapImplementation),
+    )
+    otherForwardLayout.openIndexStorage().use { }
+    assertThrows(UnsupportedFormatException::class.java) {
+      otherForwardLayout.openForwardIndex()
+    }
   }
 
-  @Test
-  fun shardedLayoutUsesSelectedMapImplementations() {
+  @ParameterizedTest(name = "inverted={0}, forward={1}")
+  @MethodSource("mapImplementationPairs")
+  fun shardedLayoutUsesSelectedMapImplementations(
+    invertedMapImplementation: DurableMapImplementation,
+    forwardMapImplementation: DurableMapImplementation,
+  ) {
     val extension = ShardableManyKeysIntegerToIntegerIndexExtension()
-    val selectedLayout = DurableDatabaseShardedStorageLayout(database, extension, KEY_VALUE_TOGETHER, KEY_VALUE_SEPARATELY)
+    val selectedLayout = DurableDatabaseShardedStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation)
     selectedLayout.openIndexStorage().use { storage ->
       storage.addValue(1, 1, 42)
     }
     selectedLayout.openForwardIndex().use { }
 
-    val otherInvertedLayout = DurableDatabaseShardedStorageLayout(database, extension, KEY_VALUE_SEPARATELY, KEY_VALUE_SEPARATELY)
+    val otherInvertedLayout = DurableDatabaseShardedStorageLayout(
+      database,
+      extension,
+      otherImplementation(invertedMapImplementation),
+      forwardMapImplementation,
+    )
     assertThrows(UnsupportedFormatException::class.java) {
       otherInvertedLayout.openIndexStorage()
     }
     otherInvertedLayout.openForwardIndex().use { }
+
+    val otherForwardLayout = DurableDatabaseShardedStorageLayout(
+      database,
+      extension,
+      invertedMapImplementation,
+      otherImplementation(forwardMapImplementation),
+    )
+    otherForwardLayout.openIndexStorage().use { }
+    assertThrows(UnsupportedFormatException::class.java) {
+      otherForwardLayout.openForwardIndex()
+    }
   }
 
   @Test
@@ -256,5 +308,21 @@ class DurableDatabaseIndexStorageTest {
       false
     })
     return result
+  }
+
+  private fun otherImplementation(implementation: DurableMapImplementation): DurableMapImplementation =
+    when (implementation) {
+      KEY_VALUE_TOGETHER -> KEY_VALUE_SEPARATELY
+      KEY_VALUE_SEPARATELY -> KEY_VALUE_TOGETHER
+    }
+
+  companion object {
+    @JvmStatic
+    fun mapImplementationPairs(): List<Arguments> =
+      DurableMapImplementation.entries.flatMap { invertedImplementation ->
+        DurableMapImplementation.entries.map { forwardImplementation ->
+          Arguments.of(invertedImplementation, forwardImplementation)
+        }
+      }
   }
 }
