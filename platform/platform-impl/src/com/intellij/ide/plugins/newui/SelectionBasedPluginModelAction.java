@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.PluginEnableDisableAction;
 import com.intellij.ide.plugins.PluginEnabledState;
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerButtonType;
 import com.intellij.ide.plugins.newui.buttons.OptionButton;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -190,7 +191,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
       myUninstallButton = new AbstractAction(uninstallAction.getTemplateText()) {
         @Override
         public void actionPerformed(ActionEvent e) {
-          myUninstallAction.actionPerformed(AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
+          myUninstallAction.uninstall(e.getSource() == uninstallButton ? PluginManagerButtonType.DEFAULT : PluginManagerButtonType.DROPDOWN);
         }
       };
       button.setOptions(new Action[]{myUninstallButton});
