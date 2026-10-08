@@ -10,7 +10,6 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -25,7 +24,6 @@ import com.intellij.openapi.fileEditor.impl.EditorComposite
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
-import com.intellij.openapi.fileEditor.impl.getOrLoadDocumentUnderProgress
 import com.intellij.openapi.fileEditor.impl.navigateAndSelectEditor
 import com.intellij.openapi.fileEditor.impl.withProgressReport
 import com.intellij.openapi.fileEditor.navigateInProjectView
@@ -42,8 +40,8 @@ import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.impl.DirectoryNavigationRequest
 import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
-import com.intellij.platform.backend.navigation.impl.asDecompilerRequestIfAny
 import com.intellij.platform.backend.navigation.impl.contextOrAny
+import com.intellij.platform.backend.navigation.impl.withResolvedDecompilerTarget
 import com.intellij.platform.ide.navigation.CaretPlacement
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
@@ -54,7 +52,6 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.hasProgressStep
 import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.platform.util.progress.reportRawProgress
-import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -148,25 +145,14 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
             prepare = {
               val currentPreparation = this
               prepareWithProgressIfNeeded(options) {
-                // keep the visible progress as one task
-                reportSequentialProgress { reporter ->
-                  val requests = reporter.indeterminateStep {
-                    limitRequestsToNavigate(action())
-                  }.takeIf { it.isNotEmpty() }
-                  requests?.let {
-                    if (!currentPreparation.registerTargetKey(it, options)) {
-                      return@reportSequentialProgress null
-                    }
-                    it to reporter.indeterminateStep {
-                      preloadTargetDocuments(it)
-                    }
-                  }
+                limitRequestsToNavigate(action()).takeIf {
+                  it.isNotEmpty() && currentPreparation.registerTargetKey(it, options)
                 }
               }
             }
           ) { requests ->
             withHistoryIfNeeded(options) {
-              navigate(project = project, requests = requests.first, options = options)
+              navigate(project = project, requests = requests, options = options)
             }.takeIf { it }
           }
         } ?: false
@@ -200,17 +186,6 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
       }
       throw e
     }
-  }
-
-  /**
-   * Loads documents for the selected targets and returns references to retain during navigation.
-   */
-  private suspend fun preloadTargetDocuments(requests: Collection<NavigationRequest>): List<Document> {
-    val fileDocumentManager = serviceAsync<FileDocumentManager>()
-    val files = requests.mapNotNullTo(LinkedHashSet()) { (it as? SourceNavigationRequest)?.file }
-    return files.mapWithProgress { file ->
-      fileDocumentManager.getOrLoadDocumentUnderProgress(file)
-    }.filterNotNull()
   }
 
   private suspend inline fun <T> withHistoryIfNeeded(options: NavigationOptions, crossinline action: suspend () -> T): T {
@@ -311,14 +286,11 @@ private suspend fun tryNavigateToSource(
   when (request) {
     is SourceNavigationRequest -> {
       val knownType = request.file.knownFileType()
-      val resolvedRequest = request.asDecompilerRequestIfAny()
-      val caretShift = caretShift(project = project, request = resolvedRequest, placement = options.caretPlacement)
       withContext(Dispatchers.EDT) {
         navigateToSourceImpl(
-          request = resolvedRequest,
+          request = request,
           options = options,
           project = project,
-          offset = resolvedRequest.targetOffset(caretShift),
           knownType = knownType,
           rightSplitWindow = rightSplitWindow,
         )
@@ -467,7 +439,6 @@ private suspend fun navigateToSourceImpl(
   options: NavigationOptions.Impl,
   request: SourceNavigationRequest,
   project: Project,
-  offset: Int,
   knownType: FileType?,
   rightSplitWindow: RightSplitWindow? = null,
 ) {
@@ -482,16 +453,24 @@ private suspend fun navigateToSourceImpl(
     }
     else {
       val requestedEditor = (options.requestedEditor as? RequestedEditor.Specific)?.editor
-      if (requestedEditor != null) {
-        val descriptor = OpenFileDescriptor(project, request.file, request.contextOrAny, offset)
-        val fileNavigator = serviceAsync<FileNavigator>()
-        if (fileNavigator is FileNavigatorImpl &&
-            fileNavigator.navigateInRequestedEditorAsync(descriptor, requestedEditor, options.requestFocus)) {
+      if (requestedEditor != null && !requestedEditor.isDisposed &&
+          serviceAsync<FileDocumentManager>().getFile(requestedEditor.document) == file) {
+        val navigated = request.withResolvedDecompilerTarget(project) { resolvedRequest ->
+          val caretShift = withContext(Dispatchers.Default) {
+            caretShift(project, resolvedRequest, options.caretPlacement)
+          }
+          val offset = resolvedRequest.targetOffset(caretShift)
+          val descriptor = OpenFileDescriptor(project, request.file, request.contextOrAny, offset)
+          val fileNavigator = serviceAsync<FileNavigator>()
+          fileNavigator is FileNavigatorImpl &&
+            fileNavigator.navigateInRequestedEditorAsync(descriptor, requestedEditor, options.requestFocus)
+        }
+        if (navigated) {
           return
         }
       }
 
-      if (openFile(request = request, project = project, options = options, offset = offset, rightSplitWindow = rightSplitWindow)) {
+      if (openFile(request = request, project = project, options = options, rightSplitWindow = rightSplitWindow)) {
         return
       }
     }
@@ -504,23 +483,13 @@ private suspend fun openFile(
   options: NavigationOptions.Impl,
   project: Project,
   request: SourceNavigationRequest,
-  offset: Int,
   rightSplitWindow: RightSplitWindow? = null,
 ): Boolean {
-  var hostOffset = offset
   val originalFile = request.file
-  var file = originalFile
-
   val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerEx
-  if (originalFile is VirtualFileWindow) {
-    readAction {
-      if (hostOffset != -1) {
-        // injectedToHost does not preserve the "no offset" marker, it maps a negative offset into the first host range
-        hostOffset = originalFile.documentWindow.injectedToHost(hostOffset)
-      }
-      file = originalFile.delegate
-    }
-  }
+  val file = if (originalFile is VirtualFileWindow) readAction {
+    originalFile.delegate
+  } else originalFile
 
   // the split is already there, so the request states it explicitly instead of asking for another one
   val targetWindow = rightSplitWindow?.value?.takeIf { !it.isDisposed && !options.openInRightSplit }
@@ -537,69 +506,88 @@ private suspend fun openFile(
     ),
   )
 
+  val editorComposite = composite as? EditorComposite
   val fileEditors = composite.allEditors
-  if (fileEditors.isEmpty()) {
-    return false
-  }
 
-  if (rightSplitWindow != null && options.openInRightSplit) {
-    rightSplitWindow.value = withContext(Dispatchers.EDT) {
-      fileEditorManager.windows.firstOrNull { it.getComposite(file) === composite }
+  return fileEditors.isNotEmpty() && request.withResolvedDecompilerTarget(project) { resolvedRequest ->
+    val caretShift = withContext(Dispatchers.Default) {
+      caretShift(project, resolvedRequest, options.caretPlacement)
     }
-  }
+    val offset = resolvedRequest.targetOffset(caretShift)
+    val hostOffset = if (originalFile is VirtualFileWindow && offset != -1) {
+      readAction { originalFile.documentWindow.injectedToHost(offset) }
+    }
+    else {
+      offset
+    }
 
-  val elementRange = if (options.preserveCaret) request.elementRangeMarker?.takeIf { it.isValid }?.textRange else null
-  if (elementRange != null) {
-    for (editor in fileEditors) {
-      if (editor is TextEditor) {
-        val text = editor.editor
-        if (elementRange.containsOffset(readAction { text.caretModel.offset })) {
-          return true
-        }
+    editorComposite?.coroutineScope?.ensureActive()
+    if (rightSplitWindow != null && options.openInRightSplit) {
+      rightSplitWindow.value = withContext(Dispatchers.EDT) {
+        fileEditorManager.windows.firstOrNull { it.getComposite(file) === composite }
       }
     }
-  }
 
+    val elementRange = if (options.preserveCaret) resolvedRequest.elementRangeMarker?.takeIf { it.isValid }?.textRange else null
+    if (elementRange != null) {
+      for (editor in fileEditors) {
+        if (editor is TextEditor) {
+          val shallProceed = readAction {
+            val textEditor = editor.editor
+            !textEditor.isDisposed && elementRange.containsOffset(textEditor.caretModel.offset)
+          }
 
-  if (hostOffset == -1) {
-    return true
-  }
-
-  val descriptor = OpenFileDescriptor(project, file, request.contextOrAny, hostOffset)
-  val fileNavigator = serviceAsync<FileNavigator>()
-  suspend fun tryNavigate(fileEditors: Sequence<FileEditor>): Boolean {
-    for (editor in fileEditors) {
-      // try to navigate opened editor
-      if (editor is NavigatableFileEditor) {
-        val navigated = withContext(Dispatchers.EDT) {
-          //todo: try read action only
-          writeIntentReadAction {
-            // The current implementation of navigation depends on the type of the editor.
-            // If the editor is a subtype of TextEditorImpl, it falls into the condition editor.canNavigateTo.
-            // If the editor is a subtype of EditorWrapper, the second branch is tested. This scenario is possible
-            // during running some tests but could potentially happen in production code as well.
-            // More details: IJPL-184882 openFile doesn’t perform navigation for a SourceNavigationRequest
-            when {
-              editor.canNavigateTo(descriptor) -> {
-                navigateAndSelectEditor(editor, descriptor, composite as? EditorComposite)
-              }
-              fileNavigator.canNavigate(descriptor) -> {
-                // NAVIGATE_IN_EDITOR of the current data context is unrelated to this navigation
-                fileNavigator.navigate(descriptor, options.requestFocus, requestedEditor = null)
-                true
-              }
-              else -> false
-            }
+          if (shallProceed) {
+            return@withResolvedDecompilerTarget true
           }
         }
-        if (navigated) {
-          return true
-        }
       }
     }
-    return false
-  }
 
-  val selected = (composite as? EditorComposite)?.selectedWithProvider?.fileEditor
-  return tryNavigate(sequenceOfNotNull(selected)) || tryNavigate(fileEditors.asSequence().filter { it != selected })
+
+    if (hostOffset == -1) {
+      return@withResolvedDecompilerTarget true
+    }
+
+    val descriptor = OpenFileDescriptor(project, file, request.contextOrAny, hostOffset)
+    val fileNavigator = serviceAsync<FileNavigator>()
+    suspend fun tryNavigate(fileEditors: Sequence<FileEditor>): Boolean {
+      for (editor in fileEditors) {
+        // try to navigate opened editor
+        if (editor is NavigatableFileEditor) {
+          val navigated = withContext(Dispatchers.EDT) {
+            //todo: try read action only
+            writeIntentReadAction {
+              editorComposite?.coroutineScope?.ensureActive()
+              // The current implementation of navigation depends on the type of the editor.
+              // If the editor is a subtype of TextEditorImpl, it falls into the condition editor.canNavigateTo.
+              // If the editor is a subtype of EditorWrapper, the second branch is tested. This scenario is possible
+              // during running some tests but could potentially happen in production code as well.
+              // More details: IJPL-184882 openFile doesn’t perform navigation for a SourceNavigationRequest
+              when {
+                !editor.isValid -> false
+                editor.canNavigateTo(descriptor) -> {
+                  navigateAndSelectEditor(editor, descriptor, editorComposite)
+                }
+                fileNavigator.canNavigate(descriptor) -> {
+                  // NAVIGATE_IN_EDITOR of the current data context is unrelated to this navigation
+                  fileNavigator.navigate(descriptor, options.requestFocus, requestedEditor = null)
+                  true
+                }
+                else -> false
+              }
+            }
+          }
+          if (navigated) {
+            return true
+          }
+        }
+      }
+      return false
+    }
+
+    editorComposite?.coroutineScope?.ensureActive()
+    val selected = editorComposite?.selectedWithProvider?.fileEditor
+    tryNavigate(sequenceOfNotNull(selected)) || tryNavigate(fileEditors.asSequence().filter { it != selected })
+  }
 }

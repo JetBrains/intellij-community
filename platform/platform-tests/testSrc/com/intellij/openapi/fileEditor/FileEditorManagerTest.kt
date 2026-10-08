@@ -47,6 +47,8 @@ import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
 import com.intellij.openapi.fileEditor.impl.blockingWaitForCompositeFileOpen
 import com.intellij.openapi.fileEditor.impl.getOrLoadDocumentUnderProgress
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
+import com.intellij.openapi.fileTypes.BinaryFileDecompiler
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.fileTypes.UnknownFileType
@@ -64,6 +66,7 @@ import com.intellij.openapi.util.ExpirableRunnable
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.util.text.HtmlChunk
@@ -75,7 +78,9 @@ import com.intellij.openapi.vfs.VirtualFilePreCloseCheck
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.fileEditor.FileEntry
+import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.ide.progress.BackgroundTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.TaskSupport
@@ -85,6 +90,9 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.FakePsiElement
 import com.intellij.testFramework.BinaryLightVirtualFile
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.EditorTestUtil
@@ -95,6 +103,7 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -216,14 +225,21 @@ class FileEditorManagerTest {
     assertThat(consumedEditorState).isNull()
   }
 
-  @Test
-  fun testOpeningShowsTabDuringDocumentPreparation(): Unit = timeoutRunBlocking {
+  @ParameterizedTest
+  @ValueSource(booleans = [false, true])
+  fun testOpeningShowsTabDuringDocumentPreparation(navigate: Boolean): Unit = timeoutRunBlocking {
     val started = CompletableDeferred<Unit>()
     val release = CountDownLatch(1)
     val file = createFileWithBlockedRead("progress.txt", started, release)
     val progress = captureFilePreparation(file)
     val opening = async {
-      manager.openFile(file = file, options = FileEditorOpenOptions())
+      if (navigate) {
+        val request = readAction { assertThatNotNull(NavigationRequest.sourceNavigationRequest(project, file, 2)) }
+        NavigationService.getInstance(project).navigate(request)
+      }
+      else {
+        manager.openFile(file = file, options = FileEditorOpenOptions())
+      }
     }
     try {
       started.await()
@@ -240,6 +256,7 @@ class FileEditorManagerTest {
         assertThat(composite.isAvailable()).isTrue()
         val editor = composite.allEditors.filterIsInstance<TextEditor>().single().editor
         EditorTestUtil.waitForLoading(editor)
+        if (navigate) assertThat(editor.caretModel.offset).isEqualTo(2)
       }
     }
     finally {
@@ -251,14 +268,21 @@ class FileEditorManagerTest {
     }
   }
 
-  @Test
-  fun testCancellingDocumentPreparationClosesLoadingTab(): Unit = timeoutRunBlocking {
+  @ParameterizedTest
+  @ValueSource(booleans = [false, true])
+  fun testCancellingDocumentPreparationClosesLoadingTab(navigate: Boolean): Unit = timeoutRunBlocking {
     val started = CompletableDeferred<Unit>()
     val release = CountDownLatch(1)
     val file = createFileWithBlockedRead("cancelled.txt", started, release)
     val progress = captureFilePreparation(file)
     val opening = async {
-      manager.openFile(file = file, options = FileEditorOpenOptions())
+      if (navigate) {
+        val request = readAction { assertThatNotNull(NavigationRequest.sourceNavigationRequest(project, file, -1)) }
+        NavigationService.getInstance(project).navigate(request)
+      }
+      else {
+        manager.openFile(file = file, options = FileEditorOpenOptions())
+      }
     }
     try {
       started.await()
@@ -268,7 +292,12 @@ class FileEditorManagerTest {
       progress.started.await().cancel()
       release.countDown()
       opening.join()
-      assertThat(opening.isCancelled).isTrue()
+      if (navigate) {
+        assertThat(opening.await()).isEqualTo(false)
+      }
+      else {
+        assertThat(opening.isCancelled).isTrue()
+      }
       withContext(Dispatchers.EDT) {
         assertThat(manager.isFileOpen(file)).isFalse()
       }
@@ -609,9 +638,105 @@ class FileEditorManagerTest {
     }
   }
 
+  @Test
+  @RegistryKey(key = "hyperlink.ide.decompiler.open.file", value = "true")
+  fun testNavigationResolvesTargetAfterDecompilation(): Unit = timeoutRunBlocking {
+    val fileType = object : UserBinaryFileType() {}
+    val file = BinaryLightVirtualFile("navigation.bin", fileType, byteArrayOf(0))
+    val decompiler = BinaryFileDecompiler { "before target after" }
+    BinaryFileTypeDecompilers.getInstance().addExplicitExtension(fileType, decompiler, disposable)
+    val request = createDecompilerNavigationRequest(file) {
+      assertThat(ApplicationManager.getApplication().isDispatchThread).isFalse()
+      assertThat(FileDocumentManager.getInstance().getCachedDocument(file)).isNotNull()
+    }
+    try {
+      assertThat(NavigationService.getInstance(project).navigate(request)).isTrue()
+      withContext(Dispatchers.EDT) {
+        val editor = assertThatNotNull(manager.selectedTextEditor)
+        EditorTestUtil.waitForLoading(editor)
+        assertThat(editor.caretModel.offset).isEqualTo(7)
+      }
+    }
+    finally {
+      withContext(Dispatchers.EDT) {
+        manager.closeFile(file)
+      }
+    }
+  }
+
   private class PreparationProgress {
     val started = CompletableDeferred<Job>()
     val updates = CopyOnWriteArrayList<String?>()
+  }
+
+  @Test
+  @RegistryKey(key = "hyperlink.ide.decompiler.open.file", value = "true")
+  fun testNavigationCancelsWhenTabClosesDuringTargetResolution(): Unit = timeoutRunBlocking {
+    val fileType = object : UserBinaryFileType() {}
+    val file = BinaryLightVirtualFile("closed.bin", fileType, byteArrayOf(0))
+    val decompiler = BinaryFileDecompiler { "before target after" }
+    BinaryFileTypeDecompilers.getInstance().addExplicitExtension(fileType, decompiler, disposable)
+    var navigated = false
+    registerProvider(object : MockFileEditorProvider(policy = FileEditorPolicy.HIDE_DEFAULT_EDITOR), DumbAware {
+      override fun createEditor(project: Project, file: VirtualFile): FileEditor {
+        return object : Mock.MyFileEditor(), NavigatableFileEditor {
+          override fun getComponent(): JComponent = JLabel()
+
+          override fun getName(): String = "Non-Text Editor"
+
+          override fun getFile(): VirtualFile = file
+
+          override fun canNavigateTo(navigatable: Navigatable): Boolean = navigatable is OpenFileDescriptor
+
+          override fun navigateTo(navigatable: Navigatable) {
+            navigated = true
+          }
+        }
+      }
+    })
+    val started = CompletableDeferred<Unit>()
+    val release = CountDownLatch(1)
+    val request = createDecompilerNavigationRequest(file) {
+      started.complete(Unit)
+      awaitWithCheckCanceled { release.await(10, TimeUnit.MILLISECONDS) }
+    }
+    val navigation = async { NavigationService.getInstance(project).navigate(request) }
+    try {
+      started.await()
+      withContext(Dispatchers.EDT) {
+        val composite = assertThatNotNull(manager.getComposite(file))
+        assertThat(composite.isAvailable()).isTrue()
+        val editor = composite.allEditors.single()
+        manager.closeFile(file)
+        assertThat(Disposer.isDisposed(editor)).isTrue()
+      }
+      release.countDown()
+      assertThat(navigation.await()).isFalse()
+      assertThat(navigated).isFalse()
+      withContext(Dispatchers.EDT) { assertThat(manager.isFileOpen(file)).isFalse() }
+    }
+    finally {
+      release.countDown()
+      navigation.cancelAndJoin()
+      withContext(Dispatchers.EDT) { manager.closeFile(file) }
+    }
+  }
+
+  private suspend fun createDecompilerNavigationRequest(file: VirtualFile, onOffsetRead: () -> Unit): NavigationRequest = readAction {
+    val psiFile = assertThatNotNull(PsiManager.getInstance(project).findFile(file))
+    val target = object : FakePsiElement() {
+      override fun getParent(): PsiElement = psiFile
+
+      override fun getName(): String = "target"
+
+      override fun getTextOffset(): Int {
+        onOffsetRead()
+        return 7
+      }
+
+      override fun getTextRange(): TextRange = TextRange(7, 13)
+    }
+    assertThatNotNull(target.navigationRequest())
   }
 
   private fun createFileWithBlockedRead(
