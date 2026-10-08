@@ -9,9 +9,11 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.actionSystem.ex.ActionUtil.wrap
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.NlsActions
@@ -42,8 +44,10 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.KeyStroke
 
 @ApiStatus.Internal
 object VcsLogComponents {
@@ -82,6 +86,7 @@ object VcsLogComponents {
       resetDefaultFocusTraversalKeys()
     }.also {
       PopupHandler.installPopupMenu(it, VcsLogActionIds.POPUP_ACTION_GROUP, ActionPlaces.VCS_LOG_TABLE_PLACE)
+      registerMaximizeCommitMessageShortcut(it, parentDisposable)
     }
   }
 
@@ -174,6 +179,19 @@ object VcsLogComponents {
     }
     return ContainerUtil.map2Set(Ints.asList(*selectedRows)) { row: Int? -> tableModel.getRootAtRow(row!!) }.filterNotNull()
   }
+
+  /**
+   * Binds the Space key of [component] to [VcsLogActionIds.VCS_LOG_MAXIMIZE_COMMIT_MESSAGE] action.
+   * Have to be bound manually bc Space interferes with the search field input
+   */
+  @JvmStatic
+  fun registerMaximizeCommitMessageShortcut(component: JComponent, parentDisposable: Disposable) {
+    val action = ActionManager.getInstance().getAction(VcsLogActionIds.VCS_LOG_MAXIMIZE_COMMIT_MESSAGE) ?: return
+    wrap(action).registerCustomShortcutSet(COMMIT_MESSAGE_POPUP_TOGGLE_SHORTCUT, component, parentDisposable)
+  }
+
+  private val COMMIT_MESSAGE_POPUP_TOGGLE_SHORTCUT: ShortcutSet
+    get() = CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0))
 
   private const val HELP_ID: @NonNls String = "reference.changesToolWindow.log"
 }

@@ -282,6 +282,10 @@
       <reference ref="Vcs.Log.GoToParent"/>
       <separator/>
     </group>
+    <action id="Vcs.Log.MaximizeCommitMessage" class="com.intellij.vcs.log.ui.actions.MaximizeCommitMessageAction"
+            icon="AllIcons.General.ExpandComponent" internal="true">
+      <add-to-group group-id="Vcs.Log.ContextMenu" anchor="after" relative-to-action="Vcs.CopyRevisionNumberAction"/>
+    </action>
     <group id="Vcs.Log.Toolbar.RightCorner">
       <reference ref="Vcs.Log.ResumeIndexing"/>
       <reference ref="Vcs.Log.Refresh"/>

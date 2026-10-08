@@ -11,6 +11,7 @@ import com.intellij.vcs.log.history.FileHistoryModel
 import com.intellij.vcs.log.history.FileHistoryUi
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsLogUiProperties
+import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import org.jetbrains.annotations.ApiStatus
 
@@ -52,4 +53,10 @@ object VcsLogInternalDataKeys {
    */
   @ApiStatus.Internal
   val VCS_LOG_COMMIT_STORAGE_INDICES: DataKey<List<VcsLogCommitStorageIndex>> = create("Vcs.Log.Commit.Storage.Indices")
+
+  /**
+   * The commit details panel that owns the action toolbar.
+   */
+  @ApiStatus.Internal
+  val COMMIT_DETAILS_PANEL: DataKey<CommitDetailsPanel> = create("Vcs.Log.Commit.Details.Panel")
 }

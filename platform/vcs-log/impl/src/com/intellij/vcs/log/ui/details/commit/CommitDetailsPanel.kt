@@ -5,12 +5,16 @@ import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.toolbarLayout.autoLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
@@ -32,6 +36,8 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
+import com.intellij.vcs.log.ui.details.commit.CommitMessagePopup
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.CommitPresentation
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.getBranchesLinkText
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.isGoToHash
@@ -53,28 +59,33 @@ import javax.swing.BoxLayout
 import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
 
-class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit = {}) : JPanel() {
+class CommitDetailsPanel @JvmOverloads constructor(private val navigate: (CommitId) -> Unit = {}) : JPanel(), UiDataProvider {
   companion object {
-    const val SIDE_BORDER = 14
-    const val INTERNAL_BORDER = 10
-    const val EXTERNAL_BORDER = 14
-    const val LAYOUT_MIN_WIDTH = 40
-    const val TOOLBAR_MIN_HEIGHT = 30
-    const val INFO_PANEL_MIN_HEIGHT = 17
+    const val SIDE_BORDER: Int = 14
+    const val INTERNAL_BORDER: Int = 10
+    const val EXTERNAL_BORDER: Int = 14
+    const val LAYOUT_MIN_WIDTH: Int = 40
+    const val TOOLBAR_MIN_HEIGHT: Int = 30
+    const val INFO_PANEL_MIN_HEIGHT: Int = 17
   }
 
   private val statusesActionGroup = DefaultActionGroup()
+  private val toolbarActionGroup = DefaultActionGroup().apply {
+    ActionManager.getInstance().getAction("Vcs.Log.MaximizeCommitMessage")?.also {
+      add(it)
+    }
+    add(statusesActionGroup)
+  }
 
   data class RootColor(val root: VirtualFile, val color: Color)
 
   private val hashAndAuthorPanel = HashAndAuthorPanel()
-  private val statusesToolbar = ActionManager.getInstance().createActionToolbar("CommitDetailsPanel", statusesActionGroup, false).apply {
+  private val toolbar = ActionManager.getInstance().createActionToolbar("CommitDetailsPanel", toolbarActionGroup, false).apply {
     targetComponent = this@CommitDetailsPanel
     layoutStrategy = autoLayoutStrategy(showFirst = true)
     component.apply {
       isOpaque = false
       border = JBUI.Borders.empty()
-      isVisible = false
     }
   }
   private val messagePanel = CommitMessagePanel(navigate)
@@ -109,14 +120,34 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     add(mainPanel, CC().grow().push())
     //show at most 4 icons
     val maxHeight = 22 * 4
-    add(statusesToolbar.component, CC().alignY("top").maxHeight("$maxHeight").minHeight("$TOOLBAR_MIN_HEIGHT"))
+    add(toolbar.component, CC().alignY("top").maxHeight("$maxHeight").minHeight("$TOOLBAR_MIN_HEIGHT"))
 
-    scheduleStatusToolbarUpdate()
+    scheduleToolbarUpdate()
+  }
+
+  /**
+   * The presentation of the shown commit, or null when the panel has no commit.
+   */
+  val commitPresentation: CommitPresentation?
+    get() = messagePanel.presentation
+
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[VcsLogInternalDataKeys.COMMIT_DETAILS_PANEL] = this
   }
 
   fun setCommit(presentation: CommitPresentation) {
     messagePanel.updateMessage(presentation)
     hashAndAuthorPanel.presentation = presentation
+    toolbar.updateActionsAsync()
+  }
+
+  /**
+   * Creates a popup with the message of the shown commit.
+   * Returns null when the panel has no commit.
+   */
+  fun createMessagePopup(project: Project): JBPopup? {
+    val presentation = commitPresentation ?: return null
+    return CommitMessagePopup.createPopup(project, listOf(presentation), navigate)
   }
 
   fun setRefs(references: List<VcsRef>?) {
@@ -149,7 +180,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     statusesActionGroup.removeAll()
     statusesActionGroup.addAll(nonSignaturesStatuses.map(::statusToAction))
 
-    scheduleStatusToolbarUpdate()
+    scheduleToolbarUpdate()
   }
 
   private fun statusToAction(status: VcsCommitExternalStatusPresentation) =
@@ -176,15 +207,12 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
       }
     }
 
-  private fun scheduleStatusToolbarUpdate() {
+  private fun scheduleToolbarUpdate() {
     val modality = ModalityState.stateForComponent(this)
     // even async toolbar update may need a ReadAction and we might not be allowed to launch it here
     ApplicationManager.getApplication().invokeLater(
       {
-        val hasStatuses = statusesActionGroup.childrenCount > 0
-        border = if (hasStatuses) JBUI.Borders.empty() else JBUI.Borders.emptyRight(SIDE_BORDER)
-        statusesToolbar.updateActionsAsync()
-        statusesToolbar.component.isVisible = hasStatuses
+        toolbar.updateActionsAsync()
       }, modality)
   }
 
@@ -200,8 +228,9 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
   override fun getBackground(): Color = getCommitDetailsBackground()
 }
 
-private class CommitMessagePanel(private val navigate: (CommitId) -> Unit) : HtmlPanel() {
-  private var presentation: CommitPresentation? = null
+internal class CommitMessagePanel(private val navigate: (CommitId) -> Unit) : HtmlPanel() {
+  var presentation: CommitPresentation? = null
+    private set
 
   override fun hyperlinkUpdate(e: HyperlinkEvent) {
     presentation?.let { presentation ->
