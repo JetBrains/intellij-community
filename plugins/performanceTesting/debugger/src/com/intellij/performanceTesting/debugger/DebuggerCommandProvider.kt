@@ -15,4 +15,8 @@ internal class DebuggerCommandProvider : CommandProvider {
     DebugToggleBreakpointCommand.PREFIX to CreateCommand(::DebugToggleBreakpointCommand),
     WaitForDebugSessionsEndCommand.PREFIX to CreateCommand(::WaitForDebugSessionsEndCommand),
   )
+
+  override fun shouldDelegateToBackend(): Boolean {
+    return true
+  }
 }

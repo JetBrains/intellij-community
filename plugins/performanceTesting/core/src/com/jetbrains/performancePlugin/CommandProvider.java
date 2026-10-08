@@ -15,6 +15,12 @@ public interface CommandProvider {
 
   @NotNull Map<@NonNls String, CreateCommand> getCommands();
 
+  /// Determines whether execution of provided commands should be delegated to the backend process if the command is called in the frontend
+  /// process of an IDE running in remote development mode
+  default boolean shouldDelegateToBackend() {
+    return false;
+  }
+
   static @NotNull List<@NonNls String> getAllCommandNames() {
     return EP_NAME.getExtensionList().stream()
       .flatMap(e -> e.getCommands().keySet().stream()).toList();
