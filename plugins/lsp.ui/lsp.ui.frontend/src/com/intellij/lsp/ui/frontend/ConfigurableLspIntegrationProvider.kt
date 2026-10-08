@@ -5,11 +5,12 @@ import com.intellij.lsp.ui.frontend.settings.LspIntegrationSettingsImpl
 import com.intellij.lsp.ui.frontend.settings.LspServersConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lsp.api.LspBulkIntegrationProvider
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem
 
-internal class ConfigurableLspIntegrationProvider : LspIntegrationProvider {
+internal class ConfigurableLspIntegrationProvider : LspBulkIntegrationProvider {
   override fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspIntegrationProvider.LspClientStarter) {
     val settings = LspIntegrationSettingsImpl.getInstance(project)
     for (configuration in settings.servers) {

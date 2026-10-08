@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.lsp.api.Lsp4jServer
 import com.intellij.platform.lsp.api.Lsp4jServerWrapper
+import com.intellij.platform.lsp.api.LspBulkIntegrationProvider
 import com.intellij.platform.lsp.api.LspClientDescriptor
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspClientManagerListener
@@ -37,7 +38,6 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -148,28 +148,30 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
       val descriptorsToStart = readAction {
         val clients = getClients(providerClass)
         val descriptorsToStart = mutableListOf<LspClientDescriptor>()
+        // a bulk provider may want one more client for a file within the roots of its other clients
+        val bulk = provider is LspBulkIntegrationProvider
 
         for (file in FileEditorManager.getInstance(project).openFiles) {
           ProgressManager.checkCanceled()
           if (!ProjectFileIndex.getInstance(project).isInContent(file)) continue
 
-          if (clients.any { client ->
+          if (!bulk && clients.any { client ->
               client.descriptor.roots.any { root -> VfsUtilCore.isAncestor(root, file, true) }
             }) {
             // the file is already within the roots of a running server
             continue
           }
 
-          if (descriptorsToStart.any { descriptor ->
+          if (!bulk && descriptorsToStart.any { descriptor ->
               descriptor.roots.any { root -> VfsUtilCore.isAncestor(root, file, true) }
             }) {
             // the file is already within the roots of a server that will start soon
             continue
           }
 
-          val starter = LspStarterImpl()
+          val starter = LspStarterImpl(provider)
           callFileOpened(provider, file, starter)
-          descriptorsToStart.addIfNotNull(starter.descriptor)
+          descriptorsToStart.addAll(starter.descriptors)
         }
         descriptorsToStart
       }
@@ -430,15 +432,21 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
 
 
   @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
-  internal class LspStarterImpl : LspIntegrationProvider.LspClientStarter, LspServerSupportProvider.LspServerStarter {
-    var descriptor: LspClientDescriptor? = null
+  internal class LspStarterImpl(private val provider: LspIntegrationProvider) :
+    LspIntegrationProvider.LspClientStarter, LspServerSupportProvider.LspServerStarter {
+    /**
+     * An [LspBulkIntegrationProvider] gets a client per passed descriptor.
+     * Any other provider runs one client for the file, so its last passed descriptor wins.
+     */
+    val descriptors = mutableListOf<LspClientDescriptor>()
 
     override fun ensureClientStarted(descriptor: LspClientDescriptor) {
-      this.descriptor = descriptor
+      if (provider !is LspBulkIntegrationProvider) descriptors.clear()
+      descriptors.add(descriptor)
     }
 
     override fun ensureServerStarted(descriptor: LspServerDescriptor) {
-      this.descriptor = descriptor
+      ensureClientStarted(descriptor)
     }
   }
 

@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lsp.api.LspBulkIntegrationProvider
 import com.intellij.platform.lsp.api.LspClientDescriptor
 import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspServerState
@@ -98,10 +99,12 @@ internal class LspOpenedFilesService(private val project: Project) {
             }
           }
 
-          if (!fileWithinServerRootsAndSupported /*&& ProjectFileIndex.getInstance(project).isInContent(openedFile)*/) {
-            val starter = LspClientManagerImpl.LspStarterImpl()
+          if (!fileWithinServerRootsAndSupported /*&& ProjectFileIndex.getInstance(project).isInContent(openedFile)*/ ||
+              // a bulk provider may want one more client for a file that its other clients support
+              provider is LspBulkIntegrationProvider) {
+            val starter = LspClientManagerImpl.LspStarterImpl(provider)
             provider.fileOpened(project, openedFile, starter)
-            starter.descriptor?.let { descriptor -> data.newClientsToStart.add(ClientToStart(providerClass, descriptor, requestStamp)) }
+            starter.descriptors.forEach { descriptor -> data.newClientsToStart.add(ClientToStart(providerClass, descriptor, requestStamp)) }
           }
         }
       }
