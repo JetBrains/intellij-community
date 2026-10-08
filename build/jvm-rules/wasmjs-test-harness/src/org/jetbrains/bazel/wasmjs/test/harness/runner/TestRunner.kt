@@ -38,6 +38,7 @@ internal suspend fun runTests(
   staticContentDir: Path,
   indexHtml: String,
   testFilters: List<String>,
+  failFast: Boolean,
   infrastructureLog: InfrastructureLog,
   bazelDeadline: ComparableTimeMark?,
   browserSetupTimeout: Duration,
@@ -75,7 +76,7 @@ internal suspend fun runTests(
 
       // Navigation runs alongside the loop below rather than before it: a page whose load event never
       // fires must still be bounded, and the Bazel deadline is only observed by the select.
-      val navigation = async { page.goto(testPageUri(baseUri.await(), testFilters).toString()) }
+      val navigation = async { page.goto(testPageUri(baseUri.await(), testFilters, failFast).toString()) }
       // The run closes on the finished marker of the page. Every other branch interrupts it, so
       // the outcome is complete after the select.
       select {
@@ -124,10 +125,10 @@ private fun List<RemoteObject>.formatConsoleLine(): String = joinToString(" ") {
 }
 
 // Internal for its unit tests: the filter encoding must round-trip through URLSearchParams.
-internal fun testPageUri(base: URI, testFilters: List<String>): URI {
-  val query = testFilters.joinToString("&") { filter ->
-    "include=${URLEncoder.encode(filter, Charsets.UTF_8)}"
-  }.takeIf { it.isNotBlank() }
+internal fun testPageUri(base: URI, testFilters: List<String>, failFast: Boolean = false): URI {
+  val parameters = testFilters.map { filter -> "include=${URLEncoder.encode(filter, Charsets.UTF_8)}" } +
+                   listOfNotNull("failFast=true".takeIf { failFast })
+  val query = parameters.joinToString("&").takeIf { it.isNotBlank() }
   val indexHtml = when (query) {
     null -> "index.html"
     else -> "index.html?$query"

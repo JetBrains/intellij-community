@@ -37,6 +37,7 @@ suspend fun main(args: Array<String>) {
         importRemaps = parsed.invocation.importRemaps,
         awaitedImports = parsed.invocation.awaitedImports,
         testFilters = environment.testFilters,
+        failFast = environment.failFast,
         bazelDeadline = environment.timeout?.let { timeout -> TimeSource.Monotonic.markNow() + softDeadline(timeout) },
         browserSetupTimeout = parsed.invocation.browserSetupTimeout,
         xmlOutputFile = environment.xmlOutputFile,

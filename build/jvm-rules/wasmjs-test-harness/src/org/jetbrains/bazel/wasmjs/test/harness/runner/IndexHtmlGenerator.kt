@@ -80,16 +80,18 @@ internal fun generateIndexHtml(
   appendLine("""<script src="/${validatedPagePath(mochaScriptPath)}"></script>""")
   // The runner reads this configuration when its script loads, so it must come first.
   appendLine("""<script>""")
-  // Bazel's --test_filter is only known at test runtime: the runner forwards it as repeated
-  // `include` query parameters. The kotlin-test runner expects `--include` and the
-  // comma-separated patterns as two separate arguments.
-  appendLine("""  const includes = new URLSearchParams(window.location.search).getAll("include");""")
+  // Bazel's --test_filter and --test_runner_fail_fast are only known at test runtime: the runner
+  // forwards them as repeated `include` query parameters and a `failFast` query parameter. The
+  // kotlin-test runner expects `--include` and the comma-separated patterns as two separate arguments.
+  appendLine("""  const parameters = new URLSearchParams(window.location.search);""")
+  appendLine("""  const includes = parameters.getAll("include");""")
   appendLine("""  window.kotlinTestBrowserRunner = {""")
   appendLine("""    kotlinTestCliArguments: includes.length === 0 ? [] : ["--include", includes.join(",")],""")
   // Without a page element for mocha's HTML reporter, the reporter needs the base reporter for its statistics.
   appendLine("""    reporterOptions: { Base: Mocha.reporters.Base },""")
   // Mocha fails a test after 2 seconds by default. The deadline derived from TEST_TIMEOUT bounds the run instead.
-  appendLine("""    mochaSetupOptions: { timeout: 0 },""")
+  // With `bail`, mocha runs no more tests after the first failure, and still closes the suites it started.
+  appendLine("""    mochaSetupOptions: { timeout: 0, bail: parameters.has("failFast") },""")
   // The page prints the marker the harness waits for, not the runner. The extra macrotask lets a
   // callback that a test scheduled with `setTimeout(0)` run first: mocha removes its error hook
   // when the run ends, so an exception in that callback reaches the harness as uncaught.
