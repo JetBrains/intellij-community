@@ -8,6 +8,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.util.io.storages.database.DurableDatabase
 import com.intellij.platform.util.io.storages.database.DurableDatabaseFactory
 import com.intellij.platform.util.io.storages.database.DurableMapImplementation
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_SEPARATELY
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_TOGETHER
 import com.intellij.platform.util.io.storages.database.impl.DropRetiredChunksHousekeeper
 import com.intellij.platform.util.io.storages.database.impl.SparseChunksEvacuationHousekeeper
 import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics
@@ -48,9 +50,12 @@ private val LOG = logger<DurableDatabaseIndexLayoutProvider>()
 @ApiStatus.Internal
 class DurableDatabaseIndexLayoutProvider(
   private val databasePath: Path = PathManager.getIndexRoot().resolve(DATABASE_DIRECTORY_NAME),
-  //TODO RC: load defaults from system properties?
-  private val forwardMapImplementation: DurableMapImplementation = DurableMapImplementation.KEY_VALUE_SEPARATELY,
-  private val invertedMapImplementation: DurableMapImplementation = DurableMapImplementation.KEY_VALUE_SEPARATELY,
+  private val forwardMapImplementation: DurableMapImplementation = DurableMapImplementation.getProperty(
+    "DurableDatabaseIndexLayoutProvider.forwardMapImplementation", KEY_VALUE_TOGETHER
+  ),
+  private val invertedMapImplementation: DurableMapImplementation = DurableMapImplementation.getProperty(
+    "DurableDatabaseIndexLayoutProvider.invertedMapImplementation", KEY_VALUE_SEPARATELY
+  )
 ) : FileBasedIndexLayoutProvider {
   private var lazyExecutorHolder: Lazy<ScheduledExecutorService> = newExecutorHolder()
   private var lazyDatabaseHolder: Lazy<DurableDatabase> = newDatabaseHolder()
