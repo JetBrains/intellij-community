@@ -26,7 +26,7 @@ import kotlin.coroutines.cancellation.CancellationException
 sealed interface SeItemData {
   val uuid: String
   val providerId: SeProviderId
-  val weight: SeComposedWeight
+  val weight: Int
   val presentation: SeItemPresentation
   val uuidsToReplace: List<String>
   val additionalInfo: Map<String, String>
@@ -86,12 +86,13 @@ class SeItemDataFactory {
 class SeItemDataImpl internal constructor(
   override val uuid: String,
   override val providerId: SeProviderId,
-  override val weight: SeComposedWeight,
+  val composedWeight: SeComposedWeight,
   override val presentation: SeItemPresentation,
   override val uuidsToReplace: List<String>,
   override val additionalInfo: Map<String, String>,
   private val itemRef: DurableRef<SeItemEntity>,
 ): SeItemData {
+  override val weight: Int get() = composedWeight.first
   val isCommand: Boolean get() = additionalInfo[SeItemDataKeys.IS_COMMAND]?.toBoolean() == true
   val isSemantic: Boolean get() = additionalInfo[SeItemDataKeys.IS_SEMANTIC]?.toBoolean() == true
   val isExactMatch: Boolean get() = additionalInfo[SeItemDataKeys.IS_EXACT_MATCH]?.toBoolean() == true
@@ -110,15 +111,17 @@ class SeItemDataImpl internal constructor(
     }
 
   fun withUuidToReplace(uuidToReplace: List<String>): SeItemDataImpl {
-    return SeItemDataImpl(uuid, providerId, weight, presentation, uuidToReplace, additionalInfo, itemRef)
+    return SeItemDataImpl(uuid, providerId, composedWeight, presentation, uuidToReplace, additionalInfo, itemRef)
   }
 
   fun withPresentation(presentation: SeItemPresentation): SeItemDataImpl {
-    return SeItemDataImpl(uuid, providerId, weight, presentation, uuidsToReplace, additionalInfo, itemRef)
+    return SeItemDataImpl(uuid, providerId, composedWeight, presentation, uuidsToReplace, additionalInfo, itemRef)
   }
 
+  /** Replaces the first component of [composedWeight] with [weight], and keeps the other components. */
   fun withWeight(weight: Int): SeItemDataImpl {
-    return SeItemDataImpl(uuid, providerId, SeComposedWeight(weight), presentation, uuidsToReplace, additionalInfo, itemRef)
+    val components = composedWeight.components.drop(1) + SeWeightComponent(weight)
+    return SeItemDataImpl(uuid, providerId, SeComposedWeight.of(components), presentation, uuidsToReplace, additionalInfo, itemRef)
   }
 
   fun withWeight(weight: SeComposedWeight): SeItemDataImpl {
@@ -132,6 +135,9 @@ class SeItemDataImpl internal constructor(
     return presentation.contentEquals(other.presentation)
   }
 }
+
+@get:ApiStatus.Internal
+val SeItemData.composedWeight: SeComposedWeight get() = (this as SeItemDataImpl).composedWeight
 
 @get:ApiStatus.Internal
 val SeItemData.isCommand: Boolean get() = (this as SeItemDataImpl).isCommand

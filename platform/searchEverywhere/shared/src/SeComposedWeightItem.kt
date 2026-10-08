@@ -3,7 +3,7 @@ package com.intellij.platform.searchEverywhere
 
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface SeComposedWeightItem {
-  fun composedWeight(): SeComposedWeight
+  val composedWeight: SeComposedWeight
 }

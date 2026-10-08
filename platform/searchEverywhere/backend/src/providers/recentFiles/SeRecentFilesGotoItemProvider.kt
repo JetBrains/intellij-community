@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.searchEverywhere.SeComposedWeight
 import com.intellij.platform.searchEverywhere.SeWeightComponent
+import com.intellij.platform.searchEverywhere.SeWeightKey
 import com.intellij.platform.searchEverywhere.providers.target.SeComposedWeightFoundItemDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -53,9 +54,9 @@ internal class SeRecentFilesGotoItemProvider(
       val psiFile = psiManager.findFile(file) ?: continue
 
       // The match comes first. The recency orders the files with the same match, for example all files for an empty pattern.
-      val weight = SeComposedWeight(listOf(
-        SeWeightComponent(SeWeightComponent.MATCH, matcher.matchingDegree(file.name)),
-        SeWeightComponent("recency", history.lastIndex - index),
+      val weight = SeComposedWeight.of(listOf(
+        SeWeightComponent(SeWeightKey.MATCH, matcher.matchingDegree(file.name)),
+        SeWeightComponent(SeWeightKey.RECENCY, history.lastIndex - index),
       ))
 
       if (!consumer.process(SeComposedWeightFoundItemDescriptor(psiFile, weight))) return false

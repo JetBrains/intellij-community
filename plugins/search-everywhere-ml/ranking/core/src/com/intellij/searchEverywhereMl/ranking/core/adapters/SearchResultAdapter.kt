@@ -102,7 +102,7 @@ private class SeItemDataAdapter(private val seItemData: SeItemData) : SearchResu
   override fun fetchRawItemIfExists(): Any? = seItemData.fetchItemIfExists()?.rawObject
 
   override val provider: SearchResultProviderAdapter = SearchResultProviderAdapter.createAdapterFor(seItemData.providerId.value)
-  override val originalWeight: Int = seItemData.weight.components.first().weight
+  override val originalWeight: Int = seItemData.weight
   override val providerWeight: Int? = seItemData.additionalInfo[SeItemDataKeys.PROVIDER_SORT_WEIGHT]?.toIntOrNull()
   override val isSemantic: Boolean = seItemData.isSemantic
   override val correction: SearchEverywhereSpellCheckResult

@@ -2,46 +2,97 @@
 package com.intellij.platform.searchEverywhere
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class SeComposedWeightTest {
 
   @Test
-  fun equalPrefixMakesWeightsOfDifferentSizesEqual() {
-    assertCompare(0, w("m" to 100), w("m" to 100, "r" to 5))
+  fun matchDecidesBeforeOtherKeys() {
+    assertCompare(1, w(100, A to 0), w(50, A to 9))
   }
 
   @Test
-  fun commonPrefixDecidesForDifferentSizes() {
-    assertCompare(1, w("m" to 100), w("m" to 50, "r" to 5))
-    assertCompare(-1, w("m" to 100, "r" to 3), w("m" to 100, "r" to 7, "x" to 1))
+  fun missingComponentCountsAsDefaultWeight() {
+    assertCompare(0, w(100), w(100, A to 0))
+    assertCompare(-1, w(100), w(100, A to 3))
+    // The default of B is 5.
+    assertCompare(0, w(100), w(100, B to 5))
+    assertCompare(1, w(100), w(100, B to 4))
   }
 
   @Test
-  fun differentIdsAtNonFirstPositionMakeWeightsEqual() {
-    assertCompare(0, w("m" to 100, "r" to 5), w("m" to 100, "x" to 7))
+  fun keysAreComparedInTheirOrder() {
+    // A goes before B, whatever the order in the list.
+    assertCompare(-1, w(100, A to 0, B to 9), w(100, A to 1, B to 0))
+    assertCompare(1, w(100, B to 6), w(100, A to 0, B to 5))
   }
 
   @Test
-  fun differentIdsAtNonFirstPositionStopComparison() {
-    // The third components differ, but the id mismatch at index 1 comes first.
-    assertCompare(0, w("m" to 100, "r" to 5, "z" to 1), w("m" to 100, "x" to 5, "z" to 9))
+  fun idDecidesTheOrderOfKeysWithTheSameOrder() {
+    val x = SeWeightKey("x", order = 10, defaultWeight = 0)
+    val y = SeWeightKey("y", order = 10, defaultWeight = 0)
+
+    assertEquals(listOf("matchWeight", "x", "y"), SeComposedWeight.of(listOf(c(y, 0), c(x, 0), SeWeightComponent(1))).components.map { it.id })
   }
 
   @Test
-  fun firstComponentDecidesBeforeIdsAtNonFirstPosition() {
-    assertCompare(1, w("m" to 100, "r" to 5), w("m" to 50, "x" to 7))
+  fun comparisonIsTransitive() {
+    // These weights gave a cycle when the comparison skipped the missing ids.
+    val first = w(0, A to 1, B to 2)
+    val second = w(0, B to 1, C to 2)
+    val third = w(0, C to 1, A to 2)
+    assertContract(listOf(first, second, third))
+
+    val values = listOf(0, 1, 5, 9)
+    val keys = listOf(A, B, C)
+    val weights = buildList {
+      for (match in 0..1) {
+        for (mask in 0..<(1 shl keys.size)) {
+          for (value in values) {
+            add(SeComposedWeight.of(listOf(SeWeightComponent(match)) + keys.filterIndexed { index, _ -> mask and (1 shl index) != 0 }.map { c(it, value) }))
+          }
+        }
+      }
+    }
+    assertContract(weights)
+    // A sort checks the contract, too.
+    assertEquals(weights.size, weights.sortedWith(naturalOrder()).size)
   }
 
   @Test
-  fun idsAtFirstPositionAreIgnored() {
-    assertCompare(1, w("a" to 100), w("b" to 50))
-    assertCompare(0, w("a" to 100), w("b" to 100))
+  fun withAddsComponentInKeyOrderAndReplacesSameKey() {
+    val weight = w(100, B to 1).with(c(A, 2)).with(c(B, 7))
+
+    assertEquals(listOf("matchWeight", "a", "b"), weight.components.map { it.id })
+    assertEquals(listOf(100, 2, 7), weight.components.map { it.weight })
   }
 
   @Test
-  fun comparisonContinuesAfterFirstComponentsWithDifferentIds() {
-    assertCompare(-1, w("a" to 100, "r" to 3), w("b" to 100, "r" to 7))
+  fun constructorRejectsInvalidComponents() {
+    assertThrows<IllegalArgumentException> { SeComposedWeight.of(listOf(SeWeightComponent(1), c(A, 0), c(A, 1))) }
+    assertThrows<IllegalArgumentException> { SeComposedWeight.of(listOf(c(A, 0))) }
+    assertThrows<IllegalArgumentException> { SeWeightKey("negative", order = -1, defaultWeight = 0) }
+  }
+
+  /** Checks the [Comparable] contract for every pair and every triple of [weights]. */
+  private fun assertContract(weights: List<SeComposedWeight>) {
+    for (x in weights) {
+      for (y in weights) {
+        val xy = x.compareTo(y).sign
+        assertEquals(-xy, y.compareTo(x).sign, "$x vs $y")
+        for (z in weights) {
+          val yz = y.compareTo(z).sign
+          if (xy >= 0 && yz >= 0) {
+            assertTrue(x >= z, "$x >= $y >= $z")
+          }
+          if (xy == 0) {
+            assertEquals(x.compareTo(z).sign, y.compareTo(z).sign, "$x == $y, compared with $z")
+          }
+        }
+      }
+    }
   }
 
   /** Checks that `left.compareTo(right)` has the sign of [expected], and that the reverse comparison has the opposite sign. */
@@ -50,8 +101,16 @@ class SeComposedWeightTest {
     assertEquals(-expected, right.compareTo(left).sign, "$right vs $left")
   }
 
-  private fun w(vararg components: Pair<String, Int>): SeComposedWeight =
-    SeComposedWeight(components.map { (id, weight) -> SeWeightComponent(id, weight) })
+  private fun w(match: Int, vararg components: Pair<SeWeightKey, Int>): SeComposedWeight =
+    SeComposedWeight.of(listOf(SeWeightComponent(match)) + components.map { (key, weight) -> c(key, weight) })
+
+  private fun c(key: SeWeightKey, weight: Int): SeWeightComponent = SeWeightComponent(key, weight)
 
   private val Int.sign: Int get() = Integer.signum(this)
+
+  private companion object {
+    val A = SeWeightKey("a", order = 10, defaultWeight = 0)
+    val B = SeWeightKey("b", order = 20, defaultWeight = 5)
+    val C = SeWeightKey("c", order = 30, defaultWeight = 0)
+  }
 }

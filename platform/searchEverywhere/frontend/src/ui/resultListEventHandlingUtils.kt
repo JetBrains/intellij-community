@@ -12,6 +12,7 @@ import com.intellij.platform.searchEverywhere.SeResultEndEvent
 import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
 import com.intellij.platform.searchEverywhere.SeResultSkippedEvent
+import com.intellij.platform.searchEverywhere.composedWeight
 import com.intellij.platform.searchEverywhere.frontend.vm.SeSearchContext
 import com.intellij.platform.searchEverywhere.isCommand
 import com.intellij.platform.searchEverywhere.isExactMatch
@@ -135,10 +136,10 @@ private fun SeResultList.indexToAdd(newItem: SeItemData, searchPattern: String, 
     shouldInsertAbove(
       newProviderPriority = SeResultList.prioritizedProvidersPriorities[newItem.providerId] ?: 0,
       newIsExactMatch = newItem.isExactMatch,
-      newWeight = newItem.weight,
+      newWeight = newItem.composedWeight,
       itemProviderPriority = SeResultList.prioritizedProvidersPriorities[item.providerId] ?: 0,
       itemIsExactMatch =  item.isExactMatch,
-      itemWeight = item.weight,
+      itemWeight = item.composedWeight,
       prioritizeExactMatch = Registry.`is`("search.everywhere.exact.match.priority", false) && newItem.providerId == item.providerId
     )
   } ?: lastIndexToInsertItem

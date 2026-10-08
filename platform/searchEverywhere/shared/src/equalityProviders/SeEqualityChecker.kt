@@ -37,7 +37,7 @@ class SeEqualityChecker {
 
     return readAction {
       lock.withLock {
-        val newItemInfo = SearchEverywhereFoundElementInfo(newItemData.uuid, itemObject, newItemData.weight.components.first().weight, contributor)
+        val newItemInfo = SearchEverywhereFoundElementInfo(newItemData.uuid, itemObject, newItemData.weight, contributor)
         val action = {
           equalityProvider.compareItemsCollection(newItemInfo, alreadyFoundItems.values)
         }.withSafeCatch {

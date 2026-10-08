@@ -27,6 +27,7 @@ import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSearchScopesProvider
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.SeTypeVisibilityStateProvider
+import com.intellij.platform.searchEverywhere.composedWeight
 import com.intellij.platform.searchEverywhere.providers.commands.SeCommandItem
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import kotlinx.coroutines.CancellationException
@@ -168,7 +169,7 @@ class SeLocalItemDataProvider(
     itemData?.also {
       SeLog.log(SeLog.ITEM_EMIT) {
         val count = counter.incrementAndFetch()
-        "$logLabel provider for ${id.value} receives (total=$count, priority=${itemData.weight}): ${itemData.uuid} - ${itemData.presentation.text.split("\n").firstOrNull()}"
+        "$logLabel provider for ${id.value} receives (total=$count, priority=${itemData.composedWeight}): ${itemData.uuid} - ${itemData.presentation.text.split("\n").firstOrNull()}"
       }
     }
   }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)

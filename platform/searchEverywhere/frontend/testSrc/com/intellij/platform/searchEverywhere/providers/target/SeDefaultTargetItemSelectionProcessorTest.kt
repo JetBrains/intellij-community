@@ -5,6 +5,7 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.platform.searchEverywhere.SeComposedWeight
 import com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
@@ -31,15 +32,14 @@ class SeDefaultTargetItemSelectionProcessorTest {
   @Test
   fun enterOnNonPsiNavigationItemNavigatesAndClosesPopup() {
     val target = RecordingNavigationItem()
-    val item = SeTargetPresentableItem(
+    val item = SeTargetPresentableItemImpl(
       rawItem = target,
       matchers = null,
-      weight = 0,
+      composedWeight = SeComposedWeight(0),
       presentation = TargetPresentation.builder("finishCommitInWriteAction").presentation(),
       extendedInfo = SeExtendedInfoBuilder().build(),
       isMultiSelectionSupported = false,
       isExactMatch = false,
-      composedWeight = null,
     )
 
     val closePopup = runBlocking {

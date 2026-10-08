@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.platform.searchEverywhere.SeComposedWeight
 import com.intellij.platform.searchEverywhere.SeWeightComponent
+import com.intellij.platform.searchEverywhere.SeWeightKey
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -69,5 +70,6 @@ class SeResultOrderingTest {
     prioritizeExactMatch = true
   )
 
-  private fun composed(vararg weights: Int): SeComposedWeight = SeComposedWeight(weights.map { SeWeightComponent(it) })
+  private fun composed(match: Int, recency: Int): SeComposedWeight =
+    SeComposedWeight.of(listOf(SeWeightComponent(match), SeWeightComponent(SeWeightKey.RECENCY, recency)))
 }

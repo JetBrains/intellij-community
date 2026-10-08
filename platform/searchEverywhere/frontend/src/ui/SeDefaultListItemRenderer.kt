@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.frontend.ui
 import com.intellij.ide.ui.colors.color
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.searchEverywhere.composedWeight
 import com.intellij.platform.searchEverywhere.isExactMatch
 import com.intellij.platform.searchEverywhere.isSemantic
 import com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationImpl
@@ -73,7 +74,7 @@ fun LcrRow<SeResultListRow>.weightTextIfEnabled(row: SeResultListRow) {
 
   val item = row.item
   val diagnostics = listOf(
-    item.weight.toString(),
+    item.composedWeight.toString(),
     if (item.isExactMatch) "Exact" else null,
     if (item.isSemantic) "Sem" else null,
     item.providerId.value.replace("SearchEverywhereContributor", "")

@@ -53,15 +53,12 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.scopes.SearchScopeData
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.SeComposedWeight
-import com.intellij.platform.searchEverywhere.SeComposedWeightItem
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SePreviewInfoFactory
-import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
-import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.target.presentation.SeTargetPresentationProvider
@@ -101,47 +98,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.cancellation.CancellationException
-
-/**
- * A raw search result, with the matchers that decide which parts of its presentation the UI highlights.
- */
-@ApiStatus.Experimental
-class SeTargetRawItem(
-  val rawItem: Any,
-  val rawWeight: Int?,
-  val matchers: ItemMatchers?,
-  val composedWeight: SeComposedWeight?,
-)
-
-/**
- * A [FoundItemDescriptor] with a [composedWeight]. A goto item provider returns it, so that [SeTargetItemsProvider] keeps all components.
- *
- * The plain weight is the first component, for code that reads only [getWeight].
- */
-@ApiStatus.Internal
-class SeComposedWeightFoundItemDescriptor<I>(item: I, val composedWeight: SeComposedWeight)
-  : FoundItemDescriptor<I>(item, composedWeight.components.first().weight)
-
-private val FoundItemDescriptor<*>.composedWeight: SeComposedWeight?
-  get() = (this as? SeComposedWeightFoundItemDescriptor<*>)?.composedWeight
-
-@ApiStatus.Experimental
-class SeTargetPresentableItem(rawItem: Any,
-                              private val matchers: ItemMatchers?,
-                              private val weight: Int,
-                              private val presentation: TargetPresentation,
-                              val extendedInfo: SeExtendedInfo,
-                              val isMultiSelectionSupported: Boolean,
-                              val isExactMatch: Boolean,
-                              private val composedWeight: SeComposedWeight?): SeItem, SeComposedWeightItem {
-
-  override val rawObject: Any = PSIPresentationBgRendererWrapper.ItemWithPresentation(rawItem, presentation)
-  override fun weight(): Int = weight
-  override fun composedWeight(): SeComposedWeight = composedWeight ?: SeComposedWeight(weight)
-  override suspend fun presentation(): SeItemPresentation = SeTargetItemPresentationBuilder()
-    .withTargetPresentation(presentation, matchers, extendedInfo, isMultiSelectionSupported)
-    .build()
-}
 
 @ApiStatus.Experimental
 class SeTargetItemsProvider<T> private constructor(
@@ -185,31 +141,29 @@ class SeTargetItemsProvider<T> private constructor(
   }
 
   private suspend fun fetchPresentation(
-    item: SeTargetRawItem,
+    item: SeTargetRawItemImpl,
     inputQuery: String,
     inputQueryHasNoExtension: Boolean,
   ): SeTargetPresentableItem {
-    val weight = item.rawWeight ?: 0
     val presentation = SeTargetPresentationProvider.computePresentation(item.rawItem)
                        ?: TargetPresentation.builder("").presentation()
 
-    return SeTargetPresentableItem(
+    return SeTargetPresentableItemImpl(
       rawItem = item.rawItem,
       matchers = item.matchers,
-      weight = weight,
+      composedWeight = item.composedWeight,
       presentation = presentation,
       extendedInfo = getExtendedInfo(item),
       isMultiSelectionSupported = true, // AbstractGotoSEContributor supports it for every goto model
       isExactMatch = isExactMatch(
         // The legacy verdict of the item. SeAsyncContributorWrapper derives it the same way.
-        isExactMatchFromItem = DefaultChooseByNameItemProvider.isInExactMatchDegreeRange(weight),
+        isExactMatchFromItem = DefaultChooseByNameItemProvider.isInExactMatchDegreeRange(item.weight),
         presentableText = presentation.presentableText,
         inputQuery = inputQuery,
         isFile = isFileProvider,
         inputQueryHasNoExtension = inputQueryHasNoExtension,
         isDirectory = PSIPresentationBgRendererWrapper.toPsi(item.rawItem) is PsiDirectory,
-      ),
-      composedWeight = item.composedWeight,
+      )
     )
   }
 
@@ -219,8 +173,8 @@ class SeTargetItemsProvider<T> private constructor(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun getItemsFlow(
-    rawItems: Flow<SeTargetRawItem>,
-    presentationProvider: suspend (SeTargetRawItem) -> SeTargetPresentableItem,
+    rawItems: Flow<SeTargetRawItemImpl>,
+    presentationProvider: suspend (SeTargetRawItemImpl) -> SeTargetPresentableItem,
   ): Flow<SeTargetPresentableItem> {
     val stats = SeFetchStats(LOG.isDebugEnabled)
     val presentationNanos = AtomicLong(0)
@@ -254,7 +208,7 @@ class SeTargetItemsProvider<T> private constructor(
    * were sent already: by an earlier run, an earlier attempt of this run, or another contributor. Without it, the search
    * has no limit.
    */
-  private fun rawItemsFlow(params: SeParams, runs: GotoLimitedRuns?): Flow<SeTargetRawItem> = channelFlow {
+  private fun rawItemsFlow(params: SeParams, runs: GotoLimitedRuns?): Flow<SeTargetRawItemImpl> = channelFlow {
     // The counters live outside the read action, because `readAction` restarts the block after a write action.
     val attemptCount = AtomicInteger(0)
     val stats = SeFetchStats(LOG.isDebugEnabled)
@@ -334,20 +288,20 @@ class SeTargetItemsProvider<T> private constructor(
                 provider.filterElementsWithWeights(viewModel, parameters, progressIndicator
                 ) { item: FoundItemDescriptor<*> ->
                   fromModelCount.incrementAndGet()
-                  processElement(progressIndicator, model, item.item, item.weight, item.composedWeight, defaultMatchers, runs, stats, startedAtNano)
+                  processElement(progressIndicator, model, item.item, item.composedWeight, defaultMatchers, runs, stats, startedAtNano)
                 }
               }
               is ChooseByNameWeightedItemProvider -> {
                 provider.filterElementsWithWeights(viewModel, pattern, isEverywhere, progressIndicator
                 ) { item: FoundItemDescriptor<*> ->
                   fromModelCount.incrementAndGet()
-                  processElement(progressIndicator, model, item.item, item.weight, item.composedWeight, defaultMatchers, runs, stats, startedAtNano)
+                  processElement(progressIndicator, model, item.item, item.composedWeight, defaultMatchers, runs, stats, startedAtNano)
                 }
               }
               else -> {
                 provider.filterElements(viewModel, pattern, isEverywhere, progressIndicator) { element: Any ->
                   fromModelCount.incrementAndGet()
-                  processElement(progressIndicator, model, element, null, null, defaultMatchers, runs, stats, startedAtNano)
+                  processElement(progressIndicator, model, element, SeComposedWeight(0), defaultMatchers, runs, stats, startedAtNano)
                 }
               }
             }
@@ -368,12 +322,11 @@ class SeTargetItemsProvider<T> private constructor(
     }
   }
 
-  private fun ProducerScope<SeTargetRawItem>.processElement(
+  private fun ProducerScope<SeTargetRawItemImpl>.processElement(
     indicator: ProgressIndicator,
     model: ChooseByNameModel,
     element: Any?,
-    weight: Int?,
-    composedWeight: SeComposedWeight?,
+    weight: SeComposedWeight,
     defaultMatchers: ItemMatchers,
     runs: GotoLimitedRuns?,
     stats: SeFetchStats,
@@ -390,7 +343,7 @@ class SeTargetItemsProvider<T> private constructor(
       return true
     }
     // An item that was sent already, with the same or a better weight. A provider without weights sends each item once.
-    val sentWeight = weight ?: 0
+    val sentWeight = weight.first
     if (runs != null && !runs.accept(element, sentWeight)) return true
 
     // A write action cancels a `send` that waits for the consumer, and the read action restarts: that attempt must send the item.
@@ -398,11 +351,11 @@ class SeTargetItemsProvider<T> private constructor(
     try {
       runBlockingCancellable {
         LOG.debug {
-          "$label: emitting ${element.toString().split('\n').firstOrNull()}, weight=$weight"
+          "$label: emitting ${element.toString().split('\n').firstOrNull()}, weight=$sentWeight"
         }
         // `send` waits for the consumer while the read lock is held, so the wait goes into the log.
         stats.measure(stats.blockedInSendNanos) {
-          send(SeTargetRawItem(element, weight, itemMatchers(defaultMatchers, model, element), composedWeight))
+          send(SeTargetRawItemImpl(element, weight, itemMatchers(defaultMatchers, model, element)))
         }
         delivered = true
       }
@@ -916,3 +869,15 @@ internal class SeScopeByIdMap(
 
   override fun get(scopeId: String): ScopeDescriptor? = scopeIdToScope[scopeId]
 }
+
+/**
+ * A [FoundItemDescriptor] with a [composedWeight]. A goto item provider returns it, so that [SeTargetItemsProvider] keeps all components.
+ *
+ * The plain weight is the first component, for code that reads only [getWeight].
+ */
+@ApiStatus.Internal
+class SeComposedWeightFoundItemDescriptor<I>(item: I, val composedWeight: SeComposedWeight)
+  : FoundItemDescriptor<I>(item, composedWeight.components.first().weight)
+
+private val FoundItemDescriptor<*>.composedWeight: SeComposedWeight
+  get() = (this as? SeComposedWeightFoundItemDescriptor<*>)?.composedWeight ?: SeComposedWeight(weight)
