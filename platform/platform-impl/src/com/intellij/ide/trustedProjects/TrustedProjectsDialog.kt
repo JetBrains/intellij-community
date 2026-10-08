@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
@@ -26,6 +27,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+
+private val LOG = logger<TrustedProjectsDialog>()
 
 @ApiStatus.Internal
 object TrustedProjectsDialog {
@@ -167,12 +170,14 @@ object TrustedProjectsDialog {
   fun confirmTrustingUntrustedFile(hostProject: Project, filePath: Path): Boolean {
     val locatedFile = TrustedProjectsLocator.locateProject(filePath, project = null)
     if (TrustedProjects.isProjectTrusted(locatedFile)) {
+      LOG.info("Trust file dialog: ${filePath.fileName} is already trusted, the dialog is not shown")
       TrustedProjects.setProjectTrusted(locatedFile, true)
       return true
     }
 
     val choice = TrustedFileDialog.showAndGet(hostProject, filePath)
     val answer = choice.isTrusted
+    LOG.info("Trust file dialog: the user choice for ${filePath.fileName} is trust=$answer, trustFolder=${choice.isTrustFolder}")
 
     if (answer) {
       val parentPath = filePath.parent
