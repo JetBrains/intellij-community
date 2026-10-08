@@ -11,6 +11,9 @@ import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginsGroupType
 import com.intellij.ide.plugins.getUiInspectorContextFor
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerButtonType
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerSide
 import com.intellij.internal.inspector.PropertyBean
 import com.intellij.internal.inspector.UiInspectorContextProvider
 import com.intellij.internal.inspector.UiInspectorUtil
@@ -272,6 +275,7 @@ class ListPluginComponent private constructor(
 
   @JvmField
   var myInstallButton: InstallButton? = null
+  private var myInstallButtonType = PluginManagerButtonType.DEFAULT
 
   @JvmField
   var myUpdateButton: JButton? = null
@@ -457,12 +461,7 @@ class ListPluginComponent private constructor(
         myLayout.addButtonComponent(myInstallButton!!)
 
         myInstallButton!!.addActionListener {
-          val operationUi = myOperationUi.captureContext(myInstallButton!!)
-          PluginModelAsyncOperationsExecutor.performAutoInstall(myOperationLauncher,
-                                                                myModelFacade,
-                                                                myPlugin,
-                                                                myCustomizer,
-                                                                operationUi)
+          installPlugin(myInstallButtonType)
         }
         myInstallButton!!.setEnabled(showInstall, IdeBundle.message("plugin.status.installed"))
 
@@ -546,6 +545,27 @@ class ListPluginComponent private constructor(
     }
     catch (e: Exception) {
       LOG.error("Error while customizing create buttons", e)
+    }
+  }
+
+  private fun installPlugin(buttonType: PluginManagerButtonType) {
+    val operationUi = myOperationUi.captureContext(myInstallButton!!)
+    if (myCustomizer == null) {
+      PluginManagerUsageCollector.pluginInstallButtonClicked(myPlugin.pluginId, PluginManagerSide.FRONTEND, buttonType)
+    }
+    PluginModelAsyncOperationsExecutor.performAutoInstall(
+      myOperationLauncher, myModelFacade, myPlugin, myCustomizer, operationUi,
+    )
+  }
+
+  private fun clickInstallButton(buttonType: PluginManagerButtonType) {
+    val previousButtonType = myInstallButtonType
+    myInstallButtonType = buttonType
+    try {
+      myInstallButton!!.doClick()
+    }
+    finally {
+      myInstallButtonType = previousButtonType
     }
   }
 
@@ -1318,7 +1338,11 @@ class ListPluginComponent private constructor(
       }
 
       if (installCount == size) {
-        group.add(ButtonAnAction(*installButtons.requireNoNulls()))
+        // Report context menu and Enter activations with different button types. Keep the button listeners through doClick().
+        group.add(DumbAwareAction.create(installButtons[0]!!.text) { event ->
+          val buttonType = if (event.isFromContextMenu) PluginManagerButtonType.CONTEXT_MENU else PluginManagerButtonType.DEFAULT
+          selection.forEach { component -> component.clickInstallButton(buttonType) }
+        }.apply { shortcutSet = CommonShortcuts.ENTER })
         return
       }
       if (installedCount != size) {
