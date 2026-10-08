@@ -2,9 +2,9 @@ package com.intellij.python.pyproject.model.internal.pyProject
 
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
+import com.intellij.workspaceModel.ide.toPath
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.sdk.internal.PYTHON_FACET_ID
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
@@ -34,7 +34,7 @@ internal data class PyProjectImpl private constructor(override val baseDir: Path
           roots.minBy { it.url.url }
         }
       }
-      return PyProjectImpl(Path.of(VfsUtilCore.urlToPath(root.url.url)), residesOnModule = module)
+      return PyProjectImpl(root.url.toPath(), residesOnModule = module)
     }
   }
 }
