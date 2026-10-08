@@ -81,7 +81,7 @@ internal class GHPRCreatePullRequestNotificationAction(
 }
 
 private fun tryToCreatePullRequest(e: AnActionEvent) {
-  return e.project!!.service<GHPRProjectViewModel>().activateAndAwaitProject {
+  e.project!!.service<GHPRProjectViewModel>().activateAndAwaitProject {
     createPullRequest()
   }
 }

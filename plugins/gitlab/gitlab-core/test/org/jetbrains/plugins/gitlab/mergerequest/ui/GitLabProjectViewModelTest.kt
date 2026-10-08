@@ -14,7 +14,6 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
@@ -48,6 +47,7 @@ class GitLabProjectViewModelTest {
   private lateinit var account: GitLabAccount
   private lateinit var connectionManager: GitLabProjectConnectionManager
   private lateinit var knownRepositoriesState: MutableStateFlow<Set<GitLabProjectMapping>>
+  private lateinit var connectionStateFlow: MutableStateFlow<GitLabProjectConnection?>
 
   @BeforeEach
   fun setUp() {
@@ -60,7 +60,7 @@ class GitLabProjectViewModelTest {
     val projectsManager = mockk<GitLabProjectsManager> {
       every { knownRepositoriesState } returns this@GitLabProjectViewModelTest.knownRepositoriesState
     }
-    val connectionStateFlow = MutableStateFlow<GitLabProjectConnection?>(null)
+    connectionStateFlow = MutableStateFlow(null)
     connectionManager = mockk<GitLabProjectConnectionManager> {
       every { connectionState } returns connectionStateFlow
       coEvery { openConnection(any(), any()) } answers {
@@ -130,13 +130,50 @@ class GitLabProjectViewModelTest {
 
     val unknownProject = GitLabProjectCoordinates(GitLabServerPath.DEFAULT_SERVER, GitLabProjectPath("unknown-owner", "repo"))
     var actionInvoked = false
-    vm.activateAndAwaitProject(unknownProject to account, mappingTimeout = 100.milliseconds) {
+    val activation = vm.doActivateAndAwaitProject(unknownProject to account, mappingTimeout = 100.milliseconds) {
       actionInvoked = true
     }
-    delay(500.milliseconds) // longer than the mapping timeout, so the skip has happened when the check runs
+    activation.join()
 
+    assertFalse(activation.isCancelled)
     assertFalse(actionInvoked)
     coVerify(exactly = 1) { connectionManager.openConnection(any(), any()) }
+  }
+
+  @Test
+  fun `activateAndAwaitProject stops when the connection closes before the view model appears`() = timeoutRunBlocking {
+    checkActivationStops(replaceConnection = false)
+  }
+
+  @Test
+  fun `activateAndAwaitProject stops when the connection changes before the view model appears`() = timeoutRunBlocking {
+    checkActivationStops(replaceConnection = true)
+  }
+
+  private suspend fun checkActivationStops(replaceConnection: Boolean) {
+    val vm = project.service<GitLabProjectViewModel>()
+    val originalConnection = connectionManager.openConnection(forkMapping, account)!!
+    vm.connectedProjectVm.first { it != null }
+
+    coEvery { connectionManager.openConnection(originMapping, account) } answers {
+      // The state flow can skip a connection that closes before its collector runs.
+      connectionStateFlow.value = if (replaceConnection) originalConnection else null
+      mockk<GitLabProjectConnection>(relaxed = true) {
+        every { id } returns UUID.randomUUID().toString()
+        every { repo } returns originMapping
+        every { this@mockk.account } returns this@GitLabProjectViewModelTest.account
+      }
+    }
+
+    var actionInvoked = false
+    val activation = vm.doActivateAndAwaitProject(originMapping.repository to account) {
+      actionInvoked = true
+    }
+    activation.join()
+
+    assertFalse(activation.isCancelled)
+    assertFalse(actionInvoked)
+    coVerify(exactly = 1) { connectionManager.openConnection(originMapping, account) }
   }
 
   @Test

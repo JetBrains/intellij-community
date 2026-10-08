@@ -31,6 +31,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -133,13 +135,44 @@ class GHPRProjectViewModelTest {
 
     val unknownRepository = GHRepositoryCoordinates(GithubServerPath.DEFAULT_SERVER, GHRepositoryPath("unknown-owner", "repo"))
     var actionInvoked = false
-    vm.activateAndAwaitProject(unknownRepository to account, mappingTimeout = 100.milliseconds) {
+    val activation = vm.doActivateAndAwaitProject(unknownRepository to account, mappingTimeout = 100.milliseconds) {
       actionInvoked = true
     }
-    delay(500.milliseconds) // longer than the mapping timeout, so the skip has happened when the check runs
+    activation.join()
 
+    assertFalse(activation.isCancelled)
     assertFalse(actionInvoked)
     coVerify(exactly = 1) { connectionManager.openConnection(any(), any()) }
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = [false, true])
+  fun `activateAndAwaitProject stops when the connection closes or changes before the view model appears`(
+    replaceConnection: Boolean,
+  ) = timeoutRunBlocking {
+    val vm = project.service<GHPRProjectViewModel>()
+    val originalConnection = connectionManager.openConnection(forkMapping, account)!!
+    vm.connectedProjectVm.first { it != null }
+
+    coEvery { connectionManager.openConnection(originMapping, account) } answers {
+      // The state flow can skip a connection that closes before its collector runs.
+      connectionStateFlow.value = if (replaceConnection) originalConnection else null
+      mockk<GHRepositoryConnection>(relaxed = true) {
+        every { id } returns UUID.randomUUID().toString()
+        every { repo } returns originMapping
+        every { this@mockk.account } returns this@GHPRProjectViewModelTest.account
+      }
+    }
+
+    var actionInvoked = false
+    val activation = vm.doActivateAndAwaitProject(originMapping.repository to account) {
+      actionInvoked = true
+    }
+    activation.join()
+
+    assertFalse(activation.isCancelled)
+    assertFalse(actionInvoked)
+    coVerify(exactly = 1) { connectionManager.openConnection(originMapping, account) }
   }
 
   @Test

@@ -12,12 +12,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
@@ -26,6 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
@@ -142,13 +145,26 @@ class GHPRProjectViewModel(private val project: Project, parentCs: CoroutineScop
    * The [selectorVm] heuristics need exactly one known repository and account, and a new pull request worktree can have more.
    * [action] always runs against the view model for [preferredRepoAndAccount].
    * When no mapping for the repository appears within [mappingTimeout], [action] does not run.
+   * When the connection closes or changes before its view model appears, [action] does not run.
    */
   fun activateAndAwaitProject(
     preferredRepoAndAccount: Pair<GHRepositoryCoordinates, GithubAccount>? = null,
     mappingTimeout: Duration = PREFERRED_REPOSITORY_MAPPING_TIMEOUT,
     action: GHPRConnectedProjectViewModel.() -> Unit,
   ) {
-    cs.launch {
+    doActivateAndAwaitProject(preferredRepoAndAccount, mappingTimeout, action)
+  }
+
+  /**
+   * Does the same as [activateAndAwaitProject] and returns the job of the activation.
+   */
+  @VisibleForTesting
+  internal fun doActivateAndAwaitProject(
+    preferredRepoAndAccount: Pair<GHRepositoryCoordinates, GithubAccount>? = null,
+    mappingTimeout: Duration = PREFERRED_REPOSITORY_MAPPING_TIMEOUT,
+    action: GHPRConnectedProjectViewModel.() -> Unit,
+  ): Job {
+    return cs.launch {
       _activationRequests.emit(Unit)
       if (preferredRepoAndAccount == null) {
         connectedProjectVm.filterNotNull().first().action()
@@ -166,7 +182,11 @@ class GHPRProjectViewModel(private val project: Project, parentCs: CoroutineScop
         return@launch
       }
       val connection = connect(mapping, account) ?: return@launch
-      connectedProjectVm.filterNotNull().first { it.connectionId == connection.id }.action()
+      val (currentConnection, vm) = combine(connectionManager.connectionState, connectedProjectVm, ::Pair)
+        .first { (currentConnection, vm) -> currentConnection !== connection || vm?.connectionId == connection.id }
+      if (currentConnection === connection) {
+        vm?.action()
+      }
     }
   }
 
