@@ -3,7 +3,9 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.backend.welcomeFiles
 
 import com.intellij.ide.actions.WelcomeFilesRootType
 import com.intellij.ide.actions.deleteWelcomeFile
+import com.intellij.ide.actions.deleteWelcomeFilesOnClose
 import com.intellij.ide.actions.saveWelcomeFileAs
+import com.intellij.ide.actions.saveWelcomeFilesOnClose
 import com.intellij.ide.ui.WindowFocusFrontendService
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
@@ -42,6 +44,21 @@ internal class BackendWelcomeFilesApi : WelcomeFilesApi {
       deleteWelcomeFile(project, welcomeFile)
     }
   }
+
+  override suspend fun saveOnClose(projectId: ProjectId, files: List<VirtualFileId>): Deferred<Boolean> {
+    val project = projectId.findProjectOrNull() ?: return CompletableDeferred(true)
+    return BackendWelcomeFilesService.getInstance(project).saveOnClose(files)
+  }
+
+  override suspend fun discardOnClose(projectId: ProjectId, files: List<VirtualFileId>) {
+    val project = projectId.findProjectOrNull() ?: return
+    withContext(Dispatchers.EDT) {
+      val welcomeFiles = files.mapNotNull { findWelcomeFile(project, it) }
+      if (welcomeFiles.isNotEmpty()) {
+        deleteWelcomeFilesOnClose(project, welcomeFiles)
+      }
+    }
+  }
 }
 
 /**
@@ -56,6 +73,19 @@ private class BackendWelcomeFilesService(private val project: Project, private v
       WindowFocusFrontendService.getInstance().performActionWithFocus(true) {
         saveWelcomeFileAs(project, file, closeCurrentTab = true)
       }
+    }
+  }
+
+  fun saveOnClose(fileIds: List<VirtualFileId>): Deferred<Boolean> {
+    return scope.async(Dispatchers.EDT) {
+      val files = fileIds.mapNotNull { findWelcomeFile(project, it) }
+      if (files.isEmpty()) {
+        return@async true
+      }
+      // The dialog gets the last focused frontend window as its parent.
+      WindowFocusFrontendService.getInstance().performActionWithFocus(true) {
+        saveWelcomeFilesOnClose(project, files)
+      } == true
     }
   }
 

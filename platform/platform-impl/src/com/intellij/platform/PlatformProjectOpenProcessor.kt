@@ -66,9 +66,6 @@ internal val PROJECT_NEWLY_OPENED: Key<Boolean> = Key.create("PROJECT_NEWLY_OPEN
 internal val PROJECT_NEWLY_CREATED: Key<Boolean> = Key.create("PROJECT_NEWLY_CREATED")
 
 @Internal
-val PROJECT_CLOSE_WITH_CONFIRMATION: Key<Boolean> = Key.create("PROJECT_CLOSE_WITH_CONFIRMATION")
-
-@Internal
 fun isConfiguredByPlatformProcessor(project: Project): Boolean = project.getUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR) == true
 
 internal fun isLoadedFromCacheButHasNoModules(project: Project): Boolean {

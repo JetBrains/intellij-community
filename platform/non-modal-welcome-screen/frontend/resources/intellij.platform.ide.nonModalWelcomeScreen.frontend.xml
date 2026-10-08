@@ -23,6 +23,7 @@
       implementation="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.leftPanel.FrontendWelcomeScreenLeftPanelProvider"
     />
     <virtualFilePreCloseCheck implementation="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.welcomeFiles.WelcomeFilePreCloseCheck"/>
+    <projectCloseHandler implementation="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.welcomeFiles.FrontendWelcomeProjectCloseHandler"/>
   </extensions>
 
   <projectListeners>

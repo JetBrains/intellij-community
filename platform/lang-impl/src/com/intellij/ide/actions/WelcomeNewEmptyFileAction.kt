@@ -9,6 +9,7 @@ import com.intellij.ide.scratch.ScratchFileActions.ChangeLanguageAction
 import com.intellij.ide.scratch.ScratchFileCreationHelper
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
+import com.intellij.ide.ui.WindowFocusFrontendService
 import com.intellij.ide.util.DeleteHandler
 import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.idea.ActionsBundle
@@ -39,7 +40,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findFile
-import com.intellij.platform.PROJECT_CLOSE_WITH_CONFIRMATION
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.util.Consumer
@@ -144,36 +144,34 @@ class WelcomeSaveFileAction : DumbAwareAction() {
   }
 }
 
+/**
+ * Asks the user to save the open Home files before the welcome project closes.
+ * The application exit asks nothing, because the files stay for the next session.
+ * On a split-mode host, the files are open in the client editors, and the dialogs go to the client.
+ */
 internal class WelcomeProjectCloseHandler : ProjectCloseHandler {
   override fun canClose(project: Project): Boolean {
-    if (WelcomeUtils.isWelcomeProject(project) && project.getUserData(PROJECT_CLOSE_WITH_CONFIRMATION) == true) {
-      val rootType = WelcomeFilesRootType.Util.instance
-      val files = FileEditorManager.getInstance(project).openFiles.filter { rootType.containsFile(it) }
-      val size = files.size
-
-      if (size == 1) {
-        return doCloseFileOnExit(project, files[0])
-      }
-      if (size > 1) {
-        return doCloseFilesOnExit(project, files)
-      }
+    if (ApplicationManager.getApplication().isExitInProgress || !WelcomeUtils.isWelcomeProject(project)) {
+      return true
     }
-    return true
+    val rootType = WelcomeFilesRootType.Util.instance
+    val files = FileEditorManager.getInstance(project).openFilesWithRemotes.distinct().filter { rootType.containsFile(it) }
+    // The dialogs get the last focused frontend window as their parent.
+    return files.isEmpty() || WindowFocusFrontendService.getInstance().performActionWithFocus(true) {
+      closeWelcomeFilesWithProject(project, files)
+    } == true
   }
 }
 
-private fun doCloseFileOnExit(project: Project, file: VirtualFile): Boolean {
-  val result = askSaveWelcomeFile(file, project)
-
-  if (result == Messages.CANCEL) {
-    return false
+private fun closeWelcomeFilesWithProject(project: Project, files: List<VirtualFile>): Boolean {
+  return when (askSaveWelcomeFiles(files, project)) {
+    Messages.CANCEL -> false
+    Messages.OK -> saveWelcomeFilesOnClose(project, files)
+    else -> {
+      deleteWelcomeFilesOnClose(project, files)
+      true
+    }
   }
-  if (result == Messages.OK) {
-    return doSaveFileOnExit(project, file)
-  }
-
-  deleteFilesOnExit(project, listOf(file))
-  return true
 }
 
 /**
@@ -188,22 +186,30 @@ fun askSaveWelcomeFile(file: VirtualFile, project: Project): Int {
     .yesText(IdeBundle.message("button.save")).noText(ApplicationBundle.message("settings.switch.project.button.dont.save")).show(project)
 }
 
-private fun doCloseFilesOnExit(project: Project, files: List<VirtualFile>): Boolean {
-  val result = MessageDialogBuilder.yesNoCancel(IdeBundle.message("welcome.files.dialog.title"),
-                                                IdeBundle.message("welcome.files.dialog.messages",
-                                                                  files.size.toString(),
-                                                                  files.joinToString("<br>") { it.name }))
+/**
+ * Asks the user to save the Home [files]. One file gets [askSaveWelcomeFile]. Several files get one dialog with their names.
+ * Returns [Messages.OK] for "Save", [Messages.NO] for "Don't save", and [Messages.CANCEL] for "Cancel".
+ */
+@ApiStatus.Internal
+@YesNoCancelResult
+fun askSaveWelcomeFiles(files: List<VirtualFile>, project: Project): Int {
+  files.singleOrNull()?.let { return askSaveWelcomeFile(it, project) }
+  return MessageDialogBuilder.yesNoCancel(IdeBundle.message("welcome.files.dialog.title"),
+                                          IdeBundle.message("welcome.files.dialog.messages",
+                                                            files.size.toString(),
+                                                            files.joinToString("<br>") { it.name }))
     .yesText(IdeBundle.message("button.save")).noText(ApplicationBundle.message("settings.switch.project.button.dont.save")).show(project)
+}
 
-  if (result == Messages.CANCEL) {
-    return false
-  }
-  if (result == Messages.OK) {
-    return doSaveFilesOnExit(project, files)
-  }
-
-  deleteFilesOnExit(project, files)
-  return true
+/**
+ * Copies the Home [files] to a target the user selects, then closes and deletes them.
+ * One file gets the save dialog. Several files get a directory chooser and keep their names.
+ * Returns false when the user cancels the dialog. Then nothing changes.
+ */
+@ApiStatus.Internal
+fun saveWelcomeFilesOnClose(project: Project, files: List<VirtualFile>): Boolean {
+  val file = files.singleOrNull()
+  return if (file != null) doSaveFileOnExit(project, file) else doSaveFilesOnExit(project, files)
 }
 
 /**
@@ -248,7 +254,7 @@ private fun doSaveFileOnExit(project: Project, file: VirtualFile): Boolean {
     writeFile(FileDocumentManager.getInstance(), file, targetFile)
   })
 
-  deleteFilesOnExit(project, listOf(file))
+  deleteWelcomeFilesOnClose(project, listOf(file))
 
   return true
 }
@@ -277,7 +283,7 @@ private fun doSaveFilesOnExit(project: Project, files: List<VirtualFile>): Boole
     }
   })
 
-  deleteFilesOnExit(project, files)
+  deleteWelcomeFilesOnClose(project, files)
 
   return true
 }
@@ -352,7 +358,11 @@ fun deleteWelcomeFile(project: Project, file: VirtualFile) {
   }
 }
 
-private fun deleteFilesOnExit(project: Project, files: List<VirtualFile>) {
+/**
+ * Closes the editors of the Home [files] and deletes the files without a confirmation.
+ */
+@ApiStatus.Internal
+fun deleteWelcomeFilesOnClose(project: Project, files: List<VirtualFile>) {
   val psiManager = PsiManager.getInstance(project)
   val fileEditorManager = FileEditorManager.getInstance(project)
   val toDelete = mutableListOf<PsiElement>()

@@ -35,6 +35,18 @@ interface WelcomeFilesApi : RemoteApi<Unit> {
    */
   suspend fun discard(projectId: ProjectId, file: VirtualFileId)
 
+  /**
+   * Copies [files] to a target the user selects, then closes and deletes them. The project close waits for the result.
+   * One file gets the save dialog. Several files get a directory chooser and keep their names.
+   * The call returns at once. The returned deferred completes with false when the user cancels the dialog.
+   */
+  suspend fun saveOnClose(projectId: ProjectId, files: List<VirtualFileId>): Deferred<Boolean>
+
+  /**
+   * Closes the editors of [files] and deletes the files without a confirmation.
+   */
+  suspend fun discardOnClose(projectId: ProjectId, files: List<VirtualFileId>)
+
   companion object {
     /**
      * Returns the api of this session. A light session has no backend, so it gets an api that finds no Home file.
@@ -53,5 +65,10 @@ private object NoBackendWelcomeFilesApi : WelcomeFilesApi {
   override suspend fun saveAs(projectId: ProjectId, file: VirtualFileId): Deferred<Unit> = CompletableDeferred(Unit)
 
   override suspend fun discard(projectId: ProjectId, file: VirtualFileId) {
+  }
+
+  override suspend fun saveOnClose(projectId: ProjectId, files: List<VirtualFileId>): Deferred<Boolean> = CompletableDeferred(true)
+
+  override suspend fun discardOnClose(projectId: ProjectId, files: List<VirtualFileId>) {
   }
 }

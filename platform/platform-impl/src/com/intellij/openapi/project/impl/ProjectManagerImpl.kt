@@ -103,7 +103,6 @@ import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.ex.isBackgroundActivitiesSuppressed
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.platform.PROJECT_CLOSE_WITH_CONFIRMATION
 import com.intellij.platform.PROJECT_NEWLY_CREATED
 import com.intellij.platform.PROJECT_NEWLY_OPENED
 import com.intellij.platform.PlatformProjectOpenProcessor
@@ -437,17 +436,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           }
         }.toTypedArray())
       }
-    }
-  }
-
-  private fun closeProjectWithConfirmation(project: Project): Boolean {
-    try {
-      project.putUserData(PROJECT_CLOSE_WITH_CONFIRMATION, true)
-
-      return closeProject(project, checkCanClose = true)
-    }
-    finally {
-      project.putUserData(PROJECT_CLOSE_WITH_CONFIRMATION, null)
     }
   }
 
@@ -1288,11 +1276,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         writeIntentReadAction {
           if (enableReuse) {
             windowManager.withFrameReuseEnabled().use {
-              closeProjectWithConfirmation(project)
+              closeProject(project, checkCanClose = true)
             }
           }
           else {
-            closeProjectWithConfirmation(project)
+            closeProject(project, checkCanClose = true)
           }
         }
       }

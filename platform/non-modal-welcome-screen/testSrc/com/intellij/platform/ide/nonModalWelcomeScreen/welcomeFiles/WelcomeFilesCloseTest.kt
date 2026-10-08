@@ -7,20 +7,25 @@ import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileChooser.FileSaverDialog
+import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.tabActions.ALWAYS_SHOW_MODIFIED_MARKER
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWrapper
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
@@ -37,6 +42,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -46,14 +52,16 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.awt.Component
 import java.nio.file.Path
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.SwingConstants
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Checks the Home files of the welcome project: the modified marker on the tab, and the prompt when the tab closes.
+ * Checks the Home files of the welcome project: the modified marker on the tab, and the prompts when a tab or the project closes.
  * A test save dialog replaces the real one. It selects no target, so the tests check no copy of a file.
+ * A test directory chooser replaces the real one for the save of several files on the project close.
  */
 @TestApplication
 internal class WelcomeFilesCloseTest {
@@ -67,6 +75,7 @@ internal class WelcomeFilesCloseTest {
     openAfterCreation = true,
   )
   private val fileEditorManagerFixture = projectFixture.fileEditorManagerFixture()
+  private val tempDirFixture = tempPathFixture()
 
   private val project: Project
     get() = projectFixture.get()
@@ -266,6 +275,94 @@ internal class WelcomeFilesCloseTest {
     assertTrue(api.isWelcomeFile(project.projectId(), file.rpcId()))
   }
 
+  @Test
+  fun `project close cancel keeps the file`(): Unit = timeoutRunBlocking {
+    markAsWelcomeProject(project)
+    val file = createWelcomeFile()
+    openAndAwaitMarker(file)
+    var questionCount = 0
+    TestDialogManager.setTestDialog({ questionCount++; Messages.CANCEL }, disposable)
+
+    // The project manager calls the close handlers under the write-intent lock, so the test does the same.
+    val canClose = withContext(Dispatchers.EDT) {
+      ProjectManagerEx.getInstanceEx().canClose(project)
+    }
+
+    assertFalse(canClose)
+    assertEquals(1, questionCount)
+    assertTrue(withContext(Dispatchers.UiWithModelAccess) { manager.isFileOpen(file) })
+    assertTrue(file.isValid)
+  }
+
+  @Test
+  fun `project close with do not save deletes the files after one question`(): Unit = timeoutRunBlocking {
+    markAsWelcomeProject(project)
+    val files = listOf(createWelcomeFile(), createWelcomeFile())
+    for (file in files) {
+      openAndAwaitMarker(file)
+    }
+    var questionCount = 0
+    TestDialogManager.setTestDialog({ questionCount++; Messages.NO }, disposable)
+
+    // The project manager calls the close handlers under the write-intent lock, so the test does the same.
+    val canClose = withContext(Dispatchers.EDT) {
+      ProjectManagerEx.getInstanceEx().canClose(project)
+    }
+
+    assertTrue(canClose)
+    assertEquals(1, questionCount)
+    withContext(Dispatchers.UiWithModelAccess) {
+      for (file in files) {
+        assertFalse(manager.isFileOpen(file))
+      }
+    }
+    waitUntil("The Home files are not deleted", timeout = 5.seconds) { files.none { it.isValid } }
+  }
+
+  @Test
+  fun `project close with save copies the files to the selected directory`(): Unit = timeoutRunBlocking {
+    markAsWelcomeProject(project)
+    val files = listOf(createWelcomeFile(), createWelcomeFile())
+    for (file in files) {
+      openAndAwaitMarker(file)
+    }
+    val fileNames = files.map { it.name }.sorted()
+    TestDialogManager.setTestDialog(TestDialog.OK, disposable)
+    val targetDir = withContext(Dispatchers.IO) {
+      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempDirFixture.get())!!
+    }
+    replacePathChooser(targetDir)
+
+    // The project manager calls the close handlers under the write-intent lock, so the test does the same.
+    val canClose = withContext(Dispatchers.EDT) {
+      ProjectManagerEx.getInstanceEx().canClose(project)
+    }
+
+    assertTrue(canClose)
+    waitUntil("The Home files are not deleted", timeout = 5.seconds) { files.none { it.isValid } }
+    assertEquals(fileNames, targetDir.children.map { it.name }.sorted())
+  }
+
+  @Test
+  fun `project close with save of one file uses the save dialog`(): Unit = timeoutRunBlocking {
+    markAsWelcomeProject(project)
+    val file = createWelcomeFile()
+    openAndAwaitMarker(file)
+    TestDialogManager.setTestDialog(TestDialog.OK, disposable)
+    val savedFileNames = ArrayList<String>()
+    replaceSaveDialog { savedFileNames += it }
+
+    // The project manager calls the close handlers under the write-intent lock, so the test does the same.
+    val canClose = withContext(Dispatchers.EDT) {
+      ProjectManagerEx.getInstanceEx().canClose(project)
+    }
+
+    // The test save dialog selects no target, so the close stops and the file stays.
+    assertFalse(canClose)
+    assertEquals(listOf(file.name), savedFileNames)
+    assertTrue(file.isValid)
+  }
+
   private suspend fun createWelcomeFile(): VirtualFile {
     val file = edtWriteAction {
       WelcomeFilesRootType.Util.instance.findFile(project, "Untitled.txt", ScratchFileService.Option.create_new_always)
@@ -300,6 +397,18 @@ internal class WelcomeFilesCloseTest {
             return null
           }
         }
+      }
+    }
+    ApplicationManager.getApplication().replaceService(FileChooserFactory::class.java, factory, disposable)
+  }
+
+  /**
+   * Replaces the directory chooser with a chooser that selects [targetDir].
+   */
+  private fun replacePathChooser(targetDir: VirtualFile) {
+    val factory = object : FileChooserFactoryImpl() {
+      override fun createPathChooser(descriptor: FileChooserDescriptor, project: Project?, parent: Component?): PathChooserDialog {
+        return PathChooserDialog { _, callback -> callback.consume(listOf(targetDir)) }
       }
     }
     ApplicationManager.getApplication().replaceService(FileChooserFactory::class.java, factory, disposable)

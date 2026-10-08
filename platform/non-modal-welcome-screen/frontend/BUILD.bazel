@@ -41,6 +41,8 @@ jvm_library(
         "//platform/projectView/frontend",
         "//platform/util/jdom",
         "//platform/platform-impl/rpc",
+        "//platform/projectModel-api:projectModel",
+        "//platform/progress/shared:ide-progress",
     ],
 )
 
@@ -72,6 +74,8 @@ jvm_library(
         "//platform/projectView/frontend:frontend_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/progress/shared:ide-progress_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.frontend` end
