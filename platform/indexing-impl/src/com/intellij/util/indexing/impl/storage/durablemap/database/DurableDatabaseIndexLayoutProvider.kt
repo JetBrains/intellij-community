@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.util.io.storages.database.DurableDatabase
 import com.intellij.platform.util.io.storages.database.DurableDatabaseFactory
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation
 import com.intellij.platform.util.io.storages.database.impl.DropRetiredChunksHousekeeper
 import com.intellij.platform.util.io.storages.database.impl.SparseChunksEvacuationHousekeeper
 import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics
@@ -41,10 +42,15 @@ private val LOG = logger<DurableDatabaseIndexLayoutProvider>()
  * of indexes to support is given in `DurableDatabaseIndexLayoutProvider.APPLICABLE_INDEX_IDS` system property, and
  * only those indexes are owned by this provider. The only exception is `*`-value: if it is in the list -- **all** indexes are
  * owned by this provider
+ *
+ * [invertedMapImplementation] and [forwardMapImplementation] select the formats for the two map roles.
  */
 @ApiStatus.Internal
 class DurableDatabaseIndexLayoutProvider(
   private val databasePath: Path = PathManager.getIndexRoot().resolve(DATABASE_DIRECTORY_NAME),
+  //TODO RC: load defaults from system properties?
+  private val forwardMapImplementation: DurableMapImplementation = DurableMapImplementation.KEY_VALUE_SEPARATELY,
+  private val invertedMapImplementation: DurableMapImplementation = DurableMapImplementation.KEY_VALUE_SEPARATELY,
 ) : FileBasedIndexLayoutProvider {
   private var lazyExecutorHolder: Lazy<ScheduledExecutorService> = newExecutorHolder()
   private var lazyDatabaseHolder: Lazy<DurableDatabase> = newDatabaseHolder()
@@ -58,6 +64,10 @@ class DurableDatabaseIndexLayoutProvider(
   private fun newDatabaseHolder(): Lazy<DurableDatabase> = lazy {
     //TODO RC: use one of the platform executors?
     val scheduler = lazyExecutorHolder.value
+    LOG.info(
+      "implementations: forwardIndex=$forwardMapImplementation, invertedIndex=$invertedMapImplementation, " +
+      "directory: [$databasePath]",
+    )
     DurableDatabaseFactory.withDefaults()
       .housekeeping(scheduler, scheduler)
       .startupHousekeeping(
@@ -105,17 +115,17 @@ class DurableDatabaseIndexLayoutProvider(
     return when (extension) {
       is SingleEntryFileBasedIndexExtension<V> -> {
         @Suppress("UNCHECKED_CAST")
-        DurableDatabaseSingleEntryStorageLayout(database, extension) as VfsAwareIndexStorageLayout<K, V>
+        DurableDatabaseSingleEntryStorageLayout(database, extension, invertedMapImplementation) as VfsAwareIndexStorageLayout<K, V>
       }
       is ShardableIndexExtension -> {
         if (extension.shardsCount() > 1) {
-          DurableDatabaseShardedStorageLayout(database, extension)
+          DurableDatabaseShardedStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation)
         }
         else {
-          DurableDatabaseStorageLayout(database, extension)
+          DurableDatabaseStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation)
         }
       }
-      else -> DurableDatabaseStorageLayout(database, extension)
+      else -> DurableDatabaseStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation)
     }
   }
 

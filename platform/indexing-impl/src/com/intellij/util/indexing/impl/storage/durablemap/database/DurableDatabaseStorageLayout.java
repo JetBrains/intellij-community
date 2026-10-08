@@ -4,6 +4,7 @@ package com.intellij.util.indexing.impl.storage.durablemap.database;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.database.DurableDatabase;
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
 import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap;
 import com.intellij.util.indexing.FileBasedIndexExtension;
@@ -43,7 +44,9 @@ final class DurableDatabaseStorageLayout<Key, Value> implements VfsAwareIndexSto
   private final @NotNull StorageRef<DurableMapBasedForwardIndex, IOException> forwardIndexRef;
 
   DurableDatabaseStorageLayout(@NotNull DurableDatabase database,
-                               @NotNull FileBasedIndexExtension<Key, Value> extension) {
+                               @NotNull FileBasedIndexExtension<Key, Value> extension,
+                               @NotNull DurableMapImplementation invertedMapImplementation,
+                               @NotNull DurableMapImplementation forwardMapImplementation) {
     this.database = database;
     indexId = extension.getName();
     DataExternalizer<Map<Key, Value>> inputMapExternalizer = DefaultIndexStorageLayoutProviderKt.defaultMapExternalizerFor(extension);
@@ -54,10 +57,11 @@ final class DurableDatabaseStorageLayout<Key, Value> implements VfsAwareIndexSto
     valueMapAccessor = DurableDatabaseMapAccessors.valueMapAccessor(
       database,
       indexId,
+      invertedMapImplementation,
       keyDescriptor,
       valueExternalizer
     );
-    forwardMapAccessor = DurableDatabaseMapAccessors.forwardMapAccessor(database, indexId);
+    forwardMapAccessor = DurableDatabaseMapAccessors.forwardMapAccessor(database, indexId, forwardMapImplementation);
     indexStorageRef = new StorageRef<>(
       "IndexStorage[" + extension.getName() + "]",
       () -> new DurableMapIndexStorage<>(

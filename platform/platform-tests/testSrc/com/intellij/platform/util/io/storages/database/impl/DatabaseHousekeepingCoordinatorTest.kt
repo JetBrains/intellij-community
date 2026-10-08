@@ -2,6 +2,7 @@
 package com.intellij.platform.util.io.storages.database.impl
 
 import com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_TOGETHER
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory
 import com.intellij.platform.util.io.storages.database.DurableDatabaseFactory
 import com.intellij.platform.util.io.storages.database.impl.housekeeping.DatabaseHousekeepingCoordinator
@@ -240,7 +241,7 @@ class DatabaseHousekeepingCoordinatorTest {
         val database = reconfiguredFactory.open(directory)
         database.use {
           val descriptor = stringAsUTF8()
-          val map = database.openMap("map", 1, descriptor, descriptor)
+          val map = database.openMap("map", 1, KEY_VALUE_TOGETHER, descriptor, descriptor)
           map.put("key", "value")
           assertEquals("value", map.get("key"))
         }
@@ -363,7 +364,7 @@ class DatabaseHousekeepingCoordinatorTest {
     BlocksDatabaseFactory(1024 * 1024).open(directory).use { blocksDatabase ->
       DurableDatabaseImpl(blocksDatabase).use { database ->
         val descriptor = stringAsUTF8()
-        val map = database.openMap("map", 1, descriptor, descriptor)
+        val map = database.openMap("map", 1, KEY_VALUE_TOGETHER, descriptor, descriptor)
         map.put("updated", firstValue)
         map.put("live", liveValue)
         map.put("updated", replacementValue)
@@ -385,7 +386,7 @@ class DatabaseHousekeepingCoordinatorTest {
     BlocksDatabaseFactory(1024 * 1024).open(directory).use { blocksDatabase ->
       DurableDatabaseImpl(blocksDatabase).use { database ->
         val descriptor = stringAsUTF8()
-        val map = database.openMap("map", 1, descriptor, descriptor)
+        val map = database.openMap("map", 1, KEY_VALUE_TOGETHER, descriptor, descriptor)
         assertEquals(liveValue, map.get("live"))
         assertEquals(replacementValue, map.get("updated"))
       }

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.platform.util.io.storages.CommonKeyDescriptors;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.database.DurableDatabase;
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
 import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap;
 import com.intellij.util.ThrowableRunnable;
@@ -33,10 +34,11 @@ public final class DurableDatabaseMapAccessors {
   valueMapAccessor(
     @NotNull DurableDatabase database,
     @NotNull IndexId<?, ?> indexId,
+    @NotNull DurableMapImplementation implementation,
     @NotNull KeyDescriptorEx<Key> keyDescriptor,
     @NotNull DataExternalizer<Value> valueExternalizer
   ) {
-    return createValueMapAccessor(database, indexId, /*shardNo: */null, keyDescriptor, valueExternalizer);
+    return createValueMapAccessor(database, indexId, /*shardNo: */null, implementation, keyDescriptor, valueExternalizer);
   }
 
   public static <Key, Value>
@@ -45,27 +47,30 @@ public final class DurableDatabaseMapAccessors {
     @NotNull DurableDatabase database,
     @NotNull IndexId<?, ?> indexId,
     int shardNo,
+    @NotNull DurableMapImplementation implementation,
     @NotNull KeyDescriptorEx<Key> keyDescriptor,
     @NotNull DataExternalizer<Value> valueExternalizer
   ) {
     checkShardNo(shardNo);
-    return createValueMapAccessor(database, indexId, shardNo, keyDescriptor, valueExternalizer);
-  }
-
-  public static @NotNull StorageAccessor<DurableMap<Integer, ByteArraySequence>> forwardMapAccessor(
-    @NotNull DurableDatabase database,
-    @NotNull IndexId<?, ?> indexId
-  ) {
-    return createForwardMapAccessor(database, indexId, /*shardNo: */null);
+    return createValueMapAccessor(database, indexId, shardNo, implementation, keyDescriptor, valueExternalizer);
   }
 
   public static @NotNull StorageAccessor<DurableMap<Integer, ByteArraySequence>> forwardMapAccessor(
     @NotNull DurableDatabase database,
     @NotNull IndexId<?, ?> indexId,
-    int shardNo
+    @NotNull DurableMapImplementation implementation
+  ) {
+    return createForwardMapAccessor(database, indexId, /*shardNo: */null, implementation);
+  }
+
+  public static @NotNull StorageAccessor<DurableMap<Integer, ByteArraySequence>> forwardMapAccessor(
+    @NotNull DurableDatabase database,
+    @NotNull IndexId<?, ?> indexId,
+    int shardNo,
+    @NotNull DurableMapImplementation implementation
   ) {
     checkShardNo(shardNo);
-    return createForwardMapAccessor(database, indexId, shardNo);
+    return createForwardMapAccessor(database, indexId, shardNo, implementation);
   }
 
   private static <Key, Value>
@@ -74,13 +79,14 @@ public final class DurableDatabaseMapAccessors {
     @NotNull DurableDatabase database,
     @NotNull IndexId<?, ?> indexId,
     @Nullable Integer shardNo,
+    @NotNull DurableMapImplementation implementation,
     @NotNull KeyDescriptorEx<Key> keyDescriptor,
     @NotNull DataExternalizer<Value> valueExternalizer
   ) {
     var mapName = mapName(indexId, MapRole.INVERTED, shardNo);
     var containerExternalizer = new PatchableValueContainerExternalizer<>(valueExternalizer);
     return accessor(
-      () -> database.openMap(mapName, VALUE_MAP_DATA_VERSION, keyDescriptor, containerExternalizer),
+      () -> database.openMap(mapName, VALUE_MAP_DATA_VERSION, implementation, keyDescriptor, containerExternalizer),
       () -> database.dropMap(mapName)
     );
   }
@@ -88,11 +94,12 @@ public final class DurableDatabaseMapAccessors {
   private static @NotNull StorageAccessor<DurableMap<Integer, ByteArraySequence>> createForwardMapAccessor(
     @NotNull DurableDatabase database,
     @NotNull IndexId<?, ?> indexId,
-    Integer shardNo
+    Integer shardNo,
+    @NotNull DurableMapImplementation implementation
   ) {
     var mapName = mapName(indexId, MapRole.FORWARD, shardNo);
     return accessor(
-      () -> database.openMap(mapName, FORWARD_MAP_DATA_VERSION,
+      () -> database.openMap(mapName, FORWARD_MAP_DATA_VERSION, implementation,
                              CommonKeyDescriptors.integer(),
                              CommonKeyDescriptors.byteArraySequence()),
       () -> database.dropMap(mapName)

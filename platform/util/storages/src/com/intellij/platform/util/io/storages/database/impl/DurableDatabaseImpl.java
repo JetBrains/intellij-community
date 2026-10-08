@@ -34,8 +34,6 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_TOGETHER;
-
 /// Provides named durable maps over a block database
 @ApiStatus.Internal
 public final class DurableDatabaseImpl implements DurableDatabase {
@@ -66,14 +64,6 @@ public final class DurableDatabaseImpl implements DurableDatabase {
   @NotNull DatabaseHousekeepingScheduler startHousekeeping(@NotNull ScheduledExecutorService scheduler,
                                                            @NotNull Executor executor) {
     return housekeepingCoordinator.startScheduling(scheduler, executor);
-  }
-
-  @Override
-  public <K, V> @NotNull DurableMap<K, V> openMap(@NotNull String name,
-                                                  int dataVersion,
-                                                  @NotNull KeyDescriptorEx<K> keyDescriptor,
-                                                  @NotNull DataExternalizerEx<V> valueExternalizer) throws IOException {
-    return openMap(name, dataVersion, KEY_VALUE_TOGETHER, keyDescriptor, valueExternalizer);
   }
 
   @Override
@@ -136,15 +126,6 @@ public final class DurableDatabaseImpl implements DurableDatabase {
       openedMapsByName.put(name, new OpenedMap(blocksStore.dataVersion(), storedImplementation, map));
       return map;
     }
-  }
-
-  @Override
-  public <K, V, P> @NotNull PatchableDurableMap<K, V, P> openMap(@NotNull String name,
-                                                                 int dataVersion,
-                                                                 @NotNull KeyDescriptorEx<K> keyDescriptor,
-                                                                 @NotNull PatchableDurableMap.PatchableValueExternalizer<V, P> valueExternalizer)
-    throws IOException {
-    return openMap(name, dataVersion, KEY_VALUE_TOGETHER, keyDescriptor, valueExternalizer);
   }
 
   @Override

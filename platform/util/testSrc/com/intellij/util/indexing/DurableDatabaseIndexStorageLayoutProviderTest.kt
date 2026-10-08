@@ -2,11 +2,15 @@
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.platform.util.io.storages.UnsupportedFormatException
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_SEPARATELY
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_TOGETHER
 import com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator
 import com.intellij.util.indexing.impl.storage.durablemap.database.DurableDatabaseIndexLayoutProvider
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -42,11 +46,37 @@ class DurableDatabaseIndexStorageLayoutProviderTest : IndexStorageLayoutProvider
     }
   }
 
+  @Test
+  fun providerPassesSelectedImplementationsToBothMapRoles() {
+    val databasePath = tempDir.resolve("selected-implementation")
+    val extension = ManyKeysIntegerToIntegerIndexExtension()
+    DurableDatabaseIndexLayoutProvider(databasePath, KEY_VALUE_SEPARATELY, KEY_VALUE_TOGETHER).use { provider ->
+      val layout = provider.getLayout(extension, emptyList())
+      layout.openIndexStorage().use { it.addValue(1, 1, 42) }
+      layout.openForwardIndex().use { }
+    }
+
+    DurableDatabaseIndexLayoutProvider(databasePath, KEY_VALUE_SEPARATELY, KEY_VALUE_SEPARATELY).use { provider ->
+      val layout = provider.getLayout(extension, emptyList())
+      assertThrows(UnsupportedFormatException::class.java) {
+        layout.openIndexStorage()
+      }
+      layout.openForwardIndex().use { }
+    }
+
+    DurableDatabaseIndexLayoutProvider(databasePath, KEY_VALUE_TOGETHER, KEY_VALUE_TOGETHER).use { provider ->
+      val layout = provider.getLayout(extension, emptyList())
+      layout.openIndexStorage().use { }
+      assertThrows(UnsupportedFormatException::class.java) { layout.openForwardIndex() }
+    }
+  }
+
   companion object {
     private const val PROVIDER_ID = "memory-mapped-database-impl"
     private const val INPUTS_COUNT_TO_TEST_WITH = 30_000
     private val PROVIDER = DurableDatabaseIndexLayoutProvider(
       databasePath = PathManager.getIndexRoot().resolve("test-indexing-database")
+      //TODO RC: test with different map implementations
     )
 
     @JvmStatic

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.database.DurableDatabase;
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
 import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap;
 import com.intellij.util.indexing.FileBasedIndexExtension;
@@ -38,17 +39,23 @@ final class DurableDatabaseShardedStorageLayout<Key, Value> implements VfsAwareI
   private final @NotNull FileBasedIndexExtension<Key, Value> extension;
   private final @NotNull KeyDescriptorEx<Key> keyDescriptor;
   private final @NotNull DataExternalizer<Value> valueExternalizer;
+  private final @NotNull DurableMapImplementation invertedMapImplementation;
+  private final @NotNull DurableMapImplementation forwardMapImplementation;
   private final @NotNull MapForwardIndexAccessor<Key, Value> forwardIndexAccessor;
   private final @NotNull StorageRef<ShardedIndexStorage<Key, Value>, IOException> indexStorageRef;
   private final @NotNull StorageRef<ShardedForwardIndex, IOException> forwardIndexRef;
 
   DurableDatabaseShardedStorageLayout(@NotNull DurableDatabase database,
-                                      @NotNull FileBasedIndexExtension<Key, Value> extension) {
+                                      @NotNull FileBasedIndexExtension<Key, Value> extension,
+                                      @NotNull DurableMapImplementation invertedMapImplementation,
+                                      @NotNull DurableMapImplementation forwardMapImplementation) {
     if (!(extension instanceof ShardableIndexExtension)) {
       throw new IllegalArgumentException("Extension(" + extension + ") must be ShardableIndexExtension");
     }
     this.database = database;
     this.extension = extension;
+    this.invertedMapImplementation = invertedMapImplementation;
+    this.forwardMapImplementation = forwardMapImplementation;
     keyDescriptor = LegacyAdapter.adapt(extension.getKeyDescriptor());
     valueExternalizer = extension.getValueExternalizer();
 
@@ -117,6 +124,7 @@ final class DurableDatabaseShardedStorageLayout<Key, Value> implements VfsAwareI
       database,
       extension.getName(),
       shardNo,
+      invertedMapImplementation,
       keyDescriptor,
       valueExternalizer
     );
@@ -126,7 +134,8 @@ final class DurableDatabaseShardedStorageLayout<Key, Value> implements VfsAwareI
     return DurableDatabaseMapAccessors.forwardMapAccessor(
       database,
       extension.getName(),
-      shardNo
+      shardNo,
+      forwardMapImplementation
     );
   }
 }

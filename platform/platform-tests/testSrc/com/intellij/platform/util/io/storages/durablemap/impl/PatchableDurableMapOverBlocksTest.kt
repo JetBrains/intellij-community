@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.durablemap.impl
 
 import com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8
 import com.intellij.platform.util.io.storages.DataExternalizerEx.KnownSizeRecordWriter
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_TOGETHER
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory
 import com.intellij.platform.util.io.storages.database.DurableDatabaseFactory
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore
@@ -351,17 +352,19 @@ class PatchableDurableMapOverBlocksTest {
   fun namedFactoryReturnsTheTypedCapabilityAndCachesItsInstance() {
     DurableDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
       val codec = SetCodec()
-      val first = database.openMap("patchable", 1, stringAsUTF8(), codec)
-      val second = database.openMap("patchable", 1, stringAsUTF8(), codec)
+      val first = database.openMap("patchable", 1, KEY_VALUE_TOGETHER, stringAsUTF8(), codec)
+      val second = database.openMap("patchable", 1, KEY_VALUE_TOGETHER, stringAsUTF8(), codec)
       assertSame(first, second)
       first.patchValue("key", listOf(1))
       first.patchValue("key", listOf(2))
       assertEquals(setOf(1, 2), second.get("key"))
       first.close()
-      database.openMap("patchable", 1, stringAsUTF8(), codec).use { assertEquals(setOf(1, 2), it.get("key")) }
-      val ordinary = database.openMap("ordinary", 1, stringAsUTF8(), stringAsUTF8())
+      database.openMap("patchable", 1, KEY_VALUE_TOGETHER, stringAsUTF8(), codec).use { assertEquals(setOf(1, 2), it.get("key")) }
+      val ordinary = database.openMap("ordinary", 1, KEY_VALUE_TOGETHER, stringAsUTF8(), stringAsUTF8())
       assertFalse(ordinary is PatchableDurableMap<*, *, *>, "Ordinary maps must not advertise patch support")
-      assertThrows(IllegalStateException::class.java) { database.openMap("ordinary", 1, stringAsUTF8(), codec) }
+      assertThrows(IllegalStateException::class.java) {
+        database.openMap("ordinary", 1, KEY_VALUE_TOGETHER, stringAsUTF8(), codec)
+      }
     }
   }
 

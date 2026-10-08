@@ -2,6 +2,7 @@
 package com.intellij.platform.util.io.storages.database.impl
 
 import com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_SEPARATELY
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory
 import com.intellij.platform.util.io.storages.database.DurableDatabaseFactory
 import com.intellij.platform.util.io.storages.database.spi.housekeeping.OnStartupHousekeeper
@@ -222,7 +223,7 @@ class DatabaseStartupHousekeepingTest {
     factory.open(directory).use { database ->
       assertEquals(listOf("startup"), events, "Startup must finish before clients can open maps")
       val descriptor = stringAsUTF8()
-      val map = database.openMap("map", 1, descriptor, descriptor)
+      val map = database.openMap("map", 1, KEY_VALUE_SEPARATELY, descriptor, descriptor)
       map.put("key", "value")
       assertEquals("value", map.get("key"))
     }

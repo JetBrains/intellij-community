@@ -3,6 +3,7 @@ package com.intellij.util.indexing.impl.storage.durablemap.database;
 
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.database.DurableDatabase;
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation;
 import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap;
 import com.intellij.util.indexing.SingleEntryFileBasedIndexExtension;
 import com.intellij.util.indexing.VfsAwareIndexStorage;
@@ -35,7 +36,8 @@ final class DurableDatabaseSingleEntryStorageLayout<Value> implements VfsAwareIn
   private final @NotNull StorageRef<DurableMapIndexStorage<Integer, Value>, IOException> indexStorageRef;
 
   DurableDatabaseSingleEntryStorageLayout(@NotNull DurableDatabase database,
-                                          @NotNull SingleEntryFileBasedIndexExtension<Value> extension) {
+                                          @NotNull SingleEntryFileBasedIndexExtension<Value> extension,
+                                          @NotNull DurableMapImplementation invertedMapImplementation) {
     this.database = database;
     this.extension = extension;
     forwardIndexAccessor = new SingleEntryIndexForwardIndexAccessor<>(extension);
@@ -45,6 +47,7 @@ final class DurableDatabaseSingleEntryStorageLayout<Value> implements VfsAwareIn
     valueMapAccessor = DurableDatabaseMapAccessors.valueMapAccessor(
       database,
       extension.getName(),
+      invertedMapImplementation,
       keyDescriptor,
       valueExternalizer
     );

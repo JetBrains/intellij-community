@@ -3,6 +3,7 @@ package com.intellij.util.indexing.impl.storage.durablemap
 
 import com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8
 import com.intellij.platform.util.io.storages.database.DurableDatabaseFactory
+import com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_SEPARATELY
 import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap.PatchableValueExternalizer
 import com.intellij.util.indexing.impl.ChangeTrackingValueContainer
 import com.intellij.util.indexing.impl.UpdatableValueContainer
@@ -29,7 +30,7 @@ class PatchableValueContainerDurableMapTest {
     val codec = ReadCheckingCodec()
     val factory = DurableDatabaseFactory(1024 * 1024)
     factory.open(directory).use { database ->
-      val map = database.openMap("index", 1, stringAsUTF8(), codec)
+      val map = database.openMap("index", 1, KEY_VALUE_SEPARATELY, stringAsUTF8(), codec)
       ValueContainerDurableMap(map, EnumeratorStringDescriptor.INSTANCE, false).use { adapter ->
         adapter.put("key", container(1 to "old", 2 to "keep"))
         codec.allowReads = false
@@ -47,7 +48,7 @@ class PatchableValueContainerDurableMapTest {
       }
     }
     factory.open(directory).use { database ->
-      val map = database.openMap("index", 1, stringAsUTF8(), codec)
+      val map = database.openMap("index", 1, KEY_VALUE_SEPARATELY, stringAsUTF8(), codec)
       assertEquals(mapOf(1 to "new"), contents(map.get("key")))
       ValueContainerDurableMap(map, EnumeratorStringDescriptor.INSTANCE, false).use { adapter ->
         val changes = adapter.getModifiableValueContainer("key")
@@ -62,7 +63,7 @@ class PatchableValueContainerDurableMapTest {
   @Test
   fun deletionOnlyAndEmptyPatchesCreateEmptyContainers() {
     DurableDatabaseFactory(1024 * 1024).open(directory).use { database ->
-      val map = database.openMap("index", 1, stringAsUTF8(), ReadCheckingCodec())
+      val map = database.openMap("index", 1, KEY_VALUE_SEPARATELY, stringAsUTF8(), ReadCheckingCodec())
       ValueContainerDurableMap(map, EnumeratorStringDescriptor.INSTANCE, false).use { adapter ->
         val deletion = adapter.getModifiableValueContainer("deleted")
         deletion.removeAssociatedValue(1)
@@ -80,7 +81,7 @@ class PatchableValueContainerDurableMapTest {
   fun compactionAndUniqueKeysUseSnapshots() {
     for (uniqueKey in listOf(false, true)) {
       DurableDatabaseFactory(1024 * 1024).open(directory.resolve(uniqueKey.toString())).use { database ->
-        val map = database.openMap("index", 1, stringAsUTF8(), ReadCheckingCodec())
+        val map = database.openMap("index", 1, KEY_VALUE_SEPARATELY, stringAsUTF8(), ReadCheckingCodec())
         ValueContainerDurableMap(map, EnumeratorStringDescriptor.INSTANCE, uniqueKey).use { adapter ->
           adapter.put("key", container(1 to "old", 2 to "keep"))
           val changes = adapter.getModifiableValueContainer("key")
