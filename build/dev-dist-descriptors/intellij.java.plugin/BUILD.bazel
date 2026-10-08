@@ -199,6 +199,7 @@ dev_dist_plugin_descriptor(
         "intellij.java.jam",
         "intellij.profiler.ultimate",
         "intellij.profiler.ultimate.vcs",
+        "intellij.profiler.mcpServer",
         "intellij.debugger.jvm.advanced.java",
         "intellij.debugger.jvm.advanced.mcpServer",
         "intellij.debugger.logpoints.shared",
