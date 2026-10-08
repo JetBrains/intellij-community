@@ -585,6 +585,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     ) {
       lockContextWrapper.accept(() -> {
         if (!isProgressDialog() &&
+            myWrapper.isUseWriteIntentReadAction() &&
             ApplicationManager.getApplication() != null &&
             !ApplicationManager.getApplication().isReadAccessAllowed()) {
           WriteIntentReadAction.run(() -> {

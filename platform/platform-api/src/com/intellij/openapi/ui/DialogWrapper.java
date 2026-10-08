@@ -1271,6 +1271,11 @@ public abstract class DialogWrapper {
     return myHelpAction;
   }
 
+  @ApiStatus.Internal
+  public boolean isUseWriteIntentReadAction() {
+    return useWriteIntentReadAction;
+  }
+
   @ApiStatus.Internal // maybe experimental?
   public void setShouldUseWriteIntentReadAction(boolean value) {
     useWriteIntentReadAction = value;
