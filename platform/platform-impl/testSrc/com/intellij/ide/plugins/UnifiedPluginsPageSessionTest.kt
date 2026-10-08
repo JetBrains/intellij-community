@@ -361,7 +361,7 @@ internal class UnifiedPluginsPageSessionTest {
         waitForSearchCount(searches, 2)
 
         assertThat(searches.last().first.queryShape).isEqualTo(UnifiedPluginSearchQueryShape.TEXT_AND_CONTROLS)
-        assertThat(searches.last().first.filterKinds).containsExactly(UnifiedPluginSearchFilterKind.INSTALLED_STATE)
+        assertThat(searches.last().first.filterKinds).containsExactly(UnifiedPluginSearchFilterKind.DISABLED)
 
         disabled.actionPerformed(TestActionEvent.createTestEvent(disabled))
         waitForSearchCount(searches, 3)
@@ -388,6 +388,43 @@ internal class UnifiedPluginsPageSessionTest {
       }
       finally {
         Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `session reports each installed menu filter with and without text`(): Unit =
+    uiTest {
+      val kinds = listOf(
+        UnifiedPluginSearchFilterKind.OUTDATED,
+        UnifiedPluginSearchFilterKind.ENABLED,
+        UnifiedPluginSearchFilterKind.DISABLED,
+        UnifiedPluginSearchFilterKind.INVALID,
+        UnifiedPluginSearchFilterKind.UPDATED_BUNDLED,
+      )
+      for (text in listOf("", "Plugin")) {
+        val searches = mutableListOf<Pair<UnifiedPluginSearchStatistics, Int>>()
+        val session = createSession(
+          searchQuery = text,
+          unifiedSearchLogger = { statistics, searchIndex -> searches.add(statistics to searchIndex) },
+        )
+        try {
+          var searchCount = if (text.isEmpty()) 0 else 1
+          if (searchCount != 0) waitForSearchCount(searches, searchCount)
+          for ((index, kind) in kinds.withIndex()) {
+            val action = filterActions(session).takeLast(kinds.size)[index]
+            action.actionPerformed(TestActionEvent.createTestEvent(action))
+            waitForSearchCount(searches, ++searchCount)
+
+            val statistics = searches.last().first
+            assertThat(statistics.filterKinds).containsExactly(kind)
+            val shape = if (text.isEmpty()) UnifiedPluginSearchQueryShape.CONTROLS_ONLY else UnifiedPluginSearchQueryShape.TEXT_AND_CONTROLS
+            assertThat(statistics.queryShape).isEqualTo(shape)
+          }
+          assertThat(searches.map { it.second }).containsExactlyElementsOf(0 until searchCount)
+        }
+        finally {
+          Disposer.dispose(session)
+        }
       }
     }
 
