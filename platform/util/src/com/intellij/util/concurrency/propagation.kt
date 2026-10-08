@@ -9,10 +9,6 @@ import com.intellij.concurrency.ContextAwareCallable
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.IntelliJThreadContextElement
-import com.intellij.concurrency.client.captureClientIdInBiConsumer
-import com.intellij.concurrency.client.captureClientIdInCallable
-import com.intellij.concurrency.client.captureClientIdInFunction
-import com.intellij.concurrency.client.captureClientIdInRunnable
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.application.AccessToken
@@ -395,9 +391,8 @@ internal fun captureRunnableThreadContext(command: Runnable): Runnable {
 
 internal fun <V> captureCallableThreadContext(callable: Callable<V>): Callable<V> {
   val childContext = createChildContext(callable.toString())
-  var callable = captureClientIdInCallable(callable)
-  callable = ContextCallable(true, childContext, callable, AtomicBoolean(false))
-  return callable
+  val wrappedCallable = ContextCallable(true, childContext, callable, AtomicBoolean(false))
+  return wrappedCallable
 }
 
 fun isContextAwareComputation(runnable: Any): Boolean {
@@ -483,12 +478,11 @@ internal fun capturePropagationContext(r: Runnable, forceUseContextJob : Boolean
   if (isContextAwareComputation(r)) {
     return r
   }
-  var command = captureClientIdInRunnable(r)
   val childContext =
     if (forceUseContextJob) createChildContextWithContextJob(r.toString())
     //TODO: do we really need .toString() here? It allocates ~6 Gb during indexing
     else createChildContext(r.toString())
-  command = ContextRunnable(childContext, command)
+  val command = ContextRunnable(childContext, r)
   return command
 }
 
@@ -506,18 +500,17 @@ internal fun capturePropagationContextWithCleanup(r: Runnable): JBPair<Runnable,
   if (isContextAwareComputation(r)) {
     return JBPair.create(r, EMPTY_CLEANUP)
   }
-  val command = captureClientIdInRunnable(r)
   val childContext = createChildContextWithContextJob(r.toString())
   val childJob = childContext.continuation?.context?.job
   if (childJob == null) {
-    return JBPair.create(ContextRunnable(childContext, command), EMPTY_CLEANUP)
+    return JBPair.create(ContextRunnable(childContext, r), EMPTY_CLEANUP)
   }
   val cleanup = Runnable {
     // Cancel to avoid a hanging child job which will prevent completion of the parent one.
     childJob.cancel(null)
     childContext.cancelAllIntelliJElements()
   }
-  return JBPair.create(ContextRunnable(childContext, command), cleanup)
+  return JBPair.create(ContextRunnable(childContext, r), cleanup)
 }
 
 private val EMPTY_CLEANUP = Runnable {}
@@ -527,10 +520,9 @@ fun capturePropagationContext(r: Runnable, expired: Condition<*>, signalRunnable
   if (isContextAwareComputation(signalRunnable)) {
     return JBPair.create(r, expired)
   }
-  var command = captureClientIdInRunnable(r)
   val childContext = createChildContext(r.toString())
   var expired = expired
-  command = ContextRunnable(childContext, command)
+  val command = ContextRunnable(childContext, r)
   val cont = childContext.continuation
   val childJob = cont?.context?.job
   expired = cleanupIfExpired(expired, childContext, childJob)
@@ -540,9 +532,8 @@ fun capturePropagationContext(r: Runnable, expired: Condition<*>, signalRunnable
 @ApiStatus.Internal
 fun <T, U> captureBiConsumerThreadContext(f: BiConsumer<T, U>): BiConsumer<T, U> {
   val childContext = createChildContext(f.toString())
-  var f = captureClientIdInBiConsumer(f)
-  f = ContextBiConsumer(childContext, f)
-  return f
+  val wrappedF = ContextBiConsumer(childContext, f)
+  return wrappedF
 }
 
 private fun <T> cleanupIfExpired(expiredCondition: Condition<in T>, childContext: ChildContext, childJob: Job?): Condition<T> {
@@ -565,10 +556,9 @@ internal fun <V> capturePropagationContext(c: Callable<V>): FutureTask<V> {
   if (isContextAwareComputation(c)) {
     return FutureTask(c)
   }
-  val callable = captureClientIdInCallable(c)
   val childContext = createChildContext(c.toString())
   val executionTracker = AtomicBoolean(false)
-  val wrappedCallable = ContextCallable(false, childContext, callable, executionTracker)
+  val wrappedCallable = ContextCallable(false, childContext, c, executionTracker)
   val cont = childContext.continuation
   if (cont != null) {
     val childJob = cont.context.job
@@ -581,19 +571,17 @@ internal fun <V> capturePropagationContext(c: Callable<V>): FutureTask<V> {
 
 internal fun <T, R> capturePropagationContext(function: Function<T, R>): Function<T, R> {
   val childContext = createChildContext(function.toString())
-  var f = captureClientIdInFunction(function)
-  f = ContextFunction(childContext, f)
-  return f
+  val wrappedF = ContextFunction(childContext, function)
+  return wrappedF
 }
 
 internal fun <V> capturePropagationContext(wrapper: SchedulingWrapper, c: Callable<V>, ns: Long): FutureTask<V> {
   if (isContextAwareComputation(c)) {
     return wrapper.MyScheduledFutureTask(c, ns)
   }
-  val callable = captureClientIdInCallable(c)
   val childContext = createChildContext("$c (scheduled: $ns)")
   val cancellationTracker = AtomicBoolean(false)
-  val wrappedCallable = ContextCallable(false, childContext, callable, cancellationTracker)
+  val wrappedCallable = ContextCallable(false, childContext, c, cancellationTracker)
 
   return CancellationScheduledFutureTask(wrapper, childContext, cancellationTracker, wrappedCallable, ns)
 }
@@ -605,12 +593,11 @@ internal fun capturePropagationContext(
   period: Long,
 ): FutureTask<*> {
   val childContext = createChildContext("$runnable (scheduled: $ns, period: $period)")
-  val capturedRunnable1 = captureClientIdInRunnable(runnable)
   val capturedRunnable2 = Runnable {
     // no cancellation tracker here: this is a periodic runnable that is restarted
     installThreadContext(childContext.context, false) {
       childContext.applyContextActions(false).use {
-        capturedRunnable1.run()
+        runnable.run()
       }
     }
   }
