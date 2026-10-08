@@ -19,7 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileVisitor
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -80,7 +80,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
 
   constructor(project: Project, coroutineScope: CoroutineScope) {
     this.project = project
-    project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
       override fun after(events: List<VFileEvent>) {
         if (DirectoryIndexImpl.shouldResetOnEvents(events)) {
           indexData.clearPackageDirectoryCache()
