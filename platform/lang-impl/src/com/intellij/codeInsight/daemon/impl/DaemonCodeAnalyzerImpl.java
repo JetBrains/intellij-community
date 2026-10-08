@@ -1564,7 +1564,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
     @Override
     public void onStop() {
-      myFirstPassFinished = true;
+      VirtualFile file = myFileEditor.getFile();
+      if (file != null && getFileEditorManager().isFileOpenWithRemotes(file)) {
+        myFirstPassFinished = true;
+      }
       removeIndicatorFromMap(myFileEditor, this);
       myDaemonListenerPublisher.daemonFinished(List.of(myFileEditor));
       HighlightingSessionImpl.clearAllHighlightingSessions(this);
