@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
@@ -69,6 +70,7 @@ class GHPRProjectViewModelTest {
         val repo = firstArg<GHGitRepositoryMapping>()
         val acc = secondArg<GithubAccount>()
         mockk<GHRepositoryConnection>(relaxed = true) {
+          every { id } returns UUID.randomUUID().toString()
           every { this@mockk.repo } returns repo
           every { this@mockk.account } returns acc
         }.also { connectionStateFlow.value = it }
@@ -81,6 +83,7 @@ class GHPRProjectViewModelTest {
       every { create(any(), any(), any(), any()) } answers {
         val connection = thirdArg<GHRepositoryConnection>()
         mockk<GHPRConnectedProjectViewModel>(relaxed = true) {
+          every { connectionId } returns connection.id
           every { repository } returns connection.repo.repository
         }
       }
@@ -173,6 +176,49 @@ class GHPRProjectViewModelTest {
     actionInvoked.await()
 
     assertEquals(listOf(forkMapping.repository), seenRepositories)
+  }
+
+  @Test
+  fun `activateAndAwaitProject awaits the new connection when the account changes for the same repository`() = timeoutRunBlocking {
+    val vm = project.service<GHPRProjectViewModel>()
+    val originalConnection = connectionManager.openConnection(originMapping, account)!!
+    val originalVm = vm.connectedProjectVm.first { it != null }!!
+    val originalVmChecked = CompletableDeferred<Unit>()
+
+    every { originalVm.repository } answers {
+      originalVmChecked.complete(Unit)
+      originMapping.repository
+    }
+    every { originalVm.connectionId } answers {
+      originalVmChecked.complete(Unit)
+      originalConnection.id
+    }
+    val factory = project.service<GHPRConnectedProjectViewModelFactory>()
+    every { factory.create(any(), any(), any(), any()) } answers {
+      val connection = thirdArg<GHRepositoryConnection>()
+      // Delay the new view model until the activation checks the old one.
+      timeoutRunBlocking { originalVmChecked.await() }
+      mockk<GHPRConnectedProjectViewModel>(relaxed = true) {
+        every { connectionId } returns connection.id
+        every { repository } returns connection.repo.repository
+      }
+    }
+
+    try {
+      val otherAccount = GithubAccount(name = "other-user", server = account.server)
+      val actionConnectionId = CompletableDeferred<String>()
+      vm.activateAndAwaitProject(originMapping.repository to otherAccount) {
+        actionConnectionId.complete(connectionId)
+      }
+
+      val actualConnectionId = actionConnectionId.await()
+      val newConnection = connectionManager.connectionState.value!!
+      assertEquals(otherAccount, newConnection.account)
+      assertEquals(newConnection.id, actualConnectionId)
+    }
+    finally {
+      originalVmChecked.complete(Unit)
+    }
   }
 
   @Test

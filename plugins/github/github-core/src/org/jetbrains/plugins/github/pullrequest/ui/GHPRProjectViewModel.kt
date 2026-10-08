@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -101,19 +102,19 @@ class GHPRProjectViewModel(private val project: Project, parentCs: CoroutineScop
     vm
   }
 
-  private suspend fun connect(repo: GHGitRepositoryMapping, account: GithubAccount) {
+  private suspend fun connect(repo: GHGitRepositoryMapping, account: GithubAccount): GHRepositoryConnection? =
     withContext(cs.coroutineContext) {
       // Compare by repository coordinates, not mapping equality: the same repo can re-resolve to a
       // structurally different mapping (e.g. after git sync), which would otherwise trigger a needless
       // reconnect that cancels in-flight work (e.g. a diff load).
       val current = connectionManager.connectionState.value
       if (current != null && current.repo.repository == repo.repository && current.account == account) {
-        return@withContext
+        return@withContext current
       }
-      connectionManager.openConnection(repo, account)
+      val connection = connectionManager.openConnection(repo, account)
       settings.selectedUrlAndAccount = repo.remote.url to account
+      connection
     }
-  }
 
   private val vmFactory = project.service<GHPRConnectedProjectViewModelFactory>()
 
@@ -164,8 +165,8 @@ class GHPRProjectViewModel(private val project: Project, parentCs: CoroutineScop
         LOG.warn("No Git remote for GitHub repository $expectedRepository appeared in $mappingTimeout, skipping the requested action")
         return@launch
       }
-      connect(mapping, account)
-      connectedProjectVm.filterNotNull().first { it.repository == expectedRepository }.action()
+      val connection = connect(mapping, account) ?: return@launch
+      connectedProjectVm.filterNotNull().first { it.connectionId == connection.id }.action()
     }
   }
 

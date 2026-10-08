@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
+import java.util.UUID
 
 /**
  * A low-level helper representing a GitHub repository, to which the app was authorized to connect
@@ -20,6 +21,7 @@ class GHRepositoryConnection internal constructor(
   override val account: GithubAccount,
   val dataContext: GHPRDataContext,
 ) : HostedGitRepositoryConnection<GHGitRepositoryMapping, GithubAccount> {
+  val id: String = UUID.randomUUID().toString()
 
   override suspend fun close() {
     try {
