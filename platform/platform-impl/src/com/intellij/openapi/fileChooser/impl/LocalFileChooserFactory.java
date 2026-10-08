@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.ClientFileChooserFactory;
@@ -115,6 +116,7 @@ public class LocalFileChooserFactory implements ClientFileChooserFactory {
     }
 
     return !descriptor.isForcedToUseIdeaFileChooser() &&
+           !AppMode.isRemoteDevHost() && // The toolkit of a remote-dev host has no native file dialog, see `IdeToolkit.createFileDialog`.
            SystemInfo.isJetBrainsJvm &&
            (SystemInfo.isWindows || SystemInfo.isMac) &&
            (ApplicationManager.getApplication() == null || AdvancedSettings.getBoolean("ide.ui.native.file.chooser"));
