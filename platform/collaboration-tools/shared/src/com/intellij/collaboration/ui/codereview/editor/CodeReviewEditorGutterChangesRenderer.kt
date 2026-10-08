@@ -18,12 +18,15 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.DefaultFlagsProvider
 import com.intellij.openapi.diff.LineStatusMarkerColorScheme
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -37,7 +40,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions
 import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel
+import com.intellij.openapi.vcs.ex.LineStatusMarkerRangesSource
 import com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopup
+import com.intellij.openapi.vcs.ex.LstRange
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.ui.EditorTextField
 import kotlinx.coroutines.CoroutineName
@@ -58,7 +63,15 @@ open class CodeReviewEditorGutterChangesRenderer(
   protected val editor: Editor,
   disposable: Disposable,
   private val lineStatusMarkerColorScheme: LineStatusMarkerColorScheme = ReviewInEditorUtil.REVIEW_STATUS_MARKER_COLOR_SCHEME,
-) : LineStatusMarkerRendererWithPopup(editor.project, editor.document, model, disposable, { it === editor }) {
+) : LineStatusMarkerRendererWithPopup(editor.project, editor.document, ReviewGutterRangesSource(model, editor.document),
+                                      disposable, { it === editor }) {
+
+  init {
+    editor.document.addDocumentListener(object : BulkAwareDocumentListener {
+      override fun bulkUpdateStarting(document: Document) = scheduleUpdate()
+      override fun bulkUpdateFinished(document: Document) = scheduleUpdate()
+    }, disposable)
+  }
 
   override fun paintGutterMarkers(editor: Editor, ranges: List<Range>, g: Graphics) {
     LineStatusMarkerDrawUtil.paintDefault(editor, g, ranges, DefaultFlagsProvider.DEFAULT,
@@ -264,6 +277,36 @@ open class CodeReviewEditorGutterChangesRenderer(
         }
       }
     }
+  }
+}
+
+private val LOG = logger<ReviewGutterRangesSource>()
+
+private class ReviewGutterRangesSource(
+  private val model: CodeReviewEditorGutterChangesModel,
+  private val document: Document,
+) : LineStatusMarkerRangesSource<LstRange> {
+  // the last rejected ranges, so that each rejected list is logged once and not on each paint
+  private var lastRejectedRanges: List<LstRange>? = null
+
+  override fun isValid(): Boolean = getRanges() != null
+
+  override fun getRanges(): List<LstRange>? {
+    if (document.isInBulkUpdate) return null
+    val ranges = model.getRanges() ?: return null
+    val lineCount = DiffUtil.getLineCount(document)
+    val outsideRange = ranges.find { range -> range.line1 < 0 || range.line1 > range.line2 || range.line2 > lineCount } ?: return ranges
+    if (ranges !== lastRejectedRanges) {
+      lastRejectedRanges = ranges
+      LOG.warn("Review ranges are hidden, because a range is outside the document: $outsideRange, lineCount=$lineCount, " +
+               "rangesCount=${ranges.size}")
+    }
+    return null
+  }
+
+  override fun findRange(range: Range): LstRange? = getRanges()?.find {
+    it.vcsLine1 == range.vcsLine1 && it.vcsLine2 == range.vcsLine2 &&
+    it.line1 == range.line1 && it.line2 == range.line2
   }
 }
 
