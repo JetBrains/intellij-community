@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.changes.ignore.util.RegexUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
@@ -55,7 +55,7 @@ internal class IgnorePatternsMatchedFilesCache(private val project: Project, cs:
 
   init {
     ApplicationManager.getApplication().messageBus.connect(this)
-      .subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      .subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
         override fun after(events: List<VFileEvent>) {
           if (cache.estimatedSize() == 0L) {
             return
