@@ -112,6 +112,9 @@ public object ShowcaseIcons {
 
         /** Icon for the SpeedSearch component section. */
         public val speedSearch: PathIconKey = PathIconKey("icons/components/speedSearch.svg", ShowcaseIcons::class.java)
+
+        /** Icon for the On Off Button component section. */
+        public val onOffButton: PathIconKey = PathIconKey("icons/components/onOffButton.svg", ShowcaseIcons::class.java)
     }
 
     /** Icon keys for programming language representations used in the showcase. */

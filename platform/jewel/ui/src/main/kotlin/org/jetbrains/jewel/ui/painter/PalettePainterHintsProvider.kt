@@ -15,6 +15,12 @@ public abstract class PalettePainterHintsProvider(
     protected abstract val treePaletteHint: PainterHint
     protected abstract val uiPaletteHint: PainterHint
 
+    /**
+     * Recolors the IntelliJ Platform toggle images (`toggle*.svg`) with the theme's `toggle-*` colors. See
+     * [org.jetbrains.jewel.ui.painter.hints.ColorKeyPaletteReplacement].
+     */
+    protected open val togglePaletteHint: PainterHint = PainterHint.None
+
     protected fun resolveColor(value: String): Color? {
         // If the value is one of the named colors in the theme, use that named color's value
         val namedColor = themeColorPalette[value]
@@ -59,6 +65,7 @@ public abstract class PalettePainterHintsProvider(
 
         return when {
             file == "treeCollapsed.svg" || file == "treeExpanded.svg" -> treePaletteHint
+            file.startsWith("toggle") -> togglePaletteHint
             isNewUi && isCheckboxScope -> checkBoxByKeyPaletteHint
             !isNewUi && isCheckboxScope -> checkBoxByColorPaletteHint
             else -> PainterHint.None
