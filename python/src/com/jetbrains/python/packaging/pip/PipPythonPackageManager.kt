@@ -11,12 +11,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelApi
 import com.intellij.psi.PsiFile
 import com.intellij.python.community.execService.Args
+import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator.Companion.findPathInHelpers
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.requirements.parser.PyRequirementParser
 import com.intellij.python.venv.MINIMUM_SUPPORTED_VENV_PYTHON_VERSION
+import com.jetbrains.python.PYTHONPATH
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
@@ -140,11 +142,13 @@ class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPa
   }
 
   private suspend fun installWheel(wheelName: String): PyResult<Unit> = withContext(Dispatchers.IO) {
-    val pipPath = findPathInHelpers(WheelFiles.PIP_WHEEL_NAME).resolve(Path.of(PyPackageUtil.PIP))
+    val pipWheelPath = findPathInHelpers(WheelFiles.PIP_WHEEL_NAME).toString()
     val wheelPath = findPathInHelpers(wheelName).toString()
     val pythonPath = requireNotNull(sdk.homePath).let { Path.of(it) }
-    val args = Args(pipPath.toString(), "install", "--no-index", wheelPath)
-    ExecService().execGetStdout(pythonPath, args).mapSuccess { }
+    // Run the bundled pip as a module imported from its wheel: on Windows pip refuses to install itself
+    // when it is started as `<wheel>/pip` and asks to use `python -m pip` instead (PY-93045).
+    val args = Args("-m", PyPackageUtil.PIP, "install", "--no-index", wheelPath)
+    ExecService().execGetStdout(pythonPath, args, ExecOptions(env = mapOf(PYTHONPATH to pipWheelPath))).mapSuccess { }
   }
 
   private suspend fun hasPip(): Boolean = manager.hasInstalledPackage(PyPackageUtil.PIP)
