@@ -9,9 +9,11 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
+    <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectView"/>
     <module name="intellij.platform.projectView.frontend"/>
     <module name="intellij.platform.util.ui"/>
