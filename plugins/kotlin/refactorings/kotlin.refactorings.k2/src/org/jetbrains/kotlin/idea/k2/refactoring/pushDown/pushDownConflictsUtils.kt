@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.pushDown
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -53,7 +55,8 @@ import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 context(session: KaSession)
 internal fun analyzePushDownConflicts(
     context: K2PushDownContext,
-    usages: Array<out UsageInfo>
+    usages: Array<out UsageInfo>,
+    inlineSuperclass: Boolean = false,
 ): MultiMap<PsiElement, String> {
     val targetClasses = usages.mapNotNull { it.element?.unwrapped }
 
@@ -73,7 +76,7 @@ internal fun analyzePushDownConflicts(
     }
 
     for (targetClass in targetClasses) {
-        checkConflicts(conflicts, context, targetClass, membersToKeepAbstract, membersToPush)
+        checkConflicts(conflicts, context, targetClass, membersToKeepAbstract, membersToPush, inlineSuperclass)
     }
 
     return conflicts
@@ -85,7 +88,8 @@ internal fun checkConflicts(
     context: K2PushDownContext,
     targetClass: PsiElement,
     membersToKeepAbstract: List<KtNamedDeclaration>,
-    membersToPush: ArrayList<KtNamedDeclaration>
+    membersToPush: ArrayList<KtNamedDeclaration>,
+    inlineSuperclass: Boolean = false,
 ) {
     if (targetClass !is KtClassOrObject) {
         conflicts.putValue(
@@ -116,10 +120,15 @@ internal fun checkConflicts(
     }
 
     for (member in membersToPush) {
-        checkMemberClashing(conflicts, context, member, membersToKeepAbstract, substitutor, targetClass, targetClassSymbol)
+        checkMemberClashing(conflicts, context, member, membersToKeepAbstract, substitutor, targetClass, targetClassSymbol, inlineSuperclass)
         checkSuperCalls(conflicts, context, member, membersToPush)
-        checkExternalUsages(conflicts, member, targetClassSymbol)
-        checkVisibility(conflicts, member, targetClass)
+        if (!inlineSuperclass) checkExternalUsages(conflicts, member, targetClassSymbol)
+        checkVisibility(conflicts, member, targetClass, if (inlineSuperclass) membersToPush else emptyList())
+    }
+    if (inlineSuperclass) {
+        for (element in sourceClass.getAnonymousInitializers() + sourceClass.superTypeListEntries) {
+            checkVisibility(conflicts, element, targetClass, membersToPush)
+        }
     }
 }
 
@@ -132,6 +141,7 @@ private fun checkMemberClashing(
     substitutor: KaSubstitutor,
     targetClass: KtClassOrObject,
     targetClassSymbol: KaClassSymbol,
+    inlineSuperclass: Boolean,
 ) {
     when (member) {
         is KtNamedFunction, is KtProperty -> {
@@ -140,7 +150,9 @@ private fun checkMemberClashing(
                 targetClassSymbol.findCallableMemberBySignature(callableSymbol.substitute(substitutor), ignoreReturnType = true)
             val clashingDeclaration = clashingSymbol?.psi as? KtNamedDeclaration
             if (clashingSymbol != null && clashingDeclaration != null) {
-                if (callableSymbol.modality != KaSymbolModality.ABSTRACT && member !in membersToKeepAbstract) {
+                val overriddenFunction = inlineSuperclass && member is KtNamedFunction &&
+                        clashingDeclaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)
+                if (callableSymbol.modality != KaSymbolModality.ABSTRACT && member !in membersToKeepAbstract && !overriddenFunction) {
                     val message = KotlinBundle.message(
                         "text.0.already.contains.1",
                         targetClassSymbol.renderForConflicts(),
@@ -232,16 +244,19 @@ private fun checkExternalUsages(
 context(session: KaSession)
 private fun checkVisibility(
     conflicts: MultiMap<PsiElement, String>,
-    member: KtNamedDeclaration,
+    member: KtElement,
     targetClass: KtClassOrObject,
+    movedMembers: List<KtNamedDeclaration>,
 ) {
+    val declaration = member as? KtNamedDeclaration ?: member.parentOfType<KtClassOrObject>() ?: return
     fun reportConflictIfAny(targetSymbol: KaDeclarationSymbol) {
         val target = targetSymbol.psi ?: return
+        if (movedMembers.any { PsiTreeUtil.isAncestor(it, target, false) }) return
 
         if (!isVisible(targetSymbol, targetClass)) {
             val message = KotlinBundle.message(
                 "text.0.uses.1.which.is.not.accessible.from.2",
-                member.symbol.renderForConflicts(),
+                declaration.symbol.renderForConflicts(),
                 targetSymbol.renderForConflicts(),
                 targetClass.symbol.renderForConflicts()
             )

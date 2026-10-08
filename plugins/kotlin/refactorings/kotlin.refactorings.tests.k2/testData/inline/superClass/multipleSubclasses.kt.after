@@ -1,0 +1,7 @@
+class Child {
+    fun answer() = 42
+}
+
+class Other {
+    fun answer() = 42
+}

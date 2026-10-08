@@ -1,0 +1,3 @@
+interface Root<T>
+open class Parent(val value: Int)
+class Child : Parent(42), Root<String>

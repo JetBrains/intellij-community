@@ -1,0 +1,7 @@
+class Child {
+    val computed: Int
+        get() = 42
+    var mutable: String = ""
+        private set
+    lateinit var late: String
+}

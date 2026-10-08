@@ -1,0 +1,5 @@
+class Child {
+    fun answer() = 42
+}
+
+fun use(value: Child) = value.answer()

@@ -1,0 +1,7 @@
+package child
+
+import dependency.Value
+
+class Child {
+    fun value() = Value()
+}

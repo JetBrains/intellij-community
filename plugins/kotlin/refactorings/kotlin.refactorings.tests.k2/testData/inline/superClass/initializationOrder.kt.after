@@ -1,0 +1,11 @@
+fun record(value: Int) = value
+class Child {
+    val first = record(1)
+
+    init { record(2) }
+
+    val second = record(3)
+    val third = record(4)
+
+    init { record(5) }
+}

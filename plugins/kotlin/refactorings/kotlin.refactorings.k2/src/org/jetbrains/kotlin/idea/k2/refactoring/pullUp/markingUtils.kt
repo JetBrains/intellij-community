@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
@@ -45,7 +44,7 @@ private var KtElement.newTypeTextByTargetClass: MutableMap<FqName, () -> String?
 
 context(session: KaSession)
 internal fun markElements(
-    declaration: KtNamedDeclaration,
+    declaration: KtElement,
     sourceClass: KtClassOrObject,
     targetClass: KtClassOrObject,
     substitutor: KaSubstitutor,
@@ -104,7 +103,7 @@ internal fun markElements(
 }
 
 internal fun applyMarking(
-    declaration: KtNamedDeclaration,
+    declaration: KtElement,
     targetClass: KtClassOrObject,
 ) {
     val psiFactory = KtPsiFactory(declaration.project)

@@ -1,0 +1,7 @@
+class Child {
+    fun identity(value: String): String = value
+}
+
+class Other {
+    fun identity(value: Int): Int = value
+}

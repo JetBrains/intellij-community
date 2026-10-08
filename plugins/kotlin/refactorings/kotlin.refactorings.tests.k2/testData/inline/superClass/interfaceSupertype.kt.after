@@ -1,0 +1,5 @@
+interface Marker
+
+class Child : Marker {
+    fun answer() = 42
+}

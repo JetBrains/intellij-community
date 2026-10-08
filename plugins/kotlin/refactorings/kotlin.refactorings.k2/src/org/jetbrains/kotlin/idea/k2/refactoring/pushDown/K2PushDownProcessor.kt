@@ -72,10 +72,18 @@ internal class K2PushDownProcessor(
     }
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
+        pushDownToClasses(usages)
+    }
+
+    internal fun pushDownToClasses(
+        usages: Array<out UsageInfo>,
+        removeOriginalMembers: Boolean = true,
+        onMemberMoved: (KtNamedDeclaration, KtNamedDeclaration, KtClassOrObject) -> Unit = { _, _, _ -> },
+    ) {
         val actionsContext = PushDownActionsContext()
         try {
             prepareRefactoring(usages, actionsContext)
-            executeRefactoring(usages, actionsContext)
+            executeRefactoring(usages, actionsContext, removeOriginalMembers, onMemberMoved)
         } finally {
             clearMarking(actionsContext.markedElements)
         }
@@ -181,6 +189,8 @@ internal class K2PushDownProcessor(
     private fun executeRefactoring(
         usages: Array<out UsageInfo>,
         actionsContext: PushDownActionsContext,
+        removeOriginalMembers: Boolean,
+        onMemberMoved: (KtNamedDeclaration, KtNamedDeclaration, KtClassOrObject) -> Unit,
     ) {
         usages.map { it.element }
             .filterIsInstance<KtClassOrObject>()
@@ -191,11 +201,14 @@ internal class K2PushDownProcessor(
                     val action = actionsContext.pushDownActionsByTarget[target] ?: return@forEach
                     val added = action.execute() ?: return@forEach
                     applyMarking(added, targetClass)
+                    onMemberMoved(member.member as KtNamedDeclaration, added, targetClass)
                 }
             }
 
-        context.membersToMove.forEach { memberInfo ->
-            actionsContext.removalActionsByMember[memberInfo]?.execute()
+        if (removeOriginalMembers) {
+            context.membersToMove.forEach { memberInfo ->
+                actionsContext.removalActionsByMember[memberInfo]?.execute()
+            }
         }
     }
 }

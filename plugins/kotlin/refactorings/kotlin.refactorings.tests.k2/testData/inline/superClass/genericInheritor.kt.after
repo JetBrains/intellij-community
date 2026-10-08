@@ -1,0 +1,3 @@
+class Child<E> {
+    fun box(value: E): List<E> = listOf(value)
+}
