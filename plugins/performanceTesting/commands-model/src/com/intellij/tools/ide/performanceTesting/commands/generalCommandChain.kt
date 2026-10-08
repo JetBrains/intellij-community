@@ -1420,6 +1420,11 @@ fun <T : CommandChain> T.editTodo(
              "fileItems $expectedFileItems command $command")
 }
 
+/** Switches to an open editor on the Current File tab and measures until the tab shows [expectedItems] items. */
+fun <T : CommandChain> T.switchTodoFile(relativePath: String, expectedItems: Int): T = apply {
+  addCommand("${CMD_PREFIX}todoSwitchFile $relativePath items $expectedItems")
+}
+
 fun <T : CommandChain> T.waitForReOpenedFile(relativePath: String): T = apply {
   addCommand("${CMD_PREFIX}waitForReOpenedFile -file ${relativePath.replace(" ", "SPACE_SYMBOL")}")
 }
