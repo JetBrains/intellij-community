@@ -508,6 +508,7 @@ f:com.intellij.ide.IdeEventQueue
 - f:addDispatcher(com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher,com.intellij.openapi.Disposable):V
 - f:addDispatcher(com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher,kotlinx.coroutines.CoroutineScope):V
 - f:blockNextEvents(java.awt.event.MouseEvent):V
+- f:containsDispatcher(com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher):Z
 - f:disableInputMethods(com.intellij.openapi.Disposable):V
 - dispatchEvent(java.awt.AWTEvent):V
 - f:doWhenReady(java.lang.Runnable):V
@@ -532,9 +533,9 @@ e:com.intellij.ide.IdeEventQueue$BlockMode
 f:com.intellij.ide.IdeEventQueue$Companion
 - f:getInstance():com.intellij.ide.IdeEventQueue
 com.intellij.ide.IdeEventQueue$EventDispatcher
-- a:dispatch(java.awt.AWTEvent):Z
+- com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher
 com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher
-- com.intellij.ide.IdeEventQueue$EventDispatcher
+- a:dispatch(java.awt.AWTEvent):Z
 f:com.intellij.ide.IdePopupManager
 - com.intellij.ide.IdeEventQueue$EventDispatcher
 - closeAllPopups():Z

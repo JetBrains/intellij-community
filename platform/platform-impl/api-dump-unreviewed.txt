@@ -641,7 +641,6 @@ f:com.intellij.ide.IdeEventQueue
 - f:addActivityListener(java.lang.Runnable,com.intellij.openapi.Disposable):V
 - f:addActivityListener(java.lang.Runnable,kotlinx.coroutines.CoroutineScope):V
 - f:addDispatcher(com.intellij.ide.IdeEventQueue$EventDispatcher,com.intellij.openapi.Disposable):V
-- f:addDispatcher(com.intellij.ide.IdeEventQueue$EventDispatcher,kotlinx.coroutines.CoroutineScope):V
 - f:addIdleListener(java.lang.Runnable,I):V
 - f:addPostEventListener(kotlin.jvm.functions.Function1,com.intellij.openapi.Disposable):V
 - f:addPostprocessor(com.intellij.ide.IdeEventQueue$EventDispatcher,com.intellij.openapi.Disposable):V
@@ -649,7 +648,6 @@ f:com.intellij.ide.IdeEventQueue
 - f:addPreprocessor(com.intellij.ide.IdeEventQueue$EventDispatcher,com.intellij.openapi.Disposable):V
 - f:blockNextEvents(java.awt.event.MouseEvent,com.intellij.ide.IdeEventQueue$BlockMode):V
 - bs:blockNextEvents$default(com.intellij.ide.IdeEventQueue,java.awt.event.MouseEvent,com.intellij.ide.IdeEventQueue$BlockMode,I,java.lang.Object):V
-- f:containsDispatcher(com.intellij.ide.IdeEventQueue$EventDispatcher):Z
 - f:executeInProductionModeEvenThoughWeAreInTests(java.lang.Runnable):V
 - f:flushNativeEventQueue():V
 - f:getPostedEventCount():J
