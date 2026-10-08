@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorWindow
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.project.DumbAwareAction
@@ -226,7 +227,7 @@ fun saveWelcomeFileAs(project: Project, file: VirtualFile, closeCurrentTab: Bool
             val fileEditorManager = FileEditorManager.getInstance(project)
 
             if (closeCurrentTab) {
-              fileEditorManager.closeFile(file)
+              closeAllEditors(fileEditorManager, file)
             }
             fileEditorManager.openFile(targetFile)
 
@@ -326,6 +327,18 @@ private fun writeFile(manager: FileDocumentManager, file: VirtualFile, targetFil
 }
 
 /**
+ * Closes every editor of [file] in every window, and in the editors of a remote client.
+ */
+private fun closeAllEditors(fileEditorManager: FileEditorManager, file: VirtualFile) {
+  if (fileEditorManager is FileEditorManagerImpl) {
+    fileEditorManager.closeFile(file, moveFocus = true, closeAllCopies = true)
+  }
+  else {
+    fileEditorManager.closeFile(file)
+  }
+}
+
+/**
  * Deletes the Home [file] without a confirmation.
  */
 @ApiStatus.Internal
@@ -345,7 +358,7 @@ private fun deleteFilesOnExit(project: Project, files: List<VirtualFile>) {
   val toDelete = mutableListOf<PsiElement>()
 
   for (file in files) {
-    fileEditorManager.closeFile(file)
+    closeAllEditors(fileEditorManager, file)
 
     if (file.isValid()) {
       val psiFile = psiManager.findFile(file)
