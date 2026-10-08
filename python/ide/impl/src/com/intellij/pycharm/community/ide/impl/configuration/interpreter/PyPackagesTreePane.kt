@@ -276,6 +276,7 @@ internal class PyPackagesTreePane(
       PyBundle.message("configurable.PyWorkspaceStructureConfigurable.packages.install.tooltip"),
       Runnable { triggerInstallPackageDialog() },
     ))
+    addActionListener { triggerInstallPackageDialog() }
     document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
         searchQuery = text
