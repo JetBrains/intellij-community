@@ -102,17 +102,19 @@ internal class K2PushDownProcessor(
         actionsContext: PushDownActionsContext,
     ) {
         val sourceClass = context.sourceClass
-        allowAnalysisFromWriteActionInEdt(sourceClass) {
-            if (targetClasses.isEmpty()) {
-                // No inheritors exist, but we still register removal actions to delete members
-                // from the source class. This ensures the refactoring behaves as indicated in
-                // the user-facing warning dialog.
-                // See: K2PushDownTestGenerated.K2K.testNoInheritors
-                context.membersToMove.forEach { memberInfo ->
+        if (targetClasses.isEmpty()) {
+            // No inheritors exist, but we still register removal actions to delete members
+            // from the source class. This ensures the refactoring behaves as indicated in
+            // the user-facing warning dialog.
+            // See: K2PushDownTestGenerated.K2K.testNoInheritors
+            context.membersToMove.forEach { memberInfo ->
+                allowAnalysisFromWriteActionInEdt(sourceClass) {
                     registerRemovalAction(memberInfo, emptySubstitutor, actionsContext)
                 }
-            } else {
-                targetClasses.forEach { targetClass ->
+            }
+        } else {
+            targetClasses.forEach { targetClass ->
+                allowAnalysisFromWriteActionInEdt(targetClass) {
                     val substitutor = createInheritanceTypeSubstitutor(
                         subClass = targetClass.classSymbol ?: return@forEach,
                         superClass = sourceClass.classSymbol ?: return@forEach,

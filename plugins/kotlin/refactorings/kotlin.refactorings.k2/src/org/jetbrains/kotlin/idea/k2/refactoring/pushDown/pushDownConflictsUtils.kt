@@ -12,8 +12,10 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.asSignature
 import org.jetbrains.kotlin.analysis.api.signatures.substitute
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -76,7 +78,9 @@ internal fun analyzePushDownConflicts(
     }
 
     for (targetClass in targetClasses) {
-        checkConflicts(conflicts, context, targetClass, membersToKeepAbstract, membersToPush, inlineSuperclass)
+        analyze(targetClass.kaModule) {
+            checkConflicts(conflicts, context, targetClass, membersToKeepAbstract, membersToPush, inlineSuperclass)
+        }
     }
 
     return conflicts
