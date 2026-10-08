@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.find.findUsages.CustomUsageSearcher;
 import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -369,7 +370,17 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   protected void enablePyiStubsForPackages(String @NotNull ... packageNames) {
-    Sdk sdk = getSdkForRootEdits();
+    enablePyiStubsForPackages(myFixture.getModule(), getTestRootDisposable(), packageNames);
+  }
+
+  /**
+   * Adds the bundled stubs of {@code packageNames} to the SDK of {@code module}.
+   * The stubs stay until {@code parentDisposable} is disposed.
+   */
+  public static void enablePyiStubsForPackages(@NotNull Module module,
+                                               @NotNull Disposable parentDisposable,
+                                               String @NotNull ... packageNames) {
+    Sdk sdk = getSdkForRootEdits(module);
     List<VirtualFile> stubPackageRoots = new ArrayList<>();
     for (String packageName : packageNames) {
       VirtualFile stubPackageRoot = PyTypeShed.INSTANCE.getStubRootForPackage(packageName);
@@ -380,7 +391,7 @@ public abstract class PyTestCase extends UsefulTestCase {
       stubPackageRoots.add(stubPackageRoot);
     }
     addSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES);
-    Disposer.register(getTestRootDisposable(), () -> removeSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES));
+    Disposer.register(parentDisposable, () -> removeSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES));
   }
 
   /** The interpreter of the Python project of the fixture module, read from the snapshot. */
@@ -390,7 +401,12 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   /** The SDK of the interpreter, for a test that adds or removes its class roots. A root belongs to the SDK. */
   protected @NotNull Sdk getSdkForRootEdits() {
-    final PythonInterpreter interpreter = getPythonInterpreter();
+    return getSdkForRootEdits(myFixture.getModule());
+  }
+
+  /** The SDK of the interpreter of {@code module}, see {@link #getSdkForRootEdits()}. */
+  public static @NotNull Sdk getSdkForRootEdits(@NotNull Module module) {
+    final PythonInterpreter interpreter = PyProjectStructureTestUtilKt.findPythonInterpreterForTests(module);
     assertNotNull(interpreter);
     //noinspection deprecation
     return PythonInterpreterExtKt.getSdkAPI(interpreter);
