@@ -232,7 +232,7 @@ com.intellij.ui.BalloonImpl$AtRight
 com.intellij.ui.BalloonImpl$AtLeft
 com.intellij.openapi.keymap.KeymapUtilKt
 com.intellij.openapi.actionSystem.ex.TooltipLinkProvider
-com.intellij.openapi.actionSystem.ExperimentalIcons
+com.intellij.openapi.actionSystem.ExperimentalIconRendering
 com.intellij.openapi.util.IconLoaderKt
 com.intellij.openapi.util.IconLoaderKt$fakeComponent$2$1
 com.intellij.openapi.util.DarkReplacer

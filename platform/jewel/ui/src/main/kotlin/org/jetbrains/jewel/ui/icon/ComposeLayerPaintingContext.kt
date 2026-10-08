@@ -66,7 +66,7 @@ public class ComposeLayerPaintingContext(
             slotWidth,
             slotHeight,
             overrideColorFilter ?: this.overrideColorFilter,
-            alpha,
+            alpha * this.alpha,
             DefaultScalingContext(scaling.displayDensity, scaling.contextScale * scale),
         )
     }
