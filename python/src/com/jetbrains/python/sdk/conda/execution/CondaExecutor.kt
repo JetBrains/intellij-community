@@ -30,8 +30,14 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 internal object CondaExecutor {
+  /**
+   * Package specs for a new env. pip is requested explicitly: conda 27.9 stops adding it with Python
+   * (`add_pip_as_python_dependency` defaults to false, conda/conda#16404), and the package manager needs it for PyPI packages.
+   */
+  private fun newEnvPackages(pythonVersion: String): List<String> = listOf("python=${pythonVersion}", "pip")
+
   suspend fun createNamedEnv(binaryToExec: BinaryToExec, envName: String, pythonVersion: String): PyResult<Unit> {
-    val args = listOf("create", "-y", "-n", envName, "python=${pythonVersion}")
+    val args = listOf("create", "-y", "-n", envName) + newEnvPackages(pythonVersion)
     return runConda(
       binaryToExec, args, null
     ) { PyResult.success(Unit) }
@@ -52,7 +58,7 @@ internal object CondaExecutor {
   }
 
   suspend fun createUnnamedEnv(binaryToExec: BinaryToExec, envPrefix: String, pythonVersion: String): PyResult<Unit> {
-    val args = listOf("create", "-y", "-p", envPrefix, "python=${pythonVersion}")
+    val args = listOf("create", "-y", "-p", envPrefix) + newEnvPackages(pythonVersion)
     return runConda(
       binaryToExec, args, null
     ) { PyResult.success(Unit) }
