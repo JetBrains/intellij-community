@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
@@ -82,7 +82,7 @@ internal class WolfListeners(
       }
     }, wolfTheProblemSolver)
     val busConnection = project.messageBus.connect(coroutineScope)
-    busConnection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    busConnection.subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
       override fun after(events: List<VFileEvent>) {
         var dirChanged = false
         val toRemove: MutableSet<VirtualFile?> = HashSet()
