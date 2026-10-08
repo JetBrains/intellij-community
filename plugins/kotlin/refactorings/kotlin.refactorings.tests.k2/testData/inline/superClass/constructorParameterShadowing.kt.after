@@ -1,0 +1,3 @@
+class Child {
+    fun result(x: Int) = 1 + x
+}

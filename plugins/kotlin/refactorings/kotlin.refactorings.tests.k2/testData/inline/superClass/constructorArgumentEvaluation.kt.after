@@ -1,0 +1,7 @@
+fun next(): Int = 1
+
+class Child {
+    val value: Int = next()
+
+    fun result() = value + value
+}

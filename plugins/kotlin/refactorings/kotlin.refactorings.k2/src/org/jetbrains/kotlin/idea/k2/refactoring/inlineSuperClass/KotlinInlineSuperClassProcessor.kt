@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.listeners.RefactoringEventData
@@ -15,11 +16,17 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.substitute
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.emptySubstitutor
@@ -27,13 +34,17 @@ import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider
 import org.jetbrains.kotlin.idea.base.psi.addMemberDeclarationBefore
 import org.jetbrains.kotlin.idea.base.psi.addSuperType
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateClassBody
 import org.jetbrains.kotlin.idea.base.psi.removeSuperType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.createUsageReplacementStrategyForFunction
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.applyMarking
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.clearMarking
@@ -51,22 +62,30 @@ import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
 import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtValueArgumentName
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
@@ -107,7 +126,24 @@ internal class KotlinInlineSuperClassProcessor(
         val conflicts = myProject.runSynchronouslyWithProgress(KotlinBundle.message("inline.super.class.detecting.conflicts"), true) {
             runReadActionBlocking {
                 analyze(sourceClass) {
-                    analyzePushDownConflicts(K2PushDownContext(sourceClass, members), targetUsages(), inlineSuperclass = true)
+                    val constructorParameters = sourceClass.primaryConstructorParameters.map {
+                        KotlinMemberInfo.Declaration(it).apply { isChecked = true }
+                    }
+                    val conflicts = analyzePushDownConflicts(
+                        K2PushDownContext(sourceClass, members + constructorParameters), targetUsages(), inlineSuperclass = true,
+                    )
+                    if (constructorParameters.isNotEmpty() && sourceClass.superTypeListEntries.any { it is KtSuperTypeCallEntry }) {
+                        for (target in targets.filterIsInstance<KtClassOrObject>()) {
+                            analyze(target) {
+                                val entry = target.superTypeListEntries.single { it.resolveSuperTypeDeclaration() == sourceClass }
+                                val constructor = prepareConstructor(target, entry, substitutor(target.classSymbol, sourceClass.classSymbol))
+                                if (constructor.needsArgumentStorage) {
+                                    conflicts.putValue(target, KotlinBundle.message("inline.super.class.unsupported.constructor"))
+                                }
+                            }
+                        }
+                    }
+                    conflicts
                 }
             }
         } ?: return false
@@ -121,11 +157,11 @@ internal class KotlinInlineSuperClassProcessor(
         ) {
             return KotlinBundle.message("inline.super.class.unsupported.class")
         }
-        if (sourceClass.primaryConstructorParameters.isNotEmpty() || sourceClass.secondaryConstructors.isNotEmpty()) {
-            return KotlinBundle.message("inline.super.class.unsupported.constructor")
-        }
         if (sourceClass.superTypeListEntries.any { it is KtDelegatedSuperTypeEntry }) {
             return KotlinBundle.message("inline.super.class.unsupported.delegation")
+        }
+        if (sourceClass.primaryConstructorParameters.any { it.isVarArg }) {
+            return KotlinBundle.message("inline.super.class.unsupported.constructor")
         }
         if (sourceClass.declarations.any {
                 it !is KtNamedFunction && it !is KtProperty && it !is KtClassOrObject && it !is KtAnonymousInitializer
@@ -136,11 +172,13 @@ internal class KotlinInlineSuperClassProcessor(
             if (target !is KtClassOrObject || target.fqName == null || PsiTreeUtil.isAncestor(sourceClass, target, false)) {
                 return KotlinBundle.message("inline.super.class.unsupported.inheritor")
             }
-            if (!sourceClass.isInterface() && target is KtClass && target.secondaryConstructors.isNotEmpty()) {
-                return KotlinBundle.message("inline.super.class.unsupported.constructor")
-            }
             if (target.superTypeListEntries.any { it is KtDelegatedSuperTypeEntry && it.resolveSuperTypeDeclaration() == sourceClass }) {
                 return KotlinBundle.message("inline.super.class.unsupported.delegation")
+            }
+            if (!sourceClass.isInterface() && target.superTypeListEntries.any {
+                    it.resolveSuperTypeDeclaration() == sourceClass && it !is KtSuperTypeCallEntry
+                }) {
+                return KotlinBundle.message("inline.super.class.unsupported.constructor")
             }
         }
         for (usage in usages.filterIsInstance<K2MoveRenameUsageInfo>()) {
@@ -154,7 +192,7 @@ internal class KotlinInlineSuperClassProcessor(
             val call = element.parent as? KtCallExpression
             if (call?.calleeExpression == element && usage.referencedElement == sourceClass) {
                 val target = targets.single()
-                if (target !is KtClass || target.hasModifier(KtTokens.ABSTRACT_KEYWORD) ||
+                if (sourceClass.primaryConstructorParameters.isNotEmpty() || target !is KtClass || target.hasModifier(KtTokens.ABSTRACT_KEYWORD) ||
                     target.primaryConstructorParameters.any { !it.hasDefaultValue() && !it.isVarArg }
                 ) {
                     return KotlinBundle.message("inline.super.class.constructor.usage")
@@ -176,11 +214,19 @@ internal class KotlinInlineSuperClassProcessor(
         val oldEntry: KtSuperTypeListEntry,
         val superTypes: List<Pair<KtSuperTypeListEntry, KtSuperTypeListEntry>>,
         val originalDeclarations: Set<KtDeclaration>,
+        val constructor: ConstructorPlan,
         val replacements: MutableMap<PsiElement, PsiElement> = LinkedHashMap(),
+    )
+
+    private class ConstructorPlan(
+        val arguments: Map<KtParameter, KtExpression>,
+        val properties: Map<KtParameter, KtProperty>,
+        val needsArgumentStorage: Boolean = false,
     )
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
         val marked = ArrayList<KtElement>()
+        markConstructorParameterReferences()
         val sourceThisExpressions = sourceClass.collectDescendantsOfType<KtThisExpression> {
                 it.getLabelName() != null && it.instanceReference.mainReference.resolve() == sourceClass
             }
@@ -194,12 +240,23 @@ internal class KotlinInlineSuperClassProcessor(
                 targetUsages(), removeOriginalMembers = false,
             ) { original, added, target ->
                 retargetSourceThis(added, target)
-                plans.single { it.target == target }.replacements[original] = added
+                val plan = plans.single { it.target == target }
+                substituteConstructorParameters(added, plan.constructor.arguments)
+                plan.replacements[original] = added
             }
             for (plan in plans) {
                 copyInitializers(plan)
                 restoreDeclarationOrder(plan)
+                for ((parameter, property) in plan.constructor.properties.entries.reversed()) {
+                    val firstDeclaration = plan.target.declarations.firstOrNull()
+                    val added = plan.target.addMemberDeclarationBefore(property, null)
+                    if (firstDeclaration is KtNamedFunction) {
+                        plan.target.getOrCreateClassBody().addAfter(KtPsiFactory(myProject).createNewLine(2), added)
+                    }
+                    plan.replacements[parameter] = added
+                }
                 for ((original, replacement) in plan.superTypes) {
+                    substituteConstructorParameters(replacement, plan.constructor.arguments)
                     plan.replacements[original] = plan.target.addSuperType(replacement)
                 }
                 plan.target.removeSuperType(plan.oldEntry)
@@ -221,7 +278,6 @@ internal class KotlinInlineSuperClassProcessor(
         } finally {
             sourceThisExpressions.forEach { it.putCopyableUserData(SOURCE_THIS, null) }
             clearMarking(marked)
-            if (sourceClass.isValid) K2MoveRenameUsageInfo.unMarkAllUsages(sourceClass)
         }
     }
 
@@ -243,9 +299,111 @@ internal class KotlinInlineSuperClassProcessor(
                 for (initializer in sourceClass.getAnonymousInitializers()) {
                     marked += markElements(initializer, sourceClass, target, substitutor)
                 }
-                TargetPlan(target, oldEntry, superTypes, target.declarations.toSet())
+                TargetPlan(target, oldEntry, superTypes, target.declarations.toSet(), prepareConstructor(target, oldEntry, substitutor))
             }
         }
+    }
+
+    private fun markConstructorParameterReferences() {
+        allowAnalysisFromWriteActionInEdt(sourceClass) {
+            sourceClass.forEachDescendantOfType<KtSimpleNameExpression> { expression ->
+                val parameter = expression.resolveSuccessfulSymbol()?.psi as? KtParameter
+                if (parameter in sourceClass.primaryConstructorParameters) {
+                    expression.putCopyableUserData(CONSTRUCTOR_PARAMETER, parameter)
+                }
+            }
+        }
+    }
+
+    context(_: KaSession)
+    private fun prepareConstructor(
+        target: KtClassOrObject,
+        entry: KtSuperTypeListEntry,
+        substitutor: KaSubstitutor,
+    ): ConstructorPlan {
+        val parameters = sourceClass.primaryConstructorParameters
+        if (parameters.isEmpty()) return ConstructorPlan(emptyMap(), emptyMap())
+        val call = (entry as KtSuperTypeCallEntry).tryResolveCall()?.single?.function
+        val factory = KtPsiFactory(myProject)
+        val arguments = LinkedHashMap<KtParameter, KtExpression>()
+        val properties = LinkedHashMap<KtParameter, KtProperty>()
+        var needsArgumentStorage = false
+
+        for ((superParameter, argument) in retrieveSuperArgumentsFromCall(call, parameters)) {
+            val value = substituteConstructorParameters(argument.copy() as KtExpression, arguments) as KtExpression
+            val parameterType = substitutor.substitute(superParameter.typeReference!!.type)
+            if (value is KtConstantExpression || value is KtStringTemplateExpression && !value.hasInterpolation()) {
+                val keepProperty = superParameter.hasValOrVar() && (
+                        superParameter.isMutable || superParameter.modifierList != null ||
+                                ReferencesSearch.search(superParameter).any {
+                                    val element = it.element
+                                    val parent = element.parent
+                                    !PsiTreeUtil.isAncestor(sourceClass, element, false) && parent !is KtValueArgumentName ||
+                                            parent is KtCallableReferenceExpression ||
+                                            parent is KtQualifiedExpression && parent.selectorExpression == element &&
+                                            parent.receiverExpression !is KtThisExpression
+                                }
+                        )
+                if (!keepProperty) {
+                    arguments[superParameter] = value
+                    continue
+                }
+            } else {
+                needsArgumentStorage = true
+            }
+            val validator = KotlinNameValidatorProvider.getInstance()
+                .createNameValidator(
+                    container = target.body ?: target,
+                    target = KotlinNameSuggestionProvider.ValidatorTarget.PROPERTY,
+                    target.declarations.firstOrNull()
+                )
+            val originalName = superParameter.name!!
+            val name = if (superParameter.hasValOrVar()) originalName else KotlinNameSuggester.suggestNameByName(originalName, validator)
+
+            val modifiers = if (superParameter.hasValOrVar()) superParameter.modifierList?.text.orEmpty() else "private"
+            val keyword = if (superParameter.isMutable) "var" else "val"
+            val type = parameterType.render(position = Variance.INVARIANT)
+            val property = factory.createProperty("$modifiers $keyword ${name.quoteIfNeeded()}: $type = 0")
+            property.initializer!!.replace(value)
+            properties[superParameter] = property
+            if (!superParameter.hasValOrVar()) arguments[superParameter] = factory.createExpression(name.quoteIfNeeded())
+        }
+        return ConstructorPlan(arguments, properties, needsArgumentStorage)
+    }
+
+    private fun retrieveSuperArgumentsFromCall(
+        call: KaFunctionCall<*>?,
+        parameters: List<KtParameter>
+    ): LinkedHashMap<KtParameter, KtExpression> {
+        val arguments = LinkedHashMap<KtParameter, KtExpression>()
+        for ((argument, parameter) in call?.valueArgumentMapping.orEmpty()) {
+            val declaration = parameter.symbol.psi as? KtParameter ?: continue
+            arguments[declaration] = argument
+        }
+        for (parameter in parameters) {
+            if (parameter !in arguments) {
+                parameter.defaultValue?.let { arguments[parameter] = it }
+            }
+        }
+        return arguments
+    }
+
+    private fun substituteConstructorParameters(element: KtElement, arguments: Map<KtParameter, KtExpression>): KtElement {
+        if (element is KtSimpleNameExpression) {
+            arguments[element.getCopyableUserData(CONSTRUCTOR_PARAMETER)]?.let { return it.copy() as KtExpression }
+        }
+        for (reference in element.collectDescendantsOfType<KtSimpleNameExpression>()) {
+            val parameter = reference.getCopyableUserData(CONSTRUCTOR_PARAMETER) ?: continue
+            val value = arguments[parameter] ?: continue
+            val qualified = reference.parent as? KtQualifiedExpression
+            val usage = if (qualified?.selectorExpression == reference && qualified.receiverExpression is KtThisExpression) {
+                qualified
+            } else {
+                reference
+            }
+            usage.replace(value)
+        }
+        return element
     }
 
     context(session: KaSession)
@@ -267,7 +425,7 @@ internal class KotlinInlineSuperClassProcessor(
                     val reference = qualified.selectorExpression?.getCalleeExpressionIfAny() as? KtSimpleNameExpression ?: continue
                     val symbol = qualified.resolveSuccessfulExpressionSymbol() as? KaCallableSymbol ?: continue
                     val member = symbol.psi ?: continue
-                    if (member.parent != sourceClass.body) continue
+                    if (symbol.containingSymbol != sourceSymbol && member !in sourceClass.primaryConstructorParameters) continue
 
                     val override = targetSymbol?.findCallableMemberBySignature(symbol.substitute(substitutor), ignoreReturnType = true)
                     if (override != null && member is KtNamedFunction && member.hasBody()) {
@@ -297,6 +455,7 @@ internal class KotlinInlineSuperClassProcessor(
             val added = plan.target.addMemberDeclarationBefore(initializer, null)
             retargetSourceThis(added, plan.target)
             applyMarking(added, plan.target)
+            substituteConstructorParameters(added, plan.constructor.arguments)
             plan.replacements[initializer] = added
         }
     }
@@ -325,5 +484,6 @@ internal class KotlinInlineSuperClassProcessor(
 
     companion object {
         private val SOURCE_THIS = Key.create<Boolean>("kotlin.inline.super.class.this")
+        private val CONSTRUCTOR_PARAMETER = Key.create<KtParameter>("kotlin.inline.super.class.constructor.parameter")
     }
 }

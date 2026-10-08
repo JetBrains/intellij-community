@@ -1,0 +1,9 @@
+class Child {
+    val doubled = 3 * 2
+
+    init {
+        println("base")
+    }
+
+    val result = doubled + 1
+}

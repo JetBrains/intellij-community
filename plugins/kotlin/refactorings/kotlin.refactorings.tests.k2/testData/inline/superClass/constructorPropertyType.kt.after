@@ -1,0 +1,4 @@
+class Child {
+    fun number() = 1
+    fun value() = "text"
+}

@@ -1,0 +1,8 @@
+fun record(value: Int) = value
+
+class Child {
+    private val second: Int = record(2)
+    private val first: Int = record(1)
+    val result = first - second
+    val last = record(3)
+}

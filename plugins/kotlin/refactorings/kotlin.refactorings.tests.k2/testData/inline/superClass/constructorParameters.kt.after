@@ -1,0 +1,5 @@
+class Child {
+    fun m() {
+        println(1)
+    }
+}

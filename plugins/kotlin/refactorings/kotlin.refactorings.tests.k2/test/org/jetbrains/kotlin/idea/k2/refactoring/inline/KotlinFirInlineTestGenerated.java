@@ -2803,14 +2803,109 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("testData/inline/superClass/anonymousInheritor.kt");
         }
 
+        @TestMetadata("constructorArgumentEvaluation.kt")
+        public void testConstructorArgumentEvaluation() throws Exception {
+            runTest("testData/inline/superClass/constructorArgumentEvaluation.kt");
+        }
+
+        @TestMetadata("constructorArgumentOrder.kt")
+        public void testConstructorArgumentOrder() throws Exception {
+            runTest("testData/inline/superClass/constructorArgumentOrder.kt");
+        }
+
+        @TestMetadata("constructorDefaultArguments.kt")
+        public void testConstructorDefaultArguments() throws Exception {
+            runTest("testData/inline/superClass/constructorDefaultArguments.kt");
+        }
+
+        @TestMetadata("constructorDependentDefault.kt")
+        public void testConstructorDependentDefault() throws Exception {
+            runTest("testData/inline/superClass/constructorDependentDefault.kt");
+        }
+
+        @TestMetadata("constructorExternalProperty.kt")
+        public void testConstructorExternalProperty() throws Exception {
+            runTest("testData/inline/superClass/constructorExternalProperty.kt");
+        }
+
+        @TestMetadata("constructorGenericProperty.kt")
+        public void testConstructorGenericProperty() throws Exception {
+            runTest("testData/inline/superClass/constructorGenericProperty.kt");
+        }
+
+        @TestMetadata("constructorMultipleSubclasses.kt")
+        public void testConstructorMultipleSubclasses() throws Exception {
+            runTest("testData/inline/superClass/constructorMultipleSubclasses.kt");
+        }
+
+        @TestMetadata("constructorMutableProperty.kt")
+        public void testConstructorMutableProperty() throws Exception {
+            runTest("testData/inline/superClass/constructorMutableProperty.kt");
+        }
+
+        @TestMetadata("constructorNameAmbiguity.kt")
+        public void testConstructorNameAmbiguity() throws Exception {
+            runTest("testData/inline/superClass/constructorNameAmbiguity.kt");
+        }
+
+        @TestMetadata("constructorNamedArguments.kt")
+        public void testConstructorNamedArguments() throws Exception {
+            runTest("testData/inline/superClass/constructorNamedArguments.kt");
+        }
+
+        @TestMetadata("constructorParameterShadowing.kt")
+        public void testConstructorParameterShadowing() throws Exception {
+            runTest("testData/inline/superClass/constructorParameterShadowing.kt");
+        }
+
         @TestMetadata("constructorParameters.kt")
         public void testConstructorParameters() throws Exception {
             runTest("testData/inline/superClass/constructorParameters.kt");
         }
 
+        @TestMetadata("constructorPlainParameters.kt")
+        public void testConstructorPlainParameters() throws Exception {
+            runTest("testData/inline/superClass/constructorPlainParameters.kt");
+        }
+
+        @TestMetadata("constructorPrivateProperty.kt")
+        public void testConstructorPrivateProperty() throws Exception {
+            runTest("testData/inline/superClass/constructorPrivateProperty.kt");
+        }
+
+        @TestMetadata("constructorPropertyArgument.kt")
+        public void testConstructorPropertyArgument() throws Exception {
+            runTest("testData/inline/superClass/constructorPropertyArgument.kt");
+        }
+
+        @TestMetadata("constructorPropertyType.kt")
+        public void testConstructorPropertyType() throws Exception {
+            runTest("testData/inline/superClass/constructorPropertyType.kt");
+        }
+
+        @TestMetadata("constructorSuperProperty.kt")
+        public void testConstructorSuperProperty() throws Exception {
+            runTest("testData/inline/superClass/constructorSuperProperty.kt");
+        }
+
+        @TestMetadata("constructorSuperclassArgument.kt")
+        public void testConstructorSuperclassArgument() throws Exception {
+            runTest("testData/inline/superClass/constructorSuperclassArgument.kt");
+        }
+
+        @TestMetadata("constructorSuperclassEvaluation.kt")
+        public void testConstructorSuperclassEvaluation() throws Exception {
+            runTest("testData/inline/superClass/constructorSuperclassEvaluation.kt");
+        }
+
         @TestMetadata("constructorUsage.kt")
         public void testConstructorUsage() throws Exception {
             runTest("testData/inline/superClass/constructorUsage.kt");
+        }
+
+        @TestMetadata("constructorVararg.kt")
+        public void testConstructorVararg() throws Exception {
+            runTest("testData/inline/superClass/constructorVararg.kt");
         }
 
         @TestMetadata("differentSubstitutions.kt")

@@ -1,0 +1,12 @@
+class Child {
+    var value: Int = 1
+
+    fun increment() {
+        value++
+    }
+}
+
+fun use(child: Child) {
+    child.value = 2
+    child.increment()
+}
