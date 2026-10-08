@@ -89,6 +89,42 @@ class AuxiliaryConfigurationArtifactsTest {
   }
 
   @Test
+  fun `artifact sources take precedence over component sources`() {
+    val identifier = TestComponentIdentifier()
+    val platformJar = testFile("app.jar")
+    val libraryJar = testFile("intellij.libraries.commons.cli.jar")
+    val platformSources = testFile("ideaIC-2024.1-sources.jar")
+    val librarySources = testFile("commons-cli-1.11.0-sources.jar")
+
+    val stub = AuxiliaryConfigurationArtifacts(
+      mapOf(identifier to setOf(platformSources)),
+      emptyMap(),
+      mapOf(libraryJar to librarySources)
+    )
+
+    assertEquals(librarySources, stub.getSources(identifier, libraryJar))
+    assertEquals(platformSources, stub.getSources(identifier, platformJar))
+  }
+
+  @Test
+  fun `mergeWith keeps artifact sources of both sides and prefers primary`() {
+    val identifier = TestComponentIdentifier()
+    val jar1 = testFile("jar1.jar")
+    val jar2 = testFile("jar2.jar")
+    val primarySources = testFile("primary-sources.jar")
+    val secondarySources1 = testFile("secondary1-sources.jar")
+    val secondarySources2 = testFile("secondary2-sources.jar")
+
+    val primary = AuxiliaryConfigurationArtifacts(emptyMap(), emptyMap(), mapOf(jar1 to primarySources))
+    val secondary = AuxiliaryConfigurationArtifacts(emptyMap(), emptyMap(), mapOf(jar1 to secondarySources1, jar2 to secondarySources2))
+
+    val merged = primary.mergeWith(secondary)
+    assertEquals(primarySources, merged.getSources(identifier, jar1))
+    assertEquals(secondarySources2, merged.getSources(identifier, jar2))
+    assertEquals(secondarySources2, AuxiliaryConfigurationArtifacts.EMPTY.mergeWith(secondary).getSources(identifier, jar2))
+  }
+
+  @Test
   fun `choose auxiliary artifact file when there is none to choose from`() {
     val main = testFile("foo-bar.jar")
     assertThat(AuxiliaryConfigurationArtifacts.chooseAuxiliaryArtifactFile(main, setOf())).isNull()

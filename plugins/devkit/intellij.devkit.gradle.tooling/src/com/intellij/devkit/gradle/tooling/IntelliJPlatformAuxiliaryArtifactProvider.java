@@ -6,26 +6,39 @@ import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.AuxiliaryConfigurationArtifacts;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
+import org.gradle.api.artifacts.result.ResolvedArtifactResult;
 import org.gradle.api.artifacts.result.ResolvedComponentResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * Provides source artifacts for IntelliJ Platform dependencies.
@@ -35,8 +48,14 @@ import java.util.concurrent.ConcurrentMap;
  * This provider maps platform dependency coordinates to the correct source coordinates
  * and resolves them via detached Gradle configurations.
  * <p>
+ * The IntelliJ Platform bundles third-party libraries whose jars keep the {@code META-INF/maven/<groupId>/<artifactId>/pom.properties}
+ * file of the original library. The provider reads these coordinates from every jar of a platform component,
+ * resolves the {@code sources} artifacts of all of them in one detached configuration,
+ * and attaches each sources archive to its jar. The IntelliJ Platform sources stay attached to the other jars of the component.
+ * <p>
  * The provider resolves each sources notation one time per Gradle project and sync.
- * When the sources are not found, it reports a sync warning with the tried notations.
+ * When the IntelliJ Platform sources are not found, it reports a sync warning with the tried notations.
+ * A missing third-party sources archive is skipped without a warning.
  * <p>
  * This code is run on the Gradle daemon side.
  */
@@ -44,13 +63,22 @@ import java.util.concurrent.ConcurrentMap;
 public final class IntelliJPlatformAuxiliaryArtifactProvider implements AuxiliaryArtifactProvider {
 
   private static final String JETBRAINS_INTELLIJ_PREFIX = "com.jetbrains.intellij.";
+  private static final String LIBRARY_MODULE_PREFIX = "intellij.libraries.";
   private static final String MESSAGE_GROUP = "gradle.import.intellijPlatform.sources";
   private static final String DOCUMENTATION_URL = "https://jb.gg/ijpgp-docs#configuration.repositories";
+  private static final String POM_PROPERTIES_PREFIX = "META-INF/maven/";
+  private static final String POM_PROPERTIES_SUFFIX = "/pom.properties";
 
   /**
    * Keeps the resolved sources per Gradle project and sources notation for the current sync.
    */
   private static final ModelBuilderContext.DataProvider<ConcurrentMap<String, Optional<File>>> SOURCES_CACHE =
+    context -> new ConcurrentHashMap<>();
+
+  /**
+   * Keeps the Maven coordinates read from a jar per jar path for the current sync.
+   */
+  private static final ModelBuilderContext.DataProvider<ConcurrentMap<String, List<String>>> LIBRARY_COORDINATES_CACHE =
     context -> new ConcurrentHashMap<>();
 
   @SuppressWarnings("SSBasedInspection") // don't use platform utils here
@@ -85,6 +113,7 @@ public final class IntelliJPlatformAuxiliaryArtifactProvider implements Auxiliar
     }
 
     Map<ComponentIdentifier, Set<File>> sources = new LinkedHashMap<>();
+    Map<File, List<String>> libraryCoordinates = new LinkedHashMap<>();
 
     Set<ResolvedComponentResult> components;
     try {
@@ -93,6 +122,7 @@ public final class IntelliJPlatformAuxiliaryArtifactProvider implements Auxiliar
     catch (Exception e) {
       return AuxiliaryConfigurationArtifacts.EMPTY;
     }
+    Map<ComponentIdentifier, List<File>> artifacts = resolveIntelliJPlatformArtifacts(configuration);
 
     for (ResolvedComponentResult component : components) {
       ComponentIdentifier id = component.getId();
@@ -114,12 +144,22 @@ public final class IntelliJPlatformAuxiliaryArtifactProvider implements Auxiliar
       if (sourceFile != null) {
         sources.put(id, Collections.singleton(sourceFile));
       }
+
+      List<File> jars = artifacts.getOrDefault(id, Collections.emptyList());
+      if (!hasLibrarySources(name, jars)) continue;
+      for (File jar : jars) {
+        List<String> coordinates = readLibraryCoordinates(context, jar);
+        if (!coordinates.isEmpty()) {
+          libraryCoordinates.put(jar, coordinates);
+        }
+      }
     }
 
-    if (sources.isEmpty()) {
+    Map<File, File> artifactSources = resolveLibrarySources(context, project, libraryCoordinates);
+    if (sources.isEmpty() && artifactSources.isEmpty()) {
       return AuxiliaryConfigurationArtifacts.EMPTY;
     }
-    return new AuxiliaryConfigurationArtifacts(sources, Collections.emptyMap());
+    return new AuxiliaryConfigurationArtifacts(sources, Collections.emptyMap(), artifactSources);
   }
 
   private static boolean isIntelliJPlatformComponent(@NotNull String group) {
@@ -129,6 +169,94 @@ public final class IntelliJPlatformAuxiliaryArtifactProvider implements Auxiliar
            || "localIde".equals(group)
            || "bundledPlugin".equals(group)
            || "bundledModule".equals(group);
+  }
+
+  /**
+   * A jar gets one sources archive. The third-party sources replace the IntelliJ Platform sources of a jar with Maven coordinates.
+   * The component keeps the IntelliJ Platform sources on its other jars, so a component with one jar keeps them,
+   * unless the component is a library module such as {@code intellij.libraries.commons.cli}.
+   */
+  private static boolean hasLibrarySources(@NotNull String name, @NotNull List<File> jars) {
+    return jars.size() > 1 || name.startsWith(LIBRARY_MODULE_PREFIX);
+  }
+
+  /**
+   * Collects the resolved jars of the IntelliJ Platform components in {@code configuration}.
+   */
+  private static @NotNull Map<ComponentIdentifier, List<File>> resolveIntelliJPlatformArtifacts(@NotNull Configuration configuration) {
+    Map<ComponentIdentifier, List<File>> result = new LinkedHashMap<>();
+    try {
+      Set<ResolvedArtifactResult> artifacts = configuration.getIncoming()
+        .artifactView(view -> {
+          view.setLenient(true);
+          view.componentFilter(id -> id instanceof ModuleComponentIdentifier
+                                     && isIntelliJPlatformComponent(((ModuleComponentIdentifier)id).getGroup()));
+        })
+        .getArtifacts()
+        .getArtifacts();
+      for (ResolvedArtifactResult artifact : artifacts) {
+        result.computeIfAbsent(artifact.getId().getComponentIdentifier(), k -> new ArrayList<>()).add(artifact.getFile());
+      }
+    }
+    catch (Exception ignore) {
+      // the configuration dependencies are reported by the dependency resolver
+    }
+    return result;
+  }
+
+  private static @NotNull List<String> readLibraryCoordinates(@NotNull ModelBuilderContext context, @NotNull File jar) {
+    return context.getData(LIBRARY_COORDINATES_CACHE).computeIfAbsent(jar.getAbsolutePath(), k -> readLibraryCoordinates(jar));
+  }
+
+  /**
+   * Reads the Maven coordinates of the libraries packed into {@code jar} from every
+   * {@code META-INF/maven/<groupId>/<artifactId>/pom.properties} entry.
+   * A library whose artifact ID is part of the jar name comes first, so a jar that merges a library with its dependencies
+   * (for example {@code intellij.libraries.netty.codec.http.jar}) gets the sources of the main library.
+   *
+   * @return the coordinates in the {@code groupId:artifactId:version} form, or an empty list when the jar has no Maven metadata
+   */
+  @VisibleForTesting
+  public static @NotNull List<String> readLibraryCoordinates(@NotNull File jar) {
+    if (!jar.isFile() || !jar.getName().endsWith(".jar")) {
+      return Collections.emptyList();
+    }
+    Map<String, String> artifactIds = new LinkedHashMap<>();
+    try (ZipFile zip = new ZipFile(jar)) {
+      Enumeration<? extends ZipEntry> entries = zip.entries();
+      while (entries.hasMoreElements()) {
+        ZipEntry entry = entries.nextElement();
+        String entryName = entry.getName();
+        if (!entryName.startsWith(POM_PROPERTIES_PREFIX) || !entryName.endsWith(POM_PROPERTIES_SUFFIX)) continue;
+        Properties properties = new Properties();
+        try (InputStream stream = zip.getInputStream(entry)) {
+          properties.load(stream);
+        }
+        String groupId = properties.getProperty("groupId");
+        String artifactId = properties.getProperty("artifactId");
+        String version = properties.getProperty("version");
+        if (groupId == null || artifactId == null || version == null) continue;
+        artifactIds.put(groupId + ":" + artifactId + ":" + version, artifactId);
+      }
+    }
+    catch (IOException | RuntimeException e) {
+      return Collections.emptyList();
+    }
+    if (artifactIds.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    String jarName = normalize(jar.getName());
+    List<String> coordinates = new ArrayList<>(artifactIds.keySet());
+    coordinates.sort(Comparator.comparingInt((String it) -> {
+      String artifactId = normalize(artifactIds.get(it));
+      return jarName.contains(artifactId) ? -artifactId.length() : 0;
+    }));
+    return coordinates;
+  }
+
+  private static @NotNull String normalize(@NotNull String name) {
+    return name.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
   }
 
   private static @Nullable String resolveSourceCoordinates(
@@ -206,7 +334,7 @@ public final class IntelliJPlatformAuxiliaryArtifactProvider implements Auxiliar
       notations.add(sourceCoordinates + ":" + majorVersion + "-SNAPSHOT:sources");
     }
 
-    String key = project.getProjectDir().getAbsolutePath() + "|" + notations.get(0);
+    String key = cacheKey(project, notations.get(0));
     return context.getData(SOURCES_CACHE).computeIfAbsent(key, k -> {
       Exception failure = null;
       for (String notation : notations) {
@@ -223,6 +351,89 @@ public final class IntelliJPlatformAuxiliaryArtifactProvider implements Auxiliar
       reportSourcesNotFound(context, project, notations, failure);
       return Optional.empty();
     }).orElse(null);
+  }
+
+  private static @NotNull String cacheKey(@NotNull Project project, @NotNull String notation) {
+    return project.getProjectDir().getAbsolutePath() + "|" + notation;
+  }
+
+  /**
+   * Resolves the sources archives of the third-party libraries in {@code libraryCoordinates} and maps each jar to one of them.
+   * The uncached notations resolve in one detached configuration. A missing archive is cached and skipped without a warning.
+   *
+   * @param libraryCoordinates the Maven coordinates of the libraries packed into a jar, in the order of preference
+   * @return the sources archive of the first resolved library per jar
+   */
+  private static @NotNull Map<File, File> resolveLibrarySources(
+    @NotNull ModelBuilderContext context,
+    @NotNull Project project,
+    @NotNull Map<File, List<String>> libraryCoordinates
+  ) {
+    if (libraryCoordinates.isEmpty()) {
+      return Collections.emptyMap();
+    }
+    ConcurrentMap<String, Optional<File>> cache = context.getData(SOURCES_CACHE);
+
+    Set<String> unresolved = new LinkedHashSet<>();
+    for (List<String> coordinates : libraryCoordinates.values()) {
+      for (String coordinate : coordinates) {
+        if (!cache.containsKey(cacheKey(project, sourcesNotation(coordinate)))) {
+          unresolved.add(coordinate);
+        }
+      }
+    }
+    if (!unresolved.isEmpty()) {
+      Map<String, File> resolved = resolveSourceArtifacts(project, unresolved);
+      for (String coordinate : unresolved) {
+        cache.put(cacheKey(project, sourcesNotation(coordinate)), Optional.ofNullable(resolved.get(coordinate)));
+      }
+    }
+
+    Map<File, File> result = new LinkedHashMap<>();
+    for (Map.Entry<File, List<String>> entry : libraryCoordinates.entrySet()) {
+      for (String coordinate : entry.getValue()) {
+        Optional<File> file = cache.get(cacheKey(project, sourcesNotation(coordinate)));
+        if (file != null && file.isPresent()) {
+          result.put(entry.getKey(), file.get());
+          break;
+        }
+      }
+    }
+    return result;
+  }
+
+  private static @NotNull String sourcesNotation(@NotNull String coordinate) {
+    return coordinate + ":sources";
+  }
+
+  /**
+   * Resolves the {@code sources} artifacts of {@code coordinates} in one lenient detached configuration of {@code project}.
+   *
+   * @return the resolved sources archive per {@code groupId:artifactId:version} coordinate
+   */
+  private static @NotNull Map<String, File> resolveSourceArtifacts(@NotNull Project project, @NotNull Set<String> coordinates) {
+    Map<String, File> result = new HashMap<>();
+    try {
+      Dependency[] dependencies = coordinates.stream()
+        .map(coordinate -> project.getDependencies().create(sourcesNotation(coordinate)))
+        .toArray(Dependency[]::new);
+      Configuration detached = project.getConfigurations().detachedConfiguration(dependencies);
+      detached.setTransitive(false);
+      Set<ResolvedArtifactResult> artifacts = detached.getIncoming()
+        .artifactView(view -> view.setLenient(true))
+        .getArtifacts()
+        .getArtifacts();
+      for (ResolvedArtifactResult artifact : artifacts) {
+        ComponentIdentifier id = artifact.getId().getComponentIdentifier();
+        if (!(id instanceof ModuleComponentIdentifier)) continue;
+        ModuleComponentIdentifier moduleId = (ModuleComponentIdentifier)id;
+        result.put(moduleId.getGroup() + ":" + moduleId.getModule() + ":" + moduleId.getVersion(), artifact.getFile());
+      }
+    }
+    catch (Exception ignore) {
+      // a missing third-party sources archive is not an error of the IntelliJ Platform project
+    }
+    return result;
   }
 
   private static void reportSourcesNotFound(
