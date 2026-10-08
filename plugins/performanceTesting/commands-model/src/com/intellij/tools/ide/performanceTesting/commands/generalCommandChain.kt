@@ -1447,6 +1447,21 @@ fun <T : CommandChain> T.selectTodoScope(
   addCommand("${CMD_PREFIX}todoSelectScope $scope files $expectedFiles items $expectedItems$span")
 }
 
+/** Selects the item at [line] (1-based), or goes to the next or the previous item, and measures until the preview shows that item. */
+fun <T : CommandChain> T.previewTodo(action: TodoPreviewAction, relativePath: String, line: Int, spanName: String): T = apply {
+  addCommand("${CMD_PREFIX}todoPreview ${action.argument} $relativePath line $line span $spanName")
+}
+
+/** Turns the TODO preview on and measures until it shows the selected item as [spanName]. */
+fun <T : CommandChain> T.enableTodoPreview(spanName: String): T = apply {
+  addCommand("${CMD_PREFIX}todoPreview on span $spanName")
+}
+
+/** Turns the TODO preview off, then selects the item at [line] (1-based) of [relativePath]. Nothing is measured. */
+fun <T : CommandChain> T.disableTodoPreview(relativePath: String, line: Int): T = apply {
+  addCommand("${CMD_PREFIX}todoPreview off $relativePath line $line")
+}
+
 fun <T : CommandChain> T.waitForReOpenedFile(relativePath: String): T = apply {
   addCommand("${CMD_PREFIX}waitForReOpenedFile -file ${relativePath.replace(" ", "SPACE_SYMBOL")}")
 }
