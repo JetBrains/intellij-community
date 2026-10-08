@@ -345,6 +345,9 @@ internal class DynamicPluginsSupportImpl(
       }
       try {
         attachClassLoaders(targetPluginSet, groups, reusedGroups)
+
+        warmupClassLoaders(groups)
+
         val listenerCallbacks = mutableListOf<ExtensionPointDeferredListenersNotification>()
         application.runWriteAction {
           val descriptors = groups.flatMap { it.sortedDescriptors }
