@@ -24,6 +24,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
+import com.intellij.codeInspection.reference.RefFile
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.multiverse.LibraryContextImpl
 import com.intellij.multiverse.ModuleContextImpl
@@ -335,19 +336,27 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
   }
 
   fun testBatchInspectionInPreferredContextOnly() {
-    val descriptions = runBatchCommentInspectionInTwoModules()
+    val descriptions = runBatchCommentInspectionInTwoModules().problemElements.values.map { it.descriptionTemplate }
     assertEquals("the file must be inspected only in its preferred context: $descriptions", 1, descriptions.size)
   }
 
   fun testBatchInspectionInAllContexts() {
     Registry.get("batch.inspections.inspect.all.code.insight.contexts").setValue(true, testRootDisposable)
-    val descriptions = runBatchCommentInspectionInTwoModules()
+    val descriptions = runBatchCommentInspectionInTwoModules().problemElements.values.map { it.descriptionTemplate }
     assertSameElements("the file must be inspected in each of its contexts",
                        descriptions,
                        listOf("Comment warning module-context module2", "Comment warning module-context $name"))
   }
 
-  private fun runBatchCommentInspectionInTwoModules(): List<String> {
+  fun testBatchInspectionInAllContextsReportsProblemsOnFileOfEachContext() {
+    Registry.get("batch.inspections.inspect.all.code.insight.contexts").setValue(true, testRootDisposable)
+    val refFiles = runBatchCommentInspectionInTwoModules().problemElements.keys()
+    assertSameElements("each context must have its own reference element",
+                       refFiles.map { (it as RefFile).psiElement.codeInsightContext },
+                       getContexts())
+  }
+
+  private fun runBatchCommentInspectionInTwoModules(): DefaultInspectionToolResultExporter {
     @Language("JAVA")
     val text = """
       // comment
@@ -363,8 +372,7 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     val scope = AnalysisScope(project)
     val globalContext = createGlobalContextForTool(scope, project, listOf(toolWrapper))
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
-    val presentation = globalContext.getPresentation(toolWrapper) as DefaultInspectionToolResultExporter
-    return presentation.problemElements.values.map { it.descriptionTemplate }
+    return globalContext.getPresentation(toolWrapper) as DefaultInspectionToolResultExporter
   }
 
   private fun getAllDocumentHighlights(): List<HighlightInfo> {

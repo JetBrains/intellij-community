@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -267,6 +268,10 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
       return myFileHolder.getVirtualFile$intellij_platform_core_impl(); // must be constant, used in equals/hashcode
     }
 
+    private @Nullable CodeInsightContext getContext() {
+      return myFileHolder.getContext$intellij_platform_core_impl();
+    }
+
     @Override
     public @Nullable PsiElement retrieve() {
       PsiFile psiFile = getFile();
@@ -302,7 +307,8 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
       return myEndOffset == that.myEndOffset &&
              myStartOffset == that.myStartOffset &&
              myInfo.equals(that.myInfo) &&
-             getVirtualFile().equals(that.getVirtualFile());
+             getVirtualFile().equals(that.getVirtualFile()) &&
+             Objects.equals(getContext(), that.getContext());
     }
 
     @Override
@@ -311,6 +317,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
       result = 31 * result + myStartOffset;
       result = 31 * result + myEndOffset;
       result = 31 * result + getVirtualFile().hashCode();
+      result = 31 * result + Objects.hashCode(getContext());
 
       return result;
     }
@@ -382,6 +389,10 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
       return myFileHolder.getVirtualFile$intellij_platform_core_impl(); // must be constant, used in equals/hashcode
     }
 
+    private @Nullable CodeInsightContext getContext() {
+      return myFileHolder.getContext$intellij_platform_core_impl();
+    }
+
     private static @NotNull Language findLanguage(@NotNull PsiFile file) {
       FileViewProvider vp = file.getViewProvider();
       Set<Language> languages = vp.getLanguages();
@@ -423,13 +434,17 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
       if (!getVirtualFile().equals(reference.getVirtualFile())) return false;
       if (!myLanguage.equals(reference.myLanguage)) return false;
       if (!myProject.equals(reference.myProject)) return false;
+      if (!Objects.equals(getContext(), reference.getContext())) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      return 31 * getVirtualFile().hashCode() + myLanguage.hashCode();
+      int result = getVirtualFile().hashCode();
+      result = 31 * result + myLanguage.hashCode();
+      result = 31 * result + Objects.hashCode(getContext());
+      return result;
     }
   }
 
@@ -576,12 +591,14 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
       return myIndex == that.myIndex &&
              myVirtualFile.equals(that.myVirtualFile) &&
              Comparing.equal(myElementType, that.myElementType) &&
-             myLanguage == that.myLanguage;
+             myLanguage == that.myLanguage &&
+             myContext.equals(that.myContext);
     }
 
     @Override
     public int hashCode() {
-      return ((31 * myVirtualFile.hashCode() + myIndex) * 31 + myElementType.hashCode()) * 31 + myLanguage.hashCode();
+      return (((31 * myVirtualFile.hashCode() + myIndex) * 31 + myElementType.hashCode()) * 31 + myLanguage.hashCode()) * 31 +
+             myContext.hashCode();
     }
 
     @Override
