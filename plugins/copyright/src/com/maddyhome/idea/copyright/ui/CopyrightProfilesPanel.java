@@ -17,7 +17,6 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -55,7 +54,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-final class CopyrightProfilesPanel extends MasterDetailsComponent implements SearchableConfigurable {
+final class CopyrightProfilesPanel extends MasterDetailsComponent {
   private final Project myProject;
   private final AtomicBoolean myInitialized = new AtomicBoolean(false);
   private final CopyrightManager myCopyrightManager;
@@ -418,10 +417,5 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
         ApplicationManager.getApplication().invokeLater(runnable);
       }
     });
-  }
-
-  @Override
-  public @NotNull String getId() {
-    return getHelpTopic();
   }
 }

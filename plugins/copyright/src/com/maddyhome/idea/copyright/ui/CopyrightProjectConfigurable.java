@@ -3,6 +3,7 @@
 package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.copyright.CopyrightBundle;
+import com.intellij.copyright.CopyrightManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -15,11 +16,11 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
   public static final String ID = "copyright";
   private final Project project;
   private ProjectSettingsPanel myOptionsPanel = null;
-  private final CopyrightProfilesPanel myProfilesPanel;
+  private final CopyrightProfilesConfigurable myProfilesConfigurable;
 
   public CopyrightProjectConfigurable(Project project) {
     this.project = project;
-    myProfilesPanel = new CopyrightProfilesPanel(project);
+    myProfilesConfigurable = new CopyrightProfilesConfigurable(project);
   }
 
   @Override
@@ -34,8 +35,9 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
 
   @Override
   public JComponent createComponent() {
-    myOptionsPanel = new ProjectSettingsPanel(project, myProfilesPanel);
-    myProfilesPanel.setUpdate(this::reloadProfiles);
+    CopyrightProfilesPanel profilesPanel = myProfilesConfigurable.getOrCreatePanel();
+    myOptionsPanel = new ProjectSettingsPanel(project, profilesPanel);
+    profilesPanel.setUpdate(this::reloadProfiles);
     return myOptionsPanel.getMainComponent();
   }
 
@@ -79,7 +81,7 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
 
   @Override
   protected @NotNull Configurable @NotNull [] buildConfigurables() {
-    return new Configurable[]{myProfilesPanel, new CopyrightFormattingConfigurable(project)};
+    return new Configurable[]{myProfilesConfigurable, new CopyrightFormattingConfigurable(project)};
   }
 
   private void reloadProfiles() {
@@ -89,6 +91,9 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
   }
 
   public boolean hasAnyCopyrights() {
-    return myOptionsPanel.hasAnyCopyrights();
+    if (myOptionsPanel != null) {
+      return myOptionsPanel.hasAnyCopyrights();
+    }
+    return CopyrightManager.getInstance(project).hasAnyCopyrights();
   }
 }
