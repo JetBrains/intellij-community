@@ -17,19 +17,22 @@ import git4idea.config.GitVersionSpecialty
 import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 
 @Service(Service.Level.PROJECT)
 internal class GitAmendCommitService(project: Project, scope: CoroutineScope) : AmendCommitService(project) {
-  private val recentCommitsProvider = GitRecentCommitsProvider(
-    project, scope,
-    limit = COMMITS_LIMIT,
-    userScope = GitRecentCommitsProvider.UserScope.ALL_USERS,
-    stopAtFirstMergeCommit = true,
-    unpublishedOnly = true,
-    preload = true,
-  )
+  private val recentCommitsProvider = scope.async(Dispatchers.Default) {
+    GitRecentCommitsProvider(
+      project, scope,
+      limit = COMMITS_LIMIT,
+      userScope = GitRecentCommitsProvider.UserScope.ALL_USERS,
+      stopAtFirstMergeCommit = true,
+      unpublishedOnly = true,
+      preload = true,
+    )
+  }
 
   override fun isAmendCommitSupported(): Boolean = true
   override fun isAmendSpecificCommitSupported(): Boolean = Registry.`is`("git.amend.specific.commit")
@@ -46,7 +49,7 @@ internal class GitAmendCommitService(project: Project, scope: CoroutineScope) : 
   override suspend fun getAmendSpecificCommitTargets(root: VirtualFile): List<CommitToAmend.Resolved> =
     withContext(Dispatchers.Default) {
       val repo = GitRepositoryManager.getInstance(project).repositories.singleOrNull() ?: return@withContext emptyList()
-      val commits: List<VcsCommitMetadata> = recentCommitsProvider.getRecentCommits(repo.root)
+      val commits: List<VcsCommitMetadata> = recentCommitsProvider.await().getRecentCommits(repo.root)
 
       commits.mapIndexed { index, metadata ->
         if (index == 0) {
