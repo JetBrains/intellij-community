@@ -72,6 +72,15 @@ class JavaSupportTest : GrazieTestBase() {
     myFixture.checkHighlighting()
   }
 
+  fun `test escaped backslash before text`() {
+    myFixture.configureByText("a.java", """
+      class Repro {
+        String path = "C:\\transform-templates";
+      }
+    """.trimIndent())
+    myFixture.checkHighlighting()
+  }
+
   @PerformanceUnitTest
   fun `test long comment performance`() {
     Benchmark.newBenchmark("highlighting") {

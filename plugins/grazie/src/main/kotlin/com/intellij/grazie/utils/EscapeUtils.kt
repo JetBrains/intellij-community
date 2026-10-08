@@ -68,7 +68,10 @@ private fun getBackslashExcludeRanges(content: TextContent, symbol: Char): List<
   val ranges = ArrayList<TextRange>()
   var i = 0
   while (i < content.length - 1) {
-    if (isSeparator(content, i, symbol)) {
+    if (content[i] == '\\' && content[i + 1] == '\\') {
+      i += 2
+    }
+    else if (isSeparator(content, i, symbol)) {
       ranges.add(TextRange(i, i + 2))
       i += 2
     }
