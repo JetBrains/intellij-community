@@ -13,7 +13,7 @@ import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.Lif
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.RETIRED
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.SEALED
 import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics
-import com.intellij.platform.util.io.storages.database.storages.durablemap.RetireUnusedBlockInDurableMapHousekeeper
+import com.intellij.platform.util.io.storages.database.storages.durablemap.RetireUnusedBlocksHousekeeper
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapOverBlocks
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES
 import com.intellij.util.ConcurrencyUtil
@@ -372,7 +372,7 @@ class DatabaseHousekeepingCoordinatorTest {
         val entriesBlocks = store.blocks().filter { it.role() == ENTRIES.persistentCode() }
         assertEquals(listOf(SEALED, SEALED, ACTIVE), entriesBlocks.map { it.state() })
 
-        val housekeeper = RetireUnusedBlockInDurableMapHousekeeper(map as DurableMapOverBlocks<*, *>)
+        val housekeeper = RetireUnusedBlocksHousekeeper(map as DurableMapOverBlocks<*, *>)
         housekeeper.runHousekeeping { false }
         housekeeper.runHousekeeping { false }
 

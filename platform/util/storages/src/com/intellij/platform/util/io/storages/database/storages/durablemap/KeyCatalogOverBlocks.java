@@ -125,6 +125,16 @@ public final class KeyCatalogOverBlocks<K> {
     );
   }
 
+  /// Processes key record references and their current value heads without deserializing keys.
+  boolean processValueRecordRefs(@NotNull ValueRecordRefProcessor processor) throws IOException {
+    return keys.forEachCommittedRecord(
+      (recordRef, record) -> {
+        var valueRecordRef = KeyRecordLayout.valueRecordRef(record);
+        return processor.process(recordRef, valueRecordRef);
+      }
+    );
+  }
+
   private long findRecordRef(@NotNull K key, int keyHash) throws IOException {
     return keyHashToRecordRefIndex.lookup(keyHash, candidateRef -> {
       var record = keys.read(candidateRef);
@@ -152,5 +162,11 @@ public final class KeyCatalogOverBlocks<K> {
   public interface KeyRecordProcessor<K> {
     /// @return `true` to process the next record, or `false` to stop the traversal.
     boolean process(long keyRecordRef, @NotNull K key, long valueRecordRef) throws IOException;
+  }
+
+  @FunctionalInterface
+  interface ValueRecordRefProcessor {
+    /// @return `true` to process the next record, or `false` to stop the traversal.
+    boolean process(long keyRecordRef, long valueRecordRef) throws IOException;
   }
 }

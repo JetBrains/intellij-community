@@ -18,7 +18,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED
 import java.nio.file.Path
 
-class RetireUnusedBlockInDurableMapHousekeeperTest {
+class DurableMapOverBlocksHousekeeperTest {
   @Test
   fun `sweep keeps every block in a live patch chain`(@TempDir directory: Path) {
     BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
@@ -44,7 +44,7 @@ class RetireUnusedBlockInDurableMapHousekeeperTest {
         val entriesBlocks = store.blocks().filter { it.role() == ENTRIES.persistentCode() }
         assertTrue(entriesBlocks.count { it.state() == SEALED } > 2, "The chain must span sealed ENTRIES blocks")
 
-        val housekeeper = RetireUnusedBlockInDurableMapHousekeeper(map)
+        val housekeeper = RetireUnusedBlocksHousekeeper(map)
         val statesBeforeSweep = entriesBlocks.map { it.state() }
         housekeeper.runHousekeeping { true }
         assertEquals(statesBeforeSweep, entriesBlocks.map { it.state() }, "Cancellation before the run must prevent retirement")

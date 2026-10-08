@@ -47,7 +47,7 @@ import static com.intellij.util.io.IOUtil.KiB;
 /// - key-value entries in `ENTRIES` blocks
 /// - `key.hash -> RecordRef` index in `LOOKUP` blocks
 @ApiStatus.Internal
-public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
+public class DurableMapOverBlocks<K, V> implements DurableMap<K, V>, UnusedBlocksRetirement {
   static final int IMPLEMENTATION_VERSION = 1;
 
   public static final int DEFAULT_ENTRIES_BLOCK_CONTENT_LENGTH = 64 * KiB;
@@ -281,7 +281,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
     }
     if (blocksStore instanceof HousekeeperInstaller installer) {// not every BlocksStore supports HousekeeperInstaller!
       durableMapImpl.housekeeperRegistration = installer.installHousekeeper(
-        new RetireUnusedBlockInDurableMapHousekeeper(durableMapImpl)
+        new RetireUnusedBlocksHousekeeper(durableMapImpl)
       );
     }
     return durableMapImpl;
@@ -508,7 +508,8 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V> {
 
   /// Find store's blocks that are [BlocksStore.Block.LifecycleState#SEALED] and not used by any currently alive records;
   /// => retire those blocks.
-  void retireUnusedBlocks(@NotNull BooleanSupplier cancelled) throws IOException {
+  @Override
+  public void retireUnusedBlocks(@NotNull BooleanSupplier cancelled) throws IOException {
     DeadBlocksSweepSnapshot snapshot;
     synchronized (lock) {
       if (closed || cancelled.getAsBoolean()) {
