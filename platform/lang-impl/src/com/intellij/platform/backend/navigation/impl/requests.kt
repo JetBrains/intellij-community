@@ -2,6 +2,7 @@
 package com.intellij.platform.backend.navigation.impl
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
@@ -59,6 +60,10 @@ class SharedSourceNavigationRequest internal constructor(
   useCurrentWindow,
   usePreviewTab,
 )
+
+@get:Internal
+val SourceNavigationRequest.contextOrAny: CodeInsightContext
+  get() = if (this is SharedSourceNavigationRequest) context else anyContext()
 
 @Internal
 class DirectoryNavigationRequest internal constructor(
