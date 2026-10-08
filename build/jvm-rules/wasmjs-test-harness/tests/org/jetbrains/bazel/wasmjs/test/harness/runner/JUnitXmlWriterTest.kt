@@ -77,7 +77,7 @@ class JUnitXmlWriterTest {
 
   private suspend fun write(run: TestRunState): String {
     // A no-op on an already-closed run (the interrupt case): the first close renders the report.
-    run.complete()
+    run.consume(TESTS_FINISHED_MARKER)
     val outcome = run.outcome.await() as TestRunOutcome.Completed
     val out = ByteArrayOutputStream()
     writeJUnitXml(outcome.suites, out)

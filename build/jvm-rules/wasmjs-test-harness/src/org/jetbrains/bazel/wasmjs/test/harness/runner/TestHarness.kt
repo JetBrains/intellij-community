@@ -18,6 +18,8 @@ object TestHarness {
     browserCommand: List<String>,
     staticContentDir: Path,
     entrypointModulePath: String,
+    mochaScriptPath: String,
+    kotlinTestRunnerScriptPath: String,
     configurationScriptPaths: List<String>,
     npmPackages: List<String>,
     importRemaps: Map<String, String> = emptyMap(),
@@ -25,7 +27,6 @@ object TestHarness {
     testFilters: List<String>,
     bazelDeadline: ComparableTimeMark?,
     browserSetupTimeout: Duration,
-    testCompletionGracePeriod: Duration,
     xmlOutputFile: Path?,
     undeclaredOutputsDir: Path?,
   ): Int {
@@ -38,6 +39,8 @@ object TestHarness {
         // already in the runfiles tree, and keeping it here leaves the rule with symlinks only.
         indexHtml = generateIndexHtml(
           entrypointModulePath = entrypointModulePath,
+          mochaScriptPath = mochaScriptPath,
+          kotlinTestRunnerScriptPath = kotlinTestRunnerScriptPath,
           configurationScriptPaths = configurationScriptPaths,
           npmPackageEntries = npmPackages.associateWith { specifier ->
             resolveNpmEntry(specifier, npmPackageJson(staticContentDir, specifier))
@@ -49,7 +52,6 @@ object TestHarness {
         infrastructureLog = infrastructureLog,
         bazelDeadline = bazelDeadline,
         browserSetupTimeout = browserSetupTimeout,
-        testCompletionGracePeriod = testCompletionGracePeriod,
       )
     }
     catch (e: CancellationException) {

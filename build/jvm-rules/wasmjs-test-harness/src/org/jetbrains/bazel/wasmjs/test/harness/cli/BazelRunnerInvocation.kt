@@ -34,28 +34,22 @@ internal data class BazelRunnerInvocation(
   /** The static web root: the directory holding the `--static-content-marker` file. */
   val staticContentDir: Path,
   val entrypoint: String,
+  /** The mocha browser bundle, served in the static root. */
+  val mochaScript: String,
+  /** The kotlin-test mocha runner bundle of kotlin-web-helpers, served in the static root. */
+  val kotlinTestRunnerScript: String,
   val configurationScripts: List<String>,
   val npmPackages: List<String>,
   val importRemaps: Map<String, String>,
   val awaitedImports: List<Pair<String, String>>,
   /** Time until the browser starts and exposes its DevTools endpoint. */
   val browserSetupTimeout: Duration,
-  /**
-   * How long the harness still waits for output before it calls the run finished: measured from the last
-   * console line the page printed, and only counted once no test and no suite is still open — any further
-   * output resets it. kotlin-test never announces the end of a run, so this is how the harness infers it.
-   * A target whose async gap between two suites outlasts this grace period has its run declared over
-   * early — it reports what it collected, without the suites that never came.
-   */
-  val testCompletionGracePeriod: Duration,
 ) {
   companion object {
-    // The phase defaults, the single source of truth. Only the completion grace period is tunable per
-    // target, through `wasmjs_test`'s `test_completion_grace_period_ms`; `--browser-setup-timeout-ms`
-    // exists for driving the harness by hand. Page load carries no phase timeout of its own: it is
+    // The phase default, the single source of truth. `--browser-setup-timeout-ms` exists for driving
+    // the harness by hand. Page load and the test run carry no phase timeout of their own: they are
     // bounded by the Bazel deadline derived from TEST_TIMEOUT, which the run loop observes.
     private val DEFAULT_BROWSER_SETUP_TIMEOUT = 30.seconds
-    private val DEFAULT_TEST_COMPLETION_GRACE_PERIOD = 3.seconds
 
     private val KNOWN_OPTIONS = setOf(
       "--browser-binary",
@@ -63,12 +57,13 @@ internal data class BazelRunnerInvocation(
       "--browser-profile-dir",
       "--static-content-marker",
       "--entrypoint",
+      "--mocha-script",
+      "--kotlin-test-runner-script",
       "--configuration-script",
       "--npm-package",
       "--import-remap",
       "--awaited-import",
       "--browser-setup-timeout-ms",
-      "--test-completion-grace-period-ms",
     )
 
     fun parse(args: List<String>, environment: BazelTestEnvironment): BazelInvocationParseResult = try {
@@ -93,13 +88,13 @@ internal data class BazelRunnerInvocation(
         ),
         staticContentDir = staticContentDir(valuesByOption.single("--static-content-marker"), environment),
         entrypoint = valuesByOption.single("--entrypoint"),
+        mochaScript = valuesByOption.single("--mocha-script"),
+        kotlinTestRunnerScript = valuesByOption.single("--kotlin-test-runner-script"),
         configurationScripts = valuesByOption["--configuration-script"].orEmpty(),
         npmPackages = valuesByOption["--npm-package"].orEmpty(),
         importRemaps = valuesByOption["--import-remap"].orEmpty().associate { value -> value.toPair("--import-remap") },
         awaitedImports = valuesByOption["--awaited-import"].orEmpty().map { value -> value.toPair("--awaited-import") },
         browserSetupTimeout = valuesByOption.timeoutOrNull("--browser-setup-timeout-ms") ?: DEFAULT_BROWSER_SETUP_TIMEOUT,
-        testCompletionGracePeriod = valuesByOption.timeoutOrNull("--test-completion-grace-period-ms")
-                                    ?: DEFAULT_TEST_COMPLETION_GRACE_PERIOD,
       ))
     }
     catch (e: IllegalArgumentException) {

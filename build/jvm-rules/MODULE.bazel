@@ -694,6 +694,26 @@ CHROMIUM_HEADLESS_SHELL_PLATFORMS = {
     for platform, (archive, archive_root, sha256) in CHROMIUM_HEADLESS_SHELL_PLATFORMS.items()
 ]
 
+# The kotlin-test browser runner of the Kotlin Gradle plugin: mocha runs the kotlin-test suites, and
+# the kotlin-web-helpers runner bundle wires kotlin-test, the test filter and the TeamCity reporter
+# into it. The wasmjs_test page loads both as classic scripts (see rules/test-wasmjs.bzl).
+# Keep mocha at the version that kotlin-web-helpers' static/test.html loads.
+http_archive(
+    name = "mocha",
+    build_file_content = 'exports_files(["mocha.js"], visibility = ["//visibility:public"])',
+    sha256 = "c84b52ae4f0310df25707771c89e97299e01ef139b42e2c51b118c25f771bb49",
+    strip_prefix = "package",
+    url = "https://registry.npmjs.org/mocha/-/mocha-11.8.0.tgz",
+)
+
+http_archive(
+    name = "kotlin_web_helpers",
+    build_file_content = 'exports_files(["dist/kotlin-test-mocha-browser-runner.js"], visibility = ["//visibility:public"])',
+    sha256 = "b77937a729c6955b14560b8c1ece7a9a1864434ffe2e437c85b63aa83142312e",
+    strip_prefix = "package",
+    url = "https://registry.npmjs.org/kotlin-web-helpers/-/kotlin-web-helpers-3.5.4.tgz",
+)
+
 # TeamCity service message parsing (kotlin-test browser output); published on
 # intellij-dependencies, not Maven Central.
 http_file(

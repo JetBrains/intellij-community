@@ -54,8 +54,6 @@ wasmjs_test(
     module_name = "wasmjs-test-e2e",
     module_runtime_files = ["runtime/marker.mjs"],
     npm_packages = {"nanoid": "@nanoid//:package"},
-    # The default value, behavior unchanged; exercises the macro -> flagfile -> harness plumbing.
-    test_completion_grace_period_ms = 3000,
     testdata = ["testdata/sample.txt"],
 )
 
@@ -84,8 +82,6 @@ wasmjs_test(
     module = ":e2e-failing-module",
     module_name = "wasmjs-test-e2e-failing",
     tags = ["manual"],
-    # Its tests are synchronous, so a short window only makes :e2e-outcomes finish sooner.
-    test_completion_grace_period_ms = 3000,
 )
 
 filegroup(
@@ -166,8 +162,7 @@ kt_jvm_library(
 
 # The anti-false-positive guarantee of wasmjs_test, enforced end to end: a failing, hanging,
 # or unloadable test module must fail the run with the reason in the JUnit XML — and the green
-# fixture must report every one of its tests, which is what catches an end-of-run decision taken
-# too early.
+# fixture must report every one of its tests.
 java_test(
     name = "e2e-outcomes",
     size = "large",

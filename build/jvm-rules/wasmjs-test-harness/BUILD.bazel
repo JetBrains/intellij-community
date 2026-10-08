@@ -39,6 +39,20 @@ alias(
     visibility = ["//visibility:public"],
 )
 
+# The kotlin-test browser runner the test page loads, in this order: mocha, then the
+# kotlin-web-helpers bundle that installs the kotlin-test adapter and the TeamCity reporter.
+alias(
+    name = "mocha-script",
+    actual = "@mocha//:mocha.js",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "kotlin-test-mocha-runner-script",
+    actual = "@kotlin_web_helpers//:dist/kotlin-test-mocha-browser-runner.js",
+    visibility = ["//visibility:public"],
+)
+
 java_binary(
     name = "wasmjs-test-harness",
     main_class = "org.jetbrains.bazel.wasmjs.test.harness.MainKt",

@@ -7,8 +7,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.hours
 
 class TestRunStateTests {
   @Test
@@ -75,11 +73,10 @@ class TestRunStateTests {
     val result = feed(
       "##teamcity[testStarted name='t']",
       "println from the test",
-      "##teamcity[testStdOut name='t' out='explicit stdout']",
       "##teamcity[testFinished name='t' duration='1']",
     ).completed()
 
-    assertEquals(listOf("println from the test", "explicit stdout"), result.suites.single().tests.single().output)
+    assertEquals(listOf("println from the test"), result.suites.single().tests.single().output)
     assertEquals(emptyList<String>(), result.orphanOutput)
   }
 
@@ -204,45 +201,6 @@ class TestRunStateTests {
   }
 
   @Test
-  fun `a testStarted while another test is open flushes the open test as errored`(): Unit = runBlocking {
-    // A lost testFinished must not make the earlier test vanish from the report.
-    val result = feed(
-      "##teamcity[testSuiteStarted name='sample.T']",
-      "##teamcity[testStarted name='lost']",
-      "output of the lost test",
-      "##teamcity[testStarted name='next']",
-      "##teamcity[testFinished name='next' duration='1']",
-      "##teamcity[testSuiteFinished name='sample.T']",
-    ).completed()
-
-    assertEquals(2, result.suites.testCount)
-    assertEquals(1, result.suites.erroredCount)
-    val byName = result.suites.single().tests.associateBy { it.name }
-    val lost = byName.getValue("lost")
-    assertEquals(
-      TestStatus.Errored(message = "test did not report testFinished before the next test started", details = "next test: next"),
-      lost.status,
-    )
-    assertEquals(listOf("output of the lost test"), lost.output)
-    assertEquals(TestStatus.Passed, byName.getValue("next").status)
-  }
-
-  @Test
-  fun `a failure verdict survives a lost testFinished`(): Unit = runBlocking {
-    val result = feed(
-      "##teamcity[testStarted name='failed']",
-      "##teamcity[testFailed name='failed' message='boom' details='stack']",
-      "##teamcity[testStarted name='next']",
-      "##teamcity[testFinished name='next' duration='1']",
-    ).completed()
-
-    assertEquals(1, result.suites.failedCount)
-    assertEquals(0, result.suites.erroredCount)
-    val failed = result.suites.flatMap { it.tests }.single { it.name == "failed" }
-    assertEquals(TestStatus.Failed(message = "boom", details = "stack"), failed.status)
-  }
-
-  @Test
   fun `an interruption with only the root suite open reports an errored case with the reason`(): Unit = runBlocking {
     // kotlin-test opens an unnamed root suite first; a run cut short there must not render
     // nothing and be misread downstream as "no tests executed".
@@ -259,75 +217,49 @@ class TestRunStateTests {
   }
 
   @Test
-  fun `a testSuiteFinished naming no open suite changes nothing`(): Unit = runBlocking {
-    val result = feed(
-      "##teamcity[testSuiteStarted name='sample.T']",
-      "##teamcity[testSuiteFinished name='other.Suite']",
-      "##teamcity[testStarted name='t']",
-      "##teamcity[testFinished name='t' duration='1']",
-      "##teamcity[testSuiteFinished name='sample.T']",
-    ).completed()
-
-    assertEquals("sample.T", result.suites.single().name)
-    assertTrue(result.orphanOutput.contains("unmatched testSuiteFinished for 'other.Suite'"))
-  }
-
-  @Test
-  fun `finishing an outer suite closes the inner suites left open`(): Unit = runBlocking {
-    // Recovery from a lost inner testSuiteFinished: the run must still become idle-able.
-    val run = feed(
-      "##teamcity[testSuiteStarted name='outer']",
-      "##teamcity[testSuiteStarted name='inner']",
-      "##teamcity[testStarted name='t']",
-      "##teamcity[testFinished name='t' duration='1']",
-      "##teamcity[testSuiteFinished name='outer']",
-    )
-
-    assertTrue(run.isIdleFor(Duration.ZERO))
-    assertEquals("outer.inner", run.completed().suites.single().name)
-  }
-
-  @Test
-  fun `a second testFailed on the same open test wins`(): Unit = runBlocking {
-    // kotlin-test emits at most one verdict; if a degraded stream ever repeats one, last wins.
-    val result = feed(
-      "##teamcity[testStarted name='t']",
-      "##teamcity[testFailed name='t' message='first' details='d1']",
-      "##teamcity[testFailed name='t' message='second' details='d2']",
-      "##teamcity[testFinished name='t' duration='1']",
-    ).completed()
-
-    assertEquals(TestStatus.Failed(message = "second", details = "d2"), result.suites.single().tests.single().status)
-  }
-
-  @Test
-  fun `a testFailed that matches no started test is never dropped`(): Unit = runBlocking {
+  fun `a testFailed after the test passed is never dropped`(): Unit = runBlocking {
+    // Mocha reports an exception after a test passed as a second failure of that test.
     val result = feed(
       "##teamcity[testStarted name='first']",
       "##teamcity[testFinished name='first' duration='1']",
-      "##teamcity[testFailed name='second' message='boom' details='stack']",
+      "##teamcity[testFailed name='first' message='boom' details='stack']",
     ).completed()
 
     assertEquals(1, result.suites.erroredCount)
     val errored = result.suites.flatMap { it.tests }.single { it.status is TestStatus.Errored }
-    assertEquals("second", errored.name)
+    assertEquals("first", errored.name)
     assertTrue((errored.status as TestStatus.Errored).message.contains("boom"))
   }
 
   @Test
+  fun `a failing hook of the open test is an errored case of its own`(): Unit = runBlocking {
+    // Mocha starts a test before its beforeEach hooks run, and reports the hook failure under the
+    // title of the hook. It sends no testFinished for that test, so the failure must close it:
+    // otherwise the finished marker would count as output of the open test, and the run would
+    // only end at the deadline.
+    val result = feed(
+      "##teamcity[testStarted name='t']",
+      "output of the hook",
+      "##teamcity[testFailed name='\"before each\" hook for \"t\"' message='boom' details='stack']",
+    ).completed()
+
+    val errored = result.suites.flatMap { it.tests }.single()
+    assertEquals("\"before each\" hook for \"t\"", errored.name)
+    assertTrue(errored.status is TestStatus.Errored)
+    assertEquals(listOf("output of the hook"), errored.output)
+  }
+
+  @Test
   fun `suite depth comes from parsed messages, not raw text`(): Unit = runBlocking {
-    val open = feed(
+    val result = feed(
       "##teamcity[testSuiteStarted name='sample.T']",
       "##teamcity[testStarted name='t']",
       "assertion output mentioning ##teamcity[testSuiteFinished literally",
-    )
-    assertFalse(open.isIdleFor(Duration.ZERO))
+      "##teamcity[testFinished name='t' duration='1']",
+    ).completed()
 
-    val closed = feed(
-      "##teamcity[testSuiteStarted name='sample.T']",
-      "##teamcity[testSuiteFinished name='sample.T']",
-    )
-    assertTrue(closed.isIdleFor(Duration.ZERO))
+    val names = result.suites.flatMap { it.tests }.map { it.name }
+    assertEquals(listOf("t", "unfinished-test-suites"), names)
   }
 
   @Test
@@ -347,14 +279,42 @@ class TestRunStateTests {
   }
 
   @Test
-  fun `a run is idle only when it went quiet with nothing in flight`(): Unit = runBlocking {
-    // Silence is how the harness recognises the end of a run, so anything still open defers it --
-    // including the unnamed root suite kotlin-test wraps a run in, which the report filters out.
-    assertFalse(feed("##teamcity[testSuiteStarted name='']").isIdleFor(Duration.ZERO))
-    assertFalse(feed("##teamcity[testStarted name='t']").isIdleFor(Duration.ZERO))
-    assertTrue(feed("##teamcity[testStarted name='t']", "##teamcity[testFinished name='t' duration='1']").isIdleFor(Duration.ZERO))
-    // And it is measured from the last console line, not from the moment of the question.
-    assertFalse(feed("some banner").isIdleFor(1.hours))
+  fun `the finished marker outside a test closes the run`(): Unit = runBlocking {
+    val run = feed(
+      "##teamcity[testSuiteStarted name='sample.T']",
+      "##teamcity[testStarted name='t']",
+      "##teamcity[testFinished name='t' duration='1']",
+      "##teamcity[testSuiteFinished name='sample.T']",
+    )
+    assertTrue(run.outcome.isActive)
+
+    run.consume(TESTS_FINISHED_MARKER)
+
+    val outcome = run.outcome.await() as TestRunOutcome.Completed
+    assertEquals(1, outcome.suites.testCount)
+    assertEquals(0, outcome.suites.erroredCount)
+  }
+
+  @Test
+  fun `the finished marker inside a test is output of that test`(): Unit = runBlocking {
+    // A test that prints the marker must not end the run before its own verdict.
+    val run = feed(
+      "##teamcity[testSuiteStarted name='sample.T']",
+      "##teamcity[testStarted name='t']",
+      TESTS_FINISHED_MARKER,
+    )
+    assertTrue(run.outcome.isActive)
+
+    val result = feed(
+      "##teamcity[testSuiteStarted name='sample.T']",
+      "##teamcity[testStarted name='t']",
+      TESTS_FINISHED_MARKER,
+      "##teamcity[testFinished name='t' duration='1']",
+      "##teamcity[testSuiteFinished name='sample.T']",
+    ).completed()
+    val test = result.suites.single().tests.single()
+    assertEquals(TestStatus.Passed, test.status)
+    assertEquals(listOf(TESTS_FINISHED_MARKER), test.output)
   }
 
   @Test
@@ -362,13 +322,13 @@ class TestRunStateTests {
     // The console feed is stopped before the run closes, but a line already in flight must not blow
     // up the feed, and neither it nor a late close or synthetic failure may change what is reported.
     val run = feed("##teamcity[testStarted name='t']", "##teamcity[testFinished name='t' duration='1']")
-    run.complete()
+    run.consume(TESTS_FINISHED_MARKER)
     val outcome = run.outcome.await() as TestRunOutcome.Completed
 
     run.consume("a late banner")
     run.addSyntheticFailure(SyntheticTestFailure.UNCAUGHT_EXCEPTION, "too late")
     run.interrupt("late")
-    run.complete()
+    run.consume(TESTS_FINISHED_MARKER)
 
     assertSame(outcome, run.outcome.await())
     assertEquals(1, outcome.suites.testCount)
@@ -381,7 +341,7 @@ class TestRunStateTests {
   }
 
   private suspend fun TestRunState.completed(): TestRunOutcome.Completed {
-    complete()
+    consume(TESTS_FINISHED_MARKER)
     return outcome.await() as TestRunOutcome.Completed
   }
 

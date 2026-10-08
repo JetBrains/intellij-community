@@ -10,6 +10,8 @@ class IndexHtmlGeneratorTest {
   fun `a test without configuration scripts, npm packages or awaited imports`() {
     val page = generateIndexHtml(
       entrypointModulePath = "my-module-js/my-module.mjs",
+      mochaScriptPath = MOCHA,
+      kotlinTestRunnerScriptPath = KOTLIN_TEST_RUNNER,
       configurationScriptPaths = emptyList(),
       npmPackageEntries = emptyMap(),
     )
@@ -21,6 +23,8 @@ class IndexHtmlGeneratorTest {
   fun `configuration scripts, the import map and awaited imports keep their declared order`() {
     val page = generateIndexHtml(
       entrypointModulePath = "my-module-js/my-module.mjs",
+      mochaScriptPath = MOCHA,
+      kotlinTestRunnerScriptPath = KOTLIN_TEST_RUNNER,
       configurationScriptPaths = listOf("_config/first.js", "_config/second.js"),
       npmPackageEntries = mapOf("@js-joda/core" to "dist/js-joda.esm.js"),
       importRemaps = mapOf("my-module-js/skiko.mjs" to "_runtime/skiko.mjs"),
@@ -35,6 +39,8 @@ class IndexHtmlGeneratorTest {
     assertThrows(IllegalStateException::class.java) {
       generateIndexHtml(
         entrypointModulePath = "m-js/m.mjs",
+        mochaScriptPath = MOCHA,
+        kotlinTestRunnerScriptPath = KOTLIN_TEST_RUNNER,
         configurationScriptPaths = emptyList(),
         npmPackageEntries = emptyMap(),
         awaitedImports = listOf("_runtime/skiko.mjs" to "awaitSkiko; alert(1)"),
@@ -52,11 +58,18 @@ class IndexHtmlGeneratorTest {
       assertThrows(path, IllegalStateException::class.java) {
         generateIndexHtml(
           entrypointModulePath = path,
+          mochaScriptPath = MOCHA,
+          kotlinTestRunnerScriptPath = KOTLIN_TEST_RUNNER,
           configurationScriptPaths = emptyList(),
           npmPackageEntries = emptyMap(),
         )
       }
     }
+  }
+
+  private companion object {
+    const val MOCHA = "_harness/mocha.js"
+    const val KOTLIN_TEST_RUNNER = "_harness/kotlin-test-mocha-browser-runner.js"
   }
 
   private fun fixture(name: String): String =

@@ -30,6 +30,8 @@ suspend fun main(args: Array<String>) {
         browserCommand = parsed.invocation.browserCommand,
         staticContentDir = parsed.invocation.staticContentDir,
         entrypointModulePath = parsed.invocation.entrypoint,
+        mochaScriptPath = parsed.invocation.mochaScript,
+        kotlinTestRunnerScriptPath = parsed.invocation.kotlinTestRunnerScript,
         configurationScriptPaths = parsed.invocation.configurationScripts,
         npmPackages = parsed.invocation.npmPackages,
         importRemaps = parsed.invocation.importRemaps,
@@ -37,7 +39,6 @@ suspend fun main(args: Array<String>) {
         testFilters = environment.testFilters,
         bazelDeadline = environment.timeout?.let { timeout -> TimeSource.Monotonic.markNow() + softDeadline(timeout) },
         browserSetupTimeout = parsed.invocation.browserSetupTimeout,
-        testCompletionGracePeriod = parsed.invocation.testCompletionGracePeriod,
         xmlOutputFile = environment.xmlOutputFile,
         undeclaredOutputsDir = environment.undeclaredOutputsDir,
       )

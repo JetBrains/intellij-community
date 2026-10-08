@@ -102,7 +102,6 @@ def fleet_wasmjs_module(
         test_size = None,
         test_timeout = None,
         test_skiko_runtime = False,
-        test_completion_grace_period_ms = 0,
         binary = False,
         binary_source_maps = None,
         binary_source_map_prefix = None,
@@ -216,7 +215,6 @@ def fleet_wasmjs_module(
             module_name = "%s.tests" % module_name,
             kotlinc_opts = kotlinc_opts,
             testdata = test_data,
-            test_completion_grace_period_ms = test_completion_grace_period_ms,
             configuration_scripts = test_configuration_scripts,
             npm_packages = test_npm_packages,
             # skiko/Compose modules import `./skiko.mjs` (which loads skiko.wasm) relative to the

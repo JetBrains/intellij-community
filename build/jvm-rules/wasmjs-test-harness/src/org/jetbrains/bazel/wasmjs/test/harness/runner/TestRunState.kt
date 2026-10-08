@@ -9,8 +9,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import java.text.ParseException
-import kotlin.time.Duration
-import kotlin.time.TimeSource
 
 /**
  * The immutable result of one browser test run, rendered when the run closes: the mutable
@@ -76,8 +74,9 @@ internal enum class SyntheticTestFailure(val caseName: String, val message: Stri
 
 /**
  * The results of one browser test run: fed line by line from the browser console stream while the
- * run is on — TeamCity service messages interleaved with regular output — then closed exactly once
- * by [complete] or [interrupt], which renders the immutable [TestRunOutcome]. It records only what
+ * run is on — TeamCity service messages interleaved with regular output — then closed exactly once,
+ * which renders the immutable [TestRunOutcome]. The run closes when the page prints
+ * [TESTS_FINISHED_MARKER] outside a test, or when [interrupt] cuts it short. It records only what
  * a report needs; it knows nothing about XML, exit codes, or the browser.
  *
  * The first close wins and renders the report; anything arriving later is folded into this state
@@ -97,30 +96,18 @@ internal class TestRunState {
   private var openTest: OpenTest? = null
   private var sawTestEvents = false
   private var interruptionReason: String? = null
-  private var lastLineAt = TimeSource.Monotonic.markNow()
 
   /**
-   * Whether the page went quiet for [silence] with nothing left in flight — no open test, no open
-   * suite — which is how the harness recognises the end of a run: the page never announces it.
-   *
-   * Unlike the report (see [completedOutcome]), an empty-named suite counts as open here:
-   * kotlin-test/wasmJs wraps a run in an unnamed root suite, and deferring on it is what keeps the
-   * gap between two root suites from reading as the end of the run.
-   */
-  suspend fun isIdleFor(silence: Duration): Boolean = lock.withPermit {
-    suiteStack.isEmpty() && openTest == null && lastLineAt.elapsedNow() >= silence
-  }
-
-  suspend fun hasSeenTestEvents(): Boolean = lock.withPermit {
-    sawTestEvents
-  }
-
-  /**
-   * Consumes one Browser console log line to fill up test run data.
+   * Consumes one Browser console log line to fill up test run data. [TESTS_FINISHED_MARKER] ends
+   * the run, unless a test is open: then the line is output of that test.
    */
   suspend fun consume(line: String): Unit = lock.withPermit {
-    lastLineAt = TimeSource.Monotonic.markNow()
-    parser.parseLineToEvents(line).forEach { event -> consumeEvent(event) }
+    when {
+      line == TESTS_FINISHED_MARKER && openTest == null -> {
+        if (!outcome.isCompleted) outcome.complete(renderAsCompletedOutcome())
+      }
+      else -> parser.parseLineToEvents(line).forEach { event -> consumeEvent(event) }
+    }
   }
 
   /**
@@ -131,11 +118,6 @@ internal class TestRunState {
     lock.withPermit {
       finishedTests += syntheticFailureCase(failure, details = details, output = output)
     }
-
-  /** Ends a run that finished on its own terms, rendering the report. */
-  suspend fun complete(): Unit = lock.withPermit {
-    outcome.complete(renderAsCompletedOutcome())
-  }
 
   /**
    * Ends a run that was cut short — a dead console stream, an uncaught page exception, the harness
@@ -254,6 +236,10 @@ internal class TestRunState {
     }
   }
 
+  /**
+   * Handles the messages of kotlin-web-helpers' TeamCity reporter. Mocha runs one test at a time
+   * and closes its suites in order, so the messages arrive balanced and in order.
+   */
   private fun consumeServiceMessage(message: ServiceMessage) {
     val attributes = message.attributes
     val testName = attributes["name"].orEmpty()
@@ -262,34 +248,15 @@ internal class TestRunState {
         suiteStack += testName
         sawTestEvents = true
       }
-      // Popping only down to a matching name keeps one unbalanced or lost testSuiteFinished from
-      // silently corrupting the class name of every later test.
-      ServiceMessageTypes.TEST_SUITE_FINISHED -> when (val index = suiteStack.lastIndexOf(testName)) {
-        -1 -> orphanLines += "unmatched testSuiteFinished for '$testName'"
-        else -> suiteStack.subList(index, suiteStack.size).clear()
-      }
+      ServiceMessageTypes.TEST_SUITE_FINISHED -> suiteStack.removeLastOrNull()
       ServiceMessageTypes.TEST_STARTED -> {
-        // A test still open when the next one starts (its testFinished was lost) must not vanish
-        // from the report: like an unmatched testFailed, a missing verdict is never droppable.
-        openTest?.let { lost ->
-          finishedTests += TestCaseResult(
-            className = currentClassName(),
-            name = lost.name,
-            durationMillis = 0,
-            status = lost.failure ?: TestStatus.Errored(
-              message = "test did not report testFinished before the next test started",
-              details = "next test: $testName",
-            ),
-            output = lost.output,
-          )
-        }
         openTest = OpenTest(name = testName)
         sawTestEvents = true
       }
-      ServiceMessageTypes.TEST_FAILED -> when (val test = openTestMatching(testName)) {
-        // A failure verdict must never be droppable: a testFailed that matches no open test
-        // (a lost testStarted, out-of-order events) becomes an errored case instead of being
-        // downgraded to plain output like the other unmatched events.
+      ServiceMessageTypes.TEST_FAILED -> when (val test = openTest?.takeIf { it.name == testName }) {
+        // Mocha also reports failures outside the open test: an exception after the test passed,
+        // or a failing hook, which carries the title of the hook. Each becomes an errored case.
+        // A failing beforeEach hook ends the open test without testFinished, so it closes it here.
         null -> {
           finishedTests += TestCaseResult(
             className = currentClassName(),
@@ -299,8 +266,9 @@ internal class TestRunState {
               message = "testFailed did not match a started test: ${attributes["message"].orEmpty()}",
               details = attributes["details"].orEmpty(),
             ),
-            output = emptyList(),
+            output = openTest?.output.orEmpty(),
           )
+          openTest = null
           sawTestEvents = true
         }
         else -> openTest = test.copy(failure = TestStatus.Failed(
@@ -308,43 +276,25 @@ internal class TestRunState {
           details = attributes["details"].orEmpty(),
         ))
       }
-      ServiceMessageTypes.TEST_IGNORED -> {
-        val ignored = TestStatus.Ignored(reason = attributes["message"].orEmpty())
-        // kotlin-test emits testIgnored either inside a testStarted/testFinished pair or standalone.
-        when (val test = openTestMatching(testName)) {
-          null -> finishedTests += TestCaseResult(
-            className = currentClassName(),
-            name = testName,
-            durationMillis = 0,
-            status = ignored,
-            output = emptyList(),
-          )
-          else -> openTest = test.copy(ignored = ignored)
-        }
-      }
-      ServiceMessageTypes.TEST_FINISHED -> withOpenTest(testName, message) { test ->
+      // The reporter sends a skipped test as a testIgnored message alone, without testStarted.
+      ServiceMessageTypes.TEST_IGNORED -> finishedTests += TestCaseResult(
+        className = currentClassName(),
+        name = testName,
+        durationMillis = 0,
+        status = TestStatus.Ignored(reason = attributes["message"].orEmpty()),
+        output = emptyList(),
+      )
+      ServiceMessageTypes.TEST_FINISHED -> openTest?.let { test ->
         finishedTests += TestCaseResult(
           className = currentClassName(),
           name = test.name,
           durationMillis = attributes["duration"]?.toLongOrNull() ?: 0,
-          status = test.failure ?: test.ignored ?: TestStatus.Passed,
+          status = test.failure ?: TestStatus.Passed,
           output = test.output,
         )
         openTest = null
       }
-      ServiceMessageTypes.TEST_STD_OUT, ServiceMessageTypes.TEST_STD_ERR -> withOpenTest(testName, message) { test ->
-        openTest = test.copy(output = test.output + attributes["out"].orEmpty())
-      }
       else -> orphanLines += message.asString()
-    }
-  }
-
-  private fun openTestMatching(testName: String): OpenTest? = openTest?.takeIf { testName.isEmpty() || it.name == testName }
-
-  private fun withOpenTest(testName: String, message: ServiceMessage, action: (OpenTest) -> Unit) {
-    when (val test = openTestMatching(testName)) {
-      null -> orphanLines += "unmatched test event for '$testName': ${message.messageName}"
-      else -> action(test)
     }
   }
 
@@ -394,7 +344,6 @@ private sealed interface ConsoleEvent {
 private data class OpenTest(
   val name: String,
   val failure: TestStatus.Failed? = null,
-  val ignored: TestStatus.Ignored? = null,
   val output: List<String> = emptyList(),
 )
 
