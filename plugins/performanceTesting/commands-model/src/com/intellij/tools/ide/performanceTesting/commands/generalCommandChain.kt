@@ -1400,6 +1400,12 @@ fun <T : CommandChain> T.assertProblemViewCount(expectedProblemCount: Int): T = 
   addCommand("${CMD_PREFIX}assertProblemsViewCount $expectedProblemCount")
 }
 
+/** Opens the Project tab in its default view and records `todo.open.treeReady`. [expectedGroups] counts the rows under the summary. */
+fun <T : CommandChain> T.openTodoToolWindow(expectedFiles: Int, expectedItems: Int, expectedGroups: Int, hideAfter: Boolean = true): T = apply {
+  val keepOpen = if (hideAfter) "" else " keepOpen"
+  addCommand("${CMD_PREFIX}todoOpen files $expectedFiles items $expectedItems groups $expectedGroups$keepOpen")
+}
+
 fun <T : CommandChain> T.waitForReOpenedFile(relativePath: String): T = apply {
   addCommand("${CMD_PREFIX}waitForReOpenedFile -file ${relativePath.replace(" ", "SPACE_SYMBOL")}")
 }
