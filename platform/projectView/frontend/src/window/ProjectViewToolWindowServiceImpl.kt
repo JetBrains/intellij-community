@@ -4,6 +4,7 @@ package com.intellij.platform.projectView.frontend.window
 
 import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.ide.projectView.impl.ProjectViewInitNotifier
 import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -129,6 +130,7 @@ internal class ProjectViewToolWindowServiceImpl(
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun setupToolWindow(toolWindow: ToolWindow) {
+    ProjectViewInitNotifier.getInstance(project).initStarted()
     toolWindow.setDefaultContentUiType(ToolWindowContentUiType.COMBO)
     val action = ActionManager.getInstance().getAction("ProjectViewToolbar") as? ActionGroup?
     if (action != null) toolWindow.setTitleActions(listOf(ProjectViewToolbarActionGroup(action)))

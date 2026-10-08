@@ -5,6 +5,7 @@ import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SelectInTarget
 import com.intellij.ide.actions.OpenInRightSplitActionProvider
+import com.intellij.ide.projectView.impl.ProjectViewInitNotifier
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -48,6 +49,7 @@ import com.intellij.ui.stripe.TreeUpdater
 import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.ui.treeStructure.TreeStateListener
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.asDisposable
@@ -155,6 +157,7 @@ internal class TreeBasedFrontendProjectViewPane(
 
       override fun treeCollapsed(event: TreeExpansionEvent) { }
     })
+    tree.addTreeExpansionListener(TreeStateInitListener(project, tree))
     EditSourceOnDoubleClickHandler.install(tree)
     EditSourceOnEnterKeyHandler.install(tree)
     autoscrollToSourceHandler.install(tree)
@@ -542,6 +545,28 @@ private class MyTreeUpdater(
     val errorStripeColor = textAttributes.errorStripeColor ?: return null
     return ErrorStripe.create(errorStripeColor, 1)
   }
+}
+
+private class TreeStateInitListener(
+  private val project: Project,
+  private val tree: Tree,
+) : TreeStateListener {
+  override fun treeStateRestoreStarted(event: TreeExpansionEvent) {
+    // reported earlier, when the TW only begins to load
+  }
+
+  override fun treeStateCachedStateRestored(event: TreeExpansionEvent) {
+    ProjectViewInitNotifier.getInstance(project).initCachedNodesLoaded()
+  }
+
+  override fun treeStateRestoreFinished(event: TreeExpansionEvent) {
+    ProjectViewInitNotifier.getInstance(project).initCompleted()
+    tree.removeTreeExpansionListener(this)
+  }
+
+  override fun treeExpanded(event: TreeExpansionEvent?) { }
+
+  override fun treeCollapsed(event: TreeExpansionEvent?) { }
 }
 
 private val LOG = logger<TreeBasedFrontendProjectViewPane>()
