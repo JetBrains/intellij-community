@@ -18,6 +18,10 @@ internal class WelcomeScreenAwareCloseAllProjectsAction : CloseAllProjectsAction
     return !project.isWelcomeExperienceProjectSync() || ProjectManager.getInstance().openProjects.size > 1
   }
 
+  override fun canClose(project: Project, currentProject: Project): Boolean {
+    return !project.isWelcomeExperienceProjectSync()
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val currentProject = getProjectEvenIfNotInitialized(e) ?: return super.actionPerformed(e)
     val projectManager = ProjectManager.getInstance()
