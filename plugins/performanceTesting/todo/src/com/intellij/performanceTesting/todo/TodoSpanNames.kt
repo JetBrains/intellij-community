@@ -7,6 +7,8 @@ object TodoSpanNames {
   const val ADD: String = "todo.edit.add.treeReady"
   const val CHANGE: String = "todo.edit.change.itemShown"
   const val REMOVE: String = "todo.edit.remove.treeReady"
+  const val SCOPE_NARROW: String = "todo.scope.narrow.treeReady"
+  const val SCOPE_PROJECT: String = "todo.scope.project.treeReady"
 
   /** The switch of the Current File tab to a file with [items] items. Each size gets its own chart. */
   fun currentFileSwitch(items: Int): String = "todo.currentFile.switch.items$items"

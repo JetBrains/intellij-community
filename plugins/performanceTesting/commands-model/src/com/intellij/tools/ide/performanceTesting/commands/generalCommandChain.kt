@@ -1425,6 +1425,18 @@ fun <T : CommandChain> T.switchTodoFile(relativePath: String, expectedItems: Int
   addCommand("${CMD_PREFIX}todoSwitchFile $relativePath items $expectedItems")
 }
 
+/** Selects a scope and waits for the expected counts. A null [spanName] prepares the scope without a measurement. */
+fun <T : CommandChain> T.selectTodoScope(
+  scopeName: String,
+  expectedFiles: Int,
+  expectedItems: Int,
+  spanName: String? = null,
+): T = apply {
+  val span = spanName?.let { " span $it" }.orEmpty()
+  val scope = scopeName.replace(" ", "SPACE_SYMBOL")
+  addCommand("${CMD_PREFIX}todoSelectScope $scope files $expectedFiles items $expectedItems$span")
+}
+
 fun <T : CommandChain> T.waitForReOpenedFile(relativePath: String): T = apply {
   addCommand("${CMD_PREFIX}waitForReOpenedFile -file ${relativePath.replace(" ", "SPACE_SYMBOL")}")
 }

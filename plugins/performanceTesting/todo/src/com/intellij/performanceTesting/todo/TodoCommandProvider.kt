@@ -9,5 +9,6 @@ internal class TodoCommandProvider : CommandProvider {
     OpenTodoToolWindowCommand.PREFIX to CreateCommand(::OpenTodoToolWindowCommand),
     EditTodoCommand.PREFIX to CreateCommand(::EditTodoCommand),
     SwitchTodoFileCommand.PREFIX to CreateCommand(::SwitchTodoFileCommand),
+    SelectTodoScopeCommand.PREFIX to CreateCommand(::SelectTodoScopeCommand),
   )
 }
