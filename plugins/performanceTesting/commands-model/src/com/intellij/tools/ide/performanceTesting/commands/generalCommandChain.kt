@@ -1406,6 +1406,20 @@ fun <T : CommandChain> T.openTodoToolWindow(expectedFiles: Int, expectedItems: I
   addCommand("${CMD_PREFIX}todoOpen files $expectedFiles items $expectedItems groups $expectedGroups$keepOpen")
 }
 
+/** Measures one [insertText] or [replaceText] command until TODO shows the expected comment at [line] (1-based) and counts. */
+fun <T : CommandChain> T.editTodo(
+  kind: TodoEdit,
+  line: Int,
+  expectedFiles: Int,
+  expectedItems: Int,
+  expectedFileItems: Int,
+  edit: CommandChain.() -> Unit,
+): T = apply {
+  val command = CommandChain().apply(edit).single().storeToString()
+  addCommand("${CMD_PREFIX}todoEdit ${kind.argument} line $line files $expectedFiles items $expectedItems " +
+             "fileItems $expectedFileItems command $command")
+}
+
 fun <T : CommandChain> T.waitForReOpenedFile(relativePath: String): T = apply {
   addCommand("${CMD_PREFIX}waitForReOpenedFile -file ${relativePath.replace(" ", "SPACE_SYMBOL")}")
 }

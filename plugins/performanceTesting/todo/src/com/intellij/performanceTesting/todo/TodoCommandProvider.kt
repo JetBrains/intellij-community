@@ -7,5 +7,6 @@ import com.jetbrains.performancePlugin.CreateCommand
 internal class TodoCommandProvider : CommandProvider {
   override fun getCommands(): Map<String, CreateCommand> = mapOf(
     OpenTodoToolWindowCommand.PREFIX to CreateCommand(::OpenTodoToolWindowCommand),
+    EditTodoCommand.PREFIX to CreateCommand(::EditTodoCommand),
   )
 }

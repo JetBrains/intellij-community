@@ -4,5 +4,8 @@ package com.intellij.performanceTesting.todo
 /** The metrics recorded by the TODO commands and published by the tests. */
 object TodoSpanNames {
   const val OPEN: String = "todo.open.treeReady"
+  const val ADD: String = "todo.edit.add.treeReady"
+  const val CHANGE: String = "todo.edit.change.itemShown"
+  const val REMOVE: String = "todo.edit.remove.treeReady"
 
 }
