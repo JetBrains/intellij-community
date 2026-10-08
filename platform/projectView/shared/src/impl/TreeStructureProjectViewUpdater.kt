@@ -22,7 +22,7 @@ import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
@@ -87,7 +87,7 @@ private class UpdateSession(
         emitFromRoot()
       })
 
-      connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      connection.subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
         override fun after(vfsEvents: List<VFileEvent>) {
           for (event in vfsEvents) {
             when (event) {
