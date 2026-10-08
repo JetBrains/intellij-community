@@ -55,6 +55,7 @@
     "intellij.database.ai",
     "intellij.database.ai.tests",
     "intellij.database.artifactsBundle",
+    "intellij.database.config.editor",
     "intellij.database.cliCommands",
     "intellij.database.cliCommands.tests",
     "intellij.database.cloudExplorer.aws",
