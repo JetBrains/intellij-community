@@ -12,7 +12,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.Alarm
 import org.jetbrains.annotations.ApiStatus
@@ -45,11 +45,11 @@ abstract class DiffTitleHandler private constructor(
     }
     if (!files.isEmpty()) {
       ApplicationManager.getApplication().messageBus.connect(disposable)
-        .subscribe(VirtualFileManager.VFS_CHANGES, MyBulkFileListener(files))
+        .subscribe(VirtualFileManager.VFS_CHANGES_BG, MyBulkFileListener(files))
     }
   }
 
-  private inner class MyBulkFileListener(private val files: List<VirtualFile>) : BulkFileListener {
+  private inner class MyBulkFileListener(private val files: List<VirtualFile>) : BulkFileListenerBackgroundable {
     override fun after(events: List<VFileEvent>) {
       var shouldRefresh = false
 
