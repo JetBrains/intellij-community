@@ -63,3 +63,15 @@ tab_width = 4
 trim_trailing_whitespace = true
 insert_final_newline = true
 ;===== Bazel =====
+
+[{*.go,go.mod,go.work}]
+indent_size = 4
+indent_style = tab
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+; GO-21126 Keep the Go test data unchanged on save
+[**/testData/**/{*.go,go.mod,go.work}]
+ij_formatter_enabled = false
+trim_trailing_whitespace = false
+insert_final_newline = false
