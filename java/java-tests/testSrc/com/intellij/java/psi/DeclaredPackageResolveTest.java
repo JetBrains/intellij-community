@@ -7,6 +7,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -127,6 +128,35 @@ public class DeclaredPackageResolveTest extends LightJavaCodeInsightFixtureTestC
   public void testUnknownPackageIsStillUnresolved() {
     addClassA();
     assertNull(JavaPsiFacade.getInstance(getProject()).findPackage("org.classb"));
+  }
+
+  public void testDeclaredPackageAndItsParentsHaveContentInScope() {
+    addMyService();
+    GlobalSearchScope scope = GlobalSearchScope.projectScope(getProject());
+
+    assertTrue(findPackageImpl("acme").mayHaveContentInScope(scope));
+    assertTrue(findPackageImpl("acme.corp").mayHaveContentInScope(scope));
+    assertTrue(findPackageImpl("acme.corp.tools").mayHaveContentInScope(scope));
+  }
+
+  public void testDeclaredPackageHasNoContentOutsideScope() {
+    addMyService();
+    GlobalSearchScope scope = GlobalSearchScope.notScope(GlobalSearchScope.projectScope(getProject()));
+
+    assertFalse(findPackageImpl("acme").mayHaveContentInScope(scope));
+    assertFalse(findPackageImpl("acme.corp.tools").mayHaveContentInScope(scope));
+  }
+
+  private PsiPackageImpl findPackageImpl(String qualifiedName) {
+    return assertInstanceOf(JavaPsiFacade.getInstance(getProject()).findPackage(qualifiedName), PsiPackageImpl.class);
+  }
+
+  private void addMyService() {
+    myFixture.addFileToProject("MyService.java", """
+      package acme.corp.tools;
+
+      public class MyService { }
+      """);
   }
 
   private void addClassA() {

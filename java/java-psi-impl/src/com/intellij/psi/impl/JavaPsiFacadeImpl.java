@@ -498,6 +498,21 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return result.values().toArray(PsiPackage.EMPTY_ARRAY);
   }
 
+  /**
+   * Returns the same answer as {@code getSubPackages(psiPackage, scope).length > 0}, but stops at the first finder which reports a subpackage.
+   */
+  public boolean hasSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    for (PsiElementFinder finder : filteredFinders()) {
+      try {
+        if (finder.getSubPackages(psiPackage, scope).length > 0) return true;
+      }
+      catch (IndexNotReadyException ex) {
+        handleIndexNotReadyException(ex);
+      }
+    }
+    return false;
+  }
+
   private static void handleIndexNotReadyException(@NotNull IndexNotReadyException ex) {
     if (Registry.is("ide.dumb.mode.check.awareness")) throw ex;
   }

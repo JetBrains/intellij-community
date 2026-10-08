@@ -81,4 +81,24 @@ class Registry {
 
     myFixture.testHighlighting(true, false, false, "RegistryKeyId.kt", "registryKeyId.xml")
   }
+
+  fun testKotlinClassInPackageWithoutDirectory() {
+    myFixture.addFileToProject("MyService.kt", """
+package acme.corp.tools
+
+interface MyService
+""")
+    myFixture.configureByText("plugin.xml", """
+<idea-plugin>
+  <id>com.intellij.myPlugin</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+  <extensionPoints>
+    <extensionPoint name="service" interface="acme.corp.tools.MyService"/>
+  </extensionPoints>
+</idea-plugin>
+""")
+    myFixture.checkHighlighting(false, false, false)
+  }
 }

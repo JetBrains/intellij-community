@@ -495,7 +495,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   public boolean mayHaveContentInScope(@NotNull GlobalSearchScope scope) {
     return getDirectories(scope).length > 0 ||
            getClasses(scope).length > 0 ||
-           ContainerUtil.exists(occursInPackagePrefixes(), scope::contains);
+           ContainerUtil.exists(occursInPackagePrefixes(), scope::contains) ||
+           getFacade().hasSubPackages(this, scope);
   }
 
   private class PackageAnnotationValueProvider implements CachedValueProvider<PsiModifierList> {
