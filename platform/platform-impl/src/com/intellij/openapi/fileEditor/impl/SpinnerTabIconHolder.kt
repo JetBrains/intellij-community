@@ -45,7 +45,7 @@ internal class SpinnerTabIconHolder(composite: EditorComposite, private val owne
           delay(delayFromRegistry)
         }
       }
-      val iconProcessingWaiting = launch { composite.waitForAvailable() }
+      val iconProcessingWaiting = launch { composite.waitForAvailableWithoutTriggeringInit() }
       select {
         loadingSpinnerWaiting.onJoin {
           setLoadingSpinner()

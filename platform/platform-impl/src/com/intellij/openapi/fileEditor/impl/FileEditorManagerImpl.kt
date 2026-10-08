@@ -2561,7 +2561,7 @@ open class FileEditorManagerImpl(
       openedCompositeEntries.add(editorCompositeEntry)
       composite.coroutineScope.launch {
         // remove delayed state as soon as composite can provide state
-        composite.waitForAvailable()
+        composite.waitForAvailableWithoutTriggeringInit()
         editorCompositeEntry.delayedState = null
       }
     }
