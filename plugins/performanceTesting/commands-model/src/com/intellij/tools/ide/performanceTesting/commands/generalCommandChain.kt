@@ -1425,6 +1425,16 @@ fun <T : CommandChain> T.switchTodoFile(relativePath: String, expectedItems: Int
   addCommand("${CMD_PREFIX}todoSwitchFile $relativePath items $expectedItems")
 }
 
+/** Adds a TODO filter [name] for the existing pattern [pattern]. Call it before the TODO tool window opens. */
+fun <T : CommandChain> T.addTodoFilter(name: String, pattern: String): T = apply {
+  addCommand("${CMD_PREFIX}todoFilter add $name $pattern")
+}
+
+/** Applies the TODO filter [name] on the Project tab, or shows all items when [name] is null. Counts describe the result. */
+fun <T : CommandChain> T.applyTodoFilter(name: String?, expectedFiles: Int, expectedItems: Int, expectedGroups: Int): T = apply {
+  addCommand("${CMD_PREFIX}todoFilter apply ${name ?: "all"} files $expectedFiles items $expectedItems groups $expectedGroups")
+}
+
 /** Selects a scope and waits for the expected counts. A null [spanName] prepares the scope without a measurement. */
 fun <T : CommandChain> T.selectTodoScope(
   scopeName: String,

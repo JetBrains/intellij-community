@@ -7,6 +7,8 @@ object TodoSpanNames {
   const val ADD: String = "todo.edit.add.treeReady"
   const val CHANGE: String = "todo.edit.change.itemShown"
   const val REMOVE: String = "todo.edit.remove.treeReady"
+  const val FILTER_APPLY: String = "todo.filter.apply.treeReady"
+  const val FILTER_CLEAR: String = "todo.filter.clear.treeReady"
   const val SCOPE_NARROW: String = "todo.scope.narrow.treeReady"
   const val SCOPE_PROJECT: String = "todo.scope.project.treeReady"
 
