@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKnownDecorator;
 import com.jetbrains.python.psi.PyKnownDecoratorUtil;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyTypedElement;
@@ -196,7 +197,8 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
   private static boolean isTransparentDecorator(@NotNull PyDecoratable decorated,
                                                 @NotNull PyDecorator decorator,
                                                 @NotNull TypeEvalContext context) {
-    return !PyKnownDecoratorUtil.asKnownDecorators(decorator, context).isEmpty()
+    List<PyKnownDecorator> knownDecorators = PyKnownDecoratorUtil.asKnownDecorators(decorator, context);
+    return !knownDecorators.isEmpty() && !ContainerUtil.and(knownDecorators, PyKnownDecorator::isDeclaredTypeApplied)
            || isUntypedDecorator(decorator, context)
            || decorated instanceof PyClass && PyDataclassTransformResolverKt.isDataclassTransform(decorator, context);
   }
