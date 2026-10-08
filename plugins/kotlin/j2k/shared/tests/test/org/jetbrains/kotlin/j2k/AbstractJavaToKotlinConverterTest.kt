@@ -80,6 +80,16 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
         }
     }
 
+    protected fun addMockitoAnnotations() {
+        myFixture.addClass(
+            """
+            package org.mockito;
+            
+            public @interface Mock {}
+            """.trimIndent()
+        )
+    }
+
     protected fun addJunitTestAnnotations() {
         myFixture.addClass(
             """

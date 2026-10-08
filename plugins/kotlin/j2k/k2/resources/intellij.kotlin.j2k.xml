@@ -52,10 +52,6 @@
 
   <extensionPoints>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.j2kNullabilityInferenceExtension"
-            interface="org.jetbrains.kotlin.j2k.J2KNullabilityInferenceExtension"
-            dynamic="true"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.j2kPostprocessorExtension"
             interface="org.jetbrains.kotlin.j2k.J2kPostprocessorExtension"
             dynamic="true"/>

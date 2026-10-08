@@ -307,17 +307,21 @@ class JavaToJKTreeBuilder internal constructor(
     private val formattingCollector = FormattingCollector()
     private val immutableVariables: MutableMap<PsiCodeBlock, Set<PsiElement>?> = mutableMapOf()
 
-    // Per-file property with collected nullability information.
-    // Needs to be flushed before building the tree for each root element.
-    private var nullabilityInfo: NullabilityInfo? = null
-
     companion object {
         private val LOG = Logger.getInstance("@org.jetbrains.kotlin.j2k.JavaToJKTreeBuilder")
     }
 
     fun buildTree(psi: PsiElement, saveImports: Boolean): JKTreeRoot? {
-        nullabilityInfo = null
-        (psi.containingFile as? PsiJavaFile)?.let { collectNullabilityInfo(it) }
+        typeFactory.nullabilityInfo = (psi.containingFile as? PsiJavaFile)?.let { file ->
+            try {
+                inferNullability(file)
+            } catch (e: ProcessCanceledException) {
+                throw e
+            } catch (t: Throwable) {
+                LOG.error(t)
+                null
+            }
+        }
 
         return when (psi) {
             is PsiJavaFile -> psi.toJK()
@@ -1452,29 +1456,6 @@ class JavaToJKTreeBuilder internal constructor(
             importList.toJK(saveImports = false),
             with(declarationMapper) { classes.map { it.toJK() } }
         )
-    }
-
-    /**
-     * See also [org.jetbrains.kotlin.j2k.conversions.NullabilityConversion]
-     */
-    private fun collectNullabilityInfo(file: PsiJavaFile) {
-        val nullityInferrer = J2KNullityInferrer()
-        try {
-            nullityInferrer.collect(file)
-            J2KDataflowNullability(file).applyTo(nullityInferrer)
-        } catch (e: ProcessCanceledException) {
-            throw e
-        } catch (t: Throwable) {
-            LOG.error(t)
-        }
-
-        nullabilityInfo = NullabilityInfo(
-            nullityInferrer.nullableTypes,
-            nullityInferrer.notNullTypes,
-            nullityInferrer.nullableElements,
-            nullityInferrer.notNullElements
-        )
-        typeFactory.nullabilityInfo = nullabilityInfo
     }
 
     private fun PsiImportList?.toJK(saveImports: Boolean): JKImportList =

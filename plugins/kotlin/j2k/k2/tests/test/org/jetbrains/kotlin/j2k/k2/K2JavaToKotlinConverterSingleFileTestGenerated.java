@@ -5016,6 +5016,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullability/FieldComparedWithNull4.java");
         }
 
+        @TestMetadata("FieldInitializedByFramework.java")
+        public void testFieldInitializedByFramework() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/FieldInitializedByFramework.java");
+        }
+
         @TestMetadata("FieldInitializedWithNull.java")
         public void testFieldInitializedWithNull() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/FieldInitializedWithNull.java");
@@ -5337,21 +5342,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("javaInteropTodo.java")
         public void testJavaInteropTodo() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/javaInteropTodo.java");
-        }
-
-        @TestMetadata("jpaToManyCollection.java")
-        public void testJpaToManyCollection() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/jpaToManyCollection.java");
-        }
-
-        @TestMetadata("jpaToManyNullEvidence.java")
-        public void testJpaToManyNullEvidence() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/jpaToManyNullEvidence.java");
-        }
-
-        @TestMetadata("jpaToManyTypeArguments.java")
-        public void testJpaToManyTypeArguments() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/jpaToManyTypeArguments.java");
         }
 
         @TestMetadata("kotlinInteropTodo.java")

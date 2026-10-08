@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.j2k.conversions
 
 import com.intellij.codeInsight.NullableNotNullManager
+import com.intellij.codeInspection.dataFlow.NullabilityUtil
 import com.intellij.psi.PsiField
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
@@ -170,7 +171,7 @@ class ImplicitInitializerConversion(context: ConverterContext) : RecursiveConver
         val fieldType = type.type
         if (fieldType !is JKClassType || fieldType.nullability != NotNull || fieldType.asPrimitiveType() != null) return false
         val psiField = psi<PsiField>() ?: return false
-        return NullableNotNullManager.isNotNull(psiField)
+        return NullableNotNullManager.isNotNull(psiField) || NullabilityUtil.isImplicitlyInitializedNotNull(psiField)
     }
 
     private fun createPrimitiveTypeInitializer(primitiveType: JKJavaPrimitiveType): JKLiteralExpression =

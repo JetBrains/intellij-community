@@ -5,39 +5,32 @@ import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.CommonDataflow
 import com.intellij.codeInspection.dataFlow.DfaNullability
-import com.intellij.codeInspection.dataFlow.DfaUtil
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType
-import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiJavaCodeReferenceElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiModifierListOwner
-import com.intellij.psi.PsiPrimitiveType
-import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
-import com.intellij.psi.util.CachedValue
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.psi.util.TypeConversionUtil
-import com.siyeh.ig.psiutils.ExpectedTypeUtils
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.psi.KtTypeParameter
+import java.util.Collections
+import java.util.IdentityHashMap
 
 /**
- * A collection of types with known nullability as determined by [J2KNullityInferrer].
+ * A collection of types with known nullability as determined by [J2KDataflowNullability].
  * This information is used to set the nullability of created `JKType`s in [org.jetbrains.kotlin.j2k.types.JKTypeFactory].
  */
-internal data class NullabilityInfo(
-    val nullableTypes: Set<PsiType>,
-    val notNullTypes: Set<PsiType>,
-    val nullableElements: Set<PsiJavaCodeReferenceElement>,
-    val notNullElements: Set<PsiJavaCodeReferenceElement>,
-)
+internal class NullabilityInfo {
+    // Identity sets tell apart the equal type arguments of one type
+    val nullableTypes: MutableSet<PsiType> = Collections.newSetFromMap(IdentityHashMap())
+    val notNullTypes: MutableSet<PsiType> = Collections.newSetFromMap(IdentityHashMap())
+
+    // A recreated type object keeps its reference element
+    val nullableElements: MutableSet<PsiJavaCodeReferenceElement> = HashSet()
+    val notNullElements: MutableSet<PsiJavaCodeReferenceElement> = HashSet()
+}
 
 internal val NULLABLE_DFA_NULLABILITIES = setOf(DfaNullability.NULL, DfaNullability.NULLABLE)
 
@@ -63,17 +56,6 @@ internal fun getTypeParameterNullability(psiTypeParameter: PsiTypeParameter): Nu
     }
 }
 
-internal fun isUsedInAutoUnboxingContext(expr: PsiReferenceExpression): Boolean {
-    val exprType = expr.type
-    if (!TypeConversionUtil.isAssignableFromPrimitiveWrapper(exprType)) return false
-
-    val expectedType = ExpectedTypeUtils.findExpectedType(expr, /* calculateTypeForComplexReferences = */ false) ?: return false
-    if (!TypeConversionUtil.isPrimitiveAndNotNull(expectedType)) return false
-
-    val unboxedType = PsiPrimitiveType.getUnboxedType(exprType) ?: return false
-    return expectedType.isAssignableFrom(unboxedType)
-}
-
 // The result is cached by the Java DFA itself (this function is still hot, though)
 internal fun getExpressionDfaNullability(expr: PsiExpression): DfaNullability? {
     val dataflowResult = CommonDataflow.getDataflowResult(expr) ?: return null
@@ -82,17 +64,3 @@ internal fun getExpressionDfaNullability(expr: PsiExpression): DfaNullability? {
     return dfType.getNullability()
 }
 
-// JPA returns an empty collection for a to-many relationship, so neither the collection nor its elements can be null
-private val TO_MANY_ANNOTATIONS: Set<String> = jpaAnnotations("OneToMany", "ManyToMany")
-
-internal fun isJpaToManyDeclaration(owner: PsiModifierListOwner): Boolean =
-    owner.modifierList?.annotations.orEmpty().any { it.qualifiedName in TO_MANY_ANNOTATIONS }
-
-// This function should not be called very often, but the computation is expensive, so it's better to cache it anyway
-internal fun getMethodNullabilityByDfa(method: PsiMethod): Nullability {
-    return CachedValuesManager.getManager(method.project).getCachedValue(method, METHOD_NULLABILITY_KEY, {
-        CachedValueProvider.Result(DfaUtil.inferMethodNullability(method), PsiModificationTracker.MODIFICATION_COUNT)
-    }, false)
-}
-
-private val METHOD_NULLABILITY_KEY = Key.create<CachedValue<Nullability>>("METHOD_NULLABILITY")

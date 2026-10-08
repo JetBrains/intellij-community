@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.j2k
 
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider
+import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal
 import com.intellij.psi.JavaElementVisitor
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor
@@ -193,6 +195,7 @@ internal fun getImmutableLocalVariablesInBlock(body: PsiCodeBlock?): Set<PsiVari
 }
 
 internal fun canBeImmutable(variable: PsiVariable): Boolean {
+    if (variable is PsiField && isImplicitlyWritten(variable)) return false
     if (variable.getInitializer() != null || variable is PsiParameter) {
         // parameters have an implicit initializer
         return !VariableAccessUtils.variableIsAssigned(variable)
@@ -201,6 +204,13 @@ internal fun canBeImmutable(variable: PsiVariable): Boolean {
         false
     } else checkIfElementViolatesImmutability(variable)
 }
+
+// J2K converts the Lombok members itself, so a Lombok write does not make a field mutable
+private fun isImplicitlyWritten(field: PsiField): Boolean =
+    ImplicitUsageProvider.EP_NAME.extensionList.any { it.javaClass.name != LOMBOK_IMPLICIT_USAGE_PROVIDER && it.isImplicitWrite(field) } ||
+        EntryPointsManager.getInstance(field.project).isImplicitWrite(field)
+
+private const val LOMBOK_IMPLICIT_USAGE_PROVIDER: String = "de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"
 
 private fun fieldConstructionImpliesMutable(field: PsiField): Boolean {
     val aClass = field.getContainingClass() ?: return false

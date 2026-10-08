@@ -18,7 +18,7 @@ class J {
     private var version: Long? = null
 
     @OneToMany
-    private var children: MutableList<String>? = null
+    private var children: MutableList<String?>? = null
 
     private val notMapped: String? = null
 }
