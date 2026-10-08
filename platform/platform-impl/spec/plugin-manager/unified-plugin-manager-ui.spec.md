@@ -393,12 +393,17 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
 ## Search Reporting
 
 - Each nonempty query must emit one unified search event after all eligible sources settle.
+- Filter selection, filter removal, and sort changes must use the same reporting path as typed queries.
+- An unchanged query must not emit another search event or advance the search index.
+- A newer query must replace an older pending search before its sources settle.
 - A pending query projection must not count as settled.
 - The event must report the query shape, filter kinds, source kinds, effective sort, and each section result count.
 - The event must not report filter values or repository identities.
 - A session start event must identify the unified page.
   [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
     `session reports each non-empty search after all sources settle`;
+    `session reports filter selection removal and sort changes`;
+    `session reports only the latest menu query after pending sources settle`;
     `session started identifies the unified page`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/marketplace/statistics/UnifiedPluginSearchStatisticsTest.kt (
