@@ -3,6 +3,7 @@
 package com.intellij.ide.projectView.impl
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
@@ -20,6 +21,10 @@ private val projectViewInit: Scope = Scope("projectViewInit")
 @Service(Service.Level.PROJECT)
 @Internal
 class ProjectViewInitNotifier(private val project: Project) {
+  companion object {
+    @JvmStatic fun getInstance(project: Project): ProjectViewInitNotifier = project.service()
+  }
+  
   private val startedOccurred = AtomicBoolean()
   private val cachedNodesLoadedOccurred = AtomicBoolean()
   private val completedOccurred = AtomicBoolean()
