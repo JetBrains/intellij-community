@@ -107,7 +107,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
     } ?: return null
 
     // A third-party library bundled with the IntelliJ Platform, such as `commons-cli:commons-cli:1.11.0` in `lib/intellij.libraries.commons.cli.jar`
-    return createAttachLibrarySourcesAction(psiFile) ?: platformAction
+    return createAttachLibrarySourcesAction(psiFile, platformAction) ?: platformAction
   }
 
 
@@ -241,12 +241,15 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    *
    * The IntelliJ Platform build keeps the `META-INF/maven/<groupId>/<artifactId>/pom.properties` file of the original library in the jar.
    * The action downloads the `sources` artifact for these coordinates instead of the IntelliJ Platform sources.
-   * When the jar merges several libraries, the action attaches the first archive that contains the source file of the handled class.
+   * The action attaches the first archive that contains the package of the handled class.
+   * A jar can merge IntelliJ Platform classes with a third-party library, such as `lib/intellij.platform.ide.impl.jar`.
+   * When no archive contains the package, the action runs [platformAction] instead.
    *
    * @param psiFile The PSI file that represents the currently handled class.
+   * @param platformAction The action that attaches the IntelliJ Platform sources of the same library.
    * @return The action, or `null` when the jar of [psiFile] carries no Maven metadata.
    */
-  private fun createAttachLibrarySourcesAction(psiFile: PsiFile): AttachSourcesAction? {
+  private fun createAttachLibrarySourcesAction(psiFile: PsiFile, platformAction: AttachSourcesAction): AttachSourcesAction? {
     val jarRoot = VfsUtilCore.getRootFile(psiFile.virtualFile)
     val coordinates = readLibraryCoordinates(jarRoot)
     if (coordinates.isEmpty()) {
@@ -259,7 +262,8 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
       name = DevKitGradleBundle.message("attachSources.library.action.name"),
       busyText = DevKitGradleBundle.message("attachSources.library.action.busyText"),
       notations = coordinates.map { "$it:sources" },
-      accept = { path -> coordinates.size == 1 || containsSourceFile(path, classPath) },
+      accept = { path -> containsPackageSources(path, classPath) },
+      fallback = platformAction,
     )
   }
 
@@ -293,6 +297,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    * @param busyText The text shown while the action runs.
    * @param notations The Gradle artifact notations to try in order.
    * @param accept Checks a downloaded archive. The action skips the archive and tries the next notation when it returns `false`.
+   * @param fallback The action to run when no archive from [notations] is attached. Without it, the action reports the failure.
    */
   private fun createDownloadSourcesAction(
     psiFile: PsiFile,
@@ -300,6 +305,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
     busyText: @Nls String,
     notations: List<String>,
     accept: (Path) -> Boolean = { true },
+    fallback: AttachSourcesAction? = null,
   ) =
     object : AttachSourcesAction {
       override fun getName() = name
@@ -308,7 +314,10 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
       @Deprecated("Deprecated in Java")
       override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
-        return performInternal(orderEntries.first().ownerModule, orderEntries.mapNotNull { it.library })
+        return performInternal(orderEntries.first().ownerModule, orderEntries.mapNotNull { it.library }) {
+          @Suppress("DEPRECATION")
+          fallback?.perform(orderEntries)
+        }
       }
 
       override fun perform(libraryEntities: Collection<LibraryEntity>, project: Project): ActionCallback {
@@ -317,13 +326,18 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
           .firstOrNull()
           ?.findModule(snapshot)
         if (module != null) {
-          return performInternal(module, libraryEntities.mapNotNull { it.findLibraryBridge(snapshot) })
+          return performInternal(module, libraryEntities.mapNotNull { it.findLibraryBridge(snapshot) }) {
+            fallback?.perform(libraryEntities, project)
+          }
         }
         return ActionCallback.REJECTED
       }
 
-
-      private fun performInternal(module: Module, libraries: Collection<Library>): ActionCallback {
+      /**
+       * Downloads and attaches the first accepted archive.
+       * When none is accepted, runs [performFallback] and joins its result, or reports the failure when it returns `null`.
+       */
+      private fun performInternal(module: Module, libraries: Collection<Library>, performFallback: () -> ActionCallback?): ActionCallback {
         val moduleData = CachedModuleDataFinder.getGradleModuleData(module)
                          ?: return ActionCallback.REJECTED
 
@@ -333,8 +347,14 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         fun downloadAndAttach(index: Int) {
           val artifactNotation = notations.getOrNull(index)
           if (artifactNotation == null) {
-            notifyDownloadFailed(project, moduleData, notations.first())
-            executionResult.setRejected()
+            val fallbackResult = performFallback()
+            if (fallbackResult != null) {
+              fallbackResult.notify(executionResult)
+            }
+            else {
+              notifyDownloadFailed(project, moduleData, notations.first())
+              executionResult.setRejected()
+            }
             return
           }
           GradleArtifactDownloader.downloadArtifact(project, name, artifactNotation, moduleData,
@@ -484,12 +504,18 @@ internal fun readLibraryCoordinates(jarRoot: VirtualFile?): List<String> {
 }
 
 /**
- * Checks if the sources archive in [path] contains the source file of the class in [classPath].
+ * Checks if the sources archive in [path] contains a source file in the package of the class in [classPath].
  * The [classPath] is relative to the jar root, such as `org/apache/commons/cli/Option$Builder.class`.
+ *
+ * The check uses the package directory and not the class name,
+ * because a Kotlin or Groovy source file can declare classes with other names, such as `FlowKt` in `Flow.kt`.
  */
-internal fun containsSourceFile(path: Path, classPath: String): Boolean {
-  val sourcePath = classPath.removeSuffix(".class").substringBefore('$')
+internal fun containsPackageSources(path: Path, classPath: String): Boolean {
+  val packagePath = classPath.substringBeforeLast('/', "")
   return runCatching {
-    FileSystems.newFileSystem(path).use { zip -> Files.exists(zip.getPath("$sourcePath.java")) || Files.exists(zip.getPath("$sourcePath.kt")) }
+    FileSystems.newFileSystem(path).use { zip ->
+      val directory = zip.getPath(packagePath.ifEmpty { "/" })
+      Files.isDirectory(directory) && Files.list(directory).use { files -> files.anyMatch(Files::isRegularFile) }
+    }
   }.getOrDefault(false)
 }

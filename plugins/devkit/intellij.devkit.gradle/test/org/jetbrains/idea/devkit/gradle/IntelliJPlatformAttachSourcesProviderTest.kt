@@ -64,16 +64,19 @@ class IntelliJPlatformAttachSourcesProviderTest {
   }
 
   @Test
-  fun `contains source file`() {
+  fun `contains package sources`() {
     val sources = createZip("commons-cli-1.11.0-sources.jar",
                             "org/apache/commons/cli/Option.java" to "class Option {}",
-                            "org/apache/commons/cli/Util.kt" to "object Util")
+                            "kotlinx/coroutines/flow/Flow.kt" to "fun interface Flow")
 
-    assertTrue(containsSourceFile(sources, "org/apache/commons/cli/Option.class"))
-    assertTrue(containsSourceFile(sources, $$"org/apache/commons/cli/Option$Builder.class"))
-    assertTrue(containsSourceFile(sources, "org/apache/commons/cli/Util.class"))
-    assertFalse(containsSourceFile(sources, "org/apache/commons/cli/Options.class"))
-    assertFalse(containsSourceFile(sources.resolveSibling("missing.jar"), "org/apache/commons/cli/Option.class"))
+    assertTrue(containsPackageSources(sources, "org/apache/commons/cli/Option.class"))
+    assertTrue(containsPackageSources(sources, $$"org/apache/commons/cli/Option$Builder.class"))
+    assertTrue(containsPackageSources(sources, "org/apache/commons/cli/Options.class"))
+    assertTrue(containsPackageSources(sources, "kotlinx/coroutines/flow/FlowKt.class"))
+    assertFalse("A parent package of a source file holds no source file", containsPackageSources(sources, "org/apache/commons/Lang.class"))
+    assertFalse(containsPackageSources(sources, "com/intellij/accessibility/AccessibilityConfigurable.class"))
+    assertFalse(containsPackageSources(sources, "Main.class"))
+    assertFalse(containsPackageSources(sources.resolveSibling("missing.jar"), "org/apache/commons/cli/Option.class"))
   }
 
   private fun pomProperties(groupId: String, artifactId: String, version: String) =
