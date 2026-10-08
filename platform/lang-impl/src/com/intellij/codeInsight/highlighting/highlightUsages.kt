@@ -85,6 +85,7 @@ private fun getPsiUsageRanges(hostFile: PsiFile, psiTarget: PsiElement): UsageRa
   val refs = oldHandler?.findReferencesToHighlight(psiTarget, searchScope)
              ?: ReferencesSearch.search(psiTarget, searchScope).findAll()
   for (ref: PsiReference in refs) {
+    if (!ref.element.belongsToFile(hostFile)) continue
     val write: Boolean = detector != null && detector.getReferenceAccess(psiTarget, ref) != ReadWriteAccessDetector.Access.Read
     HighlightUsagesHandler.collectHighlightRanges(ref, if (write) writeRanges else readRanges)
   }
@@ -103,6 +104,11 @@ private fun getPsiUsageRanges(hostFile: PsiFile, psiTarget: PsiElement): UsageRa
   return UsageRanges(readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges)
 }
 
+private fun PsiElement.belongsToFile(hostFile: PsiFile): Boolean {
+  val topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(this)
+  return topLevelFile.viewProvider == hostFile.viewProvider
+}
+
 private fun getSymbolUsageRanges(hostFile: PsiFile, symbol: Symbol): UsageRanges? {
   val project: Project = hostFile.project
   val searchTarget = symbolSearchTarget(project, symbol) ?: return null
@@ -116,7 +122,7 @@ private fun getSymbolUsageRanges(hostFile: PsiFile, symbol: Symbol): UsageRanges
   val writeRanges = ArrayList<TextRange>()
   val writeDeclarationRanges = ArrayList<TextRange>()
   for (usage in usages) {
-    if (usage !is PsiUsage) {
+    if (usage !is PsiUsage || !usage.file.belongsToFile(hostFile)) {
       continue
     }
     val collector: ArrayList<TextRange> = when (Pair(usageAccess(usage) ?: UsageAccess.Read, usage.declaration)) {
