@@ -28,8 +28,10 @@ import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
 class GHPRProjectViewModelTest {
@@ -116,6 +118,25 @@ class GHPRProjectViewModelTest {
     vm.activateAndAwaitProject { }
 
     coVerify(exactly = 0) { connectionManager.openConnection(any(), any()) }
+  }
+
+  @Test
+  fun `activateAndAwaitProject skips the action when no mapping for the preferred repository appears`() = timeoutRunBlocking {
+    val vm = project.service<GHPRProjectViewModel>()
+
+    // A connection to another repository exists, so a fallback to any connected vm would run the action there.
+    connectionManager.openConnection(originMapping, account)
+    vm.connectedProjectVm.first { it != null }
+
+    val unknownRepository = GHRepositoryCoordinates(GithubServerPath.DEFAULT_SERVER, GHRepositoryPath("unknown-owner", "repo"))
+    var actionInvoked = false
+    vm.activateAndAwaitProject(unknownRepository to account, mappingTimeout = 100.milliseconds) {
+      actionInvoked = true
+    }
+    delay(500.milliseconds) // longer than the mapping timeout, so the skip has happened when the check runs
+
+    assertFalse(actionInvoked)
+    coVerify(exactly = 1) { connectionManager.openConnection(any(), any()) }
   }
 
   @Test
