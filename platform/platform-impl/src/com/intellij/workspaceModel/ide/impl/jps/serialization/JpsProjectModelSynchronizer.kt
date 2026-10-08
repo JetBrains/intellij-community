@@ -31,7 +31,7 @@ import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
@@ -318,7 +318,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
 
     val connection = project.messageBus.connect(this)
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    connection.subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
       override fun after(events: List<VFileEvent>) {
         //todo support move/rename
         //todo optimize: filter events before creating lists
