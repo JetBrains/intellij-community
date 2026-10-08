@@ -25,12 +25,18 @@ import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.jar.TimedZipHandler;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
+import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.CompoundVFileEvent;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.platform.testFramework.DynamicPluginTestUtilsKt;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.VfsTestUtil;
@@ -154,6 +160,36 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
     var newEntry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + "some.txt");
     assertEquals("some text", VfsUtilCore.loadText(newEntry));
+  }
+
+  @Test
+  public void testDuplicateInducedJarDeleteEventsAreDeduplicated() throws IOException {
+    var jdkHome = tempDir.newDirectory("jdk").toPath();
+    var libDir = Files.createDirectory(jdkHome.resolve("lib"));
+    //noinspection IO_FILE_USAGE
+    var jar = IoTestUtil.createTestJar(libDir.resolve("src.zip").toFile(), "marker.txt", "content");
+
+    var localFileSystem = LocalFileSystem.getInstance();
+    var jdkRoot = localFileSystem.refreshAndFindFileByNioFile(jdkHome);
+    var localJar = localFileSystem.refreshAndFindFileByIoFile(jar);
+    assertNotNull(jdkRoot);
+    assertNotNull(localJar);
+
+    var jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(localJar);
+    assertNotNull(jarRoot);
+    assertNotNull(jarRoot.findChild("marker.txt"));
+
+    var events =
+      List.of(new CompoundVFileEvent(new VFileDeleteEvent(this, jdkRoot)), new CompoundVFileEvent(new VFileDeleteEvent(this, localJar)));
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
+      @Override
+      public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, Throwable t) {
+        throw new AssertionError("Processing duplicate induced delete events must not log an error: " + message, t);
+      }
+    }, () -> ApplicationManager.getApplication().runWriteAction(
+      () -> ((PersistentFSImpl)PersistentFS.getInstance()).processEventsImpl(events, AsyncEventSupport.ChangeAppliers.EMPTY, false)));
+
+    assertFalse(jarRoot.isValid());
   }
 
   @Test
