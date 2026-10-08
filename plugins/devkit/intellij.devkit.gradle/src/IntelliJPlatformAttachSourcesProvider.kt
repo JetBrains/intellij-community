@@ -26,6 +26,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.psi.PsiFile
 import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
 import com.intellij.workspaceModel.ide.legacyBridge.findModule
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
 import org.jetbrains.idea.devkit.run.ProductInfo
@@ -36,7 +37,10 @@ import org.jetbrains.plugins.gradle.service.project.GradleNotification
 import org.jetbrains.plugins.gradle.util.GradleArtifactDownloader
 import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloaderErrorHandler
 import org.jetbrains.plugins.gradle.util.GradleModuleData
+import java.nio.file.FileSystems
+import java.nio.file.Files
 import java.nio.file.Path
+import java.util.Properties
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
@@ -83,7 +87,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
     val product = IntelliJPlatformProduct.fromMavenCoordinates(coordinates.groupId, coordinates.artifactId)
                   ?: IntelliJPlatformProduct.fromCdnCoordinates(coordinates.groupId, coordinates.artifactId)
 
-    return when {
+    val platformAction = when {
       // IntelliJ Platform dependency, such as `com.jetbrains.intellij.idea:ideaIC:2023.2.7`, `idea:ideaIC:aarch64:2024.3`, or `idea:ideaIC:2023.2.7`
       product != null -> resolveIntelliJPlatformAction(psiFile, coordinates.version)
 
@@ -100,7 +104,10 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
       coordinates.groupId == IntelliJPlatformSourceCoordinates.JETBRAINS_PLUGIN_GROUP -> createAttachJetBrainsPluginSourcesAction(psiFile, coordinates)
 
       else -> null
-    }
+    } ?: return null
+
+    // A third-party library bundled with the IntelliJ Platform, such as `commons-cli:commons-cli:1.11.0` in `lib/intellij.libraries.commons.cli.jar`
+    return createAttachLibrarySourcesAction(psiFile) ?: platformAction
   }
 
 
@@ -230,6 +237,33 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
   }
 
   /**
+   * Creates an action to attach sources of a third-party library bundled with the IntelliJ Platform.
+   *
+   * The IntelliJ Platform build keeps the `META-INF/maven/<groupId>/<artifactId>/pom.properties` file of the original library in the jar.
+   * The action downloads the `sources` artifact for these coordinates instead of the IntelliJ Platform sources.
+   * When the jar merges several libraries, the action attaches the first archive that contains the source file of the handled class.
+   *
+   * @param psiFile The PSI file that represents the currently handled class.
+   * @return The action, or `null` when the jar of [psiFile] carries no Maven metadata.
+   */
+  private fun createAttachLibrarySourcesAction(psiFile: PsiFile): AttachSourcesAction? {
+    val jarRoot = VfsUtilCore.getRootFile(psiFile.virtualFile)
+    val coordinates = readLibraryCoordinates(jarRoot)
+    if (coordinates.isEmpty()) {
+      return null
+    }
+
+    val classPath = psiFile.virtualFile.path.substringAfter("!/")
+    return createDownloadSourcesAction(
+      psiFile,
+      name = DevKitGradleBundle.message("attachSources.library.action.name"),
+      busyText = DevKitGradleBundle.message("attachSources.library.action.busyText"),
+      notations = coordinates.map { "$it:sources" },
+      accept = { path -> coordinates.size == 1 || containsSourceFile(path, classPath) },
+    )
+  }
+
+  /**
    * Creates an action to attach IntelliJ Platform sources to a library within the project.
    *
    * @param psiFile The PSI file that represents the currently handled class.
@@ -237,12 +271,42 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    * @param version The version of the product.
    * @param closeVersion The alternative version of the product used for resolving sources of a close version.
    */
-  private fun createAttachPlatformSourcesAction(psiFile: PsiFile, productCoordinates: String, version: String, closeVersion: String) =
+  private fun createAttachPlatformSourcesAction(psiFile: PsiFile, productCoordinates: String, version: String, closeVersion: String): AttachSourcesAction {
+    val snapshotVersion = version.substringBefore('.') + "-SNAPSHOT"
+    return createDownloadSourcesAction(
+      psiFile,
+      name = DevKitGradleBundle.message("attachSources.intellijPlatform.action.name"),
+      busyText = DevKitGradleBundle.message("attachSources.intellijPlatform.action.busyText"),
+      notations = listOf(
+        "$productCoordinates:$version:sources",
+        "$productCoordinates:$closeVersion:sources",
+        "$productCoordinates:$snapshotVersion:sources", // last chance, nightly snapshot
+      ),
+    )
+  }
+
+  /**
+   * Creates an action that downloads the first available sources archive from [notations] and attaches it to the library.
+   *
+   * @param psiFile The PSI file that represents the currently handled class.
+   * @param name The name of the action.
+   * @param busyText The text shown while the action runs.
+   * @param notations The Gradle artifact notations to try in order.
+   * @param accept Checks a downloaded archive. The action skips the archive and tries the next notation when it returns `false`.
+   */
+  private fun createDownloadSourcesAction(
+    psiFile: PsiFile,
+    name: @Nls String,
+    busyText: @Nls String,
+    notations: List<String>,
+    accept: (Path) -> Boolean = { true },
+  ) =
     object : AttachSourcesAction {
-      override fun getName() = DevKitGradleBundle.message("attachSources.intellijPlatform.action.name")
+      override fun getName() = name
 
-      override fun getBusyText() = DevKitGradleBundle.message("attachSources.intellijPlatform.action.busyText")
+      override fun getBusyText() = busyText
 
+      @Deprecated("Deprecated in Java")
       override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
         return performInternal(orderEntries.first().ownerModule, orderEntries.mapNotNull { it.library })
       }
@@ -266,31 +330,24 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         val executionResult = ActionCallback()
         val project = psiFile.project
 
-        val primaryNotation = "$productCoordinates:$version:sources"
-        val fallbackNotation = "$productCoordinates:$closeVersion:sources"
-
-        val snapshotVersion = version.substringBefore('.') + "-SNAPSHOT"
-        val nightlySnapshotNotation = "$productCoordinates:$snapshotVersion:sources" // last chance, nightly snapshot
-
-        fun downloadAndAttach(artifactNotation: String, onFailure: () -> Unit) {
+        fun downloadAndAttach(index: Int) {
+          val artifactNotation = notations.getOrNull(index)
+          if (artifactNotation == null) {
+            notifyDownloadFailed(project, moduleData, notations.first())
+            executionResult.setRejected()
+            return
+          }
           GradleArtifactDownloader.downloadArtifact(project, name, artifactNotation, moduleData,
                                                     GradleDependencySourceDownloaderErrorHandler.Noop)
             .whenComplete { path, error ->
               when {
-                error == null && path != null -> attachSources(path, libraries) { executionResult.setDone() }
-                else -> onFailure()
+                error == null && path != null && accept(path) -> attachSources(path, libraries) { executionResult.setDone() }
+                else -> downloadAndAttach(index + 1)
               }
             }
         }
 
-        downloadAndAttach(primaryNotation, onFailure = {
-          downloadAndAttach(fallbackNotation, onFailure = {
-            downloadAndAttach(nightlySnapshotNotation, onFailure = {
-              notifyDownloadFailed(project, moduleData, primaryNotation)
-              executionResult.setRejected()
-            })
-          })
-        })
+        downloadAndAttach(0)
 
         return executionResult
       }
@@ -404,4 +461,35 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
       else ->
         IntelliJPlatformSourceCoordinates.defaultPlatformSources(majorVersion)
     }
+}
+
+/**
+ * Reads the Maven coordinates of the libraries packed into the jar with the given [jarRoot].
+ * The coordinates come from every `META-INF/maven/<groupId>/<artifactId>/pom.properties` entry.
+ *
+ * @return The coordinates in the `groupId:artifactId:version` form, or an empty list when the jar has no Maven metadata.
+ */
+internal fun readLibraryCoordinates(jarRoot: VirtualFile?): List<String> {
+  val mavenRoot = jarRoot?.findFileByRelativePath("META-INF/maven") ?: return emptyList()
+  return mavenRoot.children
+    .flatMap { group -> group.children.asList() }
+    .mapNotNull { artifact -> artifact.findChild("pom.properties") }
+    .mapNotNull { file ->
+      val properties = Properties().apply { file.inputStream.use { load(it) } }
+      val groupId = properties.getProperty("groupId") ?: return@mapNotNull null
+      val artifactId = properties.getProperty("artifactId") ?: return@mapNotNull null
+      val version = properties.getProperty("version") ?: return@mapNotNull null
+      "$groupId:$artifactId:$version"
+    }
+}
+
+/**
+ * Checks if the sources archive in [path] contains the source file of the class in [classPath].
+ * The [classPath] is relative to the jar root, such as `org/apache/commons/cli/Option$Builder.class`.
+ */
+internal fun containsSourceFile(path: Path, classPath: String): Boolean {
+  val sourcePath = classPath.removeSuffix(".class").substringBefore('$')
+  return runCatching {
+    FileSystems.newFileSystem(path).use { zip -> Files.exists(zip.getPath("$sourcePath.java")) || Files.exists(zip.getPath("$sourcePath.kt")) }
+  }.getOrDefault(false)
 }
