@@ -25,6 +25,7 @@ dev_dist_plugin(
         "intellij.performanceTesting.frontend.baseline",
         "intellij.performanceTesting.problemsView",
         "intellij.performanceTesting.structureView",
+        "intellij.performanceTesting.todo",
         "intellij.performanceTesting.backend",
         "intellij.performanceTesting.rdct",
         "intellij.tools.ide.starter.bus",

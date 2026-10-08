@@ -1761,6 +1761,7 @@ plugins/performanceTesting/remote-driver.compose
 plugins/performanceTesting/remote-driver.jcef
 plugins/performanceTesting/scripts-ui
 plugins/performanceTesting/structureView
+plugins/performanceTesting/todo
 plugins/performanceTesting/vcs
 plugins/properties
 plugins/properties/copyright

@@ -83,6 +83,7 @@
     <module name="intellij.performanceTesting.frontend.baseline"/>
     <module name="intellij.performanceTesting.problemsView"/>
     <module name="intellij.performanceTesting.structureView"/>
+    <module name="intellij.performanceTesting.todo"/>
     <module name="intellij.performanceTesting.backend"/>
     <module name="intellij.performanceTesting.frontend.split"/>
     <module name="intellij.performanceTesting.backend.split"/>
