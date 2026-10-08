@@ -21,12 +21,10 @@ internal fun unifiedPluginSearchStatistics(state: UnifiedPluginsPageSourceState)
     query.parts.asSequence()
       .filterIsInstance<UnifiedPluginQueryPart.Attribute>()
       .mapNotNullTo(this) { part -> part.attribute.searchFilterKind }
-    if (query.effectiveInstalledFilter != null) add(UnifiedPluginSearchFilterKind.INSTALLED_STATE)
-    if (query.parts.any { part ->
-        part is UnifiedPluginQueryPart.Command && part.command in INSTALLATION_TYPE_COMMANDS
-      }) {
-      add(UnifiedPluginSearchFilterKind.INSTALLATION_TYPE)
-    }
+    query.parts.asSequence()
+      .filterIsInstance<UnifiedPluginQueryPart.Command>()
+      .filter { it.command.installedFilter == null || it.command.installedFilter == query.effectiveInstalledFilter }
+      .mapNotNullTo(this) { part -> part.command.searchFilterKind }
   }
   val route = state.query.sourceRoute()
   val sourceKinds = buildSet {
@@ -53,8 +51,23 @@ private val UnifiedPluginQueryAttribute.searchFilterKind: UnifiedPluginSearchFil
     UnifiedPluginQueryAttribute.Category -> UnifiedPluginSearchFilterKind.CATEGORY
     UnifiedPluginQueryAttribute.Tag -> UnifiedPluginSearchFilterKind.TAG
     UnifiedPluginQueryAttribute.Repository -> UnifiedPluginSearchFilterKind.REPOSITORY
-    UnifiedPluginQueryAttribute.UpdateSource,
+    UnifiedPluginQueryAttribute.UpdateSource -> UnifiedPluginSearchFilterKind.UPDATE_SOURCE
     UnifiedPluginQueryAttribute.Sort -> null
+  }
+
+private val UnifiedPluginQueryCommand.searchFilterKind: UnifiedPluginSearchFilterKind?
+  get() = when (this) {
+    UnifiedPluginQueryCommand.UpdateAvailable -> UnifiedPluginSearchFilterKind.OUTDATED
+    UnifiedPluginQueryCommand.Enabled -> UnifiedPluginSearchFilterKind.ENABLED
+    UnifiedPluginQueryCommand.Disabled -> UnifiedPluginSearchFilterKind.DISABLED
+    UnifiedPluginQueryCommand.Invalid -> UnifiedPluginSearchFilterKind.INVALID
+    UnifiedPluginQueryCommand.UpdatedBundled -> UnifiedPluginSearchFilterKind.UPDATED_BUNDLED
+    UnifiedPluginQueryCommand.Bundled -> UnifiedPluginSearchFilterKind.BUNDLED
+    UnifiedPluginQueryCommand.UserInstalled -> UnifiedPluginSearchFilterKind.USER_INSTALLED
+    UnifiedPluginQueryCommand.Downloaded -> UnifiedPluginSearchFilterKind.DOWNLOADED
+    UnifiedPluginQueryCommand.Suggested,
+    UnifiedPluginQueryCommand.StaffPicks,
+    UnifiedPluginQueryCommand.Internal -> null
   }
 
 private val PluginSectionId.statisticsSection: UnifiedPluginSearchSection?
@@ -68,9 +81,3 @@ private val PluginSectionId.statisticsSection: UnifiedPluginSearchSection?
     PluginSectionId.CustomRepositoryCatalog -> null
     is PluginSectionId.CustomRepository -> UnifiedPluginSearchSection.CUSTOM_REPOSITORY
   }
-
-private val INSTALLATION_TYPE_COMMANDS = setOf(
-  UnifiedPluginQueryCommand.Bundled,
-  UnifiedPluginQueryCommand.UserInstalled,
-  UnifiedPluginQueryCommand.Downloaded,
-)
