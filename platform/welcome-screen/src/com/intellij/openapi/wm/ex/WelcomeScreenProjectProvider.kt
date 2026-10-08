@@ -237,11 +237,6 @@ abstract class WelcomeScreenProjectProvider {
   }
 
   @Internal
-  suspend fun doCreateOrOpenWelcomeScreenProjectForInternalUsage(path: Path): Project {
-    return doCreateOrOpenWelcomeScreenProject(path, projectToClose = null)
-  }
-
-  @Internal
   suspend fun doCreateOrOpenWelcomeScreenProjectForInternalUsage(path: Path, projectToClose: Project?, forceOpenInNewFrame: Boolean = false): Project {
     if (forceOpenInNewFrame) {
       return doCreateOrOpenWelcomeScreenProjectInNewFrame(path)

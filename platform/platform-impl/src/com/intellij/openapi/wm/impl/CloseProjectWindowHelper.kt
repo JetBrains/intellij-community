@@ -7,23 +7,19 @@ import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.ex.findProjectClosingTransitionHandler
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.mac.MacMenuSettings
 import com.intellij.ui.mac.MergeAllWindowsAction
 import com.intellij.ui.mac.WindowTabsComponent
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -93,17 +89,6 @@ open class CloseProjectWindowHelper {
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected open fun closeProjectAndShowWelcomeFrameIfNoProjectOpened(project: Project?) {
-    if (project != null && project.isOpen && getNumberOfOpenedProjects() == 1) {
-      val transitionHandler = findProjectClosingTransitionHandler(project)
-      if (transitionHandler != null) {
-        // The handler closes [project] as part of opening the welcome project so the frame is reused.
-        service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
-          transitionHandler()
-        }
-        return
-      }
-    }
-
     SaveAndSyncHandler.getInstance().withDisabledAutoSaveBlocking {
       if (project != null && project.isOpen) {
         ProjectManager.getInstance().closeAndDispose(project)
