@@ -34,6 +34,9 @@ class IntelliJPlatformAuxiliaryArtifactProviderTest : BuildViewMessagesImporting
     private const val COMMONS_CLI_SOURCES_JAR = "commons-cli-$COMMONS_CLI_VERSION-sources.jar"
     private const val COMMONS_CLI_POM_PROPERTIES = "META-INF/maven/commons-cli/commons-cli/pom.properties"
     private val COMMONS_CLI_METADATA = COMMONS_CLI_POM_PROPERTIES to "groupId=commons-cli\nartifactId=commons-cli\nversion=$COMMONS_CLI_VERSION\n"
+    private const val OLD_COMMONS_CLI_VERSION = "1.9.0"
+    private const val OLD_COMMONS_CLI_SOURCES_JAR = "commons-cli-$OLD_COMMONS_CLI_VERSION-sources.jar"
+    private val OLD_COMMONS_CLI_METADATA = COMMONS_CLI_POM_PROPERTIES to "groupId=commons-cli\nartifactId=commons-cli\nversion=$OLD_COMMONS_CLI_VERSION\n"
 
     private const val SLF4J_VERSION = "2.0.9"
     private const val SLF4J_SOURCES_JAR = "slf4j-api-$SLF4J_VERSION-sources.jar"
@@ -133,6 +136,27 @@ class IntelliJPlatformAuxiliaryArtifactProviderTest : BuildViewMessagesImporting
                platformSourceUrls.any { it.endsWith("$SOURCES_JAR!/") })
     assertTrue("The merged platform jar must not get '$SLF4J_SOURCES_JAR': $platformSourceUrls",
                platformSourceUrls.none { it.contains(SLF4J_SOURCES_JAR) })
+  }
+
+  @Test
+  fun `test two versions of one library get their own sources`() {
+    createLocalIde("app" to emptyList(),
+                   "intellij.libraries.commons.cli" to listOf(COMMONS_CLI_METADATA),
+                   "intellij.maven" to listOf(OLD_COMMONS_CLI_METADATA))
+    createArtifact("com.jetbrains.intellij.idea", "ideaIC", "-sources")
+    createArtifact("commons-cli", "commons-cli", "-sources", version = COMMONS_CLI_VERSION)
+    createArtifact("commons-cli", "commons-cli", "-sources", version = OLD_COMMONS_CLI_VERSION)
+
+    importProjectWithDependencies(LOCAL_IDE)
+
+    val sourceUrls = getLocalIdeSourceUrls()
+    val librarySourceUrls = sourceUrls.getValue("intellij.libraries.commons.cli.jar")
+    assertTrue("The library jar must get '$COMMONS_CLI_SOURCES_JAR': $librarySourceUrls",
+               librarySourceUrls.any { it.endsWith("$COMMONS_CLI_SOURCES_JAR!/") })
+
+    val mergedSourceUrls = sourceUrls.getValue("intellij.maven.jar")
+    assertTrue("The jar with the older library must get '$OLD_COMMONS_CLI_SOURCES_JAR': $mergedSourceUrls",
+               mergedSourceUrls.any { it.endsWith("$OLD_COMMONS_CLI_SOURCES_JAR!/") })
   }
 
   @Test

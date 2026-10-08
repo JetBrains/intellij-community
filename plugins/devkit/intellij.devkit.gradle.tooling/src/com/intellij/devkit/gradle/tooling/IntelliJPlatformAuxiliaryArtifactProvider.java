@@ -50,7 +50,7 @@ import java.util.zip.ZipFile;
  * <p>
  * The IntelliJ Platform bundles third-party libraries whose jars keep the {@code META-INF/maven/<groupId>/<artifactId>/pom.properties}
  * file of the original library. The provider reads these coordinates from every jar of a platform component,
- * resolves the {@code sources} artifacts of all of them in one detached configuration,
+ * resolves the {@code sources} artifacts of all of them in one detached configuration per library version,
  * and attaches each sources archive to its jar. The IntelliJ Platform sources stay attached to the other jars of the component.
  * A jar gets one sources archive, so when every jar of a component packs a library, one jar keeps the IntelliJ Platform sources.
  * <p>
@@ -444,11 +444,36 @@ public final class IntelliJPlatformAuxiliaryArtifactProvider implements Auxiliar
   }
 
   /**
-   * Resolves the {@code sources} artifacts of {@code coordinates} in one lenient detached configuration of {@code project}.
+   * Resolves the {@code sources} artifacts of {@code coordinates} in lenient detached configurations of {@code project}.
+   * Gradle selects one version per module in a configuration, so each further version of a module goes to a further configuration.
+   * The IntelliJ Platform bundles some libraries in two versions, for example {@code guava} in a plugin and in the platform.
    *
    * @return the resolved sources archive per {@code groupId:artifactId:version} coordinate
    */
   private static @NotNull Map<String, File> resolveSourceArtifacts(@NotNull Project project, @NotNull Set<String> coordinates) {
+    List<Set<String>> batches = new ArrayList<>();
+    Map<String, Integer> versionsPerModule = new HashMap<>();
+    for (String coordinate : coordinates) {
+      String module = coordinate.substring(0, coordinate.lastIndexOf(':'));
+      int batch = versionsPerModule.merge(module, 1, Integer::sum) - 1;
+      if (batch == batches.size()) {
+        batches.add(new LinkedHashSet<>());
+      }
+      batches.get(batch).add(coordinate);
+    }
+
+    Map<String, File> result = new HashMap<>();
+    for (Set<String> batch : batches) {
+      result.putAll(resolveSourceArtifactsBatch(project, batch));
+    }
+    return result;
+  }
+
+  /**
+   * Resolves the {@code sources} artifacts of {@code coordinates} in one lenient detached configuration of {@code project}.
+   * Every module in {@code coordinates} must have one version.
+   */
+  private static @NotNull Map<String, File> resolveSourceArtifactsBatch(@NotNull Project project, @NotNull Set<String> coordinates) {
     Map<String, File> result = new HashMap<>();
     try {
       Dependency[] dependencies = coordinates.stream()
