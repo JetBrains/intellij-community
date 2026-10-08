@@ -34,6 +34,10 @@ class IntelliJPlatformAuxiliaryArtifactProviderTest : BuildViewMessagesImporting
     private const val COMMONS_CLI_SOURCES_JAR = "commons-cli-$COMMONS_CLI_VERSION-sources.jar"
     private const val COMMONS_CLI_POM_PROPERTIES = "META-INF/maven/commons-cli/commons-cli/pom.properties"
     private val COMMONS_CLI_METADATA = COMMONS_CLI_POM_PROPERTIES to "groupId=commons-cli\nartifactId=commons-cli\nversion=$COMMONS_CLI_VERSION\n"
+
+    private const val SLF4J_VERSION = "2.0.9"
+    private const val SLF4J_SOURCES_JAR = "slf4j-api-$SLF4J_VERSION-sources.jar"
+    private val SLF4J_METADATA = "META-INF/maven/org.slf4j/slf4j-api/pom.properties" to "groupId=org.slf4j\nartifactId=slf4j-api\nversion=$SLF4J_VERSION\n"
   }
 
   override fun setUp() {
@@ -108,6 +112,27 @@ class IntelliJPlatformAuxiliaryArtifactProviderTest : BuildViewMessagesImporting
     val sourceUrls = getSourceUrls(module)
     assertTrue("The library module must get '$COMMONS_CLI_SOURCES_JAR': $sourceUrls",
                sourceUrls.any { it.endsWith("$COMMONS_CLI_SOURCES_JAR!/") })
+  }
+
+  @Test
+  fun `test merged platform jar keeps the platform sources when every jar has Maven metadata`() {
+    createLocalIde("intellij.libraries.commons.cli" to listOf(COMMONS_CLI_METADATA), "intellij.platform.ide.impl" to listOf(SLF4J_METADATA))
+    createArtifact("com.jetbrains.intellij.idea", "ideaIC", "-sources")
+    createArtifact("commons-cli", "commons-cli", "-sources", version = COMMONS_CLI_VERSION)
+    createArtifact("org.slf4j", "slf4j-api", "-sources", version = SLF4J_VERSION)
+
+    importProjectWithDependencies(LOCAL_IDE)
+
+    val sourceUrls = getLocalIdeSourceUrls()
+    val librarySourceUrls = sourceUrls.getValue("intellij.libraries.commons.cli.jar")
+    assertTrue("The library jar must get '$COMMONS_CLI_SOURCES_JAR': $librarySourceUrls",
+               librarySourceUrls.any { it.endsWith("$COMMONS_CLI_SOURCES_JAR!/") })
+
+    val platformSourceUrls = sourceUrls.getValue("intellij.platform.ide.impl.jar")
+    assertTrue("The merged platform jar must keep '$SOURCES_JAR': $platformSourceUrls",
+               platformSourceUrls.any { it.endsWith("$SOURCES_JAR!/") })
+    assertTrue("The merged platform jar must not get '$SLF4J_SOURCES_JAR': $platformSourceUrls",
+               platformSourceUrls.none { it.contains(SLF4J_SOURCES_JAR) })
   }
 
   @Test

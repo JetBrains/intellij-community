@@ -52,6 +52,7 @@ import java.util.zip.ZipFile;
  * file of the original library. The provider reads these coordinates from every jar of a platform component,
  * resolves the {@code sources} artifacts of all of them in one detached configuration,
  * and attaches each sources archive to its jar. The IntelliJ Platform sources stay attached to the other jars of the component.
+ * A jar gets one sources archive, so when every jar of a component packs a library, one jar keeps the IntelliJ Platform sources.
  * <p>
  * The provider resolves each sources notation one time per Gradle project and sync.
  * When the IntelliJ Platform sources are not found, it reports a sync warning with the tried notations.
@@ -146,13 +147,20 @@ public final class IntelliJPlatformAuxiliaryArtifactProvider implements Auxiliar
       }
 
       List<File> jars = artifacts.getOrDefault(id, Collections.emptyList());
-      if (!hasLibrarySources(name, jars)) continue;
+      Map<File, List<String>> componentCoordinates = new LinkedHashMap<>();
       for (File jar : jars) {
         List<String> coordinates = readLibraryCoordinates(context, jar);
         if (!coordinates.isEmpty()) {
-          libraryCoordinates.put(jar, coordinates);
+          componentCoordinates.put(jar, coordinates);
         }
       }
+      if (sourceFile != null && componentCoordinates.size() == jars.size() && !name.startsWith(LIBRARY_MODULE_PREFIX)) {
+        File platformJar = choosePlatformJar(componentCoordinates);
+        if (platformJar != null) {
+          componentCoordinates.remove(platformJar);
+        }
+      }
+      libraryCoordinates.putAll(componentCoordinates);
     }
 
     Map<File, File> artifactSources = resolveLibrarySources(context, project, libraryCoordinates);
@@ -172,12 +180,41 @@ public final class IntelliJPlatformAuxiliaryArtifactProvider implements Auxiliar
   }
 
   /**
-   * A jar gets one sources archive. The third-party sources replace the IntelliJ Platform sources of a jar with Maven coordinates.
-   * The component keeps the IntelliJ Platform sources on its other jars, so a component with one jar keeps them,
-   * unless the component is a library module such as {@code intellij.libraries.commons.cli}.
+   * Chooses the jar that keeps the IntelliJ Platform sources in a component whose every jar has Maven coordinates.
+   * A jar gets one sources archive, so without this choice the component would lose the IntelliJ Platform sources.
+   * The first jar that is not named after one of its libraries wins, because such a jar packs IntelliJ Platform classes too.
+   *
+   * @param componentCoordinates the Maven coordinates per jar of the component
+   * @return the jar, or {@code null} when every jar is named after one of its libraries
    */
-  private static boolean hasLibrarySources(@NotNull String name, @NotNull List<File> jars) {
-    return jars.size() > 1 || name.startsWith(LIBRARY_MODULE_PREFIX);
+  private static @Nullable File choosePlatformJar(@NotNull Map<File, List<String>> componentCoordinates) {
+    for (Map.Entry<File, List<String>> entry : componentCoordinates.entrySet()) {
+      if (!isLibraryJar(entry.getKey(), entry.getValue())) {
+        return entry.getKey();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Checks if {@code jar} is a library jar: a library module jar such as {@code intellij.libraries.commons.cli.jar},
+   * or a jar named after one of the libraries in {@code coordinates}.
+   */
+  private static boolean isLibraryJar(@NotNull File jar, @NotNull List<String> coordinates) {
+    String jarName = normalize(jar.getName());
+    if (jarName.startsWith(normalize(LIBRARY_MODULE_PREFIX))) {
+      return true;
+    }
+    for (String coordinate : coordinates) {
+      if (jarName.contains(normalize(artifactId(coordinate)))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static @NotNull String artifactId(@NotNull String coordinate) {
+    return coordinate.split(":")[1];
   }
 
   /**
