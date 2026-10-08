@@ -27,9 +27,9 @@ abstract class KtSimpleNameReference(
     }
 
     override fun getRangeInElement(): TextRange {
-        val element = element.getReferencedNameElement()
-        val startOffset = getElement().startOffset
-        return element.textRange.shiftRight(-startOffset)
+        val referencedElement = element.getReferencedNameElement()
+        val startOffset = element.startOffset
+        return referencedElement.textRange.shiftLeft(startOffset)
     }
 
     override fun canRename(): Boolean {
