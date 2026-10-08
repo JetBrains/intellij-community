@@ -7,7 +7,7 @@ repository rule does not, so an edit here changes no repository identity.
 
 # BuildDependenciesConstants
 MAVEN_CENTRAL_URL = "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2"
-INTELLIJ_DEPENDENCIES_URL = "https://cache-redirector.jetbrains.com/intellij-dependencies"
+INTELLIJ_DEPENDENCIES_URL = "https://cache-redirector.jetbrains.com/maven/ultimate-public"
 INTELLIJ_JBR_URL = "https://cache-redirector.jetbrains.com/intellij-jbr"
 JETBRAINS_FILES_URL = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-dependencies"
 JETBRAINS_MAVEN_URL = "https://cache-redirector.jetbrains.com/maven/ultimate-public"

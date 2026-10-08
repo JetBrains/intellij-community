@@ -16,7 +16,7 @@ load(":platform_downloads.bzl", "jbr_runtime_archive_root", "jbr_runtime_url", "
 
 _JBR = "https://cache-redirector.jetbrains.com/intellij-jbr"
 _MAVEN = "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2"
-_DEPS = "https://cache-redirector.jetbrains.com/intellij-dependencies"
+_DEPS = "https://cache-redirector.jetbrains.com/maven/ultimate-public"
 
 # JBRResolver.jbrArchiveFileName, for `runtimeBuild=25.0.4b557.28`
 _JBR_URLS = {

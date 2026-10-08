@@ -7,7 +7,7 @@ load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
 load("@community//build:host_platforms.bzl", "HOST_PLATFORMS")
 load(":downloads.bzl", "pyrefly_platform_directory", "pyrefly_url")
 
-_DEPS = "https://cache-redirector.jetbrains.com/intellij-dependencies"
+_DEPS = "https://cache-redirector.jetbrains.com/maven/ultimate-public"
 
 # downloadPyrefly, for `pyreflyBuild=263.6545`. The artifact is the lowercase `pyreflyPlatformDirName`.
 _PYREFLY_URLS = {
