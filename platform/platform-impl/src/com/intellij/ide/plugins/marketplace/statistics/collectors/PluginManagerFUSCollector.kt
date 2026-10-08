@@ -35,7 +35,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 internal const val PM_FUS_GROUP_ID = "plugin.manager"
-internal const val PM_FUS_GROUP_VERSION = 13
+internal const val PM_FUS_GROUP_VERSION = 14
 private val EVENT_GROUP = EventLogGroup(PM_FUS_GROUP_ID, PM_FUS_GROUP_VERSION)
 
 @ApiStatus.Internal
