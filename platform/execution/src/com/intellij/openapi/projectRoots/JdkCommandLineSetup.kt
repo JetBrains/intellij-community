@@ -260,7 +260,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
     }
 
-    val commandLineWrapperClass = commandLineWrapperClass()
+    val commandLineWrapperClass = commandLineWrapperClass(javaParameters)
 
     if (dynamicClasspath) {
       if (javaParameters.isArgFile) {
@@ -709,13 +709,21 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
 
     private val LOG by lazy { Logger.getInstance(JdkCommandLineSetup::class.java) }
 
-    private fun commandLineWrapperClass(): Class<*>? {
-      try {
-        return Class.forName("com.intellij.rt.execution.CommandLineWrapper")
+    // TODO move this class to java plugin
+    private fun commandLineWrapperClass(javaParameters: SimpleJavaParameters): Class<*>? {
+      val loaders = linkedSetOf(JdkCommandLineSetup::class.java.classLoader)
+      val parametersLoader = javaParameters.javaClass.classLoader
+      if (parametersLoader != null) {
+        loaders.add(parametersLoader)
       }
-      catch (e: ClassNotFoundException) {
-        return null
+      for (loader in loaders) {
+        try {
+          return loader.loadClass("com.intellij.rt.execution.CommandLineWrapper")
+        }
+        catch (_: ClassNotFoundException) {
+        }
       }
+      return null
     }
 
     private fun ParametersList.isExplicitClassPath(): Boolean {
