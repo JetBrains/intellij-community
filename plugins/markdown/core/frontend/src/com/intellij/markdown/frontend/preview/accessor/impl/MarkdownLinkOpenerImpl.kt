@@ -40,7 +40,6 @@ import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
 import org.intellij.plugins.markdown.util.MarkdownDisposable
 import org.intellij.plugins.markdown.util.MarkdownLinkFragmentUtil
 import java.net.URI
-import java.net.URISyntaxException
 
 internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : MarkdownLinkOpener {
   @Deprecated("Use openLink(project, link, sourceFile) instead", replaceWith = ReplaceWith("openLink(project, link, sourceFile)"))
@@ -56,7 +55,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
         else -> MarkdownLinkNavigationData(link, null, null, null)
       }
 
-      val uri = createUri(data.uri) ?: return@launch
+      val uri = MarkdownLinkOpenerUtil.createUri(data.uri) ?: return@launch
       if (uri.scheme != "file") {
         // An unresolved local file path must not fall through to the external browser.
         if (isLocalFilePathLink(link)) {
@@ -114,7 +113,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
   }
 
   override fun isSafeLink(project: Project?, link: String): Boolean {
-    val uri = createUri(link) ?: return false
+    val uri = MarkdownLinkOpenerUtil.createUri(link) ?: return false
     return isSafeUri(project, uri)
   }
 
@@ -195,18 +194,6 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
 
   companion object {
     private val logger = logger<MarkdownLinkOpenerImpl>()
-
-    fun createUri(link: String): URI? {
-      return try {
-        when {
-          BrowserUtil.isAbsoluteURL(link) -> URI(link)
-          else -> URI("http://$link")
-        }
-      } catch (exception: URISyntaxException) {
-        logger.warn(exception)
-        null
-      }
-    }
 
     /**
      * True when [link] is written as an explicit local filesystem path (absolute or relative),
