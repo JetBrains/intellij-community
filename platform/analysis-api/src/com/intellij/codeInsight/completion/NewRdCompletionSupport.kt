@@ -2,10 +2,12 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
@@ -88,6 +90,10 @@ object NewRdCompletionVetoSupport {
 
   fun isAllowed(editor: Editor?): Boolean = editor == null || !isVetoed(editor)
 
-  private fun isVetoed(editor: Editor): Boolean =
-    ep_name.findFirstSafe { veto -> veto.veto(editor) } != null
+  private fun isVetoed(editor: Editor): Boolean = runReadActionBlocking {
+    ep_name.findFirstSafe { veto ->
+      ProgressManager.checkCanceled()
+      veto.veto(editor)
+    } != null
+  }
 }

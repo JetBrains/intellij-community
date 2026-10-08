@@ -2,10 +2,14 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * Allows forbidding new frontend-based completion support in RemoteDev
+ *
+ * The platform calls [veto] under a read action, on any thread.
+ * The implementation must be fast and must not block.
  *
  * ```
  * internal class MyLangNewRdVeto : NewRdCompletionVeto {
@@ -19,5 +23,6 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface NewRdCompletionVeto {
+  @RequiresReadLock
   fun veto(editor: Editor): Boolean
 }
