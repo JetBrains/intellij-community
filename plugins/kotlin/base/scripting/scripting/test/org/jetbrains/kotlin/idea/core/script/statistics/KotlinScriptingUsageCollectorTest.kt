@@ -27,6 +27,16 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition as IdeScriptD
 class KotlinScriptingUsageCollectorTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun runInDispatchThread(): Boolean = false
 
+    override fun tearDown() {
+        try {
+            KotlinScriptingSettings.getInstance(project).update {
+                it.copy(settings = emptyList())
+            }
+        } finally {
+            super.tearDown()
+        }
+    }
+
     fun `test definition counts sum to all provided definitions and report disabled ones`() {
         val definitions = ScriptDefinitionProviderImpl.getInstance(project).cachedProvidedDefinitions
         val disabled = definitions.first()
@@ -56,6 +66,52 @@ class KotlinScriptingUsageCollectorTest : KotlinLightCodeInsightFixtureTestCase(
         registerProvider()
 
         assertEquals(1, definitionCountsByProvider()["other"])
+    }
+
+    fun `test external providers count is reported as rounded value`() {
+        val externalProvidersCount = ScriptDefinitionsProvider.EP_NAME.getExtensions(project)
+            .count { getPluginInfo(it.javaClass).id != KotlinIdePlugin.id.idString }
+
+        val metrics = collect().filter { it.eventId == "external.providers.count" }.map { it.data.build() }
+        if (externalProvidersCount > 0) {
+            val expected = com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo(externalProvidersCount)
+            assertEquals(expected, metrics.single()["count"])
+        }
+    }
+
+    fun `test definition counts and disabled counts are rounded to power of two`() {
+        val definitions = (1..3).map { index ->
+            createScriptDefinitionFromTemplate(
+                KotlinType(ScriptTemplateWithArgs::class),
+                defaultJvmScriptingHostConfiguration,
+                compilation = { fileExtension("ext$index.kts") },
+            )
+        }
+        project.registerExtension(
+            ScriptDefinitionsProvider.EP_NAME,
+            object : ScriptDefinitionsProvider {
+                override val id: String = "KotlinScriptingUsageCollectorTestMulti"
+                override fun provideDefinitions(
+                    baseHostConfiguration: ScriptingHostConfiguration,
+                    loadedScriptDefinitions: List<ScriptDefinition>,
+                ): Iterable<ScriptDefinition> = definitions
+            },
+            testRootDisposable,
+        )
+        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+
+        val provided = ScriptDefinitionProviderImpl.getInstance(project).cachedProvidedDefinitions.filter { it.reportedProviderId() == "other" }
+        KotlinScriptingSettings.getInstance(project).update {
+            it.copy(
+                settings = provided.map { def ->
+                    KotlinScriptingSettings.DefinitionSetting(def.name, def.definitionId, enabled = false)
+                }
+            )
+        }
+
+        val otherMetrics = collect().filter { it.eventId == "definitions.count" && it.data.build()["provider_id"] == "other" }.map { it.data.build() }
+        assertEquals(4, otherMetrics.single()["count"])
+        assertEquals(4, otherMetrics.single()["disabled_count"])
     }
 
     fun `test loaded scripts are attributed to the provider that claimed them`() {

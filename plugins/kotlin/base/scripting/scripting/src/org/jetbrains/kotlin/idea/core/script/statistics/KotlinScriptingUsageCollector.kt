@@ -17,18 +17,18 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 
-private val GROUP = EventLogGroup("kotlin.ide.scripting", 1)
+private val GROUP = EventLogGroup("kotlin.ide.scripting", 2)
 
 private val definitionsCountEvent = GROUP.registerEvent(
     "definitions.count",
     EventFields.String("provider_id", REPORTED_PROVIDER_IDS),
-    EventFields.Int("count"),
-    EventFields.Int("disabled_count"),
+    EventFields.RoundedInt("count"),
+    EventFields.RoundedInt("disabled_count"),
 )
 
 private val externalProvidersEvent = GROUP.registerEvent(
     "external.providers.count",
-    EventFields.Int("count"),
+    EventFields.RoundedInt("count"),
 )
 
 private val scriptsCountEvent = GROUP.registerEvent(
