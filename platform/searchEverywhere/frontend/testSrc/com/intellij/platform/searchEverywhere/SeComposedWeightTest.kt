@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -35,6 +36,24 @@ class SeComposedWeightTest {
     val y = SeWeightKey("y", order = 10, defaultWeight = 0)
 
     assertEquals(listOf("matchWeight", "x", "y"), SeComposedWeight.of(listOf(c(y, 0), c(x, 0), SeWeightComponent(1))).components.map { it.id })
+  }
+
+  @Test
+  fun keyEqualityAgreesWithComparison() {
+    // A deserialized key is a new instance.
+    val copy = SeWeightKey("notDeprecated", order = 200, defaultWeight = 1)
+
+    assertEquals(SeWeightKey.NOT_DEPRECATED, copy)
+    assertEquals(SeWeightKey.NOT_DEPRECATED.hashCode(), copy.hashCode())
+    assertEquals(0, SeWeightKey.NOT_DEPRECATED.compareTo(copy))
+    assertEquals(setOf(SeWeightKey.NOT_DEPRECATED), setOf(copy))
+    assertNotEquals(SeWeightKey("notDeprecated", order = 201, defaultWeight = 1), copy)
+  }
+
+  @Test
+  fun notDeprecatedIsTheDefault() {
+    assertCompare(0, w(100), w(100, SeWeightKey.NOT_DEPRECATED to 1))
+    assertCompare(1, w(100), w(100, SeWeightKey.NOT_DEPRECATED to 0))
   }
 
   @Test

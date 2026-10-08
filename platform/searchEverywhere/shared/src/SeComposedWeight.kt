@@ -29,6 +29,7 @@ class SeWeightKey(val id: String, val order: Int, val defaultWeight: Int) : Comp
 
     val MATCH: SeWeightKey = SeWeightKey(MATCH_ID, order = 0, defaultWeight = 0) // The standard weight by name matching
     val RECENCY: SeWeightKey = SeWeightKey("recency", order = 100, defaultWeight = 0) // Recency order for recent files
+    val NOT_DEPRECATED: SeWeightKey = SeWeightKey("notDeprecated", order = 200, defaultWeight = 1) // Bonus for being non-deprecated
   }
 }
 
