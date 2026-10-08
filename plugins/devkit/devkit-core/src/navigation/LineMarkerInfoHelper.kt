@@ -29,7 +29,7 @@ import javax.swing.Icon
 internal object LineMarkerInfoHelper {
 
   @JvmStatic
-  fun createExtensionLineMarkerInfo(targets: List<PointableCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement> {
+  fun createExtensionLineMarkerInfo(targets: List<PointableCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement>? {
     return createPluginLineMarkerInfo<Extension>(
       targets, element,
       popup = DevKitBundle.message("gutter.related.navigation.choose.extension"),
@@ -39,7 +39,7 @@ internal object LineMarkerInfoHelper {
   }
 
   @JvmStatic
-  fun createExtensionPointLineMarkerInfo(targets: List<PointableCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement> {
+  fun createExtensionPointLineMarkerInfo(targets: List<PointableCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement>? {
     return createPluginLineMarkerInfo<ExtensionPoint>(
       targets, element,
       popup = DevKitBundle.message("gutter.related.navigation.choose.extension.point"),
@@ -49,7 +49,7 @@ internal object LineMarkerInfoHelper {
   }
 
   @JvmStatic
-  fun createListenerLineMarkerInfo(targets: List<ListenerCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement> {
+  fun createListenerLineMarkerInfo(targets: List<ListenerCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement>? {
     return createPluginLineMarkerInfo<Listeners.Listener>(
       targets, element,
       popup = DevKitBundle.message("gutter.related.navigation.choose.listener"),
@@ -59,7 +59,7 @@ internal object LineMarkerInfoHelper {
   }
 
   @JvmStatic
-  fun createListenerTopicLineMarkerInfo(targets: List<ListenerCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement> {
+  fun createListenerTopicLineMarkerInfo(targets: List<ListenerCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement>? {
     return createPluginLineMarkerInfo<Listeners.Listener>(
       targets, element,
       popup = DevKitBundle.message("gutter.related.navigation.choose.listener"),
@@ -69,7 +69,7 @@ internal object LineMarkerInfoHelper {
   }
 
   @JvmStatic
-  fun createActionLineMarkerInfo(targets: List<ActionCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement> {
+  fun createActionLineMarkerInfo(targets: List<ActionCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement>? {
     return createPluginLineMarkerInfo(
       targets, element,
       popup = DevKitBundle.message("gutter.related.navigation.choose.action"),
@@ -79,7 +79,7 @@ internal object LineMarkerInfoHelper {
   }
 
   @JvmStatic
-  fun createActionGroupLineMarkerInfo(targets: List<ActionCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement> {
+  fun createActionGroupLineMarkerInfo(targets: List<ActionCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement>? {
     return createPluginLineMarkerInfo(
       targets, element,
       popup = DevKitBundle.message("gutter.related.navigation.choose.action.group"),
@@ -89,7 +89,7 @@ internal object LineMarkerInfoHelper {
   }
 
   @JvmStatic
-  fun createComponentLineMarkerInfo(targets: List<ComponentCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement> {
+  fun createComponentLineMarkerInfo(targets: List<ComponentCandidate>, element: PsiElement): RelatedItemLineMarkerInfo<PsiElement>? {
     return createPluginLineMarkerInfo<Component>(
       targets, element,
       popup = DevKitBundle.message("gutter.related.navigation.choose.component"),
@@ -108,7 +108,7 @@ internal object LineMarkerInfoHelper {
     @Nls(capitalization = Nls.Capitalization.Title) popup: String,
     icon: Icon,
     namer: (T) -> @NlsSafe String?,
-  ): RelatedItemLineMarkerInfo<PsiElement> {
+  ): RelatedItemLineMarkerInfo<PsiElement>? {
     return NavigationGutterIconBuilder
       .create<PointableCandidate>(icon, { listOfNotNull(it.pointer.element) }) { target ->
         val domElement = DomUtil.getDomElement(target.pointer.element)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
@@ -72,7 +73,7 @@ final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider extends Dev
             listenerTargets.add(new ListenerCandidate(listener));
             return true;
           });
-          result.add(LineMarkerInfoHelper.createListenerTopicLineMarkerInfo(listenerTargets, identifier));
+          ContainerUtil.addIfNotNull(result, LineMarkerInfoHelper.createListenerTopicLineMarkerInfo(listenerTargets, identifier));
         }
       }
       return;
@@ -85,7 +86,7 @@ final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider extends Dev
     if (!IdeaPluginRegistrationIndex.isRegisteredClass(psiClass, candidatesScope)) {
       List<ExtensionCandidate> epTargets = ExtensionLocatorKt.locateExtensionsByPsiClass(psiClass);
       if (!epTargets.isEmpty()) {
-        result.add(LineMarkerInfoHelper.createExtensionLineMarkerInfo(epTargets, identifier));
+        ContainerUtil.addIfNotNull(result, LineMarkerInfoHelper.createExtensionLineMarkerInfo(epTargets, identifier));
       }
       return;
     }
@@ -99,10 +100,10 @@ final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider extends Dev
         return true;
       });
       if (InheritanceUtil.isInheritor(psiClass, ActionGroup.class.getName())) {
-        result.add(LineMarkerInfoHelper.createActionGroupLineMarkerInfo(targets, identifier));
+        ContainerUtil.addIfNotNull(result, LineMarkerInfoHelper.createActionGroupLineMarkerInfo(targets, identifier));
       }
       else {
-        result.add(LineMarkerInfoHelper.createActionLineMarkerInfo(targets, identifier));
+        ContainerUtil.addIfNotNull(result, LineMarkerInfoHelper.createActionLineMarkerInfo(targets, identifier));
       }
       return;
     }
@@ -116,7 +117,7 @@ final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider extends Dev
       return true;
     });
     if (!listenerTargets.isEmpty()) {
-      result.add(LineMarkerInfoHelper.createListenerLineMarkerInfo(listenerTargets, identifier));
+      ContainerUtil.addIfNotNull(result, LineMarkerInfoHelper.createListenerLineMarkerInfo(listenerTargets, identifier));
       return;
     }
 
@@ -137,7 +138,7 @@ final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider extends Dev
       return true;
     });
     if (!componentTargets.isEmpty()) {
-      result.add(LineMarkerInfoHelper.createComponentLineMarkerInfo(componentTargets, identifier));
+      ContainerUtil.addIfNotNull(result, LineMarkerInfoHelper.createComponentLineMarkerInfo(componentTargets, identifier));
     }
   }
 }

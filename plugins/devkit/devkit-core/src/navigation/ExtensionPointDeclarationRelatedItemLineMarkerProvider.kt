@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.index.ExtensionPointClassIndex
 import org.jetbrains.idea.devkit.util.ExtensionPointCandidate
@@ -34,8 +35,7 @@ internal class ExtensionPointDeclarationRelatedItemLineMarkerProvider : DevkitRe
     val classIdentifier = uClass.uastAnchor?.sourcePsi ?: return
 
     val targets = relevantEps.map { ExtensionPointCandidate(SmartPointerManager.createPointer(it.xmlTag), it.effectiveQualifiedName) }
-    val info = LineMarkerInfoHelper.createExtensionPointLineMarkerInfo(targets, classIdentifier)
-    result.add(info)
+    ContainerUtil.addIfNotNull(result, LineMarkerInfoHelper.createExtensionPointLineMarkerInfo(targets, classIdentifier))
   }
 
   /**
