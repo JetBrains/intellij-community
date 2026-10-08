@@ -20,7 +20,7 @@ class Doo {
     if (getMethod() == null && !isSomething()) {
       return;
     } else {
-      System.out.println(getMethod().hashCode());
+      System.out.println(getMethod().<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
     }
   }
 
@@ -29,7 +29,7 @@ class Doo {
       return;
     } else {
       // still not sure about nullability as getMethod() is not pure
-      System.out.println(getMethod().hashCode());
+      System.out.println(getMethod().<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
     }
   }
 

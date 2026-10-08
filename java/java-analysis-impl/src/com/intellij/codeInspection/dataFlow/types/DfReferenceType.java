@@ -90,7 +90,7 @@ public interface DfReferenceType extends DfType {
     DfaNullability inherentNullability = this.getNullability();
     if (inherentNullability == DfaNullability.NULLABLE) {
       DfaNullability nullability = DfaNullability.fromDfType(typeBeforeFlush);
-      if (nullability == DfaNullability.FLUSHED || nullability == DfaNullability.NULL || nullability == DfaNullability.NOT_NULL) {
+      if (nullability == DfaNullability.FLUSHED || nullability == DfaNullability.NOT_NULL) {
         return dropNullability().meet(DfaNullability.FLUSHED.asDfType());
       }
     }
