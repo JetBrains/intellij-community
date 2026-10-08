@@ -1,27 +1,35 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.indexes;
 
+import com.intellij.mock.MockProject;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.util.io.storages.database.DurableMapImplementation;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.Input;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.InputDataGenerator;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.ManyEntriesPerFileInputGenerator;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.ManyKeysIntegerToIntegerIndexExtension;
+import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.RealisticKeysGenerator;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.storage.KeyHashLog;
 import com.intellij.util.indexing.impl.storage.durablemap.database.DurableDatabaseIndexLayoutProvider;
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -41,10 +49,14 @@ import org.openjdk.jmh.runner.options.CommandLineOptionException;
 import org.openjdk.jmh.runner.options.CommandLineOptions;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.function.IntPredicate;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -78,7 +90,8 @@ public class IndexStorageLayoutBenchmark {
     //          performance. No-cache numbers is be harder to relate to high-level index subsystem performance, though -- but
     //          we could have both kinds of tests, with and without caching, to see how the caching smoothens the underlying
     //          storage performance.
-    public final InputDataGenerator<Integer, Integer> inputDataGenerator = new ManyEntriesPerFileInputGenerator(1, 5_000_000, 1 << 10);
+    public final InputDataGenerator<Integer, Integer> inputDataGenerator =
+      new ManyEntriesPerFileInputGenerator(new Random(42), 1, 5_000_000, 1 << 10, new RealisticKeysGenerator());
 
     public long[] inputsSubstrate;
 
@@ -147,7 +160,7 @@ public class IndexStorageLayoutBenchmark {
     public void setupBenchmark() throws Exception {
       IndexDebugProperties.IS_IN_STRESS_TESTS = true;
 
-      extension = new SampleIndexExtension(cacheSize);
+      extension = createIndexExtension();
 
       latencyProfile = IoLatencyProfile.parse(ioDelayProfile);
       int configurationSeparator = storageLayoutProviderClassName.lastIndexOf('#');
@@ -237,6 +250,10 @@ public class IndexStorageLayoutBenchmark {
       }
     }
 
+    protected FileBasedIndexExtension<Integer, Integer> createIndexExtension() {
+      return new SampleIndexExtension(cacheSize);
+    }
+
     public static class SampleIndexExtension extends ManyKeysIntegerToIntegerIndexExtension implements ShardableIndexExtension {
 
       public SampleIndexExtension(int cacheSize) {
@@ -256,6 +273,19 @@ public class IndexStorageLayoutBenchmark {
   }
 
   @State(Scope.Benchmark)
+  public static class ProjectFilterStorageContext extends StorageContext {
+    @Override
+    protected FileBasedIndexExtension<Integer, Integer> createIndexExtension() {
+      return new SampleIndexExtension(cacheSize) {
+        @Override
+        public boolean traceKeyHashToVirtualFileMapping() {
+          return true;
+        }
+      };
+    }
+  }
+
+  @State(Scope.Benchmark)
   public static class ReadContext {
 
     private int[] allKeys;
@@ -263,6 +293,12 @@ public class IndexStorageLayoutBenchmark {
     @Setup(Level.Iteration)
     public void setupIteration_fillStorageWithData(InputContext inputContext,
                                                    StorageContext storageContext) throws Exception {
+      fillStorageWithData(inputContext, storageContext, /* keyHashLog: */ null);
+    }
+
+    private void fillStorageWithData(InputContext inputContext,
+                                     StorageContext storageContext,
+                                     @Nullable KeyHashLog<Integer> keyHashLog) throws Exception {
       InputDataGenerator<Integer, Integer> dataGenerator = inputContext.inputDataGenerator;
       IndexStorage<Integer, Integer> indexStorage = storageContext.indexStorage;
       IntOpenHashSet keys = new IntOpenHashSet();
@@ -271,6 +307,9 @@ public class IndexStorageLayoutBenchmark {
         int inputId = input.inputId();
         for (Map.Entry<Integer, Integer> e : input.inputData().entrySet()) {
           indexStorage.addValue(e.getKey(), inputId, e.getValue());
+          if (keyHashLog != null) {
+            keyHashLog.addKeyHashToVirtualFileMapping(e.getKey(), inputId);
+          }
           keys.add(e.getKey().intValue());
         }
       }
@@ -285,6 +324,118 @@ public class IndexStorageLayoutBenchmark {
       //         should be looked up more frequently than the rare keys. Otherwise this is
       int keyIndex = ThreadLocalRandom.current().nextInt(allKeys.length);
       return allKeys[keyIndex];
+    }
+  }
+
+  public enum KeyFilterMode { KEYS_ONLY, EXACT, HASH_LOG }
+
+  /// Keeps the project filter ready so repeated queries measure the scan rather than cache construction
+  @SuppressWarnings("unused") // JMH calls the setup and teardown methods
+  @State(Scope.Benchmark)
+  public static class ProjectFilterContext {
+    @Param({"KEYS_ONLY", "EXACT", "HASH_LOG"})
+    public KeyFilterMode keyFilterMode;
+
+    @Param("1/4")
+    public String acceptedFileIdFraction;
+
+    private int acceptedFileIdNumerator;
+    private int acceptedFileIdDenominator;
+
+    private final IdFilter idFilter = new IdFilter() {
+      @Override
+      public boolean containsFileId(int id) {
+        return id > 0 && id % acceptedFileIdDenominator < acceptedFileIdNumerator;
+      }
+
+      @Override
+      public @NotNull FilterScopeType getFilteringScopeType() {
+        return FilterScopeType.PROJECT_AND_LIBRARIES;
+      }
+    };
+
+    private Disposable disposable;
+    private MockProject project;
+    private GlobalSearchScope scope;
+    private Path logDirectory;
+    private KeyHashLog<Integer> keyHashLog;
+
+    @Setup
+    public void setupBenchmark() {
+      String[] fraction = acceptedFileIdFraction.split("/", -1);
+      if (fraction.length != 2) {
+        throw new IllegalArgumentException("The file ID fraction must have the form numerator/denominator");
+      }
+      acceptedFileIdNumerator = Integer.parseInt(fraction[0]);
+      acceptedFileIdDenominator = Integer.parseInt(fraction[1]);
+      if (acceptedFileIdDenominator <= 0 || acceptedFileIdNumerator < 0 || acceptedFileIdNumerator > acceptedFileIdDenominator) {
+        throw new IllegalArgumentException("The file ID fraction must be between 0 and 1 with a positive denominator");
+      }
+      if (!KeyHashLog.ENABLE_CACHED_HASH_IDS) {
+        throw new IllegalStateException("The benchmark requires idea.index.cashed.hashids=true");
+      }
+      disposable = Disposer.newDisposable();
+      project = new MockProject(null, disposable);
+      scope = new GlobalSearchScope(project) {
+        @Override
+        public boolean isSearchInModuleContent(@NotNull Module module) {
+          return true;
+        }
+
+        @Override
+        public boolean isSearchInLibraries() {
+          return true;
+        }
+
+        @Override
+        public boolean contains(@NotNull VirtualFile file) {
+          return true;
+        }
+      };
+    }
+
+    @Setup(Level.Iteration)
+    public void setupIteration(InputContext inputContext, ProjectFilterStorageContext storageContext) throws Exception {
+      logDirectory = Files.createTempDirectory("index-key-hash-log");
+      keyHashLog = new KeyHashLog<>(storageContext.extension.getKeyDescriptor(), logDirectory.resolve("keys"));
+      var readContext = new ReadContext();
+      readContext.fillStorageWithData(inputContext, storageContext, keyHashLog);
+
+      // Build the cache and check the two filters before measuring repeated queries
+      IntPredicate suitableHashes = keyHashLog.getSuitableKeyHashes(idFilter, project);
+      int hashFilteredCount = 0;
+      for (int key : readContext.allKeys) {
+        if (suitableHashes.test(storageContext.extension.getKeyDescriptor().getHashCode(key))) hashFilteredCount++;
+      }
+      int[] exactCount = {0};
+      var exactKeys = new IntOpenHashSet();
+      var storage = (VfsAwareIndexStorage<Integer, Integer>)storageContext.indexStorage;
+      storage.processKeys(key -> {
+        exactCount[0]++;
+        exactKeys.add(key.intValue());
+        return true;
+      }, scope, idFilter);
+      if (exactKeys.size() != hashFilteredCount) {
+        throw new IllegalStateException("The exact filter and the hash filter disagree: " + exactKeys.size() + " != " + hashFilteredCount);
+      }
+      System.out.println("Project key filter: all=" + readContext.allKeys.length + ", matched=" + exactKeys.size() +
+                         ", exactProcessorCalls=" + exactCount[0]);
+      storageContext.resetIoLatencyStatistics();
+    }
+
+    @TearDown(Level.Iteration)
+    public void closeIteration() throws Exception {
+      try {
+        if (keyHashLog != null) keyHashLog.close();
+      }
+      finally {
+        if (logDirectory != null) NioFiles.deleteRecursively(logDirectory);
+      }
+    }
+
+    @TearDown
+    public void closeBenchmark() {
+      if (disposable != null) Disposer.dispose(disposable);
     }
   }
 
@@ -349,6 +500,30 @@ public class IndexStorageLayoutBenchmark {
       SCOPE_EVERYTHING,
       IdFilter.ACCEPT_ALL
     );
+  }
+
+  @Benchmark
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  public int indexStorage_forEachKeyWithProjectFilter(ProjectFilterStorageContext storageContext,
+                                                      ProjectFilterContext filterContext) throws StorageException {
+    var storage = (VfsAwareIndexStorage<Integer, Integer>)storageContext.indexStorage;
+    int[] count = {0};
+    Processor<Integer> processor = ignored -> {
+      count[0]++;
+      return true;
+    };
+    switch (filterContext.keyFilterMode) {
+      case KEYS_ONLY -> storage.processKeys(processor, filterContext.scope, IdFilter.ACCEPT_ALL);
+      case EXACT -> storage.processKeys(processor, filterContext.scope, filterContext.idFilter);
+      case HASH_LOG -> {
+        IntPredicate suitableHashes = filterContext.keyHashLog.getSuitableKeyHashes(filterContext.idFilter, filterContext.project);
+        storage.processKeys(key -> {
+          if (!suitableHashes.test(storageContext.extension.getKeyDescriptor().getHashCode(key))) return true;
+          return processor.process(key);
+        }, filterContext.scope, IdFilter.ACCEPT_ALL);
+      }
+    }
+    return count[0];
   }
 
 

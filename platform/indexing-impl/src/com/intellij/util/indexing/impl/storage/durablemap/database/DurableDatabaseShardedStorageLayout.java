@@ -69,7 +69,8 @@ final class DurableDatabaseShardedStorageLayout<Key, Value> implements VfsAwareI
         keyDescriptor,
         valueExternalizer,
         extension.getCacheSize(),
-        extension.keyIsUniqueForIndexedFile()
+        extension.keyIsUniqueForIndexedFile(),
+        extension.traceKeyHashToVirtualFileMapping()
       );
     };
     ThrowableNotNullFunction<Integer, ForwardIndex, IOException> forwardFactory = shardNo ->

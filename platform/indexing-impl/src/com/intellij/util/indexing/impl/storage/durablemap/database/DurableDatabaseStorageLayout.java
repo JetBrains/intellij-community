@@ -69,7 +69,8 @@ final class DurableDatabaseStorageLayout<Key, Value> implements VfsAwareIndexSto
         keyDescriptor,
         valueExternalizer,
         extension.getCacheSize(),
-        extension.keyIsUniqueForIndexedFile()
+        extension.keyIsUniqueForIndexedFile(),
+        extension.traceKeyHashToVirtualFileMapping()
       ),
       IndexStorage::isClosed,
       /* failIfNotClosed: */ !WARN_IF_CLEANING_UNCLOSED_STORAGE

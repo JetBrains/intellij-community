@@ -12,6 +12,13 @@ import org.jetbrains.annotations.Nullable;
 @Internal
 public interface VfsAwareIndexStorage<Key, Value> extends IndexStorage<Key, Value>, MeasurableIndexStore {
 
+  /**
+   * Both (scope, idFilter) could be used to skip keys that do not belong to scope, and without fileId matched by idFilter.
+   * This is optional optimization: not all indexes supports it, and implementation is free to ignore both filters, and just
+   * supply all the keys to processor.
+   *
+   * @see FileBasedIndexExtension#traceKeyHashToVirtualFileMapping()
+   */
   boolean processKeys(@NotNull Processor<? super Key> processor,
                       @NotNull GlobalSearchScope scope,
                       @Nullable IdFilter idFilter) throws StorageException;

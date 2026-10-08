@@ -59,6 +59,7 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
   //          It seems like the code could be simplified quite a bit -- and also quite a bit of implicit assumptions and
   //          unclear conditions in the code could be made more clear and explicit
   private final boolean keyIsUniqueForIndexedFile;
+  private final boolean traceKeyHashToVirtualFileMapping;
   private final boolean readOnly;
 
   private final @NotNull ThrowableComputable<? extends DurableMap<Key, UpdatableValueContainer<Value>>, ? extends IOException> durableMapOpener;
@@ -67,7 +68,8 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
                                 @NotNull KeyDescriptorEx<Key> keyDescriptor,
                                 @NotNull DataExternalizer<Value> valueExternalizer,
                                 int cacheSize,
-                                boolean keyIsUniqueForIndexedFile) throws IOException {
+                                boolean keyIsUniqueForIndexedFile,
+                                boolean traceKeyHashToVirtualFileMapping) throws IOException {
     this(
       fileMapOpener(
         storageFile,
@@ -77,8 +79,9 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
       valueExternalizer,
       cacheSize,
       keyIsUniqueForIndexedFile,
-      true,
-      false,
+      traceKeyHashToVirtualFileMapping,
+      /* initialize: */ true,
+      /* readOnly:   */ false,
       null
     );
   }
@@ -88,8 +91,10 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
                                 @NotNull DataExternalizer<Value> valueExternalizer,
                                 int cacheSize,
                                 boolean keyIsUniqueForIndexedFile,
+                                boolean traceKeyHashToVirtualFileMapping,
                                 @NotNull StorageFactory<? extends DurableMap<Key, UpdatableValueContainer<Value>>> durableMapFactory) throws IOException {
-    this(fileMapOpener(storageFile, durableMapFactory), keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, null);
+    this(fileMapOpener(storageFile, durableMapFactory), keyDescriptor, valueExternalizer, cacheSize,
+         keyIsUniqueForIndexedFile, traceKeyHashToVirtualFileMapping, true, false, null);
   }
 
   public DurableMapIndexStorage(
@@ -97,9 +102,11 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
     @NotNull KeyDescriptorEx<Key> keyDescriptor,
     @NotNull DataExternalizer<Value> valueExternalizer,
     int cacheSize,
-    boolean keyIsUniqueForIndexedFile
+    boolean keyIsUniqueForIndexedFile,
+    boolean traceKeyHashToVirtualFileMapping
   ) throws IOException {
-    this(durableMapOpener, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, null);
+    this(durableMapOpener, keyDescriptor, valueExternalizer, cacheSize,
+         keyIsUniqueForIndexedFile, traceKeyHashToVirtualFileMapping, true, false, null);
   }
 
   public DurableMapIndexStorage(@NotNull Path storageFile,
@@ -107,6 +114,7 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
                                 @NotNull DataExternalizer<Value> valueExternalizer,
                                 int cacheSize,
                                 boolean keyIsUniqueForIndexedFile,
+                                boolean traceKeyHashToVirtualFileMapping,
                                 boolean initialize,
                                 boolean readOnly,
                                 @Nullable ValueContainerInputRemapping inputRemapping) throws IOException {
@@ -119,6 +127,7 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
       valueExternalizer,
       cacheSize,
       keyIsUniqueForIndexedFile,
+      traceKeyHashToVirtualFileMapping,
       initialize,
       readOnly,
       inputRemapping
@@ -131,6 +140,7 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
     @NotNull DataExternalizer<Value> valueExternalizer,
     int cacheSize,
     boolean keyIsUniqueForIndexedFile,
+    boolean traceKeyHashToVirtualFileMapping,
     boolean initialize,
     boolean readOnly,
     @Nullable ValueContainerInputRemapping inputRemapping
@@ -140,6 +150,7 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
 
     this.cacheSize = cacheSize;
     this.keyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
+    this.traceKeyHashToVirtualFileMapping = traceKeyHashToVirtualFileMapping;
     this.readOnly = readOnly;
 
     if (inputRemapping != null) {
@@ -451,7 +462,8 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
   public boolean processKeys(@NotNull Processor<? super Key> processor,
                              @NotNull GlobalSearchScope scope,
                              @Nullable IdFilter idFilter) throws StorageException {
-    if (idFilter == null) {
+    if (!traceKeyHashToVirtualFileMapping || idFilter == null || idFilter == IdFilter.ACCEPT_ALL) {
+      //if scope is not defined, or storage is not configured to support the scoping -- supply all the keys
       return processKeys(processor);
     }
 
