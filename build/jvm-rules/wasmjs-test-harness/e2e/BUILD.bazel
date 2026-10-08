@@ -48,11 +48,11 @@ wasmjs_library(
 
 wasmjs_test(
     name = "e2e",
-    awaited_imports = {"marker.mjs": "ready"},
+    awaited_imports = {"./marker.mjs": "ready"},
     configuration_scripts = ["config/set-global.js"],
     module = ":e2e-module",
     module_name = "wasmjs-test-e2e",
-    module_runtime_files = ["runtime/marker.mjs"],
+    module_runtime_files = {"./marker.mjs": "runtime/marker.mjs"},
     npm_packages = {"nanoid": "@nanoid//:package"},
     testdata = ["testdata/sample.txt"],
 )
@@ -132,19 +132,19 @@ wasmjs_test(
 
 wasmjs_test(
     name = "e2e-awaited-missing",
-    awaited_imports = {"marker.mjs": "nonexistent"},
+    awaited_imports = {"./marker.mjs": "nonexistent"},
     module = ":e2e-failing-module",
     module_name = "wasmjs-awaited-missing",
-    module_runtime_files = ["runtime/marker.mjs"],
+    module_runtime_files = {"./marker.mjs": "runtime/marker.mjs"},
     tags = ["manual"],
 )
 
 wasmjs_test(
     name = "e2e-awaited-hanging",
-    awaited_imports = {"never.mjs": "never"},
+    awaited_imports = {"./never.mjs": "never"},
     module = ":e2e-failing-module",
     module_name = "wasmjs-awaited-hanging",
-    module_runtime_files = ["runtime/never.mjs"],
+    module_runtime_files = {"./never.mjs": "runtime/never.mjs"},
     tags = ["manual"],
 )
 
