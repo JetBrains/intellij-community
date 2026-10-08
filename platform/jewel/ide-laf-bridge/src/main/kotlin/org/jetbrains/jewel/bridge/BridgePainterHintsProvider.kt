@@ -11,6 +11,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.PalettePainterHintsProvider
 import org.jetbrains.jewel.ui.painter.hints.ColorBasedPaletteReplacement
+import org.jetbrains.jewel.ui.painter.hints.ColorKeyPaletteReplacement
 import org.jetbrains.jewel.ui.painter.hints.Dark
 import org.jetbrains.jewel.ui.painter.hints.HiDpi
 import org.jetbrains.jewel.ui.painter.hints.KeyBasedPaletteReplacement
@@ -34,6 +35,7 @@ private constructor(
     override val checkBoxByKeyPaletteHint: PainterHint
     override val treePaletteHint: PainterHint
     override val uiPaletteHint: PainterHint
+    override val togglePaletteHint: PainterHint
 
     init {
         val ui = mutableMapOf<Color, Color>()
@@ -60,6 +62,15 @@ private constructor(
         checkBoxByColorPaletteHint = ColorBasedPaletteReplacement(checkBoxesByColor)
         treePaletteHint = ColorBasedPaletteReplacement(trees)
         uiPaletteHint = ColorBasedPaletteReplacement(ui)
+
+        // DarculaOnOffButtonUI resolves the same keys from the UI defaults, where UITheme registers each theme color
+        // with a "ColorPalette." prefix
+        togglePaletteHint =
+            ColorKeyPaletteReplacement(
+                toggleColorKeys
+                    .mapNotNull { key -> retrieveColorOrNull("ColorPalette.$key")?.let { key to it } }
+                    .toMap()
+            )
     }
 
     private fun registerColorBasedReplacement(map: MutableMap<Color, Color>, key: String, value: String) {
@@ -136,6 +147,24 @@ private constructor(
                 themeColorPalette = themeColors,
             )
         }
+
+        // The theme colors that the platform toggle*.svg images name. See DarculaOnOffButtonUI.
+        private val toggleColorKeys: List<String> =
+            listOf(
+                "toggle-on-bg",
+                "toggle-on-border",
+                "toggle-on-notch",
+                "toggle-off-bg",
+                "toggle-off-border",
+                "toggle-off-notch",
+                "toggle-on-disabled-bg",
+                "toggle-on-disabled-border",
+                "toggle-on-disabled-notch",
+                "toggle-off-disabled-bg",
+                "toggle-off-disabled-border",
+                "toggle-off-disabled-notch",
+                "toggle-focus-border",
+            )
 
         private val supportedCheckboxKeys: Set<String> =
             setOf(

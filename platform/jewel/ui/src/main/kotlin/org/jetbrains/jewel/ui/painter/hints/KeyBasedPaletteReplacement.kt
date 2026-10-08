@@ -58,7 +58,7 @@ private fun parseKeysFromId(id: String): Pair<String, String> {
     }
 }
 
-private fun Element.patchColorAttribute(attrName: String, newColor: Color?) {
+internal fun Element.patchColorAttribute(attrName: String, newColor: Color?) {
     if (newColor == null) return
     if (!hasAttribute(attrName)) return
 

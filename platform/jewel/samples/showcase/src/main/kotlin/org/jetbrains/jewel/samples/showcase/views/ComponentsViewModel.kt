@@ -21,6 +21,7 @@ import org.jetbrains.jewel.samples.showcase.components.GotItTooltipShowcase
 import org.jetbrains.jewel.samples.showcase.components.Icons
 import org.jetbrains.jewel.samples.showcase.components.Links
 import org.jetbrains.jewel.samples.showcase.components.Menus
+import org.jetbrains.jewel.samples.showcase.components.OnOffButtons
 import org.jetbrains.jewel.samples.showcase.components.ProgressBar
 import org.jetbrains.jewel.samples.showcase.components.RadioButtons
 import org.jetbrains.jewel.samples.showcase.components.Scrollbars
@@ -117,6 +118,11 @@ public class ComponentsViewModel(
             ),
             ViewInfo(title = "Badges", iconKey = ShowcaseIcons.Components.badge, content = { Badges() }),
             ViewInfo(title = "Got It", iconKey = ShowcaseIcons.Components.gotIt, content = { GotItTooltipShowcase() }),
+            ViewInfo(
+                title = "On Off Button",
+                iconKey = ShowcaseIcons.Components.onOffButton,
+                content = { OnOffButtons() },
+            ),
         )
 
     private var _currentView: ViewInfo by mutableStateOf(views.first())

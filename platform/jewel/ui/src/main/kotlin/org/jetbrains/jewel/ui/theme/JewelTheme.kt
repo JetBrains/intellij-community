@@ -55,6 +55,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalInlineBannerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalLazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
+import org.jetbrains.jewel.ui.component.styling.LocalOnOffButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSlimButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSplitButtonStyle
@@ -75,6 +76,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTransparentIconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.component.styling.OnOffButtonStyle
 import org.jetbrains.jewel.ui.component.styling.PopupAdStyle
 import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
@@ -270,6 +272,10 @@ public val JewelTheme.Companion.gotItButtonStyle: ButtonStyle
 /** The styling for search text field components. */
 public val JewelTheme.Companion.searchTextFieldStyle: SearchTextFieldStyle
     @Composable @ReadOnlyComposable get() = LocalSearchTextFieldStyle.current
+
+/** The styling for on off button components. */
+public val JewelTheme.Companion.onOffButtonStyle: OnOffButtonStyle
+    @Composable @ReadOnlyComposable get() = LocalOnOffButtonStyle.current
 
 /**
  * Applies [theme] and [styling] to the [content] composition tree with Swing compat mode disabled.

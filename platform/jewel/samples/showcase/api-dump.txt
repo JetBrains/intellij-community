@@ -25,6 +25,7 @@ f:org.jetbrains.jewel.samples.showcase.ShowcaseIcons$Components
 - f:getGotIt():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getLinks():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getMenu():org.jetbrains.jewel.ui.icon.PathIconKey
+- f:getOnOffButton():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getProgressBar():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getRadioButton():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getScrollbar():org.jetbrains.jewel.ui.icon.PathIconKey
@@ -66,6 +67,8 @@ f:org.jetbrains.jewel.samples.showcase.components.LinksKt
 - sf:Links(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.MenusKt
 - sf:Menus(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
+f:org.jetbrains.jewel.samples.showcase.components.OnOffButtonsKt
+- sf:OnOffButtons(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.ProgressBarKt
 - sf:ProgressBar(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.RadioButtonsKt
