@@ -686,7 +686,10 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
   private fun applySearchControl(intent: UnifiedPluginSearchControlIntent) {
     if (disposed) return
     queryIntentRevision++
+    val previousRevision = pageSource.state.value.query.revision
     pageSource.applySearchControl(intent)
+    val updatedQuery = pageSource.state.value.query
+    if (updatedQuery.revision != previousRevision) startUnifiedSearch(updatedQuery)
   }
 
   private fun selectOccurrences(occurrenceIds: List<PluginOccurrenceId>) {
