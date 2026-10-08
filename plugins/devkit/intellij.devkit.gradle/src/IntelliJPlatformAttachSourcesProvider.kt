@@ -7,7 +7,7 @@ import com.intellij.java.library.MavenCoordinates
 import com.intellij.java.library.getMavenCoordinates
 import com.intellij.notification.BrowseNotificationAction
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -26,12 +26,17 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.psi.PsiFile
 import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
 import com.intellij.workspaceModel.ide.legacyBridge.findModule
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
 import org.jetbrains.idea.devkit.run.ProductInfo
 import com.intellij.devkit.gradle.tooling.IntelliJPlatformSourceCoordinates
 import org.jetbrains.idea.devkit.run.loadProductInfo
+import org.jetbrains.plugins.gradle.GradleCoroutineScope.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.service.project.GradleNotification
 import org.jetbrains.plugins.gradle.util.GradleArtifactDownloader
@@ -226,8 +231,15 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         private fun performInternal(libraries: Collection<Library>): ActionCallback {
           val executionResult = ActionCallback()
 
-          attachSources(it, libraries) {
-            executionResult.setDone()
+          psiFile.project.gradleCoroutineScope.launch {
+            try {
+              attachSources(it, libraries)
+              executionResult.setDone()
+            }
+            catch (e: Throwable) {
+              executionResult.setRejected()
+              throw e
+            }
           }
 
           return executionResult
@@ -352,7 +364,11 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
       /**
        * Downloads and attaches the first accepted archive.
        * When no archive downloads, reports [failure]. A downloaded archive that [accept] rejects is not a failure.
-       * When no archive is attached, runs [performFallback] and joins its result, or rejects the result when it returns `null`.
+       * When no archive is attached, runs [performFallback] on the EDT and joins its result,
+       * or rejects the result when it returns `null`.
+       *
+       * The work runs in a coroutine of the project, and not in a continuation of the download future.
+       * The continuation runs in the context of the completed download job, which cancels an IDE service initialization.
        */
       private fun performInternal(module: Module, libraries: Collection<Library>, performFallback: () -> ActionCallback?): ActionCallback {
         val moduleData = CachedModuleDataFinder.getGradleModuleData(module)
@@ -360,58 +376,50 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
         val executionResult = ActionCallback()
         val project = psiFile.project
-        var downloaded = false
 
-        fun downloadAndAttach(index: Int) {
-          val artifactNotation = notations.getOrNull(index)
-          if (artifactNotation == null) {
-            if (!downloaded) {
-              notifyDownloadFailed(project, moduleData, notations.first(), failure)
+        project.gradleCoroutineScope.launch {
+          try {
+            var downloaded = false
+            for (artifactNotation in notations) {
+              val path = GradleArtifactDownloader.downloadArtifact(project, name, artifactNotation, moduleData,
+                                                                   GradleDependencySourceDownloaderErrorHandler.Noop).await()
+                         ?: continue
+              downloaded = true
+              if (accept(path)) {
+                attachSources(path, libraries)
+                executionResult.setDone()
+                return@launch
+              }
             }
-            val fallbackResult = performFallback()
-            if (fallbackResult != null) {
-              fallbackResult.notify(executionResult)
+            withContext(Dispatchers.EDT) {
+              if (!downloaded) {
+                notifyDownloadFailed(project, moduleData, notations.first(), failure)
+              }
+              performFallback()?.notify(executionResult) ?: executionResult.setRejected()
             }
-            else {
-              executionResult.setRejected()
-            }
-            return
           }
-          GradleArtifactDownloader.downloadArtifact(project, name, artifactNotation, moduleData,
-                                                    GradleDependencySourceDownloaderErrorHandler.Noop)
-            .whenComplete { path, error ->
-              if (error == null && path != null) {
-                downloaded = true
-              }
-              when {
-                error == null && path != null && accept(path) -> attachSources(path, libraries) { executionResult.setDone() }
-                else -> downloadAndAttach(index + 1)
-              }
-            }
+          catch (e: Throwable) {
+            executionResult.setRejected()
+            throw e
+          }
         }
-
-        downloadAndAttach(0)
 
         return executionResult
       }
     }
 
   /**
-   * Attaches the sources archive in [path] to [libraries] and then runs [block].
+   * Attaches the sources archive in [path] to [libraries].
    * Refreshes the VFS for [path] on a background thread.
    * Then adds the archive root as a sources root of [libraries] on the EDT.
    */
-  private fun attachSources(path: Path, libraries: Collection<Library>, block: () -> Unit) {
-    val application = ApplicationManager.getApplication()
-    application.executeOnPooledThread {
-      val archiveRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)
+  private suspend fun attachSources(path: Path, libraries: Collection<Library>) {
+    val archiveRoot = withContext(Dispatchers.IO) {
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)
         ?.let { JarFileSystem.getInstance().getJarRootForLocalFile(it) }
-      application.invokeLater {
-        if (archiveRoot != null) {
-          addSourcesRoot(archiveRoot, libraries)
-        }
-        block()
-      }
+    } ?: return
+    withContext(Dispatchers.EDT) {
+      addSourcesRoot(archiveRoot, libraries)
     }
   }
 
