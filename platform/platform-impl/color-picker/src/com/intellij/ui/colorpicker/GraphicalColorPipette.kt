@@ -181,7 +181,7 @@ private class PickerDialog(val parent: JComponent, val callback: ColorPipette.Ca
       timer.start()
       disposable = newDisposable()
       ApplicationManager.getApplication().invokeLater {
-        IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.EventDispatcher {
+        IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.NonLockedEventDispatcher {
           if (it is MouseEvent) {
             if (it.clickCount > 0) {
               it.consume()

@@ -405,7 +405,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
    * Adds "Override IDE shortcuts" terminal feature allowing terminal to process all the key events.
    * Without own IdeEventQueue.EventDispatcher, terminal won't receive key events corresponding to IDE action shortcuts.
    */
-  private final class TerminalEventDispatcher implements IdeEventQueue.EventDispatcher {
+  private final class TerminalEventDispatcher implements IdeEventQueue.NonLockedEventDispatcher {
 
     private boolean myRegistered = false;
 

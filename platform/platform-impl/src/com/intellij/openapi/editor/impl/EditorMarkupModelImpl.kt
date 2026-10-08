@@ -1328,17 +1328,17 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
     fun closeHintOnMovingMouseAway(hint: LightweightHint) {
       val disposable = Disposer.newDisposable()
-      IdeEventQueue.getInstance().addDispatcher({ e ->
-                                                  if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-                                                    myKeepHint = true
-                                                    Disposer.dispose(disposable)
-                                                  }
-                                                  else if (e.getID() == MouseEvent.MOUSE_MOVED && !hint.isInsideHint(RelativePoint(e as MouseEvent))) {
-                                                    hint.hide()
-                                                    Disposer.dispose(disposable)
-                                                  }
-                                                  false
-                                                }, disposable)
+      IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.NonLockedEventDispatcher { e ->
+        if (e.getID() == MouseEvent.MOUSE_PRESSED) {
+          myKeepHint = true
+          Disposer.dispose(disposable)
+        }
+        else if (e.getID() == MouseEvent.MOUSE_MOVED && !hint.isInsideHint(RelativePoint(e as MouseEvent))) {
+          hint.hide()
+          Disposer.dispose(disposable)
+        }
+        false
+      }, disposable)
     }
 
     override fun mouseDragged(e: MouseEvent) {

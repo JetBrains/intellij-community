@@ -137,6 +137,7 @@ import org.jsoup.nodes.Element;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 import javax.swing.MenuSelectionManager;
+import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
@@ -896,11 +897,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     findQuickSearchComponent().ifPresent(quickSearch -> quickSearch.registerHint(hint));
 
-    IdeEventQueue.getInstance().addDispatcher(e -> {
-      if (e.getID() == MouseEvent.MOUSE_PRESSED && e.getSource() == hint.getPopupWindow()) {
-        myCloseOnSneeze = false;
+    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.NonLockedEventDispatcher() {
+      @Override
+      public boolean dispatch(@NotNull AWTEvent e) {
+        if (e.getID() == MouseEvent.MOUSE_PRESSED && e.getSource() == hint.getPopupWindow()) {
+          myCloseOnSneeze = false;
+        }
+        return false;
       }
-      return false;
     }, component);
   }
 

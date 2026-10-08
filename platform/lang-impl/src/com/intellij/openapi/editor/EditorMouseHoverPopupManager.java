@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -321,14 +321,17 @@ public class EditorMouseHoverPopupManager implements Disposable {
     Window window = hint.getPopupWindow();
     if (window != null) {
       window.setFocusableWindowState(true);
-      IdeEventQueue.getInstance().addDispatcher(e -> {
-        if (e.getID() == MouseEvent.MOUSE_PRESSED && e.getSource() == window) {
-          myKeepPopupOnMouseMove = true;
+      IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.NonLockedEventDispatcher() {
+        @Override
+        public boolean dispatch(@NotNull AWTEvent e) {
+          if (e.getID() == MouseEvent.MOUSE_PRESSED && e.getSource() == window) {
+            myKeepPopupOnMouseMove = true;
+          }
+          else if (isValidWindowOpenedEvent(e) && !isParentWindow(window, e.getSource())) {
+            closeHint();
+          }
+          return false;
         }
-        else if (isValidWindowOpenedEvent(e) && !isParentWindow(window, e.getSource())) {
-          closeHint();
-        }
-        return false;
       }, hint);
     }
   }
