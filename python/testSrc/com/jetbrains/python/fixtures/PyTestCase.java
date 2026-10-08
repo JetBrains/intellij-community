@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.find.findUsages.CustomUsageSearcher;
 import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -367,7 +368,17 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   protected void enablePyiStubsForPackages(String @NotNull ... packageNames) {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+    enablePyiStubsForPackages(myFixture.getModule(), getTestRootDisposable(), packageNames);
+  }
+
+  /**
+   * Adds the bundled stubs of {@code packageNames} to the SDK of {@code module}.
+   * The stubs stay until {@code parentDisposable} is disposed.
+   */
+  public static void enablePyiStubsForPackages(@NotNull Module module,
+                                               @NotNull Disposable parentDisposable,
+                                               String @NotNull ... packageNames) {
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
     assertNotNull(sdk);
     List<VirtualFile> stubPackageRoots = new ArrayList<>();
     for (String packageName : packageNames) {
@@ -379,7 +390,7 @@ public abstract class PyTestCase extends UsefulTestCase {
       stubPackageRoots.add(stubPackageRoot);
     }
     addSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES);
-    Disposer.register(getTestRootDisposable(), () -> removeSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES));
+    Disposer.register(parentDisposable, () -> removeSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES));
   }
 
   protected String getTestDataPath() {
