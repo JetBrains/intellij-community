@@ -66,7 +66,8 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     // Update representation.
     DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(project);
     if (analyzer != null) {
-      analyzer.restart(file, this);
+      // The editor can be created on the EDT without a lock, e.g., in a Settings card that becomes visible.
+      ReadAction.runBlocking(() -> analyzer.restart(file, this));
     }
   }
 
