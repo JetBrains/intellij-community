@@ -274,6 +274,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use version for NonLockedEventDispatcher")
   fun addDispatcher(dispatcher: EventDispatcher, parent: Disposable?) {
     addProcessor(dispatcher, parent, dispatchers)
@@ -281,15 +282,6 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   fun addDispatcher(dispatcher: NonLockedEventDispatcher, parent: Disposable?) {
     addProcessor(dispatcher, parent, nonLockingDispatchers)
-  }
-  
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use version for NonLockedEventDispatcher")
-  fun addDispatcher(dispatcher: EventDispatcher, scope: CoroutineScope) {
-    dispatchers.add(dispatcher)
-    scope.coroutineContext.job.invokeOnCompletion {
-      dispatchers.remove(dispatcher)
-    }
   }
 
   fun addDispatcher(dispatcher: NonLockedEventDispatcher, scope: CoroutineScope) {
