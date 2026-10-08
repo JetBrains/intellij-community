@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -43,6 +43,15 @@ public class ActionDeclarationRelatedItemLineMarkerProviderTest extends JavaCode
                                                   DevkitCoreIcons.Gutter.Plugin, "action");
   }
 
+  public void testActionWithoutId() {
+    myFixture.copyFileToProject("pluginActionWithoutId.xml");
+
+    GutterMark gutter = myFixture.findGutter("MyAction.java");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter,
+                                                  buildTooltipText("MyAction"),
+                                                  DevkitCoreIcons.Gutter.Plugin, "action");
+  }
+
   public void testActionMultipleDeclarations() {
     myFixture.copyFileToProject("pluginActionMultipleDeclarations.xml");
 
@@ -66,6 +75,33 @@ public class ActionDeclarationRelatedItemLineMarkerProviderTest extends JavaCode
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
                                                   buildTooltipText("firstDeclaration", "secondDeclaration"),
                                                   DevkitCoreIcons.Gutter.Plugin, "group");
+  }
+
+  public void testActionGroupClassActionDeclaration() {
+    myFixture.copyFileToProject("pluginActionGroupClassActionDeclaration.xml");
+
+    GutterMark gutter = myFixture.findGutter("MyActionGroup.java");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter,
+                                                  buildTooltipText("actionDeclaration"),
+                                                  DevkitCoreIcons.Gutter.Plugin, "action");
+  }
+
+  public void testActionGroupClassActionDeclarationWithoutId() {
+    myFixture.copyFileToProject("pluginActionGroupClassActionDeclarationWithoutId.xml");
+
+    GutterMark gutter = myFixture.findGutter("MyActionGroup.java");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter,
+                                                  buildTooltipText("MyActionGroup"),
+                                                  DevkitCoreIcons.Gutter.Plugin, "action");
+  }
+
+  public void testActionClassRegisteredAsActionAndGroupProvidesOnlyTheActionItem() {
+    myFixture.copyFileToProject("pluginActionClassActionAndGroupDeclarations.xml");
+
+    GutterMark gutter = myFixture.findGutter("MyAction.java");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter,
+                                                  buildTooltipText("actionDeclaration"),
+                                                  DevkitCoreIcons.Gutter.Plugin, "action");
   }
 
   private static String buildTooltipText(String... actionIds) {

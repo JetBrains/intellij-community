@@ -1,0 +1,6 @@
+<idea-plugin>
+  <actions>
+    <action class="MyAction" id="actionDeclaration"/>
+    <group class="MyAction" id="groupDeclaration"/>
+  </actions>
+</idea-plugin>
