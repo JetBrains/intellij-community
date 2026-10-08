@@ -111,6 +111,9 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testRecordPatternAndWhen() {
     doTest();
   }
+  public void testRecordPatternWildcardComponent() {
+    doTest();
+  }
   public void testNestedRecordPatterns() {
     doTest();
   }

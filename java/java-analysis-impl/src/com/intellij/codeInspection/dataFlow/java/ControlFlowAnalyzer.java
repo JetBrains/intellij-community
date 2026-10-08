@@ -226,6 +226,7 @@ import com.intellij.psi.PsiWhileStatement;
 import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.PsiYieldStatement;
 import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.impl.source.JavaVarTypeUtil;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -1369,7 +1370,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         PsiClassType.ClassResolveResult resolveResult = patternClassType.resolveGenerics();
         PsiClass recordClass = resolveResult.getElement();
         boolean unchecked = JavaGenericsUtil.isUncheckedCast(patternClassType, checkType);
-        PsiSubstitutor substitutor = unchecked ? PsiSubstitutor.EMPTY : resolveResult.getSubstitutor();
+        // Capture the wildcards, as a bare wildcard component type (like in 'Rec<?>(Object o)') makes the nested pattern conditional
+        PsiSubstitutor substitutor = unchecked ? PsiSubstitutor.EMPTY :
+                                     ((PsiClassType)PsiUtil.captureToplevelWildcards(patternClassType, deconstructionPattern))
+                                       .resolveGenerics().getSubstitutor();
         if (recordClass != null && recordClass.isRecord()) {
           PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
           if (components.length == recordComponents.length) {
@@ -1386,7 +1390,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
               if (JavaPsiSwitchUtil.mayCauseMatchExceptionDuringDeconstruction(deconstructionPattern, recordComponent, patternComponent, Set.of())) {
                 addNullCheck(deconstructionMatchException.problem(labelAnchor, patternComponent));
               }
-              processPattern(sourcePattern, patternComponent, substitutor.substitute(recordComponent.getType()), null, endPatternOffset);
+              PsiType componentType = JavaVarTypeUtil.getUpwardProjection(substitutor.substitute(recordComponent.getType()));
+              processPattern(sourcePattern, patternComponent, componentType, null, endPatternOffset);
             }
           }
         }
