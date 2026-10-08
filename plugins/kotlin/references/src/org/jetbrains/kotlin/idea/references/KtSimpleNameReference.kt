@@ -6,12 +6,15 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtEnumEntrySuperclassReferenceExpression
 import org.jetbrains.kotlin.psi.KtImplementationDetail
 import org.jetbrains.kotlin.psi.KtImportAlias
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtWhenConditionInRange
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.utils.exceptions.rethrowExceptionWithDetails
+import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 @SubclassOptInRequired(KtImplementationDetail::class)
 abstract class KtSimpleNameReference(
@@ -27,9 +30,28 @@ abstract class KtSimpleNameReference(
     }
 
     override fun getRangeInElement(): TextRange {
+        if (element is KtEnumEntrySuperclassReferenceExpression) {
+            // `KtEnumEntrySuperclassReferenceExpression` does not have a proper name element inside of it;
+            // instead, `getReferencedNameElement` returns the parent enum class for it.
+            // Since `getRangeInElement` is expected to return the range somewhere inside of the `element`,
+            // the only reasonable option is to return the whole text range of the `element` in this case.
+            return element.textRangeInParent
+        }
+
         val referencedElement = element.getReferencedNameElement()
         val startOffset = element.startOffset
-        return referencedElement.textRange.shiftLeft(startOffset)
+
+        return try {
+            referencedElement.textRange.shiftLeft(startOffset)
+        } catch (e: IllegalArgumentException) {
+            rethrowExceptionWithDetails(
+                "Could not compute 'getRangeInElement' for element of class '${element.javaClass}'",
+                e,
+            ) {
+                withPsiEntry("element", element)
+                withPsiEntry("referencedElement", referencedElement)
+            }
+        }
     }
 
     override fun canRename(): Boolean {
