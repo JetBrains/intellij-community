@@ -1,5 +1,6 @@
 package com.intellij.database.datagrid;
 
+import com.intellij.database.extractors.TextInfo;
 import com.intellij.util.containers.ClassMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,7 @@ public class BaseObjectNormalizer implements ObjectNormalizer {
     put(Timestamp.class, identity);
     put(Time.class, identity);
     put(String.class, identity);
+    put(TextInfo.class, identity);
     addToBoxedArrayConverters();
   }
 
