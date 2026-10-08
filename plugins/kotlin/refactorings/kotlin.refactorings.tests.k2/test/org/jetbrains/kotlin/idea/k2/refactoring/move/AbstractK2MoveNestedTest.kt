@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -45,9 +46,10 @@ internal object K2MoveNestedRefactoringAction : KotlinMoveRefactoringAction {
         when (type) {
             "MOVE_KOTLIN_NESTED_CLASS", "MOVE_KOTLIN_NESTED_DECLARATION" -> {
                 val project = mainFile.project
-                val elementToMove = elementsAtCaret.single().getNonStrictParentOfType<KtNamedDeclaration>()!!
-                val fileName = (elementToMove.name!!) + ".kt"
+                val elementsToMove = elementsAtCaret.map { it.getNonStrictParentOfType<KtNamedDeclaration>()!! }
+                val fileName = (elementsToMove.first().name!!) + ".kt"
                 val targetClassName = config.getNullableString("targetClass")
+                val targetCompanionBlock = config.get("targetCompanionBlock")?.asBoolean == true
                 val targetPackageFqName = config.getNullableString("targetPackage")?.let {
                     FqName(it)
                 } ?: (mainFile as KtFile).packageFqName
@@ -55,13 +57,17 @@ internal object K2MoveNestedRefactoringAction : KotlinMoveRefactoringAction {
                 val dirStructureMatchesPkg = mainFile.sourceRoot != mainFile.virtualFile.parent
                 val target = if (targetClassName != null) {
                     val targetClass = KotlinFullClassNameIndex[targetClassName, project, project.projectScope()].first()
-                    K2MoveTargetDescriptor.ClassOrObject(targetClass)
+                    if (targetCompanionBlock) {
+                        K2MoveTargetDescriptor.CompanionBlock(targetClass as KtClass)
+                    } else {
+                        K2MoveTargetDescriptor.ClassOrObject(targetClass)
+                    }
                 } else {
                     K2MoveTargetDescriptor.File(fileName, targetPackageFqName, targetDir)
                 }
                 val moveDescriptor = K2MoveDescriptor.Declarations(
                     project,
-                    source = K2MoveSourceDescriptor.ElementSource(listOf(elementToMove)),
+                    source = K2MoveSourceDescriptor.ElementSource(elementsToMove),
                     target = target,
                 )
                 val moveOperationDescriptor = allowAnalysisOnEdt {

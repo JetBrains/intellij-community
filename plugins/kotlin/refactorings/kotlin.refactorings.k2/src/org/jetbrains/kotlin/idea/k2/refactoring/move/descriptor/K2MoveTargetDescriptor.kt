@@ -169,7 +169,7 @@ sealed interface K2MoveTargetDescriptor {
         override fun getTarget(): KtCompanionBlock? = containingClass.companionBlocks.firstOrNull()
 
         override fun addElement(target: KtCompanionBlock, element: PsiElement): PsiElement =
-            appendElementToClassBody(target.body, element)
+            appendElementToClassBody(target.body, element, skipWhiteSpaces = false)
     }
 
     class CompanionExtension(

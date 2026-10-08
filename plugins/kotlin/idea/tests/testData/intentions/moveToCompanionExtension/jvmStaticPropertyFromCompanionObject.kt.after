@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+
+class Foo {
+}
+
+companion val Foo.bar: Int get() = 0

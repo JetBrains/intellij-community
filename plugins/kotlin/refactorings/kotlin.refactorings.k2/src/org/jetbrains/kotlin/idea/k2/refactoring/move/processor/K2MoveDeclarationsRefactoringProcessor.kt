@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.psi.deleteSingle
 import org.jetbrains.kotlin.idea.base.psi.getOrCreatePrimaryConstructorParameterList
 import org.jetbrains.kotlin.idea.base.psi.insertParameterBefore
@@ -53,6 +54,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.OuterInsta
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringListener
 import org.jetbrains.kotlin.idea.refactoring.pullUp.willBeMoved
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -60,6 +62,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFileAnnotationList
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtImportList
+import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -74,6 +77,7 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
+import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
@@ -464,6 +468,10 @@ open class K2MoveDeclarationsRefactoringProcessor(
         newDeclaration: PsiElement
     ) {
         val outerInstanceParameterName = (originalDeclaration as? KtNamedDeclaration)?.computeOrGetOuterInstanceName()
+        val moveTargetType = (moveTarget as? Declaration<*>)?.getTargetType()
+        if (moveTargetType == DeclarationTargetType.COMPANION_BLOCK || moveTargetType == DeclarationTargetType.COMPANION_EXTENSION) {
+            (newDeclaration as? KtDeclaration)?.removeJvmStaticAnnotation()
+        }
         when (newDeclaration) {
             is KtClass -> {
                 val primaryConstructor = newDeclaration.primaryConstructor ?: return
@@ -476,7 +484,6 @@ open class K2MoveDeclarationsRefactoringProcessor(
                     val addedParameter = newDeclaration.valueParameterList?.parameters?.firstOrNull() ?: return
                     shortenReferences(addedParameter)
                 }
-                val moveTargetType = (moveTarget as? Declaration<*>)?.getTargetType()
                 if (moveTargetType == DeclarationTargetType.COMPANION_OBJECT || moveTargetType == DeclarationTargetType.OBJECT) {
                     newDeclaration.removeModifierKeyword(KtTokens.OPEN_KEYWORD)
                     newDeclaration.removeModifierKeyword(KtTokens.FINAL_KEYWORD)

@@ -13947,6 +13947,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/invokeOperator.kt");
         }
 
+        @TestMetadata("jvmStaticFunFromCompanionObject.kt")
+        public void testJvmStaticFunFromCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/jvmStaticFunFromCompanionObject.kt");
+        }
+
+        @TestMetadata("jvmStaticPropertyFromCompanionObject.kt")
+        public void testJvmStaticPropertyFromCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/jvmStaticPropertyFromCompanionObject.kt");
+        }
+
         @TestMetadata("lastFunFromCompanionObject.kt")
         public void testLastFunFromCompanionObject() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/lastFunFromCompanionObject.kt");
@@ -14068,6 +14078,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("invokeOperator.kt")
         public void testInvokeOperator() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/invokeOperator.kt");
+        }
+
+        @TestMetadata("jvmStaticFunFromCompanionObject.kt")
+        public void testJvmStaticFunFromCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/jvmStaticFunFromCompanionObject.kt");
+        }
+
+        @TestMetadata("jvmStaticPropertyFromCompanionObject.kt")
+        public void testJvmStaticPropertyFromCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/jvmStaticPropertyFromCompanionObject.kt");
         }
 
         @TestMetadata("memberExtensionFun.kt")

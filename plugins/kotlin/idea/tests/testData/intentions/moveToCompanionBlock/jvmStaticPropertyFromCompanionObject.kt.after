@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+class Foo {
+    companion {
+        <caret>var bar: Int = 0
+    }
+}

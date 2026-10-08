@@ -13,6 +13,7 @@ import com.intellij.psi.util.siblings
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import com.intellij.util.takeWhileInclusive
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
 import org.jetbrains.kotlin.idea.core.createKotlinFile
@@ -23,13 +24,17 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationD
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.kdoc.psi.api.KDocElement
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.JvmStandardClassIds
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.psi.psiUtil.siblings
 
 /**
  * @return whether an [PsiElement] should be moved when it's in between moved declarations.
@@ -113,4 +118,20 @@ internal var PsiDirectory.forcedTargetPackage: FqName?
 internal fun PsiDirectory.getPossiblyForcedPackageFqName(): FqName {
     val forcedPkg = parentsWithSelf.filterIsInstance<PsiDirectory>().map { it.forcedTargetPackage }.firstNotNullOfOrNull { it }
     return forcedPkg ?: getFqNameWithImplicitPrefixOrRoot()
+}
+
+internal fun KtDeclaration.removeJvmStaticAnnotation() {
+    val annotationEntry = KotlinPsiHeuristics.findAnnotation(this, JvmStandardClassIds.JVM_STATIC_FQ_NAME) ?: return
+    val modifierList = annotationEntry.parent as? KtModifierList ?: return
+    modifierList.deleteChildWithWhiteSpaces(annotationEntry, forward = modifierList.lastChild != annotationEntry)
+    if (modifierList.firstChild == null) {
+        deleteChildWithWhiteSpaces(modifierList, forward = true)
+    }
+}
+
+private fun PsiElement.deleteChildWithWhiteSpaces(child: PsiElement, forward: Boolean) {
+    val rangeEnd = child.siblings(forward = forward, withItself = true)
+        .takeWhile { it is PsiWhiteSpace || it == child }
+        .last()
+    if (forward) deleteChildRange(child, rangeEnd) else deleteChildRange(rangeEnd, child)
 }
