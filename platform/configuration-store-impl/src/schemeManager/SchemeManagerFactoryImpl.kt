@@ -166,7 +166,7 @@ internal class ApplicationSchemeManagerFactory(coroutineScope: CoroutineScope) :
 internal class ProjectSchemeManagerFactory(override val project: Project, coroutineScope: CoroutineScope) : SchemeManagerFactoryBase(project, coroutineScope) {
   override fun createFileChangeSubscriber(): FileChangeSubscriber = { schemeManager ->
     if (!ApplicationManager.getApplication().isUnitTestMode || project.getUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE) == true) {
-      project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))
+      project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES_BG, SchemeFileTracker(schemeManager, project))
     }
   }
 

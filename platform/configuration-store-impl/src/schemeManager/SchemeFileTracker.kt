@@ -10,7 +10,7 @@ import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
@@ -20,7 +20,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 internal class SchemeFileTracker<T : Scheme, M : T>(
   private val schemeManager: SchemeManagerImpl<T, M>,
   private val project: Project
-) : BulkFileListener {
+) : BulkFileListenerBackgroundable {
   private val applicator = SchemeChangeApplicator(schemeManager)
 
   override fun after(events: List<VFileEvent>) {
