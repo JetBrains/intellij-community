@@ -25,10 +25,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES
+import com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES_BG
 import com.intellij.openapi.vfs.VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS
 import com.intellij.openapi.vfs.findFile
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.PolyContextName
@@ -448,7 +448,7 @@ private class PolyContextDiscoveryInfo(private val project: Project, private val
     messageBus.subscribe(PolyContextChangeListener.TOPIC, PolyContextChangeListener {
       DaemonCodeAnalyzer.getInstance(project).restart("PolyContextDiscoveryInfo.PolyContextChangeListener")
     })
-    messageBus.subscribe(VFS_CHANGES, object : BulkFileListener {
+    messageBus.subscribe(VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
       override fun after(events: MutableList<out VFileEvent>) {
         val wsFile = events.find { it.file?.name == PolyContext.POLY_SYMBOLS_CONTEXT_FILE }
         if (wsFile != null) {
