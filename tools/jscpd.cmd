@@ -23,29 +23,16 @@ GOTO :CMDSCRIPT
 
 set -eu
 
-if [ -n "${JSCPD_BIN:-}" ]; then
-  if [ ! -x "$JSCPD_BIN" ]; then
-    echo "jscpd: JSCPD_BIN is not an executable file: $JSCPD_BIN" >&2
-    exit 78
-  fi
-  exec "$JSCPD_BIN" "$@"
-fi
-
-# Find the Community root in either layout. Use its parent only for an Ultimate checkout, as `bt.cmd` does. The
-# repositories of the community module have no name in the ultimate root, so the label goes through `@community`.
 case "$0" in
   */*) self_dir="${0%/*}" ;;
   *) self_dir="." ;;
 esac
-community_root="$(cd -- "$self_dir/.." && pwd)"
-parent="$(cd -- "$community_root/.." && pwd)"
-root="$community_root"
-label_prefix="//tools"
-if [ -f "$parent/MODULE.bazel" ] && [ -f "$parent/bazel.cmd" ] && [ -d "$parent/community" ] &&
-   [ "$(cd -- "$parent/community" && pwd)" = "$community_root" ]; then
-  root="$parent"
-  label_prefix="@community//tools"
-fi
+# The shared steps of the polyglot wrappers: the override, the roots, the real path.
+. "$self_dir/polyglot-wrapper.sh"
+polyglot_exec_override jscpd JSCPD_BIN 78 "$@"
+
+# The repositories of the community module have no name in the ultimate root, so the label goes through `@community`.
+polyglot_find_roots "$self_dir"
 
 # The pin file is the one home of the version. A shell loop reads it, so the warm path starts no other process.
 version=""
@@ -94,7 +81,7 @@ if [ -f "$cache" ]; then
   fi
 fi
 
-label="$label_prefix:jscpd_$host"
+label="${label_prefix}tools:jscpd_$host"
 echo "jscpd: the first run of jscpd $version asks Bazel for $label" >&2
 if ! files="$(cd "$root" && ./bazel.cmd cquery --ui_event_filters=-info --noshow_progress --output=files "$label")"; then
   echo "jscpd: bazel cquery failed for $label; see the bazel output above" >&2
@@ -115,7 +102,7 @@ fi
 # `cquery` prints `external/<canonical>/jscpd`, relative to the output base. That directory can be a symlink into the
 # repository contents cache. The real path stays valid after `bazel clean --expunge`.
 resolved="$output_base/$relative"
-resolved="$(readlink -f "$resolved" 2>/dev/null || printf '%s' "$resolved")"
+resolved="$(polyglot_real_path "$resolved")"
 if [ -z "$relative" ] || [ ! -x "$resolved" ]; then
   echo "jscpd: could not resolve jscpd from $label (got '$resolved')" >&2
   exit 78
@@ -135,19 +122,7 @@ REM output_base. Bazel writes each answer to a file. Thus no Bazel argument goes
 REM the exit code of Bazel stays visible. Windows has no readlink, so the cache holds the path under the output base.
 REM After an expunge of the output base that path does not exist, and the next run resolves again.
 
-REM Find the roots before the argument loop, because `shift` also moves %0.
-for %%d in ("%~dp0..") do set "COMMUNITY_ROOT=%%~fd"
-for %%d in ("%COMMUNITY_ROOT%\..") do set "PARENT=%%~fd"
-for %%d in ("%PARENT%\community") do set "PARENT_COMMUNITY=%%~fd"
-set "ROOT=%COMMUNITY_ROOT%"
-set "LABEL_PREFIX=//tools"
-if not exist "%PARENT%\MODULE.bazel" goto :ROOTREADY
-if not exist "%PARENT%\bazel.cmd" goto :ROOTREADY
-if not exist "%PARENT_COMMUNITY%\" goto :ROOTREADY
-if /I not "%PARENT_COMMUNITY%"=="%COMMUNITY_ROOT%" goto :ROOTREADY
-set "ROOT=%PARENT%"
-set "LABEL_PREFIX=@community//tools"
-:ROOTREADY
+call "%~dp0polyglot-wrapper.cmd"
 
 REM `shift` does not rewrite %*, so the forwarded arguments are collected one at a time.
 set "ARGS="
@@ -184,7 +159,7 @@ if not defined RESOLVED goto :RESOLVE
 if exist "%RESOLVED%" goto :RUN
 
 :RESOLVE
-set "LABEL=%LABEL_PREFIX%:jscpd_%HOST%"
+set "LABEL=%LABEL_PREFIX%tools:jscpd_%HOST%"
 echo jscpd: the first run of jscpd %VERSION% asks Bazel for %LABEL% 1>&2
 if not exist "%ROOT%\out\jscpd" mkdir "%ROOT%\out\jscpd"
 REM One %RANDOM% read, reused: two reads give two different names.

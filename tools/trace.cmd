@@ -36,32 +36,21 @@ GOTO :CMDSCRIPT
 
 set -eu
 
-# Resolve the Community root in either layout, then use its parent only for an Ultimate checkout, as bt.cmd does. In a
-# Community checkout `plan` refuses with `air_area_missing`, because no `bt.json` there names the Air area.
 case "$0" in
   */*) self_dir="${0%/*}" ;;
   *) self_dir="." ;;
 esac
-community_root="$(cd -- "$self_dir/.." && pwd)"
-parent="$(cd -- "$community_root/.." && pwd)"
-root="$community_root"
-target="//tools/vm:air-trace"
-if [ -f "$parent/MODULE.bazel" ] && [ -f "$parent/bazel.cmd" ] && [ -d "$parent/community" ] &&
-   [ "$(cd -- "$parent/community" && pwd)" = "$community_root" ]; then
-  root="$parent"
-  target="@community//tools/vm:air-trace"
-fi
+# The shared steps of the polyglot wrappers: the override, the roots, the real path.
+. "$self_dir/polyglot-wrapper.sh"
+
+# In a Community checkout `plan` refuses with `air_area_missing`, because no `bt.json` there names the Air area.
+polyglot_find_roots "$self_dir"
+target="${label_prefix}tools/vm:air-trace"
 
 export BUILD_WORKSPACE_DIRECTORY="$root"
 unset JAVA_RUNFILES RUNFILES_DIR RUNFILES_MANIFEST_FILE RUNFILES_MANIFEST_ONLY TEST_SRCDIR
 
-if [ -n "${AIR_TRACE_BIN:-}" ]; then
-  if [ ! -x "$AIR_TRACE_BIN" ]; then
-    echo "trace: AIR_TRACE_BIN is not an executable file: $AIR_TRACE_BIN" >&2
-    exit 78
-  fi
-  exec "$AIR_TRACE_BIN" "$@"
-fi
+polyglot_exec_override trace AIR_TRACE_BIN 78 "$@"
 
 # The local file with the base name $2 that the build event file $1 names. The build names its top-level outputs in
 # `namedSetOfFiles` records, one JSON record per line, and `--nobuild_event_json_file_path_conversion` makes every URI
@@ -92,7 +81,7 @@ fi
 
 resolved="$(built_file "$events" air-trace)"
 rm -f "$events"
-resolved="$(readlink -f "$resolved" 2>/dev/null || printf '%s' "$resolved")"
+resolved="$(polyglot_real_path "$resolved")"
 if [ ! -x "$resolved" ]; then
   echo "trace: could not resolve air-trace from $target (got '$resolved')" >&2
   exit 78
@@ -107,18 +96,8 @@ setlocal
 REM The same steps as the sh half, see note 5. The launcher is only read for its last line and never run.
 REM This half still runs `bazel run --script_path`, for the reason that the CMD half of vm.cmd states.
 
-for %%d in ("%~dp0..") do set "COMMUNITY_ROOT=%%~fd"
-for %%d in ("%COMMUNITY_ROOT%\..") do set "PARENT=%%~fd"
-for %%d in ("%PARENT%\community") do set "PARENT_COMMUNITY=%%~fd"
-set "ROOT=%COMMUNITY_ROOT%"
-set "TARGET=//tools/vm:air-trace"
-if not exist "%PARENT%\MODULE.bazel" goto :ROOTREADY
-if not exist "%PARENT%\bazel.cmd" goto :ROOTREADY
-if not exist "%PARENT_COMMUNITY%\" goto :ROOTREADY
-if /I not "%PARENT_COMMUNITY%"=="%COMMUNITY_ROOT%" goto :ROOTREADY
-set "ROOT=%PARENT%"
-set "TARGET=@community//tools/vm:air-trace"
-:ROOTREADY
+call "%~dp0polyglot-wrapper.cmd"
+set "TARGET=%LABEL_PREFIX%tools/vm:air-trace"
 
 set "BUILD_WORKSPACE_DIRECTORY=%ROOT%"
 set "JAVA_RUNFILES="
