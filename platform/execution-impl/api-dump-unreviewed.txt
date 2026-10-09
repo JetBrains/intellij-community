@@ -1583,10 +1583,6 @@ f:com.intellij.task.impl.ProjectTaskManagerImpl
 - rebuildAllModules():org.jetbrains.concurrency.Promise
 - run(com.intellij.task.ProjectTask):org.jetbrains.concurrency.Promise
 - run(com.intellij.task.ProjectTaskContext,com.intellij.task.ProjectTask):org.jetbrains.concurrency.Promise
-f:com.intellij.terminal.TerminalShellCommandHandler$Companion
-- f:executeShellCommandHandler(com.intellij.openapi.project.Project,java.lang.String,Z,java.lang.String,com.intellij.execution.Executor):V
-- f:getEP():com.intellij.openapi.extensions.ExtensionPointName
-- f:matches(com.intellij.openapi.project.Project,java.lang.String,Z,java.lang.String):Z
 a:com.intellij.tools.AbstractToolBeforeRunTask
 - clone():com.intellij.tools.AbstractToolBeforeRunTask
 - execute(com.intellij.openapi.actionSystem.DataContext,J):Z
