@@ -5,6 +5,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.impl.OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest.Companion.collectFilesLoadedIntoVfsBeforeListenersRuns
 import com.intellij.openapi.vfs.AfterEventShouldBeFiredBeforeOtherListeners
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -14,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.openapi.vfs.newvfs.TransientChildScanner
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
@@ -38,6 +40,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.pathString
@@ -158,6 +162,68 @@ class VfsRefreshLoadingFilesToVfsTest {
         addNewChildren(parent, listOf("newpkg"))
       }.launch()
       listenerResult.await().getOrThrow()
+    }
+  }
+
+  @Test
+  @RegistryKey(CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  @RegistryKey("vfs.refresh.use.accurate.wfi.data.for.children.preloading", "true")
+  fun `refresh continues when a project closes while another project stays open`(): Unit = timeoutRunBlocking {
+    stageFlatContentLayout()
+
+    withOpenedProject { openProject, _ ->
+      val contentRoot = rootDir.rootPath.resolve("single")
+      addModuleWithContentRoot(openProject, contentRoot)
+
+      val closingProjectPath = rootDir.newDirectoryPath("closingProject")
+      closingProjectPath.resolve(".idea").createDirectories()
+      val options = OpenProjectTask {
+        createModule = false
+        forceOpenInNewFrame = true
+      }
+      ProjectUtil.openOrImportAsync(closingProjectPath, options)!!.useProjectAsync { closingProject ->
+        TestObservation.awaitConfiguration(closingProject)
+        addModuleWithContentRoot(closingProject, contentRoot)
+        assertThat(openProject.isOpen).isTrue()
+        assertThat(closingProject.isOpen).isTrue()
+
+        val parent = findVirtualFile(contentRoot) as NewVirtualFile
+        parent.children
+        val newDirectory = contentRoot.resolve("newpkg")
+        newDirectory.resolve("nested").createDirectories()
+        newDirectory.resolve("nested/NewFile.java").writeText("class NewFile {}\n")
+        assertThat(parent.findChild("newpkg")).isNull()
+
+        val scanStarted = CompletableDeferred<Unit>()
+        val resumeScan = CountDownLatch(1)
+        val refreshFinished = CompletableDeferred<Unit>()
+        TransientChildScanner.setScanStartedCallbackForTests(disposable) {
+          if (scanStarted.complete(Unit)) {
+            assertThat(resumeScan.await(10, TimeUnit.SECONDS)).isTrue()
+          }
+        }
+
+        try {
+          RefreshQueue.getInstance().createSession(true, false) { refreshFinished.complete(Unit) }.apply {
+            addNewChildren(parent, listOf("newpkg"))
+          }.launch()
+          scanStarted.await()
+          assertThat(ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(closingProject, save = false)).isTrue()
+          assertThat(closingProject.isDisposed).isTrue()
+          assertThat(openProject.isOpen).isTrue()
+        }
+        finally {
+          resumeScan.countDown()
+        }
+        refreshFinished.await()
+
+        val directory = checkNotNull(parent.findChildIfCached("newpkg"))
+        assertThat(directory.allChildrenLoaded()).isTrue()
+        val nested = checkNotNull(directory.findChildIfCached("nested"))
+        assertThat(nested.allChildrenLoaded()).isTrue()
+        assertThat(nested.findChildIfCached("NewFile.java")).isNotNull()
+        assertThat(openProject.isDisposed).isFalse()
+      }
     }
   }
 

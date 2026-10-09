@@ -44,7 +44,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 @ApiStatus.Internal
 public final class TransientChildScanner implements ChildScanner {
@@ -79,7 +81,7 @@ public final class TransientChildScanner implements ChildScanner {
         return null;
       }
 
-      return scanChildren(child, initialStates(parent), parent);
+      return scanChildren(child, initialStates(parent, () -> checkCancelled.accept(parent)), parent);
     }
     catch (InvalidPathException e) {
       LOG.warn("Invalid child name: '" + childName + "'", e);
@@ -98,27 +100,44 @@ public final class TransientChildScanner implements ChildScanner {
     }
   }
 
+  /// Using project in the application scope, may lead to [CancellationException] because project is disposed
+  /// However, the vfs refresh should continue in this case if the application is not disposed
+  private static <T> @Nullable T useProject(@Nullable Project project,
+                                            @NotNull Runnable checkCanceled,
+                                            @NotNull Function<? super Project, ? extends T> action) {
+    if (project == null || project.isDisposed()) return null;
+    try {
+      return action.apply(project);
+    }
+    catch (CancellationException e) {
+      checkCanceled.run();
+      ProgressManager.checkCanceled();
+      return null;
+    }
+  }
+
   /// [TraverseState] of a file in [#project]
   ///
   /// Project is stored in a reference, so if it is disposed, it can be released, avoiding temporary project leak
   private record ProjectState(@NotNull Ref<Project> projectRef, @NotNull TraverseState traverseState, @Nullable VirtualFileUrl vfu) {
-    @Nullable Project project() {
+
+    private <T> @Nullable T useProject(@NotNull Runnable checkCanceled, @NotNull Function<? super Project, ? extends T> action) {
       var project = projectRef.get();
       if (project != null && project.isDisposed()) {
         projectRef.set(null);
         return null;
       }
-      return project;
+      return TransientChildScanner.useProject(project, checkCanceled, action);
     }
 
     /// @return `null` if the project is disposed or excludes the subtree of `file`
-    @Nullable ProjectState goDown(@NotNull VirtualFile file) {
-      Project project = project();
-      if (project == null) return null;
-      VirtualFileUrl vfu = this.vfu == null ? null : this.vfu.findChild(file.getName());
-      TraverseState state = this.traverseState.goDown(file, vfu, WorkspaceFileIndexEx.getInstance(project));
-      if (state == null) return null;
-      return new ProjectState(projectRef, state, vfu);
+    @Nullable ProjectState goDown(@NotNull VirtualFile file, @NotNull Runnable checkCanceled) {
+      return useProject(checkCanceled, project -> {
+        VirtualFileUrl vfu = this.vfu == null ? null : this.vfu.findChild(file.getName());
+        TraverseState state = this.traverseState.goDown(file, vfu, WorkspaceFileIndexEx.getInstance(project));
+        if (state == null) return null;
+        return new ProjectState(projectRef, state, vfu);
+      });
     }
   }
 
@@ -129,30 +148,36 @@ public final class TransientChildScanner implements ChildScanner {
 
   /// Computes states of `parent` which is loaded into VFS for all open projects.
   /// Skips the projects which exclude the subtree of `parent`
-  private static @NotNull List<ProjectState> initialStates(@NotNull VirtualFile parent) {
+  private static @NotNull List<ProjectState> initialStates(@NotNull VirtualFile parent, @NotNull Runnable checkCanceled) {
     String url = parent.getUrl();
     List<ProjectState> states = new ArrayList<>();
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (project.isDisposed()) continue;
-      TraverseState state = TraverseState.getTraverseState(parent, project);
-      if (state == null) continue;
-      VirtualFileUrl vfu = ((VirtualFileUrlManagerImpl)WorkspaceModel.getInstance(project).getVirtualFileUrlManager()).findNode(url);
-      states.add(new ProjectState(Ref.create(project), state, vfu));
+      var projectState = useProject(project, checkCanceled, p -> {
+        TraverseState state = TraverseState.getTraverseState(parent, p);
+        if (state == null) return null;
+        VirtualFileUrl vfu = ((VirtualFileUrlManagerImpl)WorkspaceModel.getInstance(p).getVirtualFileUrlManager()).findNode(url);
+        return new ProjectState(Ref.create(p), state, vfu);
+      });
+      if (projectState != null) states.add(projectState);
     }
     return states;
   }
 
   /// Computes states of `file` from `parentStates` of its parent.
   /// Skips the projects which exclude the subtree of `file`
-  private static @NotNull List<ProjectState> goDown(@NotNull List<ProjectState> parentStates, @NotNull VirtualFile file) {
+  private static @NotNull List<ProjectState> goDown(@NotNull List<ProjectState> parentStates,
+                                                    @NotNull VirtualFile file,
+                                                    @NotNull Runnable checkCanceled) {
     if (parentStates.isEmpty()) return parentStates;
-    return ContainerUtil.mapNotNull(parentStates, state -> state.goDown(file));
+    return ContainerUtil.mapNotNull(parentStates, state -> state.goDown(file, checkCanceled));
   }
 
   /// Finds roots of indexable file sets under `directory` which aren't excluded in their projects
   ///
   /// @param states states of `directory`
-  private static @Unmodifiable List<VirtualFile> indexableRootsUnder(VirtualFile directory, List<ProjectState> states) {
+  private static @Unmodifiable List<VirtualFile> indexableRootsUnder(VirtualFile directory,
+                                                                     List<ProjectState> states,
+                                                                     @NotNull Runnable checkCanceled) {
     if (!RegistryManager.getInstance().is(ITERATE_INCLUDED_FILES_UNDER_EXCLUDE)) {
       return Collections.emptyList();
     }
@@ -160,25 +185,26 @@ public final class TransientChildScanner implements ChildScanner {
     var roots = new LinkedHashMap<String, VirtualFile>();
     String url = directory.getUrl();
     for (ProjectState directoryState : states) {
-      Project project = directoryState.project();
-      if (project == null) continue;
-      var workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project);
-      var vfuManager = (VirtualFileUrlManagerImpl)WorkspaceModel.getInstance(project).getVirtualFileUrlManager();
-      vfuManager.processChildrenRecursively(url, child -> {
-        if (workspaceFileIndex.getFileSetsAt(child).getMask() == 0) {
-          return TreeNodeProcessingResult.CONTINUE;
-        }
-        var root = directory.findFileByRelativePath(child.getUrl().substring(url.length()));
-        if (root == null) return TreeNodeProcessingResult.SKIP_CHILDREN; // file does not exist, skip
+      directoryState.useProject(checkCanceled, project -> {
+        var workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project);
+        var vfuManager = (VirtualFileUrlManagerImpl)WorkspaceModel.getInstance(project).getVirtualFileUrlManager();
+        vfuManager.processChildrenRecursively(url, child -> {
+          if (workspaceFileIndex.getFileSetsAt(child).getMask() == 0) {
+            return TreeNodeProcessingResult.CONTINUE;
+          }
+          var root = directory.findFileByRelativePath(child.getUrl().substring(url.length()));
+          if (root == null) return TreeNodeProcessingResult.SKIP_CHILDREN; // file does not exist, skip
 
-        TraverseState state = stateUnder(directory, directoryState.traverseState(), root, child, workspaceFileIndex);
-        if (state == null) return TreeNodeProcessingResult.SKIP_CHILDREN; // file is excluded, skip
+          TraverseState state = stateUnder(directory, directoryState.traverseState(), root, child, workspaceFileIndex);
+          if (state == null) return TreeNodeProcessingResult.SKIP_CHILDREN; // file is excluded, skip
 
-        if (state.isIndexable()) {
-          roots.putIfAbsent(root.getPath(), root);
-          return TreeNodeProcessingResult.SKIP_CHILDREN; // find indexable file
-        }
-        return TreeNodeProcessingResult.CONTINUE; // file can be indexable underneath, continue
+          if (state.isIndexable()) {
+            roots.putIfAbsent(root.getPath(), root);
+            return TreeNodeProcessingResult.SKIP_CHILDREN; // find indexable file
+          }
+          return TreeNodeProcessingResult.CONTINUE; // file can be indexable underneath, continue
+        });
+        return null;
       });
     }
     return ContainerUtil.filter(roots.values(), file -> Cancellation.computeInNonCancelableSection(() -> file.exists()));
@@ -255,7 +281,7 @@ public final class TransientChildScanner implements ChildScanner {
             return SKIP_CHILDREN;
           }
 
-          List<ProjectState> states = goDown(frame.states(), file);
+          List<ProjectState> states = goDown(frame.states(), file, () -> checkCancelled.accept(currentDir));
           if (!isIndexableRecursive(states)) {
             siblings.set(siblings.size() - 1, withIndexableRootsUnder(file, info, states, currentDir));
             return SKIP_CHILDREN;
@@ -342,7 +368,8 @@ public final class TransientChildScanner implements ChildScanner {
                      : ((ChildInfoImpl)childInfo).withChildren(scannedChildren.children(), scannedChildren.childrenComplete()));
       }
       else {
-        children.add(withChildrenUnderExcluded(childNode, childInfo, goDown(states, childNode.file), currentDir));
+        children.add(withChildrenUnderExcluded(childNode, childInfo,
+                                               goDown(states, childNode.file, () -> checkCancelled.accept(currentDir)), currentDir));
       }
     }
     return ((ChildInfoImpl)info).withChildren(children.toArray(ChildInfo.EMPTY_ARRAY), false);
@@ -356,7 +383,7 @@ public final class TransientChildScanner implements ChildScanner {
                                            ChildInfo info,
                                            List<ProjectState> states,
                                            NewVirtualFile currentDir) {
-    List<VirtualFile> indexableRoots = indexableRootsUnder(directory, states);
+    List<VirtualFile> indexableRoots = indexableRootsUnder(directory, states, () -> checkCancelled.accept(currentDir));
     if (indexableRoots.isEmpty()) {
       return info;
     }
