@@ -183,14 +183,34 @@ class SeSelectionListenerTest {
   }
 
   @Test
-  fun returnsZero_andClearsState_whenNoMatch_andRangeExhausted() {
+  fun returnsZero_andKeepsState_whenNoMatch_andRangeExhausted() {
     val model = newModel()
     model.addItems(item(), item(), item()) // none equal to saved
     val listener = SeSelectionListener(SeSelectionState("p", item()), newList(model), model)
 
     // effectiveModelSize - 1 (2) >= maxVisibleRowCount - 1 (2): the whole visible window was scanned.
+    // A later item can still be sorted into the window, so the state is kept until the end event.
     assertEquals(0, listener.getIndexToSelect(maxVisibleRowCount = 3, currentPattern = "p", isInitialSearchPattern = false, isEndEvent = false))
-    assertNull(listener.getSelectionState())
+    assertNotNull(listener.getSelectionState())
+  }
+
+  /**
+   * IJPL-257978 The visible window is full and does not contain the saved item.
+   * A later batch sorts the saved item into the window, and the listener must select it.
+   */
+  @Test
+  fun returnsMatchingIndex_whenSavedItemIsSortedIntoFullVisibleRange() {
+    val model = newModel()
+    val saved = item()
+    model.addItems(item(), item(), item()) // none equal to saved
+    val listener = SeSelectionListener(SeSelectionState("p", saved), newList(model), model)
+
+    assertEquals(0, listener.getIndexToSelect(maxVisibleRowCount = 3, currentPattern = "p", isInitialSearchPattern = false, isEndEvent = false))
+
+    val match = item().also { markEqual(it, saved) }
+    model.add(1, SeResultListItemRow(match))
+
+    assertEquals(1, listener.getIndexToSelect(maxVisibleRowCount = 3, currentPattern = "p", isInitialSearchPattern = false, isEndEvent = false))
   }
 
   @Test
@@ -214,7 +234,7 @@ class SeSelectionListenerTest {
 
     // maxVisibleRowCount = 3 limits the scan to indices 0..2, so the match at index 4 is not found.
     assertEquals(0, listener.getIndexToSelect(maxVisibleRowCount = 3, currentPattern = "p", isInitialSearchPattern = false, isEndEvent = false))
-    assertNull(listener.getSelectionState())
+    assertNotNull(listener.getSelectionState())
   }
 
   @Test

@@ -40,15 +40,8 @@ class SeSelectionListener(
         (resultListModel.get(i) as? SeResultListItemRow)?.item?.contentEquals(selectedItemData) == true
       }
 
-      if (matchingIndex != null) {
-        return matchingIndex
-      }
-
-      if (searchRange.last >= maxVisibleRowCount - 1) {
-        selectionState = null
-      }
-
-      return 0
+      // Keep the state even when the visible rows are full: a later item can still be sorted into them
+      return matchingIndex ?: 0
     }
   }
 
