@@ -1,0 +1,5 @@
+package sample;
+
+class Usage {
+    Bar.Nested value = new Bar.Nested();
+}

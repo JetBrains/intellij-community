@@ -1,0 +1,12 @@
+package sample
+
+open class Foo {
+}
+
+class Bar : Foo() {
+    // INFO: {"checked": "true"}
+    annotation class Nested
+}
+
+@Bar.Nested
+class Usage

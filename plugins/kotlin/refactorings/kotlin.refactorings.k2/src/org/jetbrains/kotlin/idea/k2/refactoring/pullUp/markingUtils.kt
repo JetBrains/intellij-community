@@ -67,6 +67,15 @@ internal fun markElements(
             }
 
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+                if (declaration is KtClassOrObject &&
+                    expression.resolveSuccessfulExpressionSymbol() == sourceClass.symbol &&
+                    expression.getQualifiedExpressionForReceiver() != null
+                ) {
+                    expression.newFqName = targetClass.fqName ?: return
+                    affectedElements.add(expression)
+                    return
+                }
+
                 val resolvedCall = expression.resolveSuccessfulExpressionCall()?.simple ?: return
                 val receiverValue = resolvedCall.extensionReceiver ?: resolvedCall.dispatchReceiver ?: return
 
@@ -75,7 +84,8 @@ internal fun markElements(
 
                 if (
                     implicitThis.classKind == KaClassKind.COMPANION_OBJECT &&
-                    sourceClass.isAncestor(implicitThisElement, strict = true)
+                    sourceClass.isAncestor(implicitThisElement, strict = true) &&
+                    !declaration.isAncestor(implicitThisElement, strict = false)
                 ) {
                     val qualifierFqName = implicitThis.importableFqName ?: return
 

@@ -1,0 +1,15 @@
+package sample
+
+open class Foo {
+}
+
+class Bar : Foo() {
+    // INFO: {"checked": "true"}
+    open class Nested {
+        fun m() {}
+    }
+}
+
+class Other : Bar.Nested() {
+    fun use() = m()
+}

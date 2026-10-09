@@ -1,0 +1,13 @@
+package sample
+
+import sample.Bar.Nested
+
+open class Foo {
+}
+
+class Bar : Foo() {
+    // INFO: {"checked": "true"}
+    class Nested
+}
+
+fun use(): Nested = Nested()

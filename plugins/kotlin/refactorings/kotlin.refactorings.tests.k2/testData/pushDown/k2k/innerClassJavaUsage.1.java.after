@@ -1,0 +1,9 @@
+package sample;
+
+class Usage {
+    Bar.Inner inner;
+
+    Bar.Inner use(Bar.Inner value) {
+        return value;
+    }
+}

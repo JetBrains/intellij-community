@@ -187,7 +187,7 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("pullUp/k2j", pattern = KT, flatten = true, testClassName = "K2J", testMethodName = "doKotlinTest")
         }
         testClass<AbstractK2PushDownTest> {
-            model("pushDown/k2k", pattern = KT, flatten = true, testClassName = "K2K", testMethodName = "doKotlinTest")
+            model("pushDown/k2k", pattern = KT_WITHOUT_DOTS, flatten = true, testClassName = "K2K", testMethodName = "doKotlinTest")
             model("pushDown/k2j", pattern = KT, flatten = true, testClassName = "K2J", testMethodName = "doKotlinTest")
         }
         testClass<AbstractK2ExtractionTest> {

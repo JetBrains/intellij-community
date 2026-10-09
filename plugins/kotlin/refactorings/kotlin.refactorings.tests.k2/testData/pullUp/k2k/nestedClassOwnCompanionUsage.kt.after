@@ -1,0 +1,13 @@
+open class Base {
+    // INFO: {"checked": "true"}
+    class Nested {
+        fun use() = obj() + Nested.obj() + Base.Nested.obj()
+
+        companion object {
+            fun obj() = 1
+        }
+    }
+}
+
+class Child : Base() {
+}

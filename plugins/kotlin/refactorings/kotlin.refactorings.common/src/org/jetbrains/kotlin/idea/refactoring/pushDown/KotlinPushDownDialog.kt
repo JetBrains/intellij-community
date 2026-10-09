@@ -91,6 +91,7 @@ class KotlinPushDownDialog(
             override fun isAbstractEnabled(memberInfo: KotlinMemberInfo): Boolean = runReadAction {
                 val member = memberInfo.member
                 if (member !is KtNamedDeclaration) return@runReadAction false
+                if (memberInfo.isCompanionMember) return@runReadAction false
                 if (member.hasModifier(KtTokens.INLINE_KEYWORD) ||
                     member.hasModifier(KtTokens.EXTERNAL_KEYWORD) ||
                     member.hasModifier(KtTokens.LATEINIT_KEYWORD)

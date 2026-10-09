@@ -250,6 +250,16 @@ public abstract class K2PullUpTestGenerated extends AbstractK2PullUpTest {
             runTest("testData/pullUp/k2k/multipleInitializersInConstructorsEq.kt");
         }
 
+        @TestMetadata("nestedClassOwnCompanionUsage.kt")
+        public void testNestedClassOwnCompanionUsage() throws Exception {
+            runTest("testData/pullUp/k2k/nestedClassOwnCompanionUsage.kt");
+        }
+
+        @TestMetadata("nestedNestedClassOwnCompanionUsage.kt")
+        public void testNestedNestedClassOwnCompanionUsage() throws Exception {
+            runTest("testData/pullUp/k2k/nestedNestedClassOwnCompanionUsage.kt");
+        }
+
         @TestMetadata("noCaret.kt")
         public void testNoCaret() throws Exception {
             runTest("testData/pullUp/k2k/noCaret.kt");

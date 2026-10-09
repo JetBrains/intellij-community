@@ -1,0 +1,14 @@
+package child
+
+import base.Base
+
+class Child : Base() {
+    // INFO: {"checked": "true"}
+    companion object {
+        const val ANSWER = 42
+
+        fun answer() = ANSWER
+
+        class Token
+    }
+}

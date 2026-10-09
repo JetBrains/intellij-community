@@ -1,0 +1,7 @@
+package other;
+
+class Usage {
+    void use() {
+        sample.Child.Companion.this.obj();
+    }
+}

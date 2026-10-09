@@ -1,0 +1,14 @@
+open class Base {
+}
+
+class Child : Base() {
+    companion object {
+        fun m() {}
+        fun obj() {}
+    }
+}
+
+fun usage() {
+    Child.obj()
+    Child.obj()
+}

@@ -1,0 +1,9 @@
+fun m(i: Bar.Nested) = Bar.Nested()
+
+open class Foo {
+}
+
+class Bar : Foo() {
+    // INFO: {"checked": "true"}
+    class Nested
+}

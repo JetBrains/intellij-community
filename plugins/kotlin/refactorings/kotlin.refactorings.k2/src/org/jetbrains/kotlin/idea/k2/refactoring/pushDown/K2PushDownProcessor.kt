@@ -2,7 +2,11 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.pushDown
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -11,22 +15,39 @@ import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.emptySubstitutor
+import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.applyMarking
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.clearMarking
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.markElements
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownProcessor
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 
 private data class PushDownTarget(
     val memberInfo: KotlinMemberInfo,
     val targetClassFqName: FqName,
 )
+
+internal class ClassMemberUsage(
+    element: PsiElement,
+    val sourceNestedClass: KtClassOrObject,
+    val sourceDeclaration: KtNamedDeclaration,
+) : UsageInfo(element) {
+    init {
+        sourceDeclaration.putCopyableUserData(SOURCE_DECLARATION_KEY, sourceDeclaration)
+    }
+}
+
+private val SOURCE_DECLARATION_KEY = Key.create<KtNamedDeclaration>("kotlin.push.down.source.declaration")
 
 /**
  * Represents a refactoring step that inserts a member into a target class during push down.
@@ -64,6 +85,32 @@ internal class K2PushDownProcessor(
     membersToMove: List<KotlinMemberInfo>,
 ) : KotlinPushDownProcessor(project) {
     override val context: K2PushDownContext = K2PushDownContext(sourceClass, membersToMove)
+
+    override fun findUsages(): Array<out UsageInfo> {
+        val memberUsages = context.membersToMove
+            .mapNotNull { it.member as? KtClassOrObject }
+            .flatMap(::findClassMemberUsages)
+        return (super.findUsages().asList() + memberUsages).toTypedArray()
+    }
+
+    private fun findClassMemberUsages(classOrObject: KtClassOrObject): List<ClassMemberUsage> {
+        val usages = ArrayList<ClassMemberUsage>()
+
+        fun collect(declaration: KtNamedDeclaration) {
+            ReferencesSearch.search(declaration).forEach { reference ->
+                val element = reference.element
+                if (!PsiTreeUtil.isAncestor(classOrObject, element, false)) {
+                    usages += ClassMemberUsage(element, classOrObject, declaration)
+                }
+            }
+            if (declaration is KtClassOrObject) {
+                declaration.declarations.filterIsInstance<KtNamedDeclaration>().forEach { collect(it) }
+            }
+        }
+
+        collect(classOrObject)
+        return usages
+    }
 
     override fun analyzePushDownConflicts(
         usages: Array<out UsageInfo>,
@@ -194,6 +241,7 @@ internal class K2PushDownProcessor(
         removeOriginalMembers: Boolean,
         onMemberMoved: (KtNamedDeclaration, KtNamedDeclaration, KtClassOrObject) -> Unit,
     ) {
+        val shouldRebind = removeOriginalMembers && usages.count { it is SubclassUsage } == 1
         usages.map { it.element }
             .filterIsInstance<KtClassOrObject>()
             .forEach { targetClass ->
@@ -201,8 +249,12 @@ internal class K2PushDownProcessor(
                 context.membersToMove.forEach { member ->
                     val target = PushDownTarget(member, fqName)
                     val action = actionsContext.pushDownActionsByTarget[target] ?: return@forEach
+                    val memberUsages = usages.filterIsInstance<ClassMemberUsage>().filter { it.sourceNestedClass == member.member }
                     val added = action.execute() ?: return@forEach
                     applyMarking(added, targetClass)
+                    if (shouldRebind && added is KtClassOrObject) {
+                        rebindClassMemberUsages(added, memberUsages)
+                    }
                     onMemberMoved(member.member as KtNamedDeclaration, added, targetClass)
                 }
             }
@@ -210,6 +262,36 @@ internal class K2PushDownProcessor(
         if (removeOriginalMembers) {
             context.membersToMove.forEach { memberInfo ->
                 actionsContext.removalActionsByMember[memberInfo]?.execute()
+            }
+        }
+    }
+
+    private fun rebindClassMemberUsages(added: KtClassOrObject, usages: List<ClassMemberUsage>) {
+        val usagesByDeclaration = usages.groupBy { it.sourceDeclaration }
+
+        for (targetDeclaration in added.collectDescendantsOfType<KtNamedDeclaration>()) {
+            val sourceDeclaration = targetDeclaration.getCopyableUserData(SOURCE_DECLARATION_KEY) ?: continue
+            val classMemberUsages = usagesByDeclaration[sourceDeclaration] ?: continue
+            try {
+                for (usage in classMemberUsages.sortedWith(Comparator { o1, o2 -> o1.compareToByStartOffset(o2) })) {
+                    val element = usage.element ?: continue
+                    when (element) {
+                        is KtElement -> {
+                            if (element.containingFile == targetDeclaration.containingFile || element !is KtSimpleNameExpression) {
+                                element.mainReference?.bindToElement(targetDeclaration)
+                            } else {
+                                element.mainReference.bindToElement(targetDeclaration, KtSimpleNameReference.ShorteningMode.NO_SHORTENING)
+                            }
+                        }
+
+                        is PsiJavaCodeReferenceElement -> {
+                            val lightElement = targetDeclaration.toLightElements().firstOrNull() ?: continue
+                            element.bindToElement(lightElement)
+                        }
+                    }
+                }
+            } finally {
+                targetDeclaration.putCopyableUserData(SOURCE_DECLARATION_KEY, null)
             }
         }
     }

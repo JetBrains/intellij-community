@@ -1,0 +1,17 @@
+package sample
+
+import sample.Child.Companion.obj
+
+open class Base {
+}
+
+class Child : Base() {
+    // INFO: {"checked": "true"}
+    companion object {
+        fun obj() {}
+    }
+}
+
+fun usage() {
+    obj()
+}

@@ -34,6 +34,8 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.renderForConflicts
+import org.jetbrains.kotlin.idea.refactoring.isCompanionMemberOf
+import org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownProcessor.SubclassUsage
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
@@ -41,16 +43,19 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 
@@ -60,7 +65,7 @@ internal fun analyzePushDownConflicts(
     usages: Array<out UsageInfo>,
     inlineSuperclass: Boolean = false,
 ): MultiMap<PsiElement, String> {
-    val targetClasses = usages.mapNotNull { it.element?.unwrapped }
+    val targetClasses = usages.filterNot { it is ClassMemberUsage }.mapNotNull { it.element?.unwrapped }
 
     val conflicts = MultiMap<PsiElement, String>()
 
@@ -83,6 +88,18 @@ internal fun analyzePushDownConflicts(
         }
     }
 
+    if (targetClasses.size > 1) {
+        usages.filterIsInstance<ClassMemberUsage>().mapNotNull { usage ->
+            val element = usage.element ?: return@mapNotNull null
+            var current = element
+            while (current.parent is KtCallExpression || current.parent is KtDotQualifiedExpression || current.parent is KtUserType) {
+                current = current.parent
+            }
+            current
+        }.distinct().forEach {
+            conflicts.putValue(it, KotlinBundle.message("text.pushed.member.will.not.be.available.in.0", it.text))
+        }
+    }
     return conflicts
 }
 
@@ -124,6 +141,13 @@ internal fun checkConflicts(
     }
 
     for (member in membersToPush) {
+        if (targetClass is KtObjectDeclaration && member is KtClass && member.hasModifier(KtTokens.INNER_KEYWORD)) {
+            val message = KotlinBundle.message("text.inner.class.0.cannot.be.moved.to.object", member.symbol.renderForConflicts())
+            conflicts.putValue(
+                member,
+                message.replaceFirstChar { it.uppercaseChar() },
+            )
+        }
         checkMemberClashing(conflicts, context, member, membersToKeepAbstract, substitutor, targetClass, targetClassSymbol, inlineSuperclass)
         checkSuperCalls(conflicts, context, member, membersToPush)
         if (!inlineSuperclass) checkExternalUsages(conflicts, member, targetClassSymbol)
@@ -150,8 +174,14 @@ private fun checkMemberClashing(
     when (member) {
         is KtNamedFunction, is KtProperty -> {
             val callableSymbol = member.symbol as KaCallableSymbol
-            val clashingSymbol =
-                targetClassSymbol.findCallableMemberBySignature(callableSymbol.substitute(substitutor), ignoreReturnType = true)
+            val targetMemberClassSymbol = if (member.isCompanionMemberOf(context.sourceClass) && targetClass is KtClass) {
+                targetClass.companionObjects.firstOrNull()?.symbol
+            } else {
+                targetClassSymbol
+            }
+            val clashingSymbol = targetMemberClassSymbol?.findCallableMemberBySignature(
+                callableSymbol.substitute(substitutor), ignoreReturnType = true
+            )
             val clashingDeclaration = clashingSymbol?.psi as? KtNamedDeclaration
             if (clashingSymbol != null && clashingDeclaration != null) {
                 val overriddenFunction = inlineSuperclass && member is KtNamedFunction &&
@@ -164,7 +194,7 @@ private fun checkMemberClashing(
                     )
                     conflicts.putValue(clashingDeclaration, StringUtil.capitalize(message))
                 }
-                if (!clashingDeclaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
+                if (!member.isCompanionMemberOf(context.sourceClass) && !clashingDeclaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
                     val message = KotlinBundle.message(
                         "text.0.in.1.will.override.corresponding.member.of.2.after.refactoring",
                         clashingSymbol.renderForConflicts(),
@@ -177,6 +207,19 @@ private fun checkMemberClashing(
         }
 
         is KtClassOrObject -> {
+            if (member is KtObjectDeclaration && member.isCompanion() && targetClass is KtClass) {
+                val targetCompanion = targetClass.companionObjects.firstOrNull()
+                if (targetCompanion != null) {
+                    val targetCompanionSymbol = targetCompanion.symbol
+                    member.declarations.filterIsInstance<KtNamedDeclaration>().forEach { nestedMember ->
+                        checkMemberClashing(
+                            conflicts, context, nestedMember, membersToKeepAbstract, substitutor,
+                            targetCompanion, targetCompanionSymbol, inlineSuperclass,
+                        )
+                    }
+                    return
+                }
+            }
             targetClass.declarations
                 .asSequence()
                 .filterIsInstance<KtClassOrObject>()
@@ -255,6 +298,7 @@ private fun checkVisibility(
     val declaration = member as? KtNamedDeclaration ?: member.parentOfType<KtClassOrObject>() ?: return
     fun reportConflictIfAny(targetSymbol: KaDeclarationSymbol) {
         val target = targetSymbol.psi ?: return
+        if (PsiTreeUtil.isAncestor(member, target, false)) return
         if (movedMembers.any { PsiTreeUtil.isAncestor(it, target, false) }) return
 
         if (!isVisible(targetSymbol, targetClass)) {

@@ -12,15 +12,18 @@ import org.jetbrains.kotlin.idea.base.psi.removeSuperType
 import org.jetbrains.kotlin.idea.base.psi.setCallableTypeReference
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.computeAndRenderReturnType
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.makeAbstract
+import org.jetbrains.kotlin.idea.refactoring.deleteWithCompanion
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
+import org.jetbrains.kotlin.psi.KtTypeAlias
 
 context(session: KaSession)
 internal fun createRemoveOriginalMemberAction(
@@ -29,7 +32,7 @@ internal fun createRemoveOriginalMemberAction(
     substitutor: KaSubstitutor,
 ): RemovalAction? = when (memberInfo.member) {
     is KtProperty, is KtNamedFunction -> createRemoveCallableMemberAction(memberInfo, sourceClass, substitutor)
-    is KtClassOrObject, is KtSuperTypeListEntry -> createRemoveClassLikeMemberAction(memberInfo, sourceClass)
+    is KtClassOrObject, is KtTypeAlias, is KtSuperTypeListEntry -> createRemoveClassLikeMemberAction(memberInfo, sourceClass)
     else -> null
 }
 
@@ -59,7 +62,7 @@ private fun createRemoveCallableMemberAction(
         }
     }
 
-    return RemovalAction { member.delete() }
+    return RemovalAction { member.deleteWithCompanion() }
 }
 
 private fun createRemoveClassLikeMemberAction(
@@ -71,7 +74,7 @@ private fun createRemoveClassLikeMemberAction(
         val superTypeListEntry = member as? KtSuperTypeListEntry ?: return null
         RemovalAction { sourceClass.removeSuperType(superTypeListEntry) }
     } else {
-        val classLikeMember = member as? KtClassOrObject ?: return null
+        val classLikeMember = member as? KtNamedDeclaration ?: return null
         RemovalAction { classLikeMember.delete() }
     }
 }

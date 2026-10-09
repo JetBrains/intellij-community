@@ -1,0 +1,6 @@
+open class Base {
+}
+
+object Impl : Base() {
+    fun obj() {}
+}

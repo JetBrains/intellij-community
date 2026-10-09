@@ -1,0 +1,9 @@
+fun m(i: Bar.Inner) {}
+
+open class Foo {
+}
+
+class Bar : Foo() {
+    // INFO: {"checked": "true"}
+    inner class Inner
+}

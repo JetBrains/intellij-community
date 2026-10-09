@@ -1,0 +1,11 @@
+package sample
+
+open class Foo {
+}
+
+class Bar : Foo() {
+    // INFO: {"checked": "true"}
+    enum class Nested { VALUE }
+}
+
+fun use(): Bar.Nested = Bar.Nested.VALUE
