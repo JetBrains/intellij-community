@@ -4,7 +4,8 @@
 //! The generator owns the schema. This side declares the fields that a runner needs and ignores the others: the
 //! reach of the suite, the expectations, the fixture names. What it holds the document to is the vocabulary: every id
 //! that an instruction names has an entry of its kind, a `host` id is a word of [`HostAction`] or [`HostAssertion`],
-//! a `crossing` id is on the pinned list, and every argument fits the schema of its id.
+//! a `crossing` id is on the pinned list, and every argument fits the schema of its id. A value that an id takes has
+//! an answer earlier in its scenario, or the runner answers it before the first instruction.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -100,7 +101,10 @@ pub struct SuiteLabel {
 
 /// The ids that a suite runs, by kind.
 #[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Vocabulary {
+    /// The values that the runner answers before the first instruction of a scenario.
+    pub runner_answers: Vec<String>,
     pub actions: BTreeMap<String, IdSpec>,
     pub assertions: BTreeMap<String, IdSpec>,
 }
@@ -114,6 +118,12 @@ pub struct IdSpec {
     pub timeout_ms: u64,
     /// How many times one use restarts the IDE.
     pub restarts: u32,
+    /// The values one use answers. A runner keeps each one under its name, as an opaque blob.
+    pub answers: Vec<String>,
+    /// The values one use needs. A runner passes the latest answer of each name.
+    pub takes: Vec<String>,
+    /// The values one use reads only on some arguments, or only when they exist.
+    pub may_take: Vec<String>,
     pub params: BTreeMap<String, ParamSpec>,
 }
 
@@ -197,6 +207,7 @@ impl SuiteProgram {
         }
         let mut used = BTreeSet::new();
         for scenario in &self.profiles {
+            let mut answered: BTreeSet<&str> = self.vocabulary.runner_answers.iter().map(String::as_str).collect();
             let operations = scenario
                 .setups
                 .iter()
@@ -205,6 +216,11 @@ impl SuiteProgram {
                 for instruction in &operation.instructions {
                     let place = format!("scenario '{}' operation '{}'", scenario.name, operation.operation);
                     refusals.extend(self.check_instruction(instruction, &place, &mut used).err());
+                    let Some(spec) = self.spec_of(instruction) else { continue };
+                    for name in spec.takes.iter().filter(|name| !answered.contains(name.as_str())) {
+                        refusals.push(format!("{place} takes the value '{name}', which no earlier instruction answers"));
+                    }
+                    answered.extend(spec.answers.iter().map(String::as_str));
                 }
             }
         }
@@ -232,6 +248,15 @@ impl SuiteProgram {
             }
         }
         refusals
+    }
+
+    /// The vocabulary entry of one instruction, if it states one.
+    fn spec_of(&self, instruction: &Instruction) -> Option<&IdSpec> {
+        match (&instruction.action, &instruction.assertion) {
+            (Some(id), None) => self.vocabulary.actions.get(id),
+            (None, Some(id)) => self.vocabulary.assertions.get(id),
+            _ => None,
+        }
     }
 
     /// Why one instruction does not fit its vocabulary. A stated id goes into `used` whether its arguments fit or not.
