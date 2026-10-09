@@ -19,7 +19,8 @@ GOTO :CMDSCRIPT
 #    became unreachable rather than wrong. This wrapper resolves a binary built from working-copy sources,
 #    which change on every edit and are keyed by nothing. There is no honest cache key, and a wrong one is
 #    silent: BT would report a verdict about test-selection code it did not run. So every invocation runs
-#    `bazel run --script_path` and the build *is* the freshness guarantee. ADR 0105 records that trap already
+#    `bazel build`, the build's event file names the binary, and the build *is* the freshness guarantee. It is no
+#    `bazel run`, for the reason of note 1 of vm.cmd: a `bazel run` drops the analysis that the last build made. ADR 0105 records that trap already
 #    paid for once - an `lstat` freshness check that degraded to "always reinstall", passed its whole suite,
 #    and failed on hardware.
 #
@@ -81,8 +82,23 @@ if [ -n "${AIR_BT_BIN:-}" ]; then
   exec "$AIR_BT_BIN" "$@"
 fi
 
+# The local file with the base name $2 that the build event file $1 names. The build names its top-level outputs in
+# `namedSetOfFiles` records, one JSON record per line, and `--nobuild_event_json_file_path_conversion` makes every URI
+# `file://<path>`. An event file that names no such file answers the empty string.
+built_file() {
+  awk -v name="$2" '{
+    line = $0
+    while (match(line, /"uri":"file:\/\/[^"]*"/)) {
+      uri = substr(line, RSTART + 14, RLENGTH - 15)
+      line = substr(line, RSTART + RLENGTH)
+      count = split(uri, parts, "/")
+      if (parts[count] == name) found = uri
+    }
+  } END { print found }' "$1"
+}
+
 mkdir -p "$root/out/air"
-launcher="$root/out/air/bt.launcher.$$"
+events="$root/out/air/bt.events.$$.json"
 # `--config=bt` (`community/common.bazelrc`) keeps Bazel's progress and result lines out of the wrapper's output contract,
 # and `>&2` keeps whatever is left off stdout, where a `--json` run writes exactly one payload. A failure
 # here is infrastructure, which this wrapper reports as 6 - BT's own code for a run that said nothing about
@@ -93,17 +109,16 @@ launcher="$root/out/air/bt.launcher.$$"
 # 6 as `exit::INFRA`, which already means "the run said nothing", so wrapper and binary agree; the VM
 # controller defines 6 as `Exit::TESTS_FAILED`, a red lane. **The asymmetry is deliberate; do not harmonize
 # the two wrappers on one number.**
-if ! (cd "$root" && ./bazel.cmd run --config=bt --script_path="$launcher" "$target" >&2); then
-  rm -f "$launcher"
+if ! (cd "$root" && ./bazel.cmd build --config=bt "--build_event_json_file=$events" \
+  --nobuild_event_json_file_path_conversion "$target" >&2); then
+  rm -f "$events"
   echo "bt: could not build $target; see the bazel output above" >&2
   exit 6
 fi
 
-# `bazel run --script_path` writes `<binary> <args> "$@"` as the last line; only its first token is wanted.
-# Reading it beats adding a second way to ask Bazel where its output went.
-resolved="$(awk 'END { print $1 }' "$launcher")"
-rm -f "$launcher"
-# The launcher points at a symlink under the output base; resolving through it reaches the real file. Where
+resolved="$(built_file "$events" bt)"
+rm -f "$events"
+# The build names a symlink under the output base; resolving through it reaches the real file. Where
 # readlink -f is unavailable the unresolved path still works.
 resolved="$(readlink -f "$resolved" 2>/dev/null || printf '%s' "$resolved")"
 if [ ! -x "$resolved" ]; then

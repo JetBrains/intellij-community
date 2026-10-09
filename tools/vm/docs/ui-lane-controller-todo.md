@@ -89,10 +89,21 @@ Every item below was found by running something, and says so. Where a measuremen
   `bazel run` of the `vm.cmd` wrapper ended at 13:41:41.4 UTC with `invalidation of 487213 nodes`. The analysis of
   the lane build then took 8 s. A build with a kept analysis takes about 2 s, so about 7 s of each run is open.
 
-  What is open is the trigger. Both commands pass `--config=air-lane-linux`. The wrapper adds `--config=bt`, whose
-  options are `run` options only. The two `cquery` calls after a lane build are gone since the build names its own
-  outputs, so the next measurement shows whether they were part of it. `java.log` of the output base names every
-  command with its argv and timestamps, and it is the instrument here.
+  The trigger is the `bazel run` command. On 2026-10-10 every wrapper `bazel run` of `@community//tools/vm:vm` that
+  followed a lane build ended with a deletion of 430,000 to 487,401 nodes, packages included, and no lane `bazel
+  build` of that day ended with one (38 of 38). The `bt.cmd` runs did it too (48 times). The run and the build read
+  the same rc files and options. So the sh halves of the wrappers now run `bazel build` and read the binary from the
+  build event file. What is still open is the Bazel mechanism behind the deletion, and the measurement that the lane
+  build then keeps its analysis. `java.log` of the output base names every command with its argv and timestamps,
+  and it is the instrument here.
+
+- **Each Bazel command checks every output file on disk.**
+
+  Measured on 2026-10-10 in `java.log`: each command of a lane run spent 1.2 to 2.6 s on `checking 123421
+  filesystem nodes` in the afternoon, and 1.4 to 5.7 s on 157,329 nodes in the evening, after a rebase and under host
+  load. A run now has two Bazel commands, the build of the wrapper and the lane build, so it pays this twice.
+  `--noexperimental_check_output_files` would skip the check, but then a change of `bazel-out` from outside goes
+  unseen, and the working copy is shared. What is open is a cheaper check, or one command for both builds.
 
 - **The build of the `vm.cmd` wrapper is outside the run's journal.**
 

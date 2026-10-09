@@ -621,8 +621,9 @@ def _optimized_binary_impl(ctx):
 optimized_binary = rule(
     doc = """One shipped binary, optimized, for the host or for one named platform.
 
-    Its only file is the binary. `bazel run --script_path` (the wrappers), `$(rlocationpath)` (`ui_lane_ide.bzl`), the
-    controller's `cquery ... [0]` for the guest agent, and `bazel-build-run.cmd` each need exactly one. The test of the
+    Its only file is the binary. The wrappers (their build event file, or `bazel run --script_path`), `$(rlocationpath)`
+    (`ui_lane_ide.bzl`), the controller's `cquery ... [0]` for the guest agent, and `bazel-build-run.cmd` each need
+    exactly one. The test of the
     binary stays on the `rust_binary` in the configuration of the build. The Air UI-lane workspace loads this rule as
     `avl_binary`.""",
     implementation = _optimized_binary_impl,

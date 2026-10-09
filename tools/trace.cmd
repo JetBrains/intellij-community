@@ -63,18 +63,35 @@ if [ -n "${AIR_TRACE_BIN:-}" ]; then
   exec "$AIR_TRACE_BIN" "$@"
 fi
 
+# The local file with the base name $2 that the build event file $1 names. The build names its top-level outputs in
+# `namedSetOfFiles` records, one JSON record per line, and `--nobuild_event_json_file_path_conversion` makes every URI
+# `file://<path>`. An event file that names no such file answers the empty string.
+built_file() {
+  awk -v name="$2" '{
+    line = $0
+    while (match(line, /"uri":"file:\/\/[^"]*"/)) {
+      uri = substr(line, RSTART + 14, RLENGTH - 15)
+      line = substr(line, RSTART + RLENGTH)
+      count = split(uri, parts, "/")
+      if (parts[count] == name) found = uri
+    }
+  } END { print found }' "$1"
+}
+
 mkdir -p "$root/out/air"
-launcher="$root/out/air/trace.launcher.$$"
+events="$root/out/air/trace.events.$$.json"
 # `--config=bt` keeps Bazel's progress lines quiet and `>&2` keeps the rest off stdout, which `plan` answers on.
-if ! (cd "$root" && ./bazel.cmd run --config=bt --config=air-lane-linux --script_path="$launcher" "$target" >&2); then
-  rm -f "$launcher"
+# A `bazel build` and not a `bazel run`, for the reason of note 1 of vm.cmd: a `bazel run` drops the analysis of the
+# last lane build.
+if ! (cd "$root" && ./bazel.cmd build --config=bt --config=air-lane-linux "--build_event_json_file=$events" \
+  --nobuild_event_json_file_path_conversion "$target" >&2); then
+  rm -f "$events"
   echo "trace: could not build $target; see the bazel output above" >&2
   exit 78
 fi
 
-# `bazel run --script_path` writes `<binary> <args> "$@"` as the last line; only its first token is wanted.
-resolved="$(awk 'END { print $1 }' "$launcher")"
-rm -f "$launcher"
+resolved="$(built_file "$events" air-trace)"
+rm -f "$events"
 resolved="$(readlink -f "$resolved" 2>/dev/null || printf '%s' "$resolved")"
 if [ ! -x "$resolved" ]; then
   echo "trace: could not resolve air-trace from $target (got '$resolved')" >&2
@@ -88,6 +105,7 @@ exec "$resolved" "$@"
 setlocal
 
 REM The same steps as the sh half, see note 5. The launcher is only read for its last line and never run.
+REM This half still runs `bazel run --script_path`, for the reason that the CMD half of vm.cmd states.
 
 for %%d in ("%~dp0..") do set "COMMUNITY_ROOT=%%~fd"
 for %%d in ("%COMMUNITY_ROOT%\..") do set "PARENT=%%~fd"

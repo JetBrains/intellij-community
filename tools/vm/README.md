@@ -25,7 +25,8 @@ follows [`AGENTS.md`](AGENTS.md).
 | `./community/tools/trace.cmd` | `:air-trace` | `air-trace` | `serve`, `plan` and `pack` |
 | (none; `ui_lane_ide.bzl`) | `:air-trace-record` | `avl-record` | the scenario recorder a lane JVM starts from its runfiles |
 
-Each wrapper runs `bazel run --script_path` on every call, so the binary is always built from the working copy.
+Each wrapper builds its binary on every call, so the binary is always built from the working copy. The sh half runs
+`bazel build` and reads the path of the binary from the build event file. The CMD half runs `bazel run --script_path`.
 `AIR_VM_BIN` and `AIR_TRACE_BIN` name a built binary instead and skip Bazel. BT, `./community/tools/bt.cmd`, is
 the community workspace `community/tools/bt`; its README is its crate map. A UI lane takes the
 recorder from its runfiles: `ui_lane_ide.bzl` names `:air-trace-record` for a lane on the host,
@@ -44,8 +45,8 @@ checkout at its start. In a community checkout no `bt.json` names the Air area, 
 `air_area_missing`.
 
 Every one of these labels is an `avl_binary` at the workspace root: one file, and always `compilation_mode=opt`,
-whatever the command line says. One file, because `--script_path`, `$(rlocationpath)` and the controller's
-`cquery ... [0]` for the agent each need exactly one. Optimized, because fastbuild Rust is `-Copt-level=0` for every
+whatever the command line says. One file, because the build event file of a wrapper, `--script_path`, `$(rlocationpath)` and
+the controller's `cquery ... [0]` for the agent each need exactly one. Optimized, because fastbuild Rust is `-Copt-level=0` for every
 dependency, and the WebP stills, the X11 frame copies and the zip deflate would run ten times slower or worse
 inside a lane that measures time. The rule is `optimized_binary` of `community/build/rust-tools/defs.bzl`, which
 `avl.bzl` binds as `avl_binary`. On a Unix host, what `bazel test` runs for Windows is
