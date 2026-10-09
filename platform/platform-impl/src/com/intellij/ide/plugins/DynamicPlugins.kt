@@ -65,7 +65,6 @@ object DynamicPlugins {
     pretendEnabled: List<PluginId>,
     pretendDisabled: List<PluginId>,
   ): Boolean {
-    val dynamicPlugins = DynamicPluginsSupport.getInstance()
     val newState = computeNewPluginsState(
       include = addNewCustomPlugins,
       exclude = forceRemovePlugins,
@@ -78,7 +77,7 @@ object DynamicPlugins {
       LOG.info("new plugins state did not meet expectations: $it")
       return false
     }
-    return dynamicPlugins.validateDynamicReconfigurationPossible(newState) == null
+    return DynamicPluginsSupport.getInstance().validateDynamicReconfigurationPossible(newState) == null
   }
 
   /**
@@ -108,13 +107,6 @@ object DynamicPlugins {
     targetProductMode: ProductMode? = null,
   ): Boolean {
     LOG.trace("dynamic plugins reconfiguration attempt")
-    if (targetProductMode != null) {
-      val currentMode = PluginManagerCore.getPluginSet().initContext.productMode
-      if (!CurrentProductMode.transitionTo(targetProductMode)) {
-        LOG.info("The product mode does not move to '${targetProductMode.id}' from '${currentMode.id}', so no plugin is reconfigured")
-        return false
-      }
-    }
     val title = when {
       forceRemovePlugins.isEmpty() -> when {
         addNewCustomPlugins.isEmpty() -> IdeBundle.message("modal.progress.title.reconfiguring.plugins")
@@ -129,6 +121,13 @@ object DynamicPlugins {
       else -> IdeBundle.message("modal.progress.title.reconfiguring.plugins")
     }
     return withTracedModalProgress(RECONFIGURE_MODAL_PROGRESS_SPAN, project, title) {
+      if (targetProductMode != null) {
+        val currentMode = PluginManagerCore.getPluginSet().initContext.productMode
+        if (!CurrentProductMode.transitionTo(targetProductMode)) {
+          LOG.info("The product mode does not move to '${targetProductMode.id}' from '${currentMode.id}', so no plugin is reconfigured")
+          return@withTracedModalProgress false
+        }
+      }
       val newState = computeNewPluginsState(addNewCustomPlugins, forceRemovePlugins, forceExclude = true)
                      ?: return@withTracedModalProgress false
       val resolvedPluginSet = newState.resolvedPluginSet
