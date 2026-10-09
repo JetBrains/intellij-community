@@ -774,6 +774,8 @@ jvm_library(
         "//python/python-pyproject:pyproject_test_lib",
         "//platform/indexing-tests",
         "//platform/indexing-tests:indexing-tests_test_lib",
+        "//platform/analysis-impl:analysis-impl-tests",
+        "//platform/analysis-impl:analysis-impl-tests_test_lib",
         "//platform/testFramework/monorepo",
         "//platform/testFramework/monorepo:monorepo_test_lib",
         "//plugins/textmate/tests",

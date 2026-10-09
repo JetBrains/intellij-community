@@ -95,6 +95,7 @@ intellij.mermaid.tests
 intellij.notebooks.visualization.tests
 intellij.performanceTesting.tests
 intellij.performanceTesting.ui.tests
+intellij.platform.analysis.impl.tests
 intellij.platform.backend.observation.tests
 intellij.platform.buildScripts.productDsl.tests
 intellij.platform.buildScripts.runtimeModuleRepository.tests
