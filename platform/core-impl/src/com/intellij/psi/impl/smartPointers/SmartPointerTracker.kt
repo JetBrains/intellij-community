@@ -12,7 +12,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
+import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.SmartHashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -38,7 +40,23 @@ class SmartPointerTracker(initialModCount: Long) {
   private val markerCache = MarkerCache(this)
   private var mySorted = false
   private val holderCache = ContainerUtil.createConcurrentWeakKeySoftValueMap<CodeInsightContext, FileHolder>()
-  private val pendingContextMappings = mutableListOf<Map<CodeInsightContext, CodeInsightContext?>>()
+  private val pendingContextMappings = SmartList<Map<CodeInsightContext, CodeInsightContext?>>()
+
+  /**
+   * A superset of the non-null [FileHolder.context]s of the live tracked infos, or `null` when unknown.
+   *
+   * [revalidate] uses the set to prove that a generation bump changed no context of this file without
+   * walking the infos; that walk is O(pointer count) and runs after every bulk PSI invalidation
+   * (see IJPL-258041), so the common no-change case must stay away from it.
+   *
+   * The set never misses a context: every write of a non-null context into a tracked info happens under
+   * the tracker monitor — the info's holder exists before [startTracking] adds the context here, and
+   * [revalidate] refreshes the set whenever it reassigns holders. The one unsynchronized holder write,
+   * in [SelfElementInfo.restoreFile], stores a null context and so cannot violate the invariant.
+   * The set may hold stale contexts (a collected pointer, a holder nulled by `restoreFile`); a stale
+   * entry costs one exact rescan, which replaces the set with the exact one.
+   */
+  private var knownContexts: MutableSet<CodeInsightContext>? = null
 
   @JvmName("startTracking")
   @Synchronized
@@ -62,6 +80,8 @@ class SmartPointerTracker(initialModCount: Long) {
         throw IllegalArgumentException("Unexpected element info: $elementInfo")
       }
     }
+
+    elementInfo.fileHolder.context?.let { knownContexts?.add(it) }
   }
 
   @Synchronized
@@ -216,6 +236,7 @@ class SmartPointerTracker(initialModCount: Long) {
   internal fun clearPendingState() {
     pendingContextMappings.clear()
     holderCache.clear()
+    knownContexts = null
   }
 
   private val SmartPsiElementPointerImpl<*>.selfInfo: SelfElementInfo
@@ -228,32 +249,56 @@ class SmartPointerTracker(initialModCount: Long) {
 
     validationModCount = currentModCount
 
-    val allInfos = getContextAwareInfos()
-    if (allInfos.isEmpty()) {
-      pendingContextMappings.clear()
-      return
-    }
-
     if (pendingContextMappings.isNotEmpty()) {
       val composedMapping = composeMappings(pendingContextMappings)
       pendingContextMappings.clear()
+      remapContexts(virtualFile, composedMapping)
+    }
+    else {
+      dropDeadContexts(virtualFile, manager)
+    }
+  }
 
-      for (info in allInfos) {
+  private fun remapContexts(virtualFile: VirtualFile, composedMapping: Map<CodeInsightContext, CodeInsightContext?>) {
+    val cached = knownContexts
+    if (cached == null || composedMapping.keys.any { it in cached }) {
+      val liveContexts = SmartHashSet<CodeInsightContext>()
+      for (info in getContextAwareInfos()) {
         val ctx = info.fileHolder.context ?: continue
-        if (ctx in composedMapping) {
-          info.fileHolder = createFileHolderInterned(virtualFile, composedMapping[ctx])
+        val newCtx = if (ctx in composedMapping) {
+          val mapped = composedMapping[ctx]
+          info.fileHolder = createFileHolderInterned(virtualFile, mapped)
+          mapped ?: continue
         }
+        else {
+          ctx
+        }
+        liveContexts.add(newCtx)
       }
+      knownContexts = liveContexts
+    }
 
-      for (oldCtx in composedMapping.keys) {
-        holderCache.remove(oldCtx)
-      }
+    for (oldCtx in composedMapping.keys) {
+      holderCache.remove(oldCtx)
+    }
+  }
+
+  /** Fallback for a generation bump with no stored mappings: drop the contexts the file no longer has. */
+  private fun dropDeadContexts(virtualFile: VirtualFile, manager: SmartPointerManagerEx) {
+    val cached = knownContexts
+    if (cached != null && cached.isEmpty()) {
       return
     }
 
-    // Fallback: no stored mappings available
-    val oldContexts = allInfos.mapNotNullTo(mutableSetOf()) { it.fileHolder.context }
-    val actualContexts = CodeInsightContextManager.getInstance(manager.project).getCodeInsightContexts(virtualFile).toSet()
+    val fileContexts = CodeInsightContextManager.getInstance(manager.project).getCodeInsightContexts(virtualFile)
+    if (cached != null && fileContexts.containsAll(cached)) {
+      return
+    }
+
+    val actualContexts = fileContexts.toSet()
+    val allInfos = getContextAwareInfos()
+    val oldContexts = collectContexts(allInfos)
+    knownContexts = oldContexts
     val deadContexts = oldContexts.subtract(actualContexts)
 
     if (deadContexts.isEmpty()) {
@@ -269,6 +314,7 @@ class SmartPointerTracker(initialModCount: Long) {
       }
       holderCache.remove(deadContext)
       holderCache[actualContext] = newHolder
+      knownContexts = SmartHashSet<CodeInsightContext>().apply { add(actualContext) }
       return
     }
 
@@ -280,6 +326,21 @@ class SmartPointerTracker(initialModCount: Long) {
     for (deadContext in deadContexts) {
       holderCache.remove(deadContext)
     }
+    // knownContexts is initialized here and this method is run in synchronized block
+    knownContexts!!.removeAll(deadContexts)
+  }
+
+  /** The holders are interned, so consecutive infos usually share one; the identity check skips the context hashing. */
+  private fun collectContexts(infos: List<ContextAwareInfo>): MutableSet<CodeInsightContext> {
+    val contexts = SmartHashSet<CodeInsightContext>()
+    var lastHolder: FileHolder? = null
+    for (info in infos) {
+      val holder = info.fileHolder
+      if (holder === lastHolder) continue
+      lastHolder = holder
+      holder.context?.let { contexts.add(it) }
+    }
+    return contexts
   }
 
   internal fun createFileHolderInterned(virtualFile: VirtualFile, context: CodeInsightContext?): FileHolder =
