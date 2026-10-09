@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.testFramework.TestDataPath;
@@ -108,5 +108,11 @@ public class PluginXmlDomInspectionActionHighlightingTest extends PluginXmlDomIn
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction {}");
 
     myFixture.testHighlighting("GroupKeepContent.xml");
+  }
+
+  public void testReferenceWithoutEffect() {
+    myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction {}");
+
+    myFixture.testHighlighting("ReferenceWithoutEffect.xml");
   }
 }

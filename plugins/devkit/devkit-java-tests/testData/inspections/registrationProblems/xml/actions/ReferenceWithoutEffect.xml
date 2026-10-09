@@ -1,0 +1,20 @@
+<idea-plugin>
+  <actions>
+    <action id="myAction" class="foo.bar.BarAction"/>
+    <group id="myGroup"/>
+
+    <<warning descr="'<reference>' has no effect outside '<group>' without '<add-to-group>' or '<synonym>'">reference</warning> ref="myAction"/>
+    <<warning descr="'<reference>' has no effect outside '<group>' without '<add-to-group>' or '<synonym>'">reference</warning> ref="myAction"></reference>
+
+    <reference ref="myAction">
+      <add-to-group group-id="myGroup"/>
+    </reference>
+    <reference ref="myAction">
+      <synonym text="My Synonym"/>
+    </reference>
+
+    <group id="anotherGroup">
+      <reference ref="myAction"/>
+    </group>
+  </actions>
+</idea-plugin>

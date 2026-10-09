@@ -66,6 +66,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Action;
+import org.jetbrains.idea.devkit.dom.Actions;
 import org.jetbrains.idea.devkit.dom.AddToGroup;
 import org.jetbrains.idea.devkit.dom.Component;
 import org.jetbrains.idea.devkit.dom.ContentDescriptor;
@@ -1025,6 +1026,13 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     @SuppressWarnings("deprecation") var id = reference.getId();
     if (id.exists()) {
       highlightDeprecated(id, DevKitBundle.message("inspections.plugin.xml.reference.id.deprecated.use.ref"), holder, false, true);
+    }
+
+    if (reference.getParent() instanceof Actions &&
+        reference.getAddToGroups().isEmpty() &&
+        reference.getSynonyms().isEmpty()) {
+      holder.createProblem(reference, ProblemHighlightType.WARNING,
+                           DevKitBundle.message("inspections.plugin.xml.reference.has.no.effect"), null);
     }
   }
 
