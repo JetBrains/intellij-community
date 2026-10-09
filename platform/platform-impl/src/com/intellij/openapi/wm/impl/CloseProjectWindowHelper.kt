@@ -5,6 +5,7 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.lightEdit.LightEditService
+import com.intellij.ide.welcomeScreen.WelcomeAccessPoint
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.components.serviceIfCreated
@@ -13,6 +14,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
+import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.openapi.wm.ex.getWelcomeScreenProjectProvider
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.mac.MacMenuSettings
 import com.intellij.ui.mac.MergeAllWindowsAction
@@ -91,7 +95,9 @@ open class CloseProjectWindowHelper {
   protected open fun closeProjectAndShowWelcomeFrameIfNoProjectOpened(project: Project?) {
     SaveAndSyncHandler.getInstance().withDisabledAutoSaveBlocking {
       if (project != null && project.isOpen) {
-        ProjectManager.getInstance().closeAndDispose(project)
+        // the welcome screen project opens in the frame of the last closed project
+        val keepFrame = getNumberOfOpenedProjects() == 1 && opensWelcomeScreenProjectAfterClose(project)
+        closeAndDisposeProject(project, keepFrame)
       }
       ApplicationManager.getApplication().messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed()
       SaveAndSyncHandler.getInstance().scheduleSave(task = SaveAndSyncHandler.SaveTask(forceSavingAllSettings = true),
@@ -109,4 +115,34 @@ open class CloseProjectWindowHelper {
            ?: (isShowWelcomeScreen && !PlatformUtils.isDataGrip())
   }
 
+}
+
+/**
+ * Returns `true` if closing [projectToClose] as the last open project
+ * opens the welcome screen project, or `false` if no welcome screen project opens.
+ */
+internal fun opensWelcomeScreenProjectAfterClose(projectToClose: Project): Boolean {
+  // JetBrains Client doesn't have its own non-modal welcome screen.
+  if (PlatformUtils.isJetBrainsClient() ||
+      !WelcomeAccessPoint.isAvailable() ||
+      WelcomeScreenProjectProvider.isWelcomeScreenProject(projectToClose)) {
+    return false
+  }
+  return getWelcomeScreenProjectProvider() != null
+}
+
+/**
+ * Closes [project] with the regular close flow.
+ * When [keepFrame] is `true`, the frame of [project] stays open, and the next project that opens reuses it.
+ *
+ * @return true on success. Returns `false` when a listener vetoes the close.
+ */
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+internal fun closeAndDisposeProject(project: Project, keepFrame: Boolean): Boolean {
+  if (!keepFrame) {
+    return ProjectManager.getInstance().closeAndDispose(project)
+  }
+  return WindowManagerEx.getInstanceEx().withFrameReuseEnabled().use {
+    ProjectManager.getInstance().closeAndDispose(project)
+  }
 }
