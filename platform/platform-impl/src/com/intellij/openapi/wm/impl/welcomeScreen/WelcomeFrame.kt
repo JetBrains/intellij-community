@@ -51,7 +51,9 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Point
 import java.awt.Rectangle
@@ -215,7 +217,16 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWi
       val customHandler = findNoProjectStateHandler()
       if (customHandler != null) {
         service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
-          customHandler()
+          try {
+            customHandler()
+          }
+          finally {
+            // The project that the handler opens reuses the frame of the last closed project.
+            // Dispose the frame when no project took it, for example, when the open failed.
+            withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement() + NonCancellable) {
+              (serviceAsync<WindowManager>() as? WindowManagerImpl)?.disposeRootFrame()
+            }
+          }
         }
         return
       }
