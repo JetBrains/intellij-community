@@ -1329,7 +1329,7 @@ elements:
                                     place="EditorPopup"
                                     use-text-of-place="MainMenu"/>
                                 ```
-                    - element:
+                    - element: &synonym
                         name: synonym
                         sdkDocsFixedPath: [idea-plugin, actions, action, synonym]
                         since: "2020.3"
@@ -1506,9 +1506,12 @@ elements:
                         name: reference
                         sdkDocsFixedPath: [idea-plugin, actions, group, reference]
                         description: |
-                          Allows adding an existing action to the group.
-                          The element can be used directly under the [`<actions>`](#element:idea-plugin__actions) element, or in
-                          the [`<group>`](#element:idea-plugin__actions__group) element.
+                          Refers to an existing action.
+                          The element can be used in:
+                          - the [`<actions>`](#element:idea-plugin__actions) element - must contain
+                            the [`<add-to-group>`](#element:idea-plugin__actions__action__add-to-group) element adding the referenced action to a group,
+                            the [`<synonym>`](#element:idea-plugin__actions__action__synonym) element adding a synonym to the referenced action, or both.
+                          - the [`<group>`](#element:idea-plugin__actions__group) element - adds the referenced action to the group.
                         requirement:
                           required: no
                         attributes:
@@ -1539,10 +1542,20 @@ elements:
                                   <reference ref="com.example.MyAction">
                                     <add-to-group group-id="ToolsMenu"/>
                                   </reference>
-                                </group>
+                                </actions>
+                                ```
+                          - |
+                            A synonym added to an existing action:
+                                ```xml
+                                <actions>
+                                  <reference ref="EditorCopy">
+                                    <synonym text="Copy to Clipboard"/>
+                                  </reference>
+                                </actions>
                                 ```
                         children:
                           - element: *addToGroup
+                          - element: *synonym
                     - element:
                         name: separator
                         description: |
