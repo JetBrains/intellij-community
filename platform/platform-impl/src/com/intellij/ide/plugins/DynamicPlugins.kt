@@ -344,16 +344,21 @@ object DynamicPlugins {
   ): DynamicPluginsReconfigurationResult {
     LOG.trace("dynamic plugins reconfiguration attempt")
     val newStateErr = buildNewState()
-    if (newStateErr.isError) {
-      return DynamicPluginsReconfigurationResult.Invalid(newStateErr.error)
+    val result = if (newStateErr.isError) {
+      DynamicPluginsReconfigurationResult.Invalid(newStateErr.error)
     }
-    val newState = newStateErr.value
-    extraStateValidator.validate(newState.resolvedPluginSet)?.let {
-      return DynamicPluginsReconfigurationResult.Invalid(
-        DynamicReconfigurationIsNotPossibleReason.of("new state did not meet expectations: $it", null)
-      )
+    else {
+      val newState = newStateErr.value
+      val validationReason = extraStateValidator.validate(newState.resolvedPluginSet)?.let {
+        DynamicPluginsReconfigurationResult.Invalid(
+          DynamicReconfigurationIsNotPossibleReason.of(it, null)
+        )
+      }
+      if (validationReason != null) validationReason
+      else DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState)
     }
-    return DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState)
+    if (result is DynamicPluginsReconfigurationResult.Invalid) LOG.warn("Reconfiguration is not possible: ${result.reason.logMessage}")
+    return result
   }
 
   /**
