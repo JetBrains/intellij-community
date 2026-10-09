@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
@@ -236,6 +237,7 @@ object DynamicPlugins {
       }
       else -> IdeBundle.message("modal.progress.title.reconfiguring.plugins")
     }
+    val criticalSectionModalProgress = Registry.`is`("ide.plugins.modal.progress.on.reconfiguration.critical.section", false)
     return withSpan(RECONFIGURE_MODAL_PROGRESS_SPAN) {
       reconfigure(
         buildNewState = {
@@ -253,8 +255,8 @@ object DynamicPlugins {
           computeNewPluginsState(addNewCustomPlugins, forceRemovePlugins, forceExclude = true)
         },
         extraStateValidator = extraStateValidator,
-        modalProgressConfig = ModalProgressConfig(modalTaskOwner(project), title),
-        criticalSectionModalProgressConfig = null,
+        outerModalProgressConfig = if (criticalSectionModalProgress) null else ModalProgressConfig(modalTaskOwner(project), title),
+        criticalSectionModalProgressConfig = if (criticalSectionModalProgress) ModalProgressConfig(modalTaskOwner(project), title) else null,
       ) is DynamicPluginsReconfigurationResult.Success
     }
   }
@@ -276,7 +278,7 @@ object DynamicPlugins {
             computeNewPluginsState(plugins, emptyList())
           },
           extraStateValidator = expectPluginsState(expectToLoad = plugins.map { it.pluginId }),
-          modalProgressConfig = null,
+          outerModalProgressConfig = null,
           criticalSectionModalProgressConfig = null,
         ) is DynamicPluginsReconfigurationResult.Success
       }
@@ -309,7 +311,7 @@ object DynamicPlugins {
             computeNewPluginsState(listOf(pluginDescriptor), emptyList())
           },
           extraStateValidator = expectPluginsState(expectToLoad = listOf(pluginDescriptor.pluginId)),
-          modalProgressConfig = null,
+          outerModalProgressConfig = null,
           criticalSectionModalProgressConfig = null,
         ) is DynamicPluginsReconfigurationResult.Success
       }
@@ -335,7 +337,7 @@ object DynamicPlugins {
             computeNewPluginsState(emptyList(), plugins)
           },
           extraStateValidator = expectPluginsState(expectNotToLoad = plugins.map { it.pluginId }),
-          modalProgressConfig = null,
+          outerModalProgressConfig = null,
           criticalSectionModalProgressConfig = null,
         ) is DynamicPluginsReconfigurationResult.Success
       }
@@ -355,7 +357,7 @@ object DynamicPlugins {
             computeNewPluginsState(emptyList(), listOf(pluginDescriptor))
           },
           extraStateValidator = expectPluginsState(expectNotToLoad = listOf(pluginDescriptor.pluginId)),
-          modalProgressConfig = null,
+          outerModalProgressConfig = null,
           criticalSectionModalProgressConfig = null,
         ) is DynamicPluginsReconfigurationResult.Success
       }
@@ -365,7 +367,7 @@ object DynamicPlugins {
   private suspend fun reconfigure(
     buildNewState: () -> Either<PluginSet, DynamicReconfigurationIsNotPossibleReason>,
     extraStateValidator: PluginStateValidator,
-    modalProgressConfig: ModalProgressConfig?,
+    outerModalProgressConfig: ModalProgressConfig?,
     criticalSectionModalProgressConfig: ModalProgressConfig?,
   ): DynamicPluginsReconfigurationResult {
     LOG.trace("dynamic plugins reconfiguration attempt")
@@ -386,8 +388,8 @@ object DynamicPlugins {
         else DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState, criticalSectionModalProgressConfig)
       }
     }
-    val result = if (modalProgressConfig != null) {
-      withModalProgress(modalProgressConfig.owner, modalProgressConfig.title, cancellation = TaskCancellation.nonCancellable()) {
+    val result = if (outerModalProgressConfig != null) {
+      withModalProgress(outerModalProgressConfig.owner, outerModalProgressConfig.title, cancellation = TaskCancellation.nonCancellable()) {
         runReconfiguration()
       }
     } else {
