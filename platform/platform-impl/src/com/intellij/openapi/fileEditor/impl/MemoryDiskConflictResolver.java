@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager.ConflictResolution;
+import com.intellij.openapi.fileEditor.impl.FileCacheConflictCollector.DialogCause;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
@@ -157,11 +158,14 @@ public class MemoryDiskConflictResolver {
       conflicts = new ArrayList<>(myConflictQueue);
       myConflictQueue.clear();
     }
+    DialogCause cause = dialogCause(getConflictResolution());
     for (VirtualFile file : conflicts) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(file);
       if (document != null && file.getModificationStamp() != document.getModificationStamp()) {
         LOG.info("reload " + file.getName() + " from disk?");
-        if (askReloadFromDisk(file, document)) {
+        DialogResult result = askReloadFromDisk(file, document);
+        FileCacheConflictCollector.logDialogClosed(file, cause, result);
+        if (result.loadFsChanges()) {
           FileDocumentManager.getInstance().reloadFromDisk(document);
         }
       }
@@ -169,8 +173,19 @@ public class MemoryDiskConflictResolver {
     myConflictAppearedInUnitTest = null;
   }
 
+  /**
+   * Takes the resolution at the time the dialogs show, not at the time the conflicts were queued.
+   * A merge that applies cancels its dialog, so a dialog under MERGE follows a failed merge.
+   */
+  private static @NotNull DialogCause dialogCause(@NotNull ConflictResolution resolution) {
+    return switch (resolution) {
+      case ASK, KEEP_MEMORY_CHANGES -> DialogCause.AUTOMERGE_OFF;
+      case MERGE -> DialogCause.AUTOMERGE_FAILED;
+    };
+  }
+
   @VisibleForTesting
-  protected boolean askReloadFromDisk(@NotNull VirtualFile file, @NotNull Document document) {
+  protected @NotNull DialogResult askReloadFromDisk(@NotNull VirtualFile file, @NotNull Document document) {
     if (myConflictAppearedInUnitTest != null) {
       Throwable trace = myConflictAppearedInUnitTest;
       myConflictAppearedInUnitTest = null;
@@ -196,6 +211,15 @@ public class MemoryDiskConflictResolver {
       return document;
     }
     return null;
+  }
+
+  /**
+   * What the user did in the conflict dialog.
+   *
+   * @param loadFsChanges   true when the user chose to load the file system changes
+   * @param differenceShown true when the user opened the difference view
+   */
+  public record DialogResult(boolean loadFsChanges, boolean differenceShown) {
   }
 
   /**

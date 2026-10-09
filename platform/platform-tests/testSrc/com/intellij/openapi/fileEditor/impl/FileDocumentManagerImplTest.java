@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager;
+import com.intellij.internal.statistic.FUCollectorTestCase;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,6 +45,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.fus.reporting.model.lion3.LogEvent;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -59,6 +62,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -77,12 +81,12 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     FileDocumentManagerImpl impl = (FileDocumentManagerImpl)FileDocumentManager.getInstance();
     impl.setAskReloadFromDisk(getTestRootDisposable(), new MemoryDiskConflictResolver() {
       @Override
-      protected boolean askReloadFromDisk(@NotNull VirtualFile file, @NotNull Document document) {
+      protected @NotNull DialogResult askReloadFromDisk(@NotNull VirtualFile file, @NotNull Document document) {
         if (myAskReloadFromDiskResult == null) {
           fail();
-          return false;
+          return new DialogResult(false, false);
         }
-        return myAskReloadFromDiskResult.booleanValue();
+        return new DialogResult(myAskReloadFromDiskResult.booleanValue(), false);
       }
     });
     myDocumentManager = impl;
@@ -702,6 +706,70 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
     // the user was asked and picked the disk version, so the mergeable in-memory edit is dropped rather than combined
     assertEquals("first\nsecond\nTHIRD\n", document.getText());
+  }
+
+  public void testConflictDialog_reportsTheAnswerWhenNoClientAsksToMerge() throws Exception {
+    myAskReloadFromDiskResult = Boolean.TRUE;
+    VirtualFile file = createFileWithUnsavedEdit("dialog-merge-off.txt");
+
+    List<LogEvent> events = collectEvents(() -> setFileText(file, "first\nsecond\nTHIRD\n"));
+
+    assertConflictDialogClosed(events, "LOAD_FS_CHANGES", "AUTOMERGE_OFF");
+  }
+
+  /**
+   * Both sides change the second line, so the merge fails and the dialog appears in its place.
+   */
+  public void testConflictDialog_reportsTheAnswerWhenTheMergeFails() throws Exception {
+    overrideConflictResolution(ConflictResolution.MERGE);
+    myAskReloadFromDiskResult = Boolean.FALSE;
+    VirtualFile file = createFileWithUnsavedEdit("dialog-merge-failed.txt");
+
+    List<LogEvent> events = refreshAndCollectEvents(file, "first\nsecond-on-disk\nthird\n");
+
+    assertConflictDialogClosed(events, "KEEP_MEMORY_CHANGES", "AUTOMERGE_FAILED");
+  }
+
+  /**
+   * Creates a file and edits its second line in memory, so that its document has unsaved changes.
+   */
+  private @NotNull VirtualFile createFileWithUnsavedEdit(@NotNull String fileName) throws IOException {
+    VirtualFile file = createFile(fileName, "first\nsecond\nthird\n");
+    Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.setText("first\nSECOND\nthird\n"));
+    return file;
+  }
+
+  /**
+   * Writes {@code diskText} to the file, then returns the FUS events that the refresh of the file logs.
+   */
+  private @NotNull List<LogEvent> refreshAndCollectEvents(@NotNull VirtualFile file, @NotNull String diskText) throws IOException {
+    writeToDisk(file, diskText.getBytes(StandardCharsets.UTF_8));
+    return collectEvents(() -> file.refresh(false, false));
+  }
+
+  /**
+   * Runs {@code action} and the events it queues, then returns the FUS events that they log.
+   */
+  private @NotNull List<LogEvent> collectEvents(@NotNull Runnable action) {
+    return FUCollectorTestCase.INSTANCE.collectLogEvents(getTestRootDisposable(), () -> {
+      action.run();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      return Unit.INSTANCE;
+    });
+  }
+
+  private static @NotNull List<LogEvent> conflictEvents(@NotNull List<LogEvent> events, @NotNull String eventId) {
+    return ContainerUtil.filter(events, e -> e.getGroup().getId().equals("file.cache.conflict") && e.getEvent().getId().equals(eventId));
+  }
+
+  private static void assertConflictDialogClosed(@NotNull List<LogEvent> events, @NotNull String answer, @NotNull String cause) {
+    Map<String, Object> data = assertOneElement(conflictEvents(events, "dialog.closed")).getEvent().getData();
+    assertEquals(answer, data.get("answer"));
+    assertEquals(cause, data.get("cause"));
+    assertEquals(false, data.get("difference_shown"));
+    assertEquals("PLAIN_TEXT", data.get("file_type"));
   }
 
 

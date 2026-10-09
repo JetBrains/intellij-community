@@ -897,6 +897,7 @@
     <projectService serviceInterface="com.intellij.openapi.util.WindowStateService"
                     serviceImplementation="com.intellij.openapi.util.WindowStateProjectService"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileEditor.impl.IdeScriptEngineUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileEditor.impl.FileCacheConflictCollector"/>
     <applicationService serviceInterface="com.intellij.ide.UiActivityMonitor"
                         serviceImplementation="com.intellij.ide.UiActivityMonitorImpl"/>
     <applicationService serviceImplementation="com.intellij.diagnostic.WindowsDefenderChecker" open="true"/>
