@@ -1477,6 +1477,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/performanceTesting/vcs/intellij.performanceTesting.vcs.iml" filepath="$PROJECT_DIR$/plugins/performanceTesting/vcs/intellij.performanceTesting.vcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-api/intellij.platform.analysis.iml" filepath="$PROJECT_DIR$/platform/analysis-api/intellij.platform.analysis.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-impl/intellij.platform.analysis.impl.iml" filepath="$PROJECT_DIR$/platform/analysis-impl/intellij.platform.analysis.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/analysis-impl/intellij.platform.analysis.impl.tests.iml" filepath="$PROJECT_DIR$/platform/analysis-impl/intellij.platform.analysis.impl.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/backend/intellij.platform.backend.iml" filepath="$PROJECT_DIR$/platform/backend/intellij.platform.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/main/intellij.platform.backend.main/intellij.platform.backend.main.iml" filepath="$PROJECT_DIR$/platform/main/intellij.platform.backend.main/intellij.platform.backend.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/backend/observation/intellij.platform.backend.observation.iml" filepath="$PROJECT_DIR$/platform/backend/observation/intellij.platform.backend.observation.iml" />
