@@ -20,13 +20,16 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PsiErrorElementUtil;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -184,16 +187,20 @@ public final class DelayedDocumentWatcher implements AutoTestWatcher {
 
   private void asyncCheckErrors(@NotNull Collection<? extends VirtualFile> files,
                                 @NotNull Consumer<? super Boolean> errorsFoundConsumer) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final boolean errorsFound = ReadAction.computeBlocking(() -> {
-        for (VirtualFile file : files) {
+    // The check walks the PSI of every changed file. A non-blocking read action gives way to a pending write action, such as
+    // the keystroke that resumes typing, and restarts; hasErrors() has no side effects. The files are copied because
+    // myChangedFiles is used on the EDT.
+    List<VirtualFile> filesToCheck = new ArrayList<>(files);
+    ReadAction.nonBlocking(() -> {
+        for (VirtualFile file : filesToCheck) {
           if (PsiErrorElementUtil.hasErrors(myProject, file)) {
             return true;
           }
         }
         return false;
-      });
-      ApplicationManager.getApplication().invokeLater(() -> errorsFoundConsumer.accept(errorsFound), ModalityState.any());
-    });
+      })
+      .expireWith(myProject)
+      .finishOnUiThread(ModalityState.any(), errorsFoundConsumer::accept)
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 }
