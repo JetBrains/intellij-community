@@ -2,12 +2,12 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.platform.polySymbols.web` start
-content_module_jar(module = ":polySymbols-web")
+content_module_jar(module = ":web")
 ### auto-generated section `dev intellij.platform.polySymbols.web` end
 
 ### auto-generated section `build intellij.platform.polySymbols.web` start
 jvm_library(
-    name = "polySymbols-web",
+    name = "web",
     srcs = glob(
         [
             "gen/**/*.kt",
@@ -26,7 +26,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "//platform/polySymbols",
+        "//platform/polySymbols/shared:polySymbols",
         "//platform/ide-core",
         "//platform/analysis-api:analysis",
         "//platform/editor-ui-api:editor-ui",
@@ -54,7 +54,7 @@ jvm_library(
 )
 
 jvm_library(
-    name = "polySymbols-web_test_lib",
+    name = "web_test_lib",
     testonly = True,
     srcs = glob(
         [],
@@ -64,8 +64,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":polySymbols-web",
-        "//platform/polySymbols:polySymbols_test_lib",
+        ":web",
+        "//platform/polySymbols/shared:polySymbols_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",

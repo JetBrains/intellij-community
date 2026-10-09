@@ -1562,9 +1562,9 @@ DEV_DIST_MODULE_SETS = {
         nested = [
         ],
         packed = {
-            "intellij.platform.polySymbols": "//platform/polySymbols:polySymbols_content_module_jar",
+            "intellij.platform.polySymbols": "//platform/polySymbols/shared:polySymbols_content_module_jar",
             "intellij.platform.polySymbols.backend": "//platform/polySymbols/backend:backend_content_module_jar",
-            "intellij.platform.polySymbols.web": "//platform/polySymbols-web:polySymbols-web_content_module_jar",
+            "intellij.platform.polySymbols.web": "//platform/polySymbols/web:web_content_module_jar",
         },
         module_system_loaded = [
             "intellij.platform.polySymbols",

@@ -43,7 +43,7 @@ which `Language` to parse it as. Concrete chain in this repo:
 `WebFrameworkHtmlLanguageSubstitutor.getLanguage(file: VirtualFile, project: Project)` (a
 `LanguageSubstitutor`, `plugins/JavaScriptLanguage/web-platform/.../WebFrameworkHtmlLanguageSubstitutor.kt:15`)
 → `WebFramework.forContext(file, project)` → `PolySymbolFramework.inLocation(file, project)`
-(`community/platform/polySymbols/src/com/intellij/polySymbols/framework/PolySymbolFramework.kt:52-53`)
+(`community/platform/polySymbols/shared/src/com/intellij/polySymbols/framework/PolySymbolFramework.kt:52-53`)
 → `PolyContext.get(KIND_FRAMEWORK, file, project)`. The result picks which HTML dialect
 (Vue/Angular/plain) the file's `Language` is substituted to, entirely before a PSI tree is built.
 

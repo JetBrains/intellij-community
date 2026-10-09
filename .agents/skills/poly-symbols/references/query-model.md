@@ -6,7 +6,7 @@ resolved `PolySymbol` lights up search/rename/navigation/documentation.
 
 ## PolySymbolQueryExecutor
 
-Central entry point (`community/platform/polySymbols/src/com/intellij/polySymbols/query/PolySymbolQueryExecutor.kt`).
+Central entry point (`community/platform/polySymbols/shared/src/com/intellij/polySymbols/query/PolySymbolQueryExecutor.kt`).
 Built via `PolySymbolQueryExecutorFactory.create(location: PsiElement)`, which configures the
 executor from every registered `PolySymbolQueryScopeContributor` and `PolySymbolQueryConfigurator`
 based on the PSI location — contributors supply initial scopes, configurators supply `PolyContext`
@@ -41,7 +41,7 @@ the symbol implements `PolySymbolScope`.
 
 **For any scope backed by more than a handful of symbols, or whose computation should be cached**,
 use the `polySymbolScopeCached(...)` DSL
-(`community/platform/polySymbols/src/com/intellij/polySymbols/query/PolySymbolScopeDsl.kt`) rather
+(`community/platform/polySymbols/shared/src/com/intellij/polySymbols/query/PolySymbolScopeDsl.kt`) rather
 than hand-extending `PolySymbolScopeWithCache` — it's the same `PolySymbolScopeWithCache`/
 `CachedValuesManager` engine underneath, just without the manual `createPointer()`/`equals`/
 `hashCode` boilerplate:
@@ -143,7 +143,7 @@ underneath" mechanism, and - unlike a hypothetical kind-overriding delegate - it
 Hard Constraint note in [References — own references](#references--own-references-polysymbolownreferences))
 already knows how to peel back to the real symbol. The platform's own
 `ReferencingPolySymbol.create(kind, name, vararg kinds)`
-(`community/platform/polySymbols/src/com/intellij/polySymbols/utils/ReferencingPolySymbol.kt`) builds
+(`community/platform/polySymbols/shared/src/com/intellij/polySymbols/utils/ReferencingPolySymbol.kt`) builds
 exactly this shape declaratively, but only for the case where the referencing and the real target
 share the *same name*: it works by *re-querying* other scopes for `kinds` via a `symbolReference(name)`
 pattern, using that one shared name (its own worked example: Angular Forms' `formControlName="x"`
@@ -228,7 +228,7 @@ Three paths — pick based on whether the symbol has a backing `PsiElement` at a
 whether that `PsiElement` also needs to keep working as a target for **legacy, non-PolySymbols**
 find-usages/rename:
 
-- **`PolySymbolDeclaredInPsi`** (`community/platform/polySymbols/src/com/intellij/polySymbols/utils/PolySymbolDeclaredInPsi.kt`)
+- **`PolySymbolDeclaredInPsi`** (`community/platform/polySymbols/shared/src/com/intellij/polySymbols/utils/PolySymbolDeclaredInPsi.kt`)
   — **the default for a PSI-backed symbol that lives purely in the PolySymbols model.** Override
   `sourceElement`/`textRangeInSourceElement`, and register a `PolySymbolDeclarationProvider`
   (EP `com.intellij.polySymbols.declarationProvider`) that instantiates/finds the symbol for a given
@@ -254,7 +254,7 @@ find-usages/rename:
   overrides `textRangeInSourceElement` to `TextRange.EMPTY_RANGE` since a whole-file declaration has
   no caret-anchorable position). Reach for `PolySymbolDeclaredInPsi` first; it doesn't require a
   legacy PSI-reference mechanism to exist.
-- **`PsiLinkedPolySymbol`** (`community/platform/polySymbols/src/com/intellij/polySymbols/search/PsiLinkedPolySymbol.kt`)
+- **`PsiLinkedPolySymbol`** (`community/platform/polySymbols/shared/src/com/intellij/polySymbols/search/PsiLinkedPolySymbol.kt`)
   + registering `polySymbols.psiLinkedSymbol host="..."` — **a bridge, not a general shortcut.**
   Its own doc comment says exactly this: *"serves as a bridge between Symbol-based functionality
   and the old PSI-based functionality."* Implementing it makes usage-search/rename **bidirectional**
@@ -320,7 +320,7 @@ referenced by unrelated framework support.
 itself (`community/platform/core-api/src/com/intellij/psi/PsiElement.java`, defaults to empty) — every
 PSI element already has it and can override it directly. **Building the result via the
 `polySymbolOwnReferences` DSL, however, requires the host element's own type to implement
-`PolySymbolOwnReferenceHost`** (`community/platform/polySymbols/src/com/intellij/polySymbols/references/PolySymbolOwnReferenceHost.kt`),
+`PolySymbolOwnReferenceHost`** (`community/platform/polySymbols/shared/src/com/intellij/polySymbols/references/PolySymbolOwnReferenceHost.kt`),
 a marker interface extending `PsiElement`:
 
 ```kotlin
@@ -407,7 +407,7 @@ ways this can go wrong, and the one that actually works:
 - **Right: a `PolySymbolDelegate<T>` that overrides `name`.** A delegate is not a `PolySymbolMatch`, so
   `unwrapMatchedSymbols()` treats it as a leaf and its overridden name survives. The platform now has a
   shared, reusable implementation of this: `PolySymbol.withName(name: String): PolySymbolDelegate<PolySymbol>`
-  (`community/platform/polySymbols/src/com/intellij/polySymbols/utils/PolySymbolUtils.kt`, backed by a
+  (`community/platform/polySymbols/shared/src/com/intellij/polySymbols/utils/PolySymbolUtils.kt`, backed by a
   private `AliasedPolySymbol` delegate, `renameTarget = null`) — apply the wrapping *in the query scope*
   that resolves the mismatched name (e.g. Angular's `Angular2BlockReferenceProvider.getReferencedSymbol`
   aliasing a canonicalized, whitespace-collapsed block name like `else if` back onto whatever spacing

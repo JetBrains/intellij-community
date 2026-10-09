@@ -989,9 +989,11 @@ platform/pluginManager/shared.baseline
 platform/pluginManager/testFramework
 platform/pluginSystem/parser/impl
 platform/pluginSystem/testFramework
-platform/polySymbols
-platform/polySymbols-web
 platform/polySymbols/backend
+platform/polySymbols/shared
+platform/polySymbols/testFramework
+platform/polySymbols/tests
+platform/polySymbols/web
 platform/pratt
 platform/problemsView/backend
 platform/problemsView/collector

@@ -5,7 +5,7 @@ import com.intellij.polySymbols.testFramework.query.PolySymbolsDebugOutputPrinte
 import com.intellij.testFramework.PlatformTestUtil
 
 internal val polySymbolsTestsDataPath: String
-  get() = "${PlatformTestUtil.getCommunityPath()}/platform/polySymbols/testData/"
+  get() = "${PlatformTestUtil.getCommunityPath()}/platform/polySymbols/tests/testData/"
 
 object PolySymbolsTestsDebugOutputPrinter : PolySymbolsDebugOutputPrinter() {
   override val propertiesToPrint: List<PolySymbolProperty<*>>
