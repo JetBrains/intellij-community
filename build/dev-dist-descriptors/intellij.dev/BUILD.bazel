@@ -21,7 +21,6 @@ dev_dist_plugin_descriptor(
     content_modules = [
         "intellij.dev.codeInsight",
         "intellij.dev.core",
-        "intellij.dev.leakDetection",
         "intellij.dev.pluginLoading",
         "intellij.dev.psiViewer",
         "intellij.groovy.dev",
@@ -56,7 +55,6 @@ dev_plugin(
         "//platform/statistics/devkit/frontend:frontend_content_module_jar",
         "//platform/statistics/devkit:devkit_content_module_jar",
         "//plugins/dev/intellij.dev.core:core_content_module_jar",
-        "//plugins/dev/intellij.dev.leakDetection:leakDetection_content_module_jar",
         "//plugins/dev/intellij.dev.pluginLoading:pluginLoading_content_module_jar",
         "//plugins/dev/intellij.groovy.dev:groovy-dev_content_module_jar",
     ],

@@ -19,6 +19,7 @@ load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
 
 dev_dist_plugin_descriptor(
     content_modules = [
+        "intellij.dev.leakDetection",
         "intellij.driver.client",
         "intellij.driver.impl",
         "intellij.driver.model",
@@ -63,6 +64,7 @@ dev_plugin(
         "//platform/remote-driver/client:client_content_module_jar",
         "//platform/remote-driver/core:driver-impl_content_module_jar",
         "//platform/remote-driver/model:model_content_module_jar",
+        "//plugins/dev/intellij.dev.leakDetection:leakDetection_content_module_jar",
         "//plugins/performanceTesting/backend:backend_content_module_jar",
         "//plugins/performanceTesting/debugger:debugger_content_module_jar",
         "//plugins/performanceTesting/event-bus:tools-ide-starter-bus_content_module_jar",
