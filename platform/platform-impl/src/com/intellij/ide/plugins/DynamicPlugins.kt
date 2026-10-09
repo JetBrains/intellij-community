@@ -122,6 +122,8 @@ object DynamicPlugins {
     }
     return withTracedModalProgress(RECONFIGURE_MODAL_PROGRESS_SPAN, project, title) {
       if (targetProductMode != null) {
+        // FIXME this is bad: it mutates the state before we actually know the transition is possible.
+        //  Instead, product mode change should only apply after a successful transition, and the preliminary init context instance with adjusted product change should come from [PluginInitContextFactory].
         val currentMode = PluginManagerCore.getPluginSet().initContext.productMode
         if (!CurrentProductMode.transitionTo(targetProductMode)) {
           LOG.info("The product mode does not move to '${targetProductMode.id}' from '${currentMode.id}', so no plugin is reconfigured")
