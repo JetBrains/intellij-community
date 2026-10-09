@@ -47,6 +47,105 @@ object DynamicPlugins {
   }
 
   /**
+   * Helper method for [checkCanReconfigureWithoutRestart]
+   */
+  fun expectPluginsState(
+    expectToLoad: List<PluginId> = emptyList(),
+    expectNotToLoad: List<PluginId> = emptyList(),
+  ): PluginStateValidator = validator@{ state ->
+    for (id in expectToLoad) {
+      val plugin = state.candidateSet.resolvePluginId(id)
+      if (plugin == null) {
+        return@validator "plugin $id was expected to be loaded but is not found in the target plugin state"
+      }
+      if (state.isExcluded(plugin)) {
+        return@validator "${plugin.shortLogDescription} was expected to be loaded but was excluded:\n" +
+                         "${PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(state, plugin)}"
+      }
+    }
+    for (id in expectNotToLoad) {
+      val plugin = state.candidateSet.resolvePluginId(id)
+      if (plugin != null && state.isResolved(plugin)) {
+        return@validator "${plugin.shortLogDescription} was expected not to be loaded but was included in the module graph"
+      }
+    }
+    null
+  }
+
+  /**
+   * Checks that it is possible to dynamically reconfigure the plugin subsystem, i.e., bring it to the new state that is calculated using
+   * the currently known set of plugins and an actual [PluginInitializationContext].
+   *
+   * @param addNewCustomPlugins newly installed/updated plugins that weren't in the context before
+   * @param forceRemovePlugins plugins that should be excluded from the context completely (so it appears as they don't exist at all anymore)
+   * @param extraStateValidator additional checks of the target state can be done there (e.g. that a certain plugin loads). See [expectPluginsState]
+   * @param pretendEnabled plugins that should be treated as not disabled
+   * @param pretendDisabled plugins that should be treated as disabled
+   *
+   * @return a non-null string with an explanation if the reconfiguration is not possible, null otherwise
+   */
+  @RequiresReadLockAbsence
+  @ApiStatus.Internal
+  suspend fun validateReconfigurationIsPossible(
+    addNewCustomPlugins: List<PluginMainDescriptor>,
+    forceRemovePlugins: List<PluginMainDescriptor>,
+    extraStateValidator: PluginStateValidator,
+    pretendEnabled: List<PluginId>,
+    pretendDisabled: List<PluginId>,
+  ): String? {
+    return validateReconfigurationIsPossible(
+      buildNewState = {
+        computeNewPluginsState(
+          include = addNewCustomPlugins,
+          exclude = forceRemovePlugins,
+          forceExclude = true,
+          pretendEnabled = pretendEnabled,
+          pretendDisabled = pretendDisabled,
+        )
+      },
+      extraStateValidator = extraStateValidator
+    )
+  }
+
+  /**
+   * @return non-null message explaining why unloading is not possible, null otherwise
+   */
+  @RequiresBackgroundThread(generateAssertion = false)
+  fun validateCanUnloadWithoutRestart(plugin: PluginMainDescriptor): String? {
+    return runBlockingMaybeCancellable {
+      validateReconfigurationIsPossible(
+        buildNewState = { computeNewPluginsState(emptyList(), listOf(plugin), pretendDisabled = listOf(plugin.pluginId)) },
+        extraStateValidator = expectPluginsState(expectNotToLoad = listOf(plugin.pluginId))
+      )
+    }
+  }
+
+  /**
+   * @return non-null message explaining why loading is not possible, null otherwise
+   */
+  @RequiresBackgroundThread(generateAssertion = false)
+  fun validateCanLoadWithoutRestart(plugin: PluginMainDescriptor): String? {
+    return runBlockingMaybeCancellable {
+      validateReconfigurationIsPossible(
+        buildNewState = { computeNewPluginsState(listOf(plugin), listOf(), pretendEnabled = listOf(plugin.pluginId)) },
+        extraStateValidator = expectPluginsState(expectToLoad = listOf(plugin.pluginId))
+      )
+    }
+  }
+
+  private suspend fun validateReconfigurationIsPossible(
+    buildNewState: () -> PluginSet?,
+    extraStateValidator: PluginStateValidator,
+  ): String? {
+    val newState = buildNewState()
+                   ?: return "Target state is missing essential plugins"
+    extraStateValidator.validate(newState.resolvedPluginSet)?.let {
+      return "new plugins state did not meet expectations: $it"
+    }
+    return DynamicPluginsSupport.getInstance().validateDynamicReconfigurationPossible(newState)?.reason?.logMessage
+  }
+
+  /**
    * Checks that it is possible to dynamically reconfigure the plugin subsystem, i.e., bring it to the new state that is calculated using
    * the currently known set of plugins and an actual [PluginInitializationContext].
    *
@@ -65,51 +164,15 @@ object DynamicPlugins {
     pretendEnabled: List<PluginId>,
     pretendDisabled: List<PluginId>,
   ): Boolean {
-    val newState = computeNewPluginsState(
-      include = addNewCustomPlugins,
-      exclude = forceRemovePlugins,
-      forceExclude = true,
-      pretendEnabled = pretendEnabled,
-      pretendDisabled = pretendDisabled,
-    ) ?: return false
-    val resolvedPluginSet = newState.resolvedPluginSet
-    extraStateValidator.validate(resolvedPluginSet)?.let {
-      LOG.info("new plugins state did not meet expectations: $it")
-      return false
-    }
-    return DynamicPluginsSupport.getInstance().validateDynamicReconfigurationPossible(newState) == null
-  }
-
-  /**
-   * @return non-null message explaining why unloading is not possible, null otherwise
-   */
-  @RequiresBackgroundThread(generateAssertion = false)
-  fun validateCanUnloadWithoutRestart(plugin: PluginMainDescriptor): String? {
-    val newState = computeNewPluginsState(emptyList(), listOf(plugin), pretendDisabled = listOf(plugin.pluginId))
-                   ?: return "Target state is missing essential plugins"
-    val resolvedPluginSet = newState.resolvedPluginSet
-    expectPluginsState(expectNotToLoad = listOf(plugin.pluginId)).validate(resolvedPluginSet)?.let {
-      return it
-    }
-    return runBlockingMaybeCancellable {
-      DynamicPluginsSupport.getInstance().validateDynamicReconfigurationPossible(newState)?.reason?.logMessage
-    }
-  }
-
-  /**
-   * @return non-null message explaining why loading is not possible, null otherwise
-   */
-  @RequiresBackgroundThread(generateAssertion = false)
-  fun validateCanLoadWithoutRestart(plugin: PluginMainDescriptor): String? {
-    val newState = computeNewPluginsState(listOf(plugin), listOf(), pretendEnabled = listOf(plugin.pluginId))
-                   ?: return "Target state is missing essential plugins"
-    val resolvedPluginSet = newState.resolvedPluginSet
-    expectPluginsState(expectToLoad = listOf(plugin.pluginId)).validate(resolvedPluginSet)?.let {
-      return it
-    }
-    return runBlockingMaybeCancellable {
-      DynamicPluginsSupport.getInstance().validateDynamicReconfigurationPossible(newState)?.reason?.logMessage
-    }
+    val reason = validateReconfigurationIsPossible(
+      addNewCustomPlugins,
+      forceRemovePlugins,
+      extraStateValidator,
+      pretendEnabled,
+      pretendDisabled,
+    )
+    reason?.let { LOG.info("reconfiguration is not possible: $it") }
+    return reason == null
   }
 
   @RequiresBackgroundThread(generateAssertion = false)
@@ -186,32 +249,6 @@ object DynamicPlugins {
       val result = DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState)
       result is DynamicPluginsReconfigurationResult.Success
     }
-  }
-
-  /**
-   * Helper method for [checkCanReconfigureWithoutRestart]
-   */
-  fun expectPluginsState(
-    expectToLoad: List<PluginId> = emptyList(),
-    expectNotToLoad: List<PluginId> = emptyList(),
-  ): PluginStateValidator = validator@{ state ->
-    for (id in expectToLoad) {
-      val plugin = state.candidateSet.resolvePluginId(id)
-      if (plugin == null) {
-        return@validator "plugin $id was expected to be loaded but is not found in the target plugin state"
-      }
-      if (state.isExcluded(plugin)) {
-        return@validator "${plugin.shortLogDescription} was expected to be loaded but was excluded:\n" +
-                         "${PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(state, plugin)}"
-      }
-    }
-    for (id in expectNotToLoad) {
-      val plugin = state.candidateSet.resolvePluginId(id)
-      if (plugin != null && state.isResolved(plugin)) {
-        return@validator "${plugin.shortLogDescription} was expected not to be loaded but was included in the module graph"
-      }
-    }
-    null
   }
 
   /**
