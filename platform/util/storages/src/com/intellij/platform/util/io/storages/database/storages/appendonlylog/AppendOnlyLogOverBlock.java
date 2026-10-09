@@ -44,21 +44,22 @@ public final class AppendOnlyLogOverBlock {
       throw new IllegalArgumentException("Block " + block.id() + " must be allocated, but: " + initialState);
     }
 
-    var initialized = false;
     try {
       var content = block.content();
-      if (content.byteSize() < minimumBlockContentLengthFor(0)) {
+      if (content.byteSize() < minimumBlockContentLengthFor(/* payloadLength: */ 0)) {
         throw new IllegalArgumentException("Block " + block.id() + " content (=" + content.byteSize() + ") is too small");
       }
       AppendOnlyLogOverBlockHeaderLayout.initializeEmpty(content);
       block.activate();
-      initialized = true;
       return new AppendOnlyLogOverBlock(block, content);
     }
-    finally {
-      if (!initialized && block.state() == ALLOCATED) {
+    catch (Throwable failure) {
+      if (block.state() == ALLOCATED) {
+        //Not strictly required: ALLOCATED blocks are discarded on recovery phase of DB startup
+        // but why not do it right here, if we can?
         block.discard();
       }
+      throw failure;
     }
   }
 

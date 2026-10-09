@@ -98,18 +98,19 @@ public final class DurableMapBlockCatalog {
         DurableMapBlockRole.LOOKUP,
         Math.addExact(LookupBlockHeaderLayout.HEADER_SIZE, minimumPayloadLength)
       );
-      var initialized = false;
       try {
         LookupBlockHeaderLayout.initialize(block, implementationId, generation);
         var scopedBlock = new ScopedLookupBlock(block);
         scopedBlocks.add(scopedBlock);
-        initialized = true;
         return scopedBlock;
       }
-      finally {
-        if (!initialized && block.state() == BlocksStore.Block.LifecycleState.ALLOCATED) {
+      catch (Throwable failure) {
+        if (block.state() == BlocksStore.Block.LifecycleState.ALLOCATED) {
+          //Not strictly required: ALLOCATED blocks are discarded on recovery phase of DB startup
+          // but why not do it right here, if we can?
           block.discard();
         }
+        throw failure;
       }
     }
 

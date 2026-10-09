@@ -133,20 +133,21 @@ public final class ExtendibleHashMapStorageOverLookupBlocks implements Extendibl
     }
 
     var block = lookupBlocks.allocate(BLOCK_HEADER_SIZE + segmentSize);
-    var initialized = false;
     try {
       var content = block.payload();
       ExtendibleHashMapBlockLayout.initializeSegmentIndex(content, segmentIndex);
       var payload = segmentPayload(block);
       block.activate();
       blocksBySegmentIndex.put(segmentIndex, block);
-      initialized = true;
       return payload;
     }
-    finally {
-      if (!initialized && block.state() == ALLOCATED) {
+    catch (Throwable failure) {
+      if (block.state() == ALLOCATED) {
+        //Not strictly required: ALLOCATED blocks are discarded on recovery phase of DB startup
+        // but why not do it right here, if we can?
         block.discard();
       }
+      throw failure;
     }
   }
 
@@ -177,7 +178,6 @@ public final class ExtendibleHashMapStorageOverLookupBlocks implements Extendibl
 
   private void allocateMetadataBlock() throws IOException {
     var block = lookupBlocks.allocate(metadataBlockTotalPayloadSize);
-    var initialized = false;
     try {
       var content = block.payload();
       if (content.byteSize() < metadataBlockTotalPayloadSize) {
@@ -186,12 +186,12 @@ public final class ExtendibleHashMapStorageOverLookupBlocks implements Extendibl
       ExtendibleHashMapBlockLayout.initializeHeaderAndSegmentsTable(content);
       block.activate();
       metadataBlock = block;
-      initialized = true;
     }
-    finally {
-      if (!initialized && block.state() == ALLOCATED) {
+    catch (Throwable failure) {
+      if (block.state() == ALLOCATED) {
         block.discard();
       }
+      throw failure;
     }
   }
 
