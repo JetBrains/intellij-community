@@ -10,10 +10,9 @@ import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
-import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -38,7 +37,7 @@ class SmartPointerTracker(initialModCount: Long) {
   private val fileInfoList = WeakPointerReferenceList()
   private val markerCache = MarkerCache(this)
   private var mySorted = false
-  private val holderCache = CollectionFactory.createConcurrentWeakKeySoftValueMap<CodeInsightContext, FileHolder>()
+  private val holderCache = ContainerUtil.createConcurrentWeakKeySoftValueMap<CodeInsightContext, FileHolder>()
   private val pendingContextMappings = mutableListOf<Map<CodeInsightContext, CodeInsightContext?>>()
 
   @JvmName("startTracking")
@@ -98,18 +97,6 @@ class SmartPointerTracker(initialModCount: Long) {
     events: List<DocumentEvent>,
   ): Segment? {
     return markerCache.getUpdatedRange(info, document, events)
-  }
-
-  @JvmName("getUpdatedRange")
-  @Synchronized
-  internal fun getUpdatedRange(
-    containingFile: PsiFile,
-    segment: Segment,
-    isSegmentGreedy: Boolean,
-    frozen: FrozenDocument,
-    events: List<DocumentEvent>,
-  ): Segment? {
-    return MarkerCache.getUpdatedRange(segment, isSegmentGreedy, frozen, events)
   }
 
   @JvmName("switchStubToAst")
