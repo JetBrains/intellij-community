@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test
 @Subsystems.CodeInsight
 @Layers.Functional
 @PyCodeInsightTestCase.TestInspections(enableInspections = [PyDocstringTypesInspection::class])
-class PyDocstringTypesInspectionTest : PyCodeInsightTestCase() {
+class PyDocstringDebuggerTypesInspectionTest : PyCodeInsightTestCase() {
 
   // The reported range is the type inside the docstring, and a marker line can only point at the line above it,
   // so the closing quotes are pulled up onto the documented type's line.
