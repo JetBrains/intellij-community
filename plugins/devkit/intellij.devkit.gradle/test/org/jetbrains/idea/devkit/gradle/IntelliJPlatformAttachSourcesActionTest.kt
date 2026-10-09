@@ -83,7 +83,9 @@ class IntelliJPlatformAttachSourcesActionTest : IntelliJPlatformSourcesImporting
 
   @Test
   fun `test missing library sources are reported and the platform sources are attached`() {
-    createLocalIde("intellij.libraries.commons.cli" to listOf(COMMONS_CLI_METADATA, classFile(LIBRARY_CLASS)), "app" to emptyList())
+    // The library does not exist in any repository. A real library, such as commons-cli, can come from a Gradle cache or a mirror of the build agent.
+    val missingLibraryMetadata = pomProperties("org.jetbrains.test.missing", "missing-library", "1.0")
+    createLocalIde("intellij.libraries.commons.cli" to listOf(missingLibraryMetadata, classFile(LIBRARY_CLASS)), "app" to emptyList())
     createArtifact("com.jetbrains.intellij.idea", "ideaIC", "-sources")
     importProjectWithDependencies(LOCAL_IDE, downloadSources = false)
     val notifications = collectNotifications()
