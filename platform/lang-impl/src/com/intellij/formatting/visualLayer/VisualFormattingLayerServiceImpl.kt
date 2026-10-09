@@ -160,8 +160,10 @@ class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
                            formattedText, replacementLineStartOffset, replacementStartOffset, replacementEndOffset,
                            tabSize))
 
-      // add block inlay for M - N lines after firstLine, might be empty.
-      yield(blockInlay(document.getLineStartOffset(originalFirstLine + 1), m - n))
+      // add block inlay for M - N lines after firstLine. When N = M, firstLine can be the last line of the document.
+      if (m > n) {
+        yield(BlockInlay(document.getLineStartOffset(originalFirstLine + 1), m - n))
+      }
     }
 
 
@@ -241,11 +243,6 @@ class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
         }
       }
     }
-  }
-
-  private fun blockInlay(offset: Int, lines: Int): VisualFormattingLayerElement? {
-    if (lines == 0) return null
-    return BlockInlay(offset, lines)
   }
 }
 
