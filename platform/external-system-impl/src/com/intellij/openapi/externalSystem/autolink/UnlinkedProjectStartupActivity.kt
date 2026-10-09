@@ -141,21 +141,22 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
 
   private suspend fun installUnlinkedProjectScanner(project: Project, projectRoots: ProjectRoots) {
     EP_NAME.withEachExtensionSafeAsync(project) { extension, extensionDisposable ->
+      // Register the remove listener before the first update. A project root can be linked during this update.
+      projectRoots.whenProjectRootRemoved(extensionDisposable) { projectRoot ->
+        project.trackActivity(ExternalSystemActivityKey) {
+          expireNotification(project, projectRoot, extension)
+        }
+      }
       whenProjectRootsChanged(project, projectRoots, extensionDisposable) { changedRoots ->
         project.trackActivity(ExternalSystemActivityKey) {
           for (projectRoot in changedRoots) {
-            updateNotification(project, projectRoot, extension)
+            updateNotification(project, projectRoots, projectRoot, extension)
           }
         }
       }
       projectRoots.withProjectRoot(extensionDisposable) { projectRoot ->
         project.trackActivity(ExternalSystemActivityKey) {
-          updateNotification(project, projectRoot, extension)
-        }
-      }
-      projectRoots.whenProjectRootRemoved(extensionDisposable) { projectRoot ->
-        project.trackActivity(ExternalSystemActivityKey) {
-          expireNotification(project, projectRoot, extension)
+          updateNotification(project, projectRoots, projectRoot, extension)
         }
       }
     }
@@ -170,7 +171,12 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
     return false
   }
 
-  private suspend fun updateNotification(project: Project, projectRoot: String, extension: ExternalSystemUnlinkedProjectAware) {
+  private suspend fun updateNotification(
+    project: Project,
+    projectRoots: ProjectRoots,
+    projectRoot: String,
+    extension: ExternalSystemUnlinkedProjectAware,
+  ) {
     when {
       extension.isLinkedProject(project, projectRoot) ->
         expireNotification(project, projectRoot, extension)
@@ -178,6 +184,11 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
         notifyNotification(project, projectRoot, extension)
       else ->
         expireNotification(project, projectRoot, extension)
+    }
+    // The project root can be linked and removed after the isLinkedProject check.
+    // The remove listener cannot expire a notification that is not shown yet.
+    if (projectRoot !in projectRoots) {
+      expireNotification(project, projectRoot, extension)
     }
   }
 

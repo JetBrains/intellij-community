@@ -4,12 +4,14 @@ package com.intellij.openapi.externalSystem.autolink
 import com.intellij.ide.impl.SelectProjectOpenProcessorDialog
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.vfs.writeText
+import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.testFramework.utils.vfs.createFile
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
 
 class AutoLinkTest : AutoLinkTestCase() {
 
@@ -159,6 +161,52 @@ class AutoLinkTest : AutoLinkTestCase() {
           assertNotificationAware(project, "B" to "project")
           assertLinkedProjects(unlinkedProjectAwareA, 1)
           assertLinkedProjects(unlinkedProjectAwareB, 0)
+        }
+    }
+  }
+
+  @Test
+  fun `test expire notification if project is linked during notification update`() {
+    runBlocking {
+      edtWriteAction {
+        testRoot.createFile("project/file.a")
+        testRoot.createFile("project/.idea/compiler.xml")
+          .writeText("""
+            |<?xml version="1.0" encoding="UTF-8"?>
+            |<project version="4">
+            |  <component name="CompilerConfiguration">
+            |    <bytecodeTargetLevel target="14" />
+            |  </component>
+            |</project>
+          """.trimMargin())
+        testRoot.createFile("project/.idea/modules.xml")
+          .writeText("""
+            |<?xml version="1.0" encoding="UTF-8"?>
+            |<project version="4">
+            |  <component name="ProjectModuleManager">
+            |    <modules>
+            |      <module fileurl="file://${'$'}PROJECT_DIR${'$'}/project.iml" filepath="${'$'}PROJECT_DIR${'$'}/project.iml" />
+            |    </modules>
+            |  </component>
+            |</project>
+          """.trimMargin())
+      }
+
+      val unlinkedProjectAware = createAndRegisterUnlinkedProjectAware("A", "a")
+      // Link the project after the first check of the notification update.
+      // The check returns false, so the notification is shown and must be expired later.
+      unlinkedProjectAware.afterLinkedProjectCheck = { externalProjectPath ->
+        if (unlinkedProjectAware.hasSubscribers && unlinkedProjectAware.linkCounter.get() == 0) {
+          unlinkedProjectAware.linkProject(externalProjectPath)
+        }
+      }
+
+      openProject("project")
+        .useProjectAsync { project ->
+          assertLinkedProjects(unlinkedProjectAware, 1)
+          waitUntilAssertSucceeds(timeout = 10.seconds) {
+            assertNotificationAware(project)
+          }
         }
     }
   }

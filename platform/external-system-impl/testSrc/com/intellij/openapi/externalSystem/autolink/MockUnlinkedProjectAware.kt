@@ -17,13 +17,24 @@ class MockUnlinkedProjectAware(
 
   val linkCounter = AtomicInteger()
 
+  /**
+   * Runs after each [isLinkedProject] check, with the checked path.
+   */
+  @Volatile
+  var afterLinkedProjectCheck: (String) -> Unit = {}
+
+  val hasSubscribers: Boolean
+    get() = listeners.isNotEmpty()
+
   override fun isBuildFile(project: Project, buildFile: VirtualFile) = isBuildFile(buildFile)
   fun isBuildFile(buildFile: VirtualFile): Boolean {
     return buildFile.extension == buildFileExtension
   }
 
   override fun isLinkedProject(project: Project, externalProjectPath: String): Boolean {
-    return externalProjectPath in linkedProjects
+    val isLinked = externalProjectPath in linkedProjects
+    afterLinkedProjectCheck(externalProjectPath)
+    return isLinked
   }
 
   override suspend fun linkAndLoadProjectAsync(project: Project, externalProjectPath: String) {
