@@ -4,8 +4,8 @@
 //! The generator owns the schema. This side declares the fields that a runner needs and ignores the others: the
 //! reach of the suite, the expectations, the fixture names. What it holds the document to is the vocabulary: every id
 //! that an instruction names has an entry of its kind, a `host` id is a word of [`HostAction`] or [`HostAssertion`],
-//! a `crossing` id is on the pinned list, and every argument fits the schema of its id. A value that an id takes has
-//! an answer earlier in its scenario, or the runner answers it before the first instruction.
+//! an `ide` id is not, and every argument fits the schema of its id. A value that an id takes has an answer earlier in
+//! its scenario, or the runner answers it before the first instruction.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -22,9 +22,6 @@ vocabulary! {
         Ide = "ide",
         /// On the host of the lane, against a lane service or the IDE process.
         Host = "host",
-        /// In both, in one handler. Only the ids of [`CROSSING_ACTIONS`] and [`CROSSING_ASSERTIONS`] have it, until
-        /// the split of each of them into one id per side.
-        Crossing = "crossing",
     }
 }
 
@@ -32,8 +29,14 @@ vocabulary! {
     /// The actions that a lane runner performs on the host. A runner matches over them, so an id with no word here
     /// cannot be a host action.
     pub enum HostAction {
+        /// Approves the JetBrains Account login of the value `signInUrl` in the JetBrains Cloud emulator.
+        AccountApproveSignIn = "account-approve-sign-in",
         /// Pauses the next package download of the fake registry.
         ConsentHoldDownload = "consent-hold-download",
+        /// Makes the fake registry fail the next package download.
+        RegistryFailNextDownload = "registry-fail-next-download",
+        /// Answers the count of package requests that the fake registry answered so far, as `consentRegistryBaseline`.
+        RegistryMarkRequests = "registry-mark-requests",
         /// Lets the paused package download of the fake registry finish.
         ReleaseDownload = "release-download",
         /// Quits the IDE the way a user does and starts it again on the same context. Between the quit and the launch it
@@ -48,6 +51,8 @@ vocabulary! {
     pub enum HostAssertion {
         /// The fake registry fails the next package download.
         ConsentDownloadFaultArmed = "consent-download-fault-armed",
+        /// The fake registry answered the stated count of package requests since `consentRegistryBaseline`.
+        RegistryRequestCount = "registry-request-count",
     }
 }
 
@@ -60,21 +65,6 @@ vocabulary! {
         Enum = "enum",
     }
 }
-
-/// The actions whose one handler calls the IDE and a host service. The generator pins the same list.
-pub const CROSSING_ACTIONS: &[&str] = &[
-    "consent-baseline",
-    "consent-fail-download",
-    "consent-strand-installed-agent",
-    "prepare-junie-free-plan-account",
-];
-
-/// The assertions whose one handler calls the IDE and a host service. The generator pins the same list.
-pub const CROSSING_ASSERTIONS: &[&str] = &[
-    "consent-record",
-    "prepare-junie-free-plan-account",
-    "repair-not-restarted-by-itself",
-];
 
 /// One suite document, as a lane runner reads it.
 #[derive(Clone, Debug, Deserialize)]
@@ -314,22 +304,14 @@ fn side_refusal(kind: IdKind, id: &str, side: Side) -> Option<String> {
         IdKind::Action => id.parse::<HostAction>().is_ok(),
         IdKind::Assertion => id.parse::<HostAssertion>().is_ok(),
     };
-    let crossing = match kind {
-        IdKind::Action => CROSSING_ACTIONS.contains(&id),
-        IdKind::Assertion => CROSSING_ASSERTIONS.contains(&id),
-    };
     let kind = kind.as_str();
     match side {
         Side::Host if !host => Some(format!(
             "the {kind} '{id}' is a host id, and the host vocabulary of a runner has no word for it"
         )),
-        Side::Crossing if !crossing => Some(format!(
-            "the {kind} '{id}' crosses the sides, and the pinned crossing list does not name it"
+        Side::Ide if host => Some(format!(
+            "the {kind} '{id}' is stated to run in the IDE, but a runner knows it as a host id"
         )),
-        Side::Ide if host || crossing => Some(format!(
-            "the {kind} '{id}' is stated to run in the IDE, but a runner knows it as {}",
-            if host { "a host id" } else { "a crossing id" }
-        )),
-        _ => None,
+        Side::Host | Side::Ide => None,
     }
 }

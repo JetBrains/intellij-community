@@ -28,14 +28,12 @@ fn a_program_that_fits_its_vocabulary_has_no_refusal() {
     let vocabulary = json!({"runnerAnswers": ["terminalBaseline"], "actions": {
             "composer-type": spec("ide", &surface),
             "restart-ide": {"side": "host", "timeoutMs": 840_000, "restarts": 1, "answers": [], "takes": [], "mayTake": [], "params": {}},
-            "consent-baseline": spec("crossing", &json!({})),
         },
         "assertions": {"consent-download-fault-armed": spec("host", &json!({}))},
     });
     let instructions = json!([
         {"action": "composer-type", "args": {"surface": "GLOBAL_PROMPT", "count": 2}},
         {"action": "restart-ide"},
-        {"action": "consent-baseline"},
         {"assertion": "consent-download-fault-armed", "expectation": "The fault is armed."},
     ]);
     assert_eq!(program(&vocabulary, &instructions).refusals(), Vec::<String>::new());
@@ -46,17 +44,15 @@ fn a_side_that_a_runner_does_not_know_is_refused() {
     let vocabulary = json!({"runnerAnswers": ["terminalBaseline"], "actions": {
             "open-prompt": spec("host", &json!({})),
             "restart-ide": spec("ide", &json!({})),
-            "send": spec("crossing", &json!({})),
         },
         "assertions": {},
     });
-    let instructions = json!([{"action": "open-prompt"}, {"action": "restart-ide"}, {"action": "send"}]);
+    let instructions = json!([{"action": "open-prompt"}, {"action": "restart-ide"}]);
     assert_eq!(
         program(&vocabulary, &instructions).refusals(),
         vec![
             "the action 'open-prompt' is a host id, and the host vocabulary of a runner has no word for it".to_owned(),
             "the action 'restart-ide' is stated to run in the IDE, but a runner knows it as a host id".to_owned(),
-            "the action 'send' crosses the sides, and the pinned crossing list does not name it".to_owned(),
         ]
     );
 }
