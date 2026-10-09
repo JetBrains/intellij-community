@@ -351,9 +351,9 @@ class NetCommandFactoryJson(NetCommandFactory):
         return NetCommand(CMD_RETURN, 0, response, is_json=True)
 
     @overrides(NetCommandFactory.make_warning_message)
-    def make_warning_message(self, msg):
+    def make_warning_message(self, msg, data=None):
         category = "important"
-        body = OutputEventBody(msg, category)
+        body = OutputEventBody(msg, category, data=data)
         event = OutputEvent(body)
         return NetCommand(CMD_WRITE_TO_CONSOLE, 0, event, is_json=True)
 

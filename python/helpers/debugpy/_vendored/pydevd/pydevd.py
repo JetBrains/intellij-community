@@ -431,9 +431,10 @@ class AbstractSingleNotificationBehavior(object):
                 if py_db is not None:
                     py_db.writer.add_command(
                         py_db.cmd_factory.make_warning_message(
-                            "Pause did not stop the process: it may be blocked in a native or "
+                            "\nPause did not stop the process: it may be blocked in a native or "
                             "I/O call (e.g. a blocking read) that the debugger cannot interrupt. "
-                            "It will stop the next time it executes Python code."
+                            "It will stop the next time it executes Python code.\n",
+                            data={"pauseIgnored": True},
                         )
                     )
 
