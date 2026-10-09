@@ -567,6 +567,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
       }
       else if (intersect(oldDocument, newDocumentWindow)) {
         injected.remove(i); // injected fragments should not overlap. In the End, there can be only one.
+        InjectedLanguageUtilBase.clearCaches(hostPsiFile.getProject(), oldDocument);
       }
     }
     injected.add(newDocumentWindow);

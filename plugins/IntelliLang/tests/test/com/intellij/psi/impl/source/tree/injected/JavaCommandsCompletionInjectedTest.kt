@@ -232,7 +232,7 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
         class A {
             void a(Object o, List<String> a, String[] b) {
                 for (int i = 0; i < a.size(); i++) {
-        
+                    
                 }
             }
         }""${'"'};
