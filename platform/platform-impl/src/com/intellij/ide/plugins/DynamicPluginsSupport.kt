@@ -3,8 +3,10 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -66,3 +68,5 @@ private class DynamicReconfigurationIsNotPossibleReasonImpl(
 
 @Service
 internal class DynamicPluginsSupportService(val coroutineScope: CoroutineScope)
+
+internal class ModalProgressConfig(val owner: ModalTaskOwner, val title: @Nls String)

@@ -27,7 +27,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import fleet.util.Either
 import fleet.util.error
 import fleet.util.value
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -235,7 +234,7 @@ object DynamicPlugins {
       }
       else -> IdeBundle.message("modal.progress.title.reconfiguring.plugins")
     }
-    return withTracedModalProgress(RECONFIGURE_MODAL_PROGRESS_SPAN, project, title) {
+    return withSpan(RECONFIGURE_MODAL_PROGRESS_SPAN) {
       reconfigure(
         buildNewState = {
           val currentMode = PluginManagerCore.getPluginSet().initContext.productMode
@@ -251,7 +250,8 @@ object DynamicPlugins {
           }
           computeNewPluginsState(addNewCustomPlugins, forceRemovePlugins, forceExclude = true)
         },
-        extraStateValidator = extraStateValidator
+        extraStateValidator = extraStateValidator,
+        modalProgressConfig = ModalProgressConfig(modalTaskOwner(project), title)
       ) is DynamicPluginsReconfigurationResult.Success
     }
   }
@@ -262,13 +262,20 @@ object DynamicPlugins {
   @RequiresEdt(generateAssertion = false)
   fun loadPlugins(plugins: List<PluginMainDescriptor>, project: Project?, progressTitle: @Nls String? = null): Boolean {
     val title = progressTitle ?: defaultLoadingTitle(plugins)
-    return runWithTracedModalProgressBlocking(LOAD_MODAL_PROGRESS_SPAN, project, title) {
-      reconfigure(
-        buildNewState = {
-          computeNewPluginsState(plugins, emptyList())
-        },
-        extraStateValidator = expectPluginsState(expectToLoad = plugins.map { it.pluginId }),
-      ) is DynamicPluginsReconfigurationResult.Success
+    return withSpan(LOAD_MODAL_PROGRESS_SPAN) {
+      runWithModalProgressBlocking(
+        owner = modalTaskOwner(project),
+        title = title,
+        cancellation = TaskCancellation.nonCancellable(),
+      ) {
+        reconfigure(
+          buildNewState = {
+            computeNewPluginsState(plugins, emptyList())
+          },
+          extraStateValidator = expectPluginsState(expectToLoad = plugins.map { it.pluginId }),
+          modalProgressConfig = null,
+        ) is DynamicPluginsReconfigurationResult.Success
+      }
     }
   }
 
@@ -287,17 +294,20 @@ object DynamicPlugins {
   @RequiresEdt(generateAssertion = false)
   @JvmOverloads
   fun loadPlugin(pluginDescriptor: PluginMainDescriptor, project: Project? = null): Boolean {
-    return runWithTracedModalProgressBlocking(
-      LOAD_MODAL_PROGRESS_SPAN,
-      project,
-      IdeBundle.message("modal.progress.title.loading.plugin", pluginDescriptor.name),
-    ) {
-      reconfigure(
-        buildNewState = {
-          computeNewPluginsState(listOf(pluginDescriptor), emptyList())
-        },
-        extraStateValidator = expectPluginsState(expectToLoad = listOf(pluginDescriptor.pluginId)),
-      ) is DynamicPluginsReconfigurationResult.Success
+    return withSpan(LOAD_MODAL_PROGRESS_SPAN) {
+      runWithModalProgressBlocking(
+        owner = modalTaskOwner(project),
+        title = IdeBundle.message("modal.progress.title.loading.plugin", pluginDescriptor.name),
+        cancellation = TaskCancellation.nonCancellable(),
+      ) {
+        reconfigure(
+          buildNewState = {
+            computeNewPluginsState(listOf(pluginDescriptor), emptyList())
+          },
+          extraStateValidator = expectPluginsState(expectToLoad = listOf(pluginDescriptor.pluginId)),
+          modalProgressConfig = null,
+        ) is DynamicPluginsReconfigurationResult.Success
+      }
     }
   }
 
@@ -309,54 +319,71 @@ object DynamicPlugins {
     plugins: List<PluginMainDescriptor>,
     project: Project? = null,
   ): Boolean {
-    return runWithTracedModalProgressBlocking(
-      UNLOAD_MODAL_PROGRESS_SPAN,
-      project,
-      IdeBundle.message("modal.progress.title.unloading.plugins"),
-    ) {
-      reconfigure(
-        buildNewState = {
-          computeNewPluginsState(emptyList(), plugins)
-        },
-        extraStateValidator = expectPluginsState(expectNotToLoad = plugins.map { it.pluginId }),
-      ) is DynamicPluginsReconfigurationResult.Success
+    return withSpan(UNLOAD_MODAL_PROGRESS_SPAN) {
+      runWithModalProgressBlocking(
+        owner = modalTaskOwner(project),
+        title = IdeBundle.message("modal.progress.title.unloading.plugins"),
+        cancellation = TaskCancellation.nonCancellable(),
+      ) {
+        reconfigure(
+          buildNewState = {
+            computeNewPluginsState(emptyList(), plugins)
+          },
+          extraStateValidator = expectPluginsState(expectNotToLoad = plugins.map { it.pluginId }),
+          modalProgressConfig = null,
+        ) is DynamicPluginsReconfigurationResult.Success
+      }
     }
   }
 
   @RequiresEdt(generateAssertion = false)
   fun unloadPlugin(pluginDescriptor: PluginMainDescriptor): Boolean {
-    return runWithTracedModalProgressBlocking(
-      UNLOAD_MODAL_PROGRESS_SPAN,
-      project = null,
-      IdeBundle.message("modal.progress.title.unloading.plugin", pluginDescriptor.name),
-    ) {
-      reconfigure(
-        buildNewState = {
-          computeNewPluginsState(emptyList(), listOf(pluginDescriptor))
-        },
-        extraStateValidator = expectPluginsState(expectNotToLoad = listOf(pluginDescriptor.pluginId)),
-      ) is DynamicPluginsReconfigurationResult.Success
+    return withSpan(UNLOAD_MODAL_PROGRESS_SPAN) {
+      runWithModalProgressBlocking(
+        owner = modalTaskOwner(null),
+        title = IdeBundle.message("modal.progress.title.unloading.plugin", pluginDescriptor.name),
+        cancellation = TaskCancellation.nonCancellable(),
+      ) {
+        reconfigure(
+          buildNewState = {
+            computeNewPluginsState(emptyList(), listOf(pluginDescriptor))
+          },
+          extraStateValidator = expectPluginsState(expectNotToLoad = listOf(pluginDescriptor.pluginId)),
+          modalProgressConfig = null,
+        ) is DynamicPluginsReconfigurationResult.Success
+      }
     }
   }
 
   private suspend fun reconfigure(
     buildNewState: () -> Either<PluginSet, DynamicReconfigurationIsNotPossibleReason>,
     extraStateValidator: PluginStateValidator,
+    modalProgressConfig: ModalProgressConfig?,
   ): DynamicPluginsReconfigurationResult {
     LOG.trace("dynamic plugins reconfiguration attempt")
-    val newStateErr = buildNewState()
-    val result = if (newStateErr.isError) {
-      DynamicPluginsReconfigurationResult.Invalid(newStateErr.error)
-    }
-    else {
-      val newState = newStateErr.value
-      val validationReason = extraStateValidator.validate(newState.resolvedPluginSet)?.let {
-        DynamicPluginsReconfigurationResult.Invalid(
-          DynamicReconfigurationIsNotPossibleReason.of(it, null)
-        )
+    val runReconfiguration = suspend {
+      val newStateErr = buildNewState()
+      if (newStateErr.isError) {
+        DynamicPluginsReconfigurationResult.Invalid(newStateErr.error)
       }
-      if (validationReason != null) validationReason
-      else DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState)
+      else {
+        val newState = newStateErr.value
+        val validationReason =
+          extraStateValidator.validate(newState.resolvedPluginSet)?.let<@NonNls String, DynamicPluginsReconfigurationResult.Invalid> {
+            DynamicPluginsReconfigurationResult.Invalid(
+              DynamicReconfigurationIsNotPossibleReason.of(it, null)
+            )
+          }
+        if (validationReason != null) validationReason
+        else DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState)
+      }
+    }
+    val result = if (modalProgressConfig != null) {
+      withModalProgress(modalProgressConfig.owner, modalProgressConfig.title, cancellation = TaskCancellation.nonCancellable()) {
+        runReconfiguration()
+      }
+    } else {
+      runReconfiguration()
     }
     if (result is DynamicPluginsReconfigurationResult.Invalid) LOG.warn("Reconfiguration is not possible: ${result.reason.logMessage}")
     return result
@@ -534,7 +561,6 @@ object DynamicPlugins {
   }
 }
 
-
 /**
  * Runs [action] inside a span named [spanName].
  * The span stays out of the current context on purpose: a modal progress pumps unrelated events on the EDT,
@@ -551,26 +577,3 @@ private inline fun <T> withSpan(spanName: @NonNls String, action: () -> T): T {
 }
 
 private fun modalTaskOwner(project: Project?): ModalTaskOwner = project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess()
-
-/**
- * [runWithModalProgressBlocking] with a non-cancellable task, inside a span named [spanName].
- * The span covers the whole time the IDE stays modal, from before the modality starts to after it ends.
- */
-private fun <T> runWithTracedModalProgressBlocking(
-  spanName: @NonNls String,
-  project: Project?,
-  title: @NlsContexts.ModalProgressTitle String,
-  action: suspend CoroutineScope.() -> T,
-): T = withSpan(spanName) {
-  runWithModalProgressBlocking(modalTaskOwner(project), title, cancellation = TaskCancellation.nonCancellable(), action = action)
-}
-
-/** The suspending twin of [runWithTracedModalProgressBlocking]: [withModalProgress] inside a span named [spanName]. */
-private suspend fun <T> withTracedModalProgress(
-  spanName: @NonNls String,
-  project: Project?,
-  title: @NlsContexts.ModalProgressTitle String,
-  action: suspend CoroutineScope.() -> T,
-): T = withSpan(spanName) {
-  withModalProgress(modalTaskOwner(project), title, cancellation = TaskCancellation.nonCancellable(), action = action)
-}
