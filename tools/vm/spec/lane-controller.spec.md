@@ -362,6 +362,13 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-vm/src/worker/pin/tests.rs (`a_changed_pin_resolves_again`)
   [@test] ../crates/avl-vm/src/worker/pin/tests.rs (`a_recorded_file_that_is_gone_resolves_again`)
 
+- No Bazel command of the controller carries a build option of its own. The guest is a target: the controller builds the
+  daemon target of its guest OS. The lane builds no runfile links, and the controller reads the MANIFEST of the runtime
+  descriptor on every host. A tree beside the MANIFEST is ignored, because it can be one of an earlier build.
+  [@test] ../crates/avl-vm/src/lane/bazel/tests.rs (`every_invocation_carries_no_build_option_of_its_own`)
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`each_guest_builds_its_own_daemon_target`)
+  [@test] ../crates/avl-host-sys/src/runfiles/tests.rs (`a_host_reads_the_manifest_even_beside_a_tree`)
+
 - The journal has the phase `prepare`, from the end of the host build to the end of the digest sweep. Its progress
   names the time of the descriptor lookup, the cache open, the digests, the cache save and the runfiles tree. The
   record `runStarted` names when the process started. So the journal shows the build of the `vm.cmd` wrapper before

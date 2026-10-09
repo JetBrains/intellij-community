@@ -41,10 +41,10 @@ GOTO :CMDSCRIPT
 #    use (it uses 1, 2, 6, 65, 66, 69, 70, 73, 75, 77). **The asymmetry is deliberate; do not harmonize
 #    the two wrappers on one number.**
 #
-# 5. **`--config=air-lane-linux` on the build.** The controller's own lane builds pass the same config
-#    (`host_bazel_argv` in `vm/crates/avl-vm/src/lane/bazel.rs`), and its options are part of Bazel's
-#    analysis key. Without it, each call of this wrapper discards the analysis of the last lane build. It is
-#    the config of the default guest, so a lane build for a macOS guest still pays one analysis.
+# 5. **No `--config` for the guest on the build.** The controller's lane builds pass no build option of their own
+#    (`host_bazel_argv` in `vm/crates/avl-vm/src/lane/bazel.rs`), because Bazel keys its analysis cache on build
+#    options. So this wrapper, the lane build and every other command share one analysis. The guest is a target of the
+#    lane, not an option (`plugins/air/tests/integration/ui_lane_ide.bzl` of the ultimate root).
 #
 # 6. **Where the build's output goes depends on who reads stderr.** For a pipe, it goes to a log file and
 #    reaches stderr only when the build fails. A refusal envelope goes to stderr, so a Bazel line there
@@ -119,7 +119,7 @@ built_file() {
 mkdir -p "$root/out/air"
 events="$root/out/air/vm.events.$$.json"
 build_log="$root/out/air/vm.build.$$.log"
-build=(./bazel.cmd build --config=bt --config=air-lane-linux "--build_event_json_file=$events"
+build=(./bazel.cmd build --config=bt "--build_event_json_file=$events"
   --nobuild_event_json_file_path_conversion "$target")
 # `--config=bt` (`community/common.bazelrc`) keeps Bazel's progress and result lines short. For a pipe, the log file keeps
 # the rest out of both envelope streams; a terminal sees it (note 6 above). A failure here is infrastructure,
@@ -205,7 +205,7 @@ set "LAUNCHER=%ROOT%\out\air\vm.launcher.%STAMP%"
 set "BUILD_LOG=%ROOT%\out\air\vm.build.%STAMP%.log"
 REM The pipe path of note 6: the build output reaches stderr only when the build fails.
 pushd "%ROOT%"
-call bazel.cmd run --config=bt --config=air-lane-linux --script_path="%LAUNCHER%" "%TARGET%" >"%BUILD_LOG%" 2>&1
+call bazel.cmd run --config=bt --script_path="%LAUNCHER%" "%TARGET%" >"%BUILD_LOG%" 2>&1
 set "STATUS=%ERRORLEVEL%"
 popd
 if not "%STATUS%"=="0" (

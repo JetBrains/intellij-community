@@ -18,12 +18,10 @@ use crate::lane::testing::{pool, pool_backend, unresolved};
 
 const DAEMON_RELATIVE: &str = "bazel-out/darwin_arm64-fastbuild/bin/plugins/air/tests/integration/ui/ui_daemon.runtime.json";
 
-/// The fake Bazel, kept assertive: it refuses an invocation that bypasses the seam. The guest's config holds *build*
-/// options, so an invocation that drops it is one Bazel keys its analysis cache differently for - and a lane that
-/// silently built for the *other* guest is the defect the check guards. That failure is invisible otherwise: a
-/// darwin descriptor declares `Contents/Home` as its Java-home suffix, that path does exist inside the macOS
-/// tarball, so guest-local staging succeeds and the first complaint is an exec-format error from a daemon that
-/// already reported itself started.
+/// The fake Bazel, kept assertive: it refuses an invocation that bypasses the seam. An invocation must keep the
+/// checkout's convenience symlinks alone, and must carry no `--config` of its own: a build option of the lane keys
+/// Bazel's analysis cache apart from every other command, and each command then discards the other's analysis. A build
+/// of `//fail:me` fails, with a line on stderr, for the tests of a failed build.
 ///
 /// Written as a `bazel.cmd` in the fake repository root, exactly as the real wrapper is found: the controller runs
 /// it through `/bin/sh` because the real one is the repo's shell/batch hybrid and has no shebang.
@@ -46,7 +44,7 @@ struct FakeBazelCmd {
 impl FakeBazelCmd {
     /// Writes the wrapper and stages the descriptor the guest would read. `guest_os` is the guest the fake was
     /// built *for*, which is what the refusal compares against - not the guest the caller happens to configure.
-    fn new(guest_os: GuestOs) -> Self {
+    fn new() -> Self {
         let root = tempfile::tempdir().unwrap();
         let bazel_user_root = root.path().join("bazel-user-root");
         let execution_root = bazel_user_root.join("fakehash/execroot/_main");
@@ -68,25 +66,33 @@ impl FakeBazelCmd {
         fs::create_dir_all(runfiles_root(&fake.descriptor).join("_main")).unwrap();
         fs::write(runfiles_root(&fake.descriptor).join("_main/daemon.jar"), b"jar").unwrap();
         fs::create_dir_all(&fake.repo).unwrap();
-        let wanted = format!("--config=air-lane-{}", guest_os.as_str());
         let script = format!(
             r#"command="$1"
 echo "$*" >> "{calls}"
-guest_config=""
+config=""
+symlinks=""
 events=""
+fail=""
 for argument in "$@"; do
   case "$argument" in
-    --config=air-lane-*) guest_config="$guest_config$argument";;
+    --config=*) config="$config $argument";;
+    --experimental_convenience_symlinks=ignore) symlinks="yes";;
     --build_event_json_file=*) events="${{argument#--build_event_json_file=}}";;
+    //fail:me) fail="yes";;
   esac
 done
-if [ "$guest_config" != "{wanted}" ]; then
-  echo "fake bazel: $command carries '$guest_config', expected {wanted}: $*" >&2
+if [ -n "$config" ]; then
+  echo "fake bazel: $command carries a config of its own:$config" >&2
+  exit 1
+fi
+if [ -z "$symlinks" ]; then
+  echo "fake bazel: $command touches the convenience symlinks: $*" >&2
   exit 1
 fi
 case "$command" in
   build)
     echo "fake build: $*"; echo "fake build stderr" >&2
+    if [ -n "$fail" ]; then echo "fake build failed for //fail:me" >&2; exit 1; fi
     if [ -n "$events" ]; then
       echo '{{"id":{{"started":{{}}}},"started":{{"uuid":"fake"}}}}' > "$events"
       echo '{{"id":{{"namedSet":{{"id":"0"}}}},"namedSetOfFiles":{{"files":[{{"name":"ui_daemon.runtime.json","uri":"file://{descriptor}"}}]}}}}' >> "$events"
@@ -147,21 +153,16 @@ esac
     }
 }
 
-/// Every invocation, not only `build`: `community/common.bazelrc` sets `build --nobuild_runfile_links`, and `cquery`
-/// and `info` inherit that line, so a call site that forgets the guest's config differs from the build in a *build
-/// option* - which makes Bazel discard the analysis of every configured target between the two.
-///
-/// The build options themselves live in the root `.bazelrc`, where `vm.cmd` and `trace.cmd` reach them by the same
-/// config name. A literal one here would be a second spelling, and the wrappers' key would drift from it.
+/// Every invocation, not only `build`, carries no build option of its own, on either guest. A build option keys
+/// Bazel's analysis cache, so a lane invocation with one would discard the analysis of every other command, and every
+/// other command would discard the lane's. The guest is a target ([`crate::daemon::build::daemon_label`]).
 #[test]
-fn every_invocation_carries_the_options_every_other_one_carries() {
+fn every_invocation_carries_no_build_option_of_its_own() {
     for command in ["build", "cquery", "info"] {
         for guest_os in [GuestOs::Macos, GuestOs::Linux] {
             let argv = host_bazel_argv(&pool(guest_os), command, &words(["//some:target"])).unwrap();
-            let config = format!("--config=air-lane-{}", guest_os.as_str());
             for wanted in [
                 command,
-                &config,
                 "--color=no",
                 "--curses=no",
                 // Not part of the analysis key, unlike the config's build options, and carried everywhere for exactly
@@ -175,10 +176,10 @@ fn every_invocation_carries_the_options_every_other_one_carries() {
                 );
             }
             assert!(
-                !argv
-                    .iter()
-                    .any(|argument| argument.starts_with("--define") || argument.contains("build_runfile_links")),
-                "a {guest_os:?} {command} invocation spells a build option the config owns: {argv:?}"
+                !argv.iter().any(|argument| argument.starts_with("--config")
+                    || argument.starts_with("--define")
+                    || argument.contains("build_runfile_links")),
+                "a {guest_os:?} {command} invocation carries a build option of its own: {argv:?}"
             );
             // Through the repo's wrapper and a shell, because the wrapper has no shebang.
             assert_eq!(argv[0], "/bin/sh");
@@ -190,7 +191,7 @@ fn every_invocation_carries_the_options_every_other_one_carries() {
 /// The fixture's own guarantee, because every case below depends on it.
 #[tokio::test]
 async fn the_fake_bazel_refuses_an_invocation_that_bypasses_the_seam() {
-    let fake = FakeBazelCmd::new(GuestOs::Macos);
+    let fake = FakeBazelCmd::new();
     let runner = path_runner();
     let wrapper = fake.repo.join("bazel.cmd");
     let wrapper = wrapper.to_str().unwrap();
@@ -209,19 +210,19 @@ async fn the_fake_bazel_refuses_an_invocation_that_bypasses_the_seam() {
         }
     };
 
-    assert_eq!(run(&["build", "--config=air-lane-macos", "//x"]).await.exit_code, 0);
-    let dropped = run(&["build", "//x"]).await;
-    assert_eq!(dropped.exit_code, 1);
-    assert!(dropped.stderr.contains("expected --config=air-lane-macos"), "{dropped:?}");
-    // This fixture is the macOS guest, so the Linux config is as wrong as omitting the config.
-    let wrong_guest = run(&["build", "--config=air-lane-linux", "//x"]).await;
-    assert_eq!(wrong_guest.exit_code, 1);
+    let symlinks = "--experimental_convenience_symlinks=ignore";
+    assert_eq!(run(&["build", symlinks, "//x"]).await.exit_code, 0);
+    let touching = run(&["build", "//x"]).await;
+    assert_eq!(touching.exit_code, 1);
+    assert!(touching.stderr.contains("touches the convenience symlinks"), "{touching:?}");
+    let configured = run(&["build", symlinks, "--config=air-lane-linux", "//x"]).await;
+    assert_eq!(configured.exit_code, 1);
     assert!(
-        wrong_guest
-            .stderr
-            .contains("carries '--config=air-lane-linux', expected --config=air-lane-macos"),
-        "{wrong_guest:?}"
+        configured.stderr.contains("carries a config of its own: --config=air-lane-linux"),
+        "{configured:?}"
     );
+    let failing = run(&["build", symlinks, "//fail:me"]).await;
+    assert_eq!(failing.exit_code, 1);
 }
 
 /// The lane build is what makes the guest agent fresh, so this guest's agent label is in the target set of the one
@@ -246,7 +247,7 @@ async fn the_lane_build_builds_this_guests_agent() {
             "@community//tools/vm:vm-guest-agent-linux-x86_64",
         ),
     ] {
-        let fake = FakeBazelCmd::new(guest_os);
+        let fake = FakeBazelCmd::new();
         let mut settings = fake.settings(guest_os);
         settings.guest_arch = guest_arch;
         // The guest's Node comes from its image, so no build stages one. No pinned tool is built: see
@@ -278,7 +279,7 @@ async fn a_boot_builds_the_agent_and_no_lane() {
         (GuestOs::Linux, GuestArch::Arm64),
         (GuestOs::Linux, GuestArch::X86_64),
     ] {
-        let fake = FakeBazelCmd::new(guest_os);
+        let fake = FakeBazelCmd::new();
         let mut settings = fake.settings(guest_os);
         settings.guest_arch = guest_arch;
         let boot = guest_boot_targets(guest_os, guest_arch);
@@ -310,7 +311,7 @@ async fn a_boot_builds_the_agent_and_no_lane() {
 /// The boot build is handed to the worker manager as a seam, and running it is the same build.
 #[tokio::test]
 async fn the_boot_seam_is_the_boot_build() {
-    let fake = FakeBazelCmd::new(GuestOs::Linux);
+    let fake = FakeBazelCmd::new();
     let builder = fake.bazel(GuestOs::Linux).boot_builder();
 
     builder(Ctx::background()).await.unwrap();
@@ -321,7 +322,7 @@ async fn the_boot_seam_is_the_boot_build() {
 /// The build's log is the artifact a human debugs from, so it holds both of the child's streams.
 #[tokio::test]
 async fn a_build_logs_both_of_its_streams() {
-    let fake = FakeBazelCmd::new(GuestOs::Linux);
+    let fake = FakeBazelCmd::new();
     let log = fake.repo.join("build.log");
     let bazel = fake.bazel(GuestOs::Linux);
     bazel.build(&Ctx::background(), &log, "//some:target").await.unwrap();
@@ -334,28 +335,24 @@ async fn a_build_logs_both_of_its_streams() {
     bazel.build(&Ctx::background(), &log, "//some:target").await.unwrap();
 }
 
-/// A guest whose configuration the build did not select is the failure the fake's check stands for, and it has to
-/// arrive as a refusal rather than as a descriptor for the wrong machine.
+/// A failed build arrives as a refusal with the tail of its log, rather than as a descriptor of an older build.
 #[tokio::test]
-async fn a_build_for_the_wrong_guest_fails_with_its_logs_tail() {
-    // A fake built for macOS, asked for by a controller configured for a Linux guest.
-    let fake = FakeBazelCmd::new(GuestOs::Macos);
+async fn a_failed_build_fails_with_its_logs_tail() {
+    let fake = FakeBazelCmd::new();
     let log = fake.repo.join("build.log");
 
-    let refused = refusal(fake.bazel(GuestOs::Linux).build(&Ctx::background(), &log, "//some:target").await);
+    let refused = refusal(fake.bazel(GuestOs::Linux).build(&Ctx::background(), &log, "//fail:me").await);
 
     assert_eq!((refused.code.as_ref(), refused.exit), ("host_build_failed", Exit::BUILD_FAILED));
     assert_eq!(refused.exit.code(), 5);
     assert!(
-        refused
-            .message
-            .contains("carries '--config=air-lane-linux', expected --config=air-lane-macos"),
+        refused.message.contains("fake build failed for //fail:me"),
         "the refusal carries no evidence from the log: {}",
         refused.message
     );
     let details = refused.details().unwrap();
     assert_eq!(details["exitCode"], 1);
-    assert_eq!(details["label"], "//some:target");
+    assert_eq!(details["label"], "//fail:me");
     // The log survives the failure: the refusal carries 30 lines, the log carries the rest, and a human needs the
     // rest.
     assert!(log.is_file(), "the failed build's log was removed");
@@ -379,7 +376,7 @@ fn a_failed_builds_refusal_carries_only_the_logs_tail() {
 /// A build whose log path cannot be opened is a refusal naming it, not a panic much later.
 #[tokio::test]
 async fn a_build_refuses_when_its_log_cannot_be_opened() {
-    let fake = FakeBazelCmd::new(GuestOs::Linux);
+    let fake = FakeBazelCmd::new();
     let log = fake.repo.join("no-such-directory/build.log");
 
     let refused = refusal(fake.bazel(GuestOs::Linux).build(&Ctx::background(), &log, "//some:target").await);
@@ -397,7 +394,7 @@ async fn a_build_refuses_when_its_log_cannot_be_opened() {
 /// from the first.
 #[tokio::test]
 async fn the_descriptor_and_the_execution_root_are_resolved_once_per_process() {
-    let fake = FakeBazelCmd::new(GuestOs::Linux);
+    let fake = FakeBazelCmd::new();
     let bazel = fake.bazel(GuestOs::Linux);
     let ctx = Ctx::background();
 
@@ -414,7 +411,7 @@ async fn the_descriptor_and_the_execution_root_are_resolved_once_per_process() {
 #[tokio::test]
 async fn a_wiped_output_tree_resolves_again_instead_of_answering_a_stale_path() {
     for removed in ["the descriptor", "its runfiles tree"] {
-        let fake = FakeBazelCmd::new(GuestOs::Linux);
+        let fake = FakeBazelCmd::new();
         let bazel = fake.bazel(GuestOs::Linux);
         let ctx = Ctx::background();
         bazel.runtime_descriptor(&ctx, DAEMON_LABEL).await.unwrap();
@@ -438,7 +435,7 @@ async fn a_wiped_output_tree_resolves_again_instead_of_answering_a_stale_path() 
 /// rather than as a mount that fails inside the VM for a reason naming nothing.
 #[tokio::test]
 async fn a_descriptor_outside_the_share_is_refused() {
-    let fake = FakeBazelCmd::new(GuestOs::Linux);
+    let fake = FakeBazelCmd::new();
     let elsewhere = tempfile::tempdir().unwrap();
     let settings = fake.settings_sharing(GuestOs::Linux, elsewhere.path());
     let bazel = Bazel::new(Arc::new(settings), path_runner(), quiet());
@@ -459,7 +456,7 @@ async fn a_descriptor_outside_the_share_is_refused() {
 /// A `cquery` that answers nothing about the descriptor is a refusal, not a joined-up empty path.
 #[tokio::test]
 async fn a_cquery_without_the_descriptor_is_refused() {
-    let fake = FakeBazelCmd::new(GuestOs::Linux);
+    let fake = FakeBazelCmd::new();
 
     let refused = refusal(
         fake.bazel(GuestOs::Linux)
@@ -474,7 +471,7 @@ async fn a_cquery_without_the_descriptor_is_refused() {
 /// A memo published only after the call would let each of them pay for it.
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn the_memos_are_safe_under_a_fan_out() {
-    let fake = FakeBazelCmd::new(GuestOs::Linux);
+    let fake = FakeBazelCmd::new();
     let bazel = fake.bazel(GuestOs::Linux);
     let mut workers = tokio::task::JoinSet::new();
     for _ in 0..8 {
@@ -495,7 +492,7 @@ async fn the_memos_are_safe_under_a_fan_out() {
 /// implementation.
 #[tokio::test]
 async fn this_is_the_guest_packages_bazel_host() {
-    let fake = FakeBazelCmd::new(GuestOs::Linux);
+    let fake = FakeBazelCmd::new();
     let host: Arc<dyn BazelHost> = fake.bazel(GuestOs::Linux);
     let ctx = Ctx::background();
     // A `--output=starlark` form the guest agent's resolver may need, passed through untouched.
@@ -581,7 +578,7 @@ fn the_last_log_line_is_the_last_non_empty_one() {
 /// no `info`. On this checkout the pair cost 7.1 s of every warm iteration on 2026-10-10.
 #[tokio::test]
 async fn a_lane_build_names_the_descriptor_and_no_query_follows() {
-    let fake = FakeBazelCmd::new(GuestOs::Linux);
+    let fake = FakeBazelCmd::new();
     let bazel = fake.bazel(GuestOs::Linux);
     let ctx = Ctx::background();
     fs::create_dir_all(&fake.runtime_root).unwrap();
@@ -602,17 +599,15 @@ async fn a_lane_build_names_the_descriptor_and_no_query_follows() {
 /// produces.
 #[tokio::test]
 async fn a_failed_build_forgets_the_files_of_the_build_before_it() {
-    let fake = FakeBazelCmd::new(GuestOs::Macos);
+    let fake = FakeBazelCmd::new();
     let log = fake.repo.join("build.log");
-    let built = fake.bazel(GuestOs::Macos);
-    built.build(&Ctx::background(), &log, DAEMON_LABEL).await.unwrap();
-    assert_eq!(built.built_files(), std::slice::from_ref(&fake.descriptor));
+    let bazel = fake.bazel(GuestOs::Macos);
+    bazel.build(&Ctx::background(), &log, DAEMON_LABEL).await.unwrap();
+    assert_eq!(bazel.built_files(), std::slice::from_ref(&fake.descriptor));
 
-    // The same fake asked for the other guest refuses the build.
-    let failing = fake.bazel(GuestOs::Linux);
-    refusal(failing.build(&Ctx::background(), &log, DAEMON_LABEL).await);
+    refusal(bazel.build(&Ctx::background(), &log, "//fail:me").await);
 
-    assert_eq!(failing.built_files(), Vec::<PathBuf>::new());
+    assert_eq!(bazel.built_files(), Vec::<PathBuf>::new());
     assert!(
         !fake.repo.join("build.bep.json").exists(),
         "the event file of the earlier build survived"

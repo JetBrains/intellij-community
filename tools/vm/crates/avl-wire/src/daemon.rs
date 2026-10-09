@@ -27,8 +27,13 @@ mod tests;
 /// Must match `AIR_UI_DAEMON_PROTOCOL_VERSION` on the Kotlin side. Bump both together, or a boot fails by name.
 pub const PROTOCOL_VERSION: u32 = 5;
 
-/// The Bazel target the runtime descriptor comes from.
+/// The Bazel target the runtime descriptor of a macOS guest comes from.
 pub const LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon";
+
+/// The Bazel target the runtime descriptor of a Linux guest comes from. The guest is a target and not a build option,
+/// so the lane build shares one analysis with every other Bazel command
+/// (`plugins/air/tests/integration/ui_lane_ide.bzl`).
+pub const LINUX_GUEST_LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon_linux_guest";
 
 /// The prefix of every daemon run id. Only a daemon start sends a supervisor `start` with it, so it is what lets a
 /// controller that holds no record still recognise a daemon run in the slot.

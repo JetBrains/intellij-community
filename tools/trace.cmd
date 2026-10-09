@@ -16,7 +16,7 @@ GOTO :CMDSCRIPT
 #    skips Bazel, for a debugger attached to a hand-built binary. The CMD half reads it the same way (note 5).
 # 3. **Wrapper failures exit 78** (`EX_CONFIG`), a code `air-trace` itself never returns, so "the tool did not
 #    start" stays distinguishable from anything the tool answers.
-# 4. **`--config=air-lane-linux` on the build**, as in vm.cmd. A call between `vm.cmd daemon warm` and
+# 4. **No `--config` for the guest on the build**, as in vm.cmd. A call between `vm.cmd daemon warm` and
 #    `vm.cmd run` then keeps the analysis that the warm-up made.
 # 5. **The CMD half runs `air-trace` natively**, as in vm.cmd. It follows the sh half step for step, with the
 #    shapes of the CMD half of bt.cmd, and sends the build output to stderr as the sh half does.
@@ -83,7 +83,7 @@ events="$root/out/air/trace.events.$$.json"
 # `--config=bt` keeps Bazel's progress lines quiet and `>&2` keeps the rest off stdout, which `plan` answers on.
 # A `bazel build` and not a `bazel run`, for the reason of note 1 of vm.cmd: a `bazel run` drops the analysis of the
 # last lane build.
-if ! (cd "$root" && ./bazel.cmd build --config=bt --config=air-lane-linux "--build_event_json_file=$events" \
+if ! (cd "$root" && ./bazel.cmd build --config=bt "--build_event_json_file=$events" \
   --nobuild_event_json_file_path_conversion "$target" >&2); then
   rm -f "$events"
   echo "trace: could not build $target; see the bazel output above" >&2
@@ -150,7 +150,7 @@ REM One %RANDOM% read, reused: two reads would produce two different names.
 set "LAUNCHER=%ROOT%\out\air\trace.launcher.%RANDOM%"
 REM `1>&2` keeps the build output off stdout, which `plan` answers on.
 pushd "%ROOT%"
-call bazel.cmd run --config=bt --config=air-lane-linux --script_path="%LAUNCHER%" "%TARGET%" 1>&2
+call bazel.cmd run --config=bt --script_path="%LAUNCHER%" "%TARGET%" 1>&2
 set "STATUS=%ERRORLEVEL%"
 popd
 if not "%STATUS%"=="0" (

@@ -19,7 +19,7 @@ use serde::de::{self, Deserializer, MapAccess, Visitor};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::daemon::LABEL;
+use crate::daemon::{LABEL, LINUX_GUEST_LABEL};
 
 #[cfg(test)]
 mod tests;
@@ -316,7 +316,7 @@ fn non_empty<'de, D: Deserializer<'de>>(deserializer: D) -> Result<String, D::Er
 fn descriptor_error(code: &'static str, descriptor_path: &str, detail: &str) -> DescriptorError {
     DescriptorError::new(
         code,
-        format!("invalid Air daemon runtime descriptor {descriptor_path}: {detail}; rebuild {LABEL}"),
+        format!("invalid Air daemon runtime descriptor {descriptor_path}: {detail}; rebuild {LABEL} or {LINUX_GUEST_LABEL}"),
     )
 }
 

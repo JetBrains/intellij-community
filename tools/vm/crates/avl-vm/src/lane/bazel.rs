@@ -43,46 +43,28 @@ const BUILD_LOG_FOLLOW_EVERY: Duration = Duration::from_secs(2);
 /// shorter than this.
 const LOG_END_WINDOW: u64 = 4096;
 
-/// The guest's `.bazelrc` config.
-///
-/// A config, not the build options themselves: `community/tools/vm.cmd` and `trace.cmd` pass the same config,
-/// so their `bazel run` and a lane build share one analysis key. [`host_bazel_argv`] says why that key matters. The
-/// Linux config adds `--define=air_lane_guest_os=linux`; see `plugins/air/tests/integration/ui_lane_ide.bzl`.
-const fn guest_bazel_config(guest_os: GuestOs) -> &'static str {
-    match guest_os {
-        GuestOs::Macos => "--config=air-lane-macos",
-        GuestOs::Linux => "--config=air-lane-linux",
-    }
-}
-
 /// Every Bazel invocation the controller makes, so none of them can drift from the others.
 ///
-/// The guest's `.bazelrc` config (`air-lane-macos` or `air-lane-linux`) holds *build* options, which means Bazel
-/// keys its analysis cache on them and a `cquery` that omits what the preceding `build` passed discards the analysis
-/// of every configured target - on every daemon start, on both guests. `--build_runfile_links` is in both configs
-/// because `community/common.bazelrc` turns it off for `build`, and `cquery` and `info` inherit that line: the
-/// descriptor names its inputs by logical runfiles path, so the tree it names has to exist.
+/// No invocation carries a build option of its own. Bazel keys its analysis cache on the build options, so a lane build
+/// with options of its own discarded the analysis of every other command, and every other command discarded the
+/// lane's. On 2026-10-10 a test before a lane build made Bazel discard 1,049,066 nodes, and the lane build analyzed for
+/// 11.6 s again. The guest is therefore a target and not an option ([`crate::daemon::build::daemon_label`]), and no
+/// runfile links are built: the controller reads the MANIFEST ([`avl_host_sys::runfiles::HostRunfiles`]). So a lane
+/// build, a wrapper build and a test share one analysis.
 ///
-/// The same key reaches beyond this process. `community/tools/vm.cmd` and `trace.cmd` build their binaries with
-/// `bazel run --config=air-lane-linux`, the default guest's config. Without it, every wrapper call discarded the
-/// analysis the last lane build made, so a `trace.cmd` call between `daemon warm` and `run` threw the warm-up away.
-/// A macOS guest still differs from the wrappers, and a lane build for it pays one analysis.
-///
-/// The other option is not a build option, and is here for the opposite reason: it stops this controller's builds
-/// from touching the checkout's convenience symlinks at all. [`host_build_targets`] puts the guest agent - built for
-/// the guest's platform - beside the lane's own label, so one invocation's top-level targets span two
-/// configurations, and Bazel's answer to that is to *clear* `out/bazel-bin` and `out/bazel-testlogs`. Building the
-/// agent in an invocation of its own instead repoints `out/bazel-bin` at the guest's configuration, which is worse:
-/// a plausible-looking symlink into the wrong configuration, in a working copy several sessions share. A lane build
-/// is not this checkout's main build and has no business doing either. It is not part of the analysis key, so it
-/// is carried on every command at no cost.
+/// The one option here is not a build option: it stops this controller's builds from touching the checkout's
+/// convenience symlinks at all. [`host_build_targets`] puts the guest agent - built for the guest's platform - beside
+/// the lane's own label, so one invocation's top-level targets span two configurations, and Bazel's answer to that is
+/// to *clear* `out/bazel-bin` and `out/bazel-testlogs`. Building the agent in an invocation of its own instead repoints
+/// `out/bazel-bin` at the guest's configuration, which is worse: a plausible-looking symlink into the wrong
+/// configuration, in a working copy several sessions share. A lane build is not this checkout's main build and has no
+/// business doing either. It is not part of the analysis key, so it is carried on every command at no cost.
 pub(crate) fn host_bazel_argv(settings: &Config, command: &str, args: &[String]) -> Result<Vec<String>, Refusal> {
     let repo = settings.host_repo()?;
     let line: Vec<String> = [
         command,
         "--color=no",
         "--curses=no",
-        guest_bazel_config(settings.guest_os),
         // A lane build must neither clear nor retarget this checkout's `out/bazel-bin`; see above.
         "--experimental_convenience_symlinks=ignore",
     ]

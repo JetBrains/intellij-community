@@ -976,8 +976,10 @@ async fn the_guest_builds_its_tree_before_the_probe_and_gets_the_bytes_when_it_h
 async fn the_parity_probe_asks_for_the_label_derived_descriptor() {
     let (fixture, prep) = start_ready().await;
     start(&fixture, &prep).await.unwrap();
+    // The fixture is a Linux guest, so the descriptor is the one of the Linux-guest daemon target.
+    assert_eq!(prep.label, avl_wire::daemon::LINUX_GUEST_LABEL);
     let expected = format!(
-        "{}/_main/plugins/air/tests/integration/ui/ui_daemon.runtime.json",
+        "{}/_main/plugins/air/tests/integration/ui/ui_daemon_linux_guest.runtime.json",
         prep.guest_runfiles_root
     );
     assert_eq!(self_location(&prep), expected);

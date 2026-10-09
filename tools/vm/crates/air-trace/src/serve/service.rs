@@ -300,16 +300,15 @@ pub(crate) const SITE_PNPM_VARIABLE: &str = "AIR_TRACE_PNPM";
 /// The checkout the wrapper ran from, which it exports and a detached server inherits; `bazel.cmd` is there.
 const CHECKOUT_VARIABLE: &str = "BUILD_WORKSPACE_DIRECTORY";
 const BAZEL_WRAPPER: &str = "bazel.cmd";
-/// The options of every Bazel call here. `trace.cmd` builds with `--config=air-lane-linux`, and Bazel keys its
-/// analysis cache on build options, so a call without it would discard the analysis the last lane build made; see
-/// `host_bazel_argv` in the `lane` module of the controller. The convenience symlinks of a working copy that several sessions share are left
+/// The options of every Bazel call here. None is a build option, because Bazel keys its analysis cache on build options,
+/// and a call with one of its own would discard the analysis of the last lane build; see `host_bazel_argv` in the
+/// `lane` module of the controller. The convenience symlinks of a working copy that several sessions share are left
 /// alone, and Bazel's progress is kept out of the log.
-const BAZEL_OPTIONS: [&str; 6] = [
+const BAZEL_OPTIONS: [&str; 5] = [
     "--color=no",
     "--curses=no",
     "--noshow_progress",
     "--ui_event_filters=-info",
-    "--config=air-lane-linux",
     "--experimental_convenience_symlinks=ignore",
 ];
 

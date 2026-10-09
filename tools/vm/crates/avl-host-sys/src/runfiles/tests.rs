@@ -37,9 +37,10 @@ fn windows_descriptor(directory: &Path) -> (PathBuf, String) {
     (descriptor, WINDOWS_MANIFEST.to_owned())
 }
 
-/// A host that built the tree reads it, whatever else is there: the MANIFEST beside a Unix tree changes nothing.
+/// A host reads the MANIFEST even beside a tree. The lane build builds no tree, so a tree on disk is one of an earlier
+/// build, and a runfile that the build added or removed since is not in it.
 #[test]
-fn a_host_that_built_the_tree_reads_it() {
+fn a_host_reads_the_manifest_even_beside_a_tree() {
     let directory = tempfile::tempdir().unwrap();
     let descriptor = directory.path().join("ui_daemon.runtime.json");
     let root = runfiles_root(&descriptor);
@@ -47,9 +48,9 @@ fn a_host_that_built_the_tree_reads_it() {
     std::fs::write(root.join("MANIFEST"), WINDOWS_MANIFEST).unwrap();
     std::fs::write(&manifest_paths(&descriptor)[0], WINDOWS_MANIFEST).unwrap();
     assert!(HostRunfiles::present(&descriptor));
-    let runfiles = HostRunfiles::of(&descriptor).unwrap();
-    assert_eq!(runfiles, HostRunfiles::Tree(root.clone()));
-    assert_eq!(runfiles.host_path("_main/lib/a.jar"), Some(root.join("_main/lib/a.jar")));
+    let runfiles = HostRunfiles::of_on(&descriptor, HostOs::Macos).unwrap();
+    assert!(matches!(runfiles, HostRunfiles::Manifest { .. }), "{runfiles:?}");
+    assert_ne!(runfiles.host_path("_main/lib/a.jar"), Some(root.join("_main/lib/a.jar")));
 }
 
 #[test]

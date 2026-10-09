@@ -275,18 +275,6 @@ common --http_timeout_scaling=2.0
 # progress and result lines would be noise; they are suppressed rather than parsed around.
 build:bt --ui_event_filters=-info --noshow_progress --show_result=0
 
-# air-lane-macos, air-lane-linux — the build options of the Air UI-lane controller, one config per guest OS.
-# `host_bazel_argv` in community/tools/vm/crates/avl-vm/src/lane/bazel.rs owns them. Bazel keys its analysis cache on
-# build options, so community/tools/vm.cmd and trace.cmd pass the Linux config too. Without it, each wrapper call
-# discards the analysis that the last lane build made. The guest's architecture is not an option: on a Linux/x86_64
-# host `air-lane-linux` selects the x86_64 guest
-# (`//plugins/air/tests/integration/ide:air_lane_guest_linux_on_host_linux_x64` of the ultimate root), and on another
-# x86_64 host, such as Windows x64, the cross-built x86_64 guest
-# (`//plugins/air/tests/integration/ide:air_lane_guest_linux_x64_cross`).
-build:air-lane-macos --build_runfile_links
-build:air-lane-linux --build_runfile_links
-build:air-lane-linux --define=air_lane_guest_os=linux
-
 common --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
 
 # Keep a packed content-module jar in the local disk cache and out of the remote cache. A CI build starts with an empty

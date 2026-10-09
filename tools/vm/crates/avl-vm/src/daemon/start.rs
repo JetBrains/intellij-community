@@ -9,7 +9,7 @@ use avl_base::{Backend, Exit, OrRefuse, Refusal, Scope};
 use avl_host_sys::guest::{AgentAccount, GUEST_COMMAND_TIMEOUT, Guest, ShareMount, SupervisorOptions, guest_join, user_argv};
 use avl_host_sys::{Backoff, Channel, Ctx, Poll, SpawnOptions};
 use avl_report::digest;
-use avl_wire::daemon::{self as wire, LABEL, StateFile};
+use avl_wire::daemon::{self as wire, StateFile};
 use avl_wire::progress::Phase;
 use avl_wire::runtime::{self, LaunchOptions};
 use avl_wire::stage::{self as stage_wire, ArgFileRequest, LaunchPrep, LaunchPrepResult};
@@ -54,7 +54,7 @@ const LAUNCH_PREP_TIMEOUT: Duration = Duration::from_secs(120);
 /// The daemon's own runtime descriptor as the guest sees it: the label's package path and name under the guest
 /// runfiles root. The leading `//` and the first `:` are replaced once; a label cannot legally carry a second `:`.
 pub(crate) fn self_location(prep: &PreparedBuild) -> String {
-    let label = LABEL.strip_prefix("//").unwrap_or(LABEL).replacen(':', "/", 1);
+    let label = prep.label.strip_prefix("//").unwrap_or(prep.label).replacen(':', "/", 1);
     guest_join(&guest_join(&prep.guest_runfiles_root, "_main"), &format!("{label}.runtime.json"))
 }
 

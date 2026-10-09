@@ -1,9 +1,8 @@
 //! The runfiles of a runtime descriptor on the host, and where a worker opens them.
 //!
-//! On a macOS or a Linux host Bazel builds `<descriptor>.runfiles`, a tree of links into the checkout and the output
-//! root, and the host reads a runfile under that tree. On a Windows host Bazel writes the MANIFEST of the descriptor
-//! and no tree, and the host reads a runfile at its MANIFEST target. The choice is made on what is on disk, not on the
-//! host OS.
+//! Bazel writes the MANIFEST of the descriptor on every host, and the host reads a runfile at its MANIFEST target. The
+//! lane build builds no tree of links (`--build_runfile_links` is off), so a `<descriptor>.runfiles` tree that is on
+//! disk is one of an earlier build and can be stale. It is read only when no MANIFEST is there.
 //!
 //! The guest agent builds its own tree from the MANIFEST on every host, with the `runfiles-tree` verb
 //! ([`Guest::ensure_runfiles_tree`](crate::guest::Guest::ensure_runfiles_tree)), under
@@ -43,9 +42,10 @@ pub enum HostRunfiles {
 }
 
 impl HostRunfiles {
-    /// The runfiles of `descriptor`: the tree when Bazel built one, else its MANIFEST, read now.
+    /// The runfiles of `descriptor`: its MANIFEST, read now, on every host. A tree beside it is ignored, because it can
+    /// be one of an earlier build.
     ///
-    /// With neither, the answer is the tree, so the stamp refuses the first input it cannot find by name.
+    /// With no MANIFEST, the answer is the tree, so the stamp refuses the first input it cannot find by name.
     pub fn of(descriptor: &Path) -> Result<Self, Refusal> {
         Self::of_on(descriptor, HostOs::CURRENT)
     }
@@ -54,12 +54,8 @@ impl HostRunfiles {
     /// its junctions, because Bazel's external repositories there are junctions into the repository cache, which the
     /// guest's mount cannot read; the file under the cache is one it can.
     pub fn of_on(descriptor: &Path, host: HostOs) -> Result<Self, Refusal> {
-        let root = runfiles_root(descriptor);
-        if holds_a_tree(&root) {
-            return Ok(Self::Tree(root));
-        }
         let Some(path) = manifest_paths(descriptor).into_iter().find(|path| path.is_file()) else {
-            return Ok(Self::Tree(root));
+            return Ok(Self::Tree(runfiles_root(descriptor)));
         };
         let mut manifest = read_manifest(&path)?;
         if host == HostOs::Windows {

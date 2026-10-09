@@ -330,3 +330,10 @@ fn the_environment_digest_is_by_name() {
         ])
     );
 }
+
+/// The guest is a target and not a build option, so each guest OS has its own daemon target.
+#[test]
+fn each_guest_builds_its_own_daemon_target() {
+    assert_eq!(daemon_label(GuestOs::Macos), LABEL);
+    assert_eq!(daemon_label(GuestOs::Linux), LINUX_GUEST_LABEL);
+}

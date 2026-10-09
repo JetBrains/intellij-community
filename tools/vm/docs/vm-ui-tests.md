@@ -342,9 +342,9 @@ central login export | ./community/tools/vm.cmd run --lane ui-live --test-env AI
 The test JVM imports that login into the guest account, starts the Central proxy and wires the agents with
 `central add`. It tears all of it down when the iteration's test plan ends, before the run reports its verdict. A
 macOS guest refuses the lane by name. The pinned Linux CLIs
-reach only a build that opts in with `build:air-lane-linux --define=air_lane_live_runtimes=on` in
-`.bazelrc-user.bazelrc`, until the mirror holds them. Every session of this checkout shares that file, so their
-Linux-guest builds then fetch the archives too. The skill's live-lane reference has the procedure.
+reach only a build that opts in with `build --define=air_lane_live_runtimes=on` in
+`.bazelrc-user.bazelrc`, until the mirror holds them. Every session of this checkout shares that file, so all their
+builds carry the define, still share one analysis, and their Linux-guest builds fetch the archives too. The skill's live-lane reference has the procedure.
 
 ## Windows
 
@@ -455,15 +455,13 @@ basename. `share_argument` in `crates/avl-vm/src/worker/tart.rs` owns that gramm
 a run from another checkout of the host changes no share and restarts no worker. A Parallels VM keeps a share that
 an older controller declared until `prlctl set <vm> --shf-host-del air-macos-repo` removes it.
 
-A Linux run adds `--define=air_lane_guest_os=linux` to the host build. On a Mac it selects the
-`linux_aarch64` distribution and JBR. On a Linux x86_64 host it selects the x86_64 guest, whose distribution
-is the host's own build (`//plugins/air/tests/integration/ide:air_lane_guest_linux_on_host_linux_x64`). **That option and
-`--build_runfile_links` ride every Bazel command the controller runs**, build, cquery and info
-alike. They have to: both are build options, so a `cquery` that omits what the preceding `build`
-passed makes Bazel discard the analysis of every configured target. The root `.bazelrc` holds them
-as one config per guest, `air-lane-linux` and `air-lane-macos`. `vm.cmd` and `trace.cmd` build
-their own binaries with `--config=air-lane-linux`, so a wrapper call keeps the analysis of a Linux
-lane build.
+A Linux run builds the daemon target of the Linux guest, `//plugins/air/tests/integration/ui:ui_daemon_linux_guest`,
+and a macOS run builds `:ui_daemon`. On a Mac the Linux target names the `linux_aarch64` distribution and JBR. On a
+Linux x86_64 host it names the x86_64 guest, whose distribution is the host's own build. **No Bazel command of the
+controller or of a wrapper carries a build option of its own.** Bazel keys its analysis cache on build options, so a
+lane build with options of its own discarded the analysis of every other command, and every other command discarded
+the lane's: one test before a lane build cost 11.6 s of analysis on 2026-10-10. The guest is therefore a target, and
+the lane builds no runfile links: the controller reads the MANIFEST of the runtime descriptor on every host.
 
 A lane IDE downloads nothing. Under the daemon it runs on the daemon's own staged JVM, which the
 controller stages from the JBR archive of the runtime descriptor. A standalone lane run stages the JBR

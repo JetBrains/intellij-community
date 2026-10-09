@@ -5,13 +5,14 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
+use avl_base::GuestOs;
 use avl_base::format::seconds;
 use avl_base::fs::create_private_dir;
 use avl_base::{Config, Exit, OrRefuse, PhaseRun, Refusal};
 use avl_host_sys::Ctx;
 use avl_host_sys::runfiles::{GuestRunfilesTree, GuestTreeInputs, HostRunfiles};
 use avl_report::digest::{self, FileDigestCache, JbrPolicy, PathDigest, ProductIdentityInput};
-use avl_wire::daemon::LABEL;
+use avl_wire::daemon::{LABEL, LINUX_GUEST_LABEL};
 use avl_wire::progress::{Event, Phase};
 use avl_wire::report::Tree;
 use avl_wire::runtime::{self, RuntimeDescriptor, RuntimeFile};
@@ -33,9 +34,19 @@ pub(crate) fn lane_environment_digest(environment: &BTreeMap<String, String>) ->
     digest::path_sensitive_digest(&entries)
 }
 
+/// The daemon target of a guest: one target per guest OS, because the guest is a target and not a build option.
+pub(crate) const fn daemon_label(guest_os: GuestOs) -> &'static str {
+    match guest_os {
+        GuestOs::Macos => LABEL,
+        GuestOs::Linux => LINUX_GUEST_LABEL,
+    }
+}
+
 /// One host build, stamped: what to launch, and the four identities that decide what can be reused.
 #[derive(Clone, Debug)]
 pub(crate) struct PreparedBuild {
+    /// The daemon target this build built ([`daemon_label`]).
+    pub label: &'static str,
     /// The runfiles tree the guest builds from the MANIFEST of `runfiles`, with the bytes of its staged runfiles.
     pub guest_tree: GuestRunfilesTree,
     /// The root of [`Self::guest_tree`], as the guest opens it. Every path the guest gets under the tree is joined onto
@@ -352,14 +363,15 @@ impl Host {
     /// the phase is the digest sweep and asks Bazel nothing.
     pub(crate) async fn prepare_build(&self, ctx: &Ctx, scope: &BuildScope) -> Result<PreparedBuild, Refusal> {
         let build_started = Instant::now();
+        let label = daemon_label(self.settings.guest_os);
         let (built, tree) = tokio::join!(
-            self.bazel.build(ctx, &scope.log, LABEL),
+            self.bazel.build(ctx, &scope.log, label),
             read_checkout_tree(ctx, &self.runner, &self.settings)
         );
         built?;
         self.reporter.publish(Event::Checkout(checkout_event(&tree)), None);
         let phase = self.reporter.start_phase(Phase::Prepare, "hash what the host build produced", None);
-        let prepared = self.prepare_built(ctx, scope, build_started, tree, &phase).await;
+        let prepared = self.prepare_built(ctx, scope, label, build_started, tree, &phase).await;
         phase.finish(&prepared);
         prepared
     }
@@ -369,12 +381,13 @@ impl Host {
         &self,
         ctx: &Ctx,
         scope: &BuildScope,
+        label: &'static str,
         build_started: Instant,
         tree: Result<Tree, Refusal>,
         phase: &PhaseRun,
     ) -> Result<PreparedBuild, Refusal> {
         let lookup_started = Instant::now();
-        let descriptor_path = self.bazel.runtime_descriptor(ctx, LABEL).await?;
+        let descriptor_path = self.bazel.runtime_descriptor(ctx, label).await?;
         let lookup = lookup_started.elapsed();
         let build = build_started.elapsed();
 
@@ -423,6 +436,7 @@ impl Host {
         let daemon_environment = crate::lane::daemon_environment(&self.settings);
         let launch_digest = launch_digest(&stamped.runtime_digest, &boot, &daemon_environment);
         Ok(PreparedBuild {
+            label,
             guest_tree: stamped.guest_tree,
             guest_runfiles_root,
             descriptor,
