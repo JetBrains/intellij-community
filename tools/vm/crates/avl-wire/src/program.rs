@@ -36,7 +36,9 @@ vocabulary! {
         ConsentHoldDownload = "consent-hold-download",
         /// Lets the paused package download of the fake registry finish.
         ReleaseDownload = "release-download",
-        /// Quits the IDE the way a user does and starts it again on the same context.
+        /// Quits the IDE the way a user does and starts it again on the same context. Between the quit and the launch it
+        /// performs the file operations of the value `whileDown`, each on a path relative to the IDE context, and it
+        /// answers the text of each read in `whileDownReads`.
         RestartIde = "restart-ide",
     }
 }
@@ -61,14 +63,10 @@ vocabulary! {
 
 /// The actions whose one handler calls the IDE and a host service. The generator pins the same list.
 pub const CROSSING_ACTIONS: &[&str] = &[
-    "cli-restart-unavailable",
     "consent-baseline",
     "consent-fail-download",
-    "consent-revoke-installed",
     "consent-strand-installed-agent",
     "prepare-junie-free-plan-account",
-    "read-state-restart-with-agent-turn",
-    "sessions-window-restart-ide",
 ];
 
 /// The assertions whose one handler calls the IDE and a host service. The generator pins the same list.
