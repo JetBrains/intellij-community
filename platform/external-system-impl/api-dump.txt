@@ -349,18 +349,6 @@ f:com.intellij.openapi.externalSystem.service.execution.configuration.fragments.
 - sf:addSettingsEditorFragment(com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorFragmentContainer,com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2):com.intellij.execution.ui.SettingsEditorFragment
 - sf:addSettingsEditorFragment(com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorFragmentContainer,com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1):com.intellij.execution.ui.SettingsEditorFragment
 - sf:addTag(com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorFragmentContainer,java.lang.String,java.lang.String,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):com.intellij.execution.ui.SettingsEditorFragment
-f:com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorFragmentBuildersKt$sam$i$java_util_function_BiConsumer$0
-- java.util.function.BiConsumer
-- <init>(kotlin.jvm.functions.Function2):V
-- bf:accept(java.lang.Object,java.lang.Object):V
-f:com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorFragmentBuildersKt$sam$i$java_util_function_Function$0
-- java.util.function.Function
-- <init>(kotlin.jvm.functions.Function1):V
-- bf:apply(java.lang.Object):java.lang.Object
-f:com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorFragmentBuildersKt$sam$i$java_util_function_Predicate$0
-- java.util.function.Predicate
-- <init>(kotlin.jvm.functions.Function1):V
-- bf:test(java.lang.Object):Z
 f:com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorFragmentContainer
 - sf:Companion:com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorFragmentContainer$Companion
 - <init>():V
