@@ -37,8 +37,8 @@
 
   <actions resource-bundle="messages.DevLeakDetectionBundle">
     <action id="DetectProjectLeaks"
-            class="com.intellij.dev.leakDetection.DetectProjectLeaksAction"
-            internal="true">
+            class="com.intellij.dev.leakDetection.DetectProjectLeaksAction">
+      <add-to-group group-id="HelpDiagnosticTools" anchor="last"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
   </actions>

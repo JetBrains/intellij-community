@@ -11,7 +11,6 @@ dev_dist_plugin(
         "intellij.platform.ide.ui.inspector",
         "intellij.dev.psiViewer",
         "intellij.dev.codeInsight",
-        "intellij.dev.leakDetection",
         "intellij.dev.pluginLoading",
         "intellij.java.dev",
         "intellij.groovy.dev",

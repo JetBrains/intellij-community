@@ -3,16 +3,11 @@ package com.intellij.dev.leakDetection
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAwareAction
 
-/** Internal-only action that scans a running IDE for leaked disposed Project/Editor instances. */
+/** Action that scans a running IDE for leaked disposed Project/Editor instances. */
 internal class DetectProjectLeaksAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal
-  }
 
   override fun actionPerformed(e: AnActionEvent) {
     LeakDetectionRunner.getInstance().runLeakDetectionInBackground(e.project)
