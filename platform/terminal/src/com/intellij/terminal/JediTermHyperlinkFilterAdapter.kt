@@ -7,6 +7,7 @@ import com.intellij.execution.filters.Filter.ResultItem
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.HyperlinkWithHoverInfo
 import com.intellij.execution.filters.HyperlinkWithPopupMenuInfo
+import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -40,7 +41,7 @@ import javax.swing.JComponent
 
 internal class JediTermHyperlinkFilterAdapter(
   private val project: Project,
-  console: TerminalExecutionConsole?,
+  console: ConsoleView?,
   private val widget: JBTerminalWidget,
 ) : AsyncHyperlinkFilter {
 

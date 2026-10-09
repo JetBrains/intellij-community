@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.editor.actions
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.terminal.actions
 
 import com.intellij.application.options.EditorFontsConstants
 import com.intellij.ide.lightEdit.LightEditCompatible
@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.TerminalFontSizeProvider
-import com.intellij.terminal.actions.TerminalActionUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

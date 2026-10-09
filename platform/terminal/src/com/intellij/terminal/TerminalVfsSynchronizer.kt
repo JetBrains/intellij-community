@@ -66,7 +66,6 @@ fun refreshVfsOnFocusChange(component: Component, coroutineScope: CoroutineScope
   }
 }
 
-@ApiStatus.Internal
 /** Hack for a Java code with no coroutine scopes */
 internal fun refreshVfsOnFocusChange(component: Component, parentDisposable: Disposable) {
   val scope = service<TerminalCoroutineScopeProvider>().coroutineScope.childScope("Terminal VFS refresh on focus change")

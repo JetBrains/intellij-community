@@ -5,6 +5,7 @@ import com.intellij.execution.filters.CompositeFilter;
 import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.impl.ConsoleViewUtil;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -20,11 +21,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 final class CompositeFilterWrapper {
 
   private final Project myProject;
-  private final TerminalExecutionConsole myConsole;
+  private final ConsoleView myConsole;
   private final List<Filter> myCustomFilters = new CopyOnWriteArrayList<>();
   private volatile CompositeFilter myCompositeFilter;
 
-  CompositeFilterWrapper(@NotNull Project project, @Nullable TerminalExecutionConsole console, @NotNull Disposable disposable) {
+  CompositeFilterWrapper(@NotNull Project project, @Nullable ConsoleView console, @NotNull Disposable disposable) {
     myProject = project;
     myConsole = console;
     ConsoleFilterProvider.FILTER_PROVIDERS.addChangeListener(() -> {

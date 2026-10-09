@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal
 
-import com.intellij.execution.ExecutionBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
@@ -77,10 +76,10 @@ class TerminalTitle {
   @ApiStatus.Experimental
   fun buildTitle(ignoreAppTitle: Boolean): @Nls String {
     val title = if (ignoreAppTitle || applicationTitle.isNullOrBlank()) {
-      userDefinedTitle ?: defaultTitle ?: ExecutionBundle.message("terminal.default.title")
+      userDefinedTitle ?: defaultTitle ?: PlatformTerminalBundle.message("terminal.default.title")
     }
     else {
-      userDefinedTitle ?: shortenApplicationTitle() ?: defaultTitle ?: ExecutionBundle.message("terminal.default.title")
+      userDefinedTitle ?: shortenApplicationTitle() ?: defaultTitle ?: PlatformTerminalBundle.message("terminal.default.title")
     }
     return if (tag != null) "$title ($tag)" else title
   }
@@ -92,9 +91,9 @@ class TerminalTitle {
   @ApiStatus.Experimental
   fun buildFullTitle(ignoreAppTitle: Boolean): @Nls String {
     return if (ignoreAppTitle || applicationTitle.isNullOrBlank()) {
-      userDefinedTitle ?: defaultTitle ?: ExecutionBundle.message("terminal.default.title")
+      userDefinedTitle ?: defaultTitle ?: PlatformTerminalBundle.message("terminal.default.title")
     }
-    else userDefinedTitle ?: applicationTitle ?: defaultTitle ?: ExecutionBundle.message("terminal.default.title")
+    else userDefinedTitle ?: applicationTitle ?: defaultTitle ?: PlatformTerminalBundle.message("terminal.default.title")
   }
 
   private fun shortenApplicationTitle(): String? {

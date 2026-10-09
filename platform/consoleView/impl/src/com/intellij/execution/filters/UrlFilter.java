@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
-import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ConsoleViewBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.browsers.OpenUrlHyperlinkInfo;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -187,7 +187,7 @@ public class UrlFilter implements Filter, DumbAware {
     public void navigate(@NotNull Project project) {
       VirtualFile file = getVirtualFile();
       if (file == null || !file.isValid()) {
-        Messages.showErrorDialog(project, ExecutionBundle.message("message.cannot.find.file.0", StringUtil.trimMiddle(url, 150)),
+        Messages.showErrorDialog(project, ConsoleViewBundle.message("message.cannot.find.file.0", StringUtil.trimMiddle(url, 150)),
                                  IdeBundle.message("title.cannot.open.file"));
         return;
       }

@@ -1955,6 +1955,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/tasks-platform-impl/tasks.impl.bookmarks/intellij.platform.tasks.impl.bookmarks.iml" filepath="$PROJECT_DIR$/platform/tasks-platform-impl/tasks.impl.bookmarks/intellij.platform.tasks.impl.bookmarks.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/tasks-platform-impl/tasks.impl.debugger/intellij.platform.tasks.impl.debugger.iml" filepath="$PROJECT_DIR$/platform/tasks-platform-impl/tasks.impl.debugger/intellij.platform.tasks.impl.debugger.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/tasks-platform-impl/plugin/intellij.platform.tasks.plugin.iml" filepath="$PROJECT_DIR$/platform/tasks-platform-impl/plugin/intellij.platform.tasks.plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/terminal/intellij.platform.terminal.iml" filepath="$PROJECT_DIR$/platform/terminal/intellij.platform.terminal.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/extensions/intellij.platform.testExtensions.iml" filepath="$PROJECT_DIR$/platform/testFramework/extensions/intellij.platform.testExtensions.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/intellij.platform.testFramework.iml" filepath="$PROJECT_DIR$/platform/testFramework/intellij.platform.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/buildView/intellij.platform.testFramework.buildView.iml" filepath="$PROJECT_DIR$/platform/testFramework/buildView/intellij.platform.testFramework.buildView.iml" />

@@ -2,7 +2,7 @@
 package com.intellij.terminal;
 
 import com.google.common.base.Ascii;
-import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ConsoleViewBundle;
 import com.intellij.execution.actions.ConsoleActionsPostProcessor;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -562,7 +561,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
       super.uiDataSnapshot(sink);
-      sink.set(ExecutionDataKeys.CONSOLE_VIEW, TerminalExecutionConsole.this);
+      sink.set(DATA_KEY, TerminalExecutionConsole.this);
     }
   }
 
@@ -573,8 +572,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private final class ClearAction extends DumbAwareAction {
     private ClearAction() {
-      super(ExecutionBundle.messagePointer("clear.all.from.console.action.name"),
-            ExecutionBundle.messagePointer("clear.all.from.console.action.text"), AllIcons.Actions.GC);
+      super(ConsoleViewBundle.messagePointer("clear.all.from.console.action.name"),
+            ConsoleViewBundle.messagePointer("clear.all.from.console.action.description"), AllIcons.Actions.GC);
     }
 
     @Override

@@ -13,6 +13,19 @@ c:com.intellij.execution.filters.TextConsoleBuilderImpl
 - p:isViewer():Z
 - setUsePredefinedMessageFilter(Z):V
 - setViewer(Z):V
+c:com.intellij.execution.filters.UrlFilter
+- com.intellij.execution.filters.Filter
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- <init>(com.intellij.openapi.project.Project):V
+- p:buildHyperlinkInfo(java.lang.String):com.intellij.execution.filters.HyperlinkInfo
+f:com.intellij.execution.filters.UrlFilter$FileUrlHyperlinkInfo
+- com.intellij.execution.filters.LazyFileHyperlinkInfo
+- com.intellij.execution.filters.HyperlinkWithPopupMenuInfo
+c:com.intellij.execution.filters.UrlFilter$UrlFilterProvider
+- com.intellij.execution.filters.ConsoleFilterProviderEx
+- <init>():V
+- getDefaultFilters(com.intellij.openapi.project.Project):com.intellij.execution.filters.Filter[]
 f:com.intellij.execution.impl.ConsoleBuffer
 - s:getCycleBufferSize():I
 - s:useCycleBuffer():Z
@@ -79,3 +92,8 @@ f:com.intellij.execution.impl.EditorHyperlinkSupport
 - getHyperlinkInfoByEvent(com.intellij.openapi.editor.event.EditorMouseEvent):com.intellij.execution.filters.HyperlinkInfo
 - getHyperlinks():java.util.Map
 - removeHyperlink(com.intellij.openapi.editor.markup.RangeHighlighter):V
+f:com.intellij.ide.browsers.OpenUrlHyperlinkInfo
+- com.intellij.execution.filters.HyperlinkWithPopupMenuInfo
+- <init>(java.lang.String):V
+- getPopupMenuGroup(java.awt.event.MouseEvent):com.intellij.openapi.actionSystem.ActionGroup
+- navigate(com.intellij.openapi.project.Project):V

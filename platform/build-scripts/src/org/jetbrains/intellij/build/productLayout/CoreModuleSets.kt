@@ -259,6 +259,7 @@ object CoreModuleSets {
 
     embeddedModule("intellij.platform.consoleView")
     embeddedModule("intellij.platform.consoleView.impl")
+    module("intellij.platform.terminal")
     module("intellij.platform.execution")
     module("intellij.platform.execution.impl")
 

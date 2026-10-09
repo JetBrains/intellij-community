@@ -2,7 +2,6 @@
 package com.intellij.terminal
 
 import com.intellij.application.options.schemes.SchemeNameGenerator
-import com.intellij.execution.ExecutionBundle
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
@@ -96,8 +95,8 @@ object TerminalCmdKShortcutDialog {
     val clearTerminalActionText = clearTerminalAction.templatePresentation.text ?: IdeBundle.message("terminal.action.ClearBuffer.text")
     val choice = Messages.showDialog(
       project,
-      ExecutionBundle.message("terminal.cmd.k.shortcut.dialog.message"),
-      ExecutionBundle.message("terminal.cmd.k.shortcut.dialog.title"),
+      PlatformTerminalBundle.message("terminal.cmd.k.shortcut.dialog.message"),
+      PlatformTerminalBundle.message("terminal.cmd.k.shortcut.dialog.title"),
       arrayOf(checkinActionText, clearTerminalActionText),
       COMMIT_OPTION,
       Messages.getInformationIcon(),

@@ -280,6 +280,7 @@
     <module name="intellij.platform.icons.impl.intellij" loading="embedded"/>
     <module name="intellij.platform.consoleView" loading="embedded"/>
     <module name="intellij.platform.consoleView.impl" loading="embedded"/>
+    <module name="intellij.platform.terminal"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.lvcs" loading="embedded"/>

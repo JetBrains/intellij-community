@@ -35,18 +35,6 @@
     <action id="Runner.CloseAllUnpinnedViews" class="com.intellij.execution.ui.layout.actions.CloseAllUnpinnedViewsAction" icon="AllIcons.Actions.Close"/>
     <action id="SendEOF" class="com.intellij.execution.actions.EOFAction"/>
     <action class="com.intellij.execution.actions.ActivateRunToolWindowAction" id="ActivateRunToolWindow"/>
-    <action id="TerminalIncreaseFontSize" class="com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction$IncreaseEditorFontSize"
-            use-shortcut-of="EditorIncreaseFontSize">
-      <override-text place="GoToAction"/>
-    </action>
-    <action id="TerminalDecreaseFontSize" class="com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction$DecreaseEditorFontSize"
-            use-shortcut-of="EditorDecreaseFontSize">
-      <override-text place="GoToAction"/>
-    </action>
-    <action id="TerminalResetFontSize" class="com.intellij.openapi.editor.actions.TerminalResetFontSizeAction"
-            use-shortcut-of="EditorResetFontSize">
-      <override-text place="GoToAction"/>
-    </action>
     <action id="RunToolbarWidgetAction" class="com.intellij.execution.runToolbar.RunToolbarWidgetAction">
       <add-to-group group-id="RightToolbarSideGroup" anchor="first"/>
     </action>
