@@ -2,11 +2,15 @@
 package com.intellij.ui
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class RealClickDetector {
-  private var isRealClick = false
+  // On Windows, to work around JBR-10042, we always treat "mouse released" events as true clicks.
+  // It's not an issue, because this hack is only needed for OS where a right click
+  // can both open a menu and activate an item, which means macOS and Linux.
+  private var isRealClick = SystemInfoRt.isWindows
 
   fun mousePressed() {
     if (!isRealClick) {
