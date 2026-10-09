@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.options.NoAutomaticReset
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.Align
@@ -32,7 +33,7 @@ import org.jetbrains.plugins.github.util.GithubUtil
 
 internal class GithubSettingsConfigurable internal constructor(
   private val project: Project
-) : BoundConfigurable(GithubUtil.SERVICE_DISPLAY_NAME, "settings.github") {
+) : BoundConfigurable(GithubUtil.SERVICE_DISPLAY_NAME, "settings.github"), NoAutomaticReset {
   override fun createPanel(): DialogPanel {
     val scopeProvider = project.service<GHPluginProjectScopeProvider>()
     val defaultAccountHolder = project.service<GithubProjectDefaultAccountHolder>()

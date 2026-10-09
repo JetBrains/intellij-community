@@ -11,8 +11,6 @@ import com.intellij.openapi.ui.ExitActionType
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.update.UiNotifyConnector
 import git4idea.i18n.GitBundle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -27,13 +25,13 @@ import org.jetbrains.plugins.github.authentication.GHLoginData
 import org.jetbrains.plugins.github.authentication.GHServerOffering
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.Component
-import javax.swing.Action
 import javax.swing.JComponent
 
 internal fun JComponent.setPaddingCompensated(): JComponent =
   apply { putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false) }
 
-internal sealed class GHTokenLoginDialog(
+@Suppress("SplitModeApiUsage")
+internal class GHTokenLoginDialog(
   private val model: GHLoginModel,
   project: Project?,
   parentCs: CoroutineScope,
@@ -43,10 +41,19 @@ internal sealed class GHTokenLoginDialog(
 
   private val cs = parentCs.childScope(javaClass.name, Dispatchers.EDT + ModalityState.stateForComponent(window).asContextElement())
 
-  protected val loginPanel = GithubLoginPanel(cs, GithubApiRequestExecutor.Factory.getInstance()) { login, server ->
+  private val loginPanel = GithubLoginPanel(cs, GithubApiRequestExecutor.Factory.getInstance()) { login, server ->
     model.isAccountUnique(server, login)
   }
 
+  init {
+    title = GithubBundle.message("login.to.github")
+    setLoginButtonText(GitBundle.message("login.dialog.button.login"))
+    loginPanel.setTokenUi()
+
+    init()
+  }
+
+  fun setLoginButtonText(@NlsContexts.Button text: String) = setOKButtonText(text)
 
   fun setLogin(login: String?, editable: Boolean) = loginPanel.setLogin(login, editable)
   fun setServer(path: String, editable: Boolean) = loginPanel.setServer(path, editable)
@@ -55,6 +62,8 @@ internal sealed class GHTokenLoginDialog(
     loginPanel.setError(exception)
     startTrackingValidation()
   }
+
+  override fun createCenterPanel(): JComponent = loginPanel.setPaddingCompensated()
 
   override fun getPreferredFocusedComponent(): JComponent? = loginPanel.getPreferredFocusableComponent()
 
@@ -80,46 +89,9 @@ internal sealed class GHTokenLoginDialog(
 
   private fun logEvent() {
     GHLoginCollector.login(loginData.copy(
-      authType = if (loginPanel.isOAuthUi()) GHAuthType.OAUTH else GHAuthType.TOKEN,
+      authType = GHAuthType.TOKEN,
       serverOffering = GHServerOffering.of(loginPanel.getServer()))
     )
-  }
-
-  class Token(model: GHLoginModel, project: Project?, parentCs: CoroutineScope, parent: Component?, loginData: GHLoginData) :
-    GHTokenLoginDialog(model, project, parentCs, parent, loginData) {
-
-    init {
-      title = GithubBundle.message("login.to.github")
-      setLoginButtonText(GitBundle.message("login.dialog.button.login"))
-      loginPanel.setTokenUi()
-
-      init()
-    }
-
-    internal fun setLoginButtonText(@NlsContexts.Button text: String) = setOKButtonText(text)
-
-    override fun createCenterPanel(): JComponent = loginPanel.setPaddingCompensated()
-  }
-
-  class OAuth(model: GHLoginModel, project: Project?, parentCs: CoroutineScope, parent: Component?, loginData: GHLoginData) :
-    GHTokenLoginDialog(model, project, parentCs, parent, loginData) {
-
-    init {
-      title = GithubBundle.message("login.to.github")
-      loginPanel.setOAuthUi()
-      init()
-    }
-
-    override fun createActions(): Array<Action> = arrayOf(cancelAction)
-
-    override fun createCenterPanel(): JComponent =
-      JBUI.Panels.simplePanel(loginPanel)
-        .withPreferredWidth(200)
-        .setPaddingCompensated().also {
-          UiNotifyConnector.doWhenFirstShown(it) {
-            doOKAction()
-          }
-        }
   }
 }
 
