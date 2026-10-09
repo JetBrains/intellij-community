@@ -56,7 +56,9 @@ public class KeyCatalogOverBlocksTest {
       assertEquals(41, catalog.valueRecordRef(keyRecordRef));
 
       var recordRefs = new ArrayList<Long>();
-      var records = RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), KEYS, BLOCK_SIZE);
+      var records = RecordStorageOverBlocks.open(
+        DurableMapBlockCatalog.open(store), KEYS, /*appendOnly: */ false, BLOCK_SIZE
+      );
       records.forEachCommittedRecord((recordRef, _) -> {
         recordRefs.add(recordRef);
         return true;

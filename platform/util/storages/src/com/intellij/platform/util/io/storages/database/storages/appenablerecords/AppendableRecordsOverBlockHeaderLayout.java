@@ -11,37 +11,37 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.VarHandle;
 
-import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT16_LAYOUT;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT32_LAYOUT;
+import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT8_LAYOUT;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.fieldHandle;
 import static com.intellij.platform.util.io.storages.database.storages.appenablerecords.RecordHeaderLayout.RECORD_ALIGNMENT;
 
-/// Binary layout of an append-only-log header inside block:
+/// Binary layout of an appendable-records header inside block:
 /// ```
 /// AppendableRecordsOverBlockHeaderLayout[=12 bytes] {
-///   formatVersion : int16
-///   [padding]     : int16
 ///   allocatedTail : int32
 ///   committedTail : int32
+///   formatVersion : int8
+///   (padding)     : int8[3]
 /// }
 /// ```
 @ApiStatus.Internal
 public final class AppendableRecordsOverBlockHeaderLayout {
-  public static final short FORMAT_VERSION = 1;
-
   public static final MemoryLayout LAYOUT = MemoryLayout.structLayout(
-    INT16_LAYOUT.withName("formatVersion"),
-    MemoryLayout.paddingLayout(Short.BYTES), // so allocatedTail is on 32-aligned offset
     INT32_LAYOUT.withName("allocatedTail"),
-    INT32_LAYOUT.withName("committedTail")
+    INT32_LAYOUT.withName("committedTail"),
+    INT8_LAYOUT.withName("formatVersion"),
+    MemoryLayout.paddingLayout( /*bytes: */ 3)
   ).withName("AppendableRecordsOverBlockHeaderLayout");
 
   //@formatter:off
-  public static final VarHandle FORMAT_VERSION_HANDLE = fieldHandle(LAYOUT, "formatVersion");
   public static final VarHandle ALLOCATED_TAIL_HANDLE = fieldHandle(LAYOUT, "allocatedTail");
   public static final VarHandle COMMITTED_TAIL_HANDLE = fieldHandle(LAYOUT, "committedTail");
+  public static final VarHandle FORMAT_VERSION_HANDLE = fieldHandle(LAYOUT, "formatVersion");
 
-  public static final int HEADER_SIZE                 = Math.toIntExact(LAYOUT.byteSize());
+  public static final int       HEADER_SIZE           = Math.toIntExact(LAYOUT.byteSize());
+
+  public static final byte      FORMAT_VERSION        = 1; // 0 means 'uninitialized'
   //@formatter:on
 
   /// Initializes the header of a new, empty log
@@ -55,7 +55,7 @@ public final class AppendableRecordsOverBlockHeaderLayout {
     if (source.byteSize() < HEADER_SIZE + RecordHeaderLayout.HEADER_SIZE) {
       throw corrupted(blockId, "the content is too small");
     }
-    var formatVersion = (short)FORMAT_VERSION_HANDLE.get(source, 0L);
+    var formatVersion = (byte)FORMAT_VERSION_HANDLE.get(source, 0L);
     if (formatVersion != FORMAT_VERSION) {
       throw new UnsupportedFormatException(
         "append-only log in block " + blockId,

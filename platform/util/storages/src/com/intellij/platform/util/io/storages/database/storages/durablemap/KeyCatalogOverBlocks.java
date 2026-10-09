@@ -39,7 +39,7 @@ public final class KeyCatalogOverBlocks<K> {
                                                           int preferredBlockContentLength,
                                                           @NotNull RecordRefIndex keyHashToRecordRefIndex,
                                                           @NotNull KeyDescriptorEx<K> keyDescriptor) throws IOException {
-    var keys = RecordStorageOverBlocks.open(blockCatalog, KEYS, preferredBlockContentLength);
+    var keys = RecordStorageOverBlocks.open(blockCatalog, KEYS, /*appendOnly: */ false, preferredBlockContentLength);
     return new KeyCatalogOverBlocks<>(keys, keyHashToRecordRefIndex, keyDescriptor);
   }
 

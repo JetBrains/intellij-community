@@ -78,8 +78,9 @@ public interface BlocksStore {
     /// @throws IllegalStateException if the block's memory segment is no longer alive
     @NotNull LifecycleState state() throws IllegalStateException;
 
-    /// @return the content of the block usable for the application
-    /// The caller must stop writes before it seals the block. A previously returned segment cannot become read-only.
+    /// @return the content of the block usable for the application. For [seal]-ed block returns read-only segments.
+    /// BEWARE: one should not rely on this protection -- a segment returned before [seal] remains writeable after [seal].
+    /// So it is the caller's responsibility to stop all writes before the [seal] is called.
     @NotNull MemorySegment content();
 
     /// Publishes the block after the storage initializes its content.
@@ -91,7 +92,11 @@ public interface BlocksStore {
     /// Discards a block whose content initialization did not complete.
     void discard();
 
-    /// Marks the block as immutable after the application finishes all writes
+    /// Marks the block as immutable after the application finishes all writes;
+    ///
+    /// Sealed blocks return **readonly** segment from [#content()] -- but segment that were gotten while block was active
+    ///  is still valid and writable, so one shouldn't rely too much on that protection: this is more like a self-check
+    ///  to detect bugs, than 100% data protection.
     void seal();
 
     /// Marks the sealed block as unreachable data that compaction can reclaim

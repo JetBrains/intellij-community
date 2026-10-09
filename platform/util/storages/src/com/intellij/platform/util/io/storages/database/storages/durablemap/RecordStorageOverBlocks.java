@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.database.storages.durablemap;
 
+import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState;
 import com.intellij.platform.util.io.storages.database.storages.appenablerecords.AppendableRecordsOverBlock;
 import com.intellij.platform.util.io.storages.database.storages.appenablerecords.AppendableRecordsOverBlock.RecordWriter;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
@@ -17,41 +18,58 @@ import java.util.Comparator;
 
 import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES;
 
-/// Append-only record storage over multiple durable map blocks with one record role.
+/// Appendable record storage over **multiple** durable map blocks, with one record role.
 /// Uses [AppendableRecordsOverBlock] for each block, allocates new block as current one gets exhausted,
 /// and keeps filled up blocks connected in a sequence.
+///
+/// The record storage could work in 2 modes: append-only, or modifiable
+/// 1. Append-only: records are only appended, never modified afterward; i.e. this is classical append-only-log structure.
+///    In this mode each block is sealed ([BlocksStore.Block#seal]) as soon as it is filled up, so only read access is allowed;
+/// 2. Modifiable: simple records store, appended records content could be modified, but records can't be resized;
+///    In this mode filled up blocks are not sealed, they remain active so their records could be modified;
+///
+/// The appendOnly/modifiable mode is defined at runtime, and does NOT persist.
 @ApiStatus.Internal
 public final class RecordStorageOverBlocks {
+
+  //TODO RC: we don't need  DurableMapBlockCatalog/DurableMapBlockRole here -- instead we need a simple abstraction
+  //         ScopedBlocks{ blocks(): List, allocateBlock(size) }
+
   /// Routes block access through [DurableMapBlockCatalog] to keep the catalog up to date
   private final @NotNull DurableMapBlockCatalog blockCatalog;
   private final @NotNull DurableMapBlockRole recordBlockRole;
+  private final boolean appendOnly;
 
   private final int preferredBlockContentLength;
 
-  private final transient Object logsByBlockIdLock = new Object();
-  private final Int2ObjectMap<AppendableRecordsOverBlock> logsByBlockId = new Int2ObjectOpenHashMap<>();
+  private final transient Object recordsByBlockIdLock = new Object();
+  private final Int2ObjectMap<AppendableRecordsOverBlock> recordsByBlockId = new Int2ObjectOpenHashMap<>();
 
   // TODO Serializing the complete append operation is not acceptable. Revise the allocation and commit protocol to permit concurrent writers.
   private final transient Object appendLock = new Object();
-  private AppendableRecordsOverBlock currentLog;
+  private AppendableRecordsOverBlock currentAppendableBlock;
 
   private RecordStorageOverBlocks(@NotNull DurableMapBlockCatalog blockCatalog,
                                   @NotNull DurableMapBlockRole recordBlockRole,
+                                  boolean appendOnly,
                                   int preferredBlockContentLength) {
     this.blockCatalog = blockCatalog;
     this.recordBlockRole = recordBlockRole;
+    this.appendOnly = appendOnly;
     this.preferredBlockContentLength = preferredBlockContentLength;
   }
 
   /// Opens the storage and validates the committed record prefix in each non-retired `ENTRIES` block.
   public static @NotNull RecordStorageOverBlocks open(@NotNull DurableMapBlockCatalog blockCatalog,
+                                                      boolean appendOnly,
                                                       int preferredBlockContentLength) throws IOException {
-    return open(blockCatalog, ENTRIES, preferredBlockContentLength);
+    return open(blockCatalog, ENTRIES, appendOnly, preferredBlockContentLength);
   }
 
   /// Opens the storage for one record block role and validates each committed record prefix.
   public static @NotNull RecordStorageOverBlocks open(@NotNull DurableMapBlockCatalog blockCatalog,
                                                       @NotNull DurableMapBlockRole recordBlockRole,
+                                                      boolean appendOnly,
                                                       int preferredBlockContentLength) throws IOException {
     switch (recordBlockRole) {
       case ENTRIES, KEYS, VALUES -> { }
@@ -65,26 +83,44 @@ public final class RecordStorageOverBlocks {
       );
     }
 
-    var storage = new RecordStorageOverBlocks(blockCatalog, recordBlockRole, preferredBlockContentLength);
+    var storage = new RecordStorageOverBlocks(blockCatalog, recordBlockRole, appendOnly, preferredBlockContentLength);
+
     //restore filled-up and currently appendable blocks:
-    for (var block : blockCatalog.blocks(recordBlockRole)) {
-      if (block.state() == BlocksStore.Block.LifecycleState.RETIRED) {
-        continue;
-      }
-
-      var log = AppendableRecordsOverBlock.open(block);
-      AppendableRecordsOverBlock previous = storage.logsByBlockId.putIfAbsent(block.id(), log);
+    var blocksInAllocationOrder = blockCatalog.blocks(recordBlockRole).stream()
+      .filter(block -> block.state() != LifecycleState.RETIRED)
+      .sorted(Comparator.comparingInt(BlocksStore.Block::id))
+      .toList();
+    AppendableRecordsOverBlock lastActiveBlock = null;
+    var activeBlocksCount = 0;
+    for (var block : blocksInAllocationOrder) {
+      var recordsBlock = AppendableRecordsOverBlock.open(block);
+      AppendableRecordsOverBlock previous = storage.recordsByBlockId.putIfAbsent(block.id(), recordsBlock);
       if (previous != null) {
-        throw new CorruptedException("Duplicate block id[" + block.id() + "]: " + previous + " vs " + block);
+        throw new CorruptedException("Duplicate block id [" + block.id() + "]: " + previous + " vs " + block);
       }
 
-      if (block.state() == BlocksStore.Block.LifecycleState.ACTIVE) {
-        if (log.hasIncompleteAllocation()) {
-          block.seal();
+      if (block.state() == LifecycleState.ACTIVE) {
+        activeBlocksCount++;
+        lastActiveBlock = recordsBlock;
+      }
+    }
+
+    if (appendOnly && activeBlocksCount > 1) {
+      throw new CorruptedException("Append-only " + recordBlockRole + " storage has " + activeBlocksCount + " active blocks");
+    }
+
+    if (lastActiveBlock != null) {
+      if (lastActiveBlock.hasIncompleteAllocation()) {
+        if (appendOnly) {
+          lastActiveBlock.block().seal();
         }
-        else {
-          storage.currentLog = log;
-        }
+        //else: currently in !appendOnly mode we just leave the block with incomplete allocation as-is -- don't append to it anymore,
+        //      but still keep its state='active' and readable/writeable. We could do more: 'cancel' the incomplete allocation (zeroize
+        //      all the potentially-dirty region, and adjust cursors as-if incomplete allocation never happened), and treat the block as
+        //      normal -- but for now it seems unnecessary.
+      }
+      else {
+        storage.currentAppendableBlock = lastActiveBlock;
       }
     }
     return storage;
@@ -99,23 +135,25 @@ public final class RecordStorageOverBlocks {
   /// Appends a payload and an optional reference to its predecessor
   public long append(int payloadLength, long previousRef, @NotNull RecordWriter writer) throws IOException {
     synchronized (appendLock){
-      var log = currentLog;
+      var currentBlock = currentAppendableBlock;
       boolean hasLink = (previousRef != 0);
-      if (log == null || !log.hasSpaceFor(payloadLength, hasLink)) {
-        if (log != null) {
-          log.block().seal();
+      if (currentBlock == null || !currentBlock.hasSpaceFor(payloadLength, hasLink)) {
+        if (currentBlock != null && appendOnly) {
+          currentBlock.block().seal();
         }
-        log = allocateLog(payloadLength, hasLink);
-        currentLog = log;
+        currentBlock = allocateLog(payloadLength, hasLink);
+        currentAppendableBlock = currentBlock;
       }
 
       try {
-        int recordOffset = log.append(payloadLength, previousRef, writer);
-        return recordRef(log.block().id(), recordOffset);
+        int recordOffset = currentBlock.append(payloadLength, previousRef, writer);
+        return recordRef(currentBlock.block().id(), recordOffset);
       }
-      catch (IOException | RuntimeException | Error failure) {
-        log.block().seal();
-        currentLog = null;
+      catch (Throwable failure) {
+        if (appendOnly) {
+          currentBlock.block().seal();
+        }
+        currentAppendableBlock = null;
         throw failure;
       }
     }
@@ -129,27 +167,31 @@ public final class RecordStorageOverBlocks {
   /// @return record for recordRef, _without_ resolving [AppendableRecordsOverBlock.Record#previousRef()], if record has it
   public @NotNull AppendableRecordsOverBlock.Record readRecord(long recordRef) throws IOException {
     var blockId = blockId(recordRef);
-    AppendableRecordsOverBlock log;
-    synchronized (logsByBlockIdLock) {
-      log = logsByBlockId.get(blockId);
+    AppendableRecordsOverBlock records;
+    synchronized (recordsByBlockIdLock) {
+      records = recordsByBlockId.get(blockId);
     }
-    if (log == null) {
+    if (records == null) {
       throw new IllegalArgumentException("Unknown " + recordBlockRole + " block " + blockId);
     }
-    return log.readRecord(recordOffset(recordRef));
+    return records.readRecord(recordOffset(recordRef));
   }
 
   /// Updates a committed payload without changing its size or record header.
   public void updatePayload(long recordRef, @NotNull RecordWriter updater) throws IOException {
-    var blockId = blockId(recordRef);
-    AppendableRecordsOverBlock log;
-    synchronized (logsByBlockIdLock) {
-      log = logsByBlockId.get(blockId);
+    if (appendOnly) {
+      throw new UnsupportedOperationException("Append-only records cannot be updated");
     }
-    if (log == null) {
+
+    var blockId = blockId(recordRef);
+    AppendableRecordsOverBlock records;
+    synchronized (recordsByBlockIdLock) {
+      records = recordsByBlockId.get(blockId);
+    }
+    if (records == null) {
       throw new IllegalArgumentException("Unknown " + recordBlockRole + " block " + blockId);
     }
-    log.updatePayload(recordOffset(recordRef), updater);
+    records.updatePayload(recordOffset(recordRef), updater);
   }
 
   /// Processes committed records in block allocation order
@@ -168,19 +210,19 @@ public final class RecordStorageOverBlocks {
         .sorted(Comparator.comparingInt(BlocksStore.Block::id))
         .toList();
       for (var block : blocksInAllocationOrder) {
-        if (block.state() == BlocksStore.Block.LifecycleState.RETIRED) {
+        if (block.state() == LifecycleState.RETIRED) {
           continue;
         }
-        AppendableRecordsOverBlock log;
+        AppendableRecordsOverBlock records;
         //noinspection NestedSynchronizedStatement
-        synchronized (logsByBlockIdLock) {
-          log = logsByBlockId.get(block.id());
+        synchronized (recordsByBlockIdLock) {
+          records = recordsByBlockId.get(block.id());
         }
-        if (log == null) {
+        if (records == null) {
           throw new CorruptedException("Missing " + recordBlockRole + " block " + block.id());
         }
         var blockId = block.id();
-        var allBlockRecordsProcessed = log.forEachCommittedRecordWithLinks(
+        var allBlockRecordsProcessed = records.forEachCommittedRecordWithLinks(
           (recordOffset, record) -> reader.process(recordRef(blockId, recordOffset), record)
         );
         if (!allBlockRecordsProcessed) {
@@ -195,11 +237,11 @@ public final class RecordStorageOverBlocks {
     var minimumContentLength = AppendableRecordsOverBlock.minimumBlockContentLengthFor(payloadLength, hasLink);
     var contentLength = Math.max(preferredBlockContentLength, minimumContentLength);
     var block = blockCatalog.allocateBlock(recordBlockRole, contentLength);
-    var log = AppendableRecordsOverBlock.create(block);
-    synchronized (logsByBlockIdLock) {
-      logsByBlockId.put(block.id(), log);
+    var records = AppendableRecordsOverBlock.create(block);
+    synchronized (recordsByBlockIdLock) {
+      recordsByBlockId.put(block.id(), records);
     }
-    return log;
+    return records;
   }
 
   /// Packs a stable block identifier and a block-relative offset into one record reference.
@@ -216,8 +258,8 @@ public final class RecordStorageOverBlocks {
   }
 
   boolean containsRecordBlock(long recordRef) {
-    synchronized (logsByBlockIdLock) {
-      return logsByBlockId.containsKey(blockId(recordRef));
+    synchronized (recordsByBlockIdLock) {
+      return recordsByBlockId.containsKey(blockId(recordRef));
     }
   }
 

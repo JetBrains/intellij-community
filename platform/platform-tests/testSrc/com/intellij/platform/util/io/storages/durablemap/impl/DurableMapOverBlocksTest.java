@@ -66,7 +66,9 @@ public class DurableMapOverBlocksTest {
       }
 
       var recordRefs = new ArrayList<Long>();
-      var records = RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), ENTRIES_BLOCK_CONTENT_LENGTH);
+      var records = RecordStorageOverBlocks.open(
+        DurableMapBlockCatalog.open(store), /*appendOnly: */ true, ENTRIES_BLOCK_CONTENT_LENGTH
+      );
       records.forEachCommittedRecord((recordRef, _) -> {
         recordRefs.add(recordRef);
         return true;
@@ -136,7 +138,9 @@ public class DurableMapOverBlocksTest {
         map.put("stable", "value");
       }
 
-      var records = RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), ENTRIES_BLOCK_CONTENT_LENGTH);
+      var records = RecordStorageOverBlocks.open(
+        DurableMapBlockCatalog.open(store), /*appendOnly: */ true, ENTRIES_BLOCK_CONTENT_LENGTH
+      );
       assertThrows(IOException.class, () -> records.append(16, _ -> {
         throw new IOException("simulated write failure");
       }));

@@ -51,8 +51,6 @@ public final class RecordHeaderLayout {
   public static final int       HEADER_SIZE                    = Math.toIntExact(LAYOUT.byteSize());
   //@formatter:on
 
-  private RecordHeaderLayout() { }
-
   // TODO Replace this object with static operations over a packed int.
 
   /// derives all record metadata from packed int32 header
@@ -119,7 +117,7 @@ public final class RecordHeaderLayout {
       return totalLength() - HEADER_SIZE - (hasLink() ? Long.BYTES : 0) - paddingSize();
     }
 
-    /// Writes an allocated header that is not visible to readers.
+    /// Writes an 'allocated' header -- that is not yet visible to readers
     public void writeAllocatedTo(@NotNull MemorySegment target, int recordOffset) {
       if (isCommitted()) {
         throw new IllegalStateException("The record header is already committed");
@@ -127,18 +125,20 @@ public final class RecordHeaderLayout {
       PACKED_LENGTH_AND_FLAGS_HANDLE.set(target, (long)recordOffset, header);
     }
 
-    /// Publishes this header after the writer finishes the payload.
+    /// Publishes this header after the writer finishes the payload
     public void publishCommittedTo(@NotNull MemorySegment target, int recordOffset) {
       var committedHeader = header | COMMITTED_STATE_MASK;
       PACKED_LENGTH_AND_FLAGS_HANDLE.setRelease(target, (long)recordOffset, committedHeader);
       header = committedHeader;
     }
 
-    public static @NotNull RecordHeader readCommitted(int blockId,
-                                                      int recordOffset,
-                                                      @NotNull MemorySegment source,
-                                                      int committedTail) throws CorruptedException {
-      var header = new RecordHeader((int)PACKED_LENGTH_AND_FLAGS_HANDLE.getAcquire(source, 0L));
+    /// Reads a committed record header from `source` **at offset** `recordOffset`, and verifies its params;
+    /// @return [RecordHeader] if it is valid, committed record, with sane header params; throws otherwise
+    public static @NotNull RecordHeader readIfCommitted(int blockId,
+                                                        int recordOffset,
+                                                        @NotNull MemorySegment source,
+                                                        int committedTail) throws CorruptedException {
+      var header = new RecordHeader((int)PACKED_LENGTH_AND_FLAGS_HANDLE.getAcquire(source, (long)recordOffset));
       if (!header.isCommitted()) {
         throw corrupted(blockId, "record at offset " + recordOffset + " is not committed");
       }
@@ -169,4 +169,6 @@ public final class RecordHeaderLayout {
   private static @NotNull CorruptedException corrupted(int blockId, @NotNull String details) {
     return new CorruptedException("Invalid append-only log block " + blockId + ": " + details);
   }
+
+  private RecordHeaderLayout() { }
 }

@@ -169,7 +169,7 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
     var requiresRecovery = !freshLookup && !recordRefIndex.wasProperlyClosed();
     try {
       var keyCatalog = KeyCatalogOverBlocks.open(blockCatalog, preferredBlockContentLength, recordRefIndex, keyDescriptor);
-      var values = RecordStorageOverBlocks.open(blockCatalog, VALUES, preferredBlockContentLength);
+      var values = RecordStorageOverBlocks.open(blockCatalog, VALUES, /*appendOnly: */ true, preferredBlockContentLength);
       DurableMapWithKeyCatalogOverBlocks<K, V> map;
       if (patchExternalizer == null) {
         map = new DurableMapWithKeyCatalogOverBlocks<>(

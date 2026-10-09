@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.database.storages.appenablerecords;
 
+import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState;
 import com.intellij.platform.util.io.storages.database.storages.appenablerecords.RecordHeaderLayout.RecordHeader;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.util.io.CorruptedException;
@@ -14,30 +15,37 @@ import java.lang.foreign.ValueLayout;
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ACTIVE;
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ALLOCATED;
 
-/// Stores append-only records with arbitrary payloads inside one [BlocksStore.Block].
+/// Appendable records with arbitrary payloads, organized inside a single [BlocksStore.Block].
 /// [AppendableRecordsOverBlockHeaderLayout] defines header binary layout.
 /// Block selection, chaining and lifecycle transitions belong to the storage that owns this log.
+/// Individual records header is [RecordHeaderLayout].
+///
+/// Records could be treated as *append-only*, or *modifiable* after appended -- this class supports
+/// both policies, it is up to caller to decide.
 @ApiStatus.Internal
 public final class AppendableRecordsOverBlock {
   private final @NotNull BlocksStore.Block block;
   private final @NotNull MemorySegment content;
 
   private AppendableRecordsOverBlock(@NotNull BlocksStore.Block block,
-                                 @NotNull MemorySegment content) {
+                                     @NotNull MemorySegment content) {
     this.block = block;
     this.content = content;
   }
 
   public static int minimumBlockContentLengthFor(int payloadLength) {
-    return minimumBlockContentLengthFor(payloadLength, /*hasLink: */ false);
+    return minimumBlockContentLengthFor(payloadLength, /* hasLink: */ false);
   }
 
+  /// @return block content length that fits a record with `payloadLength` with/without a link
+  ///         i.e. it should fit an appendable-log header ([AppendableRecordsOverBlockHeaderLayout]), a record header,
+  ///         an (optional) link, and a given payload
   public static int minimumBlockContentLengthFor(int payloadLength, boolean hasLink) {
     return Math.addExact(AppendableRecordsOverBlockHeaderLayout.HEADER_SIZE, RecordHeader.totalLength(payloadLength, hasLink));
   }
 
   /// Initializes an empty log header in the block, and activates the block;
-  /// The block must be in [ALLOCATED] state;
+  /// The block must be in [LifecycleState#ALLOCATED] state;
   public static @NotNull AppendableRecordsOverBlock create(@NotNull BlocksStore.Block block) {
     var initialState = block.state();
     if (initialState != ALLOCATED) {
@@ -68,6 +76,7 @@ public final class AppendableRecordsOverBlock {
     var content = block.content();
     var committedTail = AppendableRecordsOverBlockHeaderLayout.readValidatedCommittedTail(block.id(), content);
     var log = new AppendableRecordsOverBlock(block, content);
+    //TODO RC: why to do that? it is costly
     log.scanCommittedRecords(committedTail, (_, _) -> true);
     return log;
   }
@@ -137,7 +146,7 @@ public final class AppendableRecordsOverBlock {
   }
 
   public @NotNull Record readRecord(int recordOffset) throws CorruptedException {
-    if (block.state() == BlocksStore.Block.LifecycleState.RETIRED) {
+    if (block.state() == LifecycleState.RETIRED) {
       throw new IllegalStateException("Block " + block.id() + " is retired");
     }
     var committedTail = AppendableRecordsOverBlockHeaderLayout.committedTail(content);
@@ -145,14 +154,15 @@ public final class AppendableRecordsOverBlock {
     return record(recordOffset, header);
   }
 
-  /// Updates a committed payload without changing its size or record header
+  /// Updates a committed payload without changing its size or record header.
   ///
-  /// BEWARE: updating records denies the guarantees append-only-log normally gives -- i.e. that committed records
-  /// are crash-safe (in a way)
+  /// **BEWARE**: updating records denies the guarantees append-only-log normally gives -- i.e. that committed records
+  /// are, in a way, crash-safe.
   public void updatePayload(int recordOffset, @NotNull RecordWriter updater) throws IOException {
-    if (block.state() == BlocksStore.Block.LifecycleState.RETIRED) {
-      throw new IllegalStateException("Block " + block.id() + " is retired");
+    if (block.state() != ACTIVE) {
+      throw new IllegalStateException("Block " + block.id() + " is not active");
     }
+
     var committedTail = AppendableRecordsOverBlockHeaderLayout.committedTail(content);
     var header = readCommittedHeader(recordOffset, committedTail);
     updater.writeTo(payload(recordOffset, header));
@@ -164,8 +174,7 @@ public final class AppendableRecordsOverBlock {
         (long)recordOffset + RecordHeaderLayout.HEADER_SIZE > committedTail) {
       throw new CorruptedException("Invalid record offset " + recordOffset + " in block " + block.id());
     }
-    var recordHeader = content.asSlice(recordOffset, RecordHeaderLayout.HEADER_SIZE);
-    return RecordHeader.readCommitted(block.id(), recordOffset, recordHeader, committedTail);
+    return RecordHeader.readIfCommitted(block.id(), recordOffset, content, committedTail);
   }
 
   /// @return `true` if all records were processed, or `false` if the reader stopped the traversal.
@@ -181,8 +190,7 @@ public final class AppendableRecordsOverBlock {
   private boolean scanCommittedRecords(int committedTail, @NotNull LinkedRecordReader reader) throws IOException {
     var recordOffset = AppendableRecordsOverBlockHeaderLayout.HEADER_SIZE;
     while (recordOffset < committedTail) {
-      var recordHeader = content.asSlice(recordOffset, RecordHeaderLayout.HEADER_SIZE);
-      var header = RecordHeader.readCommitted(block.id(), recordOffset, recordHeader, committedTail);
+      RecordHeader header = RecordHeader.readIfCommitted(block.id(), recordOffset, content, committedTail);
       Record record = record(recordOffset, header);
       if (!reader.process(recordOffset, record)) {
         return false;
@@ -198,7 +206,8 @@ public final class AppendableRecordsOverBlock {
   }
 
   private @NotNull MemorySegment payload(int recordOffset, @NotNull RecordHeader header) {
-    return content.asSlice(recordOffset + RecordHeaderLayout.HEADER_SIZE + (header.hasLink() ? Long.BYTES : 0), header.payloadLength());
+    int payloadOffset = recordOffset + RecordHeaderLayout.HEADER_SIZE + (header.hasLink() ? Long.BYTES : 0);
+    return content.asSlice(payloadOffset, header.payloadLength());
   }
 
   private @NotNull Record record(int recordOffset, @NotNull RecordHeader header) throws CorruptedException {
@@ -209,7 +218,8 @@ public final class AppendableRecordsOverBlock {
         throw new CorruptedException("Missing record link at offset " + recordOffset + " in block " + block.id());
       }
     }
-    return new Record(previousRef, payload(recordOffset, header).asReadOnly());
+    MemorySegment payload = payload(recordOffset, header).asReadOnly();
+    return new Record(previousRef, payload);
   }
 
   /// The [payload] excludes the (optional) [previousRef].

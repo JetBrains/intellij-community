@@ -264,7 +264,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V>, UnusedBlock
     if (rebuildLookup && !recordRefIndex.isEmpty()) {
       throw new IllegalArgumentException("The recordRefIndex must be empty before recovery");
     }
-    var mapEntries = RecordStorageOverBlocks.open(blockCatalog, preferredBlockContentLength);
+    var mapEntries = RecordStorageOverBlocks.open(blockCatalog, /*appendOnly: */ true, preferredBlockContentLength);
     DurableMapOverBlocks<K, V> durableMapImpl;
     if (patchExternalizer == null) {
       durableMapImpl = new DurableMapOverBlocks<>(
