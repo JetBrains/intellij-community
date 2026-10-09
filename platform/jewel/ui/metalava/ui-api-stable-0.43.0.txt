@@ -15,7 +15,7 @@ package org.jetbrains.jewel.ui {
   }
 
   @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class DefaultComponentStyling implements org.jetbrains.jewel.ui.ComponentStyling {
-    ctor public DefaultComponentStyling(org.jetbrains.jewel.ui.component.styling.CheckboxStyle checkboxStyle, org.jetbrains.jewel.ui.component.styling.ChipStyle chipStyle, org.jetbrains.jewel.ui.component.styling.CircularProgressStyle circularProgressStyle, org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles defaultBannerStyle, org.jetbrains.jewel.ui.component.styling.ComboBoxStyle comboBoxStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle defaultButtonStyle, org.jetbrains.jewel.ui.component.styling.DropdownStyle defaultDropdownStyle, org.jetbrains.jewel.ui.component.styling.SplitButtonStyle defaultSplitButtonStyle, org.jetbrains.jewel.ui.component.styling.TabStyle defaultTabStyle, org.jetbrains.jewel.ui.component.styling.DividerStyle dividerStyle, org.jetbrains.jewel.ui.component.styling.TabStyle editorTabStyle, org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle groupHeaderStyle, org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle horizontalProgressBarStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle iconButtonStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle transparentIconButtonStyle, org.jetbrains.jewel.ui.component.styling.InlineBannerStyles inlineBannerStyle, org.jetbrains.jewel.ui.component.styling.LazyTreeStyle lazyTreeStyle, org.jetbrains.jewel.ui.component.styling.LinkStyle linkStyle, org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedButtonStyle, org.jetbrains.jewel.ui.component.styling.PopupContainerStyle popupContainerStyle, org.jetbrains.jewel.ui.component.styling.SplitButtonStyle outlinedSplitButtonStyle, org.jetbrains.jewel.ui.component.styling.RadioButtonStyle radioButtonStyle, org.jetbrains.jewel.ui.component.styling.ScrollbarStyle scrollbarStyle, org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle segmentedControlButtonStyle, org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle segmentedControlStyle, org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle selectableLazyColumnStyle, org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle simpleListItemStyle, org.jetbrains.jewel.ui.component.styling.SliderStyle sliderStyle, org.jetbrains.jewel.ui.component.styling.TextAreaStyle textAreaStyle, org.jetbrains.jewel.ui.component.styling.TextFieldStyle textFieldStyle, org.jetbrains.jewel.ui.component.styling.TooltipStyle tooltipStyle, org.jetbrains.jewel.ui.component.styling.DropdownStyle undecoratedDropdownStyle, org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle speedSearchStyle, org.jetbrains.jewel.ui.component.styling.SearchMatchStyle searchMatchStyle, org.jetbrains.jewel.ui.component.styling.PopupAdStyle popupAdStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle defaultSlimButtonStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedSlimButtonStyle, org.jetbrains.jewel.ui.component.styling.BadgeStyles badgeStyle, org.jetbrains.jewel.ui.component.gotit.GotItTooltipStyle gotItTooltipStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle gotItButtonStyle, org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle searchTextFieldStyle);
+    ctor public DefaultComponentStyling(org.jetbrains.jewel.ui.component.styling.CheckboxStyle checkboxStyle, org.jetbrains.jewel.ui.component.styling.ChipStyle chipStyle, org.jetbrains.jewel.ui.component.styling.CircularProgressStyle circularProgressStyle, org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles defaultBannerStyle, org.jetbrains.jewel.ui.component.styling.ComboBoxStyle comboBoxStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle defaultButtonStyle, org.jetbrains.jewel.ui.component.styling.DropdownStyle defaultDropdownStyle, org.jetbrains.jewel.ui.component.styling.SplitButtonStyle defaultSplitButtonStyle, org.jetbrains.jewel.ui.component.styling.TabStyle defaultTabStyle, org.jetbrains.jewel.ui.component.styling.DividerStyle dividerStyle, org.jetbrains.jewel.ui.component.styling.TabStyle editorTabStyle, org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle groupHeaderStyle, org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle horizontalProgressBarStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle iconButtonStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle transparentIconButtonStyle, org.jetbrains.jewel.ui.component.styling.InlineBannerStyles inlineBannerStyle, org.jetbrains.jewel.ui.component.styling.LazyTreeStyle lazyTreeStyle, org.jetbrains.jewel.ui.component.styling.LinkStyle linkStyle, org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedButtonStyle, org.jetbrains.jewel.ui.component.styling.PopupContainerStyle popupContainerStyle, org.jetbrains.jewel.ui.component.styling.SplitButtonStyle outlinedSplitButtonStyle, org.jetbrains.jewel.ui.component.styling.RadioButtonStyle radioButtonStyle, org.jetbrains.jewel.ui.component.styling.ScrollbarStyle scrollbarStyle, org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle segmentedControlButtonStyle, org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle segmentedControlStyle, org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle selectableLazyColumnStyle, org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle simpleListItemStyle, org.jetbrains.jewel.ui.component.styling.SliderStyle sliderStyle, org.jetbrains.jewel.ui.component.styling.TextAreaStyle textAreaStyle, org.jetbrains.jewel.ui.component.styling.TextFieldStyle textFieldStyle, org.jetbrains.jewel.ui.component.styling.TooltipStyle tooltipStyle, org.jetbrains.jewel.ui.component.styling.DropdownStyle undecoratedDropdownStyle, org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle speedSearchStyle, org.jetbrains.jewel.ui.component.styling.SearchMatchStyle searchMatchStyle, org.jetbrains.jewel.ui.component.styling.PopupAdStyle popupAdStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle defaultSlimButtonStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedSlimButtonStyle, org.jetbrains.jewel.ui.component.styling.BadgeStyles badgeStyle, org.jetbrains.jewel.ui.component.gotit.GotItTooltipStyle gotItTooltipStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle gotItButtonStyle, org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle searchTextFieldStyle, org.jetbrains.jewel.ui.component.styling.OnOffButtonStyle onOffButtonStyle);
     method public org.jetbrains.jewel.ui.component.styling.BadgeStyles getBadgeStyle();
     method public org.jetbrains.jewel.ui.component.styling.CheckboxStyle getCheckboxStyle();
     method public org.jetbrains.jewel.ui.component.styling.ChipStyle getChipStyle();
@@ -38,6 +38,7 @@ package org.jetbrains.jewel.ui {
     method public org.jetbrains.jewel.ui.component.styling.LazyTreeStyle getLazyTreeStyle();
     method public org.jetbrains.jewel.ui.component.styling.LinkStyle getLinkStyle();
     method public org.jetbrains.jewel.ui.component.styling.MenuStyle getMenuStyle();
+    method public org.jetbrains.jewel.ui.component.styling.OnOffButtonStyle getOnOffButtonStyle();
     method public org.jetbrains.jewel.ui.component.styling.ButtonStyle getOutlinedButtonStyle();
     method public org.jetbrains.jewel.ui.component.styling.ButtonStyle getOutlinedSlimButtonStyle();
     method public org.jetbrains.jewel.ui.component.styling.SplitButtonStyle getOutlinedSplitButtonStyle();
@@ -81,6 +82,7 @@ package org.jetbrains.jewel.ui {
     property public org.jetbrains.jewel.ui.component.styling.LazyTreeStyle lazyTreeStyle;
     property public org.jetbrains.jewel.ui.component.styling.LinkStyle linkStyle;
     property public org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle;
+    property public org.jetbrains.jewel.ui.component.styling.OnOffButtonStyle onOffButtonStyle;
     property public org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedButtonStyle;
     property public org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedSlimButtonStyle;
     property public org.jetbrains.jewel.ui.component.styling.SplitButtonStyle outlinedSplitButtonStyle;
@@ -554,6 +556,26 @@ package org.jetbrains.jewel.ui.component {
     method public void selectableItem(boolean selected, optional org.jetbrains.jewel.ui.icon.IconKey? iconKey, optional java.util.Set<java.lang.String>? keybinding, kotlin.jvm.functions.Function0<kotlin.Unit> onClick, optional boolean enabled, kotlin.jvm.functions.Function0<kotlin.Unit> content);
     method public void selectableItemWithActionType(boolean selected, optional org.jetbrains.jewel.ui.icon.IconKey? iconKey, optional org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction? actionType, kotlin.jvm.functions.Function0<kotlin.Unit> onClick, optional boolean enabled, kotlin.jvm.functions.Function0<kotlin.Unit> content);
     method public void submenu(optional boolean enabled, optional org.jetbrains.jewel.ui.icon.IconKey? iconKey, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.ui.component.MenuScope,kotlin.Unit> submenu, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+  }
+
+  public final class OnOffButtonKt {
+    method @androidx.compose.runtime.Composable public static void OnOffButton(boolean checked, kotlin.jvm.functions.Function1<? super java.lang.Boolean,kotlin.Unit> onCheckedChange, optional androidx.compose.ui.Modifier modifier, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.OnOffButtonStyle style);
+  }
+
+  @androidx.compose.runtime.Immutable @kotlin.jvm.JvmInline public final value class OnOffButtonState implements org.jetbrains.jewel.foundation.state.FocusableComponentState org.jetbrains.jewel.foundation.state.ToggleableComponentState {
+    ctor @KotlinOnly public OnOffButtonState(kotlin.ULong state);
+    method public long copy(optional boolean checked, optional boolean enabled, optional boolean focused, optional boolean pressed, optional boolean hovered, optional boolean active);
+    property public boolean isActive;
+    property public boolean isEnabled;
+    property public boolean isFocused;
+    property public boolean isHovered;
+    property public boolean isPressed;
+    property public androidx.compose.ui.state.ToggleableState toggleableState;
+    field public static final org.jetbrains.jewel.ui.component.OnOffButtonState.Companion Companion;
+  }
+
+  public static final class OnOffButtonState.Companion {
+    method public long of(boolean checked, optional boolean enabled, optional boolean focused, optional boolean pressed, optional boolean hovered, optional boolean active);
   }
 
   public final class PopupAdKt {
@@ -2095,6 +2117,68 @@ package org.jetbrains.jewel.ui.component.styling {
   public final class MenuStylingKt {
     method public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.ui.component.styling.MenuStyle> getLocalMenuStyle();
     property public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.ui.component.styling.MenuStyle> LocalMenuStyle;
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class OnOffButtonColors {
+    ctor @KotlinOnly public OnOffButtonColors(androidx.compose.ui.graphics.Color backgroundOn, androidx.compose.ui.graphics.Color backgroundOnDisabled, androidx.compose.ui.graphics.Color backgroundOff, androidx.compose.ui.graphics.Color backgroundOffDisabled, androidx.compose.ui.graphics.Color borderOn, androidx.compose.ui.graphics.Color borderOnDisabled, androidx.compose.ui.graphics.Color borderOff, androidx.compose.ui.graphics.Color borderOffDisabled, androidx.compose.ui.graphics.Color borderFocused, androidx.compose.ui.graphics.Color notchOn, androidx.compose.ui.graphics.Color notchOnDisabled, androidx.compose.ui.graphics.Color notchOff, androidx.compose.ui.graphics.Color notchOffDisabled);
+    method @androidx.compose.runtime.Composable public androidx.compose.runtime.State<androidx.compose.ui.graphics.Color> backgroundFor(long state);
+    method @androidx.compose.runtime.Composable public androidx.compose.runtime.State<androidx.compose.ui.graphics.Color> borderFor(long state);
+    method @androidx.compose.runtime.Composable public androidx.compose.runtime.State<androidx.compose.ui.graphics.Color> notchFor(long state);
+    property public androidx.compose.ui.graphics.Color backgroundOff;
+    property public androidx.compose.ui.graphics.Color backgroundOffDisabled;
+    property public androidx.compose.ui.graphics.Color backgroundOn;
+    property public androidx.compose.ui.graphics.Color backgroundOnDisabled;
+    property public androidx.compose.ui.graphics.Color borderFocused;
+    property public androidx.compose.ui.graphics.Color borderOff;
+    property public androidx.compose.ui.graphics.Color borderOffDisabled;
+    property public androidx.compose.ui.graphics.Color borderOn;
+    property public androidx.compose.ui.graphics.Color borderOnDisabled;
+    property public androidx.compose.ui.graphics.Color notchOff;
+    property public androidx.compose.ui.graphics.Color notchOffDisabled;
+    property public androidx.compose.ui.graphics.Color notchOn;
+    property public androidx.compose.ui.graphics.Color notchOnDisabled;
+    field public static final org.jetbrains.jewel.ui.component.styling.OnOffButtonColors.Companion Companion;
+  }
+
+  public static final class OnOffButtonColors.Companion {
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class OnOffButtonMetrics {
+    ctor @KotlinOnly public OnOffButtonMetrics(androidx.compose.ui.unit.DpSize trackSize, androidx.compose.foundation.shape.CornerSize trackCornerSize, androidx.compose.ui.unit.Dp borderWidth, androidx.compose.ui.unit.DpSize notchSizeOn, androidx.compose.foundation.shape.CornerSize notchCornerSizeOn, androidx.compose.ui.unit.DpSize notchSizeOff, androidx.compose.foundation.shape.CornerSize notchCornerSizeOff, androidx.compose.ui.unit.Dp notchStrokeWidthOff, androidx.compose.ui.unit.Dp focusOutlineWidth, androidx.compose.ui.unit.Dp focusOutlineExpand);
+    method public androidx.compose.foundation.shape.CornerSize getNotchCornerSizeOff();
+    method public androidx.compose.foundation.shape.CornerSize getNotchCornerSizeOn();
+    method public androidx.compose.foundation.shape.CornerSize getTrackCornerSize();
+    property public androidx.compose.ui.unit.Dp borderWidth;
+    property public androidx.compose.ui.unit.Dp focusOutlineExpand;
+    property public androidx.compose.ui.unit.Dp focusOutlineWidth;
+    property public androidx.compose.foundation.shape.CornerSize notchCornerSizeOff;
+    property public androidx.compose.foundation.shape.CornerSize notchCornerSizeOn;
+    property public androidx.compose.ui.unit.DpSize notchSizeOff;
+    property public androidx.compose.ui.unit.DpSize notchSizeOn;
+    property public androidx.compose.ui.unit.Dp notchStrokeWidthOff;
+    property public androidx.compose.foundation.shape.CornerSize trackCornerSize;
+    property public androidx.compose.ui.unit.DpSize trackSize;
+    field public static final org.jetbrains.jewel.ui.component.styling.OnOffButtonMetrics.Companion Companion;
+  }
+
+  public static final class OnOffButtonMetrics.Companion {
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class OnOffButtonStyle {
+    ctor public OnOffButtonStyle(org.jetbrains.jewel.ui.component.styling.OnOffButtonColors colors, org.jetbrains.jewel.ui.component.styling.OnOffButtonMetrics metrics);
+    method public org.jetbrains.jewel.ui.component.styling.OnOffButtonColors getColors();
+    method public org.jetbrains.jewel.ui.component.styling.OnOffButtonMetrics getMetrics();
+    property public org.jetbrains.jewel.ui.component.styling.OnOffButtonColors colors;
+    property public org.jetbrains.jewel.ui.component.styling.OnOffButtonMetrics metrics;
+    field public static final org.jetbrains.jewel.ui.component.styling.OnOffButtonStyle.Companion Companion;
+  }
+
+  public static final class OnOffButtonStyle.Companion {
+  }
+
+  public final class OnOffButtonStylingKt {
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.ui.component.styling.OnOffButtonStyle> getLocalOnOffButtonStyle();
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.ui.component.styling.OnOffButtonStyle> LocalOnOffButtonStyle;
   }
 
   @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class PopupAdColors {
@@ -5069,6 +5153,7 @@ package org.jetbrains.jewel.ui.theme {
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.InlineBannerStyles getInlineBannerStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.LinkStyle getLinkStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.MenuStyle getMenuStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.OnOffButtonStyle getOnOffButtonStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.ButtonStyle getOutlinedButtonStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.ButtonStyle getOutlinedSlimButtonStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.SplitButtonStyle getOutlinedSplitButtonStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
@@ -5111,6 +5196,7 @@ package org.jetbrains.jewel.ui.theme {
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.InlineBannerStyles org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.inlineBannerStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.LinkStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.linkStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.MenuStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.menuStyle;
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.OnOffButtonStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.onOffButtonStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.ButtonStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.outlinedButtonStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.ButtonStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.outlinedSlimButtonStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.SplitButtonStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.outlinedSplitButtonStyle;
