@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
+import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
@@ -20,7 +21,7 @@ open class CloseAllProjectsAction : CloseProjectsActionBase(), ActionRemoteBehav
     templatePresentation.setDescription(uiCustomization.projectMessage("action.close.all.projects.description"))
   }
 
-  override fun canClose(project: Project, currentProject: Project): Boolean = true
+  override fun canClose(project: Project, currentProject: Project): Boolean = !WelcomeUtils.isWelcomeProject(project)
 
   override fun shouldShow(e: AnActionEvent): Boolean = ProjectManager.getInstance().openProjects.size > 1
 

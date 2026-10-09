@@ -21,8 +21,6 @@ import org.intellij.lang.annotations.Language
 internal class WelcomeScreenAwareActionsCustomizer : ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
   override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
     actionRegistrar.run {
-      replaceExistingAction("CloseProject") { WelcomeScreenAwareCloseProjectAction() }
-      replaceExistingAction("CloseAllProjects") { WelcomeScreenAwareCloseAllProjectsAction() }
       replaceExistingAction("RenameProject") { hideActionOnWelcomeScreen(it) }
       if (!ApplicationManager.getApplication().isUnitTestMode) {
         replaceExistingAction("SaveAll") { WelcomeFileProxyAction(it) }
