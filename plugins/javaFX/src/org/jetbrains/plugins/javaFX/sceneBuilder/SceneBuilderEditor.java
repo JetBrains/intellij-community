@@ -14,11 +14,11 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.fs.EelFileUtils;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
@@ -40,10 +40,10 @@ import javax.swing.JTextArea;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -111,7 +111,7 @@ public final class SceneBuilderEditor extends UserDataHolderBase implements File
 
     if (CurrentJavaVersion.currentJavaVersion().feature > 11 &&
         e instanceof NoClassDefFoundError &&
-        !SceneBuilderUtil.getSceneBuilder11Path().toFile().isFile()) {
+        !Files.exists(SceneBuilderUtil.getSceneBuilder11Path())) {
       myErrorNotification.setText(JavaFXBundle.message("javafx.scene.builder.editor.failed.to.open.file.error"));
       myErrorNotification.createActionLabel(
         JavaFXBundle.message("javafx.scene.builder.editor.download.scene.builder.kit"),
@@ -119,7 +119,10 @@ public final class SceneBuilderEditor extends UserDataHolderBase implements File
           DownloadableFileService service = DownloadableFileService.getInstance();
           var description = service.createFileDescription("https://cache-redirector.jetbrains.com/" +
                                                           "intellij-dependencies/org/jetbrains/intellij/deps/scenebuilderkit/" +
-                                                          SceneBuilderUtil.SCENE_BUILDER_VERSION + "/" + SceneBuilderUtil.SCENE_BUILDER_KIT_FULL_NAME, SceneBuilderUtil.SCENE_BUILDER_KIT_FULL_NAME);
+                                                          SceneBuilderUtil.SCENE_BUILDER_VERSION +
+                                                          "/" +
+                                                          SceneBuilderUtil.SCENE_BUILDER_KIT_FULL_NAME,
+                                                          SceneBuilderUtil.SCENE_BUILDER_KIT_FULL_NAME);
           FileDownloader downloader = service.createDownloader(Collections.singletonList(description), "Scene Builder Kit");
           try {
             Path tempDir = Files.createTempDirectory("");
@@ -131,10 +134,12 @@ public final class SceneBuilderEditor extends UserDataHolderBase implements File
               return;
             }
 
-            FileUtil.copy(VfsUtilCore.virtualToIoFile(list.getFirst().first), SceneBuilderUtil.getSceneBuilder11Path().toFile());
-            FileUtil.delete(tempDir.toFile());
+            Path target = SceneBuilderUtil.getSceneBuilder11Path();
+            NioFiles.createParentDirectories(target);
+            Files.copy(list.getFirst().first.toNioPath(), target, StandardCopyOption.REPLACE_EXISTING);
+            EelFileUtils.deleteRecursively(tempDir);
 
-            SceneBuilderUtil.updateLoader();
+            SceneBuilderUtil.updateLoader(myProject);
             updateState();
           }
           catch (IOException e2) {
@@ -192,7 +197,7 @@ public final class SceneBuilderEditor extends UserDataHolderBase implements File
         new RepositoryLibraryProperties("org.openjfx:" + coordinate + ":" + SceneBuilderUtil.JAVAFX_VERSION, true);
       JarRepositoryManager.loadDependenciesModal(myProject, libraryProperties, false, false, null, null);
     }
-    SceneBuilderUtil.updateLoader();
+    SceneBuilderUtil.updateLoader(myProject);
     updateState();
   }
 
@@ -273,7 +278,7 @@ public final class SceneBuilderEditor extends UserDataHolderBase implements File
   private void recreateSceneBuilder() {
     try {
       removeSceneBuilder();
-      mySceneBuilder = SceneBuilderUtil.create(new File(myFile.getPath()).toURI().toURL(), myProject, this);
+      mySceneBuilder = SceneBuilderUtil.create(Path.of(myFile.getPath()).toUri().toURL(), myProject, this);
 
       myPanel.add(mySceneBuilder.getPanel(), SCENE_CARD);
       myLayout.show(myPanel, SCENE_CARD);

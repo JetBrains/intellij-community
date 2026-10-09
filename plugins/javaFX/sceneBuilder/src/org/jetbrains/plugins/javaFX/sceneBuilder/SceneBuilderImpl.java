@@ -54,13 +54,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -397,7 +397,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     final List<URL> classpathUrls = new ArrayList<>();
     for (String path : pathList) {
       try {
-        URL url = new File(path).toURI().toURL();
+        URL url = Path.of(path).toUri().toURL();
         classpathUrls.add(url);
       }
       catch (MalformedURLException e) {

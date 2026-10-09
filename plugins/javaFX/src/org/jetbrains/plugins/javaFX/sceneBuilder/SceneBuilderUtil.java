@@ -9,7 +9,6 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.URL;
@@ -37,9 +36,12 @@ final class SceneBuilderUtil {
     "javafx-media",
     "javafx-web",
   };
-  private static URLClassLoader ourLoader = createClassLoader();
+  private static URLClassLoader ourLoader;
 
-  static SceneBuilder create(URL url, Project project, EditorCallback editorCallback) throws Exception {
+  static synchronized SceneBuilder create(URL url, @NotNull Project project, EditorCallback editorCallback) throws Exception {
+    if (ourLoader == null) {
+      ourLoader = createClassLoader(project);
+    }
     //noinspection unchecked
     Class<SceneBuilder> java11Class =
       (Class<SceneBuilder>)ourLoader.loadClass("org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderImpl");
@@ -47,15 +49,23 @@ final class SceneBuilderUtil {
     return constructor.newInstance(url, project, editorCallback, ourLoader);
   }
 
-  private static URLClassLoader createClassLoader() {
-    return new URLClassLoader(getLibUrls(), SceneBuilderUtil.class.getClassLoader());
+  private static URLClassLoader createClassLoader(@NotNull Project project) {
+    return new URLClassLoader(getLibUrls(project), SceneBuilderUtil.class.getClassLoader());
   }
 
-  public static void updateLoader() {
-    ourLoader = createClassLoader();
+  public static synchronized void updateLoader(@NotNull Project project) {
+    if (ourLoader != null) {
+      try {
+        ourLoader.close();
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+      }
+    }
+    ourLoader = createClassLoader(project);
   }
 
-  private static URL[] getLibUrls() {
+  private static URL[] getLibUrls(@NotNull Project project) {
     try {
       final Path javaFxJar = Paths.get(PathUtil.getJarPathForClass(SceneBuilderUtil.class));
       boolean isDevMode = Files.isDirectory(javaFxJar);
@@ -70,7 +80,7 @@ final class SceneBuilderUtil {
           List<URL> urls = new ArrayList<>();
           urls.add(sceneBuilder.toUri().toURL());
           urls.add(sceneBuilderImpl.toUri().toURL());
-          addJavafxFromLocalRepository(urls);
+          addJavafxFromLocalRepository(urls, project);
 
           return urls.toArray(new URL[0]);
         }
@@ -87,9 +97,9 @@ final class SceneBuilderUtil {
     return new URL[]{};
   }
 
-  private static void addJavafxFromLocalRepository(List<URL> urls) throws IOException {
-    File localRepositoryPath = JarRepositoryManager.getLocalRepositoryPath();
-    Path javaFx = Paths.get(localRepositoryPath.getPath(), "org", "openjfx");
+  private static void addJavafxFromLocalRepository(@NotNull List<URL> urls, @NotNull Project project) throws IOException {
+    Path localRepositoryPath = JarRepositoryManager.getJPSLocalMavenRepositoryForIdeaProject(project);
+    Path javaFx = localRepositoryPath.resolve("org").resolve("openjfx");
 
     for (String artifact : JAVAFX_ARTIFACTS) {
       Path path2Artifact = javaFx.resolve(artifact).resolve(JAVAFX_VERSION);
@@ -97,7 +107,7 @@ final class SceneBuilderUtil {
       try (Stream<Path> artifacts = Files.list(path2Artifact)) {
         List<Path> paths = artifacts
           .filter(path -> {
-            String name = path.toFile().getName();
+            String name = path.getFileName().toString();
             return name.startsWith(artifact + "-" + JAVAFX_VERSION) && name.endsWith(".jar"); //include os-specific jars
           }).toList();
 
@@ -109,7 +119,8 @@ final class SceneBuilderUtil {
   }
 
   static Path getSceneBuilder11Path() {
-    return Paths.get(PathManager.getConfigDir().toString(), "plugins", "javaFX", "rt", SCENE_BUILDER_VERSION).resolve(SCENE_BUILDER_KIT_FULL_NAME);
+    return Paths.get(PathManager.getConfigDir().toString(), "plugins", "javaFX", "rt", SCENE_BUILDER_VERSION)
+      .resolve(SCENE_BUILDER_KIT_FULL_NAME);
   }
 
   private static Path getJarPath(@NotNull String relativePath, @NotNull Path javafxRuntimePath) {
