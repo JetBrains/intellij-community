@@ -198,6 +198,7 @@
     "intellij.execution.multilaunch.core",
     "intellij.android.streaming",
     "intellij.android.whats-new-assistant",
-    "intellij.android.newProjectWizard"
+    "intellij.android.newProjectWizard",
+    "intellij.angular"
   ],
 }
