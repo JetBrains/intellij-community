@@ -12,11 +12,8 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.LibraryEntity;
 import com.intellij.platform.workspace.jps.entities.SdkEntity;
-import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
@@ -39,12 +36,11 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.openapi.roots.impl.FileSet2RootDescriptor.findFileSetDescriptor;
+import static com.intellij.openapi.roots.impl.FileSet2RootDescriptor.findModuleSourceOrLibraryClassesRootDescriptors;
 
 /**
  * This is an internal class, {@link ProjectFileIndex} must be used instead.
@@ -274,27 +270,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public @NotNull Collection<RootDescriptor> getModuleSourceOrLibraryClassesRoots(@NotNull VirtualFile file) {
     WorkspaceFileInternalInfo info = myWorkspaceFileIndex.getFileInfo(file, true, true, true, true, false, false, false);
-    List<WorkspaceFileSetWithCustomData<?>> fileSets = info.findFileSets(it -> {
-      WorkspaceFileKind kind = it.getKind();
-      return kind.isContent() && it.getData() instanceof ModuleOrLibrarySourceRootData || kind == WorkspaceFileKind.EXTERNAL;
-    });
-
-    if (fileSets.isEmpty()) return Collections.emptyList();
-
-    SmartList<RootDescriptor> result = new SmartList<>();
-
-    ImmutableEntityStorage snapshot = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
-    for (WorkspaceFileSetWithCustomData<?> set : fileSets) {
-      RootDescriptor descriptor = findFileSetDescriptor(set, snapshot);
-      if (descriptor != null) {
-        result.add(descriptor);
-      }
-    }
-    if (result.size() != 1) {
-      // distinct, sorted
-      return new LinkedHashSet<>(result);
-    }
-    return result;
+    return findModuleSourceOrLibraryClassesRootDescriptors(info, myProject);
   }
 
   @Override

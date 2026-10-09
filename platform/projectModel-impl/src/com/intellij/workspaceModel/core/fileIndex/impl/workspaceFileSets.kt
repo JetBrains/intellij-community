@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.impl.RootDescriptor
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.storage.EntityPointer
@@ -136,6 +137,17 @@ internal class WorkspaceFileSetImpl(
   override val data: WorkspaceFileSetData,
   override val recursive: Boolean = true,
 ) : WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, StoredFileSet, WorkspaceFileInternalInfo {
+
+  /**
+   * The [RootDescriptor] this file set resolves to, computed on first demand - see `FileSet2RootDescriptor.kt`.
+   *
+   * The slot may be filled but never invalidated: when the entity behind a file set changes, the index discards the
+   * whole file set and stores a fresh instance (see [WorkspaceFileIndexDataImpl.onEntitiesChanged] and
+   * [WorkspaceFileIndexDataImpl.updateDirtyEntities]), and the module, library or SDK bridge the descriptor holds is
+   * itself stable per entity. The race on the field is benign - two threads can only store equal descriptors.
+   */
+  @Volatile
+  internal var cachedRootDescriptor: RootDescriptor? = null
 
   override val fileSets: List<WorkspaceFileSetWithCustomData<*>> get() = listOf(this)
 
