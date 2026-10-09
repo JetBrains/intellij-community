@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.tree.injected
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.injection.MultiHostInjector
@@ -13,6 +14,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -24,11 +26,13 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.ResolveScopeManager
 import com.intellij.psi.injection.Injectable
 import com.intellij.psi.util.parentOfType
+import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertNothingLogged
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
@@ -1047,6 +1051,67 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
     }
   }
 
+  fun `test prefix change releases old injected editor`() {
+    checkInjectionReplacedOnAffixChange { injector -> injector.prefix = "/* header */\n" }
+  }
+
+  fun `test suffix change releases old injected editor`() {
+    checkInjectionReplacedOnAffixChange { injector -> injector.suffix = "\n/* footer */" }
+  }
+
+  fun `test unchanged prefix keeps injected file`() {
+    with(myFixture) {
+      val injector = AffixJsonInjector()
+      InjectedLanguageManager.getInstance(project).registerMultiHostInjector(injector, testRootDisposable)
+      injector.prefix = "/* header */\n"
+      val hostFile = configureByText("classA.java", AFFIX_HOST_TEXT)
+      editor.caretModel.moveToOffset(hostFile.text.indexOf("1"))
+      val oldInjectedFile = findInjectedFileAtCaret(hostFile)
+
+      type("2")
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+
+      assertSame(oldInjectedFile, findInjectedFileAtCaret(hostFile))
+      assertTrue(oldInjectedFile.isValid)
+    }
+  }
+
+  private fun checkInjectionReplacedOnAffixChange(changeAffix: (AffixJsonInjector) -> Unit) {
+    with(myFixture) {
+      val injector = AffixJsonInjector()
+      InjectedLanguageManager.getInstance(project).registerMultiHostInjector(injector, testRootDisposable)
+      val hostFile = configureByText("classA.java", AFFIX_HOST_TEXT)
+      val hostEditor = editor
+      hostEditor.caretModel.moveToOffset(hostFile.text.indexOf("1"))
+
+      val oldInjectedFile = findInjectedFileAtCaret(hostFile)
+      val oldViewProvider = oldInjectedFile.viewProvider
+      val oldDocumentWindow = InjectedLanguageUtil.getDocumentWindow(oldInjectedFile)!!
+      val oldEditorWindow = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, oldInjectedFile) as EditorWindow
+      // the listener is registered on the host editor, so it keeps the editor window reachable until the editor window is disposed
+      oldEditorWindow.caretModel.addCaretListener(object : CaretListener {})
+
+      changeAffix(injector)
+      type("2")
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+
+      val newInjectedFile = findInjectedFileAtCaret(hostFile)
+      assertNotSame(oldDocumentWindow, InjectedLanguageUtil.getDocumentWindow(newInjectedFile))
+      assertFalse(oldDocumentWindow.isValid)
+      assertFalse(oldInjectedFile.isValid)
+      assertFalse(oldEditorWindow.isValid)
+
+      // the next commit disposes the invalid editor window
+      type("3")
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+
+      LeakHunter.checkLeak(hostEditor, oldViewProvider.javaClass) { it === oldViewProvider }
+    }
+  }
+
+  private fun findInjectedFileAtCaret(hostFile: PsiFile): PsiFile =
+    InjectedLanguageManager.getInstance(project).findInjectedElementAt(hostFile, myFixture.editor.caretModel.offset)!!.containingFile
+
   private fun injectAndOpenInFragmentEditor(language: String): PsiFile {
     with(myFixture) {
       StoringFixPresenter().apply {
@@ -1107,6 +1172,26 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 private fun String.indexAfter(string: String): Int {
   val r = indexOf(string)
   return if (r == -1) -1 else r + string.length
+}
+
+private val AFFIX_HOST_TEXT = """
+  class A {
+    String s = "{\"a\": 1}";
+  }
+""".trimIndent()
+
+private class AffixJsonInjector : MultiHostInjector {
+  var prefix: String = ""
+  var suffix: String = ""
+
+  override fun getLanguagesToInject(registrar: MultiHostRegistrar, context: PsiElement) {
+    if (context !is PsiLiteralExpression || context.value !is String) return
+    registrar.startInjecting(Language.findLanguageByID("JSON")!!)
+      .addPlace(prefix, suffix, context as PsiLanguageInjectionHost, ElementManipulators.getValueTextRange(context))
+      .doneInjecting()
+  }
+
+  override fun elementsToInjectIn() = listOf(PsiLiteralExpression::class.java)
 }
 
 private class JsonMultiInjector : MultiHostInjector {
