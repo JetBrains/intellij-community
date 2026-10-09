@@ -50,7 +50,7 @@ class IntelliJPlatformAttachSourcesActionTest : IntelliJPlatformSourcesImporting
   fun `test library sources are attached to a class from a library jar`() {
     createLocalIde("intellij.libraries.commons.cli" to listOf(COMMONS_CLI_METADATA, classFile(LIBRARY_CLASS)), "app" to emptyList())
     createArtifact("com.jetbrains.intellij.idea", "ideaIC", "-sources")
-    createArtifact("commons-cli", "commons-cli", "-sources", sourceFile(LIBRARY_CLASS), version = COMMONS_CLI_VERSION)
+    createArtifact(COMMONS_CLI_GROUP, "commons-cli", "-sources", sourceFile(LIBRARY_CLASS), version = COMMONS_CLI_VERSION)
     importProjectWithDependencies(LOCAL_IDE, downloadSources = false)
     val notifications = collectNotifications()
 
@@ -67,7 +67,7 @@ class IntelliJPlatformAttachSourcesActionTest : IntelliJPlatformSourcesImporting
   fun `test platform sources are attached to a platform class from a merged jar`() {
     createLocalIde("intellij.platform.ide.impl" to listOf(SLF4J_METADATA, classFile(PLATFORM_CLASS)), "app" to emptyList())
     createArtifact("com.jetbrains.intellij.idea", "ideaIC", "-sources")
-    createArtifact("org.slf4j", "slf4j-api", "-sources", version = SLF4J_VERSION)
+    createArtifact(SLF4J_GROUP, "slf4j-api", "-sources", version = SLF4J_VERSION)
     importProjectWithDependencies(LOCAL_IDE, downloadSources = false)
     val notifications = collectNotifications()
 

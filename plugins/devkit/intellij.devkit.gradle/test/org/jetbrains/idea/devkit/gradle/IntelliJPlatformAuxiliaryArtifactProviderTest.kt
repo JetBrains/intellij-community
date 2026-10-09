@@ -41,7 +41,7 @@ class IntelliJPlatformAuxiliaryArtifactProviderTest : IntelliJPlatformSourcesImp
   fun `test library sources are attached to the jar with Maven metadata`() {
     createLocalIde("intellij.libraries.commons.cli" to listOf(COMMONS_CLI_METADATA), "app" to emptyList())
     createArtifact("com.jetbrains.intellij.idea", "ideaIC", "-sources")
-    createArtifact("commons-cli", "commons-cli", "-sources", version = COMMONS_CLI_VERSION)
+    createArtifact(COMMONS_CLI_GROUP, "commons-cli", "-sources", version = COMMONS_CLI_VERSION)
 
     importProjectWithDependencies(LOCAL_IDE)
 
@@ -60,7 +60,7 @@ class IntelliJPlatformAuxiliaryArtifactProviderTest : IntelliJPlatformSourcesImp
   fun `test single jar component keeps the platform sources`() {
     createArtifact("com.jetbrains.intellij.phpstorm", "phpstorm", "", COMMONS_CLI_METADATA)
     createArtifact("com.jetbrains.intellij.idea", "ideaIC", "-sources")
-    createArtifact("commons-cli", "commons-cli", "-sources", version = COMMONS_CLI_VERSION)
+    createArtifact(COMMONS_CLI_GROUP, "commons-cli", "-sources", version = COMMONS_CLI_VERSION)
 
     importProjectWithDependencies(PHPSTORM)
 
@@ -74,7 +74,7 @@ class IntelliJPlatformAuxiliaryArtifactProviderTest : IntelliJPlatformSourcesImp
     val module = "bundledModule:intellij.libraries.commons.cli:IC-$VERSION"
     createArtifact("bundledModule", "intellij.libraries.commons.cli", "", COMMONS_CLI_METADATA, version = "IC-$VERSION")
     createArtifact("com.jetbrains.intellij.idea", "ideaIC", "-sources")
-    createArtifact("commons-cli", "commons-cli", "-sources", version = COMMONS_CLI_VERSION)
+    createArtifact(COMMONS_CLI_GROUP, "commons-cli", "-sources", version = COMMONS_CLI_VERSION)
 
     importProjectWithDependencies(module)
 
@@ -87,8 +87,8 @@ class IntelliJPlatformAuxiliaryArtifactProviderTest : IntelliJPlatformSourcesImp
   fun `test merged platform jar keeps the platform sources when every jar has Maven metadata`() {
     createLocalIde("intellij.libraries.commons.cli" to listOf(COMMONS_CLI_METADATA), "intellij.platform.ide.impl" to listOf(SLF4J_METADATA))
     createArtifact("com.jetbrains.intellij.idea", "ideaIC", "-sources")
-    createArtifact("commons-cli", "commons-cli", "-sources", version = COMMONS_CLI_VERSION)
-    createArtifact("org.slf4j", "slf4j-api", "-sources", version = SLF4J_VERSION)
+    createArtifact(COMMONS_CLI_GROUP, "commons-cli", "-sources", version = COMMONS_CLI_VERSION)
+    createArtifact(SLF4J_GROUP, "slf4j-api", "-sources", version = SLF4J_VERSION)
 
     importProjectWithDependencies(LOCAL_IDE)
 
@@ -110,8 +110,8 @@ class IntelliJPlatformAuxiliaryArtifactProviderTest : IntelliJPlatformSourcesImp
                    "intellij.libraries.commons.cli" to listOf(COMMONS_CLI_METADATA),
                    "intellij.maven" to listOf(OLD_COMMONS_CLI_METADATA))
     createArtifact("com.jetbrains.intellij.idea", "ideaIC", "-sources")
-    createArtifact("commons-cli", "commons-cli", "-sources", version = COMMONS_CLI_VERSION)
-    createArtifact("commons-cli", "commons-cli", "-sources", version = OLD_COMMONS_CLI_VERSION)
+    createArtifact(COMMONS_CLI_GROUP, "commons-cli", "-sources", version = COMMONS_CLI_VERSION)
+    createArtifact(COMMONS_CLI_GROUP, "commons-cli", "-sources", version = OLD_COMMONS_CLI_VERSION)
 
     importProjectWithDependencies(LOCAL_IDE)
 

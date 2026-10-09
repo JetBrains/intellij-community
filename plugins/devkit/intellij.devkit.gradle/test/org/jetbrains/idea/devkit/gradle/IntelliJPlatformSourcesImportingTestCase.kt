@@ -34,16 +34,24 @@ abstract class IntelliJPlatformSourcesImportingTestCase : BuildViewMessagesImpor
     const val SOURCES_JAR = "ideaIC-$VERSION-sources.jar"
 
     const val LOCAL_IDE = "localIde:IC:$VERSION"
+
+    /**
+     * The test libraries use a group that does not exist in a public repository.
+     * A build agent can hold the real library in a read-only Gradle dependency cache.
+     * Gradle prefers that cache to the test repositories, and the import then reads a file outside of the allowed roots.
+     */
+    const val COMMONS_CLI_GROUP = "org.jetbrains.test.commons-cli"
     const val COMMONS_CLI_VERSION = "1.11.0"
     const val COMMONS_CLI_SOURCES_JAR = "commons-cli-$COMMONS_CLI_VERSION-sources.jar"
-    val COMMONS_CLI_METADATA = pomProperties("commons-cli", "commons-cli", COMMONS_CLI_VERSION)
+    val COMMONS_CLI_METADATA = pomProperties(COMMONS_CLI_GROUP, "commons-cli", COMMONS_CLI_VERSION)
     const val OLD_COMMONS_CLI_VERSION = "1.9.0"
     const val OLD_COMMONS_CLI_SOURCES_JAR = "commons-cli-$OLD_COMMONS_CLI_VERSION-sources.jar"
-    val OLD_COMMONS_CLI_METADATA = pomProperties("commons-cli", "commons-cli", OLD_COMMONS_CLI_VERSION)
+    val OLD_COMMONS_CLI_METADATA = pomProperties(COMMONS_CLI_GROUP, "commons-cli", OLD_COMMONS_CLI_VERSION)
 
+    const val SLF4J_GROUP = "org.jetbrains.test.slf4j"
     const val SLF4J_VERSION = "2.0.9"
     const val SLF4J_SOURCES_JAR = "slf4j-api-$SLF4J_VERSION-sources.jar"
-    val SLF4J_METADATA = pomProperties("org.slf4j", "slf4j-api", SLF4J_VERSION)
+    val SLF4J_METADATA = pomProperties(SLF4J_GROUP, "slf4j-api", SLF4J_VERSION)
 
     /**
      * Returns the `META-INF/maven/[groupId]/[artifactId]/pom.properties` jar entry of a library.
