@@ -13,7 +13,7 @@
 //!
 //! The Bazel runtime descriptor these identities are taken over is [`avl_wire::runtime`].
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::fs::{self, File, Metadata};
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
@@ -206,10 +206,14 @@ fn permission_bits(metadata: &Metadata) -> u32 {
 /// is the difference between a 16 s stamp and a sub-second one on every warm iteration.
 ///
 /// Single-owner (`&mut self`): the daemon build opens its own cache and walks its inputs one at a time.
+///
+/// The file keeps only the entries of the last sweep ([`FileDigestCache::save`]).
 #[derive(Debug)]
 pub struct FileDigestCache {
     path: PathBuf,
     entries: BTreeMap<String, CacheEntry>,
+    /// The files that this sweep asked about.
+    read: HashSet<String>,
     dirty: bool,
 }
 
@@ -227,6 +231,7 @@ impl FileDigestCache {
         Self {
             path: path.to_owned(),
             entries,
+            read: HashSet::new(),
             dirty: false,
         }
     }
@@ -249,6 +254,7 @@ impl FileDigestCache {
         let Some(name) = path.to_str() else {
             return sha256_file(path);
         };
+        self.read.insert(name.to_owned());
         if let Some(cached) = self.entries.get(name)
             && cached.matches(&key)
         {
@@ -311,12 +317,21 @@ impl FileDigestCache {
         Ok(path_sensitive_digest(&entries))
     }
 
-    /// Publishes the cache atomically at 0600, and does nothing when nothing was hashed.
+    /// Publishes the cache atomically at 0600, with only the files that this sweep asked about, and does nothing when
+    /// that changes nothing.
     ///
     /// Atomic because a half-written cache is not merely a slow next run: it is a document the next process
     /// silently discards, which turns one interrupted sweep into a re-hash of gigabytes on every run until
     /// something rewrites the file completely.
+    ///
+    /// A cache without the prune grows with every checkout, output base and removed file that a worker ever saw. A
+    /// sweep that asked about nothing keeps every entry, so a save without a sweep cannot empty the cache.
     pub fn save(&mut self) -> Result<(), Refusal> {
+        if !self.read.is_empty() {
+            let before = self.entries.len();
+            self.entries.retain(|name, _| self.read.contains(name));
+            self.dirty |= self.entries.len() != before;
+        }
         if !self.dirty {
             return Ok(());
         }

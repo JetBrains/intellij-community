@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use avl_base::{Exit, GuestOs};
 use avl_host_sys::Signal;
-use avl_wire::progress::{Kind, PhaseChange};
+use avl_wire::progress::{Kind, PhaseChange, PhaseState};
 use pretty_assertions::assert_eq;
 
 use super::*;
@@ -99,11 +99,13 @@ async fn the_build_comes_before_the_lease() {
     .await
     .unwrap_or_else(|refusal| panic!("the run leases two workers: {refusal:?}"));
     assert_eq!(fixture.bazel.build_calls() - builds, 1);
-    // The digest sweep of the build is its own phase, and it too comes before the lease.
+    // The digest sweep of the build is its own phase, and it too comes before the lease. Its progress names the
+    // time of each of its parts.
     assert_eq!(
         phases(&recorded),
         [
             "prepare:started",
+            "prepare:progress",
             "prepare:finished",
             "lease:started",
             "lease:finished",
@@ -111,6 +113,15 @@ async fn the_build_comes_before_the_lease() {
             "release:finished"
         ]
     );
+    let progress = recorded
+        .data_of::<PhaseChange>(Kind::Phase)
+        .into_iter()
+        .find(|change| change.phase == Phase::Prepare && change.state == PhaseState::Progress)
+        .and_then(|change| change.detail)
+        .unwrap_or_default();
+    for part in ["descriptor ", "cache open ", "digests ", "cache save ", "runfiles tree "] {
+        assert!(progress.contains(part), "the prepare phase does not time {part:?}: {progress:?}");
+    }
     assert_eq!(leased.settlement.disposition, LeaseDisposition::Released);
 }
 

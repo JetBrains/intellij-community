@@ -332,6 +332,9 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-report/src/digest/tests.rs
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs
 
+- The digest cache keeps only the files that its last sweep read. A sweep that read nothing keeps the whole cache.
+  [@test] ../crates/avl-report/src/digest/tests.rs (`a_save_keeps_only_the_entries_of_its_sweep`)
+
 - The runtime descriptor names each file of a context plugin with its place below the plugin directory of the IDE
   context. A place that leaves that directory, or that two files claim, is refused. The files have an identity of
   their own, apart from the product and the mount identities. A changed file changes only that identity.
@@ -352,8 +355,10 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-vm/src/lane/bazel/tests.rs (`a_failed_build_forgets_the_files_of_the_build_before_it`)
   [@test] ../crates/avl-host-sys/src/guest/external/tests.rs (`a_build_that_named_every_file_spares_the_query`)
 
-- The journal has the phase `prepare`, from the end of the host build to the end of the digest sweep. The record
-  `runStarted` names when the process started. So the journal shows the build of the `vm.cmd` wrapper before it.
+- The journal has the phase `prepare`, from the end of the host build to the end of the digest sweep. Its progress
+  names the time of the descriptor lookup, the cache open, the digests, the cache save and the runfiles tree. The
+  record `runStarted` names when the process started. So the journal shows the build of the `vm.cmd` wrapper before
+  it.
   [@test] ../crates/avl-vm/src/daemon/leased/tests.rs (`the_build_comes_before_the_lease`)
   [@test] ../crates/avl-vm/src/daemon/leased/tests.rs (`a_process_start_reads_as_rfc3339_in_utc`)
 

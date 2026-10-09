@@ -279,3 +279,27 @@ fn the_cache_is_not_rewritten_when_nothing_was_hashed() {
         "a cache that hashed nothing still wrote a file"
     );
 }
+
+/// The file keeps only what the last sweep asked about. On 2026-10-10 the cache of `air-docker-1` held 233,283 entries
+/// in 118 MB, and about 65,000 of them belonged to the current checkout. The rest named other output bases.
+#[test]
+fn a_save_keeps_only_the_entries_of_its_sweep() {
+    let root = tempfile::tempdir().unwrap();
+    let kept = root.path().join("kept.jar");
+    let dropped = root.path().join("dropped.jar");
+    fs::write(&kept, "kept").unwrap();
+    fs::write(&dropped, "dropped").unwrap();
+    let cache_path = root.path().join("cache.json");
+    let mut first = FileDigestCache::open(&cache_path);
+    first.digest(&kept).unwrap();
+    first.digest(&dropped).unwrap();
+    first.save().unwrap();
+
+    // A sweep that hashed nothing new still writes, because it drops an entry.
+    let mut second = FileDigestCache::open(&cache_path);
+    second.digest(&kept).unwrap();
+    second.save().unwrap();
+
+    let entries: serde_json::Map<String, Value> = serde_json::from_slice(&fs::read(&cache_path).unwrap()).unwrap();
+    assert_eq!(entries.keys().collect::<Vec<_>>(), [kept.to_str().unwrap()]);
+}
