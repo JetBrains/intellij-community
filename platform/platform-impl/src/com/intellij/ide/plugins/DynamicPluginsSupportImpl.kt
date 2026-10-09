@@ -60,10 +60,13 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -158,37 +161,42 @@ internal class DynamicPluginsSupportImpl(
     val loadSteps = sequence.transitionSequence.drop(unloadSteps.size).takeWhile { it.action == RuntimeModuleGroupAction.LOAD }
     check(unloadSteps.size + loadSteps.size == sequence.transitionSequence.size) { "All loading actions are expected to come after all unloading actions" }
 
-    val pluginsToLoad =
-      loadSteps.asSequence().flatMap { it.runtimeModuleGroup.sortedDescriptors }.filterIsInstance<PluginMainDescriptor>()
-        .associateBy { it.pluginId }
-    val (successfullyUnloaded, classloadersToUnload) = tracer.spanBuilder("unloadGroups").useWithScope {
-      unloadGroups(
-        groupsToUnload = unloadSteps.map { it.runtimeModuleGroup },
-        pluginsToBeLoadedLater = pluginsToLoad,
-        reporter = reporter,
-      )
-    }
-    if (!successfullyUnloaded) {
-      // broken state, require restart
-      InstalledPluginsState.getInstance().isRestartRequired = true
-      return DynamicPluginsReconfigurationResult.Incomplete()
-    }
+    currentCoroutineContext().ensureActive()
 
-    tracer.spanBuilder("loadGroups").useWithScope {
-      loadGroups(
-        targetPluginSet = targetState,
-        groups = loadSteps.map { it.runtimeModuleGroup },
-        reusedGroups = sequence.exactRuntimeModuleGroupAlignment.values.toList(),
-        reporter = reporter,
-      )
-    }
-    val trulyCollected = classloaderUnloadAwaitStrategy.awaitClassloadersUnloadedPostReconfiguration(classloadersToUnload)
-    if (!trulyCollected) {
-      InstalledPluginsState.getInstance().isRestartRequired = true
-      return DynamicPluginsReconfigurationResult.Incomplete()
-    }
+    return withContext(NonCancellable) {
+      val pluginsToLoad =
+        loadSteps.asSequence().flatMap { it.runtimeModuleGroup.sortedDescriptors }.filterIsInstance<PluginMainDescriptor>()
+          .associateBy { it.pluginId }
+      val (successfullyUnloaded, classloadersToUnload) = tracer.spanBuilder("unloadGroups").useWithScope {
+        unloadGroups(
+          groupsToUnload = unloadSteps.map { it.runtimeModuleGroup },
+          pluginsToBeLoadedLater = pluginsToLoad,
+          reporter = reporter,
+        )
+      }
+      if (!successfullyUnloaded) {
+        // broken state, require restart
+        InstalledPluginsState.getInstance().isRestartRequired = true
+        return@withContext DynamicPluginsReconfigurationResult.Incomplete()
+      }
 
-    return DynamicPluginsReconfigurationResult.Success()
+      tracer.spanBuilder("loadGroups").useWithScope {
+        loadGroups(
+          targetPluginSet = targetState,
+          groups = loadSteps.map { it.runtimeModuleGroup },
+          reusedGroups = sequence.exactRuntimeModuleGroupAlignment.values.toList(),
+          reporter = reporter,
+        )
+      }
+
+      val trulyCollected = classloaderUnloadAwaitStrategy.awaitClassloadersUnloadedPostReconfiguration(classloadersToUnload)
+      if (!trulyCollected) {
+        InstalledPluginsState.getInstance().isRestartRequired = true
+        return@withContext DynamicPluginsReconfigurationResult.Incomplete()
+      }
+
+      return@withContext DynamicPluginsReconfigurationResult.Success()
+    }
   }
 
   private fun buildExplanationMessage(
