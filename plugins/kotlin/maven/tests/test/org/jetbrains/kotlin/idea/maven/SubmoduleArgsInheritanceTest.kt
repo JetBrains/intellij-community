@@ -256,7 +256,7 @@ class SubmoduleArgsInheritanceTest(mavenVersion: String, modelVersion: String) :
             Assertions.assertEquals(LanguageVersion.KOTLIN_1_0, apiLevel!!)
             Assertions.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             Assertions.assertEquals(
-                listOf("-java-parameters", "-Xjava-source-roots=javaDir", "-kotlin-home", "temp2"),
+                listOf("-Xjava-source-roots=javaDir", "-java-parameters", "-kotlin-home", "temp2"),
                 compilerSettings!!.additionalArgumentsAsList
             )
         }
