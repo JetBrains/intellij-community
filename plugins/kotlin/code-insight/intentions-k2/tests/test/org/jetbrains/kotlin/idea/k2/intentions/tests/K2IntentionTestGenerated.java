@@ -15999,6 +15999,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("anonymousFunction.kt")
+        public void testAnonymousFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/anonymousFunction.kt");
+        }
+
         @TestMetadata("enumPrimaryConstructor.kt")
         public void testEnumPrimaryConstructor() throws Exception {
             runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/enumPrimaryConstructor.kt");
@@ -16007,6 +16012,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("enumSecondaryConstructor.kt")
         public void testEnumSecondaryConstructor() throws Exception {
             runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/enumSecondaryConstructor.kt");
+        }
+
+        @TestMetadata("getOperator.kt")
+        public void testGetOperator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/getOperator.kt");
         }
 
         @TestMetadata("javaUsage.kt")
@@ -16019,9 +16029,19 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/lambdaArgument.kt");
         }
 
+        @TestMetadata("lambdaParameter.kt")
+        public void testLambdaParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/lambdaParameter.kt");
+        }
+
         @TestMetadata("nested.kt")
         public void testNested() throws Exception {
             runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/nested.kt");
+        }
+
+        @TestMetadata("onDefaultValue.kt")
+        public void testOnDefaultValue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addParameterNameAtAllCallsites/onDefaultValue.kt");
         }
 
         @TestMetadata("primaryConstructor.kt")
