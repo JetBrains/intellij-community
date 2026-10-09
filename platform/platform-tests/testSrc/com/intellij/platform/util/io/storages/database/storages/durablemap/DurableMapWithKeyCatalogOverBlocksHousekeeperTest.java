@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
+import com.intellij.platform.util.io.storages.database.storages.appenablerecords.RecordStorageOverBlocks;
 import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;

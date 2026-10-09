@@ -4,7 +4,7 @@ package com.intellij.platform.util.io.storages.durablemap.impl;
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.KeyCatalogOverBlocks;
-import com.intellij.platform.util.io.storages.database.storages.durablemap.RecordStorageOverBlocks;
+import com.intellij.platform.util.io.storages.database.storages.appenablerecords.RecordStorageOverBlocks;
 import com.intellij.platform.util.io.storages.intmultimaps.InMemoryIntToMultiLongMap;
 import com.intellij.platform.util.io.storages.intmultimaps.RecordRefIndex;
 import org.jetbrains.annotations.NotNull;

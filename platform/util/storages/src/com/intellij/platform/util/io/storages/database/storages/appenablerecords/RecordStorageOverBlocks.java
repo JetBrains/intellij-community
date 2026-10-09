@@ -1,10 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.util.io.storages.database.storages.durablemap;
+package com.intellij.platform.util.io.storages.database.storages.appenablerecords;
 
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState;
-import com.intellij.platform.util.io.storages.database.storages.appenablerecords.AppendableRecordBlocks;
-import com.intellij.platform.util.io.storages.database.storages.appenablerecords.AppendableRecordsOverBlock;
 import com.intellij.platform.util.io.storages.database.storages.appenablerecords.AppendableRecordsOverBlock.RecordWriter;
 import com.intellij.util.io.CorruptedException;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -231,7 +229,7 @@ public final class RecordStorageOverBlocks {
     return (int)recordRef;
   }
 
-  boolean containsRecordBlock(long recordRef) {
+  public boolean containsRecordBlock(long recordRef) {
     synchronized (recordsByBlockIdLock) {
       return recordsByBlockId.containsKey(blockId(recordRef));
     }

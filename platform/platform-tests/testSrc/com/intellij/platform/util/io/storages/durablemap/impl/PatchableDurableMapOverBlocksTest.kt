@@ -13,7 +13,7 @@ import com.intellij.platform.util.io.storages.database.storages.durablemap.Durab
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.LOOKUP
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapOverBlocks
-import com.intellij.platform.util.io.storages.database.storages.durablemap.RecordStorageOverBlocks
+import com.intellij.platform.util.io.storages.database.storages.appenablerecords.RecordStorageOverBlocks
 import com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapStorageOverLookupBlocks
 import com.intellij.platform.util.io.storages.durablemap.DefaultEntryExternalizer
 import com.intellij.platform.util.io.storages.durablemap.PatchableDurableMap

@@ -6,6 +6,7 @@ import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ACTIVE
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.RETIRED
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.SEALED
+import com.intellij.platform.util.io.storages.database.storages.appenablerecords.RecordStorageOverBlocks
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES
 import com.intellij.platform.util.io.storages.durablemap.DefaultEntryExternalizer
 import com.intellij.platform.util.io.storages.intmultimaps.InMemoryIntToMultiLongMap

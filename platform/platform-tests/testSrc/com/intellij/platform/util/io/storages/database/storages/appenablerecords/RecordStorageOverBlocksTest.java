@@ -1,10 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.util.io.storages.durablemap.impl;
+package com.intellij.platform.util.io.storages.database.storages.appenablerecords;
 
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog;
-import com.intellij.platform.util.io.storages.database.storages.durablemap.RecordStorageOverBlocks;
 import com.intellij.util.io.CorruptedException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;

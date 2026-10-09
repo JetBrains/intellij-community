@@ -4,7 +4,7 @@ package com.intellij.platform.util.io.storages.durablemap.impl;
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.KeyRecordLayout;
-import com.intellij.platform.util.io.storages.database.storages.durablemap.RecordStorageOverBlocks;
+import com.intellij.platform.util.io.storages.database.storages.appenablerecords.RecordStorageOverBlocks;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.ValueRecordLayout;
 import com.intellij.util.io.CorruptedException;
 import org.jetbrains.annotations.NotNull;

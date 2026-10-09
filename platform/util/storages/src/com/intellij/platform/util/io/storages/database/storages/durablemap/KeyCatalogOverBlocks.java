@@ -2,6 +2,7 @@
 package com.intellij.platform.util.io.storages.database.storages.durablemap;
 
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
+import com.intellij.platform.util.io.storages.database.storages.appenablerecords.RecordStorageOverBlocks;
 import com.intellij.platform.util.io.storages.intmultimaps.HashUtils;
 import com.intellij.platform.util.io.storages.intmultimaps.RecordRefIndex;
 import com.intellij.util.Processor;

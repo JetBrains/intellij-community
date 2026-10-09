@@ -7,7 +7,7 @@ import com.intellij.platform.util.io.storages.database.spi.BlocksDatabase;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapOverBlocks;
-import com.intellij.platform.util.io.storages.database.storages.durablemap.RecordStorageOverBlocks;
+import com.intellij.platform.util.io.storages.database.storages.appenablerecords.RecordStorageOverBlocks;
 import com.intellij.platform.util.io.storages.durablemap.DefaultEntryExternalizer;
 import com.intellij.platform.util.io.storages.intmultimaps.InMemoryIntToMultiLongMap;
 import com.intellij.platform.util.io.storages.intmultimaps.RecordRefIndex;
