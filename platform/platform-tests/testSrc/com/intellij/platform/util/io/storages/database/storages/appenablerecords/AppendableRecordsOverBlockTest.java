@@ -64,7 +64,8 @@ public class AppendableRecordsOverBlockTest {
 
   @Test
   public void packedHeaderUsesTheDocumentedBitFormat() {
-    var segment = MemorySegment.ofArray(new int[1]);
+    var segment = MemorySegment.ofArray(new int[2]);
+    var recordOffset = Integer.BYTES;
     var header = RecordHeaderLayout.RecordHeader.allocated(1);
 
     assertFalse(header.isCommitted());
@@ -74,12 +75,12 @@ public class AppendableRecordsOverBlockTest {
     assertEquals(8, header.totalLength());
     assertEquals(1, header.payloadLength());
 
-    header.writeAllocatedTo(segment);
-    assertEquals(0b10_011_000, (int)RecordHeaderLayout.PACKED_LENGTH_AND_FLAGS_HANDLE.get(segment, 0L));
+    header.writeAllocatedTo(segment, recordOffset);
+    assertEquals(0b10_011_000, (int)RecordHeaderLayout.PACKED_LENGTH_AND_FLAGS_HANDLE.get(segment, (long)recordOffset));
 
-    header.publishCommittedTo(segment);
+    header.publishCommittedTo(segment, recordOffset);
     assertTrue(header.isCommitted());
-    assertEquals(0b10_011_001, (int)RecordHeaderLayout.PACKED_LENGTH_AND_FLAGS_HANDLE.get(segment, 0L));
+    assertEquals(0b10_011_001, (int)RecordHeaderLayout.PACKED_LENGTH_AND_FLAGS_HANDLE.get(segment, (long)recordOffset));
   }
 
   @Test

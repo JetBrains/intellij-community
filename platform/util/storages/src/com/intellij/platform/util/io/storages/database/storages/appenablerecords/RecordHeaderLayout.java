@@ -120,17 +120,17 @@ public final class RecordHeaderLayout {
     }
 
     /// Writes an allocated header that is not visible to readers.
-    public void writeAllocatedTo(@NotNull MemorySegment target) {
+    public void writeAllocatedTo(@NotNull MemorySegment target, int recordOffset) {
       if (isCommitted()) {
         throw new IllegalStateException("The record header is already committed");
       }
-      PACKED_LENGTH_AND_FLAGS_HANDLE.set(target, 0L, header);
+      PACKED_LENGTH_AND_FLAGS_HANDLE.set(target, (long)recordOffset, header);
     }
 
     /// Publishes this header after the writer finishes the payload.
-    public void publishCommittedTo(@NotNull MemorySegment target) {
+    public void publishCommittedTo(@NotNull MemorySegment target, int recordOffset) {
       var committedHeader = header | COMMITTED_STATE_MASK;
-      PACKED_LENGTH_AND_FLAGS_HANDLE.setRelease(target, 0L, committedHeader);
+      PACKED_LENGTH_AND_FLAGS_HANDLE.setRelease(target, (long)recordOffset, committedHeader);
       header = committedHeader;
     }
 

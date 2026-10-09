@@ -116,8 +116,7 @@ public final class AppendableRecordsOverBlock {
       throw new IllegalStateException("Block " + block.id() + " has no space for the record");
     }
 
-    var recordHeader = content.asSlice(recordOffset, RecordHeaderLayout.HEADER_SIZE);
-    header.writeAllocatedTo(recordHeader);
+    header.writeAllocatedTo(content, recordOffset);
     var newTail = Math.addExact(recordOffset, header.totalLength());
     AppendableRecordsOverBlockHeaderLayout.publishAllocatedTail(content, newTail);
 
@@ -127,7 +126,7 @@ public final class AppendableRecordsOverBlock {
     }
     writer.writeTo(payload(recordOffset, header));
 
-    header.publishCommittedTo(recordHeader);
+    header.publishCommittedTo(content, recordOffset);
     AppendableRecordsOverBlockHeaderLayout.publishCommittedTail(content, newTail);
     return recordOffset;
   }
