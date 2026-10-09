@@ -172,7 +172,7 @@ internal class DynamicPluginsSupportImpl(
     currentCoroutineContext().ensureActive()
 
     return withContext(NonCancellable) {
-      if (criticalSectionModalProgressConfig != null) {
+      val criticalSectionResult = if (criticalSectionModalProgressConfig != null) {
         tracer.spanBuilder("criticalSectionModalProgress").useWithScope {
           withModalProgress(criticalSectionModalProgressConfig.owner,
                             criticalSectionModalProgressConfig.title,
@@ -184,8 +184,16 @@ internal class DynamicPluginsSupportImpl(
       else {
         doUnloadAndLoad(loadSteps, unloadSteps, targetState, sequence)
       }
+
+      criticalSectionResult.deferredPostLoadNotification.invoke()
+      criticalSectionResult.result
     }
   }
+
+  private class CriticalSectionResult(
+    val result: DynamicPluginsReconfigurationResult,
+    val deferredPostLoadNotification: suspend () -> Unit,
+  )
 
   context(reporter: SequentialProgressReporter)
   private suspend fun doUnloadAndLoad(
@@ -193,7 +201,7 @@ internal class DynamicPluginsSupportImpl(
     unloadSteps: List<TransitionStep>,
     targetState: PluginSet,
     sequence: TransitionSequence,
-  ): DynamicPluginsReconfigurationResult {
+  ): CriticalSectionResult {
     val pluginsToLoad = loadSteps.asSequence()
       .flatMap { it.runtimeModuleGroup.sortedDescriptors }
       .filterIsInstance<PluginMainDescriptor>()
@@ -208,10 +216,10 @@ internal class DynamicPluginsSupportImpl(
     if (!successfullyUnloaded) {
       // broken state, require restart
       InstalledPluginsState.getInstance().isRestartRequired = true
-      return DynamicPluginsReconfigurationResult.Incomplete()
+      return CriticalSectionResult(DynamicPluginsReconfigurationResult.Incomplete()) {}
     }
 
-    tracer.spanBuilder("loadGroups").useWithScope {
+    val deferredLoadListeners = tracer.spanBuilder("loadGroups").useWithScope {
       loadGroups(
         targetPluginSet = targetState,
         groups = loadSteps.map { it.runtimeModuleGroup },
@@ -222,9 +230,9 @@ internal class DynamicPluginsSupportImpl(
     val trulyCollected = classloaderUnloadAwaitStrategy.awaitClassloadersUnloadedPostReconfiguration(classloadersToUnload)
     if (!trulyCollected) {
       InstalledPluginsState.getInstance().isRestartRequired = true
-      return DynamicPluginsReconfigurationResult.Incomplete()
+      return CriticalSectionResult(DynamicPluginsReconfigurationResult.Incomplete()) { deferredLoadListeners?.run() }
     }
-    return DynamicPluginsReconfigurationResult.Success()
+    return CriticalSectionResult(DynamicPluginsReconfigurationResult.Success()) { deferredLoadListeners?.run() }
   }
 
   private fun buildExplanationMessage(
@@ -401,13 +409,15 @@ internal class DynamicPluginsSupportImpl(
     targetPluginSet: PluginSet,
     groups: List<RuntimeModuleGroup>,
     reusedGroups: List<RuntimeModuleGroup>,
-  ) {
+  ): DeferredLoadListeners? {
     if (groups.isEmpty()) {
       application.runWriteAction {
         PluginManagerCore.setPluginSet(targetPluginSet)
       }
-      return
+      return null
     }
+    val deferredLoadListeners =
+      if (Registry.`is`("ide.plugins.defer.listener.notifications.on.load", false)) DeferredLoadListeners() else null
     reporter.indeterminateStep(IdeBundle.message("progress.text.loading.n.modules", groups.size)) {
       val affectedPlugins = groups.asSequence().flatMap { it.sortedDescriptors }.filterIsInstance<PluginMainDescriptor>()
       withContext(Dispatchers.EDT) {
@@ -416,6 +426,16 @@ internal class DynamicPluginsSupportImpl(
           runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(plugin) }
         }
       }
+      val notifyListenersPostLoad: suspend () -> Unit = suspend {
+        withContext(Dispatchers.EDT) {
+          for (plugin in affectedPlugins) {
+            runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(plugin) }
+            DynamicPluginsUsagesCollector.logDescriptorLoad(plugin)
+          }
+          runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginsLoaded() }
+        }
+      }
+      var exception: Throwable? = null
       try {
         attachClassLoaders(targetPluginSet, groups, reusedGroups)
 
@@ -437,23 +457,39 @@ internal class DynamicPluginsSupportImpl(
               if (it.ep.name == "com.intellij.registryKey") -1 else 0
             }
           }
-          application.service<TransferredWriteActionService>().runOnEdtWithTransferredWriteActionAndWait {
+          val runListeners = {
             listenerCallbacks.forEach {
-              it.notify.run()
+              runSafe { it.notify.run() }
+            }
+          }
+          if (deferredLoadListeners != null) {
+            deferredLoadListeners.add {
+              edtWriteAction {
+                runListeners()
+              }
+            }
+          }
+          else {
+            application.service<TransferredWriteActionService>().runOnEdtWithTransferredWriteActionAndWait {
+              runListeners()
             }
           }
         }
       }
+      catch (e: Throwable) {
+        exception = e
+        throw e
+      }
       finally {
-        withContext(Dispatchers.EDT) {
-          for (plugin in affectedPlugins) {
-            runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(plugin) }
-            DynamicPluginsUsagesCollector.logDescriptorLoad(plugin)
-          }
-          runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginsLoaded() }
+        if (deferredLoadListeners != null && exception == null) {
+          deferredLoadListeners.add(notifyListenersPostLoad)
+        }
+        else {
+          notifyListenersPostLoad()
         }
       }
     }
+    return deferredLoadListeners
   }
 
   private fun attachClassLoaders(pluginSet: PluginSet, groups: List<RuntimeModuleGroup>, reusedGroups: List<RuntimeModuleGroup>) {
@@ -803,6 +839,26 @@ internal class DynamicPluginsSupportImpl(
     catch (e: Throwable) {
       if (e !is CancellationException) LOG.error(e)
       return null
+    }
+  }
+}
+
+private class DeferredLoadListeners {
+  private val deferred: ArrayList<suspend () -> Unit> = ArrayList()
+
+  fun add(callback: suspend () -> Unit) {
+    deferred.add(callback)
+  }
+
+  suspend fun run() {
+    for (func in deferred) {
+      try {
+        func()
+      }
+      catch (e: Throwable) {
+        currentCoroutineContext().ensureActive()
+        if (e !is CancellationException) LOG.error(e)
+      }
     }
   }
 }
