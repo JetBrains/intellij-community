@@ -164,9 +164,11 @@ internal class DynamicPluginsSupportImpl(
     currentCoroutineContext().ensureActive()
 
     return withContext(NonCancellable) {
-      val pluginsToLoad =
-        loadSteps.asSequence().flatMap { it.runtimeModuleGroup.sortedDescriptors }.filterIsInstance<PluginMainDescriptor>()
-          .associateBy { it.pluginId }
+      val pluginsToLoad = loadSteps.asSequence()
+        .flatMap { it.runtimeModuleGroup.sortedDescriptors }
+        .filterIsInstance<PluginMainDescriptor>()
+        .associateBy { it.pluginId }
+
       val (successfullyUnloaded, classloadersToUnload) = tracer.spanBuilder("unloadGroups").useWithScope {
         unloadGroups(
           groupsToUnload = unloadSteps.map { it.runtimeModuleGroup },
