@@ -12,6 +12,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.EmptyProgressIndicatorBase
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.StandardProgressIndicator
 import com.intellij.openapi.progress.WrappedProgressIndicator
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -122,6 +123,7 @@ private class RetryProgressIndicator(
 
   override fun cancel() {
     canceled = true
+    ProgressManager.canceled(this)
   }
 
   override fun isCanceled(): Boolean = canceled || delegate.isCanceled
