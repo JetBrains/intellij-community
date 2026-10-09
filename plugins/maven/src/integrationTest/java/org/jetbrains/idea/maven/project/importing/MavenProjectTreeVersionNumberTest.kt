@@ -24,7 +24,7 @@ class MavenProjectTreeVersionNumberTest {
     hashKType(MavenProjectState::class.createType(), recursionKeeper, hash)
 
     hash.putString(MavenProjectsTree.STORAGE_VERSION)
-    assertEquals(-209040842628671777, hash.asLong, "UPDATE STORAGE VERSION ALONG WITH THIS HASH!!!")
+    assertEquals(-8494576616920108978, hash.asLong, "UPDATE STORAGE VERSION ALONG WITH THIS HASH!!!")
   }
 
   private fun hashKType(type: KType, recursionKeeper: MutableSet<String>, hash: HashSink) {
@@ -42,7 +42,7 @@ class MavenProjectTreeVersionNumberTest {
       }
     }
     if (shouldGoDeeper(klass) && recursionKeeper.add(klass.qualifiedName!!)) {
-      klass.declaredMembers.filterIsInstance<KProperty<*>>().forEach { t ->
+      klass.declaredMembers.filterIsInstance<KProperty<*>>().sortedBy { it.name }.forEach { t ->
         if (!isTransient(t)) {
           hash.putString(t.name)
           hashKType(t.returnType, recursionKeeper, hash)
