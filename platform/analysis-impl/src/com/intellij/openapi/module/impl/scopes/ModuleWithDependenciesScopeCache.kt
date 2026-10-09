@@ -18,7 +18,9 @@ class ModuleWithDependenciesScopeCache {
     if (limit > -1) {
       maximumWeight(limit.toLong()) // default is 300k. Ultimate project only needs 40k
       weigher { _: Pair<Module, Int>, value: ModuleWithDependenciesScope ->
-        value.rootContainer.size
+        // approximateSize, not size: weighing happens on every insertion, and the exact root count of the
+        // entry-set container means materialising its roots.
+        value.rootContainer.approximateSize
       }
     }
   }.build()

@@ -7,7 +7,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleSourceOrderEntry
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.search.impl.VirtualFileEnumeration
@@ -16,7 +15,6 @@ import com.intellij.util.indexing.IndexingBundle
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.TestOnly
-import java.util.Collections
 import kotlin.concurrent.Volatile
 
 @Suppress("EqualsOrHashCode")
@@ -54,21 +52,8 @@ class ModuleWithDependenciesScope internal constructor(
     return isSearchInModuleContent(aModule) && (hasOption(TESTS) || !testSources)
   }
 
-  override fun compare(file1: VirtualFile, file2: VirtualFile): Int {
-    val r1 = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file1)
-    val r2 = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file2)
-    if (Comparing.equal(r1, r2)) return 0
-
-    if (r1 == null) return -1
-    if (r2 == null) return 1
-
-    val roots = rootContainer
-    val i1 = roots.getPriority(r1)
-    val i2 = roots.getPriority(r2)
-    if (i1 == 0 && i2 == 0) return 0
-    if (i1 > 0 && i2 > 0) return i2 - i1
-    return if (i1 > 0) 1 else -1
-  }
+  override fun compare(file1: VirtualFile, file2: VirtualFile): Int =
+    compareByRank(file1, file2)
 
   @get:TestOnly
   val roots: Collection<VirtualFile>
@@ -86,8 +71,10 @@ class ModuleWithDependenciesScope internal constructor(
   }
 
   private fun doExtractFileEnumeration(): VirtualFileEnumeration {
-    // todo might be not cheap
-    if (rootContainer.size > 1 && (hasOption(MODULES) && allModules.size > 1 || hasOption(LIBRARIES))) {
+    // approximateSize, not size: this runs on every VFS structure change, and the exact root count of the entry-set
+    // container means materialising its roots. The bound only ever overestimates, so a scope it rejects here is one
+    // that would have been rejected anyway or a single-root scope that loses an optimisation.
+    if (rootContainer.approximateSize > 1 && (hasOption(MODULES) && allModules.size > 1 || hasOption(LIBRARIES))) {
       return VirtualFileEnumeration.EMPTY
     }
 
@@ -132,22 +119,28 @@ class ModuleWithDependenciesScope internal constructor(
         if (entry is ModuleOrderEntry || entry is ModuleSourceOrderEntry) return@roots OrderRootType.SOURCES
         OrderRootType.CLASSES
       }
-      val roots = LinkedHashSet<VirtualFile>()
-      Collections.addAll(roots, *en.getRoots())
-
-      var i = 1
+      val roots = en.getRoots()
+      // Priorities are a dense 1-based index over the distinct roots: only their order matters, and 0 has to keep
+      // meaning "absent". The map does the deduplication itself, so no intermediate set is built for what can be
+      // tens of thousands of roots.
       val map = Object2IntOpenHashMap<VirtualFile>(roots.size)
+      var i = 1
       for (root in roots) {
-        map.putIfAbsent(root, i++)
+        if (!map.containsKey(root)) {
+          map.put(root, i++)
+        }
       }
+      map.trim()
       return map
     }
 
-    private fun calcRootsMultiverse(): MultiverseRootContainer {
+    private fun calcRootsMultiverse(): EntrySetRootContainer {
       val en = getOrderEnumeratorForOptions(module, myOptions).roots { entry ->
         if (entry is ModuleOrderEntry || entry is ModuleSourceOrderEntry) OrderRootType.SOURCES else OrderRootType.CLASSES
       }
-      return MultiverseRootContainer.build(en.getRootEntries())
+      // Deliberately getEnumeratedEntries() and not getRootEntries(): the roots behind an entry are a property of
+      // the entry's owner and are kept once per project, so building a scope never resolves one.
+      return EntrySetRootContainer.build(module.project, en.getEnumeratedEntries())
     }
   }
 }

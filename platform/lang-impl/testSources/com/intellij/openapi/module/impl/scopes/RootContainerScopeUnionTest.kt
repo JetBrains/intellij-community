@@ -60,7 +60,10 @@ internal class RootContainerScopeUnionTest {
 
   @Test
   fun `united scope keeps one context for a root that both scopes contain`(): Unit = timeoutRunBlocking {
-    // The merge keeps the first descriptor per root (todo IJPL-339), and uniteWith puts the argument scopes first.
+    // The entry-set container reaches both owners of the shared root, but the scope keeps the classic answer of
+    // one owner per root: a second context would make PSI load one copy of the file per context, and code that
+    // resolves across the copies breaks on their identity (IJPL-255937). IJPL-339 tracks real multi-owner support.
+    // The merge ranks the argument scopes first, so the first owner is module2's.
     val ctx2 = module2.moduleContext()
     readAction {
       val united = unitedScopeContextInfo()
