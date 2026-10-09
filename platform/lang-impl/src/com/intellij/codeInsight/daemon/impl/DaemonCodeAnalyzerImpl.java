@@ -68,7 +68,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -117,6 +116,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1281,7 +1281,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     // have to store created indicators because myUpdateProgress removes the canceled indicator immediately
     List<ProgressIndicator> createdIndicators = new ArrayList<>();
     List<String> result = new SmartList<>();
-    Map<Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses = new ConcurrentHashMap<>();
+    Map<MainDocumentPassKey, ProgressableTextEditorHighlightingPass> mainDocumentPasses = new ConcurrentHashMap<>();
     //noinspection IncorrectCancellationExceptionHandling
     try {
       if (LOG.isDebugEnabled()) {
@@ -1393,7 +1393,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   ProgressIndicator queuePassesCreation(@NotNull FileEditor fileEditor,
                                         @NotNull VirtualFile virtualFile,
                                         int @NotNull [] passesToIgnore,
-                                        @NotNull Map<? super Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses,
+                                        @NotNull Map<MainDocumentPassKey, ProgressableTextEditorHighlightingPass> mainDocumentPasses,
                                         @Nullable BackgroundEditorHighlighter backgroundHighlighter) {
     checkPassesCreationAllowed();
     TextEditor textEditor = fileEditor instanceof TextEditor t ? t : null;
@@ -1472,7 +1472,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                   int @NotNull [] passesToIgnore,
                                   @NotNull DaemonProgressIndicator progress,
                                   @NotNull HighlightingSessionImpl initialSession,
-                                  @NotNull Map<? super Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses) {
+                                  @NotNull Map<MainDocumentPassKey, ProgressableTextEditorHighlightingPass> mainDocumentPasses) {
     ThreadingAssertions.assertBackgroundThread();
     if (LOG.isTraceEnabled()) {
       LOG.trace("submitInBackground: " + virtualFile + "; viewProvider.hashCode()={"+psiFile.getViewProvider().hashCode()+"}");
@@ -1518,10 +1518,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             for (int i = 0; i < r.length; i++) {
               HighlightingPass pass = r[i];
               if (pass instanceof ProgressableTextEditorHighlightingPass progr) {
-                ProgressableTextEditorHighlightingPass created = mainDocumentPasses.putIfAbsent(Pair.create(document, progr.getClass()), progr);
+                ProgressableTextEditorHighlightingPass created = mainDocumentPasses.putIfAbsent(new MainDocumentPassKey(document, context[0], progr.getClass()), progr);
                 if (created != null) {
-                  // When the document-bound pass was already created for this document,
-                  // do not create additional instances of it but reuse the first created one for all other file editors.
+                  // When the document-bound pass was already created for this document and context, do not create additional instances of it.
+                  // Reuse the first created one for all other file editors with this context.
                   // Thus, we can distinguish whether we run the first copy of this pass (and should call collectInformation()), or
                   // we are running a duplicate (in which case we should wait for the first copy to complete),
                   // see ProgressableTextEditorHighlightingPass.waitMyJob()
@@ -1671,17 +1671,17 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     ThreadingAssertions.assertEventDispatchThread();
     // editors in modal context
     List<? extends Editor> editors = EditorTracker.Companion.getInstance(myProject).getActiveEditors();
-    Collection<FileEditor> activeTextEditors = new HashSet<>(editors.size());
-    Set<VirtualFile> files = new HashSet<>(editors.size());
+    Collection<FileEditor> activeTextEditors = new LinkedHashSet<>(editors.size());
+    Set<FileInContext> scheduledPassesWithKnownContext = new HashSet<>(editors.size());
     if (!editors.isEmpty()) {
       TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
       for (Editor editor : editors) {
         if (!editor.isDisposed()) {
           TextEditor textEditor = textEditorProvider.getTextEditor(editor);
           if (isValidEditor(textEditor)) {
-            VirtualFile virtualFile = textEditor.getFile();
+            FileInContext fileInContext = FileInContext.of(textEditor, myProject);
             activeTextEditors.add(textEditor);
-            files.add(virtualFile);
+            scheduledPassesWithKnownContext.add(fileInContext);
           }
         }
       }
@@ -1702,12 +1702,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
           for (Editor embeddedEditor : delegate.getEmbeddedEditors()) {
             TextEditor embeddedTextEditor = textEditorProvider.getTextEditor(embeddedEditor);
-            if (files.add(embeddedTextEditor.getFile()) && isValidEditor(embeddedTextEditor)) {
+            if (isValidEditor(embeddedTextEditor) && FileInContext.of(embeddedTextEditor, myProject).addIfNew(scheduledPassesWithKnownContext)) {
               activeTextEditors.add(embeddedTextEditor);
             }
           }
         }
-        else if (files.add(tabEditor.getFile())) {
+        else if (FileInContext.of(tabEditor, myProject).addIfNew(scheduledPassesWithKnownContext)) {
           activeTextEditors.add(tabEditor);
         }
       }
@@ -1795,4 +1795,50 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       throws ExecutionException, InterruptedException, TimeoutException {
     ExternalAnnotatorManager.getInstance().waitForAllExecuted(timeout, unit);
   }
+
+  /**
+   * Identifies a {@link ProgressableTextEditorHighlightingPass} that all file editors of the same document and context share.
+   */
+  private record MainDocumentPassKey(
+    @NotNull Document document,
+    @NotNull CodeInsightContext context,
+    @NotNull Class<? extends ProgressableTextEditorHighlightingPass> passClass) {
+  }
+
+  private record FileInContext(
+    @Nullable VirtualFile file,
+    @NotNull CodeInsightContext context
+  ) {
+    /**
+     * The context of a text editor whose context is not cached yet.
+     * It never merges with another key, because the editor can resolve to a context that no other editor covers.
+     */
+    private static final CodeInsightContext UNKNOWN_EDITOR_CONTEXT = new CodeInsightContext() {
+      @Override
+      public String toString() {
+        return "UnknownEditorContext";
+      }
+    };
+
+    /**
+     * Two split editors can show one file in different contexts, and the daemon must highlight both.
+     * A non-text editor has no editor context, so its key uses the default context.
+     * Without multiverse, every text editor has the default context too, so the dedup is by file only.
+     */
+    static @NotNull FileInContext of(@NotNull FileEditor fileEditor, @NotNull Project project) {
+      if (!(fileEditor instanceof TextEditor textEditor)) {
+        return new FileInContext(fileEditor.getFile(), CodeInsightContexts.defaultContext());
+      }
+      CodeInsightContext context = EditorContextManager.getCachedEditorContext(textEditor.getEditor(), project);
+      return new FileInContext(fileEditor.getFile(), context != null ? context : UNKNOWN_EDITOR_CONTEXT);
+    }
+
+    /**
+     * @return true if no editor with this key is in {@code files} yet; always true for a key with an unknown context
+     */
+    boolean addIfNew(@NotNull Set<FileInContext> files) {
+      return context == UNKNOWN_EDITOR_CONTEXT || files.add(this);
+    }
+  }
+
 }

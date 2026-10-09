@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.daemon.impl
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.ProductionLightDaemonAnalyzerTestCase
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
@@ -32,14 +33,27 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.multiverse.LibraryContextImpl
 import com.intellij.multiverse.ModuleContextImpl
 import com.intellij.multiverse.SdkContextImpl
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorPolicy
+import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileEditor.FileEditorWithTextEditors
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -48,6 +62,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.InspectionTestUtil
@@ -56,7 +71,11 @@ import com.intellij.testFramework.createGlobalContextForTool
 import com.intellij.testFramework.enableInspectionTools
 import com.intellij.util.Processors
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.containers.ContainerUtil
 import org.intellij.lang.annotations.Language
+import java.beans.PropertyChangeListener
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 @CanChangeDocumentDuringHighlighting
 class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
@@ -216,6 +235,148 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
       val textEditor = TextEditorProvider.getInstance().getTextEditor(editor)
       assertTrue("the editor reports its highlighting as completed", DaemonCodeAnalyzerEx.isHighlightingCompleted(textEditor, project))
     }
+  }
+
+  // Two split editors show one document in different contexts, and the daemon must highlight each editor in its context
+  fun testEditHighlightsBothEditorsWithDifferentContexts() {
+    enableInspectionTools(project, testRootDisposable, CommentInspection())
+    val (first, second) = configureCommentInTwoModules()
+    val document = editor.document
+    val editor2 = EditorFactory.getInstance().createEditor(document, project)
+    Disposer.register(testRootDisposable) { EditorFactory.getInstance().releaseEditor(editor2) }
+    context = first
+    EditorContextManager.getInstance(project).setEditorContext(editor2, SingleEditorContext(second))
+    val fileStatusMap = myDaemonCodeAnalyzer.fileStatusMap
+
+    ProductionLightDaemonAnalyzerTestCase.runTestInProduction(false, myDaemonCodeAnalyzer) {
+      EditorTracker.getInstance(project).setActiveEditorsInTests(listOf(editor, editor2))
+      repeat(10) { i ->
+        WriteCommandAction.runWriteCommandAction(project) {
+          document.insertString(document.text.indexOf("comment") + "comment".length, "x")
+        }
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
+
+        assertTrue("edit $i: the daemon analyzes the context of the first editor", fileStatusMap.allDirtyScopesAreNullFor(document, first))
+        assertTrue("edit $i: the daemon analyzes the context of the second editor", fileStatusMap.allDirtyScopesAreNullFor(document, second))
+        assertOrderedEquals("edit $i: both contexts have a warning",
+                            getAllDocumentHighlights().map { it.description },
+                            "Comment warning module-context module2",
+                            "Comment warning module-context $name")
+      }
+    }
+  }
+
+  // Two editors of one file with an Unknown context must not merge in the dedup of the tab editors
+  fun testDaemonHighlightsEachEditorWithUnknownContext() {
+    configureByText(JavaFileType.INSTANCE, "class C {}")
+    val document = editor.document
+    val embeddedEditors = List(2) { createEditor(document) }
+    // Other subsystems resolve the context of a new editor in the background, so drop the contexts right before the daemon reads them.
+    // The daemon reads the embedded editors right before it computes their dedup keys.
+    var dropContexts = true
+    openInEditorWithTextEditors(embeddedEditors) {
+      if (dropContexts) {
+        project.messageBus.syncPublisher(CodeInsightContextManager.topic).contextsChanged()
+      }
+    }
+    val startedEditors = collectStartedEditors()
+    project.messageBus.connect(testRootDisposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
+      override fun daemonStarting(fileEditors: Collection<FileEditor>) {
+        dropContexts = false
+      }
+    })
+
+    ProductionLightDaemonAnalyzerTestCase.runTestInProduction(false, myDaemonCodeAnalyzer) {
+      EditorTracker.getInstance(project).setActiveEditorsInTests(emptyList())
+      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
+      assertSameElements("the daemon highlights each editor", startedEditors.distinct(), embeddedEditors)
+    }
+  }
+
+  // An invalid embedded editor must not claim the dedup key of a valid editor in the same context
+  fun testInvalidEmbeddedEditorDoesNotMaskValidEditor() {
+    configureByText(JavaFileType.INSTANCE, "class C {}")
+    val document = editor.document
+    val context = CodeInsightContextManager.getInstance(project).getPreferredContext(virtualFile)
+    val invalidEditor = EditorFactory.getInstance().createEditor(document, project)
+    val validEditor = createEditor(document)
+    for (embeddedEditor in listOf(invalidEditor, validEditor)) {
+      EditorContextManager.getInstance(project).setEditorContext(embeddedEditor, SingleEditorContext(context))
+    }
+    EditorFactory.getInstance().releaseEditor(invalidEditor)
+    openInEditorWithTextEditors(listOf(invalidEditor, validEditor))
+    val startedEditors = collectStartedEditors()
+
+    ProductionLightDaemonAnalyzerTestCase.runTestInProduction(false, myDaemonCodeAnalyzer) {
+      EditorTracker.getInstance(project).setActiveEditorsInTests(emptyList())
+      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
+      assertSameElements("the daemon highlights the valid editor only", startedEditors.distinct(), listOf(validEditor))
+    }
+  }
+
+  // A context switch must schedule the highlighting of the new context without an explicit restart.
+  // setEditorContext requires the write lock, and the daemon restarts when the write action finishes.
+  fun testContextSwitchRestartsDaemon() {
+    val (first, second) = configureCommentInTwoModules()
+    val document = editor.document
+    val fileStatusMap = myDaemonCodeAnalyzer.fileStatusMap
+    context = first
+
+    ProductionLightDaemonAnalyzerTestCase.runTestInProduction(false, myDaemonCodeAnalyzer) {
+      EditorTracker.getInstance(project).setActiveEditorsInTests(listOf(editor))
+      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
+      assertTrue("precondition: the daemon analyzes the first context", fileStatusMap.allDirtyScopesAreNullFor(document, first))
+      assertFalse("precondition: the second context is not analyzed", fileStatusMap.allDirtyScopesAreNullFor(document, second))
+
+      WriteAction.run<Throwable> { EditorContextManager.getInstance(project).setEditorContext(editor, SingleEditorContext(second)) }
+      // the restart goes through the file status queue before it schedules the update runnable
+      myTestDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests()
+      assertTrue("the context switch restarts the daemon", myDaemonCodeAnalyzer.isRunningOrPending)
+      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
+      assertTrue("the daemon analyzes the second context", fileStatusMap.allDirtyScopesAreNullFor(document, second))
+    }
+  }
+
+  private fun createEditor(document: Document): Editor {
+    val editor = EditorFactory.getInstance().createEditor(document, project)
+    Disposer.register(testRootDisposable) { EditorFactory.getInstance().releaseEditor(editor) }
+    return editor
+  }
+
+  /** Reopens the file in the tab of a [FileEditorWithTextEditors] that embeds [embeddedEditors] */
+  private fun openInEditorWithTextEditors(embeddedEditors: List<Editor>, onEmbeddedEditorsQueried: () -> Unit = {}) {
+    val file = virtualFile
+    val fileEditorManager = FileEditorManager.getInstance(project)
+    fileEditorManager.closeFile(file)
+    file.putUserData(FileEditorProvider.KEY, EditorWithTextEditorsProvider(file, embeddedEditors, onEmbeddedEditorsQueried))
+    Disposer.register(testRootDisposable) { file.putUserData(FileEditorProvider.KEY, null) }
+    fileEditorManager.openFile(file)
+  }
+
+  /** @return the live list of the editors that the daemon starts to highlight */
+  private fun collectStartedEditors(): List<Editor> {
+    val startedEditors = ContainerUtil.createConcurrentList<Editor>()
+    project.messageBus.connect(testRootDisposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
+      override fun daemonStarting(fileEditors: Collection<FileEditor>) {
+        fileEditors.mapNotNullTo(startedEditors) { (it as? TextEditor)?.editor }
+      }
+    })
+    return startedEditors
+  }
+
+  /** @return the "module2" context, then the context of the test module */
+  private fun configureCommentInTwoModules(): List<ModuleContext> {
+    @Language("JAVA")
+    val text = """
+      // comment
+    """
+    configureByText(JavaFileType.INSTANCE, text)
+    PsiTestUtil.addModule(project, ModuleType.EMPTY, "module2", module.rootManager.contentRoots[0])
+    val contexts = getContexts()
+    assertSize(2, contexts)
+    assertEquals("module2", contexts[0].getModule()!!.name)
+    return contexts
   }
 
   private fun getAllDocumentHighlights(): List<HighlightInfo> {
@@ -475,6 +636,54 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     return (contexts as List<ModuleContext>)
       .sortedBy { it.getModule()!!.name }
   }
+}
+
+private class EditorWithTextEditorsProvider(
+  private val file: VirtualFile,
+  private val embeddedEditors: List<Editor>,
+  private val onEmbeddedEditorsQueried: () -> Unit,
+) : FileEditorProvider, DumbAware {
+  override fun accept(project: Project, file: VirtualFile): Boolean = file == this.file
+
+  override fun createEditor(project: Project, file: VirtualFile): FileEditor =
+    EditorWithTextEditors(file, embeddedEditors, onEmbeddedEditorsQueried)
+
+  override fun getEditorTypeId(): String = "test-editor-with-text-editors"
+
+  override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+}
+
+private class EditorWithTextEditors(
+  private val file: VirtualFile,
+  private val embeddedEditors: List<Editor>,
+  private val onEmbeddedEditorsQueried: () -> Unit,
+) : UserDataHolderBase(), FileEditorWithTextEditors {
+  private val component = JPanel()
+
+  override fun getEmbeddedEditors(): List<Editor> {
+    onEmbeddedEditorsQueried()
+    return embeddedEditors
+  }
+
+  override fun getFile(): VirtualFile = file
+
+  override fun getComponent(): JComponent = component
+
+  override fun getPreferredFocusedComponent(): JComponent = component
+
+  override fun getName(): String = "EditorWithTextEditors"
+
+  override fun setState(state: FileEditorState) {}
+
+  override fun isModified(): Boolean = false
+
+  override fun isValid(): Boolean = true
+
+  override fun addPropertyChangeListener(listener: PropertyChangeListener) {}
+
+  override fun removePropertyChangeListener(listener: PropertyChangeListener) {}
+
+  override fun dispose() {}
 }
 
 private class FakeContext(private val name: String) : CodeInsightContext {
