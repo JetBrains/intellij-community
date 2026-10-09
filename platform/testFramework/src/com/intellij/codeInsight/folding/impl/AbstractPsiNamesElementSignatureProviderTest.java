@@ -10,6 +10,10 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated Use {@link PsiNamesElementSignatureProviderTestUtil#doTest} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class AbstractPsiNamesElementSignatureProviderTest extends BasePlatformTestCase {
   public void doTest(@NotNull String text, @NotNull String ext) {
     myFixture.configureByText("test." + ext, text);
