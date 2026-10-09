@@ -649,6 +649,11 @@ public final class DnDManagerImpl extends DnDManager {
       }
       catch (InvalidDnDOperationException e) {
         LOG.info(e);
+        resetEvents("startDrag failed: " + e);
+      }
+      catch (Throwable e) {
+        resetEvents("startDrag failed: " + e);
+        throw e;
       }
     }
   }
