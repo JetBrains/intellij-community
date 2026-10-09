@@ -21,7 +21,8 @@ class ExpandProjectViewCommand(text: String, line: Int) : PlaybackCommandCorouti
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val file = OpenFileCommand.findFile(extractCommandArgument(PREFIX), context.project)
+    val relativePath = extractCommandArgument(PREFIX)
+    val file = OpenFileCommand.findFile(relativePath, context.project) ?: error("File $relativePath not found")
     val mutex = Mutex(true)
     withContext(Dispatchers.EDT) {
       ProjectView.getInstance(context.project).selectCB(null, file, false).doWhenProcessed {
