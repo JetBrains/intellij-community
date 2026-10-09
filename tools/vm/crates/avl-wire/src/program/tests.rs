@@ -140,3 +140,17 @@ fn a_value_that_no_earlier_instruction_answers_is_refused() {
         vec!["scenario 'scenario' operation 'submit' takes the value 'path', which no earlier instruction answers".to_owned()]
     );
 }
+
+#[test]
+fn a_value_that_an_earlier_instruction_may_answer_is_answered() {
+    let submit = json!({"side": "ide", "timeoutMs": 1, "restarts": 0, "answers": [], "mayAnswer": ["draft"], "takes": [], "mayTake": [], "params": {}});
+    let kept = json!({"side": "ide", "timeoutMs": 1, "restarts": 0, "answers": [], "takes": ["draft"], "mayTake": [], "params": {}});
+    let vocabulary = json!({"runnerAnswers": [], "actions": {"submit": submit}, "assertions": {"kept": kept}});
+    let fits = json!([{"action": "submit"}, {"assertion": "kept", "expectation": "The draft tab is kept."}]);
+    assert_eq!(program(&vocabulary, &fits).refusals(), Vec::<String>::new());
+    let early = json!([{"assertion": "kept", "expectation": "The draft tab is kept."}, {"action": "submit"}]);
+    assert_eq!(
+        program(&vocabulary, &early).refusals(),
+        vec!["scenario 'scenario' operation 'submit' takes the value 'draft', which no earlier instruction answers".to_owned()]
+    );
+}

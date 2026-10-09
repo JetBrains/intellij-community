@@ -108,6 +108,9 @@ pub struct IdSpec {
     pub restarts: u32,
     /// The values one use answers. A runner keeps each one under its name, as an opaque blob.
     pub answers: Vec<String>,
+    /// The values one use answers only on some arguments. An absent answer keeps the old value under its name.
+    #[serde(default)]
+    pub may_answer: Vec<String>,
     /// The values one use needs. A runner passes the latest answer of each name.
     pub takes: Vec<String>,
     /// The values one use reads only on some arguments, or only when they exist.
@@ -208,7 +211,7 @@ impl SuiteProgram {
                     for name in spec.takes.iter().filter(|name| !answered.contains(name.as_str())) {
                         refusals.push(format!("{place} takes the value '{name}', which no earlier instruction answers"));
                     }
-                    answered.extend(spec.answers.iter().map(String::as_str));
+                    answered.extend(spec.answers.iter().chain(&spec.may_answer).map(String::as_str));
                 }
             }
         }
