@@ -30,9 +30,9 @@ class PyDocstringDebuggerTypesInspectionTest : PyCodeInsightTestCase() {
     recordSignature("f", "x" to "int")
     test("""
       def f(x):
-          $tripleQuote
+          '''
           :param x: a value
-          :type x: str$tripleQuote
+          :type x: str'''
       #            ^^^ WEAK-WARNING Dynamically inferred type 'int' doesn't match specified type 'str'
     """)
   }
@@ -42,10 +42,10 @@ class PyDocstringDebuggerTypesInspectionTest : PyCodeInsightTestCase() {
     recordSignature("f", "x" to "int")
     test("""
       def f(x):
-          $tripleQuote
+          '''
           :param x: a value
           :type x: int
-          $tripleQuote
+          '''
     """)
   }
 
@@ -54,10 +54,10 @@ class PyDocstringDebuggerTypesInspectionTest : PyCodeInsightTestCase() {
     recordSignature("f", "x" to "bool")
     test("""
       def f(x):
-          $tripleQuote
+          '''
           :param x: a value
           :type x: int
-          $tripleQuote
+          '''
     """)
   }
 
@@ -70,9 +70,9 @@ class PyDocstringDebuggerTypesInspectionTest : PyCodeInsightTestCase() {
       from typing import Union
 
       def f(x):
-          $tripleQuote
+          '''
           :param x: a value
-          :type x: bytes$tripleQuote
+          :type x: bytes'''
       #            ^^^^^ WEAK-WARNING Dynamically inferred type 'typing._SpecialForm' doesn't match specified type 'bytes' FIXME Dynamically inferred type 'int or str' doesn't match specified type 'bytes'
     """)
   }
@@ -82,9 +82,9 @@ class PyDocstringDebuggerTypesInspectionTest : PyCodeInsightTestCase() {
     recordSignature("f", "x" to "int")
     test("""
       def f(x):
-          $tripleQuote
+          '''
           :param x: a value
-          $tripleQuote
+          '''
     """)
   }
 
@@ -93,10 +93,10 @@ class PyDocstringDebuggerTypesInspectionTest : PyCodeInsightTestCase() {
     recordSignature("f", "other" to "int")
     test("""
       def f(x):
-          $tripleQuote
+          '''
           :param x: a value
           :type x: str
-          $tripleQuote
+          '''
     """)
   }
 
@@ -114,7 +114,7 @@ class PyDocstringDebuggerTypesInspectionTest : PyCodeInsightTestCase() {
     recordSignature("f", "x" to "int")
     test("""
       def f(x):
-          ${tripleQuote}Takes an x of type str.$tripleQuote
+          '''Takes an x of type str.'''
     """)
   }
 
@@ -123,10 +123,10 @@ class PyDocstringDebuggerTypesInspectionTest : PyCodeInsightTestCase() {
     recordSignature("_f", "x" to "int")
     test("""
       def _f(x):
-          $tripleQuote
+          '''
           :param x: a value
           :type x: str
-          $tripleQuote
+          '''
     """)
   }
 
@@ -134,10 +134,10 @@ class PyDocstringDebuggerTypesInspectionTest : PyCodeInsightTestCase() {
   fun `a function without a recorded signature is not reported`() {
     test("""
       def f(x):
-          $tripleQuote
+          '''
           :param x: a value
           :type x: str
-          $tripleQuote
+          '''
     """)
   }
 
@@ -146,16 +146,16 @@ class PyDocstringDebuggerTypesInspectionTest : PyCodeInsightTestCase() {
     recordSignature("f", "x" to "int")
     testQuickFix("""
       def f(x):
-          $tripleQuote
+          '''
           :param x: a value
           :type x: str
-          $tripleQuote
+          '''
     """, "Change x type from str to int", """
       def f(x):
-          $tripleQuote
+          '''
           :param x: a value
           :type x: int
-          $tripleQuote
+          '''
     """)
   }
 
@@ -164,24 +164,24 @@ class PyDocstringDebuggerTypesInspectionTest : PyCodeInsightTestCase() {
     recordSignature("f", "x" to "int")
     testQuickFix("""
       def f(x, y):
-          $tripleQuote
+          '''
           Does something.
 
           :param x: a value
           :type x: str
           :param y: another value
           :return: nothing
-          $tripleQuote
+          '''
     """, "Change x type from str to int", """
       def f(x, y):
-          $tripleQuote
+          '''
           Does something.
 
           :param x: a value
           :type x: int
           :param y: another value
           :return: nothing
-          $tripleQuote
+          '''
     """)
   }
 

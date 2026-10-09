@@ -76,10 +76,10 @@ class PyTypesWithoutBuiltinsTest : PyCodeInsightTestCase() {
     class A: ...
 
     def f(*args, **kwargs):
-        $tripleQuote
+        '''
         :type args: A
         :type kwargs: A
-        $tripleQuote
+        '''
         return args, kwargs
     #          │     └ TYPE Unknown
     #          └ TYPE Unknown
