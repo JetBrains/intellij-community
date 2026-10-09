@@ -186,6 +186,11 @@ try {
     New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
 
     try {
+        # Normal mode extracts with the .NET zip reader only. A tool that ships only .tar.gz for Windows is pinned
+        # in Bazel instead, as community/tools/jscpd.MODULE.bazel does. Fail here with the cause, not in the zip reader.
+        if ($url -notmatch '\.zip$') {
+            throw "tool-wrapper.ps1 extracts .zip archives only: $url"
+        }
         $archivePath = Join-Path $tempDir 'archive.zip'
 
         Write-Host "Downloading $url" -ForegroundColor Cyan

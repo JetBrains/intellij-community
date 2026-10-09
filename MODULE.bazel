@@ -370,3 +370,6 @@ include("//tools/vm:lima.MODULE.bazel")
 include("//tools/vm:tart.MODULE.bazel")
 include("//tools/vm:avl.MODULE.bazel")
 include("//:fleet/kmp.MODULE.bazel")
+
+# jscpd, the copy-paste detector of `tools/jscpd.cmd`.
+include("//tools:jscpd.MODULE.bazel")

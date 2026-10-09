@@ -58,6 +58,7 @@ TOOL_VERIFY_ALL_PLATFORMS=1 ./community/tools/npx.cmd
 | **Archive structure**       | Support nested and flat                             | Nested archives stripped, flat archives extracted directly   |
 | **Retry logic**             | None                                                | Simple, user can retry manually                              |
 | **Version override**        | Not supported                                       | Version pinned in script, no bypass                          |
+| **Windows archive format**  | `.zip` only, normal mode throws for another URL     | Only `.tar.gz` for Windows: Bazel pin, `jscpd.MODULE.bazel`  |
 | **Windows arch detection**  | Registry query                                      | More reliable than env var                                   |
 | **Path handling**           | Quote all paths                                     | Support spaces in usernames/paths                            |
 | **Concurrency**             | File locking (hard links on Unix, Mutex on Windows) | Safe for parallel runs                                       |

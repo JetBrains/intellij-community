@@ -1,0 +1,44 @@
+# The pinned jscpd of each host, one alias per repository of `jscpd.MODULE.bazel`. A repository of this module has no
+# name that the ultimate root can see, so `jscpd.cmd` asks Bazel for these labels. Its `cquery` is the only reader.
+# Each alias is `manual`, so `//...` does not download the archive.
+alias(
+    name = "jscpd_darwin_aarch64",
+    actual = "@jscpd_darwin_aarch64//:binary",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "jscpd_darwin_x64",
+    actual = "@jscpd_darwin_x64//:binary",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "jscpd_linux_aarch64",
+    actual = "@jscpd_linux_aarch64//:binary",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "jscpd_linux_x64",
+    actual = "@jscpd_linux_x64//:binary",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "jscpd_windows_aarch64",
+    actual = "@jscpd_windows_aarch64//:binary",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "jscpd_windows_x64",
+    actual = "@jscpd_windows_x64//:binary",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
