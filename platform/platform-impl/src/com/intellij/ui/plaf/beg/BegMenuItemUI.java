@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.RealClickDetector;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
@@ -572,26 +573,17 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   }
 
   private final class MyMouseInputHandler extends MouseInputHandler {
-    private boolean isRealClick = false;
+    private final RealClickDetector realClickDetector = new RealClickDetector();
 
     @Override
     public void mousePressed(MouseEvent e) {
-      if (!isRealClick) {
-        isRealClick = true;
-        LOG.debug("A MOUSE_PRESSED event is detected, treating future MOUSE_RELEASED events as real ones");
-      }
+      realClickDetector.mousePressed();
       super.mousePressed(e);
     }
 
     @Override
     public void mouseReleased(MouseEvent e){
-      if (!isRealClick) {
-        // Sometimes happens on Wayland. The menu may receive the released event from the same mouse press that invoked the context menu.
-        // This leads to an immediate click on the menu item that happens to be under the cursor.
-        // Normally there isn't one, but if the menu had to be repositioned because it's close to a screen edge, it can happen (IJPL-253484).
-        // We don't check for Wayland here because handling a MOUSE_RELEASED without a MOUSE_PRESSED one doesn't make sense in any case.
-        // The only exception is a single press-drag-release, but that's handled by MenuDragMouseListener below.
-        LOG.debug("Ignoring a MOUSE_RELEASED event because there was no MOUSE_PRESSED");
+      if (!realClickDetector.isRealClick()) {
         return;
       }
       MenuSelectionManager manager=MenuSelectionManager.defaultManager();

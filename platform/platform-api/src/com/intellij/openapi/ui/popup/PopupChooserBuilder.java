@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.RealClickDetector;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.Consumer;
@@ -368,17 +369,17 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
     if (myCloseOnEnter || myItemChosenRunnable != null) {
       myChooserComponent.addMouseListener(new MouseAdapter() {
-        private boolean isRealClick = false;
+        // Protection against "pressed elsewhere, released here," happens on Fedora+Wayland.
+        private final RealClickDetector realClickDetector = new RealClickDetector();
 
         @Override
         public void mousePressed(MouseEvent e) {
-          // Protection against "pressed elsewhere, released here," happens on Fedora+Wayland.
-          isRealClick = true;
+          realClickDetector.mousePressed();
         }
 
         @Override
         public void mouseReleased(MouseEvent e) {
-          if (isRealClick && UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
+          if (realClickDetector.isRealClick() && UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
             if (myCloseOnEnter) {
               closePopup(e, true);
             }
