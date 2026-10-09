@@ -119,6 +119,12 @@ public final class IndexTodoCacheManagerImpl implements TodoCacheManager {
       return -1;
     }
 
+    if(!(file instanceof VirtualFileWithId) // likely a transient file
+       && !(file instanceof LightVirtualFile) // has special processing in getTodoMap
+    ){
+      return -1;//
+    }
+
     Map<TodoIndexEntry, Integer> data = getTodoMap(myProject, file);
     if (data == null || data.isEmpty()) return 0;
 
