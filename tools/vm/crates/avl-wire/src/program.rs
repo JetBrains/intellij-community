@@ -84,8 +84,18 @@ pub struct SuiteProgram {
     pub suite: String,
     pub lane: String,
     pub test_class_name: String,
+    /// The Allure labels of the generated class, which a runner passes in the `scenario` command of the recorder.
+    pub labels: Vec<SuiteLabel>,
     pub vocabulary: Vocabulary,
     pub profiles: Vec<ScenarioProgram>,
+}
+
+/// One Allure label of the generated class of a suite.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SuiteLabel {
+    pub name: String,
+    pub value: String,
 }
 
 /// The ids that a suite runs, by kind.
@@ -178,6 +188,13 @@ impl SuiteProgram {
     /// program a runner can run.
     pub fn refusals(&self) -> Vec<String> {
         let mut refusals = Vec::new();
+        let classes: Vec<&SuiteLabel> = self.labels.iter().filter(|label| label.name == "testClass").collect();
+        if !matches!(classes.as_slice(), [class] if class.value.ends_with(&format!(".{}", self.test_class_name))) {
+            refusals.push(format!(
+                "the labels name the test class {classes:?}, not one class '{}'",
+                self.test_class_name
+            ));
+        }
         let mut used = BTreeSet::new();
         for scenario in &self.profiles {
             let operations = scenario

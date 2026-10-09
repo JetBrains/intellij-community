@@ -7,6 +7,7 @@ use super::*;
 fn program(vocabulary: &Value, instructions: &Value) -> SuiteProgram {
     let document = json!({
         "suite": "suite", "lane": "UI", "testClassName": "AirSuiteGeneratedFlowUiTest", "restartsIde": false,
+        "labels": [{"name": "testClass", "value": "com.example.AirSuiteGeneratedFlowUiTest"}, {"name": "Subsystem", "value": "AI"}],
         "modules": [], "implementationFlows": [],
         "vocabulary": vocabulary,
         "profiles": [{"name": "scenario", "fixture": "fixture", "flow": "flow-one", "flags": {},
@@ -110,7 +111,23 @@ fn an_id_that_the_vocabulary_leaves_out_or_never_runs_is_refused() {
 fn an_id_spec_with_a_field_this_side_does_not_know_is_not_one() {
     let vocabulary =
         json!({"actions": {"send": {"side": "ide", "timeoutMs": 1, "restarts": 0, "params": {}, "more": 1}}, "assertions": {}});
-    let document = json!({"suite": "s", "lane": "UI", "testClassName": "T", "vocabulary": vocabulary, "profiles": []});
+    let document = json!({"suite": "s", "lane": "UI", "testClassName": "T", "labels": [], "vocabulary": vocabulary, "profiles": []});
     let error = parse_suite_program(document.to_string().as_bytes()).unwrap_err();
     assert!(error.contains("unknown field `more`"), "{error}");
+}
+
+#[test]
+fn labels_that_name_another_class_are_refused() {
+    let mut program = program(&json!({"actions": {}, "assertions": {}}), &json!([]));
+    program.labels = vec![SuiteLabel {
+        name: "testClass".to_owned(),
+        value: "com.example.AirOtherGeneratedFlowUiTest".to_owned(),
+    }];
+    assert_eq!(
+        program.refusals(),
+        vec![
+            "the labels name the test class [SuiteLabel { name: \"testClass\", value: \"com.example.AirOtherGeneratedFlowUiTest\" }], not one class 'AirSuiteGeneratedFlowUiTest'"
+                .to_owned()
+        ]
+    );
 }
