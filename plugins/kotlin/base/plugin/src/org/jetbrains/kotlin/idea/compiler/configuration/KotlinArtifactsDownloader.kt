@@ -470,7 +470,7 @@ private fun openStream(artifactCoordinates: String): InputStream? {
 @get:ApiStatus.Internal
 val kotlinArtifactRepositoryCoordinates: List<String> by lazy(LazyThreadSafetyMode.PUBLICATION) {
     buildList {
-        add("https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+        add("https://cache-redirector.jetbrains.com/maven/ultimate-public")
         add("https://cache-redirector.jetbrains.com/intellij-dependencies")
         add("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
 
