@@ -8,10 +8,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.xml.XmlFile
@@ -21,6 +25,8 @@ import org.jetbrains.idea.devkit.dom.ContentDescriptor.ModuleDescriptor.ModuleLo
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
 import org.jetbrains.idea.devkit.dom.index.PluginXIncludeIndex
 import org.jetbrains.idea.devkit.util.DescriptorUtil
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 
 internal fun isInProductionRoots(file: VirtualFile?, project: Project): Boolean {
   val fileIndex = ProjectFileIndex.getInstance(project)
@@ -97,28 +103,45 @@ internal fun filesWithContentEntryFor(descriptor: XmlFile): List<XmlFile> {
 
 internal data class ProductionXIncludeEdge(val includer: XmlFile, val mergesWholeDescriptor: Boolean)
 
+private val PRODUCTION_XINCLUDE_EDGES_KEY =
+  Key.create<CachedValue<ConcurrentMap<VirtualFile, List<Pair<VirtualFile, Boolean>>>>>("devkit.production.xinclude.edges")
+
 /**
  * Cached per file: the reachability walks re-enter this for every file of the include graph on every checked
  * reference. Includer candidates come from [PluginXIncludeIndex] by target file name and are verified by resolving
  * their indexed hrefs, so no includer tree is loaded; a reference search would scan every text occurrence of the file
  * name in the project — for a file named `plugin.xml` that is most of the monorepo.
+ *
+ * The edges depend on the indexed hrefs, the file layout and the roots, not on PSI, so the cache does not track XML
+ * PSI changes: [PsiManager.dropPsiCaches] bumps every language tracker and would recompute all href resolves.
+ * The cache is held by the project and keyed by virtual file: descriptor PSI is weakly reachable and a cache in its
+ * user data would be collected with it.
  */
 internal fun findProductionXIncludeEdges(file: XmlFile): List<ProductionXIncludeEdge> {
-  return CachedValuesManager.getCachedValue(file) {
+  // indexed hrefs resolve to persistent files only
+  val virtualFile = file.virtualFile?.takeIf { it is VirtualFileWithId } ?: return emptyList()
+  val project = file.project
+  val cache = CachedValuesManager.getManager(project).getCachedValue(project, PRODUCTION_XINCLUDE_EDGES_KEY, {
     CachedValueProvider.Result.create(
-      computeProductionXIncludeEdges(file),
-      *descriptorGraphDependencies(file.project),
+      ConcurrentHashMap(),
+      ProjectRootModificationTracker.getInstance(project),
+      VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS,
+      PluginXIncludeIndex.getModificationTracker(project),
     )
+  }, false)
+  val edges = cache[virtualFile] ?: computeProductionXIncludeEdges(file).let { cache.putIfAbsent(virtualFile, it) ?: it }
+  return edges.mapNotNull { (includer, mergesWholeDescriptor) ->
+    (file.manager.findFile(includer) as? XmlFile)?.let { ProductionXIncludeEdge(it, mergesWholeDescriptor) }
   }
 }
 
-private fun computeProductionXIncludeEdges(file: XmlFile): List<ProductionXIncludeEdge> {
+private fun computeProductionXIncludeEdges(file: XmlFile): List<Pair<VirtualFile, Boolean>> {
   val virtualFile = file.virtualFile ?: return emptyList()
   val includes = PluginXIncludeIndex.getIncludes(virtualFile.name, GlobalSearchScope.projectScope(file.project))
   return productionXmlFiles(includes.keys - virtualFile, file).flatMap { includer ->
     includes[includer.virtualFile].orEmpty()
       .filter { resolveXIncludeHref(includer, it.href) == virtualFile }
-      .map { ProductionXIncludeEdge(includer, it.mergesWholeDescriptor) }
+      .map { includer.virtualFile to it.mergesWholeDescriptor }
   }.distinct()
 }
 

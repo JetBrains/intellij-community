@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -126,5 +128,10 @@ public final class PluginXIncludeIndex extends PluginXmlIndexBase<String, List<P
       return true;
     }, scope);
     return result;
+  }
+
+  /** Changes when any indexed include changes, including unsaved documents and files whose PSI is not loaded. */
+  public static @NotNull ModificationTracker getModificationTracker(@NotNull Project project) {
+    return () -> FileBasedIndex.getInstance().getIndexModificationStamp(NAME, project);
   }
 }
