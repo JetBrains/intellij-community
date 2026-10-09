@@ -151,12 +151,11 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
         contextRangeTrimmed.shiftLeft(hostRange.startOffset)
       }
 
-      injectedLanguageManager.getInjectedPsiFiles(host)
+      val injectedFiles = injectedLanguageManager.getInjectedPsiFiles(host)
         .orEmpty()
-        .asSequence()
-        .filter { (_, range) -> range.length > 0 && injectionRange.contains(range) }
-        .mapNotNull { it.first as? PsiFile }
-        .firstOrNull()
+        .filter { (psi, range) -> psi is PsiFile && injectionRange.contains(range) }
+      // an emptied literal keeps only an empty injection, and it is still the live one
+      (injectedFiles.firstOrNull { (_, range) -> range.length > 0 } ?: injectedFiles.firstOrNull())?.first as PsiFile?
     }
 
     if (newInjectedFile !== myInjectedFile) {
