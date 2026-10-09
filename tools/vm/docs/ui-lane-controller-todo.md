@@ -81,6 +81,26 @@ Every item below was found by running something, and says so. Where a measuremen
   `cancel --thread-dump` path keeps its dump before the kill. The second half is `pool stop`, which should honour
   the receipt it is given instead of reading its own lease as another holder's.
 
+- **The host build analyzes the whole graph again on every run, with no action to run.**
+
+  Measured on 2026-10-10 on `air-docker-1`, in the series of the `rename-session` suite under one held lease. The
+  lane build of run `develar-run-c94c3108` ran 0 actions and took 9.1 s. It loaded 6,217 packages and configured
+  323,588 targets, so Bazel had no analysis to keep. The Bazel server log shows the cause one command earlier: the
+  `bazel run` of the `vm.cmd` wrapper ended at 13:41:41.4 UTC with `invalidation of 487213 nodes`. The analysis of
+  the lane build then took 8 s. A build with a kept analysis takes about 2 s, so about 7 s of each run is open.
+
+  What is open is the trigger. Both commands pass `--config=air-lane-linux`. The wrapper adds `--config=bt`, whose
+  options are `run` options only. The two `cquery` calls after a lane build are gone since the build names its own
+  outputs, so the next measurement shows whether they were part of it. `java.log` of the output base names every
+  command with its argv and timestamps, and it is the instrument here.
+
+- **The build of the `vm.cmd` wrapper is outside the run's journal.**
+
+  Measured on 2026-10-10 on the same series: the `bazel run` of the wrapper took 4.1 s before `runStarted`
+  (13:41:37.5 to 13:41:41.6 UTC), with no action to run. The record `runStarted` now names when the process started,
+  so a journal shows this cost. What is open is the cost itself: a build that has nothing to do still pays the Bazel
+  client, the option parse and the target check, and `AIR_VM_BIN` is the only way to skip it.
+
 ## Not ours
 
 - **Why the exec agent's vsock context cancels under load is inside Cirrus's `tart-guest-agent`.** It exits

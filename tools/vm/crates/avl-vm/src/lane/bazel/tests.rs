@@ -73,9 +73,11 @@ impl FakeBazelCmd {
             r#"command="$1"
 echo "$*" >> "{calls}"
 guest_config=""
+events=""
 for argument in "$@"; do
   case "$argument" in
     --config=air-lane-*) guest_config="$guest_config$argument";;
+    --build_event_json_file=*) events="${{argument#--build_event_json_file=}}";;
   esac
 done
 if [ "$guest_config" != "{wanted}" ]; then
@@ -83,7 +85,13 @@ if [ "$guest_config" != "{wanted}" ]; then
   exit 1
 fi
 case "$command" in
-  build) echo "fake build: $*"; echo "fake build stderr" >&2; exit 0;;
+  build)
+    echo "fake build: $*"; echo "fake build stderr" >&2
+    if [ -n "$events" ]; then
+      echo '{{"id":{{"started":{{}}}},"started":{{"uuid":"fake"}}}}' > "$events"
+      echo '{{"id":{{"namedSet":{{"id":"0"}}}},"namedSetOfFiles":{{"files":[{{"name":"ui_daemon.runtime.json","uri":"file://{descriptor}"}}]}}}}' >> "$events"
+    fi
+    exit 0;;
   cquery) echo "{DAEMON_RELATIVE}";;
   info) echo "{execution_root}";;
   *) echo "unsupported fake bazel command: $*" >&2; exit 1;;
@@ -91,6 +99,7 @@ esac
 "#,
             calls = fake.calls.display(),
             execution_root = fake.execution_root.display(),
+            descriptor = fake.descriptor.display(),
         );
         avl_testkit::fake_executable(&fake.repo, "bazel.cmd", &script).unwrap();
         fake
@@ -237,11 +246,14 @@ async fn the_lane_build_builds_this_guests_agent() {
             "@community//tools/vm:vm-guest-agent-linux-x86_64",
         ),
     ] {
-        // The guest's Node comes from its image, so no build stages one.
-        let wanted = words([DAEMON_LABEL, agent]);
-        assert_eq!(host_build_targets(guest_os, guest_arch, DAEMON_LABEL), wanted);
-
         let fake = FakeBazelCmd::new(guest_os);
+        let mut settings = fake.settings(guest_os);
+        settings.guest_arch = guest_arch;
+        // The guest's Node comes from its image, so no build stages one. The pinned tools of the pool follow.
+        let mut wanted = words([DAEMON_LABEL, agent]);
+        wanted.extend(PinnedTool::of_pool(&settings).into_iter().map(|tool| tool.label(&settings)));
+        assert_eq!(host_build_targets(&settings, DAEMON_LABEL), wanted);
+
         let log = fake.runtime_root.join("build.log");
         fs::create_dir_all(&fake.runtime_root).unwrap();
         fake.bazel_for(guest_os, guest_arch)
@@ -267,11 +279,15 @@ async fn a_boot_builds_the_agent_and_no_lane() {
         (GuestOs::Linux, GuestArch::X86_64),
     ] {
         let fake = FakeBazelCmd::new(guest_os);
-        let settings = fake.settings(guest_os);
+        let mut settings = fake.settings(guest_os);
+        settings.guest_arch = guest_arch;
         let boot = guest_boot_targets(guest_os, guest_arch);
         let mut lane = words([DAEMON_LABEL]);
         lane.extend(boot.iter().cloned());
-        assert_eq!(host_build_targets(guest_os, guest_arch, DAEMON_LABEL), lane);
+        assert!(
+            host_build_targets(&settings, DAEMON_LABEL).starts_with(&lane),
+            "{guest_os:?} {guest_arch}"
+        );
         assert!(!boot.iter().any(|label| label == DAEMON_LABEL));
         assert_eq!(boot, [agent_label(guest_os, guest_arch)], "{guest_os:?} {guest_arch}");
 
@@ -562,4 +578,78 @@ fn the_last_log_line_is_the_last_non_empty_one() {
     assert_eq!(last_log_line(&log), None);
     fs::write(&log, "first\r\n[1 / 2] compiling\r\n\r\n  \n").unwrap();
     assert_eq!(last_log_line(&log).as_deref(), Some("[1 / 2] compiling"));
+}
+
+/// The build names its own top-level outputs in its event file, so the descriptor after a build costs no `cquery` and
+/// no `info`. On this checkout the pair cost 7.1 s of every warm iteration on 2026-10-10.
+#[tokio::test]
+async fn a_lane_build_names_the_descriptor_and_no_query_follows() {
+    let fake = FakeBazelCmd::new(GuestOs::Linux);
+    let bazel = fake.bazel(GuestOs::Linux);
+    let ctx = Ctx::background();
+    fs::create_dir_all(&fake.runtime_root).unwrap();
+    let log = fake.runtime_root.join("host-build.log");
+
+    bazel.build(&ctx, &log, DAEMON_LABEL).await.unwrap();
+
+    assert_eq!(bazel.runtime_descriptor(&ctx, DAEMON_LABEL).await.unwrap(), fake.descriptor);
+    assert_eq!(fake.commands(), ["build"]);
+    let build = &fake.invocations()[0];
+    let events = fake.runtime_root.join("host-build.bep.json");
+    assert!(build.contains(&format!("--build_event_json_file={}", events.display())), "{build}");
+    assert!(build.contains("--nobuild_event_json_file_path_conversion"), "{build}");
+    assert_eq!(bazel.built_files(), std::slice::from_ref(&fake.descriptor));
+}
+
+/// A failed build leaves no answer behind: the paths of an earlier build may name outputs that this build no longer
+/// produces.
+#[tokio::test]
+async fn a_failed_build_forgets_the_files_of_the_build_before_it() {
+    let fake = FakeBazelCmd::new(GuestOs::Macos);
+    let log = fake.repo.join("build.log");
+    let built = fake.bazel(GuestOs::Macos);
+    built.build(&Ctx::background(), &log, DAEMON_LABEL).await.unwrap();
+    assert_eq!(built.built_files(), std::slice::from_ref(&fake.descriptor));
+
+    // The same fake asked for the other guest refuses the build.
+    let failing = fake.bazel(GuestOs::Linux);
+    refusal(failing.build(&Ctx::background(), &log, DAEMON_LABEL).await);
+
+    assert_eq!(failing.built_files(), Vec::<PathBuf>::new());
+    assert!(
+        !fake.repo.join("build.bep.json").exists(),
+        "the event file of the earlier build survived"
+    );
+}
+
+#[test]
+fn the_event_file_gives_its_local_files_in_order() {
+    let directory = tempfile::tempdir().unwrap();
+    let events = directory.path().join("build.bep.json");
+    let lines = [
+        r#"{"id":{"started":{}},"started":{"uuid":"u"}}"#,
+        r#"{"id":{"namedSet":{"id":"1"}},"namedSetOfFiles":{"files":[{"name":"a","uri":"file:///base/a%20b/ui_daemon.runtime.json"},{"name":"r","uri":"bytestream://cache/blobs/1/2"}],"fileSets":[{"id":"0"}]}}"#,
+        "",
+        r#"{"id":{"namedSet":{"id":"0"}},"namedSetOfFiles":{"files":[{"name":"c","uri":"file:///base/external/community++http_archive+air_container_darwin_arm64/bin/container"}]}}"#,
+    ];
+    fs::write(&events, lines.join("\n")).unwrap();
+
+    assert_eq!(
+        files_of_build_events(&events).unwrap(),
+        [
+            PathBuf::from("/base/a b/ui_daemon.runtime.json"),
+            PathBuf::from("/base/external/community++http_archive+air_container_darwin_arm64/bin/container"),
+        ]
+    );
+    fs::write(&events, "not json\n").unwrap();
+    assert!(files_of_build_events(&events).unwrap_err().starts_with("line 1: "));
+}
+
+#[test]
+fn a_file_uri_becomes_a_host_path() {
+    assert_eq!(local_path("file:///base/x"), Some(PathBuf::from("/base/x")));
+    assert_eq!(local_path("file:///C:/base/x"), Some(PathBuf::from("C:/base/x")));
+    assert_eq!(local_path("file:///base/%E2%9C%93"), Some(PathBuf::from("/base/\u{2713}")));
+    assert_eq!(local_path("bytestream://cache/x"), None);
+    assert_eq!(local_path("file:///base/%zz"), None);
 }

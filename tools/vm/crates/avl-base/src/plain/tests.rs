@@ -384,6 +384,7 @@ fn a_run_and_its_traces_are_named_by_their_viewer_links() {
             command: "run".to_owned(),
             args: Vec::new(),
             checkout: None,
+            process_started_at: None,
         }),
         None,
     );

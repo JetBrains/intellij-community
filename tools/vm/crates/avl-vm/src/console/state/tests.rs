@@ -101,6 +101,7 @@ fn run_started(args: &[&str]) -> Event {
         command: "run".to_owned(),
         args: args.iter().map(|arg| (*arg).to_owned()).collect(),
         checkout: None,
+        process_started_at: None,
     })
 }
 
@@ -219,6 +220,7 @@ fn the_checklist_shows_the_plan_and_the_usual_times() {
     expect![[r"
         |
         |  ⠦ host build         12s  usual 40s    [12 / 90] Compiling Kotlin
+        |  ○ prepare
         |  ○ lease
         |  ○ daemon start
         |  ○ tests
@@ -300,6 +302,7 @@ fn the_tests_line_counts_and_estimates() {
     expect![[r"
         |
         |  – host build     skipped
+        |  – prepare        skipped
         |  – lease          skipped
         |  – daemon start   skipped
         |  ⠋ tests              10s  usual 2m00s  flow flow-new-session

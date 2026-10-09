@@ -99,9 +99,17 @@ async fn the_build_comes_before_the_lease() {
     .await
     .unwrap_or_else(|refusal| panic!("the run leases two workers: {refusal:?}"));
     assert_eq!(fixture.bazel.build_calls() - builds, 1);
+    // The digest sweep of the build is its own phase, and it too comes before the lease.
     assert_eq!(
         phases(&recorded),
-        ["lease:started", "lease:finished", "release:started", "release:finished"]
+        [
+            "prepare:started",
+            "prepare:finished",
+            "lease:started",
+            "lease:finished",
+            "release:started",
+            "release:finished"
+        ]
     );
     assert_eq!(leased.settlement.disposition, LeaseDisposition::Released);
 }
@@ -349,4 +357,27 @@ async fn the_run_id_is_the_holder_unless_one_is_named() {
             "the journal is named by the run id"
         );
     }
+}
+
+/// `runStarted` carries the start of the process, so a journal shows how long the `vm.cmd` wrapper built before the
+/// controller ran. The Unix answer is local time, and the record is UTC.
+#[test]
+fn a_process_start_reads_as_rfc3339_in_utc() {
+    use super::rfc3339_of_process_start;
+    let local = |day| {
+        jiff::civil::date(2026, 10, day)
+            .at(15, 41, 37, 0)
+            .to_zoned(jiff::tz::TimeZone::system())
+            .unwrap()
+            .timestamp()
+            .to_string()
+    };
+    assert_eq!(rfc3339_of_process_start("Sat Oct 10 15:41:37 2026"), Some(local(10)));
+    // `ps` pads a day before the tenth, and the probe collapses the padding.
+    assert_eq!(rfc3339_of_process_start("Fri Oct 9 15:41:37 2026"), Some(local(9)));
+    assert_eq!(
+        rfc3339_of_process_start("2026-10-10T13:41:37.25Z").as_deref(),
+        Some("2026-10-10T13:41:37.25Z")
+    );
+    assert_eq!(rfc3339_of_process_start("yesterday"), None);
 }

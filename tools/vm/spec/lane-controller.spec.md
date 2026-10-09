@@ -345,6 +345,18 @@ The rest of the scenario matrix is in
 - The daemon environment is part of the launch identity. A changed value restarts the daemon.
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs
 
+- The lane build also builds the pinned tools of the pool. Its event file names the runtime descriptor and the file of
+  each pinned tool. So the controller asks Bazel nothing between the build and the decision about the IDE. A build
+  whose event file names no descriptor makes the controller ask Bazel, and a note says so.
+  [@test] ../crates/avl-vm/src/lane/bazel/tests.rs (`a_lane_build_names_the_descriptor_and_no_query_follows`)
+  [@test] ../crates/avl-vm/src/lane/bazel/tests.rs (`a_failed_build_forgets_the_files_of_the_build_before_it`)
+  [@test] ../crates/avl-host-sys/src/guest/external/tests.rs (`a_build_that_named_every_file_spares_the_query`)
+
+- The journal has the phase `prepare`, from the end of the host build to the end of the digest sweep. The record
+  `runStarted` names when the process started. So the journal shows the build of the `vm.cmd` wrapper before it.
+  [@test] ../crates/avl-vm/src/daemon/leased/tests.rs (`the_build_comes_before_the_lease`)
+  [@test] ../crates/avl-vm/src/daemon/leased/tests.rs (`a_process_start_reads_as_rfc3339_in_utc`)
+
 - The controller tells the daemon how to launch the lane IDE. It names the installed guest agent, the directory of
   the IDE contexts, and the home of the staged JVM. The IDE runs on that JVM too.
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs

@@ -35,8 +35,8 @@ use crate::worker::lease::{
 use crate::worker::worker::Lease;
 use avl_base::plain::release_command;
 use avl_base::{Refusal, Scope, journal};
-use avl_host_sys::Ctx;
 use avl_host_sys::guest::ensure_host_paths;
+use avl_host_sys::{Ctx, PsField};
 use avl_wire::progress::{Event, LeaseDisposition, Phase, RunStarted, VerdictLease};
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
@@ -139,12 +139,14 @@ impl Host {
         let run_id = avl_base::actor_id(&self.environment, command);
         let ctx = ctx.clone().with_run_id(run_id.as_str());
         let _journal = journal::attach(&self.settings.runtime_root, &self.reporter, &run_id);
+        let process_started_at = self.process_started_at(&ctx).await;
         self.reporter.publish(
             Event::RunStarted(RunStarted {
                 run_id: run_id.clone(),
                 command: command.to_owned(),
                 args,
                 checkout: self.environment.get("BUILD_WORKSPACE_DIRECTORY").map(str::to_owned),
+                process_started_at,
             }),
             None,
         );
@@ -152,6 +154,16 @@ impl Host {
         self.reporter
             .publish(Event::RunFinished(journal::run_finished(result.as_ref().err())), None);
         result
+    }
+
+    /// When this process started, in RFC 3339, or `None` when the process table does not say.
+    ///
+    /// The `vm.cmd` wrapper runs its `bazel run` in the process that it then replaces with the controller, so the start
+    /// of this process is the start of the wrapper. On Unix `ps` gives the local time to the second.
+    async fn process_started_at(&self, ctx: &Ctx) -> Option<String> {
+        let pid = i32::try_from(std::process::id()).ok()?;
+        let answer = self.runner.probe_process(ctx, pid, PsField::StartTime).await.ok()??;
+        rfc3339_of_process_start(&answer)
     }
 
     /// The leased run: see this module's header for the order and the two policies.
@@ -322,4 +334,17 @@ impl Host {
             still_held,
         }
     }
+}
+
+/// A start time that the process probe answered, as RFC 3339 in UTC, or `None` for an answer in no known form.
+///
+/// Windows answers RFC 3339 already. Unix answers the collapsed `lstart` of `ps`, such as `Sat Oct 10 15:41:37 2026`,
+/// in the local time zone of the host.
+pub(crate) fn rfc3339_of_process_start(answer: &str) -> Option<String> {
+    if let Ok(timestamp) = answer.parse::<jiff::Timestamp>() {
+        return Some(timestamp.to_string());
+    }
+    let local = jiff::civil::DateTime::strptime("%a %b %e %H:%M:%S %Y", answer).ok()?;
+    let zoned = local.to_zoned(jiff::tz::TimeZone::system()).ok()?;
+    Some(zoned.timestamp().to_string())
 }

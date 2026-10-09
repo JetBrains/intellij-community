@@ -11,7 +11,7 @@ use avl_host_sys::Ctx;
 use avl_host_sys::runfiles::{GuestRunfilesTree, GuestTreeInputs, HostRunfiles};
 use avl_report::digest::{self, FileDigestCache, JbrPolicy, PathDigest, ProductIdentityInput};
 use avl_wire::daemon::LABEL;
-use avl_wire::progress::Event;
+use avl_wire::progress::{Event, Phase};
 use avl_wire::report::Tree;
 use avl_wire::runtime::{self, RuntimeDescriptor, RuntimeFile};
 use serde::Serialize;
@@ -325,6 +325,9 @@ impl Host {
     ///
     /// The build fixes the bytes that a run pushes, so the checkout tree is read when the build starts, beside it,
     /// and adds no time to it.
+    ///
+    /// The work after the build is the phase [`Phase::Prepare`]. The build names the descriptor in its event file, so
+    /// the phase is the digest sweep and asks Bazel nothing.
     pub(crate) async fn prepare_build(&self, ctx: &Ctx, scope: &BuildScope) -> Result<PreparedBuild, Refusal> {
         let build_started = Instant::now();
         let (built, tree) = tokio::join!(
@@ -333,6 +336,20 @@ impl Host {
         );
         built?;
         self.reporter.publish(Event::Checkout(checkout_event(&tree)), None);
+        let phase = self.reporter.start_phase(Phase::Prepare, "hash what the host build produced", None);
+        let prepared = self.prepare_built(ctx, scope, build_started, tree).await;
+        phase.finish(&prepared);
+        prepared
+    }
+
+    /// The descriptor and the digest sweep of [`Host::prepare_build`], after its build.
+    async fn prepare_built(
+        &self,
+        ctx: &Ctx,
+        scope: &BuildScope,
+        build_started: Instant,
+        tree: Result<Tree, Refusal>,
+    ) -> Result<PreparedBuild, Refusal> {
         let descriptor_path = self.bazel.runtime_descriptor(ctx, LABEL).await?;
         let build = build_started.elapsed();
 

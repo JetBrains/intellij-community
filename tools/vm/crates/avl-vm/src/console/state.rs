@@ -23,8 +23,9 @@ mod tests;
 
 /// The order a run goes through its phases. Before the first phase starts, the dashboard shows each of them as
 /// pending, so a person sees the whole plan.
-const CANONICAL_PHASES: [Phase; 6] = [
+const CANONICAL_PHASES: [Phase; 7] = [
     Phase::HostBuild,
+    Phase::Prepare,
     Phase::Lease,
     Phase::DaemonStart,
     Phase::Iteration,
@@ -816,6 +817,7 @@ pub(crate) fn short_class(class_name: &str) -> &str {
 pub(crate) const fn phase_label(phase: Phase) -> &'static str {
     match phase {
         Phase::HostBuild => "host build",
+        Phase::Prepare => "prepare",
         Phase::Lease => "lease",
         Phase::DaemonStart => "daemon start",
         Phase::Iteration => "tests",

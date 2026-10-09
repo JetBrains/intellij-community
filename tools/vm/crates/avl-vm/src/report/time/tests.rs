@@ -61,6 +61,7 @@ impl FixtureRun<'_> {
                 command: "run".to_owned(),
                 args: vec!["AirSessionReadStateGeneratedFlowUiTest".to_owned()],
                 checkout: None,
+                process_started_at: None,
             }),
             at(0),
         )];
