@@ -81,24 +81,42 @@ Every item below was found by running something, and says so. Where a measuremen
   `cancel --thread-dump` path keeps its dump before the kill. The second half is `pool stop`, which should honour
   the receipt it is given instead of reading its own lease as another holder's.
 
-- **A Bazel command with other build options discards the analysis of the lane build.**
+- **A change of the client environment between two Bazel commands discards the analysis of the other.**
 
-  The lane build of a `vm.cmd run` ran 0 actions on 2026-10-10 and still analyzed 6,217 packages again on every run,
-  for 7.5 to 23 s. The first cause is gone. Until "setup vm controller: the lane build names its own outputs", the
-  controller asked `cquery` about the lane target right after the lane build. The next command that built another
-  target then deleted about 487,000 nodes, packages included. In `java.log` of that day, 26 of the 28 wrapper runs
-  with the lane config that ended with such a deletion came right after that `cquery`. Only 2 of 69 runs without it
-  did. A measurement at 19:06 UTC on the fixed controller showed no deletion after the wrapper, and a lane build that
-  loaded 0 packages and analyzed for 1.0 s. "setup build: the wrappers build their binary instead of running it"
-  named the `bazel run` as the trigger. That was wrong, and the change of that commit gains about 0.5 s only.
+  On 2026-10-10 the lane build of a `vm.cmd run` ran 0 actions and still analyzed about 6,200 packages again on every
+  run, for 7.5 to 23 s. Three earlier commits named a trigger inside the lane run, and `java.log` of the output base
+  refutes all three. Each deletion they counted came after a command with another `SHLVL`:
+  - "setup build: the wrappers build their binary instead of running it" named the `bazel run` of the wrapper.
+  - "docs vm: the lane analysis was lost to a cquery, and is lost to other build options" named the `cquery` of the
+    controller.
+  - "setup vm controller: the pinned tools come from a record, not from Bazel" named the container target of the
+    lane build. After it, each lane build of the series still deleted 430,467 to 510,951 nodes.
 
-  What is open is the second cause. The lane config adds two build options, `--build_runfile_links` and
-  `--define=air_lane_guest_os=linux`. A command without them discards the lane analysis. In the same measurement, a
-  `bt.cmd` test before the lane build made Bazel discard 1,049,066 nodes, and the lane build then loaded 6,546
-  packages and analyzed for 11.6 s. Every `bt.cmd` call, and every gate without the lane config, between two lane
-  runs costs that. The fix is a lane build with the default options: the guest OS from a build setting that a
-  transition sets on the lane targets, and no runfile links on the host, because the host reads the MANIFEST.
-  `java.log` of the output base names every command with its argv and timestamps, and it is the instrument here.
+  The other build options of the lane config were a real cause. "setup build: the lane build runs with the default
+  build options" removed them. The cause that remained is the client environment. `vm.cmd` runs its own Bazel
+  command one shell deeper than the controller, because bash lowers `SHLVL` when it hands over to the controller with
+  `exec`. So the wrapper build had `SHLVL=3` and the lane build `SHLVL=2`. The control runs of that day kept the
+  analysis only because they ran every command from one shell. Measured at 23:29 UTC, from one shell (A4):
+
+  | command | `SHLVL` | nodes deleted before | analysis |
+  |---|---|---|---|
+  | the wrapper build | 3 | 5,078 | 0.6 s |
+  | the lane build | 2 | 508,967 | 6.5 s, 6,216 packages |
+  | the wrapper build | 2 | 20,903 | 0.5 s |
+  | the lane build | 2 | 0 | 0 packages, 1.5 s in all |
+
+  `bt.cmd` has the same pair: its build of `bt` and the test that `bt` runs. Each of the 31 `bt.cmd` tests in
+  `java.log` of that day came after a build with another `SHLVL`, and their median analysis took 11.8 s.
+  `bazel.cmd` now starts Bazel without `SHLVL` and `_`. No rc option and no repository rule of this repository reads
+  either variable, and the action environment is strict, so no action and no cache key changes.
+
+  What is open: the reader of the client environment inside Bazel is not named, and only `SHLVL` is measured.
+  `java.log` still shows `SHLVL=0` for every command after the change, so a step after `env -u` writes it back. The
+  value is the same for every caller, so it costs no analysis. An IDE
+  terminal and a plain shell differ in more variables, such as `TERMINAL_EMULATOR` and `TERM_PROGRAM`. A switch
+  between them can still cost one analysis. The test is a pair of commands that differ in one other variable.
+  `java.log` of the output base names every command with its argv, its client environment and its timestamps, and it
+  is the instrument here.
 
 - **Each Bazel command checks every output file on disk.**
 
