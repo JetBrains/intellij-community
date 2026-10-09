@@ -269,6 +269,12 @@ internal class GitWorkingTreeDialog(
     component.renderer = refCellRenderer
     refComboBox = component
 
+    // Preselect the current branch if no explicit ref was provided.
+    if (existingRefWithWorkingTree.get() == null) {
+      val currentBranch = getCurrentRepository().currentBranch
+      existingRefWithWorkingTree.set(localRefsWithTrees.firstOrNull { it?.ref == currentBranch } ?: localRefsWithTrees.firstOrNull())
+    }
+
     // Set prototype to calculate proper size upfront and prevent resizing on first selection
     val longestRef = localRefsWithTrees.maxByOrNull { it?.ref?.name?.length ?: 0 }
     if (longestRef != null) {
