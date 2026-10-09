@@ -45,12 +45,22 @@ Fa:com.intellij.openapi.projectRoots.ProjectJdkTable
 - sf:TOPIC:com.intellij.util.messages.Topic
 - s:fireAdditionalLibraryChanged(com.intellij.openapi.project.Project,java.lang.String,java.util.Collection,java.util.Collection,java.lang.String):V
 - a:libraryRootsChanged(java.lang.String,java.util.Collection,java.util.Collection,java.lang.String):V
+*f:com.intellij.openapi.roots.EnumeratedEntry
+- java.lang.Record
+- <init>(com.intellij.openapi.roots.OrderEntry,com.intellij.openapi.roots.OrderRootType,Z,Z):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- includeProduction():Z
+- includeTests():Z
+- orderEntry():com.intellij.openapi.roots.OrderEntry
+- rootType():com.intellij.openapi.roots.OrderRootType
 *:com.intellij.openapi.roots.ExternalProjectSystemRegistry
 - sf:EXTERNAL_SYSTEM_ID_KEY:java.lang.String
 - a:getExternalSource(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ProjectModelExternalSource
 - s:getInstance():com.intellij.openapi.roots.ExternalProjectSystemRegistry
 - a:getSourceById(java.lang.String):com.intellij.openapi.roots.ProjectModelExternalSource
 com.intellij.openapi.roots.OrderRootsEnumerator
+- *a:getEnumeratedEntries():java.util.Collection
 - *a:getRootEntries():java.util.Collection
 com.intellij.openapi.roots.ProjectFileIndex
 - com.intellij.openapi.roots.FileIndex

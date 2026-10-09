@@ -32,6 +32,18 @@ public interface OrderRootsEnumerator {
   Collection<RootEntry> getRootEntries();
 
   /**
+   * Walks the order entries this enumerator reaches, in the same order {@link #getRootEntries()} would, but stops
+   * before resolving the roots of each: the result says which entries contribute and how their roots would be
+   * filtered, not what those roots are.
+   *
+   * @return the contributing entries, deduplicated, in enumeration order
+   * @see EnumeratedEntry
+   */
+  @ApiStatus.Experimental
+  @NotNull @Unmodifiable
+  Collection<EnumeratedEntry> getEnumeratedEntries();
+
+  /**
    * @return urls of all roots processed by this enumerator
    */
   String @NotNull [] getUrls();

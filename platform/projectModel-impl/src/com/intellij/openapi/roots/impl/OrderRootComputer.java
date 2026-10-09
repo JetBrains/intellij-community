@@ -50,44 +50,80 @@ abstract class OrderRootComputer<RootEntry> {
     myWithoutSelfModuleOutput = withoutSelfModuleOutput;
   }
 
-  @NotNull Collection<RootEntry> computeRoots() {
-    Collection<RootEntry> result = new LinkedHashSet<>();
-    myOrderEnumerator.forEach((orderEntry, customHandlers) -> {
-      OrderRootType type = myOrderEntryToRootType.apply(orderEntry);
+  /**
+   * How an entry reached by {@link #forEachContributingEntry} contributes: for a module entry its root model and the
+   * production/test filter, and for a library or an SDK entry a {@code null} root model and no filter at all.
+   */
+  interface EntryProcessor {
+    void process(@NotNull OrderEntry orderEntry,
+                 @NotNull OrderRootType rootType,
+                 @Nullable ModuleRootModel rootModel,
+                 boolean includeProduction,
+                 boolean includeTests,
+                 @NotNull List<? extends OrderEnumerationHandler> customHandlers);
+  }
+
+  /**
+   * The entry half of the root walk: which order entries the enumerator reaches and what each of them would
+   * contribute, without resolving a single root. Both {@link #computeRoots()} and
+   * {@link OrderRootsEnumeratorImpl#getEnumeratedEntries()} go through here, so the two cannot drift apart.
+   */
+  static void forEachContributingEntry(@NotNull OrderEnumeratorBase enumerator,
+                                       @NotNull Function<OrderEntry, OrderRootType> orderEntryToRootType,
+                                       @NotNull EntryProcessor processor) {
+    enumerator.forEach((orderEntry, customHandlers) -> {
+      OrderRootType type = orderEntryToRootType.apply(orderEntry);
 
       if (orderEntry instanceof ModuleSourceOrderEntry) {
         ModuleRootModel rootModel = ((ModuleSourceOrderEntry)orderEntry).getRootModel();
-        boolean includeTests = !myOrderEnumerator.isProductionOnly() &&
-                               (OrderEnumeratorBase.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers) || myOrderEnumerator.isRootModuleModel(rootModel));
-        collectModuleRoots(type, rootModel, result, true, includeTests, customHandlers, orderEntry);
+        boolean includeTests = !enumerator.isProductionOnly() &&
+                               (OrderEnumeratorBase.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers) ||
+                                enumerator.isRootModuleModel(rootModel));
+        processor.process(orderEntry, type, rootModel, true, includeTests, customHandlers);
       }
       else if (orderEntry instanceof ModuleOrderEntry moduleOrderEntry) {
         Module module = moduleOrderEntry.getModule();
         if (module != null) {
-          ModuleRootModel rootModel = myOrderEnumerator.getRootModel(module);
-          boolean productionOnTests = ((ModuleOrderEntry)orderEntry).isProductionOnTestDependency();
-          boolean includeTests = !myOrderEnumerator.isProductionOnly()
+          ModuleRootModel rootModel = enumerator.getRootModel(module);
+          boolean productionOnTests = moduleOrderEntry.isProductionOnTestDependency();
+          boolean includeTests = !enumerator.isProductionOnly()
                                  && OrderEnumeratorBase.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers)
                                  || productionOnTests;
-          collectModuleRoots(type, rootModel, result, !productionOnTests, includeTests, customHandlers, orderEntry);
+          processor.process(orderEntry, type, rootModel, !productionOnTests, includeTests, customHandlers);
         }
       }
       else if (orderEntry instanceof LibraryOrSdkOrderEntry) {
-        if (myCustomSdkRootProvider != null && orderEntry instanceof JdkOrderEntry) {
-          addAll(result, myCustomSdkRootProvider.fun((JdkOrderEntry)orderEntry), orderEntry);
-          return true;
-        }
-        if (addCustomRootsForLibraryOrSdk((LibraryOrSdkOrderEntry)orderEntry, type, result, customHandlers)) {
-          return true;
-        }
-        addAll(result, ((LibraryOrSdkOrderEntry)orderEntry).getRootFiles(type), orderEntry);
+        // the roots of a library or an SDK are not split into production and test ones, so nothing is filtered out
+        processor.process(orderEntry, type, null, true, true, customHandlers);
       }
       else {
         LOG.error("Unexpected implementation of OrderEntry: " + orderEntry.getClass().getName());
       }
       return true;
     });
-    return result;  }
+  }
+
+  @NotNull Collection<RootEntry> computeRoots() {
+    Collection<RootEntry> result = new LinkedHashSet<>();
+    forEachContributingEntry(myOrderEnumerator, myOrderEntryToRootType,
+                             (orderEntry, type, rootModel, includeProduction, includeTests, customHandlers) -> {
+      if (rootModel != null) {
+        collectModuleRoots(type, rootModel, result, includeProduction, includeTests, customHandlers, orderEntry);
+        return;
+      }
+
+      LibraryOrSdkOrderEntry libraryOrSdk = (LibraryOrSdkOrderEntry)orderEntry;
+      if (myCustomSdkRootProvider != null && orderEntry instanceof JdkOrderEntry) {
+        addAll(result, myCustomSdkRootProvider.fun((JdkOrderEntry)orderEntry), orderEntry);
+        return;
+      }
+      if (addCustomRootsForLibraryOrSdk(libraryOrSdk, type, result, customHandlers)) {
+        return;
+      }
+      addAll(result, libraryOrSdk.getRootFiles(type), orderEntry);
+    });
+    return result;
+  }
 
   private void collectModuleRoots(@NotNull OrderRootType type,
                                   ModuleRootModel rootModel,
