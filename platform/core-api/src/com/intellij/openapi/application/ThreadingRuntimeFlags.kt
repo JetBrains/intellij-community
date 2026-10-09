@@ -59,6 +59,14 @@ val useTrueSuspensionForWriteAction: Boolean = System.getProperty("idea.true.sus
 @get:ApiStatus.Internal
 val reportInvalidActionChains: Boolean = System.getProperty("ijpl.report.invalid.action.chains", "false").toBoolean()
 
+/**
+ * - `true` means that [edtWriteAction] reports an error if the lock element in the context does not correspond to the modality state.
+ *   Modal dialogs and modal progresses associate their modality states with their lock elements in `ModalityLockAssociation`.
+ * - `false` means that [edtWriteAction] does not do this check
+ */
+@get:ApiStatus.Internal
+val checkLockConsistencyWithModality: Boolean = System.getProperty("ide.check.lock.consistency.with.modality", "true").toBoolean()
+
 @get:ApiStatus.Internal
 val installSuvorovProgress: Boolean = System.getProperty("ide.install.suvorov.progress", "true").toBoolean()
 

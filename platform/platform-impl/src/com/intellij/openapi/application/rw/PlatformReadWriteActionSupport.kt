@@ -21,10 +21,12 @@ import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.checkLockConsistencyWithModality
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.defaultModalityImpl
 import com.intellij.openapi.application.impl.AsyncExecutionServiceImpl
 import com.intellij.openapi.application.impl.InternalThreading
+import com.intellij.openapi.application.impl.ModalityLockAssociation
 import com.intellij.openapi.application.lambdaToComputable
 import com.intellij.openapi.application.useBackgroundWriteAction
 import com.intellij.openapi.application.useBlockingEdtWriteActionImplementation
@@ -201,6 +203,12 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
     }
   }
 
+  private suspend fun <T> runEdtWriteActionInBlockingWay(action: () -> T): T {
+    return withContext(Dispatchers.EDT) {
+      @Suppress("ForbiddenInSuspectContextMethod")
+      ApplicationManager.getApplication().runWriteAction(lambdaToComputable<T>(action))
+    }
+  }
 
   private object DeniedSentinel
 
@@ -219,16 +227,19 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
    * hence we allow to stall writes if the UI thread wants to run a reading operation.
    */
   override suspend fun <T> runEdtWriteAction(action: () -> T): T {
-    if (useBlockingEdtWriteActionImplementation) {
-      @Suppress("ForbiddenInSuspectContextMethod")
-      return withContext(Dispatchers.EDT) {
-        ApplicationManager.getApplication().runWriteAction(lambdaToComputable<T>(action))
-      }
-    }
-    val lock = application.threadingSupport!!
-    val dispatcher = edtWriteActionAcquisitionDispatcher
     val outerContext = currentCoroutineContext()
     val outerModality = defaultModalityImpl()
+    if (useBlockingEdtWriteActionImplementation) {
+      return runEdtWriteActionInBlockingWay(action)
+    }
+    if (checkLockConsistencyWithModality && !ModalityLockAssociation.isCurrentLockConsistentWithModality(outerModality)) {
+      logger<PlatformReadWriteActionSupport>().error(
+        "The lock element in the context does not correspond to the modality state $outerModality. " +
+        "The modality state probably leaked from a modal computation without its lock element. Context: $outerContext")
+      return runEdtWriteActionInBlockingWay(action)
+    }
+    val lock = application.threadingSupport
+    val dispatcher = edtWriteActionAcquisitionDispatcher
     return withContext(dispatcher) {
       while (true) {
         val singleWriteActionResult = lock.runWriteActionWithExecutor<T, Result<T>>(
