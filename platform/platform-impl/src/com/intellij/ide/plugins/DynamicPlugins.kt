@@ -81,6 +81,52 @@ object DynamicPlugins {
   }
 
   /**
+   * @return non-null message explaining why unloading is not possible, null otherwise
+   */
+  @RequiresBackgroundThread(generateAssertion = false)
+  fun validateCanUnloadWithoutRestart(plugin: PluginMainDescriptor): String? {
+    val newState = computeNewPluginsState(emptyList(), listOf(plugin), pretendDisabled = listOf(plugin.pluginId))
+                   ?: return "Target state is missing essential plugins"
+    val resolvedPluginSet = newState.resolvedPluginSet
+    expectPluginsState(expectNotToLoad = listOf(plugin.pluginId)).validate(resolvedPluginSet)?.let {
+      return it
+    }
+    return runBlockingMaybeCancellable {
+      DynamicPluginsSupport.getInstance().validateDynamicReconfigurationPossible(newState)?.reason?.logMessage
+    }
+  }
+
+  /**
+   * @return non-null message explaining why loading is not possible, null otherwise
+   */
+  @RequiresBackgroundThread(generateAssertion = false)
+  fun validateCanLoadWithoutRestart(plugin: PluginMainDescriptor): String? {
+    val newState = computeNewPluginsState(listOf(plugin), listOf(), pretendEnabled = listOf(plugin.pluginId))
+                   ?: return "Target state is missing essential plugins"
+    val resolvedPluginSet = newState.resolvedPluginSet
+    expectPluginsState(expectToLoad = listOf(plugin.pluginId)).validate(resolvedPluginSet)?.let {
+      return it
+    }
+    return runBlockingMaybeCancellable {
+      DynamicPluginsSupport.getInstance().validateDynamicReconfigurationPossible(newState)?.reason?.logMessage
+    }
+  }
+
+  @RequiresBackgroundThread(generateAssertion = false)
+  fun checkCanUnloadWithoutRestart(plugin: PluginMainDescriptor): Boolean {
+    val reason = validateCanUnloadWithoutRestart(plugin)
+    reason?.let { LOG.info("${plugin.shortLogDescription} cannot be unloaded dynamically: $it") }
+    return reason == null
+  }
+
+  @RequiresBackgroundThread(generateAssertion = false)
+  fun checkCanLoadWithoutRestart(plugin: PluginMainDescriptor): Boolean {
+    val reason = validateCanLoadWithoutRestart(plugin)
+    reason?.let { LOG.info("${plugin.shortLogDescription} cannot be loaded dynamically: $it") }
+    return reason == null
+  }
+
+  /**
    * Tries to perform a dynamic reconfiguration of plugins: the currently known set of plugins is recalculated against
    * an actual [PluginInitializationContext] instance. If the produced [module graph][ResolvedPluginSet] is different from the currently used one,
    * an attempt is made to unload no longer needed module groups and load new ones.
@@ -260,52 +306,6 @@ object DynamicPlugins {
       val result = DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState)
       result is DynamicPluginsReconfigurationResult.Success
     }
-  }
-
-  /**
-   * @return non-null message explaining why unloading is not possible, null otherwise
-   */
-  @RequiresBackgroundThread(generateAssertion = false)
-  fun validateCanUnloadWithoutRestart(plugin: PluginMainDescriptor): String? {
-    val newState = computeNewPluginsState(emptyList(), listOf(plugin), pretendDisabled = listOf(plugin.pluginId))
-                   ?: return "Target state is missing essential plugins"
-    val resolvedPluginSet = newState.resolvedPluginSet
-    expectPluginsState(expectNotToLoad = listOf(plugin.pluginId)).validate(resolvedPluginSet)?.let {
-      return it
-    }
-    return runBlockingMaybeCancellable {
-      DynamicPluginsSupport.getInstance().validateDynamicReconfigurationPossible(newState)?.reason?.logMessage
-    }
-  }
-
-  /**
-   * @return non-null message explaining why loading is not possible, null otherwise
-   */
-  @RequiresBackgroundThread(generateAssertion = false)
-  fun validateCanLoadWithoutRestart(plugin: PluginMainDescriptor): String? {
-    val newState = computeNewPluginsState(listOf(plugin), listOf(), pretendEnabled = listOf(plugin.pluginId))
-                     ?: return "Target state is missing essential plugins"
-    val resolvedPluginSet = newState.resolvedPluginSet
-    expectPluginsState(expectToLoad = listOf(plugin.pluginId)).validate(resolvedPluginSet)?.let {
-      return it
-    }
-    return runBlockingMaybeCancellable {
-      DynamicPluginsSupport.getInstance().validateDynamicReconfigurationPossible(newState)?.reason?.logMessage
-    }
-  }
-
-  @RequiresBackgroundThread(generateAssertion = false)
-  fun checkCanUnloadWithoutRestart(plugin: PluginMainDescriptor): Boolean {
-    val reason = validateCanUnloadWithoutRestart(plugin)
-    reason?.let { LOG.info("${plugin.shortLogDescription} cannot be unloaded dynamically: $it") }
-    return reason == null
-  }
-
-  @RequiresBackgroundThread(generateAssertion = false)
-  fun checkCanLoadWithoutRestart(plugin: PluginMainDescriptor): Boolean {
-    val reason = validateCanLoadWithoutRestart(plugin)
-    reason?.let { LOG.info("${plugin.shortLogDescription} cannot be loaded dynamically: $it") }
-    return reason == null
   }
 
   /**
