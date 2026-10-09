@@ -33,6 +33,7 @@ class LexerTestFixture internal constructor(
   private val dirPath: String,
   /**
    * The name of the current test method without the `test` prefix and with a lowercase first letter.
+   * The name has no leading or trailing spaces. Each other space in the name becomes an underscore.
    */
   val testName: String,
   private val expectedFileExtension: String,
@@ -81,8 +82,10 @@ class LexerTestFixture internal constructor(
   /**
    * Returns the path of the test data file for the current test. [extension] starts with a dot.
    */
-  fun getPathToTestDataFile(extension: String): String =
-    IdeaTestExecutionPolicy.getHomePathWithPolicy() + "/" + dirPath + "/" + testName + extension
+  fun getPathToTestDataFile(extension: String): String {
+    val dir = if (Path(dirPath).isAbsolute) dirPath else IdeaTestExecutionPolicy.getHomePathWithPolicy() + "/" + dirPath
+    return "$dir/$testName$extension"
+  }
 
   /**
    * Returns the text of the file of [getPathToTestDataFile] for [fileExt], with normalized line separators.
@@ -260,7 +263,7 @@ class LexerTestFixture internal constructor(
 /**
  * Creates a [LexerTestFixture] that gets a new lexer from [lexerFactory] for each check.
  *
- * The test data files are in [dirPath]. [dirPath] is relative to the home path, as `LexerTestCase.getDirPath` is.
+ * The test data files are in [dirPath]. [dirPath] is absolute, or relative to the home path as `LexerTestCase.getDirPath` is.
  * [expectedFileExtension] is the extension of the expected file. It starts with a dot.
  * When [trimTestData] is `true`, [LexerTestFixture.loadTestDataFile] trims the text of the file.
  * When [checkRestart] is `false`, [LexerTestFixture.doTest] does not call [LexerTestFixture.checkCorrectRestart].
@@ -284,7 +287,7 @@ fun lexerFixture(
   val fixture = LexerTestFixture(
     lexerFactory = lexerFactory,
     dirPath = dirPath,
-    testName = PlatformTestUtil.getTestName(testMethod.name, true),
+    testName = PlatformTestUtil.getTestName(testMethod.name, true).trim().replace(' ', '_'),
     expectedFileExtension = expectedFileExtension,
     trimTestData = trimTestData,
     checkRestart = checkRestart,

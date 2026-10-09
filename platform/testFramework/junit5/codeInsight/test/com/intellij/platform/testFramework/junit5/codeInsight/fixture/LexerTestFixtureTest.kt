@@ -14,6 +14,7 @@ import org.junit.jupiter.api.assertThrows
 @TestFixtures
 class LexerTestFixtureTest {
   private val fixture by lexerFixture("lexer/data") { WordLexer() }
+  private val absoluteFixture by lexerFixture(IdeaTestExecutionPolicy.getHomePathWithPolicy() + "/lexer/data") { WordLexer() }
 
   @Test
   fun testInlineExpected() {
@@ -35,6 +36,16 @@ class LexerTestFixtureTest {
   fun testPathToTestDataFile() {
     assertEquals("pathToTestDataFile", fixture.testName)
     assertEquals(IdeaTestExecutionPolicy.getHomePathWithPolicy() + "/lexer/data/pathToTestDataFile.txt", fixture.getPathToTestDataFile(".txt"))
+  }
+
+  @Test
+  fun testAbsoluteDirPath() {
+    assertEquals(fixture.getPathToTestDataFile(".txt"), absoluteFixture.getPathToTestDataFile(".txt"))
+  }
+
+  @Test
+  fun `test name with spaces`() {
+    assertEquals("name_with_spaces", fixture.testName)
   }
 
   @Test
