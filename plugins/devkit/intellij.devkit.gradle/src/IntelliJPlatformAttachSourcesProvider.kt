@@ -9,6 +9,7 @@ import com.intellij.notification.BrowseNotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
@@ -42,13 +43,15 @@ import org.jetbrains.plugins.gradle.service.project.GradleNotification
 import org.jetbrains.plugins.gradle.util.GradleArtifactDownloader
 import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloaderErrorHandler
 import org.jetbrains.plugins.gradle.util.GradleModuleData
-import java.nio.file.FileSystems
-import java.nio.file.Files
+import java.io.IOException
 import java.nio.file.Path
 import java.util.Properties
+import java.util.zip.ZipFile
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
+
+private val LOG = logger<IntelliJPlatformAttachSourcesProvider>()
 
 internal enum class ApiSourceArchive(
   val id: String,
@@ -542,11 +545,16 @@ internal fun readLibraryCoordinates(jarRoot: VirtualFile?): List<String> {
  * because a Kotlin or Groovy source file can declare classes with other names, such as `FlowKt` in `Flow.kt`.
  */
 internal fun containsPackageSources(path: Path, classPath: String): Boolean {
-  val packagePath = classPath.substringBeforeLast('/', "")
-  return runCatching {
-    FileSystems.newFileSystem(path).use { zip ->
-      val directory = zip.getPath(packagePath.ifEmpty { "/" })
-      Files.isDirectory(directory) && Files.list(directory).use { files -> files.anyMatch(Files::isRegularFile) }
+  val packagePrefix = classPath.substringBeforeLast('/', "").let { if (it.isEmpty()) "" else "$it/" }
+  return try {
+    ZipFile(path.pathString).use { zip ->
+      zip.entries().asSequence().any { entry ->
+        !entry.isDirectory && entry.name.startsWith(packagePrefix) && '/' !in entry.name.substring(packagePrefix.length)
+      }
     }
-  }.getOrDefault(false)
+  }
+  catch (e: IOException) {
+    LOG.warn("Cannot read the sources archive $path", e)
+    false
+  }
 }
