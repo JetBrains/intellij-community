@@ -254,6 +254,10 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   which the `scenario` command opens.
   [@test] ../crates/avl-trace/src/protocol/tests.rs
 
+- `span` can carry `side`, `ide` or `host`, on an action or an assertion only. The recorder refuses a side on
+  a span of any other kind.
+  [@test] ../crates/avl-trace/src/protocol/tests.rs (`only_an_instruction_span_states_a_side`)
+
 - Only the lane knows two times: a call's start and its duration. The recorder stamps everything else when the
   line arrives. A transcript therefore holds no other timestamp.
   [@test] ../crates/avl-trace/src/protocol/tests.rs

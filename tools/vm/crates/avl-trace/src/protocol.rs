@@ -75,6 +75,24 @@ vocabulary! {
     }
 }
 
+impl SpanKind {
+    /// Whether a span of this kind runs one instruction of a generated program: an action or an assertion. Only such
+    /// a span states the [Side] of its id.
+    pub const fn is_instruction(self) -> bool {
+        matches!(self, Self::Action | Self::Assertion)
+    }
+}
+
+vocabulary! {
+    /// Where the id of an instruction runs, as the suite document of its scenario states it.
+    pub enum Side {
+        /// In the lane IDE, through the bridge.
+        Ide = "ide",
+        /// On the host of the lane, against a lane service or the IDE process.
+        Host = "host",
+    }
+}
+
 /// The stable key of a span, the `air.span.key` attribute: `<kind>:<id>`, where the id is the flow step, operation
 /// or instruction id, `before` or `after` for a reset, `ide` or `recycle` for a restart, the part for a relaunch,
 /// such as `quit/exit`, and the journey step's title for a journey.
@@ -260,6 +278,9 @@ pub struct SpanCommand {
     /// The sentence an assertion proves, only on a [SpanKind::Assertion].
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub expectation: Option<String>,
+    /// Where the id of the instruction runs, only on a span whose kind [SpanKind::is_instruction].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub side: Option<Side>,
 }
 
 /// Why a span failed: the throwable's class, its message, and its stack.
@@ -434,6 +455,13 @@ impl Command {
                 if span.expectation.is_some() && span.kind != SpanKind::Assertion {
                     refuse!(
                         "span {} is a {} and carries an expectation, which only an assertion has",
+                        span.id,
+                        span.kind
+                    );
+                }
+                if span.side.is_some() && !span.kind.is_instruction() {
+                    refuse!(
+                        "span {} is a {} and carries a side, which only an action or an assertion has",
                         span.id,
                         span.kind
                     );

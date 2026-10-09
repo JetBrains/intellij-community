@@ -5,13 +5,13 @@
 {"op":"call","span":0,"request":"SeedSessionPresets","startMs":1790158502330,"durationMs":184,"ok":true}
 {"op":"span","id":2,"kind":"setup","key":"setup:prepare-closed-project-session","title":"[setup] prepare-closed-project-session"}
 {"op":"span","id":3,"parent":2,"kind":"operation","key":"operation:prepare-closed-project-session","title":"[operation] prepare-closed-project-session"}
-{"op":"span","id":4,"parent":3,"kind":"action","key":"action:prepare-closed-project-session","title":"[action] prepare-closed-project-session"}
+{"op":"span","id":4,"parent":3,"kind":"action","key":"action:prepare-closed-project-session","title":"[action] prepare-closed-project-session","side":"ide"}
 {"op":"snap","span":4,"phase":"boundary"}
 {"op":"call","span":4,"request":"SeedClosedRecentProject","startMs":1790158502600,"durationMs":212,"ok":true}
 {"op":"call","span":4,"request":"SeedIdleSessions","startMs":1790158502815,"durationMs":431,"ok":true}
 {"op":"call","span":4,"request":"AwaitSessionTreeRow","startMs":1790158503750,"durationMs":640,"ok":true}
 {"op":"end","id":4,"status":"passed"}
-{"op":"span","id":5,"parent":3,"kind":"assertion","key":"assertion:prepare-closed-project-session","title":"[assertion] prepare-closed-project-session: One idle native session is listed under the row of a closed project in the all-projects scope.","expectation":"One idle native session is listed under the row of a closed project in the all-projects scope."}
+{"op":"span","id":5,"parent":3,"kind":"assertion","key":"assertion:prepare-closed-project-session","title":"[assertion] prepare-closed-project-session: One idle native session is listed under the row of a closed project in the all-projects scope.","expectation":"One idle native session is listed under the row of a closed project in the all-projects scope.","side":"ide"}
 {"op":"snap","span":5,"phase":"boundary"}
 {"op":"call","span":5,"request":"AwaitSessionTreeRow","startMs":1790158504470,"durationMs":38,"ok":true}
 {"op":"snap","span":5,"phase":"check"}
@@ -21,14 +21,14 @@
 {"op":"end","id":2,"status":"passed"}
 {"op":"span","id":6,"kind":"step","key":"step:rename-session-select","title":"[flow] rename-session-select"}
 {"op":"span","id":7,"parent":6,"kind":"operation","key":"operation:rename-session-select","title":"[operation] rename-session-select"}
-{"op":"span","id":8,"parent":7,"kind":"assertion","key":"assertion:rename-session-offered","title":"[assertion] rename-session-offered: Rename is enabled in the popup of the closed project session row.","expectation":"Rename is enabled in the popup of the closed project session row."}
+{"op":"span","id":8,"parent":7,"kind":"assertion","key":"assertion:rename-session-offered","title":"[assertion] rename-session-offered: Rename is enabled in the popup of the closed project session row.","expectation":"Rename is enabled in the popup of the closed project session row.","side":"ide"}
 {"op":"snap","span":8,"phase":"boundary"}
 {"op":"call","span":8,"request":"AwaitSessionTreeRow","startMs":1790158504700,"durationMs":22,"ok":true}
 {"op":"snap","span":8,"phase":"check"}
 {"op":"end","id":8,"status":"passed"}
-{"op":"span","id":9,"parent":7,"kind":"action","key":"action:rename-session-select","title":"[action] rename-session-select"}
+{"op":"span","id":9,"parent":7,"kind":"action","key":"action:rename-session-select","title":"[action] rename-session-select","side":"ide"}
 {"op":"snap","span":9,"phase":"boundary"}
 {"op":"call","span":9,"request":"AwaitSessionTreeRow","startMs":1790158505600,"durationMs":19,"ok":true}
 {"op":"end","id":9,"status":"passed"}
-{"op":"span","id":10,"parent":7,"kind":"assertion","key":"assertion:rename-session-dialog-shown","title":"[assertion] rename-session-dialog-shown: The Rename Session dialog shows.","expectation":"The Rename Session dialog shows."}
+{"op":"span","id":10,"parent":7,"kind":"assertion","key":"assertion:rename-session-dialog-shown","title":"[assertion] rename-session-dialog-shown: The Rename Session dialog shows.","expectation":"The Rename Session dialog shows.","side":"ide"}
 {"op":"snap","span":10,"phase":"boundary"}

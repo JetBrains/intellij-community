@@ -85,6 +85,14 @@ impl Session {
                 if span.kind == SpanKind::Assertion {
                     assert!(span.expectation.is_some(), "line {line} opens an assertion without its expectation");
                 }
+                if span.kind.is_instruction() {
+                    assert!(
+                        span.side.is_some(),
+                        "line {line} opens the {} {} without the side of its id",
+                        span.kind,
+                        span.key
+                    );
+                }
                 self.open.insert(span.id, span.clone());
                 self.stack.push(span.id);
             }
@@ -323,6 +331,14 @@ fn decode_command_refuses_what_the_contract_does_not_name() {
             "an expectation on an action",
             r#"{"op":"span","id":1,"kind":"action","key":"action:a","title":"a","expectation":"x"}"#,
         ),
+        (
+            "a side on a step",
+            r#"{"op":"span","id":1,"kind":"step","key":"step:a","title":"[flow] a","side":"ide"}"#,
+        ),
+        (
+            "an unknown side",
+            r#"{"op":"span","id":1,"kind":"action","key":"action:a","title":"a","side":"guest"}"#,
+        ),
         ("a failure without a why", r#"{"op":"end","id":3,"status":"failed"}"#),
         (
             "a pass with an error",
@@ -402,6 +418,7 @@ fn encode_command_puts_the_op_first_and_refuses_an_invalid_command() {
         key: String::new(),
         title: "t".to_owned(),
         expectation: None,
+        side: None,
     });
     assert!(encode_command(&invalid).is_err(), "an invalid span was encoded");
 
@@ -451,6 +468,7 @@ fn every_vocabulary_declares_its_own_words_only() {
     }
     assert!(refused::<Op>("pause"));
     assert!(refused::<SpanKind>("scenario"));
+    assert!(refused::<Side>("guest"));
     assert!(refused::<SnapshotPhase>("idle"));
     assert!(refused::<Status>("skipped"));
     assert!(refused::<Launcher>("gradle"));
@@ -483,6 +501,31 @@ fn labels_attachments_and_a_failed_done_are_canonical() {
     };
     assert_eq!((attach.span, attach.mime.as_str()), (2, "image/png"));
     assert!(!Op::Attach.is_acked(), "an attachment costs the scenario no time");
+}
+
+/// An action or an assertion states the side of its id. A span of any other kind states none.
+#[test]
+fn only_an_instruction_span_states_a_side() {
+    let lines = [
+        r#"{"op":"span","id":1,"kind":"action","key":"action:a","title":"[action] a","side":"ide"}"#,
+        r#"{"op":"span","id":2,"kind":"assertion","key":"assertion:b","title":"[assertion] b: it holds","expectation":"it holds","side":"host"}"#,
+    ];
+    let mut sides = Vec::new();
+    for line in lines {
+        let command = decode_command(line.as_bytes()).unwrap_or_else(|error| panic!("{line}: {error}"));
+        assert_eq!(String::from_utf8(encode_command(&command).unwrap()).unwrap(), line);
+        if let Command::Span(span) = command {
+            sides.push(span.side);
+        }
+    }
+    assert_eq!(sides, [Some(Side::Ide), Some(Side::Host)]);
+
+    for kind in SpanKind::ALL.iter().filter(|kind| !kind.is_instruction()) {
+        let line = format!(r#"{{"op":"span","id":1,"kind":"{kind}","key":"{kind}:a","title":"a","side":"ide"}}"#);
+        assert!(decode_command(line.as_bytes()).is_err(), "a {kind} span with a side was accepted");
+        let line = format!(r#"{{"op":"span","id":1,"kind":"{kind}","key":"{kind}:a","title":"a"}}"#);
+        assert!(decode_command(line.as_bytes()).is_ok(), "a {kind} span without a side was refused");
+    }
 }
 
 /// A relaunch is one `restart` span, `restart:ide` or `restart:recycle`, with the restart op inside it and a
