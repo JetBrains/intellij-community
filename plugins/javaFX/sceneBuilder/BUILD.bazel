@@ -30,6 +30,7 @@ jvm_library(
         "//platform/indexing-impl",
         "//platform/workspace/jps",
         "//platform/workspace/storage",
+        "//libraries/kotlinx/coroutines/core",
     ],
 )
 
@@ -59,6 +60,7 @@ jvm_library(
         "//platform/indexing-impl:indexing-impl_test_lib",
         "//platform/workspace/jps:jps_test_lib",
         "//platform/workspace/storage:storage_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.javaFX.sceneBuilder` end

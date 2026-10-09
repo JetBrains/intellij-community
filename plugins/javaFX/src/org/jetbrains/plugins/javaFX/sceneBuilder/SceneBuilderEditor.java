@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.jarRepository.JarRepositoryManager;
@@ -252,9 +252,26 @@ public final class SceneBuilderEditor extends UserDataHolderBase implements File
     try {
       ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveDocument(myDocument));
 
-      if (mySceneBuilder != null && mySceneBuilder.reload()) {
+      final SceneBuilder sceneBuilder = mySceneBuilder;
+      if (sceneBuilder != null) {
+        final ModalityState modalityState = ModalityState.defaultModalityState();
+        sceneBuilder.reload(() -> ApplicationManager.getApplication().invokeLater(() -> {
+          if (mySceneBuilder == sceneBuilder) {
+            recreateSceneBuilder();
+          }
+        }, modalityState));
         return;
       }
+    }
+    catch (Throwable e) {
+      showErrorPage(e);
+      return;
+    }
+    recreateSceneBuilder();
+  }
+
+  private void recreateSceneBuilder() {
+    try {
       removeSceneBuilder();
       mySceneBuilder = SceneBuilderUtil.create(new File(myFile.getPath()).toURI().toURL(), myProject, this);
 

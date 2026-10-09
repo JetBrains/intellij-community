@@ -1,11 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.sceneBuilder;// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
@@ -35,6 +33,9 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.Query;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
@@ -48,6 +49,7 @@ import com.oracle.javafx.scenebuilder.kit.fxom.FXOMProperty;
 import com.oracle.javafx.scenebuilder.kit.fxom.FXOMPropertyC;
 import com.oracle.javafx.scenebuilder.kit.library.LibraryItem;
 import com.oracle.javafx.scenebuilder.kit.metadata.util.PropertyName;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +91,15 @@ public class SceneBuilderImpl implements SceneBuilder {
   private Object mySelectionListener;
   private List<List<SelectionNode>> mySelectionState;
   protected final @NotNull ClassLoader myParentClassLoader;
+  private final Job myCreateJob;
+  private Job myReloadJob;
 
+  private record LibraryData(
+    @NotNull List<String> classpath,
+    @NotNull List<JavaFXPlatformHelper.CustomComponent> customComponents
+  ) {}
+
+  @RequiresEdt
   public SceneBuilderImpl(URL url, Project project, EditorCallback editorCallback, @NotNull ClassLoader loader) {
     myFileURL = url;
     myProject = project;
@@ -98,23 +108,16 @@ public class SceneBuilderImpl implements SceneBuilder {
 
     JavaFXPlatformHelper.disableImplicitExit();
 
-    final DumbService dumbService = DumbService.getInstance(myProject);
-    if (dumbService.isDumb()) {
-      dumbService.smartInvokeLater(() -> JavaFXPlatformHelper.javafxInvokeLater(this::create));
-    }
-    else {
-      JavaFXPlatformHelper.javafxInvokeLater(this::create);
-    }
+    myCreateJob = SceneBuilderBackgroundService.getInstance(project).computeInSmartMode(
+      this::collectLibraryData, data -> JavaFXPlatformHelper.javafxInvokeLater(() -> create(data))
+    );
   }
 
-  private void create() {
-    if (myProject.isDisposed()) {
-      return;
-    }
+  private void create(@NotNull LibraryData data) {
     Thread.currentThread().setUncaughtExceptionHandler(SceneBuilderImpl::logUncaughtException);
 
     myEditorController = new EditorController();
-    updateCustomLibrary();
+    updateCustomLibrary(data);
     JavaFXPlatformHelper.setupJFXPanel(myPanel, myEditorController);
 
     loadFile();
@@ -133,9 +136,9 @@ public class SceneBuilderImpl implements SceneBuilder {
     JavaFXPlatformHelper.addListeners(myEditorController, myListener, mySelectionListener);
   }
 
-  private void updateCustomLibrary() {
+  private void updateCustomLibrary(@NotNull LibraryData data) {
     final URLClassLoader oldClassLoader = myClassLoader;
-    myClassLoader = createProjectContentClassLoader(myProject, myParentClassLoader);
+    myClassLoader = createProjectContentClassLoader(data.classpath(), myParentClassLoader);
     JavaFXPlatformHelper.setDefaultClassLoader(myClassLoader);
 
     if (oldClassLoader != null) {
@@ -147,8 +150,7 @@ public class SceneBuilderImpl implements SceneBuilder {
       }
     }
 
-    final List<JavaFXPlatformHelper.CustomComponent> customComponents = DumbService.getInstance(myProject)
-      .runReadActionInSmartMode(this::collectCustomComponents);
+    final List<JavaFXPlatformHelper.CustomComponent> customComponents = data.customComponents();
 
     try {
       final JavaFXPlatformHelper.CustomLibrary customLibrary = new JavaFXPlatformHelper.CustomLibrary(myClassLoader, customComponents);
@@ -160,7 +162,18 @@ public class SceneBuilderImpl implements SceneBuilder {
     }
   }
 
-  private List<JavaFXPlatformHelper.CustomComponent> collectCustomComponents() {
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  private @NotNull LibraryData collectLibraryData() {
+    final List<String> classpath = OrderEnumerator.orderEntries(myProject)
+      .productionOnly().withoutSdk().recursively()
+      .getPathsList().getPathList();
+    return new LibraryData(classpath, collectCustomComponents());
+  }
+
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  private @NotNull List<JavaFXPlatformHelper.CustomComponent> collectCustomComponents() {
     if (myProject.isDisposed()) {
       return Collections.emptyList();
     }
@@ -195,6 +208,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     return prepareCustomComponents(psiClasses);
   }
 
+  @RequiresReadLock
   private @NotNull List<JavaFXPlatformHelper.CustomComponent> prepareCustomComponents(Collection<PsiClass> psiClasses) {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
     final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
@@ -222,6 +236,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     return customComponents;
   }
 
+  @RequiresReadLock
   private @Nullable String getComponentModuleName(@NotNull PsiClass psiClass) {
     final VirtualFile vFile = PsiUtilCore.getVirtualFile(psiClass);
     if (vFile == null) return null;
@@ -245,25 +260,27 @@ public class SceneBuilderImpl implements SceneBuilder {
   }
 
   @Override
-  public boolean reload() {
-    if (myCustomComponents == null) return false;
+  public void reload(@NotNull Runnable onLibraryChanged) {
+    if (myReloadJob != null) myReloadJob.cancel(null);
 
-    final Collection<JavaFXPlatformHelper.CustomComponent> customComponents = DumbService.getInstance(myProject)
-      .runReadActionInSmartMode(this::collectCustomComponents);
-    if (!new HashSet<>(myCustomComponents).equals(new HashSet<>(customComponents))) {
-      return false;
-    }
-
-    JavaFXPlatformHelper.javafxInvokeLater(() -> {
-      if (myEditorController != null) {
-        loadFile();
-      }
-    });
-    return true;
+    myReloadJob = SceneBuilderBackgroundService.getInstance(myProject).computeInSmartMode(
+      this::collectCustomComponents,
+      customComponents -> JavaFXPlatformHelper.javafxInvokeLater(() -> {
+        if (myEditorController == null) return;
+        if (myCustomComponents == null || !new HashSet<>(myCustomComponents).equals(new HashSet<>(customComponents))) {
+          onLibraryChanged.run();
+        }
+        else {
+          loadFile();
+        }
+      })
+    );
   }
 
   @Override
   public void close() {
+    myCreateJob.cancel(null);
+    if (myReloadJob != null) myReloadJob.cancel(null);
     JavaFXPlatformHelper.javafxInvokeLater(this::closeImpl);
   }
 
@@ -374,11 +391,8 @@ public class SceneBuilderImpl implements SceneBuilder {
     return true;
   }
 
-  private static @NotNull URLClassLoader createProjectContentClassLoader(Project project, @NotNull ClassLoader parentClassLoader) {
-    final List<String> pathList = ReadAction.compute(() ->
-                                                       OrderEnumerator.orderEntries(project).productionOnly().withoutSdk().recursively()
-                                                         .getPathsList().getPathList());
-
+  private static @NotNull URLClassLoader createProjectContentClassLoader(@NotNull List<String> pathList,
+                                                                        @NotNull ClassLoader parentClassLoader) {
     final List<URL> classpathUrls = new ArrayList<>();
     for (String path : pathList) {
       try {
