@@ -88,7 +88,7 @@ class XToggleLineBreakpointActionHandler @JvmOverloads constructor(
           project, position, !isFromGutterClick, position.editor, isAltClick || myTemporary,
           !isFromGutterClick, canRemove, mode.isLogging, logExpression ?: selectedText, mode.placement
         ).thenAccept { breakpoint ->
-          if (breakpoint != null && mode.showPopup && balloonPointX != null && editor != null) {
+          if (breakpoint != null && breakpoint.getPlacement() == XLineBreakpointVerticalPlacement.ON_LINE && mode.showPopup && balloonPointX != null && editor != null) {
             runInEdt {
               // edit breakpoint
               val logicalPosition = LogicalPosition(breakpoint.getLine() + 1, 0)
