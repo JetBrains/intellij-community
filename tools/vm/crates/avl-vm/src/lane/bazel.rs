@@ -7,7 +7,6 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, LazyLock};
 use std::time::Duration;
 
-use crate::worker::pin::PinnedTool;
 use crate::worker::worker::GuestBootBuilder;
 use async_trait::async_trait;
 use avl_base::RefusalExt;
@@ -97,11 +96,11 @@ pub(crate) fn host_bazel_argv(settings: &Config, command: &str, args: &[String])
         .collect())
 }
 
-/// Everything one lane build produces: the label the caller asked for, then [`guest_boot_targets`], then the pinned
-/// tools of the pool ([`PinnedTool::of_pool`]).
+/// Everything one lane build produces: the label the caller asked for, then [`guest_boot_targets`].
 ///
-/// The pinned tools are fetched files and run no action. They are here so that the build's event file names their
-/// paths, and the gate of the iteration that follows asks Bazel nothing ([`Bazel::built_files`]).
+/// The pinned tools are not here. A lane build that configured the pinned Apple CLI started with a deletion of about
+/// 500,000 Skyframe nodes and analyzed the whole graph again, so the tools come from their record
+/// ([`crate::worker::pin::PINNED_TOOLS_RECORD`]).
 ///
 /// The agent is built here and nowhere else, and that is the whole answer to a stale agent driving a lane. The
 /// guest-agent resolution deliberately never builds - it runs under the worker's lease-operation lock, where a build
@@ -122,7 +121,6 @@ pub(crate) fn host_bazel_argv(settings: &Config, command: &str, args: &[String])
 pub(crate) fn host_build_targets(settings: &Config, label: &str) -> Vec<String> {
     std::iter::once(label.to_owned())
         .chain(guest_boot_targets(settings.guest_os, settings.guest_arch))
-        .chain(PinnedTool::of_pool(settings).into_iter().map(|tool| tool.label(settings)))
         .collect()
 }
 
@@ -150,8 +148,8 @@ pub(crate) fn guest_boot_targets(guest_os: GuestOs, guest_arch: GuestArch) -> Ve
 /// `flake` fan out over workers of one guest, and a memo published after the call would let N tasks each pay the
 /// 7.3 s the pair costs. Two Bazel invocations of one server serialize behind its own lock anyway.
 ///
-/// After a build of this process, the descriptor memo and the pinned tools ask Bazel nothing. The event file of the
-/// build names the descriptor and the file of each pinned tool ([`Bazel::built_files`]).
+/// After a build of this process, the descriptor memo asks Bazel nothing. The event file of the build names the
+/// descriptor ([`Bazel::built_files`]).
 pub(crate) struct Bazel {
     settings: Arc<Config>,
     runner: Runner,
@@ -413,6 +411,12 @@ impl Bazel {
         Ok(descriptor)
     }
 
+    /// The host paths of the files that the event file of the last build of this process named as its top-level
+    /// outputs, or none when this process built nothing.
+    pub(crate) fn built_files(&self) -> Vec<PathBuf> {
+        avl_base::sync::lock(&self.built).clone()
+    }
+
     fn record_built(&self, files: Vec<PathBuf>) {
         *avl_base::sync::lock(&self.built) = files;
     }
@@ -450,10 +454,6 @@ impl BazelHost for Bazel {
             })
             .await
             .cloned()
-    }
-
-    fn built_files(&self) -> Vec<PathBuf> {
-        avl_base::sync::lock(&self.built).clone()
     }
 }
 

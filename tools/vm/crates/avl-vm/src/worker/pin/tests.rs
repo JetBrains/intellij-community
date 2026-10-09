@@ -1,5 +1,5 @@
 use avl_base::GuestOs;
-use avl_host_testkit::HostPool;
+use avl_host_testkit::{HostPool, PinnedBazel};
 use pretty_assertions::assert_eq;
 
 use super::*;
@@ -79,4 +79,86 @@ async fn a_pool_without_bazel_resolves_nothing() {
         .build();
     let pinned = PinnedTools::new(Arc::clone(&pool.settings), pool.runner(), None);
     assert_eq!(pinned.path(&Ctx::background(), PinnedTool::Tart).await.unwrap(), None);
+}
+
+/// Writes the two `.MODULE.bazel` files of a Lima pool into the checkout of `pool`, so the record can key on them.
+fn write_lima_pins(pool: &HostPool, docker: &str) {
+    let directory = pool.root().join("community/tools/vm");
+    std::fs::create_dir_all(&directory).unwrap();
+    std::fs::write(directory.join("docker.MODULE.bazel"), docker).unwrap();
+    std::fs::write(directory.join("lima.MODULE.bazel"), "lima pin\n").unwrap();
+}
+
+/// The resolution of every tool of `pool` by a fresh resolver over `bazel`, as the next process makes it, and what that
+/// Bazel was asked. The caller keeps `bazel`, because its files are the files that a record names.
+async fn resolve_as_a_new_process(pool: &HostPool, bazel: &Arc<PinnedBazel>) -> (Vec<PathBuf>, Vec<String>) {
+    let before = bazel.asked().len();
+    let host: Arc<dyn BazelHost> = bazel.clone();
+    let pinned = PinnedTools::new(Arc::clone(&pool.settings), pool.runner(), Some(host));
+    let mut paths = Vec::new();
+    for tool in PinnedTool::of_pool(&pool.settings) {
+        paths.push(pinned.path(&Ctx::background(), tool).await.unwrap().unwrap());
+    }
+    (paths, bazel.asked()[before..].to_vec())
+}
+
+// A process records what it resolved, so the next one asks Bazel nothing. On 2026-10-10 each `cquery` of a pinned tool
+// started with a deletion of about 510,000 Skyframe nodes, and the next lane build analyzed the whole graph again.
+#[tokio::test]
+async fn a_recorded_path_answers_the_next_process_without_a_query() {
+    let pool = HostPool::builder(Backend::Docker, GuestOs::Linux, MINIMUM_VERSION)
+        .with_lima_engine()
+        .build();
+    write_lima_pins(&pool, "docker pin\n");
+    let bazel = Arc::new(pool.pinned_bazel());
+
+    let (first, asked) = resolve_as_a_new_process(&pool, &bazel).await;
+    assert_eq!(asked, ["cquery", "info"]);
+    let (second, asked) = resolve_as_a_new_process(&pool, &bazel).await;
+    assert_eq!(second, first);
+    assert_eq!(asked, Vec::<String>::new(), "the record did not answer");
+}
+
+// A bump of a pin changes the digest of its `.MODULE.bazel` file, so the tool is resolved again.
+#[tokio::test]
+async fn a_changed_pin_resolves_again() {
+    let pool = HostPool::builder(Backend::Docker, GuestOs::Linux, MINIMUM_VERSION)
+        .with_lima_engine()
+        .build();
+    write_lima_pins(&pool, "docker pin\n");
+    let bazel = Arc::new(pool.pinned_bazel());
+    resolve_as_a_new_process(&pool, &bazel).await;
+
+    write_lima_pins(&pool, "docker pin, bumped\n");
+    let (_, asked) = resolve_as_a_new_process(&pool, &bazel).await;
+    assert_eq!(asked, ["cquery", "info"]);
+}
+
+// A recorded file that is gone, such as one of a removed output base, is no answer.
+#[tokio::test]
+async fn a_recorded_file_that_is_gone_resolves_again() {
+    let pool = HostPool::builder(Backend::Docker, GuestOs::Linux, MINIMUM_VERSION)
+        .with_lima_engine()
+        .build();
+    write_lima_pins(&pool, "docker pin\n");
+    let bazel = Arc::new(pool.pinned_bazel());
+    resolve_as_a_new_process(&pool, &bazel).await;
+    let record = pool.settings.runtime_root.join(PINNED_TOOLS_RECORD);
+    let text = std::fs::read_to_string(&record).unwrap();
+    let mut tools: Vec<serde_json::Value> = serde_json::from_str(&text).unwrap();
+    tools[0]["path"] = serde_json::json!(pool.root().join("gone").to_string_lossy());
+    std::fs::write(&record, serde_json::to_vec(&tools).unwrap()).unwrap();
+
+    let (_, asked) = resolve_as_a_new_process(&pool, &bazel).await;
+    assert_eq!(asked, ["cquery", "info"]);
+}
+
+// A checkout without the `.MODULE.bazel` files has no key, so it queries every time and records nothing.
+#[tokio::test]
+async fn a_checkout_without_the_pins_records_nothing() {
+    let pool = HostPool::builder(Backend::Docker, GuestOs::Linux, MINIMUM_VERSION)
+        .with_lima_engine()
+        .build();
+    resolve_as_a_new_process(&pool, &Arc::new(pool.pinned_bazel())).await;
+    assert!(!pool.settings.runtime_root.join(PINNED_TOOLS_RECORD).exists());
 }

@@ -348,12 +348,19 @@ The rest of the scenario matrix is in
 - The daemon environment is part of the launch identity. A changed value restarts the daemon.
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs
 
-- The lane build also builds the pinned tools of the pool. Its event file names the runtime descriptor and the file of
-  each pinned tool. So the controller asks Bazel nothing between the build and the decision about the IDE. A build
-  whose event file names no descriptor makes the controller ask Bazel, and a note says so.
+- The event file of the lane build names the runtime descriptor. So the controller asks Bazel nothing between the
+  build and the decision about the IDE. A build whose event file names no descriptor makes the controller ask Bazel,
+  and a note says so. The lane build builds no pinned tool.
   [@test] ../crates/avl-vm/src/lane/bazel/tests.rs (`a_lane_build_names_the_descriptor_and_no_query_follows`)
   [@test] ../crates/avl-vm/src/lane/bazel/tests.rs (`a_failed_build_forgets_the_files_of_the_build_before_it`)
-  [@test] ../crates/avl-host-sys/src/guest/external/tests.rs (`a_build_that_named_every_file_spares_the_query`)
+  [@test] ../crates/avl-vm/src/lane/bazel/tests.rs (`the_lane_build_builds_this_guests_agent`)
+
+- The controller records the path of each pinned tool in its runtime root. The record is valid for the digest of the
+  file that pins the tool and for the Bazel user root. A later process reads the record and asks Bazel nothing. A
+  changed pin, or a recorded file that is gone, resolves the tool again with one query.
+  [@test] ../crates/avl-vm/src/worker/pin/tests.rs (`a_recorded_path_answers_the_next_process_without_a_query`)
+  [@test] ../crates/avl-vm/src/worker/pin/tests.rs (`a_changed_pin_resolves_again`)
+  [@test] ../crates/avl-vm/src/worker/pin/tests.rs (`a_recorded_file_that_is_gone_resolves_again`)
 
 - The journal has the phase `prepare`, from the end of the host build to the end of the digest sweep. Its progress
   names the time of the descriptor lookup, the cache open, the digests, the cache save and the runfiles tree. The

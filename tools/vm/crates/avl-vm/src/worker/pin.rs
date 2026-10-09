@@ -3,17 +3,18 @@
 //! `container.MODULE.bazel` declare.
 
 use std::fmt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 #[cfg(any(unix, test))]
 use std::sync::LazyLock;
 
 use avl_base::config::{CONTAINER_LABEL, TART_LABEL, docker_buildx_label, docker_cli_label, limactl_label};
-use avl_base::{Backend, Config, Refusal, RefusalExt};
+use avl_base::{Backend, Config, Exit, OrRefuse, Refusal, RefusalExt};
 use avl_host_sys::guest::{BazelHost, ensure_host_paths, external_files};
 use avl_host_sys::{Ctx, Runner};
 #[cfg(any(unix, test))]
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use tokio::sync::OnceCell;
 
 // The suite drives Tart pools and the fake `limactl`, a shell script, and a Windows host has the Docker backend only.
@@ -40,6 +41,16 @@ pub(crate) enum PinnedTool {
 
 impl PinnedTool {
     /// The label of the tool for the host of `settings`.
+    /// The file below `tools/vm` of the community module that pins the tool.
+    const fn module_file(self) -> &'static str {
+        match self {
+            Self::Tart => "tart.MODULE.bazel",
+            Self::DockerCli | Self::DockerBuildx => "docker.MODULE.bazel",
+            Self::Limactl => "lima.MODULE.bazel",
+            Self::Container => "container.MODULE.bazel",
+        }
+    }
+
     pub(crate) fn label(self, settings: &Config) -> String {
         match self {
             Self::Tart => TART_LABEL.to_owned(),
@@ -86,9 +97,14 @@ impl fmt::Display for PinnedTool {
 
 /// The host paths of the pinned tools of one pool: one resolver for Tart, Docker, Lima and Apple `container`.
 ///
-/// The first request resolves every tool of [`PinnedTool::of_pool`] and the one it asks for, with one `cquery` and one
-/// `info output_base` ([`external_files`]). A later request asks Bazel nothing. So the first command of a Docker pool
-/// on the Lima engine pays one analysis for its CLI, its plugin and its `limactl`, and not three.
+/// The first request resolves every tool of [`PinnedTool::of_pool`] and the one it asks for. A later request asks
+/// Bazel nothing. The record of an earlier process answers first ([`PINNED_TOOLS_RECORD`]). On a miss, one `cquery`
+/// and one `info output_base` resolve every tool at once ([`external_files`]), and the record is written again. So the
+/// first command of a Docker pool on the Lima engine pays one analysis for its CLI, its plugin and its `limactl`, and
+/// not three.
+///
+/// On 2026-10-10 each `cquery` of the pinned Apple CLI started with a deletion of about 510,000 Skyframe nodes, and the
+/// next lane build analyzed the whole graph again.
 pub(crate) struct PinnedTools {
     settings: Arc<Config>,
     runner: Runner,
@@ -124,8 +140,16 @@ impl PinnedTools {
                 }
                 // The query runs in the host checkout, and `status` passes the gate before it resolves that path.
                 ensure_host_paths(ctx, &self.runner, &self.settings).await?;
+                let keys: Option<Vec<PinnedToolKey>> = tools.iter().map(|tool| PinnedToolKey::of(&self.settings, *tool)).collect();
+                let record = self.settings.runtime_root.join(PINNED_TOOLS_RECORD);
+                if let Some(paths) = keys.as_deref().and_then(|keys| recorded_paths(&record, keys)) {
+                    return Ok(tools.into_iter().zip(paths).collect());
+                }
                 let labels: Vec<String> = tools.iter().map(|tool| tool.label(&self.settings)).collect();
                 let files = external_files(ctx, bazel.as_ref(), &labels).await?;
+                if let Some(keys) = keys {
+                    write_record(&record, keys, &files)?;
+                }
                 Ok::<_, Refusal>(tools.into_iter().zip(files).collect())
             })
             .await?;
@@ -136,6 +160,75 @@ impl PinnedTools {
             ))),
         }
     }
+}
+
+/// The file in the runtime root that records the resolved path of each pinned tool, for the next process.
+pub(crate) const PINNED_TOOLS_RECORD: &str = "pinned-tools.json";
+
+/// What a recorded path is valid for: the label, the digest of the `.MODULE.bazel` file that pins the tool, and the
+/// Bazel user root. A changed pin changes the digest, so a bump resolves the tool again.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PinnedToolKey {
+    label: String,
+    module_sha256: String,
+    bazel_user_root: String,
+}
+
+impl PinnedToolKey {
+    /// The key of `tool` in this checkout, or `None` when its `.MODULE.bazel` file is not there: then only a query
+    /// answers.
+    fn of(settings: &Config, tool: PinnedTool) -> Option<Self> {
+        let repo = settings.host_repo().ok()?;
+        let module = [repo.join("community/tools/vm"), repo.join("tools/vm")]
+            .into_iter()
+            .map(|directory| directory.join(tool.module_file()))
+            .find(|path| path.is_file())?;
+        Some(Self {
+            label: tool.label(settings),
+            module_sha256: avl_report::digest::sha256_file(&module).ok()?,
+            bazel_user_root: settings.host_bazel_user_root().ok()?.to_string_lossy().into_owned(),
+        })
+    }
+}
+
+/// One recorded tool: its key and the host path that Bazel answered for it.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RecordedTool {
+    #[serde(flatten)]
+    key: PinnedToolKey,
+    path: PathBuf,
+}
+
+/// The paths that `record` holds for `keys`, in their order, or `None` unless every key has a recorded file that is
+/// still there. An unreadable record is a miss, never an error.
+fn recorded_paths(record: &Path, keys: &[PinnedToolKey]) -> Option<Vec<PathBuf>> {
+    let recorded: Vec<RecordedTool> = serde_json::from_slice(&std::fs::read(record).ok()?).ok()?;
+    keys.iter()
+        .map(|key| {
+            recorded
+                .iter()
+                .find(|tool| tool.key == *key && tool.path.is_file())
+                .map(|tool| tool.path.clone())
+        })
+        .collect()
+}
+
+/// Writes the record of `keys` and `paths`, atomically and private.
+fn write_record(record: &Path, keys: Vec<PinnedToolKey>, paths: &[PathBuf]) -> Result<(), Refusal> {
+    let tools: Vec<RecordedTool> = keys
+        .into_iter()
+        .zip(paths)
+        .map(|(key, path)| RecordedTool { key, path: path.clone() })
+        .collect();
+    let encoded = serde_json::to_vec_pretty(&tools).or_refuse("state_write_failed", Exit::FAILURE, || {
+        format!("cannot encode {}", record.display())
+    })?;
+    if let Some(parent) = record.parent() {
+        avl_base::fs::create_private_dir(parent)?;
+    }
+    avl_base::fs::write_atomically(record, &encoded, 0o600)
 }
 
 /// `major.minor.patch` from the first version-shaped token of a text, such as `tart --version` or a pin, or `None`.

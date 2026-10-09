@@ -1,6 +1,6 @@
 //! Finding a downloaded external file on the host.
 
-use std::path::{Component, Path, PathBuf};
+use std::path::PathBuf;
 
 use avl_base::config::label_target;
 use avl_base::{Exit, Refusal};
@@ -38,13 +38,7 @@ pub async fn external_file(ctx: &Ctx, bazel: &dyn BazelHost, label: &str) -> Res
 /// One query names every target, so a caller that needs several pinned tools pays one analysis and not one per tool.
 /// `cquery` prints the files in an order of its own, so each line is matched to its label by the repository
 /// ([`files_by_label`]).
-///
-/// A build of this process that named one file in the repository of each label answers without a query
-/// ([`built_files_by_label`]). The lane build builds the pinned tools of its pool for that reason.
 pub async fn external_files(ctx: &Ctx, bazel: &dyn BazelHost, labels: &[String]) -> Result<Vec<PathBuf>, Refusal> {
-    if let Some(built) = built_files_by_label(labels, &bazel.built_files()) {
-        return Ok(built);
-    }
     let stdout = bazel.query(ctx, "cquery", &cquery_output_file(&labels.join(" + "))).await?;
     let relative = files_by_label(labels, &stdout)?;
     let base = output_base(ctx, bazel).await?;
@@ -81,36 +75,6 @@ fn files_by_label<'a>(labels: &[String], stdout: &'a str) -> Result<Vec<&'a str>
             }
         })
         .collect()
-}
-
-/// The built file of each label, in the order of `labels`, or `None` unless the build named exactly one file in the
-/// repository of every label. The repository rule is the one of [`files_by_label`], applied to the path component
-/// after the last `external`.
-fn built_files_by_label(labels: &[String], built: &[PathBuf]) -> Option<Vec<PathBuf>> {
-    labels
-        .iter()
-        .map(|label| {
-            let repository = label_target(label);
-            let mut matching = built.iter().filter(|path| external_repository(path) == Some(repository));
-            match (matching.next(), matching.next()) {
-                (Some(path), None) => Some(path.clone()),
-                _ => None,
-            }
-        })
-        .collect()
-}
-
-/// The last `+` or `~` segment of the canonical repository name that follows the last `external` component of `path`.
-fn external_repository(path: &Path) -> Option<&str> {
-    let components: Vec<&str> = path
-        .components()
-        .filter_map(|component| match component {
-            Component::Normal(name) => name.to_str(),
-            _ => None,
-        })
-        .collect();
-    let external = components.iter().rposition(|name| *name == "external")?;
-    components.get(external + 1)?.rsplit(['+', '~']).next()
 }
 
 /// The output base of the host Bazel, which roots the `external/` path that `cquery` prints.

@@ -42,15 +42,6 @@ pub trait BazelHost: Send + Sync {
     /// a running controller, because a different output base means a different server than the one this process
     /// has been talking to.
     async fn execution_root(&self, ctx: &Ctx) -> Result<PathBuf, Refusal>;
-
-    /// The host paths of the files that the last build of this process named as its top-level outputs, or none when
-    /// this process built nothing.
-    ///
-    /// The build's own event file names them, so a caller that finds its answer here asks Bazel nothing. A `cquery`
-    /// after a build costs 3 to 7 s on this checkout, most of it a check of every output on disk.
-    fn built_files(&self) -> Vec<PathBuf> {
-        Vec::new()
-    }
 }
 
 /// The target that builds the guest agent for one guest.

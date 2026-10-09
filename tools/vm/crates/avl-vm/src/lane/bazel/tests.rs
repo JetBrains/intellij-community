@@ -249,9 +249,9 @@ async fn the_lane_build_builds_this_guests_agent() {
         let fake = FakeBazelCmd::new(guest_os);
         let mut settings = fake.settings(guest_os);
         settings.guest_arch = guest_arch;
-        // The guest's Node comes from its image, so no build stages one. The pinned tools of the pool follow.
-        let mut wanted = words([DAEMON_LABEL, agent]);
-        wanted.extend(PinnedTool::of_pool(&settings).into_iter().map(|tool| tool.label(&settings)));
+        // The guest's Node comes from its image, so no build stages one. No pinned tool is built: see
+        // `host_build_targets`.
+        let wanted = words([DAEMON_LABEL, agent]);
         assert_eq!(host_build_targets(&settings, DAEMON_LABEL), wanted);
 
         let log = fake.runtime_root.join("build.log");
@@ -284,10 +284,7 @@ async fn a_boot_builds_the_agent_and_no_lane() {
         let boot = guest_boot_targets(guest_os, guest_arch);
         let mut lane = words([DAEMON_LABEL]);
         lane.extend(boot.iter().cloned());
-        assert!(
-            host_build_targets(&settings, DAEMON_LABEL).starts_with(&lane),
-            "{guest_os:?} {guest_arch}"
-        );
+        assert_eq!(host_build_targets(&settings, DAEMON_LABEL), lane);
         assert!(!boot.iter().any(|label| label == DAEMON_LABEL));
         assert_eq!(boot, [agent_label(guest_os, guest_arch)], "{guest_os:?} {guest_arch}");
 
