@@ -183,7 +183,9 @@ public class DurableMapWithKeyCatalogOverBlocksTest {
       var lookup = openLookup(blockCatalog);
       lookup.markDirty();
       var values = RecordStorageOverBlocks.open(
-        blockCatalog, VALUES, /*appendOnly: */ true, DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH
+        blockCatalog.appendableRecordBlocks(VALUES),
+        /*appendOnly: */ true,
+        DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH
       );
       var payload = serializedString("new");
       values.append(ValueRecordLayout.recordSize(Math.toIntExact(payload.byteSize())), record ->
@@ -209,14 +211,18 @@ public class DurableMapWithKeyCatalogOverBlocksTest {
 
       var blockCatalog = DurableMapBlockCatalog.open(store);
       var keys = RecordStorageOverBlocks.open(
-        blockCatalog, KEYS, /*appendOnly: */ false, DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH
+        blockCatalog.appendableRecordBlocks(KEYS),
+        /*appendOnly: */ false,
+        DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH
       );
       var keyRecordRef = onlyKeyRecordRef(blockCatalog);
       var oldHead = KeyRecordLayout.valueRecordRef(keys.read(keyRecordRef));
       var lookup = openLookup(blockCatalog);
       lookup.markDirty();
       var values = RecordStorageOverBlocks.open(
-        blockCatalog, VALUES, /*appendOnly: */ true, DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH
+        blockCatalog.appendableRecordBlocks(VALUES),
+        /*appendOnly: */ true,
+        DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH
       );
       var firstPatch = serializedString("first");
       values.append(ValueRecordLayout.recordSize(Math.toIntExact(firstPatch.byteSize())), record ->
@@ -327,7 +333,9 @@ public class DurableMapWithKeyCatalogOverBlocksTest {
 
   private static long onlyKeyRecordRef(@NotNull DurableMapBlockCatalog blockCatalog) throws IOException {
     var keys = RecordStorageOverBlocks.open(
-      blockCatalog, KEYS, /*appendOnly: */ false, DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH
+      blockCatalog.appendableRecordBlocks(KEYS),
+      /*appendOnly: */ false,
+      DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH
     );
     var keyRecordRef = new long[]{NO_VALUE};
     keys.forEachCommittedRecord((recordRef, _) -> {

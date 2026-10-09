@@ -2,6 +2,8 @@
 package com.intellij.platform.util.io.storages.database.storages.durablemap;
 
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
+import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState;
+import com.intellij.platform.util.io.storages.database.storages.appenablerecords.AppendableRecordBlocks;
 import com.intellij.util.io.CorruptedException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -9,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 
@@ -54,6 +57,38 @@ public final class DurableMapBlockCatalog {
     return block;
   }
 
+  /// @return appendable record blocks restricted to the specified durable map role
+  public @NotNull AppendableRecordBlocks appendableRecordBlocks(@NotNull DurableMapBlockRole role) {
+    switch (role) {
+      case ENTRIES, KEYS, VALUES -> { }
+      case LOOKUP -> throw new IllegalArgumentException("LOOKUP blocks do not store appendable records");
+    }
+    return new RoleAppendableRecordBlocks(role);
+  }
+
+  private final class RoleAppendableRecordBlocks implements AppendableRecordBlocks {
+    private final @NotNull DurableMapBlockRole role;
+
+    private RoleAppendableRecordBlocks(@NotNull DurableMapBlockRole role) {
+      this.role = role;
+    }
+
+    @Override
+    public @NotNull List<BlocksStore.Block> blocksInAllocationOrder() {
+      //TODO RC: could be done with less allocation by directly accessing and filtering blocksByRole, without
+      //         intermediate copy
+      return blocks(role).stream()
+        .filter(block -> block.state() != LifecycleState.RETIRED)
+        .sorted(Comparator.comparingInt(BlocksStore.Block::id))
+        .toList();
+    }
+
+    @Override
+    public @NotNull BlocksStore.Block allocateBlock(int minimumContentLength) throws IOException {
+      return DurableMapBlockCatalog.this.allocateBlock(role, minimumContentLength);
+    }
+  }
+
   /// @return access restricted to the specified lookup implementation and generation
   public @NotNull LookupBlocks lookupBlocks(int implementationId, int generation) throws CorruptedException {
     return new ScopedLookupBlocks(implementationId, generation);
@@ -74,7 +109,7 @@ public final class DurableMapBlockCatalog {
       this.implementationId = implementationId;
       this.generation = generation;
       for (var block : DurableMapBlockCatalog.this.blocks(DurableMapBlockRole.LOOKUP)) {
-        if (block.state() == BlocksStore.Block.LifecycleState.RETIRED) {
+        if (block.state() == LifecycleState.RETIRED) {
           continue;
         }
         if (LookupBlockHeaderLayout.implementationId(block) == implementationId &&
@@ -105,7 +140,7 @@ public final class DurableMapBlockCatalog {
         return scopedBlock;
       }
       catch (Throwable failure) {
-        if (block.state() == BlocksStore.Block.LifecycleState.ALLOCATED) {
+        if (block.state() == LifecycleState.ALLOCATED) {
           //Not strictly required: ALLOCATED blocks are discarded on recovery phase of DB startup
           // but why not do it right here, if we can?
           block.discard();
@@ -148,7 +183,7 @@ public final class DurableMapBlockCatalog {
     }
 
     @Override
-    public @NotNull BlocksStore.Block.LifecycleState state() {
+    public @NotNull LifecycleState state() {
       return block.state();
     }
 

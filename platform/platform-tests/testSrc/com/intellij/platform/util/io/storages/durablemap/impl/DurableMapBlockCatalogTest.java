@@ -58,6 +58,44 @@ public class DurableMapBlockCatalogTest {
   }
 
   @Test
+  public void appendableRecordBlocksFollowAllocationOrder(@TempDir Path databaseDirectory) throws Exception {
+    var factory = new BlocksDatabaseFactory(CHUNK_SIZE);
+    int firstBlockId;
+    int secondBlockId;
+    try (var database = factory.open(databaseDirectory)) {
+      var store = database.openStore("map", 1);
+      var blockCatalog = DurableMapBlockCatalog.open(store);
+      var recordBlocks = blockCatalog.appendableRecordBlocks(DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES);
+
+      var firstBlock = recordBlocks.allocateBlock(BLOCK_CONTENT_LENGTH);
+      blockCatalog.allocateBlock(DurableMapBlockCatalog.DurableMapBlockRole.LOOKUP, BLOCK_CONTENT_LENGTH).activate();
+      var retiredBlock = recordBlocks.allocateBlock(BLOCK_CONTENT_LENGTH);
+      var secondBlock = recordBlocks.allocateBlock(BLOCK_CONTENT_LENGTH);
+      firstBlock.activate();
+      retiredBlock.activate();
+      secondBlock.activate();
+      retiredBlock.seal();
+      retiredBlock.retire();
+
+      assertEquals(List.of(firstBlock, secondBlock), recordBlocks.blocksInAllocationOrder());
+      firstBlockId = firstBlock.id();
+      secondBlockId = secondBlock.id();
+    }
+
+    try (var database = factory.open(databaseDirectory)) {
+      var store = database.findStore("map");
+      assertNotNull(store);
+      var recordBlocks = DurableMapBlockCatalog.open(store)
+        .appendableRecordBlocks(DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES);
+      var blocksInAllocationOrder = recordBlocks.blocksInAllocationOrder();
+
+      assertEquals(2, blocksInAllocationOrder.size());
+      assertEquals(firstBlockId, blocksInAllocationOrder.get(0).id(), "The first block must keep its allocation position");
+      assertEquals(secondBlockId, blocksInAllocationOrder.get(1).id(), "The second block must keep its allocation position");
+    }
+  }
+
+  @Test
   public void lookupBlocksAreScopedByImplementationAndGeneration(@TempDir Path databaseDirectory) throws Exception {
     var factory = new BlocksDatabaseFactory(CHUNK_SIZE);
     int entriesBlockId;

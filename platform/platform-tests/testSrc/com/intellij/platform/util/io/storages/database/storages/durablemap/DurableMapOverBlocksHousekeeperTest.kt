@@ -23,7 +23,12 @@ class DurableMapOverBlocksHousekeeperTest {
   fun `sweep keeps every block in a live patch chain`(@TempDir directory: Path) {
     BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->
       val store = database.openStore("map", 1)
-      val records = RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), /*appendOnly: */ true, ENTRIES_BLOCK_SIZE)
+      val blockCatalog = DurableMapBlockCatalog.open(store)
+      val records = RecordStorageOverBlocks.open(
+        blockCatalog.appendableRecordBlocks(ENTRIES),
+        /*appendOnly: */ true,
+        ENTRIES_BLOCK_SIZE,
+      )
       records.append(2 * ENTRIES_BLOCK_SIZE) { payload -> payload.fill(0) }
 
       val descriptor = stringAsUTF8()

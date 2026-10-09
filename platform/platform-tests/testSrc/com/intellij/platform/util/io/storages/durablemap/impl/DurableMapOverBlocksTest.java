@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 
 import static com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8;
+import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -66,8 +67,11 @@ public class DurableMapOverBlocksTest {
       }
 
       var recordRefs = new ArrayList<Long>();
+      var blockCatalog = DurableMapBlockCatalog.open(store);
       var records = RecordStorageOverBlocks.open(
-        DurableMapBlockCatalog.open(store), /*appendOnly: */ true, ENTRIES_BLOCK_CONTENT_LENGTH
+        blockCatalog.appendableRecordBlocks(ENTRIES),
+        /*appendOnly: */ true,
+        ENTRIES_BLOCK_CONTENT_LENGTH
       );
       records.forEachCommittedRecord((recordRef, _) -> {
         recordRefs.add(recordRef);
@@ -138,8 +142,11 @@ public class DurableMapOverBlocksTest {
         map.put("stable", "value");
       }
 
+      var blockCatalog = DurableMapBlockCatalog.open(store);
       var records = RecordStorageOverBlocks.open(
-        DurableMapBlockCatalog.open(store), /*appendOnly: */ true, ENTRIES_BLOCK_CONTENT_LENGTH
+        blockCatalog.appendableRecordBlocks(ENTRIES),
+        /*appendOnly: */ true,
+        ENTRIES_BLOCK_CONTENT_LENGTH
       );
       assertThrows(IOException.class, () -> records.append(16, _ -> {
         throw new IOException("simulated write failure");

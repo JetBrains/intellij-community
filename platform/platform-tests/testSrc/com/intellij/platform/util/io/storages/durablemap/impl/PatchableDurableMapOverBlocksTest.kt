@@ -431,8 +431,14 @@ class PatchableDurableMapOverBlocksTest {
     }
   }
 
-  private fun records(store: BlocksStore): RecordStorageOverBlocks =
-    RecordStorageOverBlocks.open(DurableMapBlockCatalog.open(store), /*appendOnly: */ true, BLOCK_SIZE)
+  private fun records(store: BlocksStore): RecordStorageOverBlocks {
+    val blockCatalog = DurableMapBlockCatalog.open(store)
+    return RecordStorageOverBlocks.open(
+      blockCatalog.appendableRecordBlocks(ENTRIES),
+      /*appendOnly: */ true,
+      BLOCK_SIZE
+    )
+  }
 
   private fun openRecordRefIndex(store: BlocksStore): ExtendibleHashMapInt32ToInt64 = ExtendibleHashMapInt32ToInt64(
     ExtendibleHashMapStorageOverLookupBlocks(
