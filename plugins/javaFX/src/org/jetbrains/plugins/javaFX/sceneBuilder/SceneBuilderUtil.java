@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.jarRepository.JarRepositoryManager;
@@ -109,7 +109,7 @@ final class SceneBuilderUtil {
   }
 
   static Path getSceneBuilder11Path() {
-    return Paths.get(PathManager.getConfigPath(), "plugins", "javaFX", "rt", SCENE_BUILDER_VERSION).resolve(SCENE_BUILDER_KIT_FULL_NAME);
+    return Paths.get(PathManager.getConfigDir().toString(), "plugins", "javaFX", "rt", SCENE_BUILDER_VERSION).resolve(SCENE_BUILDER_KIT_FULL_NAME);
   }
 
   private static Path getJarPath(@NotNull String relativePath, @NotNull Path javafxRuntimePath) {

@@ -131,7 +131,7 @@ public final class SceneBuilderEditor extends UserDataHolderBase implements File
               return;
             }
 
-            FileUtil.copy(VfsUtilCore.virtualToIoFile(list.get(0).first), SceneBuilderUtil.getSceneBuilder11Path().toFile());
+            FileUtil.copy(VfsUtilCore.virtualToIoFile(list.getFirst().first), SceneBuilderUtil.getSceneBuilder11Path().toFile());
             FileUtil.delete(tempDir.toFile());
 
             SceneBuilderUtil.updateLoader();
@@ -166,7 +166,7 @@ public final class SceneBuilderEditor extends UserDataHolderBase implements File
       final List<String> messages = new ArrayList<>();
       for (Throwable t = e; t != null && t != t.getCause(); t = t.getCause()) {
         final String message = getErrorMessage(t);
-        if (messages.isEmpty() || !messages.get(messages.size() - 1).contains(message)) {
+        if (messages.isEmpty() || !messages.getLast().contains(message)) {
           messages.add(message);
         }
         else {

@@ -74,6 +74,7 @@ import java.util.function.Predicate;
 
 /// Warning!
 /// It is loaded by SceneBuilderUtil to be compatible with 8 and 11 java
+@SuppressWarnings("unused")
 public class SceneBuilderImpl implements SceneBuilder {
   private static final Logger LOG = Logger.getInstance(SceneBuilderImpl.class);
   private static final PropertyName ourChildrenPropertyName = new PropertyName("children");
@@ -190,15 +191,15 @@ public class SceneBuilderImpl implements SceneBuilder {
       final JavaSdkVersion ideJdkVersion = JavaSdkVersion.fromJavaVersion(CurrentJavaVersion.currentJavaVersion());
       final LanguageLevel ideLanguageLevel = ideJdkVersion != null ? ideJdkVersion.getMaxLanguageLevel() : null;
       final Query<PsiClass> query = ClassInheritorsSearch.search(nodeClass, scope, true, true, false);
-      final Set<PsiClass> result = new HashSet<>();
-      query.asIterable().forEach(psiClass -> {
-        if (psiClass.hasModifierProperty(PsiModifier.PUBLIC) &&
-            !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
-            !isBuiltInComponent(psiClass) &&
-            isCompatibleLanguageLevel(psiClass, ideLanguageLevel)) {
-          result.add(psiClass);
-        }
-      });
+      var filteredQuery = query
+        .filtering(psiClass -> {
+          return psiClass.hasModifierProperty(PsiModifier.PUBLIC) &&
+                 !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                 !isBuiltInComponent(psiClass) &&
+                 isCompatibleLanguageLevel(psiClass, ideLanguageLevel);
+        })
+        .findAll();
+      final Set<PsiClass> result = new HashSet<>(filteredQuery);
       return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });
     if (psiClasses.isEmpty()) {
@@ -322,8 +323,8 @@ public class SceneBuilderImpl implements SceneBuilder {
 
   private List<List<SelectionNode>> getSelectionState() {
     AbstractSelectionGroup group = myEditorController.getSelection().getGroup();
-    if (group instanceof ObjectSelectionGroup) {
-      Set<FXOMObject> items = ((ObjectSelectionGroup)group).getItems();
+    if (group instanceof ObjectSelectionGroup selectionGroup) {
+      Set<FXOMObject> items = selectionGroup.getItems();
 
       List<List<SelectionNode>> state = new ArrayList<>();
       for (FXOMObject item : items) {
@@ -364,7 +365,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     final VirtualFile file = PsiUtilCore.getVirtualFile(psiClass);
     if (file == null) return false;
     final List<OrderEntry> entries = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex().getOrderEntriesForFile(file);
-    return entries.stream().anyMatch(entry -> entry instanceof JdkOrderEntry);
+    return ContainerUtil.exists(entries, entry -> entry instanceof JdkOrderEntry);
   }
 
   private static boolean isCompatibleLanguageLevel(@NotNull PsiClass aClass, @Nullable LanguageLevel targetLevel) {
@@ -423,11 +424,11 @@ public class SceneBuilderImpl implements SceneBuilder {
   }
 
   private static List<FXOMObject> getChildComponents(FXOMObject component) {
-    if (component instanceof FXOMInstance) {
-      Map<PropertyName, FXOMProperty> properties = ((FXOMInstance)component).getProperties();
+    if (component instanceof FXOMInstance instance) {
+      Map<PropertyName, FXOMProperty> properties = instance.getProperties();
       FXOMProperty value = properties.get(ourChildrenPropertyName);
-      if (value instanceof FXOMPropertyC) {
-        return ((FXOMPropertyC)value).getValues();
+      if (value instanceof FXOMPropertyC prop) {
+        return prop.getValues();
       }
     }
     return Collections.emptyList();
