@@ -9,10 +9,12 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.impl.MemoryDiskConflictResolver.DialogResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
@@ -30,15 +32,17 @@ final class ConflictResolverDialog {
     this.project = project;
   }
 
-  boolean askReloadFromDisk(@NotNull VirtualFile file, @NotNull Document document) {
+  @NotNull DialogResult askReloadFromDisk(@NotNull VirtualFile file, @NotNull Document document) {
     String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
     DialogBuilder builder = new DialogBuilder(project);
     builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingConstants.CENTER));
     builder.addOkAction().setText(UIBundle.message("file.cache.conflict.load.fs.changes.button"));
     builder.addCancelAction().setText(UIBundle.message("file.cache.conflict.keep.memory.changes.button"));
+    Ref<Boolean> differenceShown = new Ref<>(false);
     builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")) {
       @Override
       public void actionPerformed(ActionEvent e) {
+        differenceShown.set(true);
         String fsContent = LoadTextUtil.loadText(file).toString();
         DocumentContent content1 = DiffContentFactory.getInstance().create(project, fsContent, file.getFileType());
         DocumentContent content2 = DiffContentFactory.getInstance().create(project, document, file);
@@ -62,6 +66,7 @@ final class ConflictResolverDialog {
     });
     builder.setTitle(UIBundle.message("file.cache.conflict.dialog.title"));
     builder.setHelpId("reference.dialogs.fileCacheConflict");
-    return builder.show() == 0;
+    boolean loadFsChanges = builder.show() == DialogWrapper.OK_EXIT_CODE;
+    return new DialogResult(loadFsChanges, differenceShown.get());
   }
 }
