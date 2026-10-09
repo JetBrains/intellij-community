@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.ProjectScope
+import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.roots.kind.ContentOrigin
 import com.intellij.util.indexing.roots.kind.ProjectFileOrDirOrigin
 import org.jetbrains.annotations.ApiStatus
@@ -28,9 +29,12 @@ abstract class ProjectConfigurationFileScanner(private val fileNameSuffix: Strin
 }
 
 @ApiStatus.Internal
-fun loadProjectConfigurationFiles(project: Project, fileNameSuffix: String): List<String> = if (project.isDefault) listOf() else
-  FilenameIndex.getAllFilesByExt(project, fileNameSuffix.removePrefix("."), ProjectScope.getContentScope(project))
+fun loadProjectConfigurationFiles(project: Project, fileNameSuffix: String): List<String> {
+  // A process without the indexing backend, such as a frontend or JetBrains Light, has no FileBasedIndex.
+  if (project.isDefault || FileBasedIndex.getInstance() == null) return listOf()
+  return FilenameIndex.getAllFilesByExt(project, fileNameSuffix.removePrefix("."), ProjectScope.getContentScope(project))
     .filter { isProjectConfigurationFile(it, fileNameSuffix) }.map { it.path }
+}
 
 @ApiStatus.Internal
 fun isProjectConfigurationFile(file: VirtualFile, fileNameSuffix: String): Boolean {
