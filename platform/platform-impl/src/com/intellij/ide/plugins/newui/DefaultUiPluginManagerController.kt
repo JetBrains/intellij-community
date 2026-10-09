@@ -448,7 +448,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return withContext(Dispatchers.EDT) {
       val pluginEnabler = PluginEnabler.getInstance()
       val disabledWithoutRestart = if (pluginEnabler is DynamicPluginEnabler) {
-        pluginEnabler.disable(descriptors, project)
+        pluginEnabler.disable(pluginIdsToDisable, project)
       }
       else {
         pluginEnabler.disable(descriptors)
@@ -1067,7 +1067,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     pluginIds.forEach { session.pluginStates[it] = state }
   }
 
-  private fun applyEnableDisablePlugins(
+  private suspend fun applyEnableDisablePlugins(
     session: PluginManagerSession,
     pluginEnabler: PluginEnabler,
     project: Project?,
@@ -1096,12 +1096,14 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       val enable = entry.key.isEnable
       val descriptors = entry.value
 
-      val applied: Boolean
-      if (pluginEnabler is DynamicPluginEnabler) {
-        applied = if (enable) pluginEnabler.enable(descriptors, project) else pluginEnabler.disable(descriptors, project)
+      val applied: Boolean = if (pluginEnabler is DynamicPluginEnabler) {
+        val pluginIds = descriptors.map { it.pluginId }
+        if (enable) pluginEnabler.enable(pluginIds, project = project)
+        else pluginEnabler.disable(pluginIds, project = project)
       }
       else {
-        applied = if (enable) pluginEnabler.enable(descriptors) else pluginEnabler.disable(descriptors)
+        if (enable) pluginEnabler.enable(descriptors)
+        else pluginEnabler.disable(descriptors)
       }
 
       appliedWithoutRestart = appliedWithoutRestart and applied

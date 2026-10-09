@@ -220,8 +220,10 @@ object DynamicPlugins {
     forceRemovePlugins: List<PluginMainDescriptor>,
     extraStateValidator: PluginStateValidator,
     targetProductMode: ProductMode? = null,
+    progressTitle: @Nls String? = null
   ): Boolean {
     val title = when {
+      progressTitle != null -> progressTitle
       forceRemovePlugins.isEmpty() -> when {
         addNewCustomPlugins.isEmpty() -> IdeBundle.message("modal.progress.title.reconfiguring.plugins")
         addNewCustomPlugins.size == 1 -> IdeBundle.message("modal.progress.title.loading.plugin", addNewCustomPlugins[0].name)
