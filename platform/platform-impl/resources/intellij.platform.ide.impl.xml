@@ -926,6 +926,9 @@
                     serviceImplementation="com.intellij.ui.content.impl.MessageViewImpl"/>
     <projectService serviceInterface="com.intellij.openapi.project.DumbService"
                     serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.project.SmartModeScheduler"
+                    serviceImplementation="com.intellij.openapi.project.AlwaysSmartModeScheduler"
+                    open="true"/>
     <initProjectActivity id="dumbServiceStartup" implementation="com.intellij.openapi.project.DumbServiceStartupActivity" order="last"/>
     <projectService serviceInterface="com.intellij.openapi.project.IncompleteDependenciesService"
                     serviceImplementation="com.intellij.openapi.project.IncompleteDependenciesServiceImpl"/>

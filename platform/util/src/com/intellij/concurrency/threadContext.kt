@@ -191,7 +191,7 @@ private val VIOLATORS : List<String> = listOf(
   /*
    * TODO
    */
-  "com.intellij.openapi.project.SmartModeScheduler.onStateChanged",
+  "com.intellij.platform.lang.impl.backend.BackendSmartModeScheduler.onStateChanged",
   /*
    * Swing-related code is not supported now
    */

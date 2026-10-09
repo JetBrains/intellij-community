@@ -74,6 +74,9 @@
     <applicationService serviceInterface="com.intellij.util.indexing.diagnostic.ChangedFilesPushedEventReporter"
                         serviceImplementation="com.intellij.platform.lang.impl.backend.BackendChangedFilesPushedEventReporter"
                         overrides="true"/>
+    <projectService serviceInterface="com.intellij.openapi.project.SmartModeScheduler"
+                    serviceImplementation="com.intellij.platform.lang.impl.backend.BackendSmartModeScheduler"
+                    overrides="true"/>
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.lang.impl.backend.IdeLanguageCustomizationApiProvider"
                                             apiInterfaces="com.intellij.find.impl.IdeLanguageCustomizationApi"/>
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.lang.impl.backend.GotoContributorsAvailabilityApiProvider"
