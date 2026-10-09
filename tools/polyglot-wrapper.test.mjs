@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-// The bash half of the polyglot wrappers, without Bazel: the roots in both checkout layouts, the override, and the
-// jscpd paths that need no Bazel. Run with `node --test community/tools/polyglot-wrapper.test.mjs`.
+// The bash half of the polyglot wrappers, without Bazel: the Git Bash hand-off, the roots in both checkout layouts,
+// the override, and the jscpd paths that need no Bazel. Run with `node --test community/tools/polyglot-wrapper.test.mjs`.
 
 import {after, before, describe, it} from "node:test"
 import {deepEqual, equal, match} from "node:assert/strict"
@@ -16,6 +16,8 @@ const toolsDir = dirname(fileURLToPath(import.meta.url))
 
 /** @type {string} */
 let scratch
+/** A directory first on PATH that makes bash believe it runs in Git Bash. */
+let gitBashStubs
 
 /**
  * @param {string} dir
@@ -46,10 +48,26 @@ function bash(args, options = {}) {
 
 before(async () => {
   scratch = await realpath(await mkdtemp(join(tmpdir(), "polyglot-wrapper-")))
+  gitBashStubs = join(scratch, "git-bash")
+  await mkdir(gitBashStubs)
+  await writeExecutable(gitBashStubs, "uname", 'echo "MINGW64_NT-10.0-26100"')
+  await writeExecutable(gitBashStubs, "cygpath", 'echo "W:$2"')
+  await writeExecutable(gitBashStubs, "cmd.exe", 'for a in "$@"; do printf "%s\\n" "$a"; done')
 })
 
 after(async () => {
   await rm(scratch, {recursive: true, force: true})
+})
+
+describe("the Git Bash hand-off", () => {
+  for (const wrapper of ["jscpd.cmd", "bt.cmd"]) {
+    it(`${wrapper} hands its arguments to the CMD half through cmd.exe`, () => {
+      const script = join(toolsDir, wrapper)
+      const result = bash([script, "a", "b c"], {env: {PATH: `${gitBashStubs}:${process.env.PATH}`}})
+      equal(result.status, 0, result.stderr)
+      deepEqual(result.stdout.split("\n").filter(Boolean), ["//c", "call", `W:${script}`, "a", "b c"])
+    })
+  }
 })
 
 describe("the roots", () => {

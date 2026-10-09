@@ -27,8 +27,9 @@ case "$0" in
   */*) self_dir="${0%/*}" ;;
   *) self_dir="." ;;
 esac
-# The shared steps of the polyglot wrappers: the override, the roots, the real path.
+# The shared steps of the polyglot wrappers: the Git Bash hand-off, the override, the roots, the real path.
 . "$self_dir/polyglot-wrapper.sh"
+polyglot_hand_off_to_cmd "$0" "$@"
 polyglot_exec_override jscpd JSCPD_BIN 78 "$@"
 
 # The repositories of the community module have no name in the ultimate root, so the label goes through `@community`.
@@ -53,10 +54,6 @@ fi
 case "$(uname -s)" in
   Darwin) os="darwin" ;;
   Linux) os="linux" ;;
-  MINGW* | MSYS* | CYGWIN*)
-    echo "jscpd: on Windows, run community\\tools\\jscpd.cmd from cmd or PowerShell" >&2
-    exit 78
-    ;;
   *)
     echo "jscpd: no pinned jscpd for the operating system $(uname -s)" >&2
     exit 78

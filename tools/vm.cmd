@@ -73,8 +73,9 @@ case "$0" in
   */*) self_dir="${0%/*}" ;;
   *) self_dir="." ;;
 esac
-# The shared steps of the polyglot wrappers: the override, the roots, the real path.
+# The shared steps of the polyglot wrappers: the Git Bash hand-off, the override, the roots, the real path.
 . "$self_dir/polyglot-wrapper.sh"
+polyglot_hand_off_to_cmd "$0" "$@"
 
 # In a Community checkout the controller refuses with `air_area_missing`, because no `bt.json` there names the Air area.
 polyglot_find_roots "$self_dir"

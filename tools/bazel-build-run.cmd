@@ -64,8 +64,10 @@ case "$0" in
   */*) self_dir="${0%/*}" ;;
   *) self_dir="." ;;
 esac
-# The shared step of the polyglot wrappers: the roots.
+# The shared steps of the polyglot wrappers: the Git Bash hand-off and the roots. A caller exports the variables
+# above, so the CMD half reads the same contract after the hand-off.
 . "$self_dir/polyglot-wrapper.sh"
+polyglot_hand_off_to_cmd "$0" "$@"
 polyglot_find_roots "$self_dir"
 
 label="$BAZEL_RUN_TARGET"
