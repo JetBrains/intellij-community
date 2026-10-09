@@ -27,6 +27,32 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     doFieldTest(EventFields.StringValidatedByRegexpReference("count", "integer"), hashSetOf("{regexp#integer}"))
   }
 
+  fun `test generate string field validated by regexp with default value`() {
+    doFieldTest(
+      EventFields.StringValidatedByRegexpReferenceWithDefault("model", "llm_model", defaultValue = "unknown"),
+      hashSetOf("{regexp#llm_model}", "{default_value:unknown}")
+    )
+  }
+
+  fun `test generate string field validated by regexp with no default value`() {
+    doFieldTest(
+      EventFields.StringValidatedByRegexpReferenceWithDefault("model", "llm_model", defaultValue = null),
+      hashSetOf("{regexp#llm_model}")
+    )
+  }
+
+  fun `test generate llm model field with unknown default value`() {
+    doFieldTest(EventFields.LLMModelField("model"), hashSetOf("{regexp#llm_model}", "{default_value:unknown}"))
+  }
+
+  fun `test generate llm model field with custom default value`() {
+    doFieldTest(EventFields.LLMModelField("model", defaultValue = "other"), hashSetOf("{regexp#llm_model}", "{default_value:other}"))
+  }
+
+  fun `test generate llm model field with no default value`() {
+    doFieldTest(EventFields.LLMModelField("model", defaultValue = null), hashSetOf("{regexp#llm_model}"))
+  }
+
   fun `test generate string field validated by enum`() {
     doFieldTest(EventFields.StringValidatedByEnum("system", "os"), hashSetOf("{enum#os}"))
   }
