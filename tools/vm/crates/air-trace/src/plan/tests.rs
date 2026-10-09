@@ -20,6 +20,7 @@ use super::names::git_list_files;
 use super::*;
 
 mod fixture;
+mod program;
 
 use fixture::{Repo, documents_or_skip, fixture_repo, lane_word, run_git, suite_documents, zip_of};
 

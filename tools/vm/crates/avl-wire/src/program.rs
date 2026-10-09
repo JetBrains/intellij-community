@@ -1,0 +1,295 @@
+//! The program of one generated suite: the suite document that `plugins/air/docs/scripts/flowCatalog.ts` writes under
+//! the flow profile directory, read as a lane runner reads it.
+//!
+//! The generator owns the schema. This side declares the fields that a runner needs and ignores the others: the
+//! reach of the suite, the expectations, the fixture names. What it holds the document to is the vocabulary: every id
+//! that an instruction names has an entry of its kind, a `host` id is a word of [`HostAction`] or [`HostAssertion`],
+//! a `crossing` id is on the pinned list, and every argument fits the schema of its id.
+
+use std::collections::{BTreeMap, BTreeSet};
+
+use serde::Deserialize;
+use serde_json::Value;
+
+#[cfg(test)]
+mod tests;
+
+vocabulary! {
+    /// Where an id runs.
+    pub enum Side {
+        /// In the lane IDE, through the bridge.
+        Ide = "ide",
+        /// On the host of the lane, against a lane service or the IDE process.
+        Host = "host",
+        /// In both, in one handler. Only the ids of [`CROSSING_ACTIONS`] and [`CROSSING_ASSERTIONS`] have it, until
+        /// the split of each of them into one id per side.
+        Crossing = "crossing",
+    }
+}
+
+vocabulary! {
+    /// The actions that a lane runner performs on the host. A runner matches over them, so an id with no word here
+    /// cannot be a host action.
+    pub enum HostAction {
+        /// Pauses the next package download of the fake registry.
+        ConsentHoldDownload = "consent-hold-download",
+        /// Lets the paused package download of the fake registry finish.
+        ReleaseDownload = "release-download",
+        /// Quits the IDE the way a user does and starts it again on the same context.
+        RestartIde = "restart-ide",
+    }
+}
+
+vocabulary! {
+    /// The assertions that a lane runner checks on the host.
+    pub enum HostAssertion {
+        /// The fake registry fails the next package download.
+        ConsentDownloadFaultArmed = "consent-download-fault-armed",
+    }
+}
+
+vocabulary! {
+    /// The type of one argument.
+    pub enum ParamType {
+        Int = "int",
+        Boolean = "boolean",
+        /// A string of [`ParamSpec::values`].
+        Enum = "enum",
+    }
+}
+
+/// The actions whose one handler calls the IDE and a host service. The generator pins the same list.
+pub const CROSSING_ACTIONS: &[&str] = &[
+    "cli-restart-unavailable",
+    "consent-baseline",
+    "consent-fail-download",
+    "consent-revoke-installed",
+    "consent-strand-installed-agent",
+    "prepare-junie-free-plan-account",
+    "read-state-restart-with-agent-turn",
+    "sessions-window-restart-ide",
+];
+
+/// The assertions whose one handler calls the IDE and a host service. The generator pins the same list.
+pub const CROSSING_ASSERTIONS: &[&str] = &[
+    "consent-record",
+    "prepare-junie-free-plan-account",
+    "repair-not-restarted-by-itself",
+];
+
+/// One suite document, as a lane runner reads it.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SuiteProgram {
+    pub suite: String,
+    pub lane: String,
+    pub test_class_name: String,
+    pub vocabulary: Vocabulary,
+    pub profiles: Vec<ScenarioProgram>,
+}
+
+/// The ids that a suite runs, by kind.
+#[derive(Clone, Debug, Deserialize)]
+pub struct Vocabulary {
+    pub actions: BTreeMap<String, IdSpec>,
+    pub assertions: BTreeMap<String, IdSpec>,
+}
+
+/// What a runner needs to know about one id before it sends it.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct IdSpec {
+    pub side: Side,
+    /// How long one use may take: the deadline of the lane, plus one relaunch for each restart.
+    pub timeout_ms: u64,
+    /// How many times one use restarts the IDE.
+    pub restarts: u32,
+    pub params: BTreeMap<String, ParamSpec>,
+}
+
+/// The schema of one argument.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ParamSpec {
+    #[serde(rename = "type")]
+    pub kind: ParamType,
+    #[serde(default)]
+    pub values: Vec<String>,
+    pub optional: bool,
+}
+
+/// One scenario: its setups, then its flow steps.
+#[derive(Clone, Debug, Deserialize)]
+pub struct ScenarioProgram {
+    pub name: String,
+    pub setups: Vec<OperationProgram>,
+    pub steps: Vec<StepProgram>,
+}
+
+/// One flow step of a scenario.
+#[derive(Clone, Debug, Deserialize)]
+pub struct StepProgram {
+    pub flow: String,
+    pub step: String,
+    pub operations: Vec<OperationProgram>,
+}
+
+/// One operation: its ordered instructions.
+#[derive(Clone, Debug, Deserialize)]
+pub struct OperationProgram {
+    pub operation: String,
+    pub instructions: Vec<Instruction>,
+}
+
+/// One instruction: an action or an assertion, with its arguments.
+#[derive(Clone, Debug, Deserialize)]
+pub struct Instruction {
+    #[serde(default)]
+    pub action: Option<String>,
+    #[serde(default)]
+    pub assertion: Option<String>,
+    #[serde(default)]
+    pub args: BTreeMap<String, Value>,
+}
+
+/// The kind of an id. An action and an assertion may share an id, so a kind and an id together name one entry.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum IdKind {
+    Action,
+    Assertion,
+}
+
+impl IdKind {
+    const fn as_str(self) -> &'static str {
+        match self {
+            Self::Action => "action",
+            Self::Assertion => "assertion",
+        }
+    }
+}
+
+/// Reads one suite document from its bytes.
+pub fn parse_suite_program(content: &[u8]) -> Result<SuiteProgram, String> {
+    serde_json::from_slice(content).map_err(|error| format!("is not a suite program: {error}"))
+}
+
+impl SuiteProgram {
+    /// Every way in which this program does not fit its vocabulary, one line each, in program order. Empty for a
+    /// program a runner can run.
+    pub fn refusals(&self) -> Vec<String> {
+        let mut refusals = Vec::new();
+        let mut used = BTreeSet::new();
+        for scenario in &self.profiles {
+            let operations = scenario
+                .setups
+                .iter()
+                .chain(scenario.steps.iter().flat_map(|step| &step.operations));
+            for operation in operations {
+                for instruction in &operation.instructions {
+                    let place = format!("scenario '{}' operation '{}'", scenario.name, operation.operation);
+                    refusals.extend(self.check_instruction(instruction, &place, &mut used).err());
+                }
+            }
+        }
+        for (kind, entries) in [
+            (IdKind::Action, &self.vocabulary.actions),
+            (IdKind::Assertion, &self.vocabulary.assertions),
+        ] {
+            for (id, spec) in entries {
+                if !used.contains(&(kind, id.clone())) {
+                    refusals.push(format!(
+                        "the vocabulary states the {} '{id}', which no instruction runs",
+                        kind.as_str()
+                    ));
+                }
+                refusals.extend(side_refusal(kind, id, spec.side));
+                if spec.timeout_ms == 0 {
+                    refusals.push(format!("the {} '{id}' has no deadline", kind.as_str()));
+                }
+                if spec.restarts > 0 && spec.side == Side::Ide {
+                    refusals.push(format!(
+                        "the {} '{id}' restarts the IDE, so it cannot run in the IDE alone",
+                        kind.as_str()
+                    ));
+                }
+            }
+        }
+        refusals
+    }
+
+    /// Why one instruction does not fit its vocabulary. A stated id goes into `used` whether its arguments fit or not.
+    fn check_instruction(&self, instruction: &Instruction, place: &str, used: &mut BTreeSet<(IdKind, String)>) -> Result<(), String> {
+        let (kind, id, entries) = match (&instruction.action, &instruction.assertion) {
+            (Some(id), None) => (IdKind::Action, id, &self.vocabulary.actions),
+            (None, Some(id)) => (IdKind::Assertion, id, &self.vocabulary.assertions),
+            _ => {
+                return Err(format!(
+                    "{place} has an instruction that is not exactly one action or one assertion"
+                ));
+            }
+        };
+        let spec = entries
+            .get(id)
+            .ok_or_else(|| format!("{place} runs the {} '{id}', which the vocabulary does not state", kind.as_str()))?;
+        used.insert((kind, id.clone()));
+        for (name, value) in &instruction.args {
+            let param = spec
+                .params
+                .get(name)
+                .ok_or_else(|| format!("{place}: the {} '{id}' has no parameter '{name}'", kind.as_str()))?;
+            if !param.accepts(value) {
+                return Err(format!(
+                    "{place}: the {} '{id}' parameter '{name}' does not accept {value}",
+                    kind.as_str()
+                ));
+            }
+        }
+        if let Some((name, _)) = spec
+            .params
+            .iter()
+            .find(|(name, param)| !param.optional && !instruction.args.contains_key(*name))
+        {
+            return Err(format!("{place}: the {} '{id}' needs the parameter '{name}'", kind.as_str()));
+        }
+        Ok(())
+    }
+}
+
+impl ParamSpec {
+    /// Whether `value` is one of this parameter's values.
+    pub fn accepts(&self, value: &Value) -> bool {
+        match self.kind {
+            ParamType::Int => value.as_i64().is_some(),
+            ParamType::Boolean => value.is_boolean(),
+            ParamType::Enum => value
+                .as_str()
+                .is_some_and(|text| self.values.iter().any(|candidate| candidate == text)),
+        }
+    }
+}
+
+/// Why `side` is not the side of the id, or nothing.
+fn side_refusal(kind: IdKind, id: &str, side: Side) -> Option<String> {
+    let host = match kind {
+        IdKind::Action => id.parse::<HostAction>().is_ok(),
+        IdKind::Assertion => id.parse::<HostAssertion>().is_ok(),
+    };
+    let crossing = match kind {
+        IdKind::Action => CROSSING_ACTIONS.contains(&id),
+        IdKind::Assertion => CROSSING_ASSERTIONS.contains(&id),
+    };
+    let kind = kind.as_str();
+    match side {
+        Side::Host if !host => Some(format!(
+            "the {kind} '{id}' is a host id, and the host vocabulary of a runner has no word for it"
+        )),
+        Side::Crossing if !crossing => Some(format!(
+            "the {kind} '{id}' crosses the sides, and the pinned crossing list does not name it"
+        )),
+        Side::Ide if host || crossing => Some(format!(
+            "the {kind} '{id}' is stated to run in the IDE, but a runner knows it as {}",
+            if host { "a host id" } else { "a crossing id" }
+        )),
+        _ => None,
+    }
+}
