@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 private val LOG = Logger.getInstance(DynamicPlugins::class.java)
+private val tracer: IJTracer by lazy { TelemetryManager.getInstance().getTracer(Scope("dynamicPlugins", PlatformMetrics)) }
 
 @ApiStatus.Internal
 object DynamicPlugins {
@@ -533,8 +534,6 @@ object DynamicPlugins {
   }
 }
 
-/** The tracer of the spans around a modal progress of the dynamic plugin subsystem. */
-private val tracer: IJTracer by lazy { TelemetryManager.getInstance().getTracer(Scope("dynamicPlugins", PlatformMetrics)) }
 
 /**
  * Runs [action] inside a span named [spanName].
