@@ -36,8 +36,8 @@ import org.jetbrains.plugins.github.authentication.GHLoginData.Companion.reLogin
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
-import org.jetbrains.plugins.github.authentication.ui.GHLoginDialog
 import org.jetbrains.plugins.github.authentication.ui.GHLoginModel
+import org.jetbrains.plugins.github.authentication.ui.GHTokenLoginDialog
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.GHPluginProjectScopeProvider
 import java.awt.Component
@@ -181,7 +181,7 @@ object GHAccountsUtil {
     model: GHLoginModel, project: Project, parentComponent: JComponent?, loginData: GHLoginData,
   ) {
     scopedDialog(project) {
-      GHLoginDialog.OAuth(model, project, this, parentComponent, loginData).apply {
+      GHTokenLoginDialog.OAuth(model, project, this, parentComponent, loginData).apply {
         setServer(GithubServerPath.DEFAULT_HOST, false)
       }
     }.showAndGet()
@@ -197,7 +197,7 @@ object GHAccountsUtil {
     model: GHLoginModel, project: Project, parentComponent: JComponent?, loginData: GHLoginData,
   ) {
     scopedDialog(project) {
-      GHLoginDialog.Token(model, project, this, parentComponent, loginData).apply {
+      GHTokenLoginDialog.Token(model, project, this, parentComponent, loginData).apply {
         title = GithubBundle.message("dialog.title.add.github.account")
         setLoginButtonText(GithubBundle.message("accounts.add.button"))
         setServer(GithubServerPath.DEFAULT_HOST, false)
@@ -221,7 +221,7 @@ object GHAccountsUtil {
     loginData: GHLoginData,
   ) {
     scopedDialog(project) {
-      GHLoginDialog.Token(model, project, this, parentComponent, loginData).apply {
+      GHTokenLoginDialog.Token(model, project, this, parentComponent, loginData).apply {
         title = GithubBundle.message("dialog.title.add.github.account")
         setLoginButtonText(GithubBundle.message("accounts.add.button"))
         setServer("", true)
@@ -367,19 +367,19 @@ class GHLoginRequest(
   val loginData: GHLoginData
 )
 
-private fun GHLoginRequest.configure(dialog: GHLoginDialog) {
+private fun GHLoginRequest.configure(dialog: GHTokenLoginDialog) {
   error?.let { dialog.setError(it) }
   server?.let { dialog.setServer(it.toString(), isServerEditable) }
   login?.let { dialog.setLogin(it, isLoginEditable) }
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-private fun <D : GHLoginDialog> scopedDialog(project: Project?, dialogConstructor: CoroutineScope.() -> D): D {
+private fun <D : GHTokenLoginDialog> scopedDialog(project: Project?, dialogConstructor: CoroutineScope.() -> D): D {
   if (project != null) {
     return project.service<GHPluginProjectScopeProvider>().constructDialog("GitHub login dialog", dialogConstructor)
   }
   else {
-    val cs = GlobalScope.childScope(GHLoginDialog::class.java.name)
+    val cs = GlobalScope.childScope(GHTokenLoginDialog::class.java.name)
     val dialog = cs.dialogConstructor()
     cs.cancelledWith(dialog.disposable)
     return dialog
@@ -388,7 +388,7 @@ private fun <D : GHLoginDialog> scopedDialog(project: Project?, dialogConstructo
 
 private fun GHLoginRequest.loginWithToken(model: GHLoginModel, project: Project?, parentComponent: Component?) {
   val dialog = scopedDialog(project) {
-    GHLoginDialog.Token(model, project, this, parentComponent, loginData).also {
+    GHTokenLoginDialog.Token(model, project, this, parentComponent, loginData).also {
       configure(it)
     }
   }
@@ -397,7 +397,7 @@ private fun GHLoginRequest.loginWithToken(model: GHLoginModel, project: Project?
 
 private fun GHLoginRequest.loginWithOAuth(model: GHLoginModel, project: Project?, parentComponent: Component?) {
   val dialog = scopedDialog(project) {
-    GHLoginDialog.OAuth(model, project, this, parentComponent, loginData).also {
+    GHTokenLoginDialog.OAuth(model, project, this, parentComponent, loginData).also {
       configure(it)
     }
   }

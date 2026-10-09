@@ -33,7 +33,7 @@ import javax.swing.JComponent
 internal fun JComponent.setPaddingCompensated(): JComponent =
   apply { putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false) }
 
-internal sealed class GHLoginDialog(
+internal sealed class GHTokenLoginDialog(
   private val model: GHLoginModel,
   project: Project?,
   parentCs: CoroutineScope,
@@ -86,7 +86,7 @@ internal sealed class GHLoginDialog(
   }
 
   class Token(model: GHLoginModel, project: Project?, parentCs: CoroutineScope, parent: Component?, loginData: GHLoginData) :
-    GHLoginDialog(model, project, parentCs, parent, loginData) {
+    GHTokenLoginDialog(model, project, parentCs, parent, loginData) {
 
     init {
       title = GithubBundle.message("login.to.github")
@@ -102,7 +102,7 @@ internal sealed class GHLoginDialog(
   }
 
   class OAuth(model: GHLoginModel, project: Project?, parentCs: CoroutineScope, parent: Component?, loginData: GHLoginData) :
-    GHLoginDialog(model, project, parentCs, parent, loginData) {
+    GHTokenLoginDialog(model, project, parentCs, parent, loginData) {
 
     init {
       title = GithubBundle.message("login.to.github")
