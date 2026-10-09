@@ -31,8 +31,10 @@ interface GitLabAccountManager : AccountManager<GitLabAccount, GitLabCredentials
   suspend fun getAndRefreshCredentials(account: GitLabAccount): GitLabCredentials
 }
 
+private val LOG = logger<GitLabAccountManager>()
+
 internal class PersistentGitLabAccountManager : GitLabAccountManager,
-                                                AccountManagerBase<GitLabAccount, GitLabCredentials>(logger<GitLabAccountManager>()) {
+                                                AccountManagerBase<GitLabAccount, GitLabCredentials>(LOG) {
   override suspend fun getAndRefreshCredentials(account: GitLabAccount): GitLabCredentials {
     return dataGuard.withLock {
       doGetAndRefreshCredentials(account)
@@ -60,6 +62,7 @@ internal class PersistentGitLabAccountManager : GitLabAccountManager,
         }
         catch (e: Exception) {
           rethrowControlFlowException(e)
+          LOG.warn("Could not refresh the OAuth token for $account", e)
           throw GitLabCredentialsRefreshException(account, e)
         }
       }
