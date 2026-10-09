@@ -5,8 +5,13 @@ import com.intellij.codeInsight.lookup.LookupElement
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
-//TODO IJPL-207762 mark experimental
-@ApiStatus.Internal
+/**
+ * A [FrontendFriendlyInsertHandler] that does nothing.
+ *
+ * Return it from [InsertHandlerToFrontendFriendlyConverter.toDescriptor] when the insert handler has nothing to do on Frontend.
+ * A `null` result has a different meaning: the lookup element keeps its insert handler on Backend.
+ */
+@ApiStatus.Experimental
 @Serializable
 object NoOpFrontendFriendlyInsertHandler : FrontendFriendlyInsertHandler {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {}

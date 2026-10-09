@@ -1,9 +1,41 @@
 a:com.intellij.codeHighlighting.TextEditorHighlightingPass
 - com.intellij.codeHighlighting.HighlightingPass
 - *:getContext():com.intellij.codeInsight.multiverse.CodeInsightContext
+*f:com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler
+- com.intellij.codeInsight.completion.FrontendFriendlyInsertHandler
+- *sf:Companion:com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler$Companion
+- <init>(java.lang.String,java.util.List):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String,java.util.List):com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler
+- bs:copy$default(com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler,java.lang.String,java.util.List,I,java.lang.Object):com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler
+- equals(java.lang.Object):Z
+- f:getDebugName():java.lang.String
+- handleInsert(com.intellij.codeInsight.completion.InsertionContext,com.intellij.codeInsight.lookup.LookupElement):V
+- hashCode():I
+*bf:com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler):V
+*f:com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 *f:com.intellij.codeInsight.completion.EmptyDeclarativeInsertHandler
 - com.intellij.codeInsight.completion.DeclarativeInsertHandler
 - sf:INSTANCE:com.intellij.codeInsight.completion.EmptyDeclarativeInsertHandler
+*:com.intellij.codeInsight.completion.FrontendFriendlyInsertHandler
+- com.intellij.codeInsight.completion.InsertHandler
+- *sf:Companion:com.intellij.codeInsight.completion.FrontendFriendlyInsertHandler$Companion
+*f:com.intellij.codeInsight.completion.FrontendFriendlyInsertHandler$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*:com.intellij.codeInsight.completion.InsertHandlerToFrontendFriendlyConverter
+- com.intellij.codeInsight.serialization.DescriptorConverter
+*f:com.intellij.codeInsight.completion.NoOpFrontendFriendlyInsertHandler
+- com.intellij.codeInsight.completion.FrontendFriendlyInsertHandler
+- sf:INSTANCE:com.intellij.codeInsight.completion.NoOpFrontendFriendlyInsertHandler
+- handleInsert(com.intellij.codeInsight.completion.InsertionContext,com.intellij.codeInsight.lookup.LookupElement):V
+- f:serializer():kotlinx.serialization.KSerializer
 *f:com.intellij.codeInsight.completion.SingleInsertionDeclarativeInsertHandler
 - com.intellij.codeInsight.completion.DeclarativeInsertHandler
 - <init>(java.lang.String,com.intellij.codeInsight.completion.DeclarativeInsertHandler$PopupOptions):V
@@ -62,6 +94,8 @@ c:com.intellij.codeInsight.intention.impl.config.LazyEditor
 - *sf:acceptRangeHighlighter(com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.openapi.editor.markup.RangeHighlighter):Z
 - *sf:getCodeInsightContext(com.intellij.openapi.editor.markup.RangeHighlighter):com.intellij.codeInsight.multiverse.CodeInsightContext
 - *sf:installCodeInsightContext(com.intellij.openapi.editor.markup.RangeHighlighter,com.intellij.openapi.project.Project,com.intellij.codeInsight.multiverse.CodeInsightContext):V
+*:com.intellij.codeInsight.serialization.DescriptorConverter
+- a:toDescriptor(java.lang.Object):java.lang.Object
 c:com.intellij.codeInsight.template.TemplateBuilderImpl
 - com.intellij.codeInsight.template.TemplateBuilder
 - *:addVariableOccurrence(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.String):V

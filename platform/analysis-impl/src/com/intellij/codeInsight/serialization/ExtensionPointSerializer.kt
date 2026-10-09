@@ -171,8 +171,16 @@ data class SerializationHelper<Target : Any, Descriptor : Any>(
   val serializableClass: Class<Descriptor>,
 )
 
-// TODO IJPL-207762 mark experimental
-@ApiStatus.Internal
+/**
+ * Converts a [Target] object that cannot be serialized into a serializable [Descriptor].
+ *
+ * Register the converter in the `converter` attribute of a serialization extension, together with `target` and `descriptor`.
+ * Without a converter, the [Target] object itself is serialized.
+ * The platform uses the first registered converter that returns a non-null descriptor.
+ *
+ * For insert handlers, implement [com.intellij.codeInsight.completion.InsertHandlerToFrontendFriendlyConverter].
+ */
+@ApiStatus.Experimental
 interface DescriptorConverter<Target : Any, Descriptor : Any> {
   /**
    * @return data transfer object for [target], or null if [target] cannot be serialized
