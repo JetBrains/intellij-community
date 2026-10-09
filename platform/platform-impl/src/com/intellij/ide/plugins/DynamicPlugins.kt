@@ -24,6 +24,9 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
+import fleet.util.Either
+import fleet.util.error
+import fleet.util.value
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -134,11 +137,14 @@ object DynamicPlugins {
   }
 
   private suspend fun validateReconfigurationIsPossible(
-    buildNewState: () -> PluginSet?,
+    buildNewState: () -> Either<PluginSet, DynamicReconfigurationIsNotPossibleReason>,
     extraStateValidator: PluginStateValidator,
   ): String? {
-    val newState = buildNewState()
-                   ?: return "Target state is missing essential plugins"
+    val newStateErr = buildNewState()
+    if (newStateErr.isError) {
+      return "failed to build a new plugins state: ${newStateErr.error.logMessage}"
+    }
+    val newState = newStateErr.value
     extraStateValidator.validate(newState.resolvedPluginSet)?.let {
       return "new plugins state did not meet expectations: $it"
     }
@@ -239,7 +245,7 @@ object DynamicPlugins {
           return@withTracedModalProgress false
         }
       }
-      val newState = computeNewPluginsState(addNewCustomPlugins, forceRemovePlugins, forceExclude = true)
+      val newState = computeNewPluginsState(addNewCustomPlugins, forceRemovePlugins, forceExclude = true).valueOrNull
                      ?: return@withTracedModalProgress false
       val resolvedPluginSet = newState.resolvedPluginSet
       extraStateValidator.validate(resolvedPluginSet)?.let {
@@ -257,7 +263,7 @@ object DynamicPlugins {
   @RequiresEdt(generateAssertion = false)
   fun loadPlugins(plugins: List<PluginMainDescriptor>, project: Project?, progressTitle: @Nls String? = null): Boolean {
     return runWithTracedModalProgressBlocking(LOAD_MODAL_PROGRESS_SPAN, project, progressTitle ?: defaultLoadingTitle(plugins)) {
-      val newState = computeNewPluginsState(plugins, emptyList())
+      val newState = computeNewPluginsState(plugins, emptyList()).valueOrNull
                      ?: return@runWithTracedModalProgressBlocking false
       val resolvedPluginSet = newState.resolvedPluginSet
       expectPluginsState(expectToLoad = plugins.map { it.pluginId }).validate(resolvedPluginSet)?.let {
@@ -289,7 +295,7 @@ object DynamicPlugins {
       project,
       IdeBundle.message("modal.progress.title.loading.plugin", pluginDescriptor.name),
     ) {
-      val newState = computeNewPluginsState(listOf(pluginDescriptor), emptyList())
+      val newState = computeNewPluginsState(listOf(pluginDescriptor), emptyList()).valueOrNull
                      ?: return@runWithTracedModalProgressBlocking false
       val resolvedPluginSet = newState.resolvedPluginSet
       expectPluginsState(expectToLoad = listOf(pluginDescriptor.pluginId)).validate(resolvedPluginSet)?.let {
@@ -314,7 +320,7 @@ object DynamicPlugins {
       project,
       IdeBundle.message("modal.progress.title.unloading.plugins"),
     ) {
-      val newState = computeNewPluginsState(emptyList(), plugins)
+      val newState = computeNewPluginsState(emptyList(), plugins).valueOrNull
                      ?: return@runWithTracedModalProgressBlocking false
       val resolvedPluginSet = newState.resolvedPluginSet
       expectPluginsState(expectNotToLoad = plugins.map { it.pluginId }).validate(resolvedPluginSet)?.let {
@@ -333,7 +339,7 @@ object DynamicPlugins {
       project = null,
       IdeBundle.message("modal.progress.title.unloading.plugin", pluginDescriptor.name),
     ) {
-      val newState = computeNewPluginsState(emptyList(), listOf(pluginDescriptor))
+      val newState = computeNewPluginsState(emptyList(), listOf(pluginDescriptor)).valueOrNull
                      ?: return@runWithTracedModalProgressBlocking false
       val resolvedPluginSet = newState.resolvedPluginSet
       expectPluginsState(expectNotToLoad = listOf(pluginDescriptor.pluginId)).validate(resolvedPluginSet)?.let {
@@ -408,7 +414,7 @@ object DynamicPlugins {
         exclude = emptyList(),
         pretendEnabled = candidates.toList(),
         pretendDisabled = emptyList(),
-      ) ?: return externalConflict
+      ).valueOrNull ?: return externalConflict
       val excludedCandidates: List<PluginId> = candidates.filter { candidateId ->
         val candidate = newState.resolvedPluginSet.candidateSet.resolvePluginId(candidateId)
         candidate == null || !newState.resolvedPluginSet.isResolved(candidate)
@@ -452,7 +458,7 @@ object DynamicPlugins {
     forceExclude: Boolean = false,
     pretendEnabled: List<PluginId> = emptyList(),
     pretendDisabled: List<PluginId> = emptyList(),
-  ): PluginSet? {
+  ): Either<PluginSet, DynamicReconfigurationIsNotPossibleReason> {
     LOG.info(buildString {
       append("Computing new plugins state with")
       append(" include=${include.joinToString(prefix = "[", postfix = "]") { it.shortLogDescription }}")
@@ -506,11 +512,13 @@ object DynamicPlugins {
     )
 
     try {
-      return newInitContext.computeTargetState(newDiscoveryResult, isStartupInit = false, parentActivity = null)
+      return Either.value(newInitContext.computeTargetState(newDiscoveryResult, isStartupInit = false, parentActivity = null))
     }
     catch (e: EssentialPluginMissingException) {
       LOG.warn("target plugin set is missing essential plugins", e)
-      return null // TODO not the best way to handle this, but it'll do for now
+      return Either.error(DynamicReconfigurationIsNotPossibleReason.of(
+        logMessage = e.message ?: "missing essential plugins", problematicPlugin = null
+      ))
     }
   }
 }
