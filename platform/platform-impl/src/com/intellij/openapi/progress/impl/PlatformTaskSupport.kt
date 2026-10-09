@@ -14,6 +14,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.JobProvider
+import com.intellij.openapi.application.impl.ModalityLockAssociation
 import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.application.isModalAwareContext
 import com.intellij.openapi.application.runReadActionBlocking
@@ -376,44 +377,43 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       val dispatcherCtx = dispatcher ?: EmptyCoroutineContext
       val modalityContext = newModalityState.asContextElement()
       val pipe = cs.createProgressPipe()
-      val (permitCtx, cleanup) = if (ApplicationManager.getApplication().isWriteAccessAllowed) {
+      val (permitCtx, permitCleanup) = if (ApplicationManager.getApplication().isWriteAccessAllowed) {
         runReadActionBlocking { getLockPermitContext(LockParallelizationSharingPolicy.SHARING_CHECK_TOPMOST_RA) }
       } else {
         getLockPermitContext(LockParallelizationSharingPolicy.SHARING_NO_CHECK_TOPMOST_RA)
       }
-      val taskJob = async(dispatcherCtx + modalityContext + permitCtx) {
-        progressStarted(descriptor.title, descriptor.cancellation, pipe.progressUpdates())
-        // an unhandled exception in `async` can kill the entire computation tree
-        // we need to propagate the exception to the caller, since they may have some way to handle it.
-        runCatching {
-          handleCurrentThreadScopeCoroutines { pipe.collectProgressUpdates(action) }
+      permitCleanup.use {
+        ModalityLockAssociation.associate(newModalityState, permitCtx).use {
+          val taskJob = async(dispatcherCtx + modalityContext + permitCtx) {
+            progressStarted(descriptor.title, descriptor.cancellation, pipe.progressUpdates())
+            // an unhandled exception in `async` can kill the entire computation tree
+            // we need to propagate the exception to the caller, since they may have some way to handle it.
+            runCatching {
+              handleCurrentThreadScopeCoroutines { pipe.collectProgressUpdates(action) }
+            }
+          }
+          val modalJob = cs.launch(modalityContext) {
+            val showIndicatorJob = showModalIndicator(taskJob, descriptor, pipe.progressUpdates(), deferredDialog)
+            try {
+              taskJob.join()
+            }
+            finally {
+              showIndicatorJob.cancel()
+            }
+          }
+          modalJob.invokeOnCompletion {
+            // Unblock `getNextEvent()` in case it's blocked.
+            SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
+          }
+          resetThreadLocalEventLoop {
+            IdeEventQueue.getInstance().pumpEventsForHierarchy(
+              exitCondition = modalJob::isCompleted,
+              modalComponent = deferredDialog::modalComponent,
+            )
+          }
+          @OptIn(ExperimentalCoroutinesApi::class)
+          taskJob.getCompleted().getOrThrow()
         }
-      }
-      val modalJob = cs.launch(modalityContext) {
-        val showIndicatorJob = showModalIndicator(taskJob, descriptor, pipe.progressUpdates(), deferredDialog)
-        try {
-          taskJob.join()
-        }
-        finally {
-          showIndicatorJob.cancel()
-        }
-      }
-      modalJob.invokeOnCompletion {
-        // Unblock `getNextEvent()` in case it's blocked.
-        SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
-      }
-      resetThreadLocalEventLoop {
-        IdeEventQueue.getInstance().pumpEventsForHierarchy(
-          exitCondition = modalJob::isCompleted,
-          modalComponent = deferredDialog::modalComponent,
-        )
-      }
-      try {
-        @OptIn(ExperimentalCoroutinesApi::class)
-        taskJob.getCompleted().getOrThrow()
-      }
-      finally {
-        cleanup.finish()
       }
     }
   }

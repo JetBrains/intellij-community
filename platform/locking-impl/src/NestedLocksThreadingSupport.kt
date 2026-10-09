@@ -565,8 +565,16 @@ class NestedLocksThreadingSupport : ThreadingSupport {
 
     companion object : CoroutineContext.Key<ComputationStateContextElement>
 
+    override fun equals(other: Any?): Boolean {
+      return other is ComputationStateContextElement && this.computationState == other.computationState
+    }
+
     override fun toString(): String {
       return "$computationState"
+    }
+
+    override fun hashCode(): Int {
+      return computationState.hashCode()
     }
   }
 

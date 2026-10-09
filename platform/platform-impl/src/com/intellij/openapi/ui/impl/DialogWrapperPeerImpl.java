@@ -24,6 +24,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.application.impl.ModalityLockAssociation;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -79,6 +80,7 @@ import com.intellij.util.ui.OwnerOptional;
 import com.intellij.util.ui.UIUtil;
 import kotlin.Pair;
 import kotlin.Unit;
+import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
@@ -520,6 +522,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     Consumer<Runnable> lockContextWrapper;
     Function0<Unit> lockCleanup;
+    CoroutineContext lockContext;
 
     if (changeModalityState) {
       commandProcessor.enterModal();
@@ -535,6 +538,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         });
       };
       lockCleanup = pair.getSecond();
+      lockContext = pair.getFirst();
     }
     else {
       lockContextWrapper = (r) -> ThreadContext.resetThreadContext(() -> {
@@ -542,6 +546,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         return null;
       });
       lockCleanup = emptyFunction;
+      lockContext = EmptyCoroutineContext.INSTANCE;
     }
 
     if (appStarted) {
@@ -568,19 +573,20 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     CompletableFuture<Void> result = new CompletableFuture<>();
     SplashManagerKt.hideSplash();
     try ( // numbered in the order of invocation (which is reverse)
-      AccessToken ignore5 = AccessToken.create(() -> {
+      AccessToken ignore6 = AccessToken.create(() -> {
         if (changeModalityState) {
           LaterInvocator.leaveModal(myDialog);
         }
       });
-      AccessToken ignore4 = AccessToken.create(() -> {
+      AccessToken ignore5 = AccessToken.create(() -> {
         if (changeModalityState) {
           commandProcessor.leaveModal();
         }
       });
-      AccessToken ignore3 = AccessToken.create(() -> {
+      AccessToken ignore4 = AccessToken.create(() -> {
         lockCleanup.invoke();
       });
+      AccessToken ignore3 = ModalityLockAssociation.associate(LaterInvocator.getCurrentModalityState(), lockContext);
       AccessToken ignore2 = SlowOperations.startSection(SlowOperations.RESET);
       AccessToken ignore1 = resetCoroutinesEventLoop()
     ) {
