@@ -1,14 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
-import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.ui.UISettings.Companion.getInstance
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAwareToggleAction
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause
+import com.intellij.util.messages.Topic
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus
@@ -32,7 +31,7 @@ class ViewInplaceCommentsAction : DumbAwareToggleAction() {
     getInstance().showInplaceComments = state
     updateAllTreesCellsWidth()
     IdeBackgroundUtil.repaintAllWindows()
-    updateProjectViews() // project views need BGT model update
+    ApplicationManager.getApplication().messageBus.syncPublisher(ViewInplaceCommentsListener.TOPIC).settingChanged()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -44,11 +43,13 @@ class ViewInplaceCommentsAction : DumbAwareToggleAction() {
       TreeUtil.invalidateCacheAndRepaint(tree.ui)
     }
   }
+}
 
-  private fun updateProjectViews() {
-    ProjectManager.getInstance()?.openProjects?.forEach { project ->
-      ProjectView.getInstance(project)?.currentProjectViewPane?.updateFromRoot(true, ProjectViewUpdateCause.SETTINGS)
-    }
+@ApiStatus.Internal
+interface ViewInplaceCommentsListener {
+  companion object {
+    @JvmField val TOPIC: Topic<ViewInplaceCommentsListener> = Topic(ViewInplaceCommentsListener::class.java)
   }
 
+  fun settingChanged()
 }
