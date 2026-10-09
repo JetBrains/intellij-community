@@ -5,16 +5,19 @@
 
 package org.toml.lang.lexer
 
-import com.intellij.lexer.Lexer
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.lexerFixture
+import com.intellij.testFramework.junit5.fixture.TestFixtures
 import org.junit.jupiter.api.Test
+import org.toml.getTomlTestsResourcesPath
 
-class TomlHighlightingLexerTest : TomlLexerTestBase() {
-    override fun getTestDataPath(): String = "org/toml/lang/lexer/fixtures/highlighting"
-
-    override fun createLexer(): Lexer = TomlHighlightingLexer()
+@TestFixtures
+class TomlHighlightingLexerTest {
+    private val lexer by lexerFixture(getTomlTestsResourcesPath().resolve("org/toml/lang/lexer/fixtures/highlighting").toString()) {
+        TomlHighlightingLexer()
+    }
 
     @Test
-    fun `test basic string literals`() = doTest()
+    fun `test basic string literals`() = lexer.doFileTest("toml")
     @Test
-    fun `test literal string literals`() = doTest()
+    fun `test literal string literals`() = lexer.doFileTest("toml")
 }
