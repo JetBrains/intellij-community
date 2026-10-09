@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import training.learn.exceptons.NoSdkException
 import training.project.FileUtils
@@ -43,7 +44,9 @@ abstract class AbstractLangSupport : LangSupport {
 
   override fun openOrImportLearningProject(projectRootDirectory: VirtualFile, openProjectTask: OpenProjectTask): Project {
     val nioPath = projectRootDirectory.toNioPath()
-    return ProjectUtil.openOrImport(nioPath, openProjectTask) ?: error("Cannot create project for ${primaryLanguage} at $nioPath")
+    @Suppress("DEPRECATION")
+    val options = openProjectTask.copy(processorChooser = { PlatformProjectOpenProcessor.getInstance() })
+    return ProjectUtil.openOrImport(nioPath, options) ?: error("Cannot create project for ${primaryLanguage} at $nioPath")
   }
 
   override fun copyLearningProjectFiles(projectDirectory: File, destinationFilter: FileFilter?): Boolean {
