@@ -348,6 +348,7 @@ kt_jvm_test(
     test_class = "org.jetbrains.jewel.scripts.bazel.JewelBazelScriptsUtilsTest",
     deps = [
         "@lib//:junit4",
+        "@lib//:kotlin-stdlib",
         "@lib//:libraries-kotlinx-coroutines-test-kotlinx-coroutines-test",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
@@ -365,6 +366,7 @@ kt_jvm_test(
         ":clikt-dependencies",
         ":jewel-bazel-scripts-utils",
         "@lib//:junit4",
+        "@lib//:kotlin-stdlib",
         "@lib//:libraries-kotlinx-coroutines-test-kotlinx-coroutines-test",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
@@ -382,6 +384,7 @@ kt_jvm_test(
         ":bazel-test-utils",
         ":jewel-bazel-scripts-utils",
         "@lib//:junit4",
+        "@lib//:kotlin-stdlib",
         "@lib//:libraries-kotlinx-coroutines-test-kotlinx-coroutines-test",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
@@ -399,6 +402,7 @@ kt_jvm_test(
         ":clikt-dependencies",
         ":jewel-bazel-scripts-utils",
         "@lib//:junit4",
+        "@lib//:kotlin-stdlib",
         "@lib//:libraries-kotlinx-coroutines-test-kotlinx-coroutines-test",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
@@ -419,6 +423,7 @@ kt_jvm_test(
         ":clikt-dependencies",
         ":jewel-bazel-scripts-utils",
         "@lib//:junit4",
+        "@lib//:kotlin-stdlib",
         "@lib//:libraries-kotlinx-coroutines-test-kotlinx-coroutines-test",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
@@ -436,6 +441,7 @@ kt_jvm_test(
         ":kotlinpoet",
         ":kotlinx-serialization-dependencies",
         "@lib//:junit4",
+        "@lib//:kotlin-stdlib",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
 )
@@ -447,6 +453,7 @@ kt_jvm_test(
     test_class = "org.jetbrains.jewel.scripts.bazel.ThemeGeneratorUtilsTest",
     deps = [
         "@lib//:junit4",
+        "@lib//:kotlin-stdlib",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
 )
@@ -463,6 +470,7 @@ kt_jvm_test(
         ":kotlinx-serialization-dependencies",
         ":theme-generator-utils",
         "@lib//:junit4",
+        "@lib//:kotlin-stdlib",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
 )
@@ -480,6 +488,7 @@ kt_jvm_test(
         ":clikt-dependencies",
         ":jewel-bazel-scripts-utils",
         "@lib//:junit4",
+        "@lib//:kotlin-stdlib",
         "@lib//:libraries-kotlinx-coroutines-test-kotlinx-coroutines-test",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
@@ -492,6 +501,7 @@ kt_jvm_test(
     test_class = "org.jetbrains.jewel.scripts.bazel.RunPerformanceTestsTest",
     deps = [
         "@lib//:junit4",
+        "@lib//:kotlin-stdlib",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
 )
@@ -509,6 +519,7 @@ kt_jvm_test(
         ":jewel-bazel-scripts-utils",
         ":kotlinx-serialization-dependencies",
         "@lib//:junit4",
+        "@lib//:kotlin-stdlib",
         "@lib//:libraries-kotlinx-coroutines-test-kotlinx-coroutines-test",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
@@ -526,6 +537,7 @@ kt_jvm_test(
         ":kotlinx-serialization-dependencies",
         ":theme-generator-utils",
         "@lib//:junit4",
+        "@lib//:kotlin-stdlib",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
 )
@@ -543,6 +555,7 @@ kt_jvm_test(
         ":clikt-dependencies",
         ":jewel-bazel-scripts-utils",
         "@lib//:junit4",
+        "@lib//:kotlin-stdlib",
         "@lib//:libraries-kotlinx-coroutines-test-kotlinx-coroutines-test",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
@@ -645,6 +658,7 @@ kt_jvm_test(
     test_class = "org.jetbrains.jewel.scripts.bazel.DetektRunnerTest",
     deps = [
         "@lib//:junit4",
+        "@lib//:kotlin-stdlib",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
 )

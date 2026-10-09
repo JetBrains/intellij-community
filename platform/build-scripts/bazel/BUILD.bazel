@@ -89,6 +89,15 @@ kt_jvm_library(
     ],
 )
 
+# The stdlib the sources of this workspace compile against. The default is the stdlib the pinned rules_kotlin
+# bundles, which matches the compiler of the rules_kotlin default toolchain of a standalone build. A root module
+# whose toolchain adds no stdlib sets the flag to the stdlib it declares for its own modules: the monorepo roots set
+# @lib//:kotlin-stdlib in community/common.bazelrc, next to the serialization plugin flag.
+label_flag(
+    name = "kotlin_stdlib",
+    build_setting_default = "@rules_kotlin//kotlin/compiler:kotlin-stdlib",
+)
+
 kt_kotlinc_options(
     name = "jps_to_bazel_kotlinc_options",
     # The sources use features up to Kotlin 2.2 (multi-dollar string interpolation). The level is
@@ -109,6 +118,7 @@ kt_jvm_library(
     runtime_deps = [],
     deps = [
         ":kotlin_serialization",
+        ":kotlin_stdlib",
         "@j2b_maven//:com_intellij_platform_kotlinx_coroutines_core_jvm",
         "@j2b_maven//:com_jetbrains_intellij_platform_build_scripts_downloader",
         "@j2b_maven//:com_jetbrains_intellij_platform_jps_model",
@@ -118,6 +128,9 @@ kt_jvm_library(
         "@j2b_maven//:com_jetbrains_intellij_platform_util_base",
         "@j2b_maven//:com_jetbrains_intellij_platform_util_base_multiplatform",
         "@j2b_maven//:com_jetbrains_intellij_platform_util_jdom",
+        # The JPS model API carries type-use nullability annotations. K2 rejects an inferred type whose
+        # annotation class is absent, so the sources need the library on the compile classpath.
+        "@j2b_maven//:org_jetbrains_annotations",
         "@j2b_maven//:org_jetbrains_kotlin_kotlin_jps_plugin",
         "@j2b_maven//:org_jetbrains_kotlin_kotlin_reflect",
         "@j2b_maven//:org_jetbrains_kotlinx_kotlinx_serialization_json_jvm",
@@ -131,6 +144,7 @@ kt_jvm_library(
     associates = [":jps_to_bazel-lib"],
     kotlinc_opts = ":jps_to_bazel_kotlinc_options",
     deps = [
+        ":kotlin_stdlib",
         "@j2b_maven//:junit_junit",
         "@j2b_maven//:net_bytebuddy_byte_buddy",
         "@j2b_maven//:org_assertj_assertj_core",

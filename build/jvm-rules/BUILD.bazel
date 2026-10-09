@@ -129,17 +129,17 @@ define_kt_toolchain(
     # The javac options of a target that sets none: the default-javac-opts flag, the fallback the rules_jvm rules
     # take too.
     javac_options = ":default-javac-opts",
-    jvm_runtime = [
-        ":kotlin-stdlib_import",
-    ],
-
-    # Implicit Kotlin stdlib + jetbrains-annotations injected by rules_kotlin into
-    # every kt_jvm_library's JavaInfo. Without these overrides the toolchain falls
-    # back to rules_kotlin's defaults (@kotlin_rules_maven//...)
-    jvm_stdlibs = [
-        ":annotations_import",
-        ":kotlin-stdlib_import",
-    ],
+    # The jar rules_kotlin adds to the compile classpath and to the runtime of every kt_jvm_library. None: a module
+    # declares its stdlib in deps and compiles against that jar, as the JPS backend does. The toolchain merges
+    # jvm_runtime into its stdlib record, so the empty list must stay explicit: a missing attribute selects the
+    # rules_kotlin default, the bundled kotlin-stdlib.
+    jvm_runtime = [],
+    # Compile-time-only toolchain jars (neverlink). None: a module compiles against its declared or
+    # exported dependencies only. The empty list must stay explicit, because a
+    # missing attribute selects the rules_kotlin default list, the bundled compiler distribution's
+    # annotations-13.0, kotlin-stdlib, kotlin-stdlib-jdk7 and kotlin-stdlib-jdk8. The JPS backend injects
+    # no annotations jar; the compiler and the worker get theirs through the kt_btapi_runtime libraries.
+    jvm_stdlibs = [],
     # The kotlinc options of a target that sets none: the default-kotlinc-opts flag, the fallback the rules_jvm
     # rules take too. A root build points the flag to the generated module defaults (community/common.bazelrc).
     kotlinc_options = ":default-kotlinc-opts",

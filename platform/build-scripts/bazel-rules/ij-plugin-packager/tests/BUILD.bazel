@@ -11,6 +11,7 @@ kt_jvm_library(
         "//platform/bazel-runfiles",
         "//platform/testFramework",
         "//platform/util/jdom",
+        "@rules_jvm//:kotlin-stdlib_import",
         "@rules_jvm//:kotlinx-coroutines-core_import",
         "@rules_jvm//:opentelemetry-api_import",
         "@rules_jvm//worker-framework",

@@ -76,8 +76,10 @@ common:bta --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=1
 # Build Tools API with the embeddable compiler), which MODULE.bazel registers. A standalone module
 # such as @jps_to_bazel takes the compiler plugin that matches this toolchain's compiler through its
 # flag below; the plugin it bundles for its own default toolchain (the rules_kotlin CLI distribution)
-# does not match this compiler.
+# does not match this compiler. The toolchain adds no stdlib, so the same module takes the stdlib
+# the monorepo declares for its own modules through its stdlib flag.
 common --@jps_to_bazel//:serialization_plugin=@lib//:kotlin-serialization-plugin
+common --@jps_to_bazel//:kotlin_stdlib=@lib//:kotlin-stdlib
 
 # kup — Kotlin User Project (KQA-3473): render the internal diagnostic names and report all warnings even when errors are found.
 common:kup --@community//build/kotlinc-opts-override:x_render_internal_diagnostic_names=true
@@ -259,9 +261,10 @@ common --experimental_propagate_custom_flag=@rules_kotlin//kotlin/settings:jvm_e
 common --experimental_propagate_custom_flag=@rules_kotlin//kotlin/settings:experimental_prune_transitive_deps
 common --experimental_propagate_custom_flag=@rules_jvm//:default-javac-opts
 common --experimental_propagate_custom_flag=@rules_jvm//:default-kotlinc-opts
-# The exported compiler plugins of a library resolve in the exec configuration, so the plugin flag of
-# @jps_to_bazel needs the propagation.
+# The exported compiler plugins of a library resolve in the exec configuration, and its stdlib follows
+# the library into a tool build, so both flags of @jps_to_bazel need the propagation.
 common --experimental_propagate_custom_flag=@jps_to_bazel//:serialization_plugin
+common --experimental_propagate_custom_flag=@jps_to_bazel//:kotlin_stdlib
 common --experimental_propagate_custom_flag=@rules_python//python/config_settings:bootstrap_impl
 common --experimental_propagate_custom_flag=@rules_go//go/config:pure
 
