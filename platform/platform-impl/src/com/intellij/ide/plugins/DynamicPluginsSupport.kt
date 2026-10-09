@@ -16,7 +16,10 @@ import org.jetbrains.annotations.NonNls
 interface DynamicPluginsSupport {
   suspend fun validateDynamicReconfigurationPossible(targetState: PluginSet): DynamicPluginsReconfigurationResult.Invalid?
 
-  suspend fun performDynamicReconfiguration(targetState: PluginSet): DynamicPluginsReconfigurationResult
+  suspend fun performDynamicReconfiguration(
+    targetState: PluginSet,
+    criticalSectionModalProgressConfig: ModalProgressConfig?,
+  ): DynamicPluginsReconfigurationResult
 
   // TODO consider adding suspend fun runPreventingDynamicReconfiguration(body: suspend? () -> Unit)
 
@@ -69,4 +72,5 @@ private class DynamicReconfigurationIsNotPossibleReasonImpl(
 @Service
 internal class DynamicPluginsSupportService(val coroutineScope: CoroutineScope)
 
-internal class ModalProgressConfig(val owner: ModalTaskOwner, val title: @Nls String)
+@ApiStatus.Internal
+class ModalProgressConfig(val owner: ModalTaskOwner, val title: @Nls String)

@@ -251,7 +251,8 @@ object DynamicPlugins {
           computeNewPluginsState(addNewCustomPlugins, forceRemovePlugins, forceExclude = true)
         },
         extraStateValidator = extraStateValidator,
-        modalProgressConfig = ModalProgressConfig(modalTaskOwner(project), title)
+        modalProgressConfig = ModalProgressConfig(modalTaskOwner(project), title),
+        criticalSectionModalProgressConfig = null,
       ) is DynamicPluginsReconfigurationResult.Success
     }
   }
@@ -274,6 +275,7 @@ object DynamicPlugins {
           },
           extraStateValidator = expectPluginsState(expectToLoad = plugins.map { it.pluginId }),
           modalProgressConfig = null,
+          criticalSectionModalProgressConfig = null,
         ) is DynamicPluginsReconfigurationResult.Success
       }
     }
@@ -306,6 +308,7 @@ object DynamicPlugins {
           },
           extraStateValidator = expectPluginsState(expectToLoad = listOf(pluginDescriptor.pluginId)),
           modalProgressConfig = null,
+          criticalSectionModalProgressConfig = null,
         ) is DynamicPluginsReconfigurationResult.Success
       }
     }
@@ -331,6 +334,7 @@ object DynamicPlugins {
           },
           extraStateValidator = expectPluginsState(expectNotToLoad = plugins.map { it.pluginId }),
           modalProgressConfig = null,
+          criticalSectionModalProgressConfig = null,
         ) is DynamicPluginsReconfigurationResult.Success
       }
     }
@@ -350,6 +354,7 @@ object DynamicPlugins {
           },
           extraStateValidator = expectPluginsState(expectNotToLoad = listOf(pluginDescriptor.pluginId)),
           modalProgressConfig = null,
+          criticalSectionModalProgressConfig = null,
         ) is DynamicPluginsReconfigurationResult.Success
       }
     }
@@ -359,6 +364,7 @@ object DynamicPlugins {
     buildNewState: () -> Either<PluginSet, DynamicReconfigurationIsNotPossibleReason>,
     extraStateValidator: PluginStateValidator,
     modalProgressConfig: ModalProgressConfig?,
+    criticalSectionModalProgressConfig: ModalProgressConfig?,
   ): DynamicPluginsReconfigurationResult {
     LOG.trace("dynamic plugins reconfiguration attempt")
     val runReconfiguration = suspend {
@@ -375,7 +381,7 @@ object DynamicPlugins {
             )
           }
         if (validationReason != null) validationReason
-        else DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState)
+        else DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState, criticalSectionModalProgressConfig)
       }
     }
     val result = if (modalProgressConfig != null) {

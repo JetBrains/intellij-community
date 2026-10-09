@@ -46,6 +46,8 @@ import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.progress.SequentialProgressReporter
 import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.platform.util.progress.withProgressText
@@ -100,14 +102,17 @@ internal class DynamicPluginsSupportImpl(
     }
   }
 
-  override suspend fun performDynamicReconfiguration(targetState: PluginSet): DynamicPluginsReconfigurationResult {
+  override suspend fun performDynamicReconfiguration(
+    targetState: PluginSet,
+    criticalSectionModalProgressConfig: ModalProgressConfig?,
+  ): DynamicPluginsReconfigurationResult {
     return tracer.spanBuilder("performDynamicReconfiguration").useWithScope { span ->
       rwLock.withLock {
         span.addEvent("acquired lock")
         withContext(Dispatchers.Default) {
           reportSequentialProgress { reporter ->
             context(reporter) {
-              performDynamicReconfigurationImpl(targetState)
+              performDynamicReconfigurationImpl(targetState, criticalSectionModalProgressConfig)
             }
           }
         }
@@ -135,7 +140,10 @@ internal class DynamicPluginsSupportImpl(
   }
 
   context(reporter: SequentialProgressReporter)
-  private suspend fun performDynamicReconfigurationImpl(targetState: PluginSet): DynamicPluginsReconfigurationResult {
+  private suspend fun performDynamicReconfigurationImpl(
+    targetState: PluginSet,
+    criticalSectionModalProgressConfig: ModalProgressConfig?,
+  ): DynamicPluginsReconfigurationResult {
     val current = getCurrentlyLoadedPluginSet()
     val target = targetState.resolvedPluginSet
     LOG.info("performing dynamic reconfiguration to $targetState")
@@ -164,39 +172,59 @@ internal class DynamicPluginsSupportImpl(
     currentCoroutineContext().ensureActive()
 
     return withContext(NonCancellable) {
-      val pluginsToLoad = loadSteps.asSequence()
-        .flatMap { it.runtimeModuleGroup.sortedDescriptors }
-        .filterIsInstance<PluginMainDescriptor>()
-        .associateBy { it.pluginId }
-
-      val (successfullyUnloaded, classloadersToUnload) = tracer.spanBuilder("unloadGroups").useWithScope {
-        unloadGroups(
-          groupsToUnload = unloadSteps.map { it.runtimeModuleGroup },
-          pluginsToBeLoadedLater = pluginsToLoad,
-        )
+      if (criticalSectionModalProgressConfig != null) {
+        tracer.spanBuilder("criticalSectionModalProgress").useWithScope {
+          withModalProgress(criticalSectionModalProgressConfig.owner,
+                            criticalSectionModalProgressConfig.title,
+                            TaskCancellation.nonCancellable()) {
+            doUnloadAndLoad(loadSteps, unloadSteps, targetState, sequence)
+          }
+        }
       }
-      if (!successfullyUnloaded) {
-        // broken state, require restart
-        InstalledPluginsState.getInstance().isRestartRequired = true
-        return@withContext DynamicPluginsReconfigurationResult.Incomplete()
+      else {
+        doUnloadAndLoad(loadSteps, unloadSteps, targetState, sequence)
       }
-
-      tracer.spanBuilder("loadGroups").useWithScope {
-        loadGroups(
-          targetPluginSet = targetState,
-          groups = loadSteps.map { it.runtimeModuleGroup },
-          reusedGroups = sequence.exactRuntimeModuleGroupAlignment.values.toList(),
-        )
-      }
-
-      val trulyCollected = classloaderUnloadAwaitStrategy.awaitClassloadersUnloadedPostReconfiguration(classloadersToUnload)
-      if (!trulyCollected) {
-        InstalledPluginsState.getInstance().isRestartRequired = true
-        return@withContext DynamicPluginsReconfigurationResult.Incomplete()
-      }
-
-      return@withContext DynamicPluginsReconfigurationResult.Success()
     }
+  }
+
+  context(reporter: SequentialProgressReporter)
+  private suspend fun doUnloadAndLoad(
+    loadSteps: List<TransitionStep>,
+    unloadSteps: List<TransitionStep>,
+    targetState: PluginSet,
+    sequence: TransitionSequence,
+  ): DynamicPluginsReconfigurationResult {
+    val pluginsToLoad = loadSteps.asSequence()
+      .flatMap { it.runtimeModuleGroup.sortedDescriptors }
+      .filterIsInstance<PluginMainDescriptor>()
+      .associateBy { it.pluginId }
+
+    val (successfullyUnloaded, classloadersToUnload) = tracer.spanBuilder("unloadGroups").useWithScope {
+      unloadGroups(
+        groupsToUnload = unloadSteps.map { it.runtimeModuleGroup },
+        pluginsToBeLoadedLater = pluginsToLoad,
+      )
+    }
+    if (!successfullyUnloaded) {
+      // broken state, require restart
+      InstalledPluginsState.getInstance().isRestartRequired = true
+      return DynamicPluginsReconfigurationResult.Incomplete()
+    }
+
+    tracer.spanBuilder("loadGroups").useWithScope {
+      loadGroups(
+        targetPluginSet = targetState,
+        groups = loadSteps.map { it.runtimeModuleGroup },
+        reusedGroups = sequence.exactRuntimeModuleGroupAlignment.values.toList(),
+      )
+    }
+
+    val trulyCollected = classloaderUnloadAwaitStrategy.awaitClassloadersUnloadedPostReconfiguration(classloadersToUnload)
+    if (!trulyCollected) {
+      InstalledPluginsState.getInstance().isRestartRequired = true
+      return DynamicPluginsReconfigurationResult.Incomplete()
+    }
+    return DynamicPluginsReconfigurationResult.Success()
   }
 
   private fun buildExplanationMessage(
