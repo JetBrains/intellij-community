@@ -39,22 +39,36 @@ abstract class CloseProjectsActionBase : DumbAwareAction(), ActionRemoteBehavior
                                   && projectsToClose.size == openProjects.size
                                   && opensWelcomeScreenProjectAfterClose(currentProject)
 
-    projectsToClose.forEach {
-      // ensure that last closed project frame bounds will be used as newly created project frame bounds
-      // (if will be no another focused opened project)
-      WindowManager.getInstance().updateDefaultFrameInfoOnProjectClose(it)
-      WriteIntentReadAction.run {
-        closeAndDisposeProject(it, keepFrame = keepCurrentProjectFrame && it === currentProject)
+    var allOtherProjectsClosed = true
+    for (project in projectsToClose) {
+      if (project !== currentProject && !closeProject(project, keepFrame = false)) {
+        allOtherProjectsClosed = false
       }
-
-      // RecentProjectsManager cannot distinguish close as part of exit (no need to remove project),
-      // and close as explicit user initiated action (need to remove project), because reason is not provided to `projectClosed` event.
-      RecentProjectsManager.getInstance().updateLastProjectPath()
+    }
+    if (currentProject in projectsToClose) {
+      closeProject(currentProject, keepFrame = keepCurrentProjectFrame && allOtherProjectsClosed)
     }
 
     if (shouldReopenWelcomeFrameAfterClose) {
       showWelcomeFrameIfNeeded()
     }
+  }
+
+  /**
+   * @return `true` when [project] has closed, or `false` when a listener vetoed the close.
+   */
+  private fun closeProject(project: Project, keepFrame: Boolean): Boolean {
+    // ensure that last closed project frame bounds will be used as newly created project frame bounds
+    // (if will be no another focused opened project)
+    WindowManager.getInstance().updateDefaultFrameInfoOnProjectClose(project)
+    val closed = WriteIntentReadAction.compute<Boolean> {
+      closeAndDisposeProject(project, keepFrame)
+    }
+
+    // RecentProjectsManager cannot distinguish close as part of exit (no need to remove project),
+    // and close as explicit user initiated action (need to remove project), because reason is not provided to `projectClosed` event.
+    RecentProjectsManager.getInstance().updateLastProjectPath()
+    return closed
   }
 
   @ApiStatus.Internal
