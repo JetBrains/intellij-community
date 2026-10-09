@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.util.io.storages.database.storages.appendonlylog;
+package com.intellij.platform.util.io.storages.database.storages.appenablerecords;
 
 import com.intellij.platform.util.io.storages.UnsupportedFormatException;
 import com.intellij.util.io.CorruptedException;
@@ -14,11 +14,11 @@ import java.lang.invoke.VarHandle;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT16_LAYOUT;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT32_LAYOUT;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.fieldHandle;
-import static com.intellij.platform.util.io.storages.database.storages.appendonlylog.RecordHeaderLayout.RECORD_ALIGNMENT;
+import static com.intellij.platform.util.io.storages.database.storages.appenablerecords.RecordHeaderLayout.RECORD_ALIGNMENT;
 
 /// Binary layout of an append-only-log header inside block:
 /// ```
-/// AppendOnlyLogOverBlockHeaderLayout[=12 bytes] {
+/// AppendableRecordsOverBlockHeaderLayout[=12 bytes] {
 ///   formatVersion : int16
 ///   [padding]     : int16
 ///   allocatedTail : int32
@@ -26,7 +26,7 @@ import static com.intellij.platform.util.io.storages.database.storages.appendonl
 /// }
 /// ```
 @ApiStatus.Internal
-public final class AppendOnlyLogOverBlockHeaderLayout {
+public final class AppendableRecordsOverBlockHeaderLayout {
   public static final short FORMAT_VERSION = 1;
 
   public static final MemoryLayout LAYOUT = MemoryLayout.structLayout(
@@ -34,7 +34,7 @@ public final class AppendOnlyLogOverBlockHeaderLayout {
     MemoryLayout.paddingLayout(Short.BYTES), // so allocatedTail is on 32-aligned offset
     INT32_LAYOUT.withName("allocatedTail"),
     INT32_LAYOUT.withName("committedTail")
-  ).withName("AppendOnlyLogOverBlockHeaderLayout");
+  ).withName("AppendableRecordsOverBlockHeaderLayout");
 
   //@formatter:off
   public static final VarHandle FORMAT_VERSION_HANDLE = fieldHandle(LAYOUT, "formatVersion");
@@ -106,5 +106,5 @@ public final class AppendOnlyLogOverBlockHeaderLayout {
     return new CorruptedException("Invalid append-only log block " + blockId + ": " + details);
   }
 
-  private AppendOnlyLogOverBlockHeaderLayout() { }
+  private AppendableRecordsOverBlockHeaderLayout() { }
 }

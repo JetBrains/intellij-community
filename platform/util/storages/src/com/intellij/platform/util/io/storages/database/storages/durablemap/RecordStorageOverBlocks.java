@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.database.storages.durablemap;
 
-import com.intellij.platform.util.io.storages.database.storages.appendonlylog.AppendOnlyLogOverBlock;
-import com.intellij.platform.util.io.storages.database.storages.appendonlylog.AppendOnlyLogOverBlock.RecordWriter;
+import com.intellij.platform.util.io.storages.database.storages.appenablerecords.AppendableRecordsOverBlock;
+import com.intellij.platform.util.io.storages.database.storages.appenablerecords.AppendableRecordsOverBlock.RecordWriter;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole;
 import com.intellij.util.io.CorruptedException;
@@ -18,7 +18,7 @@ import java.util.Comparator;
 import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES;
 
 /// Append-only record storage over multiple durable map blocks with one record role.
-/// Uses [AppendOnlyLogOverBlock] for each block, allocates new block as current one gets exhausted,
+/// Uses [AppendableRecordsOverBlock] for each block, allocates new block as current one gets exhausted,
 /// and keeps filled up blocks connected in a sequence.
 @ApiStatus.Internal
 public final class RecordStorageOverBlocks {
@@ -29,11 +29,11 @@ public final class RecordStorageOverBlocks {
   private final int preferredBlockContentLength;
 
   private final transient Object logsByBlockIdLock = new Object();
-  private final Int2ObjectMap<AppendOnlyLogOverBlock> logsByBlockId = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<AppendableRecordsOverBlock> logsByBlockId = new Int2ObjectOpenHashMap<>();
 
   // TODO Serializing the complete append operation is not acceptable. Revise the allocation and commit protocol to permit concurrent writers.
   private final transient Object appendLock = new Object();
-  private AppendOnlyLogOverBlock currentLog;
+  private AppendableRecordsOverBlock currentLog;
 
   private RecordStorageOverBlocks(@NotNull DurableMapBlockCatalog blockCatalog,
                                   @NotNull DurableMapBlockRole recordBlockRole,
@@ -57,7 +57,7 @@ public final class RecordStorageOverBlocks {
       case ENTRIES, KEYS, VALUES -> { }
       case LOOKUP -> throw new IllegalArgumentException("LOOKUP blocks do not store append-only records");
     }
-    var minimumContentLength = AppendOnlyLogOverBlock.minimumBlockContentLengthFor(0);
+    var minimumContentLength = AppendableRecordsOverBlock.minimumBlockContentLengthFor(0);
     if (preferredBlockContentLength < minimumContentLength) {
       throw new IllegalArgumentException(
         "preferredBlockContentLength(=" + preferredBlockContentLength + ") must be at least " +
@@ -72,8 +72,8 @@ public final class RecordStorageOverBlocks {
         continue;
       }
 
-      var log = AppendOnlyLogOverBlock.open(block);
-      AppendOnlyLogOverBlock previous = storage.logsByBlockId.putIfAbsent(block.id(), log);
+      var log = AppendableRecordsOverBlock.open(block);
+      AppendableRecordsOverBlock previous = storage.logsByBlockId.putIfAbsent(block.id(), log);
       if (previous != null) {
         throw new CorruptedException("Duplicate block id[" + block.id() + "]: " + previous + " vs " + block);
       }
@@ -126,10 +126,10 @@ public final class RecordStorageOverBlocks {
     return readRecord(recordRef).payload();
   }
 
-  /// @return record for recordRef, _without_ resolving [AppendOnlyLogOverBlock.Record#previousRef()], if record has it
-  public @NotNull AppendOnlyLogOverBlock.Record readRecord(long recordRef) throws IOException {
+  /// @return record for recordRef, _without_ resolving [AppendableRecordsOverBlock.Record#previousRef()], if record has it
+  public @NotNull AppendableRecordsOverBlock.Record readRecord(long recordRef) throws IOException {
     var blockId = blockId(recordRef);
-    AppendOnlyLogOverBlock log;
+    AppendableRecordsOverBlock log;
     synchronized (logsByBlockIdLock) {
       log = logsByBlockId.get(blockId);
     }
@@ -142,7 +142,7 @@ public final class RecordStorageOverBlocks {
   /// Updates a committed payload without changing its size or record header.
   public void updatePayload(long recordRef, @NotNull RecordWriter updater) throws IOException {
     var blockId = blockId(recordRef);
-    AppendOnlyLogOverBlock log;
+    AppendableRecordsOverBlock log;
     synchronized (logsByBlockIdLock) {
       log = logsByBlockId.get(blockId);
     }
@@ -171,7 +171,7 @@ public final class RecordStorageOverBlocks {
         if (block.state() == BlocksStore.Block.LifecycleState.RETIRED) {
           continue;
         }
-        AppendOnlyLogOverBlock log;
+        AppendableRecordsOverBlock log;
         //noinspection NestedSynchronizedStatement
         synchronized (logsByBlockIdLock) {
           log = logsByBlockId.get(block.id());
@@ -191,11 +191,11 @@ public final class RecordStorageOverBlocks {
     }
   }
 
-  private @NotNull AppendOnlyLogOverBlock allocateLog(int payloadLength, boolean hasLink) throws IOException {
-    var minimumContentLength = AppendOnlyLogOverBlock.minimumBlockContentLengthFor(payloadLength, hasLink);
+  private @NotNull AppendableRecordsOverBlock allocateLog(int payloadLength, boolean hasLink) throws IOException {
+    var minimumContentLength = AppendableRecordsOverBlock.minimumBlockContentLengthFor(payloadLength, hasLink);
     var contentLength = Math.max(preferredBlockContentLength, minimumContentLength);
     var block = blockCatalog.allocateBlock(recordBlockRole, contentLength);
-    var log = AppendOnlyLogOverBlock.create(block);
+    var log = AppendableRecordsOverBlock.create(block);
     synchronized (logsByBlockIdLock) {
       logsByBlockId.put(block.id(), log);
     }
@@ -231,6 +231,6 @@ public final class RecordStorageOverBlocks {
   @FunctionalInterface
   public interface LinkedRecordReader {
     /// @return `true` to process the next record, or `false` to stop the traversal.
-    boolean process(long recordRef, @NotNull AppendOnlyLogOverBlock.Record record) throws IOException;
+    boolean process(long recordRef, @NotNull AppendableRecordsOverBlock.Record record) throws IOException;
   }
 }

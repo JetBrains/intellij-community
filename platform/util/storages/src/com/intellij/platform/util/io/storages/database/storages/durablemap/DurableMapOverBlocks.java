@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.platform.util.io.storages.UnsupportedFormatException;
 import com.intellij.platform.util.io.storages.database.spi.housekeeping.HousekeeperInstaller;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
-import com.intellij.platform.util.io.storages.database.storages.appendonlylog.AppendOnlyLogOverBlock;
+import com.intellij.platform.util.io.storages.database.storages.appenablerecords.AppendableRecordsOverBlock;
 import com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapStorageOverLookupBlocks;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
 import com.intellij.platform.util.io.storages.durablemap.EntryExternalizer;
@@ -754,7 +754,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V>, UnusedBlock
   }
 
   /// @return reference to 'base' record, i.e., first record in a chain of 'patches'
-  private static long baseEntryRef(long recordRef, @NotNull AppendOnlyLogOverBlock.Record record) throws CorruptedException {
+  private static long baseEntryRef(long recordRef, @NotNull AppendableRecordsOverBlock.Record record) throws CorruptedException {
     if (record.payload().byteSize() < Long.BYTES || record.previousRef() <= NO_VALUE || record.previousRef() >= recordRef) {
       throw new CorruptedException("Invalid patch predecessor: " + recordRef);
     }

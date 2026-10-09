@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.util.io.storages.database.storages.appendonlylog;
+package com.intellij.platform.util.io.storages.database.storages.appenablerecords;
 
-import com.intellij.platform.util.io.storages.database.storages.appendonlylog.RecordHeaderLayout.RecordHeader;
+import com.intellij.platform.util.io.storages.database.storages.appenablerecords.RecordHeaderLayout.RecordHeader;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.util.io.CorruptedException;
 import org.jetbrains.annotations.ApiStatus;
@@ -15,14 +15,14 @@ import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Bl
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ALLOCATED;
 
 /// Stores append-only records with arbitrary payloads inside one [BlocksStore.Block].
-/// [AppendOnlyLogOverBlockHeaderLayout] defines header binary layout.
+/// [AppendableRecordsOverBlockHeaderLayout] defines header binary layout.
 /// Block selection, chaining and lifecycle transitions belong to the storage that owns this log.
 @ApiStatus.Internal
-public final class AppendOnlyLogOverBlock {
+public final class AppendableRecordsOverBlock {
   private final @NotNull BlocksStore.Block block;
   private final @NotNull MemorySegment content;
 
-  private AppendOnlyLogOverBlock(@NotNull BlocksStore.Block block,
+  private AppendableRecordsOverBlock(@NotNull BlocksStore.Block block,
                                  @NotNull MemorySegment content) {
     this.block = block;
     this.content = content;
@@ -33,12 +33,12 @@ public final class AppendOnlyLogOverBlock {
   }
 
   public static int minimumBlockContentLengthFor(int payloadLength, boolean hasLink) {
-    return Math.addExact(AppendOnlyLogOverBlockHeaderLayout.HEADER_SIZE, RecordHeader.totalLength(payloadLength, hasLink));
+    return Math.addExact(AppendableRecordsOverBlockHeaderLayout.HEADER_SIZE, RecordHeader.totalLength(payloadLength, hasLink));
   }
 
   /// Initializes an empty log header in the block, and activates the block;
   /// The block must be in [ALLOCATED] state;
-  public static @NotNull AppendOnlyLogOverBlock create(@NotNull BlocksStore.Block block) {
+  public static @NotNull AppendableRecordsOverBlock create(@NotNull BlocksStore.Block block) {
     var initialState = block.state();
     if (initialState != ALLOCATED) {
       throw new IllegalArgumentException("Block " + block.id() + " must be allocated, but: " + initialState);
@@ -49,9 +49,9 @@ public final class AppendOnlyLogOverBlock {
       if (content.byteSize() < minimumBlockContentLengthFor(/* payloadLength: */ 0)) {
         throw new IllegalArgumentException("Block " + block.id() + " content (=" + content.byteSize() + ") is too small");
       }
-      AppendOnlyLogOverBlockHeaderLayout.initializeEmpty(content);
+      AppendableRecordsOverBlockHeaderLayout.initializeEmpty(content);
       block.activate();
-      return new AppendOnlyLogOverBlock(block, content);
+      return new AppendableRecordsOverBlock(block, content);
     }
     catch (Throwable failure) {
       if (block.state() == ALLOCATED) {
@@ -64,10 +64,10 @@ public final class AppendOnlyLogOverBlock {
   }
 
   /// Opens a log and validates its committed record prefix
-  public static @NotNull AppendOnlyLogOverBlock open(@NotNull BlocksStore.Block block) throws IOException {
+  public static @NotNull AppendableRecordsOverBlock open(@NotNull BlocksStore.Block block) throws IOException {
     var content = block.content();
-    var committedTail = AppendOnlyLogOverBlockHeaderLayout.readValidatedCommittedTail(block.id(), content);
-    var log = new AppendOnlyLogOverBlock(block, content);
+    var committedTail = AppendableRecordsOverBlockHeaderLayout.readValidatedCommittedTail(block.id(), content);
+    var log = new AppendableRecordsOverBlock(block, content);
     log.scanCommittedRecords(committedTail, (_, _) -> true);
     return log;
   }
@@ -82,7 +82,7 @@ public final class AppendOnlyLogOverBlock {
   }
 
   public synchronized boolean hasIncompleteAllocation() {
-    return AppendOnlyLogOverBlockHeaderLayout.allocatedTail(content) != AppendOnlyLogOverBlockHeaderLayout.committedTail(content);
+    return AppendableRecordsOverBlockHeaderLayout.allocatedTail(content) != AppendableRecordsOverBlockHeaderLayout.committedTail(content);
   }
 
   public synchronized boolean hasSpaceFor(int payloadLength) {
@@ -91,7 +91,7 @@ public final class AppendOnlyLogOverBlock {
 
   public synchronized boolean hasSpaceFor(int payloadLength, boolean hasLink) {
     var totalLength = RecordHeader.totalLength(payloadLength, hasLink);
-    return content.byteSize() - AppendOnlyLogOverBlockHeaderLayout.allocatedTail(content) >= totalLength;
+    return content.byteSize() - AppendableRecordsOverBlockHeaderLayout.allocatedTail(content) >= totalLength;
   }
 
   /// Appends one payload and returns its offset inside the block
@@ -104,8 +104,8 @@ public final class AppendOnlyLogOverBlock {
     if (block.state() != ACTIVE) {
       throw new IllegalStateException("Block " + block.id() + " is not active");
     }
-    var recordOffset = AppendOnlyLogOverBlockHeaderLayout.allocatedTail(content);
-    var committedTail = AppendOnlyLogOverBlockHeaderLayout.committedTail(content);
+    var recordOffset = AppendableRecordsOverBlockHeaderLayout.allocatedTail(content);
+    var committedTail = AppendableRecordsOverBlockHeaderLayout.committedTail(content);
     if (recordOffset != committedTail) {
       throw new IllegalStateException("Block " + block.id() + " has an incomplete allocation");
     }
@@ -119,7 +119,7 @@ public final class AppendOnlyLogOverBlock {
     var recordHeader = content.asSlice(recordOffset, RecordHeaderLayout.HEADER_SIZE);
     header.writeAllocatedTo(recordHeader);
     var newTail = Math.addExact(recordOffset, header.totalLength());
-    AppendOnlyLogOverBlockHeaderLayout.publishAllocatedTail(content, newTail);
+    AppendableRecordsOverBlockHeaderLayout.publishAllocatedTail(content, newTail);
 
     if (header.hasLink()) {
       //A header is int32, int32-aligned => [link:int64] right after header is _not_ (int64-)aligned:
@@ -128,7 +128,7 @@ public final class AppendOnlyLogOverBlock {
     writer.writeTo(payload(recordOffset, header));
 
     header.publishCommittedTo(recordHeader);
-    AppendOnlyLogOverBlockHeaderLayout.publishCommittedTail(content, newTail);
+    AppendableRecordsOverBlockHeaderLayout.publishCommittedTail(content, newTail);
     return recordOffset;
   }
 
@@ -141,7 +141,7 @@ public final class AppendOnlyLogOverBlock {
     if (block.state() == BlocksStore.Block.LifecycleState.RETIRED) {
       throw new IllegalStateException("Block " + block.id() + " is retired");
     }
-    var committedTail = AppendOnlyLogOverBlockHeaderLayout.committedTail(content);
+    var committedTail = AppendableRecordsOverBlockHeaderLayout.committedTail(content);
     var header = readCommittedHeader(recordOffset, committedTail);
     return record(recordOffset, header);
   }
@@ -154,13 +154,13 @@ public final class AppendOnlyLogOverBlock {
     if (block.state() == BlocksStore.Block.LifecycleState.RETIRED) {
       throw new IllegalStateException("Block " + block.id() + " is retired");
     }
-    var committedTail = AppendOnlyLogOverBlockHeaderLayout.committedTail(content);
+    var committedTail = AppendableRecordsOverBlockHeaderLayout.committedTail(content);
     var header = readCommittedHeader(recordOffset, committedTail);
     updater.writeTo(payload(recordOffset, header));
   }
 
   private @NotNull RecordHeader readCommittedHeader(int recordOffset, int committedTail) throws CorruptedException {
-    if (recordOffset < AppendOnlyLogOverBlockHeaderLayout.HEADER_SIZE ||
+    if (recordOffset < AppendableRecordsOverBlockHeaderLayout.HEADER_SIZE ||
         recordOffset % RecordHeaderLayout.RECORD_ALIGNMENT != 0 ||
         (long)recordOffset + RecordHeaderLayout.HEADER_SIZE > committedTail) {
       throw new CorruptedException("Invalid record offset " + recordOffset + " in block " + block.id());
@@ -176,11 +176,11 @@ public final class AppendOnlyLogOverBlock {
 
   /// @return `true` if all records were processed, or `false` if the reader stopped the traversal.
   public boolean forEachCommittedRecordWithLinks(@NotNull LinkedRecordReader reader) throws IOException {
-    return scanCommittedRecords(AppendOnlyLogOverBlockHeaderLayout.committedTail(content), reader);
+    return scanCommittedRecords(AppendableRecordsOverBlockHeaderLayout.committedTail(content), reader);
   }
 
   private boolean scanCommittedRecords(int committedTail, @NotNull LinkedRecordReader reader) throws IOException {
-    var recordOffset = AppendOnlyLogOverBlockHeaderLayout.HEADER_SIZE;
+    var recordOffset = AppendableRecordsOverBlockHeaderLayout.HEADER_SIZE;
     while (recordOffset < committedTail) {
       var recordHeader = content.asSlice(recordOffset, RecordHeaderLayout.HEADER_SIZE);
       var header = RecordHeader.readCommitted(block.id(), recordOffset, recordHeader, committedTail);

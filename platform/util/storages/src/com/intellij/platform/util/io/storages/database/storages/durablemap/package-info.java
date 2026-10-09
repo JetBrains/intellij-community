@@ -4,7 +4,7 @@
 /// A persistent Map[K,V] implemented on top of [com.intellij.platform.util.io.storages.database.spi.BlocksDatabase]
 ///
 /// `(key, value)` pairs are stored in `block[tag=DATA]`, with append-only-log structure in each block
-/// (see [com.intellij.platform.util.io.storages.database.storages.appendonlylog.AppendOnlyLogOverBlock])
+/// (see [AppendableRecordsOverBlock])
 ///
 /// Lookup index `key.hash(int32) -> recordRef(int64)` is stored as `block[tag=LOOKUP]`, specific format
 /// is pluggable: currently [com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMapInt32ToInt64]
@@ -13,4 +13,5 @@
 @Internal
 package com.intellij.platform.util.io.storages.database.storages.durablemap;
 
+import com.intellij.platform.util.io.storages.database.storages.appenablerecords.AppendableRecordsOverBlock;
 import org.jetbrains.annotations.ApiStatus.Internal;

@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.util.io.storages.database.storages.appendonlylog;
+package com.intellij.platform.util.io.storages.database.storages.appenablerecords;
 
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class AppendOnlyLogOverBlockTest {
+public class AppendableRecordsOverBlockTest {
   private static final int CHUNK_SIZE = 1024 * 1024;
   private static final int ARBITRARY_BLOCK_ROLE = 42;
   private static final int BLOCK_CONTENT_LENGTH = 64;
@@ -31,7 +31,7 @@ public class AppendOnlyLogOverBlockTest {
   public void createActivatesAllocatedBlock() {
     var block = new TestBlock(BLOCK_CONTENT_LENGTH);
 
-    var log = AppendOnlyLogOverBlock.create(block);
+    var log = AppendableRecordsOverBlock.create(block);
 
     assertSame(block, log.block());
     assertEquals(BlocksStore.Block.LifecycleState.ACTIVE, block.state());
@@ -39,10 +39,10 @@ public class AppendOnlyLogOverBlockTest {
 
   @Test
   public void failedCreateDiscardsAllocatedBlock() {
-    var contentLength = AppendOnlyLogOverBlock.minimumBlockContentLengthFor(0) - 1;
+    var contentLength = AppendableRecordsOverBlock.minimumBlockContentLengthFor(0) - 1;
     var block = new TestBlock(contentLength);
 
-    assertThrows(IllegalArgumentException.class, () -> AppendOnlyLogOverBlock.create(block));
+    assertThrows(IllegalArgumentException.class, () -> AppendableRecordsOverBlock.create(block));
 
     assertEquals(BlocksStore.Block.LifecycleState.RETIRED, block.state());
   }
@@ -53,7 +53,7 @@ public class AppendOnlyLogOverBlockTest {
     try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
       var store = database.openStore("log", 1);
       var block = store.allocateBlock(ARBITRARY_BLOCK_ROLE, BLOCK_CONTENT_LENGTH);
-      var log = AppendOnlyLogOverBlock.create(block);
+      var log = AppendableRecordsOverBlock.create(block);
 
       for (int payloadLength = 0; payloadLength < RecordHeaderLayout.RECORD_ALIGNMENT; payloadLength++) {
         var recordOffset = log.append(payloadLength, _ -> { });
@@ -91,7 +91,7 @@ public class AppendOnlyLogOverBlockTest {
     try (var database = factory.open(databaseDirectory)) {
       var store = database.openStore("log", 1);
       var block = store.allocateBlock(ARBITRARY_BLOCK_ROLE, BLOCK_CONTENT_LENGTH);
-      var log = AppendOnlyLogOverBlock.create(block);
+      var log = AppendableRecordsOverBlock.create(block);
 
       recordOffset = log.append(expected.length, payload -> payload.copyFrom(MemorySegment.ofArray(expected)));
       blockId = block.id();
@@ -103,7 +103,7 @@ public class AppendOnlyLogOverBlockTest {
       assertNotNull(store);
       var block = store.findBlock(blockId);
       assertNotNull(block);
-      var log = AppendOnlyLogOverBlock.open(block);
+      var log = AppendableRecordsOverBlock.open(block);
 
       assertArrayEquals(expected, log.read(recordOffset).toArray(ValueLayout.JAVA_BYTE));
     }
@@ -114,12 +114,12 @@ public class AppendOnlyLogOverBlockTest {
     try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
       var store = database.openStore("log", 1);
       var block = store.allocateBlock(ARBITRARY_BLOCK_ROLE, BLOCK_CONTENT_LENGTH);
-      var log = AppendOnlyLogOverBlock.create(block);
+      var log = AppendableRecordsOverBlock.create(block);
       assertTrue(log.hasSpaceFor(1));
 
       int firstOffset = log.append(1, payload -> payload.set(ValueLayout.JAVA_BYTE, 0, (byte)11));
       int linkedOffset = log.append(1, 123L, payload -> payload.set(ValueLayout.JAVA_BYTE, 0, (byte)22));
-      var reopened = AppendOnlyLogOverBlock.open(block);
+      var reopened = AppendableRecordsOverBlock.open(block);
       assertEquals(0L, reopened.readRecord(firstOffset).previousRef());
       assertEquals(123L, reopened.readRecord(linkedOffset).previousRef());
       assertEquals(1L, reopened.readRecord(linkedOffset).payload().byteSize());
@@ -150,7 +150,7 @@ public class AppendOnlyLogOverBlockTest {
     try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
       var store = database.openStore("log", 1);
       var block = store.allocateBlock(ARBITRARY_BLOCK_ROLE, BLOCK_CONTENT_LENGTH);
-      var log = AppendOnlyLogOverBlock.create(block);
+      var log = AppendableRecordsOverBlock.create(block);
 
       var failure = assertThrows(IOException.class, () -> log.append(8, _ -> {
         throw new IOException("simulated failure");
