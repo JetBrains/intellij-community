@@ -9,42 +9,35 @@ import com.intellij.lexer.Lexer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.testFramework.LexerTestCase
-import com.intellij.testFramework.UsefulTestCase
-import org.jetbrains.annotations.NonNls
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.lexerFixture
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.junit5.fixture.TestFixtures
+import org.junit.jupiter.api.fail
 import org.toml.TestCase
+import org.toml.getTomlTestsResourcesPath
 import org.toml.pathToGoldTestFile
 import org.toml.pathToSourceTestFile
 import java.io.IOException
 
-abstract class LexerTestCaseBase : LexerTestCase(), TestCase {
-    override fun getDirPath(): String = throw UnsupportedOperationException()
+@TestFixtures
+abstract class LexerTestCaseBase : TestCase {
+    private val lexer by lexerFixture(getTomlTestsResourcesPath().toString()) { createLexer() }
 
-    override fun getTestName(lowercaseFirstLetter: Boolean): String {
-        val camelCase = super.getTestName(lowercaseFirstLetter)
-        return TestCase.camelOrWordsToSnake(camelCase)
-    }
+    protected abstract fun createLexer(): Lexer
+
+    override fun getTestName(lowercaseFirstLetter: Boolean): String = TestCase.camelOrWordsToSnake(lexer.testName)
 
     // NOTE(matkad): this is basically a copy-paste of doFileTest.
     // The only difference is that encoding is set to utf-8
     protected fun doTest() {
         val filePath = pathToSourceTestFile()
-        var text = ""
-        try {
+        val text = try {
             val fileText = FileUtil.loadFile(filePath.toFile(), CharsetToolkit.UTF8)
-            text = StringUtil.convertLineSeparators(if (shouldTrim()) fileText.trim() else fileText)
+            StringUtil.convertLineSeparators(fileText.trim())
         } catch (e: IOException) {
             fail("can't load file " + filePath + ": " + e.message)
         }
-        doTest(text, null)
-    }
-
-    override fun doTest(@NonNls text: String, expected: String?, lexer: Lexer) {
-        val result = printTokens(text, 0, lexer)
-        if (expected != null) {
-            UsefulTestCase.assertSameLines(expected, result)
-        } else {
-            UsefulTestCase.assertSameLinesWithFile(pathToGoldTestFile().toFile().canonicalPath, result)
-        }
+        PlatformTestUtil.assertSameLinesWithFile(pathToGoldTestFile().toFile().canonicalPath, lexer.printTokens(text, 0))
+        lexer.checkCorrectRestart(text)
     }
 }

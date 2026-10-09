@@ -6,6 +6,7 @@
 package org.toml.lang.lexer
 
 import com.intellij.lexer.Lexer
+import org.junit.jupiter.api.Test
 import org.toml.lang.psi.TomlElementTypes.BASIC_STRING
 
 class TomlEscapeLexerTest : TomlLexerTestBase() {
@@ -13,8 +14,12 @@ class TomlEscapeLexerTest : TomlLexerTestBase() {
 
     override fun createLexer(): Lexer = TomlEscapeLexer.of(BASIC_STRING)
 
+    @Test
     fun `test valid symbol escapes`() = doTest()
+    @Test
     fun `test valid unicode escapes`() = doTest()
+    @Test
     fun `test invalid symbol escapes`() = doTest()
+    @Test
     fun `test invalid unicode escapes`() = doTest()
 }
