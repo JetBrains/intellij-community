@@ -81,21 +81,24 @@ Every item below was found by running something, and says so. Where a measuremen
   `cancel --thread-dump` path keeps its dump before the kill. The second half is `pool stop`, which should honour
   the receipt it is given instead of reading its own lease as another holder's.
 
-- **The host build analyzes the whole graph again on every run, with no action to run.**
+- **A Bazel command with other build options discards the analysis of the lane build.**
 
-  Measured on 2026-10-10 on `air-docker-1`, in the series of the `rename-session` suite under one held lease. The
-  lane build of run `develar-run-c94c3108` ran 0 actions and took 9.1 s. It loaded 6,217 packages and configured
-  323,588 targets, so Bazel had no analysis to keep. The Bazel server log shows the cause one command earlier: the
-  `bazel run` of the `vm.cmd` wrapper ended at 13:41:41.4 UTC with `invalidation of 487213 nodes`. The analysis of
-  the lane build then took 8 s. A build with a kept analysis takes about 2 s, so about 7 s of each run is open.
+  The lane build of a `vm.cmd run` ran 0 actions on 2026-10-10 and still analyzed 6,217 packages again on every run,
+  for 7.5 to 23 s. The first cause is gone. Until "setup vm controller: the lane build names its own outputs", the
+  controller asked `cquery` about the lane target right after the lane build. The next command that built another
+  target then deleted about 487,000 nodes, packages included. In `java.log` of that day, 26 of the 28 wrapper runs
+  with the lane config that ended with such a deletion came right after that `cquery`. Only 2 of 69 runs without it
+  did. A measurement at 19:06 UTC on the fixed controller showed no deletion after the wrapper, and a lane build that
+  loaded 0 packages and analyzed for 1.0 s. "setup build: the wrappers build their binary instead of running it"
+  named the `bazel run` as the trigger. That was wrong, and the change of that commit gains about 0.5 s only.
 
-  The trigger is the `bazel run` command. On 2026-10-10 every wrapper `bazel run` of `@community//tools/vm:vm` that
-  followed a lane build ended with a deletion of 430,000 to 487,401 nodes, packages included, and no lane `bazel
-  build` of that day ended with one (38 of 38). The `bt.cmd` runs did it too (48 times). The run and the build read
-  the same rc files and options. So the sh halves of the wrappers now run `bazel build` and read the binary from the
-  build event file. What is still open is the Bazel mechanism behind the deletion, and the measurement that the lane
-  build then keeps its analysis. `java.log` of the output base names every command with its argv and timestamps,
-  and it is the instrument here.
+  What is open is the second cause. The lane config adds two build options, `--build_runfile_links` and
+  `--define=air_lane_guest_os=linux`. A command without them discards the lane analysis. In the same measurement, a
+  `bt.cmd` test before the lane build made Bazel discard 1,049,066 nodes, and the lane build then loaded 6,546
+  packages and analyzed for 11.6 s. Every `bt.cmd` call, and every gate without the lane config, between two lane
+  runs costs that. The fix is a lane build with the default options: the guest OS from a build setting that a
+  transition sets on the lane targets, and no runfile links on the host, because the host reads the MANIFEST.
+  `java.log` of the output base names every command with its argv and timestamps, and it is the instrument here.
 
 - **Each Bazel command checks every output file on disk.**
 
