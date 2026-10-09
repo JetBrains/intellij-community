@@ -2,6 +2,7 @@
 package com.intellij.platform.projectView.impl
 
 import com.intellij.ide.CopyPasteUtil
+import com.intellij.ide.actions.ViewInplaceCommentsListener
 import com.intellij.ide.bookmark.BookmarksListener
 import com.intellij.ide.bookmark.FileBookmarksListener
 import com.intellij.ide.projectView.ProjectViewNode
@@ -9,6 +10,7 @@ import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper
 import com.intellij.ide.scratch.RootType
 import com.intellij.ide.ui.VirtualFileAppearanceListener
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -174,6 +176,15 @@ private class UpdateSession(
           emitPresentationsFromRootTo(file)
         }
       })
+
+      ApplicationManager.getApplication().messageBus.connect(scope).subscribe(
+        ViewInplaceCommentsListener.TOPIC,
+        object : ViewInplaceCommentsListener {
+          override fun settingChanged() {
+            emitAllPresentations()
+          }
+        }
+      )
 
       launch(CoroutineName("Consuming updates requested using ProjectViewUpdateRequestsService")) {
         ProjectViewUpdateRequestsService.getInstance(project).updates.collect { update ->
