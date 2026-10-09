@@ -11,6 +11,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -844,7 +845,9 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
 
   override fun getModificationCount(): Long {
     // todo: drop mod tracker in scanner executor after there is a proper way to track indexes updates IJPL-472
-    return _state.value.modificationCounter + UnindexedFilesScannerExecutor.getInstance(project).modificationTracker.modificationCount
+    // A process without the indexing backend has no scanner executor, so there is no scanning to count.
+    val scanningModificationCount = project.serviceOrNull<UnindexedFilesScannerExecutor>()?.modificationTracker?.modificationCount ?: 0
+    return _state.value.modificationCounter + scanningModificationCount
   }
 
   private data class DumbStateImpl(
