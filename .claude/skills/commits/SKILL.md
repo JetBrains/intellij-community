@@ -16,12 +16,16 @@ SafePush rejects a malformed subject, and each rejection costs a CI round trip.
 ## Message
 
 ```text
-IDEA-12345 <subject>              # behavioral change: ticket, no subsystem prefix
-<label> <subsystem>: <subject>    # clearly non-behavioral change
+IDEA-12345 <subject>              # a change with a ticket: the id, then one sentence
+<label> <subsystem>: <subject>    # a change with no ticket
 ```
 
 - A behavioral change needs a YouTrack ticket. If you are unsure whether it is behavioral, it is.
-- Labels: `tests`, `cleanup`, `refactor`, `docs`, `format`, `style`, `setup`, `misc`.
+- With a ticket, the subject is the id and one sentence that says what the change does or decides. Do not add a label
+  or a subsystem: the id already names the area. `IDEA-12345 the inspection skips a generated file`, not
+  `IDEA-12345 fix inspections: generated files`. A test, a docs, or a cleanup commit of a ticket takes the same form;
+  the body says that it is a test or a docs change.
+- With no ticket, the label is one of `tests`, `cleanup`, `refactor`, `docs`, `format`, `style`, `setup`, `misc`.
 - Do not use Conventional Commits (`fix(scope): …`).
 - Write a body unless the change is mechanical (a typo, an import, a format pass). Tests and cleanups need one too.
   Say why you made the change and what you decided. The diff already shows what changed.
@@ -46,7 +50,7 @@ Windows PowerShell adds a BOM to the subject, and SafePush rejects it.
 git commit -m "IDEA-12345 concise subject" -m "Why the change was made and what was decided." -m "IJ-MR-100"
 ```
 
-Do not write the message to a file outside the workspace, such as `/tmp`. If you need a file, use the gitignored `out/commit-message.txt`.
+Do not write the message to a file outside the workspace, such as `/tmp`: that asks for a filesystem approval and leaves a plaintext draft behind. If you need a file, give it a name unique to your session under the gitignored `out/`, such as `out/commit-message-<session>.txt`. Several sessions share one working copy, and a peer can overwrite a shared file name between your write and your commit.
 
 ## Examples
 
@@ -58,6 +62,16 @@ awaits fail fast in both the owning coroutine and child coroutines.
 
 IJ-MR-100
 ```
+
+```text
+IJAI-3334 the published-surface wait of the editor service test names its step and dumps the state
+
+The test failed once on TeamCity with no log line in its 10 s window, and 208 local runs did not reproduce it.
+The helper now waits for the subscription and then for the apply, under one deadline, and a failure adds the
+state of the test backend and a coroutine dump. No product code changes.
+```
+
+A change with no ticket:
 
 ```text
 tests cidr: migrate JUnit 5 coverage
