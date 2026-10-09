@@ -2,10 +2,12 @@
 package com.intellij.execution.process
 
 import com.intellij.execution.CommandLineWrapperUtil
+import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.openapi.projectRoots.JdkCommandLineSetup
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.rt.execution.CommandLineWrapper
@@ -16,7 +18,9 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import java.io.File
+import java.net.URLClassLoader
 import java.nio.charset.StandardCharsets
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -110,6 +114,13 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     doTest("#arg_file#")
     val args = filesToDelete?.find { it.name.contains("idea_arg_file") }?.readLines()?.dropWhile { !it.contains("hello.Main") }
     assertThat(args).containsExactly("hello/hello.Main", "1\"#\"1", "\"\\\"\"2\"'\"", "line\"\\n\"-", "C:\\", "D:\\work", "E:\\work\" \"space")
+  }
+
+  @Test fun `CommandLineWrapper is found through the JavaParameters class loader`() {
+    // models the layout where idea_rt.jar is in the Java plugin and the platform class loader does not see it
+    val platformLoader = URLClassLoader(arrayOf(), null)
+    assertFailsWith<ClassNotFoundException> { platformLoader.loadClass(wrapper) }
+    assertThat(JdkCommandLineSetup.commandLineWrapperClass(JavaParameters(), platformLoader)?.name).isEqualTo(wrapper)
   }
 
   @Test fun javaParametersFileGeneration() {
