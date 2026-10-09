@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
@@ -196,7 +196,7 @@ class ProductPluginInitContext(
     val text = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList, ApplicationInfoImpl.getShadowInstance().shortCompanyName)
     val buttons = arrayOf(CoreBundle.message("third.party.plugins.privacy.note.accept"), CoreBundle.message("third.party.plugins.privacy.note.disable"))
     val icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.WarningDialog)
-    val choice = JOptionPane.showOptionDialog(null, text, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, icon, buttons, buttons.get(0))
+    val choice = JOptionPane.showOptionDialog(null, text, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, icon, buttons, buttons[0])
     return choice == 0
   }
 
@@ -375,18 +375,15 @@ class ProductPluginInitContext(
 }
 
 // alias in most cases points to Core plugin, so we cannot use computed dependencies to check
-private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, aliasId: PluginId): Boolean {
-  return plugin.dependencies.any { it.pluginId == aliasId } || plugin.moduleDependencies.plugins.any { it == aliasId }
-}
+private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, aliasId: PluginId): Boolean =
+  plugin.dependencies.any { it.pluginId == aliasId } || plugin.moduleDependencies.plugins.any { it == aliasId }
 
-private fun doesDependOnModule(plugin: IdeaPluginDescriptorImpl, moduleId: PluginModuleId): Boolean {
-  return plugin.moduleDependencies.modules.any { it == moduleId }
-}
+private fun doesDependOnModule(plugin: IdeaPluginDescriptorImpl, moduleId: PluginModuleId): Boolean =
+  plugin.moduleDependencies.modules.any { it == moduleId }
 
-private fun isExternalNonBundledPlugin(plugin: IdeaPluginDescriptorImpl): Boolean {
-  return !plugin.isBundled && !PluginManagerCore.isVendorJetBrains(plugin.vendor ?: "") ||
-         plugin.pluginId.idString == "com.intellij.monorepo.devkit"
-}
+private fun isExternalNonBundledPlugin(plugin: IdeaPluginDescriptorImpl): Boolean =
+  !plugin.isBundled && !PluginManagerCore.isVendorJetBrains(plugin.vendor) ||
+  plugin.pluginId.idString == "com.intellij.monorepo.devkit"
 
 private val JAVA_BACKEND_MODULE_ID = PluginModuleId("intellij.java.backend", PluginModuleId.JETBRAINS_NAMESPACE)
 private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
@@ -395,7 +392,6 @@ private val RIDER_MODULE_ID = PluginModuleId("intellij.rider", PluginModuleId.JE
 private val JSON_ALIAS_ID = PluginId.getId("com.intellij.modules.json")
 private val CWM_PLUGIN_ID = PluginId.getId("com.jetbrains.codeWithMe")
 private val CWM_RIDER_PLUGIN_ID = PluginId.getId("intellij.rider.plugins.cwm")
-private val REMOTE_DEVELOPMENT_RIDER_PLUGIN_ID: PluginId = PluginId.getId("intellij.rider.plugins.remoteDevelopment")
 private val JSON_BACKEND_MODULE_ID = PluginModuleId("intellij.json.backend", PluginModuleId.JETBRAINS_NAMESPACE)
 private val REMOTE_DEVELOPMENT_MODULE_ID = PluginModuleId("intellij.remoteDevelopment.plugin", PluginModuleId.JETBRAINS_NAMESPACE)
 private val REMOTE_DEVELOPMENT_RIDER_MODULE_ID = PluginModuleId("intellij.rider.plugins.cwm", PluginModuleId.JETBRAINS_NAMESPACE)
