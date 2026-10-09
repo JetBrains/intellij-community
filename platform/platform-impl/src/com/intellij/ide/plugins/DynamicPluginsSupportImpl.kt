@@ -125,7 +125,7 @@ internal class DynamicPluginsSupportImpl(
     val current = getCurrentlyLoadedPluginSet()
     val sequence = buildTransitionSequence(current, target).also { LOG.debug { it.getExplanationLogMessage() } }
     val validationConfig = getDynamicPluginsValidationConfig()
-    val issues = validateTransitionSequenceCanBePerformedDynamically(sequence, validationConfig, reporter)
+    val issues = validateTransitionSequenceCanBePerformedDynamically(sequence, validationConfig)
     if (issues.isEmpty()) {
       return null
     }
@@ -145,7 +145,7 @@ internal class DynamicPluginsSupportImpl(
     }
 
     val validationConfig = getDynamicPluginsValidationConfig()
-    val issues = validateTransitionSequenceCanBePerformedDynamically(sequence, validationConfig, reporter)
+    val issues = validateTransitionSequenceCanBePerformedDynamically(sequence, validationConfig)
     if (issues.isNotEmpty()) {
       LOG.warn(buildExplanationMessage(issues, validationConfig))
       if (!validationConfig.disregardDynamicPluginReconfigurationIssues) {
@@ -171,7 +171,6 @@ internal class DynamicPluginsSupportImpl(
         unloadGroups(
           groupsToUnload = unloadSteps.map { it.runtimeModuleGroup },
           pluginsToBeLoadedLater = pluginsToLoad,
-          reporter = reporter,
         )
       }
       if (!successfullyUnloaded) {
@@ -185,7 +184,6 @@ internal class DynamicPluginsSupportImpl(
           targetPluginSet = targetState,
           groups = loadSteps.map { it.runtimeModuleGroup },
           reusedGroups = sequence.exactRuntimeModuleGroupAlignment.values.toList(),
-          reporter = reporter,
         )
       }
 
@@ -231,10 +229,10 @@ internal class DynamicPluginsSupportImpl(
     }
   }
 
+  context(reporter: SequentialProgressReporter)
   private suspend fun validateTransitionSequenceCanBePerformedDynamically(
     sequence: TransitionSequence,
     validationConfig: DynamicPluginsValidationConfig,
-    reporter: SequentialProgressReporter,
   ): List<DynamicReconfigurationIsNotPossibleReason> {
     return tracer.spanBuilder("validateTransitionSequenceCanBePerformedDynamically").useWithScope {
       if (validationConfig.skipDynamicPluginReconfigurationValidation) {
@@ -289,10 +287,10 @@ internal class DynamicPluginsSupportImpl(
     }
   }
 
+  context(reporter: SequentialProgressReporter)
   private suspend fun unloadGroups(
     groupsToUnload: List<RuntimeModuleGroup>,
     pluginsToBeLoadedLater: Map<PluginId, PluginMainDescriptor>,
-    reporter: SequentialProgressReporter,
   ): Pair<Boolean, WeakList<PluginClassLoader>> {
     val classloadersToUnload = WeakList<PluginClassLoader>()
     if (groupsToUnload.isEmpty()) {
@@ -368,11 +366,11 @@ internal class DynamicPluginsSupportImpl(
   /**
    * Applies new state, must be called even if there is nothing to load after unload
    */
+  context(reporter: SequentialProgressReporter)
   private suspend fun loadGroups(
     targetPluginSet: PluginSet,
     groups: List<RuntimeModuleGroup>,
     reusedGroups: List<RuntimeModuleGroup>,
-    reporter: SequentialProgressReporter,
   ) {
     if (groups.isEmpty()) {
       application.runWriteAction {
