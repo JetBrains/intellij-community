@@ -12,6 +12,9 @@ import kotlinx.coroutines.withContext
 private val CLASS_ATTRIBUTES = arrayOf("implementationClass", "class", "instance", "factoryClass")
 
 internal suspend fun warmupClassLoaders(loadedGroups: List<RuntimeModuleGroup>) {
+  // TODO currently, ClassLoaderConfigurator sets the classloader instances right into the plugin descriptors.
+  //   This does not allow us to do a warmup concurrently with the unloading, because some descriptors may need reloading, so they don't have
+  //   the right classloader yet. If ClassLoaderConfigurator instead returns a mapping Descriptor -> ClassLoader, we could do a warmup concurrently with the unloading.
   val classes = ArrayList<Pair<ClassLoader, String>>(1024)
   for (group in loadedGroups) {
     for (descriptor in group.sortedDescriptors) {
