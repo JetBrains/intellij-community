@@ -59,6 +59,14 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
   fun getFactoryDefaultLayoutCopy(): DesktopLayout = state.getLayoutCopy(FACTORY_DEFAULT_LAYOUT_NAME, isNewUi)
 
+  /**
+   * The ids of the factory default layout whose extension called [DefaultToolWindowDescriptorBuilder.seedIntoExistingLayout].
+   *
+   * The extensions build the set on every call, as they build the factory default layout. The set is not persisted.
+   */
+  @Internal
+  fun getFactoryDefaultSeedIds(): Set<String> = buildDefaultLayout(isNewUi).seededIntoExistingLayoutIds()
+
   fun setLayout(layout: DesktopLayout) {
     setLayout(activeLayoutName, layout)
   }
@@ -198,7 +206,9 @@ data class ToolWindowLayoutDescriptor(
   }
 }
 
-private fun getDefaultLayoutToolWindowDescriptors(isNewUi: Boolean): List<ToolWindowDescriptor> {
+private fun getDefaultLayoutToolWindowDescriptors(isNewUi: Boolean): List<ToolWindowDescriptor> = buildDefaultLayout(isNewUi).build()
+
+private fun buildDefaultLayout(isNewUi: Boolean): DefaultToolWindowLayoutBuilderImpl {
   val builder = DefaultToolWindowLayoutBuilderImpl()
   for (layoutExtension in DefaultToolWindowLayoutExtension.EP_NAME.extensionList) {
     if (isNewUi) {
@@ -208,7 +218,7 @@ private fun getDefaultLayoutToolWindowDescriptors(isNewUi: Boolean): List<ToolWi
       layoutExtension.buildV1Layout(builder)
     }
   }
-  return builder.build()
+  return builder
 }
 
 private val DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR = ToolWindowAnchor.VALUES.associate { it.toString() to WindowInfoImpl.DEFAULT_WEIGHT }

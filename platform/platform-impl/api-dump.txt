@@ -4380,6 +4380,7 @@ com.intellij.toolWindow.DefaultToolWindowDescriptorBuilder
 - hideStripeButton():V
 - a:isSplit():Z
 - a:isVisible():Z
+- seedIntoExistingLayout():V
 - a:setContentUiType(com.intellij.toolWindow.ToolWindowDescriptor$ToolWindowContentUiType):V
 - a:setSideWeight(F):V
 - a:setSplit(Z):V

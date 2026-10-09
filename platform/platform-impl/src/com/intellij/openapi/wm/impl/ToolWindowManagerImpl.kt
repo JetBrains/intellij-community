@@ -1051,6 +1051,15 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   internal fun registerToolWindow(task: RegisterToolWindowTaskData, buttonManager: ToolWindowButtonManager): ToolWindowEntry {
     val layout = layoutState
+    if (isNewUi && layout.getInfo(task.id) == null && task.id in ToolWindowDefaultLayoutManager.getInstance().getFactoryDefaultSeedIds()) {
+      val factoryDefault = ToolWindowDefaultLayoutManager.getInstance().getFactoryDefaultLayoutCopy()
+      for (otherInfo in seedFromFactoryDefault(layout = layout, ids = listOf(task.id), factoryDefault = factoryDefault)) {
+        val otherId = otherInfo.id ?: continue
+        if (otherId != task.id) {
+          idToEntry.get(otherId)?.toolWindow?.setWindowInfoSilently(otherInfo.copy())
+        }
+      }
+    }
     val existingInfo = layout.getInfo(task.id)
     val preparedTask = PreparedRegisterToolWindowTask(
       task = task,
