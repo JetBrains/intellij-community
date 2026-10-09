@@ -40,6 +40,7 @@ dev_dist_plugin_descriptor(
             "intellij.java.dev",
             "intellij.groovy.dev",
             "intellij.kotlin.dev",
+            "intellij.dev.core",
         ],
     },
     refused_content_modules = [
