@@ -221,7 +221,6 @@ object DynamicPlugins {
     extraStateValidator: PluginStateValidator,
     targetProductMode: ProductMode? = null,
   ): Boolean {
-    LOG.trace("dynamic plugins reconfiguration attempt")
     val title = when {
       forceRemovePlugins.isEmpty() -> when {
         addNewCustomPlugins.isEmpty() -> IdeBundle.message("modal.progress.title.reconfiguring.plugins")
@@ -236,24 +235,23 @@ object DynamicPlugins {
       else -> IdeBundle.message("modal.progress.title.reconfiguring.plugins")
     }
     return withTracedModalProgress(RECONFIGURE_MODAL_PROGRESS_SPAN, project, title) {
-      if (targetProductMode != null) {
-        // FIXME this is bad: it mutates the state before we actually know the transition is possible.
-        //  Instead, product mode change should only apply after a successful transition, and the preliminary init context instance with adjusted product change should come from [PluginInitContextFactory].
-        val currentMode = PluginManagerCore.getPluginSet().initContext.productMode
-        if (!CurrentProductMode.transitionTo(targetProductMode)) {
-          LOG.info("The product mode does not move to '${targetProductMode.id}' from '${currentMode.id}', so no plugin is reconfigured")
-          return@withTracedModalProgress false
-        }
-      }
-      val newState = computeNewPluginsState(addNewCustomPlugins, forceRemovePlugins, forceExclude = true).valueOrNull
-                     ?: return@withTracedModalProgress false
-      val resolvedPluginSet = newState.resolvedPluginSet
-      extraStateValidator.validate(resolvedPluginSet)?.let {
-        LOG.info("new plugins state did not meet expectations: $it")
-        return@withTracedModalProgress false
-      }
-      val result = DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState)
-      result is DynamicPluginsReconfigurationResult.Success
+      reconfigure(
+        buildNewState = {
+          val currentMode = PluginManagerCore.getPluginSet().initContext.productMode
+          if (targetProductMode != null && targetProductMode != currentMode) {
+            // FIXME this is bad: it mutates the state before we actually know the transition is possible.
+            //  Instead, product mode change should only apply after a successful transition, and the preliminary init context instance with adjusted product change should come from [PluginInitContextFactory].
+            if (!CurrentProductMode.transitionTo(targetProductMode)) {
+              return@reconfigure Either.error(DynamicReconfigurationIsNotPossibleReason.of(
+                logMessage = "The product mode does not move to '${targetProductMode.id}' from '${currentMode.id}', so no plugin is reconfigured",
+                problematicPlugin = null
+              ))
+            }
+          }
+          computeNewPluginsState(addNewCustomPlugins, forceRemovePlugins, forceExclude = true)
+        },
+        extraStateValidator = extraStateValidator
+      ) is DynamicPluginsReconfigurationResult.Success
     }
   }
 
@@ -262,16 +260,14 @@ object DynamicPlugins {
    */
   @RequiresEdt(generateAssertion = false)
   fun loadPlugins(plugins: List<PluginMainDescriptor>, project: Project?, progressTitle: @Nls String? = null): Boolean {
-    return runWithTracedModalProgressBlocking(LOAD_MODAL_PROGRESS_SPAN, project, progressTitle ?: defaultLoadingTitle(plugins)) {
-      val newState = computeNewPluginsState(plugins, emptyList()).valueOrNull
-                     ?: return@runWithTracedModalProgressBlocking false
-      val resolvedPluginSet = newState.resolvedPluginSet
-      expectPluginsState(expectToLoad = plugins.map { it.pluginId }).validate(resolvedPluginSet)?.let {
-        LOG.info("new plugins state did not meet expectations: $it")
-        return@runWithTracedModalProgressBlocking false
-      }
-      val result = DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState)
-      result is DynamicPluginsReconfigurationResult.Success
+    val title = progressTitle ?: defaultLoadingTitle(plugins)
+    return runWithTracedModalProgressBlocking(LOAD_MODAL_PROGRESS_SPAN, project, title) {
+      reconfigure(
+        buildNewState = {
+          computeNewPluginsState(plugins, emptyList())
+        },
+        extraStateValidator = expectPluginsState(expectToLoad = plugins.map { it.pluginId }),
+      ) is DynamicPluginsReconfigurationResult.Success
     }
   }
 
@@ -295,15 +291,12 @@ object DynamicPlugins {
       project,
       IdeBundle.message("modal.progress.title.loading.plugin", pluginDescriptor.name),
     ) {
-      val newState = computeNewPluginsState(listOf(pluginDescriptor), emptyList()).valueOrNull
-                     ?: return@runWithTracedModalProgressBlocking false
-      val resolvedPluginSet = newState.resolvedPluginSet
-      expectPluginsState(expectToLoad = listOf(pluginDescriptor.pluginId)).validate(resolvedPluginSet)?.let {
-        LOG.info("new plugins state did not meet expectations: $it")
-        return@runWithTracedModalProgressBlocking false
-      }
-      val result = DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState)
-      result is DynamicPluginsReconfigurationResult.Success
+      reconfigure(
+        buildNewState = {
+          computeNewPluginsState(listOf(pluginDescriptor), emptyList())
+        },
+        extraStateValidator = expectPluginsState(expectToLoad = listOf(pluginDescriptor.pluginId)),
+      ) is DynamicPluginsReconfigurationResult.Success
     }
   }
 
@@ -320,15 +313,12 @@ object DynamicPlugins {
       project,
       IdeBundle.message("modal.progress.title.unloading.plugins"),
     ) {
-      val newState = computeNewPluginsState(emptyList(), plugins).valueOrNull
-                     ?: return@runWithTracedModalProgressBlocking false
-      val resolvedPluginSet = newState.resolvedPluginSet
-      expectPluginsState(expectNotToLoad = plugins.map { it.pluginId }).validate(resolvedPluginSet)?.let {
-        LOG.info("new plugins state did not meet expectations: $it")
-        return@runWithTracedModalProgressBlocking false
-      }
-      val result = DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState)
-      result is DynamicPluginsReconfigurationResult.Success
+      reconfigure(
+        buildNewState = {
+          computeNewPluginsState(emptyList(), plugins)
+        },
+        extraStateValidator = expectPluginsState(expectNotToLoad = plugins.map { it.pluginId }),
+      ) is DynamicPluginsReconfigurationResult.Success
     }
   }
 
@@ -339,16 +329,31 @@ object DynamicPlugins {
       project = null,
       IdeBundle.message("modal.progress.title.unloading.plugin", pluginDescriptor.name),
     ) {
-      val newState = computeNewPluginsState(emptyList(), listOf(pluginDescriptor)).valueOrNull
-                     ?: return@runWithTracedModalProgressBlocking false
-      val resolvedPluginSet = newState.resolvedPluginSet
-      expectPluginsState(expectNotToLoad = listOf(pluginDescriptor.pluginId)).validate(resolvedPluginSet)?.let {
-        LOG.info("new plugins state did not meet expectations: $it")
-        return@runWithTracedModalProgressBlocking false
-      }
-      val result = DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState)
-      result is DynamicPluginsReconfigurationResult.Success
+      reconfigure(
+        buildNewState = {
+          computeNewPluginsState(emptyList(), listOf(pluginDescriptor))
+        },
+        extraStateValidator = expectPluginsState(expectNotToLoad = listOf(pluginDescriptor.pluginId)),
+      ) is DynamicPluginsReconfigurationResult.Success
     }
+  }
+
+  private suspend fun reconfigure(
+    buildNewState: () -> Either<PluginSet, DynamicReconfigurationIsNotPossibleReason>,
+    extraStateValidator: PluginStateValidator,
+  ): DynamicPluginsReconfigurationResult {
+    LOG.trace("dynamic plugins reconfiguration attempt")
+    val newStateErr = buildNewState()
+    if (newStateErr.isError) {
+      return DynamicPluginsReconfigurationResult.Invalid(newStateErr.error)
+    }
+    val newState = newStateErr.value
+    extraStateValidator.validate(newState.resolvedPluginSet)?.let {
+      return DynamicPluginsReconfigurationResult.Invalid(
+        DynamicReconfigurationIsNotPossibleReason.of("new state did not meet expectations: $it", null)
+      )
+    }
+    return DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState)
   }
 
   /**
