@@ -83,6 +83,7 @@
 
     <projectService serviceInterface="com.intellij.openapi.project.UnindexedFilesScannerExecutor"
                     serviceImplementation="com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl"/>
+    <activityTracker implementation="com.intellij.openapi.project.ScanningTracker"/>
     <applicationService serviceInterface="com.intellij.openapi.roots.AdditionalLibraryRootsListenerHelper"
                         serviceImplementation="com.intellij.openapi.roots.impl.AdditionalLibraryRootsListenerHelperImpl"/>
     <applicationService serviceImplementation="com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper"/>

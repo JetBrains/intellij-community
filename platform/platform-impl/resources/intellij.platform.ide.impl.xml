@@ -831,7 +831,6 @@
     <trustedProjectsLocator implementation="com.intellij.ide.trustedProjects.impl.DefaultTrustedProjectsLocator"/>
     <trustedProjectsStateProvider implementation="com.intellij.ide.trustedProjects.impl.TrustedPathsStateProvider" order="last"/>
     <activityTracker implementation="com.intellij.openapi.project.DumbServiceTracker"/>
-    <activityTracker implementation="com.intellij.openapi.project.ScanningTracker"/>
     <activityTracker implementation="com.intellij.ide.startup.StartupActivityTracker"/>
     <activityTracker implementation="com.intellij.openapi.vfs.newvfs.VfsActivityTracker"/>
     <activityTracker implementation="com.intellij.configurationStore.SavingTracker"/>
