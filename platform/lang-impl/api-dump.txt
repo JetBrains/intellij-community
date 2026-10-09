@@ -2796,6 +2796,8 @@ a:com.intellij.ide.impl.SelectInTargetPsiWrapper
 - p:<init>(com.intellij.openapi.project.Project):V
 f:com.intellij.ide.impl.convert.JDomConvertingUtil
 - s:load(java.nio.file.Path):org.jdom.Element
+com.intellij.ide.projectView.ProjectPaneSelectableFileContributor
+- a:isSelectable(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
 a:com.intellij.ide.projectView.ProjectView
 - a:addProjectPane(com.intellij.ide.projectView.impl.AbstractProjectViewPane):V
 - a:changeView(java.lang.String):V

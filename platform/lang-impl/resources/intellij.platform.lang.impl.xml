@@ -103,8 +103,8 @@
   <!-- endregion -->
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.canBeSelectedInProjectPaneProvider"
-                    interface="com.intellij.ide.projectView.impl.canBeSelected.CanBeSelectedInProjectPaneProvider"
+    <extensionPoint qualifiedName="com.intellij.projectPaneSelectableFileContributor"
+                    interface="com.intellij.ide.projectView.ProjectPaneSelectableFileContributor"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.scratchLanguageFilter"
                     interface="com.intellij.ide.scratch.ScratchFileTypeFilter"
@@ -510,12 +510,12 @@
                         serviceImplementation="com.intellij.ide.actions.NewProjectEntryPointImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager" open="true"
                         serviceImplementation="com.intellij.openapi.module.impl.ModuleTypeManagerImpl"/>
-    <canBeSelectedInProjectPaneProvider
-      implementation="com.intellij.ide.projectView.impl.canBeSelected.SourceOrLibraryCanBeSelectedInProjectPaneProvider"/>
-    <canBeSelectedInProjectPaneProvider
-      implementation="com.intellij.ide.projectView.impl.canBeSelected.ArchiveCanBeSelectedInProjectPaneProvider"/>
-    <canBeSelectedInProjectPaneProvider
-      implementation="com.intellij.ide.projectView.impl.canBeSelected.ScratchCanBeSelectedInProjectPaneProvider"/>
+    <projectPaneSelectableFileContributor
+      implementation="com.intellij.ide.projectView.impl.selection.SourceOrLibraryProjectPaneSelectableFileContributor"/>
+    <projectPaneSelectableFileContributor
+      implementation="com.intellij.ide.projectView.impl.selection.ArchiveProjectPaneSelectableFileContributor"/>
+    <projectPaneSelectableFileContributor
+      implementation="com.intellij.ide.projectView.impl.selection.ScratchProjectPaneSelectableFileContributor"/>
 
     <completion.frontendFriendlyPrefixMatcher target="com.intellij.codeInsight.completion.command.LimitedToleranceMatcher"
                                               converter="com.intellij.codeInsight.completion.command.LimitedToleranceMatcher$Converter"
