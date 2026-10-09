@@ -73,7 +73,8 @@ interface PsiVersioningService {
     fun <T> freezePsiVersion(action: () -> T): T = getInstance().runAndFreezePsiVersion(action)
 
     @ApiStatus.Internal
-    fun isInsideVersioningButNotLocks(): Boolean = getInstance().isInsideVersioningButNotLocks()
+    @JvmStatic
+    fun isInsideVersioningButNotLocks(): Boolean = getInstance().checkIsInsideVersioningButNotLocks()
 
     /**
      * Captures a descriptor of the current versioned snapshot.
@@ -174,5 +175,5 @@ interface PsiVersioningService {
   fun getFirstChild(element: PsiElement, version: Long): PsiElement? = element.firstChild
 
   @ApiStatus.Internal
-  fun isInsideVersioningButNotLocks(): Boolean = false
+  fun checkIsInsideVersioningButNotLocks(): Boolean = false
 }

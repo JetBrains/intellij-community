@@ -132,5 +132,5 @@ internal class PsiVersioningServiceImpl : PsiVersioningService {
     }
   }
 
-  override fun isInsideVersioningButNotLocks(): Boolean = InternalPsiVersioning.isInsideVersioningButNotLocks()
+  override fun checkIsInsideVersioningButNotLocks(): Boolean = InternalPsiVersioning.isInsideVersioningButNotLocks()
 }
