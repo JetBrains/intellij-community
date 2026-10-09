@@ -249,6 +249,9 @@ common --experimental_propagate_custom_flag=@rules_jvm//:default-kotlinc-opts
 common --experimental_propagate_custom_flag=@rules_python//python/config_settings:bootstrap_impl
 common --experimental_propagate_custom_flag=@rules_go//go/config:pure
 
+# All Go targets use no Cgo
+common --@rules_go//go/config:pure
+
 # Retry downloads up to 5 times.
 # Please note that this is not applicable to Coursier which requires its own configuration.
 common --experimental_repository_downloader_retries=5
