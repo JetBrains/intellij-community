@@ -88,6 +88,9 @@ object AgentTelemetryFusValues {
       )
     """.trimIndent()
 
+  /** The ID of the global regexp in FUS metadata [global/rules.json](https://jetbrains.team/p/apm/repositories/metadata/files/global/rules.json). */
+  const val MODEL_REGEXP_REF: String = "llm_model"
+
   const val CONTEXT_SIZE_PATTERN: String = "[0-9]{1,4}[km]|$UNKNOWN"
 
   private val allowedModesSet = allowedModes.toSet()
