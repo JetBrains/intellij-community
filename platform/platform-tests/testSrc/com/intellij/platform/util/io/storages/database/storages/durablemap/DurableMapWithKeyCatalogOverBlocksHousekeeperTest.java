@@ -12,7 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8;
+import static com.intellij.platform.util.io.storages.PersistentFormatLayouts.JAVA_INT_UNALIGNED;
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ACTIVE;
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.RETIRED;
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.SEALED;
@@ -195,7 +197,7 @@ public class DurableMapWithKeyCatalogOverBlocksHousekeeperTest {
     var descriptor = stringAsUTF8();
     var result = new Ref<>(NO_VALUE);
     keys.forEachCommittedRecord((_, record) -> {
-      var key = descriptor.read(KeyRecordLayout.keyPayload(record).asByteBuffer());
+      var key = descriptor.read(KeyRecordLayout.keyPayload(record));
       if (expectedKey.equals(key)) {
         result.set(KeyRecordLayout.valueRecordRef(record));
         return false;
@@ -264,19 +266,21 @@ public class DurableMapWithKeyCatalogOverBlocksHousekeeperTest {
     private static final byte APPEND = 2;
 
     @Override
-    public String read(@NotNull ByteBuffer input) throws IOException {
+    public String read(@NotNull MemorySegment input) throws IOException {
       var result = new StringBuilder();
-      while (input.hasRemaining()) {
-        var command = input.get();
-        if (input.remaining() < Integer.BYTES) {
+      long offset = 0;
+      while (offset < input.byteSize()) {
+        var command = input.get(ValueLayout.JAVA_BYTE, offset++);
+        if (input.byteSize() - offset < Integer.BYTES) {
           throw new IOException("Missing string command length");
         }
-        var length = input.getInt();
-        if (length < 0 || length > input.remaining()) {
+        var length = input.get(JAVA_INT_UNALIGNED, offset);
+        offset += Integer.BYTES;
+        if (length < 0 || length > input.byteSize() - offset) {
           throw new IOException("Invalid string command length " + length);
         }
-        var bytes = new byte[length];
-        input.get(bytes);
+        var bytes = input.asSlice(offset, length).toArray(ValueLayout.JAVA_BYTE);
+        offset += length;
         var text = new String(bytes, StandardCharsets.UTF_8);
         switch (command) {
           case SET -> {
@@ -302,11 +306,11 @@ public class DurableMapWithKeyCatalogOverBlocksHousekeeperTest {
 
     private static @NotNull DataExternalizerEx.KnownSizeRecordWriter writer(byte command, @NotNull String text) {
       var textBytes = text.getBytes(StandardCharsets.UTF_8);
-      var bytes = ByteBuffer.allocate(Byte.BYTES + Integer.BYTES + textBytes.length)
-        .put(command)
-        .putInt(textBytes.length)
-        .put(textBytes)
-        .array();
+      var bytes = new byte[Byte.BYTES + Integer.BYTES + textBytes.length];
+      var record = MemorySegment.ofArray(bytes);
+      record.set(ValueLayout.JAVA_BYTE, 0, command);
+      record.set(JAVA_INT_UNALIGNED, Byte.BYTES, textBytes.length);
+      MemorySegment.copy(textBytes, 0, record, ValueLayout.JAVA_BYTE, Byte.BYTES + Integer.BYTES, textBytes.length);
       return DataExternalizerEx.fromBytes(bytes);
     }
   }

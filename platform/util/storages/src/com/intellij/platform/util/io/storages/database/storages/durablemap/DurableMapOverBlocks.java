@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiPredicate;
@@ -345,7 +344,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V>, UnusedBlock
             markLookupDirty();
             mutationStarted.set(true);
           }
-          long appendedRecordRef = entries.append(writer.recordSize(), payload -> writer.write(payload.asByteBuffer()));
+          long appendedRecordRef = entries.append(writer.recordSize(), payload -> writer.write(payload, 0));
           newRecordRef.set(value == null ? NO_VALUE : appendedRecordRef);
           return false;
         });
@@ -385,7 +384,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V>, UnusedBlock
             }
             var newHead = entries.append(payloadSize, oldHead, payload -> {
               payload.set(ValueLayout.JAVA_LONG_UNALIGNED, 0, baseRef);
-              writer.write(payload.asSlice(Long.BYTES).asByteBuffer());
+              writer.write(payload, Long.BYTES);
             });
             newHeadRef.set(newHead);
             return false;
@@ -399,8 +398,8 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V>, UnusedBlock
             mutationStarted.set(true);
           }
           var newHead = entries.append(payloadSize, payload -> {
-            headerWriter.write(payload.asSlice(0, headerSize).asByteBuffer());
-            writer.write(payload.asSlice(headerSize).asByteBuffer());
+            headerWriter.write(payload, 0);
+            writer.write(payload, headerSize);
           });
           newHeadRef.set(newHead);
           return false;
@@ -616,10 +615,10 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V>, UnusedBlock
         return true;
       }
 
-      var key = entryExternalizer.readKey(record.payload().asByteBuffer());
+      var key = entryExternalizer.readKey(record.payload());
       boolean deleted = key == null;
       if (deleted) {
-        key = entryExternalizer.read(record.payload().asByteBuffer()).key();
+        key = entryExternalizer.read(record.payload()).key();
       }
       var restoredKey = key;
       int keyHash = adjustedHash(restoredKey);
@@ -693,7 +692,7 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V>, UnusedBlock
       var record = entries.readRecord(candidateRef);
       Entry<K, V> entry;
       if (record.previousRef() == NO_VALUE) {
-        entry = entryExternalizer.readIfKeyMatch(record.payload().asByteBuffer(), key);
+        entry = entryExternalizer.readIfKeyMatch(record.payload(), key);
       }
       else {
         var candidateKey = readKey(candidateRef);
@@ -719,13 +718,13 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V>, UnusedBlock
         throw new CorruptedException("The base entry is a patch: " + recordRef);
       }
     }
-    return entryExternalizer.readKey(record.payload().asByteBuffer());
+    return entryExternalizer.readKey(record.payload());
   }
 
   private @NotNull Entry<K, V> readEntry(long recordRef) throws IOException {
     var record = entries.readRecord(recordRef);
     if (record.previousRef() == NO_VALUE) {
-      return entryExternalizer.read(record.payload().asByteBuffer());
+      return entryExternalizer.read(record.payload());
     }
 
     long baseRef = baseEntryRef(recordRef, record);
@@ -742,20 +741,22 @@ public class DurableMapOverBlocks<K, V> implements DurableMap<K, V>, UnusedBlock
       currentRef = record.previousRef();
       record = entries.readRecord(currentRef);
     }
-    if (record.previousRef() != NO_VALUE || entryExternalizer.readKey(record.payload().asByteBuffer()) == null) {
+    if (record.previousRef() != NO_VALUE || entryExternalizer.readKey(record.payload()) == null) {
       throw new CorruptedException("The patch chain must start with a non-null entry: " + baseRef);
     }
     totalSize += record.payload().byteSize();
     if (totalSize > Integer.MAX_VALUE) {
       throw new IOException("The patched value exceeds the maximum buffer size: " + totalSize);
     }
-    var buffer = ByteBuffer.allocate((int)totalSize);
-    buffer.put(record.payload().asByteBuffer());
+    var serializedEntry = MemorySegment.ofArray(new byte[(int)totalSize]);
+    long offset = record.payload().byteSize();
+    MemorySegment.copy(record.payload(), 0, serializedEntry, 0, offset);
     for (int i = patches.size() - 1; i >= 0; i--) {
-      buffer.put(patches.get(i).asByteBuffer());
+      var patch = patches.get(i);
+      MemorySegment.copy(patch, 0, serializedEntry, offset, patch.byteSize());
+      offset += patch.byteSize();
     }
-    buffer.flip();
-    return entryExternalizer.read(buffer);
+    return entryExternalizer.read(serializedEntry);
   }
 
   /// @return reference to 'base' record, i.e., first record in a chain of 'patches'

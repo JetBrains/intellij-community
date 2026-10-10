@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiPredicate;
@@ -461,7 +460,7 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
                            @NotNull ValueRecordInitializer initializer) throws IOException {
     return values.append(ValueRecordLayout.recordSize(writer.recordSize()), record -> {
       initializer.initialize(record);
-      writer.write(record.asSlice(ValueRecordLayout.HEADER_SIZE).asByteBuffer());
+      writer.write(record, ValueRecordLayout.HEADER_SIZE);
     });
   }
 
@@ -500,7 +499,7 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
   private @Nullable V deserializeValue(@NotNull MemorySegment snapshot,
                                        @NotNull ArrayList<MemorySegment> patches) throws IOException {
     if (patches.isEmpty()) {
-      return valueExternalizer.read(snapshot.asByteBuffer());
+      return valueExternalizer.read(snapshot);
     }
     long totalSize = snapshot.byteSize();
     for (var patch : patches) {
@@ -509,13 +508,15 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
     if (totalSize > Integer.MAX_VALUE) {
       throw new IOException("The patched value exceeds the maximum buffer size: " + totalSize);
     }
-    var buffer = ByteBuffer.allocate((int)totalSize);
-    buffer.put(snapshot.asByteBuffer());
+    var serializedValue = MemorySegment.ofArray(new byte[(int)totalSize]);
+    long offset = snapshot.byteSize();
+    MemorySegment.copy(snapshot, 0, serializedValue, 0, offset);
     for (int i = patches.size() - 1; i >= 0; i--) {
-      buffer.put(patches.get(i).asByteBuffer());
+      var patch = patches.get(i);
+      MemorySegment.copy(patch, 0, serializedValue, offset, patch.byteSize());
+      offset += patch.byteSize();
     }
-    buffer.flip();
-    return valueExternalizer.read(buffer);
+    return valueExternalizer.read(serializedValue);
   }
 
   private boolean isActiveValue(long keyRecordRef, long valueRecordRef) throws IOException {

@@ -2,13 +2,13 @@
 package com.intellij.platform.util.io.storages;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.lang.foreign.MemorySegment;
 import java.util.Objects;
 
+import static com.intellij.platform.util.io.storages.PersistentFormatLayouts.JAVA_INT_UNALIGNED;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public final class CommonKeyDescriptors {
@@ -41,12 +41,12 @@ public final class CommonKeyDescriptors {
     }
 
     @Override
-    public Integer read(@NotNull ByteBuffer input) throws IOException {
-      return input.getInt();
+    public Integer read(@NotNull MemorySegment input) {
+      return input.get(JAVA_INT_UNALIGNED, 0);
     }
 
     @Override
-    public KnownSizeRecordWriter writerFor(@NotNull Integer value) throws IOException {
+    public KnownSizeRecordWriter writerFor(@NotNull Integer value) {
       return new IntegerRecordWriter(value.intValue());
     }
 
@@ -62,8 +62,8 @@ public final class CommonKeyDescriptors {
 
     private record IntegerRecordWriter(int value) implements KnownSizeRecordWriter {
       @Override
-      public ByteBuffer write(@NotNull ByteBuffer data) throws IOException {
-        return data.putInt(value);
+      public void write(@NotNull MemorySegment target, long startingOffset) {
+        target.set(JAVA_INT_UNALIGNED, startingOffset, value);
       }
 
       @Override
@@ -87,25 +87,13 @@ public final class CommonKeyDescriptors {
     }
 
     @Override
-    public ByteArraySequence read(@NotNull ByteBuffer input) throws IOException {
-      byte[] array = new byte[input.remaining()];
-      input.get(array);
-      return ByteArraySequence.create(array);
+    public ByteArraySequence read(@NotNull MemorySegment input) {
+      return ByteArraySequence.create(input.toArray(JAVA_BYTE));
     }
 
     @Override
-    public KnownSizeRecordWriter writerFor(@NotNull ByteArraySequence value) throws IOException {
-      return new KnownSizeRecordWriter() {
-        @Override
-        public ByteBuffer write(@NotNull ByteBuffer data) throws IOException {
-          return data.put(value.getInternalBuffer(), value.getOffset(), value.length());
-        }
-
-        @Override
-        public int recordSize() {
-          return value.length();
-        }
-      };
+    public KnownSizeRecordWriter writerFor(@NotNull ByteArraySequence value) {
+      return DataExternalizerEx.fromBytes(value);
     }
 
     @Override
@@ -128,12 +116,12 @@ public final class CommonKeyDescriptors {
     }
 
     @Override
-    public @NotNull String read(@NotNull ByteBuffer input) throws IOException {
-      return IOUtil.readString(input);
+    public @NotNull String read(@NotNull MemorySegment input) {
+      return new String(input.toArray(JAVA_BYTE), UTF_8);
     }
 
     @Override
-    public KnownSizeRecordWriter writerFor(@NotNull String key) throws IOException {
+    public KnownSizeRecordWriter writerFor(@NotNull String key) {
       return DataExternalizerEx.fromBytes(key.getBytes(UTF_8));
     }
 

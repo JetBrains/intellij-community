@@ -18,6 +18,7 @@ import java.io.ByteArrayOutputStream
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.DataOutputStream
+import java.lang.foreign.MemorySegment
 import java.nio.ByteBuffer
 import java.nio.file.Path
 
@@ -100,8 +101,8 @@ class TimestampsKeyDescriptorEx : KeyDescriptorEx<TimestampsImmutable> {
   //    here we don't prefix record with (int32) size, because append-only-log
   //    already keeps the record size internally
 
-  override fun read(input: ByteBuffer): TimestampsImmutable {
-    return TimestampsImmutable.readTimestamps(input)
+  override fun read(input: MemorySegment): TimestampsImmutable {
+    return TimestampsImmutable.readTimestamps(input.asByteBuffer())
   }
 
   override fun writerFor(timestamps: TimestampsImmutable): DataExternalizerEx.KnownSizeRecordWriter {

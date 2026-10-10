@@ -13,7 +13,7 @@ import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.UnsyncByteArrayOutputStream
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.nio.ByteBuffer
+import java.lang.foreign.MemorySegment
 
 /**
  * Uses the container format without loading the snapshot during a patch write.
@@ -29,7 +29,7 @@ class PatchableValueContainerExternalizer<Value>(
   )
 
   @Throws(IOException::class)
-  override fun read(input: ByteBuffer): UpdatableValueContainer<Value> = valueExternalizerEx.read(input)
+  override fun read(input: MemorySegment): UpdatableValueContainer<Value> = valueExternalizerEx.read(input)
 
   @Throws(IOException::class)
   override fun writerFor(value: UpdatableValueContainer<Value>): KnownSizeRecordWriter = valueExternalizerEx.writerFor(value)

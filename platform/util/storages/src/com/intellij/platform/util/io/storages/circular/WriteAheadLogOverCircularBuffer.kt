@@ -26,6 +26,7 @@ import com.intellij.util.io.writeaheadlog.WriteAheadLog
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
+import java.lang.foreign.MemorySegment
 import java.nio.ByteBuffer
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -446,7 +447,7 @@ class WriteAheadLogOverCircularBuffer(
 
       override fun isEqual(key1: Path, key2: Path): Boolean = (key1 == key2)
 
-      override fun read(input: ByteBuffer): Path {
+      override fun read(input: MemorySegment): Path {
         val path = CommonKeyDescriptors.stringAsUTF8().read(input)
         return Paths.get(path)
       }

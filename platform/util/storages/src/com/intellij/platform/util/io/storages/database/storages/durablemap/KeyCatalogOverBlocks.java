@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
-import java.nio.ByteBuffer;
 
 import static com.intellij.platform.util.io.storages.database.DurableDatabaseFactory.ENABLE_SELF_CHECKS;
 import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.KEYS;
@@ -62,7 +61,7 @@ public final class KeyCatalogOverBlocks<K> {
     keyHashToRecordRefIndex.markDirty();
     var keyRecordRef = keys.append(recordSize, record -> {
       KeyRecordLayout.initialize(record, keyHash);
-      keyWriter.write(record.asSlice(KeyRecordLayout.HEADER_SIZE).asByteBuffer());
+      keyWriter.write(record, KeyRecordLayout.HEADER_SIZE);
     });
     if (!keyHashToRecordRefIndex.put(keyHash, keyRecordRef)) {
       throw new CorruptedException("The key record reference is already in LOOKUP: " + keyRecordRef);
@@ -156,9 +155,7 @@ public final class KeyCatalogOverBlocks<K> {
   }
 
   private @NotNull K readKey(@NotNull MemorySegment record) throws IOException {
-    MemorySegment recordPayload = KeyRecordLayout.keyPayload(record);
-    ByteBuffer recordPayloadAsBuffer = recordPayload.asByteBuffer();
-    return keyDescriptor.read(recordPayloadAsBuffer);
+    return keyDescriptor.read(KeyRecordLayout.keyPayload(record));
   }
 
   private int adjustedHash(@NotNull K key) {

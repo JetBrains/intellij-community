@@ -40,7 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,6 +53,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static com.intellij.platform.util.io.storages.PersistentFormatLayouts.JAVA_INT_UNALIGNED;
 
 final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<ChangeKind>, CompressedDetails> {
   private static final Logger LOG = Logger.getInstance(VcsLogPathsIndex.class);
@@ -298,13 +300,12 @@ final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<ChangeKind>, Co
     }
 
     @Override
-    public LightFilePath read(@NotNull ByteBuffer input) throws IOException {
-      int rootIndex = input.getInt();
+    public LightFilePath read(@NotNull MemorySegment input) throws IOException {
+      int rootIndex = input.get(JAVA_INT_UNALIGNED, 0);
       VirtualFile root = myRoots.get(rootIndex);
       if (root == null) throw new IOException("Can not read root for index " + rootIndex + ". All roots " + myRoots);
 
-      byte[] dst = new byte[input.remaining()];
-      input.get(dst);
+      byte[] dst = input.asSlice(Integer.BYTES).toArray(ValueLayout.JAVA_BYTE);
       var path = new String(dst, UTF_8);
 
       return new LightFilePath(root, path);
@@ -321,9 +322,10 @@ final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<ChangeKind>, Co
       int rootIndex = myRootsReversed.getInt(root);
       return new KnownSizeRecordWriter() {
         @Override
-        public ByteBuffer write(@NotNull ByteBuffer data) {
-          return data.putInt(rootIndex)
-            .put(relativePathBytes);
+        public void write(@NotNull MemorySegment target, long startingOffset) {
+          var record = target.asSlice(startingOffset, recordSize());
+          record.set(JAVA_INT_UNALIGNED, 0, rootIndex);
+          MemorySegment.copy(relativePathBytes, 0, record, ValueLayout.JAVA_BYTE, Integer.BYTES, relativePathBytes.length);
         }
 
         @Override

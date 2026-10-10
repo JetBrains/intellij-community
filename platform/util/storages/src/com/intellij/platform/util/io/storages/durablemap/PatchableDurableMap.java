@@ -23,7 +23,7 @@ public interface PatchableDurableMap<K, V, P> extends DurableMap<K, V> {
   /// Extend [[DataExternalizerEx] to work with [[PatchableDurableMap].
   ///
   /// [PatchableDurableMap] requires both value [V] and patches-to-value [P] to be encoded in a common format,
-  ///  so [#read(java.nio.ByteBuffer)] is able to consume an initial value followed by {0..N} patches, and return
+  ///  so [#read(java.lang.foreign.MemorySegment)] can consume an initial value followed by {0..N} patches and return
   ///  their combined value.
   /// Patches without an initial value apply to an empty value -- whatever empty value is should be defined by this
   ///  externalizer impl.

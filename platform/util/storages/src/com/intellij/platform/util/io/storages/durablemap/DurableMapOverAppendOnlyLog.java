@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.durablemap;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.platform.util.io.storages.ByteBufferFFMBridge;
 import com.intellij.platform.util.io.storages.DataExternalizerEx.KnownSizeRecordWriter;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLog;
 import com.intellij.platform.util.io.storages.durablemap.EntryExternalizer.Entry;
@@ -100,7 +101,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Comp
     int foundRecordId = keyHashToIdMap.lookup(adjustedHash, recordId -> {
       long logRecordId = convertStoredIdToLogId(recordId);
       return keyValuesLog.read(logRecordId, recordBuffer -> {
-        K recordKey = entryExternalizer.readKey(recordBuffer);
+        K recordKey = entryExternalizer.readKey(ByteBufferFFMBridge.remainingSegment(recordBuffer));
         return recordKey != null && keyEquality.isEqual(key, recordKey);
       });
     });
@@ -400,22 +401,22 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Comp
   private Entry<K, V> readEntryIfKeyMatch(long logRecordId,
                                           @NotNull K expectedKey) throws IOException {
     return keyValuesLog.read(logRecordId, recordBuffer -> {
-      return entryExternalizer.readIfKeyMatch(recordBuffer, expectedKey);
+      return entryExternalizer.readIfKeyMatch(ByteBufferFFMBridge.remainingSegment(recordBuffer), expectedKey);
     });
   }
 
   private Entry<K, V> readEntry(long logRecordId) throws IOException {
-    return keyValuesLog.read(logRecordId, entryExternalizer::read);
+    return keyValuesLog.read(logRecordId, buffer -> entryExternalizer.read(ByteBufferFFMBridge.remainingSegment(buffer)));
   }
 
   /** @return a key from record(logRecordId), or null, if the record is deleted */
   private @Nullable K readKey(long logRecordId) throws IOException {
-    return keyValuesLog.read(logRecordId, entryExternalizer::readKey);
+    return keyValuesLog.read(logRecordId, buffer -> entryExternalizer.readKey(ByteBufferFFMBridge.remainingSegment(buffer)));
   }
 
   private long appendEntry(@NotNull K key,
                            @Nullable V value) throws IOException {
     KnownSizeRecordWriter entryWriter = entryExternalizer.writerFor(key, value);
-    return keyValuesLog.append(entryWriter, entryWriter.recordSize());
+    return keyValuesLog.append(buffer -> ByteBufferFFMBridge.write(entryWriter, buffer), entryWriter.recordSize());
   }
 }

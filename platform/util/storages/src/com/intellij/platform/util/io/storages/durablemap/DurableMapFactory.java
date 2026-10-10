@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.durablemap;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.platform.util.io.storages.ByteBufferFFMBridge;
 import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.StorageFactory;
@@ -252,7 +253,7 @@ public class DurableMapFactory<K, V> implements StorageFactory<DurableMapOverApp
     //MAYBE RC: keyHashToEntryOffsetMap could be filled async -- to not delay initialization? (see DurableStringEnumerator)
 
     valuesLog.forEachRecord((logId, entryBuffer) -> {
-      Entry<K, V> entry = entryExternalizer.read(entryBuffer);
+      Entry<K, V> entry = entryExternalizer.read(ByteBufferFFMBridge.remainingSegment(entryBuffer));
       K key = entry.key();
 
       //RC: below is basically DurableMapOverAppendOnlyLog.put() method, slightly stripped
@@ -266,7 +267,7 @@ public class DurableMapFactory<K, V> implements StorageFactory<DurableMapOverApp
           long logRecordId = convertStoredIdToLogId(candidateRecordId);
           Entry<K, V> entryWithSameKey = valuesLog.read(
             logRecordId,
-            _entryBuffer -> entryExternalizer.readIfKeyMatch(_entryBuffer, key)
+            _entryBuffer -> entryExternalizer.readIfKeyMatch(ByteBufferFFMBridge.remainingSegment(_entryBuffer), key)
           );
           if (entryWithSameKey == null) {
             return false; // [record.key != key] => hash collision => look further

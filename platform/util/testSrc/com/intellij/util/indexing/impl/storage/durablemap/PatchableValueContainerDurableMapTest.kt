@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.io.TempDir
-import java.nio.ByteBuffer
+import java.lang.foreign.MemorySegment
 import java.nio.file.Path
 
 /** Checks that the index adapter stores changes without loading the old container */
@@ -113,7 +113,7 @@ class PatchableValueContainerDurableMapTest {
   ) : PatchableValueExternalizer<UpdatableValueContainer<String>, ChangeTrackingValueContainer<String>> by delegate {
     var allowReads = true
 
-    override fun read(input: ByteBuffer): UpdatableValueContainer<String> {
+    override fun read(input: MemorySegment): UpdatableValueContainer<String> {
       check(allowReads) { "Writing a patch must not read the old container" }
       return delegate.read(input)
     }

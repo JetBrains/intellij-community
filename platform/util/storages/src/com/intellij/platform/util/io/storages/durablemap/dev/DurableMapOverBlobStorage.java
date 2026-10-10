@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.durablemap.dev;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.platform.util.io.storages.ByteBufferFFMBridge;
 import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.DataExternalizerEx.KnownSizeRecordWriter;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
@@ -10,7 +11,6 @@ import com.intellij.platform.util.io.storages.StorageFactory;
 import com.intellij.platform.util.io.storages.durablemap.Compactable;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
 import com.intellij.platform.util.io.storages.durablemap.DurableMapFactory;
-import com.intellij.platform.util.io.storages.durablemap.DurableMapOverAppendOnlyLog;
 import com.intellij.platform.util.io.storages.durablemap.EntryExternalizer;
 import com.intellij.platform.util.io.storages.durablemap.EntryExternalizer.Entry;
 import com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMap;
@@ -77,7 +77,7 @@ public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Compac
     int foundRecordId = keyHashToIdMap.lookup(adjustedHash, recordId -> {
       int logRecordId = convertStoredIdToLogId(recordId);
       return keyValuesStorage.readRecord(logRecordId, recordBuffer -> {
-        K recordKey = entryExternalizer.readKey(recordBuffer);
+        K recordKey = entryExternalizer.readKey(ByteBufferFFMBridge.remainingSegment(recordBuffer));
         return recordKey != null;
       });
     });
@@ -431,17 +431,17 @@ public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Compac
   private Entry<K, V> readEntryIfKeyMatch(int logRecordId,
                                           @NotNull K expectedKey) throws IOException {
     return keyValuesStorage.readRecord(logRecordId, recordBuffer -> {
-      return entryExternalizer.readIfKeyMatch(recordBuffer, expectedKey);
+      return entryExternalizer.readIfKeyMatch(ByteBufferFFMBridge.remainingSegment(recordBuffer), expectedKey);
     });
   }
 
   private Entry<K, V> readEntry(int logRecordId) throws IOException {
-    return keyValuesStorage.readRecord(logRecordId, entryExternalizer::read);
+    return keyValuesStorage.readRecord(logRecordId, buffer -> entryExternalizer.read(ByteBufferFFMBridge.remainingSegment(buffer)));
   }
 
   /** @return a key from record(logRecordId), or null, if the record is deleted */
   private @Nullable K readKey(int logRecordId) throws IOException {
-    return keyValuesStorage.readRecord(logRecordId, entryExternalizer::readKey);
+    return keyValuesStorage.readRecord(logRecordId, buffer -> entryExternalizer.readKey(ByteBufferFFMBridge.remainingSegment(buffer)));
   }
 
   private int updateOrWriteEntry(int foundRecordId,
@@ -468,7 +468,7 @@ public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Compac
         toWrite.position(0)
           .limit(recordSize);
 
-        entryWriter.write(toWrite);
+        ByteBufferFFMBridge.write(entryWriter, toWrite);
 
         toWrite.position(recordSize)
           .limit(recordSize);
@@ -498,11 +498,11 @@ public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Compac
         buffer -> {
           buffer.position(0).limit(headerAndKeySize);
 
-          headerAndKeyWriter.write(buffer);
+          ByteBufferFFMBridge.write(headerAndKeyWriter, buffer);
 
           buffer.position(headerAndKeySize).limit(totalRecordSize);
 
-          valueAppender.write(buffer);
+          ByteBufferFFMBridge.write(valueAppender, buffer);
 
           buffer.position(totalRecordSize).limit(totalRecordSize);
           return buffer;
@@ -528,7 +528,7 @@ public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Compac
           toWrite.position(currentRecordSize)
             .limit(newRecordSize);
 
-          valueAppender.write(toWrite);
+          ByteBufferFFMBridge.write(valueAppender, toWrite);
 
           toWrite.position(newRecordSize)
             .limit(newRecordSize);

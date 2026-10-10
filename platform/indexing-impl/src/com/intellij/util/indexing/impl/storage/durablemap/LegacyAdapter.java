@@ -10,11 +10,13 @@ import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.ByteBuffer;
+import java.lang.foreign.MemorySegment;
+
+import static com.intellij.platform.util.io.storages.PersistentFormatLayouts.JAVA_INT_UNALIGNED;
 
 /**
  * Contains 'hacks' used in the transition period to adapt already existing {@link KeyDescriptor}/{@link DataExternalizer}
- * to the new {@link ByteBuffer}-based API.
+ * to the new {@link MemorySegment}-based API.
  * <p>
  * In a long-term I'd expect most implementations to be 'bilingual' -- i.e. implement both old and new interfaces, with
  * few not-performance-critical implementations still adapted via {@link KeyDescriptorEx#adapt(KeyDescriptor)}/{@link DataExternalizerEx#adapt(DataExternalizer)}.
@@ -44,8 +46,8 @@ public final class LegacyAdapter {
   }
 
   public static <V> @NotNull DataExternalizerEx<V> adapt(@NotNull DataExternalizer<V> externalizer) {
-    if (externalizer instanceof @NotNull KeyDescriptor<V>) {
-      return adapt((KeyDescriptor<V>)externalizer);
+    if (externalizer instanceof KeyDescriptor<V> keyDescriptor) {
+      return adapt(keyDescriptor);
     }
     return DataExternalizerEx.adapt(externalizer);
   }
@@ -73,8 +75,8 @@ public final class LegacyAdapter {
     }
 
     @Override
-    public K read(@NotNull ByteBuffer input)  {
-      int code = input.getInt();
+    public K read(@NotNull MemorySegment input)  {
+      int code = input.get(JAVA_INT_UNALIGNED, 0);
       return adaptedDescriptor.fromInt(code);
     }
 
@@ -86,8 +88,8 @@ public final class LegacyAdapter {
 
     private record IntRecordWriter(int code) implements KnownSizeRecordWriter {
       @Override
-      public ByteBuffer write(@NotNull ByteBuffer data) {
-        return data.putInt(code);
+      public void write(@NotNull MemorySegment target, long startingOffset) {
+        target.set(JAVA_INT_UNALIGNED, startingOffset, code);
       }
 
       @Override

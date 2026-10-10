@@ -2,6 +2,7 @@
 package com.intellij.platform.util.io.storages.enumerator;
 
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.platform.util.io.storages.ByteBufferFFMBridge;
 import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLog;
@@ -134,14 +135,14 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
     if (valueId == NULL_ID) {
       return null;
     }
-    return valuesLog.read(valueId, valueDescriptor::read);
+    return valuesLog.read(valueId, buffer -> valueDescriptor.read(ByteBufferFFMBridge.remainingSegment(buffer)));
   }
 
   @Override
   public boolean forEach(@NotNull ValueReader<? super V> reader) throws IOException {
     return valuesLog.forEachRecord((recordId, buffer) -> {
       int valueId = convertLogIdToEnumeratorId(recordId);
-      V value = valueDescriptor.read(buffer);
+      V value = valueDescriptor.read(ByteBufferFFMBridge.remainingSegment(buffer));
       return reader.read(valueId, value);
     });
   }
@@ -172,7 +173,7 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
     int hash = valueDescriptor.getHashCode(value);
     int valueHash = HashUtils.adjustHash(hash);
     return valueHashToId.lookup(valueHash, candidateId -> {
-      V candidateKey = valuesLog.read(candidateId, valueDescriptor::read);
+      V candidateKey = valuesLog.read(candidateId, buffer -> valueDescriptor.read(ByteBufferFFMBridge.remainingSegment(buffer)));
       return valueDescriptor.isEqual(candidateKey, value);
     });
   }
@@ -183,12 +184,12 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
     return valueHashToId.lookupOrInsert(
       valueHash,
       candidateId -> {
-        V candidateValue = valuesLog.read(candidateId, valueDescriptor::read);
+        V candidateValue = valuesLog.read(candidateId, buffer -> valueDescriptor.read(ByteBufferFFMBridge.remainingSegment(buffer)));
         return valueDescriptor.isEqual(candidateValue, value);
       },
       _valueHash_ -> {
         DataExternalizerEx.KnownSizeRecordWriter writer = valueDescriptor.writerFor(value);
-        long logRecordId = valuesLog.append(writer, writer.recordSize());
+        long logRecordId = valuesLog.append(buffer -> ByteBufferFFMBridge.write(writer, buffer), writer.recordSize());
         return convertLogIdToEnumeratorId(logRecordId);
       });
   }
@@ -197,7 +198,7 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
                                                                    @NotNull KeyDescriptorEx<K> valueDescriptor,
                                                                    @NotNull DurableIntToMultiIntMap valueHashToId) throws IOException {
     valuesLog.forEachRecord((logId, buffer) -> {
-      K value = valueDescriptor.read(buffer);
+      K value = valueDescriptor.read(ByteBufferFFMBridge.remainingSegment(buffer));
 
       int hash = valueDescriptor.getHashCode(value);
       int valueHash = HashUtils.adjustHash(hash);

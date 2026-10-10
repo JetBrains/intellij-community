@@ -226,6 +226,9 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
     if (set != null && !set.isEmpty()) {
       for (it.unimi.dsi.fastutil.ints.IntIterator it = set.intIterator(); it.hasNext(); ) {
         int inputId = it.nextInt();
+        //TODO RC: values are all negative, i.e. packed varint is ineffective here -- but ValueContainer.readFrom()
+        //         reads varint first, and only then uses value <> 0 as discriminator for different sections of
+        //         binary format -- so change it is untrivial
         DataInputOutputUtil.writeINT(out, -inputId); // mark inputId as invalid, to be processed on load in ValueContainerImpl.readFrom
       }
     }

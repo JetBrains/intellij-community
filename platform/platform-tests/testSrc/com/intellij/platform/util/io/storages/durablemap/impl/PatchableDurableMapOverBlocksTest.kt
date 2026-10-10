@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.durablemap.impl
 
 import com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8
 import com.intellij.platform.util.io.storages.DataExternalizerEx.KnownSizeRecordWriter
+import com.intellij.platform.util.io.storages.PersistentFormatLayouts.JAVA_INT_UNALIGNED
 import com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_TOGETHER
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory
 import com.intellij.platform.util.io.storages.database.DurableDatabaseFactory
@@ -34,7 +35,7 @@ import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.io.TempDir
 import java.io.IOException
 import java.lang.foreign.ValueLayout.JAVA_LONG_UNALIGNED
-import java.nio.ByteBuffer
+import java.lang.foreign.MemorySegment
 import java.nio.file.Path
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
@@ -465,12 +466,14 @@ class PatchableDurableMapOverBlocksTest {
     var failWrites = false
     var beforeWrite: () -> Unit = {}
 
-    override fun read(input: ByteBuffer): Set<Int> {
+    override fun read(input: MemorySegment): Set<Int> {
       check(!failReads) { "The operation must not deserialize values" }
       val result = mutableSetOf<Int>()
-      while (input.hasRemaining()) {
-        val command = input.int
+      var offset = 0L
+      while (offset < input.byteSize()) {
+        val command = input.get(JAVA_INT_UNALIGNED, offset)
         if (command > 0) result.add(command) else result.remove(-command)
+        offset += Int.SIZE_BYTES
       }
       return result
     }
@@ -480,13 +483,13 @@ class PatchableDurableMapOverBlocksTest {
     override fun writerForPatch(patch: List<Int>): KnownSizeRecordWriter = object : KnownSizeRecordWriter {
       override fun recordSize(): Int = patch.size * 4
 
-      override fun write(data: ByteBuffer): ByteBuffer {
+      override fun write(target: MemorySegment, startingOffset: Long) {
+        val record = target.asSlice(startingOffset, recordSize().toLong())
         beforeWrite()
-        for (command in patch) {
-          data.putInt(command)
+        for ((index, command) in patch.withIndex()) {
+          record.set(JAVA_INT_UNALIGNED, index.toLong() * Int.SIZE_BYTES, command)
           if (failWrites) throw IOException("Simulated failure during patch serialization")
         }
-        return data
       }
     }
   }

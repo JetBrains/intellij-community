@@ -23,12 +23,14 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
-import java.nio.ByteBuffer;
+import java.lang.foreign.ValueLayout;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+
+import static com.intellij.platform.util.io.storages.PersistentFormatLayouts.JAVA_INT_UNALIGNED;
 
 import static com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8;
 import static com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_SEPARATELY;
@@ -249,7 +251,7 @@ public class DurableMapWithKeyCatalogOverBlocksTest {
     var descriptor = stringAsUTF8();
     var failingExternalizer = new DataExternalizerEx<String>() {
       @Override
-      public String read(@NotNull ByteBuffer input) throws IOException {
+      public String read(@NotNull MemorySegment input) throws IOException {
         return descriptor.read(input);
       }
 
@@ -257,7 +259,7 @@ public class DurableMapWithKeyCatalogOverBlocksTest {
       public @NotNull KnownSizeRecordWriter writerFor(@NotNull String value) {
         return new KnownSizeRecordWriter() {
           @Override
-          public ByteBuffer write(@NotNull ByteBuffer data) throws IOException {
+          public void write(@NotNull MemorySegment target, long startingOffset) throws IOException {
             throw new IOException("simulated value write failure");
           }
 
@@ -363,7 +365,7 @@ public class DurableMapWithKeyCatalogOverBlocksTest {
   private static @NotNull MemorySegment serializedString(@NotNull String value) throws IOException {
     var writer = stringAsUTF8().writerFor(value);
     var bytes = new byte[writer.recordSize()];
-    writer.write(ByteBuffer.wrap(bytes));
+    writer.write(MemorySegment.ofArray(bytes), 0);
     return MemorySegment.ofArray(bytes);
   }
 
@@ -372,19 +374,21 @@ public class DurableMapWithKeyCatalogOverBlocksTest {
     private static final byte APPEND = 2;
 
     @Override
-    public String read(@NotNull ByteBuffer input) throws IOException {
+    public String read(@NotNull MemorySegment input) throws IOException {
       var result = new StringBuilder();
-      while (input.hasRemaining()) {
-        var command = input.get();
-        if (input.remaining() < Integer.BYTES) {
+      long offset = 0;
+      while (offset < input.byteSize()) {
+        var command = input.get(ValueLayout.JAVA_BYTE, offset++);
+        if (input.byteSize() - offset < Integer.BYTES) {
           throw new IOException("Missing string command length");
         }
-        var length = input.getInt();
-        if (length < 0 || length > input.remaining()) {
+        var length = input.get(JAVA_INT_UNALIGNED, offset);
+        offset += Integer.BYTES;
+        if (length < 0 || length > input.byteSize() - offset) {
           throw new IOException("Invalid string command length " + length);
         }
-        var bytes = new byte[length];
-        input.get(bytes);
+        var bytes = input.asSlice(offset, length).toArray(ValueLayout.JAVA_BYTE);
+        offset += length;
         var text = new String(bytes, StandardCharsets.UTF_8);
         switch (command) {
           case SET -> {
@@ -410,11 +414,11 @@ public class DurableMapWithKeyCatalogOverBlocksTest {
 
     private static @NotNull DataExternalizerEx.KnownSizeRecordWriter writer(byte command, @NotNull String text) {
       var textBytes = text.getBytes(StandardCharsets.UTF_8);
-      var bytes = ByteBuffer.allocate(Byte.BYTES + Integer.BYTES + textBytes.length)
-        .put(command)
-        .putInt(textBytes.length)
-        .put(textBytes)
-        .array();
+      var bytes = new byte[Byte.BYTES + Integer.BYTES + textBytes.length];
+      var record = MemorySegment.ofArray(bytes);
+      record.set(ValueLayout.JAVA_BYTE, 0, command);
+      record.set(JAVA_INT_UNALIGNED, Byte.BYTES, textBytes.length);
+      MemorySegment.copy(textBytes, 0, record, ValueLayout.JAVA_BYTE, Byte.BYTES + Integer.BYTES, textBytes.length);
       return DataExternalizerEx.fromBytes(bytes);
     }
   }

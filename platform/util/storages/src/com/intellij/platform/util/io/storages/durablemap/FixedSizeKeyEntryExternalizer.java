@@ -7,14 +7,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.lang.foreign.MemorySegment;
+
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 
 /**
  * Record format: [header:int8][keyBytes][valueBytes]
  * header is used for marking 'deleted'/value=null records: header=0 means record is deleted
  */
 public class FixedSizeKeyEntryExternalizer<K, V> implements EntryExternalizer<K, V> {
-
   private static final int HEADER_SIZE = 1;
 
   private final @NotNull KeyDescriptorEx<K> keyDescriptor;
@@ -27,109 +28,77 @@ public class FixedSizeKeyEntryExternalizer<K, V> implements EntryExternalizer<K,
     if (!keyDescriptor.isRecordSizeConstant()) {
       throw new IllegalArgumentException("Keys must be fixed-size");
     }
-    this.keyRecordSize = keyDescriptor.recordSizeIfConstant();
+    keyRecordSize = keyDescriptor.recordSizeIfConstant();
     this.keyDescriptor = keyDescriptor;
     this.valueExternalizer = valueExternalizer;
   }
 
   @Override
-  public KnownSizeRecordWriter writerFor(@NotNull K key,
-                                         @Nullable V value) throws IOException {
-    KnownSizeRecordWriter keyWriter = keyDescriptor.writerFor(key);
-    if (keyWriter.recordSize() != keyRecordSize) {
-      throw new AssertionError("fixedRecordSize(=" + keyRecordSize + ") != keyWriter.recordSize(=" + keyWriter.recordSize() + ")");
-    }
+  public KnownSizeRecordWriter writerFor(@NotNull K key, @Nullable V value) throws IOException {
+    var keyWriter = keyDescriptor.writerFor(key);
+    checkKeySize(keyWriter);
     if (value == null) {
       return new NullValueEntryWriter(keyWriter);
     }
-    else {
-      KnownSizeRecordWriter valueWriter = valueExternalizer.writerFor(value);
-      return new NonNullValueEntryWriter(keyWriter, valueWriter);
-    }
+    return new NonNullValueEntryWriter(keyWriter, valueExternalizer.writerFor(value));
   }
 
   @Override
-  public @NotNull Entry<K, V> read(@NotNull ByteBuffer input) throws IOException {
+  public @NotNull Entry<K, V> read(@NotNull MemorySegment input) throws IOException {
     byte header = readHeader(input);
-    boolean valueIsNull = isValueVoid(header);
-
-    int recordSize = input.remaining();
-
-    ByteBuffer keyRecordSlice = input
-      .position(HEADER_SIZE)
-      .limit(HEADER_SIZE + keyRecordSize);
-    K key = keyDescriptor.read(keyRecordSlice);
-
-    if (valueIsNull) {
+    K key = keyDescriptor.read(input.asSlice(HEADER_SIZE, keyRecordSize));
+    if (isValueVoid(header)) {
       return new Entry<>(key, null);
     }
 
-    ByteBuffer valueRecordSlice = input
-      .position(HEADER_SIZE + keyRecordSize)
-      .limit(recordSize);
-    V candidateValue = valueExternalizer.read(valueRecordSlice);
-    return new Entry<>(key, candidateValue);
+    long valueOffset = HEADER_SIZE + keyRecordSize;
+    V value = valueExternalizer.read(input.asSlice(valueOffset));
+    return new Entry<>(key, value);
   }
 
   @Override
   public KnownSizeRecordWriter writerForEntryHeader(@NotNull K key) throws IOException {
-    KnownSizeRecordWriter keyWriter = keyDescriptor.writerFor(key);
-    if (keyWriter.recordSize() != keyRecordSize) {
-      throw new AssertionError("fixedRecordSize(=" + keyRecordSize + ") != keyWriter.recordSize(=" + keyWriter.recordSize() + ")");
-    }
+    var keyWriter = keyDescriptor.writerFor(key);
+    checkKeySize(keyWriter);
     return new NonNullValueEntryWriter(keyWriter, /* valueWriter: */ KnownSizeRecordWriter.NOTHING);
   }
 
   @Override
-  public @Nullable Entry<K, V> readIfKeyMatch(@NotNull ByteBuffer input,
-                                              @NotNull K expectedKey) throws IOException {
+  public @Nullable Entry<K, V> readIfKeyMatch(@NotNull MemorySegment input, @NotNull K expectedKey) throws IOException {
     byte header = readHeader(input);
-    boolean valueIsNull = isValueVoid(header);
-
-    int recordSize = input.remaining();
-
-    ByteBuffer keyRecordSlice = input
-      .position(HEADER_SIZE)
-      .limit(HEADER_SIZE + keyRecordSize);
-    K candidateKey = keyDescriptor.read(keyRecordSlice);
+    K candidateKey = keyDescriptor.read(input.asSlice(HEADER_SIZE, keyRecordSize));
     if (!keyDescriptor.isEqual(expectedKey, candidateKey)) {
       return null;
     }
-
-    if (valueIsNull) {
+    if (isValueVoid(header)) {
       return new Entry<>(expectedKey, null);
     }
 
-    ByteBuffer valueRecordSlice = input
-      .position(HEADER_SIZE + keyRecordSize)
-      .limit(recordSize);
-    V candidateValue = valueExternalizer.read(valueRecordSlice);
-    return new Entry<>(expectedKey, candidateValue);
+    long valueOffset = HEADER_SIZE + keyRecordSize;
+    V value = valueExternalizer.read(input.asSlice(valueOffset));
+    return new Entry<>(expectedKey, value);
   }
 
   @Override
-  public @Nullable K readKey(@NotNull ByteBuffer input) throws IOException {
-    byte header = readHeader(input);
-    boolean valueIsNull = isValueVoid(header);
-    if (valueIsNull) {
+  public @Nullable K readKey(@NotNull MemorySegment input) throws IOException {
+    if (isValueVoid(readHeader(input))) {
       return null;
     }
-
-    ByteBuffer keyRecordSlice = input
-      .position(HEADER_SIZE)
-      .limit(HEADER_SIZE + keyRecordSize);
-    return keyDescriptor.read(keyRecordSlice);
+    return keyDescriptor.read(input.asSlice(HEADER_SIZE, keyRecordSize));
   }
 
-
-  private static byte readHeader(@NotNull ByteBuffer keyBuffer) {
-    return keyBuffer.get(0);
+  private void checkKeySize(@NotNull KnownSizeRecordWriter keyWriter) {
+    if (keyWriter.recordSize() != keyRecordSize) {
+      throw new AssertionError("fixedRecordSize(=" + keyRecordSize + ") != keyWriter.recordSize(=" + keyWriter.recordSize() + ")");
+    }
   }
 
-  private static void putHeader(@NotNull ByteBuffer keyBuffer,
-                                boolean valueEmpty) {
-    byte header = (byte)(valueEmpty ? 0 : 1);
-    keyBuffer.put(0, header);
+  private static byte readHeader(@NotNull MemorySegment input) {
+    return input.get(JAVA_BYTE, 0);
+  }
+
+  private static void putHeader(@NotNull MemorySegment target, boolean valueIsNull) {
+    target.set(JAVA_BYTE, 0, (byte)(valueIsNull ? 0 : 1));
   }
 
   /** @return value is void -- null/deleted (we don't differentiate those two cases in this map impl) */
@@ -139,18 +108,15 @@ public class FixedSizeKeyEntryExternalizer<K, V> implements EntryExternalizer<K,
 
   private record NullValueEntryWriter(@NotNull KnownSizeRecordWriter keyWriter,
                                       int keySize) implements KnownSizeRecordWriter {
-
     NullValueEntryWriter(@NotNull KnownSizeRecordWriter keyWriter) {
       this(keyWriter, keyWriter.recordSize());
     }
 
     @Override
-    public ByteBuffer write(@NotNull ByteBuffer buffer) throws IOException {
-      putHeader(buffer, /* deleted: */ true);
-      keyWriter.write(
-        buffer.position(HEADER_SIZE).limit(HEADER_SIZE + keySize)
-      );
-      return buffer;
+    public void write(@NotNull MemorySegment target, long startingOffset) throws IOException {
+      var record = target.asSlice(startingOffset, recordSize());
+      putHeader(record, /* deleted: */ true);
+      keyWriter.write(record, HEADER_SIZE);
     }
 
     @Override
@@ -159,14 +125,14 @@ public class FixedSizeKeyEntryExternalizer<K, V> implements EntryExternalizer<K,
     }
   }
 
-  private static class NonNullValueEntryWriter implements KnownSizeRecordWriter {
+  private static final class NonNullValueEntryWriter implements KnownSizeRecordWriter {
     private final KnownSizeRecordWriter keyWriter;
     private final KnownSizeRecordWriter valueWriter;
     private final int keySize;
     private final int valueSize;
 
-    NonNullValueEntryWriter(@NotNull KnownSizeRecordWriter keyWriter,
-                            @NotNull KnownSizeRecordWriter valueWriter) {
+    private NonNullValueEntryWriter(@NotNull KnownSizeRecordWriter keyWriter,
+                                    @NotNull KnownSizeRecordWriter valueWriter) {
       this.keyWriter = keyWriter;
       this.valueWriter = valueWriter;
       this.keySize = keyWriter.recordSize();
@@ -174,11 +140,11 @@ public class FixedSizeKeyEntryExternalizer<K, V> implements EntryExternalizer<K,
     }
 
     @Override
-    public ByteBuffer write(@NotNull ByteBuffer buffer) throws IOException {
-      putHeader(buffer, /* deleted: */ false);
-      keyWriter.write(buffer.position(HEADER_SIZE).limit(HEADER_SIZE + keySize));
-      valueWriter.write(buffer.position(HEADER_SIZE + keySize).limit(HEADER_SIZE + keySize + valueSize));
-      return buffer;
+    public void write(@NotNull MemorySegment target, long startingOffset) throws IOException {
+      var record = target.asSlice(startingOffset, recordSize());
+      putHeader(record, /* deleted: */ false);
+      keyWriter.write(record, HEADER_SIZE);
+      valueWriter.write(record, HEADER_SIZE + keySize);
     }
 
     @Override

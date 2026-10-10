@@ -35,7 +35,7 @@ class DurableMapOverBlocksHousekeeperTest {
       val descriptor = stringAsUTF8()
       val entryExternalizer = DefaultEntryExternalizer(descriptor, descriptor)
       val baseWriter = entryExternalizer.writerFor("key", "value")
-      val baseRef = records.append(baseWriter.recordSize()) { payload -> baseWriter.write(payload.asByteBuffer()) }
+      val baseRef = records.append(baseWriter.recordSize()) { payload -> baseWriter.write(payload, 0) }
       var headRef = baseRef
       repeat(5) {
         headRef = records.append(ENTRIES_BLOCK_SIZE, headRef) { payload ->

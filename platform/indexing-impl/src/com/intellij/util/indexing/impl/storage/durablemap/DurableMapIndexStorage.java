@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.util.function.BiPredicate;
 
 @ApiStatus.Internal
 public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase

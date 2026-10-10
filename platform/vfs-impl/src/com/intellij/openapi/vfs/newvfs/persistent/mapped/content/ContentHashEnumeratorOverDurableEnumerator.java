@@ -15,7 +15,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.nio.file.Path;
 import java.util.Arrays;
 
@@ -208,10 +209,8 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
     }
 
     @Override
-    public byte[] read(@NotNull ByteBuffer input) throws IOException {
-      byte[] hash = new byte[SIGNATURE_LENGTH];
-      input.get(hash);
-      return hash;
+    public byte[] read(@NotNull MemorySegment input) throws IOException {
+      return input.toArray(ValueLayout.JAVA_BYTE);
     }
   }
 }
