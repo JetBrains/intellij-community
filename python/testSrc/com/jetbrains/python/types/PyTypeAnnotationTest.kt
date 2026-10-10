@@ -2394,6 +2394,77 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-92893"])
+  @TestCaseOptions(assertRecursionPrevention = false)
+  fun `new-style default that refers to itself`() = test("""
+    class Itself[T = T]: ...
+    #                └ WARNING Default type of type parameter 'T' refers to itself
+    class SelfNested[T = list[T]]: ...
+    #                         └ WARNING Default type of type parameter 'T' refers to itself
+    def f_itself[T = T](): ...
+    #                └ WARNING Default type of type parameter 'T' refers to itself
+    type AItself[T = T] = list[T]
+    #                └ WARNING Default type of type parameter 'T' refers to itself
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92893"])
+  fun `new-style default that refers to a later type parameter`() = test("""
+    class Later[S2 = S1, S1 = str]: ...
+    #                ^^ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
+    def f_later[S2 = S1, S1 = str](): ...
+    #                ^^ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
+    type ALater[S2 = S1, S1 = str] = tuple[S1, S2]
+    #                ^^ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92893"])
+  @TestCaseOptions(assertRecursionPrevention = false)
+  fun `new-style defaults that refer to each other`() = test("""
+    class Mutual[T = U, U = T]: ...
+    #                └ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92893"])
+  @TestCaseOptions(assertRecursionPrevention = false)
+  fun `new-style bound that refers to its own type parameter`() = test("""
+    class SelfBound[T: T]: ...
+    #                  └ ERROR Generic types are not allowed inside constraints and bounds of type parameters
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92893"])
+  fun `new-style default that refers to a later type parameter inside a type expression`() = test("""
+    class Nested[S2 = list[S1], S1 = str]: ...
+    #                      ^^ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
+    class PLater[**P = [T], T = int]: ...
+    #                   └ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
+    class TsLater[*Ts = *tuple[T, ...], T = int]: ...
+    #                          │        ^^^^^^^ ERROR TypeVar with a default value cannot follow TypeVarTuple
+    #                          └ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92893"])
+  fun `new-style default that refers to an earlier type parameter`() = test("""
+    class Ok[S1 = str, S2 = list[S1]]: ...
+    class POk[T = int, **P = [T]]: ...
+    class TsOk[T = int, *Ts = *tuple[T, ...]]: ...
+    def f_ok[S1 = str, S2 = S1](): ...
+    type AOk[S1 = str, S2 = S1] = tuple[S1, S2]
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92893"])
+  fun `new-style default that refers to an outer type parameter`() = test("""
+    class Outer[T]:
+        def m[U = T](self) -> U: ...
+    #             └ WARNING Type variable 'T' is out of scope
+    """.trimIndent())
+
+  @Test
   @TestFor(issues = ["PY-90365"])
   fun `class with list literal default used as another default`() = test("""
     class A[T = [int]]: ...
