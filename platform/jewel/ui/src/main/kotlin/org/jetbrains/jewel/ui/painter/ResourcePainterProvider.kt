@@ -49,8 +49,10 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
 
     private val cache = ConcurrentHashMap<Int, Painter>()
 
+    // Only SVG patch hints need it, and setting it up is costly: a provider is created for every composition of
+    // rememberResourcePainterProvider (each checkbox, each icon of a list row).
     @Suppress("HttpUrlsUsage")
-    private val documentBuilderFactory =
+    private val documentBuilderFactory by lazy {
         DocumentBuilderFactory.newDefaultInstance().apply {
             isValidating = false
             setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
@@ -64,6 +66,7 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
             isXIncludeAware = false
             isExpandEntityReferences = false
         }
+    }
 
     private fun Scope.resolveHint(hint: PainterHint) {
         with(hint) {
