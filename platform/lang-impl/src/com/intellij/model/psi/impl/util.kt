@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.model.psi.impl
 
 import com.intellij.codeInsight.multiverse.EditorContextManager
@@ -10,6 +12,7 @@ import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
 internal val LOG: Logger = Logger.getInstance("#com.intellij.model.psi.impl")
 

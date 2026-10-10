@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Declarations")
+@file:ApiStatus.Internal
 
 package com.intellij.model.psi.impl
 
@@ -18,7 +19,6 @@ import org.jetbrains.annotations.TestOnly
 /**
  * @return collection of declarations found around the given [offset][offsetInFile] in [file][this]
  */
-@ApiStatus.Internal
 fun PsiFile.allDeclarationsAround(offsetInFile: Int): Collection<PsiSymbolDeclaration> {
   for ((element: PsiElement, offsetInElement: Int) in elementsAroundOffsetUp(offsetInFile)) {
     ProgressManager.checkCanceled()
