@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ExperimentalIcons;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -26,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.platform.icons.IconDescriptor;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.ui.JBInsets;
@@ -180,7 +182,12 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     public ComboBoxButton(@NotNull Presentation presentation) {
       myPresentation = presentation;
 
-      setIcon(myPresentation.getIcon());
+      if (ExperimentalIcons.isEnabled()) {
+        updateDescriptorIcons();
+      }
+      else {
+        setIcon(myPresentation.getIcon());
+      }
       setText(myPresentation.getText());
       setEnabled(myPresentation.isEnabled());
 
@@ -268,7 +275,15 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         updateTooltipText();
       }
       else if (Presentation.PROP_ICON.equals(propertyName)) {
-        setIcon((Icon)event.getNewValue());
+        if (ExperimentalIcons.isEnabled()) {
+          updateDescriptorIcons();
+        }
+        else {
+          setIcon((Icon)event.getNewValue());
+        }
+      }
+      else if (Presentation.PROP_ICON_DESCRIPTOR.equals(propertyName)) {
+        updateDescriptorIcons();
       }
       else if (Presentation.PROP_ENABLED.equals(propertyName)) {
         setEnabled((Boolean)event.getNewValue());
@@ -412,6 +427,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
             BasicButtonUI.createUI(this) :
             UIManager.getUI(this));
       setMargin();
+      if (myPresentation != null && ExperimentalIcons.isEnabled()) {
+        updateDescriptorIcons();
+      }
     }
 
     @ApiStatus.Experimental
@@ -420,6 +438,22 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     protected void doRightClick() {}
+
+    private @Nullable DescriptorIcons myDescriptorIcons;
+
+    private void updateDescriptorIcons() {
+      IconDescriptor base = ActionIconDescriptors.effective(myPresentation);
+      if (base == null) {
+        myDescriptorIcons = null;
+        setIcon(null);
+        setDisabledIcon(null);
+        return;
+      }
+
+      myDescriptorIcons = DescriptorIcons.reuseOrBuild(base, myDescriptorIcons);
+      setIcon(myDescriptorIcons.getIcon());
+      setDisabledIcon(myDescriptorIcons.getDisabled());
+    }
   }
 
   protected Condition<AnAction> getPreselectCondition() { return null; }
