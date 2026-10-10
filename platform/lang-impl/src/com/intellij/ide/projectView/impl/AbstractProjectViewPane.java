@@ -762,7 +762,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     }
     else if (myTree.isSelectionEmpty()) {
       TreeUtil.promiseSelectFirst(myTree);
-      myProject.getService(ProjectViewInitNotifier.class).initCompleted();
+      ProjectViewInitNotifier.getInstance(myProject).initCompleted();
     }
   }
 
@@ -1216,12 +1216,12 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
 
     @Override
     public void treeStateCachedStateRestored(@NotNull TreeExpansionEvent event) {
-      myProject.getService(ProjectViewInitNotifier.class).initCachedNodesLoaded();
+      ProjectViewInitNotifier.getInstance(myProject).initCachedNodesLoaded();
     }
 
     @Override
     public void treeStateRestoreFinished(@NotNull TreeExpansionEvent event) {
-      myProject.getService(ProjectViewInitNotifier.class).initCompleted();
+      ProjectViewInitNotifier.getInstance(myProject).initCompleted();
       myTree.removeTreeExpansionListener(this);
     }
 
