@@ -1,13 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.style;
 
 import com.intellij.testFramework.LightProjectDescriptor;
 import junit.framework.TestCase;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 
+@SuppressWarnings({"GrUnresolvedAccess", "GroovyEmptyStatementBody", "GrMethodMayBeStatic", "GrPackage", "GrUnnecessaryPublicModifier"})
 public class GrUnnecessarySemicolonInspectionTest extends LightGroovyTestCase {
   @Override
   public final @NotNull LightProjectDescriptor getProjectDescriptor() {
@@ -61,27 +63,55 @@ public class GrUnnecessarySemicolonInspectionTest extends LightGroovyTestCase {
   }
 
   public void testTraditionalFor() {
-    doTest("for(int i = 0; i < 5; i++);<caret>", "for(int i = 0; i < 5; i++)");
+    doTest("for(int i = 0; i < 5; i++);<caret>");
   }
 
   public void testTraditionalForWithoutUpdate() {
-    doTest("for (int i = 0; i < 10;) {}");
+    doTest("for (int i = 0; i < 10;<caret>) {}");
   }
 
   public void testTraditionalForWithoutCondition() {
-    doTest("for (int i = 0; ; i++) {}");
+    doTest("for (int i = 0; ;<caret> i++) {}");
+  }
+
+  public void testForFollowedByStatement() {
+    doTest("""
+             for(int i = 0; i < 5; i++);<caret>
+                // comment
+                println "1"
+             """);
+  }
+
+  public void testIf() {
+    doTest("if (false);<caret>\n");
+  }
+
+  public void testMethodCallFollowedByBlock() {
+    doTest("""
+             def myFunc() {
+                 println "in MyFunc"
+             }
+             myFunc();<caret>
+             // comment
+             {
+                 // anonymous code block
+             }
+             """);
   }
 
   public void testWithinMethod() {
-    doTest("def foo() {; ;1;;/*asd*/;54; ;<caret>;; }", "def foo() { 1;/*asd*/54  }");
+    doTest("def foo() {; ;1;;/*asd*/;54; ;<caret>;; }",
+           "def foo() { 1;/*asd*/54  }");
   }
 
   public void testWithinClosure() {
-    doTest("foo {; ;1;;/*asd*/;54; ;<caret>;; }", "foo { 1;/*asd*/54  }");
+    doTest("foo {; ;1;;/*asd*/;54; ;<caret>;; }",
+           "foo { 1;/*asd*/54  }");
   }
 
   public void testWithinClosureWithArrow() {
-    doTest("foo { -> ; ;1;;/*asd*/;54; ;<caret>;; }", "foo { ->  1;/*asd*/54  }");
+    doTest("foo { -> ; ;1;;/*asd*/;54; ;<caret>;; }",
+           "foo { ->  1;/*asd*/54  }");
   }
 
   public void testClassMembers() {
@@ -580,16 +610,16 @@ public class GrUnnecessarySemicolonInspectionTest extends LightGroovyTestCase {
              """);
   }
 
-  private void doTest(final String before, final String after) {
+  private void doTest(@Language("Groovy") String before, @Language("Groovy") String after) {
     myFixture.enableInspections(GrUnnecessarySemicolonInspection.class);
     myFixture.configureByText("_.groovy", before);
     myFixture.launchAction(myFixture.findSingleIntention("Fix all 'Unnecessary semicolon'"));
     myFixture.checkResult(after);
   }
 
-  private void doTest(final String text) {
+  private void doTest(@Language("Groovy") String text) {
     myFixture.enableInspections(GrUnnecessarySemicolonInspection.class);
     myFixture.configureByText("_.groovy", text);
-    TestCase.assertNull(myFixture.getAvailableIntention("Fix all 'Unnecessary semicolon'"));
+    TestCase.assertNull(myFixture.getAvailableIntention("Remove semicolon"));
   }
 }
