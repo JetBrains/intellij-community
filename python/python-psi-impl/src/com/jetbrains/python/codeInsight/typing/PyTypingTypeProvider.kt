@@ -1402,7 +1402,12 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         if (unpackedType != null) {
           return Ref(unpackedType)
         }
-        val typeParameterType: PyType? = getTypeParameterTypeFromTypeParameter(resolved, context)
+        // The default or the bound of a type parameter can refer to the type parameter itself
+        val typeParameterType: PyType? = (resolved as? PyTypeParameter)?.let { typeParameter ->
+          RecursionManager.doPreventingRecursion(typeParameter, false) {
+            getTypeParameterTypeFromTypeParameter(typeParameter, context)
+          }
+        }
         if (typeParameterType != null) {
           return Ref(typeParameterType)
         }

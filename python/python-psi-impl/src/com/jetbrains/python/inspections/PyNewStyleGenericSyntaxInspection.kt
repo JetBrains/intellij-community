@@ -71,14 +71,24 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
       if (defaultExpression != null) {
         val scopeOwner = ScopeUtil.getScopeOwner(typeParameter)
         if (scopeOwner == null) return
+        val laterTypeParameters = (typeParameter.parent as? PyTypeParameterList)?.typeParameters
+          ?.dropWhile { it !== typeParameter }
+          ?.drop(1)
+          .orEmpty()
 
         defaultExpression.accept(object : PyRecursiveElementVisitor() {
           override fun visitPyReferenceExpression(node: PyReferenceExpression) {
             node.getTypeParameterType()?.let {
-              if (scopeOwner != it.scopeOwner || it.declarationElement is PyTargetExpression) {
-                registerProblem(node,
-                                PyPsiBundle.problemMessage("INSP.new.style.type.parameter.out.of.scope", node.name),
-                                ProblemHighlightType.WARNING)
+              val declarationElement = it.declarationElement
+              when {
+                scopeOwner != it.scopeOwner || declarationElement is PyTargetExpression ->
+                  registerProblem(node,
+                                  PyPsiBundle.problemMessage("INSP.new.style.type.parameter.out.of.scope", node.name),
+                                  ProblemHighlightType.WARNING)
+                declarationElement === typeParameter ->
+                  registerProblem(node, PyPsiBundle.problemMessage("INSP.new.style.type.parameter.default.refers.to.itself", node.name))
+                declarationElement in laterTypeParameters ->
+                  registerProblem(node, PyPsiBundle.message("INSP.type.hints.default.type.refers.to.type.var.out.of.scope"))
               }
             }
             super.visitPyReferenceExpression(node)
