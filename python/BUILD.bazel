@@ -1350,6 +1350,8 @@ jvm_library(
         "//python/python-copyright:copyright_test_lib",
         "//python/testFramework",
         "//python/testFramework:testFramework_test_lib",
+        "//python/testAssertions",
+        "//python/testAssertions:testAssertions_test_lib",
         "//platform/xdebugger-testFramework:debugger-testFramework",
         "//platform/xdebugger-testFramework:debugger-testFramework_test_lib",
         "//python/python-psi-impl:psi-impl",
