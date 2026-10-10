@@ -6,6 +6,7 @@ import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.ui.icons.RgbImageFilterSupplier
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.SVGLoader
+import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
 import com.intellij.platform.icons.rendering.Dimensions
 import com.intellij.platform.icons.rendering.ImageModifiers
 import java.awt.Image
@@ -22,9 +23,12 @@ internal class LegacyIconImageResourceHolder(
   override fun getImage(scale: ScaleContext, imageModifiers: ImageModifiers?): Image? {
     val params = imageModifiers.toLoadParameters()
     val svgPatcher = params.colorPatcher
-    val icon = if (backingLegacyIcon is CachedImageIcon && svgPatcher != null && svgPatcher !== SVGLoader.colorPatcherProvider) {
-      backingLegacyIcon.createWithPatcher(svgPatcher, isDark = params.isDark, useStroke = params.isStroke)
-    } else backingLegacyIcon
+    val forcedDark = (imageModifiers as? DefaultImageModifiers)?.forcedDark
+    val variant = if (forcedDark == null) backingLegacyIcon else IconLoader.getDarkIcon(backingLegacyIcon, forcedDark)
+    val icon = if (variant is CachedImageIcon && svgPatcher != null && svgPatcher !== SVGLoader.colorPatcherProvider) {
+      val patchedIsDark = if (forcedDark != null || params.isStroke) params.isDark else null
+      variant.createWithPatcher(svgPatcher, isDark = patchedIsDark, useStroke = params.isStroke)
+    } else variant
     val filtered = if (params.filters.isNotEmpty()) {
         IconLoader.filterIcon(icon = icon, filterSupplier = object : RgbImageFilterSupplier {
             override fun getFilter() = params.filters.first() as RGBImageFilter

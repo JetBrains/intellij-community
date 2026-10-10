@@ -4,15 +4,17 @@ package com.intellij.platform.icons.impl.intellij.rendering
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.impl.rendering.ResolvedScalingContext
-import com.intellij.platform.icons.rendering.IconRendererManager
 import com.intellij.platform.icons.impl.rendering.resolve
 import com.intellij.platform.icons.rendering.Dimensions
+import com.intellij.platform.icons.rendering.IconRendererManager
 import com.intellij.platform.icons.scale.FactorScale
 import com.intellij.platform.icons.scale.FitAreaScale
 import com.intellij.platform.icons.scale.IconScale
 import com.intellij.platform.icons.scale.factor
 import com.intellij.platform.icons.scale.fitArea
 import com.intellij.platform.icons.swing.ScalableSwingIcon
+import com.intellij.ui.icons.MenuBarIconProvider
+import com.intellij.ui.scale.JBUIScale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.Component
@@ -26,7 +28,7 @@ import kotlin.math.roundToInt
 class SwingIcon(
   val iconDescriptor: IconDescriptor,
   val scale: IconScale? = null
-): Icon, ScalableSwingIcon {
+): Icon, ScalableSwingIcon, MenuBarIconProvider {
   internal val users = WeakHashMap<Component, Boolean>()
 
   private val renderer by lazy {
@@ -62,6 +64,8 @@ class SwingIcon(
     }
     return SwingIcon(iconDescriptor, mergedScale)
   }
+
+  override fun getMenuBarIcon(isDark: Boolean): Icon = scaled(factor(1f / JBUIScale.scale(1f)))
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     if (c != null) {

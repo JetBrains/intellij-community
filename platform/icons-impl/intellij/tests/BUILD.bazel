@@ -48,6 +48,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
         "//platform/testFramework/junit5",
         "//platform/icons",
+        "//platform/core-ui",
         "//platform/testFramework",
         "//libraries/junit6",
         "//platform/util:util-ui",
