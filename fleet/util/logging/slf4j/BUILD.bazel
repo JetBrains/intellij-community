@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build fleet.util.logging.slf4j` start
@@ -8,14 +8,6 @@ create_kotlinc_options(
     x_context_parameters = True,
     x_jvm_default = "all-compatibility",
     x_lambdas = "class",
-)
-
-resourcegroup(
-    name = "slf4j_resources",
-    srcs = glob(
-        ["resourcesJvmMain/**/*"],
-    ),
-    strip_prefix = "resourcesJvmMain",
 )
 
 jvm_library(
@@ -30,7 +22,6 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_slf4j",
     module_name = "fleet.util.logging.slf4j",
-    resource_jars = [":slf4j_resources"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
