@@ -795,6 +795,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     const val TYPE_ALIAS: String = "typing.TypeAlias"
     const val TYPE_ALIAS_EXT: String = "typing_extensions.TypeAlias"
     const val TYPE_ALIAS_TYPE: String = "typing.TypeAliasType"
+    const val TYPE_ALIAS_TYPE_EXT: String = "typing_extensions.TypeAliasType"
     const val SPECIAL_FORM: String = "typing._SpecialForm"
     const val SPECIAL_FORM_EXT: String = "typing_extensions._SpecialForm"
     const val REQUIRED: String = "typing.Required"

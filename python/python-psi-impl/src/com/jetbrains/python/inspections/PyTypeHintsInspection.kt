@@ -160,6 +160,11 @@ class PyTypeHintsInspection : PyInspection() {
         checkTypeVarTupleArguments(node, getTargetFromAssignment(node))
       }
 
+      if (QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_ALIAS_TYPE) in calleeQName ||
+          QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_ALIAS_TYPE_EXT) in calleeQName) {
+        checkTypeAliasTypeArguments(node, getTargetFromAssignment(node))
+      }
+
       if (QualifiedName.fromDottedString(PyTypingTypeProvider.CAST) in calleeQName ||
           QualifiedName.fromDottedString(PyTypingTypeProvider.CAST_EXT) in calleeQName) {
         checkCastArguments(node.arguments)
@@ -629,6 +634,32 @@ class PyTypeHintsInspection : PyInspection() {
         if (name == "default" && argument != null) {
           checkTypeVarTupleDefaultValue(argument, typeParameter = null)
         }
+      }
+    }
+
+    private fun checkTypeAliasTypeArguments(call: PyCallExpression, target: PyExpression?) {
+      processMatchedArgument(call) { name, argument ->
+        when (name) {
+          "name" ->
+            checkNameIsTheSameAsTarget(
+              argument, target,
+              PyPsiBundle.message("INSP.type.hints.type.alias.type.expects.string.literal.as.first.argument"),
+              PyPsiBundle.message("INSP.type.hints.argument.to.type.alias.type.must.be.string.equal.to.variable.name"),
+            )
+          "type_params" -> if (argument != null && !isTupleOfTypeParameters(argument)) {
+            registerProblem(argument, PyPsiBundle.message("INSP.type.hints.type.alias.type.params.must.be.tuple.of.type.parameters"))
+          }
+        }
+      }
+    }
+
+    private fun isTupleOfTypeParameters(expression: PyExpression): Boolean {
+      val tuple = PyPsiUtils.flattenParens(expression) as? PyTupleExpression ?: return false
+      val resolveContext = PyResolveContext.defaultContext(myTypeEvalContext)
+      return tuple.elements.all {
+        it is PyReferenceExpression &&
+        (PyUtil.multiResolveTopPriority(it, resolveContext).isEmpty() ||
+         Ref.deref(PyTypingTypeProvider.getType(it, myTypeEvalContext)) is PyTypeParameterType)
       }
     }
 

@@ -120,6 +120,81 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-92896"])
+  fun `TypeAliasType name`() = test("""
+    import typing
+    from typing import TypeAliasType
+    import typing_extensions
+
+    name = "TA3"
+    TA1 = TypeAliasType("TA1", int)
+    TA2 = TypeAliasType(name="TA2", value=int)
+    TA3 = TypeAliasType("Other", int)
+    #                   ^^^^^^^ WARNING Name of type alias must match the name of the variable to which it is assigned
+    TA4 = TypeAliasType(name, int)
+    #                   ^^^^ WARNING First argument to TypeAliasType must be a string literal
+    TA5 = typing_extensions.TypeAliasType("Other", int)
+    #                                     ^^^^^^^ WARNING Name of type alias must match the name of the variable to which it is assigned
+    TA6 = typing.TypeAliasType("Other", int)
+    #                          ^^^^^^^ WARNING Name of type alias must match the name of the variable to which it is assigned
+    print(TypeAliasType("Other", int))
+    print(TypeAliasType(name, int))
+    #                   ^^^^ WARNING First argument to TypeAliasType must be a string literal
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92896"])
+  fun `TypeAliasType type parameters`() = test("""
+    from typing import ParamSpec, TypeAliasType, TypeVar, TypeVarTuple
+    import typing_extensions
+
+    T = TypeVar("T")
+    P = ParamSpec("P")
+    Ts = TypeVarTuple("Ts")
+    params = (T,)
+
+    TA1 = TypeAliasType("TA1", int, type_params=(T, P, Ts))
+    TA2 = typing_extensions.TypeAliasType("TA2", int, type_params=(T,))
+    TA3 = TypeAliasType("TA3", int, type_params=())
+    TA4 = TypeAliasType("TA4", int, type_params=(int,))
+    #                               │           ^^^^^^ WARNING Type parameter list must be a tuple of type parameters
+    #                               ^^^^^^^^^^^^^^^^^^ WARNING Expected type 'tuple[TypeVar | ParamSpec | TypeVarTuple, ...]', got 'tuple[type[int]]' instead
+    TA5 = TypeAliasType("TA5", int, type_params=(T, "T"))
+    #                               │           ^^^^^^^^ WARNING Type parameter list must be a tuple of type parameters
+    #                               ^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'tuple[TypeVar | ParamSpec | TypeVarTuple, ...]', got 'tuple[TypeVar, Literal["T"]]' instead
+    TA6 = TypeAliasType("TA6", int, type_params=params)
+    #                                           ^^^^^^ WARNING Type parameter list must be a tuple of type parameters
+    TA7 = TypeAliasType("TA7", int, type_params=[T])
+    #                               │           ^^^ WARNING Type parameter list must be a tuple of type parameters
+    #                               ^^^^^^^^^^^^^^^ WARNING Expected type 'tuple[TypeVar | ParamSpec | TypeVarTuple, ...]', got 'list[TypeVar]' instead
+    TA8 = TypeAliasType("TA8", int, type_params=(Unknown,))
+    #                                            ^^^^^^^ ERROR Unresolved reference 'Unknown'
+    TA9 = TypeAliasType("TA9", int)
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92896"])
+  fun `TypeAliasType type parameters from another file`() = test(
+    """
+    from typing import TypeAliasType
+    from params import T, P, Ts, NotAParameter
+
+    TA1 = TypeAliasType("TA1", int, type_params=(T, P, Ts))
+    TA2 = TypeAliasType("TA2", int, type_params=(T, NotAParameter))
+    #                               │           ^^^^^^^^^^^^^^^^^^ WARNING Type parameter list must be a tuple of type parameters
+    #                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'tuple[TypeVar | ParamSpec | TypeVarTuple, ...]', got 'tuple[TypeVar, type[int]]' instead
+    """.trimIndent(),
+    "params.py" to """
+      from typing import ParamSpec, TypeVar, TypeVarTuple
+
+      T = TypeVar("T")
+      P = ParamSpec("P")
+      Ts = TypeVarTuple("Ts")
+      NotAParameter = int
+      """.trimIndent(),
+  )
+
+  @Test
   @TestFor(issues = ["PY-28227"])
   fun `plain Generic inheritance`() = test("""
     from typing import Generic
