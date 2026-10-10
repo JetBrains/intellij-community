@@ -313,6 +313,12 @@
             "module": "intellij.python.langInjection"
         },
         {
+            "module": "intellij.python.testAssertions"
+        },
+        {
+            "module": "intellij.python.devkit"
+        },
+        {
             "module": "intellij.python.markdown"
         },
         {

@@ -2196,6 +2196,8 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-console/intellij.python.console.iml" filepath="$PROJECT_DIR$/python/python-console/intellij.python.console.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-copyright/intellij.python.copyright.iml" filepath="$PROJECT_DIR$/python/python-copyright/intellij.python.copyright.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/dbt/common/intellij.python.dbt.common.iml" filepath="$PROJECT_DIR$/python/dbt/common/intellij.python.dbt.common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-devkit/intellij.python.devkit.iml" filepath="$PROJECT_DIR$/python/python-devkit/intellij.python.devkit.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-devkit/intellij.python.devkit.tests.iml" filepath="$PROJECT_DIR$/python/python-devkit/intellij.python.devkit.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/django/common/intellij.python.django.common.iml" filepath="$PROJECT_DIR$/python/django/common/intellij.python.django.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-external-index/intellij.python.externalIndex.iml" filepath="$PROJECT_DIR$/python/python-external-index/intellij.python.externalIndex.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/fastapi/common/intellij.python.fastapi.common.iml" filepath="$PROJECT_DIR$/python/fastapi/common/intellij.python.fastapi.common.iml" />

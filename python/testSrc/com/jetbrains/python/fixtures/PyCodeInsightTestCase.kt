@@ -56,6 +56,7 @@ import com.intellij.python.testAssertions.PyTestAssertionParseResult
 import com.intellij.python.testAssertions.PyTestAssertionParser
 import com.intellij.python.testAssertions.PyTestAssertionSyntax
 import com.intellij.python.testAssertions.PyTestAssertionSyntax.NEWLINE
+import com.intellij.python.testAssertions.PyTestAssertionText
 import com.intellij.python.testAssertions.PyTestDirectives
 import com.jetbrains.python.PythonTestUtil
 import com.jetbrains.python.allure.Layers
@@ -506,7 +507,7 @@ abstract class PyCodeInsightTestCase {
    * Pass [fileName] to configure a file other than the default test file, for example a `.pyi` stub.
    */
   protected fun configureWithCaret(
-    @Language("Python") fileContent: String,
+    @PyTestAssertionText @Language("Python") fileContent: String,
     fileName: String = myTestCaseOptions.testFileName,
   ): PsiFile {
     val text = fileContent.trimIndent()
@@ -536,7 +537,7 @@ abstract class PyCodeInsightTestCase {
     }
   }
 
-  protected fun test(@Language("Python") fileContent: String, vararg otherFiles: Pair<String, String>) {
+  protected fun test(@PyTestAssertionText @Language("Python") fileContent: String, vararg otherFiles: Pair<String, String>) {
     runTestBody {
       doTest(fileContent, otherFiles)
     }

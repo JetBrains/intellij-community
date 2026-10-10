@@ -1,0 +1,118 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.python.devkit` start
+content_module_jar(module = ":devkit")
+### auto-generated section `dev intellij.python.devkit` end
+
+### auto-generated section `build intellij.python.devkit` start
+create_kotlinc_options(
+    name = "custom_devkit",
+    warn = "error",
+    x_x_language = ["+AllowEagerSupertypeAccessibilityChecks"],
+)
+
+jvm_library(
+    name = "devkit",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_devkit",
+    module_name = "intellij.python.devkit",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/ide-core",
+        "//platform/analysis-api:analysis",
+        "//platform/lang-impl",
+        "//uast/uast-common:uast",
+        "//java/java-psi-api:psi",
+        "//plugins/devkit/devkit-core:core",
+        "//python/testAssertions",
+    ],
+)
+### auto-generated section `build intellij.python.devkit` end
+
+### auto-generated section `iml intellij.python.devkit` start
+exports_files(
+    [
+        "intellij.python.devkit.iml",
+        "resources/intellij.python.devkit.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.devkit` end
+
+### auto-generated section `build intellij.python.devkit.tests` start
+jvm_library(
+    name = "devkit-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//python/python-devkit:devkit"],
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//python/testAssertions",
+        "//python/pluginCore:community-plugin",
+        "//python:python-community-impl",
+        "//plugins/devkit/devkit-core:core",
+        "//plugins/devkit:devkit-plugin-main-noKotlin",
+        "//java/langInjection",
+        "//plugins/IntelliLang:langInjection",
+        "//uast/uast-java:java-uast",
+        "//platform/core-api:core",
+        "//platform/analysis-api:analysis",
+        "//platform/ide-core",
+        "//platform/lang-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/testFramework",
+        "//platform/testFramework/core",
+        "//java/testFramework",
+        "//java/java-psi-api:psi",
+        "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/base/testFramework",
+        "//plugins/kotlin/test-framework:test-framework_test_lib",
+        "//libraries/junit4",
+    ],
+)
+### auto-generated section `build intellij.python.devkit.tests` end
+
+### auto-generated section `iml intellij.python.devkit.tests` start
+exports_files(
+    [
+        "intellij.python.devkit.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.devkit.tests` end
+
+### auto-generated section `test intellij.python.devkit.tests` start
+jps_test(
+    name = "devkit-tests_test",
+    runtime_deps = [":devkit-tests_test_lib"],
+)
+### auto-generated section `test intellij.python.devkit.tests` end

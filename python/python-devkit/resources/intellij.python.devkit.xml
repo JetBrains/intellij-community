@@ -1,0 +1,22 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.devkit.core"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.uast"/>
+    <module name="intellij.python.testAssertions"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="Python" order="first" id="pyTestAssertionCompletionContributor"
+                            implementationClass="com.intellij.python.devkit.PyTestAssertionCompletionContributor"/>
+    <annotator language="Python" implementationClass="com.intellij.python.devkit.PyTestAssertionAnnotator"/>
+    <platform.backend.documentation.targetProvider implementation="com.intellij.python.devkit.PyTestAssertionDocumentationTargetProvider"/>
+    <highlightUsagesHandlerFactory implementation="com.intellij.python.devkit.PyTestAssertionMarkerHighlightFactory"/>
+  </extensions>
+</idea-plugin>
