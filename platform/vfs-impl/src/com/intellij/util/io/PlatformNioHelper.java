@@ -5,8 +5,9 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.impl.local.windows.WindowsBufferedDirectoryStream;
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter;
-import com.intellij.platform.eel.EelOsFamily;
-import com.intellij.platform.eel.provider.utils.JEelUtils;
+import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.LocalEelMachine;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,10 @@ import java.util.function.BiPredicate;
 public final class PlatformNioHelper {
   private PlatformNioHelper() { }
 
+  private static final class SettingsHolder {
+    private static final boolean useWinDirStream = Registry.is("vfs.windows.use.buffered.directory.stream", false);
+  }
+
   public static final class Result<V> {
     private final Object value;
 
@@ -38,13 +43,10 @@ public final class PlatformNioHelper {
     }
   }
 
-  /// Whether directory enumeration for {@code directory} should use the Windows-native
+  /// Whether directory enumeration for `directory` should use the Windows-native
   /// [WindowsBufferedDirectoryStream] instead of the stock [Files#newDirectoryStream].
   public static boolean useWindowsBufferedDirectoryStream(@NotNull Path directory) {
-    var eelPath = JEelUtils.toEelPath(directory);
-    var osFamily = eelPath != null ? eelPath.getDescriptor().getOsFamily() : null;
-    return EelOsFamily.Windows.equals(osFamily)
-           && Registry.is("vfs.windows.use.buffered.directory.stream", true);
+    return OS.CURRENT == OS.Windows && SettingsHolder.useWinDirStream && EelProviderUtil.ownsPath(LocalEelMachine.INSTANCE, directory);
   }
 
   /// A specialized alternative to [Files#newDirectoryStream] and [Files#walkFileTree].
@@ -101,10 +103,10 @@ public final class PlatformNioHelper {
     }
   }
 
-  /// Recursively walks the directory tree rooted at {@code root}, driving the given [FileVisitor].
+  /// Recursively walks the directory tree rooted at `root`, driving the given [FileVisitor].
   /// When eligible (see [#useWindowsBufferedDirectoryStream]) directory entries are sourced from the
   /// Windows-native [WindowsBufferedDirectoryStream]; otherwise this delegates to [Files#walkFileTree].
-  /// Reproduces [Files#walkFileTree]'s no-options semantics (NOFOLLOW_LINKS, unbounded depth).
+  /// Reproduces [Files#walkFileTree]'s no-options semantics (`NOFOLLOW_LINKS`, unbounded depth).
   public static void walkFileTree(@NotNull Path root, @NotNull FileVisitor<Path> visitor) throws IOException {
     if (useWindowsBufferedDirectoryStream(root)) {
       WindowsBufferedFileTreeWalker.walk(root, visitor);
