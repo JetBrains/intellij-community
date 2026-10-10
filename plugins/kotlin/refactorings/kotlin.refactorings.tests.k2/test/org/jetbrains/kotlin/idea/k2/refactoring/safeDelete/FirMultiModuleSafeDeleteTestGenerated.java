@@ -58,6 +58,11 @@ public class FirMultiModuleSafeDeleteTestGenerated extends AbstractFirMultiModul
         runTest("testData/safeDeleteMultiModule/byActualClassSecondaryConstructor/byActualClassSecondaryConstructor.test");
     }
 
+    @TestMetadata("byActualClassUnused/byActualClassUnused.test")
+    public void testByActualClassUnused_ByActualClassUnused() throws Exception {
+        runTest("testData/safeDeleteMultiModule/byActualClassUnused/byActualClassUnused.test");
+    }
+
     @TestMetadata("byActualClass/byActualClass.test")
     public void testByActualClass_ByActualClass() throws Exception {
         runTest("testData/safeDeleteMultiModule/byActualClass/byActualClass.test");
@@ -71,6 +76,11 @@ public class FirMultiModuleSafeDeleteTestGenerated extends AbstractFirMultiModul
     @TestMetadata("byActualFunParamererNoLiftingToExpect/byActualFunParameterNoLiftingToExpect.test")
     public void testByActualFunParamererNoLiftingToExpect_ByActualFunParameterNoLiftingToExpect() throws Exception {
         runTest("testData/safeDeleteMultiModule/byActualFunParamererNoLiftingToExpect/byActualFunParameterNoLiftingToExpect.test");
+    }
+
+    @TestMetadata("byActualFunUnused/byActualFunUnused.test")
+    public void testByActualFunUnused_ByActualFunUnused() throws Exception {
+        runTest("testData/safeDeleteMultiModule/byActualFunUnused/byActualFunUnused.test");
     }
 
     @TestMetadata("byActualFun/byActualFun.test")
@@ -118,6 +128,11 @@ public class FirMultiModuleSafeDeleteTestGenerated extends AbstractFirMultiModul
         runTest("testData/safeDeleteMultiModule/byExpectClassSecondaryConstructor/byExpectClassSecondaryConstructor.test");
     }
 
+    @TestMetadata("byExpectClassUnused/byExpectClassUnused.test")
+    public void testByExpectClassUnused_ByExpectClassUnused() throws Exception {
+        runTest("testData/safeDeleteMultiModule/byExpectClassUnused/byExpectClassUnused.test");
+    }
+
     @TestMetadata("byExpectClass/byExpectClass.test")
     public void testByExpectClass_ByExpectClass() throws Exception {
         runTest("testData/safeDeleteMultiModule/byExpectClass/byExpectClass.test");
@@ -133,6 +148,11 @@ public class FirMultiModuleSafeDeleteTestGenerated extends AbstractFirMultiModul
         runTest("testData/safeDeleteMultiModule/byExpectFunParamerer/byExpectFunParameter.test");
     }
 
+    @TestMetadata("byExpectFunUnused/byExpectFunUnused.test")
+    public void testByExpectFunUnused_ByExpectFunUnused() throws Exception {
+        runTest("testData/safeDeleteMultiModule/byExpectFunUnused/byExpectFunUnused.test");
+    }
+
     @TestMetadata("byExpectFunVarargParamerer/byExpectFunVarargParameter.test")
     public void testByExpectFunVarargParamerer_ByExpectFunVarargParameter() throws Exception {
         runTest("testData/safeDeleteMultiModule/byExpectFunVarargParamerer/byExpectFunVarargParameter.test");
@@ -146,6 +166,11 @@ public class FirMultiModuleSafeDeleteTestGenerated extends AbstractFirMultiModul
     @TestMetadata("byExpectObject/byExpectObject.test")
     public void testByExpectObject_ByExpectObject() throws Exception {
         runTest("testData/safeDeleteMultiModule/byExpectObject/byExpectObject.test");
+    }
+
+    @TestMetadata("byExpectValUnused/byExpectValUnused.test")
+    public void testByExpectValUnused_ByExpectValUnused() throws Exception {
+        runTest("testData/safeDeleteMultiModule/byExpectValUnused/byExpectValUnused.test");
     }
 
     @TestMetadata("byExpectVal/byExpectVal.test")

@@ -1,0 +1,2 @@
+mentionInCommentAndString.kt:6: // Gone is not used any more
+mentionInCommentAndString.kt:8: val name = "Gone"

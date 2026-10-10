@@ -1,0 +1,1 @@
+val j: J<String, Int> = J()

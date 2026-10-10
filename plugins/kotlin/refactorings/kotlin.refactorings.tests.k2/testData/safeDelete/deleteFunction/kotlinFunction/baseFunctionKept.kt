@@ -1,0 +1,9 @@
+package test
+
+open class Base {
+    open fun f() {}
+}
+
+class Impl : Base() {
+    override fun <caret>f() {}
+}

@@ -1,0 +1,1 @@
+class K<<caret>T, U>

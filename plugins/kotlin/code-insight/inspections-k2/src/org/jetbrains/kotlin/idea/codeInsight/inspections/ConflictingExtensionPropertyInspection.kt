@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections
 
-import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix
+import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
@@ -70,7 +70,7 @@ class ConflictingExtensionPropertyInspection : KotlinApplicableInspectionBase<Kt
         onTheFly: Boolean,
     ): ProblemDescriptor {
         val fixes = if (context) {
-            val deleteFix = SafeDeleteFix(element)
+            val deleteFix = QuickFixFactory.getInstance().createSafeDeleteFix(element)
             if (onTheFly) arrayOf(deleteFix, MarkHiddenAndDeprecatedAction(element).asQuickFix()) else arrayOf(deleteFix)
         } else {
             emptyArray<LocalQuickFix>()

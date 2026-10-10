@@ -1,0 +1,7 @@
+class Impl : Base() {
+    fun run() {}
+}
+
+fun use(impl: Impl) {
+    impl.run()
+}

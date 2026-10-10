@@ -1,0 +1,6 @@
+package test
+
+class Outer {
+
+    fun f() {}
+}

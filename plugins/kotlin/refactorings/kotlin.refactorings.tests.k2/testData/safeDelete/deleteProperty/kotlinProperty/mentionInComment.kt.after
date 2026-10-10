@@ -1,0 +1,8 @@
+// SAFE_DELETE_OPTIONS: searchInComments=true
+package test
+
+class A {
+
+    // gone was the old value
+    fun f() {}
+}

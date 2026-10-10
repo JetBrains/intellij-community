@@ -7,20 +7,14 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.concurrency.JobLauncher
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Predicates
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.refactoring.safeDelete.SafeDeleteHandler
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiClass
 import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiField
@@ -308,36 +302,12 @@ class KotlinRefsHolder(val containingFile: KtFile) {
     }
 }
 
-internal class SafeDeleteFix(declaration: KtNamedDeclaration) : LocalQuickFixAndIntentionActionOnPsiElement(declaration) {
-    @Nls
-    private val name: String =
-        K2HighlightingBundle.message(declaration.toNameKey(), declaration.name ?: declaration.text)
-
-    private fun KtNamedDeclaration.toNameKey(): String =
-        when (this) {
-            is KtPrimaryConstructor -> "safe.delete.primary.ctor.text.0"
-            is KtSecondaryConstructor -> "safe.delete.secondary.ctor.text.0"
-            is KtParameter -> "safe.delete.parameter.text.0"
-            else -> "safe.delete.text.0"
-        }
-
-    override fun getText(): @IntentionName String {
-       return name
+internal fun KtNamedDeclaration.safeDeleteText(): @IntentionName String {
+    val key = when (this) {
+        is KtPrimaryConstructor -> "safe.delete.primary.ctor.text.0"
+        is KtSecondaryConstructor -> "safe.delete.secondary.ctor.text.0"
+        is KtParameter -> "safe.delete.parameter.text.0"
+        else -> "safe.delete.text.0"
     }
-
-    override fun getFamilyName(): String = K2HighlightingBundle.message("safe.delete.family")
-
-    override fun startInWriteAction(): Boolean = false
-
-    override fun invoke(
-        project: Project,
-        file: PsiFile,
-        editor: Editor?,
-        startElement: PsiElement,
-        endElement: PsiElement
-    ) {
-        val element = startElement as? KtDeclaration ?: return
-
-        SafeDeleteHandler.invoke(project, arrayOf(element), false)
-    }
+    return K2HighlightingBundle.message(key, name ?: text)
 }

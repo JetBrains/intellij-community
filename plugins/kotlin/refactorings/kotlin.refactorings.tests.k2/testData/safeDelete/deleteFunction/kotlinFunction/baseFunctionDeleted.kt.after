@@ -1,0 +1,8 @@
+// SAFE_DELETE_OPTIONS: kotlinDeleteSuperDeclarations=true
+package test
+
+open class Base {
+}
+
+class Impl : Base() {
+}

@@ -1,0 +1,8 @@
+// SAFE_DELETE_OPTIONS: kotlinDeleteSuperDeclarations=true
+// REFUSAL: NOT_APPLICABLE
+// As in the legacy flow, a base declaration of a library ends the deletion, so the override stays too.
+package test
+
+class Named {
+    override fun <caret>toString() = "named"
+}

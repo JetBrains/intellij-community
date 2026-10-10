@@ -1,0 +1,6 @@
+// SAFE_DELETE_OPTIONS: searchInComments=true
+package test
+
+fun f() {
+    println("call gone() here")
+}

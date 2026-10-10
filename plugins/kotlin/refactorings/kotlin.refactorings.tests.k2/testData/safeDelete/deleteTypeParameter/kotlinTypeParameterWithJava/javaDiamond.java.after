@@ -1,0 +1,3 @@
+class J {
+    K<Integer> k = new K<>();
+}

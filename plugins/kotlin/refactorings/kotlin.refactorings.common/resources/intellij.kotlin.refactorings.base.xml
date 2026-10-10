@@ -66,6 +66,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="extracted" description="Default name for extracted function" key="kotlin.extract.function.default.name"/>
     <refactoring.helper implementation="org.jetbrains.kotlin.idea.refactoring.helper.KotlinOptimizeImportsRefactoringHelper" order="last"/>
+    <refactoring.modPlanListener implementation="org.jetbrains.kotlin.idea.refactoring.helper.KotlinModPlanOptimizeImportsListener"/>
 
     <vetoRenameCondition implementation="org.jetbrains.kotlin.idea.refactoring.KotlinVetoRenameCondition"/>
 

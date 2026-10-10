@@ -22,10 +22,14 @@ import java.io.File
 abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase() {
 
     object SafeDeleteAction : AbstractMultifileRefactoringTest.RefactoringAction {
+        /** Replaces the interactive safe delete when set: the headless suite runs the same data through the headless safe delete. */
+        var headlessRunner: ((PsiElement, JsonObject) -> Unit)? = null
+
         override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
             @Suppress("UNCHECKED_CAST")
             val elementClass = Class.forName(config.getString("elementClass")) as Class<PsiElement>
             val element = elementsAtCaret.single().getNonStrictParentOfType(elementClass)!!
+            headlessRunner?.let { return it(element, config) }
             val project = mainFile.project
             with(KotlinSafeDeleteSettings) {
                 project.ALLOW_LIFTING_ACTUAL_PARAMETER_TO_EXPECTED = config.get("liftParameterToExpected")?.asBoolean ?: true

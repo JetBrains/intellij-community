@@ -89,6 +89,18 @@ fun PsiElement?.canDeleteElement(): Boolean {
             || this is KtTypeAlias
 }
 
+/**
+ * The declarations that [declaration] overrides, except [ignoredElements], as [checkSuperMethods] finds them for its dialog, and with no
+ * dialog.
+ */
+internal fun overriddenDeclarations(declaration: KtDeclaration, ignoredElements: Collection<PsiElement>): List<PsiElement> {
+    if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return emptyList()
+    return analyze(declaration) {
+        (declaration.symbol as? KaCallableSymbol)?.allOverriddenSymbols?.mapNotNull { it.psi }?.filter { it !in ignoredElements }?.toList()
+            .orEmpty()
+    }
+}
+
 fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>, @Nls actionString: String): List<PsiElement> {
     if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return listOf(declaration)
 

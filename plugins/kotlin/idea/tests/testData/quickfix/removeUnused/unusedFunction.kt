@@ -6,4 +6,4 @@ fun <caret>unusedFun() {
 
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.highlighting.SafeDeleteFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.highlighting.ModPlanSafeDeleteFix

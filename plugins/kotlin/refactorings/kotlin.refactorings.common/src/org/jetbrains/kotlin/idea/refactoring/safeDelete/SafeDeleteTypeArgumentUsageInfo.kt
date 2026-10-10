@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.modplan.ModPlanEdit
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
 import org.jetbrains.kotlin.idea.refactoring.deleteBracesAroundEmptyList
 import org.jetbrains.kotlin.idea.refactoring.deleteSeparatingComma
@@ -15,10 +16,20 @@ class SafeDeleteTypeArgumentUsageInfo(
     override fun deleteElement() {
         val e = element
         if (e != null) {
-            deleteSeparatingComma(e)
-            deleteBracesAroundEmptyList(e)
-
-            e.delete()
+            deleteTypeArgument(e)
         }
     }
+
+    override fun asModPlanEdit(): ModPlanEdit? {
+        val projection = element as? KtTypeProjection ?: return null
+        if (findReferencedElement() == null) return null
+        return ModPlanEdit.update(projection, ::deleteTypeArgument)
+    }
+}
+
+private fun deleteTypeArgument(element: PsiElement) {
+    deleteSeparatingComma(element)
+    deleteBracesAroundEmptyList(element)
+
+    element.delete()
 }

@@ -1,0 +1,9 @@
+// SAFE_DELETE_OPTIONS: searchInComments=true
+package test
+
+// pass the gone value
+fun f() {}
+
+fun use() {
+    f()
+}

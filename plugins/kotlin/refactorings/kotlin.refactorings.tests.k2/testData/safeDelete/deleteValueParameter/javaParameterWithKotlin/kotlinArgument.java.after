@@ -1,0 +1,3 @@
+class J {
+    public void run(int b) {}
+}

@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.safeDelete;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,13 +12,17 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.modplan.ModPlanOption;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.SafeDeleteTestSupport;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests;
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt;
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor;
@@ -31,9 +36,12 @@ import org.jetbrains.kotlin.psi.KtTypeParameter;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtureTestCase {
     @NotNull
@@ -52,6 +60,10 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
 
     public void doJavaClassTest(@NotNull String path) throws Exception {
         doTest(path, PsiClass.class, true);
+    }
+
+    public void doJavaTypeParameterTest(@NotNull String path) throws Exception {
+        doTest(path, PsiTypeParameter.class, true);
     }
 
     public void doObjectTest(@NotNull String path) throws Exception {
@@ -106,6 +118,72 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
         doTest(path, KtParameter.class, true);
     }
 
+    /**
+     * @return the options that the {@code // SAFE_DELETE_OPTIONS: id=value} directive of the test data may set
+     */
+    protected @NotNull List<ModPlanOption<?>> knownOptions() {
+        return List.of();
+    }
+
+    /**
+     * Deletes {@code elements} in one request with {@code answers} to the questions. A conflict throws
+     * {@link BaseRefactoringProcessor.ConflictsInTestsException} unless {@code ignoreConflicts}.
+     *
+     * @param nonCodeUsagesRecorder gets the non-code usages of a deletion with no conflict
+     */
+    protected void performSafeDelete(
+            @NotNull List<PsiElement> elements,
+            @NotNull Map<ModPlanOption<?>, Object> answers,
+            boolean ignoreConflicts,
+            @NotNull SafeDeleteTestSupport.NonCodeUsageRecorder nonCodeUsagesRecorder
+    ) {
+        PsiElement[] elementArray = elements.toArray(PsiElement.EMPTY_ARRAY);
+        if (ignoreConflicts) {
+            BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(
+                    () -> SafeDeleteHandler.invoke(getProject(), elementArray, null, true, null));
+        }
+        else {
+            SafeDeleteHandler.invoke(getProject(), elementArray, null, true, null);
+        }
+    }
+
+    /**
+     * Deletes {@code elements}, which the refactoring refuses with {@code expectedReason}, a
+     * {@link com.intellij.refactoring.modplan.ModPlanAnalysisResult.RefusedReason}. The interactive flows report a refusal with an error, which a
+     * unit test throws.
+     */
+    protected void performRefusedSafeDelete(@NotNull List<PsiElement> elements,
+                                            @NotNull Map<ModPlanOption<?>, Object> answers,
+                                            @NotNull String expectedReason) {
+        try {
+            SafeDeleteHandler.invoke(getProject(), elements.toArray(PsiElement.EMPTY_ARRAY), null, true, null);
+        }
+        catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+            throw new AssertionError("A refusal is expected, not conflicts: " + e.getMessages(), e);
+        }
+        catch (RuntimeException e) {
+            return;
+        }
+        fail("The refusal " + expectedReason + " is expected");
+    }
+
+    private @NotNull Map<ModPlanOption<?>, Object> answersOf(@NotNull String dataFileText) {
+        Map<String, ModPlanOption<?>> optionsById = new LinkedHashMap<>();
+        for (ModPlanOption<?> option : knownOptions()) {
+            optionsById.put(option.getId(), option);
+        }
+        Map<ModPlanOption<?>, Object> answers = new LinkedHashMap<>();
+        for (String rawOption : InTextDirectivesUtils.findListWithPrefixes(dataFileText, "// SAFE_DELETE_OPTIONS:")) {
+            List<String> keyAndValue = StringUtil.split(rawOption, "=");
+            assertEquals("Bad option " + rawOption, 2, keyAndValue.size());
+            String id = keyAndValue.getFirst().trim();
+            ModPlanOption<?> option = optionsById.get(id);
+            assertNotNull("Bad option " + id + ": the known ones are " + optionsById.keySet(), option);
+            answers.put(option, Boolean.parseBoolean(keyAndValue.get(1).trim()));
+        }
+        return answers;
+    }
+
     private <T extends PsiElement> void doTest(
             @NotNull String path, @NotNull Class<T> elementClass, boolean withJava) throws Exception {
         String[] filePaths;
@@ -115,6 +193,21 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
             filePaths = new String[] {path};
         }
 
+        String dataFileText = FileUtil.loadFile(new File(path));
+        Map<ModPlanOption<?>, Object> answers = answersOf(dataFileText);
+        boolean ignoreConflicts = InTextDirectivesUtils.isDirectiveDefined(dataFileText, "// IGNORE_CONFLICTS");
+        String expectedRefusal = InTextDirectivesUtils.findStringWithPrefixes(dataFileText, "// REFUSAL:");
+        SafeDeleteTestSupport.NonCodeUsageRecorder nonCodeUsagesRecorder = SafeDeleteTestSupport.applyOptions(answers, getTestRootDisposable());
+
+        // A file with the name of the test and the extension of a non-code file holds the non-code usages in such a file.
+        String pathWithoutExtension = FileUtil.getNameWithoutExtension(path);
+        for (String nonCodeExtension : List.of("txt", "xml", "properties")) {
+            String nonCodePath = pathWithoutExtension + "." + nonCodeExtension;
+            if (new File(nonCodePath).exists()) {
+                myFixture.copyFileToProject(nonCodePath);
+            }
+        }
+
         Editor[] editors = new Editor[filePaths.length];
         int i = 0;
         for (String filePath : filePaths) {
@@ -122,17 +215,22 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
             editors[i++] = myFixture.getEditor();
         }
 
-        PsiElement elementAtCaret = null;
+        // Each caret of the first file with a target marks an element; several carets delete their elements in one request.
+        List<PsiElement> elements = new ArrayList<>();
         for (Editor editor : editors) {
-            elementAtCaret = TargetElementUtil.findTargetElement(
-                    editor, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.ELEMENT_NAME_ACCEPTED
-            );
-            if (elementAtCaret != null) break;
+            for (Caret caret : editor.getCaretModel().getAllCarets()) {
+                PsiElement elementAtCaret = TargetElementUtil.getInstance().findTargetElement(
+                        editor, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.ELEMENT_NAME_ACCEPTED, caret.getOffset()
+                );
+                T element = PsiTreeUtil.getParentOfType(elementAtCaret, elementClass, false);
+                if (element != null && !elements.contains(element)) {
+                    elements.add(element);
+                }
+            }
+            if (!elements.isEmpty()) break;
         }
 
-        assertNotNull("Couldn't find element at caret position", elementAtCaret);
-
-        T element = PsiTreeUtil.getParentOfType(elementAtCaret, elementClass, false);
+        assertFalse("Couldn't find element at caret position", elements.isEmpty());
 
         IgnoreTests.INSTANCE.runTestIfNotDisabledByFileDirective(
                 dataFile().toPath(),
@@ -143,9 +241,17 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
                     return KotlinLightCodeInsightFixtureTestCaseKt.withCustomCompilerOptions(myFixture.getFile().getText(), getProject(),
                                                                                              getModule(), () -> {
                                 try {
-                                    SafeDeleteHandler.invoke(getProject(), new PsiElement[] {element}, null, true, null);
+                                    if (expectedRefusal != null) {
+                                        performRefusedSafeDelete(elements, answers, expectedRefusal);
+                                    }
+                                    else {
+                                        performSafeDelete(elements, answers, ignoreConflicts, nonCodeUsagesRecorder);
+                                    }
                                     if (new File(path + ".messages").exists()) {
                                         throw new AssertionError("Expected conflicts are not found.");
+                                    }
+                                    if (!ignoreConflicts) {
+                                        SafeDeleteTestSupport.checkNonCodeUsages(nonCodeUsagesRecorder, answers, Path.of(path + ".nonCodeUsages"));
                                     }
                                     for (int j = 0; j < filePaths.length; j++) {
                                         File file = new File(filePaths[j] + ".after");

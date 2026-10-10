@@ -1,0 +1,7 @@
+// SAFE_DELETE_OPTIONS: searchInComments=true
+package test
+
+// foo is mentioned here
+fun bar() {
+
+}

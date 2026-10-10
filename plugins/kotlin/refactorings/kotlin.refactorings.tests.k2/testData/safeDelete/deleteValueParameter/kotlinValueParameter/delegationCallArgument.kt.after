@@ -1,0 +1,5 @@
+package test
+
+class A(val x: Int) {
+    constructor(s: String) : this(s.length)
+}

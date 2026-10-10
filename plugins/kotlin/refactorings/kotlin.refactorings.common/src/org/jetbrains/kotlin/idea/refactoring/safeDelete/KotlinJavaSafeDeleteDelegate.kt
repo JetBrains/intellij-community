@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
 import com.intellij.psi.PsiClass
@@ -9,6 +9,7 @@ import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
+import com.intellij.refactoring.modplan.ModPlanEdit
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteCustomUsageInfo
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
@@ -132,11 +133,7 @@ class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
       elements2Delete: Array<PsiElement>,
       result: MutableList<in UsageInfo>
     ) {
-        result.add(object : SafeDeleteReferenceSimpleDeleteUsageInfo(overriddenFunction, overriddenFunction, true), SafeDeleteCustomUsageInfo {
-            override fun performRefactoring() {
-                (element as? KtModifierListOwner)?.modifierList?.getModifier(KtTokens.OVERRIDE_KEYWORD)?.delete()
-            }
-        })
+        result.add(SafeDeleteOverrideModifierUsageInfo(overriddenFunction))
     }
 
     override fun createExtendsListUsageInfo(refElement: PsiElement, reference: PsiReference): UsageInfo? {
@@ -147,5 +144,19 @@ class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
             }
             return null
         }
+    }
+}
+
+/** Drops the `override` modifier of a function that stays after the deletion of the function it overrides. */
+private class SafeDeleteOverrideModifierUsageInfo(
+    overriddenFunction: PsiElement,
+) : SafeDeleteReferenceSimpleDeleteUsageInfo(overriddenFunction, overriddenFunction, true), SafeDeleteCustomUsageInfo {
+    override fun performRefactoring() {
+        (element as? KtModifierListOwner)?.modifierList?.getModifier(KtTokens.OVERRIDE_KEYWORD)?.delete()
+    }
+
+    override fun asModPlanEdit(): ModPlanEdit? {
+        val function = element ?: return null
+        return ModPlanEdit.update(function) { copy -> SafeDeleteOverrideModifierUsageInfo(copy).performRefactoring() }
     }
 }

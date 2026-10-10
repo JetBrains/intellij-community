@@ -55,6 +55,16 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("testData/safeDelete/deleteClass/kotlinClass/enumEntry.kt");
         }
 
+        @TestMetadata("importAlias.kt")
+        public void testImportAlias() throws Exception {
+            runTest("testData/safeDelete/deleteClass/kotlinClass/importAlias.kt");
+        }
+
+        @TestMetadata("innerClass.kt")
+        public void testInnerClass() throws Exception {
+            runTest("testData/safeDelete/deleteClass/kotlinClass/innerClass.kt");
+        }
+
         @TestMetadata("interface1.kt")
         public void testInterface1() throws Exception {
             runTest("testData/safeDelete/deleteClass/kotlinClass/interface1.kt");
@@ -63,6 +73,16 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("interface2.kt")
         public void testInterface2() throws Exception {
             runTest("testData/safeDelete/deleteClass/kotlinClass/interface2.kt");
+        }
+
+        @TestMetadata("kdocReference.kt")
+        public void testKdocReference() throws Exception {
+            runTest("testData/safeDelete/deleteClass/kotlinClass/kdocReference.kt");
+        }
+
+        @TestMetadata("kdocReferenceSearchOff.kt")
+        public void testKdocReferenceSearchOff() throws Exception {
+            runTest("testData/safeDelete/deleteClass/kotlinClass/kdocReferenceSearchOff.kt");
         }
 
         @TestMetadata("lastEnumEntry1.kt")
@@ -85,6 +105,26 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("testData/safeDelete/deleteClass/kotlinClass/localClass2.kt");
         }
 
+        @TestMetadata("mentionInCommentAndString.kt")
+        public void testMentionInCommentAndString() throws Exception {
+            runTest("testData/safeDelete/deleteClass/kotlinClass/mentionInCommentAndString.kt");
+        }
+
+        @TestMetadata("mentionInCommentSearchOff.kt")
+        public void testMentionInCommentSearchOff() throws Exception {
+            runTest("testData/safeDelete/deleteClass/kotlinClass/mentionInCommentSearchOff.kt");
+        }
+
+        @TestMetadata("mentionInNonCodeFileSearchOff.kt")
+        public void testMentionInNonCodeFileSearchOff() throws Exception {
+            runTest("testData/safeDelete/deleteClass/kotlinClass/mentionInNonCodeFileSearchOff.kt");
+        }
+
+        @TestMetadata("mentionInNonCodeFiles.kt")
+        public void testMentionInNonCodeFiles() throws Exception {
+            runTest("testData/safeDelete/deleteClass/kotlinClass/mentionInNonCodeFiles.kt");
+        }
+
         @TestMetadata("nestedClass1.kt")
         public void testNestedClass1() throws Exception {
             runTest("testData/safeDelete/deleteClass/kotlinClass/nestedClass1.kt");
@@ -100,9 +140,34 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("testData/safeDelete/deleteClass/kotlinClass/noUsages.kt");
         }
 
+        @TestMetadata("referenceInPropertiesAndXml.kt")
+        public void testReferenceInPropertiesAndXml() throws Exception {
+            runTest("testData/safeDelete/deleteClass/kotlinClass/referenceInPropertiesAndXml.kt");
+        }
+
+        @TestMetadata("sealedClassWithSubclass.kt")
+        public void testSealedClassWithSubclass() throws Exception {
+            runTest("testData/safeDelete/deleteClass/kotlinClass/sealedClassWithSubclass.kt");
+        }
+
+        @TestMetadata("severalClassesInHierarchy.kt")
+        public void testSeveralClassesInHierarchy() throws Exception {
+            runTest("testData/safeDelete/deleteClass/kotlinClass/severalClassesInHierarchy.kt");
+        }
+
         @TestMetadata("unsafeImport.kt")
         public void testUnsafeImport() throws Exception {
             runTest("testData/safeDelete/deleteClass/kotlinClass/unsafeImport.kt");
+        }
+
+        @TestMetadata("usedAnnotationClass.kt")
+        public void testUsedAnnotationClass() throws Exception {
+            runTest("testData/safeDelete/deleteClass/kotlinClass/usedAnnotationClass.kt");
+        }
+
+        @TestMetadata("valueClass.kt")
+        public void testValueClass() throws Exception {
+            runTest("testData/safeDelete/deleteClass/kotlinClass/valueClass.kt");
         }
     }
 
@@ -207,6 +272,26 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             KotlinTestUtils.runTest(this::doFunctionTest, this, testDataFilePath);
         }
 
+        @TestMetadata("baseFunctionDeleted.kt")
+        public void testBaseFunctionDeleted() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/baseFunctionDeleted.kt");
+        }
+
+        @TestMetadata("baseFunctionKept.kt")
+        public void testBaseFunctionKept() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/baseFunctionKept.kt");
+        }
+
+        @TestMetadata("callableReference.kt")
+        public void testCallableReference() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/callableReference.kt");
+        }
+
+        @TestMetadata("companionMember.kt")
+        public void testCompanionMember() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/companionMember.kt");
+        }
+
         @TestMetadata("fun1.kt")
         public void testFun1() throws Exception {
             runTest("testData/safeDelete/deleteFunction/kotlinFunction/fun1.kt");
@@ -237,6 +322,21 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("testData/safeDelete/deleteFunction/kotlinFunction/implement2.kt");
         }
 
+        @TestMetadata("kdocReference.kt")
+        public void testKdocReference() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/kdocReference.kt");
+        }
+
+        @TestMetadata("kdocReferenceSearchOff.kt")
+        public void testKdocReferenceSearchOff() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/kdocReferenceSearchOff.kt");
+        }
+
+        @TestMetadata("libraryBaseFunctionRefused.kt")
+        public void testLibraryBaseFunctionRefused() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/libraryBaseFunctionRefused.kt");
+        }
+
         @TestMetadata("localFun1.kt")
         public void testLocalFun1() throws Exception {
             runTest("testData/safeDelete/deleteFunction/kotlinFunction/localFun1.kt");
@@ -255,6 +355,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("localFunExt2.kt")
         public void testLocalFunExt2() throws Exception {
             runTest("testData/safeDelete/deleteFunction/kotlinFunction/localFunExt2.kt");
+        }
+
+        @TestMetadata("mentionInString.kt")
+        public void testMentionInString() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/mentionInString.kt");
         }
 
         @TestMetadata("noUsages.kt")
@@ -287,14 +392,49 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("testData/safeDelete/deleteFunction/kotlinFunction/overrideAndImplement3.kt");
         }
 
+        @TestMetadata("overrideWithCallerStays.kt")
+        public void testOverrideWithCallerStays() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/overrideWithCallerStays.kt");
+        }
+
         @TestMetadata("overrideWithUsages.kt")
         public void testOverrideWithUsages() throws Exception {
             runTest("testData/safeDelete/deleteFunction/kotlinFunction/overrideWithUsages.kt");
         }
 
+        @TestMetadata("severalFunctions.kt")
+        public void testSeveralFunctions() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/severalFunctions.kt");
+        }
+
+        @TestMetadata("severalFunctionsCallingEachOther.kt")
+        public void testSeveralFunctionsCallingEachOther() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/severalFunctionsCallingEachOther.kt");
+        }
+
+        @TestMetadata("severalFunctionsOneUsed.kt")
+        public void testSeveralFunctionsOneUsed() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/severalFunctionsOneUsed.kt");
+        }
+
         @TestMetadata("unsafeWithImportUsage.kt")
         public void testUnsafeWithImportUsage() throws Exception {
             runTest("testData/safeDelete/deleteFunction/kotlinFunction/unsafeWithImportUsage.kt");
+        }
+
+        @TestMetadata("unusedSecondaryConstructor.kt")
+        public void testUnusedSecondaryConstructor() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/unusedSecondaryConstructor.kt");
+        }
+
+        @TestMetadata("usedOnlyInComment.kt")
+        public void testUsedOnlyInComment() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/usedOnlyInComment.kt");
+        }
+
+        @TestMetadata("usedSecondaryConstructor.kt")
+        public void testUsedSecondaryConstructor() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/usedSecondaryConstructor.kt");
         }
 
         @TestMetadata("withDefinitelyNotNullType.kt")
@@ -333,6 +473,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("implement4.kt")
         public void testImplement4() throws Exception {
             runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/implement4.kt");
+        }
+
+        @TestMetadata("javaOverriderUsedElsewhere.kt")
+        public void testJavaOverriderUsedElsewhere() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/javaOverriderUsedElsewhere.kt");
         }
 
         @TestMetadata("override1.kt")
@@ -378,6 +523,16 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             KotlinTestUtils.runTest(this::doJavaMethodTest, this, testDataFilePath);
         }
 
+        @TestMetadata("kotlinCall.kt")
+        public void testKotlinCall() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/javaFunctionWithKotlin/kotlinCall.kt");
+        }
+
+        @TestMetadata("kotlinOverriderUsedElsewhere.kt")
+        public void testKotlinOverriderUsedElsewhere() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/javaFunctionWithKotlin/kotlinOverriderUsedElsewhere.kt");
+        }
+
         @TestMetadata("mixedHierarchy1.kt")
         public void testMixedHierarchy1() throws Exception {
             runTest("testData/safeDelete/deleteFunction/javaFunctionWithKotlin/mixedHierarchy1.kt");
@@ -394,6 +549,16 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
     public static class KotlinProperty extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doPropertyTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basePropertyDeleted.kt")
+        public void testBasePropertyDeleted() throws Exception {
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/basePropertyDeleted.kt");
+        }
+
+        @TestMetadata("basePropertyKept.kt")
+        public void testBasePropertyKept() throws Exception {
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/basePropertyKept.kt");
         }
 
         @TestMetadata("implement1.kt")
@@ -449,6 +614,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("localVar.kt")
         public void testLocalVar() throws Exception {
             runTest("testData/safeDelete/deleteProperty/kotlinProperty/localVar.kt");
+        }
+
+        @TestMetadata("mentionInComment.kt")
+        public void testMentionInComment() throws Exception {
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/mentionInComment.kt");
         }
 
         @TestMetadata("noUsages.kt")
@@ -781,6 +951,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/internalUsages5.kt");
         }
 
+        @TestMetadata("javaDiamond.kt")
+        public void testJavaDiamond() throws Exception {
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/javaDiamond.kt");
+        }
+
         @TestMetadata("rawType.kt")
         public void testRawType() throws Exception {
             runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/rawType.kt");
@@ -843,6 +1018,19 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/safeDelete/deleteTypeParameter/javaTypeParameterWithKotlin")
+    public static class JavaTypeParameterWithKotlin extends AbstractK2SafeDeleteTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doJavaTypeParameterTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("kotlinTypeArgument.java")
+        public void testKotlinTypeArgument() throws Exception {
+            runTest("testData/safeDelete/deleteTypeParameter/javaTypeParameterWithKotlin/kotlinTypeArgument.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/safeDelete/deleteValueParameter/kotlinValueParameter")
     public static class KotlinValueParameter extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -884,6 +1072,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/defaultVarargsParam.kt");
         }
 
+        @TestMetadata("delegationCallArgument.kt")
+        public void testDelegationCallArgument() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/delegationCallArgument.kt");
+        }
+
         @TestMetadata("enumConstructor.kt")
         public void testEnumConstructor() throws Exception {
             runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/enumConstructor.kt");
@@ -897,6 +1090,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("extNamedParam2.kt")
         public void testExtNamedParam2() throws Exception {
             runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/extNamedParam2.kt");
+        }
+
+        @TestMetadata("hierarchyDeletedByDefault.kt")
+        public void testHierarchyDeletedByDefault() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyDeletedByDefault.kt");
         }
 
         @TestMetadata("hierarchyWithSafeUsages1.kt")
@@ -982,6 +1180,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("lambdaArgExt.kt")
         public void testLambdaArgExt() throws Exception {
             runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/lambdaArgExt.kt");
+        }
+
+        @TestMetadata("mentionInComment.kt")
+        public void testMentionInComment() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/mentionInComment.kt");
         }
 
         @TestMetadata("namedDefaultParam.kt")
@@ -1112,6 +1315,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("setter.kt")
         public void testSetter() throws Exception {
             runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/setter.kt");
+        }
+
+        @TestMetadata("severalParameters.kt")
+        public void testSeveralParameters() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/severalParameters.kt");
         }
 
         @TestMetadata("unusedContextParametersInFunction.kt")
@@ -1267,6 +1475,16 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/internalUsage2.kt");
         }
 
+        @TestMetadata("javaVarargArguments.kt")
+        public void testJavaVarargArguments() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/javaVarargArguments.kt");
+        }
+
+        @TestMetadata("javadocLink.kt")
+        public void testJavadocLink() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/javadocLink.kt");
+        }
+
         @TestMetadata("lambdaArg.kt")
         public void testLambdaArg() throws Exception {
             runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/lambdaArg.kt");
@@ -1275,6 +1493,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("lambdaArgExt.kt")
         public void testLambdaArgExt() throws Exception {
             runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/lambdaArgExt.kt");
+        }
+
+        @TestMetadata("methodReferenceToLambda.kt")
+        public void testMethodReferenceToLambda() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/methodReferenceToLambda.kt");
         }
 
         @TestMetadata("mixedHierarchy1.kt")
@@ -1368,6 +1591,16 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("hierarchyWithoutConflict.java")
         public void testHierarchyWithoutConflict() throws Exception {
             runTest("testData/safeDelete/deleteValueParameter/javaParameterWithKotlin/hierarchyWithoutConflict.java");
+        }
+
+        @TestMetadata("kotlinArgument.java")
+        public void testKotlinArgument() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/javaParameterWithKotlin/kotlinArgument.java");
+        }
+
+        @TestMetadata("kotlinTrailingLambda.java")
+        public void testKotlinTrailingLambda() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/javaParameterWithKotlin/kotlinTrailingLambda.java");
         }
     }
 }

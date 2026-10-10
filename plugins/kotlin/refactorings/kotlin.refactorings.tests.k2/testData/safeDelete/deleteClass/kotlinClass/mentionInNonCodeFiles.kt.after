@@ -1,0 +1,4 @@
+// SAFE_DELETE_OPTIONS: searchInNonCode=true
+package test
+
+fun kept() {}

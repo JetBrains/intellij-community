@@ -1,0 +1,1 @@
+class J<<caret>T, U> {}

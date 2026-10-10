@@ -1,0 +1,9 @@
+class Impl extends Base {
+    public void run() {}
+}
+
+class User {
+    void use(Impl impl) {
+        impl.run();
+    }
+}

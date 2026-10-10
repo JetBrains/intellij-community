@@ -94,6 +94,8 @@
             id="kotlinProcessor"
             implementation="org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.KotlinFirSafeDeleteProcessor"
             order="before javaProcessor"/>
+    <refactoring.modPlanSafeDeleteProvider
+            implementation="org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.ModPlanKotlinSafeDeleteProvider"/>
     <refactoring.changeSignatureUsageProcessor
             implementation="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureUsageProcessor"/>
 
