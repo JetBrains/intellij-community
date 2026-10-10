@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.psi.PsiManager
 import com.intellij.util.Urls
+import com.intellij.util.io.URLUtil
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
 import org.intellij.plugins.markdown.dto.MarkdownLinkNavigationData
 import org.intellij.plugins.markdown.mapper.MarkdownHeaderMapper
@@ -81,7 +82,7 @@ internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
         return@runReadAction emptyList()
       }
       val file = PsiManager.getInstance(project).findFile(targetFile) ?: return@runReadAction emptyList()
-      return@runReadAction HeaderAnchorIndex.collectHeaders(file, anchor).map(MarkdownHeaderMapper::map)
+      return@runReadAction HeaderAnchorIndex.collectHeaders(file, URLUtil.unescapePercentSequences(anchor)).map(MarkdownHeaderMapper::map)
     }
   }
 }
