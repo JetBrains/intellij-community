@@ -4,9 +4,12 @@ package com.intellij.platform.util.io.storages.database.spi;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
+
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 
 /// Immutable versioned metadata of one store
 @ApiStatus.Internal
@@ -48,6 +51,15 @@ public final class StoreMetadata {
     return new StoreMetadata(version, bytes);
   }
 
+  /// Creates metadata that owns a copy of the segment bytes
+  public static @NotNull StoreMetadata copyOf(int version, @NotNull MemorySegment source) {
+    Objects.requireNonNull(source, "source");
+    if (version == 0 && source.byteSize() == 0) {
+      return EMPTY;
+    }
+    return new StoreMetadata(version, source.toArray(JAVA_BYTE));
+  }
+
   public int version() {
     return version;
   }
@@ -59,6 +71,11 @@ public final class StoreMetadata {
   /// @return a new read-only view of the metadata bytes
   public @NotNull ByteBuffer asReadOnlyBuffer() {
     return ByteBuffer.wrap(bytes).asReadOnlyBuffer();
+  }
+
+  /// @return a new read-only view of the metadata bytes
+  public @NotNull MemorySegment asReadOnlySegment() {
+    return MemorySegment.ofArray(bytes).asReadOnly();
   }
 
   @Override

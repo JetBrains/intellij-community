@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
@@ -17,6 +16,7 @@ import java.util.Objects;
 
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT32_LAYOUT;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.fieldHandle;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 
 /// Payload for `MetadataChange[type:STORE_CREATE]`
 /// ```
@@ -62,20 +62,19 @@ public final class StoreCreatePayloadLayout {
       Objects.requireNonNull(storeMetadata, "storeMetadata");
     }
 
-    /// Reads one complete payload from the current source position
-    public static @NotNull StoreCreatePayloadLayout.StoreCreateRecordPayload read(@NotNull ByteBuffer source) throws CorruptedException {
-      if (source.remaining() < FIXED_SIZE) {
+    /// Reads one complete payload from the source segment
+    public static @NotNull StoreCreateRecordPayload read(@NotNull MemorySegment source) throws CorruptedException {
+      if (source.byteSize() < FIXED_SIZE) {
         throw new CorruptedException("the store creation payload header is truncated");
       }
 
-      var segment = MemorySegment.ofBuffer(source.slice());
-      var storeId = (int)STORE_ID_HANDLE.get(segment, 0L);
-      var dataVersion = (int)DATA_VERSION_HANDLE.get(segment, 0L);
-      var storeMetadataVersion = (int)STORE_METADATA_VERSION_HANDLE.get(segment, 0L);
-      var nameLength = (int)NAME_LENGTH_HANDLE.get(segment, 0L);
-      var metadataLength = (int)METADATA_LENGTH_HANDLE.get(segment, 0L);
+      var storeId = (int)STORE_ID_HANDLE.get(source, 0L);
+      var dataVersion = (int)DATA_VERSION_HANDLE.get(source, 0L);
+      var storeMetadataVersion = (int)STORE_METADATA_VERSION_HANDLE.get(source, 0L);
+      var nameLength = (int)NAME_LENGTH_HANDLE.get(source, 0L);
+      var metadataLength = (int)METADATA_LENGTH_HANDLE.get(source, 0L);
       if (metadataLength < 0 || nameLength < 0 ||
-          (long)metadataLength + nameLength != source.remaining() - FIXED_SIZE) {
+          (long)metadataLength + nameLength != source.byteSize() - FIXED_SIZE) {
         throw new CorruptedException(
           "store metadata and name lengths do not match the remaining payload"
         );
@@ -86,7 +85,7 @@ public final class StoreCreatePayloadLayout {
         .onUnmappableCharacter(CodingErrorAction.REPORT);
       String name;
       try {
-        name = decoder.decode(source.slice(FIXED_SIZE, nameLength)).toString();
+        name = decoder.decode(source.asSlice(FIXED_SIZE, nameLength).asByteBuffer()).toString();
       }
       catch (CharacterCodingException e) {
         throw new CorruptedException("the store name is not valid UTF-8", e);
@@ -94,7 +93,7 @@ public final class StoreCreatePayloadLayout {
 
       var storeMetadata = StoreMetadata.copyOf(
         storeMetadataVersion,
-        source.slice(FIXED_SIZE + nameLength, metadataLength)
+        source.asSlice(FIXED_SIZE + nameLength, metadataLength)
       );
 
       return new StoreCreateRecordPayload(storeId, dataVersion, name, storeMetadata);
@@ -104,19 +103,16 @@ public final class StoreCreatePayloadLayout {
       return Math.addExact(Math.addExact(FIXED_SIZE, storeMetadata.size()), nameBytes().length);
     }
 
-    /// Writes the payload at the current target position.
-    public @NotNull ByteBuffer writeTo(@NotNull ByteBuffer target) {
+    /// Writes the payload to the target segment
+    public void writeTo(@NotNull MemorySegment target) {
       var nameBytes = nameBytes();
-      var segment = MemorySegment.ofBuffer(target.slice());
-      STORE_ID_HANDLE.set(segment, 0L, storeId);
-      DATA_VERSION_HANDLE.set(segment, 0L, dataVersion);
-      STORE_METADATA_VERSION_HANDLE.set(segment, 0L, storeMetadata.version());
-      NAME_LENGTH_HANDLE.set(segment, 0L, nameBytes.length);
-      METADATA_LENGTH_HANDLE.set(segment, 0L, storeMetadata.size());
-      target.position(target.position() + FIXED_SIZE);
-      target.put(nameBytes);
-      target.put(storeMetadata.asReadOnlyBuffer());
-      return target;
+      STORE_ID_HANDLE.set(target, 0L, storeId);
+      DATA_VERSION_HANDLE.set(target, 0L, dataVersion);
+      STORE_METADATA_VERSION_HANDLE.set(target, 0L, storeMetadata.version());
+      NAME_LENGTH_HANDLE.set(target, 0L, nameBytes.length);
+      METADATA_LENGTH_HANDLE.set(target, 0L, storeMetadata.size());
+      MemorySegment.copy(nameBytes, 0, target, JAVA_BYTE, FIXED_SIZE, nameBytes.length);
+      MemorySegment.copy(storeMetadata.asReadOnlySegment(), 0, target, FIXED_SIZE + nameBytes.length, storeMetadata.size());
     }
 
     private byte @NotNull [] nameBytes() {

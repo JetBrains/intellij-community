@@ -2,15 +2,15 @@
 package com.intellij.platform.util.io.storages.appendonlylog;
 
 import com.intellij.util.io.CleanableStorage;
-import com.intellij.util.io.blobstorage.ByteBufferReader;
-import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.lang.foreign.MemorySegment;
+
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 
 /**
  * Append-only log: records are written once and never overwritten, each record identified by unique
@@ -20,16 +20,16 @@ import java.nio.ByteBuffer;
 @ApiStatus.Internal
 public interface AppendOnlyLog extends Closeable, Flushable, CleanableStorage {
   /** @return id of appended record */
-  long append(@NotNull ByteBufferWriter writer,
+  long append(@NotNull RecordWriter writer,
               int recordSize) throws IOException;
 
-  /** Simplified version of {@link #append(ByteBufferWriter, int)} -- appends data from byte[] */
+  /** Simplified version of {@link #append(RecordWriter, int)} -- appends data from byte[] */
   default long append(byte @NotNull [] data) throws IOException {
-    return append(buffer -> buffer.put(data), data.length);
+    return append(target -> MemorySegment.copy(data, 0, target, JAVA_BYTE, 0, data.length), data.length);
   }
 
   <T> T read(long recordId,
-             @NotNull ByteBufferReader<T> reader) throws IOException;
+             @NotNull RecordReader<T> reader) throws IOException;
 
   /**
    * @return true if supplied id looks like valid id of existing record in a log, false otherwise.
@@ -40,9 +40,9 @@ public interface AppendOnlyLog extends Closeable, Flushable, CleanableStorage {
 
   /**
    * @return true if all the records were read, false if reader stops the reading prematurely (by
-   * returning false from {@link RecordReader#read(long, ByteBuffer)} method )
+   * returning false from {@link RecordProcessor#process(long, MemorySegment)} method )
    */
-  boolean forEachRecord(@NotNull RecordReader reader) throws IOException;
+  boolean forEachRecord(@NotNull RecordProcessor processor) throws IOException;
 
   @Override
   void close() throws IOException;
@@ -56,9 +56,19 @@ public interface AppendOnlyLog extends Closeable, Flushable, CleanableStorage {
   /** @return number of records appended to the log */
   int recordsCount() throws IOException;
 
-  interface RecordReader {
+  /// Writes one record to an exact writable segment.
+  interface RecordWriter {
+    void write(@NotNull MemorySegment target) throws IOException;
+  }
+
+  /// Reads one record from an exact read-only segment.
+  interface RecordReader<T> {
+    T read(@NotNull MemorySegment data) throws IOException;
+  }
+
+  interface RecordProcessor {
     /** @return true if reading should continue, false to stop the reading */
-    boolean read(long recordId,
-                 ByteBuffer buffer) throws IOException;
+    boolean process(long recordId,
+                    @NotNull MemorySegment data) throws IOException;
   }
 }

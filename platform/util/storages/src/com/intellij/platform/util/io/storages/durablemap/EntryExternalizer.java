@@ -37,9 +37,9 @@ public interface EntryExternalizer<K, V> extends DataExternalizerEx<EntryExterna
 
 
   //MAYBE RC: instead of series of 'short-circuit' methods -- make Entry an interface with lazy .key/.value/.isValueVoid()
-  //          evaluation? I.e. keep reference to ByteBuffer slice, and deserialize key/value only as needed?
-  //          But overhead could be quite pronounced? Also I don't want references to a ByteBuffer (which is actually a mmapped
-  //          ByteBuffer) to drift far away from the storage itself, since it may cause JVM crashes on unmapping
+  //          evaluation? I.e. keep reference to MemorySegment slice, and deserialize key/value only as needed?
+  //          But overhead could be quite pronounced? Also I don't want references to a MemorySegment (which is actually a mmapped
+  //          MemorySegment) to drift far away from the storage itself, since it may cause JVM crashes on unmapping
 
   /**
    * @return [key, value] entry read from the input buffer, if entry.key==expectedKey, or null if the entry contains key!=expectedKey
@@ -59,7 +59,7 @@ public interface EntryExternalizer<K, V> extends DataExternalizerEx<EntryExterna
   K readKey(@NotNull MemorySegment input) throws IOException;
 
   //MAYBE RC: boolean isKeyMatch(@NotNull K expectedKey) throws IOException;
-  //          //match the key against ByteBuffer, without instantiating the K object?
+  //          //match the key against MemorySegment, without instantiating the K object?
 
 
   record Entry<K, V>(@NotNull K key,

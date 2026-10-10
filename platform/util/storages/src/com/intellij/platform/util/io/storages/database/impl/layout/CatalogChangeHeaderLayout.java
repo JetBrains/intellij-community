@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteBuffer;
 
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT16_LAYOUT;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.fieldHandle;
@@ -67,25 +66,21 @@ public final class CatalogChangeHeaderLayout {
 
   /// Contains the type and payload version of one catalog change record.
   public record CatalogChangeRecordHeader(@NotNull ChangeType type, short version) {
-    /// Reads the header from the current source position.
-    public static @NotNull CatalogChangeRecordHeader read(@NotNull ByteBuffer source) throws CorruptedException {
-      var segment = MemorySegment.ofBuffer(source.slice());
-      var typeCode = (short)TYPE_HANDLE.get(segment, 0L);
+    /// Reads the header from the start of the source segment.
+    public static @NotNull CatalogChangeRecordHeader read(@NotNull MemorySegment source) throws CorruptedException {
+      var typeCode = (short)TYPE_HANDLE.get(source, 0L);
       var type = ChangeType.fromCode(typeCode);
       if (type == null) {
         throw new CorruptedException("typeCode(=" + typeCode + ") is unknown");
       }
-      var version = (short)VERSION_HANDLE.get(segment, 0L);
+      var version = (short)VERSION_HANDLE.get(source, 0L);
       return new CatalogChangeRecordHeader(type, version);
     }
 
-    /// Writes the header at the current target position.
-    public @NotNull ByteBuffer writeTo(@NotNull ByteBuffer target) {
-      var segment = MemorySegment.ofBuffer(target.slice());
-      TYPE_HANDLE.set(segment, 0L, type.code());
-      VERSION_HANDLE.set(segment, 0L, version);
-      target.position(target.position() + HEADER_SIZE);
-      return target;
+    /// Writes the header at the start of the target segment.
+    public void writeTo(@NotNull MemorySegment target) {
+      TYPE_HANDLE.set(target, 0L, type.code());
+      VERSION_HANDLE.set(target, 0L, version);
     }
   }
 }

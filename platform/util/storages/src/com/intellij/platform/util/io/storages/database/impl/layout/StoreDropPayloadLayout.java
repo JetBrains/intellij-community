@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteBuffer;
 
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT32_LAYOUT;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.fieldHandle;
@@ -33,16 +32,12 @@ public final class StoreDropPayloadLayout {
 
   /// Contains the identifier of a dropped store.
   public record StoreDropRecordPayload(int storeId) {
-    public static @NotNull StoreDropPayloadLayout.StoreDropRecordPayload read(@NotNull ByteBuffer source) {
-      var segment = MemorySegment.ofBuffer(source.slice());
-      return new StoreDropRecordPayload((int)STORE_ID_HANDLE.get(segment, 0L));
+    public static @NotNull StoreDropRecordPayload read(@NotNull MemorySegment source) {
+      return new StoreDropRecordPayload((int)STORE_ID_HANDLE.get(source, 0L));
     }
 
-    public @NotNull ByteBuffer writeTo(@NotNull ByteBuffer target) {
-      var segment = MemorySegment.ofBuffer(target.slice());
-      STORE_ID_HANDLE.set(segment, 0L, storeId);
-      target.position(target.position() + PAYLOAD_SIZE);
-      return target;
+    public void writeTo(@NotNull MemorySegment target) {
+      STORE_ID_HANDLE.set(target, 0L, storeId);
     }
   }
 }

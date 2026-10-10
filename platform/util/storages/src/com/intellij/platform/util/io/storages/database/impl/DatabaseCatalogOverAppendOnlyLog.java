@@ -5,10 +5,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.platform.util.io.storages.UnsupportedFormatException;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogOverMMappedFile;
-import com.intellij.platform.util.io.storages.database.impl.layout.ChunkChangePayloadLayout;
 import com.intellij.platform.util.io.storages.database.impl.layout.CatalogChangeHeaderLayout;
 import com.intellij.platform.util.io.storages.database.impl.layout.CatalogChangeHeaderLayout.CatalogChangeRecordHeader;
 import com.intellij.platform.util.io.storages.database.impl.layout.CatalogChangeHeaderLayout.ChangeType;
+import com.intellij.platform.util.io.storages.database.impl.layout.ChunkChangePayloadLayout;
 import com.intellij.platform.util.io.storages.database.impl.layout.ChunkChangePayloadLayout.ChunkChangeRecordPayload;
 import com.intellij.platform.util.io.storages.database.impl.layout.DatabaseHeaderLayout;
 import com.intellij.platform.util.io.storages.database.impl.layout.StoreCreatePayloadLayout;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.lang.foreign.MemorySegment;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -163,17 +163,17 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
 
   private static void readCatalogRecord(@NotNull Path storagePath,
                                         long recordId,
-                                        @NotNull ByteBuffer source,
+                                        @NotNull MemorySegment source,
                                         @NotNull InMemoryCatalog catalog) throws IOException {
-    if (source.remaining() < CatalogChangeHeaderLayout.HEADER_SIZE) {
+    if (source.byteSize() < CatalogChangeHeaderLayout.HEADER_SIZE) {
       throw corruptedCatalogRecord(storagePath, recordId, "the record header is truncated", null);
     }
 
     var recordHeader = CatalogChangeRecordHeader.read(source);
     var recordType = recordHeader.type();
-    var payload = source.slice(
+    var payload = source.asSlice(
       CatalogChangeHeaderLayout.HEADER_SIZE,
-      source.remaining() - CatalogChangeHeaderLayout.HEADER_SIZE
+      source.byteSize() - CatalogChangeHeaderLayout.HEADER_SIZE
     );
 
     try {
@@ -203,7 +203,7 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
   private static @NotNull ChunkChangeRecordPayload readChunkChangeRecord(@NotNull Path storagePath,
                                                                          long recordId,
                                                                          short recordVersion,
-                                                                         @NotNull ByteBuffer source) throws IOException {
+                                                                         @NotNull MemorySegment source) throws IOException {
     if (recordVersion != ChunkChangePayloadLayout.PAYLOAD_FORMAT_VERSION) {
       throw new UnsupportedFormatException(
         "chunk change record " + recordId + " in " + storagePath,
@@ -211,11 +211,11 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
         Short.toUnsignedInt(recordVersion)
       );
     }
-    if (source.remaining() != ChunkChangePayloadLayout.PAYLOAD_SIZE) {
+    if (source.byteSize() != ChunkChangePayloadLayout.PAYLOAD_SIZE) {
       throw corruptedCatalogRecord(
         storagePath,
         recordId,
-        "payload size is " + source.remaining() + ", expected " + ChunkChangePayloadLayout.PAYLOAD_SIZE,
+        "payload size is " + source.byteSize() + ", expected " + ChunkChangePayloadLayout.PAYLOAD_SIZE,
         null
       );
     }
@@ -225,7 +225,7 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
   private static @NotNull StoreCreateRecordPayload readStoreCreateRecord(@NotNull Path storagePath,
                                                                          long recordId,
                                                                          short recordVersion,
-                                                                         @NotNull ByteBuffer source) throws IOException {
+                                                                         @NotNull MemorySegment source) throws IOException {
     if (recordVersion != StoreCreatePayloadLayout.PAYLOAD_FORMAT_VERSION) {
       throw new UnsupportedFormatException(
         "store creation record " + recordId + " in " + storagePath,
@@ -244,7 +244,7 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
   private static @NotNull StoreDropRecordPayload readStoreDropRecord(@NotNull Path storagePath,
                                                                      long recordId,
                                                                      short recordVersion,
-                                                                     @NotNull ByteBuffer source) throws IOException {
+                                                                     @NotNull MemorySegment source) throws IOException {
     if (recordVersion != StoreDropPayloadLayout.PAYLOAD_FORMAT_VERSION) {
       throw new UnsupportedFormatException(
         "store drop record " + recordId + " in " + storagePath,
@@ -252,11 +252,11 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
         Short.toUnsignedInt(recordVersion)
       );
     }
-    if (source.remaining() != StoreDropPayloadLayout.PAYLOAD_SIZE) {
+    if (source.byteSize() != StoreDropPayloadLayout.PAYLOAD_SIZE) {
       throw corruptedCatalogRecord(
         storagePath,
         recordId,
-        "payload size is " + source.remaining() + ", expected " + StoreDropPayloadLayout.PAYLOAD_SIZE,
+        "payload size is " + source.byteSize() + ", expected " + StoreDropPayloadLayout.PAYLOAD_SIZE,
         null
       );
     }
@@ -264,9 +264,9 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
   }
 
   private static @NotNull StoreMetadataRecordPayload readStoreMetadataRecord(@NotNull Path storagePath,
-                                                                              long recordId,
-                                                                              short recordVersion,
-                                                                              @NotNull ByteBuffer source) throws IOException {
+                                                                             long recordId,
+                                                                             short recordVersion,
+                                                                             @NotNull MemorySegment source) throws IOException {
     if (recordVersion != StoreMetadataPayloadLayout.PAYLOAD_FORMAT_VERSION) {
       throw new UnsupportedFormatException(
         "store metadata record " + recordId + " in " + storagePath,
@@ -339,10 +339,9 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
       name, storeMetadata
     );
     catalogChangesLog.append(
-      buffer -> {
-        header.writeTo(buffer);
-        payload.writeTo(buffer);
-        return buffer;
+      target -> {
+        header.writeTo(target);
+        payload.writeTo(target.asSlice(CatalogChangeHeaderLayout.HEADER_SIZE));
       },
       Math.addExact(CatalogChangeHeaderLayout.HEADER_SIZE, payload.payloadSize())
     );
@@ -364,10 +363,9 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
     );
     var payload = new StoreMetadataRecordPayload(storeId, storeMetadata);
     catalogChangesLog.append(
-      buffer -> {
-        header.writeTo(buffer);
-        payload.writeTo(buffer);
-        return buffer;
+      target -> {
+        header.writeTo(target);
+        payload.writeTo(target.asSlice(CatalogChangeHeaderLayout.HEADER_SIZE));
       },
       Math.addExact(CatalogChangeHeaderLayout.HEADER_SIZE, payload.payloadSize())
     );
@@ -382,10 +380,9 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
     var header = new CatalogChangeRecordHeader(ChangeType.STORE_DROP, StoreDropPayloadLayout.PAYLOAD_FORMAT_VERSION);
     var payload = new StoreDropRecordPayload(storeId);
     catalogChangesLog.append(
-      buffer -> {
-        header.writeTo(buffer);
-        payload.writeTo(buffer);
-        return buffer;
+      target -> {
+        header.writeTo(target);
+        payload.writeTo(target.asSlice(CatalogChangeHeaderLayout.HEADER_SIZE));
       },
       CatalogChangeHeaderLayout.HEADER_SIZE + StoreDropPayloadLayout.PAYLOAD_SIZE
     );
@@ -447,10 +444,9 @@ final class DatabaseCatalogOverAppendOnlyLog implements DatabaseCatalog {
     var header = new CatalogChangeRecordHeader(changeType, ChunkChangePayloadLayout.PAYLOAD_FORMAT_VERSION);
     var payload = new ChunkChangeRecordPayload(chunkId);
     catalogChangesLog.append(
-      buffer -> {
-        header.writeTo(buffer);
-        payload.writeTo(buffer);
-        return buffer;
+      target -> {
+        header.writeTo(target);
+        payload.writeTo(target.asSlice(CatalogChangeHeaderLayout.HEADER_SIZE));
       },
       CatalogChangeHeaderLayout.HEADER_SIZE + ChunkChangePayloadLayout.PAYLOAD_SIZE
     );

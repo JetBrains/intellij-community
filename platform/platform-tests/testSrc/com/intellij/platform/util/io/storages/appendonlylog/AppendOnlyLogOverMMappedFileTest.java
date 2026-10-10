@@ -15,7 +15,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.lang.foreign.MemorySegment;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -26,7 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
-import static com.intellij.util.io.IOUtil.readString;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertArrayEquals;
@@ -82,10 +82,10 @@ public class AppendOnlyLogOverMMappedFileTest {
   public void singleRecordWritten_CouldBeReadBackAsIs() throws Exception {
     String dataToWrite = "test data";
     long recordId = appendOnlyLog.append(dataToWrite.getBytes(UTF_8));
-    String dataReadBack = appendOnlyLog.read(recordId, IOUtil::readString);
+    String dataReadBack = appendOnlyLog.read(recordId, AppendOnlyLogOverMMappedFileTest::readString);
     assertEquals("Data written must be the data read back",
-                        dataToWrite,
-                        dataReadBack);
+                 dataToWrite,
+                 dataReadBack);
   }
 
   @Test
@@ -280,12 +280,12 @@ public class AppendOnlyLogOverMMappedFileTest {
     int headerSize = Integer.BYTES;
 
     //Must be OK: max payload size to fit a page
-    appendOnlyLog.append(data -> data, PAGE_SIZE - headerSize);
+    appendOnlyLog.append(_ -> {}, PAGE_SIZE - headerSize);
 
     assertThrows(
       "Log must throws exception if full record (payload+header) doesn't fit into a page, ",
       ContentTooBigException.class,
-      () -> appendOnlyLog.append(data -> data, PAGE_SIZE - headerSize + 1)
+      () -> appendOnlyLog.append(_ -> {}, PAGE_SIZE - headerSize + 1)
     );
   }
 
@@ -345,11 +345,7 @@ public class AppendOnlyLogOverMMappedFileTest {
   public void singleEmptyRecordWritten_CouldBeReadBackAsIs() throws Exception {
     byte[] dataToWrite = new byte[0];
     long recordId = appendOnlyLog.append(dataToWrite);
-    byte[] dataReadBack = appendOnlyLog.read(recordId, buffer -> {
-      byte[] bytes = new byte[buffer.remaining()];
-      buffer.get(bytes);
-      return bytes;
-    });
+    byte[] dataReadBack = appendOnlyLog.read(recordId, AppendOnlyLogOverMMappedFileTest::readBytes);
     assertArrayEquals("Data written must be the data read back",
                       dataToWrite,
                       dataReadBack);
@@ -360,10 +356,8 @@ public class AppendOnlyLogOverMMappedFileTest {
     byte[] dataToWrite = {};
     appendOnlyLog.append(dataToWrite);
     Ref<byte[]> dataReadBackRef = new Ref<>();
-    appendOnlyLog.forEachRecord((id, buffer) -> {
-      byte[] bytes = new byte[buffer.remaining()];
-      buffer.get(bytes);
-      dataReadBackRef.set(bytes);
+    appendOnlyLog.forEachRecord((id, segment) -> {
+      dataReadBackRef.set(readBytes(segment));
       return true;
     });
     assertArrayEquals("Data written must be the data read back",
@@ -443,7 +437,7 @@ public class AppendOnlyLogOverMMappedFileTest {
                                     String[] stringsWritten) throws IOException {
     for (int i = 0; i < recordsIds.length; i++) {
       long recordId = recordsIds[i];
-      String stringReadBack = appendOnlyLog.read(recordId, IOUtil::readString);
+      String stringReadBack = appendOnlyLog.read(recordId, AppendOnlyLogOverMMappedFileTest::readString);
       assertEquals("[" + i + "]: data written must be the data read back",
                    stringsWritten[i],
                    stringReadBack);
@@ -522,9 +516,11 @@ public class AppendOnlyLogOverMMappedFileTest {
       .toArray(String[]::new);
   }
 
-  private static byte[] readBytes(@NotNull ByteBuffer buffer) {
-    byte[] bytes = new byte[buffer.remaining()];
-    buffer.get(bytes);
-    return bytes;
+  private static @NotNull String readString(@NotNull MemorySegment segment) {
+    return new String(segment.toArray(JAVA_BYTE), UTF_8);
+  }
+
+  private static byte[] readBytes(@NotNull MemorySegment segment) {
+    return segment.toArray(JAVA_BYTE);
   }
 }

@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT32_LAYOUT;
@@ -47,18 +46,17 @@ public final class StoreMetadataPayloadLayout {
       Objects.requireNonNull(storeMetadata, "storeMetadata");
     }
 
-    public static @NotNull StoreMetadataRecordPayload read(@NotNull ByteBuffer source) throws CorruptedException {
-      if (source.remaining() < FIXED_SIZE) {
+    public static @NotNull StoreMetadataRecordPayload read(@NotNull MemorySegment source) throws CorruptedException {
+      if (source.byteSize() < FIXED_SIZE) {
         throw new CorruptedException("the store metadata payload header is truncated");
       }
-      var segment = MemorySegment.ofBuffer(source.slice());
-      var storeId = (int)STORE_ID_HANDLE.get(segment, 0L);
-      var storeMetadataVersion = (int)STORE_METADATA_VERSION_HANDLE.get(segment, 0L);
-      var metadataLength = (int)METADATA_LENGTH_HANDLE.get(segment, 0L);
-      if (metadataLength < 0 || metadataLength != source.remaining() - FIXED_SIZE) {
+      var storeId = (int)STORE_ID_HANDLE.get(source, 0L);
+      var storeMetadataVersion = (int)STORE_METADATA_VERSION_HANDLE.get(source, 0L);
+      var metadataLength = (int)METADATA_LENGTH_HANDLE.get(source, 0L);
+      if (metadataLength < 0 || metadataLength != source.byteSize() - FIXED_SIZE) {
         throw new CorruptedException("the store metadata length does not match the remaining payload");
       }
-      var storeMetadata = StoreMetadata.copyOf(storeMetadataVersion, source.slice(FIXED_SIZE, metadataLength));
+      var storeMetadata = StoreMetadata.copyOf(storeMetadataVersion, source.asSlice(FIXED_SIZE, metadataLength));
       return new StoreMetadataRecordPayload(storeId, storeMetadata);
     }
 
@@ -66,14 +64,11 @@ public final class StoreMetadataPayloadLayout {
       return Math.addExact(FIXED_SIZE, storeMetadata.size());
     }
 
-    public @NotNull ByteBuffer writeTo(@NotNull ByteBuffer target) {
-      var segment = MemorySegment.ofBuffer(target.slice());
-      STORE_ID_HANDLE.set(segment, 0L, storeId);
-      STORE_METADATA_VERSION_HANDLE.set(segment, 0L, storeMetadata.version());
-      METADATA_LENGTH_HANDLE.set(segment, 0L, storeMetadata.size());
-      target.position(target.position() + FIXED_SIZE);
-      target.put(storeMetadata.asReadOnlyBuffer());
-      return target;
+    public void writeTo(@NotNull MemorySegment target) {
+      STORE_ID_HANDLE.set(target, 0L, storeId);
+      STORE_METADATA_VERSION_HANDLE.set(target, 0L, storeMetadata.version());
+      METADATA_LENGTH_HANDLE.set(target, 0L, storeMetadata.size());
+      MemorySegment.copy(storeMetadata.asReadOnlySegment(), 0, target, FIXED_SIZE, storeMetadata.size());
     }
   }
 

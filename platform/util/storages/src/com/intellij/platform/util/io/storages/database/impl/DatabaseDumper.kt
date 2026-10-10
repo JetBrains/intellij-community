@@ -85,10 +85,10 @@ object DatabaseDumper {
           check(offset % pageSize + paddedLength <= pageSize) { "$path: record crosses a page at $offset" }
           check(recordHeader and RECORD_COMMITTED_FLAG != 0) { "$path: uncommitted record at $offset" }
           if (recordHeader and RECORD_PADDING_FLAG == 0) {
-            val payload = file.asSlice(offset + Int.SIZE_BYTES, length - Int.SIZE_BYTES.toLong()).asByteBuffer()
+            val payload = file.asSlice(offset + Int.SIZE_BYTES, length - Int.SIZE_BYTES.toLong())
             if (databaseHeader == null) {
               databaseHeader = DatabaseHeaderLayout.DatabaseHeader.read(path, payload)
-              out.println("\t${formatOffset(offset)} DBHeader[${payload.remaining()} b] { " +
+              out.println("\t${formatOffset(offset)} DBHeader[${payload.byteSize()} b] { " +
                           "databaseId=${databaseHeader.databaseId().toHexString()}, chunkSize=${databaseHeader.chunkSize()} }")
             }
             else {
@@ -103,16 +103,17 @@ object DatabaseDumper {
     }
   }
 
-  private fun dumpChange(path: Path, offset: Long, record: java.nio.ByteBuffer, out: PrintStream) {
-    check(record.remaining() >= CatalogChangeHeaderLayout.HEADER_SIZE) { "$path: truncated record at $offset" }
+  private fun dumpChange(path: Path, offset: Long, record: MemorySegment, out: PrintStream) {
+    check(record.byteSize() >= CatalogChangeHeaderLayout.HEADER_SIZE) { "$path: truncated record at $offset" }
     val header = CatalogChangeHeaderLayout.CatalogChangeRecordHeader.read(record)
-    val payload = record.slice(CatalogChangeHeaderLayout.HEADER_SIZE, record.remaining() - CatalogChangeHeaderLayout.HEADER_SIZE)
+    val payload = record.asSlice(CatalogChangeHeaderLayout.HEADER_SIZE.toLong())
     val fields = when (header.type()) {
       CatalogChangeHeaderLayout.ChangeType.CHUNK_CREATE,
       CatalogChangeHeaderLayout.ChangeType.CHUNK_SEAL,
-      CatalogChangeHeaderLayout.ChangeType.CHUNK_RETIRE -> {
+      CatalogChangeHeaderLayout.ChangeType.CHUNK_RETIRE,
+        -> {
         check(header.version() == ChunkChangePayloadLayout.PAYLOAD_FORMAT_VERSION &&
-              payload.remaining() == ChunkChangePayloadLayout.PAYLOAD_SIZE) { "$path: invalid chunk record at $offset" }
+              payload.byteSize() == ChunkChangePayloadLayout.PAYLOAD_SIZE.toLong()) { "$path: invalid chunk record at $offset" }
         "chunkId=${ChunkChangePayloadLayout.ChunkChangeRecordPayload.read(payload).chunkId()}"
       }
       CatalogChangeHeaderLayout.ChangeType.STORE_CREATE -> {
@@ -123,7 +124,7 @@ object DatabaseDumper {
       }
       CatalogChangeHeaderLayout.ChangeType.STORE_DROP -> {
         check(header.version() == StoreDropPayloadLayout.PAYLOAD_FORMAT_VERSION &&
-              payload.remaining() == StoreDropPayloadLayout.PAYLOAD_SIZE) { "$path: invalid store drop at $offset" }
+              payload.byteSize() == StoreDropPayloadLayout.PAYLOAD_SIZE.toLong()) { "$path: invalid store drop at $offset" }
         "storeId=${StoreDropPayloadLayout.StoreDropRecordPayload.read(payload).storeId()}"
       }
       CatalogChangeHeaderLayout.ChangeType.STORE_METADATA_UPDATE -> {
@@ -135,7 +136,7 @@ object DatabaseDumper {
         "customStorePayload=<${update.storeMetadata().size()} b>"
       }
     }
-    out.println("\t${formatOffset(offset)} ${header.type()}[${record.remaining()} b] { version=${header.version()}, $fields }")
+    out.println("\t${formatOffset(offset)} ${header.type()}[${record.byteSize()} b] { version=${header.version()}, $fields }")
   }
 
   private fun dumpChunk(path: Path, database: DatabaseHeaderLayout.DatabaseHeader, verbose: Boolean, out: PrintStream) {
@@ -164,7 +165,9 @@ object DatabaseDumper {
           offset += length
         }
         out.println("${path.fileName}[${channel.size()} b] {")
-        out.println("\theader: {chunkId=$id, state=${ChunkHeaderLayout.readState(fileSegment)}, databaseId=${database.databaseId().toHexString()}, " +
+        out.println("\theader: {chunkId=$id, state=${ChunkHeaderLayout.readState(fileSegment)}, databaseId=${
+          database.databaseId().toHexString()
+        }, " +
                     "committedTail=$committedTail, allocatedTail=${ChunkHeaderLayout.readAllocatedTail(fileSegment)}}")
         out.println("\tblocks: ${counts.sum()} (allocated: ${counts[0]}, active: ${counts[1]}, " +
                     "sealed: ${counts[2]}, retired: ${counts[3]})")

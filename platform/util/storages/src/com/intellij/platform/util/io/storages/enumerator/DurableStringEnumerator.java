@@ -9,7 +9,6 @@ import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory
 import com.intellij.platform.util.io.storages.intmultimaps.Int2IntMultimap;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.DurableDataEnumerator;
-import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.Unmappable;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,13 +17,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.ByteBuffer;
+import java.lang.foreign.MemorySegment;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -305,8 +305,8 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
   //          i.e. access private .value and .coder fields, and write/read their values? -- this allows
   //          to bypass 1 array copy, and probably also a character encoding/decoding
 
-  private static @NotNull String readString(@NotNull ByteBuffer buffer) {
-    return IOUtil.readString(buffer);
+  private static @NotNull String readString(@NotNull MemorySegment segment) {
+    return new String(segment.toArray(JAVA_BYTE), UTF_8);
   }
 
   private static int writeString(@NotNull String value,

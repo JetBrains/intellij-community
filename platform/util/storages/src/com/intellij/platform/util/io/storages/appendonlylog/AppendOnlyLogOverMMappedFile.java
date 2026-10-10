@@ -9,8 +9,6 @@ import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.Unmappable;
-import com.intellij.util.io.blobstorage.ByteBufferReader;
-import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -21,7 +19,6 @@ import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
@@ -29,6 +26,7 @@ import static com.intellij.util.SystemProperties.getIntProperty;
 import static com.intellij.util.io.IOUtil.magicWordToASCII;
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static java.lang.foreign.MemoryLayout.PathElement.sequenceElement;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static java.nio.ByteOrder.nativeOrder;
 
 /**
@@ -262,13 +260,11 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
     }
 
     public static void putDataRecord(@NotNull MemorySegment pageSegment,
-                                     @NotNull ByteBuffer pageBuffer,
                                      int offsetInPage,
                                      int payloadSize,
-                                     ByteBufferWriter writer) throws IOException {
+                                     @NotNull RecordWriter writer) throws IOException {
       HEADER.setVolatile(pageSegment, (long)offsetInPage + HEADER_OFFSET, dataRecordHeader(payloadSize, /*commited: */false));
-      ByteBuffer writableRegionSlice = pageBuffer.slice(offsetInPage + DATA_OFFSET, payloadSize).order(pageBuffer.order());
-      writer.write(writableRegionSlice);
+      writer.write(pageSegment.asSlice(offsetInPage + DATA_OFFSET, payloadSize));
       HEADER.setVolatile(pageSegment, (long)offsetInPage + HEADER_OFFSET, dataRecordHeader(payloadSize, /*commited: */true));
     }
 
@@ -519,7 +515,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   }
 
   @Override
-  public long append(@NotNull ByteBufferWriter writer,
+  public long append(@NotNull RecordWriter writer,
                      int payloadSize) throws IOException {
     if (payloadSize < 0) {
       throw new IllegalArgumentException("Can't write record with payloadSize(=" + payloadSize + ") < 0");
@@ -549,7 +545,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
     //          This could be done by using lock instead of CAS, and doing both 'allocated' cursor update _and_ stamping record
     //          length into the record header under the lock. Both operations are fast, so lock will be very narrow, and unlikely
     //          ever contended
-    RecordLayout.putDataRecord(page.rawPageSegment(), page.rawPageBuffer(), offsetInPage, payloadSize, writer);
+    RecordLayout.putDataRecord(page.rawPageSegment(), offsetInPage, payloadSize, writer);
 
     tryCommitRecord(recordOffsetInFile, totalRecordLength);
 
@@ -577,7 +573,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
   @Override
   public <T> T read(long recordId,
-                    @NotNull ByteBufferReader<T> reader) throws IOException {
+                    @NotNull RecordReader<T> reader) throws IOException {
     long recordOffsetInFile = recordIdToOffset(recordId);
 
     //RC: Records between 'committed' and 'allocated' cursors are not all fully written -> we permit
@@ -625,10 +621,9 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
       throwInvalidRecordIdExceptionWithDetails(recordId, basicDiagnosticInfo);
     }
 
-    ByteBuffer pageBuffer = page.rawPageBuffer();
-    ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength)
-      //.asReadOnlyBuffer()
-      .order(pageBuffer.order());
+    MemorySegment recordDataSlice = pageSegment
+      .asSlice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength)
+      .asReadOnly();
     return reader.read(recordDataSlice);
   }
 
@@ -662,9 +657,9 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   }
 
   @Override
-  public boolean forEachRecord(@NotNull RecordReader reader) throws IOException {
+  public boolean forEachRecord(@NotNull RecordProcessor processor) throws IOException {
     long firstUnallocatedOffset = firstUnAllocatedOffset();
-    return forEachRecord(reader, firstUnallocatedOffset);
+    return forEachRecord(processor, firstUnallocatedOffset);
   }
 
   public void clear() throws IOException {
@@ -823,7 +818,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
     //       record on the next page, while .nextRecordToBeCommitted keeps pointing to padding record, left on
     //       previous page. Thus currentRecordOffsetInFile!=firstUncommitedOffset() even though current thread
     //       _is_ the most lagging -- and after single such fault commited cursor is never updated anymore.
-    ///
+    //
     //       This is not a fundamental flaw, just a feature of current implementation, it could be fixed. But
     //       right now I postpone the fix, and work it around by made _every_ thread responsible for committing
     //       finalized records.
@@ -927,7 +922,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
    * @return true if stopped by itself because untilOffset reached, or untraverseable record met, false
    * if iteration stopped by reader returning false
    */
-  private boolean forEachRecord(@NotNull RecordReader reader,
+  private boolean forEachRecord(@NotNull RecordProcessor processor,
                                 long untilOffset) throws IOException {
     int pageSize = storage.pageSize();
     for (long recordOffsetInFile = HeaderLayout.HEADER_SIZE; recordOffsetInFile < untilOffset; ) {
@@ -963,12 +958,11 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
                                   " is incorrect: page[0.." + pageSegment.byteSize() + "]" +
                                   moreDiagnosticInfo(recordOffsetInFile));
           }
-          ByteBuffer pageBuffer = page.rawPageBuffer();
-          ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength)
-            //.asReadOnlyBuffer()
-            .order(pageBuffer.order());
+          MemorySegment recordDataSlice = pageSegment
+            .asSlice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength)
+            .asReadOnly();
 
-          boolean shouldContinue = reader.read(recordId, recordDataSlice);
+          boolean shouldContinue = processor.process(recordId, recordDataSlice);
           if (!shouldContinue) {
             return false;
           }
@@ -1078,9 +1072,9 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
                                          " (first uncommitted offset: " + firstUnCommittedOffset() +
                                          ", first unallocated: " + firstUnAllocatedOffset() + ")\n");
     IntRef isIdValid = new IntRef(0);
-    forEachRecord((recordId, buffer) -> {
+    forEachRecord((recordId, segment) -> {
       long recordOffset = recordIdToOffset(recordId);
-      int recordSize = buffer.remaining();
+      int recordSize = Math.toIntExact(segment.byteSize());
 
       long nextRecordId = recordOffsetToId(nextRecordOffset(recordOffset, recordSize));
 
@@ -1091,8 +1085,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
       if (exactQuestionableRecord || insideQuestionableRecord || insideNeighbourRegion) {
         String bufferAsHex = recordSize > maxRecordSizeToDump ?
-                             IOUtil.toHexString(buffer.limit(buffer.position() + maxRecordSizeToDump).slice()) + " ... " :
-                             IOUtil.toHexString(buffer.slice());
+                             IOUtil.toHexString(segment.asSlice(0, maxRecordSizeToDump).toArray(JAVA_BYTE)) + " ... " :
+                             IOUtil.toHexString(segment.toArray(JAVA_BYTE));
         sb.append(exactQuestionableRecord ? ">" : (insideQuestionableRecord ? "~" : " "))
           .append("[id: ").append(recordId).append(']')
           .append("[offset: ").append(recordOffset).append(']')

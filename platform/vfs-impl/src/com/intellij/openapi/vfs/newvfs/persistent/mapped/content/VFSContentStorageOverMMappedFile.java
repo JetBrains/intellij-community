@@ -29,7 +29,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +39,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.VFS;
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_INT_UNALIGNED;
+import static java.nio.ByteOrder.nativeOrder;
 
 /**
  * {@link VFSContentStorage} implemented with memory-mapped files: uses {@link AppendOnlyLogOverMMappedFile} for
@@ -74,6 +78,8 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
   private static final int EXTERNAL_VERSION_FIELD_NO = 0;
 
   private static final int CONTENT_HASH_LENGTH = ContentHashEnumerator.SIGNATURE_LENGTH;
+
+  private static final ValueLayout.OfInt INT32_LAYOUT = JAVA_INT_UNALIGNED.withOrder(nativeOrder());
 
 
   //TODO/MAYBE RC:
@@ -215,16 +221,15 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
   public int storeRecord(@NotNull ByteArraySequence bytes) throws IOException, ContentTooBigException {
     byte[] cryptoHash = PersistentFSContentAccessor.calculateHash(bytes);
     int hash = hashCodeOf(cryptoHash);
-    ByteBuffer cryptoHashWrapped = ByteBuffer.wrap(cryptoHash);
     try {
       return hashToContentRecordIdMap.lookupOrInsert(
         hash,
         recordId -> {
           long storageId = contentIdToStorageId(recordId);
-          Boolean recordHasSameCryptoHash = contentStorage.read(storageId, buffer -> {
-            ByteBuffer cryptoHashSlice = buffer.slice(0, CONTENT_HASH_LENGTH);
-            return cryptoHashSlice.equals(cryptoHashWrapped);
-          });
+          Boolean recordHasSameCryptoHash = contentStorage.read(
+            storageId,
+            data -> data.asSlice(0, CONTENT_HASH_LENGTH).mismatch(MemorySegment.ofArray(cryptoHash)) < 0
+          );
 
           if (recordHasSameCryptoHash) {
             recordsDeduplicated.incrementAndGet();
@@ -258,9 +263,14 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
           int totalSize = cryptoHash.length + Integer.BYTES + bytesToStore.length();
 
           long storageId = contentStorage.append(
-            buffer -> buffer.put(cryptoHash)
-              .putInt(uncompressedSize)
-              .put(bytesToStore.getInternalBuffer(), bytesToStore.getOffset(), bytesToStore.length()),
+            target -> {
+              MemorySegment.copy(cryptoHash, 0, target, JAVA_BYTE, 0, cryptoHash.length);
+              target.set(INT32_LAYOUT, cryptoHash.length, uncompressedSize);
+              MemorySegment.copy(
+                bytesToStore.getInternalBuffer(), bytesToStore.getOffset(),
+                target, JAVA_BYTE, cryptoHash.length + Integer.BYTES, bytesToStore.length()
+              );
+            },
             totalSize
           );
           return storageIdToContentId(storageId);
@@ -280,33 +290,30 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
   public void checkRecord(int recordId,
                           boolean fastCheck) throws IOException {
     long storageId = contentIdToStorageId(recordId);
-    contentStorage.read(storageId, buffer -> {
-      int recordSize = buffer.limit();
+    contentStorage.read(storageId, data -> {
+      long recordSize = data.byteSize();
       int recordHeaderSize = CONTENT_HASH_LENGTH + Integer.BYTES;
 
       if (recordSize < recordHeaderSize) {
         throw new CorruptedException(
           "record[" + recordId + "].length(" + recordSize + "b) < headerSize(" + recordHeaderSize + "b) => record is corrupted");
       }
-      int uncompressedSize = buffer.getInt(CONTENT_HASH_LENGTH);
+      int uncompressedSize = data.get(INT32_LAYOUT, CONTENT_HASH_LENGTH);
 
       if (!fastCheck) {
         //check content bytes also: recalculate crypto-hash and compare with the stored one
-        byte[] cryptoHashStored = new byte[CONTENT_HASH_LENGTH];
-        buffer.get(0, cryptoHashStored);
+        byte[] cryptoHashStored = data.asSlice(0, CONTENT_HASH_LENGTH).toArray(JAVA_BYTE);
 
-        buffer.position(CONTENT_HASH_LENGTH + Integer.BYTES);
+        var content = data.asSlice(recordHeaderSize);
         byte[] contentBytes;
         //TODO RC: use threadLocal byte[]?
         if (uncompressedSize >= 0) {
-          int contentSize = recordSize - recordHeaderSize;
-          contentBytes = new byte[contentSize];
-          buffer.get(contentBytes);
+          contentBytes = content.toArray(JAVA_BYTE);
         }
         else {
           int actualUncompressedSize = -uncompressedSize;
           contentBytes = new byte[actualUncompressedSize];
-          compressingAlgo.decompress(buffer, contentBytes);
+          compressingAlgo.decompress(content.asByteBuffer(), contentBytes);
         }
 
         byte[] cryptoHashCalculated = PersistentFSContentAccessor.calculateHash(contentBytes, 0, contentBytes.length);
@@ -327,33 +334,26 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
   @Override
   public byte[] contentHash(int recordId) throws IOException {
     long storageId = contentIdToStorageId(recordId);
-    return contentStorage.read(storageId, buffer -> {
-      byte[] cryptoHash = new byte[CONTENT_HASH_LENGTH];
-      buffer.get(cryptoHash);
-      return cryptoHash;
-    });
+    return contentStorage.read(storageId, data -> data.asSlice(0, CONTENT_HASH_LENGTH).toArray(JAVA_BYTE));
   }
 
 
   @Override
   public InputStream readStream(int recordId) throws IOException {
     long storageId = contentIdToStorageId(recordId);
-    byte[] bytes = contentStorage.read(storageId, buffer -> {
+    byte[] bytes = contentStorage.read(storageId, data -> {
       //record: cryptoHash[CONTENT_HASH_LENGTH], uncompressedSize(int32), contentBytes[*]
-      buffer.position(CONTENT_HASH_LENGTH);//skip crypto-hash
-      int uncompressedSize = buffer.getInt();
+      int uncompressedSize = data.get(INT32_LAYOUT, CONTENT_HASH_LENGTH);
+      var content = data.asSlice(CONTENT_HASH_LENGTH + Integer.BYTES);
       if (uncompressedSize >= 0) { //not compressed data
-        int contentSize = buffer.remaining();
-        byte[] contentBytes = new byte[contentSize];
-        buffer.get(contentBytes);
-        return contentBytes;
+        return content.toArray(JAVA_BYTE);
       }
       else {// [uncompressedSize<0] => compressed data
         int actualUncompressedSize = -uncompressedSize;
         byte[] bufferForDecompression = new byte[actualUncompressedSize];
 
         long startedAtNs = System.nanoTime();
-        compressingAlgo.decompress(buffer, bufferForDecompression);
+        compressingAlgo.decompress(content.asByteBuffer(), bufferForDecompression);
         long decompressionTimeNs = System.nanoTime() - startedAtNs;
 
         recordsReadDecompressionTimeNs.addAndGet(decompressionTimeNs);
@@ -491,9 +491,8 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
 
   private static void rebuildMap(@NotNull AppendOnlyLog contentStorage,
                                  @NotNull /*InOut*/ ExtendibleHashMap hashToRecordIdMap) throws IOException {
-    contentStorage.forEachRecord((storageId, buffer) -> {
-      byte[] cryptoHashStored = new byte[CONTENT_HASH_LENGTH];
-      buffer.get(cryptoHashStored);
+    contentStorage.forEachRecord((storageId, data) -> {
+      byte[] cryptoHashStored = data.asSlice(0, CONTENT_HASH_LENGTH).toArray(JAVA_BYTE);
       int hash = hashCodeOf(cryptoHashStored);
       int contentId = storageIdToContentId(storageId);
       hashToRecordIdMap.put(hash, contentId);

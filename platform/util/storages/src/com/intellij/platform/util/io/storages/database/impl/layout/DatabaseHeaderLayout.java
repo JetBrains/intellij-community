@@ -10,16 +10,13 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT16_LAYOUT;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT32_LAYOUT;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT64_UNALIGNED_LAYOUT;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.fieldHandle;
-import static java.nio.ByteOrder.nativeOrder;
 
 /// Defines the persistent layout of the first database metadata record.
 ///
@@ -62,35 +59,31 @@ public final class DatabaseHeaderLayout {
   private DatabaseHeaderLayout() {}
 
   public record DatabaseHeader(long databaseId, int chunkSize) {
-    public @NotNull ByteBuffer writeTo(@NotNull ByteBuffer target) {
-      var segment = MemorySegment.ofBuffer(target.slice());
-      MAGIC_HANDLE.set(segment, 0L, MAGIC);
-      FORMAT_MAJOR_HANDLE.set(segment, 0L, FORMAT_MAJOR);
-      FORMAT_MINOR_HANDLE.set(segment, 0L, FORMAT_MINOR);
-      DATABASE_ID_HANDLE.set(segment, 0L, databaseId);
-      CHUNK_SIZE_HANDLE.set(segment, 0L, chunkSize);
-      target.position(target.position() + HEADER_SIZE);
-      return target;
+    public void writeTo(@NotNull MemorySegment target) {
+      MAGIC_HANDLE.set(target, 0L, MAGIC);
+      FORMAT_MAJOR_HANDLE.set(target, 0L, FORMAT_MAJOR);
+      FORMAT_MINOR_HANDLE.set(target, 0L, FORMAT_MINOR);
+      DATABASE_ID_HANDLE.set(target, 0L, databaseId);
+      CHUNK_SIZE_HANDLE.set(target, 0L, chunkSize);
     }
 
     public static @NotNull DatabaseHeader read(@NotNull Path storagePath,
-                                               @NotNull ByteBuffer source) throws IOException {
-      if (source.remaining() < HEADER_SIZE) {
+                                               @NotNull MemorySegment source) throws IOException {
+      if (source.byteSize() < HEADER_SIZE) {
         throw new CorruptedException(
-          "[" + storagePath + "]: database header has " + source.remaining() +
+          "[" + storagePath + "]: database header has " + source.byteSize() +
           " bytes, expected at least " + HEADER_SIZE
         );
       }
 
-      var segment = MemorySegment.ofBuffer(source.slice());
-      int magicWord = (int)MAGIC_HANDLE.get(segment, 0L);
+      int magicWord = (int)MAGIC_HANDLE.get(source, 0L);
       if (magicWord != MAGIC) {
         throw new IOException(
           "[" + storagePath + "]: unknown magic word " + IOUtil.magicWordToASCII(magicWord) + ", expected " + MAGIC
         );
       }
-      var formatMajor = Short.toUnsignedInt((short)FORMAT_MAJOR_HANDLE.get(segment, 0L));
-      var formatMinor = Short.toUnsignedInt((short)FORMAT_MINOR_HANDLE.get(segment, 0L));
+      var formatMajor = Short.toUnsignedInt((short)FORMAT_MAJOR_HANDLE.get(source, 0L));
+      var formatMinor = Short.toUnsignedInt((short)FORMAT_MINOR_HANDLE.get(source, 0L));
       if (formatMajor != FORMAT_MAJOR || formatMinor > FORMAT_MINOR) {
         throw new UnsupportedFormatException(
           "database metadata at " + storagePath,
@@ -99,12 +92,12 @@ public final class DatabaseHeaderLayout {
         );
       }
 
-      var databaseId = (long)DATABASE_ID_HANDLE.get(segment, 0L);
+      var databaseId = (long)DATABASE_ID_HANDLE.get(source, 0L);
       if (databaseId == 0) {
         throw new CorruptedException("[" + storagePath + "]: databaseId must be non-zero");
       }
 
-      var chunkSize = (int)CHUNK_SIZE_HANDLE.get(segment, 0L);
+      var chunkSize = (int)CHUNK_SIZE_HANDLE.get(source, 0L);
       if (chunkSize <= 0 || Integer.bitCount(chunkSize) != 1) {
         throw new CorruptedException("[" + storagePath + "]: chunkSize(=" + chunkSize + ") must be a positive power of 2");
       }
