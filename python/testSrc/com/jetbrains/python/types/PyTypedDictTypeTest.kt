@@ -1800,7 +1800,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       from typing_extensions import TypedDict
 
       Movie = TypedDict('Movie', {'name': str}, extra_items=2)
-      #                                                     └ WEAK-WARNING Value must be a type
+      #                                                     └ WEAK_WARNING Value must be a type
       """.trimIndent())
 
     @Test

@@ -771,7 +771,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       from typing import Iterator
       
       class MyIterator(Iterator[int]):
-      #     ^^^^^^^^^^ WEAK-WARNING Class MyIterator must implement all abstract methods
+      #     ^^^^^^^^^^ WEAK_WARNING Class MyIterator must implement all abstract methods
           def __init__(self) -> None:
               self.other = "other"
       expr = MyIterator()
@@ -899,7 +899,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       from typing import TypeVar, Iterator
 
       T = TypeVar('T')
-      class MyIterator(Iterator[T]): # WEAK-WARNING Class MyIterator must implement all abstract methods
+      class MyIterator(Iterator[T]): # WEAK_WARNING Class MyIterator must implement all abstract methods
           def __init__(self) -> None:
               self.other = "other"
       """.trimIndent())
@@ -2452,7 +2452,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       r: int | Box[str] = ...
       #                   ^^^ WARNING Expected type 'int | Box[str]', got 'EllipsisType' instead
       expr = r.get()
-      #│       ^^^ WEAK-WARNING Member 'int' of 'int | Box[str]' does not have attribute 'get'
+      #│       ^^^ WEAK_WARNING Member 'int' of 'int | Box[str]' does not have attribute 'get'
       #└ TYPE str | Unknown
       """.trimIndent())
 
@@ -2472,7 +2472,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       receiver: Any | int | StrBox = ...
       expr = receiver.get()
-      #│              ^^^ WEAK-WARNING Member 'int' of 'Any | int | StrBox' does not have attribute 'get'
+      #│              ^^^ WEAK_WARNING Member 'int' of 'Any | int | StrBox' does not have attribute 'get'
       #└ TYPE str | Unknown
       """.trimIndent())
   }

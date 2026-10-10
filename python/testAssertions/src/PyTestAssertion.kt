@@ -6,6 +6,7 @@ import com.intellij.python.testAssertions.PyTestAssertionSyntax.GUIDE_BAR
 import com.intellij.python.testAssertions.PyTestAssertionSyntax.MARKER_CORNER
 import com.intellij.python.testAssertions.PyTestAssertionSyntax.MARKER_LEFT
 import com.intellij.python.testAssertions.PyTestAssertionSyntax.MARKER_SPAN
+import com.intellij.python.testAssertions.PyTestAssertionSyntax.NEWLINE
 
 /**
  * One assertion of a test text: an expected one from the parser, or an actual one from the engine.
@@ -23,11 +24,15 @@ data class PyTestAssertion(
   val assertionLineStart: Int = -1,
   val assertionLineEnd: Int = -1,
   val assertionColumnStart: Int = -1,
-  val assertionColumnEnd: Int = -1,
   /** The name of a [PyTestDirective], or an unknown name from a wrong test text. */
   val type: String,
   val content: String,
   val fixmeContent: String? = null,
+  /**
+   * The trailing comments of the payload lines, separated by a newline.
+   *
+   * The comment of each payload line stays on that line, so an empty part is a payload line without a comment.
+   */
   val comment: String? = null,
 ) {
 
@@ -67,8 +72,16 @@ data class PyTestAssertion(
     return "[$line:$codeColumnStart] $type $content $fixme$comment"
   }
 
-  fun asText(serializedAssertionsAbove: List<String> = emptyList()): Pair<String, List<String>> {
-    val normalizedCodeColumnStart = if (codeColumnStart == 0) 1 else codeColumnStart
+  /**
+   * Writes this assertion as comment text.
+   *
+   * [hashColumn] is the column of the `#`. A marker line keeps it, so an indented marker line stays indented.
+   * The continuation lines of a multi-line payload also start at it.
+   * The marker of the assertion must not be left of [hashColumn].
+   * A marker in the column of the `#` is a `\`. A span from that column starts in the next column, because a span cannot start with a `\`.
+   */
+  fun asText(serializedAssertionsAbove: List<String> = emptyList(), hashColumn: Int = 0): Pair<String, List<String>> {
+    val normalizedCodeColumnStart = if (codeColumnStart >= 0 && codeColumnStart == hashColumn) hashColumn + 1 else codeColumnStart
 
     val serializedAssertionsAboveCopy = serializedAssertionsAbove.toMutableList()
     if (normalizedCodeColumnStart > 0) {
@@ -77,7 +90,7 @@ data class PyTestAssertion(
       }
     }
 
-    return buildAssertionText(normalizedCodeColumnStart) to serializedAssertionsAboveCopy
+    return buildAssertionText(normalizedCodeColumnStart, hashColumn) to serializedAssertionsAboveCopy
   }
 
   private fun insertGuideAtColumn(text: String, column: Int): String {
@@ -96,54 +109,61 @@ data class PyTestAssertion(
     return String(chars)
   }
 
-  private fun buildAssertionText(normalizedCodeColumnStart: Int): String {
-    val suffix = buildSuffix()
+  private fun buildAssertionText(normalizedCodeColumnStart: Int, hashColumn: Int): String {
+    val suffix = buildSuffixLines().withIndex().joinToString("") { (index, line) ->
+      when {
+        index > 0 -> "$NEWLINE${PyTestAssertionSyntax.continuationPrefix(hashColumn, line)}$line"
+        line.isEmpty() -> ""
+        else -> " $line"
+      }
+    }
 
     if (normalizedCodeColumnStart < 0) {
       return "# $type$suffix"
     }
 
-    val prefix = buildMarkerPrefix(normalizedCodeColumnStart, codeColumnEndEffective)
-    return "#$prefix $type$suffix"
+    val prefix = buildMarkerPrefix(normalizedCodeColumnStart, hashColumn, codeColumnEndEffective)
+    return "${" ".repeat(hashColumn)}#$prefix $type$suffix"
   }
 
-  private fun buildSuffix(): String {
-    val result = StringBuilder()
-
-    if (content.isNotBlank()) {
-      result.append(" ")
-      result.append(content)
-    }
-
-    if (fixmeContent != null) {
-      result.append(" ")
-      result.append(PyTestDirectives.FIXME.name)
-      if (fixmeContent.isNotBlank()) {
-        result.append(" ")
-        result.append(fixmeContent)
+  /** Returns the payload lines, each with its trailing comment. */
+  private fun buildSuffixLines(): List<String> {
+    val body = buildString {
+      if (content.isNotBlank()) {
+        append(PyTestAssertionSyntax.escape(content))
+      }
+      if (fixmeContent != null) {
+        if (isNotEmpty()) append(" ")
+        append(PyTestDirectives.FIXME.name)
+        if (fixmeContent.isNotBlank()) {
+          append(" ")
+          append(PyTestAssertionSyntax.escape(fixmeContent))
+        }
       }
     }
-
-    if (comment?.isNotBlank() == true) {
-      result.append(" ")
-      result.append(COMMENT_CHAR)
-      result.append(" ")
-      result.append(comment)
+    val bodyLines = body.split(NEWLINE)
+    val commentLines = comment?.split(NEWLINE).orEmpty()
+    return List(maxOf(bodyLines.size, commentLines.size)) { index ->
+      val bodyLine = bodyLines.getOrElse(index) { "" }
+      val commentLine = commentLines.getOrNull(index)?.takeIf { it.isNotBlank() }
+      when {
+        commentLine == null -> bodyLine
+        bodyLine.isEmpty() -> "$COMMENT_CHAR $commentLine"
+        else -> "$bodyLine $COMMENT_CHAR $commentLine"
+      }
     }
-
-    return result.toString()
   }
 
-  private fun buildMarkerPrefix(normalizedCodeColumnStart: Int, codeColumnEnd: Int): String {
+  private fun buildMarkerPrefix(normalizedCodeColumnStart: Int, hashColumn: Int, codeColumnEnd: Int): String {
     val prefix = StringBuilder()
 
-    repeat(normalizedCodeColumnStart - 1) {
+    repeat(normalizedCodeColumnStart - hashColumn - 1) {
       prefix.append(' ')
     }
 
     val spanLength = if (codeColumnEnd > 0) (codeColumnEnd - normalizedCodeColumnStart).coerceAtLeast(1) else 1
     when (spanLength) {
-      1 if (codeColumnStart == 0) -> prefix.append(MARKER_LEFT)
+      1 if (codeColumnStart == hashColumn) -> prefix.append(MARKER_LEFT)
       1 -> prefix.append(MARKER_CORNER)
       else -> {
         repeat(spanLength) {

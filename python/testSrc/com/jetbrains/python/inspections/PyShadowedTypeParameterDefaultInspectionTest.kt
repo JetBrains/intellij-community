@@ -17,14 +17,14 @@ class PyShadowedTypeParameterDefaultInspectionTest : PyCodeInsightTestCase() {
   @Test
   fun `None default shadows type parameter default`() = test("""
     def f[T = int](a: T = None):
-    #         ^^^ WEAK-WARNING Default of type parameter 'T' is never used because parameter default values take precedence over it
+    #         ^^^ WEAK_WARNING Default of type parameter 'T' is never used because parameter default values take precedence over it
         return a
     """)
 
   @Test
   fun `literal defaults shadow type parameter default`() = test("""
     def f[T = int](t1: T = 0, t2: T = 1):
-    #         ^^^ WEAK-WARNING Default of type parameter 'T' is never used because parameter default values take precedence over it
+    #         ^^^ WEAK_WARNING Default of type parameter 'T' is never used because parameter default values take precedence over it
         pass
     """)
 
@@ -32,7 +32,7 @@ class PyShadowedTypeParameterDefaultInspectionTest : PyCodeInsightTestCase() {
   fun `non-literal default shadows type parameter default`() = test("""
     def factory() -> int: ...
     def f[T = int](a: T = factory()):
-    #         ^^^ WEAK-WARNING Default of type parameter 'T' is never used because parameter default values take precedence over it
+    #         ^^^ WEAK_WARNING Default of type parameter 'T' is never used because parameter default values take precedence over it
         return a
     """)
 
@@ -76,7 +76,7 @@ class PyShadowedTypeParameterDefaultInspectionTest : PyCodeInsightTestCase() {
   @Test
   fun `ellipsis default shadows type parameter default`() = test("""
     def f[T = int](a: T = ...): ...
-    #         ^^^ WEAK-WARNING Default of type parameter 'T' is never used because parameter default values take precedence over it
+    #         ^^^ WEAK_WARNING Default of type parameter 'T' is never used because parameter default values take precedence over it
     """)
 
   @Test

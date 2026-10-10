@@ -49,10 +49,12 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.containers.orNull
 import com.intellij.python.testAssertions.PyTestAssertion
+import com.intellij.python.testAssertions.PyTestAssertionFix
 import com.intellij.python.testAssertions.PyTestAssertionInliner
 import com.intellij.python.testAssertions.PyTestAssertionInliner.findCounterparts
 import com.intellij.python.testAssertions.PyTestAssertionParseResult
 import com.intellij.python.testAssertions.PyTestAssertionParser
+import com.intellij.python.testAssertions.PyTestAssertionSyntax
 import com.intellij.python.testAssertions.PyTestAssertionSyntax.NEWLINE
 import com.intellij.python.testAssertions.PyTestDirectives
 import com.jetbrains.python.PythonTestUtil
@@ -159,11 +161,19 @@ import kotlin.time.measureTimedValue
  * # <MARKER> <ASSERTION TYPE> [expected content] [FIXME [expected-after-fix]] [# free-form comment]
  * ```
  *
- * - **Markers** are either ^, └, or \. The latter one indicates an element at column 0 in the line above.
- * Markers are omitted iff the assertion is on the same line as the code.
+ * - **Markers** are either ^, └, or \. The latter one indicates the element at the column of the `#` in the line above.
+ * Markers are omitted iff the assertion is on the same line as the code. A marker line can be indented, for example
+ * inside a function body. The `#` keeps its column. A marker points at the nearest code line or plain comment above it.
+ * The payload lines of an assertion are not such lines. A span cannot start with `\`, so a span from the column of the `#`
+ * starts in the next column.
+ *
+ * - **Payload**: a `#` starts the trailing free-form comment. Write `\#` for a `#` in the expected content.
+ * A payload can continue on the next comment lines when their `#` is in the same column.
+ * Each payload line can have its own trailing comment. A comment line with a marker and a word that starts with a letter
+ * starts a new assertion. Any other comment line in the same column continues the payload.
  *
  * - **Inspection-related assertion types** are either a highlighting severity name such as `WARNING`,
- * `WEAK-WARNING`, `ERROR`, or another [HighlightSeverity] name with `-` in place of a space. The content is compared with the
+ * `WEAK_WARNING`, `ERROR`, or another [HighlightSeverity] name with `_` in place of a space. The content is compared with the
  * highlight description. `ISSUES *` may be used as a wildcard expectation for any inspection issue
  * on the marked line.
  *
@@ -173,7 +183,17 @@ import kotlin.time.measureTimedValue
  *
  * - **FIXME** records the value that is expected after a known bug or limitation is fixed while keeping the
  * current/wrong expected value before it. `FIXME` may also appear with no anticipated text to indicate e.g.,
- * superfluous warnings that should disappear once a bug is fixed.
+ * superfluous warnings that should disappear once a bug is fixed. `FIXME` counts only as a whole word.
+ *
+ * ### Canonical Form
+ *
+ * A failed test shows the actual text in the form that [PyTestAssertionInliner] writes. So the expected text must have
+ * that form too, and the test fails on a text in another form. The rules of the canonical form:
+ * - A marker of one column is `└`, or `\` in the column of the `#`. A span of two or more columns is `^^`.
+ * - One space follows the `#` of an inline assertion, the marker and the directive name.
+ * - The marker lines of one code line start with the rightmost marker. A `│` guide continues each marker of a lower line
+ *   through the lines above it. The ASCII guide `|` is not canonical.
+ * - A further payload line starts with `# `, and an empty payload line is a `#` alone.
  *
  *
  * ## Implementation Note
@@ -460,9 +480,18 @@ abstract class PyCodeInsightTestCase {
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
   }
 
-  /** Parses the assertions of [text] and fails on a problem in their syntax. */
+  /**
+   * Parses the assertions of [text] and fails on a problem in their syntax.
+   *
+   * When the only problem is assertions that are not in the canonical form, the failure compares [text] with the canonical text.
+   */
   private fun parseChecked(text: String): PyTestAssertionParseResult {
     val result = PyTestAssertionParser.parse(text)
+    val canonicalFixes = result.diagnostics.mapNotNull { it.fix?.takeIf { fix -> fix.kind == PyTestAssertionFix.Kind.CANONICAL_FORM } }
+    if (canonicalFixes.isNotEmpty() && canonicalFixes.size == result.diagnostics.size) {
+      val canonicalText = canonicalFixes.sortedByDescending { it.start }.fold(text) { current, fix -> fix.applyTo(current) }
+      Assertions.assertEquals(canonicalText, text, "The test assertions are not in the canonical form")
+    }
     if (result.diagnostics.isNotEmpty()) {
       fail("Problems in the test assertions:\n" + result.diagnostics.joinToString("\n"))
     }
@@ -476,7 +505,10 @@ abstract class PyCodeInsightTestCase {
    * The marker line is removed, so the file holds the code alone. Call this on the EDT.
    * Pass [fileName] to configure a file other than the default test file, for example a `.pyi` stub.
    */
-  protected fun configureWithCaret(@Language("Python") fileContent: String, fileName: String = myTestCaseOptions.testFileName): PsiFile {
+  protected fun configureWithCaret(
+    @Language("Python") fileContent: String,
+    fileName: String = myTestCaseOptions.testFileName,
+  ): PsiFile {
     val text = fileContent.trimIndent()
     val markers = parseChecked(text).assertions.filter { it.type == PyTestDirectives.CARET.name }
     val marker = markers.singleOrNull() ?: fail("Expected one CARET marker, found ${markers.size}")
@@ -708,9 +740,11 @@ abstract class PyCodeInsightTestCase {
                                .filter { [actual, expected] -> actual.content != expected.content }
                                .singleOrNull() ?: return null
     if (expected.content.isBlank()) return null
-    val idx = expectedText.indexOf(expected.content, expected.assertionOffsetStart)
+    val expectedPayload = PyTestAssertionSyntax.renderPayload(expected.content, expected.assertionColumnStart)
+    val actualPayload = PyTestAssertionSyntax.renderPayload(actual.content, expected.assertionColumnStart)
+    val idx = expectedText.indexOf(expectedPayload, expected.assertionOffsetStart)
     if (idx < 0) return null
-    if (actualText != expectedText.replaceRange(idx, idx + expected.content.length, actual.content)) return null
+    if (actualText != expectedText.replaceRange(idx, idx + expectedPayload.length, actualPayload)) return null
     return "expected <${expected.toString().trim()}> but was <${actual.toString().trim()}>"
   }
 
@@ -785,7 +819,7 @@ abstract class PyCodeInsightTestCase {
                                                      codeLineStart = codeLineStart,
                                                      codeColumnStart = codeColumnStart,
                                                      codeColumnEnd = codeColumnEnd,
-                                                     type = typeName.name.replace(" ", "-"),
+                                                     type = typeName.name.replace(" ", "_"),
                                                      content = "")
 
       val counterparts = findCounterparts(expectedAssertions, listOf(actualAssertionNoContent))
@@ -1090,7 +1124,20 @@ class PyCodeInsightTestCaseComputeAssertionsTest : PyCodeInsightTestCase() {
     """)
 
   @Test
-  fun `registry entries set a boolean key or any value`(@TestDisposable testDisposable: Disposable) {
+  fun `TYPE indented comment-marker matching type passes`() = test("""
+    def f():
+        n = 1
+        #│  └ TYPE Literal[1]
+        #\ TYPE Literal[1]
+    """)
+
+  @Test
+  fun `TYPE inline after a hash in a string passes`() = test("""
+    s = "#" # TYPE Literal["\#"]
+    """)
+
+  @Test
+  fun `registry options enable a key and disable a key until the test ends`(@TestDisposable testDisposable: Disposable) {
     val keysDisposable = Disposer.newDisposable(testDisposable, "registry keys")
     setRegistryKeys(
       enable = arrayOf("python.parameter.info.show.all.hints"),

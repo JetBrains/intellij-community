@@ -34,7 +34,7 @@ class PyGlobalVariableRedeclarationInNotebookInspectionTest : PyCodeInsightTestC
   fun `a top level variable assigned twice is reported at its second assignment`() {
     test("""
       x = 1
-      x = 2 # WEAK-WARNING Global variable 'x' is already defined in this notebook
+      x = 2 # WEAK_WARNING Global variable 'x' is already defined in this notebook
     """)
   }
 
@@ -107,7 +107,7 @@ class PyGlobalVariableRedeclarationInNotebookInspectionTest : PyCodeInsightTestC
     test("""
       total = 0
       for i in range(3):
-          total = i # WEAK-WARNING Global variable 'total' is already defined in this notebook
+          total = i # WEAK_WARNING Global variable 'total' is already defined in this notebook
     """)
   }
 
@@ -179,7 +179,7 @@ class PyGlobalVariableRedeclarationInNotebookInspectionTest : PyCodeInsightTestC
       from matplotlib.backends import Canvas
 
       chart = Canvas()
-      chart = Canvas() # WEAK-WARNING Global variable 'chart' is already defined in this notebook
+      chart = Canvas() # WEAK_WARNING Global variable 'chart' is already defined in this notebook
     """)
   }
 
@@ -191,7 +191,7 @@ class PyGlobalVariableRedeclarationInNotebookInspectionTest : PyCodeInsightTestC
           pass
 
       handler = f
-      handler = f # WEAK-WARNING Global variable 'handler' is already defined in this notebook
+      handler = f # WEAK_WARNING Global variable 'handler' is already defined in this notebook
     """)
   }
 
@@ -200,7 +200,7 @@ class PyGlobalVariableRedeclarationInNotebookInspectionTest : PyCodeInsightTestC
   fun `a variable assigned after a bare type declaration is reported`() {
     test("""
       x: int
-      x = 1 # WEAK-WARNING Global variable 'x' is already defined in this notebook
+      x = 1 # WEAK_WARNING Global variable 'x' is already defined in this notebook
     """)
   }
 

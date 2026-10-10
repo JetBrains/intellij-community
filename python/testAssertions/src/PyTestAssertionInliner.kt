@@ -86,46 +86,39 @@ object PyTestAssertionInliner {
       val actualAssertions = actualByCodeLine[codeLine].orEmpty()
       val unmatchedAssertions = expectedAssertions - counterparts.values.toSet()
 
-      val inlineActualAssertions = actualAssertions.filter { counterparts[it]?.isInlineAssertion() ?: false }
-      val inlineUnmatchedExpectedAssertions = unmatchedAssertions.filter { it.isInlineAssertion() }
-      if (inlineActualAssertions.size == 1) {
-        val inlineActual = inlineActualAssertions.single()
-        val inlineExpected = counterparts[inlineActual]!!
-        val commentActuals = actualAssertions - inlineActual
-        val commentExpected = expectedAssertions - inlineExpected
-        replaceCommentAssertion(result, commentExpected, commentActuals)
-        replaceInlineAssertion(result, inlineExpected, inlineActual)
-      }
-      else if (inlineUnmatchedExpectedAssertions.size == 1) {
-        removeAssertions(result, inlineUnmatchedExpectedAssertions)
-      }
-      else {
-        val actualAndPlaceholderAssertions = actualAssertions + unmatchedAssertions.filter { it.content.isBlank() && it.hasFixme }
-        replaceCommentAssertion(result, expectedAssertions, actualAndPlaceholderAssertions)
-      }
+      val inlineActual = actualAssertions.filter { counterparts[it]?.isInlineAssertion() ?: false }.singleOrNull()
+      val inlineExpected = inlineActual?.let { counterparts.getValue(it) } ?: unmatchedAssertions.singleOrNull { it.isInlineAssertion() }
+      val commentExpected = expectedAssertions - listOfNotNull(inlineExpected)
+      val commentActual = actualAssertions - listOfNotNull(inlineActual) +
+                          unmatchedAssertions.filter { it !== inlineExpected && it.content.isBlank() && it.hasFixme }
+
+      // The edits go from the end of the text to its start, so each edit keeps the offsets of the next one.
+      // The comment assertions are below the code line, and the inline assertion is on it.
+      removeAssertions(result, commentExpected)
+      if (inlineExpected != null) removeAssertions(result, listOf(inlineExpected), removeSpaceBefore = inlineActual == null)
+      insertCommentAssertions(result, commentExpected, commentActual)
+      if (inlineActual != null) insertInlineAssertion(result, inlineExpected!!, inlineActual)
     }
 
     return result.toString()
   }
 
-  private fun replaceInlineAssertion(
+  /** Writes [actualAssertion] at the end of its code line. A multi-line payload goes above the comment assertions of the line. */
+  private fun insertInlineAssertion(
     text: StringBuilder,
     expectedAssertion: PyTestAssertion,
     actualAssertion: PyTestAssertion,
   ) {
-
-    removeAssertions(text, listOf(expectedAssertion))
     val endOfLineOffset = findLineEndOffset(text, actualAssertion)
-    val [inlineText, _] = actualAssertion.asInlineAssertion().asText()
+    val [inlineText, _] = actualAssertion.asInlineAssertion().asText(hashColumn = expectedAssertion.assertionColumnStart.coerceAtLeast(0))
     text.insert(endOfLineOffset, inlineText)
   }
 
-  private fun replaceCommentAssertion(
+  private fun insertCommentAssertions(
     text: StringBuilder,
     expectedAssertions: List<PyTestAssertion>,
     actualAndPlaceholderAssertions: List<PyTestAssertion>,
   ) {
-    removeAssertions(text, expectedAssertions)
     if (actualAndPlaceholderAssertions.isEmpty()) return
 
     val sortedActualAssertions = actualAndPlaceholderAssertions.sortedWith(compareBy(
@@ -135,9 +128,10 @@ object PyTestAssertionInliner {
       { it.fixmeContent ?: "" })
     )
 
+    val hashColumn = commentHashColumn(expectedAssertions, actualAndPlaceholderAssertions)
     var serializedAssertions = emptyList<String>()
     for (actualAssertion in sortedActualAssertions) {
-      val [newAssertion, serializedAssertionsUpdated] = actualAssertion.asText(serializedAssertions)
+      val [newAssertion, serializedAssertionsUpdated] = actualAssertion.asText(serializedAssertions, hashColumn)
       serializedAssertions = serializedAssertionsUpdated + newAssertion
     }
 
@@ -147,7 +141,20 @@ object PyTestAssertionInliner {
     }
   }
 
-  private fun removeAssertions(text: StringBuilder, assertions: List<PyTestAssertion>) {
+  /**
+   * Returns the column of the `#` for the marker lines of one code line.
+   *
+   * It is the column of the expected marker lines when they all use one column and every actual marker can stand right of it.
+   * Otherwise, it is 0.
+   */
+  private fun commentHashColumn(expectedAssertions: List<PyTestAssertion>, actualAssertions: List<PyTestAssertion>): Int {
+    val column = expectedAssertions.filter { !it.isInlineAssertion() }.map { it.assertionColumnStart }.distinct().singleOrNull() ?: return 0
+    if (column < 0) return 0
+    return if (actualAssertions.all { it.isInlineAssertion() || it.codeColumnStart >= column }) column else 0
+  }
+
+  /** Removes the text of [assertions]. With [removeSpaceBefore], it also removes the spaces between an inline assertion and its code. */
+  private fun removeAssertions(text: StringBuilder, assertions: List<PyTestAssertion>, removeSpaceBefore: Boolean = false) {
     if (assertions.isEmpty()) return
     val rangeStart = assertions.minOf { it.assertionOffsetStart }
     val rangeEnd = assertions.maxOf { it.assertionOffsetEnd }
@@ -161,12 +168,19 @@ object PyTestAssertionInliner {
 
     val allInline = assertions.all { it.isInlineAssertion() }
     if (!allInline) {
+      val lineStart = text.lastIndexOf(NEWLINE.toString(), deleteStart - 1) + 1
+      if (text.substring(lineStart, deleteStart).isBlank()) {
+        deleteStart = lineStart
+      }
       if (deleteEnd < text.length && text[deleteEnd] == NEWLINE) {
         deleteEnd++
       }
       else if (deleteStart > 0 && text[deleteStart - 1] == NEWLINE) {
         deleteStart--
       }
+    }
+    else if (removeSpaceBefore) {
+      while (deleteStart > 0 && text[deleteStart - 1] == ' ') deleteStart--
     }
 
     text.delete(deleteStart, deleteEnd)

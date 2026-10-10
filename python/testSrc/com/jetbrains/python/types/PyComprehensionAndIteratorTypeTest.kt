@@ -311,7 +311,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       from typing import Iterable
 
       class A[T](Iterable[T]): ...
-      #     └ WEAK-WARNING Class A must implement all abstract methods
+      #     └ WEAK_WARNING Class A must implement all abstract methods
 
       def f(a: A[int]):
           for x in a:
@@ -325,7 +325,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       from typing import Iterable, LiteralString
 
       class A[T](Iterable[T]): ...
-      #     └ WEAK-WARNING Class A must implement all abstract methods
+      #     └ WEAK_WARNING Class A must implement all abstract methods
 
       def f(a: A[LiteralString]):
           for x in a:

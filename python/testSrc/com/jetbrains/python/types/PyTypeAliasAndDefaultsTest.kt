@@ -41,7 +41,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           Type = set
 
       expr: Type[str]
-      # │       └ WEAK-WARNING Member 'type[set]' of 'type[list | set]' does not have attribute '__getitem__' FIXME
+      # │       └ WEAK_WARNING Member 'type[set]' of 'type[list | set]' does not have attribute '__getitem__' FIXME
       # └ TYPE list[str]
       """.trimIndent())
 
@@ -57,7 +57,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           Type = set[T]
 
       expr: Type[str]
-      #│        └ WEAK-WARNING Member 'type[set[T]]' of 'type[list[T] | set[T]]' does not have attribute '__getitem__' FIXME
+      #│        └ WEAK_WARNING Member 'type[set[T]]' of 'type[list[T] | set[T]]' does not have attribute '__getitem__' FIXME
       #└ TYPE list[str]
       """.trimIndent())
 
@@ -70,7 +70,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       Type = list[T] | set[T]
 
       expr: Type[str]
-      # │       └ WEAK-WARNING Member 'type[set[T]]' of 'UnionType | type[list[T]] | type[set[T]]' does not have attribute '__getitem__' FIXME
+      # │       └ WEAK_WARNING Member 'type[set[T]]' of 'UnionType | type[list[T]] | type[set[T]]' does not have attribute '__getitem__' FIXME
       # └ TYPE list[str] | set[str]
       """.trimIndent())
 
@@ -84,7 +84,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       Type = dict[T1, T2] | set[T2]
 
       expr: Type[str, int]
-      #│        └ WEAK-WARNING Member 'type[set[T2]]' of 'UnionType | type[dict[T1, T2]] | type[set[T2]]' does not have attribute '__getitem__' FIXME
+      #│        └ WEAK_WARNING Member 'type[set[T2]]' of 'UnionType | type[dict[T1, T2]] | type[set[T2]]' does not have attribute '__getitem__' FIXME
       #└ TYPE dict[str, int] | set[int]
       """.trimIndent())
   }

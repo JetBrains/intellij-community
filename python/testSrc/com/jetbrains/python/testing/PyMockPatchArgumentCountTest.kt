@@ -192,7 +192,7 @@ class PyMockPatchArgumentCountTest : PyCodeInsightTestCase() {
 
     @patch("os.getcwd")
     def test_foo(getcwd_mock, capsys):
-    #                         ^^^^^^ WEAK-WARNING Parameter 'capsys' value is not used
+    #                         ^^^^^^ WEAK_WARNING Parameter 'capsys' value is not used
         pass
     """.trimIndent())
 }
