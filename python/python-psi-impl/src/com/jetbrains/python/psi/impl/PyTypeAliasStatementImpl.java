@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -22,6 +24,8 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.Icon;
 
 public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasStatementStub> implements PyTypeAliasStatement {
   public PyTypeAliasStatementImpl(ASTNode astNode) {
@@ -93,6 +97,16 @@ public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasState
       return new PyClassTypeImpl(typeAliasTypeClass, false);
     }
     return null;
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return new PyElementPresentation(this);
+  }
+
+  @Override
+  public Icon getIcon(int flags) {
+    return AllIcons.Nodes.Type;
   }
 
   @Override

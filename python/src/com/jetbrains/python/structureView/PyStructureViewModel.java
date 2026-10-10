@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTypeAliasStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +23,7 @@ public class PyStructureViewModel extends StructureViewModelBase implements Stru
   public PyStructureViewModel(@NotNull PsiFile psiFile, @Nullable Editor editor) {
     this(psiFile, editor, new PyStructureViewElement((PyElement) psiFile));
     withSorters(Sorter.ALPHA_SORTER);
-    withSuitableClasses(PyFunction.class, PyClass.class);
+    withSuitableClasses(PyFunction.class, PyClass.class, PyTypeAliasStatement.class);
   }
 
   public PyStructureViewModel(@NotNull PsiFile file, @Nullable Editor editor, @NotNull StructureViewTreeElement element) {
@@ -37,7 +38,8 @@ public class PyStructureViewModel extends StructureViewModelBase implements Stru
 
   @Override
   public boolean isAlwaysLeaf(StructureViewTreeElement element) {
-    return element.getValue() instanceof PyTargetExpression;
+    final Object value = element.getValue();
+    return value instanceof PyTargetExpression || value instanceof PyTypeAliasStatement;
   }
 
   @Override

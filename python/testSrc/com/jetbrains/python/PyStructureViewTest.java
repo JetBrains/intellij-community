@@ -4,15 +4,19 @@ package com.jetbrains.python;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.idea.TestFor;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTypeAliasStatement;
 import com.jetbrains.python.structureView.PyStructureViewElement;
 
 import javax.swing.Icon;
@@ -190,6 +194,57 @@ public class PyStructureViewTest extends PyTestCase {
 
     assertEquals(List.of("own(self)"), ownMembers);
     assertEmpty(notInheritedNestedInInherited);
+  }
+
+  @TestFor(issues = "PY-92836")
+  public void testTypeAliasStatement() {
+    myFixture.configureByText("a.py", """
+      type Pair[T] = tuple[T, T]
+      class C:
+          type Alias = int
+      if True:
+          type Conditional = str
+      """);
+    doTest("""
+             -a.py
+              Pair
+              -C
+               Alias
+              Conditional
+             """,
+           false);
+  }
+
+  @TestFor(issues = "PY-92836")
+  public void testTypeAliasStatementPresentation() {
+    myFixture.configureByText("a.py", "type Pair[T] = tuple[T, T]\n");
+    final PyTypeAliasStatement alias = PsiTreeUtil.findChildOfType(myFixture.getFile(), PyTypeAliasStatement.class);
+    assertNotNull(alias);
+    final ItemPresentation presentation = new PyStructureViewElement(alias).getPresentation();
+    assertEquals("Pair", presentation.getPresentableText());
+    assertSame(AllIcons.Nodes.Type, presentation.getIcon(false));
+  }
+
+  @TestFor(issues = "PY-92836")
+  public void testNamesBoundOutsideModuleLevelAssignment() {
+    myFixture.configureByText("a.py", """
+      x = 1
+      a, b = 1, 2
+      if (n := 10) > 5:
+          y = 2
+      for i in range(3):
+          pass
+      with open("f") as f:
+          pass
+      match x:
+          case [p, q]:
+              pass
+      """);
+    doTest("""
+             -a.py
+              x
+             """,
+           false);
   }
 
   private void doTest(final String expected, final boolean inherited) {
