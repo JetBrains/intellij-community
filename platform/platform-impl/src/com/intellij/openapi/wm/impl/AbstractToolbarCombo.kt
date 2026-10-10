@@ -3,8 +3,11 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.internal.inspector.PropertyBean
 import com.intellij.internal.inspector.UiInspectorContextProvider
+import com.intellij.openapi.actionSystem.ExperimentalIconRendering
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.ActionIconDescriptors
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.SwingIconCache
 import com.intellij.ui.popup.PopupAlignableComponent
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -30,6 +33,8 @@ abstract class AbstractToolbarCombo : JComponent(), UiInspectorContextProvider, 
   var betweenIconsGap: Int by Delegates.observable(0, this::fireUpdateEvents)
   var iconTextGap: Int by Delegates.observable(6, this::fireUpdateEvents)
 
+  private val iconCache = SwingIconCache()
+
   override fun updateUI() {
     setUI(UIManager.getUI(this))
   }
@@ -37,10 +42,7 @@ abstract class AbstractToolbarCombo : JComponent(), UiInspectorContextProvider, 
   open fun updateFromPresentation(presentation: Presentation) {
     text = presentation.text
     toolTipText = presentation.description
-    leftIcons = listOfNotNull(
-      if (!presentation.isEnabled) presentation.disabledIcon ?: presentation.icon
-      else presentation.icon
-    )
+    leftIcons = if (ExperimentalIconRendering.isEnabled) descriptorLeftIcons(presentation) else legacyLeftIcons(presentation)
     rightIcons = listOfNotNull(presentation.getClientProperty(ActionUtil.SECONDARY_ICON))
   }
 
@@ -68,5 +70,17 @@ abstract class AbstractToolbarCombo : JComponent(), UiInspectorContextProvider, 
     }
 
     return result
+  }
+
+  private fun legacyLeftIcons(presentation: Presentation): List<Icon> {
+    return listOfNotNull(
+      if (!presentation.isEnabled) presentation.disabledIcon ?: presentation.icon
+      else presentation.icon
+    )
+  }
+
+  private fun descriptorLeftIcons(presentation: Presentation): List<Icon> {
+    iconCache.update(ActionIconDescriptors.effective(presentation))
+    return listOfNotNull(if (presentation.isEnabled) iconCache.icon else iconCache.disabled)
   }
 }
