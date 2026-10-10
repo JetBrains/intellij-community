@@ -5,6 +5,7 @@ import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,6 +27,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.messages.MessagesService;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -88,6 +90,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Provides common infrastructure for building refactorings.
@@ -169,6 +172,7 @@ import java.util.Set;
 public abstract class BaseRefactoringProcessor implements Runnable {
   private static final Logger LOG = Logger.getInstance(BaseRefactoringProcessor.class);
   private static boolean PREVIEW_IN_TESTS = true;
+  private static @Nullable Consumer<? super UsageInfo[]> ourPreviewRecorderInTests;
 
   protected final @NotNull Project myProject;
   protected final @NotNull SearchScope myRefactoringScope;
@@ -384,11 +388,23 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
   }
 
+  /**
+   * Passes the usages of each preview to {@code recorder} until {@code disposable} is disposed. A test runs the refactoring instead of
+   * showing the preview, so the recorder is the only way to see the usages that the preview shows, such as the ones in comments.
+   */
+  @TestOnly
+  public static void recordPreviewInTests(@NotNull Consumer<? super UsageInfo[]> recorder, @NotNull Disposable disposable) {
+    ourPreviewRecorderInTests = recorder;
+    Disposer.register(disposable, () -> ourPreviewRecorderInTests = null);
+  }
+
   protected void previewRefactoring(UsageInfo @NotNull [] usages) {
     if (ApplicationManager.getApplication().isUnitTestMode() || Boolean.getBoolean("ide.performance.skip.refactoring.dialogs")) {
       if (!PREVIEW_IN_TESTS) {
         throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, UsageInfo::toString, ", "));
       }
+      Consumer<? super UsageInfo[]> previewRecorder = ourPreviewRecorderInTests;
+      if (previewRecorder != null) previewRecorder.accept(usages);
       ensureElementsWritable(usages, createUsageViewDescriptor(usages));
       execute(usages);
       return;

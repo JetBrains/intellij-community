@@ -30,9 +30,11 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MultiModuleMoveTe
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.AbstractK2MoveToClassWithConversionTest
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.AbstractK2PullUpTest
 import org.jetbrains.kotlin.idea.k2.refactoring.pushDown.AbstractK2PushDownTest
+import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractFirMultiModuleSafeDeleteOnModPlanTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractFirMultiModuleSafeDeleteTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2HeadlessMultiModuleSafeDeleteTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2HeadlessSafeDeleteTest
+import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2SafeDeleteOnModPlanTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2SafeDeleteTest
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.EXTRACT_REFACTORING
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.INLINE_REFACTORING
@@ -61,6 +63,38 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("safeDelete/deleteObject/kotlinObject", testMethodName = "doObjectTest")
             model("safeDelete/deleteFunction/kotlinFunction", testMethodName = "doFunctionTest")
             model("safeDelete/deleteFunction/kotlinFunctionWithJava", testMethodName = "doFunctionTestWithJava")
+            model("safeDelete/deleteFunction/javaFunctionWithKotlin", testMethodName = "doJavaMethodTest")
+            model("safeDelete/deleteProperty/kotlinProperty", testMethodName = "doPropertyTest")
+            model("safeDelete/deleteProperty/kotlinPropertyWithJava", testMethodName = "doPropertyTestWithJava")//todo  super method search from java override
+            model("safeDelete/deleteProperty/javaPropertyWithKotlin", testMethodName = "doJavaPropertyTest")
+            model("safeDelete/deleteTypeAlias/kotlinTypeAlias", testMethodName = "doTypeAliasTest")
+            model("safeDelete/deleteTypeParameter/kotlinTypeParameter", testMethodName = "doTypeParameterTest")
+            model("safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava", testMethodName = "doTypeParameterTestWithJava")
+            model("safeDelete/deleteTypeParameter/javaTypeParameterWithKotlin", pattern = Patterns.JAVA, testMethodName = "doJavaTypeParameterTest")
+            model("safeDelete/deleteValueParameter/kotlinValueParameter", testMethodName = "doValueParameterTest")
+            model(
+                "safeDelete/deleteValueParameter/kotlinValueParameterWithJava",
+                testMethodName = "doValueParameterTestWithJava"
+            )
+            model(
+                "safeDelete/deleteValueParameter/javaParameterWithKotlin",
+                pattern = Patterns.JAVA,
+                testMethodName = "doJavaParameterTest"
+            )
+        }
+
+        testClass<AbstractK2SafeDeleteOnModPlanTest> {
+            model("safeDelete/deleteClass/kotlinClass", testMethodName = "doClassTest")
+            //todo secondary constructor
+            model("safeDelete/deleteClass/kotlinClassWithJava", testMethodName = "doClassTestWithJava")
+            model("safeDelete/deleteClass/javaClassWithKotlin", pattern = Patterns.JAVA, testMethodName = "doJavaClassTest")
+            model("safeDelete/deleteObject/kotlinObject", testMethodName = "doObjectTest")
+            model("safeDelete/deleteFunction/kotlinFunction", testMethodName = "doFunctionTest")
+            model(
+                "safeDelete/deleteFunction/kotlinFunctionWithJava",
+                Patterns.forRegex("^(((?!secondary)(?!implement4).)+)\\.kt"), //todo secondary constructor, super method search from java override
+                testMethodName = "doFunctionTestWithJava"
+            )
             model("safeDelete/deleteFunction/javaFunctionWithKotlin", testMethodName = "doJavaMethodTest")
             model("safeDelete/deleteProperty/kotlinProperty", testMethodName = "doPropertyTest")
             model("safeDelete/deleteProperty/kotlinPropertyWithJava", testMethodName = "doPropertyTestWithJava")//todo  super method search from java override
@@ -118,6 +152,10 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         }
 
         testClass<AbstractK2HeadlessMultiModuleSafeDeleteTest> {
+            model("safeDeleteMultiModule", pattern = TEST, flatten = true)
+        }
+
+        testClass<AbstractFirMultiModuleSafeDeleteOnModPlanTest> {
             model("safeDeleteMultiModule", pattern = TEST, flatten = true)
         }
 

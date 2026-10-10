@@ -214,6 +214,7 @@ a:com.intellij.refactoring.BaseRefactoringProcessor
 - p:preprocessUsages(com.intellij.openapi.util.Ref):Z
 - p:previewRefactoring(com.intellij.usageView.UsageInfo[]):V
 - s:processConflicts(com.intellij.openapi.project.Project,com.intellij.util.containers.MultiMap):Z
+- s:recordPreviewInTests(java.util.function.Consumer,com.intellij.openapi.Disposable):V
 - p:refreshElements(com.intellij.psi.PsiElement[]):V
 - f:run():V
 - s:runWithDisabledPreview(com.intellij.util.ThrowableRunnable):V

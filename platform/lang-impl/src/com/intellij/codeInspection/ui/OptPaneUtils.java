@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.options.CustomComponentExtension;
+import com.intellij.codeInspection.options.OptCustom;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptString;
 import com.intellij.codeInspection.options.OptionContainer;
@@ -58,6 +60,14 @@ public final class OptPaneUtils {
       String result = validator.select(project);
       if (result != null) {
         stringCtl.setValue(data, result);
+        onSuccess.run();
+      }
+      return;
+    }
+    if (ContainerUtil.getOnlyItem(pane.components()) instanceof OptCustom customCtl &&
+        CustomComponentExtension.find(customCtl.componentId()) instanceof CustomComponentExtensionWithSwingSelector<?> selector) {
+      // Single custom control with selector: just call the selector
+      if (selector.select(customCtl, data.getOptionController(), project)) {
         onSuccess.run();
       }
       return;

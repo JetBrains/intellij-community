@@ -403,6 +403,11 @@ f:com.intellij.codeInsight.hints.declarative.InlayProviderOption
 - p:<init>(java.lang.String):V
 - f:render(com.intellij.codeInspection.options.OptCustom,com.intellij.codeInspection.options.OptionController,com.intellij.openapi.project.Project):javax.swing.JComponent
 - a:render(java.lang.Object,com.intellij.codeInspection.options.OptionController,com.intellij.openapi.project.Project):javax.swing.JComponent
+*a:com.intellij.codeInspection.ui.CustomComponentExtensionWithSwingSelector
+- com.intellij.codeInspection.ui.CustomComponentExtensionWithSwingRenderer
+- p:<init>(java.lang.String):V
+- f:select(com.intellij.codeInspection.options.OptCustom,com.intellij.codeInspection.options.OptionController,com.intellij.openapi.project.Project):Z
+- a:select(java.lang.Object,com.intellij.codeInspection.options.OptionController,com.intellij.openapi.project.Project):Z
 *:com.intellij.execution.services.ServiceViewAddActionContributor
 - a:getContributorClass():java.lang.Class
 com.intellij.execution.services.ServiceViewDescriptor

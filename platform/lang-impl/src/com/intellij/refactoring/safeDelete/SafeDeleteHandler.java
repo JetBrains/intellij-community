@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
-import com.intellij.ide.util.DeleteUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -19,6 +18,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.modplan.safeDelete.impl.ModPlanSafeDeleteFlow;
 import com.intellij.refactoring.safeDelete.api.SafeDeleteTarget;
 import com.intellij.refactoring.safeDelete.api.SafeDeleteTargetProvider;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -76,6 +76,10 @@ public final class SafeDeleteHandler implements RefactoringActionHandler {
       if (!SafeDeleteProcessor.validElement(element)) {
         return;
       }
+    }
+
+    if (ModPlanSafeDeleteFlow.run(project, elements, silent, checkDelegates, successRunnable, afterRefactoring)) {
+      return;
     }
 
     if (elements.length == 1) {

@@ -578,6 +578,8 @@
     <applicationSettings service="com.intellij.codeInsight.hints.chain.DeclarativeCallChainInlaySettings"/>
     <registryKey key="daemon.suppress.stub.inconsistency.errors" defaultValue="true" restartRequired="false"
                  description="Log stub inconsistencies at debug level during highlighting"/>
+    <registryKey key="refactoring.safeDelete.modPlan" defaultValue="false" restartRequired="false"
+                 description="Run the interactive Safe Delete on the ModPlan engine, in the same steps, where the engine supports the elements"/>
     <registryKey key="hyperlink.ide.decompiler.open.file" defaultValue="true" description="Load binary files in hyperlink on background thread"/>
     <registryKey key="build.console.max.inlays" defaultValue="100"
                  description="Maximum number of Swing component inlays in the single build console. Extra messages are printed as plain text."/>
@@ -1526,6 +1528,12 @@
     <treeStructureProvider id="NestingTreeStructureProvider" implementation="com.intellij.ide.projectView.impl.NestingTreeStructureProvider" order="last"/>
     <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.RelatedFilesSafeDeleteProcessorDelegate"/>
     <refactoring.modPlanSafeDeleteProvider implementation="com.intellij.refactoring.modplan.safeDelete.impl.ModPlanLegacyBridgeSafeDeleteProvider" order="last"/>
+    <applicationService serviceInterface="com.intellij.refactoring.modplan.impl.ModPlanFlowUi"
+                        serviceImplementation="com.intellij.refactoring.modplan.impl.ModPlanDialogFlowUi"
+                        testServiceImplementation="com.intellij.refactoring.modplan.impl.ModPlanTestFlowUi"/>
+    <applicationService serviceInterface="com.intellij.refactoring.modplan.ModPlanUiInterpreter"
+                        serviceImplementation="com.intellij.refactoring.modplan.impl.ModPlanUiInterpreterImpl"/>
+    <inspectionCustomComponent implementation="com.intellij.refactoring.modplan.impl.ModPlanQuestionComponent"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.RelatedFilesRenamerFactory"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveRelatedFilesHandler"
                              order="before moveFileOrDir"/>
