@@ -2813,7 +2813,8 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
   fun `TypeVar default types are TypeVars`() = test("""
     from typing import TypeVar, TypeVarTuple, ParamSpec
 
-    type A1[**P, T = P] = tuple[P, T]  # false negative
+    type A1[**P, T = P] = tuple[P, T]
+    #                │          └ WARNING ParamSpec is not allowed in this context
     #                └ WARNING 'ParamSpec' cannot be used in default type of TypeVar
 
     Ts = TypeVarTuple("Ts")
@@ -5030,6 +5031,160 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                ^^^^^^ WARNING ParamSpec component can only be used to annotate '*args' or '**kwargs' parameters
         stored_kwargs: P.kwargs
     #                  ^^^^^^^^ WARNING ParamSpec component can only be used to annotate '*args' or '**kwargs' parameters
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92895"])
+  fun `ParamSpec as parameter annotation`() = test("""
+    def bar[**P](x: P) -> None: ...
+    #               └ WARNING ParamSpec cannot be used as the type of a parameter
+
+    def star[**P](*args: P, **kwargs: P) -> None: ...
+    #                    │            └ WARNING ParamSpec cannot be used as the type of a parameter
+    #                    └ WARNING ParamSpec cannot be used as the type of a parameter
+
+    def quoted[**P](x: "P") -> None: ...
+    #                   └ WARNING ParamSpec cannot be used as the type of a parameter
+
+    class C[**P]:
+        def m(self, x: P) -> None: ...
+    #                  └ WARNING ParamSpec cannot be used as the type of a parameter
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92895"])
+  fun `ParamSpec as parameter annotation old style`() = test("""
+    from typing import Callable, ParamSpec
+
+    P = ParamSpec("P")
+
+    def bar(f: Callable[P, int], x: P) -> None: ...
+    #                               └ WARNING ParamSpec cannot be used as the type of a parameter
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92895"])
+  fun `ParamSpec as variable and return annotation`() = test("""
+    from typing import Callable, ParamSpec, TypeAlias
+
+    def ret[**P](*args: P.args, **kwargs: P.kwargs) -> P: ...
+    #                                                  └ WARNING ParamSpec is not allowed in this context
+
+    def local[**P](f: Callable[P, int]) -> None:
+        x: P
+    #      └ WARNING ParamSpec is not allowed in this context
+
+    class C[**P]:
+        attr: P
+    #         └ WARNING ParamSpec is not allowed in this context
+
+    type Alias[**P] = P
+    #                 └ WARNING ParamSpec is not allowed in this context
+
+    Q = ParamSpec("Q")
+    OldAlias: TypeAlias = Q
+    #                     └ WARNING ParamSpec is not allowed in this context
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92895"])
+  fun `ParamSpec in invalid nested position`() = test("""
+    from typing import Annotated, Callable, Concatenate, Optional, Tuple, Unpack
+    from typing_extensions import TypeForm
+
+    def f[**P](
+        a: list[P],
+    #           └ WARNING Passed type arguments do not match type parameters [_T] of class 'list'
+        b: tuple[P],
+    #            └ WARNING ParamSpec is not allowed in this context
+        c: type[P],
+    #           └ WARNING ParamSpec is not allowed in this context
+        d: Optional[P],
+    #               └ WARNING ParamSpec is not allowed in this context
+        e: P | int,
+    #      └ WARNING ParamSpec is not allowed in this context
+        g: Annotated[P, 1],
+    #                └ WARNING ParamSpec is not allowed in this context
+        h: Callable[[P], int],
+    #                └ WARNING ParamSpec is not allowed in this context
+        i: Callable[Concatenate[int, P], P],
+    #                                    └ WARNING ParamSpec is not allowed in this context
+        j: Tuple[P],
+    #            └ WARNING ParamSpec is not allowed in this context
+        k: TypeForm[P],
+    #               └ WARNING ParamSpec is not allowed in this context
+        l: Unpack[P],
+    #             └ WARNING ParamSpec is not allowed in this context
+    ) -> None: ...
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92895"])
+  fun `ParamSpec in valid position`() = test("""
+    import collections.abc
+    from typing import Annotated, Callable, Concatenate, Generic, ParamSpec, Protocol, TypeVar
+
+    P = ParamSpec("P")
+    T = TypeVar("T")
+
+    class Old(Generic[T, P]): ...
+
+    class OldProto(Protocol[P]):
+        def __call__(self, *args: P.args, **kwargs: P.kwargs) -> None: ...
+
+    class New[**Q]: ...
+
+    type NewAlias[**Q] = Callable[Q, int]
+    OldAlias = Callable[P, int]
+
+    def f(
+        a: Callable[P, int],
+        b: collections.abc.Callable[P, int],
+        c: Callable[Concatenate[int, P], int],
+        d: Old[int, P],
+        e: New[P],
+        g: NewAlias[P],
+        h: OldAlias[P],
+        i: "Callable[P, int]",
+        j: "New[P]",
+        k: Annotated[int, P | None],
+        l: Annotated[int, [P]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Callable[P, int]: ...
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92895"])
+  fun `ParamSpec from another module`() = test(
+    """
+    from typing import Callable
+    import mod
+    from mod import P
+
+    def f(x: P, y: mod.P, z: tuple[mod.P]) -> None: ...
+    #        │     │               ^^^^^ WARNING ParamSpec is not allowed in this context
+    #        │     ^^^^^ WARNING ParamSpec cannot be used as the type of a parameter
+    #        └ WARNING ParamSpec cannot be used as the type of a parameter
+
+    def g(c: Callable[P, int], d: Callable[mod.P, int], *args: P.args, **kwargs: P.kwargs) -> None: ...
+    """.trimIndent(),
+    "mod.py" to """
+      from typing import ParamSpec
+
+      P = ParamSpec("P")
+      """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-92895"])
+  fun `ParamSpec in type comment`() = test("""
+    from typing import Callable
+
+    def f[**P](c: Callable[P, int]) -> None:
+        x = c  # type: P
+    #       │          └ WARNING ParamSpec is not allowed in this context
+    #       └ WARNING Expected type '**P', got '(**P) -> int' instead
     """.trimIndent())
 
   @Test
