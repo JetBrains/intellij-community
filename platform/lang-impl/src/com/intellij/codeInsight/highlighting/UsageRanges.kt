@@ -4,7 +4,7 @@ package com.intellij.codeInsight.highlighting
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 data class UsageRanges(
   val readRanges: Collection<TextRange>,
   val writeRanges: Collection<TextRange>,

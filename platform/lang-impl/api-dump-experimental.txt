@@ -296,6 +296,20 @@ com.intellij.codeInsight.editorActions.CopyPastePreProcessor
 - startPaste(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
 f:com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 - *s:highlightUsages(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.util.List,java.util.List,Z):V
+*f:com.intellij.codeInsight.highlighting.UsageRanges
+- <init>(java.util.Collection,java.util.Collection,java.util.Collection,java.util.Collection):V
+- f:component1():java.util.Collection
+- f:component2():java.util.Collection
+- f:component3():java.util.Collection
+- f:component4():java.util.Collection
+- f:copy(java.util.Collection,java.util.Collection,java.util.Collection,java.util.Collection):com.intellij.codeInsight.highlighting.UsageRanges
+- bs:copy$default(com.intellij.codeInsight.highlighting.UsageRanges,java.util.Collection,java.util.Collection,java.util.Collection,java.util.Collection,I,java.lang.Object):com.intellij.codeInsight.highlighting.UsageRanges
+- equals(java.lang.Object):Z
+- f:getReadDeclarationRanges():java.util.Collection
+- f:getReadRanges():java.util.Collection
+- f:getWriteDeclarationRanges():java.util.Collection
+- f:getWriteRanges():java.util.Collection
+- hashCode():I
 *f:com.intellij.codeInsight.hints.BlockInlayRenderer
 - com.intellij.codeInsight.hints.LinearOrderInlayRenderer
 - <init>(com.intellij.codeInsight.hints.presentation.PresentationFactory,java.util.Collection):V

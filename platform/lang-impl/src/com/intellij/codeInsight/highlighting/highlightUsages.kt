@@ -58,7 +58,7 @@ private fun highlightSymbolUsages(project: Project, editor: Editor, file: PsiFil
   HighlightUsagesHandler.setStatusText(project, null, readRanges.size + writeRanges.size, clearHighlights)
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun getUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges? {
   val psiTarget: PsiElement? = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
   val hostFile = InjectedLanguageManager.getInstance(file.project).getTopLevelFile(file) ?: file
