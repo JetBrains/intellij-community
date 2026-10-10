@@ -1427,14 +1427,19 @@ class PyTypeHintsInspection : PyInspection() {
 
       val isExplicitTypeAlias = PyTypingTypeProvider.isExplicitTypeAlias(declaration, myTypeEvalContext)
       val generics = collectTypeParametersFromTypeAlias(assignedValue, assignedValueType, isExplicitTypeAlias)
-      if (generics.isEmpty) {
+      val typeParametersOfType = generics.allTypeParameters.distinct()
+      val typeParametersInValue = findTypeParametersInTypeAliasValue(assignedValue)
+      val namesOfType = typeParametersOfType.map { it.name }.toSet()
+      val namesInValue = typeParametersInValue.map { it.name }.toSet()
+      val typeParameters = if (namesInValue.size > namesOfType.size && namesInValue.containsAll(namesOfType)) typeParametersInValue
+      else typeParametersOfType
+      if (typeParameters.isEmpty() && generics.isEmpty) {
         registerProblem(node.indexExpression,
                         PyPsiBundle.message("INSP.type.hints.generic.type.alias.is.not.generic.or.already.parameterized"),
                         ProblemHighlightType.WARNING)
         return
       }
       val typeArguments = checkGenericTypeArguments(node)
-      val typeParameters = generics.allTypeParameters.distinct()
       if (typeArguments != null) {
         val message = PyPsiBundle.problemMessage("INSP.type.hints.type.arguments.do.not.match.type.parameters.of.alias", declaration.name)
         checkTypeArgumentsMatchTypeParameters(node, typeParameters, typeArguments, message)
@@ -1473,6 +1478,45 @@ class PyTypeHintsInspection : PyInspection() {
                                     ?: return PyTypeChecker.Generics()
         return genericDefinitionType.collectGenerics(myTypeEvalContext)
       }
+    }
+
+    /**
+     * Finds the type parameters that [value] of an old-style type alias references, also inside forward references.
+     *
+     * The type of a recursive alias such as `Tree = Node["Tree[T]"]` can miss some of them,
+     * because the type provider gives `Unknown` for the recursive reference.
+     * The result keeps the order of the first occurrence.
+     */
+    private fun findTypeParametersInTypeAliasValue(value: PyExpression): List<PyTypeParameterType> {
+      val result = LinkedHashSet<PyTypeParameterType>()
+      value.accept(object : PyRecursiveElementVisitor() {
+        override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
+          val operand = node.operand as? PyReferenceExpression
+          if (operand != null && resolvesToAnyOfQualifiedNames(operand, PyTypingTypeProvider.LITERAL, PyTypingTypeProvider.LITERAL_EXT)) {
+            return
+          }
+          if (operand != null && resolvesToAnyOfQualifiedNames(operand, PyTypingTypeProvider.ANNOTATED, PyTypingTypeProvider.ANNOTATED_EXT)) {
+            val index = PyPsiUtils.flattenParens(node.indexExpression)
+            ((index as? PyTupleExpression)?.elements?.firstOrNull() ?: index)?.accept(this)
+            return
+          }
+          // A type parameter cannot be the operand, so only the index can contain one
+          node.indexExpression?.accept(this)
+        }
+
+        override fun visitPyStringLiteralExpression(node: PyStringLiteralExpression) {
+          val contents = node.stringValue
+          PyUtil.createExpressionFromFragment(if ("\n" in contents) "($contents)" else contents, node)?.accept(this)
+        }
+
+        override fun visitPyReferenceExpression(node: PyReferenceExpression) {
+          val type = Ref.deref(PyTypingTypeProvider.getType(node, myTypeEvalContext))
+          if (type is PyTypeParameterType) {
+            result.add(type)
+          }
+        }
+      })
+      return result.toList()
     }
 
     private fun checkGenericTypeArguments(node: PySubscriptionExpression, isCallable: Boolean = false): List<PyType?>? {
