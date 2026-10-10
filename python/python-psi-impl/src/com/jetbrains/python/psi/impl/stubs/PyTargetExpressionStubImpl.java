@@ -36,6 +36,7 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
   private final @Nullable PyLiteralKind myAssignedLiteralKind;
   private final @Nullable String myAssignedLiteralValue;
   private final boolean myQualified;
+  private final boolean myTypeAliasLikeReference;
   private final String myTypeComment;
   private final String myAnnotation;
   private final boolean myHasAssignedValue;
@@ -61,6 +62,7 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
     myAssignedLiteralValue = null;
     myInitializer = null;
     myQualified = false;
+    myTypeAliasLikeReference = false;
     myCustomStub = customStub;
     myDocString = docString;
   }
@@ -72,6 +74,7 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
                                     final @Nullable PyLiteralKind assignedLiteralKind,
                                     final @Nullable String assignedLiteralValue,
                                     final boolean qualified,
+                                    boolean typeAliasLikeReference,
                                     @Nullable String typeComment,
                                     @Nullable String annotation,
                                     boolean hasAssignedValue,
@@ -88,6 +91,7 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
     myAssignedLiteralKind = assignedLiteralKind;
     myAssignedLiteralValue = assignedLiteralValue;
     myQualified = qualified;
+    myTypeAliasLikeReference = typeAliasLikeReference;
     myCustomStub = null;
     myDocString = docString;
   }
@@ -120,6 +124,11 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
   @Override
   public boolean isQualified() {
     return myQualified;
+  }
+
+  @Override
+  public boolean isTypeAliasLikeReference() {
+    return myTypeAliasLikeReference;
   }
 
   @Override
@@ -156,6 +165,7 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
            ", myAssignedLiteralKind=" + myAssignedLiteralKind +
            ", myAssignedLiteralValue=" + myAssignedLiteralValue +
            ", myQualified=" + myQualified +
+           ", myTypeAliasLikeReference=" + myTypeAliasLikeReference +
            ", myTypeComment='" + myTypeComment + '\'' +
            ", myAnnotation='" + myAnnotation + '\'' +
            ", myHasAssignedValue=" + myHasAssignedValue +
