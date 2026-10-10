@@ -713,6 +713,9 @@ com.intellij.ide.projectView.impl.ProjectViewListener
 *f:com.intellij.microservices.utils.UsagesNavigationGutterIconBuilder$Companion
 - f:create(javax.swing.Icon,com.intellij.util.NotNullFunction):com.intellij.microservices.utils.UsagesNavigationGutterIconBuilder
 - f:create(javax.swing.Icon,com.intellij.util.NotNullFunction,com.intellij.util.NotNullFunction):com.intellij.microservices.utils.UsagesNavigationGutterIconBuilder
+*f:com.intellij.model.psi.impl.TargetsKt
+- *sf:targetDeclarationAndReferenceSymbols(com.intellij.psi.PsiFile,I):kotlin.Pair
+- *sf:targetSymbols(com.intellij.psi.PsiFile,I):java.util.Collection
 *:com.intellij.openapi.editor.actions.lists.ListSplitJoinContext
 - *sf:Companion:com.intellij.openapi.editor.actions.lists.ListSplitJoinContext$Companion
 - a:extractData(com.intellij.psi.PsiElement):com.intellij.openapi.editor.actions.lists.ListWithElements
