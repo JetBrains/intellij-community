@@ -247,8 +247,9 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     PyExpression typeExpression = typeAliasStatement.getTypeExpression();
     if (typeExpression != null) {
       result.append(styledSpan(" = ", PyHighlighter.PY_OPERATION_SIGN));
-      result.append(styledSpan(formatTypeWithLinks(context.getType(typeExpression),
-                                                   typeExpression, typeAliasStatement, context), PyHighlighter.PY_ANNOTATION));
+      PyType aliasedType = Ref.deref(PyTypingTypeProvider.getType(typeExpression, context));
+      result.append(styledSpan(formatTypeWithLinks(aliasedType, typeExpression, typeAliasStatement, context),
+                               PyHighlighter.PY_ANNOTATION));
     }
     return result.toFragment();
   }
