@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+
 /**
  * A factory for durable databases
  *
@@ -32,6 +34,12 @@ public record DurableDatabaseFactory(int chunkSize,
                                      @Nullable HousekeepingConfiguration housekeepingConfiguration,
                                      @NotNull List<OnStartupHousekeeper> startupHousekeepers)
   implements StorageFactory<DurableDatabase> {
+
+  /// Enables self-checking during normal DB operations executions: adds overhead, but reduces anxiety;
+  /// Useful for running tests, there performance matters less.
+  public static final boolean ENABLE_SELF_CHECKS = getBooleanProperty(
+    "com.intellij.platform.util.io.storages.database.ENABLE_SELF_CHECKS", false
+  );
 
   public static final int DEFAULT_CHUNK_SIZE = BlocksDatabaseFactory.DEFAULT_CHUNK_SIZE;
   public static final boolean DEFAULT_FSYNC_ON_FLUSH = BlocksDatabaseFactory.DEFAULT_FSYNC_ON_FLUSH;

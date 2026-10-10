@@ -210,6 +210,8 @@ final class DatabaseChunk implements Closeable, Flushable {
 
       ChunkHeaderLayout.publishAllocatedTail(chunkSegment, blockEnd);
       origin.copyTo(chunkSegment.asSlice(blockOffset, origin.blockLength()));
+      //TODO RC: we could probably skip all the checks/verifications in .open(), because it is 100% copy of data
+      //         from valid block?
       var copy = DatabaseBlock.open(storagePath(), chunkSegment, chunkId.chunkId(), blockOffset, blockEnd);
       blocks.add(copy);
       ChunkHeaderLayout.publishCommittedTail(chunkSegment, blockEnd);
