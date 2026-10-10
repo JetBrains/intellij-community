@@ -95,6 +95,15 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
     return value != null ? new PyTypingTypeAliasStubImpl(value.getText()) : null;
   }
 
+  /**
+   * Whether the reference that is assigned to the target is the value of a type alias.
+   * {@link PyTargetExpressionStub#isTypeAliasLikeReference()} keeps this result,
+   * so that {@link #getAssignedValueStubLike} applies the same rules with the stub and with the AST.
+   */
+  static boolean isTypeAliasLikeReference(@NotNull PyTargetExpression target) {
+    return getAssignedValueIfTypeAliasLike(target, false) instanceof PyReferenceExpression;
+  }
+
   private static @Nullable PyExpression getAssignedValueIfTypeAliasLike(@NotNull PyTargetExpression target, boolean forStubCreation) {
     if (!(PyUtil.isTopLevel(target) || ScopeUtil.getScopeOwner(target) instanceof PyClass) || !looksLikeTypeAliasTarget(target)) {
       return null;
@@ -270,7 +279,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
         if (aliasStub != null) {
           aliasText = aliasStub.getText();
         }
-        else if (stub.getInitializerType() == InitializerType.ReferenceExpression) {
+        else if (stub.getInitializerType() == InitializerType.ReferenceExpression && stub.isTypeAliasLikeReference()) {
           aliasText = Objects.toString(stub.getInitializer(), null);
         }
         if (aliasText != null) {

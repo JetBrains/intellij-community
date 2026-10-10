@@ -56,6 +56,13 @@ public interface PyTargetExpressionStub
 
   boolean isQualified();
 
+  /**
+   * Whether the reference initializer is the value of a type alias.
+   * It is {@code false} for any other initializer type.
+   */
+  @ApiStatus.Internal
+  boolean isTypeAliasLikeReference();
+
   @ApiStatus.Internal
   @Nullable
   <T> T getCustomStub(Class<T> stubClass);

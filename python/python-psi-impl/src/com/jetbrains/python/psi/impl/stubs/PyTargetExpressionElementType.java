@@ -41,6 +41,8 @@ import java.util.List;
 public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExpressionStub, PyTargetExpression>
   implements
   PyCustomizableStubElementType<PyTargetExpression, CustomTargetExpressionStub, CustomTargetExpressionStubType<? extends CustomTargetExpressionStub>> {
+  private static final byte QUALIFIED = 1;
+  private static final byte TYPE_ALIAS_LIKE_REFERENCE = 2;
 
   public PyTargetExpressionElementType() {
     super("TARGET_EXPRESSION");
@@ -79,10 +81,12 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     QualifiedName initializer = null;
     PyLiteralKind assignedLiteralKind = null;
     String assignedLiteralValue = null;
+    boolean typeAliasLikeReference = false;
     final Ref<QualifiedName> assignedReference = PyTargetExpressionImpl.getAssignedReferenceQualifiedName(psi);
     if (assignedReference != null) {
       initializerType = PyTargetExpressionStub.InitializerType.ReferenceExpression;
       initializer = assignedReference.get();
+      typeAliasLikeReference = PyTypingAliasStubType.isTypeAliasLikeReference(psi);
     }
     else {
       final Ref<QualifiedName> assignedCallCalleeReference = PyTargetExpressionImpl.getAssignedCallCalleeQualifiedName(psi);
@@ -96,7 +100,8 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
       }
     }
     return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, assignedLiteralKind, assignedLiteralValue,
-                                          psi.isQualified(), typeComment, annotation, psi.hasAssignedValue(), parentStub, versions);
+                                          psi.isQualified(), typeAliasLikeReference, typeComment, annotation, psi.hasAssignedValue(),
+                                          parentStub, versions);
   }
 
   @Override
@@ -115,7 +120,10 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     }
     else {
       QualifiedName.serialize(stub.getInitializer(), stream);
-      stream.writeBoolean(stub.isQualified());
+      byte flags = 0;
+      if (stub.isQualified()) flags |= QUALIFIED;
+      if (stub.isTypeAliasLikeReference()) flags |= TYPE_ALIAS_LIKE_REFERENCE;
+      stream.writeByte(flags);
       PyLiteralKind.serialize(stream, stub.getAssignedLiteralKind());
       DataInputOutputUtil.writeNullable(stream, stub.getAssignedLiteralValue(), stream::writeUTFFast);
     }
@@ -139,11 +147,13 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
       return new PyTargetExpressionStubImpl(name, docString, typeComment, annotation, hasAssignedValue, stub, parentStub, versions);
     }
     QualifiedName initializer = QualifiedName.deserialize(stream);
-    boolean isQualified = stream.readBoolean();
+    byte flags = stream.readByte();
+    boolean isQualified = (flags & QUALIFIED) != 0;
+    boolean typeAliasLikeReference = (flags & TYPE_ALIAS_LIKE_REFERENCE) != 0;
     PyLiteralKind literalKind = PyLiteralKind.deserialize(stream);
     var literalValue = DataInputOutputUtil.readNullable(stream, stream::readUTFFast);
     return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, literalKind, literalValue, isQualified,
-                                          typeComment, annotation, hasAssignedValue, parentStub, versions);
+                                          typeAliasLikeReference, typeComment, annotation, hasAssignedValue, parentStub, versions);
   }
 
   @Override
