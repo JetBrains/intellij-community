@@ -8,14 +8,15 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestApplication
 public class RemoveUnusedParameterMainMethodTest {
@@ -30,6 +31,6 @@ public class RemoveUnusedParameterMainMethodTest {
       void main(String[] args<caret>) { }
       """);
     List<IntentionAction> intentions = myFixture.getAvailableIntentions();
-    assertEquals("Safe delete 'args'", intentions.get(0).getText());
+    Assertions.assertTrue(ContainerUtil.exists(intentions, intention -> "Safe delete 'args'".equals(intention.getText())));
   }
 }

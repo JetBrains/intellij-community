@@ -1,7 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz.constructor;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
@@ -149,12 +149,12 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       if (null != existedStaticMethod) {
         if (paramTypes.isEmpty()) {
           builder.addErrorMessage("inspection.message.method.s.matched.static.constructor.name.already.defined", staticConstructorName)
-            .withLocalQuickFixes(() -> new SafeDeleteFix(existedStaticMethod));
+            .withLocalQuickFixes(() -> QuickFixFactory.getInstance().createSafeDeleteFix(existedStaticMethod));
         }
         else {
           builder.addErrorMessage("inspection.message.method.s.with.d.parameters.matched.static.constructor.name.already.defined",
                                   staticConstructorName, paramTypes.size())
-            .withLocalQuickFixes(() -> new SafeDeleteFix(existedStaticMethod));
+            .withLocalQuickFixes(() -> QuickFixFactory.getInstance().createSafeDeleteFix(existedStaticMethod));
         }
         result = false;
       }
@@ -183,7 +183,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       if (paramTypes.isEmpty()) {
         builder.addErrorMessage("inspection.message.constructor.without.parameters.already.defined")
           .withLocalQuickFixes(
-            () -> new SafeDeleteFix(existedMethod),
+            () -> QuickFixFactory.getInstance().createSafeDeleteFix(existedMethod),
             () -> {
               final var annotationFqn = Arrays.stream(getSupportedAnnotationClasses()).findFirst().orElse(null);
               return PsiQuickFixFactory.createDeleteAnnotationFix(psiClass, annotationFqn);
@@ -194,7 +194,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
         final String name = HighlightMessageUtil.getSymbolName(existedMethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_TYPE);
         builder.addErrorMessage("inspection.message.constructor.with.d.parameters.already.defined", name)
           .withLocalQuickFixes(
-            () -> new SafeDeleteFix(existedMethod),
+            () -> QuickFixFactory.getInstance().createSafeDeleteFix(existedMethod),
             () -> {
               final var annotationFqn = Arrays.stream(getSupportedAnnotationClasses()).findFirst().orElse(null);
               return PsiQuickFixFactory.createDeleteAnnotationFix(psiClass, annotationFqn);

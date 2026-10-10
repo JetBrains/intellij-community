@@ -2,16 +2,25 @@
 package org.jetbrains.plugins.groovy.refactoring.safeDelete;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.bundled.BundledGroovy;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author Max Medvedev
  */
 public class SafeDeleteJavaTest extends LightGroovyTestCase {
+  /** The search resolves classes through the bundled Groovy jar, which a local Bazel run on Windows keeps outside the allowed roots. */
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), BundledGroovy.getBundledGroovyFile().get().getPath());
+  }
+
   public void testGroovyCall() {
     doTest("""
              class A {

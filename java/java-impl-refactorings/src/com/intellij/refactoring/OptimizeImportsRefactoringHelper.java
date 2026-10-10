@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -19,10 +19,10 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.rename.CollisionUsageInfo;
 import com.intellij.refactoring.util.RelatedUsageInfo;
 import com.intellij.usageView.UsageInfo;
@@ -161,30 +161,39 @@ class OptimizeImportsTask implements SequentialTask {
 
     final PsiImportStatementBase importStatement = pointer.getElement();
     if (importStatement != null && importStatement.isValid()) {
-      final PsiJavaCodeReferenceElement ref = importStatement.getImportReference();
-      //Do not remove non-resolving refs
-      if (ref != null) {
-        final PsiElement resolve = ref.resolve();
-        try {
-          if (resolve != null) {
-            if (!(resolve instanceof PsiPackage) || ((PsiPackage)resolve).getDirectories(ref.getResolveScope()).length != 0) {
-              importStatement.delete();
-            }
-          }
-          //preserve comments and don't need to distinguish static/normal imports and on-demand variations
-          else {
-            Collection<String> imports = myDuplicates.computeIfAbsent(pointer.getContainingFile(), file -> new HashSet<>());
-            if (!imports.add(importStatement.getText())) {
-              importStatement.delete();
-            }
-          }
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
+      deleteRedundantImport(importStatement, myDuplicates.computeIfAbsent(pointer.getContainingFile(), file -> new HashSet<>()));
     }
 
     return isDone();
+  }
+
+  /**
+   * Deletes a redundant import, unless its reference resolves to nothing: such an import is deleted only if it repeats the text of
+   * another one.
+   *
+   * @param unresolvedImports the texts of the unresolved imports of the file met before
+   */
+  static void deleteRedundantImport(@NotNull PsiImportStatementBase importStatement, @NotNull Collection<String> unresolvedImports) {
+    final PsiJavaCodeReferenceElement ref = importStatement.getImportReference();
+    //Do not remove non-resolving refs
+    if (ref != null) {
+      final PsiElement resolve = ref.resolve();
+      try {
+        if (resolve != null) {
+          if (!(resolve instanceof PsiPackage aPackage) || aPackage.getDirectories(ref.getResolveScope()).length != 0) {
+            importStatement.delete();
+          }
+        }
+        //preserve comments and don't need to distinguish static/normal imports and on-demand variations
+        else {
+          if (!unresolvedImports.add(importStatement.getText())) {
+            importStatement.delete();
+          }
+        }
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
   }
 }

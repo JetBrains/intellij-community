@@ -100,7 +100,7 @@ public class OverridingMethodsDialog extends DialogWrapper {
       return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, PsiFormatUtilBase.SHOW_TYPE);
     }
     else {
-      return SymbolPresentationUtil.getSymbolPresentableText(overridingMethod);
+      return overridingMethod == null ? "" : SymbolPresentationUtil.getSymbolPresentableText(overridingMethod);
     }
   }
 

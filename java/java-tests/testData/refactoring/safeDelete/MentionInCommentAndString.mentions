@@ -1,0 +1,2 @@
+MentionInCommentAndString.java:5: // gone() is not used any more
+MentionInCommentAndString.java:6: String name = "gone";

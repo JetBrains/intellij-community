@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.safeDelete;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -7,6 +7,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.modplan.ModPlanEdit;
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo;
 import com.intellij.usageView.UsageInfo;
@@ -78,6 +79,13 @@ public final class JavaSafeDeleteDelegateForGroovy implements JavaSafeDeleteDele
             ((GrDocMethodReference)e).bindToText(e.getProject(), newText.toString());
           }
         }
+
+        @Override
+        public @Nullable ModPlanEdit asModPlanEdit() {
+          return getElement() instanceof GrDocMethodReference reference
+                 ? ModPlanEdit.update(reference, copy -> copy.bindToText(copy.getProject(), newText.toString()))
+                 : null;
+        }
       });
     }
   }
@@ -98,23 +106,37 @@ public final class JavaSafeDeleteDelegateForGroovy implements JavaSafeDeleteDele
             public void deleteElement() throws IncorrectOperationException {
               PsiElement element = getElement();
               if (element != null) {
-                PsiElement parent = element.getParent();
-                if (parent != null && parent.isValid()) {
-                  @Nullable PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
-                  if (next != null && PsiUtilCore.getElementType(next) == GroovyElementTypes.T_COMMA) {
-                    next.delete();
-                  }
-                  else {
-                    @Nullable PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element);
-                    if (prev != null && PsiUtilCore.getElementType(prev) == GroovyElementTypes.T_COMMA) {
-                      prev.delete();
-                    }
-                  }
-                }
+                deleteSeparatingComma(element);
               }
               super.deleteElement();
             }
+
+            @Override
+            public @Nullable ModPlanEdit asModPlanEdit() {
+              PsiElement element = getElement();
+              if (element == null) return null;
+              return ModPlanEdit.update(element, copy -> {
+                deleteSeparatingComma(copy);
+                deleteReference(copy);
+              });
+            }
           });
+        }
+      }
+    }
+  }
+
+  private static void deleteSeparatingComma(@NotNull PsiElement element) {
+    PsiElement parent = element.getParent();
+    if (parent != null && parent.isValid()) {
+      @Nullable PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
+      if (next != null && PsiUtilCore.getElementType(next) == GroovyElementTypes.T_COMMA) {
+        next.delete();
+      }
+      else {
+        @Nullable PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element);
+        if (prev != null && PsiUtilCore.getElementType(prev) == GroovyElementTypes.T_COMMA) {
+          prev.delete();
         }
       }
     }

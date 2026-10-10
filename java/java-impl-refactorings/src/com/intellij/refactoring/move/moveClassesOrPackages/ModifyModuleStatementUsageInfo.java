@@ -1,26 +1,29 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiPackageAccessibilityStatement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ModifyModuleStatementUsageInfo extends UsageInfo {
-  private final PsiJavaModule myModuleDescriptor;
+  private final SmartPsiElementPointer<PsiJavaModule> myModuleDescriptor;
   private final ModifyingOperation myModifyingOperation;
 
   private ModifyModuleStatementUsageInfo(@NotNull PsiPackageAccessibilityStatement moduleStatement,
                                          @NotNull PsiJavaModule descriptor,
                                          @NotNull ModifyingOperation modifyingOperation) {
     super(moduleStatement);
-    myModuleDescriptor = descriptor;
+    myModuleDescriptor = SmartPointerManager.createPointer(descriptor);
     myModifyingOperation = modifyingOperation;
   }
 
-  public @NotNull PsiJavaModule getModuleDescriptor() {
-    return myModuleDescriptor;
+  /** @return the module descriptor, from a smart pointer: the usage can be kept after a change of PSI. Null if the descriptor is gone */
+  public @Nullable PsiJavaModule getModuleDescriptor() {
+    return myModuleDescriptor.getElement();
   }
 
   public @Nullable PsiPackageAccessibilityStatement getModuleStatement() {

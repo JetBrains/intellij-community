@@ -191,7 +191,7 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createNavigateToDuplicateElementFix(@NotNull NavigatablePsiElement element);
 
-  public abstract @NotNull IntentionAction createShowDuplicateElementsFix(@NotNull List<@NotNull ? extends NavigatablePsiElement> elements);
+  public abstract @NotNull IntentionAction createShowDuplicateElementsFix(@NotNull List<? extends @NotNull NavigatablePsiElement> elements);
 
   public abstract @NotNull IntentionAction createConvertToStringLiteralAction();
 
@@ -367,7 +367,27 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createDeleteSideEffectAwareFix(@NotNull PsiExpressionStatement statement);
 
-  public abstract @NotNull IntentionAction createSafeDeleteFix(@NotNull PsiElement element);
+  /**
+   * Every safe delete fix is created here. The fix runs on the ModPlan engine.
+   * <p>
+   * <b>Known differences from the legacy flow</b>; the full list is in the Javadoc of
+   * {@code com.intellij.refactoring.modplan.ModPlanCommandAction}:
+   * <ul>
+   *   <li>the non-code usages in comments, strings and non-code files are shown in the conflicts dialog, not in the usage view;</li>
+   *   <li>a client of LSP that cannot show the conflicts goes on with the deletion, and a message lists the conflicts and the non-code
+   *   usages;</li>
+   *   <li>the fix is not offered for an element that the ModPlan safe delete does not support. With the Bazel plugin of
+   *   {@code community/android/aswb}, its {@code BuildFileSafeDeleteProcessor} owns every Java element, so no Java element has the fix;</li>
+   *   <li>the search options start with the remembered values, and the answers are not stored; batch execution takes the remembered
+   *   values;</li>
+   *   <li>no refactoring event and no local history label; the undo of the changes in several files is not checked;</li>
+   *   <li>the preview shows the deletion of the element alone, not the usages;</li>
+   *   <li>in the inspection results the fix shows its family name, not its text;</li>
+   * </ul>
+   *
+   * @return the safe delete of {@code element} on the ModPlan engine
+   */
+  public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createSafeDeleteFix(@NotNull PsiElement element);
 
   /**
    * @param method method to delete

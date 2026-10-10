@@ -692,6 +692,7 @@
                                    implementationClass="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyMemberHandler"/>
 
     <refactoring.helper implementation="org.jetbrains.plugins.groovy.refactoring.GroovyImportOptimizerRefactoringHelper"/>
+    <refactoring.modPlanListener implementation="org.jetbrains.plugins.groovy.refactoring.GroovyModPlanImportOptimizerListener"/>
     <codeInsight.lineMarkerProvider language="Groovy"
                                     implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="Groovy"

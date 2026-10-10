@@ -261,7 +261,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     List<UsageInfo> allUsages = new SmartList<>(usages);
     allUsages.addAll(myModuleInfoUsageDetector.createUsageInfosForNewlyCreatedDirs());
     Map<PsiJavaModule, List<ModifyModuleStatementUsageInfo>> moduleStatementsByDescriptor = StreamEx.of(allUsages)
-      .select(ModifyModuleStatementUsageInfo.class).groupingBy(usage -> usage.getModuleDescriptor());
+      .select(ModifyModuleStatementUsageInfo.class).filter(usage -> usage.getModuleDescriptor() != null)
+      .groupingBy(usage -> usage.getModuleDescriptor());
     modifyModuleStatements(moduleStatementsByDescriptor);
   }
 

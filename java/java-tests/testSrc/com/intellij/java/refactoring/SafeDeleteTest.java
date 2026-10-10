@@ -8,9 +8,12 @@ import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.scratch.ScratchRootType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -18,10 +21,15 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.MultiFileTestCase;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.modplan.ModPlanOption;
+import com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteOptions;
+import com.intellij.refactoring.safeDelete.ModPlanJavaSafeDeleteOptions;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.SafeDeleteTestSupport;
+import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
@@ -29,9 +37,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 public class SafeDeleteTest extends MultiFileTestCase {
   @Override
   protected void setUp() throws Exception {
+    allowBazelOutputBase();
     super.setUp();
     ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse);
   }
@@ -41,10 +59,35 @@ public class SafeDeleteTest extends MultiFileTestCase {
     return IdeaTestUtil.getMockJdk21();
   }
 
+  /**
+   * Under Bazel on Windows the first test indexes jars in {@code bazel-out} and {@code external} of the output base, which
+   * {@link VfsRootAccess} does not allow there, so the test allows the output base of its runfiles: the parent of {@code execroot}.
+   */
+  private void allowBazelOutputBase() throws IOException {
+    String testSrcDir = System.getenv("TEST_SRCDIR");
+    if (!BazelTestUtil.isUnderBazelTest() || testSrcDir == null) return;
+    for (Path path = Path.of(testSrcDir).toRealPath(); path.getParent() != null; path = path.getParent()) {
+      Path fileName = path.getFileName();
+      if (fileName != null && fileName.toString().equals("execroot")) {
+        VfsRootAccess.allowRootAccess(getTestRootDisposable(), FileUtil.toSystemIndependentName(path.getParent().toString()));
+        return;
+      }
+    }
+  }
+
+  /**
+   * @return the real path of the test data: under Bazel the path can differ in case from the real one, which the case check of
+   * {@link VfsTestUtil#findFileByCaseSensitivePath} rejects
+   */
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+    try {
+      return Path.of(JavaTestUtil.getJavaTestDataPath()).toRealPath().toString();
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   @NotNull
@@ -282,7 +325,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     try {
       doTest((rootDir, rootAfter) -> {
         configureByExistingFile(rootDir.findFileByRelativePath("src/p/ImplicitClass.java"));
-        performAction();
+        performAction(Map.of());
       });
       fail("Conflict expected");
     }
@@ -298,7 +341,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     try {
       doTest((rootDir, rootAfter) -> {
         configureByExistingFile(rootDir.findFileByRelativePath("src/p/ImplicitClass.java"));
-        performAction();
+        performAction(Map.of());
       });
       fail("Conflict expected");
     }
@@ -407,14 +450,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
       VirtualFile scratchFile = ScratchRootType.getInstance()
         .createScratchFile(getProject(), PathUtil.makeFileName("jScratch", "java"), JavaLanguage.INSTANCE,
                            "class jScratch {{//name()\n}}", ScratchFileService.Option.create_if_missing);
-      RefactoringSettings settings = RefactoringSettings.getInstance();
-      boolean oldCommentsOption = settings.SAFE_DELETE_SEARCH_IN_COMMENTS;
       try {
-        settings.SAFE_DELETE_SEARCH_IN_COMMENTS = true;
-        doSingleFileTest();
+        doSingleFileTest(Map.of(ModPlanSafeDeleteOptions.SEARCH_IN_COMMENTS, true));
       }
       finally {
-        settings.SAFE_DELETE_SEARCH_IN_COMMENTS = oldCommentsOption;
         WriteAction.run(() -> scratchFile.delete(this));
       }
     });
@@ -518,8 +557,84 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("pack1.First");
   }
 
+  public void testMentionInCommentAndString() {
+    doSingleFileTest(Map.of(ModPlanSafeDeleteOptions.SEARCH_IN_COMMENTS, true));
+  }
+
+  public void testMentionInCommentSearchOff() {
+    doSingleFileTest();
+  }
+
+  public void testMentionInNonCodeFiles() {
+    doTest("p.Gone", Map.of(ModPlanSafeDeleteOptions.SEARCH_IN_NON_CODE, true));
+  }
+
+  public void testReferenceInPropertiesAndXml() {
+    myDoCompare = false;
+    try {
+      doTest("p.Gone");
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("""
+                     Usage of class <b><code>p.Gone</code></b> that is not safe to delete.
+                     Usage of class <b><code>p.Gone</code></b> that is not safe to delete.""", e.getMessage());
+    }
+  }
+
+  public void testFieldWithAccessors() {
+    doSingleFileTest();
+  }
+
+  public void testSuperMethodDeleted() {
+    doSingleFileTest(Map.of(ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS, true));
+  }
+
+  public void testOverridersKept() {
+    doSingleFileTest(Map.of(ModPlanJavaSafeDeleteOptions.DELETE_OVERRIDERS, false));
+  }
+
+  public void testUnusedCalleesKept() {
+    doSingleFileTest(Map.of(ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, false));
+  }
+
+  public void testParameterInCallersKept() {
+    doSingleFileTest(Map.of(ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, false));
+  }
+
+  public void testSeveralMethods() { doSingleFileTest(); }
+
+  public void testSeveralMethodsCallingEachOther() { doSingleFileTest(); }
+
+  public void testSeveralMethodsOneUsed() {
+    try {
+      doSingleFileTest();
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Usage of method <b><code>A.first()</code></b> that is not safe to delete.", e.getMessage());
+    }
+  }
+
+  public void testSeveralParameters() { doSingleFileTest(); }
+
+  public void testUnusedOverloadedConstructor() { doSingleFileTest(); }
+
+  public void testUnusedEnumConstant() { doSingleFileTest(); }
+
+  public void testUnusedAnnotationMethod() { doSingleFileTest(); }
+
+  public void testVarargsParameter() { doSingleFileTest(); }
+
   private void doTest(@NonNls String qClassName) {
-    doTest((rootDir, rootAfter) -> performAction(qClassName));
+    doTest(qClassName, Map.of());
+  }
+
+  /**
+   * @param answers the answers to the questions of the deletion, on top of {@link #defaultAnswers()}
+   */
+  private void doTest(@NonNls String qClassName, @NotNull Map<ModPlanOption<?>, Object> answers) {
+    doTest((_, _) -> performAction(qClassName, answers));
   }
 
   @Override
@@ -539,9 +654,16 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   private void doSingleFileTest() {
+    doSingleFileTest(Map.of());
+  }
+
+  /**
+   * @param answers the answers to the questions of the deletion, on top of {@link #defaultAnswers()}
+   */
+  private void doSingleFileTest(@NotNull Map<ModPlanOption<?>, Object> answers) {
     try {
       configureByFile(getTestRoot() + getTestName(false) + ".java");
-      performAction();
+      performAction(answers);
       checkResultByFile(getTestRoot() + getTestName(false) + "_after.java");
     }
     catch (Exception e) {
@@ -549,20 +671,68 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
-  private void performAction(String qClassName) {
+  private void performAction(String qClassName, @NotNull Map<ModPlanOption<?>, Object> answers) {
     final PsiClass aClass = myJavaFacade.findClass(qClassName, GlobalSearchScope.allScope(getProject()));
     assertNotNull("Class " + qClassName + " not found", aClass);
     configureByExistingFile(aClass.getContainingFile().getVirtualFile());
     if (myEditor.getCaretModel().getOffset() == 0) {
       myEditor.getCaretModel().moveToOffset(aClass.getTextOffset());
     }
-    performAction();
+    performAction(answers);
   }
 
-  private void performAction() {
-    final PsiElement psiElement = TargetElementUtil
-      .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    assertNotNull("No element found in text:\n" + getFile().getText(), psiElement);
-    SafeDeleteHandler.invoke(getProject(), new PsiElement[]{psiElement}, true);
+  private void performAction(@NotNull Map<ModPlanOption<?>, Object> testAnswers) {
+    // Each caret marks an element; several carets delete their elements in one request.
+    List<PsiElement> elements = new ArrayList<>();
+    for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
+      PsiElement element = TargetElementUtil.getInstance().findTargetElement(
+        myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED, caret.getOffset());
+      if (element != null && !elements.contains(element)) {
+        elements.add(element);
+      }
+    }
+    assertFalse("No element found in text:\n" + getFile().getText(), elements.isEmpty());
+    Map<ModPlanOption<?>, Object> answers = new LinkedHashMap<>(defaultAnswers());
+    answers.putAll(testAnswers);
+    SafeDeleteTestSupport.NonCodeUsageRecorder nonCodeUsageRecorder = SafeDeleteTestSupport.applyOptions(answers, getTestRootDisposable());
+    performSafeDelete(elements, answers, nonCodeUsageRecorder);
+    // The conflicts list the non-code usages in their messages, so the non-code usages are checked only without them.
+    if (!BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
+      SafeDeleteTestSupport.checkNonCodeUsages(nonCodeUsageRecorder, answers, nonCodeUsageFile());
+    }
+  }
+
+  /**
+   * @return the file with the expected non-code usages of the test. On the ModPlan engine a file {@code <name>.modPlan.mentions} goes
+   * first: the ModPlan flows report the {@code exports} of an emptied package as non-code usages, where the legacy flow shows a
+   * notification.
+   */
+  private @NotNull Path nonCodeUsageFile() {
+    String pathWithoutExtension = getTestDataPath() + getTestRoot() + getTestName(false);
+    Path modPlanNonCodeUsageFile = Path.of(pathWithoutExtension + ".modPlan.mentions");
+    return runsOnModPlan() && Files.exists(modPlanNonCodeUsageFile) ? modPlanNonCodeUsageFile : Path.of(pathWithoutExtension + ".mentions");
+  }
+
+  protected boolean runsOnModPlan() {
+    return false;
+  }
+
+  /**
+   * @return the answers of every test of the class, below the answers of the test
+   */
+  protected @NotNull Map<ModPlanOption<?>, Object> defaultAnswers() {
+    return Map.of();
+  }
+
+  /**
+   * Deletes {@code elements} in one request with {@code answers}, which {@link SafeDeleteTestSupport#applyOptions} already gave to the
+   * interactive flows. A conflict throws {@link BaseRefactoringProcessor.ConflictsInTestsException} unless the test ignores the conflicts.
+   *
+   * @param nonCodeUsageRecorder gets the non-code usages of a deletion with no conflict
+   */
+  protected void performSafeDelete(@NotNull List<PsiElement> elements,
+                                   @NotNull Map<ModPlanOption<?>, Object> answers,
+                                   @NotNull SafeDeleteTestSupport.NonCodeUsageRecorder nonCodeUsageRecorder) {
+    SafeDeleteHandler.invoke(getProject(), elements.toArray(PsiElement.EMPTY_ARRAY), true);
   }
 }

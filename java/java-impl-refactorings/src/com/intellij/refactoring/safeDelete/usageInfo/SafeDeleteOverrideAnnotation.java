@@ -1,27 +1,17 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete.usageInfo;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.modplan.ModPlanEdit;
+import com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteUsage;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class SafeDeleteOverrideAnnotation extends SafeDeleteUsageInfo implements SafeDeleteCustomUsageInfo {
+public class SafeDeleteOverrideAnnotation extends SafeDeleteUsageInfo implements SafeDeleteCustomUsageInfo, ModPlanSafeDeleteUsage {
   public SafeDeleteOverrideAnnotation(PsiElement element, PsiElement referencedElement) {
     super(element, referencedElement);
   }
@@ -32,9 +22,21 @@ public class SafeDeleteOverrideAnnotation extends SafeDeleteUsageInfo implements
 
   @Override
   public void performRefactoring() throws IncorrectOperationException {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(getMethod(), true, Override.class.getName());
+    // An earlier usage may have removed the method: there is nothing to write.
+    PsiMethod method = getMethod();
+    if (method != null) removeOverride(method);
+  }
+
+  static void removeOverride(@NotNull PsiMethod method) throws IncorrectOperationException {
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, true, Override.class.getName());
     if (annotation != null) {
       annotation.delete();
     }
+  }
+
+  @Override
+  public @Nullable ModPlanEdit asModPlanEdit() {
+    if (!(getElement() instanceof PsiMethod method)) return null;
+    return ModPlanEdit.update(method, SafeDeleteOverrideAnnotation::removeOverride);
   }
 }

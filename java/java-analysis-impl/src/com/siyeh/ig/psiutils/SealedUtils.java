@@ -115,11 +115,21 @@ public final class SealedUtils {
   public static void removeFromPermitsList(@NotNull PsiClass parent, @NotNull PsiClass exChild) {
     PsiReferenceList permitsList = parent.getPermitsList();
     if (permitsList == null) return;
-    PsiJavaCodeReferenceElement[] childRefs = permitsList.getReferenceElements();
-    PsiJavaCodeReferenceElement exChildRef = ContainerUtil.find(childRefs, ref -> ref.resolve() == exChild);
+    PsiJavaCodeReferenceElement exChildRef = ContainerUtil.find(permitsList.getReferenceElements(), ref -> ref.resolve() == exChild);
     if (exChildRef == null) return;
+    removeFromPermitsList(parent, exChildRef);
+  }
+
+  /**
+   * Removes a reference that is already found from the permits list of a parent.
+   * If this was the last element in permits list then sealed modifier of parent class is removed.
+   */
+  public static void removeFromPermitsList(@NotNull PsiClass parent, @NotNull PsiJavaCodeReferenceElement exChildRef) {
+    PsiReferenceList permitsList = parent.getPermitsList();
+    if (permitsList == null) return;
+    int childRefs = permitsList.getReferenceElements().length;
     exChildRef.delete();
-    if (childRefs.length != 1) return;
+    if (childRefs != 1) return;
     PsiModifierList modifiers = parent.getModifierList();
     if (modifiers == null) return;
     modifiers.setModifierProperty(PsiModifier.SEALED, false);

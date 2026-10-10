@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.psi.PsiAnonymousClass;
@@ -28,6 +28,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.refactoring.modplan.ModPlanEdit;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteExtendsClassUsageInfo;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverrideAnnotation;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeletePermitsClassUsageInfo;
@@ -39,6 +40,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -87,7 +89,10 @@ public final class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate 
       PsiElement nameElement = ref.getNameElement();
       if (signature != null && nameElement != null) {
         final @NonNls StringBuffer newText = new StringBuffer();
-        newText.append("/** @see #").append(nameElement.getText()).append('(');
+        // The qualifier before '#' stays, so a reference to a method of another class keeps its class.
+        String refText = ref.getText();
+        String qualifier = refText.substring(0, Math.max(refText.indexOf('#'), 0));
+        newText.append("/** @see ").append(qualifier).append('#').append(nameElement.getText()).append('(');
         boolean hasParams = false;
         for (int i = 0; i < signature.length; i++) {
           if (i == paramIdx) continue;
@@ -100,34 +105,84 @@ public final class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate 
           newText.append(signature[i]);
         }
         newText.append(")*/");
-        usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, parameter, true) {
-          @Override
-          public void deleteElement() throws IncorrectOperationException {
-            final PsiDocMethodOrFieldRef.MethodOrFieldReference
-              javadocMethodReference = (PsiDocMethodOrFieldRef.MethodOrFieldReference)element.getReference();
-            if (javadocMethodReference != null) {
-              javadocMethodReference.bindToText(newText);
-            }
-          }
-        });
+        usages.add(new SafeDeleteJavadocParameterRefUsageInfo(element, parameter, newText));
       }
     }
     else if (element instanceof PsiMethodReferenceExpression) {
-      usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, parameter, true) {
-        @Override
-        public void deleteElement() throws IncorrectOperationException {
-          final PsiExpression callExpression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)element);
-          if (callExpression instanceof PsiCallExpression) {
-            final PsiExpressionList expressionList = ((PsiCallExpression)callExpression).getArgumentList();
-            if (expressionList != null) {
-              final PsiExpression[] args = expressionList.getExpressions();
-              if (paramIdx < args.length) {
-                args[paramIdx].delete();
-              }
-            }
+      usages.add(new SafeDeleteMethodReferenceParameterUsageInfo(element, parameter, paramIdx));
+    }
+  }
+
+  /**
+   * Rebinds a javadoc reference to a method or field without the deleted parameter.
+   */
+  private static final class SafeDeleteJavadocParameterRefUsageInfo extends SafeDeleteReferenceJavaDeleteUsageInfo {
+    private final @NotNull StringBuffer myNewText;
+
+    SafeDeleteJavadocParameterRefUsageInfo(@NotNull PsiElement element, @NotNull PsiElement parameter, @NotNull StringBuffer newText) {
+      super(element, parameter, true);
+      myNewText = newText;
+    }
+
+    @Override
+    public void deleteElement() throws IncorrectOperationException {
+      PsiElement element = getElement();
+      if (element != null) bindToText(element, myNewText);
+    }
+
+    private static void bindToText(@NotNull PsiElement element, @NotNull StringBuffer newText) throws IncorrectOperationException {
+      final PsiDocMethodOrFieldRef.MethodOrFieldReference
+        javadocMethodReference = (PsiDocMethodOrFieldRef.MethodOrFieldReference)element.getReference();
+      if (javadocMethodReference != null) {
+        javadocMethodReference.bindToText(newText);
+      }
+    }
+
+    @Override
+    public @Nullable ModPlanEdit asModPlanEdit() {
+      PsiElement element = getElement();
+      if (element == null) return null;
+      StringBuffer newText = myNewText;
+      return ModPlanEdit.update(element, copy -> bindToText(copy, newText));
+    }
+  }
+
+  /**
+   * Converts a method reference to a lambda, and deletes the argument of the deleted parameter from its call.
+   */
+  private static final class SafeDeleteMethodReferenceParameterUsageInfo extends SafeDeleteReferenceJavaDeleteUsageInfo {
+    private final int myParamIdx;
+
+    SafeDeleteMethodReferenceParameterUsageInfo(@NotNull PsiElement element, @NotNull PsiElement parameter, int paramIdx) {
+      super(element, parameter, true);
+      myParamIdx = paramIdx;
+    }
+
+    @Override
+    public void deleteElement() throws IncorrectOperationException {
+      PsiElement element = getElement();
+      if (element != null) toLambdaWithoutArgument(element, myParamIdx);
+    }
+
+    private static void toLambdaWithoutArgument(@NotNull PsiElement element, int paramIdx) throws IncorrectOperationException {
+      final PsiExpression callExpression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)element);
+      if (callExpression instanceof PsiCallExpression) {
+        final PsiExpressionList expressionList = ((PsiCallExpression)callExpression).getArgumentList();
+        if (expressionList != null) {
+          final PsiExpression[] args = expressionList.getExpressions();
+          if (paramIdx < args.length) {
+            args[paramIdx].delete();
           }
         }
-      });
+      }
+    }
+
+    @Override
+    public @Nullable ModPlanEdit asModPlanEdit() {
+      PsiElement element = getElement();
+      if (element == null) return null;
+      int paramIdx = myParamIdx;
+      return ModPlanEdit.update(element, copy -> toLambdaWithoutArgument(copy, paramIdx));
     }
   }
 

@@ -3,7 +3,7 @@ package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.options.JavaConfigurationDialogKind;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
@@ -290,7 +290,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
       PsiElement toHighlight = ObjectUtils.notNull(psiVariable.getNameIdentifier(), psiVariable);
       return myInspectionManager.createProblemDescriptor(
         toHighlight, JavaBundle.message("inspection.unused.assignment.problem.descriptor1"), 
-        psiVariable instanceof PsiLocalVariable ? LocalQuickFix.from(new RemoveUnusedVariableFix(psiVariable)) : new SafeDeleteFix(psiVariable),
+        psiVariable instanceof PsiLocalVariable ? LocalQuickFix.from(new RemoveUnusedVariableFix(psiVariable)) : QuickFixFactory.getInstance().createSafeDeleteFix(psiVariable),
         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
     }
   }

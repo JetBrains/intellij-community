@@ -102,7 +102,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceTypeWithWrongImportF
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithListAccessFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithTypePatternFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReuseVariableDeclarationFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.ModPlanSafeDeleteFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetVariableTypeFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ShowDuplicateElementsFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ShowModulePropertiesFix;
@@ -862,7 +862,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
         JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false).asIntention();
     }
     else {
-      return new SafeDeleteFix(parameter);
+      return createSafeDeleteFix(parameter);
     }
   }
 
@@ -917,8 +917,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createSafeDeleteFix(@NotNull PsiElement element) {
-    return new SafeDeleteFix(element);
+  public @NotNull LocalQuickFixAndIntentionActionOnPsiElement createSafeDeleteFix(@NotNull PsiElement element) {
+    return LocalQuickFixAndIntentionActionOnPsiElement.from(new ModPlanSafeDeleteFix(element), element);
   }
 
   @Override

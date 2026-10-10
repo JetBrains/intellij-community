@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -48,6 +48,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+//used in third-party plugins
+@SuppressWarnings("unused")
 public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   public SafeDeleteFix(@NotNull PsiElement element) {
     super(element);

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
@@ -19,8 +20,10 @@ import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSuperExpression;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -79,24 +82,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
         if (nodeMethod.equals(myMethod)) continue;
         int parameterIdx = methodNode.myParameterIdx;
         final PsiParameter parameter = nodeMethod.getParameterList().getParameters()[parameterIdx];
-        foreignMethodUsages.add(new SafeDeleteParameterCallHierarchyUsageInfo(nodeMethod, parameter, nodeMethod, parameter));
-        ReferencesSearch.search(nodeMethod).forEach(reference -> {
-          final PsiElement element = reference.getElement();
-          JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage());
-          if (safeDeleteDelegate != null) {
-            safeDeleteDelegate.createUsageInfoForParameter(reference, foreignMethodUsages, parameter, parameterIdx, parameter.isVarArgs());
-          }
-          return true;
-        });
-
-        ReferencesSearch.search(parameter).forEach(reference -> {
-          PsiElement element = reference.getElement();
-          final PsiDocTag docTag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
-          if (docTag != null) {
-            foreignMethodUsages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(docTag, parameter, true));
-          }
-          return true;
-        });
+        addUsagesToDeleteParameterInCaller(nodeMethod, parameter, parameterIdx, foreignMethodUsages);
       }
     };
 
@@ -106,6 +92,34 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
       myResult.addAll(foreignMethodUsages);
     }
     super.doOKAction();
+  }
+
+  /**
+   * Adds the usages that delete {@code parameter} of a chosen caller: the parameter, its arguments in the calls of the caller, and its
+   * javadoc tags.
+   */
+  private static void addUsagesToDeleteParameterInCaller(@NotNull PsiMethod caller,
+                                                         @NotNull PsiParameter parameter,
+                                                         int parameterIdx,
+                                                         @NotNull List<? super UsageInfo> usages) {
+    usages.add(new SafeDeleteParameterCallHierarchyUsageInfo(caller, parameter, caller, parameter));
+    ReferencesSearch.search(caller).forEach(reference -> {
+      final PsiElement element = reference.getElement();
+      JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage());
+      if (safeDeleteDelegate != null) {
+        safeDeleteDelegate.createUsageInfoForParameter(reference, usages, parameter, parameterIdx, parameter.isVarArgs());
+      }
+      return true;
+    });
+
+    ReferencesSearch.search(parameter).forEach(reference -> {
+      PsiElement element = reference.getElement();
+      final PsiDocTag docTag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
+      if (docTag != null) {
+        usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(docTag, parameter, true));
+      }
+      return true;
+    });
   }
 
   /**
@@ -190,7 +204,57 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
     return null;
   }
 
+  /**
+   * Adds the usages that delete the parameter in the chosen callers, as {@link #doOKAction} adds them for the checked nodes: a chosen
+   * caller of {@code callerUsages}, then the chosen callers of a chosen caller whose parameter only passes on its parameter.
+   *
+   * @param callerNames the external names of the chosen callers of any level; empty chooses the callers of {@code callerUsages} only
+   */
+  static void addChosenCallerUsages(@NotNull List<SafeDeleteParameterCallHierarchyUsageInfo> callerUsages,
+                                    @NotNull Set<String> callerNames,
+                                    @NotNull Set<PsiMethod> visitedCallers,
+                                    @NotNull List<? super UsageInfo> usages) {
+    for (SafeDeleteParameterCallHierarchyUsageInfo callerUsage : callerUsages) {
+      PsiMethod caller = callerUsage.getCallerMethod();
+      PsiParameter parameter = callerUsage.getParameterInCaller();
+      if (caller == null || parameter == null) continue;
+      if (!callerNames.isEmpty() && !callerNames.contains(JavaSafeDeleteProcessor.externalNameOf(caller)) || !visitedCallers.add(caller)) {
+        continue;
+      }
+      int parameterIdx = caller.getParameterList().getParameterIndex(parameter);
+      addUsagesToDeleteParameterInCaller(caller, parameter, parameterIdx, usages);
+      if (!callerNames.isEmpty()) {
+        addChosenCallerUsages(nextCallerUsages(caller, parameter, parameterIdx), callerNames, visitedCallers, usages);
+      }
+    }
+  }
+
+  /** The callers of {@code called} that the chooser shows under it: their parameter only passes on {@code parameter}. */
+  private static @NotNull List<SafeDeleteParameterCallHierarchyUsageInfo> nextCallerUsages(@NotNull PsiMethod called,
+                                                                                           @NotNull PsiParameter parameter,
+                                                                                           int parameterIdx) {
+    List<SafeDeleteParameterCallHierarchyUsageInfo> callerUsages = new ArrayList<>();
+    for (PsiReference reference : MethodReferencesSearch.search(called).findAll()) {
+      PsiElement element = reference.getElement();
+      if (element instanceof PsiReferenceExpression referenceExpression &&
+          referenceExpression.getQualifierExpression() instanceof PsiSuperExpression) {
+        continue;
+      }
+      if (PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class) instanceof PsiMethod caller && !caller.equals(called)) {
+        PsiParameter parameterInCaller = parameterInCaller(called, parameterIdx, caller);
+        if (parameterInCaller != null) {
+          callerUsages.add(new SafeDeleteParameterCallHierarchyUsageInfo(called, parameter, caller, parameterInCaller));
+        }
+      }
+    }
+    return callerUsages;
+  }
+
   protected PsiParameter getParameterInCaller(PsiMethod called, int paramIdx, PsiMethod caller) {
+    return parameterInCaller(called, paramIdx, caller);
+  }
+
+  private static PsiParameter parameterInCaller(PsiMethod called, int paramIdx, PsiMethod caller) {
     //do not change hierarchy
     if (caller.findDeepestSuperMethods().length > 0) {
       return null;
@@ -239,7 +303,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
     protected @Unmodifiable List<PsiMethod> computeCallers() {
       if (getTopMember().equals(getMember())) {
         List<SafeDeleteParameterCallHierarchyUsageInfo> items = getTopLevelItems();
-        return ContainerUtil.map(items, info -> info.getCallerMethod());
+        return ContainerUtil.mapNotNull(items, info -> info.getCallerMethod());
       }
       final List<PsiMethod> methods = new ArrayList<>(super.computeCallers());
       methods.remove(getTopMember());

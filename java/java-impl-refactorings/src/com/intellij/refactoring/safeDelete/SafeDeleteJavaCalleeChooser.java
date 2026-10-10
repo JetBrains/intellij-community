@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeletePrivateMethodFix;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -111,11 +111,11 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
     protected @Unmodifiable List<PsiElement> computeCallers() {
       PsiElement member = getMember();
       if (getTopMember().equals(member)) {
-        return ContainerUtil.map(getTopLevelItems(), info -> info.getCalledElement());
+        return ContainerUtil.mapNotNull(getTopLevelItems(), info -> info.getCalledElement());
       }
 
       if (!(member instanceof PsiMember)) return Collections.emptyList();
-      final List<PsiElement> callees = SafeDeleteFix.computeReferencedCodeSafeToDelete((PsiMember)member);
+      final List<PsiElement> callees = DeletePrivateMethodFix.computeReferencedCodeSafeToDelete((PsiMember)member);
       callees.remove(getTopMember());
       return callees;
     }

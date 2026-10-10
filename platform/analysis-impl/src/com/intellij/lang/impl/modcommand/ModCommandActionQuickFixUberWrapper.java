@@ -129,6 +129,11 @@ public final class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndI
   }
 
   @Override
+  public boolean availableInBatchMode() {
+    return myAction.availableInBatchMode();
+  }
+
+  @Override
   public String toString() {
     return "[LocalQuickFixAndIntentionActionOnPsiElement] " + myAction;
   }
