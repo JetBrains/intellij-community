@@ -45,7 +45,6 @@ object MarkdownLinkOpenerUtil {
   }
 
   fun navigateToHeader(project: Project, headerInfo: MarkdownHeaderInfo) {
-    createFileUri(headerInfo.filePath) ?: return
     val file = headerInfo.virtualFileId.virtualFile() ?: return
     val element = PsiUtilCore.getPsiFile(project, file).findElementAt(headerInfo.textOffset) ?: return
     val manager = FileEditorManager.getInstance(project)
@@ -58,15 +57,5 @@ object MarkdownLinkOpenerUtil {
     }
     openedEditor.navigateToHeader(headerInfo.textOffset, headerInfo.lineNumber)
     PsiNavigateUtil.navigate(element, true)
-  }
-
-  private fun createFileUri(link: String?): URI? {
-    try {
-      return URI("file", null, link, null)
-    }
-    catch (exception: URISyntaxException) {
-      logger.warn(exception)
-      return null
-    }
   }
 }
