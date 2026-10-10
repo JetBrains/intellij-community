@@ -91,7 +91,7 @@ Groovy script
                 PsiElement(true)('true')
               PsiErrorElement:')' expected, got ';'
                 <empty list>
-            PsiElement(;)(';')
+              PsiElement(;)(';')
             PsiWhiteSpace(' ')
             Block statement
               Open block

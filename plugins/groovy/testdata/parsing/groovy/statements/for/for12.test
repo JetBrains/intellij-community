@@ -17,4 +17,4 @@ Groovy script
         PsiElement([)('[')
         PsiElement(])(']')
     PsiElement())(')')
-  PsiElement(;)(';')
+    PsiElement(;)(';')

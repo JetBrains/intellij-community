@@ -8,5 +8,5 @@ Groovy script
     PsiErrorElement:<expression> expected, got ')'
       <empty list>
     PsiElement())(')')
-    PsiErrorElement:<statement> expected
+    PsiErrorElement:';' or <statement> expected
       <empty list>

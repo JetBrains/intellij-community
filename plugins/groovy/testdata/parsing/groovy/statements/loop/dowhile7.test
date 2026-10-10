@@ -1,0 +1,28 @@
+do ;
+while (false)
+
+do; while (true)
+-----
+Groovy script
+  do-while statement
+    PsiElement(do)('do')
+    PsiWhiteSpace(' ')
+    PsiElement(;)(';')
+    PsiElement(new line)('\n')
+    PsiElement(while)('while')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Literal
+      PsiElement(false)('false')
+    PsiElement())(')')
+  PsiElement(new line)('\n\n')
+  do-while statement
+    PsiElement(do)('do')
+    PsiElement(;)(';')
+    PsiWhiteSpace(' ')
+    PsiElement(while)('while')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Literal
+      PsiElement(true)('true')
+    PsiElement())(')')

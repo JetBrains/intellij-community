@@ -11,7 +11,7 @@ Groovy script
     Literal
       PsiElement(Integer)('1')
     PsiElement())(')')
-  PsiElement(;)(';')
+    PsiElement(;)(';')
   PsiElement(new line)('\n\n')
   WHILE statement
     PsiElement(while)('while')
@@ -20,4 +20,4 @@ Groovy script
       PsiElement(Integer)('2')
     PsiElement())(')')
     PsiElement(new line)('\n\n')
-  PsiElement(;)(';')
+    PsiElement(;)(';')

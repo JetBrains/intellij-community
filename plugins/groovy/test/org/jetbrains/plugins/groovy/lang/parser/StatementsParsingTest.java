@@ -139,6 +139,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testIfstmt$if4() { doTest(); }
   public void testIfstmt$if5() { doTest(); }
   public void testIfstmt$if6() { doTest(); }
+  public void testIfstmt$if7() { doTest(); }
   public void testIfstmt$applicaitonCondition() { doTest(); }
   public void testIfstmt$keywordOnly() { doTest(); }
   public void testIfstmt$keywordLParen() { doTest(); }
@@ -188,6 +189,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testLoop$dowhile4() { doTest(); }
   public void testLoop$dowhile5() { doTest(); }
   public void testLoop$dowhile6() { doTest(); }
+  public void testLoop$dowhile7() { doTest(); }
 
   public void testMethods$method1() { doTest(); }
   public void testMethods$method2() { doTest(); }

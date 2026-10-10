@@ -59,7 +59,7 @@ Groovy script
         Reference expression
           PsiElement(identifier)('c')
     PsiElement())(')')
-  PsiElement(;)(';')
+    PsiElement(;)(';')
   PsiElement(new line)('\n\n')
   For statement
     PsiElement(for)('for')
@@ -76,7 +76,7 @@ Groovy script
         Reference expression
           PsiElement(identifier)('c')
     PsiElement())(')')
-  PsiElement(;)(';')
+    PsiElement(;)(';')
   PsiElement(new line)('\n\n')
   For statement
     PsiElement(for)('for')
@@ -93,7 +93,7 @@ Groovy script
         Reference expression
           PsiElement(identifier)('c')
     PsiElement())(')')
-  PsiElement(;)(';')
+    PsiElement(;)(';')
   PsiElement(new line)('\n\n')
   For statement
     PsiElement(for)('for')
@@ -110,7 +110,7 @@ Groovy script
         Reference expression
           PsiElement(identifier)('c')
     PsiElement())(')')
-  PsiElement(;)(';')
+    PsiElement(;)(';')
   PsiElement(new line)('\n\n')
   For statement
     PsiElement(for)('for')
@@ -127,7 +127,7 @@ Groovy script
         Reference expression
           PsiElement(identifier)('c')
     PsiElement())(')')
-  PsiElement(;)(';')
+    PsiElement(;)(';')
   PsiElement(new line)('\n\n')
   For statement
     PsiElement(for)('for')
@@ -144,7 +144,7 @@ Groovy script
           PsiElement(identifier)('c')
         PsiElement(new line)('\n')
     PsiElement())(')')
-  PsiElement(;)(';')
+    PsiElement(;)(';')
   PsiElement(new line)('\n\n')
   For statement
     PsiElement(for)('for')
@@ -161,4 +161,4 @@ Groovy script
           PsiElement(identifier)('c')
     PsiElement())(')')
     PsiElement(new line)('\n')
-  PsiElement(;)(';')
+    PsiElement(;)(';')

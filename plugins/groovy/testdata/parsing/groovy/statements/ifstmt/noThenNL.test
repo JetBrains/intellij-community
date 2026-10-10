@@ -10,5 +10,5 @@ Groovy script
       PsiElement(identifier)('condition')
     PsiElement())(')')
     PsiElement(new line)('\n')
-    PsiErrorElement:<statement> expected
+    PsiErrorElement:';' or <statement> expected
       <empty list>

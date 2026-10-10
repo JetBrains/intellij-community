@@ -8,5 +8,5 @@ Groovy script
     Reference expression
       PsiElement(identifier)('condition')
     PsiElement())(')')
-    PsiErrorElement:<statement> expected
+    PsiErrorElement:';' or <statement> expected
       <empty list>

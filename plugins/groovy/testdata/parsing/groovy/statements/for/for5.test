@@ -16,7 +16,7 @@ Groovy script
         PsiWhiteSpace(' ')
         Variable
           PsiElement(identifier)('c')
-      PsiErrorElement:',', ':', ';' or in expected, got '['
+      PsiErrorElement:',' or ';' expected, got '['
         <empty list>
       PsiWhiteSpace('  ')
       Generalized list

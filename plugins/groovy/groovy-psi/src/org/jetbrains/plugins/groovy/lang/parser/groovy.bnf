@@ -762,14 +762,11 @@ block_statement ::= !<<isParameterizedClosure>> lazy_block
 private expression_statement ::= expression_or_application_except_zero_params_closure
 
 if_statement ::= 'if' after_if_keyword { pin = 1 }
-private after_if_keyword ::= if_header mb_nl branch [mb_separators else_branch] { pin = 1 }
+private after_if_keyword ::= if_header mb_nl control_statement_body [mb_separators else_branch] { pin = 1 }
 private if_header ::= '(' mb_nl <<insideParentheses expression_or_application>> mb_nl ')' { pin = 1 }
-private else_branch ::= 'else' mb_nl branch { pin = 1 }
+private else_branch ::= 'else' mb_nl control_statement_body { pin = 1 }
 
-switch_statement ::= 'switch' '(' <<insideParentheses expression>> ')' (mb_nl switch_body)
-{
-  pin = 1
-}
+switch_statement ::= 'switch' '(' <<insideParentheses expression>> ')' (mb_nl switch_body) { pin = 1 }
 private switch_body ::= '{' mb_nl general_switch_section* '}' { pin = 1 }
 
 try_statement ::= 'try' try_resource_list? mb_nl lazy_block (mb_nl catch_clause)* [mb_nl finally_clause] { pin = 1 }
@@ -784,23 +781,20 @@ private catch_parameter_start ::= modifier_list catch_parameter_type_element?
 private catch_parameter_type_element ::= type_element_followed_by_identifier
                                        | type_element disjunction_type_element
 catch_parameter ::= weak_keyword | IDENTIFIER { elementType = parameter }
-finally_clause ::= 'finally' (mb_nl lazy_block)
-{
-  pin = 1
-}
+finally_clause ::= 'finally' (mb_nl lazy_block) { pin = 1 }
 
 while_statement ::= [non_empty_annotation_list mb_nl] 'while' after_while { pin = 2 }
-private after_while ::= while_header mb_nl loop_body { pin = 1 }
+private after_while ::= while_header mb_nl control_statement_body { pin = 1 }
 private while_header ::= '(' mb_nl <<insideParentheses expression>> mb_nl ')' { pin = 1 }
-private loop_body ::= followed_by_semi | branch
+private control_statement_body ::= ';' | branch
 
-do_while_statement ::= [non_empty_annotation_list mb_nl] 'do' mb_nl branch mb_nl 'while' '(' <<insideParentheses expression>> (mb_nl ')') { pin = 2 }
+do_while_statement ::= [non_empty_annotation_list mb_nl] 'do' mb_nl control_statement_body mb_nl 'while' '(' <<insideParentheses expression>> (mb_nl ')') { pin = 2 }
 
 private type_element_followed_by_identifier ::= type_element variable_lookahead
 private mb_type_element ::= type_element_followed_by_identifier?
 
 for_statement ::= [non_empty_annotation_list mb_nl] 'for' after_for { pin = 2 }
-private after_for ::= for_header mb_nl loop_body { pin = 1 }
+private after_for ::= for_header mb_nl control_statement_body { pin = 1 }
 private for_header ::= '(' mb_nl <<insideParentheses for_clause>> mb_nl ')' { pin = 1 }
 private for_clause ::= for_in_clause | for_in_clause2 | traditional_for_clause
 
@@ -1403,8 +1397,6 @@ private fast_question ::= '?'
 private fast_colon ::= ':'
 private fast_comma ::= ','
 private fast_l_angle ::= '<'
-
-private followed_by_semi ::= &';' { consumeTokenMethod = 'fast' }
 
 private string_literal_tokens ::= STRING_SQ | STRING_TSQ | STRING_DQ | STRING_TDQ { consumeTokenMethod = 'consumeTokenFast' }
 // endregion

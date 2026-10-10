@@ -8,7 +8,7 @@ Groovy script
     Reference expression
       PsiElement(identifier)('condition')
     PsiElement())(')')
-    PsiErrorElement:<statement> expected, got 'else'
+    PsiErrorElement:';' or <statement> expected, got 'else'
       <empty list>
     PsiWhiteSpace(' ')
     PsiElement(else)('else')

@@ -14,7 +14,7 @@ Groovy script
         PsiElement(Integer)('1')
     PsiElement())(')')
     PsiElement(new line)('\n')
-    PsiErrorElement:<statement> expected, got 'import'
+    PsiErrorElement:';' or <statement> expected, got 'import'
       <empty list>
   Import statement
     Modifiers
