@@ -7,6 +7,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.modplan.safeDelete.ModPlanLegacySafeDeleteProvider;
+import com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider;
 import com.intellij.refactoring.safeDelete.NonCodeUsageSearchInfo;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegateBase;
@@ -21,6 +23,12 @@ import java.util.Collections;
 import java.util.List;
 
 final class PropertyKeysSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
+  /** It asks nothing: the keys of the other files of the bundle go without a question. */
+  @Override
+  public @NotNull ModPlanSafeDeleteProvider asModPlan() {
+    return new ModPlanLegacySafeDeleteProvider(this);
+  }
+
   @Override
   public @NotNull Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element,
                                                                        @Nullable Module module,

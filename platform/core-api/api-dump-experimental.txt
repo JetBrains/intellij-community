@@ -131,6 +131,11 @@ com.intellij.lexer.RestartableLexer
 - java.lang.IllegalStateException
 - com.intellij.openapi.diagnostic.ControlFlowException
 - <init>(com.intellij.model.SideEffectGuard$EffectType):V
+*f:com.intellij.model.SymbolPointer
+- element():com.intellij.psi.PsiElement
+- isSameSymbol(com.intellij.model.SymbolPointer):Z
+- isValid():Z
+- s:of(com.intellij.psi.PsiElement):com.intellij.model.SymbolPointer
 *:com.intellij.model.presentation.SymbolDeclarationPresentation
 - com.intellij.navigation.ItemPresentation
 - s:getFor(com.intellij.model.psi.PsiSymbolDeclaration):com.intellij.model.presentation.SymbolDeclarationPresentation
@@ -410,6 +415,11 @@ a:com.intellij.psi.PsiManager
 - getPresentationName():java.lang.String
 *:com.intellij.psi.PsiReferencesWrapper
 - a:getReferences():java.util.List
+f:com.intellij.psi.SmartPointersKt
+- *sf:createSmartFileRange(com.intellij.psi.PsiElement):com.intellij.psi.SmartPsiFileRange
+- *sf:createSmartFileRange(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):com.intellij.psi.SmartPsiFileRange
+- *bs:createSmartFileRange$default(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,I,java.lang.Object):com.intellij.psi.SmartPsiFileRange
+- *sf:findElement(com.intellij.psi.SmartPsiFileRange):com.intellij.psi.PsiElement
 com.intellij.psi.SyntheticElement
 - *:findSameElementInCopy(com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
 *:com.intellij.psi.search.ActualCodeInsightContextInfo

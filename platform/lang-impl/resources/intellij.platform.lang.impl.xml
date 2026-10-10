@@ -496,6 +496,8 @@
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.refactoring.moveDirectoryWithClassesHelper" interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.refactoring.safeDeleteProcessor" interface="com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.modPlanSafeDeleteProvider"
+                    interface="com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.moveFileHandler" interface="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.rename.symbolRenameTargetFactory" dynamic="true"
                     interface="com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory"/>
@@ -1523,6 +1525,7 @@
     <applicationService serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewFileNestingService"/>
     <treeStructureProvider id="NestingTreeStructureProvider" implementation="com.intellij.ide.projectView.impl.NestingTreeStructureProvider" order="last"/>
     <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.RelatedFilesSafeDeleteProcessorDelegate"/>
+    <refactoring.modPlanSafeDeleteProvider implementation="com.intellij.refactoring.modplan.safeDelete.impl.ModPlanLegacyBridgeSafeDeleteProvider" order="last"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.RelatedFilesRenamerFactory"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveRelatedFilesHandler"
                              order="before moveFileOrDir"/>

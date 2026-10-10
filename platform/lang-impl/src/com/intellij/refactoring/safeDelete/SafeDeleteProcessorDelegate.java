@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -39,6 +40,15 @@ public interface SafeDeleteProcessorDelegate {
    * @return {@code true} if delegates can process {@code element}.
    */
   boolean handlesElement(PsiElement element);
+
+  /**
+   * @return the headless safe delete of the elements this delegate handles; null if they cannot be deleted without a user.
+   * A subclass inherits it, as it inherits the rest; a subclass whose search differs returns null or its own.
+   */
+  @ApiStatus.Experimental
+  default @Nullable ModPlanSafeDeleteProvider asModPlan() {
+    return null;
+  }
 
   /**
    * Find usages of the {@code element} and fill {@code result} with them.

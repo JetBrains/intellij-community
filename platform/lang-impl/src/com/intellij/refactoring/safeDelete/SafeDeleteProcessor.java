@@ -53,6 +53,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -340,24 +341,44 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
     for (UsageInfo usage : usages) {
       if (usage instanceof SafeDeleteReferenceUsageInfo info) {
         if (info.isSafeDelete()) continue;
-        String description = RefactoringUIUtil.getDescription(info.getReferencedElement(), true);
+        PsiElement referencedElement = info.findReferencedElement();
+        if (referencedElement == null) continue;
         if (usage.isNonCodeUsage) {
+          String description = RefactoringUIUtil.getDescription(referencedElement, true);
           conflicts.putValue(info.getElement(), RefactoringBundle.message("non.code.usage.that.is.not.safe.to.delete", description));
         }
-        else if (isInGeneratedCode(info, info.getProject())) {
-          conflicts.putValue(info.getElement(), RefactoringBundle.message("generated.code.usage.that.is.not.safe.to.delete", description));
-        }
         else {
-          codeUsages = true;
-          conflicts.putValue(info.getElement(), RefactoringBundle.message("usage.that.is.not.safe.to.delete", description));
+          boolean inGeneratedCode = isInGeneratedCode(info.getVirtualFile(), info.getProject());
+          codeUsages |= !inGeneratedCode;
+          conflicts.putValue(info.getElement(), unsafeUsageMessage(referencedElement, inGeneratedCode));
         }
       }
     }
     return codeUsages;
   }
 
-  private static boolean isInGeneratedCode(SafeDeleteReferenceUsageInfo usage, Project project) {
-    VirtualFile file = usage.getVirtualFile();
+  /**
+   * @return the conflict text of a code usage that still needs {@code referencedElement}, as the interactive conflicts dialog shows
+   * it
+   */
+  private static @NotNull @DialogMessage String unsafeUsageMessage(@NotNull PsiElement referencedElement, boolean inGeneratedCode) {
+    String description = RefactoringUIUtil.getDescription(referencedElement, true);
+    return inGeneratedCode
+           ? RefactoringBundle.message("generated.code.usage.that.is.not.safe.to.delete", description)
+           : RefactoringBundle.message("usage.that.is.not.safe.to.delete", description);
+  }
+
+  /**
+   * @return the conflict text of {@code usage}, a code usage that still needs {@code referencedElement}, as the interactive conflicts
+   * dialog shows it
+   */
+  @ApiStatus.Internal
+  public static @NotNull @DialogMessage String unsafeUsageMessage(@NotNull PsiElement referencedElement, @NotNull PsiElement usage) {
+    PsiFile file = usage.getContainingFile();
+    return unsafeUsageMessage(referencedElement, file != null && isInGeneratedCode(file.getVirtualFile(), usage.getProject()));
+  }
+
+  private static boolean isInGeneratedCode(@Nullable VirtualFile file, @NotNull Project project) {
     return file != null && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project);
   }
 

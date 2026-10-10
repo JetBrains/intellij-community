@@ -9,6 +9,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.modplan.safeDelete.ModPlanLegacySafeDeleteProvider;
+import com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,6 +29,15 @@ import java.util.List;
  */
 @ApiStatus.Internal
 public final class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProcessorDelegate {
+  /**
+   * Opts the related files of a file in to the headless safe delete. The legacy question "delete the related files too?" is answered by
+   * its default: no.
+   */
+  @Override
+  public @NotNull ModPlanSafeDeleteProvider asModPlan() {
+    return new ModPlanLegacySafeDeleteProvider(this);
+  }
+
   @Override
   public boolean handlesElement(final PsiElement element) {
     return element instanceof PsiFile file &&

@@ -5211,12 +5211,15 @@ com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteCustomUsageInfo
 - a:performRefactoring():V
 c:com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
 - com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceUsageInfo
+- com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteUsage
+- asModPlanEdit():com.intellij.refactoring.modplan.ModPlanEdit
 - deleteElement():V
 a:com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceUsageInfo
 - com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteUsageInfo
 - com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteCustomUsageInfo
 c:com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteUsageInfo
 - com.intellij.usageView.UsageInfo
+- findReferencedElement():com.intellij.psi.PsiElement
 - getReferencedElement():com.intellij.psi.PsiElement
 a:com.intellij.refactoring.ui.AbstractMemberSelectionPanel
 - javax.swing.JPanel

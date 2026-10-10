@@ -45,6 +45,7 @@
     <extensionPoint name="vetoRenameCondition" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
     <extensionPoint name="renamerFactory" dynamic="true" interface="com.intellij.refactoring.rename.RenamerFactory"/>
     <extensionPoint name="refactoring.helper" interface="com.intellij.refactoring.RefactoringHelper" dynamic="true"/>
+    <extensionPoint name="refactoring.modPlanListener" interface="com.intellij.refactoring.modplan.ModPlanRefactoringListener" dynamic="true"/>
     <extensionPoint name="inlineActionHandler" interface="com.intellij.lang.refactoring.InlineActionHandler" dynamic="true"/>
     <extensionPoint name="refactoring.inlineHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.refactoring.InlineHandler"/>

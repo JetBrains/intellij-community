@@ -1,26 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.safeDelete.usageInfo;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.modplan.ModPlanEdit;
+import com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteUsage;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
-public class SafeDeleteReferenceSimpleDeleteUsageInfo extends SafeDeleteReferenceUsageInfo {
+public class SafeDeleteReferenceSimpleDeleteUsageInfo extends SafeDeleteReferenceUsageInfo implements ModPlanSafeDeleteUsage {
   private static final Logger LOG = Logger.getInstance(SafeDeleteReferenceSimpleDeleteUsageInfo.class);
   public SafeDeleteReferenceSimpleDeleteUsageInfo(PsiElement element, PsiElement referencedElement, boolean isSafeDelete) {
     super(element, referencedElement, isSafeDelete);
@@ -38,5 +27,11 @@ public class SafeDeleteReferenceSimpleDeleteUsageInfo extends SafeDeleteReferenc
       LOG.assertTrue(element != null);
       element.delete();
     }
+  }
+
+  @Override
+  public @Nullable ModPlanEdit asModPlanEdit() {
+    PsiElement element = getElement();
+    return isSafeDelete() && element != null ? ModPlanEdit.delete(element) : null;
   }
 }

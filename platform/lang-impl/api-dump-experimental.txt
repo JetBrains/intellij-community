@@ -882,6 +882,69 @@ f:com.intellij.platform.ide.documentation.ActionsKt
 c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - com.intellij.refactoring.BaseRefactoringProcessor
 - *:<init>(com.intellij.psi.PsiElement,java.util.List,com.intellij.refactoring.util.DocCommentPolicy,Z):V
+*f:com.intellij.refactoring.modplan.impl.ModPlanSubjectConfirmation
+- com.intellij.refactoring.modplan.ModPlanQuestion$Custom
+- <init>(com.intellij.refactoring.modplan.ModPlanOption,com.intellij.refactoring.modplan.ModPlanOption,java.lang.String,java.util.function.Function):V
+- ask(com.intellij.openapi.project.Project,com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanOptionValues
+- isAnswered(com.intellij.refactoring.modplan.ModPlanOptionValues):Z
+- isConfirmed(com.intellij.refactoring.modplan.ModPlanOptionValues):Z
+- options():java.util.List
+*f:com.intellij.refactoring.modplan.safeDelete.ModPlanLegacySafeDeleteProvider
+- com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider
+- <init>(com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate):V
+- analyze(com.intellij.refactoring.modplan.ModPlanChainBuilder,com.intellij.model.SymbolPointer,java.util.List):com.intellij.refactoring.modplan.ModPlanChain
+- isApplicable(com.intellij.model.SymbolPointer):Z
+- prepareRequest(com.intellij.refactoring.modplan.ModPlanChainBuilder,com.intellij.model.SymbolPointer,java.util.List):com.intellij.refactoring.modplan.ModPlanChain
+*f:com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteOptions
+- sf:DELETE_HIERARCHY:com.intellij.refactoring.modplan.ModPlanOption
+- sf:SEARCH_IN_COMMENTS:com.intellij.refactoring.modplan.ModPlanOption
+- sf:SEARCH_IN_NON_CODE:com.intellij.refactoring.modplan.ModPlanOption
+- sf:SEARCH_RELATED:com.intellij.refactoring.modplan.ModPlanOption
+*:com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:analyze(com.intellij.refactoring.modplan.ModPlanChainBuilder,com.intellij.model.SymbolPointer,java.util.List):com.intellij.refactoring.modplan.ModPlanChain
+- a:isApplicable(com.intellij.model.SymbolPointer):Z
+- a:prepareRequest(com.intellij.refactoring.modplan.ModPlanChainBuilder,com.intellij.model.SymbolPointer,java.util.List):com.intellij.refactoring.modplan.ModPlanChain
+*:com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider$DeletionDecision
+- sf:DELETED:com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider$DeletionDecision
+- sf:REFUSED:com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider$DeletionDecision
+- s:deletedWith(java.util.Collection):com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider$DeletionDecision
+- s:replacedBy(java.util.Collection):com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider$DeletionDecision
+*f:com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider$DeletionDecision$Deleted
+- java.lang.Record
+- com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider$DeletionDecision
+- <init>(java.util.List):V
+- alsoDeleted():java.util.List
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+*f:com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider$DeletionDecision$Refused
+- java.lang.Record
+- com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider$DeletionDecision
+- <init>():V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+*f:com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider$DeletionDecision$Replaced
+- java.lang.Record
+- com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider$DeletionDecision
+- <init>(java.util.List):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- replacements():java.util.List
+*f:com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteRefactoring
+- com.intellij.refactoring.modplan.ModPlanRefactoring
+- *sf:Companion:com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteRefactoring$Companion
+- <init>():V
+- chain(com.intellij.refactoring.modplan.ModPlanChainBuilder):com.intellij.refactoring.modplan.ModPlanChain
+- *sf:getInstance():com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteRefactoring
+- id():java.lang.String
+- isSupported(com.intellij.refactoring.modplan.ModPlanRequest):Z
+- nonCodeUsagesHeader(I,I):java.lang.String
+- targetsNodeText():java.lang.String
+- title():java.lang.String
+*f:com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteRefactoring$Companion
+- f:getInstance():com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteRefactoring
+*:com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteUsage
+- a:asModPlanEdit():com.intellij.refactoring.modplan.ModPlanEdit
 *f:com.intellij.refactoring.rename.HeadlessRenameConflict
 - <init>(java.lang.String,java.lang.String):V
 - f:component1():java.lang.String
@@ -1124,6 +1187,8 @@ c:com.intellij.refactoring.rename.RenameProcessor
 - a:getRenameTarget():com.intellij.refactoring.rename.api.RenameTarget
 *:com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory
 - a:renameTarget(com.intellij.openapi.project.Project,com.intellij.model.Symbol):com.intellij.refactoring.rename.api.RenameTarget
+com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate
+- *:asModPlan():com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider
 *:com.intellij.refactoring.safeDelete.api.FileUpdater
 - *sf:Companion:com.intellij.refactoring.safeDelete.api.FileUpdater$Companion
 - prepareFileUpdate():java.util.Collection

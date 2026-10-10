@@ -52,6 +52,286 @@
 *:com.intellij.refactoring.changeSignature.ChangeSignatureUsageProvider
 - a:createOverrideUsageInfo(com.intellij.refactoring.changeSignature.ChangeInfo,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,Z,Z,Z,java.util.List):com.intellij.usageView.UsageInfo
 - a:createUsageInfo(com.intellij.refactoring.changeSignature.ChangeInfo,com.intellij.psi.PsiReference,com.intellij.psi.PsiElement,Z,Z):com.intellij.usageView.UsageInfo
+*:com.intellij.refactoring.modplan.ModPlan
+- *sf:Companion:com.intellij.refactoring.modplan.ModPlan$Companion
+*f:com.intellij.refactoring.modplan.ModPlan$AcceptedPlan
+- com.intellij.refactoring.modplan.ModPlan
+- <init>(com.intellij.refactoring.modplan.ModPlanConflicts,com.intellij.refactoring.modplan.ModPlanExecution):V
+- f:getConflicts():com.intellij.refactoring.modplan.ModPlanConflicts
+- f:getExecution():com.intellij.refactoring.modplan.ModPlanExecution
+*f:com.intellij.refactoring.modplan.ModPlan$Companion
+- f:createPlan(java.util.List,com.intellij.refactoring.modplan.ModPlanConflicts,java.util.List,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,Z):com.intellij.refactoring.modplan.ModPlan
+*f:com.intellij.refactoring.modplan.ModPlan$RefusedPlan
+- com.intellij.refactoring.modplan.ModPlan
+- <init>(com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason,com.intellij.psi.PsiElement):V
+- <init>(com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason,com.intellij.psi.SmartPsiFileRange):V
+- f:getLocation():com.intellij.psi.SmartPsiFileRange
+- f:getReason():com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason
+*:com.intellij.refactoring.modplan.ModPlanAnalysisResult
+*f:com.intellij.refactoring.modplan.ModPlanAnalysisResult$Found
+- java.lang.Record
+- com.intellij.refactoring.modplan.ModPlanAnalysisResult
+- <init>(java.util.List,com.intellij.refactoring.modplan.ModPlanConflicts):V
+- f:component1():java.util.List
+- f:component2():com.intellij.refactoring.modplan.ModPlanConflicts
+- f:conflicts():com.intellij.refactoring.modplan.ModPlanConflicts
+- f:copy(java.util.List,com.intellij.refactoring.modplan.ModPlanConflicts):com.intellij.refactoring.modplan.ModPlanAnalysisResult$Found
+- bs:copy$default(com.intellij.refactoring.modplan.ModPlanAnalysisResult$Found,java.util.List,com.intellij.refactoring.modplan.ModPlanConflicts,I,java.lang.Object):com.intellij.refactoring.modplan.ModPlanAnalysisResult$Found
+- f:edits():java.util.List
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.refactoring.modplan.ModPlanAnalysisResult$Refused
+- java.lang.Record
+- com.intellij.refactoring.modplan.ModPlanAnalysisResult
+- <init>(com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason):V
+- f:component1():com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason
+- f:copy(com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason):com.intellij.refactoring.modplan.ModPlanAnalysisResult$Refused
+- bs:copy$default(com.intellij.refactoring.modplan.ModPlanAnalysisResult$Refused,com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason,I,java.lang.Object):com.intellij.refactoring.modplan.ModPlanAnalysisResult$Refused
+- equals(java.lang.Object):Z
+- hashCode():I
+- f:reason():com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason
+*e:com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason
+- java.lang.Enum
+- sf:EDIT_FAILED:com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason
+- sf:NOT_APPLICABLE:com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason
+- sf:NOT_SUPPORTED:com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason
+- s:values():com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason[]
+*a:com.intellij.refactoring.modplan.ModPlanChain
+- *sf:Companion:com.intellij.refactoring.modplan.ModPlanChain$Companion
+- f:andThen(com.intellij.refactoring.modplan.ModPlanChain$AfterValue):com.intellij.refactoring.modplan.ModPlanChain
+- *sf:withOptionValues(com.intellij.refactoring.modplan.ModPlanRequest,com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanRequest
+*:com.intellij.refactoring.modplan.ModPlanChain$AfterValue
+- a:goOn(com.intellij.refactoring.modplan.ModPlanChainBuilder,java.lang.Object):com.intellij.refactoring.modplan.ModPlanChain
+*:com.intellij.refactoring.modplan.ModPlanChain$ChainResult
+*f:com.intellij.refactoring.modplan.ModPlanChain$ChainResult$Finished
+- java.lang.Record
+- com.intellij.refactoring.modplan.ModPlanChain$ChainResult
+- <init>(java.lang.Object,com.intellij.refactoring.modplan.ModPlanOptionValues):V
+- f:answers():com.intellij.refactoring.modplan.ModPlanOptionValues
+- f:component1():java.lang.Object
+- f:component2():com.intellij.refactoring.modplan.ModPlanOptionValues
+- f:copy(java.lang.Object,com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanChain$ChainResult$Finished
+- bs:copy$default(com.intellij.refactoring.modplan.ModPlanChain$ChainResult$Finished,java.lang.Object,com.intellij.refactoring.modplan.ModPlanOptionValues,I,java.lang.Object):com.intellij.refactoring.modplan.ModPlanChain$ChainResult$Finished
+- equals(java.lang.Object):Z
+- hashCode():I
+- f:value():java.lang.Object
+*f:com.intellij.refactoring.modplan.ModPlanChain$Companion
+- f:withOptionValues(com.intellij.refactoring.modplan.ModPlanRequest,com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanRequest
+*:com.intellij.refactoring.modplan.ModPlanChainBuilder
+- a:ask(com.intellij.refactoring.modplan.ModPlanQuestion,java.util.function.Function):com.intellij.refactoring.modplan.ModPlanChain
+- a:finish(com.intellij.refactoring.modplan.ModPlanFinalStep):com.intellij.refactoring.modplan.ModPlanChain
+- a:getRequest():com.intellij.refactoring.modplan.ModPlanRequest
+- a:passValue(java.lang.Object):com.intellij.refactoring.modplan.ModPlanChain
+*c:com.intellij.refactoring.modplan.ModPlanCommandAction
+- com.intellij.modcommand.ModCommandAction
+- <init>(com.intellij.refactoring.modplan.ModPlanRefactoring,com.intellij.refactoring.modplan.ModPlanRequest,com.intellij.psi.PsiElement,java.lang.String):V
+- <init>(com.intellij.refactoring.modplan.ModPlanRefactoring,com.intellij.refactoring.modplan.ModPlanRequest,com.intellij.psi.PsiElement,java.lang.String,Z):V
+- generatePreview(com.intellij.modcommand.ActionContext):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+- pf:getAnchor():com.intellij.psi.PsiElement
+- getFamilyName():java.lang.String
+- getPresentation(com.intellij.modcommand.ActionContext):com.intellij.modcommand.Presentation
+- f:perform(com.intellij.modcommand.ActionContext):com.intellij.modcommand.ModCommand
+*f:com.intellij.refactoring.modplan.ModPlanCommandInterpreter
+- s:interpret(java.lang.String,com.intellij.refactoring.modplan.ModPlanRequest,Z,java.util.function.Function):com.intellij.modcommand.ModCommand
+- s:interpretHeadless(com.intellij.refactoring.modplan.ModPlanRequest,java.util.function.Function):java.lang.Object
+*f:com.intellij.refactoring.modplan.ModPlanConflict
+- <init>(com.intellij.psi.SmartPsiFileRange,java.util.List,com.intellij.refactoring.modplan.ModPlanConflictKind):V
+- equals(java.lang.Object):Z
+- f:getKind():com.intellij.refactoring.modplan.ModPlanConflictKind
+- f:getLocation():com.intellij.psi.SmartPsiFileRange
+- f:getMessages():java.util.List
+- hashCode():I
+*e:com.intellij.refactoring.modplan.ModPlanConflictKind
+- java.lang.Enum
+- sf:BROKEN:com.intellij.refactoring.modplan.ModPlanConflictKind
+- sf:FIXABLE:com.intellij.refactoring.modplan.ModPlanConflictKind
+- sf:NON_CODE_USAGE:com.intellij.refactoring.modplan.ModPlanConflictKind
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.refactoring.modplan.ModPlanConflictKind
+- s:values():com.intellij.refactoring.modplan.ModPlanConflictKind[]
+*f:com.intellij.refactoring.modplan.ModPlanConflicts
+- *sf:Companion:com.intellij.refactoring.modplan.ModPlanConflicts$Companion
+- sf:EMPTY:com.intellij.refactoring.modplan.ModPlanConflicts
+- <init>(java.util.List):V
+- *sf:builder():com.intellij.refactoring.modplan.ModPlanConflicts$Builder
+- equals(java.lang.Object):Z
+- f:getConflicts():java.util.List
+- f:hasBroken():Z
+- hashCode():I
+- f:merge(com.intellij.refactoring.modplan.ModPlanConflicts):com.intellij.refactoring.modplan.ModPlanConflicts
+- f:needsConfirmation():Z
+- f:nonCodeUsages():java.util.List
+- f:toShowConflicts(com.intellij.psi.PsiElement):java.util.Map
+- f:toShowConflictsWithNonCodeUsages(com.intellij.psi.PsiElement):java.util.Map
+*f:com.intellij.refactoring.modplan.ModPlanConflicts$Builder
+- f:broken(com.intellij.psi.PsiElement,java.lang.String):com.intellij.refactoring.modplan.ModPlanConflicts$Builder
+- f:build():com.intellij.refactoring.modplan.ModPlanConflicts
+- f:fixable(com.intellij.psi.PsiElement,java.lang.String):com.intellij.refactoring.modplan.ModPlanConflicts$Builder
+- f:nonCodeUsage(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.String):com.intellij.refactoring.modplan.ModPlanConflicts$Builder
+- f:unloadedModules(java.util.Collection):com.intellij.refactoring.modplan.ModPlanConflicts$Builder
+*f:com.intellij.refactoring.modplan.ModPlanConflicts$Companion
+- f:builder():com.intellij.refactoring.modplan.ModPlanConflicts$Builder
+*:com.intellij.refactoring.modplan.ModPlanEdit
+- s:delete(com.intellij.psi.PsiElement):com.intellij.refactoring.modplan.ModPlanEdit
+- s:update(com.intellij.psi.PsiElement,java.util.function.Consumer):com.intellij.refactoring.modplan.ModPlanEdit$Update
+- s:update(java.util.List,java.util.function.Consumer):com.intellij.refactoring.modplan.ModPlanEdit$Update
+*f:com.intellij.refactoring.modplan.ModPlanEdit$Create
+- java.lang.Record
+- com.intellij.refactoring.modplan.ModPlanEdit
+- <init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.String):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- name():java.lang.String
+- parent():com.intellij.openapi.vfs.VirtualFile
+- text():java.lang.String
+*f:com.intellij.refactoring.modplan.ModPlanEdit$Delete
+- java.lang.Record
+- com.intellij.refactoring.modplan.ModPlanEdit
+- <init>(com.intellij.openapi.vfs.VirtualFile):V
+- f:equals(java.lang.Object):Z
+- file():com.intellij.openapi.vfs.VirtualFile
+- f:hashCode():I
+*f:com.intellij.refactoring.modplan.ModPlanEdit$Move
+- java.lang.Record
+- com.intellij.refactoring.modplan.ModPlanEdit
+- <init>(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
+- f:equals(java.lang.Object):Z
+- file():com.intellij.openapi.vfs.VirtualFile
+- f:hashCode():I
+- newName():java.lang.String
+- targetDirectory():com.intellij.openapi.vfs.VirtualFile
+*f:com.intellij.refactoring.modplan.ModPlanEdit$Update
+- java.lang.Record
+- com.intellij.refactoring.modplan.ModPlanEdit
+- <init>(java.util.List,java.util.function.Consumer):V
+- action():java.util.function.Consumer
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- pointers():java.util.List
+*f:com.intellij.refactoring.modplan.ModPlanExecution
+- *sf:Companion:com.intellij.refactoring.modplan.ModPlanExecution$Companion
+- f:getAffectedFiles():java.util.List
+- f:getCommand():com.intellij.modcommand.ModCommand
+- f:getCommandName():java.lang.String
+*f:com.intellij.refactoring.modplan.ModPlanExecution$Companion
+*:com.intellij.refactoring.modplan.ModPlanExecutionResult
+*f:com.intellij.refactoring.modplan.ModPlanExecutionResult$Applied
+- com.intellij.refactoring.modplan.ModPlanExecutionResult
+- sf:INSTANCE:com.intellij.refactoring.modplan.ModPlanExecutionResult$Applied
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.refactoring.modplan.ModPlanExecutionResult$Failed
+- com.intellij.refactoring.modplan.ModPlanExecutionResult
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.refactoring.modplan.ModPlanExecutionResult$Failed
+- bs:copy$default(com.intellij.refactoring.modplan.ModPlanExecutionResult$Failed,java.lang.String,I,java.lang.Object):com.intellij.refactoring.modplan.ModPlanExecutionResult$Failed
+- equals(java.lang.Object):Z
+- f:getMessage():java.lang.String
+- hashCode():I
+*f:com.intellij.refactoring.modplan.ModPlanExecutionResult$ReadOnly
+- com.intellij.refactoring.modplan.ModPlanExecutionResult
+- <init>(java.util.List):V
+- f:component1():java.util.List
+- f:copy(java.util.List):com.intellij.refactoring.modplan.ModPlanExecutionResult$ReadOnly
+- bs:copy$default(com.intellij.refactoring.modplan.ModPlanExecutionResult$ReadOnly,java.util.List,I,java.lang.Object):com.intellij.refactoring.modplan.ModPlanExecutionResult$ReadOnly
+- equals(java.lang.Object):Z
+- f:getFiles():java.util.List
+- hashCode():I
+*f:com.intellij.refactoring.modplan.ModPlanExecutionResult$Stale
+- com.intellij.refactoring.modplan.ModPlanExecutionResult
+- <init>(java.util.List):V
+- f:component1():java.util.List
+- f:copy(java.util.List):com.intellij.refactoring.modplan.ModPlanExecutionResult$Stale
+- bs:copy$default(com.intellij.refactoring.modplan.ModPlanExecutionResult$Stale,java.util.List,I,java.lang.Object):com.intellij.refactoring.modplan.ModPlanExecutionResult$Stale
+- equals(java.lang.Object):Z
+- f:getFiles():java.util.List
+- hashCode():I
+*f:com.intellij.refactoring.modplan.ModPlanExecutor
+- sf:INSTANCE:com.intellij.refactoring.modplan.ModPlanExecutor
+- sf:execute(com.intellij.refactoring.modplan.ModPlanExecution,Z):com.intellij.refactoring.modplan.ModPlanExecutionResult
+*:com.intellij.refactoring.modplan.ModPlanFinalStep
+- a:run(com.intellij.refactoring.modplan.ModPlanRequest):java.lang.Object
+*f:com.intellij.refactoring.modplan.ModPlanOption
+- *sf:Companion:com.intellij.refactoring.modplan.ModPlanOption$Companion
+- <init>(java.lang.String,java.lang.Class,java.lang.Object,java.util.function.Supplier,java.util.function.Function):V
+- *sf:bool(java.lang.String,Z,java.util.function.Supplier):com.intellij.refactoring.modplan.ModPlanOption
+- *sf:choice(java.lang.String,java.lang.Class,java.lang.Enum,java.util.function.Supplier,java.util.function.Function):com.intellij.refactoring.modplan.ModPlanOption
+- equals(java.lang.Object):Z
+- f:fromRaw(java.lang.Object):java.lang.Object
+- f:getDefaultValue():java.lang.Object
+- f:getDescription():java.util.function.Supplier
+- f:getId():java.lang.String
+- f:getType():java.lang.Class
+- f:getValueText():java.util.function.Function
+- hashCode():I
+- *sf:text(java.lang.String,java.lang.String,java.util.function.Supplier):com.intellij.refactoring.modplan.ModPlanOption
+*f:com.intellij.refactoring.modplan.ModPlanOption$Companion
+- f:bool(java.lang.String,Z,java.util.function.Supplier):com.intellij.refactoring.modplan.ModPlanOption
+- f:choice(java.lang.String,java.lang.Class,java.lang.Enum,java.util.function.Supplier,java.util.function.Function):com.intellij.refactoring.modplan.ModPlanOption
+- f:text(java.lang.String,java.lang.String,java.util.function.Supplier):com.intellij.refactoring.modplan.ModPlanOption
+*f:com.intellij.refactoring.modplan.ModPlanOptionValues
+- *sf:Companion:com.intellij.refactoring.modplan.ModPlanOptionValues$Companion
+- sf:EMPTY:com.intellij.refactoring.modplan.ModPlanOptionValues
+- f:answeredKeys(com.intellij.refactoring.modplan.ModPlanOption):java.util.Set
+- f:chosenKeys(com.intellij.refactoring.modplan.ModPlanOption):java.util.Set
+- equals(java.lang.Object):Z
+- f:get(com.intellij.refactoring.modplan.ModPlanOption):java.lang.Object
+- f:has(com.intellij.refactoring.modplan.ModPlanOption):Z
+- hashCode():I
+- f:with(com.intellij.refactoring.modplan.ModPlanOption,java.lang.Object):com.intellij.refactoring.modplan.ModPlanOptionValues
+- f:withAnswers(com.intellij.refactoring.modplan.ModPlanOption,java.util.Collection,java.util.Collection):com.intellij.refactoring.modplan.ModPlanOptionValues
+*f:com.intellij.refactoring.modplan.ModPlanOptionValues$Companion
+*:com.intellij.refactoring.modplan.ModPlanQuestion
+- s:askCommand(java.lang.String,com.intellij.refactoring.modplan.ModPlanQuestion,com.intellij.refactoring.modplan.ModPlanOptionValues,java.util.function.Function):com.intellij.modcommand.ModCommand
+- a:isAnswered(com.intellij.refactoring.modplan.ModPlanOptionValues):Z
+- storage():com.intellij.refactoring.modplan.ModPlanQuestion$Storage
+*:com.intellij.refactoring.modplan.ModPlanQuestion$Custom
+- com.intellij.refactoring.modplan.ModPlanQuestion
+- a:ask(com.intellij.openapi.project.Project,com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanOptionValues
+- isAnswered(com.intellij.refactoring.modplan.ModPlanOptionValues):Z
+- a:options():java.util.List
+*f:com.intellij.refactoring.modplan.ModPlanQuestion$Form
+- java.lang.Record
+- com.intellij.refactoring.modplan.ModPlanQuestion
+- <init>(com.intellij.codeInspection.options.OptPane,java.util.List,com.intellij.refactoring.modplan.ModPlanQuestion$Storage):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- isAnswered(com.intellij.refactoring.modplan.ModPlanOptionValues):Z
+- s:of(java.util.List,com.intellij.refactoring.modplan.ModPlanQuestion$Storage):com.intellij.refactoring.modplan.ModPlanQuestion$Form
+- options():java.util.List
+- pane():com.intellij.codeInspection.options.OptPane
+- storage():com.intellij.refactoring.modplan.ModPlanQuestion$Storage
+*:com.intellij.refactoring.modplan.ModPlanQuestion$Storage
+- a:load(com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanOptionValues
+- a:store(com.intellij.refactoring.modplan.ModPlanOptionValues):V
+*:com.intellij.refactoring.modplan.ModPlanRefactoring
+- a:chain(com.intellij.refactoring.modplan.ModPlanChainBuilder):com.intellij.refactoring.modplan.ModPlanChain
+- a:id():java.lang.String
+- s:isInReadOnlyContainer(com.intellij.psi.PsiElement):Z
+- isSupported(com.intellij.refactoring.modplan.ModPlanRequest):Z
+- nonCodeUsagesHeader(I,I):java.lang.String
+- plan(com.intellij.refactoring.modplan.ModPlanRequest):com.intellij.refactoring.modplan.ModPlan
+- targetsNodeText():java.lang.String
+- a:title():java.lang.String
+*:com.intellij.refactoring.modplan.ModPlanRefactoringListener
+- *sf:Companion:com.intellij.refactoring.modplan.ModPlanRefactoringListener$Companion
+- a:onRefactoringDone(com.intellij.psi.PsiFile):V
+*f:com.intellij.refactoring.modplan.ModPlanRefactoringListener$Companion
+- f:runAfterEdits(com.intellij.psi.PsiFile):V
+*f:com.intellij.refactoring.modplan.ModPlanRequest
+- java.lang.Record
+- <init>(com.intellij.openapi.project.Project,java.util.List,com.intellij.refactoring.modplan.ModPlanOptionValues):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- optionValues():com.intellij.refactoring.modplan.ModPlanOptionValues
+- project():com.intellij.openapi.project.Project
+- subjects():java.util.List
+*:com.intellij.refactoring.modplan.ModPlanUiInterpreter
+- s:getInstance():com.intellij.refactoring.modplan.ModPlanUiInterpreter
+- a:interpret(java.lang.String,com.intellij.refactoring.modplan.ModPlanRequest,java.util.function.Function):com.intellij.refactoring.modplan.ModPlanChain$ChainResult$Finished
 *:com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
 - com.intellij.refactoring.rename.HeadlessRenamePsiElementProcessor
 - canProcessElementHeadless(com.intellij.psi.PsiElement):Z
