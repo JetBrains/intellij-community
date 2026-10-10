@@ -266,6 +266,8 @@ jvm_library(
         "//platform/pluginSystem/testFramework",
         "//platform/pluginSystem/testFramework:testFramework_test_lib",
         "//platform/platform-impl/rpc",
+        "//fleet/rpc",
+        "//fleet/rpc:rpc_test_lib",
         "//platform/analysis-impl",
         "//platform/analysis-impl:analysis-impl_test_lib",
         "//platform/refactoring",
