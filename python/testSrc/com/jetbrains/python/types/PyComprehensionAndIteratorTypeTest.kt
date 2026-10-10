@@ -838,6 +838,22 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       # └ TYPE Generator[Literal[1], Unknown, Literal["foo"]]
       """.trimIndent())
 
+    @TestFor(issues = ["PY-92828"])
+    @Test
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `yielded tuple type after the type of the generator function`() = test("""
+      def g(line):
+      #   └ TYPE (line: {find, startswith}) -> Generator[tuple[Literal[0], Literal["def"]] | tuple[Unknown, Literal["if"]], Unknown, None]
+          found = line.find(":")
+          while -1 < found:
+              if line.startswith("def"):
+                  yield 0, "def"
+      #                  └ TYPE tuple[Literal[0], Literal["def"]]
+              elif line.startswith("if"):
+                  yield found, "if"
+              found = line.find(":", found + 1)
+      """.trimIndent())
+
     @TestFor(issues = ["PY-20710"])
     @Test
     fun `yield expression type from generator send type hint`() = test("""

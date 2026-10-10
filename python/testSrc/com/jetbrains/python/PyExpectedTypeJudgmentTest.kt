@@ -910,6 +910,25 @@ class PyExpectedTypeJudgmentTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-92828"])
+  fun `Yielded value in generator without return annotation`() = test("""
+    def main():
+        yield 1, "a"
+    #         └ EXPECTED_TYPE Unknown
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92828"])
+  fun `Yielded value in generator with return type comment`() = test("""
+    from typing import Generator
+
+    def main():
+        # type: () -> Generator[int, None, None]
+        yield 1
+    #         └ EXPECTED_TYPE int
+    """.trimIndent())
+
+  @Test
   @TestFor(issues = ["PY-87340"])
   fun `Mismatch of expected and actual tuple size`() = test("""
     def check() -> tuple[bool, int, int]:

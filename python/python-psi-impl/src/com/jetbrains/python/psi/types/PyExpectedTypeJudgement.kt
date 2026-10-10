@@ -503,6 +503,8 @@ object PyExpectedTypeJudgement {
   private fun fromYield(expr: PyExpression, ctx: TypeEvalContext): PyType? {
     val parent = expr.parent as? PyYieldExpression ?: return null
     val funScope = parent.parentOfType<PyFunction>() ?: return null
+    // Without a declaration, the return type is inferred from the yielded values, so it cannot constrain them
+    if (funScope.annotation == null && funScope.typeCommentAnnotation == null) return null
 
     val returnType = ctx.getReturnType(funScope)
     val generatorDescriptor = PyTypingTypeProvider.GeneratorTypeDescriptor.fromGenerator(returnType)
