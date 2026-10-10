@@ -13,11 +13,13 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyAnyType
+import com.jetbrains.python.psi.types.PyParamSpecType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeChecker.collectGenerics
 import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isUnknown
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -76,8 +78,12 @@ object PyTypeParameterInfoUtil {
     if (bound != null && bound !is PyAnyType) {
       result.append(": ").append(PythonDocumentationProvider.getTypeName(bound, context))
     }
-    val defaultType = typeParameter.defaultType?.get()
-    if (defaultType != null && defaultType !is PyAnyType) {
+    val defaultTypeRef = typeParameter.defaultType
+    val defaultType = defaultTypeRef?.get()
+    if (typeParameter is PyParamSpecType && defaultTypeRef != null && defaultType.isUnknown) {
+      result.append(" = ...")
+    }
+    else if (defaultType != null && defaultType !is PyAnyType) {
       result.append(" = ").append(PythonDocumentationProvider.getTypeName(defaultType, context))
     }
     return result.toString()

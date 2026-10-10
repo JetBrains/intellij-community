@@ -2284,7 +2284,7 @@ object PyTypeChecker {
           substitutions.putTypeVarTuple(typeParameter, Ref.deref(typeParameter.defaultType), KeyImpl, true)
         }
         is PyParamSpecType -> {
-          substitutions.putParamSpec(typeParameter, Ref.deref(typeParameter.defaultType), KeyImpl, true)
+          substitutions.putParamSpec(typeParameter, Ref.deref(typeParameter.defaultType) as? PyCallableParameterVariadicType, KeyImpl, true)
         }
       }
     }
@@ -2340,7 +2340,7 @@ object PyTypeChecker {
       val isAlreadyBound = existingSubstitutions.paramSpecs.containsKey(paramSpecType)
       if (isResolvable && !isAlreadyBound) {
         if (paramSpecType.defaultType != null) {
-          existingSubstitutions.putParamSpec(paramSpecType, Ref.deref<PyCallableParameterVariadicType?>(paramSpecType.defaultType), KeyImpl)
+          existingSubstitutions.putParamSpec(paramSpecType, Ref.deref(paramSpecType.defaultType) as? PyCallableParameterVariadicType, KeyImpl)
         }
         else {
           existingSubstitutions.putParamSpec(paramSpecType, PyCallableParameterListTypeImpl(

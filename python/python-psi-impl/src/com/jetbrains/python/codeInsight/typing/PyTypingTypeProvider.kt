@@ -2276,10 +2276,9 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         }
 
         PyAstTypeParameter.Kind.ParamSpec -> {
-          val defaultType = (Ref.deref(defaultType) as? PyCallableParameterVariadicType)?.let { Ref(it) }
           return PyParamSpecType(name)
             .withBound(bound)
-            .withDefaultType(defaultType)
+            .withDefaultType(getParamSpecDefaultType(defaultExpression, defaultType))
             .withVariance(variance)
         }
       }
@@ -2345,17 +2344,14 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       val typeParameterOwner = ScopeUtil.getScopeOwner(element)
       val scopeOwner: PyQualifiedNameOwner? = typeParameterOwner as? PyQualifiedNameOwner
 
-      val defaultType = element.defaultExpressionText
-        ?.let {
-          PyUtil.createExpressionFromFragment(it, element)
+      val defaultExpression = element.defaultExpressionText?.let { PyUtil.createExpressionFromFragment(it, element) }
+      val defaultType = defaultExpression?.let {
+        val defaultExprWithoutParens = PyPsiUtils.flattenParens(it)
+        if (defaultExprWithoutParens != null) {
+          getTypePreventingRecursion(defaultExprWithoutParens, context)
         }
-        ?.let { defaultExpression ->
-          val defaultExprWithoutParens = PyPsiUtils.flattenParens(defaultExpression)
-          if (defaultExprWithoutParens != null) {
-            getTypePreventingRecursion(defaultExprWithoutParens, context)
-          }
-          else Ref<PyType?>(PyAnyType.unknown)
-        }
+        else Ref<PyType?>(PyAnyType.unknown)
+      }
 
       val boundExpression = element.boundExpressionText?.let { boundExpressionText ->
         PyPsiUtils.flattenParens(PyUtil.createExpressionFromFragment(boundExpressionText, element))
@@ -2393,15 +2389,25 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         }
 
         PyAstTypeParameter.Kind.ParamSpec -> {
-          val defaultType = (defaultType?.get() as? PyCallableParameterVariadicType)?.let { Ref(it) }
           PyParamSpecType(name)
             .withScopeOwner(scopeOwner)
             .withBound(boundType)
-            .withDefaultType(defaultType)
+            .withDefaultType(getParamSpecDefaultType(defaultExpression, defaultType))
             .withVariance(variance)
             .withDeclarationElement(declarationElement)
         }
       }
+    }
+
+    /**
+     * Returns [PyAnyType.unknown] for the `...` default of a ParamSpec.
+     * An explicit `...` type argument of a ParamSpec gets the same type.
+     */
+    private fun getParamSpecDefaultType(defaultExpression: PyExpression?, defaultType: Ref<PyType?>?): Ref<PyType>? {
+      if (PyPsiUtils.flattenParens(defaultExpression) is PyEllipsisLiteralExpression) {
+        return Ref<PyType>(PyAnyType.unknown)
+      }
+      return (Ref.deref(defaultType) as? PyCallableParameterVariadicType)?.let { Ref<PyType>(it) }
     }
 
     private fun getTypePreventingRecursion(expression: PyExpression, context: Context): Ref<PyType?>? {

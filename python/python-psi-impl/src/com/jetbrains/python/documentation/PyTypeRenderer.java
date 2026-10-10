@@ -731,7 +731,9 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     // PyTypeParameterTypes have the stars in the name but PyTypeParameters don't
     String name = typeParameter.getName().replaceFirst("\\*+", "");
     HtmlChunk renderedBound = !isAnyOrUnknown(bound) ? render(bound) : null;
-    HtmlChunk renderedType = defaultType != null ? render(defaultType) : null;
+    HtmlChunk renderedType = defaultType == null ? null
+                             : typeParameter instanceof PyParamSpecType && isUnknown(defaultType) ? styled("...", PyHighlighter.PY_DOT)
+                             : render(defaultType);
     PyAstTypeParameter.Kind parameterKind = switch (typeParameter) {
       case PyTypeVarType ignored -> PyTypeParameter.Kind.TypeVar;
       case PyTypeVarTupleType ignored -> PyTypeParameter.Kind.TypeVarTuple;

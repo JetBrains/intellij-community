@@ -204,7 +204,7 @@ public final class PyTypeParameterMapping {
       PyType defaultType = Ref.deref(typeParameterType.getDefaultType());
       // A malformed default (e.g. a parameter list `[int]` used as the default of a regular TypeVar) would yield a
       // variadic-incompatible mapping that the constructor rejects; ignore such a default and fall back below.
-      if (defaultType == null || !haveIncompatibleVariadicKinds(unmatchedExpectedType, defaultType)) {
+      if (defaultType == null || isUnknown(defaultType) || !haveIncompatibleVariadicKinds(unmatchedExpectedType, defaultType)) {
         return Couple.of(unmatchedExpectedType, defaultType);
       }
     }

@@ -2302,15 +2302,38 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestFor(issues = ["PY-71002"])
+  @TestFor(issues = ["PY-71002", "PY-92890"])
   fun `non-default ParamSpec following ones with defaults`() = test("""
-    from typing import ParamSpec, Generic
+    from typing import ParamSpec, Generic, TypeVar
 
     P1 = ParamSpec("P1")
     P2 = ParamSpec("P2", default=[int, str])
+    P3 = ParamSpec("P3", default=...)
+    T = TypeVar("T")
 
     class Clazz(Generic[P2, P1]): ...
     #                       ^^ ERROR Non-default TypeVars cannot follow ones with defaults
+    class Clazz2(Generic[P2, P3]): ...
+    class Clazz3(Generic[P3, T]): ...
+    #                        └ ERROR Non-default TypeVars cannot follow ones with defaults
+
+    c: Clazz2[[float]]
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92890"])
+  fun `omitted ParamSpec with ellipsis default`() = test("""
+    from typing import Generic, ParamSpec
+
+    P4 = ParamSpec("P4", default=(...))
+
+    class Clazz2[**P2 = [int, str], **P3 = ...]: ...
+    class Clazz3[**P2 = [int, str], **P3 = (...)]: ...
+    class Clazz4(Generic[P4]): ...
+
+    c2: Clazz2[[float]]
+    c3: Clazz3[[float]]
+    c4: Clazz4
     """.trimIndent())
 
   @Test

@@ -1799,6 +1799,27 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-92890"])
+    fun `access to attribute of generic class with ParamSpec with ellipsis default is not ambiguous`() = test("""
+      from typing import Generic, ParamSpec
+
+      P1 = ParamSpec("P1", default=...)
+
+      class Inner[**P]: ...
+
+      class Test1[**P = ...]:
+          attr: Inner[P]
+      class Test2(Generic[P1]):
+          attr: Inner[P1]
+      class Test3[**P]:
+          attr: Inner[P]
+
+      Test1.attr
+      Test2.attr
+      Test3.attr # WARNING Access to generic instance variables via class is ambiguous
+      """.trimIndent())
+
+    @Test
     fun `generic attribute assignment is checked`() = test("""
       class C[T]:
           attr: list[T]

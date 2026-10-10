@@ -2146,6 +2146,129 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       expr = Clazz[..., [float]]()
       #└ TYPE Clazz[Unknown, [float | int], [float | int]]
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92890"])
+    fun `omitted ParamSpec with ellipsis default old style`() = test("""
+      from typing import Generic, ParamSpec
+
+      P2 = ParamSpec("P2", default=[int, str])
+      P3 = ParamSpec("P3", default=...)
+
+      class Clazz2(Generic[P2, P3]): ...
+
+      def f(omitted: Clazz2[[float]], explicit: Clazz2[[float], ...]):
+          omitted
+      #   └ TYPE Clazz2[[float | int], Unknown]
+          explicit
+      #   └ TYPE Clazz2[[float | int], Unknown]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92890"])
+    fun `omitted ParamSpec with ellipsis default`() = test("""
+      class Clazz2[**P2 = [int, str], **P3 = ...]: ...
+
+      def f(omitted: Clazz2[[float]], explicit: Clazz2[[float], ...], bare: Clazz2):
+          omitted
+      #   └ TYPE Clazz2[[float | int], Unknown]
+          explicit
+      #   └ TYPE Clazz2[[float | int], Unknown]
+          bare
+      #   └ TYPE Clazz2[[int, str], Unknown]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92890"])
+    fun `member typed with omitted ParamSpec with ellipsis default`() = test("""
+      from typing import Callable
+
+      class Clazz2[**P2 = [int, str], **P3 = ...]:
+          def first(self) -> Callable[P2, int]: ...
+          def second(self) -> Callable[P3, int]: ...
+
+      def f(c: Clazz2[[float]]):
+          first = c.first()
+      #   └ TYPE (float | int) -> int
+          second = c.second()
+      #   └ TYPE (...) -> int
+          second(1, "a", x=None)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92890"])
+    fun `function with ParamSpec with ellipsis default`() = test("""
+      from typing import Callable
+
+      def f[**P = ...]() -> Callable[P, int]: ...
+
+      # using a list to widen to a PyCallableType
+      expr = [f][0]
+      #└ TYPE [**P = ...]() -> (**P) -> int
+      result = f()
+      #└ TYPE (...) -> int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92890"])
+    fun `type alias with ParamSpec with ellipsis default`() = test("""
+      from typing import Callable
+
+      type PAlias[T = str, **P = ...] = Callable[P, T]
+
+      def f(omitted: PAlias[int], bare: PAlias):
+          omitted
+      #   └ TYPE (...) -> int
+          bare
+      #   └ TYPE (...) -> str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92890"])
+    fun `imported class with ParamSpec with ellipsis default`() = test("""
+      from mod import Clazz2, Clazz3
+
+      def f(c2: Clazz2[[float]], c3: Clazz3[[float]]):
+          c2
+      #   └ TYPE Clazz2[[float | int], Unknown]
+          second = c2.second()
+      #   └ TYPE (...) -> int
+          c3
+      #   └ TYPE Clazz3[[float | int], Unknown]
+      """.trimIndent(),
+      "mod.py" to """
+        from typing import Callable, Generic, ParamSpec
+
+        P2 = ParamSpec("P2", default=[int, str])
+        P3 = ParamSpec("P3", default=...)
+
+        class Clazz2(Generic[P2, P3]):
+            def second(self) -> Callable[P3, int]: ...
+
+        class Clazz3[**P4 = [int, str], **P5 = ...]: ...
+        """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92890"])
+    fun `stub class with ParamSpec with ellipsis default`() = test("""
+      from mod import Clazz2, Clazz3
+
+      def f(c2: Clazz2[[float]], c3: Clazz3[[float]]):
+          c2
+      #   └ TYPE Clazz2[[float | int], Unknown]
+          c3
+      #   └ TYPE Clazz3[[float | int], Unknown]
+      """.trimIndent(),
+      "mod.pyi" to """
+        from typing import Generic, ParamSpec
+
+        P2 = ParamSpec("P2", default=[int, str])
+        P3 = ParamSpec("P3", default=...)
+
+        class Clazz2(Generic[P2, P3]): ...
+
+        class Clazz3[**P4 = [int, str], **P5 = ...]: ...
+        """.trimIndent())
   }
 
   @Nested
