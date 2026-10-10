@@ -3837,6 +3837,41 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-92892"])
+  @TestCaseOptions(assertRecursionPrevention = false)
+  fun `recursive generic alias through forward references`() = test("""
+    from typing import Generic, Literal, TypeVar
+
+    T = TypeVar("T")
+
+    class Node(Generic[T]): ...
+
+    Tree = Node["Forest[T]"] | list["Forest[T]"]
+    Forest = Tree[T] | Node[Tree[T]]
+    #            │              └ WEAK-WARNING Member 'type[Node[Unknown]]' of 'UnionType | type[Node[Unknown]] | type[list[Unknown]]' does not have attribute '__getitem__' FIXME
+    #            └ WEAK-WARNING Member 'type[Node[Unknown]]' of 'UnionType | type[Node[Unknown]] | type[list[Unknown]]' does not have attribute '__getitem__' FIXME
+    forest: Forest[int]
+    #             └ WEAK-WARNING Member 'type[Node[Unknown]]' of 'UnionType | type[Node[Unknown]]' does not have attribute '__getitem__' FIXME
+    forest
+    #└ TYPE Unknown FIXME # recursive generic aliases are not inferred
+
+    Rec = Node["Rec[T]"]
+    rec: Rec[int]
+    rec
+    #└ TYPE Node[Unknown] FIXME # recursive generic aliases are not inferred
+    rec_extra: Rec[int, str]
+    #              ^^^^^^^^ WARNING Passed type arguments do not match type parameters of type alias 'Rec'
+
+    U = TypeVar("U")
+    P = tuple[U, "P[T, U]"]
+    p: P[int, str]
+
+    NotGeneric = Node[Literal["T"]]
+    not_generic: NotGeneric[int]
+    #                       ^^^ WARNING Type alias is not generic or already specialized
+    """.trimIndent())
+
+  @Test
   fun `Concatenate not reported as illegal first param`() = test("""
     from typing import Callable, Concatenate
 
