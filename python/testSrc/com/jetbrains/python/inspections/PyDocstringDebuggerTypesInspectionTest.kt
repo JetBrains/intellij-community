@@ -33,7 +33,7 @@ class PyDocstringDebuggerTypesInspectionTest : PyCodeInsightTestCase() {
           '''
           :param x: a value
           :type x: str'''
-      #            ^^^ WEAK-WARNING Dynamically inferred type 'int' doesn't match specified type 'str'
+      #            ^^^ WEAK_WARNING Dynamically inferred type 'int' doesn't match specified type 'str'
     """)
   }
 
@@ -73,7 +73,7 @@ class PyDocstringDebuggerTypesInspectionTest : PyCodeInsightTestCase() {
           '''
           :param x: a value
           :type x: bytes'''
-      #            ^^^^^ WEAK-WARNING Dynamically inferred type 'typing._SpecialForm' doesn't match specified type 'bytes' FIXME Dynamically inferred type 'int or str' doesn't match specified type 'bytes'
+      #            ^^^^^ WEAK_WARNING Dynamically inferred type 'typing._SpecialForm' doesn't match specified type 'bytes' FIXME Dynamically inferred type 'int or str' doesn't match specified type 'bytes'
     """)
   }
 

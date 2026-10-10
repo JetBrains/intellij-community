@@ -68,6 +68,6 @@ class PyQuotedTypeHintUsageTest : PyCodeInsightTestCase() {
   @Test
   fun `quoted use of one type parameter does not hide another unused one`() = test("""
     type Pair[T, U] = tuple["T", int]
-    #            └ WEAK-WARNING Type parameter 'U' is not used
+    #            └ WEAK_WARNING Type parameter 'U' is not used
     """)
 }

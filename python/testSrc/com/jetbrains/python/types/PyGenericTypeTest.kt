@@ -1303,7 +1303,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       MyKT = TypeVar("MyKT")
       MyVT = TypeVar("MyVT")
 
-      class MyMapping(Mapping[MyKT, MyVT]): # WEAK-WARNING Class MyMapping must implement all abstract methods
+      class MyMapping(Mapping[MyKT, MyVT]): # WEAK_WARNING Class MyMapping must implement all abstract methods
           pass
 
       d: MyMapping[str, str] = undefined1 # ERROR Unresolved reference 'undefined1'

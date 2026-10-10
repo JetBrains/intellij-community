@@ -895,7 +895,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
 
       receiver: Any | int | StrBox = ...
       expr = receiver.get()
-      #│              ^^^ WEAK-WARNING Member 'int' of 'Any | int | StrBox' does not have attribute 'get'
+      #│              ^^^ WEAK_WARNING Member 'int' of 'Any | int | StrBox' does not have attribute 'get'
       #└ TYPE tuple[str, int, float | int] | Unknown
       """.trimIndent())
 

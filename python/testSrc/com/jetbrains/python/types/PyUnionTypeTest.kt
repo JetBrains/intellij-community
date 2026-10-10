@@ -250,7 +250,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
 
       x = f()
       expr = x.bit_length()
-      # │      ^^^^^^^^^^ WEAK-WARNING Member 'slice' of 'int | slice' does not have attribute 'bit_length'
+      # │      ^^^^^^^^^^ WEAK_WARNING Member 'slice' of 'int | slice' does not have attribute 'bit_length'
       # └ TYPE int | Unknown
       """.trimIndent())
 
@@ -258,7 +258,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
     fun `undefined property of union type`() = test("""
       x = 42 if True else 'spam'
       expr = x.foo
-      #│       ^^^ WEAK-WARNING Member 'Literal[42]' of 'Literal[42, "spam"]' does not have attribute 'foo'
+      #│       ^^^ WEAK_WARNING Member 'Literal[42]' of 'Literal[42, "spam"]' does not have attribute 'foo'
       #└ TYPE Unknown
       """.trimIndent())
 
@@ -934,7 +934,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def f(x: Empty | None):
           x += Rhs()
       #     ^^ WARNING '+=' is not supported between 'Empty | None' and 'Rhs'
-      #     ^^ WEAK-WARNING Member 'Empty' of 'Empty | None' does not have attribute '__iadd__'
+      #     ^^ WEAK_WARNING Member 'Empty' of 'Empty | None' does not have attribute '__iadd__'
       """)
 
     @Test
@@ -949,7 +949,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def f(x: Empty | None):
           _ = x + Rhs()
       #         └ WARNING '+' is not supported between 'Empty | None' and 'Rhs'
-      #         └ WEAK-WARNING Member 'Empty' of 'Empty | None' does not have attribute '__add__'
+      #         └ WEAK_WARNING Member 'Empty' of 'Empty | None' does not have attribute '__add__'
       """)
 
     @Test
@@ -967,7 +967,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def f(x: Empty | AlsoEmpty, y: Rhs):
           _ = x + y
       #         └ WARNING '+' is not supported between 'Empty | AlsoEmpty' and 'Rhs'
-      #         └ WEAK-WARNING Member 'Empty' of 'Empty | AlsoEmpty' does not have attribute '__add__' FIXME # duplicates the type checker warning
+      #         └ WEAK_WARNING Member 'Empty' of 'Empty | AlsoEmpty' does not have attribute '__add__' FIXME # duplicates the type checker warning
       """)
 
     @Test
@@ -985,7 +985,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def f(x: Empty | AlsoEmpty, y: Rhs):
           x += y
       #     ^^ WARNING '+=' is not supported between 'Empty | AlsoEmpty' and 'Rhs'
-      #     ^^ WEAK-WARNING Member 'Empty' of 'Empty | AlsoEmpty' does not have attribute '__iadd__' FIXME # duplicates the type checker warning
+      #     ^^ WEAK_WARNING Member 'Empty' of 'Empty | AlsoEmpty' does not have attribute '__iadd__' FIXME # duplicates the type checker warning
       """)
 
     @Test

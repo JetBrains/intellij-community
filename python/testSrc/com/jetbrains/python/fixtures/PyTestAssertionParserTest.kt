@@ -3,8 +3,12 @@ package com.jetbrains.python.fixtures
 
 import com.intellij.idea.TestFor
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.python.testAssertions.PyTestAssertion
+import com.intellij.python.testAssertions.PyTestAssertionFix
+import com.intellij.python.testAssertions.PyTestAssertionInliner
 import com.intellij.python.testAssertions.PyTestAssertionParser
 import com.intellij.python.testAssertions.PyTestAssertionParser.parseAssertions
+import com.intellij.python.testAssertions.PyTestAssertionToken
 import com.intellij.python.testAssertions.PyTestDirectiveKind
 import com.intellij.python.testAssertions.PyTestDirectives
 import com.jetbrains.python.allure.Layers
@@ -35,7 +39,7 @@ class PyTestAssertionParserTest {
     Assertions.assertEquals("TYPE", assertion.type)
     Assertions.assertEquals("before line 1\nbefore line 2", assertion.content)
     Assertions.assertEquals("after line 1\nafter line 2", assertion.fixmeContent)
-    Assertions.assertEquals("trailing note", assertion.comment)
+    Assertions.assertEquals("\n\ntrailing note", assertion.comment)
   }
 
   @Test
@@ -81,6 +85,7 @@ class PyTestAssertionParserTest {
     Assertions.assertEquals(2, assertions.size)
     Assertions.assertEquals("first line\ncontinuation", assertions[0].content)
     Assertions.assertEquals("second line", assertions[1].content)
+    Assertions.assertEquals(listOf(0, 0), assertions.map { it.codeLineStart })
   }
 
   @Test
@@ -175,7 +180,7 @@ class PyTestAssertionParserTest {
 
   @Test
   fun `severity directives are the default highlight severities`() {
-    val platformNames = HighlightSeverity.DEFAULT_SEVERITIES.map { it.name.replace(" ", "-") }
+    val platformNames = HighlightSeverity.DEFAULT_SEVERITIES.map { it.name.replace(" ", "_") }
     Assertions.assertEquals(platformNames.toSet(), PyTestDirectives.severityNames)
   }
 
@@ -220,11 +225,11 @@ class PyTestAssertionParserTest {
   @Test
   fun `parser reports a near miss of an inline directive`() {
     val result = PyTestAssertionParser.parse("""
-      x = 1 # WEAK_WARNING message
+      x = 1 # WEAK-WARNING message
     """.trimIndent())
 
     Assertions.assertEquals(emptyList<Any>(), result.assertions)
-    Assertions.assertEquals(listOf("1:7: Unknown directive 'WEAK_WARNING'. Did you mean 'WEAK-WARNING'?"),
+    Assertions.assertEquals(listOf("1:7: Unknown directive 'WEAK-WARNING'. Did you mean 'WEAK_WARNING'?"),
                             result.diagnostics.map { it.toString() })
   }
 
@@ -280,5 +285,300 @@ class PyTestAssertionParserTest {
 
     Assertions.assertEquals(emptyList<Any>(), result.assertions)
     Assertions.assertEquals(listOf("1:1: The marker has no code line above it"), result.diagnostics.map { it.toString() })
+  }
+
+  @Test
+  fun `inliner keeps the column and the guides of indented marker lines`() = assertRoundTrip("""
+    def f():
+        value = make()
+        #│  │   ^^^^^^ TYPE str
+        #│  └ TYPE int
+        #\ TYPE object
+  """)
+
+  @Test
+  fun `inliner writes a multi-line payload as comment lines`() = assertRoundTrip("""
+    value = make()
+    #   ^^^ TYPE before line 1
+    # before line 2 FIXME after line 1
+    # after line 2 # trailing note
+  """)
+
+  @Test
+  fun `inliner writes a multi-line payload of an indented marker line as indented comment lines`() = assertRoundTrip("""
+    def f():
+        value = make()
+        #   ^^^ TYPE before line 1
+        # before line 2
+  """)
+
+  @Test
+  fun `parser reads an escaped hash as content`() {
+    val code = """
+      x = 1 # WARNING a \# b # note
+    """.trimIndent()
+
+    val assertion = parseAssertions(code).single()
+    Assertions.assertEquals("a # b", assertion.content)
+    Assertions.assertEquals("note", assertion.comment)
+    assertRoundTrip(code)
+  }
+
+  @Test
+  fun `parser reads FIXME only as a whole word`() {
+    val assertion = parseAssertions("""
+      x = 1 # WARNING Class FIXMEType and FIXME_NAME are unused
+    """.trimIndent()).single()
+
+    Assertions.assertEquals("Class FIXMEType and FIXME_NAME are unused", assertion.content)
+    Assertions.assertNull(assertion.fixmeContent)
+  }
+
+  @Test
+  fun `parser finds an inline assertion after a hash in a string`() {
+    val code = """
+      s = "#" # TYPE str
+    """.trimIndent()
+
+    val assertion = parseAssertions(code).single()
+    Assertions.assertEquals("TYPE", assertion.type)
+    Assertions.assertEquals("str", assertion.content)
+    Assertions.assertEquals(8, assertion.assertionColumnStart)
+    assertRoundTrip(code)
+  }
+
+  @Test
+  fun `inliner keeps a trailing comment on its payload line`() = assertRoundTrip("""
+    value = make()
+    #   ^^^ TYPE a # note
+    # b
+  """)
+
+  @Test
+  fun `inliner keeps a trailing comment on each payload line`() = assertRoundTrip("""
+    value = make()
+    #   ^^^ TYPE a # first note
+    # b # second note
+  """)
+
+  @Test
+  fun `inliner keeps a comment line below the payload`() = assertRoundTrip("""
+    value = make()
+    #   ^^^ TYPE a
+    # # a note below
+  """)
+
+  @Test
+  fun `parser reports a marker right of the end of the code line`() {
+    val result = PyTestAssertionParser.parse("""
+      x = 1
+      #        └ TYPE int
+      #       ^^ TYPE int
+      #    └ ERROR Expression expected
+      #   ^^^^^^^^ ERROR Missing closing quote
+    """.trimIndent())
+
+    Assertions.assertEquals(4, result.assertions.size)
+    Assertions.assertEquals(listOf("2:1: The marker is right of the end of the code line 1",
+                                   "3:1: The marker is right of the end of the code line 1"),
+                            result.diagnostics.map { it.toString() })
+  }
+
+  @Test
+  fun `parser reports an unknown variance`() {
+    val result = PyTestAssertionParser.parse("""
+      x = 1 # EXPECTED_VARIANCE COVARAINT
+      y = 2 # INFERRED_VARIANCE Unknown
+      z = 3 # EXPECTED_VARIANCE Expected variance only available for PyReferenceExpressions
+    """.trimIndent())
+
+    Assertions.assertEquals(3, result.assertions.size)
+    Assertions.assertEquals(
+      listOf("1:7: Unknown value 'COVARAINT' after EXPECTED_VARIANCE. " +
+             "Expected one of: COVARIANT, CONTRAVARIANT, INVARIANT, BIVARIANT, INFER_VARIANCE, NONE"),
+      result.diagnostics.map { it.toString() },
+    )
+  }
+
+  @Test
+  fun `tokens are the markers the known directives and the modifiers`() {
+    val code = """
+      x = f()
+      #   ^^^ WARNING TOOLTIP a FIXME b # c FIXME
+      y = 1 # TYPE int
+      z = 2
+      #   └ TYPO int
+    """.trimIndent()
+
+    val tokens = PyTestAssertionParser.parse(code).tokens.map { code.substring(it.start, it.end) to it.kind }
+    Assertions.assertEquals(listOf("^^^" to PyTestAssertionToken.Kind.MARKER,
+                                   "WARNING" to PyTestAssertionToken.Kind.DIRECTIVE,
+                                   "TOOLTIP" to PyTestAssertionToken.Kind.MODIFIER,
+                                   "FIXME" to PyTestAssertionToken.Kind.MODIFIER,
+                                   "TYPE" to PyTestAssertionToken.Kind.DIRECTIVE,
+                                   "└" to PyTestAssertionToken.Kind.MARKER),
+                            tokens)
+  }
+
+  @Test
+  fun `tokens find FIXME on a continuation line`() {
+    val code = """
+      x = f()
+      #   ^^^ TYPE a
+      # b FIXME c
+    """.trimIndent()
+
+    val tokens = PyTestAssertionParser.parse(code).tokens.map { code.substring(it.start, it.end) to it.kind }
+    Assertions.assertEquals(listOf("^^^" to PyTestAssertionToken.Kind.MARKER,
+                                   "TYPE" to PyTestAssertionToken.Kind.DIRECTIVE,
+                                   "FIXME" to PyTestAssertionToken.Kind.MODIFIER),
+                            tokens)
+  }
+
+  @Test
+  fun `marker below a multi-line assertion points at the code line`() {
+    val code = """
+      x = f(a)
+      #   │ └ TYPE A
+      # B
+      #   └ TYPE int
+    """.trimIndent()
+
+    val assertions = parseAssertions(code)
+    Assertions.assertEquals(listOf("A\nB", "int"), assertions.map { it.content })
+    Assertions.assertEquals(listOf(0, 0), assertions.map { it.codeLineStart })
+    assertRoundTrip(code)
+  }
+
+  @Test
+  fun `payload line that starts with a hash continues the payload`() {
+    val code = """
+      value = make()
+      #   ^^^ TYPE a
+      # \#x
+      # ^ 1
+    """.trimIndent()
+
+    Assertions.assertEquals("a\n#x\n^ 1", parseAssertions(code).single().content)
+    assertRoundTrip(code)
+  }
+
+  @Test
+  fun `empty payload line stays in the content`() {
+    val code = """
+      value = make()
+      #   ^^^ TYPE a
+      #
+      # b
+    """.trimIndent()
+
+    Assertions.assertEquals("a\n\nb", parseAssertions(code).single().content)
+    assertRoundTrip(code)
+  }
+
+  @Test
+  fun `inliner writes a multi-line inline assertion above the marker lines of its code line`() = assertRoundTrip("""
+    x = f() # TYPE a
+            # b
+    #   ^^^ WARNING w
+  """)
+
+  @Test
+  fun `inliner writes a new highlight on a line whose inline assertion has no counterpart`() {
+    val text = "x = f() # TYPE int"
+    val warning = PyTestAssertion(codeOffsetStart = 4, codeLineStart = 0, codeColumnStart = 4, codeColumnEnd = 7,
+                                  type = "WARNING", content = "w")
+
+    val actualText = PyTestAssertionInliner.generateActualText(text, parseAssertions(text), listOf(warning))
+
+    Assertions.assertEquals("x = f()\n#   ^^^ WARNING w", actualText)
+  }
+
+  @Test
+  fun `parser reports a span that starts with a left marker`() {
+    val result = PyTestAssertionParser.parse("""
+      foo = 1
+      #\^ WARNING w
+    """.trimIndent())
+
+    Assertions.assertEquals(listOf("2:1: A span cannot start with '\\'. Start the span in the column after the '#'"),
+                            result.diagnostics.map { it.toString() })
+  }
+
+  @Test
+  fun `parser reports a marker without a directive`() {
+    val result = PyTestAssertionParser.parse("""
+      foo = 1
+      #   ^^^
+      bar = 2
+      #   ^^^ 123
+    """.trimIndent())
+
+    Assertions.assertEquals(emptyList<Any>(), result.assertions)
+    Assertions.assertEquals(listOf("2:1: The marker has no directive", "4:1: The marker has no directive"),
+                            result.diagnostics.map { it.toString() })
+  }
+
+  @Test
+  fun `diagnostic of a near miss holds the name and its fix`() {
+    val code = "x = 1 # WEAK-WARNING message"
+
+    val diagnostic = PyTestAssertionParser.parse(code).diagnostics.single()
+
+    Assertions.assertEquals("WEAK-WARNING", code.substring(diagnostic.start, diagnostic.end))
+    Assertions.assertEquals(PyTestAssertionFix.Kind.DIRECTIVE_NAME, diagnostic.fix?.kind)
+    Assertions.assertEquals("x = 1 # WEAK_WARNING message", diagnostic.fix?.applyTo(code))
+  }
+
+  @Test
+  fun `parser reports a one-column span and fixes it to a corner marker`() = assertCanonicalForm("""
+    x = 1
+    #   ^ TYPE int
+  """, """
+    x = 1
+    #   └ TYPE int
+  """)
+
+  @Test
+  fun `parser reports an ascii guide and two spaces after a directive`() = assertCanonicalForm("""
+    x = f(a)
+    #   | └ TYPE A
+    #   └ TYPE  int
+  """, """
+    x = f(a)
+    #   │ └ TYPE A
+    #   └ TYPE int
+  """)
+
+  @Test
+  fun `parser reports marker lines that start with the leftmost marker`() = assertCanonicalForm("""
+    x = f(a)
+    #   └ TYPE int
+    #     └ TYPE A
+  """, """
+    x = f(a)
+    #   │ └ TYPE A
+    #   └ TYPE int
+  """)
+
+  @Test
+  fun `parser reports an inline assertion without a space after the hash`() = assertCanonicalForm("""
+    x = 1 #TYPE int
+  """, """
+    x = 1 # TYPE int
+  """)
+
+  private fun assertCanonicalForm(code: String, canonicalCode: String) {
+    val text = code.trimIndent()
+    val diagnostic = PyTestAssertionParser.parse(text).diagnostics.single()
+    Assertions.assertTrue(diagnostic.message.contains("canonical form"), diagnostic.message)
+    Assertions.assertEquals(canonicalCode.trimIndent(), diagnostic.fix?.applyTo(text))
+  }
+
+  private fun assertRoundTrip(code: String) {
+    val text = code.trimIndent()
+    val result = PyTestAssertionParser.parse(text)
+    Assertions.assertEquals(emptyList<Any>(), result.diagnostics)
+    Assertions.assertEquals(text, PyTestAssertionInliner.generateActualText(text, result.assertions, result.assertions))
   }
 }

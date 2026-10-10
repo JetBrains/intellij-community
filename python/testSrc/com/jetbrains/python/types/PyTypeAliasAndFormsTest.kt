@@ -1238,7 +1238,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           x = C()
 
       expr = x.method()
-      #│       ^^^^^^ WEAK-WARNING Member 'Literal[42]' of 'Literal[42] | C' does not have attribute 'method'
+      #│       ^^^^^^ WEAK_WARNING Member 'Literal[42]' of 'Literal[42] | C' does not have attribute 'method'
       #└ TYPE C | Unknown
       """.trimIndent())
 
