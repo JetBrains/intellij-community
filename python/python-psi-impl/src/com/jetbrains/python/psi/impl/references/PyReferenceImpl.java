@@ -45,6 +45,7 @@ import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.PyTypeParameter;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PropertyBunch;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -654,6 +655,10 @@ public class PyReferenceImpl extends PyReferenceBase {
             myElement.getContainingFile() instanceof PyFile pyFile && !pyFile.hasImportFromFuture(FutureFeature.PRINT_FUNCTION)) {
           return false;
         }
+      }
+      else if (e instanceof PyTypeParameter) {
+        // The control flow does not define a type parameter.
+        return true;
       }
       else if (ScopeUtil.getScopeOwner(e) == ScopeUtil.getScopeOwner(element)) {
         return PyDefUseUtil.isDefinedBefore(e, element);
