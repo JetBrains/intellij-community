@@ -46,29 +46,19 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.containers.orNull
-import com.intellij.util.text.nullize
+import com.intellij.python.testAssertions.PyTestAssertion
+import com.intellij.python.testAssertions.PyTestAssertionInliner
+import com.intellij.python.testAssertions.PyTestAssertionInliner.findCounterparts
+import com.intellij.python.testAssertions.PyTestAssertionParseResult
+import com.intellij.python.testAssertions.PyTestAssertionParser
+import com.intellij.python.testAssertions.PyTestAssertionSyntax.NEWLINE
+import com.intellij.python.testAssertions.PyTestDirectives
 import com.jetbrains.python.PythonTestUtil
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserSymbols.COMMENT_CHAR
-import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserSymbols.FIXME_KEYWORD
-import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserSymbols.GUIDE_BAR
-import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserSymbols.MARKER_CORNER
-import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserSymbols.MARKER_LEFT
-import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserSymbols.MARKER_SPAN
-import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserSymbols.NEWLINE
-import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.defaultSeverityNames
-import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.isAssertionMarker
-import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.scanTokenEnd
-import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.skipWhitespace
-import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.skipWhitespaceAndGuides
-import com.jetbrains.python.codeInsight.completion.PyTestAssertionType
-import com.jetbrains.python.codeInsight.completion.PyTestAssertionType.Companion.TOOLTIP_KEYWORD
 import com.jetbrains.python.documentation.PyDocumentationSettings
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
-import com.jetbrains.python.fixtures.PyTestAssertionInliner.findCounterparts
-import com.jetbrains.python.fixtures.PyTestAssertionParser.parseAssertions
 import com.jetbrains.python.inspections.PyAbstractClassInspection
 import com.jetbrains.python.inspections.PyArgumentListInspection
 import com.jetbrains.python.inspections.PyAssertTypeInspection
@@ -127,7 +117,6 @@ import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.api.fail
 import java.lang.reflect.Method
-import kotlin.math.abs
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
@@ -172,13 +161,13 @@ import kotlin.time.measureTimedValue
  * Markers are omitted iff the assertion is on the same line as the code.
  *
  * - **Inspection-related assertion types** are either a highlighting severity name such as `WARNING`,
- * `WEAK_WARNING`, `ERROR`, or another [HighlightSeverity] name. The content is compared with the
+ * `WEAK-WARNING`, `ERROR`, or another [HighlightSeverity] name with `-` in place of a space. The content is compared with the
  * highlight description. `ISSUES *` may be used as a wildcard expectation for any inspection issue
  * on the marked line.
  *
- * - **Custom assertion types** are listed in [PyTestAssertionType]. To add a new semantic assertion kind,
- * extend [PyTestAssertionType] and handle it from the corresponding assertion computation by adding
- * a related assert method.
+ * - **Custom assertion types** are listed in [PyTestDirectives]. To add a new semantic assertion kind,
+ * add an entry to [PyTestDirectives] and handle it in the assertion computation of this class.
+ * Directive names are case-sensitive.
  *
  * - **FIXME** records the value that is expected after a known bug or limitation is fixed while keeping the
  * current/wrong expected value before it. `FIXME` may also appear with no anticipated text to indicate e.g.,
@@ -456,6 +445,15 @@ abstract class PyCodeInsightTestCase {
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
   }
 
+  /** Parses the assertions of [text] and fails on a problem in their syntax. */
+  private fun parseChecked(text: String): PyTestAssertionParseResult {
+    val result = PyTestAssertionParser.parse(text)
+    if (result.diagnostics.isNotEmpty()) {
+      fail("Problems in the test assertions:\n" + result.diagnostics.joinToString("\n"))
+    }
+    return result
+  }
+
   /**
    * Configures [fileContent] as the test file and puts the caret where its `CARET` marker points.
    *
@@ -465,7 +463,7 @@ abstract class PyCodeInsightTestCase {
    */
   protected fun configureWithCaret(@Language("Python") fileContent: String, fileName: String = myTestCaseOptions.testFileName): PsiFile {
     val text = fileContent.trimIndent()
-    val markers = parseAssertions(text).filter { it.type == PyTestAssertionType.CARET.name }
+    val markers = parseChecked(text).assertions.filter { it.type == PyTestDirectives.CARET.name }
     val marker = markers.singleOrNull() ?: fail("Expected one CARET marker, found ${markers.size}")
     if (marker.isInlineAssertion()) fail("The CARET marker must be on its own comment line below the code")
 
@@ -572,7 +570,7 @@ abstract class PyCodeInsightTestCase {
     }
     createOtherFiles(otherFiles)
     val originalText = fileContent.trimIndent()
-    val expectedAssertions = parseAssertions(originalText)
+    val expectedAssertions = parseChecked(originalText).assertions
     val assertions = PyTestAssertionParser.maskAssertions(originalText, expectedAssertions)
     val currentFile = myFixture.configureByText(myTestCaseOptions.testFileName, assertions)
 
@@ -713,7 +711,7 @@ abstract class PyCodeInsightTestCase {
 
     runReadActionBlocking {
       for (expectedAssertion in expectedAssertions) {
-        if (defaultSeverityNames.contains(expectedAssertion.type)) {
+        if (expectedAssertion.isSeverity) {
           continue // actual inspection-related assertions have been added above
         }
         if (expectedAssertion.isWildcard) {
@@ -782,7 +780,7 @@ abstract class PyCodeInsightTestCase {
       val newContent = when {
         expectedAssertion == null
           -> highlight.description
-        expectedAssertion.content.split(" ").firstOrNull() == TOOLTIP_KEYWORD
+        expectedAssertion.content.split(" ").firstOrNull() == PyTestDirectives.TOOLTIP.name
           -> toolTipAssertionContent(expectedAssertion, highlight)
         else -> highlight.description
       }
@@ -793,7 +791,7 @@ abstract class PyCodeInsightTestCase {
 
     // adds: x = "s" # WARNING FIXME expect new issue
     for (expectedButMissingAssertion in allExpectedAssertions) {
-      if (defaultSeverityNames.contains(expectedButMissingAssertion.type) && expectedButMissingAssertion.hasFixme && expectedButMissingAssertion.content.isBlank()) {
+      if (expectedButMissingAssertion.isSeverity && expectedButMissingAssertion.hasFixme && expectedButMissingAssertion.content.isBlank()) {
         actualAssertions.add(expectedButMissingAssertion.copy())
       }
     }
@@ -809,8 +807,8 @@ abstract class PyCodeInsightTestCase {
   }
 
   private fun toolTipAssertionContent(expectedAssertion: PyTestAssertion, highlight: HighlightInfo): String {
-    val toolTip = highlight.toolTip ?: return "$TOOLTIP_KEYWORD No tooltip on the matched highlight"
-    val payload = expectedAssertion.content.removePrefix("$TOOLTIP_KEYWORD ")
+    val toolTip = highlight.toolTip ?: return "${PyTestDirectives.TOOLTIP.name} No tooltip on the matched highlight"
+    val payload = expectedAssertion.content.removePrefix("${PyTestDirectives.TOOLTIP.name} ")
     val expectsHtml = "</" in payload || "/>" in payload
     val plainDescription = normalizeExplanationText(highlight.description)
     val toolTipText = if (expectsHtml) toolTip else toolTipToPlainText(toolTip)
@@ -819,7 +817,7 @@ abstract class PyCodeInsightTestCase {
     val fragments = payload.split("\\n").map { normalizeExplanationText(it) }
 
     for (fragment in fragments) {
-      if (!onlyToolTip.contains(fragment)) return "$TOOLTIP_KEYWORD $onlyToolTip"
+      if (!onlyToolTip.contains(fragment)) return "${PyTestDirectives.TOOLTIP.name} $onlyToolTip"
     }
     return expectedAssertion.content
   }
@@ -852,14 +850,14 @@ abstract class PyCodeInsightTestCase {
                ?: throw AssertionError("Expression not found in string literal '$strLitValue' at pos $offsetStart")
     }
 
-    val actualContent = when (PyTestAssertionType.fromValue(expectedAssertion.type)) {
-      PyTestAssertionType.TYPE -> assertType(expectedAssertion, parent)
-      PyTestAssertionType.EXPECTED_TYPE -> assertExpectedType(parent)
-      PyTestAssertionType.IS_BUILTIN -> assertIsBuiltin(parent)
-      PyTestAssertionType.EXPECTED_VARIANCE -> assertExpectedVariance(parent)
-      PyTestAssertionType.INFERRED_VARIANCE -> assertInferredVariance(parent)
-      PyTestAssertionType.ISSUES -> expectedAssertion.content
-      PyTestAssertionType.CARET -> expectedAssertion.content
+    val actualContent = when (expectedAssertion.directive) {
+      PyTestDirectives.TYPE -> assertType(expectedAssertion, parent)
+      PyTestDirectives.EXPECTED_TYPE -> assertExpectedType(parent)
+      PyTestDirectives.IS_BUILTIN -> assertIsBuiltin(parent)
+      PyTestDirectives.EXPECTED_VARIANCE -> assertExpectedVariance(parent)
+      PyTestDirectives.INFERRED_VARIANCE -> assertInferredVariance(parent)
+      PyTestDirectives.ISSUES -> expectedAssertion.content
+      PyTestDirectives.CARET -> expectedAssertion.content
       else -> "Unknown assertion type: ${expectedAssertion.type}"
     }
 
@@ -952,705 +950,6 @@ abstract class PyCodeInsightTestCase {
   }
 }
 
-data class PyTestAssertion(
-  val codeOffsetStart: Int,
-  val codeLineStart: Int,
-  val codeColumnStart: Int = -1,
-  val codeColumnEnd: Int = -1,
-  val assertionOffsetStart: Int = -1,
-  val assertionOffsetEnd: Int = -1,
-  val assertionLineStart: Int = -1,
-  val assertionLineEnd: Int = -1,
-  val assertionColumnStart: Int = -1,
-  val assertionColumnEnd: Int = -1,
-  /**
-   * This name is usually from either [PyTestAssertionType.name] or [HighlightSeverity.name],
-   * or an unknown type assertion from a wrong test assertion
-   */
-  val type: String,
-  val content: String,
-  val fixmeContent: String? = null,
-  val comment: String? = null,
-) {
-
-  fun withContent(
-    content: String = this.content,
-    fixmeContent: String? = this.fixmeContent,
-    comment: String? = this.comment,
-  ): PyTestAssertion {
-
-    return copy(content = content, fixmeContent = fixmeContent, comment = comment)
-  }
-
-  fun asInlineAssertion(): PyTestAssertion {
-    return copy(codeColumnStart = -1, codeColumnEnd = -1)
-  }
-
-  fun isInlineAssertion(): Boolean {
-    return codeColumnStart < 0
-  }
-
-  val isWildcard: Boolean get() = type == PyTestAssertionType.ISSUES.name
-
-  val codeColumnEndEffective: Int get() = if (codeColumnStart + 1 == codeColumnEnd) -1 else codeColumnEnd
-
-  val columnLength: Int get() = (codeColumnEnd - codeColumnStart).coerceAtLeast(0)
-
-  val hasFixme: Boolean get() = fixmeContent != null
-
-  override fun toString(): String {
-    val line = if (assertionLineStart > -1) assertionLineStart else codeLineStart
-    val fixme = fixmeContent?.let { "FIXME $it" } ?: ""
-    val comment = comment.nullize()?.let { " # $it" } ?: ""
-    return "[$line:$codeColumnStart] $type $content $fixme$comment"
-  }
-
-  fun asText(serializedAssertionsAbove: List<String> = emptyList()): Pair<String, List<String>> {
-    val normalizedCodeColumnStart = if (codeColumnStart == 0) 1 else codeColumnStart
-
-    val serializedAssertionsAboveCopy = serializedAssertionsAbove.toMutableList()
-    if (normalizedCodeColumnStart > 0) {
-      for (i in serializedAssertionsAbove.indices) {
-        serializedAssertionsAboveCopy[i] = insertGuideAtColumn(serializedAssertionsAbove[i], normalizedCodeColumnStart)
-      }
-    }
-
-    return buildAssertionText(normalizedCodeColumnStart) to serializedAssertionsAboveCopy
-  }
-
-  private fun insertGuideAtColumn(text: String, column: Int): String {
-    val chars = text.toCharArray()
-    if (column < 0 || column >= chars.size) {
-      return text
-    }
-    if (chars[column] == ' ' || (
-        chars[column - 1] == MARKER_SPAN
-        && chars[column] == MARKER_SPAN
-        && chars[column + 1] == MARKER_SPAN
-                                )
-    ) {
-      chars[column] = GUIDE_BAR
-    }
-    return String(chars)
-  }
-
-  private fun buildAssertionText(normalizedCodeColumnStart: Int): String {
-    val suffix = buildSuffix()
-
-    if (normalizedCodeColumnStart < 0) {
-      return "# $type$suffix"
-    }
-
-    val prefix = buildMarkerPrefix(normalizedCodeColumnStart, codeColumnEndEffective)
-    return "#$prefix $type$suffix"
-  }
-
-  private fun buildSuffix(): String {
-    val result = StringBuilder()
-
-    if (content.isNotBlank()) {
-      result.append(" ")
-      result.append(content)
-    }
-
-    if (fixmeContent != null) {
-      result.append(" ")
-      result.append("FIXME")
-      if (fixmeContent.isNotBlank()) {
-        result.append(" ")
-        result.append(fixmeContent)
-      }
-    }
-
-    if (comment?.isNotBlank() == true) {
-      result.append(" ")
-      result.append(COMMENT_CHAR)
-      result.append(" ")
-      result.append(comment)
-    }
-
-    return result.toString()
-  }
-
-  private fun buildMarkerPrefix(normalizedCodeColumnStart: Int, codeColumnEnd: Int): String {
-    val prefix = StringBuilder()
-
-    repeat(normalizedCodeColumnStart - 1) {
-      prefix.append(' ')
-    }
-
-    val spanLength = if (codeColumnEnd > 0) (codeColumnEnd - normalizedCodeColumnStart).coerceAtLeast(1) else 1
-    when (spanLength) {
-      1 if (codeColumnStart == 0) -> prefix.append(MARKER_LEFT)
-      1 -> prefix.append(MARKER_CORNER)
-      else -> {
-        repeat(spanLength) {
-          prefix.append(MARKER_SPAN)
-        }
-      }
-    }
-
-    return prefix.toString()
-  }
-}
-
-
-private object PyTestAssertionInliner {
-
-  fun generateActualText(originalText: String, expectedAssertions: List<PyTestAssertion>, actualAssertions: List<PyTestAssertion>): String {
-    val counterparts = findCounterparts(expectedAssertions, actualAssertions)
-    val expectedByCodeLine = expectedAssertions.groupBy { it.codeLineStart }
-    val actualByCodeLine = actualAssertions.groupBy { it.codeLineStart }
-    val actualText = positionActualAssertions(originalText, expectedByCodeLine, actualByCodeLine, counterparts)
-    return actualText
-  }
-
-  fun findCounterparts(
-    expectedAssertions: List<PyTestAssertion>,
-    actualAssertions: List<PyTestAssertion>,
-  ): Map<PyTestAssertion, PyTestAssertion> {
-
-    val matches = mutableMapOf<PyTestAssertion, PyTestAssertion>()
-    val usedExpected = mutableSetOf<PyTestAssertion>()
-
-    for (actual in actualAssertions) {
-      val expected = findBestCounterpart(actual, expectedAssertions, usedExpected) ?: continue
-      matches[actual] = expected
-      if (!expected.isWildcard) usedExpected += expected
-    }
-
-    return matches
-  }
-
-  private fun findBestCounterpart(
-    actual: PyTestAssertion,
-    expectedAssertions: List<PyTestAssertion>,
-    usedExpected: Set<PyTestAssertion>,
-  ): PyTestAssertion? {
-    return expectedAssertions
-      .filter { it !in usedExpected && areCounterparts(it, actual) }
-      .minByOrNull { expected ->
-        when {
-          expected.content == actual.content -> 0
-          expected.isWildcard -> 1
-          else -> abs(expected.codeColumnStart - actual.codeColumnStart) + 2
-        }
-      }
-  }
-
-  private fun areCounterparts(expected: PyTestAssertion, actual: PyTestAssertion): Boolean {
-    if (expected.isWildcard && expected.type != actual.type) {
-      if (!defaultSeverityNames.contains(actual.type)) return false
-    }
-    else if (expected.type != actual.type) return false
-    if (expected.codeColumnStart == -1) {
-      return expected.codeLineStart == actual.codeLineStart
-    }
-    if (expected.codeOffsetStart < actual.codeOffsetStart || expected.codeOffsetStart > actual.codeOffsetStart + actual.columnLength) return false
-
-    if (expected.codeColumnEndEffective > -1) {
-      return expected.codeColumnEndEffective == actual.codeColumnEndEffective
-    }
-
-    return true
-  }
-
-  private fun positionActualAssertions(
-    originalText: String,
-    expectedByCodeLine: Map<Int, List<PyTestAssertion>>,
-    actualByCodeLine: Map<Int, List<PyTestAssertion>>,
-    counterparts: Map<PyTestAssertion, PyTestAssertion>,
-  ): String {
-    val result = StringBuilder(originalText)
-
-    val allCodeLines = expectedByCodeLine.keys + actualByCodeLine.keys
-    val allCodeLinesSorted = allCodeLines.toSortedSet(compareByDescending { it })
-    for (codeLine in allCodeLinesSorted) {
-      val expectedAssertions = expectedByCodeLine[codeLine].orEmpty()
-      val actualAssertions = actualByCodeLine[codeLine].orEmpty()
-      val unmatchedAssertions = expectedAssertions - counterparts.values.toSet()
-
-      val inlineActualAssertions = actualAssertions.filter { counterparts[it]?.isInlineAssertion() ?: false }
-      val inlineUnmatchedExpectedAssertions = unmatchedAssertions.filter { it.isInlineAssertion() }
-      if (inlineActualAssertions.size == 1) {
-        val inlineActual = inlineActualAssertions.single()
-        val inlineExpected = counterparts[inlineActual]!!
-        val commentActuals = actualAssertions - inlineActual
-        val commentExpected = expectedAssertions - inlineExpected
-        replaceCommentAssertion(result, commentExpected, commentActuals)
-        replaceInlineAssertion(result, inlineExpected, inlineActual)
-      }
-      else if (inlineUnmatchedExpectedAssertions.size == 1) {
-        removeAssertions(result, inlineUnmatchedExpectedAssertions)
-      }
-      else {
-        val actualAndPlaceholderAssertions = actualAssertions + unmatchedAssertions.filter { it.content.isBlank() && it.hasFixme }
-        replaceCommentAssertion(result, expectedAssertions, actualAndPlaceholderAssertions)
-      }
-    }
-
-    return result.toString()
-  }
-
-  private fun replaceInlineAssertion(
-    text: StringBuilder,
-    expectedAssertion: PyTestAssertion,
-    actualAssertion: PyTestAssertion,
-  ) {
-
-    removeAssertions(text, listOf(expectedAssertion))
-    val endOfLineOffset = findLineEndOffset(text, actualAssertion)
-    val [inlineText, _] = actualAssertion.asInlineAssertion().asText()
-    text.insert(endOfLineOffset, inlineText)
-  }
-
-  private fun replaceCommentAssertion(
-    text: StringBuilder,
-    expectedAssertions: List<PyTestAssertion>,
-    actualAndPlaceholderAssertions: List<PyTestAssertion>,
-  ) {
-    removeAssertions(text, expectedAssertions)
-    if (actualAndPlaceholderAssertions.isEmpty()) return
-
-    val sortedActualAssertions = actualAndPlaceholderAssertions.sortedWith(compareBy(
-      { -it.codeColumnStart },
-      { it.type },
-      { it.content },
-      { it.fixmeContent ?: "" })
-    )
-
-    var serializedAssertions = emptyList<String>()
-    for (actualAssertion in sortedActualAssertions) {
-      val [newAssertion, serializedAssertionsUpdated] = actualAssertion.asText(serializedAssertions)
-      serializedAssertions = serializedAssertionsUpdated + newAssertion
-    }
-
-    val endOfLineOffset = findLineEndOffset(text, actualAndPlaceholderAssertions.first())
-    for (serializedAssertion in serializedAssertions.asReversed()) {
-      text.insert(endOfLineOffset, "\n$serializedAssertion")
-    }
-  }
-
-  private fun removeAssertions(text: StringBuilder, assertions: List<PyTestAssertion>) {
-    if (assertions.isEmpty()) return
-    val rangeStart = assertions.minOf { it.assertionOffsetStart }
-    val rangeEnd = assertions.maxOf { it.assertionOffsetEnd }
-
-    if (rangeStart !in 0..rangeEnd || rangeEnd > text.length) {
-      return
-    }
-
-    var deleteStart = rangeStart
-    var deleteEnd = rangeEnd
-
-    val allInline = assertions.all { it.isInlineAssertion() }
-    if (!allInline) {
-      if (deleteEnd < text.length && text[deleteEnd] == NEWLINE) {
-        deleteEnd++
-      }
-      else if (deleteStart > 0 && text[deleteStart - 1] == NEWLINE) {
-        deleteStart--
-      }
-    }
-
-    text.delete(deleteStart, deleteEnd)
-  }
-
-  private fun findLineEndOffset(text: StringBuilder, assertion: PyTestAssertion): Int {
-    val codeOffsetStart = assertion.codeOffsetStart
-    val endOfLineOffset = text.indexOf(NEWLINE, codeOffsetStart)
-    if (endOfLineOffset < 0) {
-      return text.length
-    }
-    return endOfLineOffset
-  }
-}
-
-
-object PyTestAssertionParser {
-
-  /**
-   * Blanks out every assertion's text with spaces so it isn't seen as a comment and doesn't affect parsing.
-   */
-  fun maskAssertions(code: String, assertions: List<PyTestAssertion>): String {
-    val chars = code.toCharArray()
-    for (assertion in assertions) {
-      for (i in assertion.assertionOffsetStart until assertion.assertionOffsetEnd) {
-        if (chars[i] != NEWLINE) chars[i] = ' '
-      }
-    }
-    return String(chars)
-  }
-
-  fun parseAssertions(code: String): List<PyTestAssertion> {
-    val lines = code.split(NEWLINE)
-    val lineStartOffsets = computeLineStartOffsets(lines)
-    val result = mutableListOf<PyTestAssertion>()
-
-    var lineIndex = 0
-    while (lineIndex < lines.size) {
-      val parsedStart = parseAssertionStart(lines, lineIndex, lineStartOffsets)
-      if (parsedStart == null) {
-        lineIndex++
-        continue
-      }
-      if (parsedStart.codeColumnStart == -1
-          && PyTestAssertionType.fromValue(parsedStart.type) == null
-          && !defaultSeverityNames.contains(parsedStart.type)
-      ) {
-        // for trailing test assertions with unknown assertion type we assume it's a comment
-        lineIndex++
-        continue
-      }
-
-      val payload = collectPayload(lines, lineIndex, parsedStart.initialPayload, lineStartOffsets, parsedStart.assertionColumnStart)
-      result += buildAssertion(parsedStart, payload)
-
-      lineIndex = payload.nextLineIndex
-    }
-
-    return result
-  }
-
-  private fun computeLineStartOffsets(lines: List<String>): IntArray {
-    val offsets = IntArray(lines.size)
-    var currentOffset = 0
-
-    for (i in lines.indices) {
-      offsets[i] = currentOffset
-      currentOffset += lines[i].length + 1
-    }
-
-    return offsets
-  }
-
-  private fun buildAssertion(parsedStart: ParsedAssertionStart, payload: CollectedPayload): PyTestAssertion {
-    return PyTestAssertion(
-      codeOffsetStart = parsedStart.codeOffset,
-      codeLineStart = parsedStart.codeLine,
-      codeColumnStart = parsedStart.codeColumnStart,
-      codeColumnEnd = parsedStart.codeColumnEnd,
-      assertionOffsetStart = parsedStart.assertionOffsetStart,
-      assertionOffsetEnd = payload.assertionOffsetEnd,
-      assertionLineStart = parsedStart.assertionLineStart,
-      assertionLineEnd = payload.assertionLineEnd,
-      assertionColumnStart = parsedStart.assertionColumnStart,
-      assertionColumnEnd = payload.assertionColumnEnd,
-      type = parsedStart.type,
-      content = payload.content,
-      fixmeContent = payload.fixmeContent,
-      comment = payload.comment.ifEmpty { null },
-    )
-  }
-
-  private fun parseAssertionStart(
-    lines: List<String>,
-    lineIndex: Int,
-    lineStartOffsets: IntArray,
-  ): ParsedAssertionStart? {
-    val line = lines[lineIndex]
-    val hashIndex = line.indexOf(COMMENT_CHAR)
-    if (hashIndex < 0) return null
-
-    val beforeHash = line.substring(0, hashIndex)
-    val afterHash = line.substring(hashIndex + 1)
-
-    return if (beforeHash.isBlank()) {
-      parseCommentOnlyAssertion(lines, lineIndex, hashIndex, afterHash, lineStartOffsets)
-    }
-    else {
-      parseInlineAssertion(lineIndex, hashIndex, afterHash, lineStartOffsets)
-    }
-  }
-
-  private fun isAssertionStartLine(lines: List<String>, lineIndex: Int): Boolean {
-    val line = lines[lineIndex]
-    val hashIndex = line.indexOf(COMMENT_CHAR)
-    if (hashIndex < 0) return false
-
-    val beforeHash = line.substring(0, hashIndex)
-    val afterHash = line.substring(hashIndex + 1)
-
-    return if (beforeHash.isBlank()) {
-      isCommentOnlyAssertionStart(afterHash)
-    }
-    else {
-      isInlineAssertionStart(afterHash)
-    }
-  }
-
-  private fun parseInlineAssertion(lineIndex: Int, hashIndex: Int, afterHash: String, lineStartOffsets: IntArray): ParsedAssertionStart? {
-    var cursor = skipWhitespace(afterHash, 0)
-    if (cursor >= afterHash.length) return null
-    if (isAssertionMarker(afterHash[cursor])) return null
-
-    val typeStart = cursor
-    cursor = scanTokenEnd(afterHash, cursor)
-    if (cursor <= typeStart) return null
-
-    val type = afterHash.substring(typeStart, cursor)
-    val payload = afterHash.substring(cursor).trimStart()
-
-    val assertionColumnEnd = lineIndexColumnEnd(hashIndex, afterHash)
-    val assertionOffsetStart = lineStartOffsets[lineIndex] + hashIndex
-
-    val codeColumnStart = -1
-    val codeColumnEnd = -1
-    val codeOffset = lineStartOffsets[lineIndex]
-
-    return ParsedAssertionStart(
-      codeOffset = codeOffset,
-      codeLine = lineIndex,
-      codeColumnStart = codeColumnStart,
-      codeColumnEnd = codeColumnEnd,
-      assertionOffsetStart = assertionOffsetStart,
-      assertionLineStart = lineIndex,
-      assertionColumnStart = hashIndex,
-      assertionColumnEnd = assertionColumnEnd,
-      type = type,
-      initialPayload = payload,
-    )
-  }
-
-  private fun parseCommentOnlyAssertion(
-    lines: List<String>,
-    lineIndex: Int,
-    hashIndex: Int,
-    afterHash: String,
-    lineStartOffsets: IntArray,
-  ): ParsedAssertionStart? {
-    val cursor = skipWhitespaceAndGuides(afterHash)
-    if (cursor >= afterHash.length) return null
-
-    val marker = afterHash[cursor]
-    if (!isAssertionMarker(marker)) return null
-
-    val codeColumnStart = hashIndex + 1 + cursor - (if (marker == MARKER_LEFT) 1 else 0)
-
-    var scanIndex = cursor + 1
-    var codeColumnEnd = -1
-    while (scanIndex < afterHash.length && isAssertionMarker(afterHash[scanIndex])) {
-      scanIndex++
-      codeColumnEnd = hashIndex + 1 + scanIndex
-    }
-
-    scanIndex = skipWhitespace(afterHash, scanIndex)
-    if (scanIndex >= afterHash.length) return null
-
-    val typeStart = scanIndex
-    scanIndex = scanTokenEnd(afterHash, scanIndex)
-    if (scanIndex <= typeStart) return null
-
-    val type = afterHash.substring(typeStart, scanIndex)
-    val payload = afterHash.substring(scanIndex).trimStart()
-    val codeLine = findReferencedCodeLine(lines, lineIndex) ?: return null
-    val codeOffset = lineStartOffsets[codeLine] + codeColumnStart
-
-    val assertionColumnEnd = lineIndexColumnEnd(hashIndex, afterHash)
-    val assertionOffsetStart = lineStartOffsets[lineIndex] + hashIndex
-
-    return ParsedAssertionStart(
-      codeOffset = codeOffset,
-      codeLine = codeLine,
-      codeColumnStart = codeColumnStart,
-      codeColumnEnd = codeColumnEnd,
-      assertionOffsetStart = assertionOffsetStart,
-      assertionLineStart = lineIndex,
-      assertionColumnStart = hashIndex,
-      assertionColumnEnd = assertionColumnEnd,
-      type = type,
-      initialPayload = payload,
-    )
-  }
-
-  private fun collectPayload(
-    lines: List<String>,
-    assertionStartLineIndex: Int,
-    initialPayload: String,
-    lineStartOffsets: IntArray,
-    assertionColumnStart: Int,
-  ): CollectedPayload {
-    val contentBuilder = StringBuilder()
-    val fixmeBuilder = StringBuilder()
-    val commentBuilder = StringBuilder()
-    var inFixme = false
-
-    val firstLineSplit = splitTrailingComment(initialPayload)
-    val firstSplit = splitAtFixme(firstLineSplit.beforeComment)
-    appendIfNotEmpty(contentBuilder, firstSplit.beforeFixme)
-    if (firstSplit.afterFixme != null) {
-      inFixme = true
-      appendIfNotEmpty(fixmeBuilder, firstSplit.afterFixme)
-    }
-    appendIfNotEmpty(commentBuilder, firstLineSplit.comment)
-
-    var lineIndex = assertionStartLineIndex + 1
-    var assertionLineEnd = assertionStartLineIndex
-    var assertionColumnEnd = lineIndexColumnEnd(
-      lines[assertionStartLineIndex].indexOf(COMMENT_CHAR),
-      lines[assertionStartLineIndex].substring(lines[assertionStartLineIndex].indexOf(COMMENT_CHAR) + 1)
-    )
-    var assertionOffsetEnd = computeLineEndOffset(
-      lineStartOffsets,
-      assertionStartLineIndex,
-      lines[assertionStartLineIndex]
-    )
-
-    while (lineIndex < lines.size) {
-      val line = lines[lineIndex]
-      if (!isCommentLine(line)) break
-      if (line.indexOf(COMMENT_CHAR) != assertionColumnStart) break
-      if (isAssertionStartLine(lines, lineIndex)) break
-
-      val continuationPayload = extractCommentPayload(line)
-      val continuationSplit = splitTrailingComment(continuationPayload)
-
-      if (!inFixme) {
-        val split = splitAtFixme(continuationSplit.beforeComment)
-        appendIfNotEmpty(contentBuilder, split.beforeFixme)
-        if (split.afterFixme != null) {
-          inFixme = true
-          appendIfNotEmpty(fixmeBuilder, split.afterFixme)
-        }
-      }
-      else {
-        appendIfNotEmpty(fixmeBuilder, continuationSplit.beforeComment.trimEnd())
-      }
-
-      appendIfNotEmpty(commentBuilder, continuationSplit.comment)
-
-      assertionLineEnd = lineIndex
-      assertionColumnEnd = lines[lineIndex].length
-      assertionOffsetEnd = computeLineEndOffset(lineStartOffsets, lineIndex, lines[lineIndex])
-      lineIndex++
-    }
-
-    return CollectedPayload(
-      content = contentBuilder.toString(),
-      fixmeContent = if (inFixme) fixmeBuilder.toString() else null,
-      comment = commentBuilder.toString(),
-      nextLineIndex = lineIndex,
-      assertionLineEnd = assertionLineEnd,
-      assertionColumnEnd = assertionColumnEnd,
-      assertionOffsetEnd = assertionOffsetEnd,
-    )
-  }
-
-  private fun splitAtFixme(text: String): FixmeSplit {
-    val idx = text.indexOf(FIXME_KEYWORD)
-    return if (idx >= 0) {
-      FixmeSplit(
-        beforeFixme = text.substring(0, idx).trimEnd(),
-        afterFixme = text.substring(idx + FIXME_KEYWORD.length).trimStart(),
-      )
-    }
-    else {
-      FixmeSplit(
-        beforeFixme = text.trimEnd(),
-        afterFixme = null,
-      )
-    }
-  }
-
-  private fun splitTrailingComment(text: String): CommentSplit {
-    val idx = text.indexOf(COMMENT_CHAR)
-    return if (idx >= 0) {
-      CommentSplit(
-        beforeComment = text.substring(0, idx).trimEnd(),
-        comment = text.substring(idx + 1).trim(),
-      )
-    }
-    else {
-      CommentSplit(
-        beforeComment = text.trimEnd(),
-        comment = null,
-      )
-    }
-  }
-
-  private fun appendIfNotEmpty(builder: StringBuilder, text: String?) {
-    if (text.isNullOrEmpty()) return
-    if (builder.isNotEmpty()) builder.append(NEWLINE)
-    builder.append(text)
-  }
-
-  private fun extractCommentPayload(line: String): String {
-    val hashIndex = line.indexOf(COMMENT_CHAR)
-    if (hashIndex < 0) return ""
-    return line.substring(hashIndex + 1).trimStart()
-  }
-
-  private fun isCommentLine(line: String): Boolean {
-    return line.trimStart().startsWith(COMMENT_CHAR)
-  }
-
-  private fun isInlineAssertionStart(afterHash: String): Boolean {
-    val cursor = skipWhitespace(afterHash, 0)
-    if (cursor >= afterHash.length) return false
-    return !isAssertionMarker(afterHash[cursor])
-  }
-
-  private fun isCommentOnlyAssertionStart(afterHash: String): Boolean {
-    val cursor = skipWhitespaceAndGuides(afterHash)
-    if (cursor >= afterHash.length) return false
-    return isAssertionMarker(afterHash[cursor])
-  }
-
-  private fun findReferencedCodeLine(lines: List<String>, assertionLineIndex: Int): Int? {
-    var i = assertionLineIndex - 1
-    while (i >= 0) {
-      if (!isCommentLine(lines[i]) || !isAssertionStartLine(lines, i)) {
-        return i
-      }
-      i--
-    }
-    return null
-  }
-
-  private fun lineIndexColumnEnd(hashIndex: Int, afterHash: String): Int {
-    return hashIndex + afterHash.length
-  }
-
-  private fun computeLineEndOffset(lineStartOffsets: IntArray, lineIndex: Int, line: String): Int {
-    return lineStartOffsets[lineIndex] + line.length
-  }
-
-
-  private data class ParsedAssertionStart(
-    val codeOffset: Int,
-    val codeLine: Int,
-    val codeColumnStart: Int,
-    val codeColumnEnd: Int,
-    val assertionOffsetStart: Int,
-    val assertionLineStart: Int,
-    val assertionColumnStart: Int,
-    val assertionColumnEnd: Int,
-    val type: String,
-    val initialPayload: String,
-  )
-
-  private data class FixmeSplit(
-    val beforeFixme: String,
-    val afterFixme: String?,
-  )
-
-  private data class CommentSplit(
-    val beforeComment: String,
-    val comment: String?,
-  )
-
-  private data class CollectedPayload(
-    val content: String,
-    val fixmeContent: String?,
-    val comment: String,
-    val nextLineIndex: Int,
-    val assertionLineEnd: Int,
-    val assertionColumnEnd: Int,
-    val assertionOffsetEnd: Int,
-  )
-}
-
-
 @Subsystems.CodeInsight
 @Layers.Functional
 class PyCodeInsightTestOptionsTest {
@@ -1663,168 +962,6 @@ class PyCodeInsightTestOptionsTest {
   }
 }
 
-
-@Subsystems.CodeInsight
-@Layers.Functional
-class PyCodeInsightTestCaseAssertionParserAndInlinerTest {
-
-  @Test
-  fun `parser parses marker span with multiline payload fixme and trailing comment`() {
-    val code = """
-      value = make()
-      #   ^^^ TYPE before line 1
-      # before line 2 FIXME after line 1
-      # after line 2 # trailing note
-    """.trimIndent()
-
-    val assertion = parseAssertions(code).single()
-    Assertions.assertEquals(0, assertion.codeLineStart)
-    Assertions.assertEquals(4, assertion.codeColumnStart)
-    Assertions.assertEquals(7, assertion.codeColumnEnd)
-    Assertions.assertEquals(1, assertion.assertionLineStart)
-    Assertions.assertEquals(3, assertion.assertionLineEnd)
-    Assertions.assertEquals("TYPE", assertion.type)
-    Assertions.assertEquals("before line 1\nbefore line 2", assertion.content)
-    Assertions.assertEquals("after line 1\nafter line 2", assertion.fixmeContent)
-    Assertions.assertEquals("trailing note", assertion.comment)
-  }
-
-  @Test
-  fun `parser ignores inline comments with unknown assertion type`() {
-    val code = """
-      x = 1 # TODO plain comment
-      y = 2 # TYPE int
-    """.trimIndent()
-
-    val assertions = parseAssertions(code)
-    Assertions.assertEquals(1, assertions.size)
-    val assertion = assertions.single()
-    Assertions.assertEquals(1, assertion.codeLineStart)
-    Assertions.assertEquals(-1, assertion.codeColumnStart)
-    Assertions.assertEquals("TYPE", assertion.type)
-    Assertions.assertEquals("int", assertion.content)
-  }
-
-  @Test
-  fun `parser resolves left marker to column zero`() {
-    val code = """
-      n = 1
-      #\ TYPE int
-    """.trimIndent()
-
-    val assertion = parseAssertions(code).single()
-    Assertions.assertEquals(0, assertion.codeColumnStart)
-    Assertions.assertEquals(-1, assertion.codeColumnEnd)
-    Assertions.assertEquals("TYPE", assertion.type)
-    Assertions.assertEquals("int", assertion.content)
-  }
-
-  @Test
-  fun `parser stops payload collection at next assertion start`() {
-    val code = """
-      value = 1
-      #   └ TYPE first line
-      # continuation
-      #   └ TYPE second line
-    """.trimIndent()
-
-    val assertions = parseAssertions(code)
-    Assertions.assertEquals(2, assertions.size)
-    Assertions.assertEquals("first line\ncontinuation", assertions[0].content)
-    Assertions.assertEquals("second line", assertions[1].content)
-  }
-
-  @Test
-  fun `parser stops payload collection at differently aligned comment`() {
-    val code = """
-      value = call()
-      #       ^^^^^^ WARNING first line
-      # second line
-          # Not assertion
-      # Also not assertion
-    """.trimIndent()
-
-    val assertion = parseAssertions(code).single()
-    Assertions.assertEquals("first line\nsecond line", assertion.content)
-  }
-
-  @Test
-  fun `parser resolves stacked markers under a type comment to the type comment line`() {
-    val code = """
-      def f(x):
-          # type: (int) -> str
-      #           ^^^^^ WARNING first
-      #                    ^^^ WARNING second
-          pass
-    """.trimIndent()
-
-    val assertions = parseAssertions(code)
-    Assertions.assertEquals(2, assertions.size)
-    Assertions.assertTrue(assertions.all { it.codeLineStart == 1 })
-    Assertions.assertEquals(listOf("first", "second"), assertions.map { it.content })
-  }
-
-  @Test
-  fun `masking blanks a marker before a function type comment so it still types the function`() {
-    val code = """
-      def f(a: int) -> int:
-      #   ^ WARNING both
-          # type: (int) -> int
-          pass
-    """.trimIndent()
-
-    val masked = PyTestAssertionParser.maskAssertions(code, parseAssertions(code))
-
-    Assertions.assertEquals(code.length, masked.length) // offsets preserved
-    Assertions.assertFalse(masked.contains("WARNING")) // marker blanked
-    Assertions.assertTrue(masked.contains("# type: (int) -> int")) // type comment intact
-  }
-
-  @Test
-  fun `parser accepts FIXME with empty content and trailing comment`() {
-    val code = """
-      value = 1
-      #   └ WARNING Expected type 'A[int]', got 'B[object]' instead FIXME # PY-89564
-    """.trimIndent()
-
-    val assertion = parseAssertions(code).single()
-    Assertions.assertEquals("WARNING", assertion.type)
-    Assertions.assertEquals("Expected type 'A[int]', got 'B[object]' instead", assertion.content)
-    Assertions.assertNotNull(assertion.fixmeContent)
-    Assertions.assertTrue(assertion.fixmeContent!!.isEmpty())
-    Assertions.assertEquals("PY-89564", assertion.comment)
-  }
-
-  @Test
-  fun `parser accepts inline FIXME with empty content and trailing comment`() {
-    val code = """
-      value = 1 # WARNING superfluous warning FIXME # PY-89564
-    """.trimIndent()
-
-    val assertion = parseAssertions(code).single()
-    Assertions.assertEquals("WARNING", assertion.type)
-    Assertions.assertEquals("superfluous warning", assertion.content)
-    Assertions.assertNotNull(assertion.fixmeContent)
-    Assertions.assertTrue(assertion.fixmeContent!!.isEmpty())
-    Assertions.assertEquals("PY-89564", assertion.comment)
-  }
-
-  @Test
-  fun `parser accepts FIXME with empty content without trailing comment`() {
-    val code = """
-      value = 1
-      #   └ WARNING superfluous warning FIXME
-    """.trimIndent()
-
-    val assertion = parseAssertions(code).single()
-    Assertions.assertEquals("WARNING", assertion.type)
-    Assertions.assertEquals("superfluous warning", assertion.content)
-    Assertions.assertNotNull(assertion.fixmeContent)
-    Assertions.assertTrue(assertion.fixmeContent!!.isEmpty())
-    Assertions.assertNull(assertion.comment)
-  }
-
-}
 
 /**
  * Verifies, through the real [PyCodeInsightTestCase.test] pipeline, that [PyCodeInsightTestCase]'s

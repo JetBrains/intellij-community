@@ -2046,6 +2046,7 @@ python/terminal
 python/terminal/backend
 python/terminal/frontend
 python/terminal/shared
+python/testAssertions
 python/testFramework
 python/tools
 spellchecker

@@ -1126,7 +1126,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
       def f(c: Color) -> int:
       #                  ^^^ WARNING Expected type 'int', got 'Literal[2, 1] | None' instead
-          match c: # WEAK_WARNING FIXME Cases do not cover Color.BLUE
+          match c: # WEAK-WARNING FIXME Cases do not cover Color.BLUE
               case Color.RED: return 1
               case Color.GREEN: return 2
       """.trimIndent())

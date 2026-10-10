@@ -708,6 +708,7 @@ jvm_library(
         "//plugins/copyright",
         "//python/python-copyright:copyright",
         "//python/testFramework",
+        "//python/testAssertions",
         "//platform/xdebugger-testFramework:debugger-testFramework",
         "//python/python-psi-impl:psi-impl",
         "//python:python-commonTests_test_lib",
