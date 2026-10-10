@@ -40,6 +40,8 @@ dev_dist_plugin_descriptor(
         "intellij.vcs.gitlab.ultimate.features.frontend",
         "intellij.vcs.gitlab.ultimate.features.frontend.split",
         "intellij.vcs.gitlab.ultimate.ci.sh",
+        "intellij.vcs.gitlab.ultimate.ci.sh.shared",
+        "intellij.vcs.gitlab.ultimate.ci.sh.frontend",
     ],
 )
 

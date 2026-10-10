@@ -51,5 +51,7 @@
     <module name="intellij.vcs.gitlab.ultimate.features.frontend"/>
     <module name="intellij.vcs.gitlab.ultimate.features.frontend.split"/>
     <module name="intellij.vcs.gitlab.ultimate.ci.sh"/>
+    <module name="intellij.vcs.gitlab.ultimate.ci.sh.shared"/>
+    <module name="intellij.vcs.gitlab.ultimate.ci.sh.frontend"/>
   </content>
 </idea-plugin>
