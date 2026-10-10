@@ -355,6 +355,31 @@ public class PyParameterInfoBehaviourTest extends PyTestCase {
     });
   }
 
+  @TestFor(issues = "PY-92890")
+  public void testParamSpecTypeParameterWithEllipsisDefault() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> {
+      configurePython("""
+                        class C[**P1 = [int, str], **P2 = ...]: ...
+                        c: C[<caret>]
+                        """);
+      showParameterInfo();
+      checkParameterInfos("<html><b>**P1 = [int, str],</b> **P2 = ...</html>");
+    });
+  }
+
+  @TestFor(issues = "PY-92890")
+  public void testParamSpecTypeParameterWithEllipsisDefaultOldStyle() {
+    configurePython("""
+                      from typing import Generic, ParamSpec
+                      P1 = ParamSpec("P1", default=[int, str])
+                      P2 = ParamSpec("P2", default=...)
+                      class C(Generic[P1, P2]): ...
+                      c: C[<caret>]
+                      """);
+    showParameterInfo();
+    checkParameterInfos("<html><b>**P1 = [int, str],</b> **P2 = ...</html>");
+  }
+
   @TestFor(issues = "PY-73402")
   public void testTypeVarTupleTypeParameter() {
     runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {

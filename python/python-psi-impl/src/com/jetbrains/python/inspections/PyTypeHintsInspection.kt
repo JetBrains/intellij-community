@@ -735,7 +735,7 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkParamSpecDefaultValue(defaultExpression: PyExpression) {
-      if (defaultExpression is PyEllipsisLiteralExpression) return
+      if (PyPsiUtils.flattenParens(defaultExpression) is PyEllipsisLiteralExpression) return
       if (defaultExpression is PyListLiteralExpression) {
         defaultExpression.elements.forEach {
           if (PyTypingTypeProvider.getType(it, myTypeEvalContext) == null) {
