@@ -3,6 +3,7 @@ package com.intellij.platform.icons.impl.rendering.layers
 
 import com.intellij.platform.icons.impl.layers.findModifier
 import com.intellij.platform.icons.impl.modifiers.ColorFilterModifier
+import com.intellij.platform.icons.impl.modifiers.ForceDarkVariantModifier
 import com.intellij.platform.icons.impl.modifiers.StrokeModifier
 import com.intellij.platform.icons.impl.modifiers.SvgPatcherModifier
 import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
@@ -13,11 +14,13 @@ import kotlin.math.ceil
 
 fun IconLayer.generateImageModifiers(renderingContext: DefaultRenderingContext? = null): DefaultImageModifiers {
     val defaults = renderingContext?.defaultImageModifiers ?: renderingContext?.theme?.imageModifiers() as? DefaultImageModifiers
+    val forcedDark = findModifier<ForceDarkVariantModifier>()?.isDark ?: defaults?.forcedDark
     return DefaultImageModifiers(
         colorFilter = findModifier<ColorFilterModifier>()?.colorFilter ?: defaults?.colorFilter,
         svgPatcher = findModifier<SvgPatcherModifier>()?.svgPatcher ?: defaults?.svgPatcher,
-        isDark = defaults?.isDark ?: false,
+        isDark = forcedDark ?: defaults?.isDark ?: false,
         stroke = findModifier<StrokeModifier>()?.color ?: defaults?.stroke,
+        forcedDark = forcedDark,
     )
 }
 

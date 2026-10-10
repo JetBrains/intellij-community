@@ -1,17 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.icons.impl.intellij
 
-import com.intellij.platform.icons.imageIconDescriptor
 import com.intellij.platform.icons.impl.design.DefaultSRGB
 import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.modifiers.patchSvg
 import com.intellij.platform.icons.modifiers.stroke
 import com.intellij.platform.icons.patchers.svgPatcher
-import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.testFramework.junit5.TestApplication
 import java.awt.image.BufferedImage
 import kotlin.math.roundToInt
-import javax.swing.UIManager
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -146,19 +143,6 @@ class StrokeRenderTest {
     assertEquals(0, stroked.gray, "$path: stroking must replace the authored gray, but gray pixels remain: $stroked")
   }
 
-  private fun render(path: String, modifier: IconModifier): BufferedImage {
-    IntelliJIconManager.activate()
-    val swingIcon = imageIconDescriptor(path, StrokeRenderTest::class.java.classLoader, modifier).createSwingIcon()
-    val image = BufferedImage(swingIcon.iconWidth, swingIcon.iconHeight, BufferedImage.TYPE_INT_ARGB)
-    val g = image.createGraphics()
-    try {
-      swingIcon.paintIcon(null, g, 0, 0)
-    } finally {
-      g.dispose()
-    }
-    return image
-  }
-
   private fun count(image: BufferedImage): Counts {
     var red = 0
     var green = 0
@@ -184,32 +168,7 @@ class StrokeRenderTest {
     return Counts(red, green, gray, opaque)
   }
 
-  private fun withDarkTheme(action: () -> Unit) {
-    val defaults = UIManager.getLookAndFeelDefaults()
-    val previous = defaults.get(DARK_THEME_KEY)
-    defaults.put(DARK_THEME_KEY, true)
-    try {
-      action()
-    } finally {
-      defaults.put(DARK_THEME_KEY, previous)
-    }
-  }
-
-  private fun sameImage(a: BufferedImage, b: BufferedImage): Boolean {
-    if (a.width != b.width || a.height != b.height) return false
-    for (y in 0 until a.height) {
-      for (x in 0 until a.width) {
-        if (a.getRGB(x, y) != b.getRGB(x, y)) return false
-      }
-    }
-    return true
-  }
-
   private class Counts(val red: Int, val green: Int, val gray: Int, val opaque: Int) {
     override fun toString(): String = "red=$red green=$green gray=$gray opaque=$opaque"
-  }
-
-  private companion object {
-    private const val DARK_THEME_KEY = "ui.theme.is.dark"
   }
 }

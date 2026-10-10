@@ -22,7 +22,10 @@ import com.intellij.openapi.actionSystem.impl.PoppedIcon
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
+import com.intellij.openapi.actionSystem.impl.framedDisabledIcon
 import com.intellij.openapi.actionSystem.impl.isEnterKeyStroke
+import com.intellij.openapi.actionSystem.impl.menuDisabledIcon
+import com.intellij.openapi.actionSystem.impl.menuIcon
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
@@ -125,17 +128,21 @@ internal class MacNativeActionMenuItem(
                          isToggleable: Boolean,
                          isToggled: Boolean,
                          insideCheckedGroup: Boolean) {
-    if (isToggleable && (insideCheckedGroup || !UISettings.getInstance().showIconsInMenus) || presentation.icon == null) {
+    val baseIcon = menuIcon(presentation, darkOverride = useDarkIcons)
+
+    if (isToggleable && (insideCheckedGroup || !UISettings.getInstance().showIconsInMenus) || baseIcon == null) {
       menuItemPeer.setState(isToggled)
-      menuItemPeer.setIcon(adjustIcon(presentation.icon, useDarkIcons, action, presentation))
+      menuItemPeer.setIcon(adjustIcon(baseIcon, useDarkIcons, action, presentation))
     }
     else if (UISettings.getInstance().showIconsInMenus) {
-      var icon = presentation.icon
+      var icon = baseIcon
       if (isToggleable && isToggled) {
-        icon = icon?.let { PoppedIcon(it, 16, 16) }
+        icon = PoppedIcon(icon, 16, 16)
       }
       menuItemPeer.setIcon(adjustIcon(
-        if (presentation.isEnabled) icon else presentation.disabledIcon ?: icon?.let { IconLoader.getDisabledIcon(it) },
+        if (presentation.isEnabled) icon
+        else framedDisabledIcon(menuDisabledIcon(presentation, darkOverride = useDarkIcons), isToggleable && isToggled)
+             ?: IconLoader.getDisabledIcon(icon),
         useDarkIcons, action, presentation))
     }
   }
