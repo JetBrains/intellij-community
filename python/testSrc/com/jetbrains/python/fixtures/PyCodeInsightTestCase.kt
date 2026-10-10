@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.idea.TestFor
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.WriteIntentReadAction
@@ -44,6 +45,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.containers.orNull
 import com.intellij.python.testAssertions.PyTestAssertion
@@ -218,7 +220,10 @@ abstract class PyCodeInsightTestCase {
     val enablePyAnyType: Boolean = true,
     val copyDirectoryToProject: Array<CopyDirectory> = [],
     val additionalSdkRoots: Array<SdkRoot> = [],
+    /** The boolean registry keys that the test sets to true. */
     val enableRegistryKeys: Array<String> = [],
+    /** The boolean registry keys that the test sets to false. */
+    val disableRegistryKeys: Array<String> = [],
   )
 
   annotation class CopyDirectory(
@@ -334,6 +339,16 @@ abstract class PyCodeInsightTestCase {
       awaitPythonInterpreters(fixture.project)
       InspectionProfileImpl.INIT_INSPECTIONS = true
       Registry.get(PyAnyType.REGISTRY_KEY).setValue(testCaseOptions.enablePyAnyType)
+    }
+
+    /** Sets the keys of [enable] to true and the keys of [disable] to false until [parentDisposable] is disposed. */
+    internal fun setRegistryKeys(enable: Array<String>, disable: Array<String>, parentDisposable: Disposable) {
+      for (key in enable) {
+        Registry.get(key).setValue(true, parentDisposable)
+      }
+      for (key in disable) {
+        Registry.get(key).setValue(false, parentDisposable)
+      }
     }
 
     @AfterAll
@@ -549,9 +564,7 @@ abstract class PyCodeInsightTestCase {
     else {
       RecursionManager.disableAssertOnRecursionPrevention(testDisposable)
     }
-    for (registryKey in myTestCaseOptions.enableRegistryKeys) {
-      Registry.get(registryKey).setValue(true, testDisposable)
-    }
+    setRegistryKeys(myTestCaseOptions.enableRegistryKeys, myTestCaseOptions.disableRegistryKeys, testDisposable)
 
     try {
       setAdditionalSdkRoots(myTestCaseOptions.additionalSdkRoots, true)
@@ -1075,6 +1088,22 @@ class PyCodeInsightTestCaseComputeAssertionsTest : PyCodeInsightTestCase() {
   fun `TYPE inline FIXME current and future type passes`() = test("""
     n = 1 # TYPE Literal[1] FIXME str
     """)
+
+  @Test
+  fun `registry entries set a boolean key or any value`(@TestDisposable testDisposable: Disposable) {
+    val keysDisposable = Disposer.newDisposable(testDisposable, "registry keys")
+    setRegistryKeys(
+      enable = arrayOf("python.parameter.info.show.all.hints"),
+      disable = arrayOf("python.type.checker.diff.tooltip"),
+      parentDisposable = keysDisposable,
+    )
+    Assertions.assertTrue(Registry.`is`("python.parameter.info.show.all.hints"))
+    Assertions.assertFalse(Registry.`is`("python.type.checker.diff.tooltip"))
+
+    Disposer.dispose(keysDisposable)
+    Assertions.assertFalse(Registry.`is`("python.parameter.info.show.all.hints"))
+    Assertions.assertTrue(Registry.`is`("python.type.checker.diff.tooltip"))
+  }
 }
 
 /**
