@@ -2,6 +2,7 @@
 package com.intellij.platform.execution.serviceView.backend
 
 import com.intellij.platform.execution.serviceView.splitApi.ServiceViewRpc
+import com.intellij.platform.execution.serviceView.splitApi.ServiceViewRpcImpl
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 

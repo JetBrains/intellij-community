@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.execution.serviceView.backend
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.execution.serviceView.splitApi
 
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.ui.RunContentManagerExtension
@@ -10,14 +10,18 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.platform.execution.serviceView.ServiceViewLocatableSearcher
 import com.intellij.platform.execution.serviceView.setServiceViewImplementationForNextIdeRun
-import com.intellij.platform.execution.serviceView.splitApi.ServiceViewConfigurationType
-import com.intellij.platform.execution.serviceView.splitApi.ServiceViewConfigurationTypeSettings
-import com.intellij.platform.execution.serviceView.splitApi.ServiceViewRpc
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
+import org.jetbrains.annotations.ApiStatus
 
-internal class ServiceViewRpcImpl : ServiceViewRpc {
+/**
+ * The in-process implementation of [ServiceViewRpc]. The backend module registers it as the remote API provider; a light process
+ * without a backend connection uses it directly, see [ServiceViewRpc.getInstance].
+ */
+@ApiStatus.Internal
+class ServiceViewRpcImpl : ServiceViewRpc {
   companion object {
     private val EP_NAME: ExtensionPointName<ServiceViewLocatableSearcher> =
       ExtensionPointName.create("com.intellij.serviceViewLocatableSearcher")
@@ -46,6 +50,9 @@ internal class ServiceViewRpcImpl : ServiceViewRpc {
     )
   }
 
+  // The run configuration types belong to the process that owns the run configurations: a backend, a monolith, or a light
+  // monolith, which has no backend module. The frontend never reaches this code; it resolves the remote API instead.
+  @Suppress("SplitModeApiUsage")
   private fun collectTypes(project: Project): Pair<List<ConfigurationType>, List<ConfigurationType>> {
     val includedTypes = ArrayList<ConfigurationType>()
     val excludedTypes = ArrayList<ConfigurationType>()

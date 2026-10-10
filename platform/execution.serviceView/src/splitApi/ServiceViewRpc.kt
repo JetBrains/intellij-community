@@ -1,10 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.serviceView.splitApi
 
+import com.intellij.ide.rpc.awaitWithLocalFallback
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -15,9 +16,13 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface ServiceViewRpc : RemoteApi<Unit> {
   companion object {
+    /**
+     * Resolves the API of this session. A light process has no backend to await, so it gets the in-process [ServiceViewRpcImpl];
+     * every other mode awaits the backend connection, as before.
+     */
     @JvmStatic
     suspend fun getInstance(): ServiceViewRpc {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<ServiceViewRpc>())
+      return LiteRemoteApiProviderService.awaitWithLocalFallback(remoteApiDescriptor<ServiceViewRpc>()) { ServiceViewRpcImpl() }
     }
   }
 

@@ -4,7 +4,7 @@ package com.intellij.platform.execution.dashboard.backend
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl
-import com.intellij.platform.execution.serviceView.backend.ServiceViewLocatableSearcher
+import com.intellij.platform.execution.serviceView.ServiceViewLocatableSearcher
 import com.intellij.psi.util.PsiUtilCore
 
 internal class RunDashboardLocatableSearcher : ServiceViewLocatableSearcher {

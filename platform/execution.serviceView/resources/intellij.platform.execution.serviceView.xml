@@ -24,7 +24,7 @@
     <module name="intellij.platform.objectSerializer"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
-    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
@@ -36,6 +36,9 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.backendServiceViewSelectedItemProvider"
                     interface="com.intellij.platform.execution.serviceView.BackendServiceViewSelectedItemProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.serviceViewLocatableSearcher"
+                    interface="com.intellij.platform.execution.serviceView.ServiceViewLocatableSearcher"
                     dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">

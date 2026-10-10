@@ -13,10 +13,6 @@
   </dependencies>
   <!-- endregion -->
 
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.serviceViewLocatableSearcher" interface="com.intellij.platform.execution.serviceView.backend.ServiceViewLocatableSearcher" dynamic="true"/>
-  </extensionPoints>
-
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.execution.serviceView.backend.BackendServiceViewRpcApiProvider"
                                             apiInterfaces="com.intellij.platform.execution.serviceView.splitApi.ServiceViewRpc"/>
