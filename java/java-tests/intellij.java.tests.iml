@@ -195,6 +195,7 @@
     <orderEntry type="module" module-name="intellij.java.structuralSearch" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.emmet" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.structureView.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.idea.customization.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="TEST" />
   </component>
 </module>
