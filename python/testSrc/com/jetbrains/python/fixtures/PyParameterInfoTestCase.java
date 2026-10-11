@@ -85,7 +85,7 @@ public abstract class PyParameterInfoTestCase extends LightMarkedTestCase {
    * @return a {@link Collector} with collected hint info.
    */
   @NotNull
-  protected static Collector feignCtrlP(int offset, @NotNull PsiFile file, boolean showAllHints, Editor editor) {
+  public static Collector feignCtrlP(int offset, @NotNull PsiFile file, boolean showAllHints, Editor editor) {
     boolean oldKeyValue = Registry.is("python.parameter.info.show.all.hints");
     try {
       Registry.get("python.parameter.info.show.all.hints").setValue(showAllHints);
