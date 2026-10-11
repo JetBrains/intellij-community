@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -15,8 +16,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,6 +30,8 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect;
+import com.jetbrains.python.codeInsight.typeHints.PyTypeHintDialect;
 import com.jetbrains.python.inspections.PyConstructorSignatureUtil;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.inspections.PyInspectionMessages;
@@ -85,6 +90,7 @@ import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
+import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -446,9 +452,10 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
     Set<PsiElement> unusedElements = mySharedAnalysis.unusedElements;
     if (unusedElements == null) {
-      unusedElements = StreamEx.of(myScopeWrites.entrySet())
-        .flatCollection(writeEntry -> ContainerUtil.subtract(writeEntry.getValue(), getReadsInsideScope(writeEntry.getKey())))
-        .toImmutableSet();
+      unusedElements = excludeElementsUsedInTypeHints(
+        StreamEx.of(myScopeWrites.entrySet())
+          .flatCollection(writeEntry -> ContainerUtil.subtract(writeEntry.getValue(), getReadsInsideScope(writeEntry.getKey())))
+          .toImmutableSet());
       // Benign race: concurrent inspections may recompute the identical set; the last write wins.
       mySharedAnalysis.unusedElements = unusedElements;
     }
@@ -611,6 +618,73 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
       }
     }
+  }
+
+  /**
+   * Removes the candidates that a quoted annotation or a type comment refers to.
+   * The control flow graph does not include these references, so they are searched only for the unused candidates.
+   */
+  private @NotNull Set<PsiElement> excludeElementsUsedInTypeHints(@NotNull Set<PsiElement> candidates) {
+    final Set<String> candidateNames = StreamEx.of(candidates).map(PyUnusedLocalInspectionVisitor::getCandidateName).nonNull().toSet();
+    if (candidateNames.isEmpty()) return candidates;
+
+    final List<ScopeOwner> owners = EntryStream.of(myScopeWrites)
+      .filterValues(writes -> ContainerUtil.intersects(writes, candidates))
+      .keys()
+      .toList();
+    final List<ScopeOwner> outermostOwners = ContainerUtil.filter(
+      owners, owner -> !ContainerUtil.exists(owners, other -> PsiTreeUtil.isAncestor(other, owner, true)));
+
+    final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(candidates.iterator().next().getProject());
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
+    final Set<PsiElement> used = new HashSet<>();
+    final PyRecursiveElementVisitor referenceVisitor = new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression expr) {
+        final PyExpression qualifier = expr.getQualifier();
+        if (qualifier != null) {
+          qualifier.accept(this);
+          return;
+        }
+        if (!candidateNames.contains(expr.getName())) return;
+        for (ResolveResult resolveResult : expr.getReference(resolveContext).multiResolve(false)) {
+          final PsiElement resolved = resolveResult.getElement();
+          if (resolved != null && candidates.contains(resolved)) {
+            used.add(resolved);
+          }
+        }
+      }
+    };
+    final PyRecursiveElementVisitor hostVisitor = new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyStringLiteralExpression(@NotNull PyStringLiteralExpression node) {
+        visitInjectedTypeHints(node);
+      }
+
+      @Override
+      public void visitComment(@NotNull PsiComment comment) {
+        visitInjectedTypeHints(comment);
+      }
+
+      private void visitInjectedTypeHints(@NotNull PsiElement host) {
+        final List<Pair<PsiElement, TextRange>> injectedFiles = injectedLanguageManager.getInjectedPsiFiles(host);
+        if (injectedFiles == null) return;
+        for (Pair<PsiElement, TextRange> injectedFile : injectedFiles) {
+          final Language language = injectedFile.getFirst().getLanguage();
+          if (language == PyTypeHintDialect.INSTANCE || language == PyFunctionTypeAnnotationDialect.INSTANCE) {
+            injectedFile.getFirst().accept(referenceVisitor);
+          }
+        }
+      }
+    };
+    for (ScopeOwner owner : outermostOwners) {
+      owner.accept(hostVisitor);
+    }
+    return used.isEmpty() ? candidates : StreamEx.of(candidates).remove(used::contains).toImmutableSet();
+  }
+
+  private static @Nullable String getCandidateName(@NotNull PsiElement element) {
+    return element instanceof PsiNamedElement namedElement ? namedElement.getName() : element.getText();
   }
 
   private @NotNull Set<PsiElement> getReadsInsideScope(@NotNull ScopeOwner scopeOwner) {
