@@ -116,6 +116,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLoopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -1856,7 +1857,8 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
 
   private static void checkInnerMethod(AnnotationHolder holder, GrMethod grMethod) {
     final PsiElement parent = grMethod.getParent();
-    if (parent instanceof GrOpenBlock || parent instanceof GrClosableBlock || parent instanceof GrBlockLambdaBody) {
+    if (parent instanceof GrOpenBlock || parent instanceof GrClosableBlock || parent instanceof GrBlockLambdaBody ||
+        parent instanceof GrLoopStatement || parent instanceof GrIfStatement) {
       String message = GroovyBundle.message("Inner.methods.are.not.supported");
       holder.newAnnotation(HighlightSeverity.ERROR, message).range(grMethod.getNameIdentifierGroovy()).create();
     }

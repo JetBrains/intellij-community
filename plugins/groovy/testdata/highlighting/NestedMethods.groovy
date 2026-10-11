@@ -1,7 +1,12 @@
 def method() {
-	void <error descr="Inner methods are not supported">nested</error>() {}    // (1)
+	void <error descr="Method declaration not allowed here">nested</error>() {}    // (1)
 }
 
 def closure = {
-	void <error descr="Inner methods are not supported">nested</error>() {}    // (2)
+	void <error descr="Method declaration not allowed here">nested</error>() {}    // (2)
 }
+
+if (true) def <error descr="Method declaration not allowed here">nested</error>() {}
+else def <error descr="Method declaration not allowed here">nested</error>() {}
+
+while (false) def <error descr="Method declaration not allowed here">nested</error>() {}

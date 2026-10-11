@@ -71,19 +71,13 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
   }
 
   public void testBreakOutside() { doTest(); }
-
   public void testUndefinedLabel() { doTest(); }
-
   public void testNestedMethods() { doTest(); }
-
+  public void testNestedClasses() { doTest(); }
   public void testRawOverriddenMethod() { doTest(); }
-
   public void testFQNJavaClassesUsages() { doTest(); }
-
   public void testGstringAssignableToString() { doTest(); }
-
   public void testGstringAssignableToStringInClosureParameter() { doTest(); }
-
   public void testEachOverRange() { doTest(); }
 
   public void testEllipsisParam() {
@@ -1331,7 +1325,7 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
-  public void testClosureParameterInferenceDoesNotWorkIfComplieStatic() {
+  public void testClosureParameterInferenceDoesNotWorkIfCompileStatic() {
     addCompileStatic();
     myFixture.enableInspections(GrUnresolvedAccessInspection.class);
     doTestHighlighting("""

@@ -2,7 +2,7 @@ import junit.framework.TestCase
 
 class Doo extends TestCase {
   void testBar() {
-    void <error descr="Inner methods are not supported"><warning descr="Method foo is unused">foo</warning></error>() {
+    void <error descr="Method declaration not allowed here"><warning descr="Method foo is unused">foo</warning></error>() {
 
     }
   }
