@@ -85,6 +85,7 @@ internal class GitComplexSubmoduleTest {
       cd(grandchildRepo)
       setupDefaultUsername()
       grandchildRepo.git("checkout master") // git submodule is initialized in detached HEAD state by default
+      repositoryManager.updateAllRepositories()
     }
   }
 
