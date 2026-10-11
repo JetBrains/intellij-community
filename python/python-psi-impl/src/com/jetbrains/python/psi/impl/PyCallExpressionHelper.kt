@@ -841,6 +841,33 @@ object PyCallExpressionHelper {
 
     if (parameters == null) return PyArgumentsMapping.empty(callSite, arguments)
 
+    return mapArguments(callSite, arguments, wrappedArguments, callableType, parameters, context)
+  }
+
+  /**
+   * Maps [arguments] to [parameters] as given, without the unpacking of container parameters.
+   * The mapping refers to the same [PyCallableParameter] instances as [parameters].
+   */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun mapArguments(
+    callSite: PyElement,
+    arguments: List<PyExpression>,
+    callableType: PyCallableType,
+    parameters: List<PyCallableParameter>,
+    context: TypeEvalContext,
+  ): PyArgumentsMapping {
+    return mapArguments(callSite, arguments, arguments.map { PyCallableArgument(it) }, callableType, parameters, context)
+  }
+
+  private fun mapArguments(
+    callSite: PyElement,
+    arguments: List<PyExpression>,
+    wrappedArguments: List<PyCallableArgument>,
+    callableType: PyCallableType,
+    parameters: List<PyCallableParameter>,
+    context: TypeEvalContext,
+  ): PyArgumentsMapping {
     val mappingResults = analyzeArguments(wrappedArguments, parameters, context)
 
     return PyArgumentsMapping(callSite,

@@ -8,6 +8,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.ast.PyAstSingleStarParameter;
 import com.jetbrains.python.ast.PyAstSlashParameter;
@@ -50,6 +52,27 @@ import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class PyParameterInfoUtils {
+
+  /**
+   * Matches a parameter by its PSI, or by identity when it has no PSI.
+   * Two parameters without PSI can be equal, for example the parameters of {@code Callable[[int, int], None]}.
+   */
+  private static final HashingStrategy<PyCallableParameter> PARAMETER_STRATEGY = new HashingStrategy<>() {
+    @Override
+    public int hashCode(@Nullable PyCallableParameter parameter) {
+      if (parameter == null) return 0;
+      final PyParameter psi = parameter.getParameter();
+      return psi != null ? psi.hashCode() : System.identityHashCode(parameter);
+    }
+
+    @Override
+    public boolean equals(@Nullable PyCallableParameter p1, @Nullable PyCallableParameter p2) {
+      if (p1 == p2) return true;
+      if (p1 == null || p2 == null) return false;
+      final PyParameter psi = p1.getParameter();
+      return psi != null && psi.equals(p2.getParameter());
+    }
+  };
 
   public static @Nullable PyArgumentList findArgumentList(PsiFile file, int contextOffset, int parameterListStart) {
     final PyArgumentList argumentList =
@@ -147,7 +170,9 @@ public final class PyParameterInfoUtils {
         public void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last) {
           indexToNamedParameter.put(currentParameterIndex[0], parameter);
           final StringBuilder stringBuilder = new StringBuilder();
-          ParameterDescription parameterDescription = new ParameterDescription(parameter.getName(), "", last);
+          final String name = parameter.getName();
+          ParameterDescription parameterDescription =
+            new ParameterDescription(name != null ? name : ParamHelper.getNameInSignature(parameter), "", last);
           if (parameter.getParameter() instanceof PyNamedParameter) {
             final String annotation = ((PyNamedParameter)parameter.getParameter()).getAnnotationValue();
             if (annotation != null) {
@@ -208,6 +233,10 @@ public final class PyParameterInfoUtils {
     final PyCallableType callableType = mapping.getCallableType();
     assert callableType != null;
     int lastParamIndex = 0;
+    final Map<PyCallableParameter, Integer> parameterPositions = CollectionFactory.createCustomHashingStrategyMap(PARAMETER_STRATEGY);
+    for (int i = 0; i < parameterList.size(); i++) {
+      parameterPositions.putIfAbsent(parameterList.get(i), i);
+    }
     final Map<PyExpression, PyCallableParameter> mappedParameters = mapping.getMappedParameters();
     final Map<PyExpression, PyCallableParameter> mappedTupleParameters = mapping.getMappedTupleParameters();
     for (PyExpression arg : flatArgs) {
@@ -219,20 +248,20 @@ public final class PyParameterInfoUtils {
       }
       if (seeker instanceof PyExpression) {
         final PyCallableParameter parameter = mappedParameters.get((PyExpression)seeker);
-        lastParamIndex = Math.max(lastParamIndex, parameterList.indexOf(parameter));
+        lastParamIndex = Math.max(lastParamIndex, parameterPositions.getOrDefault(parameter, -1));
         if (parameter != null) {
           highlightParameter(parameter, parameterHintToIndex, hintFlags, mustHighlight);
         }
       }
       else if (PyCallExpressionHelper.isVariadicPositionalArgument(arg)) {
         for (PyCallableParameter parameter : mapping.getParametersMappedToVariadicPositionalArguments()) {
-          lastParamIndex = Math.max(lastParamIndex, parameterList.indexOf(parameter));
+          lastParamIndex = Math.max(lastParamIndex, parameterPositions.getOrDefault(parameter, -1));
           highlightParameter(parameter, parameterHintToIndex, hintFlags, mustHighlight);
         }
       }
       else if (PyCallExpressionHelper.isVariadicKeywordArgument(arg)) {
         for (PyCallableParameter parameter : mapping.getParametersMappedToVariadicKeywordArguments()) {
-          lastParamIndex = Math.max(lastParamIndex, parameterList.indexOf(parameter));
+          lastParamIndex = Math.max(lastParamIndex, parameterPositions.getOrDefault(parameter, -1));
           highlightParameter(parameter, parameterHintToIndex, hintFlags, mustHighlight);
         }
       }
@@ -245,7 +274,7 @@ public final class PyParameterInfoUtils {
 
         if (tupleParameter != null) {
           for (PyCallableParameter parameter : getFlattenedTupleParameterComponents(tupleParameter)) {
-            lastParamIndex = Math.max(lastParamIndex, parameterList.indexOf(parameter));
+            lastParamIndex = Math.max(lastParamIndex, parameterPositions.getOrDefault(parameter, -1));
             highlightParameter(parameter, parameterHintToIndex, hintFlags, mustHighlight);
           }
         }
@@ -341,13 +370,14 @@ public final class PyParameterInfoUtils {
     List<PyCallableParameter> parameters = callableType.getUnpackedParameters(typeEvalContext);
     if (parameters == null) return null;
 
-    final PyCallExpression.PyArgumentsMapping mapping = PyCallExpressionHelper.mapArguments(callExpression, callableType, typeEvalContext);
+    final PyCallExpression.PyArgumentsMapping mapping =
+      PyCallExpressionHelper.mapArguments(callExpression, List.of(callExpression.getArguments()), callableType, parameters, typeEvalContext);
     if (mapping.getCallableType() == null) return null;
 
     final Map<Integer, PyCallableParameter> indexToNamedParameter = new HashMap<>(parameters.size());
 
     // param -> hint index. indexes are not contiguous, because some hints are parentheses.
-    final Map<PyCallableParameter, Integer> parameterToHintIndex = new HashMap<>();
+    final Map<PyCallableParameter, Integer> parameterToHintIndex = CollectionFactory.createCustomHashingStrategyMap(PARAMETER_STRATEGY);
     // formatting of hints: hint index -> flags. this includes flags for parens.
     final Map<Integer, EnumSet<ParameterFlag>> hintFlags = new HashMap<>();
 
