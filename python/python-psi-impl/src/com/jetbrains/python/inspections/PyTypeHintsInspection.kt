@@ -1583,6 +1583,9 @@ class PyTypeHintsInspection : PyInspection() {
                 registerProblem(argument, message, ProblemHighlightType.GENERIC_ERROR)
               }
             }
+            if (flatArgument is PyListLiteralExpression) {
+              checkNoEllipsisInParameterList(flatArgument)
+            }
             typeRef.derefOrUnknown()
           }
           is PyNoneLiteralExpression -> {
@@ -1609,6 +1612,16 @@ class PyTypeHintsInspection : PyInspection() {
         argumentTypes.add(argumentType)
       }
       return argumentTypes
+    }
+
+    private fun checkNoEllipsisInParameterList(parameterList: PyListLiteralExpression) {
+      for (element in parameterList.elements) {
+        if (PyPsiUtils.flattenParens(element) is PyEllipsisLiteralExpression) {
+          registerProblem(element,
+                          PyPsiBundle.problemMessage("INSP.type.hints.ellipsis.not.allowed.in.parameter.list"),
+                          ProblemHighlightType.GENERIC_ERROR)
+        }
+      }
     }
 
     private fun checkTupleTypeForm(node: PySubscriptionExpression) {

@@ -495,7 +495,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       }
     }
     if (anchor is PyExpression && referenceTarget is PyClass && isGeneric(referenceTarget, context.typeContext)) {
-      val parameterizedType = parameterizeClassDefaultAware(referenceTarget, listOf(), context)
+      val parameterizedType = parameterizeClassThroughDefinition(referenceTarget, listOf(), context)
       if (parameterizedType != null) {
         return Ref(parameterizedType.toClass())
       }
@@ -2594,15 +2594,23 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return elements.map { getType(it, context).derefOrUnknown() }
     }
 
-    private fun parameterizeClassDefaultAware(
+    /**
+     * Parameterizes [pyClass] through its generic definition when the raw [actualTypeParams] are not in the final shape.
+     * This is the case when a type parameter has a default,
+     * or when a class generic only over one ParamSpec gets `A[int, str]` as a shorthand for `A[[int, str]]`.
+     */
+    private fun parameterizeClassThroughDefinition(
       pyClass: PyClass,
       actualTypeParams: List<PyType?>,
       context: Context,
     ): PyClassType? {
       val genericDefinitionType = RecursionManager.doPreventingRecursion(pyClass, false) {
         PyTypeChecker.findGenericDefinitionType(pyClass, context.typeContext)
-      }
-      if (genericDefinitionType != null && genericDefinitionType.typeArguments.any { it is PyTypeParameterType && it.defaultType != null }) {
+      } ?: return null
+      val typeParameters = genericDefinitionType.typeArguments
+      val hasDefaults = typeParameters.any { it is PyTypeParameterType && it.defaultType != null }
+      val isSingleParamSpecParameterization = actualTypeParams.isNotEmpty() && typeParameters.singleOrNull() is PyParamSpecType
+      if (hasDefaults || isSingleParamSpecParameterization) {
         val parameterizedType = PyTypeChecker.parameterizeType(genericDefinitionType, actualTypeParams, context.typeContext)
         if (parameterizedType is PyClassType && parameterizedType.isParameterized) {
           return parameterizedType
@@ -2759,7 +2767,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
               }
 
               if (isGeneric(operandType, context.typeContext)) {
-                parameterizeClassDefaultAware(operandType.pyClass, indexTypes, context)?.let {
+                parameterizeClassThroughDefinition(operandType.pyClass, indexTypes, context)?.let {
                   return it.toInstance()
                 }
               }

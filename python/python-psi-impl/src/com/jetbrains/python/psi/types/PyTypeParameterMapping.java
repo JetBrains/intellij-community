@@ -185,11 +185,13 @@ public final class PyTypeParameterMapping {
   }
 
   // [**P] <- [int, str, bool] is equivalent to [**P] <- [[int, str, bool]]
+  // [**P] <- [...] keeps a single unknown type argument, which stands for any parameters
   // See https://typing.readthedocs.io/en/latest/spec/generics.html#user-defined-generic-classes
   private static @NotNull List<PyType> replaceExpectedTypesWithParameterList(@NotNull List<PyType> expectedTypes,
                                                                              @NotNull List<PyType> actualTypes) {
     if (ContainerUtil.getOnlyItem(expectedTypes) instanceof PyParamSpecType &&
-        !actualTypes.isEmpty() && !ContainerUtil.exists(actualTypes, o -> o instanceof PyVariadicType)) {
+        !actualTypes.isEmpty() && !ContainerUtil.exists(actualTypes, o -> o instanceof PyVariadicType) &&
+        !(actualTypes.size() == 1 && isUnknown(actualTypes.getFirst()))) {
       PyCallableParameterListType callableParameterListType =
         new PyCallableParameterListTypeImpl(ContainerUtil.map(actualTypes, PyCallableParameterImpl::nonPsi));
       return Collections.singletonList(callableParameterListType);
