@@ -453,7 +453,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
               testModule.name != "intellij.python.tests" &&  // intellij.idea.ultimate.customization vs intellij.pycharm.pro
               mainModule.name != "intellij.clion.main.tests" &&
               !(mainModule.name == "intellij.idea.ultimate.tests.main" && options.testGroups?.split(';')?.contains("COMMUNITY_JAVA_TESTS") == true) &&
-              MAIN_MODULE_CLASSPATH_TEST_MODULES[testModule.name]?.any { options.testGroups?.split(';')?.contains(it) == true } != true
+              !(testModule.name == "intellij.idea.ultimate.tests.integration" && options.testGroups?.split(';')?.contains(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED) == true) &&
+              !(testModule.name == "intellij.idea.ultimate.codeInsight.tests" && options.testGroups?.split(';')?.contains(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED) == true)
             } ?: mainModule,
             testGroups = options.testGroups,
             testPatterns = options.testPatterns,
@@ -1484,59 +1485,6 @@ private fun publishTestDiscovery(messages: BuildMessages, file: String?) {
   }
   messages.buildStatus("With Discovery, {build.status.text}")
 }
-
-private val MAIN_MODULE_CLASSPATH_TEST_MODULES: Map<String, Set<String>> = mapOf(
-  "intellij.angular.tests" to setOf("JS_TESTS"),  // intellij.angular.free needs intellij.idea.customization.plugin for intellij.platform.trialPromotion.common
-  "intellij.vuejs.tests" to setOf("JS_TESTS"),  // intellij.vuejs.free needs intellij.idea.customization.plugin for intellij.platform.trialPromotion.common
-  "intellij.css.tests" to setOf("JS_TESTS"),  // intellij.w3validators needs the plugin alias com.intellij.css
-  "intellij.idea.ultimate.codeInsight.tests" to setOf("JS_TESTS", GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED),  // intellij.php.impl, intellij.smarty, intellij.xpath, intellij.flex, intellij.javaee.jsp
-  "intellij.javascript.langInjection.tests" to setOf("JS_TESTS"),  // JsRequestBodyAutoPopupCompletionTest
-  "intellij.javascript.tests" to setOf("JS_TESTS", GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED),  // intellij.php.intelliLang, intellij.jade, intellij.maven.plugin; TypeScript service tests
-  "intellij.javascript.tests.ex" to setOf("JS_TESTS"),  // intellij.smarty
-  "intellij.javascript.web.tests" to setOf("JS_TESTS"),  // intellij.vuejs.backend registers the v-on directive
-  "intellij.postcss.tests" to setOf("JS_TESTS"),  // the completion weigher of intellij.java.plugin orders the lookup
-  "intellij.sass.tests" to setOf("JS_TESTS"),  // intellij.javascript.plugin injects JavaScript into expression()
-  "intellij.svelte.tests" to setOf("JS_TESTS"),  // SvelteCompletionTest.testComponentImportVariants
-  "intellij.aqua.frameworks.cypress.tests" to setOf(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED),  // the JQuery-CSS language is instantiated by another module of intellij.idea.ultimate.tests.main
-  "intellij.asp.tests" to setOf(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED),  // intellij.javascript.plugin commenter inside <script>
-  "intellij.clouds.kubernetes.backend.tests" to setOf(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED),  // KubernetesInsertHandlerTest
-  "intellij.debuggerMcp.tests" to setOf(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED),  // intellij.java.frontback.impl needs intellij.xml.parser of intellij.xml.plugin
-  "intellij.diagram.tests" to setOf(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED),  // intellij.diagram needs the alias com.intellij.modules.jetbrains of intellij.idea.ultimate.customization
-  "intellij.fullLine.html.local.tests" to setOf(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED),  // intellij.fullLine.js, intellij.fullLine.js.local, intellij.fullLine.js.ultimate, intellij.platform.problemView.plugin
-  "intellij.fullLine.js.vue.local.tests" to setOf(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED),  // intellij.vuejs.free needs intellij.idea.customization.plugin
-  "intellij.graphql.tests" to setOf(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED),  // intellij.vuejs.free needs intellij.idea.customization.plugin
-  "intellij.idea.ultimate.tests" to setOf(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED),  // intellij.php.impl
-  "intellij.idea.ultimate.tests.integration" to setOf(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED),  // IdeaKeymapsTest and UltimateActionGroupStructureTest compare the plugin set of intellij.idea.ultimate.main
-  "intellij.java.duplicates.tests" to setOf(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED),  // intellij.javaee.jsp
-  "intellij.platform.duplicatesDetector.tests" to setOf(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED),  // intellij.ultimate.plugin needs the alias com.intellij.modules.upgradable-to-ultimate of intellij.idea.ultimate.customization
-  "intellij.restClient.tests" to setOf(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED),  // intellij.python.community.plugin, intellij.php.impl
-  "intellij.vitejs.tests" to setOf(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED),  // intellij.vuejs.free needs intellij.idea.customization.plugin
-  "intellij.junit.java.tests" to setOf("DEBUGGER_TESTS"),  // the completion contributor of intellij.junit.properties runs after the one of intellij.java.impl
-  "intellij.javaee.jpa.tests" to setOf("JAVAEE_AND_FRAMEWORKS_TESTS"),  // intellij.spring.core.injections injects SQL into DatabaseClient.sql
-  "intellij.javaee.jsp.tests" to setOf("JAVAEE_AND_FRAMEWORKS_TESTS"),  // the expectations follow the classpath of intellij.idea.ultimate.tests.main
-  "intellij.javaee.platform.free.tests" to setOf("JAVAEE_AND_FRAMEWORKS_TESTS"),  // intellij.java.frontback.impl needs intellij.xml.parser of intellij.xml.plugin
-  "intellij.javaee.web.tests" to setOf("JAVAEE_AND_FRAMEWORKS_TESTS"),  // intellij.javascript.plugin or intellij.javaee.jsf
-  "intellij.micronaut.config.yaml.tests" to setOf("JAVAEE_AND_FRAMEWORKS_TESTS"),  // content modules of intellij.spring.boot.plugin veto the config key rename
-  "intellij.micronaut.tests" to setOf("JAVAEE_AND_FRAMEWORKS_TESTS"),  // content modules of intellij.spring.boot.plugin veto the config key rename
-  "intellij.quarkus.config.yaml.tests" to setOf("JAVAEE_AND_FRAMEWORKS_TESTS"),  // content modules of intellij.spring.boot.plugin veto the config key rename
-  "intellij.quarkus.tests" to setOf("JAVAEE_AND_FRAMEWORKS_TESTS"),  // content modules of intellij.spring.boot.plugin veto the config key rename
-  "intellij.swagger.core.tests" to setOf("JAVAEE_AND_FRAMEWORKS_TESTS"),  // SpecificationJSBodyCompletionTest completion order, intellij.javascript.web suspected
-  "intellij.thymeleaf.tests" to setOf("JAVAEE_AND_FRAMEWORKS_TESTS"),  // intellij.vuejs.free needs intellij.idea.customization.plugin
-  "intellij.spring.boot.data.tests" to setOf("SPRING_TESTS"),  // the PostgreSQL JDBC driver is a library of other test modules
-  "intellij.spring.boot.mvc.tests" to setOf("SPRING_TESTS"),  // intellij.spring.boot.plugin
-  "intellij.spring.eclipse.tests" to setOf("SPRING_TESTS"),  // intellij.java.frontback.impl needs intellij.xml.parser of intellij.xml.plugin
-  "intellij.spring.el.tests" to setOf("SPRING_TESTS"),  // intellij.spring.core.injections
-  "intellij.spring.mvc.impl.tests" to setOf("SPRING_TESTS"),  // intellij.vuejs.free needs intellij.idea.customization.plugin
-  "intellij.spring.security.tests" to setOf("SPRING_TESTS"),  // intellij.javascript.plugin masks the offset bug of SpringSecurityUrlPathReferenceSet
-  "intellij.gradle.java.tests" to setOf("ULTIMATE_GRADLE_INTEGRATION_TESTS"),  // intellij.maven.plugin
-  "intellij.platform.vcs.tests" to setOf("ULTIMATE_VCS_TESTS"),  // intellij.java.plugin, intellij.xml.plugin
-  "intellij.java.tests" to setOf("COMMUNITY_JAVA_TESTS"),  // intellij.idea.customization.plugin registers IntelliJIdeaExternalResourceUrls
-  "intellij.android.core.tests" to setOf("ANDROID_TESTS"),  // intellij.idea.customization.plugin registers IntelliJIdeaExternalResourceUrls
-  "intellij.php.frontback.impl.tests" to setOf("PHP_TESTS"),  // intellij.php.impl, intellij.php.resources; 58 PHP test modules depend on this module
-  "intellij.phpstorm.customization.backend.tests" to setOf("PHP_TESTS"),  // intellij.phpstorm.customization.plugin declares intellij.platform.ide.nonModalWelcomeScreen
-  "intellij.qodana.core.tests" to setOf("QODANA_EXTENDED_TESTS"),  // intellij.platform.duplicatesDetector needs intellij.idea.ultimate.customization
-  "intellij.dependencyAnalysis.python.tests" to setOf("DEPENDENCY_ANALYSIS_PLUGIN_TESTS"),  // intellij.python.community.impl needs intellij.platform.smRunner of intellij.platform.testRunner.plugin
-)
 
 private val COMMUNITY_AGGREGATOR_JPS_MODULES_ALLOWLIST = setOf(
   "intellij.java.tests",
