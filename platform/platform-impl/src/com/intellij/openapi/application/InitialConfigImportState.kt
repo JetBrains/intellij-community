@@ -21,6 +21,13 @@ object InitialConfigImportState {
   const val FRONTEND_PLUGINS_TO_MIGRATE_DIR_NAME: String = "frontend-to-migrate"
   const val MIGRATION_INSTALLED_PLUGINS_TXT: String = "migration_installed_plugins.txt"
 
+  /**
+   * An empty file in the config directory. The config import writes it when it disables an AI Assistant that the user
+   * had enabled. The AI Assistant installer shows the offboarding banner while the file exists, and deletes it when the
+   * user makes a choice.
+   */
+  const val AI_ASSISTANT_DISABLED_BY_MIGRATION_MARKER: String = "ai_assistant_disabled_by_migration"
+
   // copy of `ConfigImportHelper#OPTIONS`
   private val OPTIONS: Array<String> = arrayOf(
     PathManager.OPTIONS_DIRECTORY + '/' + StoragePathMacros.NON_ROAMABLE_FILE,

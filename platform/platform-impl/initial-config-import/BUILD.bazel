@@ -1,3 +1,4 @@
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -89,3 +90,69 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.ide.initialConfigImport` end
+
+### auto-generated section `build intellij.platform.ide.initialConfigImport.tests` start
+jvm_library(
+    name = "ide-initialConfigImport-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.initialConfigImport.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "ide-initialConfigImport-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//platform/platform-impl/initial-config-import"],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-initialConfigImport-tests",
+        "//platform/ide-core/plugins:plugins_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-impl/initial-config-import:initial-config-import_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/ide-core/plugins",
+        "//platform/platform-impl:ide-impl",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.ide.initialConfigImport.tests` end
+
+### auto-generated section `iml intellij.platform.ide.initialConfigImport.tests` start
+exports_files(
+    [
+        "intellij.platform.ide.initialConfigImport.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.ide.initialConfigImport.tests` end
+
+### auto-generated section `test intellij.platform.ide.initialConfigImport.tests` start
+jps_test(
+    name = "ide-initialConfigImport-tests_test",
+    runtime_deps = [":ide-initialConfigImport-tests_test_lib"],
+)
+### auto-generated section `test intellij.platform.ide.initialConfigImport.tests` end
