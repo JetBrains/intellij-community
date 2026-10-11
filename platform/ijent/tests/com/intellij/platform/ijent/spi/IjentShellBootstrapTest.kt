@@ -16,7 +16,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermissions
 
 @Timeout(30)
 class IjentShellBootstrapTest {
@@ -78,6 +81,47 @@ class IjentShellBootstrapTest {
 
     assertEquals(0, process.waitFor(), error)
     assertTrue(output.lineSequence().any { it.contains(bootstrap.marker) }, output)
+    assertTrue(output.lineSequence().any { it == "IJENT_AFTER_BOOTSTRAP" }, output)
+  }
+
+  @Test
+  @EnabledOnOs(OS.WINDOWS)
+  fun `Windows command bootstrap starts PowerShell from its first line`() {
+    val bootstrap = createShellBootstrap()
+    val process = ProcessBuilder("cmd.exe", "/c", bootstrap.command.substringBefore('\n')).start()
+    process.outputStream.bufferedWriter().use {
+      it.appendLine("[Console]::Out.WriteLine('IJENT_AFTER_BOOTSTRAP')")
+      it.appendLine("exit 0")
+    }
+    val output = process.inputStream.bufferedReader().readText()
+    val error = process.errorStream.bufferedReader().readText()
+
+    assertEquals(0, process.waitFor(), error)
+    assertTrue(output.lineSequence().any { it.contains("${bootstrap.marker} OS=Windows_NT") }, output)
+    assertTrue(output.lineSequence().any { it == "IJENT_AFTER_BOOTSTRAP" }, output)
+  }
+
+  @Test
+  @EnabledOnOs(OS.LINUX, OS.MAC)
+  fun `Cygwin bootstrap launches PowerShell through the POSIX shell`(@TempDir directory: Path) {
+    val uname = directory.resolve("uname")
+    Files.writeString(uname, "#!/bin/sh\necho CYGWIN_NT-10.0\n")
+    val powershell = directory.resolve("powershell.exe")
+    Files.writeString(powershell, "#!/bin/sh\nprintf '%s\\n' \"$*\"\n/bin/cat\n")
+    for (executable in listOf(uname, powershell)) {
+      Files.setPosixFilePermissions(executable, PosixFilePermissions.fromString("rwx------"))
+    }
+    val bootstrap = createShellBootstrap()
+    val builder = ProcessBuilder("/bin/sh", "-c", bootstrap.command)
+    builder.environment()["PATH"] = directory.toString()
+    val process = builder.start()
+    process.outputStream.bufferedWriter().use { it.appendLine("IJENT_AFTER_BOOTSTRAP") }
+    val output = process.inputStream.bufferedReader().readText()
+    val error = process.errorStream.bufferedReader().readText()
+
+    assertEquals(0, process.waitFor(), error)
+    assertTrue(output.contains("${bootstrap.marker} OS=CYGWIN_NT-10.0"), output)
+    assertTrue(output.lineSequence().any { it == "-NoLogo -NoProfile -NonInteractive -Command -" }, output)
     assertTrue(output.lineSequence().any { it == "IJENT_AFTER_BOOTSTRAP" }, output)
   }
 

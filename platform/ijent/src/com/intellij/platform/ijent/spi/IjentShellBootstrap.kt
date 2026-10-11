@@ -12,12 +12,11 @@ internal data class ShellBootstrap(val marker: String, val command: String)
 
 internal fun createShellBootstrap(): ShellBootstrap {
   val marker = "IJENT_SHELL_PROBE_${UUID.randomUUID().toString().replace("-", "")}"
+  val cmdBootstrap = "ECHO $marker OS=%OS% ARCH=%PROCESSOR_ARCHITECTURE% SHELL=cmd.exe & " +
+                     "\"%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\" " +
+                     "-NoLogo -NoProfile -NonInteractive -Command -"
   val command = $$"""
-    echo \" <<'REM' >/dev/null ">NUL "\" \`" <#"
-    @ECHO OFF
-    ECHO $$marker OS=%OS% ARCH=%PROCESSOR_ARCHITECTURE% SHELL=cmd.exe
-    "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -Command -
-    EXIT /B %ERRORLEVEL%
+    echo \" <<'REM' >/dev/null ">NUL "\" \`" <#" # & $$cmdBootstrap
     REM
     #> | Out-Null
     echo \" <<'POWERSHELL_SCRIPT' >/dev/null # " | Out-Null
