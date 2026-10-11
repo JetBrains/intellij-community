@@ -4,6 +4,7 @@ package com.jetbrains.python.types
 import com.intellij.idea.TestFor
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.inspections.PyTypeHintsInspection
 import com.jetbrains.python.psi.LanguageLevel
@@ -4060,6 +4061,38 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                     ^^^^^^^^^^^ WARNING Invalid type annotation
     type BadTypeAlias13 = f"{'int'}"
     #                     ^^^^^^^^^^ WARNING Invalid type annotation
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-93096"], classes = [PyTypingAnnotationInjector::class])
+  fun `quoted type in a type alias statement is resolved`() = test("""
+    type X = list["Undefined"]
+    #             │^^^^^^^^^ WARNING Unresolved reference 'Undefined'
+    #             ^^^^^^^^^^^ ERROR Invalid type argument
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-93096"], classes = [PyTypingAnnotationInjector::class])
+  fun `Literal string in a type alias statement is not a type`() = test("""
+    from typing import Literal
+
+    type X = Literal["a"]
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-93096"], classes = [PyTypingAnnotationInjector::class])
+  fun `Annotated metadata string in a type alias statement is not a type`() = test("""
+    from typing import Annotated
+
+    type X = Annotated[int, "meta"]
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-93096"], classes = [PyTypingAnnotationInjector::class])
+  fun `Literal string in a union of a type alias statement is not a type`() = test("""
+    from typing import Literal
+
+    type X = int | Literal["a b"]
     """.trimIndent())
 
   @Test

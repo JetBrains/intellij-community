@@ -15,15 +15,19 @@ import com.jetbrains.python.codeInsight.typeHints.PyTypeHintDialect
 import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyListLiteralExpression
+import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyTypeAliasStatement
 import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType
 import com.jetbrains.python.psi.resolve.PyResolveUtil
@@ -76,6 +80,9 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
       return PyTypeHintDialect.INSTANCE
     }
     if (context.isInsideValueOfExplicitTypeAnnotation()) {
+      return PyTypeHintDialect.INSTANCE
+    }
+    if (context.isInsideValueOfTypeAliasStatement() && context.stringValue.isTypingAnnotation()) {
       return PyTypeHintDialect.INSTANCE
     }
 
@@ -229,6 +236,21 @@ private fun PyStringLiteralExpression.isInsideValueOfExplicitTypeAnnotation(): B
     return false
   }
   return PyTypingTypeProvider.isExplicitTypeAlias(assignment, TypeEvalContext.codeAnalysis(project, this.containingFile))
+}
+
+/**
+ * Whether the string is the value of a `type` statement, or is nested in it only through the type expression syntax,
+ * such as `type X = list["dict[str, T]"] | None`.
+ */
+private fun PyStringLiteralExpression.isInsideValueOfTypeAliasStatement(): Boolean {
+  for (ancestor in parents(false)) {
+    when (ancestor) {
+      is PyTypeAliasStatement -> return ancestor.typeExpression?.let { PsiTreeUtil.isAncestor(it, this, false) } == true
+      is PySubscriptionExpression, is PyTupleExpression, is PyListLiteralExpression, is PyParenthesizedExpression, is PyBinaryExpression -> {}
+      else -> return false
+    }
+  }
+  return false
 }
 
 private fun registerCommentInjection(
