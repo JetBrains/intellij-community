@@ -178,6 +178,10 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }
                          final String a = ''
                          <error descr="Cannot assign a value to final variable 'a'">a</error> = 'str'
+                         static void foo() {
+                             val x = 3
+                             <error descr="Cannot assign a value to final variable 'x'">x</error> = 4
+                         }
                          """);
   }
 

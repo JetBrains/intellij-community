@@ -440,7 +440,12 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
 
       @Override
       public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
-        // skip to avoid duplicated warnings
+        // skip to avoid duplicated reports
+      }
+
+      @Override
+      public void visitMethod(@NotNull GrMethod method) {
+        // skip to avoid duplicated reports
       }
     });
     return scopes;
