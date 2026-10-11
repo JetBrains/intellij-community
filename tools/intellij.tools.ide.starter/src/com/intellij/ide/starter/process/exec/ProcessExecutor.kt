@@ -53,7 +53,7 @@ class ProcessExecutor(
     redirectOutput: ExecOutputRedirect,
   ): Thread {
     val inputStream = if (outOrErrStream) process.inputStream else process.errorStream
-    return thread(start = true, isDaemon = true, name = "Redirect " + (if (outOrErrStream) "stdout" else "stderr")) {
+    return thread(start = true, isDaemon = true, name = "Redirect ${if (outOrErrStream) "stdout" else "stderr"} '$presentableName'") {
       val reader = inputStream.bufferedReader()
       redirectOutput.open()
       try {
@@ -79,7 +79,7 @@ class ProcessExecutor(
       return null
     }
 
-    return thread(start = true, isDaemon = true, name = "Redirect input") {
+    return thread(start = true, isDaemon = true, name = "Redirect input `$presentableName`") {
       catchAll {
         process.outputStream.use {
           it.write(inputBytes)
