@@ -74,6 +74,7 @@ jvm_library(
         "//java/structuralsearch-java:structuralSearch",
         "//xml/emmet",
         "//xml/xml-structure-view-impl:structureView-impl",
+        "//idea/customization/plugin",
     ],
 )
 
@@ -130,6 +131,7 @@ jvm_library(
         "//java/structuralsearch-java:structuralSearch_test_lib",
         "//xml/emmet:emmet_test_lib",
         "//xml/xml-structure-view-impl:structureView-impl_test_lib",
+        "//idea/customization/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
