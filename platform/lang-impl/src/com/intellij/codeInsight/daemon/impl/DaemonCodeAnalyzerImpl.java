@@ -171,7 +171,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
    * When it happens that the future has started sooner than this stamp, it will re-schedule itself for later.
    */
   private long myScheduledUpdateTimestamp; // guarded by this
-  private volatile boolean myFirstPassFinished; // the only possible transition: false -> true; the first pass runs without the autoreparse delay
+  private volatile boolean myAutoReparseDelayEnabled; // the only possible transition: false -> true; the first pass runs without the autoreparse delay
   private volatile boolean completeEssentialHighlightingRequested;
   private final AtomicInteger daemonCancelEventCount = new AtomicInteger();
   private final DaemonListener myDaemonListenerPublisher;
@@ -803,7 +803,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
    * reset {@link #myScheduledUpdateTimestamp} always, but re-schedule {@link #myUpdateRunnable} only rarely because of thread scheduling overhead
    */
   private synchronized void scheduleIfNotRunning() {
-    long delayMs = myFirstPassFinished ? mySettings.getEffectiveAutoReparseDelay() : 0;
+    long delayMs = myAutoReparseDelayEnabled ? mySettings.getEffectiveAutoReparseDelay() : 0;
     myScheduledUpdateTimestamp = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(delayMs);
     // optimization: this check is to avoid too many re-schedules in case of thousands of event spikes
     boolean isDone = myUpdateRunnableFuture.isDone();
@@ -1570,7 +1570,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     public void onStop() {
       VirtualFile file = myFileEditor.getFile();
       if (file != null && getFileEditorManager().isFileOpenWithRemotes(file)) {
-        myFirstPassFinished = true;
+        myAutoReparseDelayEnabled = true;
       }
       removeIndicatorFromMap(myFileEditor, this);
       myDaemonListenerPublisher.daemonFinished(List.of(myFileEditor));
