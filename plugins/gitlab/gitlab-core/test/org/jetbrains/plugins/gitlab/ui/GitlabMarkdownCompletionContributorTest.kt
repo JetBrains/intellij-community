@@ -5,7 +5,11 @@ import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.IncrementallyComputedValue
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
@@ -361,7 +365,9 @@ class GitlabMarkdownCompletionContributorTest {
   }
 
   private fun configure(text: String, vm: GitLabViewModelWithTextCompletion) {
-    codeInsightFixture.configureByText("test.md", text)
+    val fileType = FileTypeRegistry.getInstance().getFileTypeByExtension("md").takeIf { it != UnknownFileType.INSTANCE } ?: PlainTextFileType.INSTANCE
+    // The comment editor uses a non-physical file, see CodeReviewMarkdownEditor
+    codeInsightFixture.configureFromExistingVirtualFile(LightVirtualFile("Dummy.md", fileType, text))
     codeInsightFixture.editor.putUserData(GitLabViewModelWithTextCompletion.MENTIONS_COMPLETION_KEY, vm)
   }
 
