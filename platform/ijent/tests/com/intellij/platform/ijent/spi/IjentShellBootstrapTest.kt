@@ -31,6 +31,22 @@ class IjentShellBootstrapTest {
   }
 
   @Test
+  fun `Windows POSIX environments select native PowerShell`() {
+    val marker = "IJENT_SHELL_PROBE_test"
+    for (os in listOf("CYGWIN_NT-10.0-22631", "MINGW64_NT-10.0", "MSYS_NT-10.0")) {
+      assertEquals(DetectedShell.PowerShell, parseShellMarker("$marker OS=$os ARCH=x86_64 SHELL=/bin/bash", marker), os)
+    }
+  }
+
+  @Test
+  fun `native POSIX environments retain the POSIX dialect`() {
+    val marker = "IJENT_SHELL_PROBE_test"
+    for (os in listOf("Linux", "Darwin")) {
+      assertEquals(DetectedShell.Posix, parseShellMarker("$marker OS=$os ARCH=arm64 SHELL=/bin/zsh", marker), os)
+    }
+  }
+
+  @Test
   fun `bootstrap marker is found after a banner or prompt`() {
     val marker = "IJENT_SHELL_PROBE_test"
     assertEquals(
