@@ -17,7 +17,7 @@ public class ResolveState {
   }
 
   public @NotNull <T> ResolveState put(@NotNull Key<T> key, T value) {
-    return new OneElementResolveState(key, value);
+    return new OneElementResolveState<>(key, value);
   }
 
   public @NotNull ResolveState putAll(@NotNull ResolveState state) {
@@ -31,11 +31,11 @@ public class ResolveState {
     return null;
   }
 
-  private static final class OneElementResolveState extends ResolveState {
-    private final @NotNull Key myKey;
-    private final Object myValue;
+  private static final class OneElementResolveState<K> extends ResolveState {
+    private final @NotNull Key<K> myKey;
+    private final K myValue;
 
-    private OneElementResolveState(@NotNull Key key, Object value) {
+    private OneElementResolveState(@NotNull Key<K> key, K value) {
       myKey = key;
       myValue = value;
     }
@@ -43,10 +43,10 @@ public class ResolveState {
     @Override
     public @NotNull <T> ResolveState put(@NotNull Key<T> key, T value) {
       if (myKey.equals(key)) {
-        return new OneElementResolveState(key, value);
+        return new OneElementResolveState<>(key, value);
       }
 
-      return new TwoElementResolveState(myKey, myValue, key, value);
+      return new TwoElementResolveState<>(myKey, myValue, key, value);
     }
 
     @Override
@@ -56,21 +56,21 @@ public class ResolveState {
 
     @Override
     public <T> T get(@NotNull Key<T> key) {
-      Object value = myKey.equals(key) ? myValue : null;
+      T value = myKey.equals(key) ? (T)myValue : null;
       if (value == null && key instanceof KeyWithDefaultValue) {
         return ((KeyWithDefaultValue<T>)key).getDefaultValue();
       }
-      return (T)value;
+      return value;
     }
   }
 
-  private static class TwoElementResolveState extends ResolveState {
-    private final @NotNull Key myKey1;
-    private final Object myValue1;
-    private final @NotNull Key myKey2;
-    private final Object myValue2;
+  private static class TwoElementResolveState<K1,K2> extends ResolveState {
+    private final @NotNull Key<K1> myKey1;
+    private final K1 myValue1;
+    private final @NotNull Key<K2> myKey2;
+    private final K2 myValue2;
 
-    TwoElementResolveState(@NotNull Key key1, Object value1, @NotNull Key key2, Object value2) {
+    TwoElementResolveState(@NotNull Key<K1> key1, K1 value1, @NotNull Key<K2> key2, K2 value2) {
       myKey1 = key1;
       myValue1 = value1;
       myKey2 = key2;
@@ -80,10 +80,10 @@ public class ResolveState {
     @Override
     public @NotNull <T> ResolveState put(@NotNull Key<T> key, T value) {
       if (myKey1.equals(key)) {
-        return new TwoElementResolveState(key, value, myKey2, myValue2);
+        return new TwoElementResolveState<>(key, value, myKey2, myValue2);
       }
       if (myKey2.equals(key)) {
-        return new TwoElementResolveState(myKey1, myValue1, key, value);
+        return new TwoElementResolveState<>(myKey1, myValue1, key, value);
       }
 
       return new ManyElementResolveState(this, key, value);
@@ -95,7 +95,7 @@ public class ResolveState {
         return this;
       }
       else if (state instanceof OneElementResolveState) {
-        OneElementResolveState oneState = (OneElementResolveState)state;
+        OneElementResolveState<Object> oneState = (OneElementResolveState<Object>)state;
         return put(oneState.myKey, oneState.myValue);
       }
       boolean has1 = state.get(myKey1) != null;
@@ -115,12 +115,12 @@ public class ResolveState {
 
     @Override
     public <T> T get(@NotNull Key<T> key) {
-      Object value;
+      T value;
       if (myKey1.equals(key)) {
-        value = myValue1;
+        value = (T)myValue1;
       }
       else if (myKey2.equals(key)) {
-        value = myValue2;
+        value = (T)myValue2;
       }
       else {
         value = null;
@@ -129,30 +129,30 @@ public class ResolveState {
       if (value == null && key instanceof KeyWithDefaultValue) {
         return ((KeyWithDefaultValue<T>)key).getDefaultValue();
       }
-      return (T)value;
+      return value;
     }
   }
 
   private static final class ManyElementResolveState extends ResolveState {
-    private final Map<Object, Object> myValues = new HashMap<>();
+    private final Map<Key<?>, Object> myValues = new HashMap<>();
 
     ManyElementResolveState(@NotNull ResolveState state1, @NotNull ResolveState state2) {
       putAllNoCopy(state1);
       putAllNoCopy(state2);
     }
 
-    ManyElementResolveState(@NotNull ResolveState state, @NotNull Key key, Object value) {
+    ManyElementResolveState(@NotNull ResolveState state, @NotNull Key<?> key, Object value) {
       putAllNoCopy(state);
       myValues.put(key, value);
     }
 
     private void putAllNoCopy(@NotNull ResolveState other) {
       if (other instanceof OneElementResolveState) {
-        OneElementResolveState oneState = (OneElementResolveState)other;
+        OneElementResolveState<Object> oneState = (OneElementResolveState<Object>)other;
         myValues.put(oneState.myKey, oneState.myValue);
       }
       else if (other instanceof TwoElementResolveState) {
-        TwoElementResolveState twoState = (TwoElementResolveState)other;
+        TwoElementResolveState<Object,Object> twoState = (TwoElementResolveState<Object,Object>)other;
         myValues.put(twoState.myKey1, twoState.myValue1);
         myValues.put(twoState.myKey2, twoState.myValue2);
       }
