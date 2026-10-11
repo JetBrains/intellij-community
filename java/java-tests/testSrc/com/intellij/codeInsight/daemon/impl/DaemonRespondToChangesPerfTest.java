@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.ProductionDaemonAnalyzerTestCase;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
@@ -10,8 +11,12 @@ import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.MultiHostInjector;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -38,11 +43,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -51,6 +58,12 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTestCase {
   private static final boolean DEBUG = false;
+  private static final int FIRST_PASS_START_TIMEOUT_MS = 5_000;
+  /** the default autoreparse delay of the IDE */
+  private static final int AUTO_REPARSE_DELAY_MS = 300;
+  /** the OS key repeat interval of a held key */
+  private static final int KEY_REPEAT_MS = 30;
+  private static final int HOLD_MS = 1_000;
 
   @PerformanceUnitTest
   public void testHugeAppendChainDoesNotCauseSOE_Stress() {
@@ -308,6 +321,58 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
       }
       fail("PCE must have been thrown");
     }
+  }
+
+  /**
+   * Opens a big file, and holds a key for {@link #HOLD_MS} while the first pass runs.
+   * The first key press cancels the first pass. The daemon must not start a pass again until the key is released,
+   * because every start reruns the passes from the dirty scope and the next key repeat cancels it again.
+   */
+  @PerformanceUnitTest
+  public void testHeldKeyDoesNotRerunUnfinishedFirstPass() throws Throwable {
+    TestDaemonCodeAnalyzerImpl.runWithReparseDelay(AUTO_REPARSE_DELAY_MS, () -> {
+      AtomicInteger starts = new AtomicInteger();
+      getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+        @Override
+        public void daemonStarting(@NotNull Collection<? extends FileEditor> fileEditors) {
+          starts.incrementAndGet();
+        }
+      });
+      configureByFile("/psi/resolve/Thinlet.java");
+      CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
+      long start = System.currentTimeMillis();
+      while (starts.get() == 0) {
+        assertTrue("The first pass must start without the autoreparse delay", System.currentTimeMillis() - start < FIRST_PASS_START_TIMEOUT_MS);
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        TimeoutUtil.sleep(10);
+      }
+      assertTrue("The first pass must run when the key is pressed", myDaemonCodeAnalyzer.isRunning());
+
+      int startsBefore = starts.get();
+      int presses = 0;
+      long holdStart = System.currentTimeMillis();
+      while (System.currentTimeMillis() - holdStart < HOLD_MS) {
+        fireShortcutTriggered();
+        presses++;
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        TimeoutUtil.sleep(KEY_REPEAT_MS);
+      }
+      int startsWhileHeld = starts.get() - startsBefore;
+      long released = System.currentTimeMillis();
+      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
+      LOG.info(presses + " key presses in " + HOLD_MS + "ms; daemon starts while the key was held: " + startsWhileHeld +
+               "; highlighted " + (System.currentTimeMillis() - released) + "ms after the release");
+      assertEquals("A held key must not restart the unfinished first pass before the autoreparse delay", 0, startsWhileHeld);
+    });
+  }
+
+  /**
+   * Publishes the event that {@code IdeKeyEventDispatcher} fires for every key press that maps to an action.
+   * The OS key repeat of a held key fires it about 30 times a second.
+   */
+  static void fireShortcutTriggered() {
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC)
+      .beforeShortcutTriggered(KeyboardShortcut.fromString("DOWN"), List.of(), DataContext.EMPTY_CONTEXT);
   }
 
   // highlights every character at the file level
