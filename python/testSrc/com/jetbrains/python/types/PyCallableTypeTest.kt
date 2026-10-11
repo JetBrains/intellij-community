@@ -8,6 +8,7 @@ import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.codeInsight.decorator.PyFunctoolsWrapsDecoratedFunctionTypeProvider
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.inspections.PyTypeHintsInspection
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.types.PyFunctionTypeImpl
 import org.junit.jupiter.api.Nested
@@ -1961,6 +1962,105 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def param_spec_replaced_with_concatenate[**P3](fn: Callable[Concatenate[int, P3], Any]):
           expr = f(fn)
       #   └ TYPE MyCallable[Concatenate(int, int, **P3)]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93095"])
+    fun `class generic over single ParamSpec accepts type arguments without brackets`() = test("""
+      class A[**P]:
+          def f(self, *args: P.args, **kwargs: P.kwargs): ...
+
+      b: A[int, str] = A()
+      expr = b
+      #└ TYPE A[[int, str]]
+      b.f(1, "a")
+      b.f(1, 2) # WARNING Expected type 'str', got 'Literal[2]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93095"])
+    fun `class generic over single ParamSpec accepts type arguments without brackets old style`() = test("""
+      from typing import Generic, ParamSpec
+
+      P = ParamSpec("P")
+
+      class A(Generic[P]):
+          def f(self, *args: P.args, **kwargs: P.kwargs): ...
+
+      b: A[int, str] = A()
+      expr = b
+      #└ TYPE A[[int, str]]
+      b.f(1, "a")
+      b.f(1, 2) # WARNING Expected type 'str', got 'Literal[2]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93095"])
+    fun `class generic over ParamSpec parameterized with ellipsis accepts any arguments`() = test("""
+      class A[**P]:
+          def f(self, *args: P.args, **kwargs: P.kwargs): ...
+
+      A[...]().f(1, "a")
+      a: A[...] = A()
+      a.f(1, "a")
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93095"])
+    fun `class generic over ParamSpec parameterized with ellipsis accepts any arguments old style`() = test("""
+      from typing import Generic, ParamSpec
+
+      P = ParamSpec("P")
+
+      class A(Generic[P]):
+          def f(self, *args: P.args, **kwargs: P.kwargs): ...
+
+      A[...]().f(1, "a")
+      a: A[...] = A()
+      a.f(1, "a")
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93095"])
+    fun `class generic over single ParamSpec parameterized with one type`() = test("""
+      from typing import Any
+
+      class A[**P]:
+          def f(self, *args: P.args, **kwargs: P.kwargs): ...
+
+      a: A[Any]
+      a.f(1, "a")
+      #      ^^^ WARNING Unexpected argument
+      b: A[int]
+      expr = b
+      #└ TYPE A[[int]]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93095"])
+    @TestInspections(disableInspections = [PyTypeHintsInspection::class])
+    fun `ParamSpec Callable alias parameterized with ellipsis`() = test("""
+      from typing import Callable, ParamSpec, TypeAlias
+
+      P = ParamSpec("P")
+
+      Callback1: TypeAlias = Callable[P, str]
+
+      expr: Callback1[...]
+      #└ TYPE (...) -> str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93095"])
+    fun `ellipsis inside parameter list is an error`() = test("""
+      from typing import Callable
+
+      class A[**P]: ...
+
+      a: A[[...]]
+      #     ^^^ ERROR '...' is not allowed in a parameter list
+      c: Callable[[...], int]
+      #            ^^^ ERROR '...' is not allowed in a parameter list
       """.trimIndent())
   }
 
