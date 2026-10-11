@@ -20,7 +20,8 @@
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <properties.implicitPropertyUsageProvider implementation="com.intellij.junit.properties.JUnitImplicitPropertyUsageProvider"/>
-    <completion.contributor language="Properties" implementationClass="com.intellij.junit.properties.JUnitPropertiesCompletionContributor"/>
+    <completion.contributor language="Properties" implementationClass="com.intellij.junit.properties.JUnitPropertiesCompletionContributor"
+                            order="before javaClassReference"/>
     <psi.referenceContributor language="Properties" implementation="com.intellij.junit.properties.JUnitPropertiesReferenceContributor"/>
     <platform.backend.documentation.psiTargetProvider implementation="com.intellij.junit.properties.JUnitPlatformPropertyDocumentationTargetProvider"/>
   </extensions>
