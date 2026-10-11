@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.openapi.vcs.changes.ui.isUnderTag
 import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.JBIterable
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.TreePath
 
 /**
- * Note that only changes from change lists can be currently restored
+ * Note that only changes from change lists, unversioned files, and ignored files can be currently restored
  */
 @ApiStatus.Internal
 @Serializable
@@ -31,6 +32,10 @@ data class ChangesViewSelection(
   data class PathSelection(
     val selectionPath: ChangesTreePath,
     val exactlySelected: Boolean,
+    /** The path is under the [ChangesBrowserNode.UNVERSIONED_FILES_TAG] node. */
+    val isUnversioned: Boolean = false,
+    /** The path is under the [ChangesBrowserNode.IGNORED_FILES_TAG] node. */
+    val isIgnored: Boolean = false,
   ) {
     val filePath: FilePath
       get() = selectionPath.filePath.filePath
@@ -55,6 +60,8 @@ data class ChangesViewSelection(
               PathSelection(
                 selectionPath = selectionPath,
                 exactlySelected = tree.isPathSelected(TreePath(node.path)),
+                isUnversioned = node.isUnderTag(ChangesBrowserNode.UNVERSIONED_FILES_TAG),
+                isIgnored = node.isUnderTag(ChangesBrowserNode.IGNORED_FILES_TAG),
               )
             )
           }
