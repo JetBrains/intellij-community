@@ -171,7 +171,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
    * When it happens that the future has started sooner than this stamp, it will re-schedule itself for later.
    */
   private long myScheduledUpdateTimestamp; // guarded by this
-  private volatile boolean myAutoReparseDelayEnabled; // the only possible transition: false -> true; the first pass runs without the autoreparse delay
+  /**
+   * The only possible transition: false -> true.
+   * The first pass of the project runs without the autoreparse delay, because it has nothing to debounce.
+   * A pass that finished for an open file enables the delay. A stop that canceled a running pass enables it too,
+   * because otherwise a held key reruns the unfinished pass on every key repeat.
+   */
+  private volatile boolean myAutoReparseDelayEnabled;
   private volatile boolean completeEssentialHighlightingRequested;
   private final AtomicInteger daemonCancelEventCount = new AtomicInteger();
   private final DaemonListener myDaemonListenerPublisher;
@@ -741,7 +747,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   synchronized void stopProcess(boolean toRestart, @NotNull @NonNls String reason) {
-    cancelAllUpdateProgresses(toRestart, reason);
+    if (cancelAllUpdateProgresses(toRestart, reason)) {
+      myAutoReparseDelayEnabled = true;
+    }
     boolean restart = toRestart && !myDisposed;
     if (LOG.isDebugEnabled()) {
       Map<FileEditor, DaemonProgressIndicator> progresses = Map.copyOf(myUpdateProgress);
