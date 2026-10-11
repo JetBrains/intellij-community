@@ -852,33 +852,37 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     myUpdateRunnableFuture = EdtExecutorService.getScheduledExecutorInstance().schedule(myUpdateRunnable, delayNanos, TimeUnit.NANOSECONDS);
   }
 
-  // return true if the progress really was canceled
-  synchronized void cancelAllUpdateProgresses(boolean toRestart, @NotNull @NonNls String reason) {
+  // return true if at least one running progress was canceled
+  synchronized boolean cancelAllUpdateProgresses(boolean toRestart, @NotNull @NonNls String reason) {
     if (myDisposed || myProject.isDefault() || myProject.isDisposed() || myProject.getMessageBus().isDisposed()) {
-      return;
+      return false;
     }
-    processIndicators(indicator -> {
-      cancelIndicator(indicator, toRestart, null, reason);
-      return true;
-    });
+    boolean canceled = false;
+    for (DaemonProgressIndicator indicator : new ArrayList<>(myUpdateProgress.values())) {
+      canceled |= cancelIndicator(indicator, toRestart, null, reason);
+    }
     myUpdateProgress.clear();
     myPassExecutorService.cancelAll(false, reason);
     daemonCancelEventCount.incrementAndGet();
+    return canceled;
   }
 
-  private static void cancelIndicator(@NotNull DaemonProgressIndicator indicator,
-                                      boolean toRestart,
-                                      @Nullable Throwable cause,
-                                      @NonNls @NotNull String reason) {
-    if (!indicator.isCanceled()) {
-      PassExecutorService.log(indicator, null, "Cancel (reason: '", reason, "'), restart:", toRestart);
-      if (cause == null) {
-        indicator.cancel(reason);
-      }
-      else {
-        indicator.cancel(cause, reason);
-      }
+  // return true if the indicator was running and is canceled now
+  private static boolean cancelIndicator(@NotNull DaemonProgressIndicator indicator,
+                                         boolean toRestart,
+                                         @Nullable Throwable cause,
+                                         @NonNls @NotNull String reason) {
+    if (indicator.isCanceled()) {
+      return false;
     }
+    PassExecutorService.log(indicator, null, "Cancel (reason: '", reason, "'), restart:", toRestart);
+    if (cause == null) {
+      indicator.cancel(reason);
+    }
+    else {
+      indicator.cancel(cause, reason);
+    }
+    return true;
   }
 
   private synchronized void removeIndicatorFromMap(@NotNull FileEditor fileEditor, @NotNull DaemonProgressIndicator indicator) {
