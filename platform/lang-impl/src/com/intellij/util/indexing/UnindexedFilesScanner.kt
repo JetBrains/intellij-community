@@ -198,6 +198,20 @@ class UnindexedFilesScanner(
     return scanningParameters.await()
   }
 
+  /**
+   * Resets every index with the [RebuildStatus.REQUIRES_REBUILD] status to [RebuildStatus.OK] and clears its data.
+   *
+   * A rebuild request is application-wide, so a full scan must run this step even when the project does not scan files.
+   * Otherwise, the index keeps the `REQUIRES_REBUILD` status, and every read of the index from this project fails.
+   */
+  internal fun clearIndicesIfNecessary() {
+    if (fileBasedIndex.registeredIndexes == null) {
+      // indexes are not loaded, so there is no index status to reset
+      return
+    }
+    fileBasedIndex.clearIndicesIfNecessary()
+  }
+
   fun tryMergeWith(oldTask: FilesScanningTask, mergeScope: CoroutineScope): UnindexedFilesScanner {
     oldTask as UnindexedFilesScanner
 
