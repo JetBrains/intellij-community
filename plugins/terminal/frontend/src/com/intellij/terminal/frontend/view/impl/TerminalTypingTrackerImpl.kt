@@ -91,6 +91,8 @@ class TerminalTypingTrackerImpl(
       }
       KeyEvent.KEY_PRESSED -> when (event.awtEvent.keyCode) {
         KeyEvent.VK_BACK_SPACE -> handleBackspace(event, event.cursorOffset)
+        // TODO: Support shell-specific accept-line shortcuts.
+        // Bash and Zsh also use Ctrl+J and Ctrl+M. PowerShell uses Ctrl+M.
         KeyEvent.VK_ENTER -> handleNewLine(event)
       }
     }

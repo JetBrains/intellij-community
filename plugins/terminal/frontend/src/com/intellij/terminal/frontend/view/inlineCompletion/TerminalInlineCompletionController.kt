@@ -24,7 +24,6 @@ import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -104,10 +103,9 @@ class TerminalInlineCompletionController(
   }
 
   private fun cancelActiveInlineCompletion() {
-    // Avoid scheduling an EDT action that acquires WIL when there is no session to cancel.
-    if (InlineCompletionSession.getOrNull(editor) == null) return
-
     launchInlineCompletionAction {
+      if (InlineCompletionSession.getOrNull(editor) == null) return@launchInlineCompletionAction
+
       InlineCompletion.getHandlerOrNull(editor)?.cancel(FinishType.KEY_PRESSED)
     }
   }
