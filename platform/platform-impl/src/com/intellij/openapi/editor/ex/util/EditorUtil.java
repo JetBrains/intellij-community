@@ -1111,8 +1111,10 @@ public final class EditorUtil {
       // for injected editors disposal will happen only when host editor is disposed,
       // but this seems to be the best we can do (there are no notifications on disposal of injected editor)
       Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
-      if (hostEditor instanceof EditorImpl) {
-        Disposer.register(((EditorImpl)hostEditor).getDisposable(), disposable);
+      if (hostEditor instanceof EditorImpl editorImpl) {
+        if (!Disposer.tryRegister(editorImpl.getDisposable(), disposable)) {
+          Disposer.dispose(disposable);
+        }
       }
       else {
         LOG.warn("Cannot watch for disposal of " + editor);

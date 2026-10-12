@@ -17,15 +17,18 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.BreakpointArea;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.InterLineBreakpointConfiguration;
 import com.intellij.openapi.editor.impl.InterLineBreakpointConfigurationProvider;
 import com.intellij.openapi.editor.impl.InterLineBreakpointHitArea;
 import com.intellij.openapi.editor.impl.InterLineBreakpointProperties;
 import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -207,6 +210,24 @@ public class EditorUtilTest extends AbstractEditorTest {
       Map.entry(68, new BreakpointArea.OnLine(3)),
       Map.entry(70, new BreakpointArea.OnLine(3))
     ));
+  }
+
+  @SuppressWarnings("deprecation")
+  public void testDisposeWithEditorDisposesChildWhenEditorDisposableIsDisposed() {
+    var editorFactory = EditorFactory.getInstance();
+    var editor = (EditorImpl)editorFactory.createEditor(editorFactory.createDocument("text"));
+    try {
+      // EditorImpl.release() on the EDT can dispose this disposable after a background caller checks isDisposed()
+      Disposer.dispose(editor.getDisposable());
+      var child = Disposer.newCheckedDisposable();
+
+      EditorUtil.disposeWithEditor(editor, child);
+
+      assertTrue(child.isDisposed());
+    }
+    finally {
+      editorFactory.releaseEditor(editor);
+    }
   }
 
   private void createEditor(String text) {
