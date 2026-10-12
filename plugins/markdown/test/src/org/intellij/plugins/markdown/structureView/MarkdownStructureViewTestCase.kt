@@ -5,6 +5,7 @@ import com.intellij.ide.structureView.newStructureView.StructureViewComponent
 import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.StructureViewComponentTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import javax.swing.tree.TreePath
 
@@ -13,7 +14,7 @@ abstract class MarkdownStructureViewTestCase : BasePlatformTestCase() {
   open fun doTest(listVisibility: Boolean = false) {
     Registry.get("markdown.structure.view.list.visibility").setValue(listVisibility)
     myFixture.configureByFile(getTestName(true) + ".md")
-    myFixture.testStructureView { svc: StructureViewComponent ->
+    StructureViewComponentTestUtil.testStructureView(myFixture) { svc: StructureViewComponent ->
       val tree = svc.tree
       PlatformTestUtil.expandAll(tree)
       PlatformTestUtil.waitForPromise(svc.select(svc.treeModel.currentEditorElement, false))

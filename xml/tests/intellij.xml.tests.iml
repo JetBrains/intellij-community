@@ -33,6 +33,7 @@
     <orderEntry type="module" module-name="intellij.xml.parser" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.structureView" scope="TEST" />
     <orderEntry type="module" module-name="intellij.ant" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xpath" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="TEST" />

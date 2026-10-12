@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.StructureViewComponentTestUtil
 import com.intellij.testFramework.registerExtension
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.tree.LeafState
@@ -368,7 +369,7 @@ class KotlinFirScriptStructureViewTest : KotlinLightCodeInsightFixtureTestCase()
         var isRootVisible = true
         runInEdtAndWait {
             myFixture.configureFromExistingVirtualFile(file.virtualFile)
-            myFixture.testStructureView { structureView ->
+            StructureViewComponentTestUtil.testStructureView(myFixture) { structureView ->
                 root = structureView.treeModel.root
                 isRootVisible = structureView.tree.isRootVisible
             }

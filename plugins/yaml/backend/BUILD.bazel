@@ -203,6 +203,8 @@ jvm_library(
         "//platform/structure-view-impl:structureView_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/structureView",
+        "//platform/testFramework/structureView:structureView_test_lib",
         "//spellchecker",
         "//spellchecker:spellchecker_test_lib",
         "//plugins/grazie/src:core",

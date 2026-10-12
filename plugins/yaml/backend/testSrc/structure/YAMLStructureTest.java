@@ -3,6 +3,7 @@ package org.jetbrains.yaml.structure;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.StructureViewComponentTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.yaml.structureView.YAMLAliasResolveNodeProvider;
 
@@ -27,7 +28,7 @@ public class YAMLStructureTest extends BasePlatformTestCase {
   }
 
   private void doStructureTest(String testName, boolean resolveAliases) {
-    myFixture.testStructureView(svc -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(YAMLAliasResolveNodeProvider.ID, resolveAliases);
       PlatformTestUtil.expandAll(svc.getTree());
       PlatformTestUtil.waitForPromise(svc.select(svc.getTreeModel().getCurrentEditorElement(), false));

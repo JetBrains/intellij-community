@@ -1190,6 +1190,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//platform/testFramework",
+        "//platform/testFramework/structureView",
         "//platform/structure-view-impl/plugin",
         "//platform/todo/plugin",
         "//platform/testRunner/plugin",
@@ -1291,6 +1292,8 @@ jvm_library(
         "//platform/remote-core:remote-core_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/structureView",
+        "//platform/testFramework/structureView:structureView_test_lib",
         "//platform/workspace/storage",
         "//platform/workspace/storage:storage_test_lib",
         "//python/python-psi-api:psi",

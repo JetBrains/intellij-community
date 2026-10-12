@@ -13,7 +13,6 @@ import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.find.usages.api.SearchTarget;
-import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.model.psi.PsiSymbolReference;
@@ -49,7 +48,6 @@ import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageTarget;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.MagicConstant;
@@ -807,13 +805,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void checkResultWithInlays(String text);
 
   void assertPreferredCompletionItems(int selected, String @NotNull ... expected);
-
-  /**
-   * Initializes the structure view for the file currently loaded in the editor and passes it to the specified consumer.
-   *
-   * @param consumer the callback in which the actual testing of the structure view is performed.
-   */
-  void testStructureView(@NotNull Consumer<? super StructureViewComponent> consumer);
 
   /**
    * By default, if the caret in the text passed to {@link #configureByFile(String)} or {@link #configureByText} has an injected fragment

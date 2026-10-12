@@ -11,6 +11,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.StructureViewComponentTestUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ public class JsonStructureViewTest extends JsonTestCase {
 
   private void doTest(final String expected) {
     myFixture.configureByFile(getTestName(false) + ".json");
-    myFixture.testStructureView(svc -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       expandAll(svc.getTree());
       assertTreeEqual(svc.getTree(), expected);
     });

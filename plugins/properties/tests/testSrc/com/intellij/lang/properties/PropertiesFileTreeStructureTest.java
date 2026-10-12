@@ -5,6 +5,7 @@ import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.lang.properties.structureView.GroupByWordPrefixes;
 import com.intellij.lang.properties.structureView.PropertiesFileStructureViewModel;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.StructureViewComponentTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import javax.swing.JTree;
@@ -88,7 +89,7 @@ public class PropertiesFileTreeStructureTest extends BasePlatformTestCase {
 
   private void doTest(String classText, String expected) {
     myFixture.configureByText("Test.properties", classText);
-    myFixture.testStructureView(svc -> {
+    StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(Sorter.getAlphaSorterId(), true);
       svc.setActionActive(GroupByWordPrefixes.ID, true);
       svc.setActionActive(PropertiesFileStructureViewModel.KIND_SORTER_ID, true);

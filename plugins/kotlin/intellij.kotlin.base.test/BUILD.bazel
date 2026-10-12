@@ -75,6 +75,8 @@ jvm_library(
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/structureView",
+        "//platform/testFramework/structureView:structureView_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//plugins/properties/properties-psi-api:psi",

@@ -390,6 +390,8 @@ jvm_library(
         "//platform/backend/workspace:workspace_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/structureView",
+        "//platform/testFramework/structureView:structureView_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
         "//plugins/kotlin/base/indices",

@@ -1103,6 +1103,7 @@ platform/testFramework/junit5/highlighting
 platform/testFramework/junit5/projectStructure
 platform/testFramework/monorepo
 platform/testFramework/selfContainedProjects
+platform/testFramework/structureView
 platform/testFramework/teamCity
 platform/testIntegration
 platform/testIntegration-ui
