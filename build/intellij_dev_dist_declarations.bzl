@@ -388,8 +388,8 @@ def _platform_set(tables, product, name, target_platform, visibility):
             platform_prefix = product,
             target_platform = target_platform,
             files = {
-                ":%s.home/modules/module-descriptors.dat" % repository: "modules/module-descriptors.dat",
-                ":%s.home/modules/module-descriptors.jar" % repository: "modules/module-descriptors.jar",
+                "modules/module-descriptors.dat": ":%s.home/modules/module-descriptors.dat" % repository,
+                "modules/module-descriptors.jar": ":%s.home/modules/module-descriptors.jar" % repository,
             },
         )
         return ":" + component
@@ -465,10 +465,10 @@ def _platform_set(tables, product, name, target_platform, visibility):
 
         def placed(platform):
             return {
-                ":%s/build.txt" % files: "build.txt",
-                ":%s/idea.properties" % files: "bin/idea.properties",
-                ":%s/vmoptions" % files: "bin/" + plan.launch.vmoptions[platform_parts(platform).os],
-                ":%s/product-info.json" % files: "bin/product-info.json",
+                "build.txt": ":%s/build.txt" % files,
+                "bin/idea.properties": ":%s/idea.properties" % files,
+                "bin/" + plan.launch.vmoptions[platform_parts(platform).os]: ":%s/vmoptions" % files,
+                "bin/product-info.json": ":%s/product-info.json" % files,
             }
 
         intellij_dev_packed_jars_component(
@@ -485,9 +485,10 @@ def _platform_set(tables, product, name, target_platform, visibility):
 
     def assets_component():
         # The generated plan states each file as `struct(source, path, executable)` per host platform. The rule takes
-        # the files as two label-to-path dicts, one per executable bit.
+        # the files as two path-to-label dicts, one per executable bit. The path is the key, so one source can go to
+        # two paths.
         def asset_files(entries, executable):
-            return {entry.source: entry.path for entry in entries if entry.executable == executable}
+            return {entry.path: entry.source for entry in entries if entry.executable == executable}
 
         def selected(executable):
             return per_platform(lambda platform: asset_files(plan.platform_assets.get(platform, []), executable))

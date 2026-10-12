@@ -674,7 +674,7 @@ def _packed_jars_component_impl(ctx):
     destinations = {}
     executables = []
     for placed, executable in [(ctx.attr.files, False), (ctx.attr.executable_files, True)]:
-        for target, relative_path in placed.items():
+        for relative_path, target in placed.items():
             outputs = target[DefaultInfo].files.to_list()
             if len(outputs) != 1 or outputs[0].is_directory:
                 fail("%s: %s must provide exactly one ordinary file" % (ctx.label, target.label))
@@ -708,8 +708,8 @@ intellij_dev_packed_jars_component = rule(
     doc = """Collect packed platform jars or explicitly placed files into a distribution component.
 
     Set platform_payload to collect its packed jars at lib/<filename>, and the native tree of a content module jar at
-    lib/<native_lib_dir>/. The manifest marks the jars that the payload puts on the core classpath. Alternatively, set files and executable_files to map source labels to distribution paths;
-    the composer gives a file of executable_files the executable bit. The modes cannot be combined. The action reads
+    lib/<native_lib_dir>/. The manifest marks the jars that the payload puts on the core classpath. Alternatively, set files and executable_files to map distribution paths to source labels,
+    so one source can go to several paths; the composer gives a file of executable_files the executable bit. The modes cannot be combined. The action reads
     only these sources and writes one manifest. The composer copies the files directly from their sources.
     """,
     implementation = _packed_jars_component_impl,
@@ -718,8 +718,8 @@ intellij_dev_packed_jars_component = rule(
             providers = [DevDistPlatformPayloadInfo],
             doc = "The payload's packed `lib/` jars, derived from the graph - see `dev_dist_platform_payload`.",
         ),
-        "files": attr.label_keyed_string_dict(allow_files = True, doc = "Maps each source label to its distribution path. The composer copies the file as is."),
-        "executable_files": attr.label_keyed_string_dict(allow_files = True, doc = "Maps each source label to its distribution path. The composer copies the file with the executable bit."),
+        "files": attr.string_keyed_label_dict(allow_files = True, doc = "Maps each distribution path to its source label. The composer copies the file as is."),
+        "executable_files": attr.string_keyed_label_dict(allow_files = True, doc = "Maps each distribution path to its source label. The composer copies the file with the executable bit."),
         "plugin_classpath_prefix": attr.label(
             allow_single_file = True,
             doc = "The `plugin-classpath.txt` prefix that `dev_dist_product_descriptor` writes. Only with `platform_payload`.",

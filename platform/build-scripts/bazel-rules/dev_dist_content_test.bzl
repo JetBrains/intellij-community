@@ -936,7 +936,7 @@ def dev_dist_content_test_suite(name):
             component_name = "platform_" + case,
             platform_prefix = "idea",
             target_platform = "linux_x64",
-            files = {":" + build_txt: "build.txt"},
+            files = {"build.txt": ":" + build_txt},
             main_class = main_class,
             tags = ["manual"],
         )
