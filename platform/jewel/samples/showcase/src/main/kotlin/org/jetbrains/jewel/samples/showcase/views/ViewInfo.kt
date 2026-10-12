@@ -65,7 +65,16 @@ public class ViewInfo(
     public val keyboardShortcut: KeyBinding? = null,
     /** The composable that renders the view content. */
     public val content: @Composable () -> Unit,
+    public val titlebarMenu: @Composable () -> Unit = {},
 ) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        title: String,
+        iconKey: IconKey,
+        keyboardShortcut: KeyBinding? = null,
+        content: @Composable () -> Unit,
+    ) : this(title, iconKey, keyboardShortcut, content, {})
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -76,6 +85,7 @@ public class ViewInfo(
         if (iconKey != other.iconKey) return false
         if (keyboardShortcut != other.keyboardShortcut) return false
         if (content != other.content) return false
+        if (other.titlebarMenu != titlebarMenu) return false
 
         return true
     }
@@ -85,6 +95,7 @@ public class ViewInfo(
         result = 31 * result + iconKey.hashCode()
         result = 31 * result + keyboardShortcut.hashCode()
         result = 31 * result + content.hashCode()
+        result = 31 * result + titlebarMenu.hashCode()
         return result
     }
 
@@ -93,7 +104,8 @@ public class ViewInfo(
             "title='$title', " +
             "iconKey=$iconKey, " +
             "keyboardShortcut=$keyboardShortcut, " +
-            "content=$content" +
+            "content=$content, " +
+            "titlebarMenu=$titlebarMenu" +
             ")"
     }
 
