@@ -65,6 +65,7 @@ import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.ex.normalizeProjectFrameKey
 import com.intellij.openapi.wm.impl.FrameBoundsConverter
 import com.intellij.openapi.wm.impl.FrameInfo
@@ -238,8 +239,27 @@ internal class IdeProjectFrameAllocator(
           span("initFrame") {
             launch(CoroutineName("tool window pane creation")) {
               val deferredToolWindowManager = async { project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl }
+              // resolve the policy once: the provider of the welcome project policy writes a first-run flag
+              val projectFrameUiPolicyDeferred = async {
+                serviceAsync<ProjectFrameCapabilitiesService>().getUiPolicyForToolWindows(project)
+              }
+              // a welcome-experience frame registers the tool windows it shows first, and every other one after its content paints
+              val eagerToolWindowIdsDeferred = async {
+                if (serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)) {
+                  val toolWindowManager = deferredToolWindowManager.await()
+                  toolWindowManager?.let { computeEagerToolWindowIdsOfWelcomeFrame(it, projectFrameUiPolicyDeferred.await()) }
+                }
+                else {
+                  null
+                }
+              }
               val taskListDeferred = async(CoroutineName("toolwindow init command creation")) {
-                computeToolWindowBeans(project, frameSettingsDeferred.await().projectFrameTypeId)
+                val eagerToolWindowIds = eagerToolWindowIdsDeferred.await()
+                computeToolWindowBeans(
+                  project = project,
+                  projectFrameTypeId = frameSettingsDeferred.await().projectFrameTypeId,
+                  isIncluded = { eagerToolWindowIds == null || it in eagerToolWindowIds },
+                )
               }
 
               val toolWindowManager = deferredToolWindowManager.await() ?: return@launch
@@ -248,8 +268,7 @@ internal class IdeProjectFrameAllocator(
               val toolWindowPane = withContext(Dispatchers.UI) {
                 projectFrameHelper.toolWindowPane
               }
-              // resolve the policy once: the provider of the welcome project policy writes a first-run flag
-              val projectFrameUiPolicy = serviceAsync<ProjectFrameCapabilitiesService>().getUiPolicyForToolWindows(project)
+              val projectFrameUiPolicy = projectFrameUiPolicyDeferred.await()
               val earlyStartupToolWindowActivation = projectFrameUiPolicy?.let {
                 EarlyStartupToolWindowActivation.create(toolWindowManager, project, it)
               }
@@ -260,6 +279,7 @@ internal class IdeProjectFrameAllocator(
                   taskListDeferred = taskListDeferred,
                   projectFrameTypeId = projectFrameTypeId,
                   onDefaultPaneToolWindowsRegistered = earlyStartupToolWindowActivation?.let { it::run },
+                  defersToolWindowRegistration = eagerToolWindowIdsDeferred.await() != null,
                 )
               }
               if (projectFrameUiPolicy != null) {
@@ -565,7 +585,28 @@ private class EarlyStartupToolWindowActivation private constructor(
   }
 }
 
-private fun applyProjectFrameUiPolicy(
+/**
+ * Returns the ids of the tool windows that a welcome-experience frame registers before its content paints:
+ * the welcome set of the product, the startup tool window, and the tool windows that the stored layout shows.
+ * Returns null when the product declares no welcome set, so the frame registers every tool window at once.
+ */
+private fun computeEagerToolWindowIdsOfWelcomeFrame(
+  toolWindowManager: ToolWindowManagerImpl,
+  projectFrameUiPolicy: ProjectFrameUiPolicy?,
+): Set<String>? {
+  val welcomeToolWindowIds = WelcomeScreenProjectProvider.getToolWindowIdsToExclusiveShowing()
+  if (welcomeToolWindowIds.isEmpty()) {
+    return null
+  }
+
+  val result = HashSet(welcomeToolWindowIds)
+  projectFrameUiPolicy?.startupToolWindowIdToActivate?.let(result::add)
+  result.addAll(toolWindowManager.getToolWindowIdsShownByStoredLayout())
+  return result
+}
+
+@VisibleForTesting
+internal fun applyProjectFrameUiPolicy(
   toolWindowManager: ToolWindowManager,
   project: Project,
   projectFrameUiPolicy: ProjectFrameUiPolicy,
@@ -585,14 +626,14 @@ private fun applyProjectFrameUiPolicy(
       }
     }
 
-    hideNotExclusive(toolWindowManager.toolWindowIds.filter { !exclusiveShowing.contains(it) })
-
     val messageBusConnection = project.messageBus.connect(project)
     messageBusConnection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
       override fun toolWindowsRegistered(ids: List<String>, toolWindowManager: ToolWindowManager) {
         hideNotExclusive(ids.filter { !exclusiveShowing.contains(it) })
       }
     })
+    // after the subscription: the deferred registration of a welcome-experience frame may register tool windows at any time
+    hideNotExclusive(toolWindowManager.toolWindowIds.filter { !exclusiveShowing.contains(it) })
   }
 
   val startupToolWindowId = projectFrameUiPolicy.startupToolWindowIdToActivate.takeUnless { isStartupToolWindowActivated }

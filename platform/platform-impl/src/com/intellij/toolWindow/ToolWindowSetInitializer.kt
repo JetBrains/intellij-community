@@ -4,6 +4,8 @@
 package com.intellij.toolWindow
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.ActionManager
@@ -20,6 +22,7 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.impl.getOrCreateFrameContentPaintedDeferred
 import com.intellij.openapi.wm.RegisterToolWindowTaskData
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowEP
@@ -33,9 +36,12 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.openapi.wm.impl.seedFromFactoryDefault
 import com.intellij.openapi.wm.safeToolWindowPaneId
+import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableJob
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,12 +51,17 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @Suppress("SSBasedInspection")
 private val LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl")
+
+private val DEFERRED_REGISTRATION_TIMEOUT = 2.seconds
 
 private inline fun Logger.debug(project: Project, lazyMessage: (project: String) -> @NonNls String) {
   if (isDebugEnabled) {
@@ -65,6 +76,15 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
 
   private val pendingLayout = AtomicReference<DesktopLayout>()
   private val pendingTasks = ConcurrentLinkedQueue<Runnable>()
+
+  /**
+   * Completes when the initialization has registered every tool window, the deferred ones of a welcome-experience frame included.
+   */
+  private val toolWindowsRegistered: CompletableJob = Job()
+
+  suspend fun awaitToolWindowsRegistered() {
+    toolWindowsRegistered.join()
+  }
 
   fun addToPendingTasksIfNotInitialized(task: Runnable): Boolean {
     if (isInitialized) {
@@ -99,12 +119,19 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
   /**
    * [onDefaultPaneToolWindowsRegistered] runs once on the EDT after the tool windows of the default pane are registered.
    * It runs before the `toolWindowsRegistered` event, the activation action registration, and the pending tasks.
+   *
+   * With [defersRegistration], the tool windows of [taskListDeferred] are registered first,
+   * and [registerDeferredToolWindows] registers every other tool window later, before the pending tasks run.
+   * It waits for the frame content to paint, at most [deferredRegistrationTimeout].
    */
   suspend fun initUi(
     reopeningEditorJob: Job,
     taskListDeferred: Deferred<List<RegisterToolWindowTaskData>>?,
     onDefaultPaneToolWindowsRegistered: (() -> Unit)? = null,
+    defersRegistration: Boolean = false,
+    deferredRegistrationTimeout: Duration = DEFERRED_REGISTRATION_TIMEOUT,
   ) {
+    var isRegistrationDeferred = false
     try {
       val tasks = taskListDeferred?.await()
       LOG.debug(project) { "create and layout tool windows (project=$it, tasks=${tasks?.joinToString(separator = "\n")}" }
@@ -113,16 +140,22 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
         tasks = tasks ?: return,
         reopeningEditorJob = reopeningEditorJob,
         onDefaultPaneToolWindowsRegistered = onDefaultPaneToolWindowsRegistered,
+        registersEpListeners = !defersRegistration,
       )
-      // separate EDT task - ensure that more important tasks like editor restoring maybe executed
-      span("toolwindow init pending tasks processing") {
-        while (true) {
-          val runnable = pendingTasks.poll() ?: break
-          withContext(Dispatchers.EDT) {
-            runnable.run()
-          }
+      if (defersRegistration) {
+        isRegistrationDeferred = true
+        // the same modality as the eager registration in `ToolWindowManagerImpl.doInit`: a modal dialog does not hold the batch
+        var context = CoroutineName("deferred toolwindow registration") + ModalityState.any().asContextElement()
+        if (StartUpMeasurer.isEnabled()) {
+          // the scope of the manager does not carry the start-up trace of the frame
+          context += rootTask()
         }
+        manager.coroutineScope.launch(context) {
+          registerDeferredToolWindows(reopeningEditorJob = reopeningEditorJob, timeout = deferredRegistrationTimeout)
+        }
+        return
       }
+      processPendingTasks()
     }
     catch (e: CancellationException) {
       throw e
@@ -131,8 +164,72 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
       LOG.error(e)
     }
     finally {
+      if (!isRegistrationDeferred) {
+        LOG.debug(project) { "initialization completed (project=$it)" }
+        isInitialized = true
+        toolWindowsRegistered.complete()
+      }
+    }
+  }
+
+  /**
+   * Registers every applicable tool window that [initUi] did not register, once the frame content paints,
+   * or after [timeout] when the paint does not come.
+   * The pending tasks run after the registration, so a task of `ToolWindowManager.invokeLater` finds every tool window registered.
+   */
+  private suspend fun registerDeferredToolWindows(reopeningEditorJob: Job, timeout: Duration) {
+    try {
+      span("frame content painted waiting") {
+        withTimeoutOrNull(timeout) {
+          project.getOrCreateFrameContentPaintedDeferred().join()
+        }
+      }
+      val tasks = span("toolwindow init command creation (deferred)") {
+        computeToolWindowBeans(project = project, projectFrameTypeId = manager.projectFrameTypeId) {
+          !manager.idToEntry.containsKey(it)
+        }
+      }
+      val actionManager = serviceAsync<ActionManager>()
+      // the tool windows of the other panes need the panes that the editor reopening creates
+      reopeningEditorJob.join()
+      val entries = span("toolwindow creating (deferred)", Dispatchers.EDT) {
+        val entries = registerToolWindows(
+          // a tool window that `ToolWindowManager.registerToolWindow` registered meanwhile keeps its registration
+          tasks = tasks.filter { !manager.idToEntry.containsKey(it.id) }.map(manager::prepareRegisterToolWindowTask),
+          manager = manager,
+          layout = manager.getLayout(),
+          shouldRegister = { true },
+        )
+        for (toolWindowPane in manager.getToolWindowPanes()) {
+          toolWindowPane.buttonManager.updateResizeState(null)
+          toolWindowPane.buttonManager.revalidateNotEmptyStripes()
+        }
+        entries
+      }
+      postEntryProcessing(entries, actionManager, suffix = " (deferred)")
+      registerEpListeners(manager)
+      processPendingTasks()
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.error(e)
+    }
+    finally {
       LOG.debug(project) { "initialization completed (project=$it)" }
       isInitialized = true
+      toolWindowsRegistered.complete()
+    }
+  }
+
+  private suspend fun processPendingTasks() {
+    // separate EDT task - ensure that more important tasks like editor restoring maybe executed
+    span("toolwindow init pending tasks processing") {
+      while (true) {
+        val runnable = pendingTasks.poll() ?: break
+        withContext(Dispatchers.EDT) {
+          runnable.run()
+        }
+      }
     }
   }
 
@@ -148,6 +245,7 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
     tasks: List<RegisterToolWindowTaskData>,
     reopeningEditorJob: Job,
     onDefaultPaneToolWindowsRegistered: (() -> Unit)?,
+    registersEpListeners: Boolean,
   ) {
     val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
       .getExtensionPoint<RegisterToolWindowTaskProvider>("com.intellij.registerToolWindowTaskProvider")
@@ -256,7 +354,10 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
       }, actionManager, suffix = " (secondary)")
     }
 
-    registerEpListeners(manager)
+    // the deferred registration registers them after its batch, so a tool window of a plugin loaded meanwhile is registered once
+    if (registersEpListeners) {
+      registerEpListeners(manager)
+    }
   }
 
   private suspend fun postEntryProcessing(entries: List<RegisterToolWindowResult>, actionManager: ActionManager, suffix: String = "") {
@@ -339,7 +440,7 @@ private fun registerToolWindows(
         // we must compute button manager when pane is available
         entries.add(manager.registerToolWindow(
           preparedTask = task,
-          buttonManager = manager.getToolWindowPane(task.paneId).buttonManager,
+          buttonManager = manager.getButtonManager(paneId = paneId),
           layout = layout,
           ensureToolWindowActionRegistered = false,
         ))
@@ -442,8 +543,16 @@ private fun beanToTask(
   )
 }
 
+/**
+ * Computes the registration tasks of the tool window extensions whose id [isIncluded] accepts.
+ * The factory of another tool window is not asked whether it is applicable.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
-internal suspend fun computeToolWindowBeans(project: Project, projectFrameTypeId: String? = null): List<RegisterToolWindowTaskData> {
+internal suspend fun computeToolWindowBeans(
+  project: Project,
+  projectFrameTypeId: String? = null,
+  isIncluded: (toolWindowId: String) -> Boolean = { true },
+): List<RegisterToolWindowTaskData> {
   val profileId = serviceAsync<ProjectFrameTypeService>().getToolWindowLayoutProfileId(projectFrameTypeId)
   val suppressedToolWindowIds = serviceAsync<ProjectFrameToolWindowLayoutService>().getSuppressedToolWindowIds(profileId)
   return coroutineScope {
@@ -451,7 +560,7 @@ internal suspend fun computeToolWindowBeans(project: Project, projectFrameTypeId
       async {
         try {
           val bean = item.instance ?: return@async null
-          if (suppressedToolWindowIds.contains(bean.id)) {
+          if (suppressedToolWindowIds.contains(bean.id) || !isIncluded(bean.id)) {
             return@async null
           }
           val condition = bean.getCondition(item.pluginDescriptor)

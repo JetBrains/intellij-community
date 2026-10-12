@@ -181,7 +181,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     get() = state.recentToolWindows
 
   @Suppress("LeakingThis")
-  private val toolWindowSetInitializer = ToolWindowSetInitializer(project, this)
+  @VisibleForTesting
+  internal val toolWindowSetInitializer: ToolWindowSetInitializer = ToolWindowSetInitializer(project, this)
 
   @Suppress("TestOnlyProblems")
   constructor(project: Project, coroutineScope: CoroutineScope)
@@ -315,6 +316,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   @VisibleForTesting
   internal open fun getButtonManager(toolWindow: ToolWindow): ToolWindowButtonManager = getToolWindowPane(toolWindow).buttonManager
 
+  @VisibleForTesting
+  internal open fun getButtonManager(paneId: String): ToolWindowButtonManager = getToolWindowPane(paneId).buttonManager
+
   internal fun addToolWindowPane(toolWindowPane: ToolWindowPane, parentDisposable: Disposable) {
     toolWindowPanes.put(toolWindowPane.paneId, toolWindowPane)
     Disposer.register(parentDisposable) {
@@ -437,6 +441,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   /**
    * [onDefaultPaneToolWindowsRegistered] runs once on the EDT after the tool windows of the default pane are registered.
    * At this time, [invokeLater] still puts a task in the queue of the pending tasks.
+   *
+   * With [defersToolWindowRegistration], only the tool windows of [taskListDeferred] are registered now,
+   * and every other applicable tool window is registered after the frame content paints, before the pending tasks run.
    */
   internal suspend fun init(
     pane: ToolWindowPane,
@@ -444,6 +451,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     taskListDeferred: Deferred<List<RegisterToolWindowTaskData>>,
     projectFrameTypeId: String? = null,
     onDefaultPaneToolWindowsRegistered: (() -> Unit)? = null,
+    defersToolWindowRegistration: Boolean = false,
   ) {
     this.projectFrameTypeId = projectFrameTypeId
     doInit(
@@ -453,7 +461,29 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       taskListDeferred = taskListDeferred,
       projectFrameTypeId = projectFrameTypeId,
       onDefaultPaneToolWindowsRegistered = onDefaultPaneToolWindowsRegistered,
+      defersToolWindowRegistration = defersToolWindowRegistration,
     )
+  }
+
+  /**
+   * Waits until the initialization has registered every tool window, the deferred ones included.
+   */
+  internal suspend fun awaitToolWindowsRegistered() {
+    toolWindowSetInitializer.awaitToolWindowsRegistered()
+  }
+
+  /**
+   * Returns the ids of the tool windows that the stored layout shows: the open ones and the ones with a stripe button.
+   * Returns an empty set when no layout is stored.
+   */
+  internal fun getToolWindowIdsShownByStoredLayout(): Set<String> {
+    if (state.noStateLoaded) {
+      return emptySet()
+    }
+    val layout = state.scheduledLayout.get() ?: return emptySet()
+    return layout.getInfos().values.asSequence()
+      .filter { it.isVisible || it.isShowStripeButton }
+      .mapNotNullTo(HashSet()) { it.id }
   }
 
   @ApiStatus.Internal
@@ -465,6 +495,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     taskListDeferred: Deferred<List<RegisterToolWindowTaskData>>?,
     projectFrameTypeId: String? = this.projectFrameTypeId,
     onDefaultPaneToolWindowsRegistered: (() -> Unit)? = null,
+    defersToolWindowRegistration: Boolean = false,
   ) {
     this.projectFrameTypeId = projectFrameTypeId
 
@@ -502,6 +533,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         reopeningEditorJob = reopeningEditorJob,
         taskListDeferred = taskListDeferred,
         onDefaultPaneToolWindowsRegistered = onDefaultPaneToolWindowsRegistered,
+        defersRegistration = defersToolWindowRegistration,
       )
     }
 
@@ -1089,6 +1121,22 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   internal fun registerToolWindow(task: RegisterToolWindowTaskData, buttonManager: ToolWindowButtonManager): ToolWindowEntry {
+    val result = registerToolWindow(
+      preparedTask = prepareRegisterToolWindowTask(task),
+      buttonManager = buttonManager,
+      layout = layoutState,
+      ensureToolWindowActionRegistered = true,
+    )
+    result.postTask?.invoke()
+    return result.entry
+  }
+
+  /**
+   * Prepares [task] for the registration in the current layout.
+   * With the new UI, a tool window that the layout lacks gets its factory-default entry, and a registered tool window whose entry
+   * moved for it gets the new entry.
+   */
+  internal fun prepareRegisterToolWindowTask(task: RegisterToolWindowTaskData): PreparedRegisterToolWindowTask {
     val layout = layoutState
     if (isNewUi && layout.getInfo(task.id) == null && task.id in ToolWindowDefaultLayoutManager.getInstance().getFactoryDefaultSeedIds()) {
       val factoryDefault = ToolWindowDefaultLayoutManager.getInstance().getFactoryDefaultLayoutCopy()
@@ -1100,21 +1148,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       }
     }
     val existingInfo = layout.getInfo(task.id)
-    val preparedTask = PreparedRegisterToolWindowTask(
+    return PreparedRegisterToolWindowTask(
       task = task,
       isButtonNeeded = isButtonNeeded(task, existingInfo, project.service<ToolWindowStripeManager>()),
       existingInfo = existingInfo,
-      // not used by registerToolWindow - makes sense only for `registerToolWindows` in ToolWindowSetInitializer
       paneId = existingInfo?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID,
     )
-    val result = registerToolWindow(
-      preparedTask = preparedTask,
-      buttonManager = buttonManager,
-      layout = layout,
-      ensureToolWindowActionRegistered = true,
-    )
-    result.postTask?.invoke()
-    return result.entry
   }
 
   internal fun registerToolWindow(
