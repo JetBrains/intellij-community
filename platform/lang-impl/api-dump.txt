@@ -3184,6 +3184,7 @@ com.intellij.ide.structureView.StructureViewExtension
 a:com.intellij.ide.structureView.StructureViewFactoryEx
 - com.intellij.ide.structureView.StructureViewFactory
 - <init>():V
+- cleanupForNextTest():V
 - a:getAllExtensions(java.lang.Class):java.util.Collection
 - s:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureViewFactoryEx
 - a:getStructureViewWrapper():com.intellij.ide.structureView.StructureViewWrapper
