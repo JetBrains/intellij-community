@@ -1076,7 +1076,9 @@
       <reference ref="DataSharingOptions"/>
       <separator/>
 
-      <group id="Internal.VFS" popup="true" internal="true"/>
+      <group id="Internal.VFS" popup="true" internal="true">
+        <reference ref="CheckVfsSanity"/>
+      </group>
 
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
