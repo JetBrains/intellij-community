@@ -39,9 +39,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.Alarm
 import com.intellij.util.text.nullize
 import kotlinx.html.HTML
+import kotlinx.html.a
 import kotlinx.html.body
 import kotlinx.html.html
-import kotlinx.html.link
 import kotlinx.html.stream.createHTML
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.TestOnly
@@ -133,7 +133,9 @@ internal class BuildConsoleViewImplV2(
       // The plain projection matches the multi-console mode: the description if present, the link line otherwise.
       .withHtmlText(event.description.nullize() ?: "$hyperlinkText: ${event.message}") {
         body {
-          link(hyperlinkId, hyperlinkText)
+          a(href = hyperlinkId) {
+            text(hyperlinkText)
+          }
           text(": " + event.message)
         }
       }.withHyperlinkListener { event ->
