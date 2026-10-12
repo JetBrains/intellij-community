@@ -5,9 +5,15 @@ import app.cash.turbine.test
 import com.intellij.collaboration.async.ComputedListChange.Insert
 import com.intellij.collaboration.async.ComputedListChange.Remove
 import com.intellij.collaboration.util.HashingUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.containers.HashingStrategy
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -20,11 +26,16 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -575,6 +586,192 @@ class CoroutineUtilTest {
         expectNoEvents()
       }
     }
+  }
+
+  @Test
+  fun `mapConcurrent caps active transforms and preserves order`() = timeoutRunBlocking {
+    val concurrency = 3
+    val input = (0..4).toList()
+    val firstCanComplete = CompletableDeferred<Unit>()
+    val othersCanComplete = CompletableDeferred<Unit>()
+    val firstBatchStarted = CompletableDeferred<Unit>()
+    val othersCompleted = CompletableDeferred<Unit>()
+    val started = mutableListOf<Int>()
+    val completed = mutableListOf<Int>()
+    var active = 0
+    var maxActive = 0
+
+    val result = async {
+      input.mapConcurrentOrdered(concurrency) { item ->
+        started.add(item)
+        if (started.size == concurrency) firstBatchStarted.complete(Unit)
+        active++
+        maxActive = maxOf(maxActive, active)
+        assertTrue(active <= concurrency)
+        try {
+          when (item) {
+            0 -> firstCanComplete.await()
+            1, 2 -> othersCanComplete.await()
+          }
+          completed.add(item)
+          if (completed.size == input.size - 1) othersCompleted.complete(Unit)
+          item.toString()
+        }
+        finally {
+          active--
+        }
+      }
+    }
+
+    firstBatchStarted.await()
+
+    assertEquals(listOf(0, 1, 2), started)
+    assertEquals(concurrency, maxActive)
+
+    othersCanComplete.complete(Unit)
+    othersCompleted.await()
+
+    assertEquals(input, started.sorted())
+    assertEquals(input.drop(1), completed.sorted())
+    assertEquals(1, active)
+    assertFalse(result.isCompleted)
+
+    firstCanComplete.complete(Unit)
+
+    assertEquals(input.map(Int::toString), result.await())
+    assertEquals(input, completed.sorted())
+    assertEquals(0, active)
+  }
+
+  @Test
+  fun `mapConcurrent caps active transforms on a multithreaded dispatcher`() = timeoutRunBlocking {
+    val concurrency = 4
+    val input = (0 until 100).toList()
+    val active = AtomicInteger()
+    val maxActive = AtomicInteger()
+    val capReached = CompletableDeferred<Unit>()
+
+    val result = withContext(Dispatchers.Default) {
+      input.mapConcurrentOrdered(concurrency) { item ->
+        val nowActive = active.incrementAndGet()
+        maxActive.updateAndGet { maxOf(it, nowActive) }
+        try {
+          if (nowActive == concurrency) capReached.complete(Unit)
+          capReached.await()
+          delay(1.milliseconds)
+          item.toString()
+        }
+        finally {
+          active.decrementAndGet()
+        }
+      }
+    }
+
+    assertEquals(input.map(Int::toString), result)
+    assertEquals(concurrency, maxActive.get())
+    assertEquals(0, active.get())
+  }
+
+  @Test
+  fun `mapConcurrent runs all transforms at once when concurrency exceeds the input size`() = timeoutRunBlocking {
+    val input = (0..2).toList()
+    val canComplete = CompletableDeferred<Unit>()
+    val allStarted = CompletableDeferred<Unit>()
+    val started = mutableListOf<Int>()
+
+    val result = async {
+      input.mapConcurrentOrdered(input.size + 2) { item ->
+        started.add(item)
+        if (started.size == input.size) allStarted.complete(Unit)
+        canComplete.await()
+        item.toString()
+      }
+    }
+
+    allStarted.await()
+
+    assertEquals(input, started)
+    assertFalse(result.isCompleted)
+
+    canComplete.complete(Unit)
+
+    assertEquals(input.map(Int::toString), result.await())
+  }
+
+  @Test
+  fun `mapConcurrent handles empty and single-item input`() = timeoutRunBlocking {
+    assertEquals(emptyList(), emptyList<Int>().mapConcurrentOrdered(3) { error("Unexpected transform") })
+    assertEquals(listOf("42"), listOf(42).mapConcurrentOrdered(3) { it.toString() })
+  }
+
+  @Test
+  fun `mapConcurrent rejects nonpositive concurrency`() = timeoutRunBlocking {
+    for (concurrency in listOf(0, -1)) {
+      val thrown = assertFailsWith<IllegalArgumentException> {
+        emptyList<Int>().mapConcurrentOrdered(concurrency) { it }
+      }
+      assertEquals("Concurrency must be positive, but was $concurrency", thrown.message)
+    }
+  }
+
+  @Test
+  fun `mapConcurrent cancels siblings and stops after failure`() = timeoutRunBlocking {
+    val started = mutableListOf<Int>()
+    val firstStarted = CompletableDeferred<Unit>()
+    var firstCancelled = false
+    val failure = IllegalStateException("Transform failed")
+
+    val thrown = assertFailsWith<IllegalStateException> {
+      (1..3).mapConcurrentOrdered(2) { item ->
+        started.add(item)
+        if (item == 1) {
+          firstStarted.complete(Unit)
+          try {
+            awaitCancellation()
+          }
+          finally {
+            firstCancelled = true
+          }
+        }
+        firstStarted.await()
+        throw failure
+      }
+    }
+
+    assertEquals(failure.message, thrown.message)
+    assertEquals(listOf(1, 2), started)
+    assertTrue(firstCancelled)
+  }
+
+
+  @Test
+  fun `mapConcurrent cancels active transforms and stops when the caller is cancelled`() = timeoutRunBlocking {
+    val started = mutableListOf<Int>()
+    val cancelled = mutableListOf<Int>()
+    val firstBatchStarted = CompletableDeferred<Unit>()
+
+    val caller = async {
+      (1..4).mapConcurrentOrdered(2) { item ->
+        started.add(item)
+        if (started.size == 2) firstBatchStarted.complete(Unit)
+        try {
+          awaitCancellation()
+        }
+        finally {
+          cancelled.add(item)
+        }
+      }
+    }
+
+    firstBatchStarted.await()
+
+    assertEquals(listOf(1, 2), started)
+    assertTrue(cancelled.isEmpty())
+
+    caller.cancelAndJoin()
+
+    assertEquals(listOf(1, 2), cancelled.sorted())
+    assertEquals(listOf(1, 2), started)
   }
 
   private fun <V> applyUpdates(base: List<V>, changes: List<ComputedListChange<V>>): List<V> {
