@@ -231,6 +231,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         shadowedCallablesFilter: ShadowedCallablesFilter
     ): Sequence<LookupElement> =
         filterIfInsideAnnotationEntryArgument(context.positionContext.position, context.weighingContext.expectedType)
+            .filter { hasRequiredContextArguments(it.signature) }
             .mapNotNull(shadowIfNecessary(context, shadowedCallablesFilter))
             .filter { isRepresentativeOrNonVariadicCallable(it.signature) }
             .filterNot(isUninitializedCallable(context))
@@ -262,6 +263,34 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
                     )
                 }
             }
+
+    private val K2CompletionSectionContext<P>.availableContextArgumentsCache: MutableMap<KaType, Boolean> by LazyCompletionSessionProperty {
+        mutableMapOf()
+    }
+
+    /**
+     * Checks whether the context parameters required by the [signature] are available in the [context].
+     * Could lead to some erroneous results due to using [isPossiblySubTypeOf] for performance reason
+     * and to avoid missing some results with free type variables.
+     */
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
+    protected open fun hasRequiredContextArguments(signature: KaCallableSignature<*>): Boolean {
+        val parameters = signature.contextParameters
+        if (parameters.isEmpty()) return true
+
+        val implicitValues = context.weighingContext.scopeContext.implicitValues
+        val availableContextArguments = context.availableContextArgumentsCache
+
+        for (parameter in parameters) {
+            val requiredType = parameter.returnType
+            val hasArgument = availableContextArguments.getOrPut(requiredType) {
+                implicitValues.any { it.type.isPossiblySubTypeOf(requiredType) }
+            }
+            if (!hasArgument) return false
+        }
+
+        return true
+    }
 
     context(_: KaSession, context: K2CompletionSectionContext<P>)
     fun completeFromLocalScope(
@@ -1139,19 +1168,21 @@ internal class K2CallableCompletionContributor : K2AbstractCallableCompletionCon
             showReceiver = true,
             forRuntimeType = false
         )
-        return (fromLocalScope + fromIndex).flatMap { callableWithMetadata ->
-            val signature = callableWithMetadata.signature
+        return (fromLocalScope + fromIndex)
+            .filter { hasRequiredContextArguments(it.signature) }
+            .flatMap { callableWithMetadata ->
+                val signature = callableWithMetadata.signature
 
-            createCallableLookupElements(
-                signature = signature,
-                options = callableWithMetadata.options,
-                scopeKind = callableWithMetadata.scopeKind,
-                presentableText = callableWithMetadata.getItemText(),
-                withTrailingLambda = true,
-            ).map {
-                it.withChainedInsertHandler(WithImportInsertionHandler(listOf(nameToImport)))
+                createCallableLookupElements(
+                    signature = signature,
+                    options = callableWithMetadata.options,
+                    scopeKind = callableWithMetadata.scopeKind,
+                    presentableText = callableWithMetadata.getItemText(),
+                    withTrailingLambda = true,
+                ).map {
+                    it.withChainedInsertHandler(WithImportInsertionHandler(listOf(nameToImport)))
+                }
             }
-        }
     }
 }
 
@@ -1270,6 +1301,9 @@ internal class K2KDocCallableCompletionContributor : K2AbstractCallableCompletio
         val importStrategy = context.importStrategyDetector.detectImportStrategyForCallableSymbol(symbol = signature.symbol)
         return createApplicableExtension(signature, importStrategy)
     }
+
+    context(_: KaSession, context: K2CompletionSectionContext<KDocLinkNamePositionContext>)
+    override fun hasRequiredContextArguments(signature: KaCallableSignature<*>): Boolean = true
 
     // No dot completion from index necessary for KDocs
     context(_: KaSession, context: K2CompletionSectionContext<KDocLinkNamePositionContext>)
