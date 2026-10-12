@@ -48,7 +48,6 @@ import com.intellij.ui.paint.PaintUtil.alignIntToInt
 import com.intellij.ui.paint.PaintUtil.alignTxToInt
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil
-import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -486,7 +485,7 @@ class ProjectWindowCustomizerService internal constructor(private val coroutineS
   fun isAvailable(): Boolean {
     return !DistractionFreeModeController.shouldMinimizeCustomHeader() &&
            InternalUICustomization.getInstance()?.isProjectCustomDecorationActive != false &&
-           (PlatformUtils.isRider () || Registry.`is`("ide.colorful.toolbar", true))
+           Registry.`is`("ide.colorful.toolbar", true)
   }
 
   fun isActive(): Boolean = wasGradientPainted && ourSettingsValue && isAvailable()
