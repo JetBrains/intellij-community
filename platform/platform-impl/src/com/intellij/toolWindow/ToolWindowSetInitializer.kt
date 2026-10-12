@@ -136,6 +136,13 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
     }
   }
 
+  /**
+   * Registers the tool windows of [tasks] and lays them out.
+   *
+   * The function awaits [ActionManager] before its EDT phases.
+   * The content of many tool windows calls `ActionManager.getInstance()` on the EDT, and the call parks the EDT until the preload
+   * creates the action manager.
+   */
   private suspend fun createAndLayoutToolWindows(
     manager: ToolWindowManagerImpl,
     tasks: List<RegisterToolWindowTaskData>,
@@ -146,36 +153,48 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
       .getExtensionPoint<RegisterToolWindowTaskProvider>("com.intellij.registerToolWindowTaskProvider")
 
     val layout = pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout")
-    val stripeManager = project.serviceAsync<ToolWindowStripeManager>()
-    val list = span("toolwindow creating preparation") {
-      val allTasks = addExtraTasks(tasks = tasks, project = project, ep = ep, suppressedToolWindowIds = manager.getSuppressedToolWindowIds())
-      if (manager.isNewUi) {
-        val defaultLayoutManager = serviceAsync<ToolWindowDefaultLayoutManager>()
-        val seedIds = defaultLayoutManager.getFactoryDefaultSeedIds()
-        val seeded = if (seedIds.isEmpty()) {
-          emptyList()
+    val (list, actionManager) = coroutineScope {
+      val actionManagerDeferred = async { serviceAsync<ActionManager>() }
+      val stripeManager = project.serviceAsync<ToolWindowStripeManager>()
+      val list = span("toolwindow creating preparation") {
+        val allTasks = addExtraTasks(
+          tasks = tasks,
+          project = project,
+          ep = ep,
+          suppressedToolWindowIds = manager.getSuppressedToolWindowIds(),
+        )
+        if (manager.isNewUi) {
+          val defaultLayoutManager = serviceAsync<ToolWindowDefaultLayoutManager>()
+          val seedIds = defaultLayoutManager.getFactoryDefaultSeedIds()
+          val seeded = if (seedIds.isEmpty()) {
+            emptyList()
+          }
+          else {
+            seedFromFactoryDefault(
+              layout = layout,
+              ids = allTasks.map { it.id }.filter { it in seedIds },
+              factoryDefault = defaultLayoutManager.getFactoryDefaultLayoutCopy(),
+            )
+          }
+          if (seeded.isNotEmpty()) {
+            LOG.debug(project) {
+              val seededInfos = seeded.joinToString { info -> "${info.id}=${info.anchor}:${info.order}" }
+              "seeded from the factory default layout: $seededInfos (project=$it)"
+            }
+          }
         }
-        else {
-          seedFromFactoryDefault(
-            layout = layout,
-            ids = allTasks.map { it.id }.filter { it in seedIds },
-            factoryDefault = defaultLayoutManager.getFactoryDefaultLayoutCopy(),
+        allTasks.map { task ->
+          val existingInfo = layout.getInfo(task.id)
+          val paneId = existingInfo?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+          PreparedRegisterToolWindowTask(
+            task = task,
+            existingInfo = existingInfo,
+            paneId = paneId,
+            isButtonNeeded = manager.isButtonNeeded(task = task, info = existingInfo, stripeManager = stripeManager),
           )
         }
-        if (seeded.isNotEmpty()) {
-          LOG.debug(project) { "seeded from the factory default layout: ${seeded.joinToString { info -> "${info.id}=${info.anchor}:${info.order}" }} (project=$it)" }
-        }
       }
-      allTasks.map { task ->
-        val existingInfo = layout.getInfo(task.id)
-        val paneId = existingInfo?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
-        PreparedRegisterToolWindowTask(
-          task = task,
-          existingInfo = existingInfo,
-          paneId = paneId,
-          isButtonNeeded = manager.isButtonNeeded(task = task, info = existingInfo, stripeManager = stripeManager),
-        )
-      }
+      list to actionManagerDeferred.await()
     }
 
     val entries = withContext(Dispatchers.EDT) {
@@ -221,7 +240,7 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
       }
     }
 
-    postEntryProcessing(entries)
+    postEntryProcessing(entries, actionManager)
 
     if (list.size != entries.size) {
       reopeningEditorJob.join()
@@ -234,20 +253,19 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
             shouldRegister = { it != WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID },
           )
         }
-      }, suffix = " (secondary)")
+      }, actionManager, suffix = " (secondary)")
     }
 
     registerEpListeners(manager)
   }
 
-  private suspend fun postEntryProcessing(entries: List<RegisterToolWindowResult>, suffix: String = "") {
+  private suspend fun postEntryProcessing(entries: List<RegisterToolWindowResult>, actionManager: ActionManager, suffix: String = "") {
     // dispatch event not in EDT
     span("toolWindowsRegistered event executing$suffix") {
       manager.project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries.map { it.entry.id }, manager)
     }
 
     span("ensureToolWindowActionRegistered executing$suffix") {
-      val actionManager = serviceAsync<ActionManager>()
       for (result in entries) {
         ActivateToolWindowAction.Manager.ensureToolWindowActionRegistered(result.entry.toolWindow, actionManager)
       }
