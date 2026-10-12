@@ -16,9 +16,10 @@ import java.lang.annotation.Target;
  * <p>
  * Access rules enforced by the Monorepo DevKit inspection:
  * <ul>
- *   <li>The annotated element may always be used from the JPS module where it is declared, regardless of the list: the
- *   annotation implies the visibility of Kotlin {@code internal}. There is no way to narrow the access down to specific
- *   classes of the declaring module.</li>
+ *   <li>For {@code public} and {@code protected} elements, the annotated element may always be used from the JPS module where it is declared:
+ *   the annotation implies the visibility of Kotlin {@code internal} and narrows access from external modules to the listed friend classes.</li>
+ *   <li>For Kotlin {@code internal} and Java package-private elements, the annotated element may only be used from the listed friend classes,
+ *   including classes within the declaring module.</li>
  *   <li>The annotated element may be used from every class listed in {@link #value()}, no matter which module hosts that
  *   class, including the code nested inside such a class: its nested and inner classes, anonymous classes, lambdas and
  *   companion objects.</li>
@@ -44,9 +45,8 @@ import java.lang.annotation.Target;
  *   the {@link ApiStatus.Internal} marker may be placed on the element itself, on one of its containing classes, or in the
  *   package {@code package-info}.</li>
  *   <li>Kotlin {@code internal} elements and Java package-private elements may be annotated as they are.
- *   {@link ApiStatus.Internal} is not applicable to such elements, hence it is not required. Mind that such an element is
- *   restricted to its own module by the compiler anyway, so the list only matters for a class that still reaches it from
- *   the outside, i.e. from a split package or from a Kotlin friend module.</li>
+ *   {@link ApiStatus.Internal} is not applicable to such elements, hence it is not required. The list of friend classes
+ *   restricts access to the element both within the declaring module and from outside (such as friend modules or split packages).</li>
  *   <li>{@code private} elements may not be annotated: everything that can access a {@code private} element is already in the
  *   same file, hence in the declaring module, so any list of friend classes there would be dead weight.</li>
  * </ul>
@@ -128,8 +128,9 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.PACKAGE})
 public @interface VisibleToClasses {
   /**
-   * @return the fully qualified names of the classes that are allowed to access the annotated element, in addition to the
-   * JPS module where the element is declared. Must be non-empty, and every name must correspond to a class in the project.
+   * @return the fully qualified names of the classes that are allowed to access the annotated element.
+   * For public or protected elements, this is in addition to the declaring JPS module; for internal or package-private elements,
+   * this restricts access within the declaring module as well. Must be non-empty, and every name must correspond to a class in the project.
    */
   @NotNull String @NotNull [] value();
 }
