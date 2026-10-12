@@ -141,12 +141,17 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     @JvmName("setEnabledStateForIds")
     @ApiStatus.Internal
     fun setEnabledState(pluginIds: Set<PluginId>, enabled: Boolean): Boolean {
-      val disabled = getDisabledIds().toMutableSet()
-      val changed = if (enabled) disabled.removeAll(pluginIds) else disabled.addAll(pluginIds)
-      if (changed) {
-        disabledPlugins = Collections.unmodifiableSet(disabled)
+      val actuallyChanged = synchronized(DisabledPluginsState::class.java) {
+        val disabled = getDisabledIds().toMutableSet()
+        val changed = if (enabled) disabled.removeAll(pluginIds) else disabled.addAll(pluginIds)
+        if (changed) {
+          disabledPlugins = Collections.unmodifiableSet(disabled)
+        }
+        changed && writeDisabledPlugins(disabled, invalidate = true)
       }
-      val actuallyChanged = changed && saveDisabledPluginsAndInvalidate(disabled)
+      if (actuallyChanged) {
+        notifyDisabledPluginListeners()
+      }
       val operation = if (enabled) "enabled" else "disabled"
       logger.info("${pluginIds.joinedPluginIds(operation)} (${if (actuallyChanged) "applied" else "was already ${operation}, nothing changed"})")
       return actuallyChanged
