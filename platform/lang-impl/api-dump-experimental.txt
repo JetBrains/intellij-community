@@ -296,6 +296,8 @@ com.intellij.codeInsight.editorActions.CopyPastePreProcessor
 - startPaste(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
 f:com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 - *s:highlightUsages(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.util.List,java.util.List,Z):V
+*f:com.intellij.codeInsight.highlighting.HighlightUsagesKt
+- *sf:getUsageRanges(com.intellij.psi.PsiFile,com.intellij.model.Symbol):com.intellij.codeInsight.highlighting.UsageRanges
 *f:com.intellij.codeInsight.highlighting.UsageRanges
 - <init>(java.util.Collection,java.util.Collection,java.util.Collection,java.util.Collection):V
 - f:component1():java.util.Collection
