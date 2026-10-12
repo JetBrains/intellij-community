@@ -37,6 +37,7 @@ import java.net.URL
 import java.util.zip.GZIPInputStream
 
 /**
+ * The old non-suspending executor, which we don't support much.
  * Executes API requests taking care of authentication, headers, proxies, timeouts, etc.
  */
 @ApiStatus.NonExtendable
