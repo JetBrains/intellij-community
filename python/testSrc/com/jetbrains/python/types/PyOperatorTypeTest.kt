@@ -138,4 +138,52 @@ class PyOperatorTypeTest : PyCodeInsightTestCase() {
         result = x < a < b
     #     └ TYPE int
     """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92847"])
+  fun `identity comparison`() = test("""
+    def f(a: object, b: object):
+        1 is 1
+    #   ^^^^^^ TYPE bool
+        1 is not 1
+    #   ^^^^^^^^^^ TYPE bool
+        same = a is b
+    #   └ TYPE bool
+        different = a is not b
+    #   └ TYPE bool
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92847"])
+  fun `membership comparison`() = test("""
+    def f():
+        1 in [1]
+    #   ^^^^^^^^ TYPE bool
+        1 not in [1]
+    #   ^^^^^^^^^^^^ TYPE bool
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92847"])
+  fun `chained identity comparison`() = test("""
+    def f(a: object, b: object, c: object, x: int, y: int):
+        result = a is b is c
+    #   └ TYPE bool
+        result = x < y is c
+    #   └ TYPE bool
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92847"])
+  fun `identity comparison keeps narrowing`() = test("""
+    def f(x: int | None):
+        is_none = x is None
+    #   └ TYPE bool
+        if x is not None:
+            x
+    #       └ TYPE int
+        else:
+            x
+    #       └ TYPE None
+    """.trimIndent())
 }
