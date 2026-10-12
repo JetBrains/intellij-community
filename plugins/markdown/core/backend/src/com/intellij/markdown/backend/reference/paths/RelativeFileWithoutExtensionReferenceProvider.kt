@@ -7,13 +7,18 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
 import org.intellij.plugins.markdown.lang.references.ReferenceUtil
+import org.intellij.plugins.markdown.lang.references.paths.ContentRootRelatedFileWithoutExtensionReference
 import org.intellij.plugins.markdown.lang.references.paths.RelativeFileWithoutExtensionReference
 
 internal class RelativeFileWithoutExtensionReferenceProvider: PathReferenceProvider {
   override fun createReferences(psiElement: PsiElement, references: MutableList<PsiReference>, soft: Boolean): Boolean {
     if (psiElement is MarkdownPsiElement) {
       val fileReference = ReferenceUtil.findFileReference(references) ?: return false
-      val reference = RelativeFileWithoutExtensionReference(psiElement, fileReference, soft)
+      val reference = if (fileReference.fileReferenceSet.isAbsolutePathReference) {
+        ContentRootRelatedFileWithoutExtensionReference(psiElement, fileReference, soft)
+      } else {
+        RelativeFileWithoutExtensionReference(psiElement, fileReference, soft)
+      }
       if (reference.resolve() == null) return false
       references.add(reference)
     }

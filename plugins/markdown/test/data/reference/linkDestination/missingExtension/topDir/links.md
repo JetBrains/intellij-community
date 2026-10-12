@@ -1,6 +1,7 @@
 [near](stub_in_t<caret>op_dir)
 [below](innerDir/stub_in_inner_di<caret>r)
 [above](../stub_in_r<caret>oot)
+[absolute](/topDir/stub_in_t<caret>op_dir)
 [repeatedExtension](stub_w<caret>ith_repeated_extension.md)
 [withHeader](stub_in_t<caret>op_dir#header)
 [withNonexistentHeader](stub_in_t<caret>op_dir#nonexistent_header)

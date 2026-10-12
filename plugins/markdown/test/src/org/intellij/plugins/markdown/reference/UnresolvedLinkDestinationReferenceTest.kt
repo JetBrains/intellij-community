@@ -81,6 +81,11 @@ class UnresolvedLinkDestinationReferenceTest : BasePlatformTestCase() {
     )
   }
 
+  fun testAbsoluteFileWithoutExtensionNotHighlighted() {
+    myFixture.addFileToProject("topDir/target.md", "")
+    doSubdirectoryTest("[target](/topDir/target)")
+  }
+
   private fun doTest(fileName: String) {
     myFixture.enableInspections(MarkdownUnresolvedFileReferenceInspection::class.java)
     myFixture.testHighlighting(true, false, false, fileName)

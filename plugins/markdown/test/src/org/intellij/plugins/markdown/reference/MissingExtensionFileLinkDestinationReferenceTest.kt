@@ -17,6 +17,8 @@ class MissingExtensionFileLinkDestinationReferenceTest : BaseLinkDestinationRefe
 
   fun testAbove() = testIsReferenceToFile("stub_in_root.md")
 
+  fun testAbsolute() = testIsReferenceToFile("topDir", "stub_in_top_dir.md")
+
   fun testRepeatedExtension() = testIsReferenceToFile("topDir", "stub_with_repeated_extension.md.md")
 
   fun testWithHeader() = testIsReferenceToFile("topDir", "stub_in_top_dir.md")
