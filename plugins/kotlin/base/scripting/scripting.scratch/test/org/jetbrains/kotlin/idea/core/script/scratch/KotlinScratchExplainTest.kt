@@ -2,49 +2,60 @@
 package org.jetbrains.kotlin.idea.core.script.scratch
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.Test
 
 @TestRoot("base/scripting/scripting.scratch")
-@TestDataPath($$"$CONTENT_ROOT")
-@RunWith(JUnit3RunnerWithInners::class)
+@TestApplication
+@TestDataPath($$"$PROJECT_ROOT/community/plugins/kotlin/base/scripting/scripting.scratch/testData")
 @TestMetadata("testData")
 class KotlinScratchExplainTest : AbstractKotlinScratchRunActionTest() {
     override val isExplainEnabled: Boolean
         get() = true
 
     @TestMetadata("destructuringDecls.kts")
-    fun testDestructuringDecls() = doScratchTest()
+    @Test
+    fun testDestructuringDecls(): Unit = doScratchTest()
 
     @TestMetadata("for.kts")
-    fun testFor() = doScratchTest()
+    @Test
+    fun testFor(): Unit = doScratchTest()
 
     @TestMetadata("generalCollections.kts")
-    fun testGeneralCollections() = doScratchTest()
+    @Test
+    fun testGeneralCollections(): Unit = doScratchTest()
 
     @TestMetadata("generics.kts")
-    fun testGenerics() = doScratchTest()
+    @Test
+    fun testGenerics(): Unit = doScratchTest()
 
     @TestMetadata("hexFormat.kts")
-    fun testHexFormat() = doScratchTest()
+    @Test
+    fun testHexFormat(): Unit = doScratchTest()
 
     @TestMetadata("jdk17HexFormat.kts")
-    fun testJdk17HexFormat() = doScratchTest()
+    @Test
+    fun testJdk17HexFormat(): Unit = doScratchTest()
 
     @TestMetadata("klass.kts")
-    fun testKlass() = doScratchTest()
+    @Test
+    fun testKlass(): Unit = doScratchTest()
 
     @TestMetadata("unresolved.kts")
-    fun testUnresolved() = doScratchTest()
+    @Test
+    fun testUnresolved(): Unit = doScratchTest()
 
     @TestMetadata("var.kts")
-    fun testVar() = doScratchTest()
+    @Test
+    fun testVar(): Unit = doScratchTest()
 
     @TestMetadata("veryLongOutput.kts")
-    fun testVeryLongOutput() = doScratchTest()
+    @Test
+    fun testVeryLongOutput(): Unit = doScratchTest()
 
     @TestMetadata("when.kts")
-    fun testWhen() = doScratchTest()
+    @Test
+    fun testWhen(): Unit = doScratchTest()
 }
