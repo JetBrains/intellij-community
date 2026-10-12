@@ -2,6 +2,8 @@
 package com.intellij.java.codeInsight.defaultAction;
 
 import com.intellij.codeInsight.AbstractBasicJavaRBracketTest;
+import com.intellij.testFramework.junit5.TestApplication;
 
+@TestApplication
 public class JavaRBracketTest extends AbstractBasicJavaRBracketTest {
 }
