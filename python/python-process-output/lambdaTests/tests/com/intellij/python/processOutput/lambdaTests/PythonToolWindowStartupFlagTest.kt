@@ -17,14 +17,13 @@ import kotlin.time.Duration.Companion.minutes
 /**
  * PY-89999 ("RemDev: PPOTW is absent"): Python tool windows stayed hidden at startup on the split frontend.
  * They reach that decision through `SdkAwareToolWindowFactory.shouldBeAvailable()`, a passthrough of the
- * registry key asserted below. The fix is a descriptor change rather than code — the split frontend's own
- * customization plugin now declares that key with `defaultValue="true"` instead of falling back to the
- * `false` in `intellij.python.community.common.xml`. The revert that makes this test red: drop that
- * declaration from `python/pycharm/frontend/split/customization/resources/META-INF/plugin.xml`.
+ * registry key asserted below. The fix is a descriptor change rather than code — the PyCharm Customization
+ * plugin, which the split frontend bundles too, declares that key with `defaultValue="true"` instead of falling
+ * back to the `false` in `intellij.python.community.common.xml`. The revert that makes this test red: drop that
+ * declaration from `python/ide-customization/resources/META-INF/plugin.xml`.
  *
- * Split only. PyCharm Professional's monolith customization defaults the same key to `true` — the same rule,
- * added for the monolith in PY-88193 and missing from the frontend variant until this fix — so a monolith
- * invocation reads `true` with the fix reverted and proves nothing.
+ * Split only. The monolith loads the same plugin and reads the same declaration (added for the monolith in
+ * PY-88193), so a monolith invocation adds nothing to this one.
  *
  * This pins the flag, not the tool window. Locking the symptom itself means asking `ToolWindowManager` for
  * `PythonProcessOutput` via `waitForToolWindow`, which needs a project-bearing `IdeStartConfig` this suite

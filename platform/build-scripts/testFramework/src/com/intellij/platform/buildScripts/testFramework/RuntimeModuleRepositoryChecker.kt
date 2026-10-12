@@ -116,9 +116,6 @@ class RuntimeModuleRepositoryChecker private constructor(
         for (includedModule in pluginHeader.includedModules) {
           val pluginModule = repository.findModuleHeader(includedModule.moduleId) ?: continue
 
-          //todo: remove when PY-89477 is fixed (`intellij.pycharm.community` module contains two classes and some resources only, adding it to two classpaths shouldn't cause problems)
-          if (pluginModule.moduleId.name == "intellij.pycharm.community") continue
-
           //todo remove when IJPL-255167 is fixed (`intellij.libraries.kotlin.logging` is included in the core plugin and other plugins with different namespaces)
           if (pluginModule.moduleId.name == "intellij.libraries.kotlin.logging") continue
 

@@ -108,13 +108,6 @@
                          provider="com.intellij.pycharm.community.ide.impl.configuration.PyDependenciesConfigurableProvider"
                          groupWeight="5"/>
 
-    <groupConfigurable id="python.group.settings"
-                       parentId="root"
-                       weight="1000"
-                       bundle="messages.PyBundle"
-                       displayNameKey="settings.python.group.title"
-                       descriptionKey="settings.python.group.description"/>
-
     <groupConfigurable id="python.tools.group.settings"
                        parentId="python.group.settings"
                        weight="72"

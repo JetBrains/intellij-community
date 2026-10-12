@@ -11,8 +11,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- PyCharm declares the same group on the top level, in
-      [community\python\ide\impl\resources\intellij.pycharm.community.ide.impl.xml] and
-      [python\pycharm\frontend\split\customization\resources\META-INF\plugin.xml].
+      [community\python\ide\customization.shared\resources\META-INF\plugin.xml].
       This module loads in any IDE but PyCharm, so the two declarations never meet.
       The group must exist in every IDE. The platform drops a child group whose parent is absent,
       which hides the Python tool pages. -->

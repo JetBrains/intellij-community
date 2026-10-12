@@ -28,10 +28,18 @@
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
-    <!-- This group redefined in 3 places
+    <!-- PyCharm and its JetBrains Client get the Python group from here. The other IDEs define it in
+      [community\python\pluginCore\frontend\resources\intellij.python.community.plugin.frontend.xml]. -->
+    <groupConfigurable id="python.group.settings"
+                       parentId="root"
+                       weight="1000"
+                       bundle="messages.PycharmIdeCustomizationBundle"
+                       displayNameKey="settings.python.group.title"
+                       descriptionKey="settings.python.group.description"/>
+
+    <!-- This group redefined in 2 places
       In [plugins\jupyter\core\resources\intellij.jupyter.core.xml] to place it in 'tools' group for all IDEs
-      In [community\python\ide\customization.shared\resources\META-INF\plugin.xml] and
-      [python\pycharm\frontend\split\customization\resources\META-INF\plugin.xml] to place it on top level in setting, below Python group for PyCharm.
+      In [community\python\ide\customization.shared\resources\META-INF\plugin.xml] to place it on top level in setting, below Python group for PyCharm and its JetBrains Client.
     -->
     <groupConfigurable id="Jupyter Settings"
                        parentId="root"
