@@ -51,17 +51,10 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
   @Deprecated("Use PluginManagerConfigurable()", replaceWith = ReplaceWith("PluginManagerConfigurable()"))
   constructor(project: Project?) : this()
 
-  override fun getId(): String {
-    return ID
-  }
-
-  override fun getDisplayName(): String {
-    return IdeBundle.message("title.plugins")
-  }
-
-  override fun getHelpTopic(): String {
-    return ID
-  }
+  override fun getId(): String = ID
+  override fun getDisplayName(): String = IdeBundle.message("title.plugins")
+  override fun isSearchableInActions(): Boolean = false
+  override fun getHelpTopic(): String = ID
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun getCenterComponent(controller: Configurable.TopComponentController): JComponent {
@@ -230,10 +223,6 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun select(pluginIds: Collection<PluginId>) {
     createPanelIfNeeded().select(pluginIds)
-  }
-
-  override fun isSearchableInActions(): Boolean {
-    return false
   }
 
   companion object {
