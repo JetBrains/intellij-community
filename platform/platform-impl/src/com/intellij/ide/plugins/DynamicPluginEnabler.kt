@@ -55,19 +55,12 @@ class DynamicPluginEnabler : PluginEnabler {
     progressTitle: @Nls String? = null,
     project: Project? = null,
   ): Boolean = withContext(Dispatchers.Default) {
-    val pluginSet = PluginManagerCore.getPluginSet()
-    val plugins = pluginIds.mapNotNull {
-      pluginSet.findInstalledPlugin(it) ?: run {
-        LOG.error("Plugin $it is not installed")
-        null
-      }
-    }
+    val disabledStateChanged = PluginEnabler.HEADLESS.enableById(pluginIds.toSet())
+    val plugins = findInstalledPluginsById(pluginIds) ?: return@withContext false
 
     if (LoadingState.APP_STARTED.isOccurred) {
       PluginManagerUsageCollector.pluginsStateChanged(plugins, enable = true, project)
     }
-    val disabledStateChanged = PluginEnabler.HEADLESS.enable(plugins)
-
     val pluginsLoaded: Boolean
     if (!disabledStateChanged && plugins.all { PluginManagerCore.isLoaded(it) }) {
       // nothing to do
@@ -145,16 +138,10 @@ class DynamicPluginEnabler : PluginEnabler {
   override fun disable(descriptors: Collection<IdeaPluginDescriptor>): Boolean = disable(descriptors, project = null)
 
   suspend fun disable(pluginIds: Collection<PluginId>, project: Project? = null): Boolean = withContext(Dispatchers.Default) {
-    val pluginSet = PluginManagerCore.getPluginSet()
-    val plugins = pluginIds.mapNotNull {
-      pluginSet.findInstalledPlugin(it) ?: run {
-        LOG.error("Plugin $it is not installed")
-        null
-      }
-    }
+    PluginEnabler.HEADLESS.disableById(pluginIds.toSet())
+    val plugins = findInstalledPluginsById(pluginIds) ?: return@withContext false
 
     PluginManagerUsageCollector.pluginsStateChanged(plugins, enable = false, project)
-    PluginEnabler.HEADLESS.disable(plugins)
 
     val pluginsUnloaded = DynamicPlugins.reconfigure(
       project = project,
@@ -195,6 +182,16 @@ class DynamicPluginEnabler : PluginEnabler {
     }
     return pluginsUnloaded
   }
+}
+
+private fun findInstalledPluginsById(pluginIds: Collection<PluginId>): List<PluginMainDescriptor>? {
+  val pluginSet = PluginManagerCore.getPluginSet()
+  return pluginIds.map { pluginId ->
+    pluginSet.findInstalledPlugin(pluginId) ?: run {
+      LOG.warn("Plugin $pluginId is not installed")
+      return null
+    }
+  }.distinct()
 }
 
 private fun findInstalledPlugins(descriptors: Collection<IdeaPluginDescriptor>): List<PluginMainDescriptor>? {
