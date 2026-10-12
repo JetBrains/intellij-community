@@ -533,8 +533,8 @@ public class PyParameterInfoTest extends PyParameterInfoTestCase {
   public void testTypingCallableWithKnownParameters() {
     final int offset = loadTest(1).get("<arg1>").getTextOffset();
 
-    final List<String> texts = Collections.singletonList("...: int, ...: str");
-    final List<String[]> highlighted = Collections.singletonList(new String[]{"...: int, "});
+    final List<String> texts = Collections.singletonList("__p0: int, __p1: str");
+    final List<String[]> highlighted = Collections.singletonList(new String[]{"__p0: int, "});
 
     feignCtrlP(offset).check(texts, highlighted, Collections.singletonList(ArrayUtilRt.EMPTY_STRING_ARRAY));
   }
@@ -1070,8 +1070,8 @@ public class PyParameterInfoTest extends PyParameterInfoTestCase {
   // PY-48338
   public void testAnnotatedDecoratorAddsParametersToOriginalFunctionWithConcatenate() {
     final Map<String, PsiElement> marks = loadTest(1);
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("...: str, input_a: int, input_b: float | int",
-                                                          new String[]{"...: str, "},
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("__p0: str, input_a: int, input_b: float | int",
+                                                          new String[]{"__p0: str, "},
                                                           new String[]{""});
   }
 
@@ -1088,8 +1088,8 @@ public class PyParameterInfoTest extends PyParameterInfoTestCase {
   // PY-48338
   public void testAnnotatedDecoratorReplacesParametersOfOriginalFunction() {
     final Map<String, PsiElement> marks = loadTest(1);
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("...: int",
-                                                          new String[]{"...: int"},
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("__p0: int",
+                                                          new String[]{"__p0: int"},
                                                           new String[]{""});
   }
 

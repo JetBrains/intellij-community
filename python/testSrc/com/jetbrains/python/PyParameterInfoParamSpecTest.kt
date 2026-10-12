@@ -25,7 +25,7 @@ class PyParameterInfoParamSpecTest : PyCodeInsightTestCase() {
 
     a.f()
     #   └ CARET
-  """, "...: int, ...", "...: int, ")
+  """, "__p0: int, __p1", "__p0: int, ")
 
   @Test
   @TestFor(issues = ["PY-93094"])
@@ -37,7 +37,7 @@ class PyParameterInfoParamSpecTest : PyCodeInsightTestCase() {
 
     a.f()
     #   └ CARET
-  """, "...: int, ...: str", "...: int, ", showAllHints = true)
+  """, "__p0: int, __p1: str", "__p0: int, ", showAllHints = true)
 
   @Test
   @TestFor(issues = ["PY-93094"])
@@ -49,7 +49,7 @@ class PyParameterInfoParamSpecTest : PyCodeInsightTestCase() {
 
     a.f(1, )
     #      └ CARET
-  """, "..., ...: str", "...: str")
+  """, "__p0, __p1: str", "__p1: str")
 
   @Test
   @TestFor(issues = ["PY-93094"])
@@ -59,7 +59,7 @@ class PyParameterInfoParamSpecTest : PyCodeInsightTestCase() {
     def g(c: Callable[[int, str], None]):
         c()
     #     └ CARET
-  """, "...: int, ...", "...: int, ")
+  """, "__p0: int, __p1", "__p0: int, ")
 
   @Test
   @TestFor(issues = ["PY-93094"])
@@ -73,7 +73,7 @@ class PyParameterInfoParamSpecTest : PyCodeInsightTestCase() {
 
     function("", )
     #            └ CARET
-  """, "..., input_a: int, input_b", "input_a: int, ")
+  """, "__p0, input_a: int, input_b", "input_a: int, ")
 
   @Test
   @TestFor(issues = ["PY-93094"])
@@ -85,7 +85,7 @@ class PyParameterInfoParamSpecTest : PyCodeInsightTestCase() {
 
     a.f(1, 2)
     #   └ CARET
-  """, "...: int, ...", "...: int, ")
+  """, "__p0: int, __p1", "__p0: int, ")
 
   @Test
   @TestFor(issues = ["PY-93094"])
@@ -97,7 +97,7 @@ class PyParameterInfoParamSpecTest : PyCodeInsightTestCase() {
 
     a.f(1, 2)
     #      └ CARET
-  """, "..., ...: int", "...: int")
+  """, "__p0, __p1: int", "__p1: int")
 
   @Test
   @TestFor(issues = ["PY-93094"])
@@ -107,7 +107,7 @@ class PyParameterInfoParamSpecTest : PyCodeInsightTestCase() {
     def g(c: Callable[[int, int, str], None]):
         c(1, 2, )
     #           └ CARET
-  """, "..., ..., ...: str", "...: str")
+  """, "__p0, __p1, __p2: str", "__p2: str")
 
   @Test
   @TestFor(issues = ["PY-93094"])
@@ -116,7 +116,7 @@ class PyParameterInfoParamSpecTest : PyCodeInsightTestCase() {
 
     f()
     # └ CARET
-  """, "__p0: int, *...", "__p0: int, ")
+  """, "__p0: int, __args", "__p0: int, ")
 
   @Test
   @TestFor(issues = ["PY-93094"])
@@ -125,7 +125,39 @@ class PyParameterInfoParamSpecTest : PyCodeInsightTestCase() {
 
     f(1, )
     #    └ CARET
-  """, "__p0, *...: str", "*...: str")
+  """, "__p0, *__args: str", "*__args: str")
+
+  @Test
+  @TestFor(issues = ["PY-93094"])
+  fun `synthetic name does not clash with an unpacked tuple element`() = assertParameterInfo("""
+    from typing import Callable, Concatenate
+
+    def decorator[**P, R](func: Callable[P, R]) -> Callable[Concatenate[bytes, P], R]: ...
+
+    @decorator
+    def function(*args: *tuple[int, str]): ...
+
+    function()
+    #        └ CARET
+  """, "__p0: bytes, __p1: int, __p2: str", "__p0: bytes, ", showAllHints = true)
+
+  @Test
+  @TestFor(issues = ["PY-93094"])
+  fun `unpacked tuple elements are numbered by their position`() = assertParameterInfo("""
+    def f(a: int, *args: *tuple[str, bytes]): ...
+
+    f()
+    # └ CARET
+  """, "a: int, __p1: str, __p2: bytes", "a: int, ", showAllHints = true)
+
+  @Test
+  @TestFor(issues = ["PY-93094"])
+  fun `synthetic name does not clash with a real parameter name`() = assertParameterInfo("""
+    def f(__p1: int, *args: *tuple[str, bytes]): ...
+
+    f()
+    # └ CARET
+  """, "__p1: int, __p2: str, __p3: bytes", "__p1: int, ", showAllHints = true)
 
   @Test
   @TestFor(issues = ["PY-93094"])
