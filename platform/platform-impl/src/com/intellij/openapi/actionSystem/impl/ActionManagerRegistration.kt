@@ -346,7 +346,9 @@ internal fun addToGroup(
     val resolverItems = ArrayList<AnAction>(children.size + 2)
     resolverItems.add(action)
     resolverItems.add(group)
-    resolverItems.addAll(children)
+    // a stub or a chameleon resolves its own id, so the snapshot needs only the other children:
+    // during the registration from XML, nearly every child is a stub
+    children.filterTo(resolverItems) { it !is ActionStubBase && it !is ChameleonAction }
     val actionToId = state.createActionIdResolver(resolverItems)
     val actionId = actionToId(action)
     if (module != null && action !is Separator && actionGroup.containsAction(action)) {

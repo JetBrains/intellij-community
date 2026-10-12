@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -12,6 +11,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +27,10 @@ final class ActionsBuiltInAllowedlist {
 
   private final Object myLock = new Object();
   private final Map<AnAction, String> myDynamicActionsToId = new WeakHashMap<>();
+
+  // guarded by myLock
+  private @Nullable Reference<IdeaPluginDescriptor> myLastPlugin;
+  private boolean myLastPluginSafeToReport;
 
   private final Set<String> ourXmlActionIds = new HashSet<>();
   private final Set<String> ourCustomActions = ContainerUtil.newHashSet(
@@ -51,12 +56,30 @@ final class ActionsBuiltInAllowedlist {
   }
 
   public void addActionLoadedFromXml(@NotNull String actionId, @Nullable IdeaPluginDescriptor plugin) {
-    PluginInfo pluginInfo = plugin == null ? null : PluginInfoDetectorKt.getPluginInfoByDescriptor(plugin);
-    if (pluginInfo != null && pluginInfo.isSafeToReport()) {
+    if (plugin != null && isSafeToReport(plugin)) {
       synchronized (myLock) {
         ourXmlActionIds.add(actionId);
       }
     }
+  }
+
+  /**
+   * The actions of a plugin are registered one after another, so the plugin info is computed once per plugin, not once per action.
+   * The reference is weak: an unloaded plugin must not stay reachable from here.
+   */
+  private boolean isSafeToReport(@NotNull IdeaPluginDescriptor plugin) {
+    synchronized (myLock) {
+      if (myLastPlugin != null && myLastPlugin.get() == plugin) {
+        return myLastPluginSafeToReport;
+      }
+    }
+
+    boolean isSafeToReport = PluginInfoDetectorKt.getPluginInfoByDescriptor(plugin).isSafeToReport();
+    synchronized (myLock) {
+      myLastPlugin = new WeakReference<>(plugin);
+      myLastPluginSafeToReport = isSafeToReport;
+    }
+    return isSafeToReport;
   }
 
   public void addActionsLoadedFromKeymapXml(@NotNull Keymap keymap, @NotNull Set<String> actionIds) {

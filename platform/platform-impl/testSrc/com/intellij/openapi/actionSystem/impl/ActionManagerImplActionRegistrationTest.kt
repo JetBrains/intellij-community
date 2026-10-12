@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPopupMenu
+import com.intellij.openapi.actionSystem.ActionStub
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -90,6 +91,32 @@ internal class ActionManagerImplActionRegistrationTest {
     finally {
       actionManager.unregisterAction(secondId)
       actionManager.unregisterAction(firstId)
+      actionManager.unregisterAction(groupId)
+    }
+  }
+
+  @Test
+  fun runtimeRegistrarAddToGroupResolvesRelativeConstraintsToStubChild() {
+    val actionManager = ActionManager.getInstance() as ActionManagerImpl
+    val registrar = ActionManagerEx.getInstanceEx().asActionRuntimeRegistrar()
+    val groupId = "ActionManagerImplActionRegistrationTest.stubAnchor.group"
+    val stubId = "ActionManagerImplActionRegistrationTest.stubAnchor.stub"
+    val actionId = "ActionManagerImplActionRegistrationTest.stubAnchor.action"
+    val group = DefaultActionGroup()
+    val stub = ActionStub(TestAction::class.java.name, stubId, createPluginDescriptor(), null, null) { Presentation() }
+    val action = createAction()
+    actionManager.registerAction(groupId, group)
+    actionManager.registerAction(actionId, action)
+    try {
+      group.add(stub)
+      // the snapshot of the add-to-group leaves the stub out, and the stub resolves its own id for the anchor
+      registrar.addToGroup(group, action, Constraints(Anchor.BEFORE, stubId))
+
+      assertEquals(listOf(action, stub), group.childActionsOrStubs.toList())
+      assertEquals(listOf(groupId), actionManager.groupIds(actionId))
+    }
+    finally {
+      actionManager.unregisterAction(actionId)
       actionManager.unregisterAction(groupId)
     }
   }
