@@ -261,6 +261,13 @@ class NioPathCompletionTest {
   }
 
   @Test
+  fun `failed home directory lookup reports the error`() = runCompletionTest(home = { throw IllegalStateException("No home") }) {
+    completion.update("~/", Trigger.SHORTCUT)
+    val failed = awaitState { it !is State.Loading } as State.Failed
+    assertThat(failed.error).hasMessage("No home")
+  }
+
+  @Test
   fun `slow listing shows the loading state`() {
     val release = CompletableDeferred<Unit>()
     runCompletionTest(prepare = { release.await() }) {
@@ -291,22 +298,20 @@ class NioPathCompletionTest {
 
   @Test
   fun `failed preparation reports the error and waits for the shortcut`() {
-    val failure = IllegalStateException("No connection")
     val prepareCalls = AtomicInteger()
     val prepare: suspend () -> Unit = {
-      if (prepareCalls.incrementAndGet() == 1) throw failure
+      if (prepareCalls.incrementAndGet() == 1) throw IllegalStateException("No connection")
     }
     runCompletionTest(prepare = prepare) {
       completion.update(rootText, Trigger.SHORTCUT)
-      assertThat(awaitState { it !is State.Loading }).isEqualTo(State.Hidden)
-      assertThat(preparationError).isSameAs(failure)
+      val failed = awaitState { it !is State.Loading } as State.Failed
+      assertThat(failed.error).hasMessage("No connection")
 
       completion.update(rootText + "a", Trigger.TYPING)
-      assertThat(state).isEqualTo(State.Hidden)
+      assertThat(state).describedAs("an edit hides the failure").isEqualTo(State.Hidden)
       assertThat(prepareCalls.get()).isEqualTo(1)
 
       completion.update(rootText, Trigger.SHORTCUT)
-      assertThat(preparationError).isNull()
       assertThat(suggestionNames(awaitSuggestions())).containsExactly("alpha", "beta", "bravo.txt")
     }
   }
@@ -413,10 +418,6 @@ class NioPathCompletionTest {
   ) {
     private val states = Channel<State>(Channel.UNLIMITED)
 
-    /** The last preparation failure that the completion reported. */
-    var preparationError: Throwable? = null
-      private set
-
     /** The last state that the completion reported. */
     var state: State = State.Hidden
       private set
@@ -433,7 +434,6 @@ class NioPathCompletionTest {
         state = it
         states.trySend(it)
       },
-      onPreparationFailed = { preparationError = it },
     )
 
     suspend fun awaitState(predicate: (State) -> Boolean): State =

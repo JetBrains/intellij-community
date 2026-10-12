@@ -39,9 +39,9 @@ internal fun isHomeRelative(text: String): Boolean = text.startsWith('~')
  * The completion of a path text with the children of the typed directory.
  * The completion does not access the text field. The field gives it the completion base, that is the text before the caret.
  * The completion reports its [State] to [onStateChanged], and returns an [Edit] for a chosen child.
- * It reports the failure of the [prepareCompletion] to [onPreparationFailed], and null when a new preparation starts.
- * After a failure, the suggestions hide, and the edits do not start the completion until the completion shortcut.
- * It lists the children off the EDT. The other calls, the [onStateChanged], and the [onPreparationFailed] run on the EDT.
+ * A failure of the [prepareCompletion], the [homeDirectory], or the listing shows as [State.Failed].
+ * After a failure, an edit hides the popup, and only the completion shortcut starts the completion again.
+ * It lists the children off the EDT. The other calls and the [onStateChanged] run on the EDT.
  * See [NioPathTextField] for the other parameters.
  */
 internal class NioPathCompletion(
@@ -53,7 +53,6 @@ internal class NioPathCompletion(
   private val prepareCompletion: suspend () -> Unit,
   private val homeDirectory: suspend () -> String?,
   private val onStateChanged: (State) -> Unit,
-  private val onPreparationFailed: (Throwable?) -> Unit = {},
 ) {
 
   /** The event that starts a completion update. */
@@ -77,6 +76,9 @@ internal class NioPathCompletion(
 
     /** The children of the directory with the [directoryText] that match the typed prefix. */
     data class Suggestions(val directoryText: String, val matching: List<NioFileChooserUtil.DirectoryEntry>) : State
+
+    /** The completion failed with the [error]. The popup shows the failure text. */
+    data class Failed(val error: Throwable) : State
   }
 
   /** A text edit for a chosen child. The text from the [offset] to the end becomes the [text]. */
@@ -113,7 +115,7 @@ internal class NioPathCompletion(
   // The last listing. It serves the prefix filtering.
   private var listing: DirectoryListing? = null
 
-  // Cleared by [dismiss] and by a failed preparation, so an edit does not show the suggestions again.
+  // Cleared by [dismiss] and by a failure, so an edit does not show the suggestions again.
   // The completion shortcut sets it again.
   private var autoPopup = true
 
@@ -134,6 +136,11 @@ internal class NioPathCompletion(
   /** Returns the [text] with the [homeText] in place of the leading `~`. */
   private fun expandHome(text: String, homeText: String): String = homeText + text.removePrefix("~")
 
+  private suspend fun lookUpHome(): Home = withContext(Dispatchers.IO) {
+    prepareCompletion()
+    Home(homeDirectory())
+  }
+
   /**
    * Filters the [listing] with the typed prefix when the listing covers the directory of the [base].
    * Otherwise lists the directory. The state stays until the new listing is ready.
@@ -146,7 +153,10 @@ internal class NioPathCompletion(
   }
 
   private fun refresh(trigger: Trigger) {
-    if (!autoPopup) return
+    if (!autoPopup) {
+      if (state is State.Failed) setState(State.Hidden)
+      return
+    }
     if (isHomeRelative(base) && home == null) {
       resolveHome(trigger)
       return
@@ -208,9 +218,7 @@ internal class NioPathCompletion(
     val showHidden = showHidden()
     // The directory text of a base with `~` exists only when the home is known.
     val pathText = if (isHomeRelative(directoryText)) expandHome(directoryText, checkNotNull(home?.text)) else directoryText
-    onPreparationFailed(null)
-    // The results apply in the modality of the update, so the popup does not change under a nested modal dialog.
-    val job = scope.launch(ModalityState.current().asContextElement()) {
+    val job = launchCompletionJob(clearJob = { listingJob = null }) {
       listChildren(directoryText, pathText, showHidden)
     }
     listingJob = ListingJob(directoryText, job)
@@ -220,55 +228,36 @@ internal class NioPathCompletion(
   private fun resolveHome(trigger: Trigger) {
     if (homeJob != null) return
     cancelListing()
-    onPreparationFailed(null)
-    homeJob = scope.launch(ModalityState.current().asContextElement()) {
-      var preparationError: Throwable? = null
-      val resolved = try {
-        withLoadingState {
-          withContext(Dispatchers.IO) {
-            preparationError = prepare()
-            if (preparationError != null) null else homeDirectory()
-          }
-        }
+    homeJob = launchCompletionJob(clearJob = { homeJob = null }) {
+      // A failure does not set the home, so the next shortcut resolves it again.
+      val resolved = withLoadingState { lookUpHome() }
+      withContext(Dispatchers.EDT) {
+        homeJob = null
+        home = resolved
+        if (resolved.text != null) refresh(trigger) else setState(State.NoResults)
+      }
+    }
+  }
+
+  /**
+   * Launches the [block] in the modality of the update, so the popup does not change under a nested modal dialog.
+   * A failure of the [block] shows as [State.Failed], and only the completion shortcut starts the completion again.
+   */
+  private fun launchCompletionJob(clearJob: () -> Unit, block: suspend () -> Unit): Job =
+    scope.launch(ModalityState.current().asContextElement()) {
+      try {
+        block()
       }
       catch (e: Throwable) {
         rethrowControlFlowException(e)
-        LOG.debug("Cannot get the home directory", e)
-        null
-      }
-      withContext(Dispatchers.EDT) {
-        homeJob = null
-        val failure = preparationError
-        if (failure != null) {
-          // A failed preparation does not tell the home, so the next update resolves it again.
-          reportPreparationFailure(failure)
-          return@withContext
+        LOG.debug("The path completion failed", e)
+        withContext(Dispatchers.EDT) {
+          clearJob()
+          autoPopup = false
+          setState(State.Failed(e))
         }
-        home = Home(resolved)
-        if (resolved != null) refresh(trigger) else setState(State.NoResults)
       }
     }
-  }
-
-  /** Hides the suggestions and reports the [error]. Only the completion shortcut starts the completion again. */
-  private fun reportPreparationFailure(error: Throwable) {
-    autoPopup = false
-    setState(State.Hidden)
-    onPreparationFailed(error)
-  }
-
-  /** Runs the [prepareCompletion]. Returns its failure, or null when it succeeds. */
-  private suspend fun prepare(): Throwable? {
-    try {
-      prepareCompletion()
-      return null
-    }
-    catch (e: Throwable) {
-      rethrowControlFlowException(e)
-      LOG.debug("Cannot prepare the completion", e)
-      return e
-    }
-  }
 
   private fun cancelHome() {
     homeJob?.cancel()
@@ -318,31 +307,17 @@ internal class NioPathCompletion(
   private suspend fun listChildren(directoryText: String, pathText: String, showHidden: Boolean) {
     // A new listing of the shown directory keeps the current suggestions.
     val showLoading = { (state as? State.Suggestions)?.directoryText != directoryText }
-    var preparationError: Throwable? = null
-    val listed = try {
-      withLoadingState(showLoading) {
-        // The attributes and the icons touch the file system, so keep them off the EDT.
-        withContext(Dispatchers.IO) {
-          preparationError = prepare()
-          if (preparationError != null) return@withContext null
-          val directory = pathParser(pathText) ?: return@withContext null
-          val children = NioFileChooserUtil.safeGetChildren(directory, showHidden, showFiles = chooseFiles, showArchives = chooseArchives)
-          DirectoryListing(directoryText, showHidden, children)
-        }
+    val listed = withLoadingState(showLoading) {
+      // The attributes and the icons touch the file system, so keep them off the EDT.
+      withContext(Dispatchers.IO) {
+        prepareCompletion()
+        val directory = pathParser(pathText) ?: return@withContext null
+        val children = NioFileChooserUtil.safeGetChildren(directory, showHidden, showFiles = chooseFiles, showArchives = chooseArchives)
+        DirectoryListing(directoryText, showHidden, children)
       }
-    }
-    catch (e: Throwable) {
-      rethrowControlFlowException(e)
-      LOG.debug("Cannot list $directoryText", e)
-      null
     }
     withContext(Dispatchers.EDT) {
       listingJob = null
-      val failure = preparationError
-      if (failure != null) {
-        reportPreparationFailure(failure)
-        return@withContext
-      }
       listing = listed
       showMatching(directoryText, listed?.children.orEmpty())
     }

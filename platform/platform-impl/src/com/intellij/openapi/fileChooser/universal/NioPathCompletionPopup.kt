@@ -16,6 +16,7 @@ import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Point
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
@@ -59,6 +60,12 @@ internal class NioPathCompletionPopup(
     JBLabel(IdeBundle.message("file.chooser.completion.no.suggestions")).apply {
       border = JBUI.Borders.empty(4, 8)
     }
+  private val failedLabel =
+    JBLabel(IdeBundle.message("file.chooser.completion.failed")).apply {
+      border = JBUI.Borders.empty(4, 8)
+      isOpaque = true
+      background = JBUI.CurrentTheme.Validator.errorBackgroundColor()
+    }
 
   // The single popup content. The content swaps among the loading label, the list, and the no-results label.
   private val popupPanel = JPanel(BorderLayout())
@@ -93,6 +100,12 @@ internal class NioPathCompletionPopup(
   fun showNoResults() {
     listModel.removeAll()
     show(noResultsLabel)
+  }
+
+  /** Shows the failure text in the validation error colors. The suggestions go. */
+  fun showFailed() {
+    listModel.removeAll()
+    show(failedLabel, borderColor = JBUI.CurrentTheme.Validator.errorBorderColor())
   }
 
   /**
@@ -135,7 +148,7 @@ internal class NioPathCompletionPopup(
    * A visible popup updates in place only for the same component.
    * A new component gets a new popup, because the swapped content of a non-focusable popup can stay unpainted.
    */
-  private fun show(component: JComponent) {
+  private fun show(component: JComponent, borderColor: Color? = null) {
     val current = popup
     if (current != null && !current.isDisposed && popupPanel.components.singleOrNull() === component) {
       popupPanel.revalidate()
@@ -147,14 +160,15 @@ internal class NioPathCompletionPopup(
     current?.cancel()
     popupPanel.removeAll()
     popupPanel.add(component, BorderLayout.CENTER)
-    val newPopup = JBPopupFactory.getInstance()
+    val builder = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(popupPanel, null)
       .setRequestFocus(false)
       .setFocusable(false)
       .setCancelKeyEnabled(false)
       // The popup does not shrink below the loading text, for example when the listing ends with no results.
       .setMinSize(loadingLabel.preferredSize)
-      .createPopup()
+    if (borderColor != null) builder.setBorderColor(borderColor)
+    val newPopup = builder.createPopup()
     popup = newPopup
     newPopup.showInScreenCoordinates(owner, location())
   }
