@@ -60,6 +60,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XExpression
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
 import org.assertj.swing.timing.Timeout
 import org.intellij.lang.annotations.Language
@@ -621,7 +622,7 @@ fun <L : Any> TaskRuntimeContext.subscribeForMessageBus(topic: Topic<L>, handler
 
 fun TaskRuntimeContext.lineWithBreakpoints(): Set<Int> {
   val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
-  return breakpointManager.allBreakpoints.filter {
+  return breakpointManager.allBreakpoints.filterIsInstance<XLineBreakpoint<*>>().filter {
     val file = FileDocumentManager.getInstance().getFile(editor.document)
     it.sourcePosition?.file == file
   }.mapNotNull {
