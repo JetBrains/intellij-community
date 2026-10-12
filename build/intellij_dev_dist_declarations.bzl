@@ -289,6 +289,33 @@ def _launch_destinations(plan, os):
         frontend_vm_options = "bin/" + frontend_vmoptions[os] if frontend_vmoptions else None,
     )
 
+def _launcher_destinations(launcher):
+    """The destination of the native launcher that a launch target starts, for each OS token that starts one.
+
+    `launcher` is the `launch.launcher` struct of a plan. macOS starts `bin/<base>`, which every macOS home has. Windows
+    starts the console launcher, so `bazel run` keeps a console. A product without one starts its GUI launcher. Linux
+    starts `java` until IJPL-258306 ships, so it has no entry.
+    """
+    base = launcher.base_file_name
+    if launcher.windows_console:
+        windows = "bin/%s.exe" % base
+    elif launcher.windows_gui:
+        windows = "bin/%s.exe" % (base if launcher.language_server else base + "64")
+    else:
+        fail("The launcher '%s' has no Windows launcher" % base)
+    return {"darwin": "bin/" + base, "windows": windows}
+
+def _env_var_base_name(launch, program_args):
+    """The base of the variables that the native launcher reads for a row with `program_args`.
+
+    The launcher selects a custom command from the first program argument. A command can state a base of its own, such
+    as `JETBRAINS_CLIENT` for `ijLight`. Any other row gets the base of the product.
+    """
+    commands = getattr(launch, "command_env_var_base_names", {})
+    if program_args and program_args[0] in commands:
+        return commands[program_args[0]]
+    return launch.env_var_base_name
+
 def _fragment_suffix(fragment_name):
     """The target suffix of a platform component, `<platform set>_<suffix>`."""
     return fragment_name[len("platform_"):]
@@ -756,6 +783,7 @@ def _declare_run_launcher(
         distribution,
         product,
         additional_modules,
+        runtime_module_repository,
         jvm_flags,
         env,
         data,
@@ -765,7 +793,8 @@ def _declare_run_launcher(
     """The launcher `name`, the launcher over the distribution `_declare_run_distribution` declared as `distribution`.
 
     The row is an `intellij_dev_java_launcher` over `<distribution>_dist_launch`, with the home `<distribution>_dist` on
-    Windows.
+    Windows. On macOS and Windows it starts the native launcher with the variables of `_env_var_base_name`. Its
+    vmoptions file names the runtime module repository under the rule of `export_vm_options`.
     """
     for flag in jvm_flags:
         if flag.startswith("-Dadditional.modules="):
@@ -792,6 +821,9 @@ def _declare_run_launcher(
         export = "//%s:%s_dist" % (native.package_name(), distribution),
         vm_options = {os: destination.vm_options for os, destination in destinations.items()},
         product_info = {os: destination.product_info for os, destination in destinations.items()},
+        launcher = _launcher_destinations(plan.launch.launcher),
+        env_var_base_name = _env_var_base_name(plan.launch, program_args),
+        runtime_module_repository = runtime_module_repository and not _modular_loader(tables, product),
         jvm_flags = jvm_flags,
         env = env,
         data = data,
@@ -831,6 +863,7 @@ def _run_configurations(tables, rows):
                 distribution = distribution,
                 product = product,
                 additional_modules = additional_modules,
+                runtime_module_repository = runtime_module_repository,
                 jvm_flags = getattr(row, "jvm_flags", []),
                 env = getattr(row, "env", {}),
                 data = [],
@@ -867,6 +900,7 @@ def _run_configuration(
         distribution = name,
         product = product,
         additional_modules = additional_modules,
+        runtime_module_repository = generate_runtime_module_repository,
         jvm_flags = jvm_flags,
         env = env,
         data = data,
