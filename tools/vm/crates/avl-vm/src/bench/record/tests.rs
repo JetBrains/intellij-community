@@ -25,6 +25,9 @@ fn id(arm: Arm) -> RunId {
     }
 }
 
+/// The note of the non-modal fixture, whose profile is the one of the whole run.
+const WHOLE_RUN_NOTE: &str = "cpu.collapsed is the whole-run profile, with the hold and the quit: the run has no cpu-gate.collapsed";
+
 /// The span ends of a run, see [`super::span_end`], by metric.
 fn ends(record: &RunRecord) -> BTreeMap<&str, f64> {
     record
@@ -76,6 +79,7 @@ fn a_welcome_span_metric_is_the_sum_of_its_spans_and_a_repeated_name_is_a_note()
             r#"opentelemetry.json has 2 "welcome right tab creating" spans; the metric is their sum"#,
             r#"opentelemetry.json has 2 "welcome frame creating" spans; the metric is their sum"#,
             r#"opentelemetry.json has 2 "welcome right tab body: createContent trial.started.banner" spans; the metric is their sum"#,
+            WHOLE_RUN_NOTE,
         ]
     );
 }
@@ -90,7 +94,7 @@ fn the_span_ends_are_metrics_on_the_clock_of_the_anchors() {
     append_spans(&run, &[("restoreEditors", 6000, 50), ("welcome frame creating", 2600, 30)]);
     let record = collect(&run, &id(Arm::NonModal), LaunchFacts::default());
     assert_eq!(record.reason, None);
-    assert_eq!(record.notes, Vec::<String>::new(), "a platform span that repeats is no sum");
+    assert_eq!(record.notes, [WHOLE_RUN_NOTE], "a platform span that repeats is no sum");
     assert_eq!(
         ends(&record),
         BTreeMap::from([
@@ -613,4 +617,40 @@ fn an_empty_editor_run_whose_composer_the_quit_cut_short_is_invalid() {
         Some("the air.emptyState.createComponent span did not end before the application.exit span started, so the quit cut it short")
     );
     assert!(record.metrics.is_empty(), "a failed run reports no number");
+}
+
+/// The record reads the profile to the gate when the run has one. Else it reads the whole-run profile with a note that
+/// names why the run did not stop the profiler at its gate.
+#[test]
+fn the_record_prefers_the_profile_to_the_gate() {
+    use crate::bench::profile::ProfileScope;
+    let (_dir, session) = fixture_session();
+    let run = session.join("non-modal-run-01");
+    let whole = collect(&run, &id(Arm::NonModal), LaunchFacts::default());
+    assert_eq!(whole.profile_scope, Some(ProfileScope::WholeRun));
+    assert_eq!(whole.notes, [WHOLE_RUN_NOTE]);
+    let failed = LaunchFacts {
+        profile_stop_failure: Some("the JBR of the generation has no bin/jcmd".to_owned()),
+        ..LaunchFacts::default()
+    };
+    let record = collect(&run, &id(Arm::NonModal), failed);
+    assert_eq!(
+        record.notes,
+        ["cpu.collapsed is the whole-run profile, with the hold and the quit: the JBR of the generation has no bin/jcmd"]
+    );
+
+    std::fs::write(
+        run.join("cpu-gate.collapsed"),
+        "[AWT-EventQueue-0 tid=1035];java/lang/Thread.run;com/example/Gate.paint 7\n[DefaultDispatcher-worker-1 tid=77];com/example/Work.run 3\n",
+    )
+    .expect("a profile to the gate");
+    let record = collect(&run, &id(Arm::NonModal), LaunchFacts::default());
+    assert_eq!(record.profile_scope, Some(ProfileScope::Gate));
+    assert_eq!(record.notes, Vec::<String>::new(), "the profile to the gate needs no note");
+    assert_eq!(
+        (record.edt_samples, record.edt_frames[0].frame.as_str()),
+        (Some(7), "com/example/Gate.paint"),
+        "the profile to the gate, not the {:?} EDT samples of the whole run",
+        whole.edt_samples
+    );
 }

@@ -24,6 +24,7 @@ use serde::{Deserialize, Serialize};
 
 use super::arm::Arm;
 use super::files;
+use super::profile::ProfileEvent;
 use super::record::{RunId, RunRecord};
 use super::summary::{ArmSummary, Summary};
 
@@ -133,6 +134,9 @@ pub(crate) struct SessionInfo {
     pub(crate) cold: bool,
     pub(crate) hold_ms: u64,
     pub(crate) profile: bool,
+    /// The event that the profile samples. A session from before the option sampled the CPU.
+    #[serde(default)]
+    pub(crate) profile_event: ProfileEvent,
     /// The project of `open-project`, or the project of `project` inside the template.
     pub(crate) project: Option<String>,
     /// The file that the prime run of the `project` arm opens, relative to the project. A session without that arm

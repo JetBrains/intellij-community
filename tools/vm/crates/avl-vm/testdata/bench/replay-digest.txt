@@ -62,7 +62,8 @@ span ends (ms from the process start):
 not measured: editor restoring, editor restoring till paint, post open editors, welcome left panel painted, welcome right tab painted, project prepare end, project add to opened end, toolwindow init command creation end, toolwindow default pane registered hook end, frame allocator foreground end
 no delta: modal has 1 valid runs and non-modal has 1; a delta needs 3 per arm
 modal note: startup-stats.json has a negative totalDuration, as a start without a project writes it, so the run has none (1 of 1 runs)
-non-modal EDT, top Java frames by samples (61 EDT samples):
+non-modal note: cpu.collapsed is the whole-run profile, with the hold and the quit: the run has no cpu-gate.collapsed (1 of 1 runs)
+non-modal EDT, top Java frames by samples (61 EDT cpu samples, over the whole run):
    18.0%     11  jdk/internal/misc/Unsafe.park
    13.1%      8  sun/nio/fs/UnixNativeDispatcher.mkdir0
     8.2%      5  java/lang/ClassLoader.defineClass2

@@ -8,7 +8,7 @@ use jiff::Timestamp;
 use jiff::tz::TimeZone;
 
 use super::arm::Arm;
-use super::profile::FrameSamples;
+use super::profile::{FrameSamples, ProfileEvent, ProfileScope};
 use super::record::{
     CLASS_ANCHORS, CLASS_EDT_TIME, CLASS_REQUESTS, CLASS_TIME, CLASSES_HIDDEN, CLASSES_JAR, CLASSES_JDK, CLASSES_NAMED, CLASSES_PLATFORM,
     CLASSES_PLUGINS, CREATE_CONTENT_PREFIX, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, EMPTY_STATE_SPANS, EMPTY_STATE_STEP_PREFIX, END_SPANS,
@@ -103,7 +103,7 @@ pub(crate) fn render(summary: &Summary) -> String {
     }
     failures(&mut text, &arms);
     for arm in &arms {
-        profile(&mut text, arm);
+        profile(&mut text, arm, summary.profile_event);
     }
     load(&mut text, &arms);
     for warning in &summary.warnings {
@@ -266,12 +266,19 @@ fn failures(text: &mut String, arms: &[&ArmSummary]) {
     }
 }
 
-/// The top EDT frames of an arm, then its top class-loading triggers.
-fn profile(text: &mut String, arm: &ArmSummary) {
+/// The top EDT frames of an arm, then its top class-loading triggers. The heading names the event of the samples and
+/// the span of the runs that the profile covers.
+fn profile(text: &mut String, arm: &ArmSummary, event: ProfileEvent) {
     let Some(samples) = arm.edt_samples else {
         return;
     };
-    let _ = writeln!(text, "{} EDT, top Java frames by samples ({samples} EDT samples):", arm.arm.label());
+    let _ = writeln!(
+        text,
+        "{} EDT, top Java frames by samples ({samples} EDT {} samples, {}):",
+        arm.arm.label(),
+        event.option(),
+        profile_scope(arm)
+    );
     frames(text, &arm.edt_frames, PROFILE_FRAMES, samples);
     let Some(define_samples) = arm.define_samples else {
         return;
@@ -285,6 +292,22 @@ fn profile(text: &mut String, arm: &ArmSummary) {
         arm.arm.label()
     );
     frames(text, &arm.triggers, TRIGGER_FRAMES, define_samples);
+}
+
+/// The span of the valid runs of an arm that the profile covers: to the gate, the whole run, or a mix of both.
+pub(crate) fn profile_scope(arm: &ArmSummary) -> String {
+    let scopes: Vec<ProfileScope> = arm
+        .runs
+        .iter()
+        .filter(|run| run.valid)
+        .filter_map(|run| run.profile_scope)
+        .collect();
+    let gate = scopes.iter().filter(|scope| **scope == ProfileScope::Gate).count();
+    match (gate, scopes.len() - gate) {
+        (_, 0) => "to the gate".to_owned(),
+        (0, _) => "over the whole run".to_owned(),
+        (gate, whole) => format!("{gate} runs to the gate and {whole} over the whole run"),
+    }
 }
 
 /// One line per frame of a profile block, at most `limit`, with its share of `samples`.

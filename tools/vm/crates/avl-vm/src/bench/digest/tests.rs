@@ -14,7 +14,7 @@ fn the_replay_digest_matches_the_golden() {
     assert_golden("replay-digest.txt", &digest);
     let profile = digest
         .lines()
-        .skip_while(|line| !line.ends_with("EDT samples):"))
+        .skip_while(|line| !line.contains(" EDT, top Java frames by samples ("))
         .take_while(|line| !line.contains("host load"))
         .count();
     assert_eq!(profile, 16, "the EDT block and the trigger block of the profile");

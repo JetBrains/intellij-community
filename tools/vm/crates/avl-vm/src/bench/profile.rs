@@ -1,4 +1,5 @@
-//! The reader of `cpu.collapsed`, the collapsed stacks that async-profiler writes with the `threads` option.
+//! The reader of the collapsed stacks that async-profiler writes with the `threads` option: [`GATE_PROFILE`], which
+//! the run writes when it passes its gate, else [`WHOLE_PROFILE`], which the JVM writes at its exit.
 //!
 //! A line is `[<thread> tid=<id>];<frame>;...;<frame> <samples>`. The reader keeps the stacks of the EDT, whose
 //! thread name starts with `AWT-EventQueue`. It charges the samples of a stack to its deepest Java frame, a frame with
@@ -13,6 +14,44 @@ use anyhow::{Context, bail};
 use serde::{Deserialize, Serialize};
 
 const EDT_THREAD_PREFIX: &str = "[AWT-EventQueue";
+
+/// The profile of the start-up to the gate of the run, which `jcmd` makes async-profiler write when the gate passes.
+pub(crate) const GATE_PROFILE: &str = "cpu-gate.collapsed";
+
+/// The profile of the whole run, with the hold and the quit, which async-profiler writes at the exit of the JVM when
+/// it still runs.
+pub(crate) const WHOLE_PROFILE: &str = "cpu.collapsed";
+
+/// The event that async-profiler samples.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, clap::ValueEnum)]
+#[serde(rename_all = "camelCase")]
+pub(crate) enum ProfileEvent {
+    /// The CPU time of each thread.
+    #[default]
+    Cpu,
+    /// The wall clock, which samples a thread that waits too.
+    Wall,
+}
+
+impl ProfileEvent {
+    /// The value of the `event` option of async-profiler, and the word of the digest.
+    pub(crate) const fn option(self) -> &'static str {
+        match self {
+            Self::Cpu => "cpu",
+            Self::Wall => "wall",
+        }
+    }
+}
+
+/// The span of a run that its profile covers.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) enum ProfileScope {
+    /// The start-up to the gate: [`GATE_PROFILE`].
+    Gate,
+    /// The whole run: [`WHOLE_PROFILE`].
+    WholeRun,
+}
 
 /// The prefix of the frame that defines a class.
 const DEFINE_FRAME_PREFIX: &str = "java/lang/ClassLoader.defineClass";

@@ -11,7 +11,7 @@ Date: 2026-10-12
 Accepted. Extends [ADR 0193](0193-the-start-up-bench-is-a-vm-verb-over-a-staged-generation.md), which made the
 start-up bench a `vm` verb, and [ADR 0196](0196-the-class-count-of-a-bench-run-is-the-jvm-class-load-log.md), which
 made the JVM class-load log the class count of a run. Item 1 widens item 6 of ADR 0196 from the project arm to every
-arm. Items 4 and 5 are later steps of this ADR, each in its own commit. The verbs are in
+arm. Item 5 is a later step of this ADR, in its own commit. The verbs are in
 [the vm-lane README](../../README.md), section **The bench**, and the grammar of each is its `--help`.
 
 ## Context
@@ -56,8 +56,12 @@ computes it.**
    allocator. The report's `jvm.loadingTime`, the time of the JVM before that clock starts, is a metric of its own.
    The digest shows the ends in the group `span ends (ms from the process start)`, and the modal spans in the group
    `modal spans`.
-4. **The profile ends at the gate.** A later step of this ADR, in its own commit. The CPU profile of `--profile`
-   ends when the run passes its gate. It then holds the start-up, and not the hold and the quit.
+4. **The profile ends at the gate.** When a profiled run passes its gate, it reads the PID of the IDE from
+   `idea.log`. It then runs `jcmd <pid> JVMTI.agent_load <library> stop,file=cpu-gate.collapsed,collapsed` with the
+   JBR of the generation. The second load of the library reaches the agent that `-agentpath` started, and
+   `-XX:+EnableDynamicAgentLoading` allows the load. The profile then holds the start-up, and not the hold and the
+   quit. `--profile-event wall` samples the wall clock in place of the CPU. A run that cannot stop the profiler keeps
+   the whole-run `cpu.collapsed`, with a note that names why, and the digest says which profile it read.
 5. **A session can run over a staged generation.** A later step of this ADR, in its own commit. A session names a
    generation that exists and skips the build and the stage. Two sessions then measure the same bytes.
 6. **The modal arm has a report written at the exit.** A start without a project ends no start-up, so the modal
@@ -90,5 +94,7 @@ computes it.**
 - The digest grows by the span ends, and by the modal spans in a session with the modal arm.
 - A span that the IDE does not write gives no metric, and the digest names it in its `not measured` line. A build
   from before the new spans still gives a summary.
+- The stop starts a `jcmd` JVM at the gate, while the non-modal welcome screen can still paint. The late spans of a
+  profiled run thus carry the load of that JVM, and the profile ends before the paint.
 - A modal metric of the report is the state at the exit, not at the welcome event. The class counts of the modal
   arm still stop at their anchor, because the class-load log has the time of each class.

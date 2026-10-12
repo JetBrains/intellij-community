@@ -7,6 +7,7 @@ use pretty_assertions::assert_eq;
 
 use super::{ArmChoice, BenchVerb, DEFAULT_TARGET, ProjectArmChoice, ReplayArgs, parse_hold, parse_load};
 use crate::bench::arm::Arm;
+use crate::bench::profile::ProfileEvent;
 use crate::cli::{Cmd, Parsed, parse};
 use crate::terminal::{Output, TerminalFacts};
 
@@ -38,7 +39,21 @@ fn welcome_takes_the_defaults_of_the_plan() {
     assert_eq!(args.launch.session, None);
     assert_eq!(args.launch.max_load, None);
     assert!(!args.cold && !args.profile);
+    assert_eq!(args.profile_event, ProfileEvent::Cpu);
     assert_eq!(args.arm.arms(), vec![Arm::Modal, Arm::NonModal]);
+}
+
+/// `--profile-event` picks the event of the profile, and it needs `--profile`.
+#[test]
+fn the_profile_samples_the_cpu_or_the_wall_clock() {
+    let BenchVerb::Welcome(args) = verb(&["welcome", "--profile", "--profile-event", "wall"]) else {
+        panic!("expected welcome");
+    };
+    assert_eq!((args.profile, args.profile_event), (true, ProfileEvent::Wall));
+    match parsed(&["welcome", "--profile-event", "wall"]) {
+        Parsed::Refused { refusal, .. } => assert_eq!(refusal.code, "usage"),
+        other => panic!("--profile-event without --profile parsed: {other:?}"),
+    }
 }
 
 #[test]
@@ -153,6 +168,7 @@ fn a_bad_option_is_a_usage_refusal() {
         &["welcome", "--target", "--json"],
         &["welcome", "--hold", "3"],
         &["welcome", "--max-load", "0"],
+        &["welcome", "--profile", "--profile-event", "alloc"],
         &["open-project", "p", "--max-load", "-1"],
         &["project"],
         &["project", "markdown", "--runs", "0"],

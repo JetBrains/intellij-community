@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
 use super::arm::Arm;
-use super::profile::{EdtProfile, FrameSamples};
+use super::profile::{EdtProfile, FrameSamples, ProfileEvent};
 use super::record::{RunKind, RunRecord};
 use super::session::{GitInfo, MeasureModel, SessionInfo};
 use super::trace::tenth;
@@ -35,6 +35,9 @@ pub(crate) struct Summary {
     pub(crate) cold: bool,
     pub(crate) hold_ms: u64,
     pub(crate) profile: bool,
+    /// See [`SessionInfo::profile_event`].
+    #[serde(default)]
+    pub(crate) profile_event: ProfileEvent,
     pub(crate) project: Option<String>,
     /// See [`SessionInfo::project_file`].
     #[serde(default)]
@@ -166,6 +169,7 @@ impl Summary {
             cold: info.cold,
             hold_ms: info.hold_ms,
             profile: info.profile,
+            profile_event: info.profile_event,
             project: info.project.clone(),
             project_file: info.project_file.clone(),
             additional_modules: info.additional_modules.clone(),

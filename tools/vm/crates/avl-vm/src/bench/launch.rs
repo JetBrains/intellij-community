@@ -25,6 +25,7 @@ use serde::Deserialize;
 use super::arm::{Arm, Gate};
 use super::files;
 use super::fus;
+use super::profile::{GATE_PROFILE, ProfileEvent, WHOLE_PROFILE};
 use super::record::{self, EDITOR_HIGHLIGHTED, LaunchFacts, RunKind};
 use super::session::{CLASS_LOAD_LOG, ProjectPaths, Sandbox, TRACE_FILE};
 use super::stage::{DistConfig, Generation};
@@ -45,6 +46,22 @@ const QUIT_TIMEOUT: Duration = Duration::from_secs(60);
 const TERM_TIMEOUT: Duration = Duration::from_secs(15);
 /// How long the headless scheme run can take.
 const SCHEME_TIMEOUT: Duration = Duration::from_secs(300);
+/// How long the stop of the profiler can take: a `jcmd` JVM and the dump of the profile.
+const PROFILE_STOP_TIMEOUT: Duration = Duration::from_secs(30);
+
+/// The JVM option that lets `jcmd` load the profiler library into the running IDE, which stops the profiler at the
+/// gate. Without it, a JVM warns about the load or refuses it.
+pub(crate) const DYNAMIC_AGENT_OPTION: &str = "-XX:+EnableDynamicAgentLoading";
+
+/// The log of the `jcmd` that stops the profiler, in the run directory.
+const PROFILE_STOP_LOG: &str = "profile-stop.log";
+
+/// The profiler of a session: the async-profiler library and the event that it samples.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct Profiler {
+    pub(crate) library: PathBuf,
+    pub(crate) event: ProfileEvent,
+}
 
 /// The option that comes after every JVM option of the distribution: `-da` wins over the `-ea` of the dev
 /// `idea.vmoptions`, so the run measures the code a release runs.
@@ -110,8 +127,9 @@ pub(crate) fn class_load_option(run_dir: &Path) -> Result<String, String> {
 
 /// The options of a measured start, in order: the sandbox, the files of the run, the class-load log, the properties,
 /// the arm and the profiler. A run directory that the class-load log cannot name is an error, see
-/// [`class_load_option`].
-pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: Arm, profiler: Option<&Path>) -> Result<Vec<String>, String> {
+/// [`class_load_option`]. The profiler starts with the JVM and writes [`WHOLE_PROFILE`] at the exit, unless the run
+/// stops it at the gate.
+pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: Arm, profiler: Option<&Profiler>) -> Result<Vec<String>, String> {
     let mut options = sandbox_options(sandbox);
     options.extend([
         property("idea.log.path", &run_dir.join("log")),
@@ -127,14 +145,37 @@ pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: Arm, profi
         Arm::Project | Arm::EmptyEditor => options.push(format!("-D{TRUST_PROPERTY}")),
         Arm::NonModal | Arm::OpenProject => {}
     }
-    if let Some(library) = profiler {
+    if let Some(profiler) = profiler {
+        options.push(DYNAMIC_AGENT_OPTION.to_owned());
         options.push(format!(
-            "-agentpath:{}=start,event=cpu,interval=1ms,threads,collapsed,file={}",
-            library.display(),
-            run_dir.join("cpu.collapsed").display()
+            "-agentpath:{}=start,event={},interval=1ms,threads,collapsed,file={}",
+            profiler.library.display(),
+            profiler.event.option(),
+            run_dir.join(WHOLE_PROFILE).display()
         ));
     }
     Ok(options)
+}
+
+/// The argv that stops the profiler of the IDE `pid` and writes its profile to `file`:
+/// `jcmd <pid> JVMTI.agent_load <library> stop,file=<file>,collapsed`. The second load of the library reaches the
+/// agent that `-agentpath` started. `jcmd` joins its arguments into one command, which the JVM splits at the spaces
+/// outside quotes, so the path and the options are quoted.
+pub(crate) fn profile_stop_argv(jcmd: &Path, pid: u32, library: &Path, file: &Path) -> Vec<String> {
+    vec![
+        jcmd.display().to_string(),
+        pid.to_string(),
+        "JVMTI.agent_load".to_owned(),
+        format!("\"{}\"", library.display()),
+        format!("\"stop,file={},collapsed\"", file.display()),
+    ]
+}
+
+/// The PID of the IDE: the line `PID: <pid>` that `logEssentialInfoAboutIde` writes into `idea.log` at the start. A
+/// log without the line has none.
+pub(crate) fn idea_log_pid(log: &str) -> Option<u32> {
+    log.lines()
+        .find_map(|line| line.split_once(" - PID: ").and_then(|(_, pid)| pid.trim().parse().ok()))
 }
 
 /// What one IDE run starts: the arm, the kind of the run, and the project.
@@ -350,7 +391,7 @@ pub(crate) struct Launcher {
     pub(crate) dist_options: Vec<String>,
     /// The tail of every argfile: [`entry_options`].
     pub(crate) entry_options: Vec<String>,
-    pub(crate) profiler: Option<PathBuf>,
+    pub(crate) profiler: Option<Profiler>,
     pub(crate) hold: Duration,
 }
 
@@ -360,7 +401,7 @@ impl Launcher {
         generation: &Generation,
         runner: Runner,
         repo_root: &Path,
-        profiler: Option<PathBuf>,
+        profiler: Option<Profiler>,
         hold: Duration,
     ) -> Result<Self, Refusal> {
         let refuse = |error: anyhow::Error| {
@@ -440,7 +481,7 @@ impl Launcher {
     /// Runs the IDE once in `run_dir` and answers what the controller saw. The run waits for the gate of its arm.
     pub(crate) async fn run(&self, ctx: &Ctx, run_dir: &Path, sandbox: &Sandbox, plan: &RunPlan<'_>) -> LaunchFacts {
         let mut facts = LaunchFacts::default();
-        let options = match measure_options(run_dir, sandbox, plan.arm, self.profiler.as_deref()) {
+        let options = match measure_options(run_dir, sandbox, plan.arm, self.profiler.as_ref()) {
             Ok(options) => options,
             Err(failure) => {
                 facts.failure = Some(failure);
@@ -469,6 +510,12 @@ impl Launcher {
         facts.waited_ms = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
         if exited.is_none()
             && facts.failure.is_none()
+            && let Some(profiler) = &self.profiler
+        {
+            facts.profile_stop_failure = self.stop_profile(ctx, run_dir, profiler).await.err();
+        }
+        if exited.is_none()
+            && facts.failure.is_none()
             && let Some(project) = plan.open_project
         {
             exited = self.open(ctx, &mut ide, run_dir, sandbox, project, &mut facts).await;
@@ -487,6 +534,39 @@ impl Launcher {
             None => self.quit(ctx, &child, ide, run_dir, sandbox, &mut facts).await,
         };
         facts
+    }
+
+    /// Stops the profiler of the running IDE when the run passed its gate, so [`GATE_PROFILE`] holds the start-up and
+    /// not the hold and the quit. Answers why it could not: no `jcmd` in the JBR of the generation, no PID in
+    /// `log/idea.log`, or a `jcmd` that wrote no profile. The run then keeps [`WHOLE_PROFILE`].
+    async fn stop_profile(&self, ctx: &Ctx, run_dir: &Path, profiler: &Profiler) -> Result<(), String> {
+        let jcmd = self.java.with_file_name(if cfg!(windows) { "jcmd.exe" } else { "jcmd" });
+        if !jcmd.is_file() {
+            return Err("the JBR of the generation has no bin/jcmd".to_owned());
+        }
+        let log = files::read_optional(&run_dir.join("log").join("idea.log"))
+            .ok()
+            .flatten()
+            .unwrap_or_default();
+        let pid = idea_log_pid(&log).ok_or_else(|| "log/idea.log names no PID".to_owned())?;
+        let file = run_dir.join(GATE_PROFILE);
+        let argv = profile_stop_argv(&jcmd, pid, &profiler.library, &file);
+        let result = self
+            .runner
+            .checked_to_file(
+                ctx,
+                &argv,
+                &run_dir.join(PROFILE_STOP_LOG),
+                &self.logged(PROFILE_STOP_TIMEOUT, "bench_profile_stop_timeout"),
+            )
+            .await;
+        if file.is_file() {
+            return Ok(());
+        }
+        Err(format!(
+            "jcmd wrote no {GATE_PROFILE} ({}); see {PROFILE_STOP_LOG}",
+            describe(&result)
+        ))
     }
 
     /// Asks the running IDE to open `project`, and polls the trace for the highlighted editor.

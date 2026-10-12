@@ -168,6 +168,11 @@ is a metric of the first group. A modal run opens no project, so the IDE writes 
 the record reads it after the quit. Its `totalDuration` is negative or missing, so it is a note of the run and no
 metric.
 
+`--profile` samples the CPU with async-profiler from the JVM start to the gate of each run. When the gate passes, the
+run reads the PID of the IDE from `idea.log` and stops the profiler with `jcmd` of the generation, which writes
+`cpu-gate.collapsed`. `--profile-event wall` samples the wall clock in place of the CPU. A run that cannot stop the
+profiler keeps the whole-run profile `cpu.collapsed`, with a note that names why. The digest says which profile it read.
+
 | verb | the question it answers | its output |
 | --- | --- | --- |
 | `welcome` | How long does the IDE take to show the welcome screen, in the modal and the non-modal arm? | A session directory with its `summary.json`, and a text digest. |
@@ -192,7 +197,7 @@ A session directory holds:
 | `events.ndjson` | the run journal |
 | `session.json` | the inputs, with the generation, its digest and the measurement model `measureModel`, which `compare` notes when two sessions differ in it |
 | `build.log`, `template/`, `template-log/` | the host build, the sandbox template with the FUS test scheme, and its headless run |
-| `<arm>-prime/`, `<arm>-run-NN/` | one run: `sandbox/`, `log/`, `launch.args`, `launch.log`, the files the IDE writes, `class-load.log` of the JVM, `fus.jsonl`, `result.json` |
+| `<arm>-prime/`, `<arm>-run-NN/` | one run: `sandbox/`, `log/`, `launch.args`, `launch.log`, the files the IDE writes, `class-load.log` of the JVM, `fus.jsonl`, `result.json`, and with `--profile` the profile `cpu-gate.collapsed` and the log `profile-stop.log` of its stop |
 | `<arm>-sandbox/` | the sandbox of the run that is running now, at one path per arm |
 | `summary.json` | `distDigest`, `measureModel`, `maxLoad`, `warnings`, the runs and the median, min and max of each metric per arm, and the non-modal minus modal `delta` |
 

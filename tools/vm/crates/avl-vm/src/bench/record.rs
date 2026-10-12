@@ -13,7 +13,7 @@ use super::files;
 use super::fus;
 use super::load::HostLoad;
 use super::pluginlog::{self, PluginLog};
-use super::profile::{self, EdtProfile, FrameSamples};
+use super::profile::{self, EdtProfile, FrameSamples, GATE_PROFILE, ProfileScope, WHOLE_PROFILE};
 use super::session::{CLASS_LOAD_LOG, TRACE_FILE};
 use super::stats::{self, StartupStats};
 use super::timeline::QUIT_SPAN;
@@ -217,6 +217,10 @@ pub(crate) struct LaunchFacts {
     pub(crate) waited_ms: u64,
     /// The microseconds since the epoch of the open request of `open-project`.
     pub(crate) open_request_us: Option<i64>,
+    /// Why the run did not stop the profiler at its gate, so it keeps the whole-run profile. A run without a profile,
+    /// or one that stopped it, has none.
+    #[serde(default)]
+    pub(crate) profile_stop_failure: Option<String>,
 }
 
 /// One run.
@@ -249,6 +253,9 @@ pub(crate) struct RunRecord {
     /// needs the class-load log, the plugin log and the report.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub(crate) classes_by_plugin_at: BTreeMap<String, BTreeMap<String, u64>>,
+    /// The span of the run that its profile covers, when the run has a profile.
+    #[serde(default)]
+    pub(crate) profile_scope: Option<ProfileScope>,
     /// The EDT samples, when the run has a profile.
     pub(crate) edt_samples: Option<u64>,
     pub(crate) edt_frames: Vec<FrameSamples>,
@@ -317,6 +324,7 @@ pub(crate) fn collect(run_dir: &Path, id: &RunId, launch: LaunchFacts) -> RunRec
         classes_by_plugin: BTreeMap::new(),
         classes_by_module: BTreeMap::new(),
         classes_by_plugin_at: BTreeMap::new(),
+        profile_scope: None,
         edt_samples: None,
         edt_frames: Vec::new(),
         triggers: Vec::new(),
@@ -441,24 +449,44 @@ fn measure(run_dir: &Path, record: &mut RunRecord) -> Result<(), String> {
         trace.first(QUIT_SPAN).map(|span| span.offset_ms(origin))
     });
     class_metrics(record, plugin_log.as_ref(), class_log.as_ref(), stats.as_ref(), quit_ms);
-    let profile_path = run_dir.join("cpu.collapsed");
-    if profile_path.exists() {
-        let parsed = files::read_text(&profile_path).and_then(|text| profile::parse(&text));
-        match parsed {
-            Ok(profile) => {
-                record.edt_samples = Some(profile.samples);
-                record.edt_frames = profile.top(TOP_LIMIT);
-                record.triggers = profile.triggers.top(TOP_LIMIT);
-                record.define_share = profile.define_share();
-                if profile.all_samples > 0 && profile.samples == 0 {
-                    record.notes.push("cpu.collapsed has no AWT-EventQueue stack".to_owned());
-                }
-                record.profile = Some(profile);
-            }
-            Err(error) => record.notes.push(format!("cpu.collapsed: {error:#}")),
-        }
-    }
+    profile_metrics(run_dir, record);
     Ok(())
+}
+
+/// Reads the profile of a run: [`GATE_PROFILE`], else [`WHOLE_PROFILE`] with a note that names why the run did not stop
+/// the profiler at its gate. A profile of another shape is a note.
+fn profile_metrics(run_dir: &Path, record: &mut RunRecord) {
+    let (name, scope) = if run_dir.join(GATE_PROFILE).exists() {
+        (GATE_PROFILE, ProfileScope::Gate)
+    } else if run_dir.join(WHOLE_PROFILE).exists() {
+        (WHOLE_PROFILE, ProfileScope::WholeRun)
+    } else {
+        return;
+    };
+    match files::read_text(&run_dir.join(name)).and_then(|text| profile::parse(&text)) {
+        Ok(profile) => {
+            record.profile_scope = Some(scope);
+            record.edt_samples = Some(profile.samples);
+            record.edt_frames = profile.top(TOP_LIMIT);
+            record.triggers = profile.triggers.top(TOP_LIMIT);
+            record.define_share = profile.define_share();
+            if scope == ProfileScope::WholeRun {
+                let why = record
+                    .launch
+                    .profile_stop_failure
+                    .clone()
+                    .unwrap_or_else(|| format!("the run has no {GATE_PROFILE}"));
+                record.notes.push(format!(
+                    "{WHOLE_PROFILE} is the whole-run profile, with the hold and the quit: {why}"
+                ));
+            }
+            if profile.all_samples > 0 && profile.samples == 0 {
+                record.notes.push(format!("{name} has no AWT-EventQueue stack"));
+            }
+            record.profile = Some(profile);
+        }
+        Err(error) => record.notes.push(format!("{name}: {error:#}")),
+    }
 }
 
 /// The class metrics and the class maps of a run. The plugin log alone gives `pluginClasses` and the maps. The

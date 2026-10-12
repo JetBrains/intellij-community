@@ -7,6 +7,7 @@ use clap::{Subcommand, ValueEnum};
 
 use super::arm::Arm;
 use super::gc::DEFAULT_KEEP;
+use super::profile::ProfileEvent;
 use super::record::CLASS_ANCHORS;
 
 /// The default distribution: the self-contained `.dist` of the `idea` row.
@@ -252,9 +253,14 @@ pub(crate) struct WelcomeArgs {
     /// Starts each measured run from a fresh copy of the unprimed template, and skips the prime runs.
     #[arg(long)]
     pub(crate) cold: bool,
-    /// Samples the CPU with async-profiler and reports the top frames of the EDT.
+    /// Samples with async-profiler from the JVM start to the gate of each run, and reports the top frames of the EDT. A
+    /// run whose JBR has no jcmd keeps the profile of the whole run.
     #[arg(long)]
     pub(crate) profile: bool,
+    /// The event of --profile: `cpu`, the CPU time of each thread, or `wall`, the wall clock, which samples a waiting
+    /// thread too.
+    #[arg(long, value_name = "EVENT", value_enum, default_value_t = ProfileEvent::Cpu, requires = "profile")]
+    pub(crate) profile_event: ProfileEvent,
     #[command(flatten)]
     pub(crate) launch: LaunchArgs,
 }

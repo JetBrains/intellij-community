@@ -22,10 +22,11 @@ use super::compare::{self, Compared};
 use super::digest;
 use super::files;
 use super::gc;
-use super::launch::{Launcher, RunPlan};
+use super::launch::{Launcher, Profiler, RunPlan};
 use super::load;
 use super::ls;
 use super::options::{BenchVerb, LaunchArgs};
+use super::profile::ProfileEvent;
 use super::record::{self, RunId, RunKind, RunRecord};
 use super::resolve;
 use super::session::{
@@ -60,6 +61,7 @@ struct Plan {
     runs: u32,
     cold: bool,
     profile: bool,
+    profile_event: ProfileEvent,
     project: Option<PlannedProject>,
 }
 
@@ -102,6 +104,7 @@ impl Bench<'_> {
                     runs: args.runs,
                     cold: args.cold,
                     profile: args.profile,
+                    profile_event: args.profile_event,
                     project: None,
                 };
                 self.session(ctx, &plan, &args.launch).await
@@ -117,6 +120,7 @@ impl Bench<'_> {
                     runs: args.runs,
                     cold: false,
                     profile: false,
+                    profile_event: ProfileEvent::Cpu,
                     project: Some(PlannedProject::Open(project)),
                 };
                 self.session(ctx, &plan, &args.launch).await
@@ -128,6 +132,7 @@ impl Bench<'_> {
                     runs: args.runs,
                     cold: args.cold,
                     profile: false,
+                    profile_event: ProfileEvent::Cpu,
                     project: Some(PlannedProject::Start(project_source(&args.project, &working_dir()?)?)),
                 };
                 self.session(ctx, &plan, &args.launch).await
@@ -265,7 +270,10 @@ impl Bench<'_> {
         let profiler = if plan.profile {
             self.reporter.note("resolving the async-profiler library", None);
             warnings.push("the profile adds the async-profiler agent; its runs are slower than a run without it".to_owned());
-            Some(resolve::profiler(ctx, self.bazel, self.runner, session).await?)
+            Some(Profiler {
+                library: resolve::profiler(ctx, self.bazel, self.runner, session).await?,
+                event: plan.profile_event,
+            })
         } else {
             None
         };
@@ -300,6 +308,7 @@ impl Bench<'_> {
             cold: plan.cold,
             hold_ms: u64::try_from(args.hold.as_millis()).unwrap_or(u64::MAX),
             profile: plan.profile,
+            profile_event: plan.profile_event,
             project: match (&plan.project, &project) {
                 (_, Some(project)) => Some(project.paths(&template).dir.display().to_string()),
                 (Some(PlannedProject::Open(dir)), None) => Some(dir.display().to_string()),
