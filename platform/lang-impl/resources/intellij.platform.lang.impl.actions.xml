@@ -313,7 +313,7 @@
     <action class="com.intellij.codeInsight.codeVision.ShowCodeVisionPopupAction" id="CodeVision.ShowMore" />
     <group id="QuickFixes" class="com.intellij.codeInspection.ui.actions.QuickFixesViewActionGroup"/>
     <group id="SuppressFixes" class="com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper"/>
-    <action id="EditInspectionSettings" class="com.intellij.codeInspection.ui.actions.EditSettingsAction"/>
+    <action id="EditInspectionSettings" class="com.intellij.codeInspection.ui.actions.EditSettingsAction" icon="AllIcons.General.Settings"/>
     <action id="DisableInspection" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$DisableInspection"/>
     <action id="RunInspectionOn" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$RunInspectionOn"/>
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction"/>

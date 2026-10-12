@@ -5,20 +5,30 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 import javax.swing.SpinnerNumberModel;
 
-@ApiStatus.Internal
-public final class AnalyzeDependenciesAction extends BaseAnalysisAction {
+// todo must be moved to Java plugin
+final class AnalyzeDependenciesAction extends BaseAnalysisAction {
   private AnalyzeDependenciesAdditionalUi myPanel;
 
-  public AnalyzeDependenciesAction() {
+  AnalyzeDependenciesAction() {
     super(CodeInsightBundle.messagePointer("action.forward.dependency.analysis"), CodeInsightBundle.messagePointer("action.analysis.noun"));
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      e.getPresentation().setText(ActionsBundle.message("action.ShowPackageDeps.text.full"));
+    }
   }
 
   @Override
@@ -28,7 +38,7 @@ public final class AnalyzeDependenciesAction extends BaseAnalysisAction {
   }
 
   @Override
-  protected @Nullable JComponent getAdditionalActionSettings(final @NotNull Project project, final BaseAnalysisActionDialog dialog) {
+  protected @NotNull JComponent getAdditionalActionSettings(final @NotNull Project project, final BaseAnalysisActionDialog dialog) {
     myPanel = new AnalyzeDependenciesAdditionalUi();
     return myPanel.getPanel();
   }
