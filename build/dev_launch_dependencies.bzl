@@ -428,6 +428,20 @@ def _dev_launch_deps_community_impl(module_ctx):
         url = restarter_url,
     )
 
+    # NativeBinaryDownloader.getLauncher - one archive with the native launcher of every platform, unpacked.
+    # The plan states the launcher facts of each product. The `platform_assets` component of a split distribution
+    # derives the files from them (`_launcher_files`) and places each one from this repository.
+    dev_launch_extracted_repo(
+        name = "dev_launch_launcher_extracted",
+        url = maven_url(
+            INTELLIJ_DEPENDENCIES_URL,
+            "org.jetbrains.intellij.deps",
+            "launcher",
+            pinned(community, _COMMUNITY_DEPENDENCIES, "launcherBuild"),
+            "tar.gz",
+        ),
+    )
+
     # BundledMavenDownloader.downloadMavenDistribution - the one archive of `:files`, so a plugin layout names it
     # without its version
     dev_launch_deps_repo(

@@ -71,6 +71,7 @@ _LAUNCH = struct(
         "windows": "idea64.exe.vmoptions",
     },
     main_class = "com.intellij.idea.Main",
+    launcher = struct(base_file_name = "idea", language_server = False, windows_gui = True, windows_console = True),
 )
 
 _PLAN_AndroidStudio = struct(

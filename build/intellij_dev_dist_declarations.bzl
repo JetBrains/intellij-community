@@ -221,7 +221,50 @@ PACKED_JARS_COMPONENT = "platform_packed_content_modules"
 
 # The component that places the platform's declared dist files: the files of the unpacked dev-launch archives that
 # `PlatformLayout.withDistFiles` names, at their distribution paths. The generated plan states them per host platform.
+# The component also places the native launcher files, which `_launcher_files` derives from the launch facts of the plan.
 PLATFORM_ASSETS_COMPONENT = "platform_assets"
+
+# The unpacked launcher archive, and its spelling of the `platform_parts` tokens in `<OS>-<Arch>/`.
+_LAUNCHER_REPOSITORY = "@dev_launch_launcher_extracted//:"
+_LAUNCHER_ARCHIVE_OS = {"darwin": "macOS", "linux": "Linux", "windows": "Windows"}
+_LAUNCHER_ARCHIVE_ARCH = {"aarch64": "AArch64", "x64": "X86_64"}
+
+def _launcher_files(launcher, platform):
+    """The native launcher files of one host platform, as `struct(source, path, executable)` entries.
+
+    `launcher` is the `launch.launcher` struct of a plan. It states the base file name, the language server flag and the
+    two Windows launcher flags of the product. The rule mirrors the OS builders of production packaging:
+
+    - `LinuxDistributionBuilder.addNativeLauncher` places `bin/<base>`.
+    - `MacDistributionBuilder.layoutMacApp` places `MacOS/<base>`, and `layoutMacCli` places `bin/<base>` for a language
+      server. A dev home starts through `bin`, so macOS always gets `bin/<base>`. An app also gets `MacOS/<base>`,
+      which the restarter starts.
+    - `WindowsDistributionBuilder.patchLauncher` writes the GUI launcher `bin/<base>64.exe` and the console launcher
+      `bin/<base>.exe`, each one when its flag is set. A language server adds no `64`.
+
+    Every platform also gets the launcher license at `license/launcher-third-party-libraries.html`. The OS builders patch
+    the launcher, and this component places the archive bytes as they are.
+    """
+    parts = platform_parts(platform)
+    directory = _LAUNCHER_REPOSITORY + _LAUNCHER_ARCHIVE_OS[parts.os] + "-" + _LAUNCHER_ARCHIVE_ARCH[parts.arch] + "/"
+    base = launcher.base_file_name
+    launchers = []
+    if parts.os == "windows":
+        if launcher.windows_gui:
+            launchers.append((directory + "xplat-launcher.exe", "bin/%s.exe" % (base if launcher.language_server else base + "64")))
+        if launcher.windows_console:
+            launchers.append((directory + "xplat-launcher-win-con.exe", "bin/%s.exe" % base))
+    else:
+        launchers.append((directory + "xplat-launcher", "bin/" + base))
+        if parts.os == "darwin" and not launcher.language_server:
+            launchers.append((directory + "xplat-launcher", "MacOS/" + base))
+    files = [struct(source = source, path = path, executable = True) for source, path in launchers]
+    files.append(struct(
+        source = _LAUNCHER_REPOSITORY + "license/xplat-launcher-third-party-licenses.html",
+        path = "license/launcher-third-party-libraries.html",
+        executable = False,
+    ))
+    return files
 
 # The component of `bin/idea.properties`, the vmoptions file, `bin/product-info.json` and `build.txt`, which the product
 # files action renders from the launch model of the product.
@@ -251,16 +294,17 @@ def _platform_fragment_layout(tables, product):
 
     `suffix` names the target, `<platform set>_<suffix>`. `fragment_name` is the composer's name for it. The order is
     the composition order: `platform_resources`, then the packed content-module jars, then the platform assets. This is
-    the one owner of that list; the declaring macro and the label lookup both read it.
+    the one owner of that list; the declaring macro and the label lookup both read it. Every product has the platform
+    assets, because every product places the native launcher.
     """
-    plan = _plan(tables, product)
-    layout = [
+
+    # A product without a plan fails here, with its name.
+    _plan(tables, product)
+    return [
         struct(suffix = _fragment_suffix(_PLATFORM_RESOURCES_FRAGMENT), fragment_name = _PLATFORM_RESOURCES_FRAGMENT),
         struct(suffix = PACKED_JARS_COMPONENT, fragment_name = PACKED_JARS_COMPONENT),
+        struct(suffix = "assets", fragment_name = PLATFORM_ASSETS_COMPONENT),
     ]
-    if plan.platform_assets:
-        layout.append(struct(suffix = "assets", fragment_name = PLATFORM_ASSETS_COMPONENT))
-    return layout
 
 def _has_runtime_module_repository(tables, product):
     """Whether the plan of `product` has the runtime module repository component.
@@ -484,14 +528,23 @@ def _platform_set(tables, product, name, target_platform, visibility):
         )
 
     def assets_component():
-        # The generated plan states each file as `struct(source, path, executable)` per host platform. The rule takes
-        # the files as two path-to-label dicts, one per executable bit. The path is the key, so one source can go to
-        # two paths.
+        # The generated plan states each file as `struct(source, path, executable)` per host platform, and
+        # `_launcher_files` adds the launcher files in the same shape. The rule takes the files as two path-to-label
+        # dicts, one per executable bit. The path is the key, so one source can go to two paths.
+        def platform_files(platform):
+            entries = getattr(plan, "platform_assets", {}).get(platform, []) + _launcher_files(plan.launch.launcher, platform)
+            paths = {}
+            for entry in entries:
+                if entry.path in paths:
+                    fail("%s: two platform assets of %s go to '%s'" % (product, platform, entry.path))
+                paths[entry.path] = True
+            return entries
+
         def asset_files(entries, executable):
             return {entry.path: entry.source for entry in entries if entry.executable == executable}
 
         def selected(executable):
-            return per_platform(lambda platform: asset_files(plan.platform_assets.get(platform, []), executable))
+            return per_platform(lambda platform: asset_files(platform_files(platform), executable))
 
         intellij_dev_packed_jars_component(
             name = name + "_assets",

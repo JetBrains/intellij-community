@@ -185,6 +185,7 @@ dev_launch_deps_community = use_extension("@community//build:dev_launch_dependen
 use_repo(
     dev_launch_deps_community,
     "dev_launch_jserialcomm",
+    "dev_launch_launcher_extracted",
     "dev_launch_libghostty",
     "dev_launch_libwebp",
     "dev_launch_maven",

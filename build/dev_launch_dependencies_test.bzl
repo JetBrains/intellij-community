@@ -144,6 +144,13 @@ def _maven_url_test_impl(ctx):
         _DEPS + "/org/jetbrains/intellij/deps/restarter/243.6005/restarter-243.6005.tar.gz",
         maven_url(_DEPS, "org.jetbrains.intellij.deps", "restarter", "243.6005", "tar.gz"),
     )
+
+    # NativeBinaryDownloader.getLauncher, for `launcherBuild=263.6784`. The same Maven shape as the restarter.
+    asserts.equals(
+        env,
+        _DEPS + "/org/jetbrains/intellij/deps/launcher/263.6784/launcher-263.6784.tar.gz",
+        maven_url(_DEPS, "org.jetbrains.intellij.deps", "launcher", "263.6784", "tar.gz"),
+    )
     return unittest.end(env)
 
 maven_url_test = unittest.make(_maven_url_test_impl)

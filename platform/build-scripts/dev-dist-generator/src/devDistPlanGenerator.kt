@@ -759,6 +759,10 @@ private data class ProductFragmentPlan(
   @JvmField val launchModelRelativePath: String,
   /** The label of the base `idea.properties` of [launchModel], see [DevDistHalf.baseIdeaProperties]. */
   @JvmField val ideaProperties: String,
+  /** `WindowsDistributionCustomizer.includeGuiLauncher`, or false for a product without a Windows customizer. */
+  @JvmField val windowsGuiLauncher: Boolean,
+  /** `WindowsDistributionCustomizer.includeConsoleLauncher`, or false for a product without a Windows customizer. */
+  @JvmField val windowsConsoleLauncher: Boolean,
   /** The application info sources that the `platform_resources` component reads beside [launchModel]. */
   @JvmField val applicationInfoSources: ApplicationInfoSources,
   /** The `lib/` jar order of the platform. `null` for a product without the [runtimeModuleRepository] component. */
@@ -1851,6 +1855,7 @@ private fun collectFragmentPlan(
     )
   }
   val launchModel = computeDevProductLaunchModel(properties, outputProvider, PINNED_BUILD_DATE_IN_SECONDS)
+  val windowsCustomizer = properties.createWindowsCustomizer(index.projectRoot)
   return ProductFragmentPlan(
     platformPrefix = product.name,
     productMode = properties.productMode.id,
@@ -1863,6 +1868,8 @@ private fun collectFragmentPlan(
     launchModel = launchModel,
     launchModelRelativePath = launchModelRelativePath(half.caseSafeProductName(product.name)),
     ideaProperties = index.planLabel(half.baseIdeaProperties(product.name, languageServerBase = launchModel.ideaProperties.languageServerBase)),
+    windowsGuiLauncher = windowsCustomizer?.includeGuiLauncher == true,
+    windowsConsoleLauncher = windowsCustomizer?.includeConsoleLauncher == true,
     applicationInfoSources = applicationInfoSources(
       index = index,
       project = jpsProject,
@@ -3421,6 +3428,9 @@ private fun referenceInputModel(targets: BazelTargetsInfo.TargetsFile, outputPro
 }
 
 
+/** A Starlark boolean literal. */
+private fun starlarkBoolean(value: Boolean): String = if (value) "True" else "False"
+
 /** One field value of a product plan as [planFieldBodies] renders it at the top level, keyed with its field. */
 private data class PlanFieldBody(@JvmField val field: String, @JvmField val body: String)
 
@@ -3456,6 +3466,11 @@ private fun planFieldBodies(product: ProductFragmentPlan): List<PlanFieldBody> {
     }
     append("    },\n")
     append("    main_class = \"").append(model.launch.mainClass).append("\",\n")
+    // The facts the native launcher files derive from, see `_launcher_files` in `intellij_dev_dist_declarations.bzl`.
+    append("    launcher = struct(base_file_name = \"").append(model.baseFileName)
+      .append("\", language_server = ").append(starlarkBoolean(model.languageServer))
+      .append(", windows_gui = ").append(starlarkBoolean(product.windowsGuiLauncher))
+      .append(", windows_console = ").append(starlarkBoolean(product.windowsConsoleLauncher)).append("),\n")
     append(")")
   }))
   return result
