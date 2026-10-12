@@ -16,7 +16,7 @@ object RunCommandUsingIdeUtil {
     }
 
   val isVisible: Boolean
-    get() = TerminalShellCommandHandlerHelper.isFeatureEnabled()
+    get() = TerminalShellCommandHandlerHelperImpl.isFeatureEnabled()
 
   interface TerminalCommandHandlerListener {
     fun modeChanged()

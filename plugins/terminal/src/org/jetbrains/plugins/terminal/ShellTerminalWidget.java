@@ -54,7 +54,7 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
   private List<String> myShellCommand;
   private ShellStartupOptions myStartupOptions;
   private final Prompt myPrompt = new Prompt();
-  private final TerminalShellCommandHandlerHelper myShellCommandHandlerHelper;
+  private final TerminalShellCommandHandlerHelperImpl myShellCommandHandlerHelper;
   private final BlockingQueue<String> myCommandsToExecute = new LinkedBlockingQueue<>();
   private final EventDispatcher<ClassicTerminalCommandStartedListener> myCommandStartedDispatcher =
     EventDispatcher.create(ClassicTerminalCommandStartedListener.class);
@@ -73,7 +73,7 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
                              @NotNull JBTerminalSystemSettingsProvider settingsProvider,
                              @NotNull Disposable parent) {
     super(project, settingsProvider, parent);
-    myShellCommandHandlerHelper = new TerminalShellCommandHandlerHelper(this);
+    myShellCommandHandlerHelper = new TerminalShellCommandHandlerHelperImpl(this);
 
     ClassicTerminalVfsRefresher refresher = new ClassicTerminalVfsRefresher(this);
     getTerminalPanel().addPreKeyEventHandler(e -> {
@@ -86,7 +86,7 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
           refresher.scheduleRefreshOnCommandFinished(() -> isPromptSame(prompt));
         }
       }
-      if (e.getKeyCode() == KeyEvent.VK_ENTER || TerminalShellCommandHandlerHelper.matchedExecutor(e) != null) {
+      if (e.getKeyCode() == KeyEvent.VK_ENTER || TerminalShellCommandHandlerHelperImpl.matchedExecutor(e) != null) {
         String shellCommand = getTypedShellCommand();
         TerminalUsageTriggerCollector.triggerCommandStarted(project, shellCommand, false);
         myCommandStartedDispatcher.getMulticaster().commandStarted(shellCommand);

@@ -52,8 +52,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.jediterm.terminal.ui.AwtTransformers.fromAwtToTerminalColor;
 
-public final class TerminalShellCommandHandlerHelper {
-  private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandlerHelper.class);
+public final class TerminalShellCommandHandlerHelperImpl {
+  private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandlerHelperImpl.class);
   private static final @NonNls String FEATURE_ID = "terminal.shell.command.handling";
   private static final int TYPING_THRESHOLD_MS = 200;
 
@@ -67,7 +67,7 @@ public final class TerminalShellCommandHandlerHelper {
   private volatile SmartCommandContext myLastSmartCommandContext;
   private Disposable myNotificationDisposable;
 
-  TerminalShellCommandHandlerHelper(@NotNull ShellTerminalWidget widget) {
+  TerminalShellCommandHandlerHelperImpl(@NotNull ShellTerminalWidget widget) {
     myWidget = widget;
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, widget);
 
