@@ -15,6 +15,7 @@ private val PYREFLY_UNRESOLVED_REFERENCE_CODES = PyLspUnresolvedReferenceCodes(
   unknownName = setOf("unknown-name"),
   missingImport = setOf("missing-import"),
   missingModuleAttribute = setOf("missing-module-attribute"),
+  missingSource = setOf("missing-source-for-stubs", "missing-source"),
 )
 
 internal fun isSuppressedPyreflyDiagnostic(diagnostic: Diagnostic): Boolean =

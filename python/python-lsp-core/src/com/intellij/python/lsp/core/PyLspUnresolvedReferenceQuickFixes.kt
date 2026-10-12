@@ -36,6 +36,11 @@ class PyLspUnresolvedReferenceCodes(
   val unknownName: Set<String>,
   /** A module that the tool cannot find, such as `import flask` without `flask` installed. */
   val missingImport: Set<String>,
+  /**
+   * A module that the tool finds only as stubs, because its package is not installed.
+   * The stubs show that the name is correct, so these codes get no rename.
+   */
+  val missingSource: Set<String> = emptySet(),
   /** A name that an existing module does not define, such as `from os import nonexistent`. */
   val missingModuleAttribute: Set<String>,
 )
@@ -60,6 +65,7 @@ fun pyLspUnresolvedReferenceQuickFixes(
     in codes.unknownName -> unknownNameQuickFixes(file, textRange, description)
     in codes.missingImport -> importQuickFixes(file, textRange, description, installPackage = true)
     in codes.missingModuleAttribute -> importQuickFixes(file, textRange, description, installPackage = false)
+    in codes.missingSource -> missingSourceQuickFixes(file, textRange, description)
     else -> emptyList()
   }
 }
@@ -89,14 +95,21 @@ private fun importQuickFixes(
   val fixes = buildList {
     add(PyRenameUnresolvedRefQuickFix())
     if (installPackage) {
-      val referencedName = topmostQualifier.referencedName
-      if (referencedName != null) {
-        addAll(PyUnresolvedReferenceQuickFixesImpl.getInstallPackageQuickFixes(topmostQualifier, topmostQualifier.reference, referencedName))
-      }
+      addAll(installPackageQuickFixes(topmostQualifier))
     }
     addAll(PyUnresolvedReferenceQuickFixesImpl.getImportStatementQuickFixes(topmostQualifier))
   }
   return pyLspWrapQuickFixes(topmostQualifier, description, fixes)
+}
+
+private fun missingSourceQuickFixes(file: PsiFile, textRange: TextRange, description: @NlsSafe String): List<IntentionAction> {
+  val topmostQualifier = pyLspImportedReference(file, textRange) ?: return emptyList()
+  return pyLspWrapQuickFixes(topmostQualifier, description, installPackageQuickFixes(topmostQualifier))
+}
+
+private fun installPackageQuickFixes(topmostQualifier: PyReferenceExpression): List<LocalQuickFix> {
+  val referencedName = topmostQualifier.referencedName ?: return emptyList()
+  return PyUnresolvedReferenceQuickFixesImpl.getInstallPackageQuickFixes(topmostQualifier, topmostQualifier.reference, referencedName)
 }
 
 /**
