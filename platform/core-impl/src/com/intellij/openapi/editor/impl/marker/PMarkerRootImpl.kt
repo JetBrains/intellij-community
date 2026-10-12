@@ -922,25 +922,31 @@ open class PMarkerRootImpl private constructor(
         return pivotId
       }
 
-      if (leftHeight > rightHeight + 1) {
-        val leftRootId = checkNotNull(leftId)
-        val leftRoot = push(editor, leftRootId)
-        val detachedRight = leftRoot.rightId
-        editor.setParent(detachedRight, NULL_NODE)
-        val joinedRight = joinPrepared(editor, detachedRight, pivotId, rightId)
-        rewrite(editor, leftRootId, leftRoot, NULL_NODE, leftRoot.leftId, joinedRight)
-        val result = rebalance(editor, leftRootId)
-        editor.setParent(result, NULL_NODE)
-        return result
+      val leftIsTaller = leftHeight > rightHeight
+      val shorterHeight = if (leftIsTaller) rightHeight else leftHeight
+      var subtreeId = if (leftIsTaller) leftId else rightId
+      val subtreeParentId = editor.valid(subtreeId).parentId
+      var ancestorId = subtreeParentId
+      while (height(editor, subtreeId) > shorterHeight + 1) {
+        val root = push(editor, subtreeId)
+        ancestorId = subtreeId
+        subtreeId = if (leftIsTaller) root.rightId else root.leftId
       }
 
-      val rightRootId = checkNotNull(rightId)
-      val rightRoot = push(editor, rightRootId)
-      val detachedLeft = rightRoot.leftId
-      editor.setParent(detachedLeft, NULL_NODE)
-      val joinedLeft = joinPrepared(editor, leftId, pivotId, detachedLeft)
-      rewrite(editor, rightRootId, rightRoot, NULL_NODE, joinedLeft, rightRoot.rightId)
-      val result = rebalance(editor, rightRootId)
+      val pivot = push(editor, pivotId)
+      rewrite(editor, pivotId, pivot, NULL_NODE,
+              if (leftIsTaller) subtreeId else leftId,
+              if (leftIsTaller) rightId else subtreeId)
+      var result = pivotId
+      while (ancestorId != subtreeParentId) {
+        val ancestor = editor.valid(ancestorId)
+        val parentId = ancestor.parentId
+        rewrite(editor, ancestorId, ancestor, parentId,
+                if (leftIsTaller) ancestor.leftId else result,
+                if (leftIsTaller) result else ancestor.rightId)
+        result = rebalance(editor, ancestorId)
+        ancestorId = parentId
+      }
       editor.setParent(result, NULL_NODE)
       return result
     }
