@@ -44,6 +44,7 @@ internal class WelcomeProjectNewActionsCustomizer : ActionConfigurationCustomize
     actionRegistrar.run {
       replaceExistingAction("NewDir") { WelcomeProjectHiddenAction(it) }
       replaceExistingAction("NewFile") { WelcomeProjectHiddenAction(it) }
+      replaceExistingAction("NewScratchFile") { WelcomeProjectHiddenAction(it) }
     }
   }
 }
