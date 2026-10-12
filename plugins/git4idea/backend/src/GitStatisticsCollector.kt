@@ -160,7 +160,15 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     return set
   }
 
-  private fun getTagsSize(repository: GitRepository): Int = GitBranchUtil.getAllTags(repository.project, repository.root).size
+  private fun getTagsSize(repository: GitRepository): Int? {
+    return try {
+      GitBranchUtil.getAllTags(repository.project, repository.root).size
+    }
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      null
+    }
+  }
 
   private fun reportVersion(project: Project, set: MutableSet<MetricEvent>) {
     val executableManager = GitExecutableManager.getInstance()
