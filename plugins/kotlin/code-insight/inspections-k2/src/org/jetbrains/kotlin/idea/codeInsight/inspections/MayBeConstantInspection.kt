@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
+import org.jetbrains.kotlin.analysis.api.expressions.returnType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.matchStatus
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtProperty
 
@@ -58,18 +59,24 @@ internal class MayBeConstantInspection : MayBeConstantInspectionBase() {
     private fun KtProperty.hasNonNullablePrimitiveOrStringType(): Boolean {
         val type = this.returnType
         if (type.isMarkedNullable) return false
-        return type.classId in KaStandardTypeClassIds.PRIMITIVES || type.classId == KaStandardTypeClassIds.STRING
+        return type.classId in supportedTypes
     }
 
     context(_: KaSession)
-    private fun KtExpression.getConstantValue(): KaConstantValue? {
-        return evaluate()
-    }
+    private fun KtExpression.getConstantValue(): KaConstantValue? =
+        evaluate()
 
     context(_: KaSession)
-    private fun KtExpression.usesNonConstValAsConstant(): Boolean {
-        return diagnostics().directOnly(true).find {
+    private fun KtExpression.usesNonConstValAsConstant(): Boolean =
+        diagnostics().directOnly(true).find {
             it is KaFirDiagnostic.NonConstValUsedInConstantExpression
         } != null
-    }
 }
+
+private val supportedTypes: Set<ClassId> =
+    buildSet {
+        addAll(KaStandardTypeClassIds.PRIMITIVES)
+        add(KaStandardTypeClassIds.STRING)
+        add(StandardClassIds.UInt)
+        add(StandardClassIds.ULong)
+    }
