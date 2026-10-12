@@ -173,7 +173,7 @@ internal class DynamicPluginsSupportImpl(
 
     return withContext(NonCancellable) {
       val criticalSectionResult = if (criticalSectionModalProgressConfig != null) {
-        tracer.spanBuilder("criticalSectionModalProgress").useWithScope {
+        tracer.spanBuilder(DynamicPlugins.CRITICAL_SECTION_MODAL_PROGRESS_SPAN).useWithScope {
           withModalProgress(criticalSectionModalProgressConfig.owner,
                             criticalSectionModalProgressConfig.title,
                             TaskCancellation.nonCancellable()) {
@@ -189,7 +189,9 @@ internal class DynamicPluginsSupportImpl(
         doUnloadAndLoad(loadSteps, unloadSteps, targetState, sequence)
       }
 
-      criticalSectionResult.deferredPostLoadNotification.invoke()
+      tracer.spanBuilder("postLoadNotifications").useWithScope {
+        criticalSectionResult.deferredPostLoadNotification.invoke()
+      }
       criticalSectionResult.result
     }
   }
@@ -443,7 +445,7 @@ internal class DynamicPluginsSupportImpl(
       try {
         attachClassLoaders(targetPluginSet, groups, reusedGroups)
 
-        tracer.spanBuilder("warmupClassLoaders").useWithScope {
+        tracer.spanBuilder(DynamicPlugins.WARMUP_CLASSLOADERS_SPAN).useWithScope {
           warmupClassLoaders(groups)
         }
 

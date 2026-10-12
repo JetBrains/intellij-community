@@ -45,6 +45,11 @@ object DynamicPlugins {
   const val UNLOAD_MODAL_PROGRESS_SPAN: @NonNls String = "unloadPluginsModalProgress"
   const val RECONFIGURE_MODAL_PROGRESS_SPAN: @NonNls String = "reconfigurePluginsModalProgress"
 
+  /** The span around the complete reconfiguration, including work outside modal progress. */
+  const val RECONFIGURE_SPAN: @NonNls String = "reconfigurePlugins"
+  const val CRITICAL_SECTION_MODAL_PROGRESS_SPAN: @NonNls String = "criticalSectionModalProgress"
+  const val WARMUP_CLASSLOADERS_SPAN: @NonNls String = "warmupClassLoaders"
+
   fun interface PluginStateValidator {
     /** @return a log message explaining why the state isn't expected, or null otherwise */
     fun validate(resolvedPluginState: ResolvedPluginSet): @NonNls String?
@@ -238,7 +243,7 @@ object DynamicPlugins {
       else -> IdeBundle.message("modal.progress.title.reconfiguring.plugins")
     }
     val criticalSectionModalProgress = Registry.`is`("ide.plugins.modal.progress.on.reconfiguration.critical.section", false)
-    return withSpan(RECONFIGURE_MODAL_PROGRESS_SPAN) {
+    return withSpan(RECONFIGURE_SPAN) {
       reconfigure(
         buildNewState = {
           val currentMode = PluginManagerCore.getPluginSet().initContext.productMode
@@ -389,8 +394,10 @@ object DynamicPlugins {
       }
     }
     val result = if (outerModalProgressConfig != null) {
-      withModalProgress(outerModalProgressConfig.owner, outerModalProgressConfig.title, cancellation = TaskCancellation.nonCancellable()) {
-        runReconfiguration()
+      withSpan(RECONFIGURE_MODAL_PROGRESS_SPAN) {
+        withModalProgress(outerModalProgressConfig.owner, outerModalProgressConfig.title, cancellation = TaskCancellation.nonCancellable()) {
+          runReconfiguration()
+        }
       }
     } else {
       runReconfiguration()
