@@ -296,6 +296,24 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(PROP_DESCRIPTION, oldDescriptionSupplier.get(), description);
   }
 
+  /**
+   * Sets {@code supplier} as the description, with the description set before as its fallback.
+   * {@link #getDescription()} calls {@code supplier}, so the method does not compute the description itself.
+   * When {@code supplier} returns an empty description, the description set before is returned, unless it is {@code null}.
+   */
+  @ApiStatus.Internal
+  public void setDescriptionWithFallback(@NotNull Supplier<@ActionDescription String> supplier) {
+    Supplier<String> fallback = descriptionSupplier;
+    descriptionSupplier = () -> {
+      String description = supplier.get();
+      if (Strings.isNotEmpty(description)) {
+        return description;
+      }
+      String fallbackDescription = fallback.get();
+      return fallbackDescription == null ? description : fallbackDescription;
+    };
+  }
+
   public @Nullable Icon getIcon() {
     Supplier<? extends Icon> icon = this.icon;
     return icon == null ? null : icon.get();

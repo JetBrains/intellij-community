@@ -282,12 +282,12 @@ internal fun processOverrideTextNode(
     action.copyActionTextOverride(useTextOfPlace, place, id)
   }
   else {
-    val bundle = bundleSupplier()
     val text = element.attributes.get(TEXT_ATTR_NAME)
-    if (text.isNullOrEmpty() && bundle != null) {
+    if (text.isNullOrEmpty()) {
       val prefix = if (action is ActionGroup) "group" else "action"
       val key = "$prefix.$id.$place.text"
-      action.addTextOverride(place) { BundleBase.message(bundleSupplier()!!, key) }
+      // the resource bundle is loaded when the text is read, not while the actions are registered
+      action.addTextOverride(place) { bundleSupplier()?.let { BundleBase.message(it, key) } ?: text }
     }
     else {
       action.addTextOverride(place) { text }
@@ -380,24 +380,18 @@ internal fun configureGroupDescriptionAndIcon(
                       classLoader = classLoader)
   }
 
-  // description
-  if (bundleSupplier() == null) {
-    // don't override value which was set in API with empty value from xml descriptor
-    if (!description.isNullOrEmpty() || presentation.description == null) {
-      presentation.description = description
+  // the description is computed when it is read: computing it loads the resource bundle of the plugin.
+  // An empty value from the XML descriptor does not override the value set in API
+  presentation.setDescriptionWithFallback {
+    if (bundleSupplier() == null) {
+      description
     }
-  }
-  else {
-    val descriptionSupplier = {
+    else {
       computeDescription(bundleSupplier = bundleSupplier,
                          id = id,
                          elementType = GROUP_ELEMENT_NAME,
                          descriptionValue = description,
                          classLoader = classLoader)
-    }
-    // don't override value which was set in API with empty value from xml descriptor
-    if (!descriptionSupplier().isNullOrEmpty() || presentation.description == null) {
-      presentation.setDescription(descriptionSupplier)
     }
   }
 
