@@ -152,7 +152,8 @@
     <action id="PreviousEditorTab" class="com.intellij.openapi.fileEditor.impl.SelectPreviousEditorTabAction"/>
     <action id="EditSourceInNewWindow" class="com.intellij.ide.actions.EditSourceInNewWindowAction"/>
     <action id="OpenElementInNewWindow" class="com.intellij.ide.actions.OpenElementInNewWindowAction"/>
-    <group id="SettingsEntryPoint" class="com.intellij.ide.actions.SettingsEntryPointAction" icon="AllIcons.General.GearPlain"/>
+    <group id="SettingsEntryPoint" class="com.intellij.ide.actions.SettingsEntryPointAction"
+           icon="AllIcons.General.GearPlain" searchable="false"/>
     <action id="SpeedSearch"
             class="com.intellij.ide.actions.speedSearch.SpeedSearchAction"
             icon="AllIcons.Actions.Find"
@@ -421,7 +422,7 @@
       <action id="CreateDesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"/>
       <separator/>
       <group id="OtherMenu"/>
-      <group id="ToolsMenu.Services" popup="true"/>
+      <group id="ToolsMenu.Services" popup="true" searchable="false"/>
     </group>
     <action id="MinimizeCurrentWindow" class="com.intellij.ide.actions.MinimizeCurrentWindowAction"/>
     <action id="ZoomCurrentWindow" class="com.intellij.ide.actions.ZoomCurrentWindowAction"/>
