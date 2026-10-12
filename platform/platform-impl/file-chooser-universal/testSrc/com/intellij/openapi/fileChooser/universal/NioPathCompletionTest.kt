@@ -261,6 +261,41 @@ class NioPathCompletionTest {
   }
 
   @Test
+  fun `expanded text has the home directory in place of the tilde`() = runCompletionTest(home = { root.toString() }) {
+    val separator = root.fileSystem.separator
+    assertThat(completion.expandHome("~")).isEqualTo(root.toString())
+    assertThat(completion.expandHome("~${separator}alpha")).isEqualTo(root.resolve("alpha").toString())
+    assertThat(completion.expandHome(rootText)).isEqualTo(rootText)
+    assertThat(completion.expandHome("~bob")).describedAs("the home of another user").isEqualTo("~bob")
+  }
+
+  @Test
+  fun `posix backslash after the tilde does not expand`() {
+    Jimfs.newFileSystem(Configuration.unix()).use { fileSystem ->
+      runCompletionTest(pathParser = absoluteParser(fileSystem), home = { "/home/me" }) {
+        assertThat(completion.expandHome("~/projects/~/project")).isEqualTo("/home/me/projects/~/project")
+        assertThat(completion.expandHome("~\\project")).describedAs("a file name with a backslash").isEqualTo("~\\project")
+      }
+    }
+  }
+
+  @Test
+  fun `windows home expands with both separators`() {
+    Jimfs.newFileSystem(Configuration.windows()).use { fileSystem ->
+      runCompletionTest(pathParser = absoluteParser(fileSystem), home = { "C:\\Users\\me" }) {
+        assertThat(completion.expandHome("~\\projects")).isEqualTo("C:\\Users\\me\\projects")
+        assertThat(completion.expandHome("~/projects")).isEqualTo("C:\\Users\\me/projects")
+        assertThat(completion.expandHome("~me\\projects")).describedAs("the home of another user").isEqualTo("~me\\projects")
+      }
+    }
+  }
+
+  @Test
+  fun `expansion keeps the tilde when the home directory is unknown`() = runCompletionTest(home = { null }) {
+    assertThat(completion.expandHome("~/alpha")).isEqualTo("~/alpha")
+  }
+
+  @Test
   fun `failed home directory lookup reports the error`() = runCompletionTest(home = { throw IllegalStateException("No home") }) {
     completion.update("~/", Trigger.SHORTCUT)
     val failed = awaitState { it !is State.Loading } as State.Failed
