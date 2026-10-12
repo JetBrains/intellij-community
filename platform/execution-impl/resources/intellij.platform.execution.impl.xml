@@ -150,9 +150,6 @@
     <applicationService serviceInterface="com.intellij.testIntegration.RunSelectedTestAdvertisement"
                         serviceImplementation="com.intellij.execution.impl.RunSelectedTestAdvertisementImpl"/>
 
-    <colorSettings implementation="com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage"
-                   bundle="messages.OptionsBundle" key="color.settings.console.name" priority="COMMON_SETTINGS" id="ansi"/>
-
     <registryKey defaultValue="false"
                  description="Run implementation for split mode."
                  key="run.toolwindow.split.enabled"

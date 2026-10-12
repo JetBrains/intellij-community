@@ -22,7 +22,7 @@ import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
-import com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage
+import com.intellij.terminal.ANSIColoredConsoleColorsPage
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withFileToTextConvertor

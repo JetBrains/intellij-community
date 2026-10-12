@@ -10,6 +10,7 @@
     <module name="intellij.platform.consoleView"/>
     <module name="intellij.platform.consoleView.impl"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
@@ -17,6 +18,7 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.coroutines"/>
@@ -28,6 +30,8 @@
     <applicationService serviceInterface="com.intellij.terminal.TerminalUtilsBridge"
                         serviceImplementation="com.intellij.terminal.TerminalUtilsBridgeImpl"/>
     <applicationSettings service="com.intellij.terminal.TerminalUiSettingsManager"/>
+    <colorSettings implementation="com.intellij.terminal.ANSIColoredConsoleColorsPage"
+                   bundle="messages.OptionsBundle" key="color.settings.console.name" priority="COMMON_SETTINGS" id="ansi"/>
   </extensions>
   <actions>
     <action id="TerminalIncreaseFontSize" class="com.intellij.terminal.actions.TerminalChangeFontSizeAction$IncreaseEditorFontSize"

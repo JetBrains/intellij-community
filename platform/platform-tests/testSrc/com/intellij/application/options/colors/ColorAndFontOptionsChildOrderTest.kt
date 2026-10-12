@@ -227,7 +227,7 @@ private val REGISTERED_CHILD_IDS: Array<String> = arrayOf(
   "reference.settingsdialog.IDE.editor.colors.com.intellij.openapi.options.colors.pages.DefaultLanguageColorsPage",
   "reference.settingsdialog.IDE.editor.colors.ColorSchemeFont",
   "reference.settingsdialog.IDE.editor.colors.ConsoleFont",
-  "reference.settingsdialog.IDE.editor.colors.com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage",
+  "reference.settingsdialog.IDE.editor.colors.com.intellij.terminal.ANSIColoredConsoleColorsPage",
   "reference.settingsdialog.IDE.editor.colors.com.intellij.xdebugger.impl.ui.DebuggerColorsPage",
   "reference.settingsdialog.IDE.editor.colors.DiffAndMerge",
   "reference.settingsdialog.IDE.editor.colors.com.intellij.openapi.options.colors.pages.CustomColorsPage",

@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.options.colors.pages;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.terminal;
 
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.process.ConsoleHighlighter;
@@ -16,8 +16,6 @@ import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
-import com.intellij.terminal.BlockTerminalColors;
-import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ArrayUtil;
