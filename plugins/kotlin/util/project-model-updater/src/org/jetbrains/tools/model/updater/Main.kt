@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
 import org.jetbrains.tools.model.updater.GeneratorPreferences.ApplicationMode
@@ -64,11 +64,6 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
      * @see ApplicationMode.PROJECT_MODEL_UPDATER
      */
     val convertJpsToBazel: Boolean? by OptionalPreference(String::toBooleanStrictOrNull)
-
-    /**
-     * Whether to update the Fleet project model dump.
-     */
-    val updateFleetProjectModel: Boolean?  by OptionalPreference(String::toBooleanStrictOrNull)
 
     /**
      * Whether to patch the Patronus configuration file, excluding triggers for non-Kotlin checks.
