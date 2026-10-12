@@ -28,6 +28,8 @@ import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import fleet.util.Either
 import fleet.util.error
 import fleet.util.value
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -37,6 +39,8 @@ private val tracer: IJTracer by lazy { TelemetryManager.getInstance().getTracer(
 
 @ApiStatus.Internal
 object DynamicPlugins {
+  private val reconfigurationLock = Mutex()
+
   /**
    * The spans around the modal progress of a dynamic load, an unload and a reconfiguration.
    * Each one covers the whole time the IDE stays modal. A performance test collects them by name.
@@ -226,7 +230,7 @@ object DynamicPlugins {
     forceRemovePlugins: List<PluginMainDescriptor>,
     extraStateValidator: PluginStateValidator,
     targetProductMode: ProductMode? = null,
-    progressTitle: @Nls String? = null
+    progressTitle: @Nls String? = null,
   ): Boolean {
     val title = when {
       progressTitle != null -> progressTitle
@@ -245,25 +249,27 @@ object DynamicPlugins {
     val criticalSectionModalProgress = Registry.`is`("ide.plugins.modal.progress.on.reconfiguration.critical.section", true)
     val modalProgressConfig = ModalProgressConfig(modalTaskOwner(project), title)
     return withSpan(RECONFIGURE_SPAN) {
-      reconfigure(
-        buildNewState = {
-          val currentMode = PluginManagerCore.getPluginSet().initContext.productMode
-          if (targetProductMode != null && targetProductMode != currentMode) {
-            // FIXME this is bad: it mutates the state before we actually know the transition is possible.
-            //  Instead, product mode change should only apply after a successful transition, and the preliminary init context instance with adjusted product change should come from [PluginInitContextFactory].
-            if (!CurrentProductMode.transitionTo(targetProductMode)) {
-              return@reconfigure Either.error(DynamicReconfigurationIsNotPossibleReason.of(
-                logMessage = "The product mode does not move to '${targetProductMode.id}' from '${currentMode.id}', so no plugin is reconfigured",
-                problematicPlugin = null
-              ))
+      reconfigurationLock.withLock {
+        reconfigureImpl(
+          buildNewState = {
+            val currentMode = PluginManagerCore.getPluginSet().initContext.productMode
+            if (targetProductMode != null && targetProductMode != currentMode) {
+              // FIXME this is bad: it mutates the state before we actually know the transition is possible.
+              //  Instead, product mode change should only apply after a successful transition, and the preliminary init context instance with adjusted product change should come from [PluginInitContextFactory].
+              if (!CurrentProductMode.transitionTo(targetProductMode)) {
+                return@reconfigureImpl Either.error(DynamicReconfigurationIsNotPossibleReason.of(
+                  logMessage = "The product mode does not move to '${targetProductMode.id}' from '${currentMode.id}', so no plugin is reconfigured",
+                  problematicPlugin = null
+                ))
+              }
             }
-          }
-          computeNewPluginsState(addNewCustomPlugins, forceRemovePlugins, forceExclude = true)
-        },
-        extraStateValidator = extraStateValidator,
-        outerModalProgressConfig = modalProgressConfig.takeIf { !criticalSectionModalProgress },
-        criticalSectionModalProgressConfig = modalProgressConfig.takeIf { criticalSectionModalProgress },
-      ) is DynamicPluginsReconfigurationResult.Success
+            computeNewPluginsState(addNewCustomPlugins, forceRemovePlugins, forceExclude = true)
+          },
+          extraStateValidator = extraStateValidator,
+          outerModalProgressConfig = modalProgressConfig.takeIf { !criticalSectionModalProgress },
+          criticalSectionModalProgressConfig = modalProgressConfig.takeIf { criticalSectionModalProgress },
+        ) is DynamicPluginsReconfigurationResult.Success
+      }
     }
   }
 
@@ -273,20 +279,22 @@ object DynamicPlugins {
   @RequiresEdt(generateAssertion = false)
   fun loadPlugins(plugins: List<PluginMainDescriptor>, project: Project?, progressTitle: @Nls String? = null): Boolean {
     val title = progressTitle ?: defaultLoadingTitle(plugins)
-    return withSpan(LOAD_MODAL_PROGRESS_SPAN) {
-      runWithModalProgressBlocking(
-        owner = modalTaskOwner(project),
-        title = title,
-        cancellation = TaskCancellation.nonCancellable(),
-      ) {
-        reconfigure(
-          buildNewState = {
-            computeNewPluginsState(plugins, emptyList())
-          },
-          extraStateValidator = expectPluginsState(expectToLoad = plugins.map { it.pluginId }),
-          outerModalProgressConfig = null,
-          criticalSectionModalProgressConfig = null,
-        ) is DynamicPluginsReconfigurationResult.Success
+    return withReconfigurationLockBlocking {
+      withSpan(LOAD_MODAL_PROGRESS_SPAN) {
+        runWithModalProgressBlocking(
+          owner = modalTaskOwner(project),
+          title = title,
+          cancellation = TaskCancellation.nonCancellable(),
+        ) {
+          reconfigureImpl(
+            buildNewState = {
+              computeNewPluginsState(plugins, emptyList())
+            },
+            extraStateValidator = expectPluginsState(expectToLoad = plugins.map { it.pluginId }),
+            outerModalProgressConfig = null,
+            criticalSectionModalProgressConfig = null,
+          ) is DynamicPluginsReconfigurationResult.Success
+        }
       }
     }
   }
@@ -303,20 +311,22 @@ object DynamicPlugins {
   @RequiresEdt(generateAssertion = false)
   @JvmOverloads
   fun loadPlugin(pluginDescriptor: PluginMainDescriptor, project: Project? = null): Boolean {
-    return withSpan(LOAD_MODAL_PROGRESS_SPAN) {
-      runWithModalProgressBlocking(
-        owner = modalTaskOwner(project),
-        title = IdeBundle.message("modal.progress.title.loading.plugin", pluginDescriptor.name),
-        cancellation = TaskCancellation.nonCancellable(),
-      ) {
-        reconfigure(
-          buildNewState = {
-            computeNewPluginsState(listOf(pluginDescriptor), emptyList())
-          },
-          extraStateValidator = expectPluginsState(expectToLoad = listOf(pluginDescriptor.pluginId)),
-          outerModalProgressConfig = null,
-          criticalSectionModalProgressConfig = null,
-        ) is DynamicPluginsReconfigurationResult.Success
+    return withReconfigurationLockBlocking {
+      withSpan(LOAD_MODAL_PROGRESS_SPAN) {
+        runWithModalProgressBlocking(
+          owner = modalTaskOwner(project),
+          title = IdeBundle.message("modal.progress.title.loading.plugin", pluginDescriptor.name),
+          cancellation = TaskCancellation.nonCancellable(),
+        ) {
+          reconfigureImpl(
+            buildNewState = {
+              computeNewPluginsState(listOf(pluginDescriptor), emptyList())
+            },
+            extraStateValidator = expectPluginsState(expectToLoad = listOf(pluginDescriptor.pluginId)),
+            outerModalProgressConfig = null,
+            criticalSectionModalProgressConfig = null,
+          ) is DynamicPluginsReconfigurationResult.Success
+        }
       }
     }
   }
@@ -329,45 +339,62 @@ object DynamicPlugins {
     plugins: List<PluginMainDescriptor>,
     project: Project? = null,
   ): Boolean {
-    return withSpan(UNLOAD_MODAL_PROGRESS_SPAN) {
-      runWithModalProgressBlocking(
-        owner = modalTaskOwner(project),
-        title = IdeBundle.message("modal.progress.title.unloading.plugins"),
-        cancellation = TaskCancellation.nonCancellable(),
-      ) {
-        reconfigure(
-          buildNewState = {
-            computeNewPluginsState(emptyList(), plugins)
-          },
-          extraStateValidator = expectPluginsState(expectNotToLoad = plugins.map { it.pluginId }),
-          outerModalProgressConfig = null,
-          criticalSectionModalProgressConfig = null,
-        ) is DynamicPluginsReconfigurationResult.Success
+    return withReconfigurationLockBlocking {
+      withSpan(UNLOAD_MODAL_PROGRESS_SPAN) {
+        runWithModalProgressBlocking(
+          owner = modalTaskOwner(project),
+          title = IdeBundle.message("modal.progress.title.unloading.plugins"),
+          cancellation = TaskCancellation.nonCancellable(),
+        ) {
+          reconfigureImpl(
+            buildNewState = {
+              computeNewPluginsState(emptyList(), plugins)
+            },
+            extraStateValidator = expectPluginsState(expectNotToLoad = plugins.map { it.pluginId }),
+            outerModalProgressConfig = null,
+            criticalSectionModalProgressConfig = null,
+          ) is DynamicPluginsReconfigurationResult.Success
+        }
       }
     }
   }
 
   @RequiresEdt(generateAssertion = false)
   fun unloadPlugin(pluginDescriptor: PluginMainDescriptor): Boolean {
-    return withSpan(UNLOAD_MODAL_PROGRESS_SPAN) {
-      runWithModalProgressBlocking(
-        owner = modalTaskOwner(null),
-        title = IdeBundle.message("modal.progress.title.unloading.plugin", pluginDescriptor.name),
-        cancellation = TaskCancellation.nonCancellable(),
-      ) {
-        reconfigure(
-          buildNewState = {
-            computeNewPluginsState(emptyList(), listOf(pluginDescriptor))
-          },
-          extraStateValidator = expectPluginsState(expectNotToLoad = listOf(pluginDescriptor.pluginId)),
-          outerModalProgressConfig = null,
-          criticalSectionModalProgressConfig = null,
-        ) is DynamicPluginsReconfigurationResult.Success
+    return withReconfigurationLockBlocking {
+      withSpan(UNLOAD_MODAL_PROGRESS_SPAN) {
+        runWithModalProgressBlocking(
+          owner = modalTaskOwner(null),
+          title = IdeBundle.message("modal.progress.title.unloading.plugin", pluginDescriptor.name),
+          cancellation = TaskCancellation.nonCancellable(),
+        ) {
+          reconfigureImpl(
+            buildNewState = {
+              computeNewPluginsState(emptyList(), listOf(pluginDescriptor))
+            },
+            extraStateValidator = expectPluginsState(expectNotToLoad = listOf(pluginDescriptor.pluginId)),
+            outerModalProgressConfig = null,
+            criticalSectionModalProgressConfig = null,
+          ) is DynamicPluginsReconfigurationResult.Success
+        }
       }
     }
   }
 
-  private suspend fun reconfigure(
+  private inline fun withReconfigurationLockBlocking(action: () -> Boolean): Boolean {
+    if (!reconfigurationLock.tryLock()) {
+      LOG.info("Cannot reconfigure plugins dynamically because a concurrent operation is in progress")
+      return false
+    }
+    try {
+      return action()
+    }
+    finally {
+      reconfigurationLock.unlock()
+    }
+  }
+
+  private suspend fun reconfigureImpl(
     buildNewState: () -> Either<PluginSet, DynamicReconfigurationIsNotPossibleReason>,
     extraStateValidator: PluginStateValidator,
     outerModalProgressConfig: ModalProgressConfig?,
