@@ -38,7 +38,7 @@
             class="com.intellij.codeInsight.daemon.impl.actions.GotoNextElementUnderCaretUsageAction"/>
     <action id="GotoPrevElementUnderCaretUsage"
             class="com.intellij.codeInsight.daemon.impl.actions.GotoPrevElementUnderCaretUsageAction"/>
-    <group id="ShowRecentFindUsagesGroup" class="com.intellij.find.impl.ShowRecentFindUsagesGroup" popup="true"/>
+    <group id="ShowRecentFindUsagesGroup" class="com.intellij.find.impl.ShowRecentFindUsagesGroup" popup="true" searchable="false"/>
     <action id="GotoDeclarationOnly" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyAction"/>
     <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction"/>
     <action id="QuickTypeDefinition" class="com.intellij.codeInsight.hint.actions.ShowTypeDefinitionAction"/>
@@ -344,7 +344,9 @@
     <action id="Print" class="com.intellij.codeEditor.printing.PrintAction" icon="AllIcons.General.Print"/>
     <action id="TogglePowerSave" class="com.intellij.ide.actions.TogglePowerSaveAction"/>
     <action id="ToggleFindInSelection" class="com.intellij.find.editorHeaderActions.ToggleFindInSelectionAction"/>
-    <action id="Find" class="com.intellij.openapi.editor.actions.IncrementalFindAction" icon="AllIcons.Actions.Find"/>
+    <action id="Find" class="com.intellij.openapi.editor.actions.IncrementalFindAction" icon="AllIcons.Actions.Find">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Replace" class="com.intellij.openapi.editor.actions.ReplaceAction" icon="AllIcons.Actions.Replace"/>
     <action id="FindNext" class="com.intellij.ide.actions.SearchAgainAction">
       <override-text place="MainMenu"/>
