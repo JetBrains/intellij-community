@@ -4,6 +4,7 @@ package com.intellij.debugger.memory.action
 import com.intellij.java.debugger.impl.shared.JavaDebuggerSharedBundle
 import com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptor
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerLuxActionsApi
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.text.StringUtil
@@ -13,9 +14,15 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSplitActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import kotlinx.coroutines.launch
 
-class ShowInstancesByClassAction : XDebuggerTreeSplitActionBase() {
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
+internal class ShowInstancesByClassAction : XDebuggerTreeSplitActionBase() {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    if (e.place == ActionPlaces.ACTION_SEARCH) {
+      e.presentation.isEnabledAndVisible = false
+    }
   }
 
   override fun isEnabled(node: XValueNodeImpl, e: AnActionEvent): Boolean {
@@ -26,7 +33,7 @@ class ShowInstancesByClassAction : XDebuggerTreeSplitActionBase() {
     val objectReferenceInfo = descriptor.objectReferenceInfo ?: return false
 
     val visibleTypeName = StringUtil.getShortName(objectReferenceInfo.typeName)
-    e.presentation.setText(JavaDebuggerSharedBundle.message("action.show.objects.text", visibleTypeName))
+    e.presentation.text = JavaDebuggerSharedBundle.message("action.show.objects.text", visibleTypeName)
 
     return objectReferenceInfo.canGetInstanceInfo
   }
