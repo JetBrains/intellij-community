@@ -48,5 +48,4 @@ public class Test {
 // EXIST:  actual
 // EXIST:  data object
 // EXIST:  context
-// EXIST:  error
 // NOTHING_ELSE

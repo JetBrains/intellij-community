@@ -48,5 +48,4 @@
 // EXIST: {"lookupString":"data object TopScope", "itemText":"data object TopScope"}
 // EXIST:  context
 // EXIST: {"lookupString":"context","tailText":"(...)","attributes":"bold","allLookupStrings":"context","itemText":"context"}
-// EXIST:  error
 // NOTHING_ELSE

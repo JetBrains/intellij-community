@@ -50,5 +50,4 @@ class AfterClasses {
 // EXIST:  lateinit var
 // EXIST:  data object
 // EXIST:  context
-// EXIST:  error
 // NOTHING_ELSE

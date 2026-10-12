@@ -63,5 +63,4 @@ var a : Int
 // EXIST:  {"lookupString":"context","tailText":"(...)","attributes":"bold","allLookupStrings":"context","itemText":"context"}
 // EXIST:  field
 // EXIST:  {"lookupString":"field","attributes":"bold","allLookupStrings":"field","itemText":"field"}
-// EXIST:  error
 // NOTHING_ELSE

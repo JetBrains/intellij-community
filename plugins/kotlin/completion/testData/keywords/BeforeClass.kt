@@ -6,5 +6,4 @@ e<caret>class A {
 // EXIST:  enum
 // EXIST:  external
 // EXIST:  expect
-// EXIST:  error
 // NOTHING_ELSE

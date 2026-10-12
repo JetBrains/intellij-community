@@ -54,5 +54,4 @@ class MouseMovedEventArgs
 // EXIST:  data object
 // EXIST:  context
 // EXIST:  field
-// EXIST:  error
 // NOTHING_ELSE
