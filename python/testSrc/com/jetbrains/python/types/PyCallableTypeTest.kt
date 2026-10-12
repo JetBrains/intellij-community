@@ -3907,4 +3907,39 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
     _: Callable[[int], int] | None = lambda a: a
     #                                       └ TYPE int
     """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-90421"])
+  fun `lambda parameter type uses the generic receiver of a method call`() = test("""
+    from typing import Callable
+
+    class Box[T]:
+        _t: type[T]
+        def __init__(self, t: type[T]):
+            self._t = t
+        def apply(self, delegate: Callable[[T], object]) -> object:
+            return delegate(self._t())
+        def apply_on_self(self) -> None:
+            self.apply(lambda s: s)
+    #                         └ TYPE T
+
+    class Holder:
+        def __init__(self):
+            self.box = Box(int)
+
+    Box(int).apply(lambda a: a)
+    #                     └ TYPE int
+    box = Box(int)
+    # └ TYPE Box[int]
+    box.apply(lambda b: b)
+    #                └ TYPE int
+    hinted: Box[int] = Box(int)
+    hinted.apply(lambda c: c)
+    #                   └ TYPE int
+    Holder().box.apply(lambda d: d)
+    #                         └ TYPE int
+    holder = Holder()
+    holder.box.apply(lambda e: e)
+    #                       └ TYPE int
+    """.trimIndent())
 }
