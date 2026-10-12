@@ -122,13 +122,13 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       dummyProjectName: String,
       file: Path,
     ): OpenProjectTask {
-      return options.copy(
-        isNewProject = true,
-        projectRootDir = file,
-        createModule = false,
-        projectName = dummyProjectName,
-        runConfigurators = false,
-        runConversionBeforeOpen = false,
+      return OpenProjectTask(options) {
+        isNewProject = true
+        projectRootDir = file
+        createModule = false
+        projectName = dummyProjectName
+        runConfigurators = false
+        runConversionBeforeOpen = false
         beforeOpenTasks = buildList {
           add { project ->
             project.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
@@ -136,9 +136,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           }
           addAll(options.beforeOpenTasks)
         }
-      ).let {
         // both callers of this go on to `openFileFromCommandLine`, which is what releases the hold this asks for
-        it.markAsOpeningFileAfterProjectOpen()
+        opensFileAfterProjectOpen = true
       }
     }
 
@@ -173,13 +172,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
      */
     @VisibleForTesting
     internal fun directoryOpenOptions(originalOptions: OpenProjectTask, file: Path): OpenProjectTask {
-      return originalOptions.copy(
-        runConfigurators = originalOptions.runConfigurators ?: true,
-        projectRootDir = originalOptions.projectRootDir ?: file,
-        beforeInitTasks = originalOptions.beforeInitTasks + { project ->
-          project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
-        },
-      )
+      return OpenProjectTask(originalOptions) {
+        runConfigurators = runConfigurators ?: true
+        projectRootDir = projectRootDir ?: file
+        beforeInitTasks += { project -> project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true) }
+      }
     }
 
     /**
@@ -227,7 +224,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
 
         baseDir = file.parent
-        options = options.copy(isNewProject = !storePathManager.testStoreDirectoryExistsForProjectRoot(baseDir))
+        options = OpenProjectTask(options) { isNewProject = !storePathManager.testStoreDirectoryExistsForProjectRoot(baseDir) }
       }
       else {
         baseDir = baseDirCandidate
@@ -242,7 +239,10 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           options
         }
         else {
-          options.copy(projectName = file.fileName.toString()).markAsOpeningFileAfterProjectOpen()
+          OpenProjectTask(options) {
+            projectName = file.fileName.toString()
+            opensFileAfterProjectOpen = true
+          }
         }
       )
       if (project != null && file != baseDir) {
@@ -309,7 +309,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
 
         baseDir = file.parent
-        options = options.copy(isNewProject = !storePathManager.testStoreDirectoryExistsForProjectRoot(baseDir))
+        options = OpenProjectTask(options) { isNewProject = !storePathManager.testStoreDirectoryExistsForProjectRoot(baseDir) }
       }
       else {
         baseDir = baseDirCandidate
@@ -323,7 +323,10 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           options
         }
         else {
-          options.copy(projectName = file.fileName.toString()).markAsOpeningFileAfterProjectOpen()
+          OpenProjectTask(options) {
+            projectName = file.fileName.toString()
+            opensFileAfterProjectOpen = true
+          }
         }
       )
       if (project != null && file != baseDir) {
@@ -434,14 +437,16 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
               replaceWith = ReplaceWith("openProjectAsync(virtualFile, projectOpenOptions)"))
   override suspend fun openProjectAsync(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     val baseDir = virtualFile.toNioPath()
-    val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose).copy(forceOpenInNewFrame = forceOpenInNewFrame)
+    val options = OpenProjectTask(createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose)) {
+      this.forceOpenInNewFrame = forceOpenInNewFrame
+    }
     return doOpenProject(baseDir, options)
   }
 
   // force open in a new frame if temp project
   override suspend fun openProjectAndFile(file: Path, tempProject: Boolean, options: OpenProjectTask): Project? {
     if (tempProject) {
-      return createTempProjectAndOpenFile(file = file, options = options.copy(forceOpenInNewFrame = true))
+      return createTempProjectAndOpenFile(file = file, options = OpenProjectTask(options) { forceOpenInNewFrame = true })
     }
     else {
       return openProjectAsync(file = file, originalOptions = options)
