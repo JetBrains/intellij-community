@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.changes
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -9,10 +10,12 @@ import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.ChangesViewNavigateRequest
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSelection
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.platform.vcs.impl.shared.rpc.BackendChangesViewEvent
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
@@ -110,6 +113,11 @@ internal class ChangesViewApiImpl : ChangesViewApi {
   override suspend fun getEditedCommit(projectId: ProjectId): Flow<EditedCommitPresentation?> = getProjectScoped(projectId) { project ->
     project.serviceAsync<ChangesViewWorkflowManager>().editedCommit
   } ?: flowOf(null)
+
+  override suspend fun performNavigateAction(projectId: ProjectId, selection: ChangesViewSelection, requestFocus: Boolean) = projectScoped(projectId) { project ->
+    LOG.trace { "Received navigate action from frontend" }
+    project.getRpcChangesView().navigateRequests.emit(ChangesViewNavigateRequest(ClientId.current, selection, requestFocus))
+  }
 
   /**
    * Subscribes [model] to report the current inclusion state on its update. Also, reports the initial inclusion state.

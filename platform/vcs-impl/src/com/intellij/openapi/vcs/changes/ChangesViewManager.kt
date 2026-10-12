@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.ide.dnd.DnDEvent
@@ -13,6 +14,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil.wrap
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
@@ -30,8 +32,10 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewUIUtil
 import com.intellij.openapi.vcs.changes.ui.ShelvedChangeListDragBean
 import com.intellij.openapi.vcs.changes.ui.subscribeOnVcsToolWindowLayoutChanges
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.vcs.impl.shared.changes.UpdatableMultipleChangesDiffRequestProcessor
+import com.intellij.platform.ide.navigation.NavigationOptions
+import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
+import com.intellij.platform.vcs.impl.shared.changes.UpdatableMultipleChangesDiffRequestProcessor
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.Wrapper
@@ -50,6 +54,9 @@ import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.CommitModeManager.Companion.subscribeOnCommitModeChange
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Predicate
@@ -206,6 +213,8 @@ class ChangesViewManager internal constructor(private val project: Project, priv
       editorDiffPreview = ChangesViewEditorDiffPreview(changesView, contentPanel)
       Disposer.register(this, editorDiffPreview)
 
+      handleNavigateRequests()
+
       val mainPanel = Panels.simplePanel(mainPanelContent).addToBottom(statusPanel)
       setContent(mainPanel)
 
@@ -215,6 +224,23 @@ class ChangesViewManager internal constructor(private val project: Project, priv
 
       busConnection.subscribeOnVcsToolWindowLayoutChanges(Runnable { this.updatePanelLayout() })
       updatePanelLayout()
+    }
+
+    private fun handleNavigateRequests() {
+      changesView.scope.launch {
+        changesView.navigateRequests.collectLatest { request ->
+          withContext(request.clientId.asContextElement()) {
+            val parameters = NavigationOptions.defaultOptions().requestFocus(request.requestFocus)
+            val descriptors = request.selection.selectedPaths.asSequence()
+              .map { it.filePath }
+              .filterNot { it.isDirectory }
+              .mapNotNull { it.virtualFile }
+              .filter { it.isValid }
+              .map { file -> OpenFileDescriptor(project, file) }.toList()
+            NavigationService.getInstance(project).navigate(descriptors, parameters)
+          }
+        }
+      }
     }
 
     override fun dispose() {

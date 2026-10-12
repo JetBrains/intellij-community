@@ -32,6 +32,7 @@ internal class LocalChangesViewProxy(
   override val inclusionChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   override val diffRequests = panel.diffRequests
+  override val navigateRequests = panel.navigateRequests
 
   override fun setInclusionModel(model: InclusionModel?) {
     panel.changesView.setInclusionModel(model)

@@ -75,6 +75,9 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
       forwardDiffActionsToBackend()
     }
     cs.launch {
+      forwardNavigateActionsToBackend()
+    }
+    cs.launch {
       diffableSelectionHelper.diffableSelection.collectLatest {
         ChangesViewDiffApi.getInstance().notifySelectionUpdated(project.projectId(), it)
       }
@@ -120,6 +123,12 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
   private suspend fun forwardDiffActionsToBackend() {
     diffRequests.collectLatest {
       ChangesViewDiffApi.getInstance().performDiffAction(project.projectId())
+    }
+  }
+
+  private suspend fun forwardNavigateActionsToBackend() {
+    navigateRequests.collectLatest { request ->
+      ChangesViewApi.getInstance().performNavigateAction(project.projectId(), request.selection, request.requestFocus)
     }
   }
 

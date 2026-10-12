@@ -27,9 +27,11 @@ import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.requestNavigate
 import com.intellij.platform.vcs.impl.shared.SingleTaskRunner
+import com.intellij.platform.vcs.impl.shared.actions.VcsTransferableDataKeys
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel.FilePathCounts
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys
+import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSelection
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.platform.vcs.impl.shared.changes.PartialChangesHolder
 import com.intellij.platform.vcs.impl.shared.commit.CommitToolWindowViewModel
@@ -52,6 +54,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -87,6 +90,7 @@ abstract class CommitChangesViewWithToolbarPanel(
 
   private val inputHandler = ChangesViewInputHandler(cs, changesView)
   val diffRequests: SharedFlow<ClientId> = inputHandler.diffRequests
+  val navigateRequests: SharedFlow<ChangesViewNavigateRequest> = inputHandler.navigateRequests
 
   @RequiresEdt
   open fun initPanel() {
@@ -241,6 +245,8 @@ private class ChangesViewInputHandler(
 
   val diffRequests: MutableSharedFlow<ClientId> =
     MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  val navigateRequests: MutableSharedFlow<ChangesViewNavigateRequest> =
+    MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   @RequiresEdt
   fun installListeners() {
@@ -279,11 +285,22 @@ private class ChangesViewInputHandler(
     }
   }
 
+  /**
+   * Navigates on the client first.
+   * When the client navigation handles no target, sends the selection to the backend through [navigateRequests].
+   */
   private fun navigateToSource(requestFocus: Boolean) {
     structuralPreview.cancelPendingPreview()
     val dataContext = DataManager.getInstance().getDataContext(changesView)
     val parameters = NavigationOptions.defaultOptions().requestFocus(requestFocus)
-    requestNavigate(changesView.project, dataContext, parameters, cs)
+    val navigation = requestNavigate(changesView.project, dataContext, parameters, cs)
+
+    val selection = dataContext.getData(VcsTransferableDataKeys.CHANGES_VIEW_SELECTION) ?: return
+    val request = ChangesViewNavigateRequest(ClientId.current, selection, requestFocus)
+    cs.launch {
+      if (navigation.await()) return@launch
+      navigateRequests.emit(request)
+    }
   }
 
   private fun performHoverAction(): Boolean {
@@ -296,3 +313,14 @@ private class ChangesViewInputHandler(
     return false
   }
 }
+
+/**
+ * A request to navigate to the [selection] in the Changes view.
+ * The client sends it when its data context has no navigation targets.
+ */
+@ApiStatus.Internal
+class ChangesViewNavigateRequest(
+  val clientId: ClientId,
+  val selection: ChangesViewSelection,
+  val requestFocus: Boolean,
+)

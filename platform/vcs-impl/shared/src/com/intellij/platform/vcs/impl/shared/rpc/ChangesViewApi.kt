@@ -5,6 +5,7 @@ import com.intellij.ide.rpc.awaitWithLocalFallback
 import com.intellij.openapi.components.service
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
+import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSelection
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -48,4 +49,6 @@ interface ChangesViewApi : RemoteApi<Unit> {
   companion object {
     suspend fun getInstance(): ChangesViewApi = LiteRemoteApiProviderService.awaitWithLocalFallback(remoteApiDescriptor<ChangesViewApi>()) { service<ChangesViewApi>() }
   }
+
+  suspend fun performNavigateAction(projectId: ProjectId, selection: ChangesViewSelection, requestFocus: Boolean)
 }
