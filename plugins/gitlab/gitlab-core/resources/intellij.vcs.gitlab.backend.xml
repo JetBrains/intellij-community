@@ -275,7 +275,7 @@
               class="org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMarkFilesViewedAction"/>
       <action id="GitLab.Merge.Request.Changes.MarkNotViewed"
               class="org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMarkFilesNotViewedAction"/>
-      <group id="GitLab.Merge.Request.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
+      <group id="GitLab.Merge.Request.Details.Commit.Tree.ViewOptions" searchable="false" icon="AllIcons.Actions.Show" popup="true">
         <reference ref="ChangesView.GroupBy"/>
       </group>
       <separator/>

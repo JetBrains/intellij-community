@@ -300,7 +300,7 @@
       <reference ref="Vcs.Log.ShowDiffPreview"/>
       <reference ref="Vcs.Log.Diff.Preview.Location"/>
     </group>
-    <group id="Vcs.Log.ChangesBrowser.PresentationSettings"
+    <group id="Vcs.Log.ChangesBrowser.PresentationSettings" searchable="false"
            icon="AllIcons.Actions.GroupBy"
            popup="true">
       <reference ref="ChangesView.GroupBy"/>

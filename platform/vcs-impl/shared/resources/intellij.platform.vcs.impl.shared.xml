@@ -130,7 +130,7 @@
 
   <actions resource-bundle="messages.VcsBundle">
     <group id="ChangesViewToolbar.Shared">
-      <group id="ChangesView.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
+      <group id="ChangesView.ViewOptions" searchable="false" icon="AllIcons.Actions.Show" popup="true">
         <reference ref="ChangesView.GroupBy"/>
         <separator key="action.vcs.log.show.separator"/>
         <action id="ChangesView.ShowIgnored"

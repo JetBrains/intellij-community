@@ -506,7 +506,7 @@
       <reference ref="ChangesView.Refresh"/>
       <reference ref="Git.Stage.Add.Tracked"/>
       <reference ref="Git.Stash.Silently"/>
-      <group id="Git.Stage.Ui.Settings" icon="AllIcons.Actions.GroupBy" popup="true">
+      <group id="Git.Stage.Ui.Settings" searchable="false" icon="AllIcons.Actions.GroupBy" popup="true">
         <reference ref="ChangesView.GroupBy"/>
         <separator key="separator.show"/>
         <reference ref="Git.Stage.ToggleIgnored"/>

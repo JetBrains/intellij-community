@@ -320,7 +320,7 @@
         <override-text place="Diff.EditorPopupMenu" use-text-of-place="EditorPopupMenu"/>
       </action>
       <separator/>
-      <group id="Github.PullRequest.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
+      <group id="Github.PullRequest.Details.Commit.Tree.ViewOptions" searchable="false" icon="AllIcons.Actions.Show" popup="true">
         <reference ref="ChangesView.GroupBy"/>
       </group>
       <reference ref="ExpandAll"/>
