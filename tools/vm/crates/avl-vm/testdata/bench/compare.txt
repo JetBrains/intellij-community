@@ -13,6 +13,7 @@ events and report:
   frameBecameVisible                                            1714    1543    -171
   frameBecameInteractive                                        2528    2275    -253
   totalDuration                                                 3195    2876    -320
+  jvm.loadingTime                                                358     322     -36
   classLoading.requests                                       267427  240684  -26743
   classLoading.time                                             8317    7485    -832
   classLoading.edtTime                                            42      38    -4.2
@@ -48,3 +49,9 @@ welcome spans:
   welcome right tab body: createContent trial.started.banner     0.1     0.1      +0
   welcome right tab body: EDT build                               14      13    -1.4
   readme opening check                                           0.5     0.5      +0
+span ends (ms from the process start):
+  app initialization end                                        1226    1103    -123
+  welcome screen project opening end                            2533    2280    -253
+  toolwindow creating end                                       2295    2065    -230
+  welcome left panel creating end                               2714    2442    -271
+  restoreEditors end                                            2227    2004    -223

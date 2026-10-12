@@ -11,9 +11,9 @@ use super::arm::Arm;
 use super::profile::FrameSamples;
 use super::record::{
     CLASS_ANCHORS, CLASS_EDT_TIME, CLASS_REQUESTS, CLASS_TIME, CLASSES_HIDDEN, CLASSES_JAR, CLASSES_JDK, CLASSES_NAMED, CLASSES_PLATFORM,
-    CLASSES_PLUGINS, CREATE_CONTENT_PREFIX, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, EMPTY_STATE_SPANS, EMPTY_STATE_STEP_PREFIX,
-    FRAME_BECAME_INTERACTIVE, FRAME_BECAME_VISIBLE, OPEN_EDITOR_PAINT, OPEN_FRAME, OPEN_HIGHLIGHTED, PLATFORM_SPANS, PLUGIN_CLASSES,
-    TOTAL_DURATION, WELCOME_BECAME_VISIBLE, WELCOME_SPANS, named_at,
+    CLASSES_PLUGINS, CREATE_CONTENT_PREFIX, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, EMPTY_STATE_SPANS, EMPTY_STATE_STEP_PREFIX, END_SPANS,
+    FRAME_BECAME_INTERACTIVE, FRAME_BECAME_VISIBLE, JVM_LOADING_TIME, MODAL_SPANS, OPEN_EDITOR_PAINT, OPEN_FRAME, OPEN_HIGHLIGHTED,
+    PLATFORM_SPANS, PLUGIN_CLASSES, TOTAL_DURATION, WELCOME_BECAME_VISIBLE, WELCOME_SPANS, named_at, span_end,
 };
 use super::session::SUMMARY_FILE;
 use super::summary::{ArmSummary, Summary};
@@ -30,11 +30,12 @@ const TRIGGER_FRAMES: usize = 5;
 const FRAME_WIDTH: usize = 100;
 
 /// The metrics of the first block, in order.
-const EVENT_METRICS: [&str; 7] = [
+const EVENT_METRICS: [&str; 8] = [
     WELCOME_BECAME_VISIBLE,
     FRAME_BECAME_VISIBLE,
     FRAME_BECAME_INTERACTIVE,
     TOTAL_DURATION,
+    JVM_LOADING_TIME,
     CLASS_REQUESTS,
     CLASS_TIME,
     CLASS_EDT_TIME,
@@ -129,9 +130,9 @@ fn header(text: &mut String, summary: &Summary, arms: &[&ArmSummary]) {
 }
 
 /// The metric groups of a table over `arms`, in order: a title and its rows. The editor needs the project arm, the
-/// welcome spans need an arm with the non-modal welcome screen, and the second project needs the open-project arm.
-/// The project arm finds its editor spans in the platform spans. The class group holds a row of [`named_at`] only for
-/// an anchor that an arm has.
+/// welcome spans need an arm with the non-modal welcome screen, the modal spans need the modal arm, and the second
+/// project needs the open-project arm. The project arm finds its editor spans in the platform spans. The class group
+/// holds a row of [`named_at`] only for an anchor that an arm has. The span ends are on the clock of the anchors.
 pub(crate) fn metric_groups(arms: &[&ArmSummary]) -> Vec<(&'static str, Vec<String>)> {
     let mut classes = CLASS_METRICS.map(str::to_owned).to_vec();
     classes.extend(
@@ -154,6 +155,10 @@ pub(crate) fn metric_groups(arms: &[&ArmSummary]) -> Vec<(&'static str, Vec<Stri
     if arms.iter().any(|arm| matches!(arm.arm, Arm::NonModal | Arm::OpenProject)) {
         groups.push(("welcome spans", welcome_rows(arms)));
     }
+    if arms.iter().any(|arm| arm.arm == Arm::Modal) {
+        groups.push(("modal spans", MODAL_SPANS.map(str::to_owned).to_vec()));
+    }
+    groups.push(("span ends (ms from the process start)", END_SPANS.map(span_end).to_vec()));
     if arms.iter().any(|arm| arm.arm == Arm::OpenProject) {
         groups.push(("second project", OPEN_METRICS.map(str::to_owned).to_vec()));
     }

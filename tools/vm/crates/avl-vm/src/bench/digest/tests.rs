@@ -19,8 +19,8 @@ fn the_replay_digest_matches_the_golden() {
         .count();
     assert_eq!(profile, 16, "the EDT block and the trigger block of the profile");
     assert!(
-        digest.lines().count() - profile <= 55,
-        "the digest of a welcome session without a profile is about 50 lines"
+        digest.lines().count() - profile <= 60,
+        "the digest of a welcome session without a profile is about 57 lines"
     );
 }
 
@@ -135,4 +135,58 @@ fn an_empty_editor_session_shows_the_composer() {
     );
     assert!(!lines.contains(&"editor:"), "the editor group needs the project arm: {text}");
     assert!(text.contains("  classes.named@emptyStateBuilt "), "{text}");
+}
+
+/// A session with the modal arm renders the modal spans in their order. The span ends follow the span groups, and a
+/// span of the modal welcome screen has its end there too.
+#[test]
+fn a_modal_session_shows_the_modal_spans_and_their_ends() {
+    use crate::bench::arm::Arm;
+    use crate::bench::record::{self, LaunchFacts, RunId};
+    use crate::bench::session;
+    use crate::bench::summary::Summary;
+    use crate::bench::testing::append_spans;
+    let (_dir, session_dir) = fixture_session();
+    let mut info = session::read_info(&session_dir).expect("the session");
+    info.arms = vec![Arm::Modal];
+    let run_dir = session_dir.join("modal-run-01");
+    append_spans(
+        &run_dir,
+        &[
+            ("welcome frame showing", 1500, 40),
+            ("welcome frame creating", 1000, 300),
+            ("welcome frame EDT waiting", 900, 80),
+        ],
+    );
+    let id = RunId::parse("modal-run-01").expect("a run");
+    let run = record::collect(&run_dir, &id, LaunchFacts::default());
+    let summary = Summary::build(&info, "<session>", &[run]);
+    let text = super::render(&summary);
+    let lines: Vec<&str> = text.lines().collect();
+    let name = |line: &str| line.chars().take(super::NAME_WIDTH).collect::<String>().trim().to_owned();
+    let group = |title: &str| {
+        let start = lines
+            .iter()
+            .position(|line| *line == title)
+            .unwrap_or_else(|| panic!("{title}: {text}"));
+        let rows: Vec<String> = lines[start + 1..]
+            .iter()
+            .take_while(|line| line.starts_with("  "))
+            .map(|line| name(line))
+            .collect();
+        (start, rows)
+    };
+    let (modal, modal_rows) = group("modal spans:");
+    assert_eq!(
+        modal_rows,
+        ["welcome frame EDT waiting", "welcome frame creating", "welcome frame showing"]
+    );
+    let (ends, end_rows) = group("span ends (ms from the process start):");
+    assert_eq!(end_rows, ["welcome frame creating end"]);
+    assert!(modal < ends, "{text}");
+    assert!(
+        lines[ends + 1].ends_with("   1300    1300    1300"),
+        "the end of the span, 1000 ms and 300 ms: {text}"
+    );
+    assert!(!text.contains("welcome spans:"), "{text}");
 }

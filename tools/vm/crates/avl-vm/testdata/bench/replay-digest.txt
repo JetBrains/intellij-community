@@ -7,6 +7,7 @@ events and report:
   frameBecameVisible                                               -                    1714    1714    1714
   frameBecameInteractive                                           -                    2528    2528    2528
   totalDuration                                                    -                    3195    3195    3195
+  jvm.loadingTime                                                  -                     358     358     358
   classLoading.requests                                            -                  267427  267427  267427
   classLoading.time                                                -                    8317    8317    8317
   classLoading.edtTime                                             -                      42      42      42
@@ -42,7 +43,13 @@ welcome spans:
   welcome right tab body: createContent trial.started.banner       -                     0.1     0.1     0.1
   welcome right tab body: EDT build                                -                      14      14      14
   readme opening check                                             -                     0.5     0.5     0.5
-not measured: editor restoring, editor restoring till paint, post open editors
+span ends (ms from the process start):
+  app initialization end                                           -                    1226    1226    1226
+  welcome screen project opening end                               -                    2533    2533    2533
+  toolwindow creating end                                          -                    2295    2295    2295
+  welcome left panel creating end                                  -                    2714    2714    2714
+  restoreEditors end                                               -                    2227    2227    2227
+not measured: editor restoring, editor restoring till paint, post open editors, welcome left panel painted, welcome right tab painted, welcome frame EDT waiting, welcome frame creating, welcome menu bar creating, welcome tabs creating, welcome quick access panel creating, welcome frame showing, app initialized callback end, app frame created callback end, project prepare end, project add to opened end, toolwindow init command creation end, toolwindow default pane registered hook end, frame allocator foreground end, welcome frame creating end
 no delta: modal has 1 valid runs and non-modal has 1; a delta needs 3 per arm
 modal note: no class-load.log (1 of 1 runs)
 modal note: no startup-stats.json (1 of 1 runs)

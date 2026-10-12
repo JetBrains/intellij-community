@@ -2,7 +2,7 @@
 //!
 //! [`collect`] reads only files. The launch writes the run directory and `replay` reads it again with the same call.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
@@ -17,7 +17,7 @@ use super::profile::{self, EdtProfile, FrameSamples};
 use super::session::{CLASS_LOAD_LOG, TRACE_FILE};
 use super::stats::{self, StartupStats};
 use super::timeline::QUIT_SPAN;
-use super::trace::{self, Trace, as_f64, micros_to_ms, tenth};
+use super::trace::{self, Trace, as_f64, micros_to_ms};
 
 /// The line of `idea.log` that tells that the IDE opened the welcome project.
 pub(crate) const WELCOME_PROJECT_LOG_LINE: &str = "Opened the welcome screen project";
@@ -29,6 +29,8 @@ pub(crate) const FRAME_BECAME_INTERACTIVE: &str = "frameBecameInteractive";
 
 /// The metric keys of the report.
 pub(crate) const TOTAL_DURATION: &str = "totalDuration";
+/// The milliseconds from the JVM start to the start of the process clock, `jvm.loadingTime` of the report.
+pub(crate) const JVM_LOADING_TIME: &str = "jvm.loadingTime";
 /// The class requests of `ClassPath`, which the report writes as `classLoading.count`. A request is not a class: one
 /// class can need many requests.
 pub(crate) const CLASS_REQUESTS: &str = "classLoading.requests";
@@ -90,22 +92,61 @@ pub(crate) const PLATFORM_SPANS: [&str; 11] = [
 /// the offset of the paint.
 pub(crate) const WELCOME_SCREEN_PAINTED: &str = "welcome screen painted";
 
-/// The spans of the non-modal welcome screen, in the order of the digest. The metric key is the span name.
-/// [`CREATE_CONTENT_PREFIX`] adds one metric per feature key, which the digest shows after the feature ids.
-pub(crate) const WELCOME_SPANS: [&str; 9] = [
+/// The spans of the non-modal welcome screen, in the order of the digest. The metric key is the span name, and its
+/// value is the sum of the spans of the name, as the perf test of the welcome screen sums them
+/// (`WelcomeScreenSpanPostProcessor`). [`CREATE_CONTENT_PREFIX`] adds one metric per feature key, which the digest
+/// shows after the feature ids.
+pub(crate) const WELCOME_SPANS: [&str; 11] = [
     WELCOME_SCREEN_PAINTED,
     "welcome screen project opening",
     "welcome left panel creating",
     "welcome recent projects collecting",
     "welcome left toolbar first fill",
+    "welcome left panel painted",
     "welcome right tab creating",
     "welcome right tab body: feature ids",
     "welcome right tab body: EDT build",
+    "welcome right tab painted",
     "readme opening check",
 ];
 
-/// The prefix of the per-feature spans of the right tab.
+/// The prefix of the per-feature spans of the right tab. Each metric is the sum of the spans of its name, as for
+/// [`WELCOME_SPANS`].
 pub(crate) const CREATE_CONTENT_PREFIX: &str = "welcome right tab body: createContent ";
+
+/// The spans of the modal welcome screen, in the order of the digest. Each metric is the sum of the spans of its name,
+/// as for [`WELCOME_SPANS`].
+pub(crate) const MODAL_SPANS: [&str; 6] = [
+    "welcome frame EDT waiting",
+    "welcome frame creating",
+    "welcome menu bar creating",
+    "welcome tabs creating",
+    "welcome quick access panel creating",
+    "welcome frame showing",
+];
+
+/// The spans whose end is a metric, in the order of the digest. See [`span_end`].
+pub(crate) const END_SPANS: [&str; 13] = [
+    "app initialization",
+    "app initialized callback",
+    "app frame created callback",
+    "welcome screen project opening",
+    "project prepare",
+    "project add to opened",
+    "toolwindow init command creation",
+    "toolwindow creating",
+    "toolwindow default pane registered hook",
+    "welcome left panel creating",
+    "restoreEditors",
+    "frame allocator foreground",
+    "welcome frame creating",
+];
+
+/// The metric key of the end of the first span `name`, such as `toolwindow creating end`: the milliseconds from the
+/// process start to the end, on the clock of the anchors.
+pub(crate) fn span_end(name: &str) -> String {
+    format!("{name} end")
+}
 
 /// The metric keys of the second project of `open-project`.
 pub(crate) const OPEN_FRAME: &str = "open: project frame creating";
@@ -328,22 +369,32 @@ fn measure(run_dir: &Path, record: &mut RunRecord) -> Result<(), String> {
     }
     if let Some(stats) = &stats {
         metrics.insert(TOTAL_DURATION.to_owned(), as_f64(stats.total_duration));
+        if let Some(loading_ms) = stats.jvm_loading_ms() {
+            metrics.insert(JVM_LOADING_TIME.to_owned(), as_f64(loading_ms));
+        }
         metrics.insert(CLASS_REQUESTS.to_owned(), as_f64(stats.class_loading.count));
         metrics.insert(CLASS_TIME.to_owned(), as_f64(stats.class_loading.time));
         metrics.insert(CLASS_EDT_TIME.to_owned(), as_f64(stats.edt_class_loading_ms()));
     }
-    for name in PLATFORM_SPANS.iter().chain(WELCOME_SPANS.iter()) {
+    for name in PLATFORM_SPANS {
         if let Some(duration) = span_ms(trace.as_ref(), stats.as_ref(), name) {
-            metrics.insert((*name).to_owned(), duration);
+            metrics.insert(name.to_owned(), duration);
+        }
+    }
+    for name in summed_names(trace.as_ref()) {
+        if let Some(sum) = span_sum(trace.as_ref(), stats.as_ref(), &name) {
+            if let Some(note) = sum.note(&name) {
+                record.notes.push(note);
+            }
+            metrics.insert(name, sum.ms);
+        }
+    }
+    for name in END_SPANS {
+        if let Some(end) = span_end_ms(trace.as_ref(), stats.as_ref(), name) {
+            metrics.insert(span_end(name), end);
         }
     }
     if let Some(trace) = &trace {
-        for span in &trace.spans {
-            let name = span.operation_name.as_str();
-            if name.starts_with(CREATE_CONTENT_PREFIX) && !span.is_helper() {
-                metrics.entry(name.to_owned()).or_insert_with(|| micros_to_ms(span.duration));
-            }
-        }
         empty_state_metrics(trace, metrics);
     }
     if let Gate::Span { name, missing } = gate {
@@ -610,10 +661,7 @@ fn empty_state_metrics(trace: &Trace, metrics: &mut BTreeMap<String, f64>) {
         }
     }
     if let (Some(origin), Some(span)) = (trace.origin_us(), trace.first(EMPTY_STATE_SPAN)) {
-        metrics.insert(
-            EMPTY_STATE_BUILT.to_owned(),
-            tenth(span.offset_ms(origin) + micros_to_ms(span.duration)),
-        );
+        metrics.insert(EMPTY_STATE_BUILT.to_owned(), span.end_ms(origin));
     }
 }
 
@@ -623,6 +671,81 @@ fn span_ms(trace: Option<&Trace>, stats: Option<&StartupStats>, name: &str) -> O
         .and_then(|trace| trace.first(name))
         .map(|span| micros_to_ms(span.duration))
         .or_else(|| stats.and_then(|stats| stats.item(name)).map(|item| as_f64(item.duration)))
+}
+
+/// The names whose metric is a sum, see [`span_sum`]: [`WELCOME_SPANS`], [`MODAL_SPANS`], and each name of the trace
+/// under [`CREATE_CONTENT_PREFIX`] that is not a helper twin, in name order.
+fn summed_names(trace: Option<&Trace>) -> Vec<String> {
+    let features: BTreeSet<&str> = trace
+        .into_iter()
+        .flat_map(|trace| &trace.spans)
+        .filter(|span| span.operation_name.starts_with(CREATE_CONTENT_PREFIX) && !span.is_helper())
+        .map(|span| span.operation_name.as_str())
+        .collect();
+    WELCOME_SPANS
+        .into_iter()
+        .chain(MODAL_SPANS)
+        .chain(features)
+        .map(str::to_owned)
+        .collect()
+}
+
+/// The durations of the spans of one name, summed.
+struct SpanSum {
+    /// Milliseconds, to a tenth.
+    ms: f64,
+    /// The spans of the name.
+    count: usize,
+    /// The file that has them.
+    file: &'static str,
+}
+
+impl SpanSum {
+    /// The note of a name that occurs more than once, whose metric is thus a sum of several spans.
+    fn note(&self, name: &str) -> Option<String> {
+        (self.count > 1).then(|| format!("{} has {} \"{name}\" spans; the metric is their sum", self.file, self.count))
+    }
+}
+
+/// The sum of the durations of the spans `name`: the spans of the trace when it has the name, else the items of the
+/// report. A helper twin has a name of its own, so it never counts.
+fn span_sum(trace: Option<&Trace>, stats: Option<&StartupStats>, name: &str) -> Option<SpanSum> {
+    let spans: Vec<i64> = trace
+        .into_iter()
+        .flat_map(|trace| &trace.spans)
+        .filter(|span| span.operation_name == name)
+        .map(|span| span.duration)
+        .collect();
+    if !spans.is_empty() {
+        return Some(SpanSum {
+            ms: micros_to_ms(spans.iter().sum()),
+            count: spans.len(),
+            file: TRACE_FILE,
+        });
+    }
+    let items: Vec<i64> = stats
+        .into_iter()
+        .flat_map(|stats| &stats.items)
+        .filter(|item| item.name == name)
+        .map(|item| item.duration)
+        .collect();
+    (!items.is_empty()).then(|| SpanSum {
+        ms: as_f64(items.iter().sum()),
+        count: items.len(),
+        file: "startup-stats.json",
+    })
+}
+
+/// The end of the first span `name` in milliseconds from the process start: the trace when it has the span, else the
+/// report item, whose times are on the same clock. [`EMPTY_STATE_BUILT`] is such an end too.
+fn span_end_ms(trace: Option<&Trace>, stats: Option<&StartupStats>, name: &str) -> Option<f64> {
+    trace
+        .and_then(|trace| Some(trace.first(name)?.end_ms(trace.origin_us()?)))
+        .or_else(|| {
+            stats
+                .and_then(|stats| stats.item(name))
+                .map(|item| as_f64(item.start + item.duration))
+        })
 }
 
 /// Reads and parses an optional file of the run. A missing file is a note. A file of another shape is the reason
