@@ -121,7 +121,9 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
 
   @Override
   public boolean evaluateCondition(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
-    return (isEmulated() || matchesMethod(event.location().method())) && super.evaluateCondition(context, event);
+    return (isEmulated(event.virtualMachine()) ||
+            matchingMethods(StreamEx.of(event.location().method()), context.getDebugProcess()).findAny().isPresent()) &&
+           super.evaluateCondition(context, event);
   }
 
   @Override
@@ -130,7 +132,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     if (!shouldCreateRequest(debugProcess)) {
       return;
     }
-    if (isEmulated()) {
+    if (isEmulated(VirtualMachineProxyImpl.getCurrent().getVirtualMachine())) {
       debugProcess.getRequestsManager().callbackOnPrepareClasses(this, getClassPattern());
 
       matchingClasses(debugProcess)
@@ -175,7 +177,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
 
   @Override
   public void processClassPrepare(DebugProcess debugProcess, ReferenceType refType) {
-    if (isEmulated()) {
+    if (isEmulated(refType.virtualMachine())) {
       MethodBreakpoint.createRequestForPreparedClassEmulated(this, (DebugProcessImpl)debugProcess, refType, !stopOnlyInBaseClass());
     }
     else {
