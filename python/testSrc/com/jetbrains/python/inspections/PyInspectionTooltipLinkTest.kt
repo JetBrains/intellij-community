@@ -248,6 +248,24 @@ class PyInspectionTooltipLinkTest : PyCodeInsightTestCase() {
     assertInstanceOf<PyClass>(runReadActionBlocking { QualifiedNameProviderUtil.qualifiedNameToElement(linkTargets.first { it.endsWith(".Box") }, myFixture.project) })
   }
 
+  @Test
+  @TestFor(issues = ["PY-90559"])
+  fun `not iterable expected type is a clickable link`() {
+    val info = highlight<PyTypeCheckerInspection>("for _ in 1: ...", "Expected type")
+    assertEquals("Expected type 'Iterable', got 'Literal[1]' instead", info.description)
+    assertLink(info, "typing.Iterable")
+    assertResolves("typing.Iterable")
+  }
+
+  @Test
+  @TestFor(issues = ["PY-90559"])
+  fun `not context manager expected type is a clickable link`() {
+    val info = highlight<PyTypeCheckerInspection>("with None: ...", "Expected type")
+    assertEquals("Expected type 'AbstractContextManager', got 'None' instead", info.description)
+    assertLink(info, "contextlib.AbstractContextManager")
+    assertResolves("contextlib.AbstractContextManager")
+  }
+
   private fun assertLink(info: HighlightInfo, name: String) {
     assertTrue("""href="#element/$name"""" in info.toolTip!!, info.toolTip!!)
   }

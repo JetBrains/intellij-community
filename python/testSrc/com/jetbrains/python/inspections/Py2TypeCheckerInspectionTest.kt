@@ -321,7 +321,7 @@ class Py2TypeCheckerInspectionTest : PyCodeInsightTestCase() {
         pass
 
     for y in C2:
-    #        ^^ WARNING Expected type 'collections.Iterable', got 'Type[C2]' instead
+    #        ^^ WARNING Expected type 'Iterable', got 'Type[C2]' instead
         pass
 
     for z in B1:
@@ -457,7 +457,7 @@ class Py2TypeCheckerInspectionTest : PyCodeInsightTestCase() {
     }
 
     for element in KWARGS["little_list"]:
-    #              ^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'collections.Iterable', got 'Union[bool, List[str]]' instead
+    #              ^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'Iterable', got 'Union[bool, List[str]]' instead
         print(element)
     """.trimIndent())
 

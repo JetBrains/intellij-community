@@ -78,7 +78,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       
       def g(c):
           for expr in f(c):
-      #       │       ^^^^ WARNING Expected type 'collections.Iterable', got 'list[int] | float | Literal["foo"]' instead
+      #       │       ^^^^ WARNING Expected type 'Iterable', got 'list[int] | float | Literal["foo"]' instead
       #       └ TYPE int | LiteralString | Unknown
               pass
       """.trimIndent())
