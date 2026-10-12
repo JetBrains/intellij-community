@@ -239,6 +239,7 @@
     <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.concurrency.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.hprof.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.initialConfigImport.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.tabInEditor.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.nonModalWelcomeScreen.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.presentationAssistant" scope="RUNTIME" />
