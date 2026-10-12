@@ -542,8 +542,8 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
             }
           }
           launch(CoroutineName("Select requests for the PV pane $id")) {
-            runSafelyCancellable(LOG, taskDescription = { "executing select requests for the pane $id" }) {
-              selectRequests.consumeAsFlow().collectLatest { element ->
+            selectRequests.consumeAsFlow().collectLatest { element ->
+              runSafelyCancellable(LOG, taskDescription = { "executing select request for the pane $id: $element" }) {
                 selectElementImpl(element)
               }
             }
