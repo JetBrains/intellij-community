@@ -37,7 +37,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.ApiStatus;
@@ -197,9 +196,18 @@ public final class CompletionInitializationUtil {
     PsiFile currentOrigin = copy.getOriginalFile();
     if (currentOrigin == copy) {
       copy.setOriginalFile(origin);
-    } else if (currentOrigin != origin) {
+    }
+    else if (currentOrigin != origin) {
+      if (!currentOrigin.isValid()) {
+        // The host copy is reused across completions, so its injected file can keep the original of an earlier completion.
+        // A re-injection in the host file invalidates that original. Point the copy to the current original.
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Replace the invalid original of a reused injected copy: " + currentOrigin + " -> " + origin);
+        }
+        copy.setOriginalFile(origin);
+        return;
+      }
 
-      PsiUtilCore.ensureValid(currentOrigin);
       checkInjectionConsistency(origin);
       checkInjectionConsistency(currentOrigin);
 
