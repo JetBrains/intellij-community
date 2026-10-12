@@ -126,16 +126,19 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
           val placeholder = placeholder()
             .align(Align.FILL)
 
-          val recentProjectsPanel = when {
-            isStationWelcomeScreenPromoEnabled() -> createTwoRowRecentProjectsPanel(false)
-            Registry.`is`("jetbrainsd.new.connection.flow.enabled", false) -> createTwoRowRecentProjectsPanel(true)
-            else -> createRecentProjectsPanel()
+          // only the panel that is shown is built, the other one is built on the first switch to it
+          val recentProjectsPanel = lazy(LazyThreadSafetyMode.NONE) {
+            when {
+              isStationWelcomeScreenPromoEnabled() -> createTwoRowRecentProjectsPanel(false)
+              Registry.`is`("jetbrainsd.new.connection.flow.enabled", false) -> createTwoRowRecentProjectsPanel(true)
+              else -> createRecentProjectsPanel()
+            }
           }
-          val emptyStatePanel = createEmptyStatePanel()
+          val emptyStatePanel = lazy(LazyThreadSafetyMode.NONE) { createEmptyStatePanel() }
           isPanelEmptyPredicate.addListener { isEmpty ->
-            placeholder.component = if (isEmpty) emptyStatePanel else recentProjectsPanel
+            placeholder.component = if (isEmpty) emptyStatePanel.value else recentProjectsPanel.value
           }
-          placeholder.component = if (isPanelEmptyPredicate.invoke()) emptyStatePanel else recentProjectsPanel
+          placeholder.component = if (isPanelEmptyPredicate.invoke()) emptyStatePanel.value else recentProjectsPanel.value
         }.resizableRow()
         row {
           notificationPanel = cell(WelcomeScreenComponentFactory.createNotificationToolbar(parentDisposable))
