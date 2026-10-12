@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:ApiStatus.Internal
+@file:ApiStatus.Experimental
 
 package com.intellij.codeInsight.highlighting
 
@@ -32,6 +32,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 fun highlightUsages(project: Project, editor: Editor, file: PsiFile): Boolean {
   val allTargets = targetSymbols(file, editor.caretModel.offset)
   if (allTargets.isEmpty()) {
