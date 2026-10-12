@@ -18,6 +18,8 @@ import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.internal.statistic.collectors.fus.ProjectlessData
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
@@ -519,6 +521,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     projectSaveSettingsDurationMs: Long,
   ) {
     val app = ApplicationManager.getApplication()
+    val projectless = ProjectlessData.forProject(project)
     // the caller's thread context can carry a job of this project's scope; the scope cancellation below must not cancel the close
     Cancellation.withNonCancelableSection().use {
       val projectClosingDurationMs = measureTimeMillis {
@@ -545,7 +548,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             project.startDispose()
           }
         }
-        fireProjectClosed(project)
+        fireProjectClosed(project, projectless)
         if (!ApplicationManagerEx.getApplicationEx().isExitInProgress) {
           runSuppressing(
             { TimedZipHandler.closeOpenZipReferences() },
@@ -562,7 +565,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           }
         }
         LifecycleUsageTriggerCollector.onProjectClosedAndDisposed(
-          project, projectCloseStartedMs, projectSaveSettingsDurationMs, projectClosingDurationMs, projectDisposeDurationMs
+          project, projectless, projectCloseStartedMs, projectSaveSettingsDurationMs, projectClosingDurationMs, projectDisposeDurationMs
         )
       }
     }
@@ -1342,12 +1345,12 @@ private fun fireProjectClosing(project: Project) {
   }
 }
 
-private fun fireProjectClosed(project: Project) {
+private fun fireProjectClosed(project: Project, projectless: EventPair<*>?) {
   if (LOG.isDebugEnabled) {
     LOG.debug("projectClosed $project", Throwable())
   }
 
-  LifecycleUsageTriggerCollector.onBeforeProjectClosed(project)
+  LifecycleUsageTriggerCollector.onBeforeProjectClosed(project, projectless)
   closePublisher.projectClosed(project)
   publisher.projectClosed(project)
   @Suppress("DEPRECATION")
