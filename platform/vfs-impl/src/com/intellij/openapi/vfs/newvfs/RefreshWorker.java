@@ -56,6 +56,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -100,6 +101,9 @@ final class RefreshWorker {
 
   private volatile boolean cancelled;
 
+  /** The files whose scan the worker skipped because their file system is unavailable. */
+  private final Set<NewVirtualFile> skipped = ConcurrentHashMap.newKeySet();
+
   // =========================== monitoring =========================================================================== //
   private final AtomicInteger fullScans = new AtomicInteger();
   private final AtomicInteger partialScans = new AtomicInteger();
@@ -135,6 +139,8 @@ final class RefreshWorker {
       else {
         parallelScan(events);
       }
+      // a scanned parent is clean, and `markDirty` of a skipped file, which is still dirty, does not mark the parent
+      skipped.forEach(RefreshWorker::forceMarkDirty);
       return events;
     }
     finally {
@@ -160,7 +166,14 @@ final class RefreshWorker {
           if (VfsUtil.isBadName(childName)) continue;
 
           var fakeChild = new FakeVirtualFile(parent, childName);
-          var attributes = computeAttributesForFile(fs, fakeChild);
+          FileAttributes attributes;
+          try {
+            attributes = computeAttributesForFile(fs, fakeChild);
+          }
+          catch (FileSystemUnavailableException _) {
+            LOG.info("refresh skipped a new file, the file system is unavailable: " + fakeChild);
+            continue;
+          }
           if (attributes == null) continue;
 
           var canonicalName = fs.getCanonicallyCasedName(fakeChild);
@@ -295,13 +308,18 @@ final class RefreshWorker {
           dir.markClean();
         }
       }
+      catch (FileSystemUnavailableException _) {
+        LOG.info("refresh skipped, the file system is unavailable: " + file);
+        skipped.add(file);
+      }
       finally {
         semaphore.up();
       }
     }
   }
 
-  private boolean fullDirRefresh(List<VFileEvent> events, NewVirtualFileSystem fs, VirtualDirectoryImpl dir) {
+  private boolean fullDirRefresh(List<VFileEvent> events, NewVirtualFileSystem fs, VirtualDirectoryImpl dir)
+    throws FileSystemUnavailableException {
     var t = System.nanoTime();
     Pair<VirtualFile[], List<String>> snapshot = ReadAction.computeBlocking(() -> {
       VirtualFile[] children = dir.getChildren();
@@ -399,7 +417,8 @@ final class RefreshWorker {
     return changed;
   }
 
-  private boolean partialDirRefresh(List<VFileEvent> events, NewVirtualFileSystem fs, VirtualDirectoryImpl dir) {
+  private boolean partialDirRefresh(List<VFileEvent> events, NewVirtualFileSystem fs, VirtualDirectoryImpl dir)
+    throws FileSystemUnavailableException {
     var t = System.nanoTime();
     Pair<List<VirtualFile>, List<String>> snapshot = ReadAction.computeBlocking(
       () -> new Pair<>(dir.getCachedChildren(), dir.getSuspiciousNames())
@@ -501,7 +520,7 @@ final class RefreshWorker {
 
   private @Nullable FileAttributes getAttributes(@NotNull NewVirtualFileSystem fs,
                                                  @Nullable Map<String, FileAttributes> dirList,
-                                                 @NotNull VirtualFile child) {
+                                                 @NotNull VirtualFile child) throws FileSystemUnavailableException {
     FileAttributes attributes = null;
     if (dirList != null) {
       attributes = dirList.get(child.getName());
@@ -522,15 +541,21 @@ final class RefreshWorker {
    * so it does not make anything worse.
    * In the future, it should be removed in favor of non-blocking or suspending IO.
    */
-  private static @Nullable FileAttributes computeAttributesForFile(NewVirtualFileSystem fs, VirtualFile file) {
-    return Cancellation.computeInNonCancelableSection(() -> fs.getAttributes(file));
+  private static @Nullable FileAttributes computeAttributesForFile(NewVirtualFileSystem fs, VirtualFile file)
+    throws FileSystemUnavailableException {
+    return Cancellation.computeInNonCancelableSection(() -> fs instanceof UnavailabilityAwareFileSystem uafs
+                                                            ? uafs.getAttributesOrThrowIfUnavailable(file)
+                                                            : fs.getAttributes(file));
   }
 
   /** See {@link RefreshWorker#computeAttributesForFile(NewVirtualFileSystem, VirtualFile)} docs about cancellability */
   private static Map<String, FileAttributes> computeAllChildrenAttributes(@NotNull BatchingFileSystem fs,
                                                                           @NotNull VirtualFile dir,
-                                                                          @Nullable Set<String> filter) {
-    return Cancellation.computeInNonCancelableSection(() -> fs.listWithAttributes(dir, filter));
+                                                                          @Nullable Set<String> filter)
+    throws FileSystemUnavailableException {
+    return Cancellation.computeInNonCancelableSection(() -> fs instanceof UnavailabilityAwareFileSystem uafs
+                                                            ? uafs.listWithAttributesOrThrowIfUnavailable(dir, filter)
+                                                            : fs.listWithAttributes(dir, filter));
   }
 
   private ChildInfo childRecord(NewVirtualFileSystem fs, FakeVirtualFile child, FileAttributes attributes, boolean canonicalize) {
