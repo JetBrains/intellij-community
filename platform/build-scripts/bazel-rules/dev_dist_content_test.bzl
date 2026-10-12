@@ -16,6 +16,7 @@ load(
     "IntellijDevFragmentInfo",
     "IntellijDevReferenceInfo",
     "IntellijProjectModelTreeInfo",
+    "dist_home_path",
     "intellij_dev_build_inputs",
     "intellij_dev_fragment",
     "intellij_dev_fragments_dist",
@@ -450,13 +451,25 @@ def _sibling_vm_options_test_impl(ctx):
     writes = [action for action in analysistest.target_actions(env) if file in action.outputs.to_list()]
     asserts.equals(env, 1, len(writes), "one action writes the file")
     if writes:
-        # `${EXPORT}` resolves to the absolute path of the export below the execution root.
+        # `${EXPORT}` resolves to the absolute path of the home of the export below the execution root.
         export = "/output-base/execroot/%s/%s" % (ctx.workspace_name, info.home.path)
+        if ctx.attr.home_prefix:
+            export += "/" + ctx.attr.home_prefix
+        asserts.equals(env, "/output-base/execroot/%s/%s" % (ctx.workspace_name, dist_home_path(info)), export)
         asserts.equals(env, "-Da=1\n-Dexport=%s/x\n" % export, writes[0].content)
+
+    # The provider and the composer get the home prefix. The composer gets no option for the output itself.
+    asserts.equals(env, ctx.attr.home_prefix, info.home_prefix)
+    composes = [action for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDevDistCompose"]
+    asserts.equals(env, 1, len(composes), "one action composes the export")
+    if composes:
+        prefixes = [argument for argument in composes[0].argv if argument.startswith("--home-prefix")]
+        asserts.equals(env, ["--home-prefix=" + ctx.attr.home_prefix] if ctx.attr.home_prefix else [], prefixes)
     return analysistest.end(env)
 
 _sibling_vm_options_test = analysistest.make(
     _sibling_vm_options_test_impl,
+    attrs = {"home_prefix": attr.string(doc = "The home prefix of the export under test.")},
     config_settings = {_TRACE_SPANS: False},
 )
 
@@ -932,19 +945,22 @@ def dev_dist_content_test_suite(name):
         production = [":" + component for component in production],
     )
 
-    # The sibling vmoptions file of an export, and the lines and the distributions that the rule refuses.
-    sibling = name + "_sibling_distribution"
-    intellij_dev_fragments_dist(
-        name = sibling,
-        composer = ":" + fixture,
-        fragments = [":" + component for component in production],
-        expect_fragments = production,
-        sibling_vm_options = ["-Da=1", "-Dexport=${EXPORT}/x"],
-        output_base = "/output-base",
-        tags = ["manual"],
-    )
-    tests.append(sibling + "_test")
-    _sibling_vm_options_test(name = tests[-1], target_under_test = ":" + sibling)
+    # The sibling vmoptions file of an export, flat and with the home in `Contents`, and the lines and the distributions
+    # that the rule refuses.
+    for suffix, prefix in [("", ""), ("_contents", "Contents")]:
+        sibling = name + "_sibling_distribution" + suffix
+        intellij_dev_fragments_dist(
+            name = sibling,
+            composer = ":" + fixture,
+            fragments = [":" + component for component in production],
+            expect_fragments = production,
+            sibling_vm_options = ["-Da=1", "-Dexport=${EXPORT}/x"],
+            output_base = "/output-base",
+            home_prefix = prefix,
+            tags = ["manual"],
+        )
+        tests.append(sibling + "_test")
+        _sibling_vm_options_test(name = tests[-1], target_under_test = ":" + sibling, home_prefix = prefix)
     for suffix, local_launch, lines, output_base, expected_message in [
         ("local_launch", True, ["-Da=1"], "", "a local launch has no export, so it takes no sibling_vm_options"),
         ("line_break", False, ["-Da=1\n-Db=2"], "", "a sibling vmoptions line must be one JVM option"),

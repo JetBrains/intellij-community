@@ -4,7 +4,8 @@
 //! A generation is `<runtime root>/bench/generations/<digest>/`:
 //!
 //! - `<dist name>/`: the clone of the `.dist` directory that Bazel built, such as `idea_dist.dist`. The name stays,
-//!   because the launch passes it as `dev.build.dir`;
+//!   so `home.path` of the config names the home in the generation too. The home is the directory itself, or its
+//!   `Contents` for a macOS app;
 //! - `jbr/`: the clone of the JBR home of the row launcher;
 //! - `ide.config`: the copy of the config of the distribution;
 //! - `OpenedPackages.txt`: the copy of the `--add-opens` list of the checkout, which the launch reads;
@@ -72,7 +73,8 @@ pub(crate) struct Sources {
 /// The fields of a dist config that the launch reads.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct DistConfig {
-    /// `home.path`: the name of the `.dist` directory, relative to the config.
+    /// `home.path`: the home of the IDE, relative to the config. It is the name of the `.dist` directory, or
+    /// `<name>/<directory>` for a home below it, such as `idea_dist.dist/Contents` of a macOS app.
     pub(crate) home: String,
     /// `main.class.name`.
     pub(crate) main_class: String,
@@ -83,6 +85,13 @@ pub(crate) struct DistConfig {
     pub(crate) additional_modules: Vec<String>,
 }
 
+impl DistConfig {
+    /// The name of the `.dist` directory: the first name of [`Self::home`].
+    pub(crate) fn dist_name(&self) -> &str {
+        self.home.split('/').next().unwrap_or_default()
+    }
+}
+
 /// A staged generation.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Generation {
@@ -90,6 +99,8 @@ pub(crate) struct Generation {
     pub(crate) root: PathBuf,
     /// The distribution inside the generation.
     pub(crate) dist: PathBuf,
+    /// The home of the IDE inside the generation: [`Self::dist`], or the directory below it that the config names.
+    pub(crate) home: PathBuf,
     /// `bin/java` of the JBR inside the generation.
     pub(crate) java: PathBuf,
     pub(crate) config: DistConfig,
@@ -174,8 +185,11 @@ pub(crate) fn parse_config(text: &str) -> Result<DistConfig, String> {
         }
     }
     let home = home.ok_or("it has no home.path")?;
-    if home.contains(['/', '\\']) || home.is_empty() || home == "." || home == ".." {
-        return Err(format!("its home.path {home} is not the name of a sibling directory"));
+    let names: Vec<&str> = home.split('/').collect();
+    if names.len() > 2 || home.contains('\\') || names.iter().any(|name| name.is_empty() || *name == "." || *name == "..") {
+        return Err(format!(
+            "its home.path {home} is neither a sibling directory nor a directory in one"
+        ));
     }
     Ok(DistConfig {
         home,
@@ -222,7 +236,7 @@ pub(crate) async fn stage(
         .file_name()
         .map(|name| name.to_string_lossy().into_owned())
         .unwrap_or_default();
-    if dist_name != config.home {
+    if dist_name != config.dist_name() {
         return Err(unsupported(format!(
             "the dist config {} names the home {}, and the distribution is {}",
             sources.config.display(),
@@ -259,6 +273,7 @@ pub(crate) async fn stage(
     let generation = Generation {
         digest: digest.clone(),
         dist: root.join(&dist_name),
+        home: config.home.split('/').fold(root.clone(), |path, name| path.join(name)),
         java: root.join(JBR_DIR).join("bin").join(java_name()),
         root: root.clone(),
         config,
@@ -412,6 +427,7 @@ pub(crate) fn open(runtime_root: &Path, prefix: &str) -> Result<Staged, Refusal>
         generation: Generation {
             digest: record.digest,
             dist: root.join(&record.dist_name),
+            home: config.home.split('/').fold(root.clone(), |path, name| path.join(name)),
             java: root.join(JBR_DIR).join("bin").join(java_name()),
             root,
             config,

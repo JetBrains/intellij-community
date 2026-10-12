@@ -34,6 +34,13 @@ fn reads_a_dist_config() {
 }
 
 #[test]
+fn reads_a_dist_config_with_the_home_below_the_dist_directory() {
+    let config = parse_config("home.path=idea_dist.dist/Contents\nmain.class.name=com.intellij.idea.Main\n").expect("a config");
+    assert_eq!(config.home, "idea_dist.dist/Contents");
+    assert_eq!(config.dist_name(), "idea_dist.dist");
+}
+
+#[test]
 fn reads_the_additional_modules_of_a_dist_config() {
     let config = parse_config(
         "home.path=jetbrains_light_all_plugins_dist.dist\nmain.class.name=com.intellij.idea.Main\nadditional.modules=intellij.markdown, intellij.json,,intellij.yaml \n",
@@ -52,7 +59,15 @@ fn refuses_a_config_the_launch_cannot_follow() {
         ("home.path=a.dist\n", "it has no main.class.name"),
         (
             "home.path=../a.dist\nmain.class.name=M\n",
-            "its home.path ../a.dist is not the name of a sibling directory",
+            "its home.path ../a.dist is neither a sibling directory nor a directory in one",
+        ),
+        (
+            "home.path=a.dist/Contents/MacOS\nmain.class.name=M\n",
+            "its home.path a.dist/Contents/MacOS is neither a sibling directory nor a directory in one",
+        ),
+        (
+            "home.path=a.dist/\nmain.class.name=M\n",
+            "its home.path a.dist/ is neither a sibling directory nor a directory in one",
         ),
         ("home.path\n", "the line `home.path` is not key=value"),
     ] {
@@ -122,6 +137,7 @@ async fn a_stage_clones_the_sources_read_only_and_a_second_stage_reuses_them() {
     assert!(!generation.reused);
     assert_eq!(generation.root, runtime.join("bench/generations").join(&generation.digest));
     assert_eq!(generation.dist, generation.root.join("idea_dist.dist"));
+    assert_eq!(generation.home, generation.dist);
     assert_eq!(generation.java, generation.root.join(JBR_DIR).join("bin").join(super::java_name()));
     assert_eq!(read_digest(&generation.root).expect("the record"), generation.digest);
     let jar = generation.dist.join("lib/a.jar");
@@ -176,6 +192,40 @@ async fn a_link_out_of_the_tree_is_refused_and_leaves_no_temporary() {
         .expect("the generations")
         .count();
     assert_eq!(left, 0);
+}
+
+// A macOS app has its home in `Contents`. The generation clones the whole `.dist` directory and starts from the home.
+#[tokio::test]
+async fn a_stage_starts_from_the_home_that_the_config_names_below_the_dist_directory() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let sources = fake_sources(dir.path());
+    std::fs::rename(sources.dist.join("lib"), dir.path().join("lib")).expect("a move");
+    std::fs::create_dir_all(sources.dist.join("Contents")).expect("the home");
+    std::fs::rename(dir.path().join("lib"), sources.dist.join("Contents/lib")).expect("a move");
+    std::fs::rename(
+        sources.dist.join("core-classpath.txt"),
+        sources.dist.join("Contents/core-classpath.txt"),
+    )
+    .expect("a move");
+    std::fs::write(
+        &sources.config,
+        "home.path=idea_dist.dist/Contents\nmain.class.name=com.intellij.idea.Main\n",
+    )
+    .expect("a config");
+    let (_runner, locks, reporter) = collaborators();
+    let generation = stage(
+        &Ctx::background(),
+        &locks,
+        &dir.path().join("runtime"),
+        &sources,
+        &built(),
+        &reporter,
+    )
+    .await
+    .expect("a generation");
+    assert_eq!(generation.dist, generation.root.join("idea_dist.dist"));
+    assert_eq!(generation.home, generation.dist.join("Contents"));
+    assert_eq!(std::fs::read_to_string(generation.home.join("lib/a.jar")).expect("the clone"), "a");
 }
 
 #[tokio::test]

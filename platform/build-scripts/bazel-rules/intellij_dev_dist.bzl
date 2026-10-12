@@ -174,7 +174,8 @@ IntellijDevReferenceInfo = provider(
 IntellijDevDistInfo = provider(
     fields = {
         "fingerprint": "The content fingerprint of the composed IDE distribution.",
-        "home": "The self-contained home or the local launch metadata directory.",
+        "home": "The output directory: the export `<name>.dist` or the local launch metadata `<name>.metadata`. The home of the IDE is this directory or its `home_prefix` child, see `dist_home_path`.",
+        "home_prefix": "The directory below `home` that holds the home of the IDE: `Contents` for a macOS app, or `\"\"` for `home` itself. `home_prefix` of `dev_dist_product_files.bzl` states the rule.",
         "ide_config": "The config file used by PreBuiltDevMain.",
         "runtime_files": "Component artifacts used directly by a local launch.",
         "placement": "The merged `DevDistPlacementInfo` of a local launch as `struct(files, trees, executables)`. None for a full distribution or a component without a placement.",
@@ -183,6 +184,12 @@ IntellijDevDistInfo = provider(
         "sibling_vm_options": "The sibling vmoptions file `<name>.dist.vmoptions` of an export, or None.",
     },
 )
+
+def dist_home_path(info):
+    """The exec path of the home of the IDE in the `IntellijDevDistInfo` `info`: `home`, or its `home_prefix` child."""
+    if info.home_prefix:
+        return info.home.path + "/" + info.home_prefix
+    return info.home.path
 
 IntellijProjectModelTreeInfo = provider(
     fields = {
@@ -795,14 +802,15 @@ def _merge_placements(ctx, fragment_targets):
                 fail("%s: '%s' of %s is below '%s', which %s links as a whole" % (ctx.label, destination, owners[destination], parent, owners[parent]))
     return struct(files = files, trees = trees, executables = executables)
 
-# The token of a sibling vmoptions line that stands for the absolute path of the export.
+# The token of a sibling vmoptions line that stands for the absolute path of the home of the export.
 _EXPORT_TOKEN = "${EXPORT}"
 
 def _sibling_vm_options(ctx, home):
     """Writes the sibling vmoptions file of the export `home`, or returns None when the rule states no line.
 
-    The file is `<name>.dist.vmoptions`, the Toolbox-style name next to the export. A file write runs on the local host,
-    so no shared cache holds its absolute paths. No action reads the file.
+    The file is `<name>.dist.vmoptions`, the Toolbox-style name next to the export. The native launcher finds it on
+    every OS. On macOS the home is `Contents`, and the launcher strips that level first. A file write runs on the local
+    host, so no shared cache holds its absolute paths. No action reads the file.
     """
     lines = ctx.attr.sibling_vm_options
     if not lines:
@@ -812,6 +820,8 @@ def _sibling_vm_options(ctx, home):
     export = None
     if ctx.attr.output_base:
         export = "%s/execroot/%s/%s" % (ctx.attr.output_base, ctx.workspace_name, home.path)
+        if ctx.attr.home_prefix:
+            export += "/" + ctx.attr.home_prefix
     resolved = []
     for line in lines:
         if not line or "\n" in line or "\r" in line:
@@ -887,6 +897,8 @@ def _compose(ctx, fragment_targets):
     args.add("--output-dir=" + home.path)
     args.add("--ide-config=" + ide_config.path)
     args.add("--fingerprint=" + fingerprint.path)
+    if ctx.attr.home_prefix:
+        args.add("--home-prefix=" + ctx.attr.home_prefix)
     metadata_files = [file for file in [core_classpath, plugin_classpath] if file]
     if core_classpath:
         args.add("--core-classpath-file=" + core_classpath.path)
@@ -917,6 +929,7 @@ def _compose(ctx, fragment_targets):
         ),
         IntellijDevDistInfo(
             home = home,
+            home_prefix = ctx.attr.home_prefix,
             ide_config = ide_config,
             fingerprint = fingerprint,
             runtime_files = runtime_files,
@@ -976,11 +989,15 @@ per plugin serves every product that bundles the plugin.""",
                   "packs a module that the product bundles, so only this attribute tells a consumer that the " +
                   "distribution contains it.",
         ),
+        "home_prefix": attr.string(
+            doc = "The directory below the output that holds the home of the IDE: `Contents` for a macOS app, or empty " +
+                  "for the output itself. `home_prefix` of `dev_dist_product_files.bzl` states the value. The composer " +
+                  "writes every file below it, and `DevIdeConfig` names it as the home. A local launch takes it too.",
+        ),
         "sibling_vm_options": attr.string_list(
             doc = "The lines of `<name>.dist.vmoptions`, the sibling vmoptions file next to the export. Each line is one " +
-                  "JVM option. `${EXPORT}` in a line stands for the absolute path of the export. The native launcher " +
-                  "reads the file as the user vmoptions file of a bare start on Linux and Windows. A local launch " +
-                  "refuses the attribute.",
+                  "JVM option. `${EXPORT}` in a line stands for the absolute path of the home of the export. The native " +
+                  "launcher reads the file as the user vmoptions file of a bare start. A local launch refuses the attribute.",
         ),
         "output_base": attr.string(
             doc = "The absolute output base of the workspace. The rule needs it when a line of `sibling_vm_options` names `${EXPORT}`.",

@@ -459,10 +459,10 @@ impl Launcher {
                 format!("the generation {} cannot start: {error:#}", generation.root.display()),
             )
         };
-        let dist_options = dist_options(&generation.dist, &generation.config, repo_root).map_err(refuse)?;
+        let dist_options = dist_options(&generation.home, &generation.config, repo_root).map_err(refuse)?;
         let opened_packages = files::read_text(&generation.root.join(OPENED_PACKAGES_FILE)).map_err(refuse)?;
-        let classpath = files::read_text(&generation.dist.join("core-classpath.txt")).map_err(refuse)?;
-        let entry_options = entry_options(&generation.dist, &opened_packages, &classpath, &generation.config.main_class).map_err(refuse)?;
+        let classpath = files::read_text(&generation.home.join("core-classpath.txt")).map_err(refuse)?;
+        let entry_options = entry_options(&generation.home, &opened_packages, &classpath, &generation.config.main_class).map_err(refuse)?;
         Ok(Self {
             runner,
             java: generation.java.clone(),

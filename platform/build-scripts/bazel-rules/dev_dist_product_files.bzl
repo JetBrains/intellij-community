@@ -9,13 +9,29 @@ def product_info_destination(os, language_server):
     The production writers own the rule. `MacDistributionBuilder.writeProductInfoFile` writes
     `Resources/product-info.json`, and the root for a language server. `LinuxDistributionBuilder.writeProductJsonFile`
     and `WindowsDistributionBuilder.writeProductJsonFile` write the root. The tool renders `vmOptionsFilePath` and
-    `launcherPath` relative to the directory of this path, as production does.
+    `launcherPath` relative to the directory of this path, as production does. The path is relative to the home, see
+    `home_prefix`.
     """
     if os not in ("darwin", "linux", "windows"):
         fail("'%s' is not an OS token of platform_parts" % os)
     if os == "darwin" and not language_server:
         return "Resources/product-info.json"
     return "product-info.json"
+
+def home_prefix(os, language_server):
+    """The directory of a distribution that holds the home of the IDE, for an OS token of `platform_parts`.
+
+    The result is `Contents` for a macOS app and `""` for every other distribution. Production lays a macOS app out
+    below `<name>.app/Contents`, and `MacDistributionBuilder.layoutMacCli` keeps `bin` of a language server at the
+    root. The native launcher expects the `Contents` level on macOS. It strips that level to find the Toolbox-style
+    vmoptions file `<app>.vmoptions` beside the app. Every destination of a component and of the placement is relative
+    to the home.
+    """
+    if os not in ("darwin", "linux", "windows"):
+        fail("'%s' is not an OS token of platform_parts" % os)
+    if os == "darwin" and not language_server:
+        return "Contents"
+    return ""
 
 def _dev_dist_product_files_impl(ctx):
     outputs = [ctx.outputs.build_txt, ctx.outputs.idea_properties_out, ctx.outputs.vmoptions, ctx.outputs.product_info]

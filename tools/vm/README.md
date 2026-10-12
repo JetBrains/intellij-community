@@ -195,7 +195,8 @@ that the JVM loads, and the digest notes how many samples it left out.
 A session stages a generation under `<runtime root>/bench/generations/<digest>/`. The generation holds the clones of
 the `.dist` directory and of the JBR home of the row launcher, the dist config and `OpenedPackages.txt`. The digest of
 these four inputs is the key, so a generation that exists is reused. Its files are read-only. Its `generation.json`
-names the commit of the checkout that built it.
+names the commit of the checkout that built it. A run starts from the home that the dist config names: the `.dist`
+directory, or its `Contents` for a macOS app.
 
 `--generation` takes the start of a digest and runs the session over that generation, with no build and no stage. The
 session names the commit that built the generation, so `ls` and `compare` show the commit of the measured bytes. An

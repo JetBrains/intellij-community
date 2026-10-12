@@ -12,7 +12,7 @@ tables name the community products and the community tables in `community`, see 
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_platform_jar")
 load("//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_platform_payload")
-load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "dev_dist_product_files", "product_info_destination")
+load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "dev_dist_product_files", "home_prefix", "product_info_destination")
 load("//platform/build-scripts/bazel-rules:dev_dist_runtime_module_repository.bzl", "dev_dist_runtime_layout_parts", "dev_dist_runtime_module_repository")
 load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "intellij_dev_fragments_dist", "intellij_dev_packed_jars_component")
 load(":dev_launch_dependencies.bzl", "HOST_PLATFORMS", "platform_parts")
@@ -694,6 +694,9 @@ def _declare_fragments_dist(
         additional_components.modules
     )
 
+    # The export and the local launch share the home prefix, so the runfiles home of a row has the layout of the
+    # export.
+    prefix = _home_prefix(_plan(tables, product), target_platform)
     for local_launch in [False, True] if create_local_launch else [False]:
         intellij_dev_fragments_dist(
             name = name + ("_launch" if local_launch else ""),
@@ -706,8 +709,22 @@ def _declare_fragments_dist(
             expect_fragments = expect_fragments,
             additional_modules = additional_modules,
             local_launch = local_launch,
+            home_prefix = prefix,
             **({} if local_launch else export_attrs)
         )
+
+def _home_prefix(plan, target_platform):
+    """The `home_prefix` of a distribution of `plan`: for `target_platform`, or a `select` over the host platforms.
+
+    `home_prefix` of `dev_dist_product_files.bzl` states the rule. It is `Contents` for a macOS app.
+    """
+    language_server = plan.launch.launcher.language_server
+    if target_platform:
+        return home_prefix(platform_parts(target_platform).os, language_server)
+    return select({
+        "@community//build:host_" + platform: home_prefix(platform_parts(platform).os, language_server)
+        for platform in HOST_PLATFORMS
+    })
 
 def _check_plan(tables, name, product):
     """Fails when the generated plan cannot serve the launcher `name` of `product`.
@@ -744,8 +761,10 @@ def _declare_run_distribution(tables, name, product, additional_modules, runtime
     places the `modules/` files of `dev_dist_runtime_module_repository`.
 
     The export `<name>_dist.dist` gets the sibling vmoptions file `<name>_dist.dist.vmoptions`. A bare start of the
-    export through the native launcher keeps its data in `out/dev-data/<name>_dist`. The file names the runtime module
-    repository of a classic-loader export that has one. A modular-loader launch states it in `product-info.json`.
+    export through the native launcher keeps its data in `out/dev-data/<name>_dist`. On macOS the home of the export is
+    `<name>_dist.dist/Contents`. The launcher strips that level, so it finds the file on macOS too. The file names the
+    runtime module repository of a classic-loader export that has one. A modular-loader launch states it in
+    `product-info.json`.
     """
     _check_plan(tables, name, product)
     platform = _platform_fragments(tables, product, runtime_module_repository = runtime_module_repository)
