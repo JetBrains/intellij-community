@@ -1,7 +1,6 @@
 package com.intellij.mcpserver.frontend.widget
 
 import com.intellij.mcpserver.McpServerBundle
-import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.util.MCP_STATUS_BAR_WIDGET_ID
 import com.intellij.mcpserver.widget.McpServerStatusBarWidgetProvider
 import com.intellij.openapi.project.Project
@@ -10,13 +9,13 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.CoroutineScope
+
+internal const val MCP_WIDGET_ID: String = MCP_STATUS_BAR_WIDGET_ID
 
 internal class McpServerStatusBarWidgetFactory : StatusBarWidgetFactory {
-  companion object {
-    const val WIDGET_ID: String = MCP_STATUS_BAR_WIDGET_ID
-  }
-
-  override fun getId(): String = WIDGET_ID
+  override fun getId(): String = MCP_WIDGET_ID
 
   override fun getDisplayName(): String =
     McpServerStatusBarWidgetProvider.EP_NAME.computeSafeIfAny(McpServerStatusBarWidgetProvider::getDisplayName)
@@ -30,9 +29,10 @@ internal class McpServerStatusBarWidgetFactory : StatusBarWidgetFactory {
 
   override fun canBeEnabledOn(statusBar: StatusBar): Boolean = true
 
-  override fun createWidget(project: Project): StatusBarWidget =
-    McpServerStatusBarWidgetProvider.EP_NAME.computeSafeIfAny { it.createWidget(project) }
-    ?: McpServerStatusBarWidget(project)
+  override fun createWidget(project: Project, scope: CoroutineScope): StatusBarWidget {
+    return McpServerStatusBarWidgetProvider.EP_NAME.computeSafeIfAny { it.createWidget(project) }
+           ?: McpServerStatusBarWidget(project, scope.childScope("McpServerStatusBarWidget"))
+  }
 
   override fun disposeWidget(widget: StatusBarWidget) {
     Disposer.dispose(widget)

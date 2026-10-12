@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.toolsets.util
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.execution.CommonProgramRunConfigurationParameters
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.ExecutionTargetManager
@@ -37,7 +38,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.EditorFontType
@@ -77,7 +77,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.EncodeDefault
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -495,7 +494,7 @@ private suspend fun executeResolvedRunConfiguration(
     // if process exited and output is not big/truncated, delete output file, because the whole output will be returned in the result
     if (!startedExecution.outputCollector.isOutputPreviewTruncated) {
       logger.trace { "Output is truncated. Scheduling temp file deletion: ${startedExecution.outputCollector.outputPath}..." }
-      McpServerService.getInstance().cs.launch(Dispatchers.IO) {
+      McpServerService.getInstance().coroutineScope.launch(Dispatchers.IO) {
         try {
           logger.trace { "Deleting temp file: ${startedExecution.outputCollector.outputPath}..." }
           startedExecution.outputCollector.outputPath.deleteIfExists()
@@ -608,15 +607,15 @@ private fun createProcessCallback(
       val outputPath = createRunConfigurationOutputFile(sessionName)
       // remove on IDE close
       @OptIn(AwaitCancellationAndInvoke::class)
-      McpServerService.getInstance().cs.awaitCancellationAndInvoke(Dispatchers.IO) {
+      McpServerService.getInstance().coroutineScope.awaitCancellationAndInvoke(Dispatchers.IO) {
         try {
           outputPath.deleteIfExists()
         }
-        catch (_: Exception) {
-          // ignore
+        catch (e: Exception) {
+          logger.debug("Failed to delete temp output file: ${outputPath}", e)
         }
       }
-      OutputCollector(McpServerService.getInstance().cs, outputPath)
+      OutputCollector(McpServerService.getInstance().coroutineScope, outputPath)
     }
     catch (e: Exception) {
       rethrowControlFlowException(e)
@@ -885,7 +884,6 @@ fun resolveRunConfigurationFromCodeLocation(
   return settings
 }
 
-@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class RunPoint(
   @property:McpDescription("1-based line number of the executable code location.")

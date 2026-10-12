@@ -9,18 +9,18 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import kotlinx.coroutines.launch
 
-
 const val MCP_STATUS_BAR_WIDGET_ID: String = "McpServerStatusBarWidget"
 
 /**
  * Enables the MCP status bar widget, unless the user has explicitly disabled it before.
  * Runs asynchronously in the background.
  */
-fun enableIfNotExplicitlyDisabled() {
-  McpServerService.getInstance().cs.launch {
+internal fun enableIfNotExplicitlyDisabled() {
+  McpServerService.getInstance().coroutineScope.launch {
     val settings = serviceOrNull<StatusBarWidgetSettings>() ?: return@launch
     if (settings.isExplicitlyDisabled(MCP_STATUS_BAR_WIDGET_ID)) return@launch
-    val factory = StatusBarWidgetFactory.EP_NAME.getIterable().find { it?.getId() == MCP_STATUS_BAR_WIDGET_ID } ?: return@launch
+    val factory = StatusBarWidgetFactory.EP_NAME.findFirstSafe{ it?.getId() == MCP_STATUS_BAR_WIDGET_ID } ?: return@launch
+
     settings.setEnabled(factory, true)
     for (project in ProjectManagerEx.getOpenProjects()) {
       project.serviceOrNull<StatusBarWidgetsManager>()?.updateWidget(factory)

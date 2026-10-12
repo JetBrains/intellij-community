@@ -25,13 +25,8 @@ import com.intellij.ui.popup.PopupState
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
-import java.awt.Dimension
-import java.awt.Point
-import javax.swing.Icon
-import javax.swing.JComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -42,8 +37,12 @@ import org.jetbrains.compose.swing.modifier.layout.maximumSize
 import org.jetbrains.compose.swing.modifier.layout.minimumSize
 import org.jetbrains.compose.swing.modifier.listener.componentListener
 import java.awt.BorderLayout
+import java.awt.Dimension
+import java.awt.Point
+import javax.swing.Icon
+import javax.swing.JComponent
 
-internal class McpServerStatusBarWidget(private val project: Project) : CustomStatusBarWidget {
+internal class McpServerStatusBarWidget(private val project: Project, private val coroutineScope: CoroutineScope) : CustomStatusBarWidget {
   private val popupState = PopupState.forPopup()
 
   companion object {
@@ -54,9 +53,6 @@ internal class McpServerStatusBarWidget(private val project: Project) : CustomSt
   }
 
   private val widgetComponent by lazy { createComponent() }
-
-  @Suppress("RAW_SCOPE_CREATION")
-  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
   private fun createComponent(): IconLabelButton {
     return IconLabelButton(getCurrentIcon()) {
@@ -155,7 +151,7 @@ internal class McpServerStatusBarWidget(private val project: Project) : CustomSt
 
   override fun getComponent(): JComponent = widgetComponent
 
-  override fun ID(): String = McpServerStatusBarWidgetFactory.WIDGET_ID
+  override fun ID(): String = MCP_WIDGET_ID
 
   override fun install(statusBar: StatusBar) {}
 

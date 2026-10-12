@@ -89,7 +89,8 @@ internal fun parseMcpClientTags(value: String?): Set<String> {
          ?: emptySet()
 }
 
-open class McpServerService(val cs: CoroutineScope) {
+@ApiStatus.NonExtendable
+open class McpServerService(private val cs: CoroutineScope) {
   enum class AskCommandExecutionMode {
     ASK,
     DONT_ASK,
@@ -188,6 +189,10 @@ open class McpServerService(val cs: CoroutineScope) {
 
   @Volatile
   private var toolsStateProviderOrNull: McpToolsListProvider? = null
+
+  @get:ApiStatus.Internal
+  val coroutineScope: CoroutineScope
+    get() = cs
 
   /**
    * Synchronous fallback for the non-suspend API. Converting the tools is slow, so this must not be called on the EDT;
@@ -367,6 +372,7 @@ open class McpServerService(val cs: CoroutineScope) {
    */
 //todo: I think that should be a subscription to McpServerSettings
   @RequiresBackgroundThread(generateAssertion = false)
+  @ApiStatus.Internal
   fun settingsChanged(enabled: Boolean, port: Int? = null) {
     ThreadingAssertions.softAssertBackgroundThread()
 
@@ -605,6 +611,7 @@ open class McpServerService(val cs: CoroutineScope) {
     }.start(wait = false)
   }
 
+  @ApiStatus.Internal
   fun getMcpTools(
     filter: McpToolFilter? = null,
     useFiltersFromEP: Boolean = true,
@@ -623,6 +630,7 @@ open class McpServerService(val cs: CoroutineScope) {
   /**
    * Same as [getMcpTools], but never blocks the calling thread on the initial tool conversion.
    */
+  @ApiStatus.Internal
   suspend fun getMcpToolsAsync(
     filter: McpToolFilter? = null,
     useFiltersFromEP: Boolean = true,
@@ -656,6 +664,7 @@ open class McpServerService(val cs: CoroutineScope) {
    * @param filter The filter to apply to the tools
    * @return true if at least one MCP tool is available after filtering, false otherwise
    */
+  @ApiStatus.Internal
   fun hasActiveMcpTools(filter: McpToolFilter?, invocationMode: McpSessionInvocationMode?): Boolean {
     return getMcpTools(filter = filter, invocationMode = when (invocationMode ?: McpToolFilterSettings.getInstance().invocationMode) {
       McpSessionInvocationMode.DIRECT -> McpToolInvocationMode.DIRECT
@@ -666,6 +675,7 @@ open class McpServerService(val cs: CoroutineScope) {
   /**
    * Same as [getMcpToolsFiltered], but never blocks the calling thread on the initial tool conversion.
    */
+  @ApiStatus.Internal
   suspend fun getMcpToolsFilteredAsync(
     filter: McpToolFilter? = null,
     useFiltersFromEP: Boolean = true,
@@ -685,6 +695,7 @@ open class McpServerService(val cs: CoroutineScope) {
    * This is useful for UI that needs to show tools filtered by some providers but not others
    * (e.g., showing tools for disallow list configuration without applying the disallow-list filter itself).
    */
+  @ApiStatus.Internal
   fun getMcpToolsFiltered(
     filter: McpToolFilter? = null,
     useFiltersFromEP: Boolean = true,
@@ -725,6 +736,7 @@ open class McpServerService(val cs: CoroutineScope) {
   }
 
   /** Applies the persisted enable setting after the [after] jobs complete, so a dying transition cannot override it. */
+  @ApiStatus.Internal
   fun scheduleResetToSettings(after: Collection<Job> = emptyList()): Job = cs.launch {
     after.joinAll()
     settingsChanged(McpServerSettings.getInstance().enableMcpServer)
