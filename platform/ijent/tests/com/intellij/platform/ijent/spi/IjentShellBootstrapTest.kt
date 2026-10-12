@@ -20,6 +20,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
+import java.util.Base64
 
 @Timeout(30)
 class IjentShellBootstrapTest {
@@ -99,6 +100,28 @@ class IjentShellBootstrapTest {
     assertEquals(0, process.waitFor(), error)
     assertTrue(output.lineSequence().any { it.contains("${bootstrap.marker} OS=Windows_NT") }, output)
     assertTrue(output.lineSequence().any { it == "IJENT_AFTER_BOOTSTRAP" }, output)
+  }
+
+  @Test
+  @EnabledOnOs(OS.WINDOWS)
+  fun `native PowerShell bootstrap keeps the same channel alive`() {
+    val bootstrap = createShellBootstrap()
+    val encoded = Base64.getEncoder().encodeToString(bootstrap.command.toByteArray(Charsets.UTF_16LE))
+    val process = ProcessBuilder("powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive", "-EncodedCommand", encoded).start()
+    try {
+      process.outputStream.bufferedWriter().use {
+        it.appendLine("[Console]::Out.WriteLine('IJENT_AFTER_BOOTSTRAP')")
+        it.appendLine("exit 0")
+      }
+      val output = process.inputStream.bufferedReader().readText()
+      val error = process.errorStream.bufferedReader().readText()
+      assertEquals(0, process.waitFor(), error)
+      assertTrue(output.contains("${bootstrap.marker} OS=Windows_NT"), output)
+      assertTrue(output.lineSequence().any { it == "IJENT_AFTER_BOOTSTRAP" }, output)
+    }
+    finally {
+      process.destroyForcibly()
+    }
   }
 
   @Test

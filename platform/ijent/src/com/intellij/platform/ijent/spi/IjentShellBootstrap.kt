@@ -16,16 +16,16 @@ internal fun createShellBootstrap(): ShellBootstrap {
                      "\"%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\" " +
                      "-NoLogo -NoProfile -NonInteractive -Command -"
   val command = $$"""
-    echo \" <<'REM' >/dev/null ">NUL "\" \`" <#" # & $$cmdBootstrap
-    REM
+    echo \" '">NUL "\" \`" <#" # & $$cmdBootstrap
     #> | Out-Null
-    echo \" <<'POWERSHELL_SCRIPT' >/dev/null # " | Out-Null
-    function global:prompt { ' ' }
+    echo \" # " | Out-Null
+    function global:prompt { " " }
     [Console]::Out.WriteLine("$$marker OS=$($env:OS) ARCH=$($env:PROCESSOR_ARCHITECTURE) SHELL=powershell.exe")
     & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -Command -
     exit $LASTEXITCODE
     <#
-    POWERSHELL_SCRIPT
+    ' >/dev/null
+    exec /bin/sh -c '
     ijent_uname() { uname "$@" 2>/dev/null || busybox uname "$@"; }
     ijent_os=$(ijent_uname -s)
     echo "$$marker OS=$ijent_os ARCH=$(ijent_uname -m) SHELL=$0"
@@ -33,6 +33,7 @@ internal fun createShellBootstrap(): ShellBootstrap {
       CYGWIN*|MINGW*|MSYS*) exec powershell.exe -NoLogo -NoProfile -NonInteractive -Command - ;;
       *) exec /bin/sh ;;
     esac
+    '
     #>
   """.trimIndent()
   return ShellBootstrap(marker, command)
