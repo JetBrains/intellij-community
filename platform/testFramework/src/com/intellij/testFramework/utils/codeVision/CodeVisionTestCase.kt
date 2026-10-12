@@ -18,6 +18,7 @@ import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
  * @deprecated Use [CodeVisionTestUtil] in a JUnit 5 test.
  */
 @Deprecated("Use CodeVisionTestUtil in a JUnit 5 test.")
+@Suppress("DEPRECATION")
 abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
   companion object {
