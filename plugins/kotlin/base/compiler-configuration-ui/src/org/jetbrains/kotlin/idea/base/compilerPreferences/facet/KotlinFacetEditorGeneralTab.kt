@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.base.compilerPreferences.facet
 
+import org.jetbrains.kotlin.arguments.collectProperties
 import com.intellij.facet.ui.FacetEditorContext
 import com.intellij.facet.ui.FacetEditorTab
 import com.intellij.facet.ui.FacetEditorValidator
@@ -26,13 +27,12 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArgumentsConfigur
 import org.jetbrains.kotlin.cli.common.arguments.Freezable
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.cli.common.arguments.collectProperties
 import org.jetbrains.kotlin.cli.common.arguments.copyCommonCompilerArguments
-import org.jetbrains.kotlin.cli.common.arguments.copyInheritedFields
-import org.jetbrains.kotlin.cli.common.arguments.mergeBeans
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.arguments.unfrozen
 import org.jetbrains.kotlin.cli.common.arguments.validateArguments
+import org.jetbrains.kotlin.compilerRunner.copyProperties
+import org.jetbrains.kotlin.compilerRunner.mergeBeans
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.createArguments
@@ -64,6 +64,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTextField
 import javax.swing.border.EmptyBorder
+import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 
 class KotlinFacetEditorGeneralTab(
@@ -538,3 +539,8 @@ class KotlinFacetEditorGeneralTab(
 @Suppress("UNCHECKED_CAST")
 private val <T> ComboBox<T>.selectedItemTyped: T?
     get() = selectedItem as T?
+
+private fun <From : Any, To : Any> copyInheritedFields(from: From, to: To): To {
+    @Suppress("UNCHECKED_CAST")
+    return copyProperties(from, to, true, collectProperties(from::class as KClass<From>, true))
+}

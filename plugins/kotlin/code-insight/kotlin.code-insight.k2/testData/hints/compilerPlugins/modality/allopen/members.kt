@@ -278,33 +278,33 @@ enum class Enum : Super {
 
 
 inline class Inline(val value: Int) : Super {
-  /*<# open #>*/val property = ""
-    /*<# open #>*/internal val internalProperty = ""
+  val property = ""
+    internal val internalProperty = ""
     final val finalProperty= ""
     open val openProperty = ""
     abstract val abstractProperty: String
 
-    @Deprecated("") /*<# open #>*/internal val internalPropetyWithAnnotationSameLine = ""
+    @Deprecated("") internal val internalPropetyWithAnnotationSameLine = ""
 
     @Deprecated("")
-    /*<# open #>*/internal val internalPropetyWithAnnotationOtherLine = ""
+    internal val internalPropetyWithAnnotationOtherLine = ""
 
-    /*<# open #>*/var propertyWithAccessors: String
+    var propertyWithAccessors: String
         get() = "El Psy Kongroo"
         set(value) { println("El Psy Kongroo") }
 
 
-    /*<# open #>*/fun function(): String = ""
-    /*<# open #>*/internal fun internalFunction(): String = ""
+    fun function(): String = ""
+    internal fun internalFunction(): String = ""
     final fun finalFunction(): String = ""
     open fun openFunction(): String = ""
     abstract fun abstractFunction(): String
 
     @Deprecated("")
-    /*<# open #>*/internal fun internalFunctionWithAnnotationSameLine(): String = ""
+    internal fun internalFunctionWithAnnotationSameLine(): String = ""
 
     @Deprecated("")
-    /*<# open #>*/internal fun internalFunctionWithAnnotationOtherLine(): String = ""
+    internal fun internalFunctionWithAnnotationOtherLine(): String = ""
 
     constructor(x: Int)
 
@@ -313,33 +313,33 @@ inline class Inline(val value: Int) : Super {
 
 @JvmInline
 value class Value(val value: Int) : Super {
-   /*<# open #>*/val property = ""
-    /*<# open #>*/internal val internalProperty = ""
+   val property = ""
+    internal val internalProperty = ""
     final val finalProperty= ""
     open val openProperty = ""
     abstract val abstractProperty: String
 
-    @Deprecated("") /*<# open #>*/internal val internalPropetyWithAnnotationSameLine = ""
+    @Deprecated("") internal val internalPropetyWithAnnotationSameLine = ""
 
     @Deprecated("")
-    /*<# open #>*/internal val internalPropetyWithAnnotationOtherLine = ""
+    internal val internalPropetyWithAnnotationOtherLine = ""
 
-    /*<# open #>*/var propertyWithAccessors: String
+    var propertyWithAccessors: String
         get() = "El Psy Kongroo"
         set(value) { println("El Psy Kongroo") }
 
 
-    /*<# open #>*/fun function(): String = ""
-    /*<# open #>*/internal fun internalFunction(): String = ""
+    fun function(): String = ""
+    internal fun internalFunction(): String = ""
     final fun finalFunction(): String = ""
     open fun openFunction(): String = ""
     abstract fun abstractFunction(): String
 
     @Deprecated("")
-    /*<# open #>*/internal fun internalFunctionWithAnnotationSameLine(): String = ""
+    internal fun internalFunctionWithAnnotationSameLine(): String = ""
 
     @Deprecated("")
-    /*<# open #>*/internal fun internalFunctionWithAnnotationOtherLine(): String = ""
+    internal fun internalFunctionWithAnnotationOtherLine(): String = ""
 
     constructor(x: Int)
 

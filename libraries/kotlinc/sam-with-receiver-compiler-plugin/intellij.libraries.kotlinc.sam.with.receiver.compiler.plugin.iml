@@ -8,20 +8,13 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library name="kotlinc.sam-with-receiver-compiler-plugin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:sam-with-receiver-compiler-plugin-for-ide:2.5.0-dev-9840">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.5.0-dev-9840/sam-with-receiver-compiler-plugin-for-ide-2.5.0-dev-9840.jar">
-              <sha256sum>c2a567442e6a0a15c565b3bc288a1f616cd5d0743e35cdb7c89d1aa45a1f50d0</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
+      <library name="kotlinc.sam-with-receiver-compiler-plugin">
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.5.0-dev-9840/sam-with-receiver-compiler-plugin-for-ide-2.5.0-dev-9840.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.5.255-dev-255/sam-with-receiver-compiler-plugin-for-ide-2.5.255-dev-255.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.5.0-dev-9840/sam-with-receiver-compiler-plugin-for-ide-2.5.0-dev-9840-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.5.255-dev-255/sam-with-receiver-compiler-plugin-for-ide-2.5.255-dev-255-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

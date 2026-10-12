@@ -40,7 +40,7 @@ import kotlin.script.experimental.api.with
 import kotlin.script.experimental.host.FileScriptSource
 import kotlin.script.experimental.host.createScriptDefinitionFromTemplate
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
-import kotlin.script.templates.standard.ScriptTemplateWithArgs
+import kotlin.script.experimental.templates.ScriptWithArgs
 
 /**
  * A file-level import annotation for a synthetic custom script definition. Used to prove that imported-script
@@ -110,7 +110,7 @@ class KotlinCustomImportScriptDefinitionCompletionTest : KotlinLightCodeInsightF
 
     private fun registerCustomImportScriptDefinition() {
         val definition = createScriptDefinitionFromTemplate(
-            KotlinType(ScriptTemplateWithArgs::class),
+            KotlinType(ScriptWithArgs::class),
             defaultJvmScriptingHostConfiguration,
             compilation = {
                 fileExtension("imports.kts")

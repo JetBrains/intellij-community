@@ -39,7 +39,7 @@ import kotlin.script.experimental.api.with
 import kotlin.script.experimental.host.FileScriptSource
 import kotlin.script.experimental.host.createScriptDefinitionFromTemplate
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
-import kotlin.script.templates.standard.ScriptTemplateWithArgs
+import kotlin.script.experimental.templates.ScriptWithArgs
 
 @Target(AnnotationTarget.FILE)
 annotation class CircularImport(val path: String)
@@ -276,7 +276,7 @@ class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
         ScriptDefinitionProviderImpl.getInstance(project).cachedProvidedDefinitions.map { it.fileExtension }
 
     private fun definitionFor(extension: String): ScriptDefinition = createScriptDefinitionFromTemplate(
-        KotlinType(ScriptTemplateWithArgs::class),
+        KotlinType(ScriptWithArgs::class),
         defaultJvmScriptingHostConfiguration,
         compilation = {
             fileExtension(extension)
@@ -287,7 +287,7 @@ class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
     private fun registerCircularImportScriptDefinition() {
         registerScriptDefinition(
             createScriptDefinitionFromTemplate(
-                KotlinType(ScriptTemplateWithArgs::class),
+                KotlinType(ScriptWithArgs::class),
                 defaultJvmScriptingHostConfiguration,
                 compilation = {
                     fileExtension("imports.kts")
@@ -304,7 +304,7 @@ class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
     private fun registerModuleSupplierScriptDefinition() {
         registerScriptDefinition(
             createScriptDefinitionFromTemplate(
-                KotlinType(ScriptTemplateWithArgs::class),
+                KotlinType(ScriptWithArgs::class),
                 defaultJvmScriptingHostConfiguration,
                 compilation = {
                     fileExtension("module.kts")

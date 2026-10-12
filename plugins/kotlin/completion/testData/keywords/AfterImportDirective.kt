@@ -44,4 +44,5 @@ import kotlin.String <caret>
 // EXIST: {"lookupString":"value","attributes":"bold","allLookupStrings":"value","itemText":"value"}
 // EXIST: {"lookupString":"var","attributes":"bold","allLookupStrings":"var","itemText":"var"}
 // EXIST: {"lookupString":"context","tailText":"(...)","attributes":"bold","allLookupStrings":"context","itemText":"context"}
+// EXIST:  error
 // NOTHING_ELSE

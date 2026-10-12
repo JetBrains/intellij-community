@@ -14,19 +14,19 @@ import com.intellij.openapi.roots.ModuleRootModel
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.kotlin.arguments.collectProperties
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2NativeCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.KotlinWasmCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
-import org.jetbrains.kotlin.cli.common.arguments.copyBeanTo
 import org.jetbrains.kotlin.cli.common.arguments.copyCommonCompilerArguments
-import org.jetbrains.kotlin.cli.common.arguments.copyFieldsSatisfying
 import org.jetbrains.kotlin.cli.common.arguments.copyK2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.copyK2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.copyKotlinWasmCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
+import org.jetbrains.kotlin.compilerRunner.copyProperties
 import org.jetbrains.kotlin.compilerRunner.toArgumentStrings
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 fun IKotlinFacetSettings.initializeIfNeeded(
@@ -315,4 +316,14 @@ private fun joinPluginOptions(old: Array<String>?, new: Array<String>?): Array<S
     }
 
     return (old + new).distinct().toTypedArray()
+}
+
+private fun <T : Any> copyBeanTo(from: T, to: T, filter: ((KProperty1<T, Any?>, Any?) -> Boolean)? = null): T {
+    @Suppress("UNCHECKED_CAST")
+    return copyProperties(from, to, true, collectProperties(from::class as KClass<T>, false), filter)
+}
+
+private fun <From : Any, To : Any> copyFieldsSatisfying(from: From, to: To, predicate: (KProperty1<From, Any?>) -> Boolean): To {
+    @Suppress("UNCHECKED_CAST")
+    return copyProperties(from, to, true, collectProperties(from::class as KClass<From>, false).filter(predicate))
 }

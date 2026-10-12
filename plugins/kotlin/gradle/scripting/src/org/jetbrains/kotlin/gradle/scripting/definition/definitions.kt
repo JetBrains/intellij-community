@@ -16,7 +16,7 @@ import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
-import kotlin.script.templates.standard.ScriptTemplateWithArgs
+import kotlin.script.experimental.templates.ScriptWithArgs
 
 open class GradleScriptDefinition(
     private val initialConfiguration: ScriptCompilationConfiguration,
@@ -71,7 +71,7 @@ class ErrorGradleScriptDefinition : GradleScriptDefinition(
 
     override val configurationBody: ScriptCompilationConfiguration.Builder.() -> Unit = {
         fileExtension("gradle.kts")
-        baseClass(KotlinType(ScriptTemplateWithArgs::class))
+        baseClass(KotlinType(ScriptWithArgs::class))
         displayName(KotlinGradleScriptingBundle.message("text.default.kotlin.gradle.script"))
     }
 }
