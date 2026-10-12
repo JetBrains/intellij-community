@@ -615,8 +615,8 @@ The Runs page, the run page and the trace page are in
   (0,0). A host with a display left of or above the primary one shifts tree overlays.
 - The manifest's lane is the profile's spelling, such as `UI`. The planner speaks the lane names of `bt`,
   such as `ui`. A reader that joins them maps the names.
-- A real run writes more `call` records than the golden transcript. The in-IDE reset and the scenario
-  preparation call the bridge inside spans the golden leaves empty.
+- A real run writes more `call` records than the golden transcript. The in-IDE reset calls the bridge inside
+  the two reset spans, and the golden leaves them empty.
 - A posted click records its point in a separate `press` entry, because its mouse events arrive after the
   gesture returns. The gesture's own entry keeps the target rectangle only.
 - The stage marks no point on a macOS host's screen recording. That video is scaled down from the Retina size,
