@@ -2062,6 +2062,76 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       c: Callable[[...], int]
       #            ^^^ ERROR '...' is not allowed in a parameter list
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88038"])
+    fun `call with arguments forwarded to ParamSpec args and kwargs`() = test("""
+      from typing import Callable
+
+      def add[**P, T](cls: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T: ...
+
+      class User:
+          def __init__(self, name: str, age: int): ...
+
+      def greet(greeting: str, *, loud: bool = False) -> str: ...
+
+      expr = add(User, "Alice", age=30)
+      #└ TYPE User
+
+      expr = add(greet, "Hello", loud=True)
+      #└ TYPE str
+
+      add(User, 1, 2)
+      #         └ WARNING Expected type 'str', got 'Literal[1]' instead
+
+      add(User, name=1, age=2)
+      #         ^^^^^^ WARNING Expected type 'str', got 'Literal[1]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88038"])
+    fun `call with arguments forwarded to a Concatenate`() = test("""
+      from typing import Callable, Concatenate
+
+      def call_with_int[**P, T](f: Callable[Concatenate[int, P], T], *args: P.args, **kwargs: P.kwargs) -> T: ...
+
+      def describe(count: int, label: str) -> str: ...
+
+      expr = call_with_int(describe, "apples")
+      #└ TYPE str
+
+      call_with_int(describe, 1)
+      #                       └ WARNING Expected type 'str', got 'Literal[1]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88038"])
+    fun `overload chosen by the arguments forwarded to ParamSpec args and kwargs`() = test("""
+      from typing import Callable, Concatenate, overload
+
+      @overload
+      def run[**P](f: Callable[Concatenate[int, P], None], *args: P.args, **kwargs: P.kwargs) -> int: ...
+      @overload
+      def run(f: Callable[..., None], *args: object, **kwargs: object) -> int | str: ...
+      def run(f, *args, **kwargs): ...
+
+      def handle(count: int, label: str = "") -> None: ...
+
+      expr = run(handle, "apples")
+      #└ TYPE int
+
+      expr = run(handle, label="apples")
+      #└ TYPE int
+
+      expr = run(handle, 1)
+      #└ TYPE int | str
+
+      expr = run(handle, "apples", "pears")
+      #└ TYPE int | str
+
+      expr = run(handle, title="apples")
+      #└ TYPE int | str
+      """.trimIndent())
   }
 
   @Nested

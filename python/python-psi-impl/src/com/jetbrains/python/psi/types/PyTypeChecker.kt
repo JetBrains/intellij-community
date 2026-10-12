@@ -2588,32 +2588,64 @@ object PyTypeChecker {
   @JvmStatic
   fun unifyGenericCall(arguments: Map<PyCallableArgument, PyCallableParameter>, context: TypeEvalContext): GenericSubstitutions? {
     val substitutions = GenericSubstitutions()
+    return if (matchArguments(arguments, substitutions, context)) substitutions else null
+  }
+
+  private fun matchArguments(
+    arguments: Map<PyCallableArgument, PyCallableParameter>,
+    substitutions: GenericSubstitutions,
+    context: TypeEvalContext,
+    expandedParamSpecs: Set<PyParamSpecType> = emptySet(),
+  ): Boolean {
     for ((argument, parameter) in PyCallExpressionHelper.getRegularMappedParameters(arguments).entries) {
       val expectedType = parameter.getArgumentType(context)
       val promotedToLiteral = argument.expression?.let { PyLiteralType.promoteToLiteral(it, expectedType, context, substitutions) }
       val actualType = promotedToLiteral?.takeUnless { it.isUnknown } ?: argument.getType(context)
       val matchedByTypes = match(expectedType, actualType, context, substitutions)
       if (!matchedByTypes) {
-        return null
+        return false
       }
     }
-    if (!matchContainer(
-        PyCallExpressionHelper.getMappedPositionalContainer(arguments),
+    var paramSpec: PyParamSpecType? = null
+    val forwardedArguments = mutableListOf<PyCallableArgument>()
+    val containers = listOf(
+      PyCallExpressionHelper.getMappedPositionalContainer(arguments) to
         PyCallExpressionHelper.getArgumentsMappedToPositionalContainer(arguments),
-        substitutions,
-        context
-      )
-    ) {
-      return null
+      PyCallExpressionHelper.getMappedKeywordContainer(arguments) to
+        PyCallExpressionHelper.getArgumentsMappedToKeywordContainer(arguments),
+    )
+    for ((container, containerArguments) in containers) {
+      val containerType = container?.getArgumentType(context)
+      if (containerType is PyParamSpecType) {
+        paramSpec = containerType
+        forwardedArguments += containerArguments
+      }
+      else if (!matchContainer(container, containerArguments, substitutions, context)) {
+        return false
+      }
     }
-    if (!matchContainer(
-        PyCallExpressionHelper.getMappedKeywordContainer(arguments), PyCallExpressionHelper.getArgumentsMappedToKeywordContainer(arguments),
-        substitutions, context
-      )
-    ) {
-      return null
-    }
-    return substitutions
+    return paramSpec == null || matchParamSpecArguments(paramSpec, forwardedArguments, substitutions, context, expandedParamSpecs)
+  }
+
+  /**
+   * Matches the arguments for `*args: P.args` and `**kwargs: P.kwargs` against the parameters of `P`.
+   * The other arguments of the call solve `P`. If they do not solve it, nothing is checked.
+   * The match fails if an argument has no parameter of `P`, or a required parameter of `P` has no argument.
+   * [expandedParamSpecs] stops the recursion when the parameters of `P` refer to `P` again.
+   */
+  private fun matchParamSpecArguments(
+    paramSpec: PyParamSpecType,
+    arguments: List<PyCallableArgument>,
+    substitutions: GenericSubstitutions,
+    context: TypeEvalContext,
+    expandedParamSpecs: Set<PyParamSpecType>,
+  ): Boolean {
+    if (paramSpec in expandedParamSpecs) return true
+    val parameters = substitutions.paramSpecs[paramSpec] as? PyCallableParameterListType ?: return true
+    val mapping = PyCallExpressionHelper.analyzeArguments(arguments, parameters, context)
+    return mapping.unmappedArguments.isEmpty() &&
+           mapping.unmappedParameters.isEmpty() &&
+           matchArguments(mapping.mappedParameters, substitutions, context, expandedParamSpecs + paramSpec)
   }
 
   private fun matchContainer(
