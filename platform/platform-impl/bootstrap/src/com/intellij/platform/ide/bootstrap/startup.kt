@@ -180,8 +180,6 @@ fun startApplication(
       }
     }
 
-    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(scope, initAwtToolkitJob, initUiScale, appInfoDeferred)
-
     scheduleShowSplashIfNeeded(scope, lockSystemDirsJob, initUiScale, appInfoDeferred, args)
   }
 
@@ -191,6 +189,10 @@ fun startApplication(
     if (!isHeadless) {
       configureCssUiDefaults()
     }
+  }
+
+  if (initUiScale != null) {
+    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(scope, initAwtToolkitJob, initUiScale, initLafJob, appInfoDeferred)
   }
 
   val zipPoolDeferred = scope.async {

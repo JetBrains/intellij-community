@@ -41,6 +41,7 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
+import com.intellij.ui.svg.createJSvgDocument
 import com.intellij.ui.svg.loadWithSizes
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ResourceUtil
@@ -130,6 +131,22 @@ object AppUIUtil {
         MacAppIcon.setDockIcon(addTransparentBorder(images.first()))
       }
     }
+  }
+
+  /**
+   * Parses the SVG data of the application window icon, so the XML and SVG classes are loaded before [updateAppWindowIcon] runs on the EDT.
+   * The parsing creates no image and touches no Java2D surface, unlike the rasterization, so it may run while the EDT realizes the splash.
+   */
+  @Internal
+  @JvmStatic
+  fun preloadAppWindowIcon() {
+    if (isWindowIconAlreadyExternallySet()) {
+      return
+    }
+
+    val pixScale = ScaleContext.create().getScale(DerivedScaleType.PIX_SCALE).toFloat()
+    val svgData = findAppIconSvgData(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl, pixScale) ?: return
+    createJSvgDocument(svgData)
   }
 
   @Internal
