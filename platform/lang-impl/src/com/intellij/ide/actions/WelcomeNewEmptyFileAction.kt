@@ -13,9 +13,11 @@ import com.intellij.ide.ui.WindowFocusFrontendService
 import com.intellij.ide.util.DeleteHandler
 import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.idea.ActionsBundle
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.undo.UndoUtil
@@ -48,7 +50,7 @@ import com.intellij.util.containers.toArray
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-internal class WelcomeNewEmptyFileAction : DumbAwareAction() {
+internal class WelcomeNewEmptyFileAction : DumbAwareAction(), FusAwareAction {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -68,8 +70,12 @@ internal class WelcomeNewEmptyFileAction : DumbAwareAction() {
     else {
       context.prepareText = false
     }
-    ScratchFileActions.doCreateNewScratch(project, context, e.dataContext)
+    if (ScratchFileActions.doCreateNewScratch(project, context, e.dataContext) != null) {
+      rememberWelcomeNewFile(e, context.language)
+    }
   }
+
+  override fun getAdditionalUsageData(event: AnActionEvent): List<EventPair<*>> = welcomeNewFileUsageData(event)
 }
 
 internal class WelcomeChangeLanguageAction : ChangeLanguageAction() {
