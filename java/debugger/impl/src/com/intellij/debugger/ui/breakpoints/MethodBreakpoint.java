@@ -298,7 +298,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
   @Override
   protected void createRequestForPreparedClass(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType) {
-    if (isEmulated()) {
+    if (isEmulated(classType.virtualMachine())) {
       createRequestForPreparedClassEmulated(this, debugProcess, classType, true);
     }
     else {
@@ -453,7 +453,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   public boolean matchesEvent(final @NotNull LocatableEvent event, final DebugProcessImpl process) {
-    if (isEmulated()) {
+    if (isEmulated(event.virtualMachine())) {
       return true;
     }
     if (getMethodName() == null || mySignature == null) {

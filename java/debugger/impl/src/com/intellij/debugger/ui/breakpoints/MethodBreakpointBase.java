@@ -2,6 +2,7 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.requests.Requestor;
@@ -27,6 +28,11 @@ public interface MethodBreakpointBase extends FilteredRequestor {
   XBreakpoint<JavaMethodBreakpointProperties> getXBreakpoint();
 
   boolean isEmulated();
+
+  /** Returns whether this breakpoint uses emulation in the specified VM. */
+  default boolean isEmulated(@NotNull VirtualMachine vm) {
+    return isEmulated() && !DebuggerUtils.isAndroidVM(vm);
+  }
 
   boolean isWatchEntry();
 
@@ -82,7 +88,7 @@ public interface MethodBreakpointBase extends FilteredRequestor {
     }
 
     if (Registry.is("debugger.emulated.method.return.values") &&
-        breakpoint.isEmulated() &&
+        breakpoint.isEmulated(event.virtualMachine()) &&
         breakpoint.isWatchExit() &&
         eventRequest.getProperty(METHOD_ENTRY_KEY) instanceof Boolean entryKey &&
         !entryKey) {
