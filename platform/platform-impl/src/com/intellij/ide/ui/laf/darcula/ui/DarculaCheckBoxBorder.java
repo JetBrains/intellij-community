@@ -2,12 +2,14 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.google.common.base.Strings;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.AbstractButton;
 import javax.swing.CellRendererPane;
+import javax.swing.JCheckBox;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
@@ -26,7 +28,8 @@ public class DarculaCheckBoxBorder implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    if (ComponentUtil.getParentOfType(CellRendererPane.class, c) != null) {
+    var keepBorder = (c instanceof JCheckBox checkBox && ClientProperty.get(checkBox, DarculaCheckBoxUI.KEEP_BORDER_IN_CELL_RENDERER_PANE) == Boolean.TRUE);
+    if (!keepBorder && ComponentUtil.getParentOfType(CellRendererPane.class, c) != null) {
       return JBInsets.emptyInsets().asUIResource();
     }
     Insets result = UIManager.getInsets(borderWidthPropertyName());

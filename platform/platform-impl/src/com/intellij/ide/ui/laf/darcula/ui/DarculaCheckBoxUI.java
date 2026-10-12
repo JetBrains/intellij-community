@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DrawUtil;
 import com.intellij.ui.ExperimentalUI;
@@ -38,6 +39,12 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isMultiLineHTML;
  * @author Konstantin Bulenkov
  */
 public class DarculaCheckBoxUI extends MetalCheckBoxUI {
+
+  /**
+   * Disables resetting border insets in {@link DarculaCheckBoxBorder} when the component is used in {@link CellRendererPane}
+   */
+  @ApiStatus.Internal
+  public static final Key<Boolean> KEEP_BORDER_IN_CELL_RENDERER_PANE = Key.create("JCheckBox.keepBorderInCellRendererPane");
 
   private static Icon defaultIconCache;
 
