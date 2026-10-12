@@ -17,7 +17,10 @@ public class WorkingTimeMeasurer {
   }
 
   private static long getCurrentTime() {
-    return ourThreadMXBean != null ? ourThreadMXBean.getCurrentThreadUserTime() : System.nanoTime();
+    // ThreadMXBean returns -1 for virtual threads. Use System.nanoTime() so their timeouts can expire.
+    return ourThreadMXBean != null && !Thread.currentThread().isVirtual()
+           ? ourThreadMXBean.getCurrentThreadUserTime()
+           : System.nanoTime();
   }
 
   public WorkingTimeMeasurer(long nanoLimit) {
