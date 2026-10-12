@@ -243,6 +243,7 @@ object DynamicPlugins {
       else -> IdeBundle.message("modal.progress.title.reconfiguring.plugins")
     }
     val criticalSectionModalProgress = Registry.`is`("ide.plugins.modal.progress.on.reconfiguration.critical.section", true)
+    val modalProgressConfig = ModalProgressConfig(modalTaskOwner(project), title)
     return withSpan(RECONFIGURE_SPAN) {
       reconfigure(
         buildNewState = {
@@ -260,8 +261,8 @@ object DynamicPlugins {
           computeNewPluginsState(addNewCustomPlugins, forceRemovePlugins, forceExclude = true)
         },
         extraStateValidator = extraStateValidator,
-        outerModalProgressConfig = if (criticalSectionModalProgress) null else ModalProgressConfig(modalTaskOwner(project), title),
-        criticalSectionModalProgressConfig = if (criticalSectionModalProgress) ModalProgressConfig(modalTaskOwner(project), title) else null,
+        outerModalProgressConfig = modalProgressConfig.takeIf { !criticalSectionModalProgress },
+        criticalSectionModalProgressConfig = modalProgressConfig.takeIf { criticalSectionModalProgress },
       ) is DynamicPluginsReconfigurationResult.Success
     }
   }
@@ -381,7 +382,7 @@ object DynamicPlugins {
       else {
         val newState = newStateErr.value
         val validationReason =
-          extraStateValidator.validate(newState.resolvedPluginSet)?.let<@NonNls String, DynamicPluginsReconfigurationResult.Invalid> {
+          extraStateValidator.validate(newState.resolvedPluginSet)?.let {
             DynamicPluginsReconfigurationResult.Invalid(
               DynamicReconfigurationIsNotPossibleReason.of(it, null)
             )
