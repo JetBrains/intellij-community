@@ -7,12 +7,12 @@ package org.jetbrains.kotlin.idea.debugger.core
 import com.intellij.debugger.PositionManager
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.DebuggerUtils.isAndroidVM
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
-import com.intellij.debugger.impl.DexDebugFacility
 import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.settings.DebuggerSettings
@@ -275,7 +275,7 @@ fun isOnSuspendReturnOrReenter(location: Location): Boolean {
 }
 
 private fun doesMethodHaveSwitcher(location: Location): Boolean {
-    if (DexDebugFacility.isDex(location.virtualMachine())) {
+    if (isAndroidVM(location.virtualMachine())) {
         // For JVM `checkContinuationLabelField` tries to find an instruction like `getfield MainKt$foo$1.label:I`,
         // thus defining if a state machine was generated for a suspend function.
         // This approach doesn't work for Android, so this is a simpler approach (see https://github.com/JetBrains/intellij-community/pull/2842):
@@ -495,7 +495,7 @@ private class CoroutineStateMachineVisitor(method: Method, private val resumeLoc
 
 fun getLocationOfCoroutineSuspendReturn(resumedLocation: Location?): Location? {
     val resumedMethod = resumedLocation?.safeMethod() ?: return null;
-    if (DexDebugFacility.isDex(resumedMethod.virtualMachine())) {
+    if (isAndroidVM(resumedMethod.virtualMachine())) {
         return null
     }
     val visitor = CoroutineStateMachineVisitor(resumedMethod, resumedLocation)
@@ -505,7 +505,7 @@ fun getLocationOfCoroutineSuspendReturn(resumedLocation: Location?): Location? {
 
 fun getLocationOfNextInstructionAfterResume(resumeLocation: Location?): Location? {
     val resumedMethod = resumeLocation?.safeMethod() ?: return null
-    if (DexDebugFacility.isDex(resumedMethod.virtualMachine())) {
+    if (isAndroidVM(resumedMethod.virtualMachine())) {
         return null
     }
     val visitor = CoroutineStateMachineVisitor(resumedMethod, resumeLocation)

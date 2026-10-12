@@ -10,12 +10,12 @@ import com.intellij.debugger.actions.SmartStepTarget
 import com.intellij.debugger.engine.ContextUtil
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.DebuggerUtils.isAndroidVM
 import com.intellij.debugger.engine.MethodFilter
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.impl.DebuggerSession
-import com.intellij.debugger.impl.DexDebugFacility
 import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.statistics.DebuggerStatistics
@@ -174,7 +174,7 @@ suspend fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(
         return this
     }
     val vm = VirtualMachineProxyImpl.getCurrent().virtualMachine
-    if (DexDebugFacility.isDex(vm)) {
+    if (isAndroidVM(vm)) {
         return DexBytecodeInspector.EP.extensionList.firstOrNull()?.filterAlreadyExecutedTargets(this, context)
             ?: this
     }

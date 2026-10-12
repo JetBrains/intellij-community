@@ -10,6 +10,7 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.DebuggerUtils.isAndroidVM
 import com.intellij.debugger.engine.DebuggerUtils.isSynthetic
 import com.intellij.debugger.engine.PositionManagerAsync
 import com.intellij.debugger.engine.PositionManagerImpl
@@ -18,7 +19,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
-import com.intellij.debugger.impl.DexDebugFacility
 import com.intellij.debugger.impl.wrapIncompatibleThreadStateException
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
@@ -753,7 +753,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
         try {
             val virtualMachine = type.virtualMachine()
-            if (DexDebugFacility.isDex(virtualMachine) && !virtualMachine.canGetSourceDebugExtension()) {
+            if (isAndroidVM(virtualMachine) && !virtualMachine.canGetSourceDebugExtension()) {
                 // If we cannot get source debug extension information, we approximate information for inline functions.
                 // This allows us to stop on some breakpoints in inline functions, but does not work very well.
                 // Source debug extensions are not available on Android devices before Android O.

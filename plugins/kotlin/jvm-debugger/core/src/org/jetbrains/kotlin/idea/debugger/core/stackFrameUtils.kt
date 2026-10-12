@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core
 
-import com.intellij.debugger.impl.DexDebugFacility
+import com.intellij.debugger.engine.DebuggerUtils.isAndroidVM
 import com.intellij.openapi.diagnostic.Logger
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
@@ -73,7 +73,7 @@ fun Method.sortedVariablesWithLocation(): List<VariableWithLocation> {
         ?: return emptyList()
 
     // On the JVM we can use the variable offsets directly.
-    if (!DexDebugFacility.isDex(virtualMachine())) {
+    if (!isAndroidVM(virtualMachine())) {
         return allVariables.mapNotNull { local ->
             local.getBorders()?.let { VariableWithLocation(local, it.start) }
         }.sorted()

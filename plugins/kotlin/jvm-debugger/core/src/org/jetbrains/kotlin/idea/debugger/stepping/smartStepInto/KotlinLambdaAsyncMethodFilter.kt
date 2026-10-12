@@ -6,6 +6,7 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.BasicStepMethodFilter
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebugProcessImpl.StepOverCommand
+import com.intellij.debugger.engine.DebuggerUtils.isAndroidVM
 import com.intellij.debugger.engine.MethodFilter
 import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.StepIntoMethodBreakpoint
@@ -13,7 +14,6 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
-import com.intellij.debugger.impl.DexDebugFacility
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint
@@ -144,7 +144,7 @@ class KotlinLambdaAsyncMethodFilter(
             && isSyntheticDefaultMethodPossiblyConvertedToStatic(location)) {
             index += 1
         }
-        if (DexDebugFacility.isDex(virtualMachine.virtualMachine)) {
+        if (isAndroidVM(virtualMachine.virtualMachine)) {
             // We could fetch the lambda reference from the caller function arguments
             // using `argumentValues.getOrNull(lambdaInfo.parameterIndex)`. However, this call
             // results in an exception when debugging on Android. Instead, we can fetch the lambda
@@ -255,7 +255,7 @@ class KotlinLambdaAsyncMethodFilter(
         val frameIndex = if (methodName.isGeneratedIrBackendLambdaMethodName()) 1 else 0
         return isTargetLambda(thread, frameIndex)
                 // On ART SAM converted lambdas get an additional stack frame from r8 in their stack trace
-                || DexDebugFacility.isDex(location.virtualMachine()) && isTargetLambda(thread, 2)
+                || isAndroidVM(location.virtualMachine()) && isTargetLambda(thread, 2)
                 // For lambdas passed to Java functions, the lambda could be additionally wrapped for type compatibility.
                 // One of the previous frames (heuristically 3rd frame) should contain the original lambda.
                 || isTargetLambda(thread, 3)
