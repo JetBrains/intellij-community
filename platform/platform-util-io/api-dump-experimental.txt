@@ -42,6 +42,28 @@ f:com.intellij.execution.configurations.PathEnvironmentVariableUtil
 - *s:findAll(java.lang.String):java.util.List
 - *s:findFirst(java.lang.String):java.nio.file.Path
 - *s:findFirst(java.lang.String,java.lang.String):java.nio.file.Path
+*:com.intellij.execution.portsWatcher.ListeningPort
+- a:getPid():java.lang.Long
+- a:getPort():I
+*:com.intellij.execution.portsWatcher.ListeningPortHandler
+- onPortListeningEnded(com.intellij.execution.portsWatcher.ListeningPort):V
+- a:onPortListeningStarted(com.intellij.execution.portsWatcher.ListeningPort):V
+*e:com.intellij.execution.portsWatcher.PortListeningOptions
+- java.lang.Enum
+- sf:INCLUDE_CHILDREN:com.intellij.execution.portsWatcher.PortListeningOptions
+- sf:INCLUDE_SELF:com.intellij.execution.portsWatcher.PortListeningOptions
+- sf:INCLUDE_SELF_AND_CHILDREN:com.intellij.execution.portsWatcher.PortListeningOptions
+- s:getEntries():kotlin.enums.EnumEntries
+- f:includesChildren():Z
+- f:includesSelf():Z
+- s:valueOf(java.lang.String):com.intellij.execution.portsWatcher.PortListeningOptions
+- s:values():com.intellij.execution.portsWatcher.PortListeningOptions[]
+*:com.intellij.execution.portsWatcher.ProcessPortsWatcher
+- *sf:Companion:com.intellij.execution.portsWatcher.ProcessPortsWatcher$Companion
+- a:resetDelay():V
+*f:com.intellij.execution.portsWatcher.ProcessPortsWatcher$Companion
+- f:startWatching(com.intellij.platform.eel.EelDescriptor,J,com.intellij.execution.portsWatcher.ListeningPortHandler,kotlinx.coroutines.CoroutineScope,com.intellij.execution.portsWatcher.PortListeningOptions):com.intellij.execution.portsWatcher.ProcessPortsWatcher
+- bs:startWatching$default(com.intellij.execution.portsWatcher.ProcessPortsWatcher$Companion,com.intellij.platform.eel.EelDescriptor,J,com.intellij.execution.portsWatcher.ListeningPortHandler,kotlinx.coroutines.CoroutineScope,com.intellij.execution.portsWatcher.PortListeningOptions,I,java.lang.Object):com.intellij.execution.portsWatcher.ProcessPortsWatcher
 c:com.intellij.execution.process.KillableProcessHandler
 - com.intellij.execution.process.OSProcessHandler
 - com.intellij.execution.KillableProcess
