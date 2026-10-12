@@ -60,6 +60,17 @@ class EntityStorageSerializationTest {
   }
 
   @Test
+  fun `serialization works after the warm up`() {
+    EntityStorageSerializerImpl.warmUp(PluginAwareEntityTypesResolver)
+
+    val builder = createEmptyBuilder()
+    builder addEntity SampleEntity(false, "MyEntity", ArrayList(), HashMap(), virtualFileManager.storeAndGet("file:///tmp"),
+                                   SampleEntitySource("test"))
+
+    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), virtualFileManager)
+  }
+
+  @Test
   fun `entity properties serialization`() {
     val builder = createEmptyBuilder()
     mutableSetOf("c", "d")
