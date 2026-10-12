@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -708,6 +707,12 @@ private class ComboBoxInfoPanelAction(
   private val popupState = PopupState.forPopup()
 
   /**
+   * The button that [createCustomComponent] made. The popup anchors to it, because the data context of
+   * the event only knows the toolbar's target, which is the whole tab.
+   */
+  private var comboButton: JComponent? = null
+
+  /**
    * Opens the chooser above [owner] instead of underneath it, which is where the base class would open it.
    *
    * The footer sits at the bottom of the welcome screen, so a popup underneath does not fit on screen.
@@ -732,6 +737,7 @@ private class ComboBoxInfoPanelAction(
     val component = super.createCustomComponent(presentation, place)
     component.isFocusable = true
     component.isRequestFocusEnabled = false
+    comboButton = component
     if (addBorder) {
       component.border = JBUI.Borders.emptyRight(16)
     }
@@ -748,7 +754,7 @@ private class ComboBoxInfoPanelAction(
 
   @Suppress("SplitModeApiUsage")
   override fun createPopup(event: AnActionEvent): JBPopup? {
-    val owner = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? JComponent
+    val owner = comboButton
     if (model is ThemeModel && contentProvider.isThemeChooserPopupEnabled && owner != null) {
       showThemeChooser(model, owner)
       return null
