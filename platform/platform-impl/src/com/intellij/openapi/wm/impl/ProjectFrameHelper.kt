@@ -133,6 +133,11 @@ abstract class ProjectFrameHelper internal constructor(
   // so we remember the activation time and report it against the assigned project later
   private var activationTimestamp: Long? = null
 
+  /**
+   * Completes when the first fill of the main menu may run, see [FrameLoadingState.mainMenuFillPermit].
+   */
+  internal val mainMenuFillPermit: Job? = loadingState?.mainMenuFillPermit
+
   init {
     frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
     frame.addWindowListener(WindowCloseListener)

@@ -132,6 +132,7 @@ import javax.swing.SwingUtilities
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.resume
 import kotlin.math.min
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 internal class IdeProjectFrameAllocator(
@@ -140,9 +141,34 @@ internal class IdeProjectFrameAllocator(
 ) : ProjectFrameAllocator {
   private val deferredProjectFrameHelper = CompletableDeferred<IdeProjectFrameHelper>()
 
+  /**
+   * Completes when the first fill of the main menu of the frame may run, see [FrameLoadingState.mainMenuFillPermit].
+   */
+  private val mainMenuFillPermit: CompletableJob = createMainMenuFillPermit(options)
+
   override suspend fun preInitProject(project: Project) {
+    // the earliest point that knows the project, before the background write actions of the pre-init
+    permitMainMenuFill(project)
     project.getOrCreatePostOpenEditorsDeferred()
     (FileEditorManager.getInstanceAsync(project) as? FileEditorManagerImpl)?.initJob?.join()
+  }
+
+  private suspend fun permitMainMenuFill(project: Project) {
+    if (mainMenuFillPermit.isCompleted) {
+      return
+    }
+    if (serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)) {
+      @Suppress("UsagesOfObsoleteApi")
+      permitMainMenuFillOnContentPainted(
+        scope = (project as ComponentManagerEx).getCoroutineScope(),
+        permit = mainMenuFillPermit,
+        contentPainted = project.getOrCreateFrameContentPaintedDeferred(),
+        timeout = MAIN_MENU_FILL_PERMIT_TIMEOUT,
+      )
+    }
+    else {
+      mainMenuFillPermit.complete()
+    }
   }
 
   override suspend fun runInBackground(projectInitObservable: ProjectInitObservable) {
@@ -174,12 +200,17 @@ internal class IdeProjectFrameAllocator(
       coroutineScope {
         val job = currentCoroutineContext().job
         val frameLoadingDone = createFrameLoadingDone(foregroundJob = job)
+        job.invokeOnCompletion { cause ->
+          if (cause != null) {
+            mainMenuFillPermit.complete()
+          }
+        }
         val frameSettingsDeferred = async(CoroutineName("project frame settings resolving")) {
           resolveFrameSettings()
         }
 
         val frameInitJob = launch(CoroutineName("project frame creating")) {
-          val loadingState = MutableLoadingState(done = frameLoadingDone)
+          val loadingState = MutableLoadingState(done = frameLoadingDone, mainMenuFillPermit = mainMenuFillPermit)
           span("frame creation") {
             createFrameManager(loadingState, frameSettingsDeferred.await())
           }
@@ -462,6 +493,7 @@ internal class IdeProjectFrameAllocator(
   )
 
   override suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
+    mainMenuFillPermit.complete()
     val frameHelper = if (deferredProjectFrameHelper.isCompleted) {
       deferredProjectFrameHelper.await()
     }
@@ -878,6 +910,8 @@ internal fun presentProjectViewOnStartup(
 
 private val EMPTY_STATE_FOCUS_SETTLEMENT_TIMEOUT = 5.seconds
 
+private val MAIN_MENU_FILL_PERMIT_TIMEOUT = 2.seconds
+
 /**
  * Ends the startup presentation hold when [postOpenEditors] never got to release the hold [restoreEditors] took.
  *
@@ -1257,4 +1291,31 @@ internal fun completeFrameLoadingOnContentPainted(
   foregroundJob.invokeOnCompletion { waiter.cancel() }
 }
 
-private class MutableLoadingState(override val done: Job) : FrameLoadingState
+/**
+ * Returns the permit of the first main menu fill of a frame opened with [options], see [FrameLoadingState.mainMenuFillPermit].
+ * A frame that is not initialized early learns about its project only after the project preparation, so its fill does not wait.
+ */
+@VisibleForTesting
+internal fun createMainMenuFillPermit(options: OpenProjectTask): CompletableJob {
+  val permit = Job()
+  if (!isFrameInitializedEarly(options)) {
+    permit.complete()
+  }
+  return permit
+}
+
+/**
+ * Completes [permit] when [contentPainted] completes, or after [timeout] when the paint does not come.
+ * The waiter runs in [scope], and its end in any way completes [permit], so a fill never waits for a disposed project.
+ */
+@VisibleForTesting
+internal fun permitMainMenuFillOnContentPainted(scope: CoroutineScope, permit: CompletableJob, contentPainted: Job, timeout: Duration) {
+  val waiter = scope.launch(CoroutineName("main menu fill permit waiting")) {
+    withTimeoutOrNull(timeout) {
+      contentPainted.join()
+    }
+  }
+  waiter.invokeOnCompletion { permit.complete() }
+}
+
+private class MutableLoadingState(override val done: Job, override val mainMenuFillPermit: Job) : FrameLoadingState

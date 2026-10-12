@@ -650,6 +650,13 @@ private class IdePaneLoadingLayer(
 
 internal interface FrameLoadingState {
   val done: Job
+
+  /**
+   * Completes when the first fill of the main menu may run.
+   * The fill of a welcome-experience frame waits until the frame content paints: its EDT part takes the write-intent lock,
+   * and the lock waits for the background write actions of the project pre-init while it holds the EDT.
+   */
+  val mainMenuFillPermit: Job
 }
 
 @OptIn(AwaitCancellationAndInvoke::class)

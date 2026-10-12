@@ -806,7 +806,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           }
 
           launch(CoroutineName("project prepare and startup")) {
-            val initFrameEarly = !options.isNewProject && options.beforeOpen == null && options.project == null
+            val initFrameEarly = isFrameInitializedEarly(options)
             val project = span("project prepare") {
               when {
                 options.project != null -> options.project!!
@@ -1450,6 +1450,15 @@ class UnableToSaveProjectNotification(project: Project, readOnlyFiles: List<Virt
     project = null
     super.expire()
   }
+}
+
+/**
+ * Whether the frame of [options] is initialized early: the frame content starts after the pre-init extensions of the project,
+ * in parallel with the rest of the project preparation.
+ */
+@VisibleForTesting
+internal fun isFrameInitializedEarly(options: OpenProjectTask): Boolean {
+  return !options.isNewProject && options.beforeOpen == null && options.project == null
 }
 
 private class ProjectInitHelper(
