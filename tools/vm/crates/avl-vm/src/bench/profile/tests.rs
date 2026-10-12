@@ -1,6 +1,56 @@
 use pretty_assertions::assert_eq;
 
-use super::{EdtProfile, FrameSamples, ROOT_TRIGGER, parse};
+use super::{EdtProfile, ExcludedSamples, FrameSamples, ROOT_TRIGGER, parse};
+
+/// The stacks of the profiler's own symbol parsing, under its dlopen hook, count for neither the EDT frames nor the
+/// class-loading triggers nor the share of the define samples. The profile counts them apart, on every thread and on
+/// the EDT, and a merge adds them up.
+#[test]
+fn leaves_out_the_symbol_parsing_of_the_profiler() {
+    let profile = parse(
+        "[AWT-EventQueue-0 tid=1];a/A.run;java/lang/System.loadLibrary;jdk/internal/loader/NativeLibraries.load;dlopen;\
+         Profiler::dlopen_hook(char const*, int);Symbols::parseLibraries;MachOParser::parse 480\n\
+         [AWT-EventQueue-0 tid=1];a/A.run;b/B.paint 20\n\
+         [DefaultDispatcher-worker-1 tid=7];c/C.run;java/lang/ClassLoader.defineClass1;JVM_DefineClass;\
+         jdk/internal/loader/NativeLibraries.load;Profiler::dlopen_hook;CodeCache::sort 30\n\
+         [DefaultDispatcher-worker-1 tid=7];c/C.run;d/D.init;java/lang/ClassLoader.defineClass1 5\n\
+         [DefaultDispatcher-worker-1 tid=7];c/C.run;my_dlopen_hook_helper 3\n",
+    )
+    .expect("a profile");
+    assert_eq!((profile.samples, profile.all_samples), (20, 28));
+    assert_eq!(
+        profile.top(5),
+        [FrameSamples {
+            frame: "b/B.paint".to_owned(),
+            samples: 20
+        }]
+    );
+    assert_eq!(profile.triggers.define_samples, 5);
+    assert_eq!(
+        profile.triggers.top(5),
+        [FrameSamples {
+            frame: "d/D.init".to_owned(),
+            samples: 5
+        }]
+    );
+    assert_eq!(
+        profile.excluded,
+        ExcludedSamples {
+            samples: 510,
+            edt_samples: 480
+        },
+        "a frame that only holds the name is no hook"
+    );
+    let mut total = profile.clone();
+    total.merge(&profile);
+    assert_eq!(
+        total.excluded,
+        ExcludedSamples {
+            samples: 1020,
+            edt_samples: 960
+        }
+    );
+}
 
 #[test]
 fn charges_the_edt_samples_to_the_deepest_java_frame() {

@@ -265,6 +265,7 @@ fn the_default_run_is_the_median_of_the_non_modal_arm_else_of_the_modal_arm() {
         classes_by_module: std::collections::BTreeMap::new(),
         classes_by_plugin_at: std::collections::BTreeMap::new(),
         profile_scope: None,
+        excluded_samples: None,
         edt_samples: None,
         edt_frames: Vec::new(),
         triggers: Vec::new(),

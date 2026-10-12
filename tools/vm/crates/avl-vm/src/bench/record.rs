@@ -13,7 +13,7 @@ use super::files;
 use super::fus;
 use super::load::HostLoad;
 use super::pluginlog::{self, PluginLog};
-use super::profile::{self, EdtProfile, FrameSamples, GATE_PROFILE, ProfileScope, WHOLE_PROFILE};
+use super::profile::{self, EdtProfile, ExcludedSamples, FrameSamples, GATE_PROFILE, ProfileScope, WHOLE_PROFILE};
 use super::session::{CLASS_LOAD_LOG, TRACE_FILE};
 use super::stats::{self, StartupStats};
 use super::timeline::QUIT_SPAN;
@@ -256,6 +256,9 @@ pub(crate) struct RunRecord {
     /// The span of the run that its profile covers, when the run has a profile.
     #[serde(default)]
     pub(crate) profile_scope: Option<ProfileScope>,
+    /// The samples of the profiler's own symbol parsing, which the profile leaves out, when the run has a profile.
+    #[serde(default)]
+    pub(crate) excluded_samples: Option<ExcludedSamples>,
     /// The EDT samples, when the run has a profile.
     pub(crate) edt_samples: Option<u64>,
     pub(crate) edt_frames: Vec<FrameSamples>,
@@ -325,6 +328,7 @@ pub(crate) fn collect(run_dir: &Path, id: &RunId, launch: LaunchFacts) -> RunRec
         classes_by_module: BTreeMap::new(),
         classes_by_plugin_at: BTreeMap::new(),
         profile_scope: None,
+        excluded_samples: None,
         edt_samples: None,
         edt_frames: Vec::new(),
         triggers: Vec::new(),
@@ -466,6 +470,7 @@ fn profile_metrics(run_dir: &Path, record: &mut RunRecord) {
     match files::read_text(&run_dir.join(name)).and_then(|text| profile::parse(&text)) {
         Ok(profile) => {
             record.profile_scope = Some(scope);
+            record.excluded_samples = Some(profile.excluded);
             record.edt_samples = Some(profile.samples);
             record.edt_frames = profile.top(TOP_LIMIT);
             record.triggers = profile.triggers.top(TOP_LIMIT);

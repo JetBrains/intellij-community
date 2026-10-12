@@ -267,7 +267,8 @@ fn failures(text: &mut String, arms: &[&ArmSummary]) {
 }
 
 /// The top EDT frames of an arm, then its top class-loading triggers. The heading names the event of the samples and
-/// the span of the runs that the profile covers.
+/// the span of the runs that the profile covers, and a note names the samples of the profiler's own symbol parsing,
+/// which neither block holds.
 fn profile(text: &mut String, arm: &ArmSummary, event: ProfileEvent) {
     let Some(samples) = arm.edt_samples else {
         return;
@@ -280,6 +281,15 @@ fn profile(text: &mut String, arm: &ArmSummary, event: ProfileEvent) {
         profile_scope(arm)
     );
     frames(text, &arm.edt_frames, PROFILE_FRAMES, samples);
+    if let Some(excluded) = arm.excluded_samples.filter(|excluded| excluded.samples > 0) {
+        let _ = writeln!(
+            text,
+            "{} note: profiler symbol parsing: {} samples excluded, {} of them on the EDT",
+            arm.arm.label(),
+            excluded.samples,
+            excluded.edt_samples
+        );
+    }
     let Some(define_samples) = arm.define_samples else {
         return;
     };

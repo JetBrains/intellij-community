@@ -101,5 +101,14 @@ computes it.**
 - The stop starts a `jcmd` JVM at the gate, while the non-modal welcome screen can still paint. The late spans of a
   profiled run thus carry the load of that JVM, and the profile ends before the paint.
 - A generation from before the record of the commit names none, so a session over it names no commit and warns.
+- The class-load log is asynchronous, with `-Xlog:async:stall` and `-XX:AsyncLogBufferSize=32M`. A flush of each
+  class line under the global log lock cost a run 481 to 773 ms of CPU over its threads, 64 ms of it on the EDT. The
+  default mode of JBR 25, `drop`, loses a line when the buffer is full. In the `stall` mode a full buffer makes the
+  logging thread wait, so no class line is dropped and the class count stays exact. The buffer holds the class log of a whole start, so a wait stays rare, at the price of 32 MB of native
+  memory. A run that the quit kills loses the lines that are still in the buffer.
+- The profile leaves out the stacks under `Profiler::dlopen_hook`, where async-profiler parses the symbols of each
+  library that the JVM loads. A run without the profiler never spends that time, about half a second on the EDT of a
+  profiled start, and the other threads wait on its lock. The EDT frames and the class-loading triggers both leave
+  these stacks out, and the digest notes how many samples it left out.
 - A modal metric of the report is the state at the exit, not at the welcome event. The class counts of the modal
   arm still stop at their anchor, because the class-load log has the time of each class.

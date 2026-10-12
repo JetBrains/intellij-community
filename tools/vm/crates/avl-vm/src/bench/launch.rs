@@ -110,6 +110,13 @@ pub(crate) fn sandbox_options(sandbox: &Sandbox) -> Vec<String> {
     ]
 }
 
+/// The options that make the JVM write its log, the class-load log among it, from a thread of its own. A flush of each
+/// class line under the global log lock costs a start about half a second of CPU over all its threads, the EDT too. The
+/// default mode, `drop`, loses a line when the buffer is full. In the `stall` mode a full buffer makes the logging
+/// thread wait instead, so the class count stays exact. The buffer holds the class log of a whole start, so the wait
+/// stays rare.
+pub(crate) const ASYNC_LOG_OPTIONS: [&str; 2] = ["-Xlog:async:stall", "-XX:AsyncLogBufferSize=32M"];
+
 /// The option that makes the JVM write [`CLASS_LOAD_LOG`] with the uptime of each class. The `-Xlog` grammar ends the
 /// file name at a `:`, so a run directory with a `:` in its path is an error that names it. A space is no problem,
 /// because the argfile quotes it.
@@ -125,10 +132,10 @@ pub(crate) fn class_load_option(run_dir: &Path) -> Result<String, String> {
     Ok(format!("-Xlog:class+load:file={path}:uptime,tags"))
 }
 
-/// The options of a measured start, in order: the sandbox, the files of the run, the class-load log, the properties,
-/// the arm and the profiler. A run directory that the class-load log cannot name is an error, see
-/// [`class_load_option`]. The profiler starts with the JVM and writes [`WHOLE_PROFILE`] at the exit, unless the run
-/// stops it at the gate.
+/// The options of a measured start, in order: the sandbox, the files of the run, the asynchronous log, see
+/// [`ASYNC_LOG_OPTIONS`], the class-load log, the properties, the arm and the profiler. A run directory that the
+/// class-load log cannot name is an error, see [`class_load_option`]. The profiler starts with the JVM and writes
+/// [`WHOLE_PROFILE`] at the exit, unless the run stops it at the gate.
 pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: Arm, profiler: Option<&Profiler>) -> Result<Vec<String>, String> {
     let mut options = sandbox_options(sandbox);
     options.extend([
@@ -137,8 +144,9 @@ pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: Arm, profi
         property("idea.diagnostic.opentelemetry.file", &run_dir.join(TRACE_FILE)),
         property("idea.log.class.list.file", &run_dir.join("class-report.txt")),
         property("plugin.classloader.debug", &run_dir.join("plugin-classes.txt")),
-        class_load_option(run_dir)?,
     ]);
+    options.extend(ASYNC_LOG_OPTIONS.map(str::to_owned));
+    options.push(class_load_option(run_dir)?);
     options.extend(MEASURE_PROPERTIES.iter().map(|property| format!("-D{property}")));
     match arm {
         Arm::Modal => options.push(format!("-D{FORCE_MODAL_PROPERTY}")),

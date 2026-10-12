@@ -173,6 +173,12 @@ run reads the PID of the IDE from `idea.log` and stops the profiler with `jcmd` 
 `cpu-gate.collapsed`. `--profile-event wall` samples the wall clock in place of the CPU. A run that cannot stop the
 profiler keeps the whole-run profile `cpu.collapsed`, with a note that names why. The digest says which profile it read.
 
+Two costs of the instruments stay out of the numbers. The JVM writes `class-load.log` asynchronously, with
+`-Xlog:async:stall` and a buffer of 32 MB, because a flush of each class line under the global log lock costs a start
+about half a second of CPU. A full buffer stalls the logging thread and drops no line, so the class count stays exact.
+The profile leaves out the stacks under `Profiler::dlopen_hook`, where async-profiler parses the symbols of each library
+that the JVM loads, and the digest notes how many samples it left out.
+
 | verb | the question it answers | its output |
 | --- | --- | --- |
 | `welcome` | How long does the IDE take to show the welcome screen, in the modal and the non-modal arm? | A session directory with its `summary.json`, and a text digest. |

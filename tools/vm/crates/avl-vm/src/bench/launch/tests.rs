@@ -59,16 +59,22 @@ fn every_arm_is_an_integration_test_and_a_project_start_trusts_its_project() {
     }
 }
 
-/// Every arm writes the class-load log. A space in the run directory is no problem, and a `:` is an error that names
-/// the run directory.
+/// Every arm writes the class-load log, from the thread of the asynchronous log, which stalls on a full buffer and
+/// drops no class line. A space in the run directory is no problem, and a `:` is an error that names the run
+/// directory.
 #[test]
 fn every_arm_writes_the_class_load_log_and_a_colon_in_the_run_directory_is_a_failure() {
     let sandbox = Sandbox::new("/s/sandbox");
     for arm in Arm::ALL {
         let options = measure_options(Path::new("/s/Application Support/run"), &sandbox, arm, None).expect("the options");
-        assert!(
-            options.contains(&"-Xlog:class+load:file=/s/Application Support/run/class-load.log:uptime,tags".to_owned()),
-            "{arm:?}: {options:?}"
+        let class_log = options
+            .iter()
+            .position(|option| *option == "-Xlog:class+load:file=/s/Application Support/run/class-load.log:uptime,tags")
+            .unwrap_or_else(|| panic!("{arm:?}: {options:?}"));
+        assert_eq!(
+            options[class_log - 2..class_log],
+            ["-Xlog:async:stall", "-XX:AsyncLogBufferSize=32M"],
+            "{arm:?}: the asynchronous log comes first"
         );
     }
     assert_eq!(

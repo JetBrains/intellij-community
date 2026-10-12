@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
 use super::arm::Arm;
-use super::profile::{EdtProfile, FrameSamples, ProfileEvent};
+use super::profile::{EdtProfile, ExcludedSamples, FrameSamples, ProfileEvent};
 use super::record::{RunKind, RunRecord};
 use super::session::{GitInfo, MeasureModel, SessionInfo};
 use super::trace::tenth;
@@ -79,6 +79,9 @@ pub(crate) struct ArmSummary {
     /// The class-loading triggers with the most samples, over the valid runs. See [`super::profile::Triggers`].
     #[serde(default)]
     pub(crate) triggers: Vec<FrameSamples>,
+    /// The samples of the profiler's own symbol parsing that the profiles of the valid runs leave out.
+    #[serde(default)]
+    pub(crate) excluded_samples: Option<ExcludedSamples>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
@@ -211,6 +214,7 @@ fn arm_summary(arm: Arm, runs: Vec<RunRecord>) -> ArmSummary {
         edt_frames: profile.as_ref().map(|profile| profile.top(PROFILE_TOP)).unwrap_or_default(),
         define_samples: profile.as_ref().map(|profile| profile.triggers.define_samples),
         define_share: profile.as_ref().and_then(EdtProfile::define_share),
+        excluded_samples: profile.as_ref().map(|profile| profile.excluded),
         triggers: profile.map(|profile| profile.triggers.top(PROFILE_TOP)).unwrap_or_default(),
         runs,
     }
