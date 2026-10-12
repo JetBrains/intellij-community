@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.marker
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentPatch
+import com.intellij.openapi.editor.impl.DocumentMutatorImpl
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 
@@ -35,18 +36,10 @@ class SnapshotMarkerStores {
 
   fun applyPatch(beforeSnapshot: DocumentSnapshot, patch: DocumentPatch): DocumentSnapshot {
     val capturedRoots = captureRoots(beforeSnapshot)
-    val afterSnapshot = applyPatch0(beforeSnapshot, patch)
+    val afterSnapshot = DocumentMutatorImpl.applyPatch(beforeSnapshot, patch)
     if (afterSnapshot === beforeSnapshot) return afterSnapshot
 
     return additionalApply(patch, beforeSnapshot, afterSnapshot, capturedRoots)
-  }
-
-  fun applyPatch0(beforeSnapshot: DocumentSnapshot, patch: DocumentPatch): DocumentSnapshot {
-    var snapshot = beforeSnapshot
-    for (op in patch.ops()) {
-      snapshot = snapshot.applyOp(op)
-    }
-    return snapshot
   }
 
   private fun additionalApply(
@@ -80,21 +73,10 @@ class SnapshotMarkerStores {
     afterSnapshot: DocumentSnapshot,
     capturedRoots: List<CapturedRoot>,
   ): DocumentSnapshot {
-    if (patch is DocumentPatch) {
-      validatePatch(beforeSnapshot, afterSnapshot, patch)
-      for (i in capturedRoots.indices) {
-        val it = capturedRoots[i]
-        it.store.applyPatch(it.root, beforeSnapshot, afterSnapshot, patch)
-      }
-    }
-    else {
-      require(beforeSnapshot.text() === afterSnapshot.text()) {
-        "Snapshots must share the same text instance, but op: $patch corrupted the text"
-      }
-      for (i in capturedRoots.indices) {
-        val it = capturedRoots[i]
-        it.store.inherit(it.root, afterSnapshot)
-      }
+    validatePatch(beforeSnapshot, afterSnapshot, patch)
+    for (i in capturedRoots.indices) {
+      val it = capturedRoots[i]
+      it.store.applyPatch(it.root, beforeSnapshot, afterSnapshot, patch)
     }
     return afterSnapshot
   }

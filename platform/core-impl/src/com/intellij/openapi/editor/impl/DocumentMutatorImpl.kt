@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.impl.marker.SnapshotMarkerStores
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.util.text.ImmutableCharSequence
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.UnaryOperator
 import kotlin.concurrent.Volatile
 
@@ -445,5 +446,15 @@ internal abstract class DocumentMutatorImpl(
 
   companion object {
     private val LOG: Logger = logger<DocumentMutatorImpl>()
+
+    @ApiStatus.Internal
+    fun applyPatch(beforeSnapshot: DocumentSnapshot, patch: DocumentPatch): DocumentSnapshot {
+      var snapshot = beforeSnapshot
+      for (op in patch.ops()) {
+        snapshot = snapshot.applyOp(op)
+      }
+      return snapshot
+    }
+
   }
 }
