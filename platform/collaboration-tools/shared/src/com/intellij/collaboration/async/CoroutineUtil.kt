@@ -27,6 +27,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
@@ -68,6 +69,8 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletionException
@@ -381,6 +384,26 @@ inline fun <T, reified R> Flow<Iterable<T>>.flatMapLatestEach(crossinline transf
 inline fun <T, reified R> Iterable<T>.mapEach(crossinline transform: (T) -> Flow<R>): Flow<Array<R>> {
   val nestedFlows = map(transform)
   return if (nestedFlows.isEmpty()) flowOf(arrayOf()) else combine(nestedFlows) { it }
+}
+
+/**
+ * Maps items concurrently and preserves their order.
+ * Runs at most [concurrency] transforms at the same time. The [concurrency] value must be positive.
+ */
+@ApiStatus.Internal
+suspend fun <T, R> Iterable<T>.mapConcurrentOrdered(concurrency: Int, transform: suspend (T) -> R): List<R> {
+  require(concurrency > 0) { "Concurrency must be positive, but was $concurrency" }
+  val semaphore = Semaphore(concurrency)
+  return coroutineScope {
+    map { item ->
+      async {
+        semaphore.withPermit {
+          transform(item)
+        }
+      }
+    }
+      .awaitAll()
+  }
 }
 
 fun <T> Flow<Collection<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }

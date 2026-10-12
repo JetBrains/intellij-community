@@ -6,6 +6,7 @@ import com.intellij.collaboration.api.page.foldToList
 import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.collaboration.async.mapConcurrentOrdered
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException
@@ -26,7 +27,6 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -44,6 +44,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestDif
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 
 private val LOG = logger<GitLabMergeRequestChanges>()
+internal const val MAX_CONCURRENT_COMMITS = 5
 
 interface GitLabMergeRequestChanges {
   /**
@@ -179,14 +180,10 @@ internal class GitLabMergeRequestChangesImpl(
     val mergeBaseSha = diffRefs.baseSha ?: error("Missing merge base revision")
 
     val commitsWithPatches = withContext(Dispatchers.IO) {
-      coroutineScope {
-        commits.map { commit ->
-          async {
-            val commitWithParents = api.rest.loadCommit(projectId, commit.sha)
-            val patches = api.rest.loadCommitDiffs(projectId, commit.sha).map(GitLabDiffDTO::toPatch)
-            GitCommitShaWithPatches(commit.sha, commitWithParents.parentIds, patches)
-          }
-        }.awaitAll()
+      commits.mapConcurrentOrdered(MAX_CONCURRENT_COMMITS) { commit ->
+        val commitWithParents = api.rest.loadCommit(projectId, commit.sha)
+        val patches = api.rest.loadCommitDiffs(projectId, commit.sha).map(GitLabDiffDTO::toPatch)
+        GitCommitShaWithPatches(commit.sha, commitWithParents.parentIds, patches)
       }
     }.onEach { commit ->
       commit.patches.forEach {
@@ -332,3 +329,4 @@ internal data class PatchWithEmptyReason(
 
 private val GitLabDiffDTO.isRenameOrModeChange: Boolean
   get() = renamedFile || aMode != bMode
+
