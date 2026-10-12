@@ -85,6 +85,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
+import static com.intellij.debugger.impl.DebugUtilsKt.emulateMethodBreakpointsOnVM;
+
 public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakpointProperties> implements MethodBreakpointBase {
   private static final Logger LOG = Logger.getInstance(MethodBreakpoint.class);
   protected @Nullable JVMName mySignature;
@@ -542,8 +544,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   @Override
-  public boolean isEmulated() {
-    return getProperties().EMULATED;
+  public boolean isEmulated(@NotNull VirtualMachine vm) {
+    return getProperties().EMULATED && emulateMethodBreakpointsOnVM(vm);
   }
 
   @Override
