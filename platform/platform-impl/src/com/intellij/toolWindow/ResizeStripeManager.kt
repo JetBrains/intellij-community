@@ -70,7 +70,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
 
       override fun preferredLayoutSize(target: Container): Dimension {
         val size = super.preferredLayoutSize(target)
-        if (myCustomWidth != 0 && (!myComponent.topStripe.getButtons().isEmpty() || !myComponent.bottomStripe.getButtons().isEmpty())) {
+        if (myCustomWidth != 0 && myComponent.hasButtons()) {
           size.width = myCustomWidth
         }
         return size
@@ -175,6 +175,9 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
       (button.getComponent() as SquareStripeButton).setOrUpdateShowName(myCustomWidth > 0)
     }
     for (button in myComponent.bottomStripe.getButtons()) {
+      (button.getComponent() as SquareStripeButton).setOrUpdateShowName(myCustomWidth > 0)
+    }
+    for (button in myComponent.footerStripe?.getButtons().orEmpty()) {
       (button.getComponent() as SquareStripeButton).setOrUpdateShowName(myCustomWidth > 0)
     }
 

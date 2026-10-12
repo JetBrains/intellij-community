@@ -45,6 +45,12 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
   internal abstract val bottomStripe: StripeV2
   internal abstract val topStripe: StripeV2
 
+  /**
+   * The buttons below every other button of the toolbar. Only the left toolbar has it.
+   * It holds the windows with [com.intellij.openapi.wm.impl.ToolWindowImpl.isInLeftToolbarFooter], and it accepts no drop.
+   */
+  internal open val footerStripe: StripeV2? get() = null
+
   internal abstract val moreButton: MoreSquareStripeButton
 
   private val myResizeManager = ResizeStripeManager(this)
@@ -64,19 +70,33 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     topStripe.background = JBUI.CurrentTheme.ToolWindow.stripeBackground()
     bottomStripe.background = JBUI.CurrentTheme.ToolWindow.stripeBackground()
     topWrapper.background = JBUI.CurrentTheme.ToolWindow.stripeBackground()
+    val footer = footerStripe
+    footer?.background = JBUI.CurrentTheme.ToolWindow.stripeBackground()
 
     if (ToolWindowStripeExtension.exists) {
       topWrapper.add(topStripe, BorderLayout.CENTER)
       add(topWrapper, BorderLayout.CENTER)
+      footer?.let { add(it, BorderLayout.SOUTH) }
     }
     else {
       topWrapper.add(topStripe, BorderLayout.NORTH)
       add(topWrapper, BorderLayout.NORTH)
-      add(bottomStripe, BorderLayout.SOUTH)
+      if (footer == null) {
+        add(bottomStripe, BorderLayout.SOUTH)
+      }
+      else {
+        val bottomWrapper = JBPanel<JBPanel<*>>(BorderLayout()).apply {
+          isOpaque = false
+          add(bottomStripe, BorderLayout.CENTER)
+          add(footer, BorderLayout.SOUTH)
+        }
+        add(bottomWrapper, BorderLayout.SOUTH)
+      }
     }
 
     topStripe.addButtonAddedRemovedListener { updateVisibleButtons() }
     bottomStripe.addButtonAddedRemovedListener { updateVisibleButtons() }
+    footer?.addButtonAddedRemovedListener { updateVisibleButtons() }
     moreButton.addComponentListener(object : ComponentAdapter() {
       override fun componentShown(e: ComponentEvent?) {
         updateVisibleButtons()
@@ -133,7 +153,9 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
   internal abstract fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe
 
   internal fun getButtonFor(toolWindowId: String): StripeButtonManager? {
-    return topStripe.getButtons().find { it.id == toolWindowId } ?: bottomStripe.getButtons().find { it.id == toolWindowId }
+    return topStripe.getButtons().find { it.id == toolWindowId }
+           ?: bottomStripe.getButtons().find { it.id == toolWindowId }
+           ?: footerStripe?.getButtons()?.find { it.id == toolWindowId }
   }
 
   internal open fun getStripeFor(screenPoint: Point): StripeV2? {
@@ -149,13 +171,18 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     return null
   }
 
-  fun hasButtons(): Boolean = topStripe.getButtons().isNotEmpty() || bottomStripe.getButtons().isNotEmpty()
+  fun hasButtons(): Boolean {
+    return topStripe.getButtons().isNotEmpty() ||
+           bottomStripe.getButtons().isNotEmpty() ||
+           footerStripe?.getButtons()?.isNotEmpty() == true
+  }
 
   fun hasVisibleButtons(): Boolean = hasVisibleButtons
 
   fun reset() {
     topStripe.reset()
     bottomStripe.reset()
+    footerStripe?.reset()
   }
 
   fun startDrag() {

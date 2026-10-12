@@ -167,6 +167,12 @@ private val LOG = logger<ToolWindowManagerImpl>()
   private var hideOnEmptyContent = false
   var isPlaceholderMode: Boolean = false
 
+  /**
+   * Puts the stripe button of a [ToolWindowAnchor.LEFT] tool window below every other button of the left toolbar in the New UI.
+   * The tool window still docks on the left. Set it in [com.intellij.openapi.wm.ToolWindowFactory.init].
+   */
+  internal var isInLeftToolbarFooter: Boolean = false
+
   private var pendingContentManagerListeners: PersistentList<ContentManagerListener> = persistentListOf()
 
   private val showing = object : BusyObject.Impl() {
