@@ -39,6 +39,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * @deprecated Use {@link TodoItemsTestUtil} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase {
   protected abstract String getFileExtension();
 

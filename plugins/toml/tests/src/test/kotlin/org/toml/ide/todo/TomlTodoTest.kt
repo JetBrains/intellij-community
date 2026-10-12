@@ -5,21 +5,63 @@
 
 package org.toml.ide.todo
 
-import com.intellij.editor.TodoItemsTestCase
+import com.intellij.editor.TodoItemsTestUtil
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import org.junit.jupiter.api.Test
 import org.toml.lang.psi.TomlFileType
 
-class TomlTodoTest : TodoItemsTestCase() {
-    override fun getFileExtension(): String = TomlFileType.defaultExtension
-    override fun supportsCStyleMultiLineComments(): Boolean = false
-    override fun supportsCStyleSingleLineComments(): Boolean = false
+@TestApplication
+class TomlTodoTest {
+    companion object {
+        private val projectFixture = projectFixture(openAfterCreation = true)
+    }
 
-    fun `test single todo`() = testTodos("""
+    private val pathFixture = tempPathFixture()
+
+    @Suppress("unused")
+    private val moduleFixture = projectFixture.moduleFixture(pathFixture, addPathToSourceRoot = true)
+    private val myFixture by codeInsightFixture(projectFixture, pathFixture)
+
+    private fun testTodos(text: String) = TodoItemsTestUtil.testTodos(myFixture, TomlFileType.defaultExtension, text)
+
+    @Test
+    fun `test single todo`(): Unit = testTodos("""
         # [TODO first line]
         # second line
     """)
 
-    fun `test multiline todo`() = testTodos("""
+    @Test
+    fun `test multiline todo`(): Unit = testTodos("""
         # [TODO first line]
         #  [second line]
     """)
+
+    // TodoItemsTestCase skipped the tests below for this language. They keep its test names.
+    @Test
+    fun testSuccessiveLineComments() {
+    }
+
+    @Test
+    fun testSuccessiveLineCommentsAfterEditing() {
+    }
+
+    @Test
+    fun testNewTodoAfterUnsavedEditing() {
+    }
+
+    @Test
+    fun testAllLinesLoseHighlightingWithFirstLine() {
+    }
+
+    @Test
+    fun testContinuationIsNotOverlappedWithFollowingTodo() {
+    }
+
+    @Test
+    fun testContinuationInBlockCommentWithStars() {
+    }
 }
