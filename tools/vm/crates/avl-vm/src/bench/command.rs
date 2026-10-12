@@ -29,8 +29,8 @@ use super::options::{BenchVerb, LaunchArgs};
 use super::record::{self, RunId, RunKind, RunRecord};
 use super::resolve;
 use super::session::{
-    self, BENCH_DIR, GenerationRef, GitInfo, MARKDOWN_PROJECT, Project, ProjectSource, RESULT_FILE, SESSION_FILE, SUMMARY_FILE, Sandbox,
-    SessionInfo, TEMPLATE_DIR,
+    self, BENCH_DIR, GenerationRef, GitInfo, MARKDOWN_PROJECT, MeasureModel, Project, ProjectSource, RESULT_FILE, SESSION_FILE,
+    SUMMARY_FILE, Sandbox, SessionInfo, TEMPLATE_DIR,
 };
 use super::spans;
 use super::stage::{self, Generation};
@@ -294,6 +294,7 @@ impl Bench<'_> {
                 path: generation.root.display().to_string(),
                 dist_digest: generation.digest.clone(),
             },
+            measure_model: Some(MeasureModel::current()),
             arms: plan.arms.clone(),
             runs: plan.runs,
             cold: plan.cold,

@@ -105,6 +105,7 @@ fn a_run_of_another_distribution_is_refused() {
             path: "/g/abc".to_owned(),
             dist_digest: "abc".to_owned(),
         },
+        measure_model: None,
         arms: vec![Arm::Modal],
         runs: 1,
         cold: false,
@@ -254,6 +255,7 @@ fn the_default_run_is_the_median_of_the_non_modal_arm_else_of_the_modal_arm() {
         target: "//build:idea_dist".to_owned(),
         git: GitInfo::default(),
         generation: GenerationRef::default(),
+        measure_model: None,
         arms: vec![Arm::Modal, Arm::NonModal],
         runs: 3,
         cold: false,
@@ -303,6 +305,7 @@ fn a_named_run_of_a_session_without_runs_says_that_it_has_none() {
         target: "//build:idea_dist".to_owned(),
         git: GitInfo::default(),
         generation: GenerationRef::default(),
+        measure_model: None,
         arms: vec![Arm::Modal],
         runs: 1,
         cold: false,
@@ -321,9 +324,11 @@ fn a_named_run_of_a_session_without_runs_says_that_it_has_none() {
     );
 }
 
+/// The max load and the measurement model go through `session.json` into `summary.json`. A session of before them, such
+/// as the fixture, has neither.
 #[test]
-fn the_max_load_goes_through_session_json_and_summary_json() {
-    use super::{GenerationRef, GitInfo, SessionInfo, read_info};
+fn the_max_load_and_the_measure_model_go_through_session_json_and_summary_json() {
+    use super::{GenerationRef, GitInfo, MeasureModel, SessionInfo, read_info};
     use crate::bench::summary::Summary;
     use crate::bench::testing::testdata_dir;
     let info = SessionInfo {
@@ -331,6 +336,7 @@ fn the_max_load_goes_through_session_json_and_summary_json() {
         target: "//build:idea_dist".to_owned(),
         git: GitInfo::default(),
         generation: GenerationRef::default(),
+        measure_model: Some(MeasureModel::current()),
         arms: vec![Arm::Modal],
         runs: 1,
         cold: false,
@@ -344,11 +350,18 @@ fn the_max_load_goes_through_session_json_and_summary_json() {
     };
     let text = serde_json::to_string(&info).expect("JSON");
     assert!(text.contains(r#""maxLoad":10.0"#), "{text}");
+    assert!(text.contains(r#""measureModel":{"name":"integration-test","version":1}"#), "{text}");
     assert_eq!(serde_json::from_str::<SessionInfo>(&text).expect("a session"), info);
     let summary = serde_json::to_value(Summary::build(&info, "s", &[])).expect("JSON");
     assert_eq!(summary["maxLoad"], 10.0);
+    assert_eq!(
+        summary["measureModel"],
+        serde_json::json!({"name": "integration-test", "version": 1})
+    );
+    assert_eq!(MeasureModel::current().to_string(), "integration-test v1");
     let fixture = read_info(&testdata_dir().join("session")).expect("the fixture session");
     assert_eq!(fixture.max_load, None, "a session of before the option has none");
+    assert_eq!(fixture.measure_model, None, "a session of before the model has none");
 }
 
 #[test]

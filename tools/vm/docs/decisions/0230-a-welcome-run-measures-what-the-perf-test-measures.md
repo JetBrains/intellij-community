@@ -1,0 +1,91 @@
+---
+topic: testing
+---
+
+# 230. A welcome run measures what the perf test measures
+
+Date: 2026-10-12
+
+## Status
+
+Accepted. Extends [ADR 0193](0193-the-start-up-bench-is-a-vm-verb-over-a-staged-generation.md), which made the
+start-up bench a `vm` verb, and [ADR 0196](0196-the-class-count-of-a-bench-run-is-the-jvm-class-load-log.md), which
+made the JVM class-load log the class count of a run. Item 1 widens item 6 of ADR 0196 from the project arm to every
+arm. Items 4, 5 and 6 are later steps of this ADR, each in its own commit. The verbs are in
+[the vm-lane README](../../README.md), section **The bench**, and the grammar of each is its `--help`.
+
+## Context
+
+The perf test of the welcome screen is `WelcomeScreenCollectorService.kt` of `tests/startupPerformanceTests`. CI
+publishes its numbers to ij-perf. A bench session is the local check of a change before CI measures it. These
+differences kept the two numbers apart.
+
+- The IDE Starter passes `idea.is.integration.test=true` on every run (`IDERunContext.calculateVmOptions`). The bench
+  passed it in the project arms only, for the reason of ADR 0196, item 6. A welcome run of the bench thus started an
+  IDE that offers a person what an integration test skips. CI never measures that IDE.
+- The perf test publishes each welcome span as the sum of the spans of its name (`WelcomeScreenSpanPostProcessor`).
+  The bench took the first span of a name. A name that repeats gave the bench a smaller number than CI.
+- A duration tells how long a step took, not when it ended. The work on the welcome path needs the end of each
+  start-up step on one clock with `welcomeBecameVisible`. The report's `jvm.loadingTime` was only the offset of the
+  class counts, so a change of the JVM start showed in no metric.
+
+The IDE writes new spans too: the paint of the left panel and of the right tab of the non-modal welcome screen, and
+the steps of the modal welcome frame.
+
+## Decision
+
+**A welcome run starts the IDE that the perf test starts, and the bench computes a welcome span as the perf test
+computes it.**
+
+1. **Every arm is an integration test.** Every measured start passes `idea.is.integration.test=true`, as the IDE
+   Starter does. The project arms keep `idea.trust.all.projects=true`. `session.json` and `summary.json` name the
+   measurement model: `integration-test`, version 1. A session from before the model has none. `bench compare`
+   prints a note after its session lines when a session has another model than A. A delta between two models mixes
+   the change under test with the change of the model.
+2. **A welcome span metric is the sum of its spans.** A welcome span, a modal span and a name under
+   `welcome right tab body: createContent ` each have one metric. It is the sum of the durations of the spans of the
+   name, as `WelcomeScreenSpanPostProcessor` sums them. The coroutine helper twins, `<name>: scheduled` and
+   `<name>: completing`, have names of their own, so they never count. A name that repeats adds a note to the run.
+   The trace gives the spans, and the report gives them when the trace has no span of the name. A platform span keeps
+   its first span.
+3. **Span ends and `jvm.loadingTime` are metrics.** `<span> end`, such as `toolwindow creating end`, is the end of
+   the first span of a start-up step, in milliseconds from the process start. That is the clock of the anchors, of
+   the FUS durations and of the report items: `StartUpMeasurer.getStartTime()`, which is the start of `bootstrap`.
+   The steps start at `app initialization` and end at the modal welcome frame. Between them are the application
+   callbacks, the project open of the welcome screen, the tool windows, the left panel, the editors and the frame
+   allocator. The report's `jvm.loadingTime`, the time of the JVM before that clock starts, is a metric of its own.
+   The digest shows the ends in the group `span ends (ms from the process start)`, and the modal spans in the group
+   `modal spans`.
+4. **The profile ends at the gate.** A later step of this ADR, in its own commit. The CPU profile of `--profile`
+   ends when the run passes its gate. It then holds the start-up, and not the hold and the quit.
+5. **A session can run over a staged generation.** A later step of this ADR, in its own commit. A session names a
+   generation that exists and skips the build and the stage. Two sessions then measure the same bytes.
+6. **The modal arm has a report written at the exit.** A later step of this ADR, in its own commit. The IDE writes
+   the start-up report of a modal run at its exit, and the record reads it. The modal arm then has the report
+   metrics and the platform spans.
+
+## Alternatives considered
+
+- **An option that sets the integration-test property per session.** Rejected. A number that CI cannot reproduce
+  cannot be checked against ij-perf, and the perf test is the reference of the bench.
+- **Keep the first span, and add the sum under a second name.** Rejected. One span would have two numbers, and only
+  the sum has a counterpart in ij-perf.
+- **Show the ends in `bench trace` only.** Rejected. An end needs the median over the runs and the delta of
+  `compare`, and only a metric has both.
+- **Put the ends on the JVM clock.** Rejected. The anchors and the FUS durations count from the process clock, so an
+  end on that clock compares with `welcomeBecameVisible` as it is. The offset to the JVM clock is the metric
+  `jvm.loadingTime`.
+- **Name the measurement model by the commit of the controller.** Rejected. The commit changes with every change of
+  the controller. The model changes only when the runs pass something else to the IDE.
+
+## Consequences
+
+- A welcome session of this model does not compare with one from before it, because the IDE of a welcome run
+  differs. `compare` says so. A replay cannot repair it, because the property changed what the IDE ran, so the
+  baseline is measured again.
+- The sums and the ends come from the files of a run, so a replay of an older session computes them too. Its model
+  stays none.
+- The digest grows by the span ends, and by the modal spans in a session with the modal arm.
+- A span that the IDE does not write gives no metric, and the digest names it in its `not measured` line. A build
+  from before the new spans still gives a summary.
+- Until item 6, the modal arm has no report, so its sums and its ends come from the trace alone.

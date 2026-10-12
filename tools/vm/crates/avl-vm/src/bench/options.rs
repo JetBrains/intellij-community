@@ -87,7 +87,8 @@ pub(crate) enum BenchVerb {
     /// more than twice the noise of A. The noise arm needs 3 valid runs with its main metric per session. The noise of
     /// a session is 1.4826 times the median absolute deviation of the main metric of its noise arm. A session whose own
     /// noise is above 20 % of the median of its noise arm is too noisy to compare, and the table still follows. A delta needs 3 valid runs per session. A later session of the distribution of A
-    /// is an A/A run, and its move is the noise of this host.
+    /// is an A/A run, and its move is the noise of this host. A session of another measurement model than A, such as a
+    /// session from before the model, gets a line that names both models.
     Compare(CompareArgs),
     /// Lists the sessions of this host, newest first, with their inputs and their medians. No IDE starts.
     ///

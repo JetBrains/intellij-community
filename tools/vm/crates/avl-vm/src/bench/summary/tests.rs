@@ -13,6 +13,7 @@ fn info(arms: Vec<Arm>) -> SessionInfo {
         target: "//build:idea".to_owned(),
         git: GitInfo::default(),
         generation: GenerationRef::default(),
+        measure_model: None,
         arms,
         runs: 3,
         cold: false,

@@ -4,7 +4,8 @@
 //! The noise arm of a session is the first arm, in the order of [`Arm::ALL`], that A and the session have, each with
 //! [`MIN_RUNS_FOR_DELTA`] valid runs with its main metric.
 //!
-//! A later session of the distribution of the first one is an A/A run: its move is the noise of this host.
+//! A later session of the distribution of the first one is an A/A run: its move is the noise of this host. A session
+//! of another measurement model than the first one gets a note, see [`model_note`].
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
@@ -16,7 +17,7 @@ use serde::{Serialize, Serializer};
 use super::arm::Arm;
 use super::digest::{metric_groups, number, present_rows, short, signed, table_line, write_group};
 use super::record::{CLASS_REQUESTS, PLUGIN_CLASSES};
-use super::session;
+use super::session::{self, MeasureModel};
 use super::summary::{ArmSummary, MIN_RUNS_FOR_DELTA, Stat, Summary, spread};
 use super::trace::tenth;
 
@@ -35,6 +36,8 @@ pub(crate) const NOISY_SHARE: f64 = 0.2;
 pub(crate) struct Comparison {
     /// In the order of the arguments: A, B, C...
     pub(crate) sessions: Vec<SessionColumn>,
+    /// One note per session after A whose measurement model is not the one of A. See [`model_note`].
+    pub(crate) model_notes: Vec<String>,
     /// By [`Arm::key`], then by metric.
     #[serde(serialize_with = "arms_by_key")]
     pub(crate) arms: Vec<ArmTable>,
@@ -55,6 +58,8 @@ pub(crate) struct SessionColumn {
     pub(crate) commit: String,
     pub(crate) dirty: bool,
     pub(crate) dist_digest: String,
+    /// See [`session::SessionInfo::measure_model`].
+    pub(crate) measure_model: Option<MeasureModel>,
     /// The valid measured runs, by [`Arm::key`].
     pub(crate) valid_runs: BTreeMap<String, usize>,
     /// The measured runs, valid or not, by [`Arm::key`].
@@ -128,6 +133,11 @@ pub(crate) fn report(sessions: &[Compared], expect_different_dist: bool) -> Resu
     if expect_different_dist {
         same_dist(&columns)?;
     }
+    let model_notes = columns
+        .iter()
+        .skip(1)
+        .filter_map(|column| model_note(&columns[0], column))
+        .collect();
     let mut arms: Vec<Arm> = sessions
         .iter()
         .flat_map(|compared| compared.summary.arms.values().map(|arm| arm.arm))
@@ -147,6 +157,7 @@ pub(crate) fn report(sessions: &[Compared], expect_different_dist: bool) -> Resu
         .collect();
     Ok(Comparison {
         sessions: columns,
+        model_notes,
         arms: tables,
         noise_arm,
         notes,
@@ -175,6 +186,7 @@ fn column(index: usize, compared: &Compared) -> SessionColumn {
         commit: summary.git.commit.clone(),
         dirty: summary.git.dirty,
         dist_digest: summary.dist_digest.clone(),
+        measure_model: summary.measure_model.clone(),
         valid_runs: summary.arms.iter().map(|(key, arm)| (key.clone(), arm.valid_runs)).collect(),
         measured_runs: summary.arms.iter().map(|(key, arm)| (key.clone(), arm.runs.len())).collect(),
         load: Stat::of(&loads).map(|stat| tenth(stat.median)),
@@ -184,6 +196,28 @@ fn column(index: usize, compared: &Compared) -> SessionColumn {
 /// Tells whether two sessions ran one distribution: their distribution digests are equal.
 fn same_distribution(first: &SessionColumn, second: &SessionColumn) -> bool {
     first.dist_digest == second.dist_digest
+}
+
+/// The note for a session whose measurement model is not the one of the base session, or `None` when both have one
+/// model. A delta between two models mixes the change under test with the change of the model.
+fn model_note(base: &SessionColumn, other: &SessionColumn) -> Option<String> {
+    if base.measure_model == other.measure_model {
+        return None;
+    }
+    let model = |column: &SessionColumn| {
+        column
+            .measure_model
+            .as_ref()
+            .map_or_else(|| "none (a session from before the model)".to_owned(), ToString::to_string)
+    };
+    Some(format!(
+        "{other} has another measurement model than {base}: {base} {}, {other} {}; a delta {other}-{base} mixes the change \
+         with the model, so measure both sessions with one model",
+        model(base),
+        model(other),
+        base = base.label,
+        other = other.label,
+    ))
 }
 
 /// Refuses two sessions with one distribution digest, and names each pair.
@@ -395,7 +429,8 @@ fn arms_by_key<S: Serializer>(tables: &[ArmTable], serializer: S) -> Result<S::O
 }
 
 impl Comparison {
-    /// The text: one line per session, the noise arm checks, one table per arm, and the notes.
+    /// The text: one line per session, the notes of the measurement models, the noise arm checks, one table per arm,
+    /// and the notes.
     pub(crate) fn text(&self) -> String {
         let mut text = String::new();
         let base = self.sessions.first().map_or("A", |column| column.label.as_str());
@@ -421,6 +456,9 @@ impl Comparison {
                 runs.join(", ")
             );
             let _ = writeln!(text, "{line}");
+        }
+        for note in &self.model_notes {
+            let _ = writeln!(text, "{note}");
         }
         for check in &self.noise_arm {
             let _ = writeln!(text, "{}", check.note);

@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use super::arm::Arm;
 use super::profile::{EdtProfile, FrameSamples};
 use super::record::{RunKind, RunRecord};
-use super::session::{GitInfo, SessionInfo};
+use super::session::{GitInfo, MeasureModel, SessionInfo};
 use super::trace::tenth;
 
 /// The valid runs that each arm needs for a delta.
@@ -29,6 +29,9 @@ pub(crate) struct Summary {
     pub(crate) dist_digest: String,
     /// The directory of that generation.
     pub(crate) generation: String,
+    /// See [`SessionInfo::measure_model`].
+    #[serde(default)]
+    pub(crate) measure_model: Option<MeasureModel>,
     pub(crate) cold: bool,
     pub(crate) hold_ms: u64,
     pub(crate) profile: bool,
@@ -159,6 +162,7 @@ impl Summary {
             git: info.git.clone(),
             dist_digest: info.generation.dist_digest.clone(),
             generation: info.generation.path.clone(),
+            measure_model: info.measure_model.clone(),
             cold: info.cold,
             hold_ms: info.hold_ms,
             profile: info.profile,

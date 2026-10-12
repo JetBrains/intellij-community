@@ -3,8 +3,8 @@ use std::path::Path;
 use pretty_assertions::assert_eq;
 
 use super::{
-    FORCE_MODAL_PROPERTY, PROJECT_PROPERTIES, RunPlan, argfile_text, class_load_option, dist_options, entry_options, measure_options,
-    quote_argument, sandbox_options, scheme_arguments, span_ended,
+    FORCE_MODAL_PROPERTY, INTEGRATION_TEST_PROPERTY, RunPlan, TRUST_PROPERTY, argfile_text, class_load_option, dist_options, entry_options,
+    measure_options, quote_argument, sandbox_options, scheme_arguments, span_ended,
 };
 use crate::bench::arm::Arm;
 use crate::bench::record::RunKind;
@@ -26,6 +26,7 @@ fn the_measure_options_select_the_sandbox_and_the_files_of_the_run() {
         "-Xlog:class+load:file=/s/run/class-load.log:uptime,tags",
         "-Dfus.internal.test.mode=true",
         "-Dnosplash=true",
+        "-Didea.is.integration.test=true",
     ] {
         assert!(options.contains(&expected.to_owned()), "{expected}: {options:?}");
     }
@@ -33,6 +34,27 @@ fn the_measure_options_select_the_sandbox_and_the_files_of_the_run() {
         !options.iter().any(|option| option.contains("non.modal")),
         "the non-modal arm forces nothing"
     );
+}
+
+/// Every arm is an integration test, as every run of the IDE Starter is, and only a project start trusts its project.
+#[test]
+fn every_arm_is_an_integration_test_and_a_project_start_trusts_its_project() {
+    let sandbox = Sandbox::new("/s/sandbox");
+    let integration_test = format!("-D{INTEGRATION_TEST_PROPERTY}");
+    let trust = format!("-D{TRUST_PROPERTY}");
+    for arm in Arm::ALL {
+        let options = measure_options(Path::new("/s/run"), &sandbox, arm, None).expect("the options");
+        assert_eq!(
+            options.iter().filter(|option| **option == integration_test).count(),
+            1,
+            "{arm:?}: {options:?}"
+        );
+        assert_eq!(
+            options.contains(&trust),
+            matches!(arm, Arm::Project | Arm::EmptyEditor),
+            "{arm:?}: {options:?}"
+        );
+    }
 }
 
 /// Every arm writes the class-load log. A space in the run directory is no problem, and a `:` is an error that names
@@ -112,14 +134,10 @@ fn the_prime_run_of_a_project_opens_its_first_file_and_a_measured_run_restores_i
     );
 
     let options = measure_options(Path::new("/r"), &sandbox, Arm::Project, None).expect("the options");
-    for property in PROJECT_PROPERTIES {
-        assert!(options.contains(&format!("-D{property}")), "{property}");
-    }
+    assert!(options.contains(&format!("-D{TRUST_PROPERTY}")), "{options:?}");
     assert!(!options.contains(&format!("-D{FORCE_MODAL_PROPERTY}")));
     let welcome_options = measure_options(Path::new("/r"), &sandbox, Arm::NonModal, None).expect("the options");
-    for property in PROJECT_PROPERTIES {
-        assert!(!welcome_options.contains(&format!("-D{property}")), "{property}");
-    }
+    assert!(!welcome_options.contains(&format!("-D{TRUST_PROPERTY}")), "{welcome_options:?}");
 }
 
 /// Every run of the empty-editor arm opens the project directory alone, so the IDE neither saves nor restores an
@@ -145,9 +163,7 @@ fn every_run_of_the_empty_editor_arm_opens_the_project_without_a_file() {
         );
     }
     let options = measure_options(Path::new("/r"), &sandbox, Arm::EmptyEditor, None).expect("the options");
-    for property in PROJECT_PROPERTIES {
-        assert!(options.contains(&format!("-D{property}")), "{property}");
-    }
+    assert!(options.contains(&format!("-D{TRUST_PROPERTY}")), "{options:?}");
     assert!(!options.contains(&format!("-D{FORCE_MODAL_PROPERTY}")));
 }
 

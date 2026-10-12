@@ -158,6 +158,14 @@ and copy `<bin>_closure.txt` from `out/bazel-bin` over `closure.txt`.
 `vm.cmd bench --help` states what a session does and the exit codes. `vm.cmd bench <verb> --help` states the grammar
 and the defaults of the verb.
 
+Every run is an integration test, as every run of the IDE Starter is, so a welcome run measures what the perf test of
+the welcome screen measures. `session.json` names this measurement model, and ADR 0230 records it. A metric of a
+welcome span or of a modal span is the sum of the spans of its name, as the perf test sums them, and a name that
+repeats is a note of the run. The digest shows these sums in the groups `welcome spans` and `modal spans`. The group
+`span ends (ms from the process start)` holds the end of the first span of each start-up step, on the clock of the
+anchors such as `welcomeBecameVisible`. The report's `jvm.loadingTime`, the time of the JVM before that clock starts,
+is a metric of the first group.
+
 | verb | the question it answers | its output |
 | --- | --- | --- |
 | `welcome` | How long does the IDE take to show the welcome screen, in the modal and the non-modal arm? | A session directory with its `summary.json`, and a text digest. |
@@ -180,11 +188,11 @@ A session directory holds:
 | file | what it holds |
 | --- | --- |
 | `events.ndjson` | the run journal |
-| `session.json` | the inputs, with the generation and its digest |
+| `session.json` | the inputs, with the generation, its digest and the measurement model `measureModel`, which `compare` notes when two sessions differ in it |
 | `build.log`, `template/`, `template-log/` | the host build, the sandbox template with the FUS test scheme, and its headless run |
 | `<arm>-prime/`, `<arm>-run-NN/` | one run: `sandbox/`, `log/`, `launch.args`, `launch.log`, the files the IDE writes, `class-load.log` of the JVM, `fus.jsonl`, `result.json` |
 | `<arm>-sandbox/` | the sandbox of the run that is running now, at one path per arm |
-| `summary.json` | `distDigest`, `maxLoad`, `warnings`, the runs and the median, min and max of each metric per arm, and the non-modal minus modal `delta` |
+| `summary.json` | `distDigest`, `measureModel`, `maxLoad`, `warnings`, the runs and the median, min and max of each metric per arm, and the non-modal minus modal `delta` |
 
 The lock of a session and of `gc` is `<runtime root>/bench/session.lock`.
 

@@ -50,8 +50,15 @@ const SCHEME_TIMEOUT: Duration = Duration::from_secs(300);
 /// `idea.vmoptions`, so the run measures the code a release runs.
 pub(crate) const FIDELITY_FLAG: &str = "-da";
 
-/// The properties of every measured start.
-const MEASURE_PROPERTIES: [&str; 7] = [
+/// The property that makes a run an integration test, as the IDE Starter makes every run
+/// (`IDERunContext.calculateVmOptions`). The IDE skips what it offers a person in such a run. Air, for one, offers its
+/// welcome page in a project window unless the property is set. The page is an editor tab that takes the selected tab
+/// from the file, so the daemon never highlights the file, and the gate of the `project` arm never fires.
+pub(crate) const INTEGRATION_TEST_PROPERTY: &str = "idea.is.integration.test=true";
+
+/// The properties of every measured start, whatever its arm. With [`INTEGRATION_TEST_PROPERTY`], a welcome run starts
+/// the IDE that the perf test of the welcome screen starts.
+const MEASURE_PROPERTIES: [&str; 8] = [
     "idea.record.classpath.info=true",
     "idea.record.classloading.stats=true",
     "nosplash=true",
@@ -59,16 +66,15 @@ const MEASURE_PROPERTIES: [&str; 7] = [
     "ide.newUsersOnboarding=false",
     "idea.initially.ask.config=never",
     "fus.internal.test.mode=true",
+    INTEGRATION_TEST_PROPERTY,
 ];
 
 /// The property that forces the modal welcome screen.
 pub(crate) const FORCE_MODAL_PROPERTY: &str = "idea.force.disable.non.modal.welcome.screen=true";
 
-/// The properties of the `project` arm: the project of the command line is trusted, so no trust dialog stops a run,
-/// and the run is an integration test, as every perf test of the IDE Starter is. Air offers its welcome page in a
-/// project window unless that property is set. The page is an editor tab that takes the selected tab from the file,
-/// so the daemon never highlights the file, and the gate never fires.
-pub(crate) const PROJECT_PROPERTIES: [&str; 2] = ["idea.trust.all.projects=true", "idea.is.integration.test=true"];
+/// The property of the `project` and `empty-editor` arms: the project of the command line is trusted, so no trust
+/// dialog stops a run.
+pub(crate) const TRUST_PROPERTY: &str = "idea.trust.all.projects=true";
 
 /// The file of the opened packages in a generation, a copy of
 /// `community/platform/platform-impl/resources/META-INF/OpenedPackages.txt`.
@@ -118,7 +124,7 @@ pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: Arm, profi
     options.extend(MEASURE_PROPERTIES.iter().map(|property| format!("-D{property}")));
     match arm {
         Arm::Modal => options.push(format!("-D{FORCE_MODAL_PROPERTY}")),
-        Arm::Project | Arm::EmptyEditor => options.extend(PROJECT_PROPERTIES.iter().map(|property| format!("-D{property}"))),
+        Arm::Project | Arm::EmptyEditor => options.push(format!("-D{TRUST_PROPERTY}")),
         Arm::NonModal | Arm::OpenProject => {}
     }
     if let Some(library) = profiler {

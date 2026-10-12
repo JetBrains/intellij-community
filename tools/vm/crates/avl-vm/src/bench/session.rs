@@ -3,7 +3,8 @@
 //! The default session directory is `<runtime root>/bench/runs/<actor id>`, which also holds the run journal
 //! `events.ndjson`. The layout:
 //!
-//! - `session.json`: the inputs of the session, which `replay` reads. It names the generation and its digest.
+//! - `session.json`: the inputs of the session, which `replay` reads. It names the generation, its digest and the
+//!   measurement model.
 //! - `build.log`: the output of the host Bazel build.
 //! - `template/`: the sandbox template (`config`, `system`, `plugins`), with the FUS test scheme. A `project` session
 //!   also writes its project into `template/projects/<name>`.
@@ -12,6 +13,7 @@
 //! - `<arm>-sandbox/`: the sandbox of the run that is running now. See [`live_sandbox`].
 //! - `summary.json`: the summary.
 
+use std::fmt;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
@@ -122,6 +124,10 @@ pub(crate) struct SessionInfo {
     pub(crate) git: GitInfo,
     /// The staged distribution that every run of the session starts from.
     pub(crate) generation: GenerationRef,
+    /// The measurement model of every run. A session from before the model has none: its welcome arms ran without
+    /// `idea.is.integration.test`.
+    #[serde(default)]
+    pub(crate) measure_model: Option<MeasureModel>,
     pub(crate) arms: Vec<Arm>,
     pub(crate) runs: u32,
     pub(crate) cold: bool,
@@ -142,6 +148,38 @@ pub(crate) struct SessionInfo {
     pub(crate) max_load: Option<f64>,
     /// What the session changed or dropped, such as the agent of the profile.
     pub(crate) warnings: Vec<String>,
+}
+
+/// The name of the measurement model of this controller: every arm is an integration test, see
+/// [`super::launch::INTEGRATION_TEST_PROPERTY`].
+pub(crate) const MEASURE_MODEL_NAME: &str = "integration-test";
+
+/// The version of [`MEASURE_MODEL_NAME`]. A change of what every run passes to the IDE takes the next version.
+pub(crate) const MEASURE_MODEL_VERSION: u32 = 1;
+
+/// What every measured run of a session passes that changes the IDE it measures, as a name and a version. `compare`
+/// notes two sessions of two models, because a delta between them mixes the change under test with the model.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub(crate) struct MeasureModel {
+    pub(crate) name: String,
+    pub(crate) version: u32,
+}
+
+impl MeasureModel {
+    /// The model of this controller: [`MEASURE_MODEL_NAME`] at [`MEASURE_MODEL_VERSION`].
+    pub(crate) fn current() -> Self {
+        Self {
+            name: MEASURE_MODEL_NAME.to_owned(),
+            version: MEASURE_MODEL_VERSION,
+        }
+    }
+}
+
+impl fmt::Display for MeasureModel {
+    /// The name and the version, such as `integration-test v1`.
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "{} v{}", self.name, self.version)
+    }
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
