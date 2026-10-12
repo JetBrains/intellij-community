@@ -28,7 +28,19 @@ internal object FileCacheConflictCollector : CounterUsagesCollector() {
     "AUTOMERGE_FAILED when a client asked, but the merge did not apply. The value is taken when the dialog appears",
   )
 
+  private val RESULT = EventFields.Enum<AutomergeResult>(
+    "result",
+    "MERGED when the merge applied. Otherwise the reason it did not. " +
+    "NOT_FROM_REFRESH: code in the IDE wrote the file, so nothing read the new content in advance. " +
+    "NOT_PREFETCHED: a refresh did not read the new content in advance. The file is binary, the file or the batch is too large, " +
+    "the file type changes, the file changed during the read, or the read failed. " +
+    "NO_COMMON_TEXT: the document has no text in common with the file. " +
+    "CONFLICTING_CHANGES: the two sets of changes overlap, or they are too big to compare. " +
+    "NOT_APPLIED: the merge was computed, but the document or the file changed, the document is read-only, or the reload failed",
+  )
+
   private val DIALOG_CLOSED = GROUP.registerVarargEvent("dialog.closed", ANSWER, DIFFERENCE_SHOWN, CAUSE, EventFields.FileType)
+  private val AUTOMERGE_FINISHED = GROUP.registerEvent("automerge.finished", RESULT, EventFields.FileType)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -44,12 +56,29 @@ internal object FileCacheConflictCollector : CounterUsagesCollector() {
     )
   }
 
+  @JvmStatic
+  fun logAutomergeFinished(file: VirtualFile, result: AutomergeResult) {
+    AUTOMERGE_FINISHED.log(ProjectLocator.getInstance().guessProjectForFile(file), result, file.fileType)
+  }
+
   /**
    * Why the conflict dialog appears. The [CAUSE] field describes each value.
    */
   enum class DialogCause {
     AUTOMERGE_OFF,
     AUTOMERGE_FAILED,
+  }
+
+  /**
+   * How the merge of one conflict ends, when a client asked to merge the external changes. The [RESULT] field describes each value.
+   */
+  enum class AutomergeResult {
+    MERGED,
+    NOT_FROM_REFRESH,
+    NOT_PREFETCHED,
+    NO_COMMON_TEXT,
+    CONFLICTING_CHANGES,
+    NOT_APPLIED,
   }
 
   private enum class DialogAnswer {
