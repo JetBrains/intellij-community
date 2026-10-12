@@ -60,8 +60,6 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/icons-api:icons-api_test_lib",
         "//platform/icons-api/rendering:rendering_test_lib",
-        "//platform/icons",
-        "//platform/icons:icons_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
     ],

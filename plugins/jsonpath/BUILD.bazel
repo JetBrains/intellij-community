@@ -121,7 +121,11 @@ jvm_library(
     ),
     module_name = "intellij.jsonpath.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//xml/plugin"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/byte-buddy",
+        "//xml/plugin",
+    ],
 )
 
 jvm_library(
@@ -144,6 +148,7 @@ jvm_library(
         # do not sort,
         ":jsonpath-tests",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//libraries/byte-buddy:byte-buddy_test_lib",
         "//xml/plugin:plugin_test_lib",
     ],
     deps = [

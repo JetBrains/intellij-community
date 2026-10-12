@@ -105,10 +105,6 @@ jvm_library(
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
-        "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
-        "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/core-impl:core-impl_test_lib",
     ],
 )

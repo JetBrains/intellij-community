@@ -56,8 +56,6 @@ jvm_library(
         ":marketplace-ml",
         "//platform/core-api:core_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/platform-impl/internal:internal_test_lib",

@@ -225,8 +225,6 @@ jvm_library(
         "//platform/consoleView:consoleView_test_lib",
         "//platform/consoleView/impl:impl_test_lib",
         "//platform/statistics:statistics_test_lib",
-        "//libraries/jetcheck",
-        "//libraries/jetcheck:jetcheck_test_lib",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",

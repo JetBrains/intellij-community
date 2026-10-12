@@ -276,6 +276,8 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
+        "//libraries/byte-buddy",
+        "//libraries/byte-buddy:byte-buddy_test_lib",
         "@lib//:jetbrains-kotlinx-lincheck-jvm",
         "//libraries/mockito",
         "//libraries/mockito:mockito_test_lib",

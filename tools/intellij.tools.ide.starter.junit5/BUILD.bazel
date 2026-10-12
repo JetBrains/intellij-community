@@ -71,8 +71,6 @@ jvm_library(
         "//libraries/junit6:junit6_test_lib",
         "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
         "//platform/remote-driver/model:model_test_lib",
-        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
-        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//libraries/junit6-launcher",
         "//libraries/junit6-launcher:junit6-launcher_test_lib",
         "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",

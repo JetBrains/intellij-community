@@ -148,7 +148,11 @@ jvm_library(
     ),
     module_name = "intellij.devkit.gradle.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
+        "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
+    ],
 )
 
 jvm_library(
@@ -175,6 +179,7 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
     ],
     deps = [
         # do not sort,

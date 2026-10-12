@@ -77,8 +77,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-uast-idea-base",
-        "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//plugins/kotlin/references:references_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",

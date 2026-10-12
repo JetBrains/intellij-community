@@ -10,6 +10,7 @@ jvm_library(
     ),
     module_name = "intellij.idea.community.build.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/byte-buddy"],
 )
 
 jvm_library(
@@ -25,7 +26,11 @@ jvm_library(
     ),
     module_name = "intellij.idea.community.build.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":tests"],
+    runtime_deps = [
+        # do not sort,
+        ":tests",
+        "//libraries/byte-buddy:byte-buddy_test_lib",
+    ],
     deps = [
         # do not sort,
         "//build",

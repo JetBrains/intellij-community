@@ -123,8 +123,6 @@ jvm_library(
         "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/lang-api:lang_test_lib",
-        "//plugins/kotlin/base/testFramework",
-        "//plugins/kotlin/base/testFramework:testFramework_test_lib",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
         "//platform/eel:eel_test_lib",
         "//java/java-indexing-api:indexing_test_lib",

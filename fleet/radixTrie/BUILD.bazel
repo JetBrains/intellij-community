@@ -8,7 +8,6 @@ fleet_wasmjs_module(
     kotlinc_opts = ":custom_radixTrie",
     module_name = "fleet.radixTrie",
     plugins = ["@lib//:kotlin-serialization-plugin"],
-    test_deps = ["@community//fleet/test-runtime:wasmjs_module_lib"],
     visibility = ["//visibility:public"],
     deps = [
         "@community//fleet/util/serialization:wasmjs_module_lib",
@@ -71,8 +70,6 @@ jvm_library(
         ":radixTrie",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//fleet/util/serialization:serialization_test_lib",
-        "//fleet/test-runtime",
-        "//fleet/test-runtime:test-runtime_test_lib",
     ],
 )
 ### auto-generated section `build fleet.radixTrie` end

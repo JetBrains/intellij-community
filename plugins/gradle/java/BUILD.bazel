@@ -207,6 +207,7 @@ jvm_library(
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
         "//plugins/gradle/codeInsight/groovy/backend",
         "//plugins/maven/plugin",
+        "//plugins/junit",
     ],
 )
 
@@ -235,6 +236,7 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//plugins/gradle/codeInsight/groovy/backend:backend_test_lib",
         "//plugins/maven/plugin:plugin_test_lib",
+        "//plugins/junit:junit_test_lib",
     ],
     deps = [
         # do not sort,

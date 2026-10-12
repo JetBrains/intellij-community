@@ -171,8 +171,6 @@ jvm_library(
         "//platform/editor-ui-ex:editor-ex_test_lib",
         "//platform/lvcs-impl:lvcs-impl_test_lib",
         "//platform/diagnostic:diagnostic_test_lib",
-        "//libraries/mockito-kotlin",
-        "//libraries/mockito-kotlin:mockito-kotlin_test_lib",
         "//platform/execution:execution_test_lib",
         "//platform/xdebugger-impl/ui:ui_test_lib",
     ],

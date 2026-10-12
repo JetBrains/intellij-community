@@ -105,8 +105,6 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//xml/impl:impl_test_lib",
-        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
-        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",

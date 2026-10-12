@@ -178,8 +178,6 @@ jvm_library(
         "//platform/statistics:statistics_test_lib",
         "//platform/vcs-log/api:vcs-log_test_lib",
         "//libraries/jsoup:jsoup_test_lib",
-        "//libraries/testcontainers",
-        "//libraries/testcontainers:testcontainers_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util-ex:util-ex_test_lib",
         "//platform/dvcs-impl/shared:shared_test_lib",

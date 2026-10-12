@@ -471,8 +471,6 @@ jvm_library(
         "//plugins/maven/maven36-server-impl:server-m36-impl_test_lib",
         "//plugins/maven/maven40-server-impl:server-m40_test_lib",
         "//plugins/mcp-server/mcpserver.plugin:mcpserver.plugin_test_lib",
-        "//python/python-process-output/common",
-        "//python/python-process-output/common:common_test_lib",
         "//python/pluginCore:community-plugin_test_lib",
     ],
 )
@@ -1243,6 +1241,10 @@ jvm_library(
         "//platform/core-impl:core-impl-tests_test_lib",
         "//java/debugger/impl:java-debugger-impl-tests",
         "//java/debugger/impl:java-debugger-impl-tests_test_lib",
+        "//plugins/devkit/devkit-java-tests:java-tests",
+        "//plugins/devkit/devkit-java-tests:java-tests_test_lib",
+        "//plugins/devkit/devkit-kotlin-tests:kotlin-tests",
+        "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
         "//platform/platform-impl/file-chooser-universal:ide-fileChooser-universal-tests",
     ],
 )

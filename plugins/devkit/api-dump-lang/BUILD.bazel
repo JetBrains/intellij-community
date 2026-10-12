@@ -108,6 +108,13 @@ jvm_library(
     ),
     module_name = "intellij.devkit.apiDump.lang.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//xml/plugin",
+        "//java/plugin",
+        "//platform/structure-view-impl/plugin",
+        "//aether-dependency-resolver/plugin",
+    ],
 )
 
 jvm_library(
@@ -130,6 +137,10 @@ jvm_library(
         # do not sort,
         ":apiDump-lang-tests",
         "//platform/ide-core:ide-core_test_lib",
+        "//xml/plugin:plugin_test_lib",
+        "//java/plugin:plugin_test_lib",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

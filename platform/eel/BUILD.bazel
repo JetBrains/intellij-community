@@ -105,6 +105,8 @@ jvm_library(
         "//aether-dependency-resolver/plugin",
         "//platform/testRunner/plugin",
         "//platform/structuralsearch/plugin",
+        "//platform/vcs/plugin",
+        "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
     ],
 )
 
@@ -132,6 +134,8 @@ jvm_library(
         "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
         "//platform/structuralsearch/plugin:plugin_test_lib",
+        "//platform/vcs/plugin:plugin_test_lib",
+        "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
     ],
     deps = [
         # do not sort,
@@ -228,6 +232,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/debug",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/byte-buddy/agent",
+        "//libraries/byte-buddy",
     ],
 )
 
@@ -245,7 +250,11 @@ jvm_library(
     kotlinc_opts = ":custom_eel-tests",
     module_name = "intellij.platform.eel.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":eel-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":eel-tests",
+        "//libraries/byte-buddy:byte-buddy_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

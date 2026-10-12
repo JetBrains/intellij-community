@@ -90,8 +90,6 @@ jvm_library(
         "//platform/jewel/markdown/extensions/front-matter",
         "//platform/jewel/markdown/extensions/front-matter:front-matter_test_lib",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-        "//libraries/compose-foundation-desktop-junit",
-        "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.intUiStandaloneStyling` end

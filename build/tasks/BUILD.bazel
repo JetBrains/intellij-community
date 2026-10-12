@@ -91,8 +91,6 @@ jvm_library(
         "//platform/diagnostic/telemetry.exporters:telemetry.exporters_test_lib",
         "//platform/util-ex:util-ex_test_lib",
         "//libraries/bouncy-castle-provider:bouncy-castle-provider_test_lib",
-        "//libraries/memoryfilesystem",
-        "//libraries/memoryfilesystem:memoryfilesystem_test_lib",
         "//platform/build-scripts/downloader:downloader_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util/base:base_test_lib",
@@ -130,6 +128,7 @@ jvm_library(
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
         "//libraries/bouncy-castle-provider",
+        "//libraries/byte-buddy",
     ],
 )
 
@@ -153,6 +152,7 @@ jvm_library(
         # do not sort,
         ":tasks-tests",
         "//libraries/bouncy-castle-provider:bouncy-castle-provider_test_lib",
+        "//libraries/byte-buddy:byte-buddy_test_lib",
     ],
     deps = [
         # do not sort,

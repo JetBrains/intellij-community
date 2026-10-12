@@ -124,7 +124,11 @@ jvm_library(
     ),
     module_name = "intellij.gradle.toolingExtension.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/groovy/ant"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/groovy/ant",
+        "//libraries/byte-buddy",
+    ],
 )
 
 jvm_library(
@@ -149,6 +153,7 @@ jvm_library(
         # do not sort,
         ":toolingExtension-tests",
         "//libraries/groovy/ant:ant_test_lib",
+        "//libraries/byte-buddy:byte-buddy_test_lib",
     ],
     deps = [
         # do not sort,
