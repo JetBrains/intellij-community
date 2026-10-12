@@ -240,6 +240,11 @@ pub(crate) struct LaunchArgs {
     /// The default is the CPU count. A host without a load average passes.
     #[arg(long, value_name = "LOAD", value_parser = parse_load)]
     pub(crate) max_load: Option<f64>,
+    /// Runs the session over the staged generation whose digest starts with DIGEST, under
+    /// `<runtime root>/bench/generations`, and skips the build and the stage. The session names the commit that built
+    /// the generation, so an A/B/A run measures the base again from its own bytes.
+    #[arg(long, value_name = "DIGEST", value_parser = parse_digest_prefix, conflicts_with = "target")]
+    pub(crate) generation: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, clap::Args)]
@@ -378,6 +383,17 @@ pub(crate) fn parse_ms(value: &str) -> Result<f64, String> {
     match value.parse::<f64>() {
         Ok(ms) if ms.is_finite() && ms >= 0.0 => Ok(ms),
         _ => Err(format!("must be a number of milliseconds, 0 or more, got: {value}")),
+    }
+}
+
+/// Parses `--generation`: the start of a generation digest, one or more lowercase hex digits.
+pub(crate) fn parse_digest_prefix(value: &str) -> Result<String, String> {
+    if !value.is_empty() && value.chars().all(|character| matches!(character, '0'..='9' | 'a'..='f')) {
+        Ok(value.to_owned())
+    } else {
+        Err(format!(
+            "must be the start of a generation digest, lowercase hex digits, got: {value}"
+        ))
     }
 }
 

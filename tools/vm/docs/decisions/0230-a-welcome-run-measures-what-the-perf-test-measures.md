@@ -11,8 +11,8 @@ Date: 2026-10-12
 Accepted. Extends [ADR 0193](0193-the-start-up-bench-is-a-vm-verb-over-a-staged-generation.md), which made the
 start-up bench a `vm` verb, and [ADR 0196](0196-the-class-count-of-a-bench-run-is-the-jvm-class-load-log.md), which
 made the JVM class-load log the class count of a run. Item 1 widens item 6 of ADR 0196 from the project arm to every
-arm. Item 5 is a later step of this ADR, in its own commit. The verbs are in
-[the vm-lane README](../../README.md), section **The bench**, and the grammar of each is its `--help`.
+arm. The verbs are in [the vm-lane README](../../README.md), section **The bench**, and the grammar of each is its
+`--help`.
 
 ## Context
 
@@ -62,8 +62,12 @@ computes it.**
    `-XX:+EnableDynamicAgentLoading` allows the load. The profile then holds the start-up, and not the hold and the
    quit. `--profile-event wall` samples the wall clock in place of the CPU. A run that cannot stop the profiler keeps
    the whole-run `cpu.collapsed`, with a note that names why, and the digest says which profile it read.
-5. **A session can run over a staged generation.** A later step of this ADR, in its own commit. A session names a
-   generation that exists and skips the build and the stage. Two sessions then measure the same bytes.
+5. **A session can run over a staged generation.** `--generation` takes the start of a digest, opens
+   `<runtime root>/bench/generations/<digest>`, and skips the build and the stage. A prefix that no generation has,
+   or that several have, is refused with the candidates. The stage records the commit of the checkout that built the
+   bytes in `generation.json`, and a session over the generation copies that commit into `session.json`. `ls` and
+   `compare` thus show the commit of the measured bytes, not the commit of the checkout of the controller. An A/B/A
+   run then measures the base again from its own bytes.
 6. **The modal arm has a report written at the exit.** A start without a project ends no start-up, so the modal
    welcome frame creates the start-up service of the IDE, which writes the report at the exit. The coroutine spans of
    the start reach the trace then too, `bootstrap` among them, so the trace origin is the process start. The record
@@ -96,5 +100,6 @@ computes it.**
   from before the new spans still gives a summary.
 - The stop starts a `jcmd` JVM at the gate, while the non-modal welcome screen can still paint. The late spans of a
   profiled run thus carry the load of that JVM, and the profile ends before the paint.
+- A generation from before the record of the commit names none, so a session over it names no commit and warns.
 - A modal metric of the report is the state at the exit, not at the welcome event. The class counts of the modal
   arm still stop at their anchor, because the class-load log has the time of each class.

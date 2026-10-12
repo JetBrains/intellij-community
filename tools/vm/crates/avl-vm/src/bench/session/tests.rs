@@ -94,6 +94,25 @@ fn a_sandbox_can_open_no_readme() {
     );
 }
 
+/// A session over a staged generation names the commit that its stage recorded. A generation from before that record
+/// names none, and the session warns.
+#[test]
+fn a_session_over_a_generation_names_the_commit_of_its_bytes() {
+    use super::{GitInfo, staged_commit};
+    let built = GitInfo {
+        commit: "3f337093836d2000000000000000000000000000".to_owned(),
+        dirty: false,
+    };
+    assert_eq!(staged_commit("5f1c0d9e2b7a4c3e", Some(built.clone())), (built, None));
+    assert_eq!(
+        staged_commit("5f1c0d9e2b7a4c3e", None),
+        (
+            GitInfo::default(),
+            Some("the generation 5f1c0d9e2b7a was staged before its record named a commit, so the session names none".to_owned())
+        )
+    );
+}
+
 #[test]
 fn a_run_of_another_distribution_is_refused() {
     use super::{GenerationRef, GitInfo, SessionInfo, check_digest};

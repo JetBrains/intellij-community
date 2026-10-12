@@ -252,16 +252,29 @@ impl Bench<'_> {
         launcher_label: &str,
         mut warnings: Vec<String>,
     ) -> Result<Outcome, Refusal> {
-        let build_log = session.join("build.log");
-        let labels = [args.target.clone(), launcher_label.to_owned()];
-        self.bazel.build_labels(ctx, &build_log, &labels).await?;
-        let sources = resolve::sources(ctx, self.bazel, repo, &args.target, launcher_label).await?;
-        let generation = stage::stage(ctx, self.locks, &self.settings.runtime_root, &sources, self.reporter).await?;
+        let (generation, git, target) = if let Some(prefix) = &args.generation {
+            let staged = stage::open(&self.settings.runtime_root, prefix)?;
+            let (git, warning) = session::staged_commit(&staged.generation.digest, staged.git);
+            warnings.extend(warning);
+            (staged.generation, git, staged.target)
+        } else {
+            let build_log = session.join("build.log");
+            let labels = [args.target.clone(), launcher_label.to_owned()];
+            self.bazel.build_labels(ctx, &build_log, &labels).await?;
+            let sources = resolve::sources(ctx, self.bazel, repo, &args.target, launcher_label).await?;
+            let git = self.git_info(ctx, repo).await;
+            let generation = stage::stage(ctx, self.locks, &self.settings.runtime_root, &sources, &git, self.reporter).await?;
+            (generation, git, args.target.clone())
+        };
+        let how = match (&args.generation, generation.reused) {
+            (Some(_), _) => "opened by --generation, without a build",
+            (None, true) => "reused",
+            (None, false) => "staged",
+        };
         self.reporter.note(
             format!(
-                "generation {} ({}): {}",
+                "generation {} ({how}): {}",
                 &generation.digest[..12.min(generation.digest.len())],
-                if generation.reused { "reused" } else { "staged" },
                 generation.root.display()
             ),
             None,
@@ -277,7 +290,6 @@ impl Bench<'_> {
         } else {
             None
         };
-        let git = self.git_info(ctx, repo).await;
         let launcher = Launcher::of(&generation, self.runner.clone(), repo, profiler, args.hold)?;
 
         let template = Sandbox::new(session.join(TEMPLATE_DIR));
@@ -296,7 +308,7 @@ impl Bench<'_> {
 
         let info = SessionInfo {
             command: plan.command.to_owned(),
-            target: args.target.clone(),
+            target,
             git,
             generation: GenerationRef {
                 path: generation.root.display().to_string(),

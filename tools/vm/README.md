@@ -188,7 +188,22 @@ profiler keeps the whole-run profile `cpu.collapsed`, with a note that names why
 
 A session stages a generation under `<runtime root>/bench/generations/<digest>/`. The generation holds the clones of
 the `.dist` directory and of the JBR home of the row launcher, the dist config and `OpenedPackages.txt`. The digest of
-these four inputs is the key, so a generation that exists is reused. Its files are read-only.
+these four inputs is the key, so a generation that exists is reused. Its files are read-only. Its `generation.json`
+names the commit of the checkout that built it.
+
+`--generation` takes the start of a digest and runs the session over that generation, with no build and no stage. The
+session names the commit that built the generation, so `ls` and `compare` show the commit of the measured bytes. An
+A/B/A run sets a change against the noise of this host: A1 measures the base, B the change, and A2 the bytes of A1
+again. The second line of the digest of A1 names its digest, and `bench ls` names each session:
+
+```bash
+./community/tools/vm.cmd bench welcome                             # A1, on the base commit
+./community/tools/vm.cmd bench welcome                             # B, after the change
+./community/tools/vm.cmd bench welcome --generation 5f1c0d9e2b7a   # A2, over the generation of A1
+./community/tools/vm.cmd bench compare aaaa1111 bbbb2222 cccc3333  # A1, B and A2 by a part of their names
+```
+
+`compare` sets B against A1, and A2 against A1 is the A/A run that tells the noise.
 
 A session directory holds:
 

@@ -8,7 +8,8 @@
 //! - `jbr/`: the clone of the JBR home of the row launcher;
 //! - `ide.config`: the copy of the config of the distribution;
 //! - `OpenedPackages.txt`: the copy of the `--add-opens` list of the checkout, which the launch reads;
-//! - `generation.json`: the record, written last.
+//! - `generation.json`: the record, written last. It names the commit of the checkout that built the bytes, so a
+//!   session over the generation, see [`open`], names the commit of the bytes that it measures.
 //!
 //! The digest is the key: the content of the distribution tree, the config text, the opened packages and the JBR
 //! tree, through the
@@ -33,10 +34,13 @@ use avl_report::digest::{FileDigestCache, PathDigest, path_sensitive_digest, sha
 use serde::{Deserialize, Serialize};
 
 use super::launch::OPENED_PACKAGES_FILE;
-use super::session::BENCH_DIR;
+use super::session::{BENCH_DIR, GitInfo};
 
 /// The record of a generation, the last file the stage writes.
 pub(crate) const RECORD_FILE: &str = "generation.json";
+
+/// The directory of the generations below the bench directory.
+pub(crate) const GENERATIONS_DIR: &str = "generations";
 
 /// The directory of the JBR inside a generation.
 pub(crate) const JBR_DIR: &str = "jbr";
@@ -102,9 +106,22 @@ struct Record {
     dist_name: String,
     /// Where the bytes came from, for a reader of the generation. The launch never reads these paths.
     sources: RecordSources,
+    /// The commit of the checkout that built the bytes. A generation from before this field has none.
+    #[serde(default)]
+    git: Option<GitInfo>,
     files: u64,
     bytes: u64,
     staged_at: String,
+}
+
+/// A generation that a session opens by its digest, with what its record names. See [`open`].
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct Staged {
+    pub(crate) generation: Generation,
+    /// The label of the distribution that the stage copied.
+    pub(crate) target: String,
+    /// The commit of the checkout that built the bytes. A generation from before the record of the commit has none.
+    pub(crate) git: Option<GitInfo>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -183,16 +200,18 @@ pub(crate) fn key(cache: &mut FileDigestCache, sources: &Sources, config_text: &
     ]))
 }
 
-/// Stages the generation of `sources`, or reuses the one with the same key.
+/// Stages the generation of `sources`, which the checkout at `git` built, or reuses the one with the same key. A
+/// reused generation keeps the commit of its first stage, whose bytes are the same.
 pub(crate) async fn stage(
     ctx: &Ctx,
     locks: &LockManager,
     runtime_root: &Path,
     sources: &Sources,
+    git: &GitInfo,
     reporter: &Reporter,
 ) -> Result<Generation, Refusal> {
     let bench = runtime_root.join(BENCH_DIR);
-    let generations = bench.join("generations");
+    let generations = bench.join(GENERATIONS_DIR);
     create_private_dir(&generations)?;
     let config_text = fs::read_to_string(&sources.config)
         .map_err(|error| unsupported(format!("cannot read the dist config {}: {error}", sources.config.display())))?;
@@ -263,6 +282,7 @@ pub(crate) async fn stage(
         let sources = sources.clone();
         let temporary = temporary.clone();
         let dist_name = dist_name.clone();
+        let git = git.clone();
         blocking(move || -> Result<(FileDigestCache, Totals), Refusal> {
             let mut totals = Totals::default();
             fs::create_dir(&temporary).map_err(|error| failed(format!("cannot create {}: {error}", temporary.display())))?;
@@ -291,6 +311,7 @@ pub(crate) async fn stage(
                 target: sources.target.clone(),
                 dist_name,
                 sources: record_sources,
+                git: Some(git),
                 files: totals.files,
                 bytes: totals.bytes,
                 staged_at: jiff::Timestamp::now().to_string(),
@@ -331,12 +352,90 @@ pub(crate) async fn stage(
 
 /// The digest that the record of a generation names.
 pub(crate) fn read_digest(root: &Path) -> Result<String, Refusal> {
+    read_record(root).map(|record| record.digest)
+}
+
+fn read_record(root: &Path) -> Result<Record, Refusal> {
     let path = root.join(RECORD_FILE);
-    let record: Record = fs::read_to_string(&path)
+    fs::read_to_string(&path)
         .map_err(anyhow::Error::from)
         .and_then(|text| serde_json::from_str(&text).map_err(anyhow::Error::from))
-        .map_err(|error| failed(format!("cannot read the generation record {}: {error:#}", path.display())))?;
-    Ok(record.digest)
+        .map_err(|error| failed(format!("cannot read the generation record {}: {error:#}", path.display())))
+}
+
+/// Opens the staged generation whose digest starts with `prefix`, under `<runtime root>/bench/generations`, for a
+/// session that measures it again without a build and a stage. A prefix that no generation has is the refusal
+/// `no_generation`, and a prefix of several generations is a usage refusal. Each refusal names the candidates.
+pub(crate) fn open(runtime_root: &Path, prefix: &str) -> Result<Staged, Refusal> {
+    let generations = runtime_root.join(BENCH_DIR).join(GENERATIONS_DIR);
+    let digests = staged_digests(&generations);
+    let mut matches: Vec<&String> = digests.iter().filter(|digest| digest.starts_with(prefix)).collect();
+    let digest = match matches.len() {
+        1 => matches.remove(0),
+        0 => {
+            let have = if digests.is_empty() {
+                "it has none".to_owned()
+            } else {
+                format!("its generations are {}", digests.join(", "))
+            };
+            return Err(Refusal::new(
+                "no_generation",
+                Exit::USAGE,
+                format!(
+                    "no generation under {} has a digest that starts with {prefix}; {have}",
+                    generations.display()
+                ),
+            ));
+        }
+        count => {
+            let names: Vec<&str> = matches.iter().map(|digest| digest.as_str()).collect();
+            return Err(Refusal::usage(format!(
+                "{count} generations have a digest that starts with {prefix}: {}; name a longer prefix",
+                names.join(", ")
+            )));
+        }
+    };
+    let root = generations.join(digest);
+    let record = read_record(&root)?;
+    if record.digest != *digest {
+        return Err(failed(format!(
+            "the record of the generation {} names the digest {}",
+            root.display(),
+            record.digest
+        )));
+    }
+    let config_path = root.join(CONFIG_FILE);
+    let config = fs::read_to_string(&config_path)
+        .map_err(|error| failed(format!("cannot read {}: {error}", config_path.display())))
+        .and_then(|text| parse_config(&text).map_err(|reason| unsupported(format!("{} is refused: {reason}", config_path.display()))))?;
+    Ok(Staged {
+        generation: Generation {
+            digest: record.digest,
+            dist: root.join(&record.dist_name),
+            java: root.join(JBR_DIR).join("bin").join(java_name()),
+            root,
+            config,
+            reused: true,
+        },
+        target: record.target,
+        git: record.git,
+    })
+}
+
+/// The digests of the published generations under `generations`, in name order: the directories with a record. An
+/// unfinished stage and a directory that cannot be listed have none.
+fn staged_digests(generations: &Path) -> Vec<String> {
+    let Ok(entries) = fs::read_dir(generations) else {
+        return Vec::new();
+    };
+    let mut digests: Vec<String> = entries
+        .filter_map(Result::ok)
+        .filter(|entry| entry.path().join(RECORD_FILE).is_file())
+        .map(|entry| entry.file_name().to_string_lossy().into_owned())
+        .filter(|name| !name.starts_with('.'))
+        .collect();
+    digests.sort();
+    digests
 }
 
 /// Runs a file system pass on the blocking pool, so the hash of gigabytes does not stall the runtime.
