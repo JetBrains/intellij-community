@@ -24,8 +24,8 @@ use serde::{Deserialize, Serialize};
 
 use super::arm::Arm;
 use super::files;
-use super::record::RunId;
-use super::summary::Summary;
+use super::record::{RunId, RunRecord};
+use super::summary::{ArmSummary, Summary};
 
 pub(crate) const SESSION_FILE: &str = "session.json";
 pub(crate) const SUMMARY_FILE: &str = "summary.json";
@@ -464,9 +464,10 @@ pub(crate) struct SelectedRun {
     pub(crate) median_by: Option<&'static str>,
 }
 
-/// The run that `--run` names, else the median run of the first arm that is not modal, else of the modal arm. A name
-/// that is not a run directory of the session is a usage refusal.
-pub(crate) fn select_run(session: &Path, summary: &Summary, run: Option<&str>) -> Result<SelectedRun, Refusal> {
+/// The run that `--run` names, else the median run of the arm that `--arm` names, else of the first arm that is not
+/// modal, else of the modal arm. A name that is not a run directory of the session is a usage refusal, and so is a run
+/// of another arm than `--arm`. An arm is selected as [`select_arm`] selects it.
+pub(crate) fn select_run(session: &Path, summary: &Summary, run: Option<&str>, arm: Option<Arm>) -> Result<SelectedRun, Refusal> {
     if let Some(name) = run {
         let id = RunId::parse(name)
             .ok_or_else(|| Refusal::usage(format!("{name} is not a run directory name: use <arm>-run-NN or <arm>-prime")))?;
@@ -488,27 +489,77 @@ pub(crate) fn select_run(session: &Path, summary: &Summary, run: Option<&str>) -
                 id.dir_name()
             )));
         }
+        if let Some(arm) = arm
+            && arm != id.arm
+        {
+            return Err(Refusal::usage(format!(
+                "{} is a run of the {} arm, and --arm names the {} arm; drop one of them",
+                id.dir_name(),
+                id.arm.label(),
+                arm.label()
+            )));
+        }
         return Ok(SelectedRun { id, dir, median_by: None });
+    }
+    let median = |record: &RunRecord| SelectedRun {
+        id: RunId {
+            arm: record.arm,
+            kind: record.kind,
+            index: record.index,
+        },
+        dir: session.join(&record.dir),
+        median_by: Some(record.arm.main_metric()),
+    };
+    if let Some(arm) = arm {
+        let selected = select_arm(session, summary, Some(arm))?;
+        return selected.median_run().map(median).ok_or_else(|| {
+            Refusal::usage(format!(
+                "no valid run of the {} arm of {} has {}, so the arm has no median run; name a run with --run",
+                arm.label(),
+                session.display(),
+                arm.main_metric()
+            ))
+        });
     }
     let mut arms: Vec<_> = summary.arms.values().collect();
     arms.sort_by_key(|arm| arm.arm == Arm::Modal);
-    arms.iter()
-        .find_map(|arm| arm.median_run())
-        .map(|record| SelectedRun {
-            id: RunId {
-                arm: record.arm,
-                kind: record.kind,
-                index: record.index,
-            },
-            dir: session.join(&record.dir),
-            median_by: Some(record.arm.main_metric()),
-        })
-        .ok_or_else(|| {
+    arms.iter().find_map(|arm| arm.median_run()).map(median).ok_or_else(|| {
+        Refusal::usage(format!(
+            "no arm of {} has a valid measured run, so it has no median run; name a run with --run",
+            session.display()
+        ))
+    })
+}
+
+/// The arm that `arm` names, else the first arm of [`Arm::ALL`] that is not modal and has a valid run, else the modal
+/// arm. An arm that the session does not have, or without a valid run, is a usage refusal.
+pub(crate) fn select_arm<'a>(session: &Path, summary: &'a Summary, arm: Option<Arm>) -> Result<&'a ArmSummary, Refusal> {
+    let arms: Vec<&str> = summary.arms.values().map(|arm| arm.arm.label()).collect();
+    let selected = match arm {
+        Some(arm) => summary.arms.get(arm.key()).ok_or_else(|| {
             Refusal::usage(format!(
-                "no arm of {} has a valid measured run, so it has no median run; name a run with --run",
-                session.display()
+                "{} has no {} arm; its arms are {}",
+                session.display(),
+                arm.label(),
+                arms.join(", ")
             ))
-        })
+        })?,
+        None => Arm::ALL
+            .into_iter()
+            .filter(|arm| *arm != Arm::Modal)
+            .chain([Arm::Modal])
+            .filter_map(|arm| summary.arms.get(arm.key()))
+            .find(|arm| arm.valid_runs > 0)
+            .ok_or_else(|| Refusal::usage(format!("no arm of {} has a valid measured run", session.display())))?,
+    };
+    if selected.valid_runs == 0 {
+        return Err(Refusal::usage(format!(
+            "the {} arm of {} has no valid measured run",
+            selected.arm.label(),
+            session.display()
+        )));
+    }
+    Ok(selected)
 }
 
 fn not_a_session(message: String) -> Refusal {

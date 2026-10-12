@@ -147,6 +147,7 @@ fn the_quit_cuts_a_span_that_starts_before_it_and_ends_at_its_start_or_later() {
     let span = |start_ms: f64, duration_ms: f64| super::TimedSpan {
         start_ms,
         duration_ms,
+        end_ms: crate::bench::trace::tenth(start_ms + duration_ms),
         name: "run activity".to_owned(),
         class: None,
         plugin: None,

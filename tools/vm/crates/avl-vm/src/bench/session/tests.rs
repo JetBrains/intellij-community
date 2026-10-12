@@ -275,20 +275,29 @@ fn the_default_run_is_the_median_of_the_non_modal_arm_else_of_the_modal_arm() {
         run(Arm::NonModal, 2, Some(1500.0)),
         run(Arm::NonModal, 3, Some(1600.0)),
     ];
-    let selected = select_run(session, &Summary::build(&info, "s", &records), None).expect("a run");
+    let summary = Summary::build(&info, "s", &records);
+    let selected = select_run(session, &summary, None, None).expect("a run");
     assert_eq!(selected.dir, session.join("non-modal-run-03"));
     assert_eq!(selected.median_by, Some(WELCOME_BECAME_VISIBLE));
+    let modal = select_run(session, &summary, None, Some(Arm::Modal)).expect("a run");
+    assert_eq!(
+        (modal.dir, modal.median_by),
+        (session.join("modal-run-02"), Some(WELCOME_BECAME_VISIBLE)),
+        "the median run of the arm that --arm names"
+    );
+    let refusal = select_run(session, &summary, None, Some(Arm::Project)).expect_err("no project arm");
+    assert_eq!(refusal.message, "/s has no project arm; its arms are modal, non-modal");
 
     let records = [
         run(Arm::Modal, 1, Some(1200.0)),
         run(Arm::Modal, 2, Some(1100.0)),
         run(Arm::NonModal, 1, None),
     ];
-    let selected = select_run(session, &Summary::build(&info, "s", &records), None).expect("a run");
+    let selected = select_run(session, &Summary::build(&info, "s", &records), None, None).expect("a run");
     assert_eq!(selected.dir, session.join("modal-run-02"), "the lower middle of two");
 
     let records = [run(Arm::Modal, 1, None), run(Arm::NonModal, 1, None)];
-    let refusal = select_run(session, &Summary::build(&info, "s", &records), None).expect_err("no valid run");
+    let refusal = select_run(session, &Summary::build(&info, "s", &records), None, None).expect_err("no valid run");
     assert_eq!(
         refusal.message,
         "no arm of /s has a valid measured run, so it has no median run; name a run with --run"
@@ -317,10 +326,19 @@ fn a_named_run_of_a_session_without_runs_says_that_it_has_none() {
         max_load: None,
         warnings: Vec::new(),
     };
-    let refusal = select_run(dir.path(), &Summary::build(&info, "s", &[]), Some("modal-run-01")).expect_err("no run");
+    let summary = Summary::build(&info, "s", &[]);
+    let refusal = select_run(dir.path(), &summary, Some("modal-run-01"), None).expect_err("no run");
     assert_eq!(
         refusal.message,
         format!("{} has no run modal-run-01; it has no run directory", dir.path().display())
+    );
+    std::fs::create_dir(dir.path().join("modal-run-01")).expect("a run directory");
+    let named = select_run(dir.path(), &summary, Some("modal-run-01"), Some(Arm::Modal)).expect("a run of the arm");
+    assert_eq!((named.dir, named.median_by), (dir.path().join("modal-run-01"), None));
+    let refusal = select_run(dir.path(), &summary, Some("modal-run-01"), Some(Arm::NonModal)).expect_err("another arm");
+    assert_eq!(
+        refusal.message,
+        "modal-run-01 is a run of the modal arm, and --arm names the non-modal arm; drop one of them"
     );
 }
 

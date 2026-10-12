@@ -61,11 +61,14 @@ pub(crate) enum BenchVerb {
     Project(ProjectArgs),
     /// Removes the old generations: all except the --keep newest and those a session of the last 24 hours names.
     Gc(GcArgs),
-    /// Prints the spans of one run that start in a window, with the anchors of the run. No IDE starts.
+    /// Prints the spans of one run that start in a window, with their start and end, and the anchors of the run. No
+    /// IDE starts.
     ///
-    /// The default window starts at frameBecameVisible and ends at the welcome screen paint. A missing anchor widens
-    /// the window to the start or the end of the run. A span over 4 s is marked `waits`. A span that runs into the
-    /// quit, `application.exit`, is marked `cut by the quit`.
+    /// The default window starts at frameBecameVisible and ends at the welcome screen paint. A run without
+    /// frameBecameVisible, such as a modal run, has the window from the process start to the main anchor of its arm:
+    /// welcomeBecameVisible, the highlighted editor or the built composer. A missing end widens the window to the end of
+    /// the run. --overlap also keeps the spans that start before the window and run into it. A span over 4 s is marked
+    /// `waits`. A span that runs into the quit, `application.exit`, is marked `cut by the quit`.
     Trace(TraceArgs),
     /// Prints the post-startup activities of one run by class and by plugin. No IDE starts.
     ///
@@ -79,7 +82,8 @@ pub(crate) enum BenchVerb {
     /// A count is the median over the valid runs of the arm. The totals hold the named classes of the run by their
     /// source, and the named classes before the anchor. The plugin table holds the classes of each plugin before the
     /// anchor. The module table holds the classes of each content module over the whole run. A run needs
-    /// class-load.log, plugin-classes.txt and startup-stats.json for an anchor.
+    /// class-load.log, plugin-classes.txt and startup-stats.json for an anchor. --entries lists the first classes of
+    /// each plugin of the plugin table before the anchor, from the median run of the arm.
     Classes(ClassesArgs),
     /// Prints the medians of several sessions per arm, with the delta of each session to the first one. No IDE starts.
     ///
@@ -103,10 +107,13 @@ pub(crate) enum BenchVerb {
 pub(crate) struct RunSelection {
     #[arg(value_name = "SESSION", help = format!("The session: {SESSION_FORMS}"))]
     pub(crate) session: String,
-    /// The run directory, such as `non-modal-run-03`. The default is the median run of the first arm that is not
-    /// modal, else of the modal arm.
+    /// The run directory, such as `non-modal-run-03`. The default is the median run of the arm that --arm names, else
+    /// of the first arm that is not modal, else of the modal arm.
     #[arg(long, value_name = "DIR")]
     pub(crate) run: Option<String>,
+    /// The arm whose median run the verb reads. A run that --run names must be a run of this arm.
+    #[arg(long, value_name = "ARM", value_enum)]
+    pub(crate) arm: Option<Arm>,
 }
 
 /// A window of a run, in milliseconds from the process start. A span is in the window when it starts in it.
@@ -132,6 +139,10 @@ pub(crate) struct TraceArgs {
     /// Keeps the coroutine helper twins, `<span>: scheduled` and `<span>: completing`.
     #[arg(long)]
     pub(crate) all: bool,
+    /// Keeps every span that runs in the window: a span that starts before its end and ends after its start, also one
+    /// that starts before the window.
+    #[arg(long)]
+    pub(crate) overlap: bool,
 }
 
 /// The shortest span that `bench trace` prints by default.
@@ -164,10 +175,16 @@ pub(crate) struct ClassesArgs {
     /// Keeps only this plugin id in the plugin table, with 0 when it has no class. Repeat it for more plugins.
     #[arg(long = "plugin", value_name = "ID")]
     pub(crate) plugins: Vec<String>,
-    /// The anchor of the plugin table and of the last total. The default is the last anchor that the arm has. `quit` is
-    /// the start of application.exit.
+    /// The anchor of the plugin table and of the last total. The default is the main anchor of the arm:
+    /// welcomeBecameVisible for a welcome arm, `editor highlighting completed` for the project arm and emptyStateBuilt
+    /// for the empty-editor arm. An arm without it takes its last anchor. `quit` is the start of application.exit.
     #[arg(long, value_name = "ANCHOR", value_parser = clap::builder::PossibleValuesParser::new(CLASS_ANCHORS))]
     pub(crate) at: Option<String>,
+    /// Lists the first N classes of each plugin of the plugin table that the median run of the arm loaded before the
+    /// anchor, with their ms from the process start. The run needs class-load.log, plugin-classes.txt and
+    /// startup-stats.json.
+    #[arg(long, value_name = "N", value_parser = clap::value_parser!(u32).range(1..))]
+    pub(crate) entries: Option<u32>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, clap::Args)]

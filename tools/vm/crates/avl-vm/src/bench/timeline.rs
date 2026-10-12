@@ -7,11 +7,13 @@ use anyhow::Context;
 use avl_base::{Refusal, RefusalExt};
 use serde::Serialize;
 
+use super::arm::Arm;
 use super::digest::number;
 use super::files;
 use super::options::Window;
 use super::record::{
-    EDITOR_HIGHLIGHTED, FRAME_BECAME_INTERACTIVE, FRAME_BECAME_VISIBLE, RunId, RunRecord, WELCOME_BECAME_VISIBLE, WELCOME_SCREEN_PAINTED,
+    EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, FRAME_BECAME_INTERACTIVE, FRAME_BECAME_VISIBLE, RunId, RunRecord, WELCOME_BECAME_VISIBLE,
+    WELCOME_SCREEN_PAINTED,
 };
 use super::session::{self, RESULT_FILE, SelectedRun, TRACE_FILE};
 use super::trace::{self, micros_to_ms, tenth};
@@ -30,12 +32,13 @@ pub(crate) const RUN_INIT_ACTIVITY_PREFIX: &str = "run init activity ";
 
 /// The metrics that are anchors, in the order of the start-up. Each one is in milliseconds from the process start. A
 /// metric that the run does not have is left out, as in the modal arm, which has only the welcome event.
-const ANCHORS: [&str; 5] = [
+const ANCHORS: [&str; 6] = [
     FRAME_BECAME_VISIBLE,
     FRAME_BECAME_INTERACTIVE,
     WELCOME_BECAME_VISIBLE,
     WELCOME_SCREEN_PAINTED,
     EDITOR_HIGHLIGHTED,
+    EMPTY_STATE_BUILT,
 ];
 
 /// The span of the quit of the IDE. Its start is the last anchor of a run.
@@ -55,6 +58,9 @@ pub(crate) struct TimedSpan {
     /// Milliseconds from the process start, to a tenth.
     pub(crate) start_ms: f64,
     pub(crate) duration_ms: f64,
+    /// The end in milliseconds from the process start, to a tenth, from the microseconds of the span. It can differ by
+    /// a tenth from the sum of the start and the duration, which round on their own.
+    pub(crate) end_ms: f64,
     pub(crate) name: String,
     /// The `class` tag, which a `run activity` and a `run init activity` span have.
     pub(crate) class: Option<String>,
@@ -70,11 +76,6 @@ impl TimedSpan {
         self.duration_ms > WAITER_MS
     }
 
-    /// The end of the span in milliseconds from the process start.
-    pub(crate) fn end_ms(&self) -> f64 {
-        self.start_ms + self.duration_ms
-    }
-
     /// Tells whether the span runs one activity: [`RUN_ACTIVITY`] or a span with [`RUN_INIT_ACTIVITY_PREFIX`]. A helper
     /// twin is no activity.
     pub(crate) fn is_activity(&self) -> bool {
@@ -84,7 +85,7 @@ impl TimedSpan {
     /// Tells whether the quit at `quit_ms` cut the span: it starts before the quit and ends at the start of the quit
     /// or later, within [`RESOLUTION_MS`]. Such a span never finished, so its duration is not its work.
     pub(crate) fn is_cut_by(&self, quit_ms: Option<f64>) -> bool {
-        quit_ms.is_some_and(|quit| self.start_ms < quit && self.end_ms() >= quit - RESOLUTION_MS)
+        quit_ms.is_some_and(|quit| self.start_ms < quit && self.end_ms >= quit - RESOLUTION_MS)
     }
 }
 
@@ -114,6 +115,17 @@ impl WindowMs {
         }
         Ok(resolved)
     }
+
+    /// Tells whether `span` starts in the window: at its start or later, and before its end.
+    pub(crate) fn starts(&self, span: &TimedSpan) -> bool {
+        span.start_ms >= self.from_ms && span.start_ms < self.to_ms
+    }
+
+    /// Tells whether `span` runs in the window: it starts before the end of the window and ends after its start, or it
+    /// starts in the window, as a span of zero length does.
+    pub(crate) fn overlaps(&self, span: &TimedSpan) -> bool {
+        span.start_ms < self.to_ms && (span.end_ms > self.from_ms || span.start_ms >= self.from_ms)
+    }
 }
 
 /// The timeline of one run.
@@ -129,11 +141,12 @@ pub(crate) struct Timeline {
 }
 
 impl Timeline {
-    /// Reads the timeline of the run that `run` names, else of the median run. See [`session::select_run`]. A session
-    /// without `summary.json` is the refusal `no_summary`, and a run without its files is a usage refusal.
-    pub(crate) fn select(session: &Path, run: Option<&str>) -> Result<(SelectedRun, Self), Refusal> {
+    /// Reads the timeline of the run that `run` names, else of the median run of `arm`, else of the median run of the
+    /// session. See [`session::select_run`]. A session without `summary.json` is the refusal `no_summary`, and a run
+    /// without its files is a usage refusal.
+    pub(crate) fn select(session: &Path, run: Option<&str>, arm: Option<Arm>) -> Result<(SelectedRun, Self), Refusal> {
         let summary = session::read_summary(session)?;
-        let selected = session::select_run(session, &summary, run)?;
+        let selected = session::select_run(session, &summary, run, arm)?;
         let timeline = Self::read(&selected.dir).map_err(|error| Refusal::usage(format!("{error:#}")))?;
         Ok((selected, timeline))
     }
@@ -153,6 +166,7 @@ impl Timeline {
                 let timed = TimedSpan {
                     start_ms: span.offset_ms(origin_us),
                     duration_ms: micros_to_ms(span.duration),
+                    end_ms: span.end_ms(origin_us),
                     name: span.operation_name.clone(),
                     class: span.tag("class").map(str::to_owned),
                     plugin: span.tag("plugin").map(str::to_owned),
@@ -201,7 +215,7 @@ impl Timeline {
         let end = self
             .spans
             .iter()
-            .map(|span| span.end_ms().max(span.start_ms + RESOLUTION_MS))
+            .map(|span| span.end_ms.max(span.start_ms + RESOLUTION_MS))
             .fold(0.0, f64::max);
         tenth(end)
     }

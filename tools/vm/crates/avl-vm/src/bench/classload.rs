@@ -97,6 +97,18 @@ pub(crate) fn by_plugin(log: &ClassLoadLog, owners: &PluginLog, before_ms: Optio
     by_owner(log, owners, before_ms, |owner| Some(&owner.plugin))
 }
 
+/// The named classes of `plugin` before the bound `before_ms` on the JVM clock, in the order of the log, which is the
+/// load order. The plugin log gives the owner of a class.
+pub(crate) fn of_plugin<'a>(
+    log: &'a ClassLoadLog,
+    owners: &'a PluginLog,
+    plugin: &'a str,
+    before_ms: Option<f64>,
+) -> impl Iterator<Item = &'a LoadedClass> {
+    log.named_before(before_ms)
+        .filter(move |class| owners.owners.get(&class.name).is_some_and(|owner| owner.plugin == plugin))
+}
+
 /// The named classes of each content module before the bound `before_ms` on the JVM clock. The count skips a class
 /// without an owner and a class of the main module of a plugin.
 pub(crate) fn by_module(log: &ClassLoadLog, owners: &PluginLog, before_ms: Option<f64>) -> BTreeMap<String, u64> {
