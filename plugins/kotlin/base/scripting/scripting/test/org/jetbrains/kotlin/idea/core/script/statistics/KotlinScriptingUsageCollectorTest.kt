@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.testFramework.registerExtension
-import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
@@ -22,7 +21,6 @@ import kotlin.script.experimental.host.createScriptDefinitionFromTemplate
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.templates.ScriptWithArgs
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition as IdeScriptDefinition
 
 class KotlinScriptingUsageCollectorTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun runInDispatchThread(): Boolean = false
@@ -82,7 +80,7 @@ class KotlinScriptingUsageCollectorTest : KotlinLightCodeInsightFixtureTestCase(
     fun `test definition counts and disabled counts are rounded to power of two`() {
         val definitions = (1..3).map { index ->
             createScriptDefinitionFromTemplate(
-                KotlinType(ScriptTemplateWithArgs::class),
+                KotlinType(ScriptWithArgs::class),
                 defaultJvmScriptingHostConfiguration,
                 compilation = { fileExtension("ext$index.kts") },
             )
