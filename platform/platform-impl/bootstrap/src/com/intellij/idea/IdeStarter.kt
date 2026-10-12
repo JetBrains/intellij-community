@@ -2,9 +2,11 @@
 package com.intellij.idea
 
 import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.EdtLockLoadMonitorService
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.CommandLineProcessor
@@ -217,6 +219,7 @@ open class IdeStarter : ModernApplicationStarter() {
 
   private suspend fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener): Boolean {
     val showWelcomeFrameTask = WelcomeFrame.prepareToShow() ?: return true
+    val edtWaitingStart = System.nanoTime()
     serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       // https://youtrack.jetbrains.com/issue/IJPL-522
       launch {
@@ -224,6 +227,8 @@ open class IdeStarter : ModernApplicationStarter() {
       }
 
       withContext(Dispatchers.EDT) {
+        StartUpMeasurer.addCompletedActivity(edtWaitingStart, System.nanoTime(), "welcome frame EDT waiting",
+                                             ActivityCategory.DEFAULT, null)
         showWelcomeFrameTask()
         runCatching {
           lifecyclePublisher.welcomeScreenDisplayed()

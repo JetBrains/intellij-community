@@ -1,6 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -80,7 +82,9 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     leftSidebarHolder.add(myLeftSidebar.getComponent(), BorderLayout.CENTER);
 
     if (addQuickAccessPanel) {
+      Activity quickAccessPanelActivity = StartUpMeasurer.startActivity("welcome quick access panel creating");
       JComponent quickAccessPanel = createQuickAccessPanel(this);
+      quickAccessPanelActivity.end();
       leftSidebarHolder.add(quickAccessPanel, BorderLayout.SOUTH);
     }
 
@@ -102,7 +106,9 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       centralPanel.setBorder(JBUI.Borders.customLineLeft(JBColor.border()));
     }
 
+    Activity tabsActivity = StartUpMeasurer.startActivity("welcome tabs creating");
     loadTabs(welcomeTabFactories);
+    tabsActivity.end();
   }
 
   @ApiStatus.Internal

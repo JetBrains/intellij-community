@@ -26,8 +26,9 @@ internal val welcomeScreenStartupSpanTracer: IJTracer by lazy { TelemetryManager
  * The left panel calls [leftPainted] when it first paints its actions.
  * [leftPainted] also completes [getOrCreateFrameContentPaintedDeferred], so the post-startup activities of the project can start.
  * The right tab calls [rightPainted] when it first paints its body.
- * When both sides painted, the tracker adds the instant event `welcome screen painted`.
- * It also adds the span `welcome screen painted` from the IDE start to that time.
+ * The first paint of each side adds the instant event and the span `welcome left panel painted` or `welcome right tab painted`.
+ * When both sides painted, the tracker adds the instant event and the span `welcome screen painted`.
+ * Each span runs from the IDE start to the paint.
  * Each side reports only once, so a later paint does no work.
  * Call both functions on the EDT.
  */
@@ -45,8 +46,9 @@ internal class WelcomeScreenPaintTracker(private val project: Project) {
     }
     isLeftPainted = true
     project.getOrCreateFrameContentPaintedDeferred().complete(Unit)
+    reportPainted(LEFT_PAINTED_NAME)
     if (isRightPainted) {
-      reportPainted()
+      reportPainted(PAINTED_NAME)
     }
   }
 
@@ -55,18 +57,21 @@ internal class WelcomeScreenPaintTracker(private val project: Project) {
       return
     }
     isRightPainted = true
+    reportPainted(RIGHT_PAINTED_NAME)
     if (isLeftPainted) {
-      reportPainted()
+      reportPainted(PAINTED_NAME)
     }
   }
 
-  private fun reportPainted() {
-    StartUpMeasurer.addInstantEvent(PAINTED_NAME)
-    recordStartupSpan(PAINTED_NAME, StartUpMeasurer.getStartTime(), System.nanoTime())
+  private fun reportPainted(name: String) {
+    StartUpMeasurer.addInstantEvent(name)
+    recordStartupSpan(name, StartUpMeasurer.getStartTime(), System.nanoTime())
   }
 
   companion object {
     private const val PAINTED_NAME = "welcome screen painted"
+    private const val LEFT_PAINTED_NAME = "welcome left panel painted"
+    private const val RIGHT_PAINTED_NAME = "welcome right tab painted"
 
     fun getInstance(project: Project): WelcomeScreenPaintTracker = project.service()
   }

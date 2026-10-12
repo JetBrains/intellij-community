@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.CommonBundle
 import com.intellij.diagnostic.StartUpPerformanceService
+import com.intellij.diagnostic.runActivity
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.internal.statistic.eventLog.getUiEventLogger
@@ -180,12 +181,15 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWi
           return@task
         }
 
-        val frame = EP.lazySequence().mapNotNull { it.createFrame() }.firstOrNull()
-                    ?: throw IllegalStateException("No implementation of `com.intellij.welcomeFrameProvider` extension point")
+        val frame = runActivity("welcome frame creating") {
+          EP.lazySequence().mapNotNull { it.createFrame() }.firstOrNull()
+        } ?: throw IllegalStateException("No implementation of `com.intellij.welcomeFrameProvider` extension point")
         val jFrame = frame as JFrame
         registerKeyboardShortcuts(jFrame.rootPane)
         hideSplashBeforeShow(jFrame)
-        jFrame.isVisible = true
+        runActivity("welcome frame showing") {
+          jFrame.isVisible = true
+        }
         FUSProjectHotStartUpMeasurer.reportWelcomeScreenIsGoingToBeShown()
         FUSProjectHotStartUpMeasurer.reportModalWelcomeScreenBecameVisible()
         ensureStartUpReportIsWritten()

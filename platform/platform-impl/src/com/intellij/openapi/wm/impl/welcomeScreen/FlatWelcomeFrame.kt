@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
+import com.intellij.diagnostic.runActivity
 import com.intellij.icons.AllIcons
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.DataManager
@@ -568,6 +569,12 @@ private fun createWelcomeMenuBar(frame: JFrame, parentCoroutineScope: CoroutineS
     return
   }
 
+  runActivity("welcome menu bar creating") {
+    doCreateWelcomeMenuBar(frame, parentCoroutineScope)
+  }
+}
+
+private fun doCreateWelcomeMenuBar(frame: JFrame, parentCoroutineScope: CoroutineScope) {
   val mainMenuActionGroupProvider: suspend () -> ActionGroup = {
     val manager = serviceAsync<ActionManager>()
     DefaultActionGroup(manager.getAction(IdeActions.GROUP_FILE), manager.getAction(IdeActions.GROUP_HELP_MENU))
