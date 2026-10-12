@@ -70,11 +70,6 @@ private class HttpConfigurableToCredentialStoreAdapter(private val getHttpConfig
   }
 
   @Synchronized
-  override fun clearTransientCredentials() {
-    httpConfigurable.clearGenericPasswords()
-  }
-
-  @Synchronized
   override fun clearAllCredentials() {
     buffer = null
     httpConfigurable.writeCredentials(null)

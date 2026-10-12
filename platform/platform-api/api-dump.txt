@@ -11412,7 +11412,6 @@ com.intellij.util.net.ProxyCredentialStore
 - sf:Companion:com.intellij.util.net.ProxyCredentialStore$Companion
 - a:areCredentialsRemembered(java.lang.String,I):Z
 - a:clearAllCredentials():V
-- a:clearTransientCredentials():V
 - getCredentials(com.intellij.util.net.ProxyConfiguration):com.intellij.credentialStore.Credentials
 - a:getCredentials(java.lang.String,I):com.intellij.credentialStore.Credentials
 - s:getInstance():com.intellij.util.net.ProxyCredentialStore

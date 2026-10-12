@@ -42,11 +42,6 @@ interface ProxyCredentialStore {
   fun areCredentialsRemembered(host: String, port: Int): Boolean
 
   /**
-   * Clears known credentials which are said to be not remembered
-   */
-  fun clearTransientCredentials()
-
-  /**
    * Clears all known credentials, including the ones that were said to be remembered
    */
   fun clearAllCredentials()
