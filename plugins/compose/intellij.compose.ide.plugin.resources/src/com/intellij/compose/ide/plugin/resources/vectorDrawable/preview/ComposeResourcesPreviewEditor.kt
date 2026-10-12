@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.observable.util.addComponentListener
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
@@ -64,6 +65,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
 internal class ComposeResourcePreviewEditor(
+  private val project: Project,
   private val file: VirtualFile,
   private val document: Document?,
   coroutineScope: CoroutineScope,
@@ -78,7 +80,7 @@ internal class ComposeResourcePreviewEditor(
 
   private val contentPanel = JBPanel<JBPanel<*>>(BorderLayout()).apply { isOpaque = false }
 
-  private val imageCanvas = FitCenterImagePanel(ComposeResourcePreviewBackground.CHECKERED)
+  private val imageCanvas = FitCenterImagePanel(ComposeResourcePreviewBackgroundSettings.getInstance(project).loadBackground(file))
 
   private val updateRequests = MutableSharedFlow<Unit>(
     replay = 1,
@@ -109,7 +111,12 @@ internal class ComposeResourcePreviewEditor(
     }, this)
   }
 
-  var previewBackground: ComposeResourcePreviewBackground by imageCanvas::previewBackground
+  var previewBackground: ComposeResourcePreviewBackground
+    get() = imageCanvas.previewBackground
+    set(value) {
+      imageCanvas.previewBackground = value
+      ComposeResourcePreviewBackgroundSettings.getInstance(project).saveBackground(file, value)
+    }
 
   private fun createToolbar(): ActionToolbar {
     val actionManager = ActionManager.getInstance()

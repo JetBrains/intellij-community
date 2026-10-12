@@ -74,7 +74,7 @@ internal class ComposeResourceEditorProvider : AsyncFileEditorProvider, DumbAwar
 
     return withContext(Dispatchers.EDT) {
       val textEditor = TextEditorProvider.getInstance().createEditor(project, file) as TextEditor
-      val previewEditor = ComposeResourcePreviewEditor(file, safeDocument, editorCoroutineScope)
+      val previewEditor = ComposeResourcePreviewEditor(project, file, safeDocument, editorCoroutineScope)
 
       object : TextEditorWithPreview(textEditor, previewEditor) {
         override fun createSplitter(): JBSplitter {
