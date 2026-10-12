@@ -8,7 +8,10 @@ import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-
+/**
+ * @deprecated Use {@link InspectionFixtureTestUtil} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class InspectionFixtureTestCase extends CodeInsightFixtureTestCase {
 
   public void doTest(@NonNls String folderName, LocalInspectionTool tool) {
