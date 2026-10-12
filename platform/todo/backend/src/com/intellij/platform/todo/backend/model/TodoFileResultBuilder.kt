@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.todo.backend.model
 
+import com.intellij.ide.highlighter.HighlighterFactory
 import com.intellij.ide.rpc.util.toRpc
 import com.intellij.ide.todo.TodoFilter
 import com.intellij.ide.todo.rpc.TodoAdditionalLine
@@ -11,6 +12,9 @@ import com.intellij.ide.ui.SerializableTextChunk
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.colors.EditorColorsUtil
+import com.intellij.openapi.editor.highlighter.EditorHighlighter
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -61,6 +65,8 @@ object TodoFileResultBuilder {
     filter: TodoFilter?,
   ) : List<TodoResult> {
     val document = psiFile.viewProvider.document
+    val highlighter = HighlighterFactory.createHighlighter(virtualFile, EditorColorsUtil.getGlobalOrDefaultColorScheme(), project)
+    highlighter.setText(psiFile.viewProvider.contents)
 
     val filteredTodoItems = PsiTodoSearchHelper.getInstance(project).findTodoItems(psiFile).filteredBy(filter)
 
@@ -70,7 +76,7 @@ object TodoFileResultBuilder {
         val (line, preview) = if (document != null) {
           val startOffset = todoItem.textRange.startOffset
           val line = document.getLineNumber(startOffset)
-          val previewChunks = buildPreviewChunks(document, todoItem, todoItem.textRange)
+          val previewChunks = buildPreviewChunks(document, highlighter, todoItem, todoItem.textRange)
           line to previewChunks
         } else 0 to emptyList()
 
@@ -80,14 +86,14 @@ object TodoFileResultBuilder {
           line = line,
           range = todoItem.textRange.toRpc(),
           additionalLines = if (document != null) {
-            todoItem.additionalTextRanges.map { TodoAdditionalLine(buildPreviewChunks(document, todoItem, it), it.toRpc()) }
+            todoItem.additionalTextRanges.map { TodoAdditionalLine(buildPreviewChunks(document, highlighter, todoItem, it), it.toRpc()) }
           }
           else emptyList(),
         )
       }
   }
 
-  private fun buildPreviewChunks(document: Document, todoItem: TodoItem, range: TextRange): List<SerializableTextChunk> {
+  private fun buildPreviewChunks(document: Document, highlighter: EditorHighlighter, todoItem: TodoItem, range: TextRange, ): List<SerializableTextChunk> {
     if (document.lineCount == 0) return emptyList()
 
     val chars = document.charsSequence
@@ -109,12 +115,21 @@ object TodoFileResultBuilder {
 
     return buildList {
       if (startInLine > 0) {
-        add(SerializableTextChunk(text.substring(0, startInLine)))
+        addHighlightedChunks(highlighter, chars, lineStartNonWs, range.startOffset)
       }
-      add(SerializableTextChunk(text.substring(startInLine, endInLine), attrs))
+      addHighlightedChunks(highlighter, chars, range.startOffset, range.endOffset, attrs)
       if (endInLine < text.length) {
-        add(SerializableTextChunk(text.substring(endInLine)))
+        addHighlightedChunks(highlighter, chars, range.endOffset, lineEnd)
       }
+    }
+  }
+
+  private fun MutableList<SerializableTextChunk>.addHighlightedChunks(highlighter: EditorHighlighter, chars: CharSequence, start: Int, end: Int, todoAttributes: TextAttributes? = null, ) {
+    val iterator = highlighter.createIterator(start)
+    while (!iterator.atEnd() && iterator.start < end) {
+      val text = chars.substring(maxOf(iterator.start, start), minOf(iterator.end, end))
+      add(SerializableTextChunk(text, TextAttributes.merge(iterator.textAttributes, todoAttributes)))
+      iterator.advance()
     }
   }
 
