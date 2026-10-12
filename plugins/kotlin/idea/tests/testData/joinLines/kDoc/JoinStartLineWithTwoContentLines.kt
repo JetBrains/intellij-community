@@ -1,0 +1,5 @@
+/**<caret>
+ * First line
+ * Second line
+ */
+fun testFun() {}

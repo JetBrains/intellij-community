@@ -1,0 +1,4 @@
+/**
+ * Test comment<caret>
+ */
+fun testFun() {}

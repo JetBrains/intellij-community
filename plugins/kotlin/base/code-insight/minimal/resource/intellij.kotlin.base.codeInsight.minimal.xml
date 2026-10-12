@@ -39,6 +39,7 @@
             implementationClass="org.jetbrains.kotlin.idea.KotlinFoldingBuilder"/>
 
     <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinDeclarationAndAssignmentHandler"/>
+    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.KDocJoinLinesHandler"/>
     <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinStatementsAddSemicolonHandler"/>
     <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinWhenEntryHandler"/>
     <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinWithTrailingCommaHandler"/>

@@ -259,6 +259,34 @@ public abstract class KotlinFirJoinLinesTestGenerated extends AbstractKotlinFirJ
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/joinLines/kDoc")
+    public static class KDoc extends AbstractKotlinFirJoinLinesTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("JoinContentLineWithEnd.kt")
+        public void testJoinContentLineWithEnd() throws Exception {
+            runTest("../../idea/tests/testData/joinLines/kDoc/JoinContentLineWithEnd.kt");
+        }
+
+        @TestMetadata("JoinStartLineWithContent.kt")
+        public void testJoinStartLineWithContent() throws Exception {
+            runTest("../../idea/tests/testData/joinLines/kDoc/JoinStartLineWithContent.kt");
+        }
+
+        @TestMetadata("JoinStartLineWithTwoContentLines.kt")
+        public void testJoinStartLineWithTwoContentLines() throws Exception {
+            runTest("../../idea/tests/testData/joinLines/kDoc/JoinStartLineWithTwoContentLines.kt");
+        }
+
+        @TestMetadata("JoinToSingleLine.kt")
+        public void testJoinToSingleLine() throws Exception {
+            runTest("../../idea/tests/testData/joinLines/kDoc/JoinToSingleLine.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/joinLines/nestedIfs")
     public static class NestedIfs extends AbstractKotlinFirJoinLinesTest {
         private void runTest(String testDataFilePath) throws Exception {
