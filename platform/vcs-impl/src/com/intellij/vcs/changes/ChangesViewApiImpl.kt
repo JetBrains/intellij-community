@@ -12,8 +12,10 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ChangesViewNavigateRequest
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
+import com.intellij.openapi.vcs.changes.IgnoredViewDialog
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.InclusionModel
+import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSelection
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
@@ -94,6 +96,20 @@ internal class ChangesViewApiImpl : ChangesViewApi {
 
     withContext(Dispatchers.UiWithModelAccess) {
       AbstractVcsHelper.getInstance(project).showMergeDialog(files, provider)
+    }
+  }
+
+  override suspend fun showUnversionedFilesDialog(projectId: ProjectId) = projectScoped(projectId) { project ->
+    LOG.trace { "Showing unversioned files dialog" }
+    withContext(Dispatchers.UiWithModelAccess) {
+      UnversionedViewDialog(project).show()
+    }
+  }
+
+  override suspend fun showIgnoredFilesDialog(projectId: ProjectId) = projectScoped(projectId) { project ->
+    LOG.trace { "Showing ignored files dialog" }
+    withContext(Dispatchers.UiWithModelAccess) {
+      IgnoredViewDialog(project).show()
     }
   }
 

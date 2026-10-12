@@ -35,6 +35,18 @@ interface ChangesViewApi : RemoteApi<Unit> {
   suspend fun showResolveConflictsDialog(projectId: ProjectId, changeIds: List<ChangeId>)
 
   /**
+   * Shows the dialog with all unversioned files.
+   * The call returns when the user closes the dialog.
+   */
+  suspend fun showUnversionedFilesDialog(projectId: ProjectId)
+
+  /**
+   * Shows the dialog with all ignored files.
+   * The call returns when the user closes the dialog.
+   */
+  suspend fun showIgnoredFilesDialog(projectId: ProjectId)
+
+  /**
    * Emits `true` if Commit toolwindow is enabled, `false` if commit tab is shown inside VCS toolwindow.
    * Initially emits the current state.
    *
