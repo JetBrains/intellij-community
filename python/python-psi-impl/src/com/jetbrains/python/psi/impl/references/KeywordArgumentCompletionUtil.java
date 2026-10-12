@@ -85,7 +85,8 @@ public final class KeywordArgumentCompletionUtil {
                                                                      @NotNull TypeEvalContext context) {
     List<String> result = new ArrayList<>();
     if (type.isCallable()) {
-      List<PyCallableParameter> parameters = type.getUnpackedParameters(context);
+      List<PyCallableParameter> parameters =
+        PyCallExpressionHelper.expandParamSpecArgsKwargs(callSite, type, context).getUnpackedParameters(context);
       if (parameters != null) {
         int indexOfPySlashParameter = getIndexOfPySlashParameter(parameters);
         for (PyCallableParameter parameter : parameters.subList(indexOfPySlashParameter + 1, parameters.size())) {

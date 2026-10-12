@@ -453,7 +453,8 @@ public final class PyParameterInfoUtils {
     PyPsiUtils.assertValid(callExpression);
 
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(callExpression.getProject(), callExpression.getContainingFile());
-    final PyCallableType callableType = callAndCallee.getSecond();
+    final PyCallableType callableType =
+      PyCallExpressionHelper.expandParamSpecArgsKwargs(callExpression, callAndCallee.getSecond(), typeEvalContext);
 
     List<PyCallableParameter> parameters = callableType.getUnpackedParameters(typeEvalContext);
     if (parameters == null) return null;
