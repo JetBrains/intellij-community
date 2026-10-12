@@ -36,6 +36,8 @@ def _dev_dist_product_files_impl(ctx):
         inputs.append(ctx.file.host_application_info)
     for replacement in ctx.attr.replacements:
         args.add("--replacement=" + replacement)
+    for argument in ctx.attr.dev_jvm_arguments:
+        args.add("--dev-jvm-argument=" + argument)
     args.add("--build-number=" + ctx.file.build_number.path)
     args.add("--build-date-seconds=" + DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS)
     args.add("--opened-packages=" + ctx.file.opened_packages.path)
@@ -82,6 +84,9 @@ dev_dist_product_files = rule(
 
     A classic-loader launch also reads the core classpath of the platform payload, as a file that the rule writes at
     analysis. The tool renders the `bootClassPathJarNames` of the launch from it, as production does.
+
+    `dev_jvm_arguments` mark a dev distribution in `product-info.json`. The native launcher puts `additionalJvmArguments`
+    last, so no vmoptions file overrides them. No absolute path belongs there: the action stays cacheable.
     """,
     implementation = _dev_dist_product_files_impl,
     attrs = {
@@ -123,6 +128,11 @@ dev_dist_product_files = rule(
         "product_info": attr.output(mandatory = True),
         "frontend_vmoptions": attr.output(
             doc = "The vmoptions file of the embedded frontend. Set it when the launch model states `frontendVmOptions`, and only then.",
+        ),
+        "dev_jvm_arguments": attr.string_list(
+            doc = "The JVM arguments of a dev distribution, such as `-Didea.use.dev.build.server=true`. The tool appends " +
+                  "them to the `additionalJvmArguments` of the launch and of each custom command with a list of its own. " +
+                  "Production states none. Name no absolute path here.",
         ),
         "platform_payload": attr.label(
             providers = [DevDistPlatformPayloadInfo],

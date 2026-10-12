@@ -40,31 +40,54 @@ DEFAULT_JVM_FLAGS = [
     "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
 ]
 
-# The data directories of the IDE. `_runtime_jvm_flags` owns them, and a flag that states one would lose to its defaults.
+# The data directories of the IDE. `dev_launch_jvm_flags` owns them, and a flag that states one would lose to its
+# defaults.
 _DATA_PROPERTIES = ["idea.config.path", "idea.system.path", "idea.log.path"]
 
-def _runtime_jvm_flags(name, jvm_flags):
+# The workspace root in the flags of a `java` launcher. `$$` is a literal `$`, so the rule gets
+# `${BUILD_WORKSPACE_DIRECTORY}` and resolves it at analysis.
+_LAUNCHER_WORKSPACE = "$${BUILD_WORKSPACE_DIRECTORY}"
+
+def dev_launch_jvm_flags(name, jvm_flags = [], workspace = _LAUNCHER_WORKSPACE):
     """The flags an IDE needs to run, independent of how it was assembled.
 
-    `$${...}` is a literal `${...}`, which the rule resolves at analysis.
+    The data directories are below `out/dev-data/<name>`: `config`, `system`, `system/log` and `config/plugins`. On
+    macOS `out/dev-data` is a link to a directory outside the workspace. `jvm_flags` must not state a data directory.
 
-    The config and system directories are `out/dev-data/<name>/config` and `out/dev-data/<name>/system`. On macOS
-    `out/dev-data` is a link to a directory outside the workspace. `jvm_flags` must not state a data directory.
+    `workspace` spells the workspace root. A `java` launcher keeps the default, which its rule resolves at analysis.
+    The sibling vmoptions file of an export passes the absolute root, because no rule expands its lines. So a launch
+    target and a bare start of an export get the same flags.
     """
     for flag in jvm_flags:
         for key in _DATA_PROPERTIES:
             if flag.startswith("-D%s=" % key):
                 fail("%s: `%s` states a data directory, which the rule owns" % (name, flag))
 
-    config_path = "$${BUILD_WORKSPACE_DIRECTORY}/out/dev-data/" + name + "/config"
-    system_path = "$${BUILD_WORKSPACE_DIRECTORY}/out/dev-data/" + name + "/system"
+    config_path = workspace + "/out/dev-data/" + name + "/config"
+    system_path = workspace + "/out/dev-data/" + name + "/system"
     return DEFAULT_JVM_FLAGS + [
         "-Didea.plugins.path=" + config_path + "/plugins",
         "-Didea.log.path=" + system_path + "/log",
     ] + jvm_flags + [
         "-Didea.config.path=" + config_path,
         "-Didea.system.path=" + system_path,
+        # Not a build-time input: `AppMode.getDevIdeaProjectDir` and the webview native bridge read it at runtime.
+        # A `DevMainImpl` launch has it because `DevMainImpl` sets it from the project root it just built against.
+        "-Didea.dev.project.root=" + workspace,
     ]
+
+def export_vm_options(name, runtime_module_repository):
+    """The attributes of the sibling vmoptions file of the export `<name>.dist`, for `intellij_dev_fragments_dist`.
+
+    The lines are `dev_launch_jvm_flags` over `out/dev-data/<name>`, with absolute paths. With
+    `runtime_module_repository`, the last line names `modules/module-descriptors.dat` of the export as the runtime
+    module repository, as the argument file writer does. Pass it only when the export has that file and its
+    `product-info.json` does not state the property.
+    """
+    lines = dev_launch_jvm_flags(name, workspace = WORKSPACE_ROOT)
+    if runtime_module_repository:
+        lines.append("-Dintellij.platform.runtime.repository.path=${EXPORT}/modules/module-descriptors.dat")
+    return {"sibling_vm_options": lines, "output_base": OUTPUT_BASE}
 
 # The directory of the runfiles tree that holds the home of a `java` launcher.
 _JAVA_LAUNCH_HOME = "ide_home"
@@ -347,11 +370,7 @@ def intellij_dev_java_launcher_binary(
         }),
         vm_options = vm_options,
         product_info = product_info,
-        jvm_flags = _runtime_jvm_flags(name, jvm_flags) + [
-            # Not a build-time input: `AppMode.getDevIdeaProjectDir` and the webview native bridge read it at runtime,
-            # and a dev launch has it only because `DevMainImpl` sets it from the project root it just built against.
-            "-Didea.dev.project.root=$${BUILD_WORKSPACE_DIRECTORY}",
-        ],
+        jvm_flags = dev_launch_jvm_flags(name, jvm_flags),
         add_opens = INTELLIJ_ADD_OPENS,
         env = env,
         # `bazel run` starts the executable in `<name>.runfiles/_main`, which holds the argument file. The file holds

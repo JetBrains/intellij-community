@@ -129,6 +129,7 @@ impl Fixture {
                 .boot_class_path_jar_names
                 .is_none()
                 .then_some(core_class_path.as_slice()),
+            dev_jvm_arguments: &[],
         };
         render_launch_files(&product, parse_platform(platform)?, opened, idea_properties, common)
     }
@@ -425,6 +426,7 @@ fn launch_boot_class_path_follows_the_production_order() {
             application_info,
             build_number: "263.SNAPSHOT",
             core_class_path: core,
+            dev_jvm_arguments: &[],
         }
     }
     let mut model = test_model(IDEA.model);
@@ -504,6 +506,77 @@ fn custom_commands_extend_the_boot_class_path_of_the_launch() {
     assert_eq!(
         info["launch"][0]["customCommands"][0]["bootClassPathJarNames"],
         serde_json::json!(["own.jar"])
+    );
+}
+
+/// The JVM arguments of a JSON array at `pointer`, or none when the field is absent.
+fn json_strings(info: &Value, pointer: &str) -> Vec<String> {
+    info.pointer(pointer)
+        .and_then(Value::as_array)
+        .map(|values| values.iter().map(|value| value.as_str().unwrap().to_owned()).collect())
+        .unwrap_or_default()
+}
+
+/// The dev JVM arguments go after the list of the launch and of each custom command with a list of its own. The
+/// launcher gives a command with an empty list the list of the launch, so that list stays empty.
+#[test]
+fn dev_jvm_arguments_follow_each_list_of_its_own() {
+    let model = test_model(SERVER.model);
+    let application_info = SERVER.read_application_info();
+    let build_number = SERVER.build_number();
+    let dev = strings(&["-Didea.use.dev.build.server=true", "-Dsecond=1"]);
+    let render = |dev_jvm_arguments: &[String]| -> Value {
+        let product = Product {
+            model: &model,
+            application_info: &application_info,
+            build_number: &build_number,
+            core_class_path: None,
+            dev_jvm_arguments,
+        };
+        let files = render_launch_files(&product, parse_platform("linux_x64").unwrap(), "", "", "").unwrap();
+        serde_json::from_str(&files.product_info).unwrap()
+    };
+    let plain = render(&[]);
+    let marked = render(&dev);
+    for pointer in [
+        "/launch/0/additionalJvmArguments",
+        "/launch/0/customCommands/0/additionalJvmArguments",
+    ] {
+        let mut expected = json_strings(&plain, pointer);
+        assert!(!expected.is_empty(), "the fixture states a list at {pointer}");
+        expected.extend(dev.iter().cloned());
+        assert_eq!(json_strings(&marked, pointer), expected, "{pointer}");
+    }
+    assert_eq!(
+        marked["launch"][0]["customCommands"][1]["additionalJvmArguments"],
+        Value::Null,
+        "a command with an empty list takes the list of the launch in the launcher"
+    );
+}
+
+/// The tool appends each `--dev-jvm-argument` in its order, and refuses an empty one.
+#[test]
+fn the_tool_appends_the_dev_jvm_arguments() {
+    let tool = ToolRun::new();
+    let mut args = tool.base_args();
+    args.extend(IDEA.inputs());
+    args.extend(strings(&[
+        "--dev-jvm-argument=-Didea.use.dev.build.server=true",
+        "--dev-jvm-argument=-Dx=1",
+    ]));
+    let result = run_tool(&args);
+    assert_eq!(result.code, 0, "{}", result.errors);
+    let info = tool.product_info();
+    let launch = json_strings(&info, "/launch/0/additionalJvmArguments");
+    assert_eq!(launch[launch.len() - 2..], strings(&["-Didea.use.dev.build.server=true", "-Dx=1"]));
+    // `stdioMcpServer` states no JVM arguments, so it takes the list of the launch in the launcher.
+    assert_eq!(info["launch"][0]["customCommands"][0]["additionalJvmArguments"], Value::Null);
+
+    args.push("--dev-jvm-argument=".to_owned());
+    let result = run_tool(&args);
+    assert_eq!(
+        (result.code, result.errors.as_str()),
+        (2, "ERROR: --dev-jvm-argument must not be empty\n")
     );
 }
 

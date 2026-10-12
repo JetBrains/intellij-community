@@ -16,7 +16,7 @@ load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "dev_dis
 load("//platform/build-scripts/bazel-rules:dev_dist_runtime_module_repository.bzl", "dev_dist_runtime_layout_parts", "dev_dist_runtime_module_repository")
 load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "intellij_dev_fragments_dist", "intellij_dev_packed_jars_component")
 load(":dev_launch_dependencies.bzl", "HOST_PLATFORMS", "platform_parts")
-load(":intellij_dev.bzl", "intellij_dev_java_launcher_binary")
+load(":intellij_dev.bzl", "export_vm_options", "intellij_dev_java_launcher_binary")
 
 def _plugin_component_entries(platform_prefix, tier, entries):
     """Reads one tier of the generated component map as `struct(main_module, label, labels)` entries.
@@ -270,6 +270,10 @@ def _launcher_files(launcher, platform):
 # files action renders from the launch model of the product.
 _PLATFORM_RESOURCES_FRAGMENT = "platform_resources"
 
+# The dev marker of a dev distribution. The product files action appends it to `additionalJvmArguments`, so a bare
+# start of the export through the native launcher is a dev-mode IDE. Production states none.
+_DEV_JVM_ARGUMENTS = ["-Didea.use.dev.build.server=true"]
+
 def _launch_destinations(plan, os):
     """The destinations of the launch files, as `struct(vm_options, product_info, frontend_vm_options)`.
 
@@ -507,7 +511,8 @@ def _platform_set(tables, product, name, target_platform, visibility):
         # The rendered files have fixed names, and the component maps each one to its path in the distribution.
         # `_launch_destinations` states the paths of the vmoptions files and of `product-info.json`. The component also
         # declares the main class of the launch model. A classic-loader launch takes its boot class path from the core
-        # classpath of the platform payload. A modular-loader launch states `platform-loader.jar` in the model.
+        # classpath of the platform payload. A modular-loader launch states `platform-loader.jar` in the model. The
+        # launch and each custom command with JVM arguments of its own get the dev marker `_DEV_JVM_ARGUMENTS`.
         files = name + "_product_files"
         frontend_vmoptions = getattr(plan.launch, "frontend_vmoptions", None)
         application_info = tables.application_infos[product]
@@ -526,6 +531,7 @@ def _platform_set(tables, product, name, target_platform, visibility):
             product_info = files + "/product-info.json",
             frontend_vmoptions = files + "/frontend.vmoptions" if frontend_vmoptions else None,
             platform_payload = None if _modular_loader(tables, product) else ":" + name + "_platform_payload",
+            dev_jvm_arguments = _DEV_JVM_ARGUMENTS,
         )
 
         def placed(platform):
@@ -618,11 +624,13 @@ def _declare_fragments_dist(
         additional_modules,
         target_platform,
         create_local_launch,
-        catalogue):
+        catalogue,
+        export_attrs = {}):
     """Declares the distribution `name` and, with `create_local_launch`, `<name>_launch` over `catalogue`.
 
     `catalogue` is `_plugin_component_catalogue(tables, product)`. A caller that declares several distributions of one
-    product reads it once and passes it to each.
+    product reads it once and passes it to each. `export_attrs` holds the attributes that only the export takes: the
+    sibling vmoptions attributes of `export_vm_options` in `intellij_dev.bzl`.
     """
     bundled_components = _plugin_components(target_platform, catalogue.bundled)
 
@@ -671,6 +679,7 @@ def _declare_fragments_dist(
             expect_fragments = expect_fragments,
             additional_modules = additional_modules,
             local_launch = local_launch,
+            **({} if local_launch else export_attrs)
         )
 
 def _check_plan(tables, name, product):
@@ -706,6 +715,10 @@ def _declare_run_distribution(tables, name, product, additional_modules, runtime
     A row starts over the placement of `_dist_launch`, and on Windows over the home of `_dist`. A distribution with
     `runtime_module_repository` composes the `platform_runtime_module_repository` component of its product, which
     places the `modules/` files of `dev_dist_runtime_module_repository`.
+
+    The export `<name>_dist.dist` gets the sibling vmoptions file `<name>_dist.dist.vmoptions`. A bare start of the
+    export through the native launcher keeps its data in `out/dev-data/<name>_dist`. The file names the runtime module
+    repository of a classic-loader export that has one. A modular-loader launch states it in `product-info.json`.
     """
     _check_plan(tables, name, product)
     platform = _platform_fragments(tables, product, runtime_module_repository = runtime_module_repository)
@@ -720,6 +733,10 @@ def _declare_run_distribution(tables, name, product, additional_modules, runtime
         target_platform = "",
         create_local_launch = True,
         catalogue = catalogue,
+        export_attrs = export_vm_options(
+            name + "_dist",
+            runtime_module_repository = runtime_module_repository and not _modular_loader(tables, product),
+        ),
     )
 
 def _check_before_run(tables, name, jvm_flags, compile_clion_backend_before_run):

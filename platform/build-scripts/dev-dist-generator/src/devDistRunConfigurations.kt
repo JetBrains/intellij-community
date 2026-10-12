@@ -39,7 +39,7 @@ private val ROW_FIELD_PROPERTIES = setOf(
 )
 
 /**
- * The data directories of the IDE, which the launcher owns: `_runtime_jvm_flags` in `community/build/intellij_dev.bzl`
+ * The data directories of the IDE, which the launcher owns: `dev_launch_jvm_flags` in `community/build/intellij_dev.bzl`
  * gives every row its own directories under `out/dev-data/<row>` and refuses a row that states one. `idea.plugins.path`
  * stays in the flags, because a row may load its plugins from a directory of its own.
  */

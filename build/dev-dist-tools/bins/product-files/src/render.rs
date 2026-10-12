@@ -50,8 +50,8 @@ pub(crate) struct LaunchFiles {
     pub product_info: String,
 }
 
-/// What the launch files of one product derive from: the launch model, the application info, the build number and the
-/// core classpath of the distribution.
+/// What the launch files of one product derive from: the launch model, the application info, the build number, the
+/// core classpath of the distribution and the dev JVM arguments.
 #[derive(Clone, Copy)]
 pub(crate) struct Product<'a> {
     pub model: &'a LaunchModel,
@@ -59,6 +59,10 @@ pub(crate) struct Product<'a> {
     pub build_number: &'a str,
     /// The `lib/` jars of the core classpath. A classic-loader launch needs them, and a modular-loader launch reads none.
     pub core_class_path: Option<&'a [String]>,
+    /// The JVM arguments that mark a dev distribution, such as `-Didea.use.dev.build.server=true`. Production states
+    /// none. They go after the `additionalJvmArguments` of the launch and of each custom command with a list of its own.
+    /// The launcher gives a command with an empty list the list of the launch, so that command gets them too.
+    pub dev_jvm_arguments: &'a [String],
 }
 
 /// `CORE_CLASSPATH_LEADING_JARS` of `classpath.kt`: the jars that start the boot class path of a launch, in this order.
@@ -401,6 +405,8 @@ fn render_product_info(product: &Product<'_>, target: Platform, opened_packages:
         ),
     };
     let boot_class_path_jar_names = launch_boot_class_path(product)?;
+    let mut launch_jvm_arguments = additional_jvm_arguments(&model.launch.jvm_arguments, &names, target, opened_packages, false);
+    launch_jvm_arguments.extend(product.dev_jvm_arguments.iter().cloned());
     let launch = Launch {
         os: target.os,
         arch: target.arch,
@@ -408,7 +414,7 @@ fn render_product_info(product: &Product<'_>, target: Platform, opened_packages:
         java_executable_path,
         vm_options_file_path: vm_options_file_path(target.os, &model.base_file_name, model.language_server),
         startup_wm_class: (target.os == OS_LINUX).then(|| linux_frame_class(&application_info.product_name_with_edition())),
-        additional_jvm_arguments: additional_jvm_arguments(&model.launch.jvm_arguments, &names, target, opened_packages, false),
+        additional_jvm_arguments: launch_jvm_arguments,
         main_class: &model.launch.main_class,
         stdio_redirect_arg: model.launch.stdio_redirect_arg.as_deref(),
         custom_commands: model
@@ -472,7 +478,8 @@ pub(crate) fn launch_boot_class_path(product: &Product<'_>) -> anyhow::Result<Ve
 
 /// Renders one custom command. The command takes the JVM arguments of the block it names, and a command that states an
 /// environment variable name states the data directory name of the product. A command with additional jars takes
-/// `launch_boot_class_path_jar_names`, then these jars.
+/// `launch_boot_class_path_jar_names`, then these jars. A command with JVM arguments of its own also takes the dev JVM
+/// arguments.
 fn render_custom_command<'a>(
     command: &'a CustomCommand,
     product: &Product<'a>,
@@ -523,6 +530,9 @@ fn render_custom_command<'a>(
             .iter()
             .map(|argument| argument.replace(BUILD_NUMBER_TOKEN, product.build_number)),
     );
+    if !arguments.is_empty() {
+        arguments.extend(product.dev_jvm_arguments.iter().cloned());
+    }
     Ok(Command {
         commands: &command.commands,
         vm_options_file_path: command.vm_options_file_path.get(target.os).map(String::as_str),

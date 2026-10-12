@@ -12,6 +12,7 @@ load(":dev_dist_runtime_module_repository.bzl", "dev_dist_runtime_module_reposit
 load(
     ":intellij_dev_dist.bzl",
     "IntellijDevBuildInputsInfo",
+    "IntellijDevDistInfo",
     "IntellijDevFragmentInfo",
     "IntellijDevReferenceInfo",
     "IntellijProjectModelTreeInfo",
@@ -432,6 +433,30 @@ _distribution_groups_test = analysistest.make(
     attrs = {
         "production": attr.label_list(mandatory = True, providers = [IntellijDevFragmentInfo]),
     },
+    config_settings = {_TRACE_SPANS: False},
+)
+
+def _sibling_vm_options_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    info = target[IntellijDevDistInfo]
+    file = info.sibling_vm_options
+    asserts.true(env, file != None, "the export has a sibling vmoptions file")
+    if file == None:
+        return analysistest.end(env)
+    asserts.equals(env, target.label.name + ".dist.vmoptions", file.basename)
+    asserts.true(env, file in target[DefaultInfo].files.to_list(), "the target builds the file")
+    asserts.false(env, file in target[DefaultInfo].default_runfiles.files.to_list(), "the file is no runfile")
+    writes = [action for action in analysistest.target_actions(env) if file in action.outputs.to_list()]
+    asserts.equals(env, 1, len(writes), "one action writes the file")
+    if writes:
+        # `${EXPORT}` resolves to the absolute path of the export below the execution root.
+        export = "/output-base/execroot/%s/%s" % (ctx.workspace_name, info.home.path)
+        asserts.equals(env, "-Da=1\n-Dexport=%s/x\n" % export, writes[0].content)
+    return analysistest.end(env)
+
+_sibling_vm_options_test = analysistest.make(
+    _sibling_vm_options_test_impl,
     config_settings = {_TRACE_SPANS: False},
 )
 
@@ -906,6 +931,39 @@ def dev_dist_content_test_suite(name):
         target_under_test = ":" + distribution,
         production = [":" + component for component in production],
     )
+
+    # The sibling vmoptions file of an export, and the lines and the distributions that the rule refuses.
+    sibling = name + "_sibling_distribution"
+    intellij_dev_fragments_dist(
+        name = sibling,
+        composer = ":" + fixture,
+        fragments = [":" + component for component in production],
+        expect_fragments = production,
+        sibling_vm_options = ["-Da=1", "-Dexport=${EXPORT}/x"],
+        output_base = "/output-base",
+        tags = ["manual"],
+    )
+    tests.append(sibling + "_test")
+    _sibling_vm_options_test(name = tests[-1], target_under_test = ":" + sibling)
+    for suffix, local_launch, lines, output_base, expected_message in [
+        ("local_launch", True, ["-Da=1"], "", "a local launch has no export, so it takes no sibling_vm_options"),
+        ("line_break", False, ["-Da=1\n-Db=2"], "", "a sibling vmoptions line must be one JVM option"),
+        ("empty_line", False, [""], "", "a sibling vmoptions line must be one JVM option"),
+        ("no_output_base", False, ["-Dexport=${EXPORT}"], "", "names ${EXPORT}, so output_base is required"),
+    ]:
+        refused = "%s_sibling_%s" % (name, suffix)
+        intellij_dev_fragments_dist(
+            name = refused,
+            composer = ":" + fixture,
+            fragments = [":" + component for component in production],
+            expect_fragments = production,
+            local_launch = local_launch,
+            sibling_vm_options = lines,
+            output_base = output_base,
+            tags = ["manual"],
+        )
+        tests.append(refused + "_test")
+        _expected_failure_test(name = tests[-1], target_under_test = ":" + refused, expected_message = expected_message)
 
     packed_component = name + "_packed_component"
     intellij_dev_packed_jars_component(

@@ -9,7 +9,7 @@
 //! edit of the version, the suffix or the release date changes no generated file. A classic-loader launch also reads the
 //! core classpath of the distribution for its boot class path. The files must be the files that the production writers
 //! of the build scripts write, byte for byte. `DevDistProductLaunchModelTest` checks that for every split product and
-//! every host platform.
+//! every host platform. That test passes no dev JVM argument, because production states none.
 
 mod model;
 mod render;
@@ -53,6 +53,8 @@ struct Options {
     core_class_path_jar_names: Option<PathBuf>,
     /// `ProductProperties.appInfoXmlReplacements`, in their order.
     replacements: Vec<Replacement>,
+    /// The JVM arguments that mark a dev distribution, in their order. See [`render::Product::dev_jvm_arguments`].
+    dev_jvm_arguments: Vec<String>,
 }
 
 /// Runs the tool and returns the exit code: 2 for a usage error, 1 for a render error.
@@ -78,8 +80,9 @@ fn run(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors:
 }
 
 /// Reads the options. Every option but `--frontend-vmoptions-out`, `--host-application-info`,
-/// `--core-classpath-jar-names` and `--replacement` is required, and the first missing one fails in this order.
-/// `--replacement` is the one option that a request can state more than once, as `KEY=VALUE`.
+/// `--core-classpath-jar-names`, `--replacement` and `--dev-jvm-argument` is required, and the first missing one fails
+/// in this order. A request can state `--replacement` and `--dev-jvm-argument` more than once. A replacement is
+/// `KEY=VALUE`, and a dev JVM argument must not be empty.
 fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Options> {
     let mut options = cli::parse(args)?;
     let model = options.require("--model")?.into();
@@ -107,6 +110,10 @@ fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Opt
         value => value.map(PathBuf::from),
     };
     let replacements = Replacement::parse_all(&options.take_all("--replacement")?)?;
+    let dev_jvm_arguments = options.take_all("--dev-jvm-argument")?;
+    if dev_jvm_arguments.iter().any(String::is_empty) {
+        anyhow::bail!("--dev-jvm-argument must not be empty");
+    }
     options.finish()?;
     let Ok(build_date_seconds) = build_date_seconds.parse::<i64>() else {
         anyhow::bail!("--build-date-seconds is not a number of seconds: {build_date_seconds:?}");
@@ -128,6 +135,7 @@ fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Opt
         host_application_info,
         core_class_path_jar_names,
         replacements,
+        dev_jvm_arguments,
     })
 }
 
@@ -190,6 +198,7 @@ fn render_to_files(options: &Options) -> anyhow::Result<()> {
         application_info: &application_info,
         build_number: &build_number,
         core_class_path: core_class_path.as_deref(),
+        dev_jvm_arguments: &options.dev_jvm_arguments,
     };
     let files = render::render_launch_files(&product, target, &opened_packages, &idea_properties, &common_vm_options)
         .with_context(|| options.model.display().to_string())?;

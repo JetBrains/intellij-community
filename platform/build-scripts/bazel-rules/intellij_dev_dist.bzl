@@ -180,6 +180,7 @@ IntellijDevDistInfo = provider(
         "placement": "The merged `DevDistPlacementInfo` of a local launch as `struct(files, trees, executables)`. None for a full distribution or a component without a placement.",
         "core_classpath": "The `core-classpath.txt` of a local launch as a file of its own, or None.",
         "plugin_classpath": "The `plugins/plugin-classpath.txt` of a local launch as a file of its own, or None.",
+        "sibling_vm_options": "The sibling vmoptions file `<name>.dist.vmoptions` of an export, or None.",
     },
 )
 
@@ -794,9 +795,40 @@ def _merge_placements(ctx, fragment_targets):
                 fail("%s: '%s' of %s is below '%s', which %s links as a whole" % (ctx.label, destination, owners[destination], parent, owners[parent]))
     return struct(files = files, trees = trees, executables = executables)
 
+# The token of a sibling vmoptions line that stands for the absolute path of the export.
+_EXPORT_TOKEN = "${EXPORT}"
+
+def _sibling_vm_options(ctx, home):
+    """Writes the sibling vmoptions file of the export `home`, or returns None when the rule states no line.
+
+    The file is `<name>.dist.vmoptions`, the Toolbox-style name next to the export. A file write runs on the local host,
+    so no shared cache holds its absolute paths. No action reads the file.
+    """
+    lines = ctx.attr.sibling_vm_options
+    if not lines:
+        return None
+    if ctx.attr.local_launch:
+        fail("%s: a local launch has no export, so it takes no sibling_vm_options" % ctx.label, attr = "sibling_vm_options")
+    export = None
+    if ctx.attr.output_base:
+        export = "%s/execroot/%s/%s" % (ctx.attr.output_base, ctx.workspace_name, home.path)
+    resolved = []
+    for line in lines:
+        if not line or "\n" in line or "\r" in line:
+            fail("%s: a sibling vmoptions line must be one JVM option, got %s" % (ctx.label, repr(line)), attr = "sibling_vm_options")
+        if _EXPORT_TOKEN in line:
+            if export == None:
+                fail("%s: '%s' names %s, so output_base is required" % (ctx.label, line, _EXPORT_TOKEN), attr = "output_base")
+            line = line.replace(_EXPORT_TOKEN, export)
+        resolved.append(line)
+    file = ctx.actions.declare_file(ctx.label.name + ".dist.vmoptions")
+    ctx.actions.write(file, "".join([line + "\n" for line in resolved]))
+    return file
+
 def _compose(ctx, fragment_targets):
     local_launch = ctx.attr.local_launch
     home = ctx.actions.declare_directory(ctx.label.name + (".metadata" if local_launch else ".dist"))
+    sibling_vm_options = _sibling_vm_options(ctx, home)
     ide_config = ctx.actions.declare_file(ctx.label.name + ".ide.config")
     fingerprint = ctx.actions.declare_file(ctx.label.name + ".fingerprint")
     fragments = [target[IntellijDevFragmentInfo] for target in fragment_targets]
@@ -879,7 +911,8 @@ def _compose(ctx, fragment_targets):
     )
     return [
         DefaultInfo(
-            files = depset([home, ide_config, fingerprint]),
+            # The sibling vmoptions file is no runfile: a consumer of the export reads the export, not the local file.
+            files = depset([home, ide_config, fingerprint] + ([sibling_vm_options] if sibling_vm_options else [])),
             runfiles = ctx.runfiles(files = [home, ide_config, fingerprint], transitive_files = runtime_files),
         ),
         IntellijDevDistInfo(
@@ -890,6 +923,7 @@ def _compose(ctx, fragment_targets):
             placement = placement,
             core_classpath = core_classpath,
             plugin_classpath = plugin_classpath,
+            sibling_vm_options = sibling_vm_options,
         ),
         # Read by `intellij_dev_dist_config`, which needs the single-file label `$(rlocationpath ...)` takes - which a
         # dist target, with three outputs, is not. Not reachable through `IntellijDevDistInfo`: the consumers are
@@ -941,6 +975,15 @@ per plugin serves every product that bundles the plugin.""",
                   "distribution was configured with, not what any one component assembled. A shared plugin component " +
                   "packs a module that the product bundles, so only this attribute tells a consumer that the " +
                   "distribution contains it.",
+        ),
+        "sibling_vm_options": attr.string_list(
+            doc = "The lines of `<name>.dist.vmoptions`, the sibling vmoptions file next to the export. Each line is one " +
+                  "JVM option. `${EXPORT}` in a line stands for the absolute path of the export. The native launcher " +
+                  "reads the file as the user vmoptions file of a bare start on Linux and Windows. A local launch " +
+                  "refuses the attribute.",
+        ),
+        "output_base": attr.string(
+            doc = "The absolute output base of the workspace. The rule needs it when a line of `sibling_vm_options` names `${EXPORT}`.",
         ),
     } | _TRACE_SPANS_ATTR,
 )
