@@ -41,8 +41,7 @@ public final class ExtendsObjectInspection extends BaseInspection implements Cle
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "extends.object.problem.descriptor");
+    return InspectionGadgetsBundle.message("extends.object.problem.descriptor");
   }
 
   @Override
@@ -59,23 +58,20 @@ public final class ExtendsObjectInspection extends BaseInspection implements Cle
 
     @Override
     public @NotNull String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "extends.object.remove.quickfix");
+      return InspectionGadgetsBundle.message("extends.object.remove.quickfix");
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement extendClassIdentifier, @NotNull ModPsiUpdater updater) {
-      final PsiClass element = (PsiClass)extendClassIdentifier.getParent();
-      if (element == null) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement classIdentifier, @NotNull ModPsiUpdater updater) {
+      final PsiClass aClass = (PsiClass)classIdentifier.getParent();
+      if (aClass == null) {
         return;
       }
-      final PsiReferenceList extendsList = element.getExtendsList();
+      final PsiReferenceList extendsList = aClass.getExtendsList();
       if (extendsList == null) {
         return;
       }
-      final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
-      for (PsiJavaCodeReferenceElement referenceElement :
-        referenceElements) {
+      for (PsiJavaCodeReferenceElement referenceElement : extendsList.getReferenceElements()) {
         referenceElement.delete();
       }
     }
@@ -90,14 +86,10 @@ public final class ExtendsObjectInspection extends BaseInspection implements Cle
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isInterface() || aClass.isAnnotationType()) {
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass instanceof PsiTypeParameter) {
         return;
       }
-      if (aClass instanceof PsiTypeParameter) {
-        return;
-      }
-      final PsiClassType[] types = aClass.getExtendsListTypes();
-      for (final PsiClassType type : types) {
+      for (PsiClassType type : aClass.getExtendsListTypes()) {
         if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && type.getAnnotations().length == 0) {
           registerClassError(aClass);
         }
