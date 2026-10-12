@@ -2,7 +2,11 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
@@ -40,7 +44,8 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRang
 import org.jetbrains.kotlin.idea.base.psi.replaceSamConstructorCall
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
@@ -63,6 +68,7 @@ import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.buildExpression
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.contentRange
@@ -73,10 +79,24 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.types.Variance
 
-@Suppress("DEPRECATION")
-internal class ObjectLiteralToLambdaInspection : IntentionBasedInspection<KtObjectLiteralExpression>(ObjectLiteralToLambdaIntention::class) {
-    override fun problemHighlightType(element: KtObjectLiteralExpression): ProblemHighlightType {
-        val data = extractData(element) ?: return super.problemHighlightType(element)
+internal class ObjectLiteralToLambdaInspection : AbstractKotlinInspection() {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
+        private val intention = ObjectLiteralToLambdaIntention()
+
+        override fun visitObjectLiteralExpression(expression: KtObjectLiteralExpression) {
+            val range = intention.applicabilityRange(expression)?.shiftRight(-expression.startOffset) ?: return
+            holder.registerProblem(
+                expression,
+                KotlinBundle.message("convert.to.lambda"),
+                problemHighlightType(expression),
+                range,
+                ConvertToLambdaFix()
+            )
+        }
+    }
+
+    private fun problemHighlightType(element: KtObjectLiteralExpression): ProblemHighlightType {
+        val data = extractData(element) ?: return ProblemHighlightType.GENERIC_ERROR_OR_WARNING
         val bodyBlock = data.singleFunction.bodyBlockExpression
         val lastStatement = bodyBlock?.statements?.lastOrNull()
 
@@ -95,7 +115,20 @@ internal class ObjectLiteralToLambdaInspection : IntentionBasedInspection<KtObje
             if (classId != data.baseTypeClassId) return ProblemHighlightType.INFORMATION
         }
 
-        return super.problemHighlightType(element)
+        return ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+    }
+
+    private class ConvertToLambdaFix : KotlinModCommandQuickFix<KtObjectLiteralExpression>() {
+        override fun getName(): String = KotlinBundle.message("convert.to.lambda")
+
+        override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.object.literal.to.lambda")
+
+        override fun applyFix(project: Project, element: KtObjectLiteralExpression, updater: ModPsiUpdater) {
+            val intention = ObjectLiteralToLambdaIntention()
+            if (intention.applicabilityRange(element) != null) {
+                intention.applyTo(element, null)
+            }
+        }
     }
 }
 
