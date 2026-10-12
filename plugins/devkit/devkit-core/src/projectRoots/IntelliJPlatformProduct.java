@@ -26,7 +26,7 @@ public enum IntelliJPlatformProduct {
   DBE("DB", "DataGrip", PlatformUtils.DBE_PREFIX, null, "datagrip:datagrip"),
   RIDER("RD", "Rider", PlatformUtils.RIDER_PREFIX, "com.jetbrains.intellij.rider:riderRD", "rider:JetBrains.Rider"),
   GOIDE("GO", "GoLand", PlatformUtils.GOIDE_PREFIX, "com.jetbrains.intellij.goland:goland", "go:goland"),
-  ANDROID_STUDIO("AI", "Android Studio", "AndroidStudio", null, "com.google.android.studio:android-studio"),
+  ANDROID_STUDIO("AI", "Android Studio", PlatformUtils.ANDROID_STUDIO_PREFIX, null, "com.google.android.studio:android-studio"),
   JETBRAINS_CLIENT("JBC", "JetBrains Client", PlatformUtils.JETBRAINS_CLIENT_PREFIX, null, "idea/code-with-me:JetBrainsClient"),
   GATEWAY("GW", "Gateway", PlatformUtils.GATEWAY_PREFIX, "com.jetbrains.intellij.gateway:gateway", "idea/gateway:JetBrainsGateway"),
   FLEET_BACKEND("FLIJ", "Fleet Backend", PlatformUtils.FLEET_PREFIX, "com.jetbrains.intellij.fleetBackend:fleetBackend", null),

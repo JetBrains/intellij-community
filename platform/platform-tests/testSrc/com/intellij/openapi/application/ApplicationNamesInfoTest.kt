@@ -15,6 +15,43 @@ private const val CUSTOM_PRODUCT = "CustomProductFromFile"
 
 class ApplicationNamesInfoTest {
   @Test
+  fun `default project directory names are defined centrally for platform products`() {
+    val expected = mapOf(
+      PlatformUtils.IDEA_PREFIX to "IdeaProjects",
+      PlatformUtils.IDEA_CE_PREFIX to "IdeaProjects",
+      PlatformUtils.IDEA_EDU_PREFIX to "IdeaProjects",
+      PlatformUtils.APPCODE_PREFIX to "AppCodeProjects",
+      PlatformUtils.AQUA_PREFIX to "AquaProjects",
+      PlatformUtils.CLION_PREFIX to "CLionProjects",
+      PlatformUtils.PYCHARM_PREFIX to "PycharmProjects",
+      PlatformUtils.PYCHARM_CE_PREFIX to "PycharmProjects",
+      PlatformUtils.PYCHARM_EDU_PREFIX to "PycharmProjects",
+      PlatformUtils.RUBY_PREFIX to "RubymineProjects",
+      PlatformUtils.PHP_PREFIX to "PhpstormProjects",
+      PlatformUtils.WEB_PREFIX to "WebstormProjects",
+      PlatformUtils.DBE_PREFIX to "DataGripProjects",
+      PlatformUtils.RIDER_PREFIX to "RiderProjects",
+      PlatformUtils.GOIDE_PREFIX to "GolandProjects",
+      PlatformUtils.FLEET_PREFIX to "FleetProjects",
+      PlatformUtils.RUSTROVER_PREFIX to "RustProjects",
+      PlatformUtils.MPS_PREFIX to "MPSProjects",
+      PlatformUtils.ANDROID_STUDIO_PREFIX to "AndroidStudioProjects",
+    )
+
+    expected.forEach { (prefix, directoryName) ->
+      assertThat(ApplicationNamesInfo.getDefaultProjectDirectoryName(prefix, "ignored")).isEqualTo(directoryName)
+    }
+  }
+
+  @Test
+  fun `unknown product uses its product name for the default project directory`() {
+    assertThat(ApplicationNamesInfo.getDefaultProjectDirectoryName("ThirdParty", "CustomIDE"))
+      .isEqualTo("CustomideProjects")
+    assertThat(ApplicationNamesInfo.getDefaultProjectDirectoryName("ThirdParty", "Custom IDE"))
+      .isEqualTo("Custom ideProjects")
+  }
+
+  @Test
   fun `custom application info file is read for the Gateway prefix`(@TempDir dir: Path) {
     val data = loadRawData(prefix = PlatformUtils.GATEWAY_PREFIX, file = writeCustomAppInfo(dir))
     assertThat(productName(data)).isEqualTo(CUSTOM_PRODUCT)

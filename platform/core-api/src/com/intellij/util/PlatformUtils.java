@@ -35,6 +35,7 @@ public final class PlatformUtils {
   public static final String IDEA_PREFIX = "idea";
   public static final String IDEA_CE_PREFIX = "Idea";
   public static final String IDEA_EDU_PREFIX = "IdeaEdu";
+  public static final String ANDROID_STUDIO_PREFIX = "AndroidStudio";
   public static final String APPCODE_PREFIX = "AppCode";
   public static final String AQUA_PREFIX = "Aqua";
   public static final String CLION_PREFIX = "CLion";
