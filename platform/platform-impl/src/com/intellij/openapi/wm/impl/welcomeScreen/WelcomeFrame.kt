@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.CommonBundle
+import com.intellij.diagnostic.StartUpPerformanceService
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.internal.statistic.eventLog.getUiEventLogger
@@ -187,11 +188,28 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWi
         jFrame.isVisible = true
         FUSProjectHotStartUpMeasurer.reportWelcomeScreenIsGoingToBeShown()
         FUSProjectHotStartUpMeasurer.reportModalWelcomeScreenBecameVisible()
+        ensureStartUpReportIsWritten()
         installAppMenuIfNeeded(jFrame)
         instance = frame
         if (SystemInfoRt.isMac) {
           touchbar = TouchbarSupport.showWindowActions(frame.component)
         }
+      }
+    }
+
+    /**
+     * Creates the start-up performance service when the run requests the start-up report with `idea.log.perf.stats.file`.
+     * The service writes the report when the first project finishes its start-up, or at the exit if no project did.
+     * Without the service, a start-up that opens no project writes no report.
+     * The function doesn't write the report now, so a project that opens later still writes the report of its start-up.
+     */
+    private fun ensureStartUpReportIsWritten() {
+      if (System.getProperty("idea.log.perf.stats.file").isNullOrEmpty()) {
+        return
+      }
+
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+        serviceAsync<StartUpPerformanceService>()
       }
     }
 
