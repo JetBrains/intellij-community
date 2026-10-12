@@ -2577,7 +2577,7 @@ open class FileEditorManagerImpl(
 
     for (tab in tabs) {
       val composite = tab.composite
-      splitters.afterFileOpen(file = composite.file)
+      window.owner.afterFileOpen(file = composite.file)
       selectionHistory.addRecord(composite.file to window)
 
       composite.coroutineScope.launch {
