@@ -5,10 +5,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
+
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 
 /**
  * Special editor-related wrapper for {@link CompletableFuture}.
@@ -52,10 +53,8 @@ public class EditorOpenFuture<T> extends CompletableFuture<T> {
       try {
         action.accept(value);
       }
-      catch (CancellationException e) {
-        throw e;
-      }
       catch (Throwable e) {
+        rethrowControlFlowException(e);
         LOG.error(e);
         throw e;
       }
