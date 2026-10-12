@@ -91,6 +91,20 @@ class KotlinGrazieSupportTest28 : GrazieTestBase() {
         """)
     }
 
+    fun `test meaningful single suggestion in escaped identifier`() {
+        myFixture.configureByText("a.kt", """
+            fun `test no <TYPO descr="Typo: In word 'typpo'">typpo</TYPO> around path <TYPO descr="Typo: In word 'typpo'">ty<caret>ppo</TYPO>`() {
+            }
+        """)
+        myFixture.checkHighlighting()
+        val intention = myFixture.findSingleIntention("Typo: Rename to 'test no typpo around path typo'")
+        myFixture.launchAction(intention)
+        myFixture.checkResult("""
+            fun `test no typpo around path typo`() {
+            }
+        """)
+    }
+
     fun `test escape sequences in string literals`() {
         myFixture.configureByText("a.kt", """
             val value2 = "class\nexpected 1\ttypo: 2"

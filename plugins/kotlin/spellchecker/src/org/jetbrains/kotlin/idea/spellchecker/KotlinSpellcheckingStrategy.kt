@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.spellchecker
 
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
@@ -60,4 +61,14 @@ internal class KotlinSpellcheckingStrategy : SpellcheckingStrategy(), DumbAware 
     }
 
     override fun useTextLevelSpellchecking(): Boolean = Registry.`is`("spellchecker.grazie.enabled", false)
+
+    override fun getRenameIdentifierRange(nameIdentifier: PsiElement): TextRange? {
+        val text = nameIdentifier.text
+        val textRange = nameIdentifier.textRange
+        return if (text.length > 1 && text.startsWith('`') && text.endsWith('`')) {
+            TextRange.create(textRange.startOffset + 1, textRange.endOffset - 1)
+        } else {
+            textRange
+        }
+    }
 }
