@@ -1191,7 +1191,8 @@ object MavenUtil {
       return Path.of(forcedM2Home)
     }
 
-    val api = if (descriptor == null || descriptor is LocalEelDescriptor) localEel else descriptor.toEelApiBlocking()
+    // `resolveM2Dir` of no API resolves the local directory, so the local Eel is created only for a repository named by the settings
+    val api = if (descriptor == null || descriptor is LocalEelDescriptor) null else descriptor.toEelApiBlocking()
     val m2DirPath = api.resolveM2Dir()
     val settingsPath: Path = m2DirPath.resolve(SETTINGS_XML)
     val defaultRepo = m2DirPath.resolve(REPOSITORY_DIR)
@@ -1201,7 +1202,7 @@ object MavenUtil {
         repoPath.contains($$"${")) { //no property resolution for JPS projects
       return defaultRepo
     }
-    return api.fs.getPath(repoPath).asNioPath()
+    return (api ?: localEel).fs.getPath(repoPath).asNioPath()
   }
 
   @JvmStatic

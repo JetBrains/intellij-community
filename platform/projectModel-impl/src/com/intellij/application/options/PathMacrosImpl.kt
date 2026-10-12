@@ -187,8 +187,12 @@ open class PathMacrosImpl(
     val newMacros = linkedMapOf<String, String>()
     // register first because may be overridden by user
     val newLegacyMacros = HashMap(legacyMacros)
+    val storedMacroNames = getStoredMacroNames(element)
     EP_NAME.forEachExtensionSafe { contributor ->
-      contributor.registerPathMacros(newMacros, newLegacyMacros)
+      // the stored values override the registered ones, so a contributor that names its macros is not asked for stored ones
+      if (contributor !is NamedPathMacroContributor || !storedMacroNames.containsAll(contributor.macroNames)) {
+        contributor.registerPathMacros(newMacros, newLegacyMacros)
+      }
     }
 
     for (macro in element.getChildren(PathVariablesSerializer.MACRO_TAG)) {
@@ -232,6 +236,20 @@ open class PathMacrosImpl(
     LOG.info("Loaded path macros: $macros") //temporary added to debug IDEA-256482; LOG.debug cannot be used due to IDEA-256647
   }
 
+  /**
+   * Returns the names of the macros of [element] that override the registered values, in the way [loadState] reads them.
+   */
+  private fun getStoredMacroNames(element: Element): Set<String> {
+    val result = HashSet<String>()
+    for (macro in element.getChildren(PathVariablesSerializer.MACRO_TAG)) {
+      val name = macro.getAttributeValue(PathVariablesSerializer.NAME_ATTRIBUTE) ?: continue
+      if (macro.getAttributeValue(PathVariablesSerializer.VALUE_ATTRIBUTE) != null && !SYSTEM_MACROS.contains(name)) {
+        result.add(name)
+      }
+    }
+    return result
+  }
+
   fun addMacroReplacements(result: ReplacePathToMacroMap) {
     for ((name, value) in macros) {
       result.addMacroReplacement(value, name)
@@ -247,4 +265,14 @@ open class PathMacrosImpl(
       result.addMacroExpand(key, value)
     }
   }
+}
+
+/**
+ * A [PathMacroContributor] that names the macros it registers.
+ * [PathMacrosImpl] does not ask it when `path.macros.xml` stores all of them, because the stored values override the registered ones.
+ * A contributor that computes its values from the environment saves this work at every start after the first one.
+ */
+@ApiStatus.Internal
+interface NamedPathMacroContributor : PathMacroContributor {
+  val macroNames: Collection<String>
 }
