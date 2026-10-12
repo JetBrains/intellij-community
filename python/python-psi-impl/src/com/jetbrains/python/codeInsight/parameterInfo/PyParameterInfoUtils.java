@@ -44,14 +44,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class PyParameterInfoUtils {
+
+  private static final Pattern SYNTHETIC_POSITIONAL_NAME = Pattern.compile("__p\\d+");
 
   /**
    * Matches a parameter by its PSI, or by identity when it has no PSI.
@@ -118,6 +123,12 @@ public final class PyParameterInfoUtils {
                                                                   final @NotNull Map<Integer, EnumSet<ParameterFlag>> hintFlags,
                                                                   @NotNull TypeEvalContext context) {
     final int[] currentParameterIndex = new int[]{0};
+    final int[] parameterPosition = new int[]{0};
+    final Set<String> usedNames = StreamEx.of(parameters)
+      .remove(PyParameterInfoUtils::hasSyntheticName)
+      .map(PyCallableParameter::getName)
+      .nonNull()
+      .toCollection(HashSet::new);
     final List<ParameterDescription> parameterDescriptions = new ArrayList<>();
     final Map<PyParameter, PyCallableParameter> parameterMap = StreamEx.of(parameters)
       .filter(p -> p.getParameter() != null)
@@ -171,8 +182,9 @@ public final class PyParameterInfoUtils {
           indexToNamedParameter.put(currentParameterIndex[0], parameter);
           final StringBuilder stringBuilder = new StringBuilder();
           final String name = parameter.getName();
-          ParameterDescription parameterDescription =
-            new ParameterDescription(name != null ? name : ParamHelper.getNameInSignature(parameter), "", last);
+          final String syntheticName = hasSyntheticName(parameter) ? getSyntheticName(parameter, parameterPosition[0], usedNames) : null;
+          parameterPosition[0]++;
+          ParameterDescription parameterDescription = new ParameterDescription(syntheticName != null ? syntheticName : name, "", last);
           if (parameter.getParameter() instanceof PyNamedParameter) {
             final String annotation = ((PyNamedParameter)parameter.getParameter()).getAnnotationValue();
             if (annotation != null) {
@@ -181,8 +193,12 @@ public final class PyParameterInfoUtils {
               parameterDescription.setAnnotation(last ? annotationText : (annotationText + ", "));
             }
           }
-          stringBuilder.append(parameter.getPresentableText(true, context, EnumSet.of(PyTypeRendererFeature.TYPE_VAR_BOUNDS),
-                                                             type -> isAnyOrUnknown(type) || type instanceof PyStructuralType));
+          String presentableText = parameter.getPresentableText(true, context, EnumSet.of(PyTypeRendererFeature.TYPE_VAR_BOUNDS),
+                                                                type -> isAnyOrUnknown(type) || type instanceof PyStructuralType);
+          if (syntheticName != null) {
+            presentableText = replaceNameInSignature(presentableText, parameter, syntheticName);
+          }
+          stringBuilder.append(presentableText);
           if (!last) stringBuilder.append(", ");
           final int hintIndex = parameterDescriptions.size();
           parameterToHintIndex.put(parameter, hintIndex);
@@ -194,6 +210,57 @@ public final class PyParameterInfoUtils {
       }
     );
     return parameterDescriptions;
+  }
+
+  /**
+   * Tells if parameter info shows a synthetic name for the parameter.
+   * This is true for a parameter without a name, for example a parameter of {@code Callable[[int, str], None]}.
+   * It is also true for an expanded tuple element, which has no PSI and a {@code __p<i>} name
+   * from {@link com.jetbrains.python.psi.types.PyUnpackedTupleType#asCallableParameters()}.
+   */
+  private static boolean hasSyntheticName(@NotNull PyCallableParameter parameter) {
+    final String name = parameter.getName();
+    if (name == null) return true;
+    return parameter.getParameter() == null &&
+           !parameter.isPositionalContainer() &&
+           !parameter.isKeywordContainer() &&
+           SYNTHETIC_POSITIONAL_NAME.matcher(name).matches();
+  }
+
+  /**
+   * Returns a synthetic name for the parameter.
+   * <p>
+   * A positional parameter gets {@code __p<i>}, where {@code i} is its 0-based position among the shown parameters.
+   * If a parameter with a real name already has this name, {@code i} goes up to the next free number.
+   * A positional container gets {@code __args}, and a keyword container gets {@code __kwargs}.
+   * The new name goes into {@code usedNames}.
+   */
+  private static @NotNull String getSyntheticName(@NotNull PyCallableParameter parameter, int position, @NotNull Set<String> usedNames) {
+    String name;
+    if (parameter.isPositionalContainer()) {
+      name = "__args";
+    }
+    else if (parameter.isKeywordContainer()) {
+      name = "__kwargs";
+    }
+    else {
+      int index = position;
+      while (usedNames.contains("__p" + index)) {
+        index++;
+      }
+      name = "__p" + index;
+    }
+    usedNames.add(name);
+    return name;
+  }
+
+  private static @NotNull String replaceNameInSignature(@NotNull String presentableText,
+                                                        @NotNull PyCallableParameter parameter,
+                                                        @NotNull String name) {
+    final String nameInSignature = ParamHelper.getNameInSignature(parameter);
+    if (!presentableText.startsWith(nameInSignature)) return presentableText;
+    final String prefix = parameter.isPositionalContainer() ? "*" : parameter.isKeywordContainer() ? "**" : "";
+    return prefix + name + presentableText.substring(nameInSignature.length());
   }
 
   public static void highlightParameter(final @NotNull PyCallableParameter parameter,
