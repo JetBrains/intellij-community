@@ -16,7 +16,6 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
