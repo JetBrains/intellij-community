@@ -11,12 +11,8 @@ import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
@@ -36,6 +32,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.java.workspace.files.JavaSourceFiles.findResourceFileByRelativePath;
+import static com.intellij.workspaceModel.ide.legacyBridge.ModuleBridges.findSnapshotModuleEntity;
 
 public final class PluginModuleType extends ModuleType<JavaModuleBuilder> {
 
@@ -76,26 +75,12 @@ public final class PluginModuleType extends ModuleType<JavaModuleBuilder> {
   public static @Nullable XmlFile getPluginXml(Module module) {
     if (module == null) return null;
     if (!isOfType(module)) {
-      for (final ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
-        for (final SourceFolder folder : entry.getSourceFolders(JavaModuleSourceRootTypes.PRODUCTION)) {
-          final VirtualFile file = folder.getFile();
-          if (file == null) continue;
-
-          final String packagePrefix = folder.getPackagePrefix();
-          final String prefixPath = packagePrefix.isEmpty() ? "" :
-                                    packagePrefix.replace('.', '/') + '/';
-
-          final VirtualFile pluginXmlVF = findPossibleModuleXmlDescriptor(prefixPath, PluginDescriptorConstants.PLUGIN_XML_PATH, file);
-          if (pluginXmlVF != null) {
-            final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(pluginXmlVF);
-            if (psiFile instanceof XmlFile) {
-              return (XmlFile)psiFile;
-            }
-          }
-        }
-      }
-
-      return null;
+      final ModuleEntity moduleEntity = findSnapshotModuleEntity(module);
+      if (moduleEntity == null) return null;
+      final VirtualFile pluginXmlVF = findResourceFileByRelativePath(moduleEntity, PluginDescriptorConstants.PLUGIN_XML_PATH, JavaModuleSourceRootTypes.PRODUCTION);
+      if (pluginXmlVF == null) return null;
+      final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(pluginXmlVF);
+      return psiFile instanceof XmlFile ? (XmlFile)psiFile : null;
     }
 
     final PluginBuildConfiguration buildConfiguration = PluginBuildConfiguration.getInstance(module);
@@ -107,24 +92,14 @@ public final class PluginModuleType extends ModuleType<JavaModuleBuilder> {
   @ApiStatus.Experimental
   public static @Nullable XmlFile getContentModuleDescriptorXml(@Nullable Module module) {
     if (module == null) return null;
-    for (final ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
-      for (final SourceFolder folder : entry.getSourceFolders(JavaResourceRootType.RESOURCE)) {
-        final VirtualFile folderVirtualFile = folder.getFile();
-        if (folderVirtualFile == null) continue;
-
-        final String packagePrefix = folder.getPackagePrefix();
-        final String prefixPath = packagePrefix.isEmpty() ? "" :
-                                  packagePrefix.replace('.', '/') + '/';
-        final String moduleNameFromProjectModel = module.getName();
-
-        for (final String xmlDescriptorNameCandidate : computePossibleXmlDescriptorNames(moduleNameFromProjectModel)) {
-          var effectiveModuleDescriptorFile = findPossibleModuleXmlDescriptor(prefixPath, xmlDescriptorNameCandidate, folderVirtualFile);
-          if (effectiveModuleDescriptorFile != null) {
-            final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(effectiveModuleDescriptorFile);
-            if (psiFile instanceof XmlFile) {
-              return (XmlFile)psiFile;
-            }
-          }
+    final ModuleEntity moduleEntity = findSnapshotModuleEntity(module);
+    if (moduleEntity == null) return null;
+    for (final String xmlDescriptorNameCandidate : computePossibleXmlDescriptorNames(module.getName())) {
+      var effectiveModuleDescriptorFile = findResourceFileByRelativePath(moduleEntity, xmlDescriptorNameCandidate, Set.of(JavaResourceRootType.RESOURCE));
+      if (effectiveModuleDescriptorFile != null) {
+        final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(effectiveModuleDescriptorFile);
+        if (psiFile instanceof XmlFile) {
+          return (XmlFile)psiFile;
         }
       }
     }
@@ -137,10 +112,6 @@ public final class PluginModuleType extends ModuleType<JavaModuleBuilder> {
       moduleName.replace(".main", "") + ".xml",
       moduleName.replace("_", ".").replace(".main", "") + ".xml"
     );
-  }
-
-  private static @Nullable VirtualFile findPossibleModuleXmlDescriptor(String prefixPath, String fileName, VirtualFile parentDirectory) {
-    return parentDirectory.findFileByRelativePath(prefixPath + fileName);
   }
 
   public static boolean isPluginModuleOrDependency(@Nullable Module module) {

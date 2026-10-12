@@ -32,5 +32,6 @@
     <orderEntry type="module" module-name="intellij.devkit.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.java.backend" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
   </component>
 </module>

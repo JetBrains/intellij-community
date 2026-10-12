@@ -22,6 +22,8 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.util.PathUtil
+import org.jetbrains.jps.model.java.JavaResourceRootProperties
+import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.io.File
 
 /**
@@ -69,7 +71,11 @@ abstract class PluginXmlRegistrationCheckInspectionTestBase : JavaCodeInsightFix
   protected open fun configureLanguageRuntime(module: Module) {
   }
 
-  protected fun doTestRegistrationCheck() {
+  /**
+   * When [dependencyDescriptorInSingleFileRoot] is `true`, the descriptor of `anotherModule` is not in a `META-INF` directory.
+   * It is a single-file resource root with the `META-INF` output path.
+   */
+  protected fun doTestRegistrationCheck(dependencyDescriptorInSingleFileRoot: Boolean = false) {
     val anotherModule = addModule("anotherModule", "../anotherModuleDir")
     ModuleRootModificationUtil.addModuleLibrary(anotherModule, libraryUrlOf(AnAction::class.java))
     ModuleRootModificationUtil.addModuleLibrary(anotherModule, libraryUrlOf(LanguageExtensionPoint::class.java))
@@ -95,8 +101,13 @@ abstract class PluginXmlRegistrationCheckInspectionTestBase : JavaCodeInsightFix
       copySourceFile("module", name, "")
     }
 
-    val dependencyModulePlugin = copyAndConfigure("registrationCheck/dependencyModule/DependencyModulePlugin.xml",
-                                                  "../anotherModuleDir/META-INF/DependencyModulePlugin.xml")
+    val dependencyModulePluginPath =
+      if (dependencyDescriptorInSingleFileRoot) "../anotherModuleDir/descriptor/DependencyModulePlugin.xml"
+      else "../anotherModuleDir/META-INF/DependencyModulePlugin.xml"
+    val dependencyModulePlugin = copyAndConfigure("registrationCheck/dependencyModule/DependencyModulePlugin.xml", dependencyModulePluginPath)
+    if (dependencyDescriptorInSingleFileRoot) {
+      PsiTestUtil.addSourceRoot(anotherModule, dependencyModulePlugin, JavaResourceRootType.RESOURCE, JavaResourceRootProperties("META-INF", false))
+    }
     val mainModulePlugin = copyAndConfigure("registrationCheck/module/MainModulePlugin.xml",
                                             "META-INF/MainModulePlugin.xml")
 
@@ -113,7 +124,7 @@ abstract class PluginXmlRegistrationCheckInspectionTestBase : JavaCodeInsightFix
       myFixture.launchAction(quickFixes[0])
     }
 
-    myFixture.checkResultByFile("../anotherModuleDir/META-INF/DependencyModulePlugin.xml",
+    myFixture.checkResultByFile(dependencyModulePluginPath,
                                 "registrationCheck/dependencyModule/DependencyModulePlugin_after.xml",
                                 true)
     myFixture.checkResultByFile("META-INF/MainModulePlugin.xml",

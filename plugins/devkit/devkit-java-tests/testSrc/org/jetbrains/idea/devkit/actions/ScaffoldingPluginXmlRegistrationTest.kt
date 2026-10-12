@@ -85,6 +85,23 @@ internal class ScaffoldingPluginXmlRegistrationTest {
   }
 
   @Test
+  fun `add module to plugin xml inferred from sibling content module with descriptor in single-file resource root`() {
+    runBlocking {
+      val root = projectModel.baseProjectDir.newVirtualDirectory("content-root")
+      val module = createModuleRoot("existing.content", "content-root/existing.content")
+      val descriptor = createFile("content-root/existing.content/resources/existing.content.xml", contentModuleXmlText())
+      PsiTestUtil.addSourceRoot(module, descriptor, JavaResourceRootType.RESOURCE)
+      val ownerPluginXml = createPluginModule("owner.plugin", "owner.plugin", pluginXmlText("existing.content"))
+      waitUntilIndexed()
+      waitUntilEnclosingPluginXmlIsResolved(root)
+
+      addModuleToEnclosingPluginIfPresentForTests(project, root, "new.content", SHARED_TEMPLATE_NAME)
+
+      assertThat(loadPsiText(ownerPluginXml)).contains("""name="new.content"""")
+    }
+  }
+
+  @Test
   fun `skip module registration when sibling content module has multiple owners`() {
     runBlocking {
       val root = projectModel.baseProjectDir.newVirtualDirectory("content-root")

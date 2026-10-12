@@ -6,16 +6,18 @@ import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.HyperlinkInfoBase
 import com.intellij.execution.filters.HyperlinkInfoFactory
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
+import com.intellij.java.workspace.files.findResourceFilesInDirectory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.workspaceModel.ide.legacyBridge.findSnapshotModuleEntity
+import org.jetbrains.idea.devkit.module.PluginDescriptorConstants.META_DATA
 import org.jetbrains.jps.model.java.JavaResourceRootType
 
 internal val ModulePattern = """(intellij|kotlin|fleet|android)(\.[-\w]+)+""".toRegex()
@@ -94,10 +96,9 @@ private fun navigateToFile(project: Project, file: VirtualFile) {
 
 private fun findDescriptorFiles(module: Module): Sequence<VirtualFile> {
   return sequence {
-    val rootManager = ModuleRootManager.getInstance(module)
-    for (resourceRoot in rootManager.getSourceRoots(JavaResourceRootType.RESOURCE)) {
-      resourceRoot.findFileByRelativePath("META-INF/plugin.xml")?.let { yield(it) }
-      resourceRoot.findChild("${module.name}.xml")?.let { yield(it) }
-    }
+    val moduleEntity = module.findSnapshotModuleEntity() ?: return@sequence
+    val rootTypes = setOf(JavaResourceRootType.RESOURCE)
+    yieldAll(moduleEntity.findResourceFilesInDirectory(META_DATA.directoryPath, rootTypes).filter { it.name == META_DATA.fileName })
+    yieldAll(moduleEntity.findResourceFilesInDirectory("", rootTypes).filter { it.name == "${module.name}.xml" })
   }
 }

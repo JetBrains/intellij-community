@@ -12,6 +12,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.ObjectArrayAssert
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.module.PluginModuleType
+import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaResourceRootType
 
 class PluginXmlContentModuleCompletionTest : JavaCodeInsightFixtureTestCase() {
@@ -174,6 +175,75 @@ class PluginXmlContentModuleCompletionTest : JavaCodeInsightFixtureTestCase() {
       )
   }
 
+  fun `test should complete modules in plugin content from single-file resource roots`() {
+    val module = myFixture.addModule("com.example.module", "com.example.module")
+    myFixture.addSingleFileResourceRoot(
+      module,
+      "com.example.module/resources/com.example.module.xml",
+      """
+      <idea-plugin>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.addSingleFileResourceRoot(
+      module,
+      "com.example.module/resources/com.example.module.sub.xml",
+      """
+      <idea-plugin>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.addSingleFileResourceRoot(
+      module,
+      "com.example.module/resources/nested/com.example.module.nested.xml",
+      """
+      <idea-plugin>
+      </idea-plugin>
+      """.trimIndent(),
+      relativeOutputPath = "nested")
+
+    myFixture.assertThatCompletion(
+      "com.example.plugin/src/main/resources/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <content>
+          <module name="<caret>"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent()
+    ).extracting<String> { it.lookupString }
+      .containsExactlyInAnyOrder(
+        "com.example.module",
+        "com.example.module/sub"
+      )
+  }
+
+  fun `test should complete modules in plugin content Gradle module structure with single-file resource root`() {
+    myFixture.addModule("SplitPlugin", "split-plugin")
+    myFixture.addModule("SplitPlugin.frontend", "split-plugin/frontend")
+    myFixture.addModule("SplitPlugin.main", "split-plugin/src/main")
+    val frontendMainModule = myFixture.addModule("SplitPlugin.frontend.main", "split-plugin/frontend/src/main")
+    myFixture.addSingleFileResourceRoot(
+      frontendMainModule,
+      "split-plugin/frontend/src/main/resources/SplitPlugin.frontend.xml",
+      """
+      <idea-plugin>
+      </idea-plugin>
+      """.trimIndent())
+
+    myFixture.assertThatCompletion(
+      "split-plugin/src/main/resources/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.splitplugin</id>
+        <content>
+          <module name="<caret>"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent()
+    ).extracting<String> { it.lookupString }
+      .containsExactlyInAnyOrder("SplitPlugin.frontend")
+  }
+
   private fun CodeInsightTestFixture.addModuleWithPluginDescriptor(
     moduleName: String,
     pluginDescriptorFilePath: String,
@@ -196,6 +266,17 @@ class PluginXmlContentModuleCompletionTest : JavaCodeInsightFixtureTestCase() {
 
   private fun CodeInsightTestFixture.addXmlFile(relativePath: String, @Language("XML") fileText: String): PsiFile {
     return addFileToProject(relativePath, fileText)
+  }
+
+  private fun CodeInsightTestFixture.addSingleFileResourceRoot(
+    module: Module,
+    relativePath: String,
+    @Language("XML") fileText: String,
+    relativeOutputPath: String = "",
+  ): PsiFile {
+    return addXmlFile(relativePath, fileText).also {
+      PsiTestUtil.addSourceRoot(module, it.virtualFile, JavaResourceRootType.RESOURCE, JavaResourceRootProperties(relativeOutputPath, false))
+    }
   }
 
   private fun CodeInsightTestFixture.assertThatCompletion(

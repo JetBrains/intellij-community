@@ -5,6 +5,8 @@ import com.intellij.devkit.core.icons.DevkitCoreIcons
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel
 import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil
+import com.intellij.java.workspace.files.findResourceFileByRelativePath
+import com.intellij.java.workspace.files.findResourceFilesInDirectory
 import com.intellij.lang.LangBundle
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -31,6 +33,8 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.xml.XmlFile
@@ -40,6 +44,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.util.Consumer
 import com.intellij.util.ui.JBUI
+import com.intellij.workspaceModel.ide.legacyBridge.findSnapshotModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -48,6 +53,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.devkit.dom.ContentDescriptor
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
+import org.jetbrains.idea.devkit.module.PluginDescriptorConstants
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -803,14 +809,10 @@ private fun findPluginBySiblingModules(
 
 private fun findModuleDescriptorFiles(project: Project, module: com.intellij.openapi.module.Module): Sequence<XmlFile> {
   val psiManager = PsiManager.getInstance(project)
-  return ModuleRootManager.getInstance(module)
-    .getSourceRoots(JavaModuleSourceRootTypes.RESOURCES)
-    .asSequence()
-    .flatMap { resourceRoot ->
-      resourceRoot.children
-        .asSequence()
-        .filter { !it.isDirectory && it.extension == "xml" }
-    }
+  val moduleEntity = module.findSnapshotModuleEntity() ?: return emptySequence()
+  return moduleEntity
+    .findResourceFilesInDirectory(relativePath = "", JavaModuleSourceRootTypes.RESOURCES)
+    .filter { it.extension == "xml" }
     .mapNotNull { psiManager.findFile(it) as? XmlFile }
     .filter { DescriptorUtil.isPluginModuleFile(it) }
 }
@@ -838,20 +840,12 @@ private fun XmlFile.toContentModuleRegistrationTarget(): ContentModuleRegistrati
 }
 
 private fun findXmlDescriptor(project: Project, moduleName: String): XmlFile? {
-  val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
+  val moduleEntity = project.workspaceModel.currentSnapshot.resolve(ModuleId(moduleName)) ?: return null
   val psiManager = PsiManager.getInstance(project)
-  for (sourceRoot in ModuleRootManager.getInstance(module).getSourceRoots(false)) {
-    val moduleXml = sourceRoot.findChild("$moduleName.xml")
-    if (moduleXml != null && !moduleXml.isDirectory) {
-      val psiFile = psiManager.findFile(moduleXml)
-      if (psiFile is XmlFile) return psiFile
-    }
-
-    val pluginXml = sourceRoot.findChild("META-INF")?.findChild("plugin.xml")
-    if (pluginXml != null && !pluginXml.isDirectory) {
-      val psiFile = psiManager.findFile(pluginXml)
-      if (psiFile is XmlFile) return psiFile
-    }
+  for (outputPath in listOf("$moduleName.xml", PluginDescriptorConstants.PLUGIN_XML_PATH)) {
+    val descriptor = moduleEntity.findResourceFileByRelativePath(outputPath) ?: continue
+    val psiFile = psiManager.findFile(descriptor)
+    if (psiFile is XmlFile) return psiFile
   }
   return null
 }
