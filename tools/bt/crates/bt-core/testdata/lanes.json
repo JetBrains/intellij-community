@@ -4,13 +4,60 @@
   "authoredSuitesFile": "plugins/air/tests/integration/flow-profiles/resources/authored-suites.json",
   "specDir": "plugins/air/spec",
   "integrationRoot": "//plugins/air/tests/integration",
-  "integrationCategoryTags": [
-    "air-integration-ui",
-    "air-integration-headless"
-  ],
-  "propertyTag": "air-property",
-  "dedicatedSuiteTags": [
-    "air-property"
+  "tags": [
+    {
+      "name": "air-unit",
+      "axis": "category",
+      "description": "An IDE-free test target. A broad run such as `BT --lane fast` runs it, unless the target is also `manual`."
+    },
+    {
+      "name": "air-integration-ui",
+      "axis": "category",
+      "excludedFromBroadRuns": "ci",
+      "description": "A target that launches a real IDE, so it needs a GUI session. The CI `testTagFilters` excludes it."
+    },
+    {
+      "name": "air-integration-headless",
+      "axis": "category",
+      "excludedFromBroadRuns": "ci",
+      "description": "A target that needs a real agent CLI, credentials, or the network. The CI `testTagFilters` excludes it."
+    },
+    {
+      "name": "air-property",
+      "axis": "category",
+      "excludedFromBroadRuns": "dedicated-suite",
+      "description": "A jetCheck property suite under tests/property. `BT --lane property` and a CI configuration of its own run it."
+    },
+    {
+      "name": "air-integration-ui-flow",
+      "axis": "lane",
+      "category": "air-integration-ui",
+      "description": "The generated UI-flow suites, `ui_test`. `BT --lane ui` selects it."
+    },
+    {
+      "name": "air-integration-gui-chat",
+      "axis": "lane",
+      "category": "air-integration-ui",
+      "description": "The ACP GUI-chat suites, `gui-chat_test`. `BT --lane gui-chat` selects it."
+    },
+    {
+      "name": "air-integration-ui-real",
+      "axis": "lane",
+      "category": "air-integration-ui",
+      "description": "The real-CLI flow suites, `ui-real_test`. `BT --lane ui-real` selects it."
+    },
+    {
+      "name": "air-integration-ui-live",
+      "axis": "lane",
+      "category": "air-integration-ui",
+      "description": "The live suites with real agents and real accounts, `ui-live_test`. `BT --lane ui-live` selects it."
+    },
+    {
+      "name": "air-integration-ui-perf",
+      "axis": "lane",
+      "category": "air-integration-ui",
+      "description": "The performance tests on the product heap, `ui-perf_test`. `BT --lane ui-perf` selects it."
+    }
   ],
   "excludedTestLibs": [
     "//plugins/air/frontend/llm:air-frontend-llm-tests_test_lib",
