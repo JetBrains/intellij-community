@@ -4,17 +4,81 @@ package com.intellij.codeInsight;
 import com.intellij.PathJavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
-public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActionTestCase {
-  @Override
-  protected @NotNull String getTestDataPath() {
-    return PathJavaTestUtil.getCommunityJavaTestDataPath();
+import java.nio.file.Path;
+
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.moduleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+
+public abstract class AbstractBasicJavaEnterActionTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<Path> pathFixture = tempPathFixture();
+  @SuppressWarnings("unused")
+  private final TestFixture<Module> moduleFixture = moduleFixture(projectFixture, pathFixture, true);
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightFixture(projectFixture, pathFixture);
+
+  private String testMethodName;
+
+  @BeforeEach
+  void setUpEnterActionTest(TestInfo testInfo) {
+    codeInsightFixture.get().setTestDataPath(PathJavaTestUtil.getCommunityJavaTestDataPath());
+    testMethodName = testInfo.getTestMethod().orElseThrow().getName();
   }
 
+  protected @NotNull CodeInsightTestFixture getFixture() {
+    return codeInsightFixture.get();
+  }
+
+  protected @NotNull Project getProject() {
+    return projectFixture.get();
+  }
+
+  protected @NotNull CodeStyleSettings getCodeStyleSettings() {
+    return CodeStyle.getSettings(getProject());
+  }
+
+  protected void configureByFile(@NonNls @NotNull String filePath) {
+    getFixture().configureByFile(filePath);
+  }
+
+  protected void checkResultByFile(@NonNls @NotNull String expectedFilePath) {
+    getFixture().checkResultByFile(expectedFilePath);
+  }
+
+  protected void checkResultByFile(@NonNls @NotNull String expectedFilePath, boolean ignoreTrailingSpaces) {
+    getFixture().checkResultByFile(expectedFilePath, ignoreTrailingSpaces);
+  }
+
+  protected void performAction() {
+    EnterActionTestUtil.performAction(getFixture());
+  }
+
+  protected void doTextTest(@NonNls @NotNull String ext, @NonNls @NotNull String before, @NonNls @NotNull String after) {
+    EnterActionTestUtil.doTextTest(getFixture(), ext, before, after);
+  }
+
+  protected void doTest(@NonNls @NotNull String ext) {
+    EnterActionTestUtil.doTest(getFixture(), testMethodName, ext);
+  }
+
+  @Test
   public void testAfterLbrace1() {
     String path = "/codeInsight/enterAction/afterLbrace/";
 
@@ -23,6 +87,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     checkResultByFile(path + "After1.java");
   }
 
+  @Test
   public void testAfterLbrace2() {
     String path = "/codeInsight/enterAction/afterLbrace/";
 
@@ -31,6 +96,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     checkResultByFile(path + "After2.java");
   }
 
+  @Test
   public void testLineCommentSCR13247() {
     String path = "/codeInsight/enterAction/lineComment/";
 
@@ -39,6 +105,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     checkResultByFile(path + "SCR13247_after.java");
   }
 
+  @Test
   public void testLineCommentAtLineEnd() {
     String path = "/codeInsight/enterAction/lineComment/";
 
@@ -47,6 +114,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     checkResultByFile(path + "AtLineEnd_after.java");
   }
 
+  @Test
   public void testLineCommentBeforeAnother() {
     String path = "/codeInsight/enterAction/lineComment/";
 
@@ -55,6 +123,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     checkResultByFile(path + "BeforeAnother_after.java");
   }
 
+  @Test
   public void testLineCommentBeforeAnotherWithSpace() {
     String path = "/codeInsight/enterAction/lineComment/";
 
@@ -64,6 +133,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testWithinBraces() {
     String path = "/codeInsight/enterAction/afterLbrace/";
 
@@ -72,6 +142,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     checkResultByFile(path + "WithinBraces_after.java");
   }
 
+  @Test
   public void testWithinBracesWithSpaceBeforeCaret() {
     String path = "/codeInsight/enterAction/afterLbrace/";
 
@@ -81,6 +152,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testAfterLbraceWithStatement1() {
     String path = "/codeInsight/enterAction/afterLbrace/";
 
@@ -89,6 +161,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     checkResultByFile(path + "LbraceWithStatement1_after.java");
   }
 
+  @Test
   public void testAfterLbraceWithSemicolon() {
     String path = "/codeInsight/enterAction/afterLbrace/";
 
@@ -97,6 +170,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     checkResultByFile(path + "LbraceWithSemicolon_after.java");
   }
 
+  @Test
   public void testAfterLbraceWithRParen() {
     String path = "/codeInsight/enterAction/afterLbrace/";
 
@@ -105,12 +179,14 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     checkResultByFile(path + "LbraceWithRParen_after.java");
   }
 
+  @Test
   public void testBug1() {
     configureByFile("/codeInsight/enterAction/bug1/Before.java");
     performAction();
     checkResultByFile("/codeInsight/enterAction/bug1/After.java");
   }
 
+  @Test
   public void testNoCloseComment() {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     boolean old = settings.CLOSE_COMMENT_ON_ENTER;
@@ -127,6 +203,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testNoInsertBrace() {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     boolean old = settings.INSERT_BRACE_ON_ENTER;
@@ -142,6 +219,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     }
   }
 
+  @Test
   public void testNoSmartIndent() {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     boolean old = settings.SMART_INDENT_ON_ENTER;
@@ -157,6 +235,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     }
   }
 
+  @Test
   public void testNoSmartIndentInsertBrace() {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     boolean old = settings.SMART_INDENT_ON_ENTER;
@@ -173,20 +252,24 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testBeforeElse() {
     configureByFile("/codeInsight/enterAction/BeforeElse_before.java");
     performAction();
     checkResultByFile("/codeInsight/enterAction/BeforeElse_after.java");
   }
 
+  @Test
   public void testSimpleEnter() throws Exception {
     doTest();
   }
 
+  @Test
   public void testSimpleEnter2() throws Exception {
     doTest();
   }
 
+  @Test
   public void testSCR1647() {
     CodeStyleSettings settings = getCodeStyleSettings();
     final CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptions(JavaFileType.INSTANCE);
@@ -196,26 +279,31 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     options.TAB_SIZE = 2;
     configureByFile("/codeInsight/enterAction/SCR1647.java");
     performAction();
-    checkResultByFile(null, "/codeInsight/enterAction/SCR1647_after.java", false);
+    checkResultByFile("/codeInsight/enterAction/SCR1647_after.java");
   }
 
+  @Test
   public void testComment() throws Exception {
     doTest();
   }
 
+  @Test
   public void testSaveSpaceAfter() throws Exception {
     doTest();
   }
 
+  @Test
   public void testEndOfClass() throws Exception {
     doTest();
   }
 
+  @Test
   public void testInsideClassFile() throws Exception {
     doTest();
   }
 
 
+  @Test
   public void testSCR1535() {
     doTextTest("java", """
       /**
@@ -269,6 +357,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  }""");
   }
 
+  @Test
   public void testSCR3006() {
     CodeStyleSettings settings = getCodeStyleSettings();
     settings.getCommonSettings(JavaLanguage.INSTANCE).INDENT_CASE_FROM_SWITCH = false;
@@ -292,6 +381,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  }""");
   }
 
+  @Test
   public void testSCRblabla() {
 
     CodeStyleSettings settings = getCodeStyleSettings();
@@ -319,6 +409,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testSCR1692() {
     doTextTest("java", """
       public class TryFinallyCatch {
@@ -342,6 +433,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  }""");
   }
 
+  @Test
   public void testSCR1698() {
     CodeStyleSettings settings = getCodeStyleSettings();
     settings.getCommonSettings(JavaLanguage.INSTANCE).KEEP_FIRST_COLUMN_COMMENT = false;
@@ -367,6 +459,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  }""");
   }
 
+  @Test
   public void testInsideAnonymousClass() {
     doTextTest("java", """
       class Foo{
@@ -394,6 +487,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  }""");
   }
 
+  @Test
   public void testSCR2238() {
     CodeStyleSettings settings = getCodeStyleSettings();
     settings.getCommonSettings(JavaLanguage.INSTANCE).BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
@@ -510,6 +604,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testEnterAfterSecondAnnotation() {
     doTextTest("java", """
       @A
@@ -521,6 +616,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  class C{}""");
   }
 
+  @Test
   public void testIncompleteBeginOfFile() {
     doTextTest("java",
                """
@@ -534,6 +630,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                          <caret>""");
   }
 
+  @Test
   public void testAtEndOfFile() {
     doTextTest("java",
                """
@@ -550,6 +647,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testLineCommentInBlock() {
     doTextTest("java",
                """
@@ -571,6 +669,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testIDEADEV_28200() {
     doTextTest("java",
                """
@@ -588,6 +687,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  \t}}""");
   }
 
+  @Test
   public void testIndentStatementAfterIf() {
     doTextTest("java",
                """
@@ -606,6 +706,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testAfterTryBlock() {
     doTextTest("java",
                """
@@ -624,6 +725,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testTryCatch() {
     doTextTest("java",
                """
@@ -646,6 +748,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  }""");
   }
 
+  @Test
   public void testEnterBetweenBracesAtJavadoc() {
     // Inspired by IDEA-61221
     doTextTest(
@@ -665,6 +768,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testEnterBetweenNestedJavadocTag() {
     doTextTest(
       "java",
@@ -683,6 +787,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testIndentAfterStartJavadocTag() {
     doTextTest(
       "java",
@@ -700,6 +805,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testEnterAfterEmptyJavadocTagIsNotIndented() {
     // Inspired by IDEA-65031
     doTextTest(
@@ -718,6 +824,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testEnterBetweenJavadocTagsProducesNewLine() {
     doTextTest(
       "java",
@@ -736,6 +843,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testTextBetweenJavadocTagStartAndCaret() {
     doTextTest(
       "java",
@@ -753,6 +861,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testTextBetweenCaretAndJavadocEndTag() {
     doTextTest(
       "java",
@@ -771,6 +880,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testInitBlockAtAnonymousInnerClass() {
     doTextTest(
       "java",
@@ -791,6 +901,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testAfterWrappedNonFinishedMethodCallExpression() {
     // Inspired by IDEA-64989
     doTextTest(
@@ -814,6 +925,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testSecondLineOfJavadocParameter() {
     // Inspired by IDEA-IDEA-70194
     doTextTest(
@@ -840,6 +952,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testSecondLineOfJavadocParameterMarkdown() {
       doTextTest(
         "java",
@@ -859,6 +972,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
       );
     }
 
+  @Test
   public void testBeforeJavadocParameter() {
     // Inspired by IDEA-IDEA-70194
     doTextTest(
@@ -883,6 +997,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testCommentAtFileEnd() {
     doTextTest("java", "/*<caret>", """
       /*
@@ -890,6 +1005,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
        */""");
   }
 
+  @Test
   public void testEnterAfterIfCondition() {
     String before = """
       public class Test {
@@ -910,6 +1026,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     doTextTest("java", before, after);
   }
 
+  @Test
   public void testNoneIndentAfterMethodAnnotation() {
     String before = """
       class Test {
@@ -928,6 +1045,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testEnumWithoutContinuation() {
     doTextTest("java",
                "public <caret>enum X {}",
@@ -935,6 +1053,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                "enum X {}");
   }
 
+  @Test
   public void testEnterInArrayDeclaration() {
     CodeStyleSettings settings = getCodeStyleSettings();
     CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -981,6 +1100,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  }""");
   }
 
+  @Test
   public void testEnterInArrayDeclaration_BeforeRBrace() {
     CodeStyleSettings settings = getCodeStyleSettings();
     CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -1007,6 +1127,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testIdea155683() {
     doTextTest(
       "java",
@@ -1039,6 +1160,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testBeforeBrace() {
     doTextTest(
       "java",
@@ -1062,6 +1184,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testBeforeBrace1() {
     doTextTest(
       "java",
@@ -1089,6 +1212,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testAfterBraceWithCommentBefore() {
     doTextTest(
       "java",
@@ -1123,6 +1247,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testIdea159285() {
     doTextTest(
       "java",
@@ -1158,6 +1283,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testIdea160103() {
     doTextTest(
       "java",
@@ -1187,6 +1313,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testIdea160104() {
     doTextTest(
       "java",
@@ -1212,6 +1339,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testEnterDoesNotGenerateAsteriskInNonCommentContext() {
     doTextTest("java", """
                  import java.util.List;
@@ -1237,6 +1365,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  """);
   }
 
+  @Test
   public void testDontApplyCaseIndentAfterConditionalOperator() {
     doTextTest("java",
                """
@@ -1268,6 +1397,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  }""");
   }
 
+  @Test
   public void testEnterInCaseBlockWithComment() {
     doTextTest("java",
                """
@@ -1302,22 +1432,27 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testTodoInLineComment() {
     doTextTest("java", "// todo some <caret>text", "// todo some \n//  <caret>text");
   }
 
+  @Test
   public void testMultiLineTodoInLineComment() {
     doTextTest("java", "// todo some text\n//  next <caret>line", "// todo some text\n//  next \n//  <caret>line");
   }
 
+  @Test
   public void testTodoInBlockComment() {
     doTextTest("java", "/* todo some <caret>text */", "/* todo some \n    <caret>text */");
   }
 
+  @Test
   public void testMultiLineTodoInBlockComment() {
     doTextTest("java", "/* todo some text\n    next <caret>line */", "/* todo some text\n    next \n    <caret>line */");
   }
 
+  @Test
   public void testNoBraceOnTheWrongPosition() {
     doTextTest(
       "java",
@@ -1333,6 +1468,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testSCR2024() {
     doTextTest("java", """
       class Foo {
@@ -1352,6 +1488,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  }""");
   }
 
+  @Test
   public void testSCR2124() {
     doTextTest("java", """
                  class Foo {
@@ -1370,6 +1507,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  }""");
   }
 
+  @Test
   public void testCStyleCommentCompletion() {
 
     doTextTest("java",
@@ -1391,6 +1529,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  """);
   }
 
+  @Test
   public void testInsideCStyleComment() {
     doTextTest("java",
 
@@ -1414,6 +1553,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  """);
   }
 
+  @Test
   public void testInsideCStyleCommentWithStars() {
     doTextTest("java",
 
@@ -1441,6 +1581,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     doTest("java");
   }
 
+  @Test
   public void testToCodeBlockLambda() {
     doTextTest("java", """
                  class Issue {
@@ -1458,6 +1599,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  }""");
   }
 
+  @Test
   public void testEnter_BetweenChainedMethodCalls() {
     doTextTest("java",
                """
@@ -1483,6 +1625,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  }""");
   }
 
+  @Test
   public void testEnter_BetweenAlignedChainedMethodCalls() {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -1512,6 +1655,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  }""");
   }
 
+  @Test
   public void testEnter_AfterLastChainedCall() {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -1539,6 +1683,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  }""");
   }
 
+  @Test
   public void testEnter_NewArgumentWithTabs() {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -1559,6 +1704,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  ) {}""");
   }
 
+  @Test
   public void testEnter_AfterStatementWithoutBlock() {
     doTextTest("java",
                """
@@ -1620,6 +1766,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  """);
   }
 
+  @Test
   public void testEnter_AfterStatementWithLabel() {
     // as prev
     doTextTest("java",
@@ -1661,6 +1808,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testEnter_NewArgumentWithTabsNoAlign() {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -1682,6 +1830,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                  ) {}""");
   }
 
+  @Test
   public void testIdea179073() {
     doTextTest("java",
                """
@@ -1698,6 +1847,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
                          });""");
   }
 
+  @Test
   public void testIdea187535() {
     doTextTest(
       "java",
@@ -1724,6 +1874,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
         }""");
   }
 
+  @Test
   public void testIdea189059() {
     doTextTest(
       "java",
@@ -1749,6 +1900,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testIdea198767() {
     doTextTest(
       "java",
@@ -1783,6 +1935,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testIdea181263() {
     doTextTest(
       "java",
@@ -1815,6 +1968,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
         }""");
   }
 
+  @Test
   public void testIdea192807() {
     doTextTest(
       "java",
@@ -1835,6 +1989,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
   }
 
 
+  @Test
   public void testIdea163806() {
     doTextTest(
       "java",
@@ -1860,6 +2015,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testIdea205999() {
     doTextTest(
       "java",
@@ -1887,10 +2043,11 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testIdea160629() {
     CodeStyle.doWithTemporarySettings(
       getProject(),
-      getCurrentCodeStyleSettings(),
+      getCodeStyleSettings(),
       settings -> {
         settings.getCommonSettings(JavaLanguage.INSTANCE).DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = true;
         doTextTest(
@@ -1907,6 +2064,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
       });
   }
 
+  @Test
   public void testIdea205888() {
     doTextTest(
       "java",
@@ -1934,6 +2092,7 @@ public abstract class AbstractBasicJavaEnterActionTest extends AbstractEnterActi
     );
   }
 
+  @Test
   public void testIfElseChain() {
     doTextTest(
       "java",
