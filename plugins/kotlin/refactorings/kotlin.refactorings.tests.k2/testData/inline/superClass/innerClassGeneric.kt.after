@@ -1,0 +1,6 @@
+class Child {
+    fun value(value: String): String = value
+    inner class Reader<U>(val extra: U) {
+        fun read(value: String): Pair<String, U> = this@Child.value(value) to extra
+    }
+}

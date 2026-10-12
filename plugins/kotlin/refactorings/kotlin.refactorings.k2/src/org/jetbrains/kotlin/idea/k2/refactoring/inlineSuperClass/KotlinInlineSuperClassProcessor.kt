@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.markElements
 import org.jetbrains.kotlin.idea.k2.refactoring.pushDown.K2PushDownContext
 import org.jetbrains.kotlin.idea.k2.refactoring.pushDown.K2PushDownProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.pushDown.analyzePushDownConflicts
+import org.jetbrains.kotlin.idea.k2.refactoring.pushDown.sourceDeclarationForPushDown
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.replaceUsages
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
@@ -97,7 +98,8 @@ internal class KotlinInlineSuperClassProcessor(
     private val sourceClass: KtClass,
 ) : BaseRefactoringProcessor(project) {
     private var targets: List<PsiElement> = emptyList()
-    private val members = sourceClass.declarations.filterIsInstance<KtNamedDeclaration>().map {
+    private val sourceDeclarations = sourceClass.declarations
+    private val members = sourceDeclarations.filterIsInstance<KtNamedDeclaration>().map {
         KotlinMemberInfo.Declaration(it).apply { isChecked = true }
     }
 
@@ -113,18 +115,17 @@ internal class KotlinInlineSuperClassProcessor(
             usages += K2MoveRenameUsageInfo.findExternalUsages(member)
                 .filterNot { usage -> usage.element?.let { PsiTreeUtil.isAncestor(sourceClass, it, false) } == true }
         }
+        val pushDownProcessor = K2PushDownProcessor(myProject, sourceClass, members, inlineSuperclass = true)
+        usages += pushDownProcessor.classMemberUsages()
         return usages.toTypedArray()
     }
 
     override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usages = refUsages.get()
-        val unsupported = unsupportedReason(usages)
-        if (unsupported != null) {
-            CommonRefactoringUtil.showErrorHint(myProject, null, unsupported, commandName, "Inline_Super_Class")
-            return false
-        }
-        val conflicts = myProject.runSynchronouslyWithProgress(KotlinBundle.message("inline.super.class.detecting.conflicts"), true) {
+        val (unsupported, conflicts) = myProject.runSynchronouslyWithProgress(KotlinBundle.message("inline.super.class.detecting.conflicts"), true) {
             runReadActionBlocking {
+                val unsupported = unsupportedReason(usages)
+                if (unsupported != null) return@runReadActionBlocking unsupported to null
                 analyze(sourceClass) {
                     val constructorParameters = sourceClass.primaryConstructorParameters.map {
                         KotlinMemberInfo.Declaration(it).apply { isChecked = true }
@@ -143,17 +144,21 @@ internal class KotlinInlineSuperClassProcessor(
                             }
                         }
                     }
-                    conflicts
+                    null to conflicts
                 }
             }
         } ?: return false
-        return showConflicts(conflicts, usages)
+        if (unsupported != null) {
+            CommonRefactoringUtil.showErrorHint(myProject, null, unsupported, commandName, "Inline_Super_Class")
+            return false
+        }
+        return showConflicts(conflicts ?: return false, usages)
     }
 
     private fun unsupportedReason(usages: Array<UsageInfo>): @NlsContexts.DialogMessage String? {
         if (targets.isEmpty()) return KotlinBundle.message("inline.super.class.no.inheritors")
         if (sourceClass.isInner() || sourceClass.isLocal || sourceClass.hasModifier(KtTokens.EXPECT_KEYWORD) ||
-            sourceClass.hasModifier(KtTokens.ACTUAL_KEYWORD) || sourceClass.companionObjects.isNotEmpty()
+            sourceClass.hasModifier(KtTokens.ACTUAL_KEYWORD)
         ) {
             return KotlinBundle.message("inline.super.class.unsupported.class")
         }
@@ -167,6 +172,9 @@ internal class KotlinInlineSuperClassProcessor(
                 it !is KtNamedFunction && it !is KtProperty && it !is KtClassOrObject && it !is KtAnonymousInitializer
             }) {
             return KotlinBundle.message("inline.super.class.unsupported.member")
+        }
+        for (companion in sourceClass.companionObjects) {
+            companionUnsupportedReason(sourceClass, companion, targets)?.let { return it }
         }
         for (target in targets) {
             if (target !is KtClassOrObject || target.fqName == null || PsiTreeUtil.isAncestor(sourceClass, target, false)) {
@@ -183,7 +191,8 @@ internal class KotlinInlineSuperClassProcessor(
         }
         for (usage in usages.filterIsInstance<K2MoveRenameUsageInfo>()) {
             val element = usage.element ?: continue
-            if (isInheritanceReference(element) || element.getStrictParentOfType<KtImportDirective>() != null) continue
+            if (isInheritanceReference(element)) continue
+            if (element.getStrictParentOfType<KtImportDirective>() != null) continue
             if (element !is KtSimpleNameExpression) return KotlinBundle.message("inline.super.class.unsupported.usage")
             if (targets.size != 1) return KotlinBundle.message("inline.super.class.ambiguous.usage")
             if (sourceClass.typeParameters.isNotEmpty() || (targets.single() as? KtClass)?.typeParameters?.isNotEmpty() == true) {
@@ -236,13 +245,17 @@ internal class KotlinInlineSuperClassProcessor(
             K2MoveRenameUsageInfo.markInternalUsages(sourceClass)
             val plans = prepareTargets(marked)
             inlineSuperCalls(plans, failedToInline)
-            K2PushDownProcessor(myProject, sourceClass, members).pushDownToClasses(
-                targetUsages(), removeOriginalMembers = false,
+            val pushDownProcessor = K2PushDownProcessor(myProject, sourceClass, members, inlineSuperclass = true)
+            pushDownProcessor.pushDownToClasses(
+                usages, removeOriginalMembers = true,
             ) { original, added, target ->
                 retargetSourceThis(added, target)
                 val plan = plans.single { it.target == target }
                 substituteConstructorParameters(added, plan.constructor.arguments)
                 plan.replacements[original] = added
+                added.collectDescendantsOfType<KtNamedDeclaration>().forEach { declaration ->
+                    declaration.sourceDeclarationForPushDown()?.let { plan.replacements[it] = declaration }
+                }
             }
             for (plan in plans) {
                 copyInitializers(plan)
@@ -262,10 +275,7 @@ internal class KotlinInlineSuperClassProcessor(
                 plan.target.removeSuperType(plan.oldEntry)
             }
 
-            val externalUsages = usages.filterIsInstance<K2MoveRenameUsageInfo>().filterNot {
-                val element = it.element
-                element == null || element.getStrictParentOfType<KtImportDirective>() != null
-            }
+            val externalUsages = usages.filterIsInstance<K2MoveRenameUsageInfo>()
 
             // for multiple targets we retarget external usages to the first target
             plans.firstOrNull()?.let { plan ->
@@ -273,7 +283,6 @@ internal class KotlinInlineSuperClassProcessor(
                 K2MoveRenameUsageInfo.retargetUsages(externalUsages, plan.replacements, fromCopy = true)
                 shortenReferences(plan.target)
             }
-            usages.mapNotNull { it.element?.getStrictParentOfType<KtImportDirective>() }.distinct().forEach { it.delete() }
             sourceClass.delete()
         } finally {
             sourceThisExpressions.forEach { it.putCopyableUserData(SOURCE_THIS, null) }
@@ -461,12 +470,16 @@ internal class KotlinInlineSuperClassProcessor(
     }
 
     private fun restoreDeclarationOrder(plan: TargetPlan) {
-        for (original in sourceClass.declarations.asReversed()) {
+        for (original in sourceDeclarations.asReversed()) {
             val added = plan.replacements[original] as? KtDeclaration ?: continue
-            if (added in plan.originalDeclarations) continue
+            if (added == plan.target || added in plan.originalDeclarations) continue
             val reordered = plan.target.addMemberDeclarationBefore(added, null)
             added.delete()
             plan.replacements[original] = reordered
+            // the members of `added` are gone as well, so the replacements pointing at them have to follow the copy
+            reordered.collectDescendantsOfType<KtNamedDeclaration>().forEach { declaration ->
+                declaration.sourceDeclarationForPushDown()?.let { plan.replacements[it] = declaration }
+            }
         }
     }
 

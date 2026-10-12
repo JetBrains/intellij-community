@@ -1,0 +1,15 @@
+class Child {
+    inner class Reader {
+        fun owner() = this@Child
+    }
+
+    fun reader() = Reader()
+}
+
+class Other {
+    inner class Reader {
+        fun owner() = this@Other
+    }
+
+    fun reader() = Reader()
+}

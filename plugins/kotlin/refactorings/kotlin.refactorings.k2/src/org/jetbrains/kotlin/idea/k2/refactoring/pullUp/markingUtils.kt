@@ -12,10 +12,12 @@ import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
@@ -30,11 +32,15 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiverOrThis
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
+import org.jetbrains.kotlin.psi.psiUtil.unwrapNullability
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.types.Variance
 
@@ -96,7 +102,9 @@ internal fun markElements(
 
             override fun visitTypeReference(typeReference: KtTypeReference) {
                 val oldType = typeReference.type
-                val rendered = substitutor.substitute(oldType).render(position = Variance.INVARIANT)
+                val substituted = substitutor.substitute(oldType)
+                if (substituted.semanticallyEquals(oldType)) return
+                val rendered = substituted.render(position = Variance.INVARIANT)
 
                 val targetFqName = targetClass.fqName ?: return
                 val map = typeReference.newTypeTextByTargetClass ?: mutableMapOf<FqName, () -> String?>().also {
@@ -110,6 +118,38 @@ internal fun markElements(
     )
 
     return affectedElements
+}
+
+private var KtElement.originalClassifier: PsiElement? by CopyablePsiUserDataProperty(Key.create("ORIGINAL_CLASSIFIER"))
+
+context(_: KaSession)
+internal fun markTypeReferences(declaration: KtElement): List<KtElement> {
+    val marked = ArrayList<KtElement>()
+
+    declaration.forEachDescendantOfType<KtTypeReference> { typeReference ->
+        val type = typeReference.type
+        val classifier = (type.abbreviation?.symbol ?: type.expandedSymbol)?.psi ?: return@forEachDescendantOfType
+        if (declaration.isAncestor(classifier, strict = false)) return@forEachDescendantOfType
+        typeReference.originalClassifier = classifier
+        marked += typeReference
+    }
+
+    return marked
+}
+
+internal fun rebindTypeReferences(
+    movedDeclaration: KtElement,
+    movedDeclarations: Collection<PsiElement>,
+) {
+    for (typeReference in movedDeclaration.collectDescendantsOfType<KtTypeReference>()) {
+        val classifier = typeReference.originalClassifier ?: continue
+        typeReference.originalClassifier = null
+        if (!typeReference.isValid || classifier in movedDeclarations) continue
+
+        val reference = (typeReference.typeElement?.unwrapNullability() as? KtUserType)
+            ?.referenceExpression?.mainReference ?: continue
+        reference.bindToElement(classifier, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
+    }
 }
 
 internal fun applyMarking(
@@ -158,5 +198,6 @@ internal fun clearMarking(markedElements: List<KtElement>) {
         it.newTypeTextByTargetClass?.clear()
         it.newTypeTextByTargetClass = null
         it.replaceWithTargetThis = null
+        it.originalClassifier = null
     }
 }

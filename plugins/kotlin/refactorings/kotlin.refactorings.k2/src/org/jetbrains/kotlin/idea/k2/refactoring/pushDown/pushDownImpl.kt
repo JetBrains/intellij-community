@@ -45,6 +45,7 @@ internal fun createPushDownAction(
     memberInfo: KotlinMemberInfo,
     targetClass: KtClassOrObject,
     substitutor: KaSubstitutor,
+    inlineSuperclass: Boolean = false,
 ): PushDownAction? = when (memberInfo.member) {
     is KtProperty, is KtNamedFunction ->
         createPushDownActionForCallableMember(
@@ -58,6 +59,7 @@ internal fun createPushDownAction(
             memberInfo,
             targetClass,
             substitutor,
+            inlineSuperclass,
         )
     }
 
@@ -163,6 +165,7 @@ private fun createPushDownActionForClassLikeMember(
     memberInfo: KotlinMemberInfo,
     targetClass: KtClassOrObject,
     substitutor: KaSubstitutor,
+    inlineSuperclass: Boolean,
 ): PushDownAction? {
     return if (memberInfo.overrides != null) {
         val superTypeListEntry = memberInfo.member as? KtSuperTypeListEntry ?: return null
@@ -188,7 +191,7 @@ private fun createPushDownActionForClassLikeMember(
             if (targetCompanion != null) {
                 (member as KtObjectDeclaration).declarations.filterIsInstance<KtNamedDeclaration>().forEach { addMemberToTarget(it, targetCompanion) }
                 targetCompanion
-            } else if (targetClass is KtObjectDeclaration && member is KtObjectDeclaration && member.isCompanion()) {
+            } else if (!inlineSuperclass && targetClass is KtObjectDeclaration && member is KtObjectDeclaration && member.isCompanion()) {
                 member.declarations.filterIsInstance<KtNamedDeclaration>().forEach { addMemberToTarget(it, targetClass) }
                 targetClass
             } else {

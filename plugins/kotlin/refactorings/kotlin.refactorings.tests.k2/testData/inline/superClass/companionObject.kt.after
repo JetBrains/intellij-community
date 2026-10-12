@@ -1,0 +1,17 @@
+class Child {
+    companion object {
+        const val STEP = 2
+        var count = 0
+
+        fun next(): Int {
+            count += STEP
+            return count
+        }
+    }
+
+    fun answer() = next()
+}
+
+fun next() = Child.next()
+fun explicit() = Child.next()
+fun reference() = Child.Companion::next

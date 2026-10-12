@@ -35,7 +35,6 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.renderForConflicts
 import org.jetbrains.kotlin.idea.refactoring.isCompanionMemberOf
-import org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownProcessor.SubclassUsage
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall

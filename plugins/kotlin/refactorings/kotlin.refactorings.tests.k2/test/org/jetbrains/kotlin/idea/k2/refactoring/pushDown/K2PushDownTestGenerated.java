@@ -90,6 +90,11 @@ public abstract class K2PushDownTestGenerated extends AbstractK2PushDownTest {
             runTest("testData/pushDown/k2k/companionObjectImportedMemberUsage.kt");
         }
 
+        @TestMetadata("companionObjectImports.kt")
+        public void testCompanionObjectImports() throws Exception {
+            runTest("testData/pushDown/k2k/companionObjectImports.kt");
+        }
+
         @TestMetadata("companionObjectJavaMemberUsage.kt")
         public void testCompanionObjectJavaMemberUsage() throws Exception {
             runTest("testData/pushDown/k2k/companionObjectJavaMemberUsage.kt");

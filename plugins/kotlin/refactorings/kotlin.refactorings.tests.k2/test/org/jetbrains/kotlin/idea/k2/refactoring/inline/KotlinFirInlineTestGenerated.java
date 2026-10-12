@@ -2803,6 +2803,61 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("testData/inline/superClass/anonymousInheritor.kt");
         }
 
+        @TestMetadata("companionObject.kt")
+        public void testCompanionObject() throws Exception {
+            runTest("testData/inline/superClass/companionObject.kt");
+        }
+
+        @TestMetadata("companionObjectImports.kt")
+        public void testCompanionObjectImports() throws Exception {
+            runTest("testData/inline/superClass/companionObjectImports.kt");
+        }
+
+        @TestMetadata("companionObjectInnerClass.kt")
+        public void testCompanionObjectInnerClass() throws Exception {
+            runTest("testData/inline/superClass/companionObjectInnerClass.kt");
+        }
+
+        @TestMetadata("companionObjectMemberClash.kt")
+        public void testCompanionObjectMemberClash() throws Exception {
+            runTest("testData/inline/superClass/companionObjectMemberClash.kt");
+        }
+
+        @TestMetadata("companionObjectMerge.kt")
+        public void testCompanionObjectMerge() throws Exception {
+            runTest("testData/inline/superClass/companionObjectMerge.kt");
+        }
+
+        @TestMetadata("companionObjectMergeIdentity.kt")
+        public void testCompanionObjectMergeIdentity() throws Exception {
+            runTest("testData/inline/superClass/companionObjectMergeIdentity.kt");
+        }
+
+        @TestMetadata("companionObjectMergeInitialization.kt")
+        public void testCompanionObjectMergeInitialization() throws Exception {
+            runTest("testData/inline/superClass/companionObjectMergeInitialization.kt");
+        }
+
+        @TestMetadata("companionObjectMergeSupertype.kt")
+        public void testCompanionObjectMergeSupertype() throws Exception {
+            runTest("testData/inline/superClass/companionObjectMergeSupertype.kt");
+        }
+
+        @TestMetadata("companionObjectMultipleInheritors.kt")
+        public void testCompanionObjectMultipleInheritors() throws Exception {
+            runTest("testData/inline/superClass/companionObjectMultipleInheritors.kt");
+        }
+
+        @TestMetadata("companionObjectSupertype.kt")
+        public void testCompanionObjectSupertype() throws Exception {
+            runTest("testData/inline/superClass/companionObjectSupertype.kt");
+        }
+
+        @TestMetadata("companionObjectTargetObject.kt")
+        public void testCompanionObjectTargetObject() throws Exception {
+            runTest("testData/inline/superClass/companionObjectTargetObject.kt");
+        }
+
         @TestMetadata("constructorArgumentEvaluation.kt")
         public void testConstructorArgumentEvaluation() throws Exception {
             runTest("testData/inline/superClass/constructorArgumentEvaluation.kt");
@@ -2948,6 +3003,36 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("testData/inline/superClass/initializationOrder.kt");
         }
 
+        @TestMetadata("innerClassAmbiguousUsage.kt")
+        public void testInnerClassAmbiguousUsage() throws Exception {
+            runTest("testData/inline/superClass/innerClassAmbiguousUsage.kt");
+        }
+
+        @TestMetadata("innerClassClash.kt")
+        public void testInnerClassClash() throws Exception {
+            runTest("testData/inline/superClass/innerClassClash.kt");
+        }
+
+        @TestMetadata("innerClassConstructorReference.kt")
+        public void testInnerClassConstructorReference() throws Exception {
+            runTest("testData/inline/superClass/innerClassConstructorReference.kt");
+        }
+
+        @TestMetadata("innerClassGeneric.kt")
+        public void testInnerClassGeneric() throws Exception {
+            runTest("testData/inline/superClass/innerClassGeneric.kt");
+        }
+
+        @TestMetadata("innerClassMultipleInheritors.kt")
+        public void testInnerClassMultipleInheritors() throws Exception {
+            runTest("testData/inline/superClass/innerClassMultipleInheritors.kt");
+        }
+
+        @TestMetadata("innerClassOuterThis.kt")
+        public void testInnerClassOuterThis() throws Exception {
+            runTest("testData/inline/superClass/innerClassOuterThis.kt");
+        }
+
         @TestMetadata("interfaceSupertype.kt")
         public void testInterfaceSupertype() throws Exception {
             runTest("testData/inline/superClass/interfaceSupertype.kt");
@@ -2968,6 +3053,16 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("testData/inline/superClass/multipleSubclasses.kt");
         }
 
+        @TestMetadata("namedCompanionObject.kt")
+        public void testNamedCompanionObject() throws Exception {
+            runTest("testData/inline/superClass/namedCompanionObject.kt");
+        }
+
+        @TestMetadata("namedCompanionObjectMerge.kt")
+        public void testNamedCompanionObjectMerge() throws Exception {
+            runTest("testData/inline/superClass/namedCompanionObjectMerge.kt");
+        }
+
         @TestMetadata("nestedClass.kt")
         public void testNestedClass() throws Exception {
             runTest("testData/inline/superClass/nestedClass.kt");
@@ -2976,6 +3071,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @TestMetadata("nestedClassClash.kt")
         public void testNestedClassClash() throws Exception {
             runTest("testData/inline/superClass/nestedClassClash.kt");
+        }
+
+        @TestMetadata("nestedClassDeepImports.kt")
+        public void testNestedClassDeepImports() throws Exception {
+            runTest("testData/inline/superClass/nestedClassDeepImports.kt");
         }
 
         @TestMetadata("noInheritors.kt")

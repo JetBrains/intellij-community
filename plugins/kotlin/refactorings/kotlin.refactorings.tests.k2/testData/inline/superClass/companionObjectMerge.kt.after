@@ -1,0 +1,12 @@
+class Child {
+    companion object {
+        const val EXTRA = 2
+        const val BASE = 40
+
+        fun answer() = baseAnswer() + EXTRA
+        fun baseAnswer() = BASE
+    }
+}
+
+fun baseAnswer() = Child.baseAnswer()
+fun answer() = Child.answer()

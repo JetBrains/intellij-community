@@ -20,6 +20,8 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteA
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.applyMarking
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.clearMarking
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.markElements
+import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.markTypeReferences
+import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.rebindTypeReferences
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownProcessor
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -29,6 +31,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 
@@ -48,6 +51,8 @@ internal class ClassMemberUsage(
 }
 
 private val SOURCE_DECLARATION_KEY = Key.create<KtNamedDeclaration>("kotlin.push.down.source.declaration")
+
+internal fun KtNamedDeclaration.sourceDeclarationForPushDown(): KtNamedDeclaration? = getCopyableUserData(SOURCE_DECLARATION_KEY)
 
 /**
  * Represents a refactoring step that inserts a member into a target class during push down.
@@ -83,14 +88,19 @@ internal class K2PushDownProcessor(
     project: Project,
     sourceClass: KtClass,
     membersToMove: List<KotlinMemberInfo>,
+    private val inlineSuperclass: Boolean = false,
 ) : KotlinPushDownProcessor(project) {
     override val context: K2PushDownContext = K2PushDownContext(sourceClass, membersToMove)
 
     override fun findUsages(): Array<out UsageInfo> {
+        return (super.findUsages().asList() + classMemberUsages()).toTypedArray()
+    }
+
+    fun classMemberUsages(): List<ClassMemberUsage> {
         val memberUsages = context.membersToMove
             .mapNotNull { it.member as? KtClassOrObject }
             .flatMap(::findClassMemberUsages)
-        return (super.findUsages().asList() + memberUsages).toTypedArray()
+        return memberUsages
     }
 
     private fun findClassMemberUsages(classOrObject: KtClassOrObject): List<ClassMemberUsage> {
@@ -199,6 +209,7 @@ internal class K2PushDownProcessor(
             memberInfo,
             targetClass,
             substitutor,
+            inlineSuperclass,
         )?.let { pushDownAction ->
             actionsContext.pushDownActionsByTarget[PushDownTarget(memberInfo, targetClassFqName)] = pushDownAction
         }
@@ -233,6 +244,7 @@ internal class K2PushDownProcessor(
             targetClass,
             substitutor,
         )
+        actionsContext.markedElements += markTypeReferences(member)
     }
 
     private fun executeRefactoring(
@@ -242,20 +254,27 @@ internal class K2PushDownProcessor(
         onMemberMoved: (KtNamedDeclaration, KtNamedDeclaration, KtClassOrObject) -> Unit,
     ) {
         val shouldRebind = removeOriginalMembers && usages.count { it is SubclassUsage } == 1
+        val membersToMove = context.membersToMove.sortedBy { (it.member as? KtObjectDeclaration)?.isCompanion() == true }
         usages.map { it.element }
             .filterIsInstance<KtClassOrObject>()
             .forEach { targetClass ->
                 val fqName = targetClass.fqName ?: return@forEach
-                context.membersToMove.forEach { member ->
+                membersToMove.forEach { member ->
                     val target = PushDownTarget(member, fqName)
                     val action = actionsContext.pushDownActionsByTarget[target] ?: return@forEach
-                    val memberUsages = usages.filterIsInstance<ClassMemberUsage>().filter { it.sourceNestedClass == member.member }
+                    val memberUsages = usages.filterIsInstance<ClassMemberUsage>().filter { usage ->
+                        usage.sourceNestedClass == member.member && (!inlineSuperclass ||
+                                usage.sourceDeclaration != member.member && usage.element?.let {
+                                    !PsiTreeUtil.isAncestor(context.sourceClass, it, false)
+                                } == true)
+                    }
                     val added = action.execute() ?: return@forEach
                     applyMarking(added, targetClass)
+                    rebindTypeReferences(added, membersToMove.map { it.member })
+                    onMemberMoved(member.member as KtNamedDeclaration, added, targetClass)
                     if (shouldRebind && added is KtClassOrObject) {
                         rebindClassMemberUsages(added, memberUsages)
                     }
-                    onMemberMoved(member.member as KtNamedDeclaration, added, targetClass)
                 }
             }
 

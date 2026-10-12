@@ -1,0 +1,6 @@
+package usage
+
+import child.Child.Nested.Deep as ImportedDeep
+
+fun create(): ImportedDeep = ImportedDeep()
+fun answer() = create().answer()
