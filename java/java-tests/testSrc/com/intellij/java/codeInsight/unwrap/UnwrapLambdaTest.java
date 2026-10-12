@@ -1,9 +1,41 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.unwrap;
 
-import com.intellij.codeInsight.unwrap.UnwrapTestCase;
+import com.intellij.codeInsight.unwrap.UnwrapTestUtil;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class UnwrapLambdaTest extends UnwrapTestCase {
+import java.nio.file.Path;
+
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.moduleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+
+@TestApplication
+public class UnwrapLambdaTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<Path> pathFixture = tempPathFixture();
+  @SuppressWarnings("unused")
+  private final TestFixture<Module> moduleFixture = moduleFixture(projectFixture, pathFixture, true);
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightFixture(projectFixture, pathFixture);
+
+  private void assertUnwrapped(String codeBefore, String expectedCodeAfter) {
+    assertUnwrapped(codeBefore, expectedCodeAfter, 0);
+  }
+
+  private void assertUnwrapped(String codeBefore, String expectedCodeAfter, int option) {
+    UnwrapTestUtil.assertUnwrapped(codeInsightFixture.get(), "A.java", createCode(codeBefore), createCode(expectedCodeAfter), option);
+  }
+
+  @Test
   public void testUnwrap() {
     assertUnwrapped("""
                       {
@@ -20,6 +52,7 @@ public class UnwrapLambdaTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testUnwrapNestedLambda() {
     assertUnwrapped("""
                       {
@@ -34,6 +67,7 @@ public class UnwrapLambdaTest extends UnwrapTestCase {
                       """, 1);
   }
   
+  @Test
   public void testUnwrapNestedLambda2() {
     assertUnwrapped("""
                       {
@@ -54,6 +88,7 @@ public class UnwrapLambdaTest extends UnwrapTestCase {
                       """, 1);
   }
   
+  @Test
   public void testUnwrapExpressionDeclaration() {
     assertUnwrapped("""
                       {
@@ -68,6 +103,7 @@ public class UnwrapLambdaTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testUnwrapBlockDeclaration() {
     assertUnwrapped("""
                       {
@@ -82,6 +118,7 @@ public class UnwrapLambdaTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testUnwrapAssignment() {
     assertUnwrapped("""
                       {
@@ -96,6 +133,7 @@ public class UnwrapLambdaTest extends UnwrapTestCase {
                       """, 1);
   }
 
+  @Test
   public void testUnwrapAssignmentWithCodeBlock() {
     assertUnwrapped("""
                       {
@@ -110,6 +148,7 @@ public class UnwrapLambdaTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testUnwrapUnresolved() {
     assertUnwrapped("""
                       {
@@ -124,11 +163,10 @@ public class UnwrapLambdaTest extends UnwrapTestCase {
                       """);
   }
 
-  @Override
-  protected String createCode(String codeBefore) {
+  private static String createCode(String codeBefore) {
     return "public class A {\n" +
            "    void foo() {\n" +
-           indentTwice(codeBefore) +
+           UnwrapTestUtil.indentTwice(codeBefore) +
            "    }\n" +
            "    void bar(Runnable r){}\n" +
            "}";

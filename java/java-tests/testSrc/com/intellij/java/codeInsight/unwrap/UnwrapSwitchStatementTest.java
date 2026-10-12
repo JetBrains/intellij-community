@@ -1,13 +1,44 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.unwrap;
 
-import com.intellij.codeInsight.unwrap.UnwrapTestCase;
+import com.intellij.codeInsight.unwrap.UnwrapTestUtil;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import java.nio.file.Path;
+
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.moduleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnwrapSwitchStatementTest extends UnwrapTestCase {
+@TestApplication
+public class UnwrapSwitchStatementTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
 
+  private final TestFixture<Path> pathFixture = tempPathFixture();
+  @SuppressWarnings("unused")
+  private final TestFixture<Module> moduleFixture = moduleFixture(projectFixture, pathFixture, true);
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightFixture(projectFixture, pathFixture);
+
+  private void assertUnwrapped(String codeBefore, String expectedCodeAfter) {
+    UnwrapTestUtil.assertUnwrapped(codeInsightFixture.get(), codeBefore, expectedCodeAfter, 0);
+  }
+
+  private void assertUnwrapped(String codeBefore, String expectedCodeAfter, int option) {
+    UnwrapTestUtil.assertUnwrapped(codeInsightFixture.get(), codeBefore, expectedCodeAfter, option);
+  }
+
+  @Test
   public void testSimple() {
     assertUnwrapped("""
                       boolean b;
@@ -24,6 +55,7 @@ public class UnwrapSwitchStatementTest extends UnwrapTestCase {
                     "b = false;");
   }
 
+  @Test
   public void testNoBreak() {
     assertUnwrapped("""
                       boolean b;
@@ -39,6 +71,7 @@ public class UnwrapSwitchStatementTest extends UnwrapTestCase {
                     "b = true;");
   }
 
+  @Test
   public void testLabeledBreak() {
     assertUnwrapped("""
                       outer: for (int z = 0; z < 10; z++) {
@@ -62,6 +95,7 @@ public class UnwrapSwitchStatementTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testFallThrough() {
     assertUnwrapped("""
                       switch (0) {
@@ -76,6 +110,7 @@ public class UnwrapSwitchStatementTest extends UnwrapTestCase {
                     "System.out.println(2);");
   }
 
+  @Test
   public void testEmptySwitch() {
     assertUnwrapped("""
                       switch (1) {
@@ -85,7 +120,8 @@ public class UnwrapSwitchStatementTest extends UnwrapTestCase {
                     "");
   }
 
-  public  void testThrowStatement() {
+  @Test
+  public void testThrowStatement() {
     assertUnwrapped("""
                       switch (0) {
                           case 1: {
@@ -101,6 +137,7 @@ public class UnwrapSwitchStatementTest extends UnwrapTestCase {
                     "throw null;");
   }
 
+  @Test
   public void testRuleBasedBlock() {
     assertUnwrapped("""
                       boolean b;
@@ -119,6 +156,7 @@ public class UnwrapSwitchStatementTest extends UnwrapTestCase {
                       b = false;""");
   }
 
+  @Test
   public void testRuleBasedExpression() {
     assertUnwrapped("""
                       boolean b;
@@ -135,6 +173,7 @@ public class UnwrapSwitchStatementTest extends UnwrapTestCase {
                     "b = true;");
   }
 
+  @Test
   public void testRuleBasedThrowStatement() {
     assertUnwrapped("""
                       boolean b;
@@ -151,6 +190,7 @@ public class UnwrapSwitchStatementTest extends UnwrapTestCase {
                     "throw null;");
   }
 
+  @Test
   public void testCommentBracesBreak() {
     assertUnwrapped("""
                       boolean b;
@@ -178,6 +218,7 @@ public class UnwrapSwitchStatementTest extends UnwrapTestCase {
                     1);
   }
 
+  @Test
   public void testNestedSwitch() {
     assertUnwrapped("""
                       switch (0) {
@@ -202,6 +243,7 @@ public class UnwrapSwitchStatementTest extends UnwrapTestCase {
                       System.out.println(2);""");
   }
 
+  @Test
   public void testNestedWhileWithBreak() {
     assertUnwrapped("""
                       switch (0) {

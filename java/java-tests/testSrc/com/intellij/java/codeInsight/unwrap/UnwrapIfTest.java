@@ -1,21 +1,59 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.unwrap;
 
-import com.intellij.codeInsight.unwrap.UnwrapTestCase;
+import com.intellij.codeInsight.unwrap.UnwrapTestUtil;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class UnwrapIfTest extends UnwrapTestCase {
+import java.nio.file.Path;
+
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.moduleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+
+@TestApplication
+public class UnwrapIfTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<Path> pathFixture = tempPathFixture();
+  @SuppressWarnings("unused")
+  private final TestFixture<Module> moduleFixture = moduleFixture(projectFixture, pathFixture, true);
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightFixture(projectFixture, pathFixture);
+
+  private void assertUnwrapped(String codeBefore, String expectedCodeAfter) {
+    UnwrapTestUtil.assertUnwrapped(codeInsightFixture.get(), codeBefore, expectedCodeAfter, 0);
+  }
+
+  private void assertUnwrapped(String codeBefore, String expectedCodeAfter, int option) {
+    UnwrapTestUtil.assertUnwrapped(codeInsightFixture.get(), codeBefore, expectedCodeAfter, option);
+  }
+
+  private void assertOptions(String code, String... expectedOptions) {
+    UnwrapTestUtil.assertOptions(codeInsightFixture.get(), code, expectedOptions);
+  }
+
+  @Test
   public void testDoesNothingOutsideOfStatements() {
     assertUnwrapped("<caret>int i = 0;\n",
 
                     "<caret>int i = 0;\n");
   }
 
+  @Test
   public void testIfWithSingleStatement() {
     assertUnwrapped("if(true) Sys<caret>tem.gc();\n",
 
                     "Sys<caret>tem.gc();\n");
   }
 
+  @Test
   public void testIfBlock() {
     assertUnwrapped("""
                       if(true) {
@@ -26,6 +64,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "int i;<caret>\n");
   }
 
+  @Test
   public void testIfBlockWithComment() {
     assertUnwrapped("""
                       if(true) {
@@ -40,6 +79,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testIfMultiStatementBlock() {
     assertUnwrapped("""
                       if(true) {
@@ -56,6 +96,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testIfEmpty() {
     assertUnwrapped("""
                       {
@@ -69,6 +110,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testIfEmptyBlock() {
     assertUnwrapped("""
                       {
@@ -82,6 +124,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testIfIncomplete() {
     assertUnwrapped("""
                       {
@@ -95,6 +138,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testDoesNotAffectNeighbours() {
     assertUnwrapped("""
                       if(true) {}
@@ -108,6 +152,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testIfWithElse() {
     assertUnwrapped("""
                       if(true) {
@@ -120,6 +165,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "int i;<caret>\n");
   }
 
+  @Test
   public void testIfWithElses() {
     assertUnwrapped("""
                       if(true) {
@@ -134,6 +180,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "int i;<caret>\n");
   }
 
+  @Test
   public void testIfElseIncomplete() {
     assertUnwrapped("""
                       if(true) {
@@ -144,6 +191,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     "int i;<caret>\n");
   }
 
+  @Test
   public void testUnwrapElse() {
     assertUnwrapped("""
                       {
@@ -160,6 +208,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testUnwrapElseBlock() {
     assertUnwrapped("""
                       {
@@ -178,6 +227,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testUnwrapElseIf() {
     assertUnwrapped("""
                       {
@@ -196,6 +246,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testUnwrapIfElseIfElse() {
     assertUnwrapped("""
                       {
@@ -216,6 +267,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testUnwrapElseWhenCaretRightInTheElseKeyword() {
     assertUnwrapped("""
                       {
@@ -234,6 +286,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testRemovesWhileIfWhenElseIsIsIncomplete() {
     assertUnwrapped("""
                       {
@@ -250,6 +303,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                       """);
   }
 
+  @Test
   public void testRemoveElse() {
     assertUnwrapped("""
                       {
@@ -272,6 +326,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     1);
   }
 
+  @Test
   public void testRemoveElseWhenCaretRightInTheElseKeyword() {
     assertUnwrapped("""
                       {
@@ -294,6 +349,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     1);
   }
 
+  @Test
   public void testRemoveElseIf() {
     assertUnwrapped("""
                       {
@@ -316,6 +372,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     1);
   }
 
+  @Test
   public void testRemoveElseIfElse() {
     assertUnwrapped("""
                       if(true) {
@@ -338,6 +395,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                     1);
   }
 
+  @Test
   public void testIfOption() {
     assertOptions("""
                     if (true) {
@@ -348,6 +406,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                   "Unwrap 'if...'");
   }
 
+  @Test
   public void testIfElseOption() {
     assertOptions("""
                     if (true) {
@@ -360,6 +419,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                   "Remove 'else...'");
   }
 
+  @Test
   public void testDoesNotIncludeDirectParentIfsWhenElseIsSelected() {
     assertOptions("""
                     if (true) {
@@ -374,6 +434,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                   "Remove 'else...'");
   }
 
+  @Test
   public void testDoesNotIncludeIndirectParentIfsWhenElseIsSelected() {
     assertOptions("""
                     if (true) {
@@ -392,6 +453,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                   "Remove 'else...'");
   }
 
+  @Test
   public void testIfElseIfOption() {
     assertOptions("""
                     if (true) {
@@ -404,6 +466,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                   "Remove 'else...'");
   }
 
+  @Test
   public void testIfInsideElseOption() {
     assertOptions("""
                     if (true) {
@@ -419,6 +482,7 @@ public class UnwrapIfTest extends UnwrapTestCase {
                   "Remove 'else...'");
   }
 
+  @Test
   public void testIfElseOptionWhenCaretIsRughtOnTheElseKeyword() {
     assertOptions("""
                     if (true) {

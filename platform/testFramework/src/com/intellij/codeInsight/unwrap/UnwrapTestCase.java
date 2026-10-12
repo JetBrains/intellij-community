@@ -11,6 +11,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * @deprecated Use {@link UnwrapTestUtil} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class UnwrapTestCase extends LightPlatformCodeInsightTestCase {
   protected void assertUnwrapped(String codeBefore, String expectedCodeAfter) {
     assertUnwrapped(codeBefore, expectedCodeAfter, 0);
