@@ -531,7 +531,7 @@ carries the warm IDE across whole controller iterations
 ([ADR 0138](../../../../plugins/air/docs/decisions/0138-air-owns-its-lane-ide.md)).
 
 The guest agent launches the IDE and owns its process
-([ADR 0230](../../../../plugins/air/docs/decisions/0230-the-guest-agent-launches-the-lane-ide.md)). The daemon
+([ADR 0234](../../../../plugins/air/docs/decisions/0234-the-guest-agent-launches-the-lane-ide.md)). The daemon
 decides what to launch and when. The agent's `ide-prepare` lays out the context `$AIR_VM_DATA/ide/<launchKey>`:
 the data directories, the project, the disabled plugins, and the `home` and `bin` directories. The daemon then
 writes the option files, the bridge token, the seeds of the home and the launchers into the context. The agent's
