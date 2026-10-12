@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.action.task;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.action.ExternalSystemNodeAction;
@@ -20,22 +21,26 @@ import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Vladislav.Soroka
- */
-@ApiStatus.Internal
-public class AssignShortcutAction extends ExternalSystemNodeAction<TaskData> {
+final class AssignShortcutAction extends ExternalSystemNodeAction<TaskData> {
 
-  public AssignShortcutAction() {
+  AssignShortcutAction() {
     super(TaskData.class);
   }
 
   @Override
   protected boolean isEnabled(@NotNull AnActionEvent e) {
     return super.isEnabled(e) && !isIgnoredNode(e);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
   }
 
   @Override

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.tasks.actions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -19,11 +20,20 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 import java.util.List;
 
-public class AssignShortcutAction extends MavenAction {
+final class AssignShortcutAction extends MavenAction {
   @Override
   protected boolean isAvailable(@NotNull AnActionEvent e) {
     final DataContext context = e.getDataContext();
     return super.isAvailable(e) && !isIgnoredProject(context) && getGoalActionId(context) != null;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
   }
 
   private static boolean isIgnoredProject(DataContext context) {
@@ -64,7 +74,7 @@ public class AssignShortcutAction extends MavenAction {
     return actionId;
   }
 
-  protected static @Nullable MavenShortcutsManager getShortcutsManager(DataContext context) {
+  private static @Nullable MavenShortcutsManager getShortcutsManager(DataContext context) {
     final Project project = MavenActionUtil.getProject(context);
     if(project == null) return null;
     return MavenShortcutsManager.getInstance(project);
