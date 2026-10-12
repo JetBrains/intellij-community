@@ -56,44 +56,47 @@ class SpinningProgressIcon(
   }
 
   private inner class CashedDelegateIcon(private val index: Int) : Icon {
-    private fun getDelegate() = getIconFromCache(index)
-
     override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
-      getDelegate().paintIcon(c, g, x, y)
+      getIconFromCache(index).paintIcon(c, g, x, y)
     }
 
-    override fun getIconWidth(): Int = getDelegate().iconWidth
+    override fun getIconWidth(): Int = getIconForSize(index).iconWidth
 
-    override fun getIconHeight(): Int = getDelegate().iconHeight
+    override fun getIconHeight(): Int = getIconForSize(index).iconHeight
   }
 
+  /**
+   * Returns frame [i] for the current color and scale. A cache miss renders only this frame.
+   */
   private fun getIconFromCache(i: Int): Icon {
+    val scale = resetCacheIfStale()
+    return iconCache[i] ?: toRetinaAwareIcon(loadSvg(data = generateSvgIcon(i).encodeToByteArray(), scale = scale)).also {
+      iconCache[i] = it
+    }
+  }
+
+  /**
+   * Returns a frame with the size of frame [i]. All frames have the same size, so a frame that is already rendered is used.
+   */
+  private fun getIconForSize(i: Int): Icon {
+    resetCacheIfStale()
+    return iconCache.firstNotNullOfOrNull { it } ?: getIconFromCache(i)
+  }
+
+  private fun resetCacheIfStale(): Float {
     val scale = JBUI.pixScale()
     val cacheKey = 31 * iconColor.hashCode() + scale.toBits()
-    val icon = iconCache[i]
-    if (icon != null && iconCacheKey == cacheKey) {
-      return icon
+    if (iconCacheKey != cacheKey) {
+      iconCache.fill(null)
+      iconCacheKey = cacheKey
     }
-
-    val stringBuilder = StringBuilder()
-    val header = createRooTag()
-    val stroke = ColorUtil.toHex(iconColor)
-    for (index in iconCache.indices) {
-      stringBuilder.setLength(0)
-      stringBuilder.append(header)
-      generateSvgIcon(index = index, s = stringBuilder, stroke = stroke)
-      iconCache[index] = toRetinaAwareIcon(loadSvg(data = stringBuilder.toString().encodeToByteArray(), scale = scale))
-    }
-
-    iconCacheKey = cacheKey
-    return iconCache[i]!!
+    return scale
   }
 
   private fun createRooTag(): String {
     return """<svg width="$size" height="$size" viewBox="0 0 $size $size" fill="none" xmlns="http://www.w3.org/2000/svg">\n"""
   }
 
-  @Suppress("unused")
   internal fun generateSvgIcon(index: Int): String {
     val s = StringBuilder(createRooTag())
     generateSvgIcon(index = index, s = s, stroke = ColorUtil.toHex(iconColor))
