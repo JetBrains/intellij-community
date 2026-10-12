@@ -140,7 +140,7 @@
             class="git4idea.ui.branch.dashboard.BranchesDashboardActions$NavigateLogToSelectedBranchAction"/>
     <action id="Git.Log.Hide.Branches" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$HideBranchesAction"
             icon="AllIcons.Actions.ArrowCollapse"/>
-    <group id="Git.Log.Branches.Settings" popup="true" icon="AllIcons.General.GearPlain"
+    <group id="Git.Log.Branches.Settings" popup="true" icon="AllIcons.General.GearPlain" searchable="false"
            class="com.intellij.ide.actions.NonTrivialActionGroup">
       <separator key="group.Git.Log.Branches.Settings.Separator.text"/>
       <action id="Git.Log.Branches.Change.Branch.Filter.On.Selection"
@@ -163,7 +163,9 @@
     <group id="Git.FileActions">
       <reference ref="CheckinFiles"/>
       <action id="Git.Add" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionWithIgnoredFilesConfirmationAction"
-              icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned"/>
+              icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned">
+        <override-text place="GoToAction"/>
+      </action>
       <separator/>
       <reference ref="Annotate"/>
       <reference ref="Compare.SameVersion"/>
@@ -294,7 +296,8 @@
       <reference ref="Git.Rebase.Skip"/>
     </group>
 
-    <group id="Git.Compare.With.Branch.Popup.Settings" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
+    <group id="Git.Compare.With.Branch.Popup.Settings" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupSettings"
+           icon="AllIcons.Actions.More" searchable="false">
       <reference ref="git.branches.group.by.directory"/>
       <reference ref="git.branches.show.recent"/>
       <reference ref="git.branches.show.tags"/>
@@ -635,7 +638,9 @@
       <mouse-shortcut keymap="$default" keystroke="button1 doubleClick"/>
     </action>
     <action id="Git.WorkingTrees.Refresh" class="git4idea.workingTrees.ui.actions.RefreshWorkingTreesAction"
-            icon="AllIcons.General.Refresh" use-shortcut-of="Synchronize"/>
+            icon="AllIcons.General.Refresh" use-shortcut-of="Synchronize">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Git.WorkingTrees.Prune" class="git4idea.workingTrees.ui.actions.PruneWorkingTreesAction"
             icon="AllIcons.Actions.ClearCash"/>
     <action id="Git.WorkingTrees.ToggleLock" class="git4idea.workingTrees.ui.actions.GitToggleLockWorkingTreeAction"/>
