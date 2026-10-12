@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.service.execution
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.DefaultBuildDescriptor
-import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.impl.SuccessResultImpl
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.build.progress.BuildProgressDescriptorImpl
@@ -17,41 +16,24 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.concurrency.Semaphore
 import org.assertj.core.api.Assertions.assertThat
+import java.util.concurrent.atomic.LongAdder
 
 class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
 
-  fun `test invokeOnCompletion`() {
-    val parsers = listOf(
-      BuildOutputParser { line, reader, messageConsumer ->
-        messageConsumer.accept(
-          OutputBuildEvent.builder(line)
-            .withParentId(reader.parentEventId)
-            .build()
-        )
-        return@BuildOutputParser true
-      }
-    )
-
-    doInvokeOnCompletionTest(parsers)
-  }
-
-  fun `test invokeOnCompletion with bad output parser`() {
+  fun `test parser execution flow`() {
+    val parserInvocations = LongAdder()
     val parsers = listOf(
       BuildOutputParser { _, _, _ -> throw RuntimeException("Bad parser") },
-      BuildOutputParser { line, reader, messageConsumer ->
-        messageConsumer.accept(
-          OutputBuildEvent.builder(line)
-            .withParentId(reader.parentEventId)
-            .build()
-        )
+      BuildOutputParser { _, _, _ ->
+        parserInvocations.increment()
         return@BuildOutputParser true
+      },
+      BuildOutputParser { _, _, _ ->
+        fail("This parser should not be invoked")
+        throw IllegalStateException()
       }
     )
 
-    doInvokeOnCompletionTest(parsers)
-  }
-
-  private fun doInvokeOnCompletionTest(parsers: List<BuildOutputParser>) {
     val eventMessages = mutableListOf<String>()
     ExtensionTestUtil.maskExtensions(ExternalSystemOutputParserProvider.EP_NAME, listOf(TestParserProvider(parsers)), testRootDisposable)
     val semaphore = Semaphore(1)
@@ -87,17 +69,19 @@ class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
     assertSameElements(eventMessages.take(8),
                        "Build started",
                        "sub task1 started",
+                       "Task output line 1\n",
                        "sub task2 started",
+                       "Task output line 2\n",
                        "sub task2 finished",
                        "sub task1 finished",
-                       "Task output line 1",
-                       "Task output line 2",
-                       "Task output line 3")
+                       "Task output line 3\n")
 
     assertOrderedEquals(eventMessages.takeLast(3),
                         "completion message 1",
                         "Build finished",
                         "completion message 2")
+
+    assertEquals(3, parserInvocations.toInt())
   }
 
   private class TestParserProvider(val parsers: List<BuildOutputParser>) : ExternalSystemOutputParserProvider {
