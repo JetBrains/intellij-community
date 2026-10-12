@@ -7,7 +7,7 @@ use serde_json::Value;
 
 use super::*;
 use crate::bundle::{MANIFEST_SCHEMA, Manifest};
-use crate::protocol::{Command, SpanCommand};
+use crate::protocol::{Command, Side, SpanCommand};
 use crate::testdata::{decode_transcript, example_manifest};
 
 /// The two examples the OTLP specification ships, `examples/trace.json` and `examples/logs.json` of
@@ -284,6 +284,10 @@ fn the_example_spans_are_the_transcripts_spans() {
             _ => None,
         })
         .collect();
+    assert!(
+        opened.iter().any(|span| span.timeout_ms.is_some()),
+        "the transcript states no deadline, so the spans hold none to compare"
+    );
     for span in &opened {
         let written = by_id
             .get(&span_id(span.id))
@@ -293,6 +297,13 @@ fn the_example_spans_are_the_transcripts_spans() {
         assert_eq!(lookup_str(&written.attributes, attr::SPAN_KIND), Some(span.kind.as_str()));
         assert_eq!(lookup_str(&written.attributes, attr::SPAN_KEY), Some(span.key.as_str()));
         assert_eq!(lookup_str(&written.attributes, attr::EXPECTATION), span.expectation.as_deref());
+        assert_eq!(lookup_str(&written.attributes, attr::INSTRUCTION_SIDE), span.side.map(Side::as_str));
+        assert_eq!(
+            lookup_int(&written.attributes, attr::INSTRUCTION_TIMEOUT_MS),
+            span.timeout_ms.and_then(|timeout_ms| i64::try_from(timeout_ms).ok()),
+            "the deadline of the span {}",
+            span.id
+        );
         assert_eq!(lookup_str(&written.attributes, attr::SPAN_STATUS), Some(Status::Passed.as_str()));
         let parent = by_id[&written.parent_span_id];
         assert!(

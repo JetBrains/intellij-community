@@ -388,6 +388,13 @@ impl Scenario {
         if let Some(expectation) = opened.command.expectation.as_deref().filter(|e| !e.is_empty()) {
             attributes.push(KeyValue::string(attr::EXPECTATION, expectation));
         }
+        if let Some(side) = opened.command.side {
+            attributes.push(KeyValue::string(attr::INSTRUCTION_SIDE, side.as_str()));
+        }
+        if let Some(timeout_ms) = opened.command.timeout_ms {
+            let timeout_ms = i64::try_from(timeout_ms).unwrap_or(i64::MAX);
+            attributes.push(KeyValue::int(attr::INSTRUCTION_TIMEOUT_MS, timeout_ms));
+        }
         let mut span_status = SpanStatus {
             code: status_code_of(status),
             ..SpanStatus::default()

@@ -281,6 +281,10 @@ pub struct SpanCommand {
     /// Where the id of the instruction runs, only on a span whose kind [SpanKind::is_instruction].
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub side: Option<Side>,
+    /// How long one use of the id of the instruction may take, in milliseconds, as the suite document states it. Only
+    /// on a span whose kind [SpanKind::is_instruction].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeout_ms: Option<u64>,
 }
 
 /// Why a span failed: the throwable's class, its message, and its stack.
@@ -465,6 +469,16 @@ impl Command {
                         span.id,
                         span.kind
                     );
+                }
+                if span.timeout_ms.is_some() && !span.kind.is_instruction() {
+                    refuse!(
+                        "span {} is a {} and carries a deadline, which only an action or an assertion has",
+                        span.id,
+                        span.kind
+                    );
+                }
+                if span.timeout_ms == Some(0) {
+                    refuse!("span {} carries a deadline of 0 ms, and a deadline is positive", span.id);
                 }
                 Ok(())
             }

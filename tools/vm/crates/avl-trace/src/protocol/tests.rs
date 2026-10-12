@@ -339,6 +339,18 @@ fn decode_command_refuses_what_the_contract_does_not_name() {
             "an unknown side",
             r#"{"op":"span","id":1,"kind":"action","key":"action:a","title":"a","side":"guest"}"#,
         ),
+        (
+            "a deadline on a step",
+            r#"{"op":"span","id":1,"kind":"step","key":"step:a","title":"[flow] a","timeoutMs":1000}"#,
+        ),
+        (
+            "a zero deadline",
+            r#"{"op":"span","id":1,"kind":"action","key":"action:a","title":"a","timeoutMs":0}"#,
+        ),
+        (
+            "a negative deadline",
+            r#"{"op":"span","id":1,"kind":"action","key":"action:a","title":"a","timeoutMs":-1}"#,
+        ),
         ("a failure without a why", r#"{"op":"end","id":3,"status":"failed"}"#),
         (
             "a pass with an error",
@@ -419,6 +431,7 @@ fn encode_command_puts_the_op_first_and_refuses_an_invalid_command() {
         title: "t".to_owned(),
         expectation: None,
         side: None,
+        timeout_ms: None,
     });
     assert!(encode_command(&invalid).is_err(), "an invalid span was encoded");
 
@@ -503,26 +516,35 @@ fn labels_attachments_and_a_failed_done_are_canonical() {
     assert!(!Op::Attach.is_acked(), "an attachment costs the scenario no time");
 }
 
-/// An action or an assertion states the side of its id. A span of any other kind states none.
+/// An action or an assertion states the side and the deadline of its id. A span of any other kind states neither.
 #[test]
-fn only_an_instruction_span_states_a_side() {
+fn only_an_instruction_span_states_a_side_and_a_deadline() {
     let lines = [
-        r#"{"op":"span","id":1,"kind":"action","key":"action:a","title":"[action] a","side":"ide"}"#,
-        r#"{"op":"span","id":2,"kind":"assertion","key":"assertion:b","title":"[assertion] b: it holds","expectation":"it holds","side":"host"}"#,
+        r#"{"op":"span","id":1,"kind":"action","key":"action:a","title":"[action] a","side":"ide","timeoutMs":180000}"#,
+        r#"{"op":"span","id":2,"kind":"assertion","key":"assertion:b","title":"[assertion] b: it holds","expectation":"it holds","side":"host","timeoutMs":840000}"#,
+        r#"{"op":"span","id":3,"kind":"action","key":"action:c","title":"[action] c"}"#,
     ];
-    let mut sides = Vec::new();
+    let mut facts = Vec::new();
     for line in lines {
         let command = decode_command(line.as_bytes()).unwrap_or_else(|error| panic!("{line}: {error}"));
         assert_eq!(String::from_utf8(encode_command(&command).unwrap()).unwrap(), line);
         if let Command::Span(span) = command {
-            sides.push(span.side);
+            facts.push((span.side, span.timeout_ms));
         }
     }
-    assert_eq!(sides, [Some(Side::Ide), Some(Side::Host)]);
+    assert_eq!(
+        facts,
+        [(Some(Side::Ide), Some(180_000)), (Some(Side::Host), Some(840_000)), (None, None)]
+    );
 
     for kind in SpanKind::ALL.iter().filter(|kind| !kind.is_instruction()) {
         let line = format!(r#"{{"op":"span","id":1,"kind":"{kind}","key":"{kind}:a","title":"a","side":"ide"}}"#);
         assert!(decode_command(line.as_bytes()).is_err(), "a {kind} span with a side was accepted");
+        let line = format!(r#"{{"op":"span","id":1,"kind":"{kind}","key":"{kind}:a","title":"a","timeoutMs":1000}}"#);
+        assert!(
+            decode_command(line.as_bytes()).is_err(),
+            "a {kind} span with a deadline was accepted"
+        );
         let line = format!(r#"{{"op":"span","id":1,"kind":"{kind}","key":"{kind}:a","title":"a"}}"#);
         assert!(decode_command(line.as_bytes()).is_ok(), "a {kind} span without a side was refused");
     }

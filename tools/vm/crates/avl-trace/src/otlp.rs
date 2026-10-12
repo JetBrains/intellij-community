@@ -524,6 +524,10 @@ pub mod attr {
     pub const SPAN_KEY: &str = "air.span.key";
     /// Only on an assertion span.
     pub const EXPECTATION: &str = "air.assertion.expectation";
+    /// Only on an action or an assertion span: where the id runs, a [crate::protocol::Side].
+    pub const INSTRUCTION_SIDE: &str = "air.instruction.side";
+    /// Only on an action or an assertion span: how long one use of the id may take, in milliseconds.
+    pub const INSTRUCTION_TIMEOUT_MS: &str = "air.instruction.timeout_ms";
     /// The lane's status of a span, the root included. It is on every span because the OTLP status code cannot
     /// hold it: OTLP has no word for aborted. [super::status_code_of] is the code written beside it.
     pub const SPAN_STATUS: &str = "air.span.status";
