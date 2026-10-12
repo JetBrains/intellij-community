@@ -239,6 +239,30 @@ fn the_stream_keeps_non_json_lines_as_output() {
     assert_eq!(texts, ["Picked up JAVA_TOOL_OPTIONS", "[1,2]", "\"quoted\"", "{\"broken"]);
 }
 
+// The daemon sends each error line of a run as an explicit record. The record keeps its bytes, which a non-JSON
+// line has none of, and a record without its text is refused.
+#[test]
+fn an_explicit_output_record_keeps_its_text_and_its_bytes() {
+    let line = r#"{"event":"output","text":"Recycling the IDE because the reset failed: \u00e9"}"#;
+    let decoded = NdjsonDecoder::default().push(format!("{line}\n").as_bytes());
+    assert_eq!(decoded.failure, None);
+    let [event] = decoded.events.as_slice() else {
+        panic!("read {:?}", decoded.events)
+    };
+    let RunEventKind::Output(output) = &event.kind else {
+        panic!("read {:?}", event.kind)
+    };
+    assert_eq!(output.text, "Recycling the IDE because the reset failed: é");
+    assert_eq!(event.raw.as_ref().map(|raw| raw.get()), Some(line));
+    for refused in [
+        r#"{"event":"output"}"#,
+        r#"{"event":"output","text":null}"#,
+        r#"{"event":"output","text":7}"#,
+    ] {
+        assert_eq!(protocol_code(refused), CODE_FIELD_MISSING, "{refused}");
+    }
+}
+
 #[test]
 fn the_stream_reassembles_a_record_split_across_chunks() {
     let mut decoder = NdjsonDecoder::default();
