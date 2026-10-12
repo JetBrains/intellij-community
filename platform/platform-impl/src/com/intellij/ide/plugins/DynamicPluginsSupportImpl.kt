@@ -423,7 +423,7 @@ internal class DynamicPluginsSupportImpl(
       return null
     }
     val deferredLoadListeners =
-      if (Registry.`is`("ide.plugins.defer.listener.notifications.on.load", false)) DeferredLoadListeners() else null
+      if (Registry.`is`("ide.plugins.defer.listener.notifications.on.load", true)) DeferredLoadListeners() else null
     reporter.indeterminateStep(IdeBundle.message("progress.text.loading.n.modules", groups.size)) {
       val affectedPlugins = groups.asSequence().flatMap { it.sortedDescriptors }.filterIsInstance<PluginMainDescriptor>()
       withContext(Dispatchers.EDT) {

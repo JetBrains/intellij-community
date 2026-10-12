@@ -242,7 +242,7 @@ object DynamicPlugins {
       }
       else -> IdeBundle.message("modal.progress.title.reconfiguring.plugins")
     }
-    val criticalSectionModalProgress = Registry.`is`("ide.plugins.modal.progress.on.reconfiguration.critical.section", false)
+    val criticalSectionModalProgress = Registry.`is`("ide.plugins.modal.progress.on.reconfiguration.critical.section", true)
     return withSpan(RECONFIGURE_SPAN) {
       reconfigure(
         buildNewState = {
