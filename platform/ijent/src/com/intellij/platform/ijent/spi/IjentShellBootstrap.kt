@@ -26,8 +26,9 @@ internal fun createShellBootstrap(): ShellBootstrap {
     exit $LASTEXITCODE
     <#
     POWERSHELL_SCRIPT
-    ijent_os=$(uname -s)
-    echo "$$marker OS=$ijent_os ARCH=$(uname -m) SHELL=$0"
+    ijent_uname() { uname "$@" 2>/dev/null || busybox uname "$@"; }
+    ijent_os=$(ijent_uname -s)
+    echo "$$marker OS=$ijent_os ARCH=$(ijent_uname -m) SHELL=$0"
     case "$ijent_os" in
       CYGWIN*|MINGW*|MSYS*) exec powershell.exe -NoLogo -NoProfile -NonInteractive -Command - ;;
       *) exec /bin/sh ;;

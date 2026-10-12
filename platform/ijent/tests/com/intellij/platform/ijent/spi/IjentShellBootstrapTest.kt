@@ -127,6 +127,65 @@ class IjentShellBootstrapTest {
 
   @Test
   @EnabledOnOs(OS.LINUX, OS.MAC)
+  fun `bootstrap uses BusyBox when uname is unavailable`(@TempDir root: Path) {
+    for (os in listOf("Linux", "Darwin", "CYGWIN_NT-10.0", "MINGW64_NT-10.0", "MSYS_NT-10.0")) {
+      checkBusyBoxBootstrap(os, Files.createDirectory(root.resolve(os)))
+    }
+  }
+
+  private fun checkBusyBoxBootstrap(os: String, directory: Path) {
+    val busybox = directory.resolve("busybox")
+    Files.writeString(busybox, $$"#!/bin/sh\n[ \"$1\" = uname ] || exit 1\ncase \"$2\" in -s) echo $$os ;; -m) echo x86_64 ;; esac\n")
+    val powershell = directory.resolve("powershell.exe")
+    Files.writeString(powershell, "#!/bin/sh\n/bin/cat\n")
+    for (executable in listOf(busybox, powershell)) {
+      Files.setPosixFilePermissions(executable, PosixFilePermissions.fromString("rwx------"))
+    }
+    val bootstrap = createShellBootstrap()
+    val builder = ProcessBuilder("/bin/sh", "-c", bootstrap.command)
+    builder.environment()["PATH"] = directory.toString()
+    val process = builder.start()
+    try {
+      process.outputStream.bufferedWriter().use {
+        it.appendLine("echo IJENT_AFTER_BOOTSTRAP")
+        it.appendLine("exit 0")
+      }
+      val output = process.inputStream.bufferedReader().readText()
+      val error = process.errorStream.bufferedReader().readText()
+      assertEquals(0, process.waitFor(), error)
+      val marker = output.lineSequence().first { it.contains(bootstrap.marker) }
+      assertTrue(marker.contains("OS=$os ARCH=x86_64"), output)
+      val expectedShell = if (os == "Linux" || os == "Darwin") DetectedShell.Posix else DetectedShell.PowerShell
+      assertEquals(expectedShell, parseShellMarker(marker, bootstrap.marker))
+      assertTrue(output.contains("IJENT_AFTER_BOOTSTRAP"), output)
+    }
+    finally {
+      process.destroyForcibly()
+    }
+  }
+
+  @Test
+  @EnabledOnOs(OS.LINUX, OS.MAC)
+  fun `bootstrap rejects an unknown OS when both uname commands are unavailable`(@TempDir directory: Path) {
+    val bootstrap = createShellBootstrap()
+    val builder = ProcessBuilder("/bin/sh", "-c", bootstrap.command)
+    builder.environment()["PATH"] = directory.toString()
+    val process = builder.start()
+    try {
+      process.outputStream.close()
+      val output = process.inputStream.bufferedReader().readText()
+      val error = process.errorStream.bufferedReader().readText()
+      assertEquals(0, process.waitFor(), error)
+      val marker = output.lineSequence().first { it.contains(bootstrap.marker) }
+      assertThrows(EelUnavailableException.CommunicationFailure::class.java) { parseShellMarker(marker, bootstrap.marker) }
+    }
+    finally {
+      process.destroyForcibly()
+    }
+  }
+
+  @Test
+  @EnabledOnOs(OS.LINUX, OS.MAC)
   fun `shared strategy detects a local shell without SSH or IJent`(): Unit = timeoutRunBlocking {
     val strategy = object : IjentDeployingOverShellProcessStrategy.WithShellBootstrap(ParentOfIjentScopes(this), Dispatchers.IO, "local bootstrap test") {
       override val ijentExecFileProvider: IjentExecFileProvider = object : IjentExecFileProvider {
