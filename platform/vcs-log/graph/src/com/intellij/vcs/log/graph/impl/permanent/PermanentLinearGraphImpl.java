@@ -62,6 +62,40 @@ public class PermanentLinearGraphImpl implements LinearGraph {
   }
 
   /**
+   * Passes each normal down node of {@code nodeIndex} to {@code handler},
+   * in the order of {@link #getAdjacentEdges} with {@link EdgeFilter#NORMAL_DOWN}.
+   */
+  @ApiStatus.Internal
+  public void forEachDownNode(int nodeIndex, @NotNull IntConsumer handler) {
+    for (int i = myNodeToEdgeIndex.getInt(nodeIndex); i < myNodeToEdgeIndex.getInt(nodeIndex + 1); i++) {
+      int adjacentNode = myLongEdges.getInt(i);
+      if (adjacentNode >= 0 && nodeIndex < adjacentNode) {
+        handler.accept(adjacentNode);
+      }
+    }
+    if (mySimpleNodes.get(nodeIndex)) {
+      handler.accept(nodeIndex + 1);
+    }
+  }
+
+  /**
+   * Passes each normal up node of {@code nodeIndex} to {@code handler},
+   * in the order of {@link #getAdjacentEdges} with {@link EdgeFilter#NORMAL_UP}.
+   */
+  @ApiStatus.Internal
+  public void forEachUpNode(int nodeIndex, @NotNull IntConsumer handler) {
+    if (nodeIndex != 0 && mySimpleNodes.get(nodeIndex - 1)) {
+      handler.accept(nodeIndex - 1);
+    }
+    for (int i = myNodeToEdgeIndex.getInt(nodeIndex); i < myNodeToEdgeIndex.getInt(nodeIndex + 1); i++) {
+      int adjacentNode = myLongEdges.getInt(i);
+      if (adjacentNode >= 0 && nodeIndex > adjacentNode) {
+        handler.accept(adjacentNode);
+      }
+    }
+  }
+
+  /**
    * Iterates over node which can be considered as parents (also for {@link GraphEdgeType#NOT_LOAD_COMMIT})
    * for {@code nodeIndex} passing their index to {@code handler}.
    */

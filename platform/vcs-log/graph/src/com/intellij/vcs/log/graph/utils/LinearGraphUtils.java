@@ -7,6 +7,8 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
+import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +66,34 @@ public final class LinearGraphUtils {
 
   public static @NotNull List<Integer> getDownNodes(@NotNull LinearGraph graph, final int nodeIndex) {
     return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_DOWN), graphEdge -> graphEdge.getDownNodeIndex());
+  }
+
+  /**
+   * Clears {@code result} and fills it with the normal up nodes of {@code nodeIndex}, in the order of {@link #getUpNodes}.
+   */
+  @ApiStatus.Internal
+  public static void collectUpNodes(@NotNull LinearGraph graph, int nodeIndex, @NotNull IntList result) {
+    result.clear();
+    if (graph instanceof PermanentLinearGraphImpl permanentGraph) {
+      permanentGraph.forEachUpNode(nodeIndex, node -> result.add(node));
+    }
+    else {
+      result.addAll(getUpNodes(graph, nodeIndex));
+    }
+  }
+
+  /**
+   * Clears {@code result} and fills it with the normal down nodes of {@code nodeIndex}, in the order of {@link #getDownNodes}.
+   */
+  @ApiStatus.Internal
+  public static void collectDownNodes(@NotNull LinearGraph graph, int nodeIndex, @NotNull IntList result) {
+    result.clear();
+    if (graph instanceof PermanentLinearGraphImpl permanentGraph) {
+      permanentGraph.forEachDownNode(nodeIndex, node -> result.add(node));
+    }
+    else {
+      result.addAll(getDownNodes(graph, nodeIndex));
+    }
   }
 
   public static @NotNull LiteLinearGraph asLiteLinearGraph(final @NotNull LinearGraph graph) {

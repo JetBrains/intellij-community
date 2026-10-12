@@ -3,13 +3,15 @@ package com.intellij.vcs.log.graph.impl.facade.sort.bek;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import org.jetbrains.annotations.NotNull;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getDownNodes;
 
 class BekBranch {
   private static final Logger LOG = Logger.getInstance(BekBranch.class);
@@ -21,6 +23,7 @@ class BekBranch {
 
   private final @NotNull LinearGraph myPermanentGraph;
   private final @NotNull List<Integer> myNodeIndexes;
+  private final @NotNull IntList myDownNodesBuffer = new IntArrayList();
 
   private int myNoInsertSize;
 
@@ -58,12 +61,14 @@ class BekBranch {
       // for correct topological order
       if (edgeRestrictions.hasRestriction(upNode)) break;
 
+      LinearGraphUtils.collectDownNodes(myPermanentGraph, upNode, myDownNodesBuffer);
+      boolean containsDownNode = myDownNodesBuffer.contains(downNode);
+
       // upNode is mergeCommit
-      List<Integer> downNodes = getDownNodes(myPermanentGraph, upNode);
-      if (downNodes.size() > 1 && downNodes.contains(downNode)) continue;
+      if (myDownNodesBuffer.size() > 1 && containsDownNode) continue;
 
       // division
-      if (!downNodes.contains(downNode)) break;
+      if (!containsDownNode) break;
 
       long delta = Math.abs(timestampGetter.getTimestamp(upNode) - timestampGetter.getTimestamp(downNode));
 
