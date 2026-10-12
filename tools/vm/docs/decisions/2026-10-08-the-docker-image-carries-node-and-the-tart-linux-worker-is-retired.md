@@ -2,7 +2,7 @@
 topic: testing
 ---
 
-# 210. The Docker image carries Node, and the Tart Linux worker is retired
+# The Docker image carries Node, and the Tart Linux worker is retired
 
 Date: 2026-10-08
 

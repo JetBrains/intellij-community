@@ -12,7 +12,8 @@
 //!   tag from `AIR_VM_DOCKER_REGISTRY` (ADR 0184): the tag names the same bytes wherever the image was built, and the
 //!   image's `org.opencontainers.image.revision` label carries the tag digest, so a pulled image that does not say
 //!   the digest is dropped and built instead. The Apple `container` engine pulls the tag from the file mirror
-//!   `AIR_VM_IMAGE_MIRROR` instead, as an OCI archive (ADR 0222), and checks the same label.
+//!   `AIR_VM_IMAGE_MIRROR` instead, as an OCI archive (the decision
+//!   `2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend`), and checks the same label.
 //! - **the container** is made by `docker create` with the shares as read-only bind mounts and `WorkerData` in a
 //!   named volume. The shares are arguments of the create, as they are arguments of `tart run` on Tart, so a
 //!   share-set change makes the container again. The create arguments are recorded ([`CreateRecord`]), and a record

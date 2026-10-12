@@ -2,16 +2,14 @@
 topic: testing
 ---
 
-# 227. An idle Apple container worker stops itself
+# An idle Apple container worker stops itself
 
 Date: 2026-10-10
 
 ## Status
 
 Accepted. It amends [ADR 0106](0106-a-warm-daemon-survives-a-lease-release.md) on the Apple `container` engine only:
-there the warm daemon survives a release until the idle deadline, and not until `pool stop`. The number follows
-[ADR 0226](0226-the-container-pool-follows-the-host-memory-and-the-builder-stops.md), which skips 0225 for the reason
-that it states.
+there the warm daemon survives a release until the idle deadline, and not until `pool stop`.
 
 ## Context
 
@@ -19,7 +17,7 @@ A lease release keeps the container and its warm daemon (ADR 0106), so the next 
 start. The worker runs until a `pool stop`.
 
 On Apple `container`, the default engine of a macOS 26 Mac (ADR 0224), each worker is a VM of 8192 MiB that returns no
-memory to the host until it stops (ADR 0222, item 7). ADR 0226 lets a large host run four or more such workers. A
+memory to the host until it stops ([Apple container is a second engine of the Docker backend](2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend.md), item 7). [The container pool follows the host memory, and the builder stops](2026-10-10-the-container-pool-follows-the-host-memory-and-the-builder-stops.md) lets a large host run four or more such workers. A
 developer who ran a lane in the morning held 8 GiB or more of the host for the rest of the day.
 
 The controller is a command line. No resident process can count an idle period after the release.
@@ -63,7 +61,7 @@ chose a grace of one hour on the same day.
 - **An idle worker gives its memory back after an hour.** The worker after a lane run in the morning holds no memory in
   the afternoon.
 - **A run after the deadline pays a cold daemon.** The container start takes about 1 s, and the daemon start with a
-  staged runtime took 11.7 s on 2026-10-09 (ADR 0222). A developer who runs a lane less often than once an hour pays it
+  staged runtime took 11.7 s on 2026-10-09 ([Apple container is a second engine of the Docker backend](2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend.md)). A developer who runs a lane less often than once an hour pays it
   each time. `AIR_VM_IDLE_STOP=off` keeps the old behaviour.
 - **Each release starts one small process.** A later release or acquisition makes the earlier process exit within 30 s.
 - **The process outlives the controller and the terminal.** It inherits the environment of the controller without the

@@ -66,12 +66,12 @@ runs in it.
 
 Docker is the default on every host
 ([ADR 0190](decisions/0190-the-docker-engine-is-the-default-worker.md)), and it is the one Linux worker
-([ADR 0210](decisions/0210-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). A red run
+([the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). A red run
 there is a verdict. `java.awt.Robot` captures a real frame there, so a failure arrives with a picture. It needs
 no installation, and one engine holds two lanes. `--backend container-linux` runs the same Linux guest profile
 in the container of the `testing-ui` skill, on every host of the skill. The skill's noVNC is the live view
-([ADR 0225](decisions/0225-the-lane-runs-in-the-testing-ui-container.md)), and
-[ADR 0226](decisions/0226-the-container-linux-backend-becomes-the-default-worker.md) decides that it becomes the
+([the lane runs in the testing-ui container](decisions/2026-10-04-the-lane-runs-in-the-testing-ui-container.md)), and
+[the container-linux backend becomes the default worker](decisions/2026-10-09-the-container-linux-backend-becomes-the-default-worker.md) decides that it becomes the
 default worker with a later switch commit; until then Docker is the default. A macOS guest preserves JCEF,
 Terminal, native-menu, WindowServer and Aqua behaviour, and that is where coverage about those things belongs.
 Select one with
@@ -84,7 +84,7 @@ every macOS failure is macOS-only. The mechanism is window activation:
 [IJAI-1228](https://youtrack.jetbrains.com/issue/IJAI-1228) own it. Ask for that backend explicitly,
 and do not read a red run there as a verdict about the product.
 
-A lease takes the warmest free slot ([ADR 0229](decisions/0229-a-lease-prefers-the-warm-slot.md)). The first choice
+A lease takes the warmest free slot ([a lease prefers the warm slot](decisions/2026-10-10-a-lease-prefers-the-warm-slot.md)). The first choice
 is a running slot whose daemon record names the launch digest of the build that asks. Then come a running slot, a
 stopped slot and a slot with no machine. Within one class the slot order of the pool stays. The probes start nothing: a
 Docker engine that is down, Parallels and `container-linux` give no running state, and every slot then keeps its
@@ -148,7 +148,7 @@ pull: run it detached. `community/tools/vm/provision/README.md` and
 
 The hypervisor and the guest OS are separate axes. The one Linux guest is the Docker worker, and the
 section below describes its container layer. The Tart Linux worker was retired on 2026-10-08
-([ADR 0210](decisions/0210-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)).
+([the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)).
 Everything above still applies: one read-only share, the parity layout, the exec channel and a daemon with a
 warm IDE. On the `container-linux` backend the Bazel share is a read-only mount at its host path, so the
 guest has no parity layout. Four macOS
@@ -167,7 +167,7 @@ resolves every staged shared object. Each refusal carries its own code and sente
 [ADR 0108](decisions/0108-the-guest-half-of-the-image-pipeline-is-go.md) is why.
 
 The image carries Node 24.19.0 at `/usr/local/bin/node`, and `AIR_VM_NODE` defaults to that path. The
-image tag pins the Node, so a boot runs no Node check ([ADR 0210](decisions/0210-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). Only `ui-live` uses the guest Node.
+image tag pins the Node, so a boot runs no Node check ([the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). Only `ui-live` uses the guest Node.
 Its npm-installed registry ACP agents and the Claude CLI run on it, through `AIR_VM_NODE` and `NODE_BIN`
 in the daemon environment.
 
@@ -185,7 +185,7 @@ runtime. VM preparation installs and probes no agent CLI, and existing images ne
 The default backend, `docker`, runs the Linux guest in a container on a Docker engine.
 [ADR 0183](decisions/0183-a-linux-worker-may-be-a-container.md) made it a backend,
 [ADR 0190](decisions/0190-the-docker-engine-is-the-default-worker.md) made it the default, and
-[ADR 0210](decisions/0210-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md) made it the one Linux worker. The guest is the Linux guest of the section above. This section describes the
+[the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md) made it the one Linux worker. The guest is the Linux guest of the section above. This section describes the
 container layer below it.
 
 The image is `community/tools/vm/docker/Dockerfile`. The base is `DOCKER_BASE_IMAGE`
@@ -225,7 +225,7 @@ the same daemon, and the remount step of the daemon becomes the 2 s settle. The 
 container when its create arguments change. The record of those arguments covers the share, the image
 tag, the display and `AIR_VM_SCREEN`. The arguments name no checkout, so every checkout of the host uses the
 same container, and a switch to another checkout recreates nothing
-([ADR 0228](decisions/0228-the-guest-reads-no-checkout.md)). A warm iteration compares the record too, before it reuses the
+([the guest reads no checkout](decisions/2026-10-10-the-guest-reads-no-checkout.md)). A warm iteration compares the record too, before it reuses the
 daemon. On a difference it recreates the container under its own lease and starts the daemon cold. A missing record also gives a recreate, and so does an engine
 container id that differs from the recorded id. `pool start` and `pool init` refuse with
 `worker_leased` when the stale container runs and another holder leases it. A stopped stale container
@@ -283,7 +283,7 @@ DOCKER_CONFIG="<runtime root>/docker-config" docker login <registry>
 
 A Linux or a Windows host keeps the engine it has, because Lima needs QEMU on Linux and WSL2 on Windows.
 
-On Apple `container` ([ADR 0222](decisions/0222-apple-container-is-a-second-engine-of-the-docker-backend.md)),
+On Apple `container` ([Apple container is a second engine of the Docker backend](decisions/2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend.md)),
 each container is a VM of its own. The controller runs the Apple CLI that Bazel pins in
 `community/tools/vm/container.MODULE.bazel`, or the one that `CONTAINER_BIN` names. It runs no Docker CLI and no buildx.
 
@@ -316,11 +316,11 @@ env -u DOCKER_HOST ./community/tools/vm.cmd run AgentSessionToolWindowComposerUi
   4 GiB, and the builder stops after the build.
 - **The pool size.** The workers get at most a quarter of the host memory, from 2 to 16 slots. A host of 128 GiB with
   workers of 8 GiB has 4 slots, and a host of 64 GiB has 2. `AIR_VM_MAX_WORKERS` sets the count
-  ([ADR 0226](decisions/0226-the-container-pool-follows-the-host-memory-and-the-builder-stops.md)).
+  ([the Apple container pool follows the host memory, and the builder stops after a build](decisions/2026-10-10-the-container-pool-follows-the-host-memory-and-the-builder-stops.md)).
 - **The idle stop.** A release keeps the warm daemon for an hour. Then the unleased worker stops, and it gives its
   memory back. The next run starts it again with a cold daemon, and the volume keeps the staged runtime.
   `AIR_VM_IDLE_STOP` sets the grace in seconds, `off` keeps the worker running, and `0` stops it at the release
-  ([ADR 0227](decisions/0227-an-idle-container-worker-stops-itself.md)).
+  ([an idle Apple container worker stops itself](decisions/2026-10-10-an-idle-container-worker-stops-itself.md)).
 - **The pool commands.** `pool stop` stops the containers only. `pool recycle all` deletes the builder too. `status`
   prints `engine=container`, whether the server runs, the pool size with its reason, and the idle stop deadline of
   each worker. It never starts the server.
@@ -392,7 +392,7 @@ The host paths are Windows paths, and the guest is Linux, so two steps differ fr
 
 The `container-linux` backend has passed the `ui` lane of `flow-new-session` on a Windows 10 PC with WSL 2.9.13:
 9 tests, cold in 283 s with a daemon start of 84 s, warm in 134 s
-([ADR 0225](decisions/0225-the-lane-runs-in-the-testing-ui-container.md)). That run took the MANIFEST branch through
+([the lane runs in the testing-ui container](decisions/2026-10-04-the-lane-runs-in-the-testing-ui-container.md)). That run took the MANIFEST branch through
 a real daemon start. No `vm.cmd run` has passed on a Windows PC with a Docker engine yet, so `--mount source=C:\…`
 on Docker Desktop and the MANIFEST name that the daemon descriptor gets there are not confirmed, and the cost table
 below has no Docker row for Windows. The 2 s share settle of ADR 0183 is a VirtioFS measurement on OrbStack, and a
@@ -419,7 +419,7 @@ carry the guest agent, the IDE flags file and the JBR archive that the IDE runs 
 its warm cache, then it launches the built test stub in the guest. The launch environment is the one
 Bazel's test runner would provide.
 
-**The guest reads no checkout** ([ADR 0228](decisions/0228-the-guest-reads-no-checkout.md)). It sees one read-only
+**The guest reads no checkout** ([the guest reads no checkout](decisions/2026-10-10-the-guest-reads-no-checkout.md)). It sees one read-only
 share, Bazel's output user root. A **parity layout** makes that root position-identical: the output user root is a
 single symlink onto the mount. The guest builds its own runfiles tree from the MANIFEST of the runtime descriptor,
 at `<vmData>/runfiles/<digest>`, with the `runfiles-tree` verb in the `parity-probe` phase. A runfile whose target
@@ -630,7 +630,7 @@ plain TCP. The daemon binds the container's interfaces for that, because a publi
 container's address, not to its loopback; its token guards it. Each one-shot guest command runs through
 `POST /v1/execute` on the skill's control port, with the Bearer the skill writes to
 `out/testing-ui/container.ctl_bearer`, and a pull runs through `container.cmd exec`
-([ADR 0225](decisions/0225-the-lane-runs-in-the-testing-ui-container.md)).
+([the lane runs in the testing-ui container](decisions/2026-10-04-the-lane-runs-in-the-testing-ui-container.md)).
 
 A start whose daemon never answers `/status` within `AIR_VM_DAEMON_HEALTH_TIMEOUT` (180 s) cancels the
 run it launched and keeps its record, so `daemon log` still reads it. The refusal names what the last
@@ -708,7 +708,7 @@ Agents consume the JSON report.
 
 The fixed costs around a lane, measured on `air-linux-1`, each reproduced on the same worker and
 day. `air-linux-1` was a Tart Linux worker, which
-[ADR 0210](decisions/0210-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md) retired, so its rows are history:
+the decision [the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md) retired, so its rows are history:
 
 | what | cost |
 | --- | --- |
@@ -1042,7 +1042,7 @@ line also runs the tests of BT**, through `@community//tools/bt/...`. The clippy
 from `community/`, with `./bazel.cmd test //tools/bt/...` there, because the clippy aspect skips a
 target of an external repository. BT is the community workspace `community/tools/bt`, not a part of the
 controller ([ADR 0070](../../../../plugins/air/docs/decisions/0070-bt-core-lives-in-community.md)). The controller is the community workspace
-`community/tools/vm` beside it ([ADR 0209](decisions/0209-the-ui-lane-workspace-lives-in-community.md)). The
+`community/tools/vm` beside it ([the UI-lane workspace lives in community](decisions/2026-10-07-the-ui-lane-workspace-lives-in-community.md)). The
 tests that read files of the ultimate root are in `//plugins/air/tests/integration/vm-contract`.
 
 `status` is a report, and it is almost write-free. It resolves the two host paths a parity verdict

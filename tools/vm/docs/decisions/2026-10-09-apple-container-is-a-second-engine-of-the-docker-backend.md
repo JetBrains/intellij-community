@@ -2,7 +2,7 @@
 topic: testing
 ---
 
-# 222. Apple container is a second engine of the Docker backend
+# Apple container is a second engine of the Docker backend
 
 Date: 2026-10-09
 
@@ -190,7 +190,7 @@ it.
 - The Docker dialect still pulls from the registry. A later change may move it to the file mirror too, so that both
   engines have one image source.
 - Done on 2026-10-10: the builder VM stops after each build, `builder stop` after the build and its publish
-  ([ADR 0226](0226-the-container-pool-follows-the-host-memory-and-the-builder-stops.md)). It held 1.47 GiB of its 4
+  ([the Apple container pool follows the host memory, and the builder stops after a build](2026-10-10-the-container-pool-follows-the-host-memory-and-the-builder-stops.md)). It held 1.47 GiB of its 4
   GiB after a build on 2026-10-09.
 
 - Mirror the kernel (`[kernel] url` and `binaryPath` of `config.toml`) and the `vminit` and builder images on

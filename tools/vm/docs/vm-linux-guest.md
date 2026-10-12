@@ -1,7 +1,7 @@
 # A Linux guest for the Air UI lanes
 
 **Status.** The Tart Linux worker was retired on 2026-10-08
-([ADR 0210](decisions/0210-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). The Docker
+([the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). The Docker
 guest keeps the Linux guest model of this note, and its image carries Node. The rest of this note is history. The
 current model is in the [VM guide](vm-ui-tests.md).
 

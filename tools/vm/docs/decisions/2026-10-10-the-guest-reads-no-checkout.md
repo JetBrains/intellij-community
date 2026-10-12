@@ -2,7 +2,7 @@
 topic: testing
 ---
 
-# 228. The guest reads no checkout
+# The guest reads no checkout
 
 Date: 2026-10-10
 
@@ -11,9 +11,8 @@ Date: 2026-10-10
 Accepted. It amends point 4 and point 5 of [ADR 0186](0186-a-windows-host-runs-the-controller-natively.md). The
 path map of point 4 holds one share now, the Bazel output root. The guest-built runfiles tree of point 5 is the rule
 on every host now, and not only on a Windows host. It also amends the copy-free guest run of
-[the VM guide](../vm-ui-tests.md#how-a-run-reaches-the-guest): the guest gets copies of a few source runfiles. The
-number follows [ADR 0227](0227-an-idle-container-worker-stops-itself.md), so no number is skipped.
-[ADR 0229](0229-a-lease-prefers-the-warm-slot.md) builds on this record.
+[the VM guide](../vm-ui-tests.md#how-a-run-reaches-the-guest): the guest gets copies of a few source runfiles.
+[A lease prefers the warm slot](2026-10-10-a-lease-prefers-the-warm-slot.md) builds on this record.
 
 ## Context
 

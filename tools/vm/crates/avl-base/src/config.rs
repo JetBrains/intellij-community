@@ -81,7 +81,8 @@ pub const CONTAINER_LABEL: &str = "@community//tools/vm:air_container_darwin_arm
 
 /// Chooses the engine of the Docker backend on a macOS host: `lima` or `container`. Unset, the macOS version chooses
 /// ([`MacosHost::runs_apple_container`]). The variable is read only when neither `DOCKER_BIN` nor `DOCKER_HOST` names
-/// an engine. ADR 0222 added the variable, and ADR 0224 made it an override of the version rule.
+/// an engine. The decision `2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend` added the variable, and ADR 0224
+/// made it an override of the version rule.
 pub const DOCKER_ENGINE_VARIABLE: &str = "AIR_VM_DOCKER_ENGINE";
 
 /// The first major version of macOS on which Apple `container` is the default engine. Apple `container` 1.5.0 needs
@@ -1033,7 +1034,8 @@ fn worker_root_disk_gb(reader: &mut Reader<'_>, guest_os: GuestOs) -> u32 {
 /// A pool has [`DEFAULT_POOL_SLOTS`] slots unless `AIR_VM_MAX_WORKERS` says otherwise. On the Apple `container` engine
 /// the default follows the host memory instead ([`default_docker_slots`]), because each worker is a VM of
 /// `worker_mib`. A Lima slot shares one engine VM sized for two lanes ([`LIMA_ENGINE_MEMORY_MIB`]), and a container on
-/// an external engine has no cap, so those pools keep the fixed default (ADR 0226).
+/// an external engine has no cap, so those pools keep the fixed default
+/// (the decision `2026-10-10-the-container-pool-follows-the-host-memory-and-the-builder-stops`).
 ///
 /// A container-linux pool has one slot, `container-linux-1`: the skill's script runs one container, so an
 /// `AIR_VM_MAX_WORKERS` other than 1 is refused there.
@@ -1556,7 +1558,7 @@ impl Config {
         if reader.set(REMOVED_REPO_SHARE_VARIABLE).is_some() {
             reader.refuse(Refusal::invalid_environment(format!(
                 "{REMOVED_REPO_SHARE_VARIABLE} is removed: a worker has no repository share, because the guest reads no \
-                 checkout (ADR 0228 of community/tools/vm/docs/decisions); unset it"
+                 checkout (the decision 2026-10-10-the-guest-reads-no-checkout of community/tools/vm/docs/decisions); unset it"
             )));
         }
         let bazel_share_name = reader.string("AIR_VM_BAZEL_SHARE_NAME", "air-macos-bazel");

@@ -2,15 +2,15 @@
 topic: testing
 ---
 
-# 229. A lease prefers the warm slot
+# A lease prefers the warm slot
 
 Date: 2026-10-10
 
 ## Status
 
-Accepted. It builds on [ADR 0228](0228-the-guest-reads-no-checkout.md), which lets one slot serve every checkout of
+Accepted. It builds on [the guest reads no checkout](2026-10-10-the-guest-reads-no-checkout.md), which lets one slot serve every checkout of
 the machine. It also builds on [ADR 0106](0106-a-warm-daemon-survives-a-lease-release.md), which keeps the warm
-daemon after a release. The number follows ADR 0228, so no number is skipped. The operator view is
+daemon after a release. The operator view is
 [the VM guide](../vm-ui-tests.md#the-four-guests).
 
 ## Context

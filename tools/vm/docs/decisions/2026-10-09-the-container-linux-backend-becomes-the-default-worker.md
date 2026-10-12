@@ -2,7 +2,7 @@
 topic: testing
 ---
 
-# 226. The container-linux backend becomes the default worker
+# The container-linux backend becomes the default worker
 
 Date: 2026-10-09
 
@@ -11,13 +11,13 @@ Date: 2026-10-09
 Accepted, and not yet in effect. The default of [ADR 0190](0190-the-docker-engine-is-the-default-worker.md), the
 Docker engine, stands until the switch commit, which is its own review after the backend lands: the default
 selection and its tests, the guide's backend table, and the `vm.cmd` examples of the Air skill, which run without a
-backend flag. [ADR 0225](0225-the-lane-runs-in-the-testing-ui-container.md) added the backend and left the default
+backend flag. [the lane runs in the testing-ui container](2026-10-04-the-lane-runs-in-the-testing-ui-container.md) added the backend and left the default
 alone; this record decides where the default goes. The switch commit supersedes ADR 0190's default and keeps the
 rest of that record until the Docker backend goes.
 
 ## Context
 
-ADR 0225 made the container of the `testing-ui` skill a fourth backend, `--backend container-linux`, as the first step
+[The lane runs in the testing-ui container](2026-10-04-the-lane-runs-in-the-testing-ui-container.md) made the container of the `testing-ui` skill a fourth backend, `--backend container-linux`, as the first step
 toward replacing the Docker worker. The skill's layer costs less than the worker half of the controller: a container
 start takes about 3 s against the 147 to 197 s of the first Lima engine start, and a verb on the control port takes
 0.03 s against a relay spawn of 0.65 s.
@@ -63,7 +63,7 @@ switch commit makes these five points true:
 4. **An unqualified `pool stop` stops the container-linux pool.** A command without `--backend` and without a
    receipt operates on the default pool, as ADR 0190 decided for Docker.
 5. **The container keeps the skill's fixed sizing.** 6 GiB of memory, 4 CPUs and 1 GiB of `/dev/shm`;
-   `AIR_VM_MEMORY_MB` and `AIR_VM_CPU` do not apply to it, as ADR 0225 states.
+   `AIR_VM_MEMORY_MB` and `AIR_VM_CPU` do not apply to it, as [the lane runs in the testing-ui container](2026-10-04-the-lane-runs-in-the-testing-ui-container.md) states.
 
 ## Consequences
 

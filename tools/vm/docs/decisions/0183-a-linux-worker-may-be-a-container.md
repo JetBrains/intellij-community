@@ -25,7 +25,7 @@ Amended 2026-09-30: on a macOS host with no engine named, the engine is a Lima V
 Superseded in part on 2026-09-30: [ADR 0190](0190-the-docker-engine-is-the-default-worker.md) makes the Docker container
 the default worker, with two slots. It supersedes point 7 and the one-slot default of point 6.
 
-Superseded in part on 2026-10-08: [ADR 0210](0210-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md) retires the Tart Linux worker.
+Superseded in part on 2026-10-08: [the Docker image carries Node, and the Tart Linux worker is retired](2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md) retires the Tart Linux worker.
 The Docker container is the one Linux worker.
 
 ## Context

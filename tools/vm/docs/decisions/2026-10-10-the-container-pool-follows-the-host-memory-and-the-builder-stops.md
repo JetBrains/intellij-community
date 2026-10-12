@@ -2,16 +2,16 @@
 topic: testing
 ---
 
-# 226. The Apple container pool follows the host memory, and the builder stops after a build
+# The Apple container pool follows the host memory, and the builder stops after a build
 
 Date: 2026-10-10
 
 ## Status
 
-Accepted. It amends item 7 of [ADR 0222](0222-apple-container-is-a-second-engine-of-the-docker-backend.md), which
-gave each worker its own memory and left the pool size at two. It closes the builder follow-up of ADR 0222 and of
+Accepted. It amends item 7 of [Apple container is a second engine of the Docker backend](2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend.md), which
+gave each worker its own memory and left the pool size at two. It closes the builder follow-up of [Apple container is a second engine of the Docker backend](2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend.md) and of
 [ADR 0224](0224-apple-container-is-the-default-engine-of-a-mac.md). The number skips 0225, because the docs here also
-cite the ADRs of `plugins/air/docs/decisions`, and 0225 is taken there. [ADR 0227](0227-an-idle-container-worker-stops-itself.md)
+cite the ADRs of `plugins/air/docs/decisions`, and 0225 is taken there. [an idle Apple container worker stops itself](2026-10-10-an-idle-container-worker-stops-itself.md)
 records the idle stop of a worker, which the user asked for on the same day.
 
 ## Context
@@ -25,7 +25,7 @@ host got two workers and left most of the memory unused.
 
 The builder VM of the engine kept running after each build. It holds 4 GiB (`BUILDER_MEMORY`), with 1.47 GiB in use on
 2026-10-09, and a running VM returns no memory to the host. A cold `builder start` that pulls the builder image took
-38.5 s in the spike of ADR 0222.
+38.5 s in the spike of [Apple container is a second engine of the Docker backend](2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend.md).
 
 The user asked on 2026-10-10 for a pool of about 4 slots on 128 GiB, 2 slots on a small host, and a builder that stops
 after each build.

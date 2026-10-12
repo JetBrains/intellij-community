@@ -57,9 +57,9 @@ and `:air-trace` natively.
 
 `docker/` holds the image of the Linux worker (`--backend docker`, ADR 0183): the `Dockerfile` and its
 entrypoint `air-display`. The entrypoint starts the X display and the window manager. The image carries the guest
-Node (ADR 0210). `avl-vm` embeds both files and
+Node ([the Docker image carries Node, and the Tart Linux worker is retired](docs/decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). `avl-vm` embeds both files and
 builds the image; nobody builds it by hand. The base is `DOCKER_BASE_IMAGE` in `community/tools/vm/provision/versions.env`.
-`container.MODULE.bazel` pins Apple `container`, the engine of a Mac on macOS 26 or newer (ADR 0222, ADR 0224).
+`container.MODULE.bazel` pins Apple `container`, the engine of a Mac on macOS 26 or newer ([Apple container is a second engine of the Docker backend](docs/decisions/2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend.md), ADR 0224).
 `docker/engine.lima.yaml` is the template of the Lima VM that runs the engine on an older macOS, or with
 `AIR_VM_DOCKER_ENGINE=lima` (ADR 0189). `avl-vm` embeds it too. `docker.MODULE.bazel` pins the Docker CLI and its
 `docker-buildx` plugin, and `lima.MODULE.bazel` pins Lima.

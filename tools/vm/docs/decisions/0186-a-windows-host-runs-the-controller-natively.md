@@ -25,7 +25,7 @@ Amended by [ADR 0074](0074-the-ui-lane-crates-follow-the-re-key-domains.md): `av
 `avl-vm`, and `avl-trace-serve` is the `serve` module of `air-trace`. So `air-trace-test` now carries the Kotlin test
 data of the `avl-trace-serve-test` row, and it needs the same jars on a Windows host.
 
-Amended 2026-10-09: [ADR 0225](0225-the-lane-runs-in-the-testing-ui-container.md) adds the container-linux backend
+Amended 2026-10-09: [the lane runs in the testing-ui container](2026-10-04-the-lane-runs-in-the-testing-ui-container.md) adds the container-linux backend
 on a Windows host, through the `wslc` runtime of the testing-ui skill, so a Windows host drives two backends. The
 first lane runs on a Windows PC passed through it, and the five gaps they found in the shared Windows runfiles path
 are fixed. The Docker run this record waits for has not happened, so it stays Proposed.

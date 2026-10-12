@@ -2,7 +2,7 @@
 topic: testing
 ---
 
-# 230. A welcome run measures what the perf test measures
+# A welcome run measures what the perf test measures
 
 Date: 2026-10-12
 

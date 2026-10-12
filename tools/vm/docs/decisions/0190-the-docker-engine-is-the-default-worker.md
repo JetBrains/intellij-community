@@ -13,13 +13,13 @@ worker as the default until the lane was green on Docker. It also supersedes the
 It moves the default of [ADR 0189](0189-the-docker-engine-is-a-lima-vm-the-controller-owns.md). How the lane uses the
 worker is [the VM guide](../vm-ui-tests.md).
 
-Superseded in part on 2026-10-08: [ADR 0210](0210-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md) removes `--backend linux`, which this record
+Superseded in part on 2026-10-08: [the Docker image carries Node, and the Tart Linux worker is retired](2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md) removes `--backend linux`, which this record
 names as the fallback.
 
 Amended on 2026-10-09: [ADR 0224](0224-apple-container-is-the-default-engine-of-a-mac.md) makes Apple `container` the
 engine of point 1 on macOS 26 or newer, on Apple silicon. An older macOS keeps the Lima engine.
 
-To be superseded: [ADR 0226](0226-the-container-linux-backend-becomes-the-default-worker.md), of 2026-10-09, decides
+To be superseded: [the container-linux backend becomes the default worker](2026-10-09-the-container-linux-backend-becomes-the-default-worker.md), of 2026-10-09, decides
 that the container-linux backend becomes the default worker. Its switch commit supersedes the default here; the
 Docker backend stays available by name until its removal.
 

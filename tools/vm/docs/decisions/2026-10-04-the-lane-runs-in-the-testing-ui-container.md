@@ -2,7 +2,7 @@
 topic: testing
 ---
 
-# 225. The lane runs in the testing-ui container
+# The lane runs in the testing-ui container
 
 Date: 2026-10-04
 
@@ -13,7 +13,7 @@ Accepted. It adds a fourth backend beside Tart, Parallels and Docker.
 [ADR 0182](0182-the-daemon-is-reached-through-the-exec-channel.md). The controller reaches the daemon through a port
 that the skill's `start` publishes on the host loopback, not through a relay child. It does not move the default of
 [ADR 0190](0190-the-docker-engine-is-the-default-worker.md);
-[ADR 0226](0226-the-container-linux-backend-becomes-the-default-worker.md) decides that a later switch commit does.
+[the container-linux backend becomes the default worker](2026-10-09-the-container-linux-backend-becomes-the-default-worker.md) decides that a later switch commit does.
 [The VM guide](../vm-ui-tests.md) states how the lane uses the container, and the `vm-ui-tests` skill states how to
 run it.
 
