@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="4" failures="2" errors="0" skipped="1" time="*">
+  <testsuite name="//a/b:c" tests="4" failures="2" errors="0" skipped="1" time="*">
+    <testcase classname="crate" name="fails_with_an_error" time="*">
+      <failure message="Error: &quot;an error which reaches the report&quot;">Error: &quot;an error which reaches the report&quot;
+</failure>
+    </testcase>
+    <testcase classname="crate" name="is_ignored" time="*">
+      <skipped message="the end-to-end test needs a test which libtest ignores"/>
+    </testcase>
+    <testcase classname="crate" name="panics_with_a_message_the_report_must_escape" time="*">
+      <failure message="thread * panicked at *: a panic with &lt;tags&gt; &amp; &quot;quotes&quot;">
+thread * panicked at *:
+a panic with &lt;tags&gt; &amp; &quot;quotes&quot;
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+</failure>
+    </testcase>
+    <testcase classname="crate" name="passes" time="*"/>
+  </testsuite>
+</testsuites>

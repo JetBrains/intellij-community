@@ -4,7 +4,7 @@ use serde_json::json;
 use super::*;
 use bt_core::fake::{
     AttemptSpec, FakeRuntime, REPO_ROOT, area_files, attempt, bep_lines, build_bazel_text, case, failing, flow_catalog_tree, lanes,
-    refusal, suite, suite_xml, test_result_event,
+    module_build_bazel_text, refusal, suite, suite_xml, test_result_event,
 };
 use bt_core::runtime::SpawnResult;
 
@@ -661,4 +661,87 @@ fn the_heartbeat_reaches_stderr_as_a_progress_line() {
         fake.state().stderr
     );
     assert!(!outcome.text.contains("still running"), "{}", outcome.text);
+}
+
+/// The air tree with a migrated community module of the ultimate root: the module list, its BUILD.bazel and the
+/// migrated list.
+fn fake_module_tree() -> FakeRuntime {
+    let fake = fake_air_tree();
+    fake.put("community/MODULE.bazel", "");
+    fake.put(
+        ".idea/modules.xml",
+        r#"<module fileurl="file://$PROJECT_DIR$/community/platform/util/intellij.platform.util.tests.iml" filepath="$PROJECT_DIR$/community/platform/util/intellij.platform.util.tests.iml" />
+<module fileurl="file://$PROJECT_DIR$/goland/tests/intellij.goland.tests.iml" filepath="$PROJECT_DIR$/goland/tests/intellij.goland.tests.iml" />"#,
+    );
+    for (dir, module, target) in [
+        ("community/platform/util", "intellij.platform.util.tests", "util-tests_test"),
+        ("goland/tests", "intellij.goland.tests", "go-tests_test"),
+    ] {
+        fake.put(&format!("{dir}/BUILD.bazel"), &module_build_bazel_text(module, target));
+    }
+    fake.put("community/build/bazel-migrated-test-modules.txt", "intellij.platform.util.tests\n");
+    fake
+}
+
+const UTIL_LABEL: &str = "@community//platform/util:util-tests_test";
+
+#[test]
+fn a_module_runs_its_jps_test_with_the_filter() {
+    let fake = fake_module_tree();
+    let class = run(
+        &[
+            "--module",
+            "intellij.platform.util.tests",
+            "--filter",
+            "com.intellij.openapi.util.io.FileUtilLightTest",
+            "--dry-run",
+        ],
+        &fake,
+    );
+    assert_mentions(
+        &class.text,
+        &[
+            &format!("label   {UTIL_LABEL}"),
+            "filter  com.intellij.openapi.util.io.FileUtilLightTest",
+            "--test_filter=com.intellij.openapi.util.io.FileUtilLightTest",
+        ],
+    );
+    let package = run(
+        &[
+            "--module",
+            "intellij.platform.util.tests",
+            "--filter",
+            "com.intellij.openapi.util.io",
+            "--dry-run",
+        ],
+        &fake,
+    );
+    assert_mentions(
+        &package.text,
+        &[
+            "filter  com.intellij.openapi.util.io",
+            "--test_env=JB_TEST_JUNIT5_FILTERS=include-package=com.intellij.openapi.util.io",
+        ],
+    );
+    assert!(!package.text.contains("--test_filter"), "{}", package.text);
+    let unfiltered = run(&["--module", "intellij.platform.util.tests", "--dry-run"], &fake);
+    assert_mentions(&unfiltered.text, &[&format!("label   {UTIL_LABEL}"), "filter  (none)"]);
+    let listed = run(&["--module", "intellij.platform.util.tests", "--list"], &fake);
+    assert_eq!(listed.text, format!("label   {UTIL_LABEL}"));
+    assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
+}
+
+#[test]
+fn a_module_outside_the_migrated_list_is_refused_before_bazel_starts() {
+    let fake = fake_module_tree();
+    let failure = refusal(execute(["--module", "intellij.goland.tests", "--dry-run"], &fake));
+    assert_eq!((failure.code.as_ref(), failure.exit), ("module_not_migrated", exit::USAGE));
+    assert_mentions(
+        &failure.message,
+        &[
+            "./tests.cmd --module intellij.goland.tests --test <FQN>",
+            "./community/tools/bt.cmd //goland/tests:go-tests_test --filter <FQN>",
+        ],
+    );
+    assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
 }

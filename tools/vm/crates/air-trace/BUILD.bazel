@@ -1,0 +1,11 @@
+load("//tools/vm:avl.bzl", "avl_crate")
+
+# The planner tests that read the suite documents skip here, because the flow-profiles jar is a target of the ultimate
+# root. `//plugins/air/tests/integration/vm-contract:air-trace-plan-test` runs them with the jar.
+avl_crate(
+    closure = True,
+    portable = True,
+    test_data = [
+        "//tools/vm/crates/avl-trace:testdata",
+    ],
+)

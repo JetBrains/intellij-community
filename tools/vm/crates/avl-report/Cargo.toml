@@ -1,0 +1,25 @@
+[package]
+name = "avl-report"
+description = "Run reports: the content digests, report assembly, the shard merge ladder and the flake arithmetic."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+avl-base.workspace = true
+avl-wire.workspace = true
+bt-junit.workspace = true
+hex.workspace = true
+jiff.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+walkdir.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+tempfile.workspace = true

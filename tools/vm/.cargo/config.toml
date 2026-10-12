@@ -1,0 +1,12 @@
+[target.'cfg(all(target_os = "windows", target_env = "msvc"))']
+rustflags = ["-Ctarget-feature=+crt-static"]
+
+# Route crates.io through cache-redirector (MRI-5278), for caching and so that a crates.io outage
+# does not fail the build. Cargo reads the config of the working directory and its parents only, so
+# this covers everything that builds from here.
+
+[source.crates-io]
+replace-with = "cache-redirector"
+
+[source.cache-redirector]
+registry = "sparse+https://cache-redirector.jetbrains.com/index.crates.io/"

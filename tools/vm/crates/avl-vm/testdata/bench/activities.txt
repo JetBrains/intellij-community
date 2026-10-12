@@ -1,0 +1,16 @@
+vm bench activities session non-modal-run-01 (the median run by welcomeBecameVisible)
+anchors (ms from the process start): frameBecameVisible 1714  frameBecameInteractive 2528  welcomeBecameVisible 2718  welcome screen painted 3225  application.exit 7554
+by class, 5 of 5 by duration:
+    start    dur  class                                                                               plugin
+     2150   4500  com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine$SpellerLoadActivity  tanvd.grazi           waits
+     2100   1265  org.jetbrains.kotlin.idea.base.plugin.KotlinBundledRefresher                        org.jetbrains.kotlin
+     1500     30  com.example.EarlyActivity                                                           com.example
+     1800     12  com.example.WelcomeScreenInitActivity                                               com.example
+     2020    4.2  com.intellij.psi.impl.file.impl.PsiVfsInitProjectActivity                           com.intellij
+by plugin, 4 of 4 by the sum of the durations:
+    count    sum  plugin                longest  the longest class
+        1   4500  tanvd.grazi              4500  com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine$SpellerLoadActivity
+        1   1265  org.jetbrains.kotlin     1265  org.jetbrains.kotlin.idea.base.plugin.KotlinBundledRefresher
+        2     42  com.example                30  com.example.EarlyActivity
+        1    4.2  com.intellij              4.2  com.intellij.psi.impl.file.impl.PsiVfsInitProjectActivity
+5 activities, 5 start inside 0..7944 ms, 1 wait over 4 s, 0 cut by the quit

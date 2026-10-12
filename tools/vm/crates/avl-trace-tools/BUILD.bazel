@@ -1,0 +1,6 @@
+load("//tools/vm:avl.bzl", "avl_crate")
+
+avl_crate(
+    portable = True,
+    test_data = ["//tools/vm/crates/avl-trace:testdata"],
+)

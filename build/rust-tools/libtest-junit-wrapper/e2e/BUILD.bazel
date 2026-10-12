@@ -1,0 +1,28 @@
+load("@rules_rs//rs:rust_test.bzl", "rust_test")
+
+# Two tests of the fixture fail on purpose, so the target carries the `manual` tag and no wildcard runs it.
+rust_test(
+    name = "fixture",
+    srcs = ["fixture.rs"],
+    crate_name = "libtest_junit_fixture",
+    edition = "2021",
+    tags = ["manual"],
+)
+
+rust_test(
+    name = "libtest-junit-wrapper-e2e-test",
+    srcs = ["e2e_test.rs"],
+    crate_name = "libtest_junit_e2e",
+    data = [
+        "expected-report.xml",
+        ":fixture",
+        "//build/rust-tools/libtest-junit-wrapper",
+    ],
+    edition = "2021",
+    env = {
+        "LIBTEST_JUNIT_CONVERTER": "$(rlocationpath //build/rust-tools/libtest-junit-wrapper)",
+        "LIBTEST_JUNIT_EXPECTED": "$(rlocationpath expected-report.xml)",
+        "LIBTEST_JUNIT_FIXTURE": "$(rlocationpath :fixture)",
+    },
+    deps = ["@rules_rust//tools/runfiles"],
+)

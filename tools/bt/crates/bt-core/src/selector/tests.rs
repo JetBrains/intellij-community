@@ -387,3 +387,36 @@ fn a_name_selector_without_an_area_names_itself() {
     }
     assert!(fake.reads().is_empty(), "{:?}", fake.reads());
 }
+
+/// A module name reads as a package, so only `--module` makes a module selector.
+#[test]
+fn a_module_name_classifies_as_a_package() {
+    assert_eq!(classify("intellij.platform.util.tests").kind, SelectorKind::Package);
+    assert_eq!(SelectorKind::Module.as_str(), "module");
+}
+
+/// A module selector resolves from the module list and one BUILD.bazel, before any tree scan, and with no area.
+#[test]
+fn a_module_selector_resolves_without_the_tree_scan() {
+    let fake = fake_air_tree();
+    fake.put("community/MODULE.bazel", "");
+    fake.put(
+        ".idea/modules.xml",
+        r#"<module fileurl="file://$PROJECT_DIR$/community/plugins/x/intellij.x.tests.iml" filepath="$PROJECT_DIR$/community/plugins/x/intellij.x.tests.iml" />"#,
+    );
+    fake.put(
+        "community/plugins/x/BUILD.bazel",
+        &crate::fake::module_build_bazel_text("intellij.x.tests", "x_test"),
+    );
+    fake.put("community/build/bazel-migrated-test-modules.txt", "intellij.x.tests\n");
+    let empty = crate::Areas::default();
+    let resolution = resolve_selector(
+        &fake,
+        &Selector::new(SelectorKind::Module, "intellij.x.tests"),
+        &ResolutionInputs::new(&fake, &empty),
+    )
+    .unwrap_or_else(|failure| panic!("{failure:?}"));
+    assert_eq!(resolution.labels, ["@community//plugins/x:x_test"]);
+    assert!(!resolution.multi_target);
+    assert!(fake.reads().iter().all(|read| !read.starts_with("readDir")), "{:?}", fake.reads());
+}

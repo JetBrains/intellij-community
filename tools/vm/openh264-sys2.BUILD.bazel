@@ -1,0 +1,142 @@
+# Appended to the BUILD file of the `openh264-sys2` crate repository, so every path is relative to the crate root.
+# It compiles the Cisco sources that the crate vendors under `upstream/codec`, as its `build.rs` does, and replaces
+# that build script (`avl.MODULE.bazel`). The recorder links them on Unix only.
+#
+# The four libraries mirror the four `cc::Build` calls of `build.rs`. Each has its own include directories,
+# because the decoder and the encoder have headers with the same names. The `-I` flags keep the order of
+# `build.rs` and come before the system headers: `processing/src/common` has its own `memory.h`.
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+_OPENH264_DIR = "external/%s/upstream/codec/" % repo_name()
+
+_OPENH264_AARCH64 = "@platforms//cpu:aarch64"
+
+# `-fno-strict-aliasing` and `-fno-common` are the upstream flags. Without them, the code fails at run time on
+# Linux and macOS.
+_OPENH264_COPTS = [
+    "-I" + _OPENH264_DIR + "api/wels",
+    "-I" + _OPENH264_DIR + "common/inc",
+] + select({
+    _OPENH264_AARCH64: ["-I" + _OPENH264_DIR + "common/arm64"],
+    "//conditions:default": [],
+}) + [
+    "-fno-strict-aliasing",
+    "-fno-common",
+    "-fstack-protector-all",
+    "-w",
+]
+
+# The NEON assembly runs on aarch64. x86_64 uses the C++ code, because the x86 assembly needs `nasm`.
+_OPENH264_DEFINES = select({
+    _OPENH264_AARCH64: ["HAVE_NEON_AARCH64"],
+    "//conditions:default": [],
+})
+
+cc_library(
+    name = "openh264_headers",
+    hdrs = glob([
+        "upstream/codec/api/wels/*.h",
+        "upstream/codec/common/inc/*.h",
+        "upstream/codec/common/arm64/*.h",
+        "upstream/codec/processing/interface/*.h",
+    ]),
+    linkstatic = True,
+    # The macros that the aarch64 assembly includes. It is not a source.
+    textual_hdrs = ["upstream/codec/common/arm64/arm_arch64_common_macro.S"],
+)
+
+cc_library(
+    name = "openh264_common",
+    srcs = glob(["upstream/codec/common/**/*.cpp"]) + select({
+        _OPENH264_AARCH64: glob(
+            ["upstream/codec/common/arm64/*.S"],
+            exclude = ["upstream/codec/common/arm64/arm_arch64_common_macro.S"],
+        ),
+        "//conditions:default": [],
+    }),
+    copts = _OPENH264_COPTS,
+    linkstatic = True,
+    local_defines = _OPENH264_DEFINES,
+    deps = [":openh264_headers"],
+)
+
+cc_library(
+    name = "openh264_processing",
+    srcs = glob([
+        "upstream/codec/processing/**/*.cpp",
+        "upstream/codec/processing/**/*.h",
+    ]) + select({
+        _OPENH264_AARCH64: glob(["upstream/codec/processing/src/arm64/*.S"]),
+        "//conditions:default": [],
+    }),
+    copts = _OPENH264_COPTS + [
+        "-I" + _OPENH264_DIR + "processing/src/common",
+        "-I" + _OPENH264_DIR + "processing/interface",
+    ],
+    linkstatic = True,
+    local_defines = _OPENH264_DEFINES,
+    deps = [
+        ":openh264_common",
+        ":openh264_headers",
+    ],
+)
+
+cc_library(
+    name = "openh264_decoder",
+    srcs = glob([
+        "upstream/codec/decoder/**/*.cpp",
+        "upstream/codec/decoder/**/*.h",
+    ]) + select({
+        _OPENH264_AARCH64: glob(["upstream/codec/decoder/core/arm64/*.S"]),
+        "//conditions:default": [],
+    }),
+    copts = _OPENH264_COPTS + [
+        "-I" + _OPENH264_DIR + "decoder/core/inc",
+        "-I" + _OPENH264_DIR + "decoder/plus/inc",
+    ],
+    linkstatic = True,
+    local_defines = _OPENH264_DEFINES,
+    deps = [
+        ":openh264_common",
+        ":openh264_headers",
+    ],
+)
+
+cc_library(
+    name = "openh264_encoder",
+    srcs = glob(
+        [
+            "upstream/codec/encoder/**/*.cpp",
+            "upstream/codec/encoder/**/*.h",
+        ],
+        # The Windows DLL entry point. It does not compile on Linux.
+        exclude = ["upstream/codec/encoder/plus/src/DllEntry.cpp"],
+    ) + select({
+        _OPENH264_AARCH64: glob(["upstream/codec/encoder/core/arm64/*.S"]),
+        "//conditions:default": [],
+    }),
+    copts = _OPENH264_COPTS + [
+        "-I" + _OPENH264_DIR + "encoder/core/inc",
+        "-I" + _OPENH264_DIR + "encoder/plus/inc",
+        "-I" + _OPENH264_DIR + "processing/interface",
+    ],
+    linkstatic = True,
+    local_defines = _OPENH264_DEFINES,
+    deps = [
+        ":openh264_common",
+        ":openh264_headers",
+        ":openh264_processing",
+    ],
+)
+
+# The `deps` of the `openh264-sys2` crate. The hub exposes it as `@avl//:openh264_native`.
+cc_library(
+    name = "openh264_native",
+    linkstatic = True,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":openh264_decoder",
+        ":openh264_encoder",
+    ],
+)

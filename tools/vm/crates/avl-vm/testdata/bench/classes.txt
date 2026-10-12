@@ -1,0 +1,25 @@
+vm bench classes session non-modal arm, 1 valid run
+anchors: frameBecameVisible, welcomeBecameVisible, welcome screen painted, quit; the plugin table is at quit
+classes (median of the valid runs)                            median     min     max
+totals:
+  classes.named                                                   32      32      32
+  classes.hidden                                                   5       5       5
+  classes.jdk                                                     12      12      12
+  classes.jar                                                      4       4       4
+  classes.platform                                                 4       4       4
+  classes.plugins                                                 12      12      12
+  classes.named@quit                                              32      32      32
+by plugin at quit, 7 of 7 plugins:
+  com.intellij                                                     4
+  com.intellij.dfa.analysis                                        2
+  com.jetbrains.performancePlugin                                  2
+  com.jetbrains.gateway                                            1
+  com.jetbrains.station                                            1
+  intellij.webp                                                    1
+  org.jetbrains.plugins.docker.gateway                             1
+by content module over the whole run, 5 of 5 modules:
+  intellij.platform.kernel.backend                                 2
+  intellij.platform.settings.local                                 2
+  intellij.clouds.docker.gateway.json                              1
+  intellij.gateway.daemon.bridge                                   1
+  intellij.station.core                                            1

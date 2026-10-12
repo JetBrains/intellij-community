@@ -1,0 +1,12 @@
+load("//tools/vm:avl.bzl", "avl_crate")
+
+avl_crate(
+    portable = True,
+    test_data = [
+        "//tools/vm/crates/avl-testkit:avl-fake-bin",
+    ],
+    # The Windows fakes are copies of this binary; see `avl_testkit::fakebin`.
+    test_env = {
+        "AVL_FAKE": "$(rlocationpath //tools/vm/crates/avl-testkit:avl-fake-bin)",
+    },
+)

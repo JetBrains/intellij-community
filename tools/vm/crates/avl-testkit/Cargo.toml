@@ -1,0 +1,17 @@
+[package]
+name = "avl-testkit"
+description = "Test helpers of the Air UI-lane workspace: files under cargo and under Bazel, goldens, fake executables."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "avl-fake"
+path = "src/bin/avl-fake.rs"
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true

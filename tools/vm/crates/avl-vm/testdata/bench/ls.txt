@@ -1,0 +1,7 @@
+vm bench ls: 4 of 4 sessions under <runs>, newest first
+per arm: the valid/measured runs and the median ms of welcomeBecameVisible; open-project: "open: editor highlighting completed"; project: "editor highlighting completed"; empty-editor: emptyStateBuilt
+  develar-bench-6291e91e-935b  2026-10-01 18:02  welcome       b0b0b0b0b0b0 (dirty)  dist 0b0b0b0b0b0b  modal 1/1 2336, non-modal 1/1 2718
+  develar-bench-aac81325-1c2d  2026-10-01 17:51  welcome       3f337093836d          dist 5f1c0d9e2b7a  modal 1/1 2336, non-modal 1/1 2718
+  develar-bench-f8d8cadd-0a1b  2026-10-01 17:40  open-project  3f337093836d          dist 5f1c0d9e2b7a  (no summary)
+  develar-bench-cf380279-7e7e  2026-10-01 17:29  welcome       3f337093836d          dist 5f1c0d9e2b7a  (summary not readable)
+    <runs>/develar-bench-cf380279-7e7e/summary.json is not a summary: missing field `command` at line 1 column 2; run `bench replay <runs>/develar-bench-cf380279-7e7e` to write it again

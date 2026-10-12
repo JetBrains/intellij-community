@@ -8,7 +8,7 @@ follow it.
 | `community/build/dev-dist-tools`: the dev-dist tools | `@ddt` | `dev_dist_rust_crate` |
 | `build/dev-dist-tools`: the ultimate dev-dist tools | the crates of `@ddt` | `dev_dist_rust_binary` |
 | `community/tools/bt`: BT | `@bt` | `bt_rust_crate` |
-| `plugins/air/tests/integration/vm-lane`: the Air UI-lane tooling | `@avl` | `avl_crate` |
+| `community/tools/vm`: the Air UI-lane tooling | `@avl` | `avl_crate` |
 
 ## The files here
 
@@ -23,6 +23,11 @@ follow it.
 - `defs.bzl`: the lint rules and the macro core. `rust_lints_as_errors` appends `-Dwarnings` to the clippy flags of a
   rendered table. `rust_lints_equal_check` fails when two crate hubs render different tables. The macro core is the
   next section.
+- `rust_test_junit.bzl`: `rust_test_junit` declares a `rust_test` and a test target that runs it through a wrapper
+  binary. libtest writes no JUnit report, so the wrapper writes one test case per test to `XML_OUTPUT_FILE`. The
+  `wrapper` argument names the binary. A workspace gives the rule to the macro core as its test rule.
+- `libtest-junit-wrapper/`: the default wrapper binary, a `rust_tool_binary` over the crates of `@ddt`. Its `e2e/`
+  test runs a fixture with two failed tests and compares the report with `expected-report.xml`.
 
 Cargo inherits `[lints]` inside one workspace only. There is no include across workspaces, and rules_rs reads the
 tables from the workspace `Cargo.toml`, not from `.cargo/config.toml`. rustfmt and clippy also find `rustfmt.toml` and
@@ -84,15 +89,15 @@ Each workspace keeps a thin binding with its own signature:
 | `dev_dist_rust_crate(name, test_data, closure)` | `rust_tool_crate` | the `@ddt` hub, `:lints`, `bins_prefix = "build/dev-dist-tools/bins/"`, `testdata_env = "DDT_TESTDATA_DIR"` |
 | `bt_rust_crate(name, compile_data)` | `rust_tool_crate` | the `@bt` hub with its `DEP_DATA`, `:lints`, `bins_prefix = "tools/bt/bins/"`, `distpath` as `cross_module_crates`, `test_sharding = True` |
 | `dev_dist_rust_binary(name, deps, test_deps)` | `rust_tool_binary` | the community `:lints`, `edition = "2024"`, `testdata_env = "DDT_TESTDATA_DIR"` |
-| `avl_crate(portable, closure, compile_data, test_data, test_env, test_size, test_tags, visibility)` | `rust_tool_crate` | the `@avl` hub with its `DEP_DATA`, `:lints`, the BT crates, `distpath` and `fscopy` as `cross_module_crates`, `rust_test_junit` as the test rule with `-test`, `AVL_PACKAGE` as `rustc_env`, `NOT_ON_WINDOWS` for a crate that is not portable, and the closure for x86_64 Linux |
+| `avl_crate(portable, closure, compile_data, test_data, test_env, test_size, test_tags, visibility)` | `rust_tool_crate` | the `@avl` hub with its `DEP_DATA`, `:lints`, the BT crates, `distpath` and `fscopy` as `cross_module_crates`, `rust_test_junit` as the test rule with `-test`, `AVL_PACKAGE` and `AVL_REPO` as `rustc_env`, `NOT_ON_WINDOWS` for a crate that is not portable, and the closure for x86_64 Linux |
 
 ## The checks
 
 ```sh
 bun community/build/rust-tools/sync.mjs --check            # exit 1 when a copy differs or is missing
 node --test community/build/rust-tools/sync.test.mjs
-cd community && ./bazel.cmd test //build/rust-tools/...     # the tables of @ddt and @bt are equal
-./bazel.cmd test //build/dev-dist-tools:lints_equal_test     # from the ultimate root: @ddt, @bt and @avl
+cd community && ./bazel.cmd test //build/rust-tools/...     # the tables of @ddt, @bt and @avl are equal
+./bazel.cmd test //build/dev-dist-tools:lints_equal_test     # the same tables from the ultimate root
 cargo fmt --check && cargo clippy --all-targets             # in each workspace directory of manifestPaths
 ```
 

@@ -2,7 +2,7 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::exit;
-use crate::fake::{AREA_DIR, build_bazel_text, fake_air_tree, iml_text, refusal};
+use crate::fake::{AREA_DIR, build_bazel_text, fake_air_tree, iml_text, module_build_bazel_text, refusal};
 
 #[test]
 fn iml_test_roots_pick_the_source_root_and_ignore_the_resource_root() {
@@ -231,4 +231,58 @@ fn the_index_is_keyed_by_simple_name_only() {
     );
     // The colliding name keeps both candidates; collapsing them is what would silently run one module's test.
     assert_eq!(index["AgentPromptChangesTreeContextContributorTest"].len(), 2);
+}
+
+/// One directory with two modules, as `community/platform/eel` has: each target runs the library of its own module.
+#[test]
+fn the_jps_test_of_a_module_is_the_one_that_runs_its_library() {
+    let build = format!(
+        "{}\n{}",
+        module_build_bazel_text("intellij.eel.tests", "eel-tests_test"),
+        module_build_bazel_text("intellij.eel.codegen", "eel-codegen_test")
+    );
+    assert_eq!(parse_jps_test_name(&build).map_err(|failure| failure.code), Err("bt_infra".into()));
+    assert_eq!(
+        module_jps_test_name(&build, "intellij.eel.tests"),
+        Ok(Some("eel-tests_test".to_owned()))
+    );
+    assert_eq!(
+        module_jps_test_name(&build, "intellij.eel.codegen"),
+        Ok(Some("eel-codegen_test".to_owned()))
+    );
+    assert_eq!(module_jps_test_name(&build, "intellij.eel"), Ok(None));
+}
+
+/// `community/plugins/groovy` runs its module through a filtered target only, and that target is the answer. An
+/// unfiltered target of the same module wins over a filtered one.
+#[test]
+fn a_filtered_jps_test_of_a_module_counts_when_it_is_the_only_one() {
+    let filtered = module_build_bazel_text("intellij.groovy.tests", "groovy-tests_test").replacen(
+        "    runtime_deps",
+        "    env = {\"JB_TEST_JUNIT5_FILTERS\": \"include-classname=a\\\\..*\"},\n    runtime_deps",
+        1,
+    );
+    assert_eq!(
+        module_jps_test_name(&filtered, "intellij.groovy.tests"),
+        Ok(Some("groovy-tests_test".to_owned()))
+    );
+
+    let narrowed = "jps_test(\n    name = \"narrow_test\",\n    env = {\"JB_TEST_JUNIT5_FILTERS\": \"x\"},\n    runtime_deps = \
+                    [\":groovy-tests_test_lib\"],\n)\n";
+    let both = format!(
+        "{narrowed}\n{}",
+        module_build_bazel_text("intellij.groovy.tests", "groovy-tests_test")
+    );
+    assert_eq!(
+        module_jps_test_name(&both, "intellij.groovy.tests"),
+        Ok(Some("groovy-tests_test".to_owned()))
+    );
+
+    let twice = format!("{both}\njps_test(\n    name = \"again_test\",\n    runtime_deps = [\":groovy-tests_test_lib\"],\n)\n");
+    let failure = refusal(module_jps_test_name(&twice, "intellij.groovy.tests"));
+    assert_eq!(failure.exit, exit::INFRA);
+    assert_eq!(
+        failure.message,
+        "Expected one jps_test of module intellij.groovy.tests per BUILD.bazel, found 2: groovy-tests_test, again_test"
+    );
 }

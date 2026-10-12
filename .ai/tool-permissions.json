@@ -27,8 +27,8 @@
 
   "allow": [
     ["{{TOOLS_DIR}}/bt.cmd"],
-    ["./plugins/air/scripts/vm.cmd"],
-    ["./plugins/air/scripts/trace.cmd"],
+    ["./community/tools/vm.cmd"],
+    ["./community/tools/trace.cmd"],
     ["./platform/daemon/devex/latest-nighly-build-number.sh"],
     ["./tests.cmd"],
     ["./community/tests.cmd"],

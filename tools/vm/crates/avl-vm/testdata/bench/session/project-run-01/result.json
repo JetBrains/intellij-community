@@ -1,0 +1,89 @@
+{
+  "arm": "project",
+  "kind": "measured",
+  "index": 1,
+  "dir": "project-run-01",
+  "launch": {
+    "distDigest": "5f1c0d9e2b7a4c3e8d6f1a0b9c8e7d6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d",
+    "load": {
+      "one": 3.1,
+      "five": 2.6,
+      "fifteen": 2.2,
+      "cpus": 16
+    },
+    "failure": null,
+    "terminated": false,
+    "ideExit": 0,
+    "waitedMs": 3480,
+    "openRequestUs": null
+  },
+  "valid": true,
+  "reason": null,
+  "notes": [
+    "no fus.jsonl"
+  ],
+  "metrics": {
+    "ProjectManager.openAsync": 1006.6,
+    "app initialization": 967.4,
+    "bootstrap": 44.5,
+    "classLoading.edtTime": 42.0,
+    "classLoading.requests": 267427.0,
+    "classLoading.time": 8317.0,
+    "classes.hidden": 3.0,
+    "classes.jar": 2.0,
+    "classes.jdk": 5.0,
+    "classes.named": 26.0,
+    "classes.named@editor highlighting completed": 20.0,
+    "classes.named@quit": 25.0,
+    "classes.platform": 8.0,
+    "classes.plugins": 11.0,
+    "editor highlighting completed": 2950.0,
+    "editor restoring": 180.5,
+    "editor restoring till paint": 620.0,
+    "pluginClasses": 43.0,
+    "project frame creating": 218.1,
+    "project post-startup dumb-aware activities": 681.4,
+    "restoreEditors": 210.7,
+    "toolwindow creating": 61.6,
+    "toolwindow init pending tasks processing": 0.0,
+    "totalDuration": 3195.0
+  },
+  "classesByPlugin": {
+    "com.intellij": 2,
+    "com.intellij.dfa.analysis": 1,
+    "com.intellij.platform.vcs": 1,
+    "com.jetbrains.gateway": 1,
+    "com.jetbrains.performancePlugin": 1,
+    "com.jetbrains.station": 1,
+    "intellij.webp": 1,
+    "org.intellij.plugins.markdown": 3
+  },
+  "classesByModule": {
+    "intellij.gateway.daemon.bridge": 1,
+    "intellij.markdown.core": 1,
+    "intellij.platform.settings.local": 2,
+    "intellij.platform.vcs.log.impl": 1,
+    "intellij.station.core": 1
+  },
+  "classesByPluginAt": {
+    "editor highlighting completed": {
+      "com.intellij": 2,
+      "com.jetbrains.performancePlugin": 1,
+      "org.intellij.plugins.markdown": 3
+    },
+    "quit": {
+      "com.intellij": 2,
+      "com.intellij.dfa.analysis": 1,
+      "com.intellij.platform.vcs": 1,
+      "com.jetbrains.gateway": 1,
+      "com.jetbrains.performancePlugin": 1,
+      "com.jetbrains.station": 1,
+      "intellij.webp": 1,
+      "org.intellij.plugins.markdown": 3
+    }
+  },
+  "edtSamples": null,
+  "edtFrames": [],
+  "triggers": [],
+  "defineShare": null
+}

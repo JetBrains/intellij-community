@@ -1,0 +1,398 @@
+{
+  "events": {
+    "frames": [
+      {
+        "data": {
+          "generation": "number"
+        },
+        "event": "ready"
+      },
+      {
+        "data": {
+          "file": "string",
+          "id": "string",
+          "lines": [
+            "string"
+          ]
+        },
+        "event": "bundle-append"
+      }
+    ],
+    "opened": {
+      "body": "0 bytes",
+      "headers": {
+        "cache-control": "no-cache",
+        "content-type": "text/event-stream",
+        "x-air-trace": "serve"
+      },
+      "request": "GET /__air/events",
+      "status": 200
+    }
+  },
+  "routes": [
+    {
+      "body": {
+        "controllerRuns": [
+          {
+            "args": [
+              "string"
+            ],
+            "command": "string",
+            "iterations": "number",
+            "runId": "string",
+            "startedAt": "string",
+            "status": "string",
+            "testsFailed": "number",
+            "testsPassed": "number",
+            "testsStarted": "number",
+            "traces": "number",
+            "updatedAt": "string",
+            "url": "string"
+          }
+        ],
+        "generation": "number",
+        "roots": [
+          {
+            "bundles": "number",
+            "exists": "boolean",
+            "kind": "string",
+            "path": "string"
+          }
+        ],
+        "runs": [
+          {
+            "runId": "string",
+            "scenarios": [
+              {
+                "capture": {
+                  "source": "string"
+                },
+                "durationMs": "number",
+                "flow": "string",
+                "hasVideo": "boolean",
+                "id": "string",
+                "lane": "string",
+                "launcher": "string",
+                "runId": "string",
+                "scenario": "string",
+                "source": {
+                  "entry": "string",
+                  "kind": "string",
+                  "path": "string"
+                },
+                "startedAt": "string",
+                "status": "string",
+                "testClass": "string",
+                "thumbnail": "string",
+                "url": "string"
+              }
+            ],
+            "startedAt": "string",
+            "status": "string"
+          }
+        ]
+      },
+      "headers": {
+        "cache-control": "no-store",
+        "content-type": "application/json; charset=utf-8",
+        "x-air-trace": "serve"
+      },
+      "request": "GET /__air/runs",
+      "status": 200
+    },
+    {
+      "body": {
+        "from": "number",
+        "next": "number",
+        "records": [
+          {
+            "at": "string",
+            "data": {
+              "args": [
+                "string"
+              ],
+              "command": "string",
+              "runId": "string"
+            },
+            "event": "string",
+            "message": "string",
+            "schemaVersion": "number"
+          }
+        ],
+        "run": {
+          "args": [
+            "string"
+          ],
+          "command": "string",
+          "iterations": "number",
+          "runId": "string",
+          "startedAt": "string",
+          "status": "string",
+          "testsFailed": "number",
+          "testsPassed": "number",
+          "testsStarted": "number",
+          "traces": "number",
+          "updatedAt": "string",
+          "url": "string"
+        }
+      },
+      "headers": {
+        "cache-control": "no-store",
+        "content-type": "application/json; charset=utf-8",
+        "x-air-trace": "serve"
+      },
+      "request": "GET /__air/run/<runId>?from=0",
+      "status": 200
+    },
+    {
+      "body": {
+        "capture": {
+          "source": "string"
+        },
+        "durationMs": "number",
+        "files": [
+          {
+            "path": "string",
+            "size": "number"
+          }
+        ],
+        "flow": "string",
+        "hasVideo": "boolean",
+        "id": "string",
+        "lane": "string",
+        "launcher": "string",
+        "runId": "string",
+        "scenario": "string",
+        "source": {
+          "kind": "string",
+          "path": "string"
+        },
+        "startedAt": "string",
+        "status": "string",
+        "testClass": "string",
+        "thumbnail": "string",
+        "url": "string"
+      },
+      "headers": {
+        "cache-control": "no-store",
+        "content-type": "application/json; charset=utf-8",
+        "x-air-trace": "serve"
+      },
+      "request": "GET /__air/bundle/<directory id>/",
+      "status": 200
+    },
+    {
+      "body": {
+        "capture": {
+          "source": "string"
+        },
+        "durationMs": "number",
+        "flow": "string",
+        "lane": "string",
+        "launcher": "string",
+        "runId": "string",
+        "scenario": "string",
+        "schema": "string",
+        "startedAt": "string",
+        "status": "string",
+        "testClass": "string",
+        "video": {
+          "codec": "string",
+          "reason": "string"
+        }
+      },
+      "headers": {
+        "accept-ranges": "bytes",
+        "cache-control": "no-cache",
+        "content-type": "application/json; charset=utf-8",
+        "x-air-trace": "serve"
+      },
+      "request": "GET /__air/bundle/<directory id>/bundle.json",
+      "status": 200
+    },
+    {
+      "body": "10 bytes",
+      "headers": {
+        "accept-ranges": "bytes",
+        "cache-control": "no-cache",
+        "content-range": "bytes 0-9/<size>",
+        "content-type": "application/jsonl; charset=utf-8",
+        "x-air-trace": "serve"
+      },
+      "request": "GET /__air/bundle/<directory id>/spans.jsonl Range: bytes=0-9",
+      "status": 206
+    },
+    {
+      "body": {
+        "capture": {
+          "source": "string"
+        },
+        "durationMs": "number",
+        "files": [
+          {
+            "path": "string",
+            "size": "number",
+            "stored": "boolean"
+          }
+        ],
+        "flow": "string",
+        "hasVideo": "boolean",
+        "id": "string",
+        "lane": "string",
+        "launcher": "string",
+        "runId": "string",
+        "scenario": "string",
+        "source": {
+          "entry": "string",
+          "kind": "string",
+          "path": "string"
+        },
+        "startedAt": "string",
+        "status": "string",
+        "testClass": "string",
+        "thumbnail": "string",
+        "url": "string"
+      },
+      "headers": {
+        "cache-control": "no-store",
+        "content-type": "application/json; charset=utf-8",
+        "x-air-trace": "serve"
+      },
+      "request": "GET /__air/bundle/<zip id>/",
+      "status": 200
+    },
+    {
+      "body": "4 bytes",
+      "headers": {
+        "accept-ranges": "bytes",
+        "cache-control": "no-cache",
+        "content-range": "bytes 0-3/<size>",
+        "content-type": "image/webp",
+        "x-air-trace": "serve"
+      },
+      "request": "GET /__air/bundle/<zip id>/snap/0001.webp Range: bytes=0-3",
+      "status": 206
+    },
+    {
+      "body": {
+        "bundles": [],
+        "classes": [
+          "string"
+        ],
+        "commands": [],
+        "existing": [
+          {
+            "capture": {
+              "source": "string"
+            },
+            "durationMs": "number",
+            "flow": "string",
+            "hasVideo": "boolean",
+            "id": "string",
+            "lane": "string",
+            "launcher": "string",
+            "runId": "string",
+            "scenario": "string",
+            "source": {
+              "entry": "string",
+              "kind": "string",
+              "path": "string"
+            },
+            "startedAt": "string",
+            "status": "string",
+            "testClass": "string",
+            "thumbnail": "string"
+          }
+        ],
+        "lanes": [
+          "string"
+        ],
+        "notes": [],
+        "read": [],
+        "scenarios": [
+          {
+            "flow": "string",
+            "lane": "string",
+            "scenario": "string",
+            "testClass": "string"
+          }
+        ],
+        "unmapped": []
+      },
+      "headers": {
+        "cache-control": "no-store",
+        "content-type": "application/json; charset=utf-8",
+        "x-air-trace": "serve"
+      },
+      "request": "POST /__air/plan {text}",
+      "status": 200
+    },
+    {
+      "body": {
+        "bundles": [],
+        "classes": [
+          "string"
+        ],
+        "commands": [],
+        "existing": [
+          {
+            "capture": {
+              "source": "string"
+            },
+            "durationMs": "number",
+            "flow": "string",
+            "hasVideo": "boolean",
+            "id": "string",
+            "lane": "string",
+            "launcher": "string",
+            "runId": "string",
+            "scenario": "string",
+            "source": {
+              "entry": "string",
+              "kind": "string",
+              "path": "string"
+            },
+            "startedAt": "string",
+            "status": "string",
+            "testClass": "string",
+            "thumbnail": "string"
+          }
+        ],
+        "lanes": [
+          "string"
+        ],
+        "notes": [],
+        "read": [],
+        "scenarios": [
+          {
+            "flow": "string",
+            "lane": "string",
+            "scenario": "string",
+            "testClass": "string"
+          }
+        ],
+        "unmapped": []
+      },
+      "headers": {
+        "cache-control": "no-store",
+        "content-type": "application/json; charset=utf-8",
+        "x-air-trace": "serve"
+      },
+      "request": "POST /__air/plan?fileName=<name> application/octet-stream",
+      "status": 200
+    },
+    {
+      "body": {
+        "code": "string",
+        "error": "string"
+      },
+      "headers": {
+        "cache-control": "no-store",
+        "content-type": "application/json; charset=utf-8",
+        "x-air-trace": "serve"
+      },
+      "request": "POST /__air/plan {text} refused",
+      "status": 422
+    }
+  ]
+}

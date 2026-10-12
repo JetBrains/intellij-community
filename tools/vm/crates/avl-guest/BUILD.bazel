@@ -1,0 +1,3 @@
+load("//tools/vm:avl.bzl", "avl_crate")
+
+avl_crate(closure = True)

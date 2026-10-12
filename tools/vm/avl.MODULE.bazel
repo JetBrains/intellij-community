@@ -1,0 +1,44 @@
+# The crates of the Air UI-lane workspace (`Cargo.toml` next to this file). The repository name is short on
+# purpose: every third-party crate becomes a repository `rules_rs++crate+avl__<crate>-<version>`, and long names
+# break the Windows build on path length.
+crate = use_extension("@rules_rs//rs:extensions.bzl", "crate")
+crate.from_cargo(
+    name = "avl",
+    cargo_config = "//tools/vm:.cargo/config.toml",
+    cargo_lock = "//tools/vm:Cargo.lock",
+    cargo_toml = "//tools/vm:Cargo.toml",
+    # Renders `[workspace.lints]` as `@avl//:workspace_cargo_lints` and names it as the `lint_config` of every
+    # crate with `[lints] workspace = true`; `avl_crate` passes it on.
+    generate_lint_config = True,
+    # Every exec and target platform a build of these crates meets: rules_rs marks each crate incompatible on
+    # any other (`RESOLVED_PLATFORMS` in `@avl//:defs.bzl`).
+    platform_triples = [
+        # An Apple silicon host, and `:vm-guest-agent-darwin-arm64`.
+        "aarch64-apple-darwin",
+        # An Intel Mac host.
+        "x86_64-apple-darwin",
+        # A Windows arm64 host (`vm`, `air-trace`, the recorder and the tests), `:clippy-windows-arm64`.
+        "aarch64-pc-windows-msvc",
+        # The Windows CI host (`vm`, `air-trace`, the recorder and the tests), `:clippy-windows-x86_64`.
+        "x86_64-pc-windows-msvc",
+        # `:vm-guest-agent-linux-arm64`, `:air-trace-record-linux-arm64` and `:clippy-linux-arm64`.
+        "aarch64-unknown-linux-musl",
+        # `:vm-guest-agent-linux-x86_64`, `:air-trace-record-linux-x86_64` and `:clippy-linux-x86_64`.
+        "x86_64-unknown-linux-musl",
+        # A Linux arm64 host.
+        "aarch64-unknown-linux-gnu",
+        # A Linux x86_64 host, such as a Linux CI agent.
+        "x86_64-unknown-linux-gnu",
+    ],
+)
+use_repo(crate, "avl")
+
+crate.annotation(
+    # The build script only runs `cc` over the vendored Cisco sources. A `cc_library` over the same files replaces it,
+    # so no build script runs on any host. The BCR has no `openh264` module.
+    additive_build_file = "//tools/vm:openh264-sys2.BUILD.bazel",
+    crate = "openh264-sys2",
+    extra_aliased_targets = {"openh264_native": "openh264_native"},
+    gen_build_script = "off",
+    deps = ["@avl//:openh264_native"],
+)

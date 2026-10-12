@@ -1,0 +1,40 @@
+[package]
+name = "avl-record"
+description = "The recorder a lane starts, `air-trace-record`: the protocol state machine, capture, stills, video, the bundle writer."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "air-trace-record"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow.workspace = true
+avl-trace.workspace = true
+crossbeam-channel.workspace = true
+image-webp.workspace = true
+jiff.workspace = true
+png.workspace = true
+serde_json.workspace = true
+signal-hook.workspace = true
+xxhash-rust.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+# The encoder is built where a raw video can be recorded or its round trip tested. Windows has no X11 source and
+# is spared the C++ build.
+openh264.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libc.workspace = true
+x11rb.workspace = true
+
+[dev-dependencies]
+avl-testkit.workspace = true
+expect-test.workspace = true
+pretty_assertions.workspace = true
+tempfile.workspace = true

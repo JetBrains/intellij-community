@@ -1,0 +1,24 @@
+{
+  "command": "welcome",
+  "target": "//build:idea_dist",
+  "git": {
+    "commit": "3f337093836d2000000000000000000000000000",
+    "dirty": false
+  },
+  "generation": {
+    "path": "/Users/agent/Library/Application Support/JetBrains/macos-vm-ui-tests/bench/generations/5f1c0d9e2b7a4c3e8d6f1a0b9c8e7d6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d",
+    "distDigest": "5f1c0d9e2b7a4c3e8d6f1a0b9c8e7d6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d"
+  },
+  "arms": [
+    "modal",
+    "nonModal"
+  ],
+  "runs": 1,
+  "cold": false,
+  "holdMs": 3000,
+  "profile": true,
+  "project": null,
+  "warnings": [
+    "the profile adds the async-profiler agent; its runs are slower than a run without it"
+  ]
+}

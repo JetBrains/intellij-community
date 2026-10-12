@@ -1,0 +1,20 @@
+{
+  "schema": "air-trace/1",
+  "runId": "iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3",
+  "testClass": "AirRenameSessionGeneratedFlowUiTest",
+  "scenario": "rename-closed-project-session",
+  "flow": "flow-rename-session",
+  "lane": "UI",
+  "launcher": "daemon",
+  "status": "truncated",
+  "runningSpan": "000000000000000b",
+  "startedAt": "2026-09-23T10:15:00.120Z",
+  "durationMs": 6786,
+  "capture": {
+    "source": "x11"
+  },
+  "video": {
+    "codec": "none",
+    "reason": "fixture"
+  }
+}

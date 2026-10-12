@@ -28,8 +28,8 @@ pub const AREA_DIR: &str = "plugins/air";
 pub const LANES_FILE: &str = "plugins/air/tests/integration/lanes.json";
 
 /// The fixture lane table: a copy of the Air area's, with its suite catalog, so every rule here is tested against a
-/// realistic table. It is a copy on purpose, so a change of the real table does not change what these tests
-/// state.
+/// realistic table. It is a copy because the community module cannot read the file of the ultimate root. The
+/// contract test `//plugins/air/tests/integration/vm-contract:areas-test` keeps the copy equal to the real table.
 pub const LANES_TEXT: &str = include_str!("../testdata/lanes.json");
 
 static AREAS: LazyLock<Areas> = LazyLock::new(|| {
@@ -296,6 +296,36 @@ pub fn iml_text(source_folders: &[&str]) -> String {
   </component>
 </module>"#,
         indented.join("\n")
+    )
+}
+
+/// A BUILD.bazel of one module, as the BUILD generator writes it for a test module with `associates`: the main library
+/// carries the module name, the `_test_lib` does not, and the `jps_test` runs the `_test_lib`.
+pub fn module_build_bazel_text(module: &str, target_name: &str) -> String {
+    let library = target_name.strip_suffix("_test").unwrap_or(target_name);
+    format!(
+        r#"load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+    name = "{target_name}",
+    runtime_deps = [":{library}_test_lib"],
+)
+### skip generation section `test {module}`
+
+jvm_library(
+    name = "{library}",
+    srcs = glob([], allow_empty = True),
+    module_name = "{module}",
+)
+
+jvm_library(
+    name = "{library}_test_lib",
+    testonly = True,
+    srcs = glob(["testSrc/**/*.kt"]),
+    associates = ["//plugins/x:x"],
+    runtime_deps = [":{library}"],
+)"#
     )
 }
 

@@ -1,0 +1,16 @@
+vm bench trace session non-modal-run-01 (the median run by welcomeBecameVisible)
+anchors (ms from the process start): frameBecameVisible 1714  frameBecameInteractive 2528  welcomeBecameVisible 2718  welcome screen painted 3225  application.exit 7554
+window 1714..3225 ms, spans >= 10 ms, 12 of 36 spans
+    start    dur  span                                                          class / plugin
+     1800     12  run init activity WelcomeScreenInitActivity                   com.example.WelcomeScreenInitActivity  com.example
+     2016    211  restoreEditors
+     2100   1265  run activity                                                  org.jetbrains.kotlin.idea.base.plugin.KotlinBundledRefresher  org.jetbrains.kotlin
+     2150   4500  run activity                                                  com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine$SpellerLoadActivity  tanvd.grazi  waits
+     2233     62  toolwindow creating
+     2301     24  welcome right tab creating
+     2312     20  welcome right tab body: feature ids
+     2492     14  welcome right tab body: EDT build
+     2514    681  project post-startup dumb-aware activities
+     2641     73  welcome left panel creating
+     2641     60  welcome recent projects collecting
+     2712    780  welcome left toolbar first fill

@@ -4,7 +4,7 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 
 use bt_core::areas::{Area, Areas};
-use bt_core::{Refusal, affected_text, exit, fail_usage};
+use bt_core::{Refusal, affected_text, exit, fail_usage, resolve_module};
 use serde::{Deserialize, Serialize};
 
 use crate::digest::{
@@ -133,7 +133,10 @@ where
 
 /// Runs one parsed invocation.
 pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) -> Result<Outcome, Refusal> {
-    let selector = args.selector.as_deref().map(Selector::classify).transpose()?;
+    let selector = match &args.module {
+        Some(module) => Some(Selector::new(SelectorKind::Module, module)),
+        None => args.selector.as_deref().map(Selector::classify).transpose()?,
+    };
     let lane_name = args.lane.as_deref();
     match (&selector, lane_name) {
         // A flow or a suite selector takes `--lane` as the answer to the two-lane refusal, which narrows the
@@ -141,7 +144,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         (Some(selector), Some(_)) if !selector.kind.names_suites() => {
             return Err(fail_usage("A selector and --lane are mutually exclusive"));
         }
-        (None, None) => return Err(fail_usage("Pass a selector or --lane; see --help")),
+        (None, None) => return Err(fail_usage("Pass a selector, --module or --lane; see --help")),
         _ => {}
     }
     let named_lane = match lane_name {
@@ -182,9 +185,9 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
             }
         }
         Some(selector) => {
-            if explicit_filter.is_some() && selector.kind != SelectorKind::Label {
+            if explicit_filter.is_some() && !matches!(selector.kind, SelectorKind::Label | SelectorKind::Module) {
                 return Err(fail_usage(
-                    "--filter is only valid with an explicit //label; a name selector already implies a filter",
+                    "--filter is only valid with an explicit //label or --module; a name selector already implies a filter",
                 ));
             }
             let inputs = ResolutionInputs::new(runtime, areas);
@@ -411,6 +414,10 @@ fn list_candidates(runtime: &dyn Runtime, areas: &Areas, selector: &Selector, in
         }
         SelectorKind::Dir => {
             return Ok(format!("label   //{}/...", repo_relative_dir(runtime, &selector.name)?));
+        }
+        SelectorKind::Module => {
+            let resolution = resolve_module(runtime, areas, &selector.name)?;
+            return Ok(format!("label   {}", resolution.labels.join(" ")));
         }
         // Every lane the selector names, before `--lane` narrows it, so a two-lane refusal can be read in full.
         SelectorKind::Flow | SelectorKind::Suite => {

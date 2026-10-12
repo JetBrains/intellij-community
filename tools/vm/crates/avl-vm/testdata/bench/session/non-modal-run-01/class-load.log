@@ -1,0 +1,38 @@
+[0.010s][class,load] opened: /Applications/IDEA.app/Contents/jbr/Contents/Home/lib/modules
+[0.050s][class,load] java.lang.Object source: shared objects file
+[0.051s][class,load] java.io.Serializable source: shared objects file
+[0.052s][class,load] java.lang.Comparable source: shared objects file
+[0.053s][class,load] java.lang.CharSequence source: shared objects file
+[0.054s][class,load] java.lang.String source: shared objects file
+[0.060s][class,load] java.lang.Class source: shared objects file
+[0.070s][class,load] java.util.HashMap source: shared objects file (top)
+[0.080s][info][class,load] java.lang.Thread source: shared objects file
+[0.100s][class,load] jdk.internal.module.ModuleBootstrap source: jrt:/java.base
+[0.110s][class,load] sun.nio.fs.UnixPath source: jrt:/java.base
+[0.120s][class,load] java.lang.management.ManagementFactory source: jrt:/java.management
+[0.130s][class,load] java.awt.Toolkit source: jrt:/java.desktop
+[0.300s][class,load] com.intellij.idea.Main source: file:/Applications/IDEA.app/Contents/lib/util-8.jar
+[0.310s][class,load] com.intellij.util.lang.PathClassLoader source: file:/Applications/IDEA.app/Contents/lib/util-8.jar
+[0.320s][class,load] com.intellij.util.lang.UrlClassLoader source: file:/Applications/IDEA.app/Contents/lib/util-8.jar
+[0.400s][class,load] java.lang.invoke.LambdaForm$MH/0x0000000801001000 source: __JVM_LookupDefineClass__
+[0.410s][class,load] java.lang.invoke.LambdaForm$DMH/0x0000000801001400 source: java.lang.invoke.LambdaForm
+[0.900s][class,load] org.jetbrains.annotations.NotNull source: jar:file:/Applications/IDEA.app/Contents/lib/annotations.jar!/
+[0.950s][class,load] com.intellij.idea.MainImpl source: com.intellij.util.lang.PathClassLoader
+[1.000s][class,load] com.intellij.ide.plugins.PluginManagerCore source: com.intellij.util.lang.PathClassLoader
+[1.100s][class,load] com.intellij.openapi.application.impl.ApplicationImpl source: com.intellij.util.lang.PathClassLoader @5e9f23b4
+[1.200s][info][class,load] com.intellij.ide.plugins.cl.PluginClassLoader source: com.intellij.util.lang.PathClassLoader
+[1.300s][class,load] com.intellij.platform.kernel.backend.BackendKernelService source: com.intellij.util.lang.PathClassLoader
+[1.310s][class,load] com.intellij.platform.kernel.backend.BackendKernelServiceKt source: com.intellij.util.lang.PathClassLoader
+[1.400s][class,load] com.intellij.ide.plugins.PluginManagerCore$$Lambda/0x0000000801234000 source: com.intellij.ide.plugins.PluginManagerCore
+[1.500s][class,load] com.intellij.platform.settings.local.SettingsControllerMediator source: com.intellij.ide.plugins.cl.PluginClassLoader
+[1.510s][class,load] com.intellij.platform.settings.local.LocalSettingsController source: com.intellij.ide.plugins.cl.PluginClassLoader
+[2.000s][class,load] com.jetbrains.performancePlugin.ProjectLoaded source: com.intellij.ide.plugins.cl.PluginClassLoader
+[2.010s][class,load] com.jetbrains.performancePlugin.ProjectLoaded$Companion source: com.intellij.ide.plugins.cl.PluginClassLoader
+[2.100s][class,load] com.android.tools.adtui.webp.WebpImageReaderSpi source: com.intellij.ide.plugins.cl.PluginClassLoader @6d3af739
+[2.200s][class,load] com.intellij.station.core.services.IdeStationServerService source: com.intellij.ide.plugins.cl.PluginClassLoader
+[2.300s][class,load] com.jetbrains.performancePlugin.ProjectLoaded$$Lambda/0x0000000801300000 source: com.jetbrains.performancePlugin.ProjectLoaded
+[2.500s][class,load] com.intellij.gateway.daemon.bridge.GatewayConnectorBridgeActivity source: com.intellij.ide.plugins.cl.PluginClassLoader
+[2.900s][class,load] com.intellij.clouds.docker.gateway.json.ideSettings.DevcontainerAppInitListener source: com.intellij.ide.plugins.cl.PluginClassLoader
+[3.000s][info][class,load] java.lang.invoke.LambdaForm$MH/0x0000000801400000 source: __JVM_LookupDefineClass__
+[3.200s][class,load] com.intellij.dfa.analysis.rml.utils.RmlServiceResolver source: com.intellij.ide.plugins.cl.PluginClassLoader
+[3.500s][class,load] com.intellij.dfa.analysis.rml.intellij.RmlServiceResolverImpl source: com.intellij.ide.plugins.cl.PluginClassLoader

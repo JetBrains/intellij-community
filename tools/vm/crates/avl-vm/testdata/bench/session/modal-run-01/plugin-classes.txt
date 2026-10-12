@@ -1,0 +1,157 @@
+com.intellij.platform.settings.local.SettingsControllerMediator [sub = intellij.platform.settings.local.xml] com.intellij
+com.intellij.platform.settings.local.SettingsControllerMediatorKt [sub = intellij.platform.settings.local.xml] com.intellij
+com.intellij.platform.settings.local.JsonMirrorController [sub = intellij.platform.settings.local.xml] com.intellij
+com.intellij.dfa.analysis.rml.utils.RmlServiceResolver [m] com.intellij.dfa.analysis
+com.intellij.dfa.analysis.rml.intellij.RmlServiceResolverImpl [m] com.intellij.dfa.analysis
+com.intellij.platform.kernel.impl.KernelApplicationInitializedListener [sub = intellij.platform.kernel.impl.xml] com.intellij
+org.intellij.images.util.imageio.CommonsImagingImageReaderSpi [m] com.intellij.platform.images
+com.intellij.llmInstaller.ui.promo2.AIPromoWindowAdvisorPreheat [sub = intellij.llmInstaller.xml] org.jetbrains.completion.full.line:com.intellij.llmInstaller.
+org.intellij.images.util.imageio.CommonsImagingImageReaderSpi$MyByteSource [m] com.intellij.platform.images
+org.intellij.images.util.imageio.CommonsImagingImageReaderSpi$MyImageReader [m] com.intellij.platform.images
+org.intellij.images.util.imageio.svg.SvgImageReaderSpi [m] com.intellij.platform.images
+com.android.tools.adtui.webp.WebpImageReaderSpi [m] intellij.webp
+com.android.tools.adtui.webp.WebpImageReaderSpi$WebpReader [m] intellij.webp
+com.android.tools.adtui.webp.WebpNativeLibHelper [m] intellij.webp
+com.intellij.vcs.log.statistics.VcsLogTelemetryExporter [sub = intellij.platform.vcs.log.impl.xml] com.intellij.platform.vcs
+com.jetbrains.performancePlugin.ProjectLoaded [m] com.jetbrains.performancePlugin
+com.intellij.vcs.log.statistics.LogHistorySpanExporter [sub = intellij.platform.vcs.log.impl.xml] com.intellij.platform.vcs
+com.intellij.vcs.log.statistics.LogFilterSpanExporter [sub = intellij.platform.vcs.log.impl.xml] com.intellij.platform.vcs
+com.android.tools.adtui.webp.WebpMetadata [m] intellij.webp
+com.jetbrains.performancePlugin.ProjectLoaded$Companion [m] com.jetbrains.performancePlugin
+com.android.tools.adtui.webp.WebpImageWriterSpi [m] intellij.webp
+com.android.tools.adtui.webp.WebpImageWriterSpi$WebpWriter [m] intellij.webp
+com.android.tools.adtui.webp.WebpImageWriteParam [m] intellij.webp
+com.intellij.clouds.docker.gateway.json.ideSettings.DevcontainerSettingsController [sub = intellij.clouds.docker.gateway.json.xml] org.jetbrains.plugins.docker.gateway
+com.intellij.performanceTesting.rdct.DistributedTestHost [sub = intellij.performanceTesting.rdct.xml] com.jetbrains.performancePlugin
+com.intellij.platform.settings.local.LocalSettingsController [sub = intellij.platform.settings.local.xml] com.intellij
+com.intellij.platform.settings.local.InternalAndCacheStorageManager [sub = intellij.platform.settings.local.xml] com.intellij
+com.intellij.performanceTesting.rdct.DistributedTestHost$Companion [sub = intellij.performanceTesting.rdct.xml] com.jetbrains.performancePlugin
+com.intellij.performanceTesting.rdct.LambdaTestHost [sub = intellij.performanceTesting.rdct.xml] com.jetbrains.performancePlugin
+com.jetbrains.rd.protocol.RdCoroutineHostInitializer [sub = intellij.rd.platform.xml] com.intellij
+com.intellij.performanceTesting.rdct.LambdaTestHost$Companion [sub = intellij.performanceTesting.rdct.xml] com.jetbrains.performancePlugin
+com.jetbrains.performancePlugin.IntegrationTestApplicationLoadListener [m] com.jetbrains.performancePlugin
+com.jetbrains.performancePlugin.IntegrationTestApplicationLoadListener$Companion [m] com.jetbrains.performancePlugin
+com.intellij.platform.daemon.plugins.gateway.PluginConnectionProvider [sub = intellij.platform.daemon.plugins.xml] com.intellij.platform.daemon
+com.intellij.station.core.services.IdeStationServiceInitializedListener [sub = intellij.station.core.xml] com.jetbrains.station:com.intellij.station.
+com.intellij.station.core.toolbox.ToolboxDaemonLauncher$AppInitListener [sub = intellij.station.core.xml] com.jetbrains.station:com.intellij.station.
+com.intellij.platform.diagnostic.errorAutoReport.frontend.ExceptionAutoReportServiceImpl$Starter [sub = intellij.platform.diagnostic.errorAutoReport.frontend.xml] com.intellij
+com.jetbrains.gateway.welcomeScreen.WslProjectOpeningModeSettings$NativeModeDefaultInitializer [sub = intellij.gateway.core.xml] com.jetbrains.gateway
+com.intellij.clouds.docker.gateway.DevcontainersAdvancedSettings$NativeProjectOpenSetter [m] org.jetbrains.plugins.docker.gateway
+com.intellij.clouds.docker.gateway.json.ideSettings.DevcontainerAppInitListener [sub = intellij.clouds.docker.gateway.json.xml] org.jetbrains.plugins.docker.gateway
+com.intellij.gateway.daemon.bridge.GatewayConnectorBridgeActivity [sub = intellij.gateway.daemon.bridge.xml] com.jetbrains.gateway
+com.intellij.platform.kernel.impl.KernelApplicationInitializedListener$execute$1 [sub = intellij.platform.kernel.impl.xml] com.intellij
+com.intellij.dfa.analysis.rml.utils.ServiceLoaderUtilsKt [m] com.intellij.dfa.analysis
+com.jetbrains.performancePlugin.ProjectLoaded$execute$1 [m] com.jetbrains.performancePlugin
+com.intellij.llmInstaller.ui.promo2.AIPromoWindowAdvisorPreheat$execute$1 [sub = intellij.llmInstaller.xml] org.jetbrains.completion.full.line:com.intellij.llmInstaller.
+com.intellij.dfa.analysis.rml.utils.ServiceLoaderUtilsKt$serviceProviders$1 [m] com.intellij.dfa.analysis
+com.intellij.gateway.daemon.bridge.GatewayConnectorBridgeActivity$execute$1 [sub = intellij.gateway.daemon.bridge.xml] com.jetbrains.gateway
+com.intellij.llmInstaller.ui.promo2.AIPromoWindowAdvisorPreheat$execute$2 [sub = intellij.llmInstaller.xml] org.jetbrains.completion.full.line:com.intellij.llmInstaller.
+com.intellij.platform.kernel.backend.BackendKernelService [sub = intellij.platform.kernel.backend.xml] com.intellij
+com.intellij.gateway.daemon.bridge.LegacyGatewayDaemonConnectionProviderRegistrar [sub = intellij.gateway.daemon.bridge.xml] com.jetbrains.gateway
+com.intellij.platform.kernel.backend.BackendKernelServiceKt [sub = intellij.platform.kernel.backend.xml] com.intellij
+com.intellij.platform.kernel.backend.BackendKernelService$1 [sub = intellij.platform.kernel.backend.xml] com.intellij
+com.intellij.platform.daemon.plugins.gateway.PluginConnectionProvider$loadPlugins$1 [sub = intellij.platform.daemon.plugins.xml] com.intellij.platform.daemon
+com.intellij.station.core.services.IdeStationServiceInitializedListener$execute$1 [sub = intellij.station.core.xml] com.jetbrains.station:com.intellij.station.
+com.intellij.station.core.services.IdeStationServerService [sub = intellij.station.core.xml] com.jetbrains.station:com.intellij.station.
+com.intellij.station.core.services.IdeStationServerService$Companion [sub = intellij.station.core.xml] com.jetbrains.station:com.intellij.station.
+com.intellij.gateway.daemon.bridge.LegacyGatewayDaemonConnectionProviderRegistrar$1 [sub = intellij.gateway.daemon.bridge.xml] com.jetbrains.gateway
+com.intellij.platform.daemon.connection.DaemonRegistryKt [sub = intellij.platform.daemon.connection.xml] com.intellij.platform.daemon
+com.intellij.station.core.services.IdeStationServerService$1 [sub = intellij.station.core.xml] com.jetbrains.station:com.intellij.station.
+com.intellij.platform.daemon.connection.DaemonRegistryKt$isLegacyConnectionProvidersEnabled$1 [sub = intellij.platform.daemon.connection.xml] com.intellij.platform.daemon
+com.intellij.station.core.toolbox.ToolboxDaemonLauncher$AppInitListener$execute$1 [sub = intellij.station.core.xml] com.jetbrains.station:com.intellij.station.
+com.intellij.platform.diagnostic.errorAutoReport.frontend.ExceptionAutoReportServiceImpl$Starter$execute$1 [sub = intellij.platform.diagnostic.errorAutoReport.frontend.xml] com.intellij
+com.intellij.station.core.toolbox.ToolboxDaemonLauncher [sub = intellij.station.core.xml] com.jetbrains.station:com.intellij.station.
+com.intellij.station.core.toolbox.ToolboxDaemonLauncher$Companion [sub = intellij.station.core.xml] com.jetbrains.station:com.intellij.station.
+com.intellij.station.core.toolbox.ToolboxDaemonLauncher$1 [sub = intellij.station.core.xml] com.jetbrains.station:com.intellij.station.
+com.intellij.platform.diagnostic.errorAutoReport.frontend.ExceptionAutoReportServiceImpl [sub = intellij.platform.diagnostic.errorAutoReport.frontend.xml] com.intellij
+com.jetbrains.gateway.welcomeScreen.WslProjectOpeningModeSettings [sub = intellij.gateway.core.xml] com.jetbrains.gateway
+com.jetbrains.gateway.welcomeScreen.WslProjectOpeningModeSettings$NATIVE_MODE_DEFAULT_PRODUCTS$1 [sub = intellij.gateway.core.xml] com.jetbrains.gateway
+com.jetbrains.gateway.welcomeScreen.WslProjectOpeningModeSettings$NATIVE_MODE_DEFAULT_PRODUCTS$2 [sub = intellij.gateway.core.xml] com.jetbrains.gateway
+com.jetbrains.gateway.welcomeScreen.WslProjectOpeningModeSettings$NATIVE_MODE_DEFAULT_PRODUCTS$3 [sub = intellij.gateway.core.xml] com.jetbrains.gateway
+com.intellij.platform.vcs.impl.shared.rhizome.ShelfDiffEntityTypeProvider [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemTypeProvider [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.ShelfNodesEntityTypeProvider [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.VcsEntityTypeProvider [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.kernel.backend.BackendValueEntityTypesProvider [sub = intellij.platform.kernel.backend.xml] com.intellij
+com.intellij.platform.searchEverywhere.SeEntityTypeProvider [sub = intellij.platform.searchEverywhere.xml] com.intellij
+com.intellij.clouds.docker.gateway.json.ideSettings.DevcontainerAppInitListener$execute$1 [sub = intellij.clouds.docker.gateway.json.xml] org.jetbrains.plugins.docker.gateway
+com.intellij.clouds.docker.gateway.json.ideSettings.DevcontainerPluginManagerKt [sub = intellij.clouds.docker.gateway.json.xml] org.jetbrains.plugins.docker.gateway
+com.intellij.clouds.docker.gateway.json.ideSettings.DevcontainerPluginManager [sub = intellij.clouds.docker.gateway.json.xml] org.jetbrains.plugins.docker.gateway
+com.intellij.docker.agent.devcontainers.DevcontainerHostService [m] Docker:com.intellij.docker.
+com.intellij.docker.agent.devcontainers.DevcontainerHostService$Companion [m] Docker:com.intellij.docker.
+com.intellij.platform.eel.tcp.TcpEelMrfsBackend [sub = intellij.platform.eel.tcp.xml] com.intellij
+com.intellij.platform.eel.tcp.TcpEelMrfsBackend$Companion [sub = intellij.platform.eel.tcp.xml] com.intellij
+com.intellij.docker.ijent.mrfs.EelDockerMrfsBackend [sub = intellij.clouds.docker.xml] Docker
+com.intellij.docker.ijent.mrfs.EelDockerMrfsBackend$Companion [sub = intellij.clouds.docker.xml] Docker
+com.intellij.platform.ijent.ssh.impl.SshEelMrfsBackend [sub = intellij.platform.ijent.ssh.xml] com.intellij.platform.ssh
+com.intellij.platform.ijent.ssh.impl.SshEelMrfsBackend$Companion [sub = intellij.platform.ijent.ssh.xml] com.intellij.platform.ssh
+com.intellij.platform.ijent.ssh.impl.SshEelMrfsUtils [sub = intellij.platform.ijent.ssh.xml] com.intellij.platform.ssh
+com.intellij.platform.ijent.ssh.impl.SshEelMrfsUtils$WhenMappings [sub = intellij.platform.ijent.ssh.xml] com.intellij.platform.ssh
+com.intellij.platform.diagnostic.errorAutoReport.frontend.ExceptionAutoReportServiceImpl$messagePoolAdvisor$1 [sub = intellij.platform.diagnostic.errorAutoReport.frontend.xml] com.intellij
+com.intellij.platform.diagnostic.errorAutoReport.frontend.ExceptionAutoReportServiceImpl$1 [sub = intellij.platform.diagnostic.errorAutoReport.frontend.xml] com.intellij
+com.intellij.platform.diagnostic.errorAutoReport.frontend.ExceptionAutoReportServiceImplKt [sub = intellij.platform.diagnostic.errorAutoReport.frontend.xml] com.intellij
+com.intellij.platform.eel.tcp.TcpEelPathParser [sub = intellij.platform.eel.tcp.xml] com.intellij
+com.intellij.platform.eel.tcp.TcpEelPathParser$Companion [sub = intellij.platform.eel.tcp.xml] com.intellij
+com.intellij.platform.eel.tcp.TcpEelConstants [sub = intellij.platform.eel.tcp.xml] com.intellij
+com.intellij.docker.ijent.DockerEelPathFormat [sub = intellij.clouds.docker.xml] Docker
+com.intellij.docker.ijent.DockerEelPathFormat$Companion [sub = intellij.clouds.docker.xml] Docker
+com.intellij.docker.ijent.DockerEelPathFormat$Standard [sub = intellij.clouds.docker.xml] Docker
+com.intellij.docker.ijent.DockerEelPathFormat$Devcontainer [sub = intellij.clouds.docker.xml] Docker
+com.intellij.platform.ide.nonModalWelcomeScreen.actions.WelcomeScreenAwareActionsCustomizer [sub = intellij.platform.ide.nonModalWelcomeScreen.xml] com.intellij:com.intellij.platform.ide.nonModalWelcomeScreen.
+com.intellij.platform.vcs.impl.shared.rhizome.SelectShelveChangeEntity [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.SelectShelveChangeEntity$Companion [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.SelectShelveChangeEntity$Companion$1 [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.DiffSplitterEntity [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.DiffSplitterEntity$Companion [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.DiffSplitterEntity$Companion$1 [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemsEntity [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemsEntity$Companion [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemsEntity$Companion$1 [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemEntity [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemEntity$Companion [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemEntity$Companion$1 [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.NodeEntity [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.ShelvesTreeRootEntity [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.NodeEntity$Companion [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.ShelvesTreeRootEntity$Companion [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.ShelvesTreeRootEntity$Companion$1 [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeListEntity [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeListEntity$Companion [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeListEntity$Companion$1 [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeEntity [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeEntity$Companion [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeEntity$Companion$1 [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.TagNodeEntity [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.TagNodeEntity$Companion [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.TagNodeEntity$Companion$1 [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.ModuleNodeEntity [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.ModuleNodeEntity$Companion [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.ModuleNodeEntity$Companion$1 [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.FilePathNodeEntity [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.FilePathNodeEntity$Companion [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.FilePathNodeEntity$Companion$1 [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.RepositoryNodeEntity [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.RepositoryNodeEntity$Companion [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.RepositoryNodeEntity$Companion$1 [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.ShelfTreeEntity [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.ShelfTreeEntity$Companion [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.platform.vcs.impl.shared.rhizome.ShelfTreeEntity$Companion$1 [sub = intellij.platform.vcs.impl.shared.xml] com.intellij
+com.intellij.database.run.ui.table.TableFloatingToolbar$CustomizableGroupProvider [sub = intellij.grid.impl.xml] com.intellij.grid
+com.intellij.xdebugger.impl.ui.XDebugTabCustomizableActionGroupProvider [sub = intellij.platform.debugger.impl.ui.xml] com.intellij
+com.intellij.openapi.vcs.ui.VcsCustomizableActionGroupProvider [sub = intellij.platform.vcs.impl.xml] com.intellij.platform.vcs
+com.intellij.vcs.log.ui.actions.VcsLogCustomizableActionGroupProvider [sub = intellij.platform.vcs.log.impl.xml] com.intellij.platform.vcs
+org.intellij.plugins.markdown.ui.floating.FloatingToolbarCustomizableGroupProvider [m] org.intellij.plugins.markdown
+com.intellij.station.core.toolbox.ToolboxDaemonLauncher$1$1 [sub = intellij.station.core.xml] com.jetbrains.station:com.intellij.station.
+com.intellij.station.core.services.IdeStationServerService$1$1 [sub = intellij.station.core.xml] com.jetbrains.station:com.intellij.station.
+com.intellij.platform.daemon.plugins.gateway.PluginConnectionProviderKt [sub = intellij.platform.daemon.plugins.xml] com.intellij.platform.daemon
+com.jetbrains.gateway.api.GatewayConnector [sub = intellij.gateway.core.xml] com.jetbrains.gateway
+com.jetbrains.gateway.api.GatewayConnector$Companion [sub = intellij.gateway.core.xml] com.jetbrains.gateway
+com.intellij.station.core.services.IdeStationServerService$1$1$1 [sub = intellij.station.core.xml] com.jetbrains.station:com.intellij.station.
+com.jetbrains.gateway.api.GatewayConnector$Companion$onConnectorsChange$1 [sub = intellij.gateway.core.xml] com.jetbrains.gateway
+de.plushnikov.intellij.plugin.lombokconfig.LombokConfigIndex [sub = intellij.lombok.xml] Lombook Plugin
+de.plushnikov.intellij.plugin.language.LombokConfigFileType [sub = intellij.lombok.xml] Lombook Plugin
+de.plushnikov.intellij.plugin.language.LombokConfigLanguage [sub = intellij.lombok.xml] Lombook Plugin
+de.plushnikov.intellij.plugin.lombokconfig.ConfigKey [sub = intellij.lombok.xml] Lombook Plugin
+de.plushnikov.intellij.plugin.lombokconfig.LombokConfigIndex$2 [sub = intellij.lombok.xml] Lombook Plugin
+de.plushnikov.intellij.plugin.lombokconfig.LombokConfigIndex$1 [sub = intellij.lombok.xml] Lombook Plugin
+de.plushnikov.intellij.plugin.LombokBundle [sub = intellij.lombok.xml] Lombook Plugin

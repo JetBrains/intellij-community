@@ -8,6 +8,7 @@ use refusal::Refusal;
 
 use crate::areas::AREAS_FILE;
 use crate::exit::fail_usage;
+use crate::modules::resolve_module;
 use crate::runtime::{Platform, Runtime};
 use crate::scan::{Candidate, Index, ResolutionInputs, TestRoot, derive_package, read_dir_or_none, read_text};
 use crate::suites::{AffectedSuite, resolve_suite_run};
@@ -29,6 +30,9 @@ pub enum SelectorKind {
     Flow,
     /// A generated or authored suite id, the base name of one committed suite document.
     Suite,
+    /// A JPS module name, from `--module`. [`Selector::classify`] never answers it, because a module name reads as a
+    /// package. [`crate::modules::resolve_module`] resolves it.
+    Module,
 }
 
 impl SelectorKind {
@@ -48,6 +52,7 @@ impl SelectorKind {
             Self::Package => "package",
             Self::Flow => "flow",
             Self::Suite => "suite",
+            Self::Module => "module",
         }
     }
 }
@@ -62,8 +67,8 @@ impl fmt::Display for SelectorKind {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Selector {
     pub kind: SelectorKind,
-    /// A class simple name, a class FQN, a package, a directory path, a bazel label, a flow id or a suite id,
-    /// depending on the kind.
+    /// A class simple name, a class FQN, a package, a directory path, a bazel label, a flow id, a suite id or a
+    /// module name, depending on the kind.
     pub name: String,
     /// The single test method to run. `Foo#` is not a selector this accepts, so there is no empty method.
     pub method: Option<String>,
@@ -256,6 +261,8 @@ pub fn resolve_selector(runtime: &dyn Runtime, selector: &Selector, inputs: &Res
                 ..Resolution::default()
             });
         }
+        // Before the tree scan too: the module list and one BUILD.bazel answer it.
+        SelectorKind::Module => return resolve_module(runtime, inputs.areas(), &selector.name),
         SelectorKind::Package | SelectorKind::SimpleName | SelectorKind::Fqn if inputs.areas().is_empty() => {
             return Err(fail_usage(format!(
                 "{} is a {} selector, and {AREAS_FILE} names no area to scan for it; pass a //label or a \

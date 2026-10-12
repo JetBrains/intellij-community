@@ -1,0 +1,34 @@
+{"op":"hello","root":"/home/admin/WorkerData/daemon/iterations/iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3/air-traces","runId":"iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3","launcher":"daemon","screen":true,"bridge":{"port":31347,"token":"golden-transcript-token"}}
+{"op":"scenario","name":"rename-closed-project-session","testClass":"AirRenameSessionGeneratedFlowUiTest","suite":"rename-session","lane":"UI","flow":"flow-rename-session","fixture":"closed-project-session","bridge":{"port":31347,"token":"golden-transcript-token"},"program":{"name":"rename-closed-project-session","fixture":"closed-project-session","flow":"flow-rename-session","flags":{},"followsLastUsedPreset":false,"requiresPromptProbe":false,"setups":[{"operation":"prepare-closed-project-session","instructions":[{"action":"prepare-closed-project-session"},{"assertion":"prepare-closed-project-session","expectation":"One idle native session is listed under the row of a closed project in the all-projects scope."}]}],"steps":[{"flow":"flow-rename-session","step":"rename-session-select","operations":[{"operation":"rename-session-select","instructions":[{"assertion":"rename-session-offered","expectation":"Rename is enabled in the popup of the closed project session row."},{"action":"rename-session-select"},{"assertion":"rename-session-dialog-shown","expectation":"The Rename Session dialog shows."}]}]},{"flow":"flow-rename-session","step":"rename-session-enter-name","operations":[{"operation":"rename-session-enter-name","instructions":[{"action":"rename-session-enter-name"},{"assertion":"rename-session-dialog-closed","expectation":"The Rename Session dialog closes after OK."}]}]},{"flow":"flow-rename-session","step":"rename-session-shown","operations":[{"operation":"rename-session-shown","instructions":[{"assertion":"rename-session-title","expectation":"The session is listed under the new title."}]}]}]}}
+{"op":"span","id":1,"kind":"reset","key":"reset:before","title":"[reset] before rename-closed-project-session"}
+{"op":"end","id":1,"status":"passed"}
+{"op":"call","span":0,"request":"SeedSessionPresets","startMs":1790158502330,"durationMs":184,"ok":true}
+{"op":"span","id":2,"kind":"setup","key":"setup:prepare-closed-project-session","title":"[setup] prepare-closed-project-session"}
+{"op":"span","id":3,"parent":2,"kind":"operation","key":"operation:prepare-closed-project-session","title":"[operation] prepare-closed-project-session"}
+{"op":"span","id":4,"parent":3,"kind":"action","key":"action:prepare-closed-project-session","title":"[action] prepare-closed-project-session"}
+{"op":"snap","span":4,"phase":"boundary"}
+{"op":"call","span":4,"request":"SeedClosedRecentProject","startMs":1790158502600,"durationMs":212,"ok":true}
+{"op":"call","span":4,"request":"SeedIdleSessions","startMs":1790158502815,"durationMs":431,"ok":true}
+{"op":"call","span":4,"request":"AwaitSessionTreeRow","startMs":1790158503750,"durationMs":640,"ok":true}
+{"op":"end","id":4,"status":"passed"}
+{"op":"span","id":5,"parent":3,"kind":"assertion","key":"assertion:prepare-closed-project-session","title":"[assertion] prepare-closed-project-session: One idle native session is listed under the row of a closed project in the all-projects scope.","expectation":"One idle native session is listed under the row of a closed project in the all-projects scope."}
+{"op":"snap","span":5,"phase":"boundary"}
+{"op":"call","span":5,"request":"AwaitSessionTreeRow","startMs":1790158504470,"durationMs":38,"ok":true}
+{"op":"snap","span":5,"phase":"check"}
+{"op":"end","id":5,"status":"passed"}
+{"op":"snap","span":3,"phase":"boundary"}
+{"op":"end","id":3,"status":"passed"}
+{"op":"end","id":2,"status":"passed"}
+{"op":"span","id":6,"kind":"step","key":"step:rename-session-select","title":"[flow] rename-session-select"}
+{"op":"span","id":7,"parent":6,"kind":"operation","key":"operation:rename-session-select","title":"[operation] rename-session-select"}
+{"op":"span","id":8,"parent":7,"kind":"assertion","key":"assertion:rename-session-offered","title":"[assertion] rename-session-offered: Rename is enabled in the popup of the closed project session row.","expectation":"Rename is enabled in the popup of the closed project session row."}
+{"op":"snap","span":8,"phase":"boundary"}
+{"op":"call","span":8,"request":"AwaitSessionTreeRow","startMs":1790158504700,"durationMs":22,"ok":true}
+{"op":"snap","span":8,"phase":"check"}
+{"op":"end","id":8,"status":"passed"}
+{"op":"span","id":9,"parent":7,"kind":"action","key":"action:rename-session-select","title":"[action] rename-session-select"}
+{"op":"snap","span":9,"phase":"boundary"}
+{"op":"call","span":9,"request":"AwaitSessionTreeRow","startMs":1790158505600,"durationMs":19,"ok":true}
+{"op":"end","id":9,"status":"passed"}
+{"op":"span","id":10,"parent":7,"kind":"assertion","key":"assertion:rename-session-dialog-shown","title":"[assertion] rename-session-dialog-shown: The Rename Session dialog shows.","expectation":"The Rename Session dialog shows."}
+{"op":"snap","span":10,"phase":"boundary"}
