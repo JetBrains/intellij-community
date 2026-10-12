@@ -15,9 +15,14 @@ import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.ide.progress.BackgroundTaskOwner
+import com.intellij.platform.ide.progress.ComponentModalTaskOwner
+import com.intellij.platform.ide.progress.GuessModalTaskOwner
 import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.ProjectModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.productMode.ProductMode
 import com.intellij.util.ObjectUtils
@@ -424,7 +429,20 @@ object DynamicPlugins {
           runReconfiguration()
         }
       }
-    } else {
+    }
+    else if (criticalSectionModalProgressConfig != null) {
+      withBackgroundProgress(
+        owner = when (val owner = criticalSectionModalProgressConfig.owner) {
+          is ProjectModalTaskOwner -> BackgroundTaskOwner.project(owner.project)
+          is ComponentModalTaskOwner, is GuessModalTaskOwner -> BackgroundTaskOwner.guess()
+        },
+        title = criticalSectionModalProgressConfig.title,
+        cancellation = TaskCancellation.nonCancellable(),
+      ) {
+        runReconfiguration()
+      }
+    }
+    else {
       runReconfiguration()
     }
     if (result is DynamicPluginsReconfigurationResult.Invalid) LOG.warn("Reconfiguration is not possible: ${result.reason.logMessage}")
