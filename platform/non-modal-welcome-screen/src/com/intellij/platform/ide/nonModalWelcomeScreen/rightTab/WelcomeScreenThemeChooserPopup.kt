@@ -3,6 +3,7 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
 import com.intellij.application.options.colors.highlighting.HighlightData
 import com.intellij.application.options.colors.highlighting.HighlightsExtractor
+import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafReference
 import com.intellij.openapi.Disposable
@@ -24,6 +25,7 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenComboBoxKind
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.ThemeModel
 import com.intellij.ui.CollectionListModel
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.SegmentedButton
@@ -77,7 +79,12 @@ internal class WelcomeScreenThemeChooserPopup(
     val initialFilter = model.currentBrightness()
     model.brightnessFilter = initialFilter
 
-    val listModel = CollectionListModel(model.items)
+    // An empty theme id makes the platform renderer draw a separator above the row. The row opens the
+    // Appearance settings and is not a theme, so the previewer never sees it: its index is past the themes.
+    val moreItem = LafReference(NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.theme.more.in.appearance"), "")
+    fun listItems() = model.items + moreItem
+
+    val listModel = CollectionListModel(listItems())
     val list = JBList(listModel)
     list.selectionMode = ListSelectionModel.SINGLE_SELECTION
     list.visibleRowCount = VISIBLE_ROW_COUNT
@@ -114,7 +121,7 @@ internal class WelcomeScreenThemeChooserPopup(
     // The renderer the Appearance settings combobox uses, so rows match the platform's theme popup:
     // names, a Beta badge and restart hint where a theme needs one, and group separators.
     builder.setRenderer(LafManager.getInstance().getLookAndFeelCellRenderer(list))
-    builder.setNorthComponent(createBrightnessSwitch(initialFilter, listModel, list))
+    builder.setNorthComponent(createHeader(createBrightnessSwitch(initialFilter, listModel, list, ::listItems)))
     previewSample?.let { builder.setEastComponent(createCodePreview(it, popupDisposable)) }
     builder.setAutoselectOnMouseMove(true)
     builder.setRequestFocus(true)
@@ -131,6 +138,14 @@ internal class WelcomeScreenThemeChooserPopup(
 
     builder.setItemChosenCallback(Runnable {
       val selected = list.selectedValue ?: return@Runnable
+      if (selected === moreItem) {
+        // Closing without a choice restores the theme the user had before the preview.
+        popupRef?.cancel()
+        ApplicationManager.getApplication().invokeLater {
+          ShowSettingsUtilImpl.showSettingsDialog(null, "preferences.lookFeel", null)
+        }
+        return@Runnable
+      }
       committed = true
       debounce.stop()
       model.commit(selected)
@@ -246,6 +261,7 @@ internal class WelcomeScreenThemeChooserPopup(
     initialFilter: ThemeBrightnessFilter,
     listModel: CollectionListModel<LafReference>,
     list: JBList<LafReference>,
+    listItems: () -> List<LafReference>,
   ): JComponent {
     val switch = SegmentedButtonComponent<ThemeBrightnessFilter> { filter ->
       val textKey = when (filter) {
@@ -255,10 +271,9 @@ internal class WelcomeScreenThemeChooserPopup(
       SegmentedButton.createPresentation(text = NonModalWelcomeScreenBundle.message(textKey))
     }
     switch.spacing = IntelliJSpacingConfiguration()
-    switch.items = listOf(ThemeBrightnessFilter.LIGHT, ThemeBrightnessFilter.DARK)
+    switch.items = listOf(ThemeBrightnessFilter.DARK, ThemeBrightnessFilter.LIGHT)
     switch.accessibleContext.accessibleName =
       NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.theme.brightness.accessible.name")
-    switch.border = JBUI.Borders.empty(8, 8, 4, 8)
 
     // The caller already put this filter on the model. Set it before subscribing, so the initial state
     // is not taken for a user action.
@@ -266,14 +281,38 @@ internal class WelcomeScreenThemeChooserPopup(
 
     switch.whenItemSelected { filter ->
       model.brightnessFilter = filter
-      val items = model.items
-      listModel.replaceAll(items)
+      listModel.replaceAll(listItems())
       // Keep the active theme selected when the new family still contains it, otherwise start at the top.
-      val activeIndex = items.indexOf(model.currentItem)
+      val activeIndex = model.items.indexOf(model.currentItem)
       list.selectedIndex = if (activeIndex >= 0) activeIndex else 0
       list.ensureIndexIsVisible(list.selectedIndex)
     }
 
     return switch
+  }
+
+  /**
+   * The popup header: the switch on the left, and over the code sample the title of the sample.
+   *
+   * The title box is as wide as the sample, so the two share their left edge. BorderLayout gives the
+   * switch its own preferred width, which keeps it narrow instead of stretching it over the popup.
+   */
+  private fun createHeader(switch: JComponent): JComponent {
+    val header = JPanel(BorderLayout())
+    header.isOpaque = false
+    header.border = JBUI.Borders.empty(8, 8, 4, 8)
+    header.add(switch, BorderLayout.WEST)
+
+    if (previewSample != null) {
+      val title = JBLabel(NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.theme.preview.title"))
+      title.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+      val titleBox = object : JPanel(BorderLayout()) {
+        override fun getPreferredSize(): Dimension = Dimension(JBUI.scale(PREVIEW_WIDTH), super.getPreferredSize().height)
+      }
+      titleBox.isOpaque = false
+      titleBox.add(title, BorderLayout.WEST)
+      header.add(titleBox, BorderLayout.EAST)
+    }
+    return header
   }
 }
