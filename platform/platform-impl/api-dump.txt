@@ -137,7 +137,10 @@ a:com.intellij.application.options.colors.TextAttributesDescription
 - p:getTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
 - setExternalForeground(java.awt.Color):V
 f:com.intellij.application.options.editor.CheckboxDescriptor
+- f:asOptionDescriptor(java.lang.String):com.intellij.ide.ui.search.BooleanOptionDescription
+- f:asOptionDescriptor(java.lang.String,kotlin.jvm.functions.Function0):com.intellij.ide.ui.search.BooleanOptionDescription
 - f:asOptionDescriptor(kotlin.jvm.functions.Function0):com.intellij.ide.ui.search.BooleanOptionDescription
+- f:asUiOptionDescriptor(java.lang.String):com.intellij.ide.ui.search.BooleanOptionDescription
 com.intellij.application.options.editor.EditorOptionsListener
 - sf:APPEARANCE_CONFIGURABLE_TOPIC:com.intellij.util.messages.Topic
 - sf:FOLDING_CONFIGURABLE_TOPIC:com.intellij.util.messages.Topic

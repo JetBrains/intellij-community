@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class EditorSmartKeysOptionsTopHitProvider : OptionsSearchTopHitProvider.ApplicationLevelProvider {
-  override fun getId(): String = "editor.preferences.tabs"
+  override fun getId(): String = ID
 
   override fun getOptions(): Collection<OptionDescription> {
     return editorSmartKeysOptionDescriptors + EditorSmartKeysConfigurable().configurables
