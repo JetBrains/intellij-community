@@ -4,7 +4,6 @@ package com.intellij.platform.projectView.pane
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -323,7 +322,7 @@ private class ProjectViewPaneManager(
 
   private suspend fun processRequests(requestChannel: Channel<ProjectViewPaneRequest>) {
     for (request in requestChannel) {
-      try {
+      runSafelyCancellable(LOG, taskDescription = { "Processing a request for the pane $id: $request" }) {
         when (request) {
           is ProjectViewPaneLoadChildrenRequest -> pane.loadChildren(request.nodeId, ProjectViewPaneLoadChildrenOptionsImpl)
           is ProjectViewPaneSelectionChanged -> {
@@ -351,14 +350,6 @@ private class ProjectViewPaneManager(
           is ProjectViewPaneDeleteRequest -> pane.cutCopyPasteDeleteHandler.performDelete(request.nodeIds)
           is ProjectViewPaneDnDRequest -> pane.dndHandler.performInternalDnD(request.sourceIDs, request.targetID, ProjectViewDnDOptionsImpl(request.action))
         }
-      }
-      catch (e: Exception) {
-        rethrowControlFlowException(e)
-        LOG.error(
-          "An error has occurred when processing a request for pane $id. " +
-          "The problematic request was $request",
-          e
-        )
       }
     }
   }
