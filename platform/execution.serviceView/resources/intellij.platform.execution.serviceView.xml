@@ -67,7 +67,7 @@
       <!--suppress PluginXmlValidity -->
       <group id="ServiceView.AddService" popup="true" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
              class="com.intellij.platform.execution.serviceView.AddServiceActionGroup"/>
-      <group id="ServiceView.ViewOptions" popup="true" icon="AllIcons.Actions.GroupBy"
+      <group id="ServiceView.ViewOptions" searchable="false" popup="true" icon="AllIcons.Actions.GroupBy"
              class="com.intellij.ide.actions.NonEmptyActionGroup">
         <action id="ServiceView.GroupByContributor" class="com.intellij.platform.execution.serviceView.GroupByContributorAction"/>
         <separator/>
