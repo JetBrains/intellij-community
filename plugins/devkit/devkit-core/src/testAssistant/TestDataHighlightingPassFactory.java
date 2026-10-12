@@ -24,7 +24,7 @@ final class TestDataHighlightingPassFactory implements TextEditorHighlightingPas
   public static final List<String> SUPPORTED_FILE_TYPES = Collections.singletonList(JavaFileType.INSTANCE.getDefaultExtension());
   public static final List<@NonNls String> SUPPORTED_IN_TEST_DATA_FILE_TYPES =
     List.of("js", "php", "css", "html", "xhtml", "jsp", "test", "py", "aj", "go", "mod", "work", "sum");
-  private static final int MAX_HOPES = 3;
+  private static final int MAX_HOPS = 3;
 
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
@@ -54,7 +54,7 @@ final class TestDataHighlightingPassFactory implements TextEditorHighlightingPas
     }
 
     if (ext != null && SUPPORTED_IN_TEST_DATA_FILE_TYPES.contains(ext)) {
-      return TestDataDirectories.isNearTestDataDirectory(file, MAX_HOPES);
+      return TestDataDirectories.isNearTestDataDirectory(file, MAX_HOPS);
     }
     return false;
   }
