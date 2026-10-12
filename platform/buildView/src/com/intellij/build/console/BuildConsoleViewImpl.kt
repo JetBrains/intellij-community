@@ -3,7 +3,6 @@ package com.intellij.build.console
 
 import com.intellij.build.BuildConsoleUtils
 import com.intellij.build.BuildTextConsoleView
-import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildIssueEvent
 import com.intellij.build.events.Failure
@@ -11,6 +10,7 @@ import com.intellij.build.events.FileMessageEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.OutputReferenceEvent
+import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.execution.filters.LazyFileHyperlinkInfo
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.ui.ConsoleView
@@ -35,6 +35,7 @@ import kotlin.io.path.name
 private val TAG_PATTERN = Pattern.compile("<[^>]*>")
 private val A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"']([^>]*)[\"'][^>]*>")
 private const val A_CLOSING = "</a>"
+private const val FILE_POSITION_HREF = "file-position"
 private val NEW_LINES = mutableSetOf<@NlsSafe String?>("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>")
 
 internal class BuildConsoleViewImpl(
@@ -48,34 +49,10 @@ internal class BuildConsoleViewImpl(
 
   override fun onEvent(event: BuildEvent) {
     when (event) {
-      is BuildIssueEvent -> onBuildIssueEvent(event)
-      is FileMessageEvent -> onFileMessageEvent(event)
       is MessageEvent -> onMessageEvent(event)
       is OutputBuildEvent -> onOutputEvent(event)
       is OutputReferenceEvent -> onOutputReferenceEvent(event)
       else -> onBuildEvent(event)
-    }
-  }
-
-  private fun onBuildIssueEvent(event: BuildIssueEvent) {
-    val quickFixes = event.issue.quickFixes.associateBy { it.id }
-    delegate.printHtml(event.issue.description, event.result.kind.contentType) {
-      quickFixes[it.description]?.runQuickFix(project, BuildConsoleUtils.getDataContext(delegate))
-    }
-  }
-
-  private fun onFileMessageEvent(event: FileMessageEvent) {
-    val description = event.description
-    val contentType = event.result.kind.contentType
-    if (description != null) {
-      delegate.print(description, contentType)
-    }
-    else {
-      val hyperlinkText = getHyperlinkText(event.filePosition) ?: return
-      val hyperlinkInfo = getHyperlinkInfo(project, event.filePosition) ?: return
-      delegate.printHyperlink(hyperlinkText, hyperlinkInfo)
-      delegate.print(": ", contentType)
-      delegate.print(event.message, contentType)
     }
   }
 
@@ -85,9 +62,10 @@ internal class BuildConsoleViewImpl(
   }
 
   private fun onMessageEvent(event: MessageEvent) {
-    val details = event.result.details
-    if (!details.isNullOrEmpty()) {
-      delegate.printHtml(details, event.result.kind.contentType, null)
+    val html = event.getConsoleHtml() ?: return
+    val hyperlinkHandler = event.getHyperlinkHandler(project, delegate)
+    delegate.printHtml(html, event.result.kind.contentType) {
+      hyperlinkHandler(it.description)
     }
   }
 
@@ -116,23 +94,59 @@ internal class BuildConsoleViewImpl(
   }
 
   companion object {
-
-    internal fun getHyperlinkText(filePosition: FilePosition): String? {
-      val path = filePosition.path ?: return null
-      val hyperlinkText = StringJoiner(":")
-      hyperlinkText.add(path.name)
-      if (filePosition.startLine > 0) {
-        hyperlinkText.add((filePosition.startLine + 1).toString())
+    internal fun MessageEvent.getHyperlinkText(): String? {
+      if (this is FileMessageEvent) {
+        val path = filePosition.path ?: return null
+        val hyperlinkText = StringJoiner(":")
+        hyperlinkText.add(path.name)
+        if (filePosition.startLine > 0) {
+          hyperlinkText.add((filePosition.startLine + 1).toString())
+        }
+        if (filePosition.startColumn > 0) {
+          hyperlinkText.add((filePosition.startColumn + 1).toString())
+        }
+        return hyperlinkText.toString()
       }
-      if (filePosition.startColumn > 0) {
-        hyperlinkText.add((filePosition.startColumn + 1).toString())
-      }
-      return hyperlinkText.toString()
+      return null
     }
 
-    internal fun getHyperlinkInfo(project: Project, filePosition: FilePosition): LazyFileHyperlinkInfo? {
-      val path = filePosition.path?.toCanonicalPath() ?: return null
-      return LazyFileHyperlinkInfo(project, path, filePosition.startLine, filePosition.startColumn)
+    internal fun MessageEvent.getHyperLinkInfo(project: Project): LazyFileHyperlinkInfo? {
+      if (this is FileMessageEvent) {
+        return LazyFileHyperlinkInfo(
+          project,
+          filePosition.path?.toCanonicalPath() ?: return null,
+          filePosition.startLine,
+          filePosition.startColumn
+        )
+      }
+      return null
+    }
+
+    internal fun MessageEvent.getConsoleHtml(): String? {
+      val description = description.nullize() ?: result.details.nullize() ?: return null
+      if (this is BuildIssueEvent) return description
+      val hyperlinkText = getHyperlinkText() ?: return description
+      return "<a href=\"$FILE_POSITION_HREF\">$hyperlinkText</a>: $description"
+    }
+
+    internal fun MessageEvent.getHyperlinkHandler(project: Project, consoleView: ConsoleView): (String) -> Unit {
+      val hyperlinkInfo = getHyperLinkInfo(project)
+      val quickFixes = getQuickFixes()
+      return { href ->
+        if (href == FILE_POSITION_HREF) {
+          hyperlinkInfo?.navigate(project)
+        }
+        else {
+          quickFixes[href]?.runQuickFix(project, BuildConsoleUtils.getDataContext(consoleView))
+        }
+      }
+    }
+
+    private fun MessageEvent.getQuickFixes(): Map<String, BuildIssueQuickFix> {
+      if (this is BuildIssueEvent) {
+        return issue.quickFixes.associateBy { it.id }
+      }
+      return emptyMap()
     }
 
     private fun ConsoleView.printHtml(

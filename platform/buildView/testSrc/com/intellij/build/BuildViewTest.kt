@@ -84,10 +84,10 @@ class BuildViewTest(val singleConsole: Boolean) {
         assertNode("Inner progress") {
           assertNode("aFile.java") {
             assertNode("File message1") {
-              assertConsoleText("message1 descriptive text")
+              assertConsoleText("aFile.java: message1 descriptive text\n")
             }
             assertNode("File message2") {
-              assertConsoleText("message2 descriptive text")
+              assertConsoleText("aFile.java: message2 descriptive text\n")
             }
           }
         }
@@ -182,10 +182,10 @@ class BuildViewTest(val singleConsole: Boolean) {
         assertNode("Inner progress") {
           assertNode("aFile.java") {
             assertNode("File message1") {
-              assertConsoleText("message1 descriptive text")
+              assertConsoleText("aFile.java: message1 descriptive text\n")
             }
             assertNode("File message2") {
-              assertConsoleText("message2 descriptive text")
+              assertConsoleText("aFile.java: message2 descriptive text\n")
             }
           }
         }
@@ -259,10 +259,10 @@ class BuildViewTest(val singleConsole: Boolean) {
           assertConsoleText("inner progress output")
           assertNode("aFile.java") {
             assertNode("File message1") {
-              assertConsoleText("message1 descriptive text")
+              assertConsoleText("aFile.java: message1 descriptive text\n")
             }
             assertNode("File message2") {
-              assertConsoleText("message2 descriptive text")
+              assertConsoleText("aFile.java: message2 descriptive text\n")
             }
           }
         }

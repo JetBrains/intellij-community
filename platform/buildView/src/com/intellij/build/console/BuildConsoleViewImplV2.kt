@@ -1,15 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.console
 
-import com.intellij.build.BuildConsoleUtils
 import com.intellij.build.BuildTextConsoleView
 import com.intellij.build.ExecutionNode
-import com.intellij.build.console.BuildConsoleViewImpl.Companion.getHyperlinkInfo
-import com.intellij.build.console.BuildConsoleViewImpl.Companion.getHyperlinkText
+import com.intellij.build.console.BuildConsoleViewImpl.Companion.getConsoleHtml
+import com.intellij.build.console.BuildConsoleViewImpl.Companion.getHyperlinkHandler
 import com.intellij.build.events.BuildEvent
-import com.intellij.build.events.BuildIssueEvent
 import com.intellij.build.events.Failure
-import com.intellij.build.events.FileMessageEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.OutputReferenceEvent
@@ -38,11 +35,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.Alarm
 import com.intellij.util.text.nullize
-import kotlinx.html.HTML
-import kotlinx.html.a
-import kotlinx.html.body
-import kotlinx.html.html
-import kotlinx.html.stream.createHTML
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.TestOnly
 import java.awt.event.ComponentAdapter
@@ -95,8 +87,6 @@ internal class BuildConsoleViewImplV2(
     // Output ends up in the console document (read back in getNodeOutputText); message/issue/failure text is recorded
     // in addConsoleInlay as the inlay info the corresponding Swing inlay shows (inlays are not part of the document).
     when (event) {
-      is BuildIssueEvent -> onBuildIssueEvent(event)
-      is FileMessageEvent -> onFileMessageEvent(event)
       is MessageEvent -> onMessageEvent(event)
       is OutputBuildEvent -> onOutputEvent(event)
       is OutputReferenceEvent -> onOutputReferenceEvent(event)
@@ -104,62 +94,24 @@ internal class BuildConsoleViewImplV2(
     }
   }
 
-  private fun onBuildIssueEvent(event: BuildIssueEvent) {
-    val quickFixes = event.issue.quickFixes.associateBy { it.id }
-    addConsoleInlay(event.id, ConsoleInlayInfo()
-      .withText(event.issue.description)
-      .withKind(event.result.kind.consoleInlayKind)
-      .withOutputIds(event.outputIds)
-      .withHyperlinkListener {
-        if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-          val dataContext = BuildConsoleUtils.getDataContext(delegate)
-          quickFixes[it.description]?.runQuickFix(project, dataContext)
-        }
-      }
-    )
-  }
-
-  private fun onFileMessageEvent(event: FileMessageEvent) {
-    val hyperlinkId = "file-info"
-    val hyperlinkText = getHyperlinkText(event.filePosition)
-    val hyperlinkInfo = getHyperlinkInfo(project, event.filePosition)
-    if (hyperlinkText == null || hyperlinkInfo == null) {
-      onMessageEvent(event)
-      return
-    }
-    addConsoleInlay(event.id, ConsoleInlayInfo()
-      .withKind(event.result.kind.consoleInlayKind)
-      .withOutputIds(event.outputIds)
-      // The plain projection matches the multi-console mode: the description if present, the link line otherwise.
-      .withHtmlText(event.description.nullize() ?: "$hyperlinkText: ${event.message}") {
-        body {
-          a(href = hyperlinkId) {
-            text(hyperlinkText)
-          }
-          text(": " + event.message)
-        }
-      }.withHyperlinkListener { event ->
-        if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-          if (event.description == hyperlinkId) {
-            hyperlinkInfo.navigate(project)
-          }
-        }
-      }
-    )
-  }
-
   private fun onMessageEvent(event: MessageEvent) {
-    val text = event.description.nullize() ?: event.result.details.nullize()
-    if (text == null) {
+    val html = event.getConsoleHtml()
+    if (html == null) {
       state.access {
         addNodeOutputMarkers(event.id, event.outputIds)
       }
       return
     }
     addConsoleInlay(event.id, ConsoleInlayInfo()
-      .withText(text)
+      .withText(html)
       .withKind(event.result.kind.consoleInlayKind)
       .withOutputIds(event.outputIds)
+      .withHyperlinkListener {
+        if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+          val hyperlinkHandler = event.getHyperlinkHandler(project, delegate)
+          hyperlinkHandler(it.description)
+        }
+      }
     )
   }
 
@@ -319,9 +271,7 @@ internal class BuildConsoleViewImplV2(
     if (inlayCount >= Registry.intValue("build.console.max.inlays", 100)) {
       val contentType = if (inlayInfo.kind == BuildConsoleViewInlay.Kind.ERROR) ConsoleViewContentType.ERROR_OUTPUT
       else ConsoleViewContentType.NORMAL_OUTPUT
-      // Each message is a separate line. Some infos (for example file messages) carry no trailing newline.
-      val plainText = inlayInfo.plainText
-      delegate.print(if (plainText.endsWith("\n")) plainText else plainText + "\n", contentType)
+      delegate.print(inlayInfo.plainText, contentType)
       return
     }
     val consoleOffset = delegate.contentSize
@@ -370,9 +320,6 @@ internal class BuildConsoleViewImplV2(
 
     fun withText(text: String): ConsoleInlayInfo =
       copy(text = plainTextToHtml(text.trim()), plainText = htmlToPlainText(text))
-
-    fun withHtmlText(plainText: String, block: HTML.() -> Unit = {}): ConsoleInlayInfo =
-      copy(text = createHTML().html(null, block).trim(), plainText = plainText)
 
     fun withKind(kind: BuildConsoleViewInlay.Kind): ConsoleInlayInfo =
       copy(kind = kind)
