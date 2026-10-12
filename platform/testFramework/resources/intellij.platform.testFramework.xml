@@ -50,7 +50,6 @@
     <module name="intellij.platform.syntax.util"/>
     <module name="intellij.platform.testFramework.common"/>
     <module name="intellij.platform.testFramework.core"/>
-    <module name="intellij.platform.todo"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.usageView.impl"/>
     <module name="intellij.platform.util.coroutines"/>
