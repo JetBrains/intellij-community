@@ -1353,7 +1353,7 @@
       <add-to-group group-id="XDebugger.ValueGroup" anchor="first"/>
     </action>
 
-    <group id="PyDebugger.ViewAsGroup" class="com.jetbrains.python.debugger.actions.ViewAsGroup">
+    <group id="PyDebugger.ViewAsGroup" searchable="false" class="com.jetbrains.python.debugger.actions.ViewAsGroup">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
     </group>
 
