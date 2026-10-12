@@ -8,6 +8,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.createTestOpenProjectOptions
@@ -159,6 +160,7 @@ internal class GitDeleteCurrentProjectWorktreeTest {
       projectManager.openProjectAsync(worktreeRoot, createTestOpenProjectOptions())!!
     }
     try {
+      ProjectLevelVcsManagerImpl.getInstanceImpl(worktreeProject).waitForInitialized()
       registerRepo(worktreeProject, worktreeRoot).ensureWorkingTreesUpToDateForTests()
       action(worktreeProject)
     }
