@@ -4,6 +4,7 @@ package com.intellij.vcs.log.graph.impl.facade.sort.bek;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.impl.facade.sort.SortChecker;
 import com.intellij.vcs.log.graph.impl.facade.sort.SortIndexMap;
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutImpl;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
@@ -29,12 +30,14 @@ public final class BekSorter {
 
     LOG.assertTrue(result.length == permanentGraph.nodesCount());
     SortIndexMap sortIndexMap = new SortIndexMap(result);
-    long end = System.nanoTime();
+    SortChecker.checkSortIndexMap(permanentGraph, sortIndexMap);
+    long checked = System.nanoTime();
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Bek sort of " + permanentGraph.nodesCount() + " nodes in " + branches.first.size() + " branches in " + TimeUnit.NANOSECONDS.toMillis(end - start) + " ms: " +
+      LOG.debug("Bek sort of " + permanentGraph.nodesCount() + " nodes in " + branches.first.size() + " branches in " + TimeUnit.NANOSECONDS.toMillis(checked - start) + " ms: " +
                 "branches created in " + TimeUnit.NANOSECONDS.toMillis(branchesCreated - start) + " ms, " +
                 "merged in " + TimeUnit.NANOSECONDS.toMillis(branchesMerged - branchesCreated) + " ms, " +
+                "checked in " + TimeUnit.NANOSECONDS.toMillis(checked - branchesMerged) + " ms, " +
                 "order hash " + Long.toHexString(orderHash(sortIndexMap)));
     }
     return sortIndexMap;

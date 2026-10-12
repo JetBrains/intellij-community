@@ -24,8 +24,6 @@ public final class SortedBaseController implements LinearGraphController {
   public SortedBaseController(@NotNull PermanentGraphInfo<?> permanentGraphInfo, @NotNull SortIndexMap sortIndexMap) {
     mySortIndexMap = sortIndexMap;
     mySortedGraph = new SortedLinearGraph(mySortIndexMap, permanentGraphInfo.getLinearGraph());
-
-    SortChecker.checkLinearGraph(mySortedGraph);
   }
 
   public @NotNull SortIndexMap getBekIntMap() {
