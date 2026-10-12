@@ -43,7 +43,9 @@ class Bar(SubclassMe[int, DefaultStrT]): ...
 
 
 x1: type[Bar[str]] = Bar  # ok
-x2: type[Bar[int]] = Bar  # E
+# Type checkers may take type context into account when deciding how to
+# specialize a bare runtime reference to a generic class.
+x2: type[Bar[int]] = Bar  # E?
 assert_type(Bar(), Bar[str])
 assert_type(Bar[bool](), Bar[bool])
 
