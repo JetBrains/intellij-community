@@ -14,7 +14,10 @@ import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
-private const val JCP_LISTENER_CLASS = "com.intellij.ml.llm.core.statistics.fus.jcp.JcpEventsInterceptor"
+private val JCP_LISTENER_CLASSES = setOf(
+  "com.intellij.ml.llm.core.statistics.fus.jcp.JcpEventsInterceptor",
+  "com.intellij.air.frontend.llm.analytics.jcp.AirJcpEventsInterceptor",
+)
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
@@ -100,7 +103,7 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
   }
 
   /**
-   * Tells whether the JCP listener is subscribed for [recorderId], so the JCP payload is worth carrying to it.
+   * Tells whether a JCP listener is subscribed for [recorderId], so the JCP payload is worth carrying to it.
    * The result is cached and recomputed only when subscriptions change, making it cheap to call while logging.
    */
   fun hasJcpListener(recorderId: String): Boolean {
@@ -110,7 +113,7 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
   }
 
   private fun isJcpListener(listener: StatisticsEventLogListener): Boolean {
-    return listener.javaClass.name == JCP_LISTENER_CLASS && getPluginInfo(listener.javaClass).isDevelopedByJetBrains()
+    return listener.javaClass.name in JCP_LISTENER_CLASSES && getPluginInfo(listener.javaClass).isDevelopedByJetBrains()
   }
 
   fun subscribe(subscriber: StatisticsEventLogListener, recorderId: String) {

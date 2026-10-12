@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 private const val tbePluginId = "org.jetbrains.toolbox-enterprise-client"
+private const val airPluginId = "com.intellij.air"
 
 class FusInjectionWhiteListTest {
   companion object {
@@ -39,5 +40,14 @@ class FusInjectionWhiteListTest {
       .filter { it.isAllowedToInjectIntoFUS() }
 
     assertThat(allowed.map { it.type }).containsExactlyInAnyOrder(PluginType.PLATFORM, PluginType.FROM_SOURCES)
+  }
+
+  @Test
+  fun allowedPluginsAir() {
+    val allowed = PluginType.values()
+      .map    { PluginInfo(it, airPluginId, "1.2.3") }
+      .filter { it.isAllowedToInjectIntoFUS() }
+
+    assertThat(allowed.map { it.type }).contains(PluginType.JB_BUNDLED, PluginType.JB_NOT_BUNDLED, PluginType.JB_UPDATED_BUNDLED)
   }
 }

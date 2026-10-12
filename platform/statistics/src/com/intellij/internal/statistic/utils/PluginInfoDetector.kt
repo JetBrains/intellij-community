@@ -181,8 +181,9 @@ private const val aeExperimentsPluginId = "com.jetbrains.ae.experiments"
 private const val aeDatabasePluginId = "com.jetbrains.ae.database"
 private const val aiAssistantPluginId = "com.intellij.ml.llm"
 private const val juniePluginId = "org.jetbrains.junie"
+private const val airPluginId = "com.intellij.air"
 
-private val allowedPlugins = setOf(tbePluginId, aeExperimentsPluginId, aeDatabasePluginId, aiAssistantPluginId, juniePluginId)
+private val allowedPlugins = setOf(tbePluginId, aeExperimentsPluginId, aeDatabasePluginId, aiAssistantPluginId, juniePluginId, airPluginId)
 
 data class PluginInfo(val type: PluginType, val id: String?, val version: String?) {
   /**
