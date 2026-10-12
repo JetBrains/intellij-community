@@ -113,6 +113,8 @@ class NioPathTextField(
     updateDocument { super.setText(text) }
   }
 
+  suspend fun expandHome(text: String): String = completion.expandHome(text)
+
   override fun removeNotify() {
     cancelCompletion()
     super.removeNotify()

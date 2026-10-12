@@ -41,7 +41,8 @@ internal fun isHomeRelative(text: String): Boolean = text.startsWith('~')
  * The completion reports its [State] to [onStateChanged], and returns an [Edit] for a chosen child.
  * A failure of the [prepareCompletion], the [homeDirectory], or the listing shows as [State.Failed].
  * After a failure, an edit hides the popup, and only the completion shortcut starts the completion again.
- * It lists the children off the EDT. The other calls and the [onStateChanged] run on the EDT.
+ * It lists the children off the EDT. The suspend [expandHome] runs on any thread.
+ * The other calls and the [onStateChanged] run on the EDT.
  * See [NioPathTextField] for the other parameters.
  */
 internal class NioPathCompletion(
@@ -95,7 +96,14 @@ internal class NioPathCompletion(
   private class ListingJob(val directoryText: String, val job: Job)
 
   /** The resolved home directory. The [text] is null when the home is unknown. */
-  private class Home(val text: String?)
+  private inner class Home(val text: String?) {
+    private val path: Path? = text?.let { pathParser(it) ?: error("The home directory does not parse: $it") }
+
+    fun contains(expandedText: String): Boolean {
+      val path = path ?: return false
+      return pathParser(expandedText)?.startsWith(path) == true
+    }
+  }
 
   private var state: State = State.Hidden
 
@@ -108,6 +116,7 @@ internal class NioPathCompletion(
 
   // The home directory for the `~` expansion. It is null until the completion resolves it.
   // The home does not change in a session, so the completion resolves it once.
+  @Volatile
   private var home: Home? = null
   // An update with a base out of the home cancels the job. The job clears the field at its end.
   private var homeJob: Job? = null
@@ -125,16 +134,23 @@ internal class NioPathCompletion(
    */
   fun directoryTextOf(base: String): String? {
     if (!isHomeRelative(base)) return directoryTextOf(base, pathParser)
-    val homeText = home?.text ?: return null
+    val resolvedHome = home ?: return null
+    val homeText = resolvedHome.text ?: return null
     val expandedText = directoryTextOf(expandHome(base, homeText), pathParser) ?: return null
-    // Without a separator after the `~`, the name joins the home name. So `~src/` and `~` are not in the home.
-    val homePath = pathParser(homeText) ?: return null
-    if (pathParser(expandedText)?.startsWith(homePath) != true) return null
+    if (!resolvedHome.contains(expandedText)) return null
     return base.take(expandedText.length - homeText.length + 1)
   }
 
   /** Returns the [text] with the [homeText] in place of the leading `~`. */
   private fun expandHome(text: String, homeText: String): String = homeText + text.removePrefix("~")
+
+  suspend fun expandHome(text: String): String {
+    if (!isHomeRelative(text)) return text
+    val resolvedHome = home ?: lookUpHome().also { home = it }
+    val homeText = resolvedHome.text ?: return text
+    val expandedText = expandHome(text, homeText)
+    return if (resolvedHome.contains(expandedText)) expandedText else text
+  }
 
   private suspend fun lookUpHome(): Home = withContext(Dispatchers.IO) {
     prepareCompletion()
