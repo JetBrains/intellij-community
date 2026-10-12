@@ -22,38 +22,49 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
 
+@TestApplication
 public class XmlFormatterTest extends XmlFormatterTestBase {
   private static final String BASE_PATH = "psi/formatter/xml";
 
+  @Test
   public void test1() throws Exception {
     doTest();
   }
 
+  @Test
   public void test2() throws Exception {
     doTest();
   }
 
+  @Test
   public void test3() throws Exception {
     doTest();
   }
 
+  @Test
   public void test4() throws Exception {
     doTest();
   }
 
+  @Test
   public void test5() throws Exception {
     doTest();
   }
 
+  @Test
   public void test6() throws Exception {
     doTestKeepingWhitespacesStrictly(null);
   }
 
+  @Test
   public void test7() throws Exception {
     doTestKeepingWhitespacesStrictly(null);
   }
 
+  @Test
   public void test8() throws Exception {
     final CodeStyleSettings settings = getSettings();
     XmlCodeStyleSettings xmlSettings = getSettings().getCustomSettings(XmlCodeStyleSettings.class);
@@ -62,18 +73,21 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     doTestDoNotKeepingWhitespaces();
   }
 
+  @Test
   public void test9() throws Exception {
     XmlCodeStyleSettings xmlSettings = getSettings().getCustomSettings(XmlCodeStyleSettings.class);
     xmlSettings.XML_TEXT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doTestDoNotKeepingWhitespaces();
   }
 
+  @Test
   public void test10() throws Exception {
     XmlCodeStyleSettings xmlSettings = getSettings().getCustomSettings(XmlCodeStyleSettings.class);
     xmlSettings.XML_ALIGN_TEXT = true;
     doTestDoNotKeepingWhitespacesKeepingLineBreaks();
   }
 
+  @Test
   public void test11() throws Exception {
     doTestDoNotWrap("DO_NOT_WRAP", true, 10);
     doTestWrapIfLong("WRAP_IF_LONG", true, 37);
@@ -87,10 +101,12 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
 
   }
 
+  @Test
   public void test12() throws Exception {
     doTest();
   }
 
+  @Test
   public void test13() throws Exception {
     XmlCodeStyleSettings xmlSettings = getSettings().getCustomSettings(XmlCodeStyleSettings.class);
     xmlSettings.XML_KEEP_LINE_BREAKS = true;
@@ -98,18 +114,22 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     doTestDoNotWrap(null, false, 140);
   }
 
+  @Test
   public void test14() throws Exception {
     doTest();
   }
 
+  @Test
   public void test15() throws Exception {
     doTest();
   }
 
+  @Test
   public void test16() throws Exception {
     doTestKeepingWhitespacesStrictly(null);
   }
 
+  @Test
   public void test17() throws Exception {
 
     CodeStyleSettings settings = getSettings();
@@ -126,29 +146,35 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     }
   }
 
+  @Test
   public void testInvalid() throws Exception {
     doTest();
   }
 
+  @Test
   public void testComment() throws Exception {
     doTest();
   }
 
+  @Test
   public void testComment2() throws Exception {
     doTest("DO_NOT_KEEP_WHITESPACES");
     doTestKeepingWhitespacesStrictly("KEEP_WHITESPACES");
   }
 
+  @Test
   public void testComment3() throws Exception {
     doTest("DO_NOT_KEEP_WHITESPACES");
     doTestKeepingWhitespacesStrictly("KEEP_WHITESPACES");
   }
 
+  @Test
   public void testCDATA() throws Exception {
     doTest();
     doTestDoNotKeepingWhitespaces();
   }
 
+  @Test
   public void testKeepingSpacesAndWrapping() throws Exception {
     CodeStyleSettings settings = getSettings();
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
@@ -158,6 +184,7 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     doWrapAlways("DO_NOT_ALIGN", false, 120);
   }
 
+  @Test
   public void testWhiteSpaceBeforeText() throws Exception {
     CodeStyleSettings settings = getSettings();
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
@@ -165,24 +192,29 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     doTest();
   }
 
+  @Test
   public void test18() throws Exception {
     checkFormattingDoesNotProduceException("18");
   }
 
+  @Test
   public void test19() throws Exception {
     myTextRange = new TextRange(31, 49);
     doTest();
   }
 
+  @Test
   public void test21() throws Exception {
     CodeStyle.getSettings(getProject()).setRightMargin(XMLLanguage.INSTANCE, 20);
     doTest();
   }
 
+  @Test
   public void test22() throws Exception {
     doTest();
   }
 
+  @Test
   public void testSCR1574() {
     XmlCodeStyleSettings xmlSettings = getSettings().getCustomSettings(XmlCodeStyleSettings.class);
     xmlSettings.XML_SPACE_INSIDE_EMPTY_TAG = true;
@@ -192,20 +224,24 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     doTextTest("<test  />", "<test/>");
   }
 
+  @Test
   public void testSanity() throws Exception {
     doSanityTest(true);
   }
 
+  @Test
   public void testSCR1798() {
     XmlCodeStyleSettings xmlSettings = getSettings().getCustomSettings(XmlCodeStyleSettings.class);
     xmlSettings.XML_SPACE_INSIDE_EMPTY_TAG = true;
     doTextTest("<a attr=\"value\"/>", "<a attr=\"value\" />");
   }
 
+  @Test
   public void testIDEA55230() {
     doTextTest("<a b=\"/>","<a b=\"/>");
   }
 
+  @Test
   public void testEa305257() throws Exception {
     doTest();
   }
@@ -308,18 +344,22 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     return "xml";
   }
 
+  @Test
   public void test20() throws Exception {
     doTest();
   }
 
+  @Test
   public void testPreserveSpace() throws Exception {
     doTest();
   }
 
+  @Test
   public void testIdea57965() throws Exception {
     doTest();
   }
   
+  @Test
   public void testIdea52549() {
     doTextTest(
       """
@@ -334,6 +374,7 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     );
   }
 
+  @Test
   public void testDontKeepLineBreaksInText() throws Throwable {
     final HtmlCodeStyleSettings htmlSettings = getSettings().getCustomSettings(HtmlCodeStyleSettings.class);
     final XmlCodeStyleSettings xmlSettings = getSettings().getCustomSettings(XmlCodeStyleSettings.class);
@@ -348,6 +389,7 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
     doTextTest("<tag>aaa\nbbb\nccc\nddd\n</tag>", "<tag>aaa bbb ccc ddd\n</tag>");
   }
 
+  @Test
   public void testXmlCommentLineBreak() throws Exception {
     XmlCodeStyleSettings xmlSettings = getSettings().getCustomSettings(XmlCodeStyleSettings.class);
     boolean oldValue = xmlSettings.XML_KEEP_LINE_BREAKS;

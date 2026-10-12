@@ -19,7 +19,10 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
 
+@TestApplication
 public class WrapperTest extends JavaFormatterTestCase {
   @Override
   protected String getBasePath() {
@@ -34,6 +37,7 @@ public class WrapperTest extends JavaFormatterTestCase {
   }
 
 
+  @Test
   public void testExtendsKeywordWrappingForced() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -43,6 +47,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("ExtendsWrappingForced", "ExtendsWrappingForced_after");
   }
 
+  @Test
   public void testExtendsKeywordWrappingAsNeeded() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -54,6 +59,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("ExtendsWrappingForced", "ExtendsWrappingForced_after");
   }
 
+  @Test
   public void testExtendsListWrappingNormal() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -65,6 +71,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("ExtendsListWrapping", "ExtendsListWrapping_normal");
   }
 
+  @Test
   public void testExtendsListWrappingChopped() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -76,6 +83,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("ExtendsListWrapping", "ExtendsListWrapping_chopped");
   }
 
+  @Test
   public void testMethodParametersWrappingNormal() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -88,6 +96,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("MethodParameterList", "MethodParameterList_normal");
   }
 
+  @Test
   public void testMethodParametersWrappingChopped() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -100,6 +109,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("MethodParameterList", "MethodParameterList_chopped");
   }
 
+  @Test
   public void testMethodParametersWrappingChoppedParenMoved() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -112,6 +122,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("MethodParameterList", "MethodParameterList_chopped_parenmoved");
   }
 
+  @Test
   public void testCallParametersWrappingNormal() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -125,6 +136,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("CallParameterList", "CallParameterList_normal");
   }
 
+  @Test
   public void testNotBreakedIfNoParameters() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -138,6 +150,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("CallNoParameteresList", "CallNoParameteresList_after");
   }
 
+  @Test
   public void testCallParametersWrappingChopped() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -151,6 +164,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("CallParameterList", "CallParameterList_chopped");
   }
 
+  @Test
   public void testNestedLongCalls() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -164,6 +178,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("NestedLongCalls", "NestedLongCalls_after");
   }
 
+  @Test
   public void testCallParametersWrappingChoppedParenMoved() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -177,6 +192,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("CallParameterList", "CallParameterList_chopped_parenmoved");
   }
 
+  @Test
   public void testCallParametersWrappingChoppedBothParenMoved() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -190,6 +206,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("CallParameterList", "CallParameterList_chopped_bothparenmoved");
   }
 
+  @Test
   public void testChainedMethodCall() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -204,6 +221,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("ChainedMethodCall", "ChainedMethodCall_normal");
   }
 
+  @Test
   public void testChainedMethodCallChopped() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -218,6 +236,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("ChainedMethodCall", "ChainedMethodCall_chopped");
   }
 
+  @Test
   public void testChainedCallsAndParams() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -232,6 +251,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("ChainedCallsAndParams", "ChainedCallsAndParams_normal");
   }
 
+  @Test
   public void testParenthesesExpressionLParenWrap() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -245,6 +265,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("ParenthesizedExpressionWrap", "ParenthesizedExpressionWrap_left");
   }
 
+  @Test
   public void testParenthesesExpressionRParenWrap() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -258,6 +279,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("ParenthesizedExpressionWrap", "ParenthesizedExpressionWrap_right");
   }
 
+  @Test
   public void testParenthesesExpressionBothParenWrap() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -270,6 +292,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("ParenthesizedExpressionWrap", "ParenthesizedExpressionWrap_both");
   }
 
+  @Test
   public void testBinaryOperationNormal() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -280,6 +303,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("BinaryOperation", "BinaryOperation_normal");
   }
 
+  @Test
   public void testBinaryOperationChopped() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -290,6 +314,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("BinaryOperation", "BinaryOperation_chopped");
   }
 
+  @Test
   public void testBinaryOperationChoppedSignMove() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -302,6 +327,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("BinaryOperation", "BinaryOperation_chopped_signmoved");
   }
 
+  @Test
   public void testTernaryOperationNormal() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -312,6 +338,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("TernaryOperation", "TernaryOperation_normal");
   }
 
+  @Test
   public void testTernaryOperationChopped() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -322,6 +349,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("TernaryOperation", "TernaryOperation_chopped");
   }
 
+  @Test
   public void testTernaryOperationChoppedSignMoved() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -333,6 +361,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("TernaryOperation", "TernaryOperation_chopped_signmoved");
   }
 
+  @Test
   public void testModifierList() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -342,6 +371,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("ModifierList", "ModifierList_after");
   }
 
+  @Test
   public void testSimpleMethods() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
     settings.SPACE_WITHIN_BRACES = true;
@@ -355,6 +385,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("SimpleMethods", "SimpleMethods_after");
   }
 
+  @Test
   public void testForStatementNormal() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -366,6 +397,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("ForStatement", "ForStatement_normal");
   }
 
+  @Test
   public void testForStatementLParenMoved() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -378,6 +410,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("ForStatement", "ForStatement_lparen");
   }
 
+  @Test
   public void testForStatementRParenMoved() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -390,6 +423,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("ForStatement", "ForStatement_rparen");
   }
 
+  @Test
   public void testForStatementBothParensMoved() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
 
@@ -403,11 +437,13 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("ForStatement", "ForStatement_both");
   }
 
+  @Test
   public void testKillSpacesInEmptyLine() throws Exception {
     defaultCodeStyle();
     doTest("KillSpacesInEmptyLine", "KillSpacesInEmptyLine_after");
   }
 
+  @Test
   public void testSCR11423() throws Exception {
       defaultCodeStyle();
       CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
@@ -419,6 +455,7 @@ public class WrapperTest extends JavaFormatterTestCase {
       doTest("SCR11423", "SCR11423_after");
   }
 
+  @Test
   public void testIncompleteFor() throws Exception {
     defaultCodeStyle();
 
@@ -430,6 +467,7 @@ public class WrapperTest extends JavaFormatterTestCase {
 
     doTest("IncompleteFor", "IncompleteFor_after");
   }
+  @Test
   public void testSCR27373() throws Exception {
     defaultCodeStyle();
 
@@ -442,6 +480,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     doTest("SCR27373", "SCR27373_after");
   }
 
+  @Test
   public void testDoNotWrapCallChainIfParametersWrapped() {
     getSettings(JavaLanguage.INSTANCE).RIGHT_MARGIN = 140;
     getSettings(JavaLanguage.INSTANCE).CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
@@ -507,6 +546,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     settings.RIGHT_MARGIN = 120;
   }
 
+  @Test
   public void testThrowsListWrapping() {
     getSettings(JavaLanguage.INSTANCE).RIGHT_MARGIN = 20;
 
@@ -546,6 +586,7 @@ public class WrapperTest extends JavaFormatterTestCase {
   }
 
 
+  @Test
   public void testWrappingBeforeNewLinedBlock() throws Exception {
     // Inspired by IDEA-67968
 

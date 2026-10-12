@@ -2,12 +2,16 @@
 package com.intellij.java.psi.formatter.java
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
+@TestApplication
 class JavaFormatterNewLineAfterLBraceTest : JavaFormatterIdempotencyTestCase() {
   override fun getBasePath(): String = "psi/formatter/java/newLineAfterLBrace"
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     commonSettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true
     commonSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true
     commonSettings.ALIGN_MULTILINE_PARAMETERS = false
@@ -15,54 +19,64 @@ class JavaFormatterNewLineAfterLBraceTest : JavaFormatterIdempotencyTestCase() {
     commonSettings.RIGHT_MARGIN = 100
   }
 
+  @Test
   fun testWrapAlways() {
     setupWrapType(CommonCodeStyleSettings.WRAP_ALWAYS)
     doIdempotentTest()
   }
 
+  @Test
   fun testChopDownIfLongMultipleLines() {
     setupWrapType(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM)
     doIdempotentTest()
   }
 
+  @Test
   fun testChopDownIfLongSingleLine() {
     commonSettings.RIGHT_MARGIN = 200
     setupWrapType(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM)
     doIdempotentTest()
   }
 
+  @Test
   fun testDoNotWrap() {
     setupWrapType(CommonCodeStyleSettings.DO_NOT_WRAP)
     doTest()
   }
 
+  @Test
   fun testWrapAsNeedSingleLine() {
     setupWrapType(CommonCodeStyleSettings.WRAP_AS_NEEDED)
     doIdempotentTest()
   }
 
+  @Test
   fun testWrapAsNeedMultipleLines() {
     setupWrapType(CommonCodeStyleSettings.WRAP_AS_NEEDED)
     doIdempotentTest()
   }
 
+  @Test
   fun testMultipleEntities() {
     setupWrapType(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM)
     doIdempotentTest()
   }
 
+  @Test
   fun testWrapAlwaysRespectAlignWhenMultiline() {
     setupWrapType(CommonCodeStyleSettings.WRAP_ALWAYS)
     setupAlignWhenMultiline()
     doIdempotentTest()
   }
 
+  @Test
   fun testWrapAsNeededRespectAlignWhenMultiline() {
     setupWrapType(CommonCodeStyleSettings.WRAP_AS_NEEDED)
     setupAlignWhenMultiline()
     doIdempotentTest()
   }
 
+  @Test
   fun testChopDownIfLongRespectAlignWhenMultiline() {
     setupWrapType(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM)
     setupAlignWhenMultiline()
