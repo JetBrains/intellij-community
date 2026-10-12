@@ -1,11 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.execution.Executor;
 import com.intellij.execution.process.NopProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.block.TerminalWidgetImpl;
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils;
 
-import java.awt.Component;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -341,14 +337,6 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   @Deprecated(forRemoval = true)
   public void run() {
     TerminalToolWindowManager.getInstance(myProject).createNewSession(this);
-  }
-
-  /**
-   * @deprecated use {@link RunContentManager#showRunContent(Executor, RunContentDescriptor)} instead
-   */
-  @Deprecated(forRemoval = true)
-  protected void showConsole(@NotNull Executor defaultExecutor, @NotNull RunContentDescriptor myDescriptor, Component ignoredToFocus) {
-    RunContentManager.getInstance(myProject).showRunContent(defaultExecutor, myDescriptor);
   }
 
   /**
