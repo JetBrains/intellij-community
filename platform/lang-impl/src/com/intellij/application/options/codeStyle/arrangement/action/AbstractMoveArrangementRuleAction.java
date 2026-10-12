@@ -3,6 +3,7 @@ package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesModel;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -16,6 +17,11 @@ public abstract class AbstractMoveArrangementRuleAction extends AbstractArrangem
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
     ArrangementMatchingRulesControl control = getRulesControl(e);
     if (control == null) {
       e.getPresentation().setEnabled(false);

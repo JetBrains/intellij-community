@@ -8,10 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Svetlana.Zemlyanskaya
- */
-public final class MoveArrangementAliasRuleUpAction extends MoveArrangementMatchingRuleUpAction {
+final class MoveArrangementAliasRuleUpAction extends MoveArrangementMatchingRuleUpAction {
 
   @Override
   protected @Nullable ArrangementMatchingRulesControl getRulesControl(@NotNull AnActionEvent e) {

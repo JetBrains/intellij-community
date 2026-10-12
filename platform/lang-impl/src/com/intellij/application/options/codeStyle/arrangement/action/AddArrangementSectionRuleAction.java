@@ -5,16 +5,14 @@ import com.intellij.application.options.codeStyle.arrangement.match.ArrangementM
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementSectionRuleManager;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementSectionRulesControl;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Svetlana.Zemlyanskaya
- */
-public final class AddArrangementSectionRuleAction extends AddArrangementRuleAction {
+final class AddArrangementSectionRuleAction extends AddArrangementRuleAction {
 
-  public AddArrangementSectionRuleAction() {
+  AddArrangementSectionRuleAction() {
     getTemplatePresentation().setText(ApplicationBundle.messagePointer("arrangement.action.section.rule.add.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.messagePointer("arrangement.action.section.rule.add.description"));
     getTemplatePresentation().setIcon(AllIcons.CodeStyle.AddNewSectionRule);
@@ -22,6 +20,11 @@ public final class AddArrangementSectionRuleAction extends AddArrangementRuleAct
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
     final ArrangementMatchingRulesControl control = getRulesControl(e);
     if (!(control instanceof ArrangementSectionRulesControl)) {
       e.getPresentation().setEnabledAndVisible(false);
