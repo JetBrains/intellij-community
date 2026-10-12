@@ -496,8 +496,8 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
             }
           }
           launch(CoroutineName("Flush updates for the PV pane $id")) {
-            runSafelyCancellable(LOG, taskDescription = { "processing pending updates for the pane $id" }) {
-              pendingUpdatesSignal.throttle(timeMs = 50).collect {
+            pendingUpdatesSignal.throttle(timeMs = 50).collect {
+              runSafelyCancellable(LOG, taskDescription = { "processing pending updates for the pane $id" }) {
                 scheduleProcessPendingUpdates()
               }
             }
