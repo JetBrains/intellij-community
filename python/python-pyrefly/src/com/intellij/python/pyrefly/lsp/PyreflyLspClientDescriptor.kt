@@ -25,6 +25,7 @@ import com.intellij.python.pyrefly.PyreflyPyTool
 import com.intellij.python.pyrefly.PyreflyUsageCollector
 import com.intellij.python.lsp.core.PyLspToolSettings
 import com.intellij.python.pyrefly.PyreflyExecutableProvider
+import com.jetbrains.python.codeInsight.typing.PyBundledStubs
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.sdk.pythonSdk
@@ -164,23 +165,18 @@ class PyreflyLspClientDescriptor(
     // [excludedRoots] and [projectExcludes].
     put("extraProjectExcludes", (excludedRoots() + projectExcludes()).distinct())
 
-    // Point Pyrefly at PyCharm's bundled typeshed so stdlib (and any third-party
-    // packages typeshed knows about) is resolved from a directory PyCharm already
-    // indexes. Without this, Pyrefly responds with URIs inside its own
-    // materialized `<tmp>/pyrefly_bundled_typeshed_*` dir, and `PyClass.qualifiedName`
-    // for those symbols ends up empty because PyCharm has no source/library root
-    // for that path.
+    // Point Pyrefly at the stubs PyCharm ships, so that every declaration Pyrefly reports lies in a
+    // file PyCharm indexes: the standard library from the typeshed, and third-party stubs from the
+    // typeshed's `stubs` and from the bundled stubs, which hold one directory per distribution.
+    // With `thirdPartyStubsPaths` set, Pyrefly uses none of the stubs it bundles itself, which it
+    // would unpack into `<tmp>/pyrefly_bundled_*`. PyCharm has no root there, so
+    // `PyClass.qualifiedName` of those classes would be empty.
     PyTypeShed.directory
       ?.let { vf -> vf.fileSystem.getNioPath(vf)?.toString() }
       ?.let { put("typeshedPath", it) }
-    // Stop Pyrefly from falling back to its bundled third-party stubs (pandas-stubs,
-    // boto3-stubs, ...) when a package isn't available in the user's site-packages
-    // and isn't in PyCharm's typeshed either. Those bundled stubs land under
-    // `<tmp>/pyrefly_bundled_third_party_*` which the IDE doesn't index, so PSI
-    // can't compute a qualifiedName for symbols resolved through them. With this
-    // flag set, Pyrefly instead reports `MissingStubs` / `NotFound`, and the IDE
-    // surfaces a regular diagnostic the user can act on (install <pkg>-stubs).
-    put("disableBundledThirdPartyStubs", true)
+    put("thirdPartyStubsPaths", listOfNotNull(PyTypeShed.thirdPartyStubRoot, PyBundledStubs.root).mapNotNull { vf ->
+      vf.fileSystem.getNioPath(vf)?.toString()
+    })
   }
 
   private fun buildPyreflyAnalysisSettings(): Map<String, Any> = mapOf(
