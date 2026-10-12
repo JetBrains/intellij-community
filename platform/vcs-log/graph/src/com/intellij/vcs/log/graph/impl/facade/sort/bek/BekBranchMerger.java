@@ -2,13 +2,11 @@
 package com.intellij.vcs.log.graph.impl.facade.sort.bek;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -47,7 +45,9 @@ class BekBranchMerger {
   /** The up nodes released by the removals of the current step. */
   private final @NotNull IntList myReleasedNodes = new IntArrayList();
 
-  private final @NotNull List<Integer> myInverseResultList = new ArrayList<>();
+  /** The sorted order, filled from the end: {@link #myResultStart} is the index of the lowest placed node. */
+  private final int @NotNull [] myResult;
+  private int myResultStart;
 
   BekBranchMerger(@NotNull List<? extends BekBranch> bekBranches,
                   @NotNull BekEdgeRestrictions edgeRestrictions,
@@ -59,14 +59,18 @@ class BekBranchMerger {
 
     myNodeToBranch = new int[nodesCount];
     for (int branchIndex = 0; branchIndex < bekBranches.size(); branchIndex++) {
-      for (int nodeIndex : bekBranches.get(branchIndex).getNodeIndexes()) {
-        myNodeToBranch[nodeIndex] = branchIndex;
+      IntList nodeIndexes = bekBranches.get(branchIndex).getNodeIndexes();
+      for (int i = 0; i < nodeIndexes.size(); i++) {
+        myNodeToBranch[nodeIndexes.getInt(i)] = branchIndex;
       }
     }
 
     long[] queuedTimestamps = new long[bekBranches.size()];
     myQueuedTimestamps = queuedTimestamps;
     myQueue = new PriorityQueue<>(Comparator.<Integer>comparingLong(branch -> queuedTimestamps[branch]).thenComparing(Comparator.naturalOrder()));
+
+    myResult = new int[nodesCount];
+    myResultStart = nodesCount;
   }
 
   private void prepareAndEnqueue(int branchIndex) {
@@ -74,11 +78,11 @@ class BekBranchMerger {
     if (bekBranch.isDone() || bekBranch.getPrepareForInsertPart() != null) return;
 
     bekBranch.updatePrepareForInsertPart(myTimestampGetter, myEdgeRestrictions);
-    List<Integer> prepareForInsertPart = bekBranch.getPrepareForInsertPart();
+    IntList prepareForInsertPart = bekBranch.getPrepareForInsertPart();
     if (prepareForInsertPart == null) return;
 
     LOG.assertTrue(!prepareForInsertPart.isEmpty());
-    myQueuedTimestamps[branchIndex] = myTimestampGetter.getTimestamp(prepareForInsertPart.get(0));
+    myQueuedTimestamps[branchIndex] = myTimestampGetter.getTimestamp(prepareForInsertPart.getInt(0));
     myQueue.add(branchIndex);
   }
 
@@ -86,15 +90,16 @@ class BekBranchMerger {
     int branchIndex = myQueue.remove();
     BekBranch selectBranch = myBekBranches.get(branchIndex);
 
-    List<Integer> prepareForInsertPart = selectBranch.getPrepareForInsertPart();
+    IntList prepareForInsertPart = selectBranch.getPrepareForInsertPart();
     LOG.assertTrue(prepareForInsertPart != null);
 
     myReleasedNodes.clear();
-    for (int insertedNode : prepareForInsertPart) {
+    myResultStart -= prepareForInsertPart.size();
+    for (int i = 0; i < prepareForInsertPart.size(); i++) {
+      int insertedNode = prepareForInsertPart.getInt(i);
+      myResult[myResultStart + i] = insertedNode;
       myEdgeRestrictions.removeRestriction(insertedNode, node -> myReleasedNodes.add(node));
     }
-
-    myInverseResultList.addAll(ContainerUtil.reverse(prepareForInsertPart));
     selectBranch.doneInsertPreparedPart();
 
     for (int i = 0; i < myReleasedNodes.size(); i++) {
@@ -108,14 +113,17 @@ class BekBranchMerger {
     prepareAndEnqueue(branchIndex);
   }
 
-  public @NotNull List<Integer> getResult() {
+  /**
+   * @return the node indexes in the sorted order, from the top to the bottom
+   */
+  public int @NotNull [] getResult() {
     for (int branchIndex = 0; branchIndex < myBekBranches.size(); branchIndex++) {
       prepareAndEnqueue(branchIndex);
     }
     while (!myQueue.isEmpty()) {
       step();
     }
-
-    return ContainerUtil.reverse(myInverseResultList);
+    LOG.assertTrue(myResultStart == 0, "Unplaced nodes: " + myResultStart);
+    return myResult;
   }
 }

@@ -24,10 +24,10 @@ public final class BekSorter {
     long branchesCreated = System.nanoTime();
 
     BekBranchMerger bekBranchMerger = new BekBranchMerger(branches.first, branches.second, timestampGetter, permanentGraph.nodesCount());
-    List<Integer> result = bekBranchMerger.getResult();
+    int[] result = bekBranchMerger.getResult();
     long branchesMerged = System.nanoTime();
 
-    LOG.assertTrue(result.size() == permanentGraph.nodesCount());
+    LOG.assertTrue(result.length == permanentGraph.nodesCount());
     SortIndexMap sortIndexMap = new SortIndexMap(result);
     long end = System.nanoTime();
 

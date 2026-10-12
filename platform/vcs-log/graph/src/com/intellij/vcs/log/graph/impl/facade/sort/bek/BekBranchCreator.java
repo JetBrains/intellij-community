@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.impl.facade.sort.bek;
 
 import com.intellij.openapi.util.Pair;
@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
 
 class BekBranchCreator {
   private final @NotNull LinearGraph myPermanentGraph;
@@ -38,15 +37,15 @@ class BekBranchCreator {
 
     for (int headNode : myGraphLayout.getHeadNodeIndex()) {
       if (myDoneNodes.get(headNode)) continue;
-      List<Integer> nextBranch = createNextBranch(headNode);
+      IntList nextBranch = createNextBranch(headNode);
       bekBranches.add(new BekBranch(myPermanentGraph, nextBranch));
     }
     return Pair.create(bekBranches, myEdgeRestrictions);
   }
 
-  public List<Integer> createNextBranch(int headNode) {
+  public @NotNull IntList createNextBranch(int headNode) {
     myDoneNodes.set(headNode, true);
-    List<Integer> nodeIndexes = new ArrayList<>();
+    IntList nodeIndexes = new IntArrayList();
     nodeIndexes.add(headNode);
 
     final int startLayout = myGraphLayout.getLayoutIndex(headNode);

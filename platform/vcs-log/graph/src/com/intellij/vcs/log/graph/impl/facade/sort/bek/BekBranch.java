@@ -1,17 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.impl.facade.sort.bek;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
-import org.jetbrains.annotations.NotNull;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-
 
 class BekBranch {
   private static final Logger LOG = Logger.getInstance(BekBranch.class);
@@ -22,20 +19,20 @@ class BekBranch {
 
 
   private final @NotNull LinearGraph myPermanentGraph;
-  private final @NotNull List<Integer> myNodeIndexes;
+  private final @NotNull IntList myNodeIndexes;
   private final @NotNull IntList myDownNodesBuffer = new IntArrayList();
 
   private int myNoInsertSize;
 
-  private @Nullable List<Integer> myPrepareForInsertPart = null;
+  private @Nullable IntList myPrepareForInsertPart = null;
 
-  BekBranch(@NotNull LinearGraph permanentGraph, @NotNull List<Integer> nodeIndexes) {
+  BekBranch(@NotNull LinearGraph permanentGraph, @NotNull IntList nodeIndexes) {
     myPermanentGraph = permanentGraph;
     myNodeIndexes = nodeIndexes;
     myNoInsertSize = myNodeIndexes.size();
   }
 
-  public @NotNull List<Integer> getNodeIndexes() {
+  public @NotNull IntList getNodeIndexes() {
     return myNodeIndexes;
   }
 
@@ -44,19 +41,19 @@ class BekBranch {
    */
   public int getCurrentNode() {
     LOG.assertTrue(!isDone());
-    return myNodeIndexes.get(myNoInsertSize - 1);
+    return myNodeIndexes.getInt(myNoInsertSize - 1);
   }
 
   public void updatePrepareForInsertPart(@NotNull TimestampGetter timestampGetter, @NotNull BekEdgeRestrictions edgeRestrictions) {
     LOG.assertTrue(myPrepareForInsertPart == null);
-    int currentNode = myNodeIndexes.get(myNoInsertSize - 1);
+    int currentNode = myNodeIndexes.getInt(myNoInsertSize - 1);
 
     if (edgeRestrictions.hasRestriction(currentNode)) return;
 
     int prevIndex;
     for (prevIndex = myNoInsertSize - 1; prevIndex > 0; prevIndex--) {
-      int upNode = myNodeIndexes.get(prevIndex - 1);
-      int downNode = myNodeIndexes.get(prevIndex);
+      int upNode = myNodeIndexes.getInt(prevIndex - 1);
+      int downNode = myNodeIndexes.getInt(prevIndex);
 
       // for correct topological order
       if (edgeRestrictions.hasRestriction(upNode)) break;
@@ -82,7 +79,7 @@ class BekBranch {
     myPrepareForInsertPart = myNodeIndexes.subList(prevIndex, myNoInsertSize);
   }
 
-  public @Nullable List<Integer> getPrepareForInsertPart() {
+  public @Nullable IntList getPrepareForInsertPart() {
     return myPrepareForInsertPart;
   }
 
