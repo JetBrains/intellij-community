@@ -6,6 +6,8 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.internal.statistic.collectors.fus.TerminalFusAwareHandler;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -34,6 +36,7 @@ import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
 import com.jediterm.terminal.model.TerminalModelListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,13 +49,15 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.jediterm.terminal.ui.AwtTransformers.fromAwtToTerminalColor;
 
-public final class TerminalShellCommandHandlerHelperImpl {
+@ApiStatus.Internal
+public final class TerminalShellCommandHandlerHelperImpl implements TerminalShellCommandHandlerHelper {
   private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandlerHelperImpl.class);
   private static final @NonNls String FEATURE_ID = "terminal.shell.command.handling";
   private static final int TYPING_THRESHOLD_MS = 200;
@@ -67,7 +72,7 @@ public final class TerminalShellCommandHandlerHelperImpl {
   private volatile SmartCommandContext myLastSmartCommandContext;
   private Disposable myNotificationDisposable;
 
-  TerminalShellCommandHandlerHelperImpl(@NotNull ShellTerminalWidget widget) {
+  public TerminalShellCommandHandlerHelperImpl(@NotNull ShellTerminalWidget widget) {
     myWidget = widget;
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, widget);
 
@@ -82,7 +87,8 @@ public final class TerminalShellCommandHandlerHelperImpl {
     TerminalUtilKt.addModelListener(widget.getTerminalTextBuffer(), myWidget, listener);
   }
 
-  public void processKeyPressed(KeyEvent e) {
+  @Override
+  public void processKeyPressed(@NotNull KeyEvent e) {
     if (isFeatureEnabled()) {
       myLastKeyPressedMillis.set(System.currentTimeMillis());
       if (e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiersEx() == 0 && hideNotification()) {
@@ -250,6 +256,7 @@ public final class TerminalShellCommandHandlerHelperImpl {
     return new TextStyle(fromAwtToTerminalColor(attributes.getForegroundColor()), fromAwtToTerminalColor(attributes.getBackgroundColor()));
   }
 
+  @Override
   public boolean processEnterKeyPressed(@NotNull KeyEvent keyPressed) {
     if (!isFeatureEnabled() || !isEnabledForProject()) {
       onShellCommandExecuted();
@@ -285,7 +292,7 @@ public final class TerminalShellCommandHandlerHelperImpl {
     myHasRunningCommands = null;
   }
 
-  static @Nullable Executor matchedExecutor(@NotNull KeyEvent e) {
+  public static @Nullable Executor matchedExecutor(@NotNull KeyEvent e) {
     if (matchAction(e, getRunAction())) {
       return DefaultRunExecutor.getRunExecutorInstance();
     }
@@ -349,7 +356,13 @@ public final class TerminalShellCommandHandlerHelperImpl {
     }
 
     private void triggerCommandExecuted(boolean inSmartWay) {
-      TerminalUsageTriggerCollector.triggerSmartCommand(myProject, myWorkingDirectory, myLocalSession, myCommand, myHandler, inSmartWay);
+      var data = new ArrayList<EventPair<?>>();
+      data.add(TerminalUsageTriggerCollector.TERMINAL_COMMAND_HANDLER_FIELD.with(myHandler.getClass()));
+
+      if (myHandler instanceof TerminalFusAwareHandler fusAwareHandler) {
+        fusAwareHandler.fillData(myProject, myWorkingDirectory, myLocalSession, myCommand, data);
+      }
+      TerminalUsageTriggerCollector.triggerSmartCommand(myProject, data, inSmartWay);
     }
   }
 }

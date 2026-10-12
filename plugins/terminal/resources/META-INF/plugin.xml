@@ -101,6 +101,7 @@
     <module name="intellij.terminal.backend.split"/>
     <module name="intellij.terminal.backend"/>
     <module name="intellij.terminal.emulator"/>
+    <module name="intellij.terminal.execution"/>
     <module name="intellij.terminal.frontend"/>
     <module name="intellij.terminal.frontend.split"/>
     <module name="intellij.terminal.cloud"/>

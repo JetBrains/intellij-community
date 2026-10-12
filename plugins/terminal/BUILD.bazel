@@ -16,6 +16,7 @@ dev_dist_plugin(
         # do not sort,
         "intellij.terminal.backend",
         "intellij.terminal.emulator",
+        "intellij.terminal.execution",
         "intellij.terminal.frontend",
         "intellij.terminal.cloud",
         "intellij.terminal.sh",
@@ -39,6 +40,7 @@ dev_dist_complex_plugin(
     independent_artifacts = [
         "//plugins/terminal/backend:backend_content_module_jar",
         "//plugins/terminal/emulator:emulator_content_module_jar",
+        "//plugins/terminal/execution:execution_content_module_jar",
         "//plugins/terminal/frontend:frontend_content_module_jar",
         "//plugins/terminal/cloud:cloud_content_module_jar",
         "//plugins/terminal/sh:sh_content_module_jar",

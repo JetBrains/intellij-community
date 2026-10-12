@@ -1830,6 +1830,7 @@ plugins/terminal/cloud
 plugins/terminal/completion
 plugins/terminal/completion-ml
 plugins/terminal/emulator
+plugins/terminal/execution
 plugins/terminal/frontend
 plugins/terminal/libraries
 plugins/terminal/sh

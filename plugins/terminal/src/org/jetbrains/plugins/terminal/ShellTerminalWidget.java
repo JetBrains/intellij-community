@@ -54,7 +54,7 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
   private List<String> myShellCommand;
   private ShellStartupOptions myStartupOptions;
   private final Prompt myPrompt = new Prompt();
-  private final TerminalShellCommandHandlerHelperImpl myShellCommandHandlerHelper;
+  private final TerminalShellCommandHandlerHelper myShellCommandHandlerHelper;
   private final BlockingQueue<String> myCommandsToExecute = new LinkedBlockingQueue<>();
   private final EventDispatcher<ClassicTerminalCommandStartedListener> myCommandStartedDispatcher =
     EventDispatcher.create(ClassicTerminalCommandStartedListener.class);
@@ -73,7 +73,7 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
                              @NotNull JBTerminalSystemSettingsProvider settingsProvider,
                              @NotNull Disposable parent) {
     super(project, settingsProvider, parent);
-    myShellCommandHandlerHelper = new TerminalShellCommandHandlerHelperImpl(this);
+    myShellCommandHandlerHelper = TerminalShellCommandHandlerHelper.Factory.createHelper(this);
 
     ClassicTerminalVfsRefresher refresher = new ClassicTerminalVfsRefresher(this);
     getTerminalPanel().addPreKeyEventHandler(e -> {
@@ -86,7 +86,7 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
           refresher.scheduleRefreshOnCommandFinished(() -> isPromptSame(prompt));
         }
       }
-      if (e.getKeyCode() == KeyEvent.VK_ENTER || TerminalShellCommandHandlerHelperImpl.matchedExecutor(e) != null) {
+      if (e.getKeyCode() == KeyEvent.VK_ENTER || TerminalShellCommandHandlerHelper.Factory.canProcessCustomKey(e)) {
         String shellCommand = getTypedShellCommand();
         TerminalUsageTriggerCollector.triggerCommandStarted(project, shellCommand, false);
         myCommandStartedDispatcher.getMulticaster().commandStarted(shellCommand);
@@ -165,7 +165,8 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
     myCommandStartedDispatcher.addListener(listener, parent);
   }
 
-  <T> T processTerminalBuffer(@NotNull Function<TerminalTextBuffer, T> processor) {
+  @ApiStatus.Internal
+  public <T> T processTerminalBuffer(@NotNull Function<TerminalTextBuffer, T> processor) {
     TerminalTextBuffer textBuffer = getTerminalPanel().getTerminalTextBuffer();
     textBuffer.lock();
     try {
@@ -176,7 +177,8 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
     }
   }
 
-  int getLineNumberAtCursor() {
+  @ApiStatus.Internal
+  public int getLineNumberAtCursor() {
     TerminalTextBuffer textBuffer = getTerminalPanel().getTerminalTextBuffer();
     Terminal terminal = getTerminal();
     return Math.max(0, Math.min(terminal.getCursorY() - 1, textBuffer.getHeight() - 1));

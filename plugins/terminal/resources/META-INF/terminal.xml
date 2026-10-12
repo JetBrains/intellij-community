@@ -85,8 +85,6 @@
                   even if text representation is available."/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
-    <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>
-    <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.OpenFileShellCommandHandler"/>
 
     <actionPromoter implementation="org.jetbrains.plugins.terminal.action.TerminalCtrlCActionsPromoter"/>
     <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.block.prompt.TerminalEnterHandler"
@@ -169,8 +167,6 @@
     <!--suppress DeprecatedClassUsageInspection -->
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.localTerminalCustomizer"
                     interface="org.jetbrains.plugins.terminal.LocalTerminalCustomizer" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.terminal.shellCommandHandler"
-                    interface="com.intellij.terminal.TerminalShellCommandHandler" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.openPredefinedTerminalProvider"
                     interface="org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalAgentProvider"
