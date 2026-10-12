@@ -252,7 +252,9 @@ private class UpdateSession(
         val next = events.tryReceive().getOrNull() ?: break
         batch.add(next)
       }
-      process(batch)
+      runSafelyCancellable(LOG, taskDescription = { "Processing a batch of ${batch.size} updates for the pane $id" }) {
+        process(batch)
+      }
       // Report after processing, so the resulting updateNode calls have already bumped the node epoch.
       progressReporter.eventsProcessed(batch.size)
     }
