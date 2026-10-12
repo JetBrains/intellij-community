@@ -14,6 +14,12 @@ kt_jvm_import(
     visibility = ["//visibility:private"],
 )
 
+kt_jvm_import(
+    name = "detekt-cli",
+    jar = "@jewel_deps_detekt//file",
+    visibility = ["//visibility:private"],
+)
+
 jvm_library(
     name = "clikt-dependencies",
     visibility = ["//visibility:public"],
@@ -517,3 +523,42 @@ kt_jvm_test(
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
 )
+
+jvm_library(
+    name = "detekt-lib",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/DetektRunner.kt"],
+    deps = [
+        ":detekt-cli",
+        ":jewel-bazel-scripts-utils",
+        "@lib//:kotlin-stdlib",
+    ],
+)
+
+# Jewel's custom detekt rules, duplicated from platform/jewel/detekt-plugin (which is Gradle-only, see
+# JEWEL-1309). The classes here compile against, and rely at runtime on, the shaded classes already inside
+# the detekt-cli fat jar (dev.detekt.api.*, org.jetbrains.kotlin.psi.*, com.intellij.psi.*), so no extra
+# dependencies are needed beyond :detekt-cli.
+jvm_library(
+    name = "detekt-plugin-lib",
+    srcs = glob(["src/main/kotlin/org/jetbrains/jewel/detekt/**/*.kt"]),
+    resource_strip_prefix = "src/main/resources",
+    resources = ["src/main/resources/META-INF/services/dev.detekt.api.RuleSetProvider"],
+    deps = [
+        ":detekt-cli",
+        "@lib//:kotlin-stdlib",
+    ],
+)
+
+# Run this on CLI like: bazel run //platform/jewel/build-scripts/bazel:detekt
+java_binary(
+    name = "detekt",
+    data = [
+        ":detekt-plugin-lib",
+        "@jewel_deps_nlopez_common_detekt//file",
+        "@jewel_deps_nlopez_detekt//file",
+    ],
+    main_class = "org.jetbrains.jewel.scripts.bazel.DetektRunnerKt",
+    runtime_deps = [":detekt-lib"],
+)
+
+# TODO: create other handy variations of the detekt script? lintThenDetekt or others?

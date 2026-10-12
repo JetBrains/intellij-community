@@ -17,8 +17,22 @@ http_file(
 http_file(
     name = "jewel_deps_detekt",
     downloaded_file_path = "detekt.jar",
-    sha256 = "3afe89a11120303c73c9bdda3d8fe558dd9070a6937d27819ddc04b275381245",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/gitlab/arturbosch/detekt/detekt-cli/1.23.8/detekt-cli-1.23.8-all.jar",
+    sha256 = "dc71f1eb705fa87abac0d63a5ebb51868d6a6e64bc96eaf56cd2c2a889d2491d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/detekt/detekt-cli/2.0.0-alpha.3/detekt-cli-2.0.0-alpha.3-all.jar",
+)
+
+http_file(
+    name = "jewel_deps_nlopez_detekt",
+    downloaded_file_path = "nlopez-detekt.jar",
+    sha256 = "2582d294c76e45acc3878059fcd6d55e82acaa01ba4b413e614f94c785f351af",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/nlopez/compose/rules/detekt/0.5.8/detekt-0.5.8.jar",
+)
+
+http_file(
+    name = "jewel_deps_nlopez_common_detekt",
+    downloaded_file_path = "nlopez-common-detekt.jar",
+    sha256 = "195ea5bd60ff80b72e5b51246ce14921e0845355d41a2e05d5bdfff626383428",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/nlopez/compose/rules/common-detekt/0.5.8/common-detekt-0.5.8.jar",
 )
 
 # Spectre (JEWEL-1390). Declared here rather than in `lib/MODULE.bazel` so it cannot reach the
