@@ -728,6 +728,7 @@ f:com.intellij.ide.actions.DistractionFreeModeController
 c:com.intellij.ide.actions.EditSourceAction
 - com.intellij.ide.actions.BaseNavigateToSourceAction
 - <init>():V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.ExportToTextFileAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
@@ -2277,10 +2278,6 @@ a:com.intellij.openapi.editor.actions.TextComponentEditorAction
 - com.intellij.openapi.editor.actionSystem.EditorAction
 - p:<init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
 - s:getEditorFromContext(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.editor.Editor
-f:com.intellij.openapi.editor.actions.ToggleShowWhitespacesAction
-- com.intellij.ide.lightEdit.LightEditCompatible
-- com.intellij.openapi.actionSystem.ToggleAction
-- com.intellij.openapi.project.DumbAware
 c:com.intellij.openapi.editor.actions.ToggleUseSoftWrapsMenuAction
 - com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction
 - <init>():V

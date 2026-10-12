@@ -2620,8 +2620,6 @@ a:com.intellij.openapi.editor.actions.TextComponentEditorAction
 - f:getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - p:getEditor(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.editor.Editor
 - setInjectedContext(Z):V
-f:com.intellij.openapi.editor.actions.ToggleShowWhitespacesAction
-- <init>():V
 c:com.intellij.openapi.editor.actions.ToggleUseSoftWrapsMenuAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 f:com.intellij.openapi.editor.colors.impl.AdditionalTextAttributesEP

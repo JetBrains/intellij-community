@@ -292,7 +292,9 @@
     <action id="EditorAddRectangularSelectionOnMouseDrag"
             class="com.intellij.openapi.editor.actions.AddRectangularSelectionOnMouseDragAction"/>
     <action id="EditorCreateRectangularSelectionOnMouseDrag"
-            class="com.intellij.openapi.editor.actions.CreateRectangularSelectionOnMouseDragAction"/>
+            class="com.intellij.openapi.editor.actions.CreateRectangularSelectionOnMouseDragAction">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="EditorCloneCaretBelow" class="com.intellij.openapi.editor.actions.CloneCaretBelow"/>
     <action id="EditorCloneCaretAbove" class="com.intellij.openapi.editor.actions.CloneCaretAbove"/>
     <action id="EditorToggleStickySelection" class="com.intellij.openapi.editor.actions.ToggleStickySelectionModeAction"/>
@@ -372,15 +374,23 @@
     <action id="CollapseTreeNode" class="com.intellij.ide.actions.tree.CollapseTreeNodeAction"/>
     <action id="FullyExpandTreeNode" class="com.intellij.ide.actions.tree.FullyExpandTreeNodeAction"/>
     <action id="Refresh" class="com.intellij.ide.actions.RefreshAction" icon="AllIcons.Actions.Refresh"/>
-    <action id="TextEditorWithPreview.Layout.EditorOnly" class="com.intellij.openapi.fileEditor.ChangePreviewLayoutAction$EditorOnly"/>
+    <action id="TextEditorWithPreview.Layout.EditorOnly" class="com.intellij.openapi.fileEditor.ChangePreviewLayoutAction$EditorOnly">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="TextEditorWithPreview.Layout.EditorAndPreview"
-            class="com.intellij.openapi.fileEditor.ChangePreviewLayoutAction$EditorAndPreview"/>
-    <action id="TextEditorWithPreview.Layout.PreviewOnly" class="com.intellij.openapi.fileEditor.ChangePreviewLayoutAction$PreviewOnly"/>
+            class="com.intellij.openapi.fileEditor.ChangePreviewLayoutAction$EditorAndPreview">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="TextEditorWithPreview.Layout.PreviewOnly" class="com.intellij.openapi.fileEditor.ChangePreviewLayoutAction$PreviewOnly">
+      <override-text place="GoToAction"/>
+    </action>
     <group id="TextEditorWithPreview.SplitGroup" popup="true" class="com.intellij.openapi.fileEditor.EditorSplitGroup">
       <action id="TextEditorWithPreview.SplitVertically" class="com.intellij.openapi.fileEditor.SplitVerticallyAction"/>
       <action id="TextEditorWithPreview.SplitHorizontally" class="com.intellij.openapi.fileEditor.SplitHorizontallyAction"/>
     </group>
-    <action id="ScrollTreeToCenter" class="com.intellij.ide.actions.ScrollTreeToCenterAction" use-shortcut-of="EditorScrollToCenter"/>
+    <action id="ScrollTreeToCenter" class="com.intellij.ide.actions.ScrollTreeToCenterAction" use-shortcut-of="EditorScrollToCenter">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction">
       <override-text place="EditorPopup"/>
       <override-text place="EditorTabPopup"/>
@@ -735,7 +745,9 @@
     <action id="EditorStickyConfigure" class="com.intellij.openapi.editor.impl.stickyLines.actions.StickyLinesConfigureAction"/>
     <action id="EditorStickyLinesDisableForLang"
             class="com.intellij.openapi.editor.impl.stickyLines.actions.StickyLinesDisableForLangAction"/>
-    <action id="EditorStickyLinesDisable" class="com.intellij.openapi.editor.impl.stickyLines.actions.StickyLinesDisableAction"/>
+    <action id="EditorStickyLinesDisable" class="com.intellij.openapi.editor.impl.stickyLines.actions.StickyLinesDisableAction">
+      <override-text place="GoToAction"/>
+    </action>
     <action class="com.intellij.ide.plugins.InstallFromDiskAction" id="plugin.InstallFromDiskAction"/>
     <action class="com.intellij.openapi.editor.actions.ShowFontsUsedByEditorAction" id="ShowFontsUsedByEditor"/>
     <action class="com.intellij.ide.actions.EditSourceNotInEditorAction" id="EditSourceNotInEditor"/>

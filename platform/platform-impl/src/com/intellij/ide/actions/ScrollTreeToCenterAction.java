@@ -6,15 +6,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JTree;
 import java.awt.Component;
 
-
-@ApiStatus.Internal
-public final class ScrollTreeToCenterAction extends AnAction {
+final class ScrollTreeToCenterAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);

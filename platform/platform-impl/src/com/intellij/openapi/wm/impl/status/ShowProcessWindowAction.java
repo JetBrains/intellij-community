@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -36,6 +37,11 @@ final class ShowProcessWindowAction extends ToggleAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(getFrame() != null);
+
+    if (e.getPlace().equals(ActionPlaces.ACTION_SEARCH)) {
+      e.getPresentation().setEnabledAndVisible(false);
+      e.getPresentation().setText(ActionsBundle.message("action.ShowProcessWindow.text.full"));
+    }
   }
 
   @Override
