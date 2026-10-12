@@ -2,6 +2,9 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.actions.rememberWelcomeNewFile
+import com.intellij.ide.actions.welcomeNewFileUsageData
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.actionSystem.ActionManager
@@ -12,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionWrapper
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.EmptyAction
+import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.DumbAwareAction
@@ -36,7 +40,7 @@ internal class CreateEmptyFileAction : DumbAwareAction() {
 
 @ApiStatus.Internal
 open class NewEmptyFileAction(languageId: String, private val text: Supplier<@Nls String>, private val icon: Icon) :
-  AnActionWrapper(createAction(getLanguage(languageId))) {
+  AnActionWrapper(createAction(getLanguage(languageId))), FusAwareAction {
 
   private val language: Language? = getLanguage(languageId)
 
@@ -54,8 +58,14 @@ open class NewEmptyFileAction(languageId: String, private val text: Supplier<@Nl
       return
     }
     val dataContext = SimpleDataContext.builder().setParent(e.dataContext).add(CommonDataKeys.LANGUAGE, language).build()
-    super.actionPerformed(AnActionEvent.createEvent(dataContext, null, ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE, null))
+    val event = AnActionEvent.createEvent(dataContext, null, ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE, null)
+    super.actionPerformed(event)
+    if (welcomeNewFileUsageData(event).isNotEmpty()) {
+      rememberWelcomeNewFile(e, language)
+    }
   }
+
+  override fun getAdditionalUsageData(event: AnActionEvent): List<EventPair<*>> = welcomeNewFileUsageData(event)
 }
 
 private fun createAction(language: Language?): AnAction {
