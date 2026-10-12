@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 private const val tbePluginId = "org.jetbrains.toolbox-enterprise-client"
 private const val androidPluginId = "org.jetbrains.android"
 private const val thirdPartyPluginId = "some.plugin.id"
+private const val airPluginId = "com.intellij.air"
 
 class FusInjectionWhiteListTest {
   companion object {
@@ -99,5 +100,14 @@ class FusInjectionWhiteListTest {
         .describedAs("the type %s must count as a JetBrains plugin", it)
         .isTrue()
     }
+  }
+
+  @Test
+  fun allowedPluginsAir() {
+    val allowed = PluginType.values()
+      .map    { PluginInfo(it, airPluginId, "1.2.3") }
+      .filter { it.isAllowedToInjectIntoFUS() }
+
+    assertThat(allowed.map { it.type }).contains(PluginType.JB_BUNDLED, PluginType.JB_NOT_BUNDLED, PluginType.JB_UPDATED_BUNDLED)
   }
 }

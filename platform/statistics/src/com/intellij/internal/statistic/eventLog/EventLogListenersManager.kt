@@ -20,7 +20,10 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
   companion object {
     private val logger = logger<EventLogListenersManager>()
 
-    private const val JCP_LISTENER_CLASS = "com.intellij.ml.llm.core.statistics.fus.jcp.JcpEventsInterceptor"
+    private val JCP_LISTENER_CLASSES = setOf(
+      "com.intellij.ml.llm.core.statistics.fus.jcp.JcpEventsInterceptor",
+      "com.intellij.air.frontend.llm.analytics.jcp.AirJcpEventsInterceptor",
+    )
     private const val ANDROID_STUDIO_LISTENER_CLASS = "com.android.tools.idea.stats.AndroidStudioEventLoggerListener"
   }
 
@@ -148,7 +151,8 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
    * This is an exception, and the platform decides it here. A listener does not ask for the raw data, because the raw
    * data can hold a value that the validation rejects.
    *
-   * - The JCP listener is a part of the product, and it takes each recorder that its provider gives a listener for.
+   * - The JCP listeners of the AI Assistant plugin and the AIR plugin are a part of the product. Each one takes each
+   *   recorder that its provider gives a listener for.
    * - The Android Studio listener keeps the behaviour of the event logger that Android Studio used before, for the FUS
    *   recorder only. Android Studio stays responsible for the data that it sends.
    *
@@ -156,7 +160,7 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
    */
   private fun rawDataMode(listener: StatisticsEventLogListener, recorderId: String): RawDataMode? {
     val mode = when (listener.javaClass.name) {
-      JCP_LISTENER_CLASS -> RawDataMode.WITH_JCP_PAYLOAD
+      in JCP_LISTENER_CLASSES -> RawDataMode.WITH_JCP_PAYLOAD
       ANDROID_STUDIO_LISTENER_CLASS -> if (recorderId == FUS_RECORDER) RawDataMode.WITHOUT_JCP_PAYLOAD else null
       else -> null
     }
