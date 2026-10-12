@@ -1414,6 +1414,7 @@
       implementationClass="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.HotProjectReopenStartUpPerformanceCollector"/>
     <postStartupActivity implementation="com.intellij.ide.startup.CheckProjectActivity"/>
     <postStartupActivity implementation="com.intellij.ide.startup.CheckKeysStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.openapi.editor.impl.SmoothCaretAutoEnableActivity"/>
     <environmentKeyProvider implementation="com.intellij.ide.impl.ProjectOpenKeyProvider"/>
     <environmentKeyProvider implementation="com.intellij.ide.plugins.PluginEnvironmentKeyProvider"/>
     <actionConfigurationCustomizer implementation="com.intellij.platform.ide.menu.IdeMainMenuActionCustomizer"/>
