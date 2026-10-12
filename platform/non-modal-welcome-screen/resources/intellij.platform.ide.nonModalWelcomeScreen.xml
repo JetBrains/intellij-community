@@ -55,7 +55,7 @@
     <actionConfigurationCustomizer implementation="com.intellij.platform.ide.nonModalWelcomeScreen.actions.WelcomeProjectNewActionsCustomizer" order="last"/>
 
     <!-- The welcome tab is a persisted editor tab: the platform restores it by URL through this file system. -->
-    <projectViewPane implementation="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel"/>
+    <projectViewPane implementation="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel" order="first"/>
     <projectViewPaneExtractor implementation="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelModelExtractor"/>
 
     <advancedSetting id="welcome.screen.non.modal.enabled" default="true" groupKey="group.advanced.settings.ide" order="last" bundle="messages.ApplicationBundle"/>
