@@ -9,12 +9,21 @@ import com.intellij.compose.ide.plugin.resources.ResourceType
 import com.intellij.compose.ide.plugin.resources.getResourceItem
 import com.intellij.compose.ide.plugin.resources.intentions.ComposeResourcesImageResourceQuickFix
 import com.intellij.compose.ide.plugin.shared.COMPOSE_FOUNDATION_IMAGE_CALLABLE_ID
+import com.intellij.compose.ide.plugin.shared.COMPOSE_IMAGE_BITMAP_PARAMETER_NAME
+import com.intellij.compose.ide.plugin.shared.COMPOSE_IMAGE_FILTER_QUALITY_PARAMETER_NAME
 import com.intellij.compose.ide.plugin.shared.COMPOSE_IMAGE_RESOURCE_CALLABLE_ID
 import com.intellij.compose.ide.plugin.shared.COMPOSE_IMAGE_RESOURCE_NAME
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
 import com.intellij.compose.ide.plugin.shared.isCallTo
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -22,9 +31,9 @@ import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 
 internal class ComposeResourcesImageResourceInspection : AbstractKotlinInspection() {
   override fun buildVisitor(
@@ -41,8 +50,7 @@ internal class ComposeResourcesImageResourceInspection : AbstractKotlinInspectio
         if (!expression.hasVectorResourceArgument()) return
 
         val calleeExpression = expression.calleeExpression ?: return
-        val fixes: Array<LocalQuickFix> =
-          if (expression.isDirectComposeImageArgument()) arrayOf(ComposeResourcesImageResourceQuickFix()) else LocalQuickFix.EMPTY_ARRAY
+        val fixes: Array<LocalQuickFix> = expression.createImageResourceQuickFix()?.let { arrayOf(it) } ?: LocalQuickFix.EMPTY_ARRAY
         val message = ComposeIdeBundle.message("compose.inspection.image.resource.description")
 
         val qualifiedExpression = expression.getQualifiedExpressionForSelector()
@@ -77,16 +85,25 @@ internal class ComposeResourcesImageResourceInspection : AbstractKotlinInspectio
   private fun String.isVectorResourcePath(): Boolean =
     endsWith(".xml", ignoreCase = true) || endsWith(".svg", ignoreCase = true)
 
-  private fun KtCallExpression.isDirectComposeImageArgument(): Boolean {
-    val directParent = parent
-    val valueArgument =
-      when (directParent) {
-        is KtValueArgument -> directParent
-        is KtDotQualifiedExpression -> directParent.parent as? KtValueArgument
-        else -> null
-      } ?: return false
-    val argumentList = valueArgument.parent as? KtValueArgumentList ?: return false
-    val callExpression = argumentList.parent as? KtCallExpression ?: return false
-    return callExpression.isCallTo(COMPOSE_FOUNDATION_IMAGE_CALLABLE_ID)
+  /** Returns the quick fix when this call is the `bitmap` argument of the Compose `Image` call */
+  @OptIn(KaExperimentalApi::class)
+  private fun KtCallExpression.createImageResourceQuickFix(): ComposeResourcesImageResourceQuickFix? {
+    // The `imageResource` call must be a direct argument, optionally with a qualifier
+    val bitmapArgument = getQualifiedExpressionForSelectorOrThis().parent as? KtValueArgument ?: return null
+    val imageCall = bitmapArgument.parentOfType<KtCallExpression>() ?: return null
+
+    return analyze(imageCall) {
+      // A custom function with the name `Image` gets no quick fix
+      val call = imageCall.tryResolveCall()?.single?.function ?: return@analyze null
+      if (call.symbol.callableId != COMPOSE_FOUNDATION_IMAGE_CALLABLE_ID) return@analyze null
+
+      // Match the parameter, because the argument can be positional
+      val argumentMapping = call.valueArgumentMapping
+      if (argumentMapping[bitmapArgument.getArgumentExpression()]?.name != COMPOSE_IMAGE_BITMAP_PARAMETER_NAME) return@analyze null
+
+      // Find the `filterQuality` argument for the quick fix to remove
+      val filterQualityExpression = argumentMapping.entries.find { it.value.name == COMPOSE_IMAGE_FILTER_QUALITY_PARAMETER_NAME }?.key
+      ComposeResourcesImageResourceQuickFix(filterQualityExpression?.parent as? KtValueArgument)
+    }
   }
 }

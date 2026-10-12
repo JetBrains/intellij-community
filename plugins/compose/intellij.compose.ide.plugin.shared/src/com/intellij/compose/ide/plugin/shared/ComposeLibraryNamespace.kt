@@ -56,6 +56,10 @@ val COMPOSE_IMAGE_RESOURCE_CALLABLE_ID: CallableId = CallableId(FqName(COMPOSE_R
 val COMPOSE_PAINTER_RESOURCE_NAME: Name = Name.identifier("painterResource")
 val COMPOSE_PAINTER_RESOURCE_FQ_NAME: FqName = FqName("$COMPOSE_RESOURCES_PACKAGE.$COMPOSE_PAINTER_RESOURCE_NAME")
 val COMPOSE_FOUNDATION_IMAGE_CALLABLE_ID: CallableId = CallableId(FqName("androidx.compose.foundation"), Name.identifier("Image"))
+val COMPOSE_IMAGE_BITMAP_PARAMETER_NAME: Name = Name.identifier("bitmap")
+val COMPOSE_IMAGE_PAINTER_PARAMETER_NAME: Name = Name.identifier("painter")
+val COMPOSE_IMAGE_FILTER_QUALITY_PARAMETER_NAME: Name = Name.identifier("filterQuality")
+val COMPOSE_FILTER_QUALITY_FQ_NAME: FqName = FqName("androidx.compose.ui.graphics.FilterQuality")
 
 const val COMPOSE_RUNTIME_GROUP_ID: String = "org.jetbrains.compose.runtime"
 const val COMPOSE_PLUGIN_GROUP_ID: String = "org.jetbrains.compose"
