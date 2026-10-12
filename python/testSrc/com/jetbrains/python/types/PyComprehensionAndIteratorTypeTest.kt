@@ -164,7 +164,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       def f(x): ...
       with f([expr for expr in range(10)]) as _: # type: str
       #    │  └ TYPE int
-      #    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'contextlib.AbstractContextManager', got 'None' instead
+      #    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'AbstractContextManager', got 'None' instead
           pass
       """.trimIndent())
   }
@@ -668,11 +668,11 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
               pass
 
           for x in 42:
-      #            ^^ WARNING Expected type 'collections.Iterable', got 'Literal[42]' instead
+      #            ^^ WARNING Expected type 'Iterable', got 'Literal[42]' instead
                   pass
 
           for x in f('foo', p1):
-      #            ^^^^^^^^^^^^ WARNING Expected type 'collections.Iterable', got 'Literal[10] | Unknown' instead
+      #            ^^^^^^^^^^^^ WARNING Expected type 'Iterable', got 'Literal[10] | Unknown' instead
                   pass
 
       def f(c, x):
@@ -680,6 +680,16 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
               return 10
           else:
               return x
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90559"])
+    fun `not iterable message renders the expected protocol as a type`() = test("""
+      async def f():
+          for _ in 1: ...
+      #            └ WARNING Expected type 'Iterable', got 'Literal[1]' instead
+          async for _ in 1: ...
+      #                  └ WARNING Expected type 'AsyncIterable', got 'Literal[1]' instead
       """.trimIndent())
 
     @Test
@@ -1107,10 +1117,10 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       def g():
           yield from CustomIterable()
           yield from CustomIterable2()
-          yield from NonIterable() # WARNING Expected type 'collections.Iterable', got 'NonIterable' instead
+          yield from NonIterable() # WARNING Expected type 'Iterable', got 'NonIterable' instead
           yield from [42]
           yield from "hello"
-          yield from object() # WARNING Expected type 'collections.Iterable', got 'object' instead
+          yield from object() # WARNING Expected type 'Iterable', got 'object' instead
       """.trimIndent())
 
     @TestFor(issues = ["PY-12944"])
@@ -1623,7 +1633,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
               pass
       async def foo():
           async with AContext() as c:
-      #              ^^^^^^^^^^ WARNING Expected type 'contextlib.AbstractAsyncContextManager', got 'AContext' instead
+      #              ^^^^^^^^^^ WARNING Expected type 'AbstractAsyncContextManager', got 'AContext' instead
               expr = c
       #       └ TYPE str
       """.trimIndent())
@@ -1775,7 +1785,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           else:
               print('end')
 
-          async for i in []: # WARNING Expected type 'collections.AsyncIterable', got 'list[Unknown]' instead
+          async for i in []: # WARNING Expected type 'AsyncIterable', got 'list[Unknown]' instead
               pass
 
 
@@ -1804,7 +1814,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
 
       async def run():
-          for i in asyncgen(): # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[Literal[10], Unknown]' instead
+          for i in asyncgen(): # WARNING Expected type 'Iterable', got 'AsyncGenerator[Literal[10], Unknown]' instead
               print(i)
       """.trimIndent())
 
@@ -1833,16 +1843,16 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       def gen():
           yield 10
       async def run():
-          {i async for i in gen()} # WARNING Expected type 'collections.AsyncIterable', got 'Generator[Literal[10], Unknown, None]' instead
-          [i async for i in gen()] # WARNING Expected type 'collections.AsyncIterable', got 'Generator[Literal[10], Unknown, None]' instead
-          {i: i ** 2 async for i in gen()} # WARNING Expected type 'collections.AsyncIterable', got 'Generator[Literal[10], Unknown, None]' instead
-          (i ** 2 async for i in gen()) # WARNING Expected type 'collections.AsyncIterable', got 'Generator[Literal[10], Unknown, None]' instead
-          list(i async for i in gen()) # WARNING Expected type 'collections.AsyncIterable', got 'Generator[Literal[10], Unknown, None]' instead
+          {i async for i in gen()} # WARNING Expected type 'AsyncIterable', got 'Generator[Literal[10], Unknown, None]' instead
+          [i async for i in gen()] # WARNING Expected type 'AsyncIterable', got 'Generator[Literal[10], Unknown, None]' instead
+          {i: i ** 2 async for i in gen()} # WARNING Expected type 'AsyncIterable', got 'Generator[Literal[10], Unknown, None]' instead
+          (i ** 2 async for i in gen()) # WARNING Expected type 'AsyncIterable', got 'Generator[Literal[10], Unknown, None]' instead
+          list(i async for i in gen()) # WARNING Expected type 'AsyncIterable', got 'Generator[Literal[10], Unknown, None]' instead
 
           dataset = {data async for line in gen()
-      #                                     ^^^^^ WARNING Expected type 'collections.AsyncIterable', got 'Generator[Literal[10], Unknown, None]' instead
+      #                                     ^^^^^ WARNING Expected type 'AsyncIterable', got 'Generator[Literal[10], Unknown, None]' instead
                           async for data in gen()
-      #                                     ^^^^^ WARNING Expected type 'collections.AsyncIterable', got 'Generator[Literal[10], Unknown, None]' instead
+      #                                     ^^^^^ WARNING Expected type 'AsyncIterable', got 'Generator[Literal[10], Unknown, None]' instead
                           if check(data)}
       """.trimIndent())
 
@@ -1853,16 +1863,16 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       async def asyncgen():
           yield 10
       async def run():
-          {i for i in asyncgen()} # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[Literal[10], Unknown]' instead
-          [i for i in asyncgen()] # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[Literal[10], Unknown]' instead
-          {i: i ** 2 for i in asyncgen()} # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[Literal[10], Unknown]' instead
-          (i ** 2 for i in asyncgen()) # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[Literal[10], Unknown]' instead
-          list(i for i in asyncgen()) # WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[Literal[10], Unknown]' instead
+          {i for i in asyncgen()} # WARNING Expected type 'Iterable', got 'AsyncGenerator[Literal[10], Unknown]' instead
+          [i for i in asyncgen()] # WARNING Expected type 'Iterable', got 'AsyncGenerator[Literal[10], Unknown]' instead
+          {i: i ** 2 for i in asyncgen()} # WARNING Expected type 'Iterable', got 'AsyncGenerator[Literal[10], Unknown]' instead
+          (i ** 2 for i in asyncgen()) # WARNING Expected type 'Iterable', got 'AsyncGenerator[Literal[10], Unknown]' instead
+          list(i for i in asyncgen()) # WARNING Expected type 'Iterable', got 'AsyncGenerator[Literal[10], Unknown]' instead
 
           dataset = {data for line in asyncgen()
-      #                               ^^^^^^^^^^ WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[Literal[10], Unknown]' instead
+      #                               ^^^^^^^^^^ WARNING Expected type 'Iterable', got 'AsyncGenerator[Literal[10], Unknown]' instead
                           for data in asyncgen()
-      #                               ^^^^^^^^^^ WARNING Expected type 'collections.Iterable', got 'AsyncGenerator[Literal[10], Unknown]' instead
+      #                               ^^^^^^^^^^ WARNING Expected type 'Iterable', got 'AsyncGenerator[Literal[10], Unknown]' instead
                           if check(data)}
       """.trimIndent())
 
@@ -1937,7 +1947,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
         "little_list": ['a', 'b'],
     }
 
-    for element in KWARGS["little_list"]: # WARNING Expected type 'collections.Iterable', got 'bool | list[str]' instead
+    for element in KWARGS["little_list"]: # WARNING Expected type 'Iterable', got 'bool | list[str]' instead
         print(element)
     """.trimIndent())
 
@@ -1963,7 +1973,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
     for x in C1:
         pass
 
-    for y in C2: # WARNING Expected type 'collections.Iterable', got 'type[C2]' instead
+    for y in C2: # WARNING Expected type 'Iterable', got 'type[C2]' instead
         pass
 
     for z in B1:

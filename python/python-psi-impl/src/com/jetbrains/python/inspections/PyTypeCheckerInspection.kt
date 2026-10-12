@@ -90,6 +90,7 @@ import com.jetbrains.python.psi.types.PyCallableParameterListType
 import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyConcatenateType
 import com.jetbrains.python.psi.types.PyDescriptorTypeUtil.getExpectedValueTypeForDunderSet
@@ -1560,18 +1561,28 @@ open class PyTypeCheckerInspection : PyInspection() {
       val iterableClassName = if (isAsync) PyNames.ASYNC_ITERABLE else PyNames.ITERABLE
 
       if (type != null && !isUnknown(type, myTypeEvalContext) && !isSubtype(type, iterableClassName, myTypeEvalContext)) {
-        val qualifiedName = "collections.$iterableClassName"
+        val iterableQualifiedName = if (isAsync) PyTypingTypeProvider.ASYNC_ITERABLE else PyTypingTypeProvider.ITERABLE
+        val expected = expectedClassParam(iterableQualifiedName, highlightElement)
         PyTypeCheckerProblemReporter.report(
           holder,
           PyTypeCheckerSuppressionCode.NOT_ITERABLE,
           highlightElement,
-          PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead", qualifiedName,
+          PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead", expected,
                                      CodifiedParam.ofType(type, highlightElement, myTypeEvalContext)),
           ProblemHighlightType.GENERIC_ERROR_OR_WARNING
         )
         return true
       }
       return false
+    }
+
+    /**
+     * Renders the class [classQualifiedName] like any other expected type.
+     * Falls back to the qualified name when the class does not resolve from [anchor].
+     */
+    private fun expectedClassParam(classQualifiedName: String, anchor: PsiElement): Any {
+      val type = PyClassTypeImpl.createTypeByQName(anchor, classQualifiedName, false) ?: return classQualifiedName
+      return CodifiedParam.ofType(type, anchor, myTypeEvalContext)
     }
 
     private fun checkUnpackIterableValue(iteratedValue: PyExpression?): Boolean {
@@ -1724,12 +1735,12 @@ open class PyTypeCheckerInspection : PyInspection() {
         val contextManagerClassName = if (isAsync) PyNames.ABSTRACT_ASYNC_CONTEXT_MANAGER else PyNames.ABSTRACT_CONTEXT_MANAGER
 
         if (type != null && !isUnknown(type, myTypeEvalContext) && !isSubtype(type, contextManagerClassName, myTypeEvalContext)) {
-          val qualifiedName = "contextlib.$contextManagerClassName"
+          val expected = expectedClassParam("contextlib.$contextManagerClassName", iteratedValue)
           PyTypeCheckerProblemReporter.report(
             holder,
             PyTypeCheckerSuppressionCode.BAD_CONTEXT_MANAGER,
             iteratedValue,
-            PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead", qualifiedName,
+            PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead", expected,
                                        CodifiedParam.ofType(type, iteratedValue, myTypeEvalContext)),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING
           )

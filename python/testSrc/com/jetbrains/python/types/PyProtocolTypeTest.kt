@@ -1826,12 +1826,12 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
 
       def some_union_members_match_no_any(iterable: A | B | None):
-          for _ in iterable: # WARNING Expected type 'collections.Iterable', got 'A | B | None' instead
+          for _ in iterable: # WARNING Expected type 'Iterable', got 'A | B | None' instead
               pass
 
 
       def all_union_members_dont_match_no_any(iterable: C | None):
-          for _ in iterable: # WARNING Expected type 'collections.Iterable', got 'C | None' instead
+          for _ in iterable: # WARNING Expected type 'Iterable', got 'C | None' instead
               pass
 
 
@@ -1841,12 +1841,12 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
 
       def some_union_members_match_with_any(iterable: A | B | None | Any):
-          for _ in iterable: # WARNING Expected type 'collections.Iterable', got 'A | B | None | Any' instead
+          for _ in iterable: # WARNING Expected type 'Iterable', got 'A | B | None | Any' instead
               pass
 
 
       def all_union_members_dont_match_with_any(iterable: C | None | Any):
-          for _ in iterable: # WARNING Expected type 'collections.Iterable', got 'C | None | Any' instead
+          for _ in iterable: # WARNING Expected type 'Iterable', got 'C | None | Any' instead
               pass
       """.trimIndent())
 
@@ -1890,7 +1890,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       def all_intersection_members_dont_match_no_any(iterable: "C & None"):
       #                                                           └ WARNING Class 'type' does not define '__and__', so the '&' operator cannot be used on its instances
-          for _ in iterable: # WARNING Expected type 'collections.Iterable', got 'C & None' instead
+          for _ in iterable: # WARNING Expected type 'Iterable', got 'C & None' instead
               pass
 
 

@@ -1653,7 +1653,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       class A:
           pass
 
-      with A() as a: # WARNING Expected type 'contextlib.AbstractContextManager', got 'A' instead
+      with A() as a: # WARNING Expected type 'AbstractContextManager', got 'A' instead
           pass
       """.trimIndent())
 
