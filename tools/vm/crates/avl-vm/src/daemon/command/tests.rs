@@ -706,7 +706,7 @@ fn blank_report() -> RunReport {
         },
         evidence: Vec::new(),
         protocol_diagnostic: None,
-        hot_jar_drift: None,
+        notes: Vec::new(),
         traces: Vec::new(),
         traces_error: None,
         tree: None,

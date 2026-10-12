@@ -539,6 +539,12 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-wire/src/progress/tests.rs
   [@test] ../crates/avl-vm/src/console/state/tests.rs
 
+- A test jar that the host rebuilt while the iteration ran is a note, not a verdict diagnostic. The terminal and the
+  run journal show the note, and the report carries it in `notes`. The note names the jars. The status follows the
+  counts.
+  [@test] ../crates/avl-report/src/report/tests.rs
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
+
 - The run journal holds the life of the lane IDE. An `ideLaunched` record names the pid, the launch name, the
   launch key and the log directory. An `ideExited` record names the pid, the exit code and the signal.
   [@test] ../crates/avl-wire/src/daemon/tests.rs

@@ -666,11 +666,11 @@ and a reader maps it to the source in their editor. Bazel replaces a jar by rena
 the run keeps its open handles and reports green.
 
 So each iteration re-hashes its own hot tier when the run ends and compares it with what it pushed. A jar that
-moved is a verdict diagnostic, which makes the iteration an `infrastructure_error` and never green. The
-diagnostic names the jars and says to re-run. `PreparedBuild::hot_jar_drift` in
-`crates/avl-vm/src/daemon/build.rs` is the check, and the reason it is a
-diagnostic rather than a note is the rule `crates/avl-report/src/report.rs` opens with: a run whose
-subject changed under it looks exactly as authoritative as one whose subject did not.
+moved is a note. The note names the jars and says to re-run. The terminal and the run journal show it, and the
+report carries it in `notes`. A note never changes the verdict, so the status follows the counts. The guest ran the
+bytes that the iteration pushed, so the execution and its counts stay true. Only the attribution to the checkout is
+lost. `PreparedBuild::hot_jar_drift` in `crates/avl-vm/src/daemon/build.rs` is the check. The verdict card shows no
+note, so read the journal or the report before you map a verdict to your editor.
 
 ### What a remount does not notice
 

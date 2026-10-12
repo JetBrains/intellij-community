@@ -486,6 +486,10 @@ impl Host {
             return Err(Refusal::internal("an iteration was reported without its stream"));
         };
         let (archives, traces_error) = traces.finish(self, ctx, pulls).await;
+        let drift = prep.hot_jar_drift();
+        if let Some(drift) = &drift {
+            self.reporter.note(drift.clone(), Some(&scope));
+        }
         let document = run_report::build(Input {
             iteration_id,
             daemon_run_id: state.run_id.clone(),
@@ -502,7 +506,7 @@ impl Host {
             source,
             evidence,
             protocol_diagnostic: protocol_diagnostic(execution),
-            hot_jar_drift: prep.hot_jar_drift(),
+            notes: drift.into_iter().collect(),
             traces: archives,
             traces_error,
             tree: prep.tree.clone().ok(),

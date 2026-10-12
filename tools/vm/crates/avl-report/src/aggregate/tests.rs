@@ -45,6 +45,7 @@ pub(super) fn document(status: Status) -> RunReport {
         traces_error: None,
         tree: None,
         tree_error: None,
+        notes: Vec::new(),
         protocol_diagnostic: None,
         verdict_diagnostic: None,
     }
