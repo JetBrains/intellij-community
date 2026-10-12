@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -22,6 +23,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.components.DropDownLink
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -62,27 +64,36 @@ internal fun emptyStateProjectPanel(disposable: Disposable): JComponent = panel 
     }.customize(UnscaledGapsY(bottom = 7))
   }
 
+  // the welcome frame is built while ActionManager may still be loading, so the toolbars are added once it is ready
   if (isStationWelcomeScreenPromoEnabled()) {
-    val actionManager = ActionManager.getInstance()
-    val group = actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE) as ActionGroup
-    val toolbar = createFrameWelcomeScreenVerticalToolbar(group, disposable)
+    val toolbarHolder = Wrapper()
+    ActionManagerEx.withLazyActionManager(scope = null) { actionManager ->
+      val group = actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE) as ActionGroup
+      toolbarHolder.setContent(createFrameWelcomeScreenVerticalToolbar(group, disposable).component)
+    }
 
     row {
-      cell(toolbar.component)
+      cell(toolbarHolder)
         .customize(UnscaledGaps(27))
         .align(AlignX.CENTER)
         .resizableColumn()
     }
   }
   else {
-    val (mainActions, moreActions) = createActionToolbars(disposable)
+    val mainActionsHolder = Wrapper()
+    val moreActionsHolder = Wrapper()
+    ActionManagerEx.withLazyActionManager(scope = null) {
+      val (mainActions, moreActions) = createActionToolbars(disposable)
+      mainActionsHolder.setContent(mainActions)
+      moreActionsHolder.setContent(moreActions)
+    }
     panel {
       row {
-        cell(mainActions).align(AlignX.FILL)
+        cell(mainActionsHolder).align(AlignX.FILL)
       }
     }.align(AlignX.CENTER).customize(UnscaledGaps(27))
     row {
-      cell(moreActions).align(AlignX.CENTER)
+      cell(moreActionsHolder).align(AlignX.CENTER)
     }
   }
 }.apply {

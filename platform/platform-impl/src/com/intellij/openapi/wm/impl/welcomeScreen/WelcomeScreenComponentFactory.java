@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.ActionToolbarListener;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -41,6 +42,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.SelectablePanel;
@@ -55,6 +57,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -404,8 +407,7 @@ public final class WelcomeScreenComponentFactory {
     Disposer.register(parentDisposable, panel);
 
     DefaultActionGroup group = new DefaultActionGroup(panel.getAction(), new NotificationEventAction(parentDisposable));
-    ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(
-      "WelcomeScreen.NotificationPanel", group, true);
+    ActionToolbarImpl toolbar = new ActionToolbarImpl("WelcomeScreen.NotificationPanel", group, true);
     toolbar.setMinimumButtonSize(new JBDimension(26, 26));
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setActionButtonBorder(horizontalGap, 1);
@@ -446,7 +448,14 @@ public final class WelcomeScreenComponentFactory {
     else {
       result.setBorder(JBUI.Borders.empty(0, 0, 5, 8));
     }
-    return result;
+
+    // a toolbar that is shown before ActionManager exists blocks the EDT until it is loaded, so it is added once ActionManager is ready
+    Wrapper holder = new Wrapper();
+    ActionManagerEx.withLazyActionManager(null, _ -> {
+      holder.setContent(result);
+      return Unit.INSTANCE;
+    });
+    return holder;
   }
 
   /**
