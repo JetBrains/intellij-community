@@ -180,6 +180,11 @@ public abstract class K2PullUpTestGenerated extends AbstractK2PullUpTest {
             runTest("testData/pullUp/k2k/implicitCompanionUsages.kt");
         }
 
+        @TestMetadata("importedTypeAcrossFiles.kt")
+        public void testImportedTypeAcrossFiles() throws Exception {
+            runTest("testData/pullUp/k2k/importedTypeAcrossFiles.kt");
+        }
+
         @TestMetadata("inaccessibleMemberUsed.kt")
         public void testInaccessibleMemberUsed() throws Exception {
             runTest("testData/pullUp/k2k/inaccessibleMemberUsed.kt");
@@ -253,6 +258,11 @@ public abstract class K2PullUpTestGenerated extends AbstractK2PullUpTest {
         @TestMetadata("nestedClassOwnCompanionUsage.kt")
         public void testNestedClassOwnCompanionUsage() throws Exception {
             runTest("testData/pullUp/k2k/nestedClassOwnCompanionUsage.kt");
+        }
+
+        @TestMetadata("nestedClassifierOfSourceNotMoved.kt")
+        public void testNestedClassifierOfSourceNotMoved() throws Exception {
+            runTest("testData/pullUp/k2k/nestedClassifierOfSourceNotMoved.kt");
         }
 
         @TestMetadata("nestedNestedClassOwnCompanionUsage.kt")
@@ -368,6 +378,16 @@ public abstract class K2PullUpTestGenerated extends AbstractK2PullUpTest {
         @TestMetadata("toIndirectSuperClass.kt")
         public void testToIndirectSuperClass() throws Exception {
             runTest("testData/pullUp/k2k/toIndirectSuperClass.kt");
+        }
+
+        @TestMetadata("typeAliasAcrossFiles.kt")
+        public void testTypeAliasAcrossFiles() throws Exception {
+            runTest("testData/pullUp/k2k/typeAliasAcrossFiles.kt");
+        }
+
+        @TestMetadata("typeShadowedByTargetClassifier.kt")
+        public void testTypeShadowedByTargetClassifier() throws Exception {
+            runTest("testData/pullUp/k2k/typeShadowedByTargetClassifier.kt");
         }
 
         @TestMetadata("usedPrivateToClass.kt")

@@ -1,0 +1,11 @@
+open class Base {
+    class Shared
+
+    // INFO: {"checked": "true"}
+    fun use(value: Child.Shared): Child.Shared = value
+}
+
+class Child : Base() {
+    class Shared
+
+}

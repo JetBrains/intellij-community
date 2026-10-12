@@ -1,0 +1,8 @@
+package base
+
+import sub.Alias
+
+open class Base {
+    // INFO: {"checked": "true"}
+    fun use(value: Alias): Alias = value
+}

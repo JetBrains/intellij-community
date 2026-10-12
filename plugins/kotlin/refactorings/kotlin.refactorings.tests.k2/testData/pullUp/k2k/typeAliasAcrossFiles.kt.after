@@ -1,0 +1,10 @@
+package sub
+
+import base.Base
+
+class Payload
+
+typealias Alias = Payload
+
+class Child : Base() {
+}
