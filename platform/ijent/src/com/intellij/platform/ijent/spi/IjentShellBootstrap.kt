@@ -1,14 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.platform.ijent.spi
 
 import com.intellij.platform.eel.EelUnavailableException.CommunicationFailure
 import com.intellij.platform.eel.channels.EelReceiveChannelException
 import com.intellij.platform.ijent.spi.IjentSessionMediatorUtils.readLineOrThrow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 internal data class ShellBootstrap(val marker: String, val command: String)
+
+/** Returns the shell command used for deployment and Windows recovery. */
+fun getIjentShellBootstrapCommand(): String = createShellBootstrap().command
 
 internal fun createShellBootstrap(): ShellBootstrap {
   val marker = "IJENT_SHELL_PROBE_${UUID.randomUUID().toString().replace("-", "")}"
