@@ -6,11 +6,9 @@
 package org.toml.ide.todo
 
 import com.intellij.editor.TodoItemsTestUtil
-import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Test
 import org.toml.lang.psi.TomlFileType
 
@@ -20,11 +18,7 @@ class TomlTodoTest {
         private val projectFixture = projectFixture(openAfterCreation = true)
     }
 
-    private val pathFixture = tempPathFixture()
-
-    @Suppress("unused")
-    private val moduleFixture = projectFixture.moduleFixture(pathFixture, addPathToSourceRoot = true)
-    private val myFixture by codeInsightFixture(projectFixture, pathFixture)
+    private val myFixture by codeInsightModuleFixture(projectFixture)
 
     private fun testTodos(text: String) = TodoItemsTestUtil.testTodos(myFixture, TomlFileType.defaultExtension, text)
 
