@@ -3,7 +3,11 @@ package com.intellij.psi.impl.file.impl
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager
+import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl
 import com.intellij.codeInsight.multiverse.CodeInsightContextProvider
+import com.intellij.codeInsight.multiverse.codeInsightContext
+import com.intellij.codeInsight.multiverse.defaultContext
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
@@ -17,6 +21,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiFileRange
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerEx
@@ -30,6 +35,7 @@ import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import com.intellij.testFramework.utils.vfs.createFile
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
@@ -50,6 +56,10 @@ internal class SmartPointerGenerationInvalidationTest {
   private val sourceRoot = projectFixture.moduleFixture("SmartPointerGenerationInvalidationTest").sourceRootFixture()
   private val javaFile by sourceRoot.virtualFileFixture("A.java", "class A {}")
   private val twoContextJavaFile by sourceRoot.virtualFileFixture("B.java", "class B {}")
+  private val replacedContextJavaFile by sourceRoot.virtualFileFixture("C.java", "class C {}")
+  private val droppedContextJavaFile by sourceRoot.virtualFileFixture("D.java", "class D {}")
+  private val remappedContextJavaFile by sourceRoot.virtualFileFixture("E.java", "class E {}")
+  private val copiedTextFile by sourceRoot.virtualFileFixture("F.txt", "text")
   private val disposable by disposableFixture()
 
   /**
@@ -335,6 +345,125 @@ internal class SmartPointerGenerationInvalidationTest {
     }
   }
 
+  /**
+   * The tracker caches the contexts of its pointers, so a generation bump that changes no context
+   * skips the scan over the pointers (IJPL-258041). The cache must not hide a later context change.
+   *
+   * The first revalidation fills the cache, the second one is answered by it. The context change
+   * then goes through the fallback path: the pointer resolves in the same write action as the change,
+   * before anything (indexing, for one) reassigns the view provider, so no context mapping is queued.
+   *
+   * A range pointer answers [com.intellij.psi.SmartPsiFileRange.getContainingFile] from its file
+   * holder only, so the context of the result is the context of the holder.
+   */
+  @Test
+  fun `cached contexts do not hide a replaced context`() = timeoutRunBlocking {
+    val pointer = createRangePointer(replacedContextJavaFile, context = null)
+    val oldContext = readAction { contextOf(pointer) }
+    assertNotNull(oldContext)
+
+    repeat(2) { round ->
+      triggerBulkInvalidation()
+      assertEquals(oldContext, readAction { contextOf(pointer) }, "No context changed in round ${round + 1}")
+    }
+
+    val newContext = TestContext("new")
+    edtWriteAction {
+      CodeInsightContextManager.getInstance(project)
+        .registerTestOnlyCodeInsightContextProvider(TestFileContextProvider(replacedContextJavaFile, listOf(newContext)), disposable)
+      DebugUtil.performPsiModification<Throwable>("") {
+        fileManager.possiblyInvalidatePhysicalPsi()
+      }
+      assertEquals(newContext, contextOf(pointer), "The pointer must follow the file into the new context")
+    }
+  }
+
+  /**
+   * A pointer created after the cache is filled adds its context to the cache. Without that, the
+   * cache would claim that the context is unused, and its death would not reach the pointer.
+   */
+  @Test
+  fun `a context of a pointer created after the cache is filled is dropped when it dies`() = timeoutRunBlocking {
+    val contextA = TestContext("A")
+    val contextB = TestContext("B")
+    val twoContexts = Disposer.newDisposable(disposable, "D.java has the contexts A and B")
+    replaceContexts(droppedContextJavaFile, listOf(contextA, contextB), twoContexts, invalidate = false)
+
+    val pointerA = createRangePointer(droppedContextJavaFile, contextA)
+    triggerBulkInvalidation()
+    assertEquals(contextA, readAction { contextOf(pointerA) }, "The first revalidation fills the cache")
+
+    val pointerB = createRangePointer(droppedContextJavaFile, contextB)
+    triggerBulkInvalidation()
+    assertEquals(contextB, readAction { contextOf(pointerB) }, "No context changed, so the cache answers")
+
+    Disposer.dispose(twoContexts)
+    replaceContexts(droppedContextJavaFile, listOf(contextA), disposable)
+
+    readAction {
+      assertEquals(contextA, contextOf(pointerA), "The live context must stay")
+      assertNull(pointerB.containingFile, "The pointer of the dead context must not resolve")
+    }
+  }
+
+  /**
+   * The same as `cached contexts do not hide a replaced context`, but the view provider is reassigned
+   * before the pointer resolves. The reassignment queues a context mapping, and the tracker must
+   * apply it even though its cache is filled. Indexing after the change can already do the reassignment;
+   * the explicit `findFile` makes sure it happens.
+   */
+  @Test
+  fun `cached contexts do not hide a queued context mapping`() = timeoutRunBlocking {
+    val pointer = createRangePointer(remappedContextJavaFile, context = null)
+    val oldContext = readAction { contextOf(pointer) }
+    assertNotNull(oldContext)
+
+    triggerBulkInvalidation()
+    assertEquals(oldContext, readAction { contextOf(pointer) }, "The first revalidation fills the cache")
+
+    val newContext = TestContext("new")
+    replaceContexts(remappedContextJavaFile, listOf(newContext), disposable)
+
+    readAction {
+      // Reassigns the view provider of the old context and queues the mapping.
+      val file = PsiManager.getInstance(project).findFile(remappedContextJavaFile)!!
+      assertEquals(newContext, CodeInsightContextManager.getInstance(project).getCodeInsightContext(file.viewProvider))
+      assertEquals(newContext, contextOf(pointer), "The pointer must follow the mapping into the new context")
+      assertEquals(listOf(file.viewProvider), fileManager.findCachedViewProviders(remappedContextJavaFile),
+                   "Pointer must not create a view provider for the old context")
+    }
+  }
+
+  /**
+   * Completion copies a file and gives the copy the context of the original, as `CompletionInitializationUtil` does.
+   * The context manager reports only the default context for the light virtual file of the copy.
+   *
+   * The first pointer fills the context cache of the tracker. The second pointer has the context of the original,
+   * which the cache does not know. No generation bump happens after the second pointer, so it must resolve.
+   */
+  @Test
+  fun `a new pointer into a completion file copy resolves without a generation bump`() = timeoutRunBlocking {
+    val contextManager = CodeInsightContextManager.getInstance(project) as CodeInsightContextManagerImpl
+    val copy = readAction {
+      val original = PsiManager.getInstance(project).findFile(copiedTextFile)!!
+      val copy = original.copy() as PsiFile
+      contextManager.setCodeInsightContext(copy.viewProvider, contextManager.getCodeInsightContext(original.viewProvider))
+      assertNotNull(copy.viewProvider.document, "A tracked pointer needs a document")
+      copy
+    }
+    readAction {
+      assertNotEquals(defaultContext(), copy.codeInsightContext, "The copy must keep the context of the original")
+      assertEquals(listOf(defaultContext()), contextManager.getCodeInsightContexts(copy.viewProvider.virtualFile))
+    }
+
+    val first = readAction { SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(copy, TextRange(0, 1)) }
+    triggerBulkInvalidation()
+    readAction { first.element }
+
+    val second = readAction { SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(copy, TextRange(1, 2)) }
+    assertSame(copy, readAction { second.element }, "The new pointer must resolve to the copy")
+  }
+
   ///**
   // * `SmartPointerManagerEx.getInstanceEx(project).getPossiblyInvalidatedGeneration()` and
   // * `((PsiManagerImpl)).fileManagerEx.getPossiblyInvalidatedGeneration()` are independent
@@ -370,6 +499,37 @@ internal class SmartPointerGenerationInvalidationTest {
         fileManager.possiblyInvalidatePhysicalPsi()
       }
     }
+  }
+
+  /** A range pointer that is not the whole file, so it gets a [com.intellij.psi.impl.smartPointers.SelfElementInfo]. */
+  private suspend fun createRangePointer(file: VirtualFile, context: CodeInsightContext?): SmartPsiFileRange = readAction {
+    val psiFile = when (context) {
+      null -> PsiManager.getInstance(project).findFile(file)!!
+      else -> PsiManager.getInstance(project).findFile(file, context)!!
+    }
+    SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(psiFile, TextRange(0, 1))
+  }
+
+  private fun contextOf(pointer: SmartPsiFileRange): CodeInsightContext? =
+    pointer.containingFile?.let { CodeInsightContextManager.getInstance(project).getCodeInsightContext(it.viewProvider) }
+
+  private suspend fun replaceContexts(
+    file: VirtualFile,
+    contexts: List<CodeInsightContext>,
+    parentDisposable: Disposable,
+    invalidate: Boolean = true,
+  ) {
+    edtWriteAction {
+      CodeInsightContextManager.getInstance(project)
+        .registerTestOnlyCodeInsightContextProvider(TestFileContextProvider(file, contexts), parentDisposable)
+      if (invalidate) {
+        DebugUtil.performPsiModification<Throwable>("") {
+          fileManager.possiblyInvalidatePhysicalPsi()
+        }
+      }
+    }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
+    assertEquals(contexts, readAction { CodeInsightContextManager.getInstance(project).getCodeInsightContexts(file) })
   }
 
   private suspend fun createPsiFile(name: String): Pair<VirtualFile, PsiFile> {
