@@ -45,7 +45,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
 
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 82);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 84);
 
   private static final AtomicInteger MAX_SIMULTANEOUS_PROJECTS = new AtomicInteger(0);
 
@@ -67,9 +67,11 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     EventFields.Boolean("is_non_modal_welcome_screen_project",
                         "Flag is used to show if current project is dummy welcome screen project and not a real user project");
 
-  private static final EventId3<Long, Boolean, Boolean> PROJECT_OPENING_FINISHED =
-    LIFECYCLE.registerEvent("project.opening.finished", EventFields.Long("duration_ms"), EventFields.Boolean("project_tab"),
-                            isWelcomeScreenDummyProjectField);
+  private static final EventField<Long> projectOpeningDurationField = EventFields.Long("duration_ms");
+  private static final EventField<Boolean> projectTabField = EventFields.Boolean("project_tab");
+  private static final VarargEventId PROJECT_OPENING_FINISHED =
+    LIFECYCLE.registerVarargEvent("project.opening.finished", projectOpeningDurationField, projectTabField,
+                                  isWelcomeScreenDummyProjectField, EventFields.Projectless);
 
   private static final VarargEventId PROJECT_OPENED =
     LIFECYCLE.registerVarargEvent("project.opened", EventFields.Projectless, isWelcomeScreenDummyProjectField);
@@ -78,7 +80,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     LIFECYCLE.registerEvent("project.max.simultaneous",
                             EventFields.BoundedInt("count", new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}));
 
-  private static final EventId PROJECT_CLOSED = LIFECYCLE.registerEvent("project.closed"); // actually called before closed and disposed
+  // actually called before closed and disposed
+  private static final VarargEventId PROJECT_CLOSED = LIFECYCLE.registerVarargEvent("project.closed", EventFields.Projectless);
 
   private static final EventField<Long> projectTotalCloseDurationField = EventFields.Long("total_duration_ms");
   private static final EventField<Long> projectSaveDurationField = EventFields.Long("save_duration_ms");
@@ -86,15 +89,15 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final EventField<Long> projectDisposeDurationField = EventFields.Long("dispose_duration_ms");
   private static final VarargEventId PROJECT_CLOSED_AND_DISPOSED = LIFECYCLE.registerVarargEvent(
     "project.closed.and.disposed", projectTotalCloseDurationField, projectSaveDurationField, projectClosingDurationField,
-    projectDisposeDurationField);
+    projectDisposeDurationField, EventFields.Projectless);
 
   private static final EventId PROJECT_MODULE_ATTACHED = LIFECYCLE.registerEvent("project.module.attached");
 
   private static final EventId PROTOCOL_OPEN_COMMAND_HANDLED = LIFECYCLE.registerEvent("protocol.open.command.handled");
 
-  private static final EventId FRAME_ACTIVATED = LIFECYCLE.registerEvent("frame.activated");
+  private static final VarargEventId FRAME_ACTIVATED = LIFECYCLE.registerVarargEvent("frame.activated", EventFields.Projectless);
 
-  private static final EventId FRAME_DEACTIVATED = LIFECYCLE.registerEvent("frame.deactivated");
+  private static final VarargEventId FRAME_DEACTIVATED = LIFECYCLE.registerVarargEvent("frame.deactivated", EventFields.Projectless);
 
   private static final EventId1<Long> IDE_FREEZE = LIFECYCLE.registerEvent("ide.freeze", EventFields.DurationMs);
 
@@ -139,8 +142,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   private static final EventField<ProjectOpenMode> projectOpenModeField =
     EventFields.Enum("mode", ProjectOpenMode.class, mode -> Strings.toLowerCase(mode.name()));
-  private static final EventId1<ProjectOpenMode> PROJECT_FRAME_SELECTED =
-    LIFECYCLE.registerEvent("project.frame.selected", projectOpenModeField);
+  private static final VarargEventId PROJECT_FRAME_SELECTED =
+    LIFECYCLE.registerVarargEvent("project.frame.selected", projectOpenModeField, EventFields.Projectless);
 
   private static final EventId1<Integer> EARLY_ERRORS =
     LIFECYCLE.registerEvent("early.errors", EventFields.Int("errors_ignored"));
@@ -184,7 +187,12 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   }
 
   public static void onProjectOpenFinished(@NotNull Project project, long time, boolean isTab) {
-    PROJECT_OPENING_FINISHED.log(project, time, isTab, WelcomeScreenProjectProvider.isWelcomeScreenProject(project));
+    var data = new ArrayList<EventPair<?>>(4);
+    data.add(projectOpeningDurationField.with(time));
+    data.add(projectTabField.with(isTab));
+    data.add(isWelcomeScreenDummyProjectField.with(WelcomeScreenProjectProvider.isWelcomeScreenProject(project)));
+    ContainerUtil.addIfNotNull(data, ProjectlessData.forProject(project));
+    PROJECT_OPENING_FINISHED.log(project, data);
   }
 
   public static void onProjectOpened(@NotNull Project project) {
@@ -196,24 +204,28 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     MAX_SIMULTANEOUS_PROJECTS.updateAndGet(prev -> Math.max(prev, current));
   }
 
-  public static void onBeforeProjectClosed(@NotNull Project project) {
-    PROJECT_CLOSED.log(project);
+  public static void onBeforeProjectClosed(@NotNull Project project, @Nullable EventPair<?> projectless) {
+    var data = new ArrayList<EventPair<?>>(1);
+    ContainerUtil.addIfNotNull(data, projectless);
+    PROJECT_CLOSED.log(project, data);
   }
 
   public static void onProjectClosedAndDisposed(
     @NotNull Project project,
+    @Nullable EventPair<?> projectless,
     long closeStartedMs,
     long saveSettingsDurationMs,
     long closingDurationMs,
     long disposeDurationMs
   ) {
     long totalCloseDurationMs = System.currentTimeMillis() - closeStartedMs;
-    PROJECT_CLOSED_AND_DISPOSED.log(
-      project,
-      projectTotalCloseDurationField.with(totalCloseDurationMs),
-      projectSaveDurationField.with(saveSettingsDurationMs),
-      projectClosingDurationField.with(closingDurationMs),
-      projectDisposeDurationField.with(disposeDurationMs));
+    var data = new ArrayList<EventPair<?>>(5);
+    data.add(projectTotalCloseDurationField.with(totalCloseDurationMs));
+    data.add(projectSaveDurationField.with(saveSettingsDurationMs));
+    data.add(projectClosingDurationField.with(closingDurationMs));
+    data.add(projectDisposeDurationField.with(disposeDurationMs));
+    ContainerUtil.addIfNotNull(data, projectless);
+    PROJECT_CLOSED_AND_DISPOSED.log(project, data);
   }
 
   public static void onProjectModuleAttached(@NotNull Project project) {
@@ -225,11 +237,15 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   }
 
   public static void onFrameActivated(@Nullable Project project) {
-    FRAME_ACTIVATED.log(project);
+    var data = new ArrayList<EventPair<?>>(1);
+    ContainerUtil.addIfNotNull(data, ProjectlessData.forProject(project));
+    FRAME_ACTIVATED.log(project, data);
   }
 
   public static void onFrameDeactivated(@Nullable Project project) {
-    FRAME_DEACTIVATED.log(project);
+    var data = new ArrayList<EventPair<?>>(1);
+    ContainerUtil.addIfNotNull(data, ProjectlessData.forProject(project));
+    FRAME_DEACTIVATED.log(project, data);
   }
 
   public static void onFreeze(long durationMs) {
@@ -294,16 +310,22 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   }
 
   public static void onProjectFrameSelected(int option) {
-    ProjectOpenMode optionValue;
-    switch (option) {
-      case GeneralSettings.OPEN_PROJECT_NEW_WINDOW -> optionValue = ProjectOpenMode.New;
-      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW -> optionValue = ProjectOpenMode.Same;
-      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH -> optionValue = ProjectOpenMode.Attach;
-      default -> {
-        return;
-      }
+    onProjectFrameSelected(null, option);
+  }
+
+  public static void onProjectFrameSelected(@Nullable Project project, int option) {
+    var optionValue = switch (option) {
+      case GeneralSettings.OPEN_PROJECT_NEW_WINDOW -> ProjectOpenMode.New;
+      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW -> ProjectOpenMode.Same;
+      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH -> ProjectOpenMode.Attach;
+      default -> null;
+    };
+    if (optionValue != null) {
+      var data = new ArrayList<EventPair<?>>(2);
+      data.add(projectOpenModeField.with(optionValue));
+      ContainerUtil.addIfNotNull(data, ProjectlessData.forProject(project));
+      PROJECT_FRAME_SELECTED.log(project, data);
     }
-    PROJECT_FRAME_SELECTED.log(optionValue);
   }
 
   public static void onEarlyErrorsIgnored(int numErrors) {
