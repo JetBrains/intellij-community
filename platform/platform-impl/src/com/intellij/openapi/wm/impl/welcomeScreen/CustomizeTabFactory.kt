@@ -305,7 +305,7 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
       }
 
       row {
-        cell(AnActionLink("WelcomeScreen.Configure.Import", ActionPlaces.WELCOME_SCREEN))
+        cell(AnActionLink("ImportSettings", ActionPlaces.WELCOME_SCREEN))
       }.topGap(TopGap.MEDIUM)
       row {
         link(IdeBundle.message("welcome.screen.all.settings.link")) {

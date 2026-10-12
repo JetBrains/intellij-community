@@ -953,8 +953,8 @@
       <reference ref="ShowSettings"/>
       <reference ref="ShowPlugins"/>
 
-      <reference ref="WelcomeScreen.Configure.Import"/>
-      <reference ref="WelcomeScreen.Configure.Export"/>
+      <reference ref="ImportSettings"/>
+      <reference ref="ExportSettings"/>
       <reference ref="RestoreDefaultSettings"/>
 
       <reference ref="CollectZippedLogs"/>

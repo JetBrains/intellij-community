@@ -147,7 +147,7 @@
 
     <reference ref="RunConfigurationTemplatesForNewProjects">
       <add-to-group group-id="FileOtherSettingsGroup" anchor="before" relative-to-action="FileSettingsGroup"/>
-      <add-to-group group-id="WelcomeScreen.Configure" anchor="before" relative-to-action="WelcomeScreen.Configure.Import"/>
+      <add-to-group group-id="WelcomeScreen.Configure" anchor="before" relative-to-action="ImportSettings"/>
     </reference>
 
     <group id="RunToolbarActionsGroup" popup="false">
