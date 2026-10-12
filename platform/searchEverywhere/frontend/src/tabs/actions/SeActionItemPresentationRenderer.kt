@@ -124,7 +124,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
         }
 
         if (showIcon) {
-          icon(EMPTY_ICON)
+          icon(presentation.iconId?.icon() ?: EMPTY_ICON)
         }
 
         text(presentation.text) {

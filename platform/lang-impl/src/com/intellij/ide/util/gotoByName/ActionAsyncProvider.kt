@@ -507,7 +507,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
         val matcher = buildMatcher(pattern)
         for ((key, value) in map) {
           if (matcher.matches(value)) {
-            res.add(OptionDescription(_option = null, configurableId = key, hit = value, path = null, groupName = value))
+            res.add(SettingsPageOptionDescription(configurableId = key, displayName = value))
           }
         }
       }

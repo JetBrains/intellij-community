@@ -78,6 +78,7 @@ data class SeOptionActionItemPresentation(
   override val commonData: SeActionItemPresentation.Common,
   val value: @NlsSafe String? = null,
   val isBooleanOption: Boolean = false,
+  val iconId: IconId? = null,
   override val isMultiSelectionSupported: Boolean,
 ) : SeActionItemPresentation {
   override val text: String get() = commonData.text
@@ -91,6 +92,7 @@ data class SeOptionActionItemPresentation(
     return super.contentEquals(other) &&
            commonData == other.commonData &&
            value == other.value &&
-           isBooleanOption == other.isBooleanOption
+           isBooleanOption == other.isBooleanOption &&
+           iconId == other.iconId
   }
 }

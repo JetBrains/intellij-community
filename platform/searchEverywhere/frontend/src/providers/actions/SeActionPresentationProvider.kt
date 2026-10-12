@@ -10,6 +10,7 @@ import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.getGroupName
+import com.intellij.ide.util.gotoByName.getOptionDescriptionIcon
 import com.intellij.internal.inspector.UiInspectorActionUtil.getActionId
 import com.intellij.internal.inspector.UiInspectorUtil.getClassPresentation
 import com.intellij.openapi.actionSystem.ActionManager
@@ -114,7 +115,9 @@ object SeActionPresentationProvider {
         .addProperty(SePropertyBean("Option Configurable Id", value.configurableId, true))
         .build()
       val common = SeActionItemPresentation.Common(text = displayText, extendedInfo = extendedInfo, uiInspectorInfo = uiInspectorInfo)
-      var presentation = SeOptionActionItemPresentation(commonData = common, isMultiSelectionSupported = isMultiSelectionSupported)
+      var presentation = SeOptionActionItemPresentation(commonData = common,
+                                                        iconId = getOptionDescriptionIcon(value)?.rpcIdOrNull(),
+                                                        isMultiSelectionSupported = isMultiSelectionSupported)
 
       (value as? BooleanOptionDescription)?.isOptionEnabled.let {
         presentation = presentation.run {

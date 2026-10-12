@@ -9,6 +9,7 @@ import com.intellij.ide.ui.OptionsSearchTopHitProvider;
 import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.ide.util.gotoByName.ActionSearchUtilKt;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AbbreviationManager;
@@ -248,6 +249,8 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
             }
           }
           append(text, attrs);
+          Icon icon = ActionSearchUtilKt.getOptionDescriptionIcon((OptionDescription)value);
+          if (icon != null) setIcon(icon);
         }
         else if (value instanceof OptionsTopHitProvider) {
           append(SearchTopHitProvider.getTopHitAccelerator() + ((OptionsTopHitProvider)value).getId()); //NON-NLS
