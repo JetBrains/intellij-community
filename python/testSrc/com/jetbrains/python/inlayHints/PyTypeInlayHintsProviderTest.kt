@@ -375,6 +375,28 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, PARAMETER_TYPE_ANNOTATION)
   }
 
+  @TestFor(issues = ["PY-90421"])
+  fun `test lambda parameter type hint for a method of a generic receiver`() {
+    doTest("""
+      from typing import Callable
+
+      class MyGenericTest[T]:
+          _t: type[T]
+
+          def __init__(self, t: type[T]):
+              self._t = t
+
+          def call_with_lambda(self, delegate: Callable[[T], object]) -> object:
+              return delegate(self._t())
+
+      inline_call = MyGenericTest(int).call_with_lambda(lambda x/*<# : int #>*/: print(x))
+      delayed_call = MyGenericTest(int)
+      delayed_call.call_with_lambda(lambda x/*<# : int #>*/: print(x))
+      delayed_call_with_type_hint: MyGenericTest[int] = MyGenericTest(int)
+      delayed_call_with_type_hint.call_with_lambda(lambda x/*<# : int #>*/: print(x))
+    """, PARAMETER_TYPE_ANNOTATION)
+  }
+
   private val allOptions = mapOf(
     REVEAL_TYPE_OPTION_ID to true,
     FUNCTION_RETURN_TYPE_OPTION_ID to true,
