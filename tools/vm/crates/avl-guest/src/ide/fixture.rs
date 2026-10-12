@@ -45,11 +45,9 @@ impl Fixture {
         )
         .unwrap();
         fs::write(bin.join("idea64.vmoptions"), "-Xmx2g\n-Dfrom.vmoptions=1\n").unwrap();
-        fs::write(
-            bin.join("product-info.json"),
-            r#"{"launch":[{"additionalJvmArguments":["-Dfrom.product.info=1"]}]}"#,
-        )
-        .unwrap();
+        let product_info = root.join("dist").join(launch::PRODUCT_INFO_FILE);
+        fs::create_dir_all(product_info.parent().unwrap()).unwrap();
+        fs::write(product_info, r#"{"launch":[{"additionalJvmArguments":["-Dfrom.product.info=1"]}]}"#).unwrap();
         fs::write(root.join("dist/core-classpath.txt"), "lib/a.jar\nlib/b.jar\n").unwrap();
         fs::write(root.join("dist.config"), "home.path=dist\nmain.class.name=com.intellij.idea.Main\n").unwrap();
         fs::write(root.join("ide.flags"), "-ea\n\n--add-opens=java.base/java.lang=ALL-UNNAMED\n").unwrap();

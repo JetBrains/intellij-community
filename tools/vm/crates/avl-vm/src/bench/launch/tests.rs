@@ -3,9 +3,9 @@ use std::path::Path;
 use pretty_assertions::assert_eq;
 
 use super::{
-    DYNAMIC_AGENT_OPTION, FORCE_MODAL_PROPERTY, INTEGRATION_TEST_PROPERTY, Profiler, RunPlan, TRUST_PROPERTY, argfile_text,
-    class_load_option, dist_options, entry_options, idea_log_pid, measure_options, profile_stop_argv, quote_argument, sandbox_options,
-    scheme_arguments, span_ended,
+    DYNAMIC_AGENT_OPTION, FORCE_MODAL_PROPERTY, INTEGRATION_TEST_PROPERTY, PRODUCT_INFO_FILE, Profiler, RunPlan, TRUST_PROPERTY,
+    argfile_text, class_load_option, dist_options, entry_options, idea_log_pid, measure_options, product_info_file, profile_stop_argv,
+    quote_argument, sandbox_options, scheme_arguments, span_ended,
 };
 use crate::bench::arm::Arm;
 use crate::bench::profile::ProfileEvent;
@@ -290,8 +290,10 @@ fn fake_dist(root: &Path) -> std::path::PathBuf {
     let dist = root.join("idea_dist.dist");
     std::fs::create_dir_all(dist.join("bin")).expect("a bin directory");
     std::fs::write(dist.join("bin/idea.vmoptions"), "-Xmx2048m\n\n# a comment\n-ea\n").expect("the vmoptions");
+    let product_info = dist.join(PRODUCT_INFO_FILE);
+    std::fs::create_dir_all(product_info.parent().expect("a parent")).expect("the directory of the product info");
     std::fs::write(
-        dist.join("bin/product-info.json"),
+        product_info,
         format!(
             r#"{{"launch":[{{"additionalJvmArguments":["-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader","-Xbootclasspath/a:{}/lib/nio-fs.jar"]}}]}}"#,
             super::home_macro()
@@ -299,6 +301,22 @@ fn fake_dist(root: &Path) -> std::path::PathBuf {
     )
     .expect("the product info");
     dist
+}
+
+/// The production place of `product-info.json` comes first, and `bin/product-info.json` is the fallback.
+#[test]
+fn the_product_info_is_at_the_production_place_or_in_bin() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let dist = dir.path();
+    let production = dist.join(PRODUCT_INFO_FILE);
+    let dev_build = dist.join("bin").join("product-info.json");
+    assert_eq!(product_info_file(dist), production, "no file names the production place");
+    std::fs::create_dir_all(dist.join("bin")).expect("a bin directory");
+    std::fs::write(&dev_build, "{}").expect("the product info in bin");
+    assert_eq!(product_info_file(dist), dev_build);
+    std::fs::create_dir_all(production.parent().expect("a parent")).expect("the directory of the product info");
+    std::fs::write(&production, "{}").expect("the product info");
+    assert_eq!(product_info_file(dist), production);
 }
 
 #[test]

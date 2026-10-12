@@ -44,7 +44,7 @@ pub struct DistributionFiles<'a> {
     pub idea_properties: &'a Path,
     /// The vmoptions file of the OS.
     pub vm_options: &'a Path,
-    /// `bin/product-info.json`.
+    /// `product-info.json`.
     pub product_info: &'a Path,
     /// `core-classpath.txt`. A relative line is relative to the home.
     pub core_classpath: &'a Path,

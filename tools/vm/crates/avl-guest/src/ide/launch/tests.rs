@@ -89,6 +89,22 @@ fn the_argument_file_puts_the_data_paths_of_the_context_last() {
     }
 }
 
+// The production place of `product-info.json` comes first, and `bin/product-info.json` is the fallback.
+#[test]
+fn the_product_info_is_at_the_production_place_or_in_bin() {
+    let directory = tempfile::tempdir().unwrap();
+    let home = directory.path();
+    let production = home.join(PRODUCT_INFO_FILE);
+    let dev_build = home.join("bin/product-info.json");
+    assert_eq!(product_info_file(home), production, "no file names the production place");
+    fs::create_dir_all(home.join("bin")).unwrap();
+    fs::write(&dev_build, "{}").unwrap();
+    assert_eq!(product_info_file(home), dev_build);
+    fs::create_dir_all(production.parent().unwrap()).unwrap();
+    fs::write(&production, "{}").unwrap();
+    assert_eq!(product_info_file(home), production);
+}
+
 // The flags file cannot move a data path.
 #[test]
 fn a_flag_that_states_a_data_path_is_refused() {

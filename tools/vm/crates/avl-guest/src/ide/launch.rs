@@ -13,7 +13,7 @@
 use std::ffi::OsString;
 use std::fs;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use avl_wire::ide::{
     self, ARG_FILE, CONFIG_DIR, IdeLaunch, IdeLaunched, LAUNCH_RECORD_FILE, LOG_DIR, LaunchRecord, OWNED_JVM_OPTIONS, OWNED_PROPERTIES,
@@ -190,7 +190,7 @@ fn compose_arguments(document: &IdeLaunch, paths: &LaunchPaths) -> Result<Vec<St
 
     let idea_properties = bin.join("idea.properties");
     let vm_options_file = bin.join(&vm_options);
-    let product_info = bin.join("product-info.json");
+    let product_info = product_info_file(Path::new(home));
     let core_classpath = Path::new(home).join("core-classpath.txt");
     let files = DistributionFiles {
         ide_config: Path::new(&document.ide_config),
@@ -216,6 +216,26 @@ fn compose_arguments(document: &IdeLaunch, paths: &LaunchPaths) -> Result<Vec<St
     arguments.extend(data_options(paths));
     arguments.extend(tail);
     Ok(arguments)
+}
+
+/// The place of `product-info.json` in a production distribution on this OS, relative to the home.
+pub(crate) const PRODUCT_INFO_FILE: &str = if cfg!(target_os = "macos") {
+    "Resources/product-info.json"
+} else {
+    "product-info.json"
+};
+
+/// The `product-info.json` of the distribution at `home`, as `DevLaunchProperties.kt` finds it.
+///
+/// The first candidate is [`PRODUCT_INFO_FILE`]. The second is `bin/product-info.json`, the place in an older dev
+/// distribution. When neither file exists, the answer is the first candidate, so that the read error names it.
+fn product_info_file(home: &Path) -> PathBuf {
+    let production = home.join(PRODUCT_INFO_FILE);
+    if is_file(&production) {
+        return production;
+    }
+    let dev_build = home.join("bin").join("product-info.json");
+    if is_file(&dev_build) { dev_build } else { production }
 }
 
 /// The one `*.vmoptions` file of the `bin` directory of the distribution, by its name.

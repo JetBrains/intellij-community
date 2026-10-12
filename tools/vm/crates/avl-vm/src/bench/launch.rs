@@ -231,6 +231,26 @@ const fn home_macro() -> &'static str {
     }
 }
 
+/// The place of `product-info.json` in a production distribution on this OS, relative to the home.
+const PRODUCT_INFO_FILE: &str = if cfg!(target_os = "macos") {
+    "Resources/product-info.json"
+} else {
+    "product-info.json"
+};
+
+/// The `product-info.json` of the distribution at `dist`, as `DevLaunchProperties.kt` finds it.
+///
+/// The first candidate is [`PRODUCT_INFO_FILE`]. The second is `bin/product-info.json`, the place in an older dev
+/// distribution. When neither file exists, the answer is the first candidate, so that the read error names it.
+fn product_info_file(dist: &Path) -> PathBuf {
+    let production = dist.join(PRODUCT_INFO_FILE);
+    if production.is_file() {
+        return production;
+    }
+    let dev_build = dist.join("bin").join("product-info.json");
+    if dev_build.is_file() { dev_build } else { production }
+}
+
 /// The JVM options of a distribution, as `readVmOptions` of the dev launch reads them, then the test options of the
 /// Starter and the platform prefix of the config.
 ///
@@ -268,7 +288,7 @@ pub(crate) fn dist_options(dist: &Path, config: &DistConfig, repo_root: &Path) -
         #[serde(default)]
         additional_jvm_arguments: Vec<String>,
     }
-    let product_info_path = bin.join("product-info.json");
+    let product_info_path = product_info_file(dist);
     let product_info: ProductInfo = serde_json::from_str(&files::read_text(&product_info_path)?)
         .with_context(|| format!("{} has no `launch` list", product_info_path.display()))?;
     let home = dist.display().to_string();

@@ -109,9 +109,25 @@ fun readCustomCommandLaunch(runDir: Path, command: String): Map.Entry<String, Ma
 }
 
 private fun readProductInfo(runDir: Path): ProductInfoData {
-  return runDir.resolve("bin").resolve(PRODUCT_INFO_FILE_NAME).inputStream().buffered().use {
+  return findProductInfoFile(runDir).inputStream().buffered().use {
     productInfoJson.decodeFromStream(ProductInfoData.serializer(), it)
   }
+}
+
+/**
+ * The `product-info.json` file of the distribution at [runDir].
+ *
+ * The first candidate is the production place: `Resources/product-info.json` on macOS, `product-info.json` on other systems.
+ * The second candidate is `bin/product-info.json`, which the dev build of `IdeBuilder` writes.
+ * When neither file exists, the result is the first candidate, so that the read error names it.
+ */
+private fun findProductInfoFile(runDir: Path): Path {
+  val productionFile = runDir.resolve(if (SystemInfoRt.isMac) "Resources/$PRODUCT_INFO_FILE_NAME" else PRODUCT_INFO_FILE_NAME)
+  if (Files.isRegularFile(productionFile)) {
+    return productionFile
+  }
+  val devBuildFile = runDir.resolve("bin").resolve(PRODUCT_INFO_FILE_NAME)
+  return if (Files.isRegularFile(devBuildFile)) devBuildFile else productionFile
 }
 
 /**

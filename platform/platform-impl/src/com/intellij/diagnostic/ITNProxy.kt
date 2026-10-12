@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.UnhandledExceptionKind
@@ -54,6 +55,7 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import kotlin.io.path.Path
 import kotlin.io.path.bufferedReader
+import kotlin.io.path.isRegularFile
 
 internal object DiagnosticDispatchers {
   @JvmField
@@ -132,11 +134,16 @@ object ITNProxy {
     val homeDir = System.getProperty("idea.home.path")?.let { Path(it) }
                   ?: PathManager.getHomeDirFor(ITNProxy::class.java)
                   ?: throw RuntimeException("Cannot detect the IDE home directory")
-    val appDataFile = homeDir.resolve(when {
-                                        AppMode.isRunningFromDevBuild() -> "bin/product-info.json"
-                                        OS.CURRENT == OS.macOS -> "Resources/product-info.json"
-                                        else -> "product-info.json"
-                                      })
+    val productInfoFile = homeDir.resolve(
+      if (OS.CURRENT == OS.macOS) ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC else ApplicationEx.PRODUCT_INFO_FILE_NAME
+    )
+    // the dev build of `IdeBuilder` keeps the file in `bin/`
+    val appDataFile = if (AppMode.isRunningFromDevBuild() && !productInfoFile.isRegularFile()) {
+      homeDir.resolve("bin").resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME)
+    }
+    else {
+      productInfoFile
+    }
 
     try {
       var appName = null as String?
