@@ -47,6 +47,8 @@ internal class WelcomeScreenProjectSupportImpl : WelcomeScreenProjectSupport {
       configureToOpenDotIdeaOrCreateNewIfNotExists(path, null)
       projectName = name
       this.forceOpenInNewFrame = forceOpenInNewFrame
+      // a fresh sandbox creates the welcome project anew, and its frame content should not wait until the project is registered as open
+      initFrameEarlyForNewProject = true
     }
     return PlatformProjectOpenProcessor.openProjectAsync(path, options)
            ?: throw IllegalStateException("Cannot open project at $path (not expected that user can cancel welcome-project loading)")

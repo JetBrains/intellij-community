@@ -14,6 +14,7 @@ import java.util.function.Predicate
 private data class OpenProjectTaskImplOptions(
   @JvmField val delegate: Any?,
   @JvmField val opensFileAfterProjectOpen: Boolean,
+  @JvmField val initFrameEarlyForNewProject: Boolean = false,
 )
 
 private fun Any?.asOpenProjectTaskImplOptions(): OpenProjectTaskImplOptions {
@@ -75,6 +76,17 @@ class OpenProjectTask @ApiStatus.Internal @Deprecated("Use `OpenProjectTask { ..
   @get:ApiStatus.Internal
   val opensFileAfterProjectOpen: Boolean
     get() = (implOptions as? OpenProjectTaskImplOptions)?.opensFileAfterProjectOpen == true
+
+  /**
+   * Whether the frame of a new project, one without a stored configuration, is initialized early, the same as the frame of an existing one:
+   * the frame content starts after the pre-init extensions of the project, while the rest of the project preparation runs.
+   * The template is applied before the pre-init either way.
+   *
+   * This property is deliberately not a primary-constructor parameter: adding one changes the generated data-class ABI.
+   */
+  @get:ApiStatus.Internal
+  val initFrameEarlyForNewProject: Boolean
+    get() = (implOptions as? OpenProjectTaskImplOptions)?.initFrameEarlyForNewProject == true
 
   @get:ApiStatus.Internal
   val beforeInit: ((Project) -> Unit)?
@@ -307,6 +319,10 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
   @ApiStatus.Internal
   var opensFileAfterProjectOpen: Boolean = false
 
+  /** See [OpenProjectTask.initFrameEarlyForNewProject]. */
+  @ApiStatus.Internal
+  var initFrameEarlyForNewProject: Boolean = false
+
   /** A shim for Java clients. */
   fun withBeforeOpenCallback(callback: Predicate<Project>) {
     beforeOpenTasks += { callback.test(it) }
@@ -351,6 +367,7 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
     projectFrameTypeId = base.projectFrameTypeId
     implOptions = base.effectiveImplOptions
     opensFileAfterProjectOpen = base.opensFileAfterProjectOpen
+    initFrameEarlyForNewProject = base.initFrameEarlyForNewProject
     line = base.line
     column = base.column
     projectRootDir = base.projectRootDir
@@ -381,7 +398,8 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
       beforeOpenTasks = beforeOpenTasks + listOfNotNull(beforeOpen),
       preparedToOpenTasks = listOfNotNull(preparedToOpen),
       preventIprLookup, processorChooser,
-      implOptions = implOptions.withOpensFileAfterProjectOpen(opensFileAfterProjectOpen),
+      implOptions = implOptions.withOpensFileAfterProjectOpen(opensFileAfterProjectOpen)
+        .copy(initFrameEarlyForNewProject = initFrameEarlyForNewProject),
       projectRootDir, createModule
     )
   }

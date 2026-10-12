@@ -143,6 +143,24 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
   }
 
   @Test
+  fun newProjectWithEarlyFrameInitializationOpens() {
+    val projectDir = tempDir.root.toPath().resolve("early-frame-new-project").createDirectories()
+    val project = runBlocking {
+      ProjectManagerEx.getInstanceEx().openProjectAsync(
+        projectDir,
+        OpenProjectTask {
+          isNewProject = true
+          initFrameEarlyForNewProject = true
+        }
+      )
+    }
+    assertThat(project).isNotNull()
+    project!!.useProject {
+      assertThat(it.isOpen).isTrue()
+    }
+  }
+
+  @Test
   fun suppressIndexingActivitiesCancelsScanningTasks() {
     ExtensionTestUtil.maskExtensions(
       ProjectFrameCapabilitiesService.EP_NAME,

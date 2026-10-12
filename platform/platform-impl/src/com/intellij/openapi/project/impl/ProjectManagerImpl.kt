@@ -813,6 +813,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                 options.isNewProject -> prepareNewProject(
                   projectIdentityFile, options.projectName, options.beforeInit, options.useDefaultProjectAsTemplate,
                   options.preloadServices, markAsNewlyCreated = options.isProjectCreatedWithWizard,
+                  projectInitHelper = initHelper.takeIf { initFrameEarly },
                 )
                 else -> prepareProject(
                   projectIdentityFile, options.projectName, options.beforeInit,
@@ -1078,6 +1079,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     preloadServices: Boolean,
     markAsNewlyCreated: Boolean,
     markAsNew: Boolean = true,
+    projectInitHelper: ProjectInitHelper? = null,
   ): Project {
     return coroutineScope {
       val templateAsync = if (useDefaultProjectAsTemplate) {
@@ -1110,7 +1112,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         project.putUserData(PROJECT_NEWLY_OPENED, markAsNew)
         project.putUserData(PROJECT_NEWLY_CREATED, markAsNewlyCreated)
         val template = templateAsync?.await()
-        initProject(identityFle, project, preloadServices, template)
+        // `initProject` applies the template before it reports the pre-init to the helper
+        initProject(identityFle, project, preloadServices, template, projectInitHelper)
         project
       }
       catch (e: Throwable) {
@@ -1455,10 +1458,11 @@ class UnableToSaveProjectNotification(project: Project, readOnlyFiles: List<Virt
 /**
  * Whether the frame of [options] is initialized early: the frame content starts after the pre-init extensions of the project,
  * in parallel with the rest of the project preparation.
+ * A new project gets it only when its opener asks with [OpenProjectTask.initFrameEarlyForNewProject].
  */
 @VisibleForTesting
 internal fun isFrameInitializedEarly(options: OpenProjectTask): Boolean {
-  return !options.isNewProject && options.beforeOpen == null && options.project == null
+  return (!options.isNewProject || options.initFrameEarlyForNewProject) && options.beforeOpen == null && options.project == null
 }
 
 private class ProjectInitHelper(
