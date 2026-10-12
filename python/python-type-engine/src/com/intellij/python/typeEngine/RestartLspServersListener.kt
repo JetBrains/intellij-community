@@ -23,7 +23,7 @@ import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.pyrefly.PyreflyPyTool
 import com.intellij.python.pyrefly.PyreflyUsageCollector
 import com.intellij.python.lsp.core.getInstalledToolPackage
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.jetbrains.python.packaging.PythonVersionValue
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -101,7 +101,8 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
           // Pyrefly cannot drive must not stop the install for the other modules. The test is the
           // same one the tool itself uses, so a remote interpreter gets no install it cannot use.
           val pythonSdk = PyTypeEngineUtils.localNonReadOnlySdk(module) ?: return@forEach
-          val managerUI = PythonPackageManagerUI.forPythonInterpreter(project, pythonSdk.pythonInterpreterAsync())
+          val interpreter = pythonSdk.pythonInterpreterResultAsync().successOrNull ?: return@forEach
+          val managerUI = PythonPackageManagerUI.forPythonInterpreter(project, interpreter)
 
           val pythonPackage = managerUI.manager.getInstalledToolPackage(PyreflyPyTool.getInstance())
           val version = pythonPackage?.version?.let { PythonVersionValue.parse(it) }?.successOrNull

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.lsp.core
 
+import com.intellij.python.sdk.backend.detectedEnvironment
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.evolution.evoPyProjects
 import com.intellij.openapi.application.readAction
@@ -29,7 +30,6 @@ import com.intellij.python.lsp.core.utils.PyLspToolVersionTracker
 import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.pythonBinaryPath
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.project.PyProject
@@ -309,7 +309,7 @@ data class PyLspServeKey(val workspaceRoot: String?, val toolVersion: String?, v
  * its modules by interpreter.
  */
 private fun pyLspServeInterpreterOf(interpreter: PythonInterpreter, pyTool: PyTool): String? =
-  if ((pyTool as? PyLspTool<*>)?.serverNeedsOneInterpreter == true) interpreter.pythonBinaryPath?.toString() else null
+  if ((pyTool as? PyLspTool<*>)?.serverNeedsOneInterpreter == true) interpreter.detectedEnvironment?.pythonBinaryPath?.toString() else null
 
 /**
  * The [PyLspServeKey] of [pyProject] for [pyTool], with the interpreter from the current snapshot.

@@ -14,7 +14,7 @@ import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.community.execService.python.StdInProvider
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getPythonInfo
-import com.intellij.python.sdk.backend.pythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreterResult
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -44,7 +44,10 @@ internal object PyRuntimeDocstringFormatter {
         PythonSdkType.findLocalCPython(moduleOrSdk.module) ?: return logSdkNotFound(format)
       }
     }
-    val interpreter = sdk.pythonInterpreter()
+    val interpreter = sdk.pythonInterpreterResult().getOr {
+      LOG.debug { "Sdk $sdk is broken ${it.error}" }
+      return null
+    }
     val languageLevel = interpreter.getPythonInfo().getOr {
       LOG.debug { "Sdk $sdk is broken ${it.error}" }
       return null

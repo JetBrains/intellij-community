@@ -2,7 +2,7 @@
 package com.jetbrains.python.codeInsight.stubs.checkers
 
 import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -55,7 +55,9 @@ internal abstract class PyStubsChecker(val project: Project) : Disposable.Defaul
   }
 
   private suspend fun checkSdk(sdk: Sdk) {
-    check(PythonPackageManager.forPythonInterpreter(project, sdk.pythonInterpreterAsync()))
+    // A broken SDK has no packages, so no stubs to suggest.
+    val interpreter = sdk.pythonInterpreterResultAsync().successOrNull ?: return
+    check(PythonPackageManager.forPythonInterpreter(project, interpreter))
   }
 
   /** Stores the stubs [packageManager] suggests for its interpreter, where [getCached] reads them. */
