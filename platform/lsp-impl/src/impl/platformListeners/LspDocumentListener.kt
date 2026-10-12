@@ -26,14 +26,15 @@ internal class LspDocumentListener : DocumentListener {
 
   override fun beforeDocumentChange(event: DocumentEvent) {
     val file = LspDidChangeUtil.getFileToHandle(event) ?: return
-    LspClientManagerImpl.forEachRunningClientInEachProject { client ->
+    LspClientManagerImpl.forEachRunningClientInEachProject(file) { client ->
       client.documentSyncManager.onBeforeDocumentChange(event, file)
     }
   }
 
   override fun documentChanged(event: DocumentEvent) {
     val file = LspDidChangeUtil.getFileToHandle(event) ?: return
-    LspClientManagerImpl.forEachRunningClientInEachProject { client ->
+
+    LspClientManagerImpl.forEachRunningClientInEachProject(file) { client ->
       client.documentSyncManager.onDocumentChanged(event, file)
     }
 
