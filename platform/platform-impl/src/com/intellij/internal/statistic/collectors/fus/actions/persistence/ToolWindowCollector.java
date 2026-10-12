@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.facet.ui.FacetDependentToolWindow;
+import com.intellij.internal.statistic.collectors.fus.ProjectlessData;
 import com.intellij.ide.actions.ToolWindowMoveAction.Anchor;
 import com.intellij.ide.actions.ToolWindowViewModeAction.ViewMode;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -20,6 +21,7 @@ import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
 import com.intellij.openapi.wm.impl.WindowInfoImpl;
 import com.intellij.toolWindow.ToolWindowEventSource;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.fus.reporting.api.IEventContext;
 import com.jetbrains.fus.reporting.api.ValidationResultType;
 import kotlin.Unit;
@@ -124,7 +126,7 @@ public final class ToolWindowCollector {
     }
 
     RESIZED.log(project, data -> {
-      addDefaultFields(info.getId(), info, null, data);
+      addDefaultFields(project, info.getId(), info, null, data);
       data.add(WEIGHT.with(info.getWeight()));
       data.add(IS_MAXIMIZED.with(isMaximized));
     });
@@ -157,11 +159,12 @@ public final class ToolWindowCollector {
     }
 
     event.log(project, data -> {
-      addDefaultFields(toolWindowId, windowInfo, source, data);
+      addDefaultFields(project, toolWindowId, windowInfo, source, data);
     });
   }
 
-  private static void addDefaultFields(@NotNull String toolWindowId,
+  private static void addDefaultFields(@NotNull Project project,
+                                @NotNull String toolWindowId,
                                 @Nullable WindowInfoImpl windowInfo,
                                 @Nullable ToolWindowEventSource source,
                                 List<EventPair<?>> data) {
@@ -175,6 +178,7 @@ public final class ToolWindowCollector {
     if (source != null) {
       data.add(SOURCE.with(source));
     }
+    ContainerUtil.addIfNotNull(data, ProjectlessData.forProject(project));
   }
 
   private static @NotNull PluginInfo getToolWindowInfo(@NotNull String toolWindowId) {
