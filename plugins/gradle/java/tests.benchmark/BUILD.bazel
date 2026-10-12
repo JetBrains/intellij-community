@@ -16,6 +16,7 @@ jvm_library(
         "//platform/testRunner/plugin",
         "//platform/structuralsearch/plugin",
         "//aether-dependency-resolver/plugin",
+        "//plugins/kotlin:kotlin-plugin-community-main",
     ],
 )
 
@@ -38,6 +39,7 @@ jvm_library(
         "//platform/testRunner/plugin:plugin_test_lib",
         "//platform/structuralsearch/plugin:plugin_test_lib",
         "//aether-dependency-resolver/plugin:plugin_test_lib",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
     ],
     deps = [
         # do not sort,
