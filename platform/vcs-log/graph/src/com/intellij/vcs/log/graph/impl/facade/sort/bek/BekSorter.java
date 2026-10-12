@@ -23,7 +23,7 @@ public final class BekSorter {
     Pair<List<BekBranch>, BekEdgeRestrictions> branches = bekBranchCreator.getResult();
     long branchesCreated = System.nanoTime();
 
-    BekBranchMerger bekBranchMerger = new BekBranchMerger(branches.first, branches.second, timestampGetter);
+    BekBranchMerger bekBranchMerger = new BekBranchMerger(branches.first, branches.second, timestampGetter, permanentGraph.nodesCount());
     List<Integer> result = bekBranchMerger.getResult();
     long branchesMerged = System.nanoTime();
 

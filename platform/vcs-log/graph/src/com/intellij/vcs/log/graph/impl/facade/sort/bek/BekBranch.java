@@ -32,6 +32,18 @@ class BekBranch {
     myNoInsertSize = myNodeIndexes.size();
   }
 
+  public @NotNull List<Integer> getNodeIndexes() {
+    return myNodeIndexes;
+  }
+
+  /**
+   * @return the lowest node of the branch that is not placed yet
+   */
+  public int getCurrentNode() {
+    LOG.assertTrue(!isDone());
+    return myNodeIndexes.get(myNoInsertSize - 1);
+  }
+
   public void updatePrepareForInsertPart(@NotNull TimestampGetter timestampGetter, @NotNull BekEdgeRestrictions edgeRestrictions) {
     LOG.assertTrue(myPrepareForInsertPart == null);
     int currentNode = myNodeIndexes.get(myNoInsertSize - 1);
