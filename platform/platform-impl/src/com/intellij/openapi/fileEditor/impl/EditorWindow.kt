@@ -688,6 +688,24 @@ class EditorWindow internal constructor(
     closeFile(file = file, composite = composite, disposeIfNeeded = disposeIfNeeded)
   }
 
+  /**
+   * Removes the tab of [composite] from this window and keeps the composite alive.
+   *
+   * No file-closed event is sent, and the tab is not recorded for "Reopen Closed Tab".
+   * The caller must add the composite to a window again, or dispose it.
+   * Returns the removed tab, or `null` when the composite is not in this window.
+   */
+  @RequiresEdt
+  @Internal
+  fun detachComposite(composite: EditorComposite): TabInfo? {
+    val tab = findTabByComposite(composite) ?: return null
+    val editorTabs = tabbedPane.editorTabs
+    editorTabs.removeTab(tab)
+    // setTabs adds the listener again when the tab returns to a window
+    tab.changeSupport.removePropertyChangeListener(editorTabs)
+    return tab
+  }
+
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @Internal
   fun closeFile(file: VirtualFile, composite: EditorComposite, disposeIfNeeded: Boolean = true) {
