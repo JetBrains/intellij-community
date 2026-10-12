@@ -309,6 +309,16 @@ class GlobalWorkspaceModel internal constructor(
     }
   }
 
+  /**
+   * Whether [applyStateToProject] would change [targetWorkspaceModel]:
+   * this model has global entities to copy, or [targetWorkspaceModel] has global entities to replace.
+   * A later change of this model reaches the project through [registerInitializingProjectForUpdatesFromGlobalModel].
+   */
+  fun hasStateToApplyToProject(targetWorkspaceModel: WorkspaceModel): Boolean {
+    return currentSnapshot.entitiesBySource(globalEntitiesFilter).any() ||
+           targetWorkspaceModel.currentSnapshot.entitiesBySource(globalEntitiesFilter).any()
+  }
+
   fun applyStateToProjectBuilder(
     targetBuilder: MutableEntityStorage,
     workspaceModel: WorkspaceModelImpl,

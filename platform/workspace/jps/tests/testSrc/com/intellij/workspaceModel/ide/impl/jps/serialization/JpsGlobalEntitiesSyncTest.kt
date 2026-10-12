@@ -28,6 +28,7 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
 import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -270,6 +271,41 @@ class JpsGlobalEntitiesSyncTest {
             builder.entities(LibraryEntity::class.java).filter { it.name == libraryName }.toList().forEach { builder.removeEntity(it) }
           }
         }
+      }
+    }
+  }
+
+  @Test
+  fun `test global state to apply to a project follows the global entities`() {
+    val testDir = temporaryFolder.newFolder()
+    copyAndLoadGlobalEntities(testDir = testDir, parentDisposable = disposableRule.disposable) { libraryEntitySource, _ ->
+      val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(LocalEelMachine)
+      val projectWorkspaceModel = WorkspaceModel.getInstance(loadProject())
+      // neither the global model nor the project has a global library or SDK
+      assertThat(globalWorkspaceModel.hasStateToApplyToProject(projectWorkspaceModel)).isFalse()
+
+      ApplicationManager.getApplication().invokeAndWait {
+        runWriteAction {
+          globalWorkspaceModel.updateModel("Add a global library") { builder ->
+            val tableId = LibraryTableId.GlobalLibraryTableId("application")
+            builder.addEntity(LibraryEntity("global", tableId, emptyList(), libraryEntitySource))
+          }
+        }
+      }
+      assertThat(globalWorkspaceModel.hasStateToApplyToProject(projectWorkspaceModel)).isTrue()
+
+      ApplicationManager.getApplication().invokeAndWait {
+        runWriteAction {
+          globalWorkspaceModel.updateModel("Remove the global library") { builder ->
+            builder.entities(LibraryEntity::class.java).filter { it.name == "global" }.toList().forEach { builder.removeEntity(it) }
+          }
+        }
+      }
+      // the removal reached the project, so both sides are empty again
+      assertThat(globalWorkspaceModel.hasStateToApplyToProject(projectWorkspaceModel)).isFalse()
+
+      ApplicationManager.getApplication().invokeAndWait {
+        (ProjectManager.getInstance() as ProjectManagerEx).closeAndDisposeAllProjects(false)
       }
     }
   }

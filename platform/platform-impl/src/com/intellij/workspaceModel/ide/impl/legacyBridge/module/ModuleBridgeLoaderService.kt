@@ -93,12 +93,17 @@ class ModuleBridgeLoaderService {
                       globalWsmAppliedToProjectWsm = globalWsmAppliedToProjectWsm,
                   )
               }
-              backgroundWriteAction {
-                  try {
-                      globalWorkspaceModel.applyStateToProject(project)
-                  } finally {
-                      globalWsmAppliedToProjectWsm.complete(project)
+              // without global libraries and SDKs on either side there is nothing to sync, and the write lock would stall the EDT
+              if (globalWorkspaceModel.hasStateToApplyToProject(workspaceModel)) {
+                  backgroundWriteAction {
+                      try {
+                          globalWorkspaceModel.applyStateToProject(project)
+                      } finally {
+                          globalWsmAppliedToProjectWsm.complete(project)
+                      }
                   }
+              } else {
+                  globalWsmAppliedToProjectWsm.complete(project)
               }
           } else {
               LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
@@ -132,8 +137,11 @@ class ModuleBridgeLoaderService {
                   project.serviceAsync<ProjectRootManager>()
                   ModuleDependencyIndex.getInstance(project)
               }
-              backgroundWriteAction {
-                  moduleDependencyIndex.setupTrackedLibrariesAndJdks()
+              // a project without modules has no dependencies to track; modules added later are tracked by the model change listener
+              if (workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).any()) {
+                  backgroundWriteAction {
+                      moduleDependencyIndex.setupTrackedLibrariesAndJdks()
+                  }
               }
           }
 
