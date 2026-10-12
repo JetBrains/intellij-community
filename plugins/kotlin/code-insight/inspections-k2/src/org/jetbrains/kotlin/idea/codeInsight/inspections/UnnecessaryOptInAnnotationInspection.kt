@@ -2,12 +2,14 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInspection.InspectionManager
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
@@ -343,16 +345,15 @@ private class OptInMarkerVisitor : KtTreeVisitor<MarkerCollector>() {
     }
 }
 
-private class RemoveAnnotationArgumentOrEntireEntry : LocalQuickFix {
+private class RemoveAnnotationArgumentOrEntireEntry : PsiUpdateModCommandQuickFix() {
     override fun getFamilyName(): String = KotlinBundle.message("inspection.unnecessary.opt_in.remove.marker.fix.family.name")
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val psiElement = descriptor.psiElement ?: return
-        if (psiElement is KtAnnotationEntry) {
-            psiElement.delete()
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+        if (element is KtAnnotationEntry) {
+            element.delete()
             return
         }
-        val valueArgument = psiElement.parentOfType<KtValueArgument>() ?: return
+        val valueArgument = element.parentOfType<KtValueArgument>() ?: return
         val annotationEntry = valueArgument.parentOfType<KtAnnotationEntry>() ?: return
         if (annotationEntry.valueArguments.size == 1) {
             annotationEntry.delete()
