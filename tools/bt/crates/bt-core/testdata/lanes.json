@@ -39,13 +39,17 @@
     "intellij.air.integrationTests.uiReal": ["ui-real"],
     "intellij.air.integrationTests.guiChat": ["gui-chat"]
   },
+  "laneWidePaths": {
+    "community/tools/vm": []
+  },
   "lanes": [
     {
       "name": "fast",
       "description": "all Air unit tests, excluding UI, GUI-chat, and headless integration (the default loop)",
       "target": [
         "//plugins/air/...",
-        "@community//tools/bt/..."
+        "@community//tools/bt/...",
+        "@community//tools/vm/..."
       ],
       "extra": [
         "--build_tests_only",

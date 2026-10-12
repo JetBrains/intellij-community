@@ -1,0 +1,15 @@
+load("//tools/vm:avl.bzl", "avl_crate")
+
+avl_crate(
+    portable = True,
+    test_data = [":testdata"],
+)
+
+# The scenario-trace goldens: the lane transcripts, the example bundles, the OTLP spec examples and the transcript of
+# the server's routes. Public, because the Kotlin contract test and the docs site hold their halves of the protocol
+# to the same files.
+filegroup(
+    name = "testdata",
+    srcs = glob(["testdata/**"]),
+    visibility = ["//visibility:public"],
+)

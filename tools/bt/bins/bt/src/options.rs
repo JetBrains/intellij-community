@@ -13,6 +13,7 @@ const USAGE: &str = r#"Agent-friendly wrapper over `bazel test`.
 Usage:
   bt <selector> [options] [-- <raw bazel args>...]
   bt --lane <name> [options] [-- <raw bazel args>...]
+  bt --module <jps module> [options] [-- <raw bazel args>...]
 
 Selectors (at most one):
   ClassName                  bare simple name; resolves the label and the FQN
@@ -25,6 +26,9 @@ Selectors (at most one):
   flow-rename-session        flow id; every generated suite that tells or walks the flow, as its lane
                              narrowed to those classes (launches a real IDE on this machine)
   rename-session             generated suite id; that one suite, the same way
+  --module <jps module>      the module's jps_test target, from .idea/modules.xml and its BUILD.bazel;
+                             refused when the module is neither in
+                             community/build/bazel-migrated-test-modules.txt nor inside an area
 
 To validate a change, run --lane fast rather than a directory: a subtree misses the modules that
 depend on the one you changed, while the lane reports everything your change does not reach as
@@ -41,7 +45,7 @@ asks for --lane, which is then accepted beside the selector.
 
 Options:
   --filter <FQN[#method]|pkg>
-                           filter for an explicit label (not valid with a wildcard pattern);
+                           filter for an explicit label or --module (not valid with a wildcard pattern);
                            an all-lowercase dotted value runs that whole package
   --shards <n>             shard count per target (default 2 for a run covering many targets,
                            6 for a single one; ignored when a filter pins one class, which
@@ -64,6 +68,7 @@ Examples:
   bt --lane fast
   bt //tests/ideaProjectStructure:projectStructureTests_test \
       --filter com.intellij.ideaProjectStructure.fast.KotlinFacetsConfigurationTest
+  bt --module intellij.platform.util.tests --filter com.intellij.openapi.util.io.FileUtilLightTest
 
 Exit codes: 0 green, 2 usage, 3 tests failed, 4 zero tests executed,
             5 build failure before tests, 6 infrastructure."#;
@@ -136,6 +141,9 @@ pub(crate) struct Args {
     pub(crate) selector: Option<String>,
     #[arg(long, allow_hyphen_values = true, value_parser = flag_value)]
     pub(crate) lane: Option<String>,
+    /// A JPS module name. It is a selector of its own, so it takes the place of the positional one and of `--lane`.
+    #[arg(long, allow_hyphen_values = true, value_parser = flag_value, conflicts_with_all = ["selector", "lane"])]
+    pub(crate) module: Option<String>,
     /// `--filter ''` is a caller asking for an empty filter, a different invocation from no `--filter`.
     #[arg(long, allow_hyphen_values = true, value_parser = flag_value)]
     pub(crate) filter: Option<String>,

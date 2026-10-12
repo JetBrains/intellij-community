@@ -1,0 +1,50 @@
+vm bench compare: 2 sessions, each against A
+  A develar-bench-aaaa1111  3f337093836d          dist 5f1c0d9e2b7a  modal 5/5, non-modal 5/5 valid  load 10.3
+  B develar-bench-bbbb2222  b0b0b0b0b0b0 (dirty)  dist 0b0b0b0b0b0b  modal 5/5, non-modal 5/5 valid  load 10.3
+the modal arm agrees within the noise: A 2336 ms, B 2341 ms (noise 35 ms)
+modal arm (median ms, or a count)                                  A       B     B-A
+events and report:
+  welcomeBecameVisible                                          2336    2341    +4.7
+classes:
+  pluginClasses                                                  157     157      +0
+non-modal arm (median ms, or a count)                              A       B     B-A
+events and report:
+  welcomeBecameVisible                                          2718    2446    -272
+  frameBecameVisible                                            1714    1543    -171
+  frameBecameInteractive                                        2528    2275    -253
+  totalDuration                                                 3195    2876    -320
+  classLoading.requests                                       267427  240684  -26743
+  classLoading.time                                             8317    7485    -832
+  classLoading.edtTime                                            42      38    -4.2
+classes:
+  classes.named                                                   32      29      -3
+  classes.hidden                                                   5       5      -1
+  classes.jdk                                                     12      11      -1
+  classes.jar                                                      4       4      +0
+  classes.platform                                                 4       4      +0
+  classes.plugins                                                 12      11      -1
+  pluginClasses                                                  159     143     -16
+  classes.named@frameBecameVisible                                26      23      -3
+  classes.named@welcomeBecameVisible                              30      27      -3
+  classes.named@welcome screen painted                            32      29      -3
+  classes.named@quit                                              32      29      -3
+platform spans:
+  bootstrap                                                       44      40    -4.4
+  app initialization                                             967     871     -97
+  ProjectManager.openAsync                                      1007     906    -101
+  project frame creating                                         218     196     -22
+  toolwindow creating                                             62      55    -6.2
+  toolwindow init pending tasks processing                         0       0      +0
+  restoreEditors                                                 211     190     -21
+  project post-startup dumb-aware activities                     681     613     -68
+welcome spans:
+  welcome screen painted                                        3225    2902    -322
+  welcome screen project opening                                1123    1011    -112
+  welcome left panel creating                                     73      66    -7.3
+  welcome recent projects collecting                              60      54      -6
+  welcome left toolbar first fill                                780     702     -78
+  welcome right tab creating                                      24      21    -2.4
+  welcome right tab body: feature ids                             20      18    -1.9
+  welcome right tab body: createContent trial.started.banner     0.1     0.1      +0
+  welcome right tab body: EDT build                               14      13    -1.4
+  readme opening check                                           0.5     0.5      +0

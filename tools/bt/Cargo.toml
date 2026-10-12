@@ -122,7 +122,7 @@ verbose_file_reads = "warn"
 
 # Features are additive, and rules_rs resolves one feature set per crate for the whole workspace, so every feature is
 # named here. A crate lists a dependency with `.workspace = true`, with one exception. The Air UI-lane workspace,
-# `plugins/air/tests/integration/vm-lane`, links `bt-junit` and `bt-core` through path dependencies, and rules_rs reads
+# `community/tools/vm`, links `bt-junit` and `bt-core` through path dependencies, and rules_rs reads
 # their `[dependencies]` without this workspace. Those two crates spell each normal dependency inline, with the version
 # and the features of this table.
 [workspace.dependencies]

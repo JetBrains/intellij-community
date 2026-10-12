@@ -1,0 +1,240 @@
+# The Air UI-lane tooling: the `vm` controller, `air-trace` and the guest agent. A cargo workspace that
+# Bazel also builds (`avl.MODULE.bazel`, `avl.bzl`). The crates of BT's workspace, `community/tools/bt`, and
+# `distpath` and `fscopy` of the dev-dist tools are path dependencies, and `avl.bzl` maps them to their
+# community targets.
+[workspace]
+resolver = "3"
+members = [
+    "crates/air-trace",
+    "crates/avl-affected",
+    "crates/avl-base",
+    "crates/avl-guest",
+    "crates/avl-host-sys",
+    "crates/avl-host-testkit",
+    "crates/avl-record",
+    "crates/avl-report",
+    "crates/avl-testkit",
+    "crates/avl-trace",
+    "crates/avl-trace-tools",
+    "crates/avl-vm",
+    "crates/avl-wire",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.93"
+publish = false
+
+# BEGIN rust-tools: generated from community/build/rust-tools/lints.toml by sync.mjs. Edit that file.
+[workspace.lints.rust]
+rust_2018_idioms = { level = "warn", priority = -1 }
+meta_variable_misuse = "warn"
+redundant_lifetimes = "warn"
+trivial_numeric_casts = "warn"
+unit_bindings = "warn"
+# Replaces clippy's redundant_pub_crate, which asks for the opposite; the code already writes pub(crate).
+unreachable_pub = "warn"
+unused_lifetimes = "warn"
+unused_macro_rules = "warn"
+unused_qualifications = "warn"
+unsafe_op_in_unsafe_fn = "deny"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+
+# Pedantic lints the workspaces do not follow.
+# No crate is published; an `# Errors` section would restate the refusal the body already names.
+missing_errors_doc = "allow"
+# Same as missing_errors_doc; the hits are test fixtures.
+missing_panics_doc = "allow"
+# A third of the hits are proper nouns (JUnit, VirtioFS, XQuartz); a word list needs a clippy.toml Bazel cannot scope.
+doc_markdown = "allow"
+# Nearly every pure fn qualifies; return_self_not_must_use stays on for builder methods.
+must_use_candidate = "allow"
+# A command future of 17-31 KB boxed moves the same bytes to the heap once per command.
+large_futures = "allow"
+# Length is not a defect; the long fns are command drivers.
+too_many_lines = "allow"
+# Command drivers take their settings, context and reporter explicitly.
+too_many_arguments = "allow"
+# Domain pairs such as pid/pgid and argv/args are the right names.
+similar_names = "allow"
+# Diagnostics and cache keys built once; write! would add an ignored fmt::Result per site.
+format_push_string = "allow"
+# Same as format_push_string: fold plus write! reads worse than map(format!).collect() for one-off strings.
+format_collect = "allow"
+# The compared names (.jar, .zip, .json, .webp) come from our own packers and recorders, always lower-case.
+case_sensitive_file_extension_comparisons = "allow"
+# Counts and durations turned into f64 for ratios and seconds displays stay far below 2^53.
+cast_precision_loss = "allow"
+# `x.clone_from(&y)` reads worse than `x = y.clone()`, and no hit is on a path where the allocation matters.
+assigning_clones = "allow"
+# A local type, use or static beside its only use reads better than one hoisted to the top of the block.
+items_after_statements = "allow"
+# serde's skip_serializing_if calls fn(&T), so the is_false/is_zero/is_unset helpers must borrow.
+trivially_copy_pass_by_ref = "allow"
+# The flagged fields are serde document keys; renaming them changes the documents.
+struct_field_names = "allow"
+
+# Nursery lints, by name: the group changes from release to release, and these find bugs or fix themselves.
+branches_sharing_code = "warn"
+clear_with_drain = "warn"
+collection_is_never_read = "warn"
+debug_assert_with_mut_call = "warn"
+derive_partial_eq_without_eq = "warn"
+equatable_if_let = "warn"
+fallible_impl_from = "warn"
+iter_on_empty_collections = "warn"
+iter_on_single_items = "warn"
+iter_with_drain = "warn"
+literal_string_with_formatting_args = "warn"
+missing_const_for_fn = "warn"
+needless_collect = "warn"
+needless_pass_by_ref_mut = "warn"
+non_send_fields_in_send_ty = "warn"
+path_buf_push_overwrite = "warn"
+read_zero_byte_vec = "warn"
+redundant_clone = "warn"
+set_contains_or_insert = "warn"
+significant_drop_in_scrutinee = "warn"
+string_lit_as_bytes = "warn"
+trait_duplication_in_bounds = "warn"
+trivial_regex = "warn"
+type_repetition_in_bounds = "warn"
+unnecessary_struct_initialization = "warn"
+unused_peekable = "warn"
+unused_rounding = "warn"
+use_self = "warn"
+useless_let_if_seq = "warn"
+while_float = "warn"
+
+# Restriction lints, by name.
+allow_attributes_without_reason = "warn"
+assertions_on_result_states = "warn"
+dbg_macro = "warn"
+empty_drop = "warn"
+get_unwrap = "warn"
+iter_over_hash_type = "warn"
+lossy_float_literal = "warn"
+map_err_ignore = "warn"
+mem_forget = "warn"
+mod_module_files = "warn"
+multiple_unsafe_ops_per_block = "warn"
+rc_mutex = "warn"
+rest_pat_in_fully_bound_structs = "warn"
+string_lit_chars_any = "warn"
+tests_outside_test_module = "warn"
+todo = "warn"
+try_err = "warn"
+undocumented_unsafe_blocks = "warn"
+unimplemented = "warn"
+unnecessary_safety_comment = "warn"
+unnecessary_safety_doc = "warn"
+unused_result_ok = "warn"
+verbose_file_reads = "warn"
+# END rust-tools
+
+# Features are additive, and rules_rs resolves one feature set per crate for the whole workspace, so every
+# feature is named here and nowhere else. A crate lists a dependency with `.workspace = true` only.
+[workspace.dependencies]
+# Workspace crates.
+air-trace = { path = "crates/air-trace" }
+avl-affected = { path = "crates/avl-affected" }
+avl-base = { path = "crates/avl-base" }
+avl-guest = { path = "crates/avl-guest" }
+avl-host-sys = { path = "crates/avl-host-sys" }
+avl-host-testkit = { path = "crates/avl-host-testkit" }
+avl-report = { path = "crates/avl-report" }
+avl-testkit = { path = "crates/avl-testkit" }
+avl-trace = { path = "crates/avl-trace" }
+avl-trace-tools = { path = "crates/avl-trace-tools" }
+avl-wire = { path = "crates/avl-wire" }
+
+# Crates of BT's workspace and of the dev-dist tools. Their own dependencies come from the `[workspace.dependencies]`
+# of their workspace.
+bt-core = { path = "../bt/crates/bt-core" }
+bt-junit = { path = "../bt/crates/bt-junit" }
+refusal = { path = "../bt/crates/refusal" }
+distpath = { path = "../../build/dev-dist-tools/crates/distpath" }
+fscopy = { path = "../../build/dev-dist-tools/crates/fscopy" }
+
+# Documents and errors.
+anyhow = "1.0.104"
+monostate = "1.0.3"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = { version = "1.0.151", features = ["raw_value"] }
+serde_path_to_error = "0.1.20"
+thiserror = "2.0.21"
+
+# Command line and terminal.
+anstyle = "1.0.14"
+anstyle-lossy = "1.1.5"
+clap = { version = "4.6.7", features = ["derive", "env", "wrap_help"] }
+console = "0.16.6"
+terminal-colorsaurus = "1.0.3"
+
+# Formats.
+base64 = "0.23.1"
+form_urlencoded = "1.2.2"
+hex = "0.4.3"
+image-webp = "0.2.4"
+jiff = "0.2.37"
+# The recorder's H.264 encoder, Cisco's sources built by `cc` (the default `source` feature).
+openh264 = "0.9.8"
+png = "0.18.1"
+sha2 = "0.11.0"
+xxhash-rust = { version = "0.8.18", features = ["xxh3"] }
+# Deflate through flate2 over zlib-rs only: the packer deflates at level 6, which zip gives to flate2 whenever it is
+# built in, so `deflate`'s zopfli encoder would only add a crate to the guest agent.
+zip = { version = "8.6.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+
+# System.
+crossbeam-channel = "0.5.17"
+glob = "0.3.4"
+libc = "0.2.189"
+nix = { version = "0.31.3", features = ["fs", "process", "signal", "term", "user"] }
+notify = "8.2.0"
+signal-hook = "0.4.4"
+tempfile = "3.27.0"
+# The Windows host half of the controller: Job Objects for a child's process tree, console control events, owner-only
+# DACLs for private files, and handle-based file identity. Already in the lock through tokio and tempfile.
+windows-sys = { version = "0.61.2", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Security_Authorization",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Console",
+    "Win32_System_JobObjects",
+    "Win32_System_Threading",
+] }
+uuid = { version = "1.26.1", features = ["v4"] }
+walkdir = "2.5.0"
+x11rb = { version = "0.14.0", features = ["shm"] }
+
+# Async and HTTP.
+async-trait = "0.1.92"
+axum = "0.8.9"
+bytes = "1.12.1"
+futures = "0.3.34"
+http = "1.5.0"
+http-body-util = "0.1.5"
+http-range-header = "0.4.2"
+hyper = { version = "1.11.1", features = ["client", "http1", "server"] }
+hyper-util = { version = "0.1.21", features = ["client-legacy", "http1", "server", "service", "tokio"] }
+mime_guess = "2.0.5"
+regex = "1.13.1"
+tokio = { version = "1.53.1", features = ["full"] }
+tokio-util = { version = "0.7.19", features = ["io", "rt"] }
+tower = { version = "0.5.3", features = ["util"] }
+tower-http = { version = "0.7.1", features = ["fs", "set-header"] }
+tower-service = "0.3.3"
+
+# Tests.
+expect-test = "1.5.1"
+pretty_assertions = "1.4.1"
+proptest = "1.11.0"
+strip-ansi-escapes = "0.2.1"
+
+[profile.release]
+debug = "line-tables-only"

@@ -1,0 +1,25 @@
+load("//tools/vm:avl.bzl", "avl_crate")
+
+avl_crate(
+    closure = True,
+    # The Docker worker's image definition and the Lima template of its engine, which `worker::docker` and
+    # `worker::lima` embed (`include_str!`).
+    compile_data = [
+        "//tools/vm:docker/Dockerfile",
+        "//tools/vm:docker/air-display",
+        "//tools/vm:docker/engine.lima.yaml",
+    ],
+    portable = True,
+    test_data = [
+        "//tools/vm:docker.MODULE.bazel",
+        "//tools/vm:lima.MODULE.bazel",
+        "//tools/vm:provision/versions.env",
+        "//tools/vm:tart.MODULE.bazel",
+        "//tools/vm/crates/avl-testkit:avl-fake-bin",
+    ] + glob(["testdata/**"]),
+    # The Windows fakes are copies of this binary; see `avl_testkit::fakebin`.
+    test_env = {
+        "AVL_FAKE": "$(rlocationpath //tools/vm/crates/avl-testkit:avl-fake-bin)",
+    },
+    test_size = "medium",
+)

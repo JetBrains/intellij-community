@@ -1,0 +1,98 @@
+# The Docker engine of a Docker pool on a macOS host: a Lima VM with a rootful `dockerd` (ADR 0183).
+#
+# The vm-lane controller embeds this file (`crates/avl-worker/src/lima.rs`). It replaces each marker, an upper-case
+# name between two double at signs, with a setting. It writes the result to `<runtime root>/lima-engine.yaml` and
+# runs `limactl start` with it. A string setting arrives quoted. The `{{.Dir}}` and `{{.User}}` placeholders are
+# Lima's own, and Lima fills them. The guest builds nothing, so it needs no `docker-buildx`: the pinned CLI on the
+# host carries the pinned plugin, and BuildKit runs in `dockerd`.
+#
+# The digest of the rendered file is the engine's identity. A change here, to the home, to a size or to an image pin
+# makes the engine VM again at the next start, unless another holder leases a container of the pool. A checkout
+# switch changes nothing here, because the VM mounts the whole home.
+#
+# The reference is Lima's `templates/docker-rootful.yaml`. This template installs Docker from the Ubuntu archive,
+# not from `get.docker.com`, and it pins the cloud image by digest (`LIMA_BASE_IMAGE_*` in the skill's
+# `provision/versions.env`).
+#
+# The cloud image is Ubuntu 26.04, so Lima serves SSH over vsock (ADR 0191).
+minimumLimaVersion: 2.0.2
+
+vmType: vz
+mountType: virtiofs
+cpus: @@CPUS@@
+memory: @@MEMORY@@
+disk: @@DISK@@
+
+images:
+- location: @@IMAGE_ARM64_URL@@
+  arch: aarch64
+  digest: @@IMAGE_ARM64_DIGEST@@
+- location: @@IMAGE_X86_64_URL@@
+  arch: x86_64
+  digest: @@IMAGE_X86_64_DIGEST@@
+
+# Lima's own `_images/ubuntu-26.04.yaml` sets this. The first-boot rename of the NIC fails on 26.04 (LP: #2136392),
+# and without it `systemd-networkd-wait-online` blocks the boot for 120 s.
+param:
+  internal_netplanOptional: "true"
+
+# Lima falls back to its userspace network stack only when the guest cannot serve SSH over vsock.
+ssh:
+  overVsock: true
+
+# The home of the user, read-only, at its host path, as Lima's default template mounts it. It holds the repository
+# and the Bazel output user root, the two read-only shares of a Docker worker. `docker create --mount source=<host
+# path>` names a path of the engine VM, so the same path binds the same bytes.
+mounts:
+- location: @@HOME@@
+  mountPoint: @@HOME@@
+  writable: false
+
+# Docker manages its own containerd, so Lima starts none.
+containerd:
+  system: false
+  user: false
+
+# Lima runs every `yq` entry before every `system` entry, whatever the order of this list. The list is in that
+# order, so it reads as it runs: the two files exist before `docker.io` installs and starts the socket.
+provision:
+# The Lima user owns the socket, so the port forward of the host agent can open it.
+- mode: yq
+  path: /etc/systemd/system/docker.socket.d/override.conf
+  format: ini
+  expression: .Socket.SocketUser="{{.User}}"
+- mode: yq
+  path: /etc/docker/daemon.json
+  expression: |
+    .features.cdi = true |
+    .features.containerd-snapshotter = true
+- mode: system
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
+    command -v dockerd >/dev/null 2>&1 && exit 0
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install -y --no-install-recommends docker.io
+
+probes:
+- script: |
+    #!/bin/bash
+    set -eux -o pipefail
+    if ! timeout 30s bash -c "until command -v docker >/dev/null 2>&1; do sleep 3; done"; then
+      echo >&2 "docker is not installed yet"
+      exit 1
+    fi
+    if ! timeout 30s bash -c "until pgrep dockerd; do sleep 3; done"; then
+      echo >&2 "dockerd is not running"
+      exit 1
+    fi
+    if ! timeout 30s bash -c "until [ -S /var/run/docker.sock ]; do sleep 3; done"; then
+      echo >&2 "dockerd does not listen on /var/run/docker.sock"
+      exit 1
+    fi
+  hint: See "/var/log/cloud-init-output.log" in the guest
+
+portForwards:
+- guestSocket: /var/run/docker.sock
+  hostSocket: "{{.Dir}}/sock/docker.sock"

@@ -1,0 +1,23 @@
+[package]
+name = "avl-host-testkit"
+description = "Host-side test fixtures of the controller crates: the fake guest channels, the pool environment over the Tart fake, the fake host git, the pinned-Tart Bazel and the parked-daemon probe."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+async-trait.workspace = true
+avl-base.workspace = true
+avl-host-sys.workspace = true
+avl-testkit.workspace = true
+avl-wire.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true

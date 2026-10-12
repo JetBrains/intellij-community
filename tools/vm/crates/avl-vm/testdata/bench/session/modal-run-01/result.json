@@ -1,0 +1,78 @@
+{
+  "arm": "modal",
+  "kind": "measured",
+  "index": 1,
+  "dir": "modal-run-01",
+  "launch": {
+    "distDigest": "5f1c0d9e2b7a4c3e8d6f1a0b9c8e7d6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d",
+    "load": {
+      "one": 2.4,
+      "five": 2.1,
+      "fifteen": 1.9,
+      "cpus": 16
+    },
+    "failure": null,
+    "terminated": false,
+    "ideExit": 0,
+    "waitedMs": 9120,
+    "openRequestUs": null
+  },
+  "valid": true,
+  "reason": null,
+  "notes": [
+    "no startup-stats.json",
+    "no class-load.log"
+  ],
+  "metrics": {
+    "pluginClasses": 157.0,
+    "welcomeBecameVisible": 2336.0
+  },
+  "classesByPlugin": {
+    "Docker": 8,
+    "Lombook Plugin": 7,
+    "com.intellij": 68,
+    "com.intellij.dfa.analysis": 4,
+    "com.intellij.grid": 1,
+    "com.intellij.platform.daemon": 5,
+    "com.intellij.platform.images": 4,
+    "com.intellij.platform.ssh": 4,
+    "com.intellij.platform.vcs": 5,
+    "com.jetbrains.gateway": 12,
+    "com.jetbrains.performancePlugin": 9,
+    "com.jetbrains.station": 13,
+    "intellij.webp": 7,
+    "org.intellij.plugins.markdown": 1,
+    "org.jetbrains.completion.full.line": 3,
+    "org.jetbrains.plugins.docker.gateway": 6
+  },
+  "classesByModule": {
+    "intellij.clouds.docker": 6,
+    "intellij.clouds.docker.gateway.json": 5,
+    "intellij.gateway.core": 8,
+    "intellij.gateway.daemon.bridge": 4,
+    "intellij.grid.impl": 1,
+    "intellij.llmInstaller": 3,
+    "intellij.lombok": 7,
+    "intellij.performanceTesting.rdct": 4,
+    "intellij.platform.daemon.connection": 2,
+    "intellij.platform.daemon.plugins": 3,
+    "intellij.platform.debugger.impl.ui": 1,
+    "intellij.platform.diagnostic.errorAutoReport.frontend": 6,
+    "intellij.platform.eel.tcp": 5,
+    "intellij.platform.ide.nonModalWelcomeScreen": 1,
+    "intellij.platform.ijent.ssh": 4,
+    "intellij.platform.kernel.backend": 4,
+    "intellij.platform.kernel.impl": 2,
+    "intellij.platform.searchEverywhere": 1,
+    "intellij.platform.settings.local": 5,
+    "intellij.platform.vcs.impl": 1,
+    "intellij.platform.vcs.impl.shared": 42,
+    "intellij.platform.vcs.log.impl": 4,
+    "intellij.rd.platform": 1,
+    "intellij.station.core": 13
+  },
+  "edtSamples": null,
+  "edtFrames": [],
+  "triggers": [],
+  "defineShare": null
+}

@@ -1,0 +1,55 @@
+[package]
+name = "air-trace"
+description = "The `air-trace` binary: `pack`, `serve` with the docs site, and `plan`."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "air-trace"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow.workspace = true
+avl-affected.workspace = true
+avl-base.workspace = true
+avl-host-sys.workspace = true
+avl-trace.workspace = true
+avl-trace-tools.workspace = true
+avl-wire.workspace = true
+axum.workspace = true
+bt-core.workspace = true
+bt-junit.workspace = true
+bytes.workspace = true
+clap.workspace = true
+fscopy.workspace = true
+futures.workspace = true
+hex.workspace = true
+http.workspace = true
+http-range-header.workspace = true
+jiff.workspace = true
+mime_guess.workspace = true
+notify.workspace = true
+refusal.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tempfile.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+walkdir.workspace = true
+zip.workspace = true
+
+[dev-dependencies]
+avl-testkit.workspace = true
+expect-test.workspace = true
+pretty_assertions.workspace = true
+
+[target.'cfg(unix)'.dev-dependencies]
+nix.workspace = true

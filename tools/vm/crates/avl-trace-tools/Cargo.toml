@@ -1,0 +1,29 @@
+[package]
+name = "avl-trace-tools"
+description = "The tools over scenario traces: the packer, the discovery of bundles and the viewer's URLs."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+avl-trace.workspace = true
+form_urlencoded.workspace = true
+fscopy.workspace = true
+glob.workspace = true
+hex.workspace = true
+jiff.workspace = true
+serde.workspace = true
+sha2.workspace = true
+tempfile.workspace = true
+walkdir.workspace = true
+zip.workspace = true
+
+[dev-dependencies]
+avl-testkit.workspace = true
+pretty_assertions.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true

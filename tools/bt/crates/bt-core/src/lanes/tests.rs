@@ -475,3 +475,41 @@ fn the_lane_table_parses_with_the_paths_the_join_reads() {
     );
     assert_eq!(lanes().catalog_lane_names(), ["GUI_CHAT", "UI", "UI_REAL"]);
 }
+
+/// A harness directory holds itself and every path under it, but not a sibling that shares its name as a prefix. The
+/// longer of two directories answers, and a table without the key has no harness directory.
+#[test]
+fn a_lane_wide_path_holds_its_directory_and_the_longer_directory_answers() {
+    let table = Lanes::parse(
+        r#"{
+          "laneWidePaths": { "tools/vm": [], "tools/vm/crates/leaf": ["ui"] },
+          "lanes": [ { "name": "ui", "target": "//ui:ui_test", "extra": [] } ]
+        }"#,
+    )
+    .expect("the table parses");
+    let lanes_of = |path: &str| {
+        table
+            .lane_wide_path_lanes(path)
+            .map(|(directory, lanes)| (directory, lanes.to_vec()))
+    };
+    assert_eq!(lanes_of("tools/vm"), Some(("tools/vm", vec![])));
+    assert_eq!(lanes_of("tools/vm/crates/vm/src/lib.rs"), Some(("tools/vm", vec![])));
+    assert_eq!(
+        lanes_of("tools/vm/crates/leaf/src/lib.rs"),
+        Some(("tools/vm/crates/leaf", vec!["ui".to_owned()]))
+    );
+    assert_eq!(lanes_of("tools/vm2/src/lib.rs"), None);
+    assert_eq!(lanes_of("tools/bt/README.md"), None);
+    let bare = Lanes::parse(r#"{ "lanes": [ { "name": "ui", "target": "//ui:ui_test", "extra": [] } ] }"#).expect("the table parses");
+    assert_eq!(bare.lane_wide_path_lanes("tools/vm/src/lib.rs"), None);
+    assert_eq!(bare.lane_wide_paths().count(), 0);
+}
+
+/// The fixture table names the controller workspace as the harness of every lane, as the Air table does.
+#[test]
+fn the_fixture_names_the_controller_workspace_as_a_lane_wide_path() {
+    assert_eq!(
+        lanes().lane_wide_paths().collect::<Vec<_>>(),
+        [("community/tools/vm", &[] as &[String])]
+    );
+}

@@ -1,0 +1,35 @@
+# Tart, the hypervisor of the UI-lane controller's Tart backend. The pin removes the manual install.
+#
+# No `BUILD` file may name `@air_tart`. The controller asks for it with `bazel cquery` at its first Tart
+# command (`require_available` in `crates/avl-vm/src/worker/tart.rs`), and that request is the only fetch. A
+# label in `data` or `deps` puts the archive into the analysis of `//...`. Then every IDE sync on a Mac
+# downloads it.
+#
+# The archive is the GitHub release `tart.tar.gz`, byte-identical, on the Space file mirror. The cache
+# redirector does not serve `github.com/cirruslabs/tart`, and `bazel_downloader.cfg` routes
+# `packages.jetbrains.team/files/` through the redirector.
+#
+# To bump the pin:
+#   1. Download `tart.tar.gz` of the release and check it against `tart_<version>_checksums.txt`.
+#   2. Upload it to `tart/<version>/` in https://jetbrains.team/p/ij/packages/files/intellij-build-dependencies.
+#   3. Change `AIR_TART_VERSION` and `sha256` below.
+# `the_pinned_tart_meets_the_floor` (`crates/avl-vm/src/worker/tart/pin_tests.rs`) keeps the pin at or above
+# `MINIMUM_VERSION` in `crates/avl-vm/src/worker/tart.rs`.
+AIR_TART_VERSION = "2.37.0"
+
+air_tart_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+air_tart_archive(
+    name = "air_tart",
+    # Only the executable is a target. The bundle holds `UPW Tart.icns`, and a label cannot hold a space.
+    # The executable finds its bundle, with the signature and the provisioning profile, from its real path.
+    build_file_content = """
+filegroup(
+    name = "tart",
+    srcs = ["tart.app/Contents/MacOS/tart"],
+    visibility = ["//visibility:public"],
+)
+""",
+    sha256 = "d531752c4dad5d4214ac7ff540cefc2647df1fca2338d413d3c01754f54b356b",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/tart/%s/tart.tar.gz" % AIR_TART_VERSION,
+)

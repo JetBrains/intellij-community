@@ -1,0 +1,107 @@
+#!/bin/sh
+# The entrypoint of a Docker Linux worker. The image has no systemd, so this script starts the X display and the
+# window manager, and then it keeps the container alive.
+# The controller creates the container with `--init`, so this script is the only child of Docker's init process.
+# That init process forwards a SIGTERM from `docker stop` to this script.
+#
+# The display is `AIR_VM_DISPLAY` (default `:88`). The screen is `AIR_VM_SCREEN` (default `1920x1080x24`).
+# Xvfb and fluxbox run as the worker account. `-ac` turns off the X access control,
+# so the IDE of the worker account connects without an `.Xauthority` file.
+# The script exits 1 when the display or the window manager does not come up, or when one of them stops later.
+# Then the container stops, and the controller starts it again on the next lease operation.
+set -u
+
+display="${AIR_VM_DISPLAY:-:88}"
+screen="${AIR_VM_SCREEN:-1920x1080x24}"
+user=admin
+home=/home/admin
+
+fail() {
+  echo "air-display: $*" >&2
+  exit 1
+}
+
+case "$display" in
+  :*[!0-9]* | :) fail "AIR_VM_DISPLAY must be like :88, and it is '$display'" ;;
+  :[0-9]*) ;;
+  *) fail "AIR_VM_DISPLAY must be like :88, and it is '$display'" ;;
+esac
+case "$screen" in
+  *[!0-9x]* | x* | *x | *xx* | *x*x*x*) fail "AIR_VM_SCREEN must be like 1920x1080x24, and it is '$screen'" ;;
+  *x*x*) ;;
+  *) fail "AIR_VM_SCREEN must be like 1920x1080x24, and it is '$screen'" ;;
+esac
+
+xvfb_pid=
+fluxbox_pid=
+sleeper_pid=
+
+stop_children() {
+  for pid in $sleeper_pid $fluxbox_pid $xvfb_pid; do
+    kill "$pid" 2>/dev/null
+  done
+  wait 2>/dev/null
+}
+
+on_signal() {
+  stop_children
+  exit 0
+}
+trap on_signal TERM INT
+
+# Wait one second, and stay responsive to a signal: a trapped signal interrupts `wait`, not a foreground `sleep`.
+pause() {
+  sleep 1 &
+  sleeper_pid=$!
+  wait "$sleeper_pid"
+  sleeper_pid=
+}
+
+# Called in a background subshell. `exec` makes the subshell the program itself, so `$!` is the pid of the program.
+as_worker() {
+  exec setpriv --reuid="$user" --regid="$user" --init-groups env HOME="$home" USER="$user" DISPLAY="$display" "$@"
+}
+
+# Xvfb makes its socket directory only as root. The image has no systemd-tmpfiles to make it.
+mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
+
+as_worker Xvfb "$display" -ac -screen 0 "$screen" -nolisten tcp &
+xvfb_pid=$!
+export DISPLAY="$display"
+
+tries=0
+until xdpyinfo >/dev/null 2>&1; do
+  kill -0 "$xvfb_pid" 2>/dev/null || { stop_children; fail "Xvfb $display exited before the display answered"; }
+  tries=$((tries + 1))
+  [ "$tries" -lt 60 ] || { stop_children; fail "the display $display did not answer xdpyinfo in 60 s"; }
+  pause
+done
+
+as_worker fluxbox &
+fluxbox_pid=$!
+
+wm_registered() {
+  case "$(xprop -root _NET_SUPPORTING_WM_CHECK 2>/dev/null)" in
+    *'window id # 0x'*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+tries=0
+until wm_registered; do
+  kill -0 "$fluxbox_pid" 2>/dev/null || { stop_children; fail "fluxbox exited before it registered on $display"; }
+  tries=$((tries + 1))
+  [ "$tries" -lt 60 ] || {
+    stop_children
+    fail "no window manager registered _NET_SUPPORTING_WM_CHECK on $display in 60 s"
+  }
+  pause
+done
+
+echo "air-display: $display $screen is ready, with fluxbox"
+
+while kill -0 "$xvfb_pid" 2>/dev/null && kill -0 "$fluxbox_pid" 2>/dev/null; do
+  pause
+done
+stop_children
+fail "Xvfb or fluxbox on $display stopped"

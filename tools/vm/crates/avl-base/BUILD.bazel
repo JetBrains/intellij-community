@@ -1,0 +1,8 @@
+load("//tools/vm:avl.bzl", "avl_crate")
+
+avl_crate(
+    compile_data = [
+        "//tools/vm:provision/versions.env",
+    ],
+    portable = True,
+)

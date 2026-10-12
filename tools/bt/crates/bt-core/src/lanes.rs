@@ -36,9 +36,10 @@ use crate::selector::Resolution;
 /// - The suite catalog, all three or none ([`Catalog`]): `flowProfileDir`, where the flow catalog generator writes
 ///   one document per generated suite; `flowTextDir`, where the flow text generator writes one plain-text rendering
 ///   per story flow; `authoredSuitesFile`, the committed copy of the authored suites.
-/// - `specDir` and `laneWideModules`: what the Air UI-lane controller joins a changed path through: where the
-///   specs live, and every JPS module that holds the lane harness, with the lanes it serves (`[]` is every lane).
-///   This crate reads neither.
+/// - `specDir`, `laneWideModules` and `laneWidePaths`: what the Air UI-lane controller joins a changed path
+///   through. `specDir` is where the specs live. `laneWideModules` names every JPS module that holds the lane
+///   harness, with the lanes it serves (`[]` is every lane). `laneWidePaths` names every harness directory that no
+///   module of the area holds, by its repo-relative path, in the same shape. This crate reads none of them.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Lanes {
@@ -62,6 +63,8 @@ pub struct Lanes {
     excluded_test_libs: Vec<String>,
     #[serde(default)]
     lane_wide_modules: BTreeMap<String, Vec<String>>,
+    #[serde(default)]
+    lane_wide_paths: BTreeMap<String, Vec<String>>,
     lanes: Vec<LaneSpec>,
 }
 
@@ -230,6 +233,24 @@ impl Lanes {
         self.lane_wide_modules
             .iter()
             .map(|(module, lanes)| (module.as_str(), lanes.as_slice()))
+    }
+
+    /// The harness directory that holds a repo-relative path, with the lanes it serves (`[]` meaning every lane), or
+    /// `None` when no harness directory holds the path. A directory holds itself and every path under it. When two
+    /// directories hold the path, the longer one answers.
+    pub fn lane_wide_path_lanes(&self, path: &str) -> Option<(&str, &[String])> {
+        self.lane_wide_paths()
+            .filter(|(directory, _)| {
+                path.strip_prefix(directory)
+                    .is_some_and(|rest| rest.is_empty() || rest.starts_with('/'))
+            })
+            .max_by_key(|(directory, _)| directory.len())
+    }
+
+    pub fn lane_wide_paths(&self) -> impl Iterator<Item = (&str, &[String])> {
+        self.lane_wide_paths
+            .iter()
+            .map(|(directory, lanes)| (directory.as_str(), lanes.as_slice()))
     }
 
     /// The tags a broad local run excludes: the categories, then the dedicated suites.

@@ -1,0 +1,14 @@
+load("//build/rust-tools:defs.bzl", "rust_tool_binary")
+
+# The `rust_test_junit` rule of `//build/rust-tools:rust_test_junit.bzl` runs this binary in place of the test binary
+# that it wraps. The targets are the binary, its unit test `libtest-junit-wrapper_test` and its clippy test.
+rust_tool_binary(
+    name = "libtest-junit-wrapper",
+    edition = "2021",
+    lints = "//build/dev-dist-tools:lints",
+    deps = [
+        "@ddt//:serde",
+        "@ddt//:serde_json",
+        "@rules_rust//tools/runfiles",
+    ],
+)

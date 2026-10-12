@@ -1,0 +1,26 @@
+[package]
+name = "avl-base"
+description = "The controller's base: refusals and exits, the envelope, settings, phases, ids, the journal and history, portable file publication."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+avl-trace-tools.workspace = true
+avl-wire.workspace = true
+jiff.workspace = true
+refusal.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+avl-testkit.workspace = true
+pretty_assertions.workspace = true
+tempfile.workspace = true

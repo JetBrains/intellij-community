@@ -52,11 +52,13 @@ rust_lints_as_errors = rule(
     },
 )
 
-# The rendered `[workspace.lints]` of the community workspaces: the dev-dist tools (`@ddt`) and BT (`@bt`). A `Label`
-# resolves each hub through the repository mapping of this module, so the ultimate root can name them too.
+# The rendered `[workspace.lints]` of the community workspaces: the dev-dist tools (`@ddt`), BT (`@bt`) and the Air
+# UI-lane controller (`@avl`). A `Label` resolves each hub through the repository mapping of this module, so the
+# ultimate root can name them too.
 COMMUNITY_WORKSPACE_LINTS = [
     Label("@ddt//:workspace_cargo_lints"),
     Label("@bt//:workspace_cargo_lints"),
+    Label("@avl//:workspace_cargo_lints"),
 ]
 
 _LINT_FIELDS = ["rustc_lint_flags", "clippy_lint_flags", "rustdoc_lint_flags"]
@@ -122,12 +124,15 @@ def _cross_module(dep, cross_module_crates):
         return dep
     return cross_module_crates.get(target.rpartition("-")[0], dep)
 
-def _cross_module_deps(dep_data, kinds, cross_module_crates):
+def _cross_module_deps(dep_data, kinds, cross_module_crates, as_labels = False):
     """What `all_crate_deps` of a hub returns for `kinds` of `dep_data`, with `cross_module_crates` substituted.
 
     That function returns a list plus a `select`, which a macro cannot rewrite, so the merge is done here from the
     `DEP_DATA` entry. A dependency every platform shares stays out of the `select`, because a label in both fails.
+    With `as_labels`, each dependency and each platform condition is a `Label` of this module, for a caller in another
+    module.
     """
+    resolve = Label if as_labels else (lambda dep: dep)
     shared = {}
     by_platform = {}
     for kind in kinds:
@@ -141,11 +146,26 @@ def _cross_module_deps(dep_data, kinds, cross_module_crates):
     for platform, deps in sorted(by_platform.items()):
         only_here = sorted([dep for dep in deps if dep not in shared])
         if only_here:
-            branches[platform] = only_here
+            branches[resolve(platform)] = [resolve(dep) for dep in only_here]
+    shared_deps = [resolve(dep) for dep in sorted(shared)]
     if not branches:
-        return sorted(shared)
+        return shared_deps
     branches["//conditions:default"] = []
-    return sorted(shared) + select(branches)
+    return shared_deps + select(branches)
+
+def rust_tool_test_deps(hub, package, cross_module_crates):
+    """The dependencies that the unit test of the crate in `package` adds to those of the crate.
+
+    A package of another module needs them to run the unit test of the crate again with `crate =`, for example with
+    data that only that module has. Each dependency is a `Label` of this module, so it resolves in the module of the
+    hub, and a crate of `cross_module_crates` replaces its hub copy as it does in `rust_tool_crate`.
+
+    Args:
+      hub: the hub of `rust_tool_hub`, with its `dep_data`.
+      package: the package of the crate, such as `tools/vm/crates/air-trace`.
+      cross_module_crates: the crates of another workspace, as `rust_tool_crate` takes them.
+    """
+    return _cross_module_deps(hub.dep_data[package], ["dev_deps"], cross_module_crates, as_labels = True)
 
 _PLATFORMS = "//command_line_option:platforms"
 

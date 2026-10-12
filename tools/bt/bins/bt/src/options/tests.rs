@@ -170,3 +170,33 @@ fn the_help_lists_the_lanes_of_the_areas() {
     let none = usage(&bt_core::Areas::default());
     assert!(none.contains("Lanes: none, because bt.json names no area."), "{none}");
 }
+
+/// `--module` is a selector of its own, so a second selector or a lane beside it is a usage refusal.
+#[test]
+fn module_conflicts_with_a_selector_and_a_lane() {
+    for argv in [
+        ["--module", "intellij.x.tests", "FooTest"],
+        ["--module", "intellij.x.tests", "--lane=fast"],
+    ] {
+        let failure = refusal(parse_args(argv, areas()));
+        assert_eq!(failure.exit, exit::USAGE, "{argv:?}");
+        assert!(failure.message.contains("--module"), "{argv:?}: {}", failure.message);
+    }
+    let missing = refusal(parse_args(["--module", "--json"], areas()));
+    assert!(missing.message.contains("value is required"), "{}", missing.message);
+
+    let args = run(&["--module", "intellij.x.tests", "--filter", "a.b.FooTest"]);
+    assert_eq!(args.module.as_deref(), Some("intellij.x.tests"));
+    assert_eq!(args.filter.as_deref(), Some("a.b.FooTest"));
+    assert_eq!(args.selector, None);
+}
+
+#[test]
+fn usage_text_names_the_module_selector() {
+    let text = usage(areas());
+    assert!(text.contains("bt --module <jps module> [options]"), "{text}");
+    assert!(
+        text.contains("community/build/bazel-migrated-test-modules.txt nor inside an area"),
+        "{text}"
+    );
+}

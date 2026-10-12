@@ -15,7 +15,8 @@ exports_files(
 )
 
 # The lint tables of the community workspaces, as Bazel reads them. `//build/dev-dist-tools:lints_equal_check` of the
-# ultimate root adds the Air UI-lane workspace. The test makes `bazel test --build_tests_only` analyze the check too.
+# ultimate root checks the same tables from that root. The test makes `bazel test --build_tests_only` analyze the check
+# too.
 rust_lints_equal_check(
     name = "lints_equal_check",
     targets = COMMUNITY_WORKSPACE_LINTS,

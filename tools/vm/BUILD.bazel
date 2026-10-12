@@ -1,0 +1,251 @@
+# The Air UI lane, in Rust: the cargo workspace next to this file, which Bazel builds through `avl.MODULE.bazel`
+# and `avl.bzl`. The crate map is `README.md`. BT, `bt` and its crates, is the community workspace
+# `community/tools/bt`; the crates here link `bt-core` and `bt-junit` from it.
+#
+# The crates under `crates/` fall into groups, and the split between them is the point of the workspace rather
+# than a tidy-up. A crate exists when two binaries share it, or when it is the frozen-bytes engine of one binary with
+# its own goldens (`avl-report`); code that one binary uses is a module of that binary:
+#
+#   avl-wire, avl-trace          the documents that cross a boundary, each declared once; they depend on no sibling
+#   avl-trace-tools              the packer, the discovery of bundles and the viewer's URLs, over `avl-trace`
+#   avl-base                     refusals, the envelope, the settings and the journal: what every host program
+#                                stands on
+#   avl-guest                    what runs inside a worker VM, and the one binary the controller installs; it stands
+#                                on avl-wire and avl-trace-tools alone, never on avl-base
+#   avl-host-sys, avl-report, avl-vm
+#                                the controller itself, which runs on the host; `avl-vm` is the `vm` binary, run
+#                                through `community/tools/vm.cmd`, with the console, the runs, the lanes and
+#                                the workers as its modules
+#   avl-affected                 the changed-path join of the Air suites over BT's catalog, the UI lanes, and the
+#                                bridge from BT's crates to the controller: the Air area and a BT refusal as the
+#                                controller's
+#   avl-record                   the scenario recorder a lane starts from its runfiles, `air-trace-record`
+#   air-trace                    the viewer's server and the planner, run through `community/tools/trace.cmd`
+#   avl-testkit, avl-host-testkit
+#                                test helpers, never a dependency of shipped code
+#
+# The boundaries are of different kinds, which is worth knowing before adding another: `avl_wire::supervisor`,
+# `avl_wire::stage` and `avl_wire::verb` are shared by the controller and the guest agent and exist to stop them
+# declaring the contract twice, and `avl-trace-tools`' pack report crosses between them the same way;
+# `avl_wire::runtime` is the Rust half of the descriptor `air_ui_daemon_runtime.bzl` writes; `avl_wire::daemon`,
+# `avl-trace` and `avl_trace_tools::viewer` are the Rust half of a contract whose far end is Kotlin or the docs
+# site's TypeScript;
+# `avl_wire::report` is what leaves for an *agent*, so its far end is a reader nobody can recompile.
+#
+# These binaries replaced the Go ones in one commit: the wrappers switched and the Go was deleted together, so
+# there was never a period with two *live* implementations.
+# `docs/decisions/0059-the-ui-lane-tooling-is-rust.md` records the port and supersedes ADRs 0105, 0107
+# and 0108.
+#
+# Every crate is declared by `avl_crate` in `avl.bzl`, a binding of `rust_tool_crate` of
+# `community/build/rust-tools/defs.bzl`, and every test target through `rust_test_junit`: libtest writes no report,
+# Bazel's own holds one case for the whole target, and BT counts cases. Every shipped binary is an `avl_binary` below,
+# which is one file and always optimized; `optimized_binary` in `community/build/rust-tools/defs.bzl` says why.
+
+load(
+    "//build/rust-tools:defs.bzl",
+    "LINUX_MUSL_PLATFORMS",
+    "platform_clippy_tests",
+    "rust_lints_as_errors",
+    "windows_clippy_tests",
+)
+load(":avl.bzl", "NOT_ON_WINDOWS", "avl_binary")
+
+# The lint policy every crate compiles and is linted with: `[workspace.lints]` of `Cargo.toml`, which rules_rs
+# renders (`generate_lint_config` in `avl.MODULE.bazel`), plus `-Dwarnings` for clippy. Each crate's
+# `<crate>-clippy` test runs clippy on the host; the four below cover the `cfg(target_os)` code the host never
+# compiles. They only check, so they need no linker for the platform. The Windows two also cover the controller and
+# `air-trace`, which run natively on a Windows host.
+rust_lints_as_errors(
+    name = "lints",
+    cargo = "@avl//:workspace_cargo_lints",
+    visibility = ["//visibility:public"],
+)
+
+# `clippy-linux-arm64` and `clippy-linux-x86_64`: the two binaries that run inside a Linux guest.
+platform_clippy_tests(
+    os = "linux",
+    platforms = LINUX_MUSL_PLATFORMS,
+    target_compatible_with = NOT_ON_WINDOWS,
+    targets = [
+        "//tools/vm/crates/avl-guest:vm-guest-agent-bin",
+        "//tools/vm/crates/avl-record:air-trace-record",
+    ],
+)
+
+# `clippy-windows-x86_64` and `clippy-windows-arm64`: the three binaries that run on a Windows host.
+windows_clippy_tests(
+    targets = [
+        "//tools/vm/crates/air-trace:air-trace-bin",
+        "//tools/vm/crates/avl-record:air-trace-record",
+        "//tools/vm/crates/avl-vm:vm-bin",
+    ],
+)
+
+# The Tart, Docker CLI and Lima pins, and the guest image versions, for the tests that keep each at or above the
+# controller's floor. See `tart.MODULE.bazel`, `docker.MODULE.bazel`, `lima.MODULE.bazel` and
+# `provision/versions.env`. `avl-base` also embeds `provision/versions.env` (`include_str!`).
+exports_files(
+    [
+        "docker.MODULE.bazel",
+        "lima.MODULE.bazel",
+        "provision/versions.env",
+        "tart.MODULE.bazel",
+    ],
+    visibility = ["//tools/vm:__subpackages__"],
+)
+
+# The Docker worker's image definition and the Lima template of its engine on a macOS host, which `avl-vm`
+# embeds (`include_str!`). The image files go into the build context of `docker build`. The template goes to
+# `limactl start`.
+exports_files(
+    [
+        "docker/Dockerfile",
+        "docker/air-display",
+        "docker/engine.lima.yaml",
+    ],
+    visibility = ["//tools/vm:__subpackages__"],
+)
+
+# The documents of the controller, whose `vm.cmd` example commands the contract test of the ultimate root parses
+# (`//plugins/air/tests/integration/vm-contract:examples-test`), so an example that the command line no longer takes
+# fails a test.
+filegroup(
+    name = "docs",
+    srcs = [
+        "AGENTS.md",
+        "README.md",
+        "provision/README.md",
+    ] + glob([
+        "docs/**/*.md",
+        "spec/**/*.md",
+    ]),
+    visibility = ["//visibility:public"],
+)
+
+# The cargo workspace, which `avl.MODULE.bazel` reads.
+exports_files([
+    ".cargo/config.toml",
+    "Cargo.lock",
+    "Cargo.toml",
+])
+
+# The shipped binaries, one file each, always optimized. The wrappers, `ui_lane_ide.bzl` and the controller's
+# guest-agent lookup name these labels. The cross builds are `manual`: a lane build asks for the one its guest
+# needs, and `//...` on a host builds only the host's.
+avl_binary(
+    name = "vm",
+    binary = "//tools/vm/crates/avl-vm:vm-bin",
+    visibility = ["//visibility:public"],
+)
+
+avl_binary(
+    name = "air-trace",
+    binary = "//tools/vm/crates/air-trace:air-trace-bin",
+    visibility = ["//visibility:public"],
+)
+
+avl_binary(
+    name = "air-trace-record",
+    binary = "//tools/vm/crates/avl-record:air-trace-record",
+    visibility = ["//visibility:public"],
+)
+
+avl_binary(
+    name = "air-trace-record-linux-arm64",
+    binary = "//tools/vm/crates/avl-record:air-trace-record",
+    platform = "@rules_rs//rs/platforms:aarch64-unknown-linux-musl",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+avl_binary(
+    name = "air-trace-record-linux-x86_64",
+    binary = "//tools/vm/crates/avl-record:air-trace-record",
+    platform = "@rules_rs//rs/platforms:x86_64-unknown-linux-musl",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+avl_binary(
+    name = "vm-guest-agent",
+    binary = "//tools/vm/crates/avl-guest:vm-guest-agent-bin",
+    visibility = ["//visibility:public"],
+)
+
+avl_binary(
+    name = "vm-guest-agent-linux-arm64",
+    binary = "//tools/vm/crates/avl-guest:vm-guest-agent-bin",
+    platform = "@rules_rs//rs/platforms:aarch64-unknown-linux-musl",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+avl_binary(
+    name = "vm-guest-agent-linux-x86_64",
+    binary = "//tools/vm/crates/avl-guest:vm-guest-agent-bin",
+    platform = "@rules_rs//rs/platforms:x86_64-unknown-linux-musl",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+avl_binary(
+    name = "vm-guest-agent-darwin-arm64",
+    binary = "//tools/vm/crates/avl-guest:vm-guest-agent-bin",
+    platform = "@rules_rs//rs/platforms:aarch64-apple-darwin",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+# The pinned Tart, Docker CLI, `docker-buildx` and Lima of a macOS host, one alias per repository of
+# `tart.MODULE.bazel`, `docker.MODULE.bazel` and `lima.MODULE.bazel`. A repository of this module has no name that the
+# ultimate root can see, so the controller asks Bazel for these labels. Its `cquery` is the only reader. Each alias is
+# `manual`, so `//...` does not download the archive.
+alias(
+    name = "air_tart",
+    actual = "@air_tart//:tart",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "air_docker_darwin_arm64",
+    actual = "@air_docker_darwin_arm64//:docker",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "air_docker_darwin_x86_64",
+    actual = "@air_docker_darwin_x86_64//:docker",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "air_docker_buildx_darwin_arm64",
+    actual = "@air_docker_buildx_darwin_arm64//file",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "air_docker_buildx_darwin_x86_64",
+    actual = "@air_docker_buildx_darwin_x86_64//file",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "air_lima_darwin_arm64",
+    actual = "@air_lima_darwin_arm64//:limactl",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "air_lima_darwin_x86_64",
+    actual = "@air_lima_darwin_x86_64//:limactl",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)

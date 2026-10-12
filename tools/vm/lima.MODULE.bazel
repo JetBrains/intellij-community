@@ -1,0 +1,46 @@
+# Lima, the VM manager of the Docker backend's engine on a macOS host. The pin removes the manual install.
+#
+# No `BUILD` file may name `@air_lima_darwin_arm64` or `@air_lima_darwin_x86_64`. The controller asks for the
+# one of its host arch with `bazel cquery` when it starts the engine (`ensure_running` in
+# `crates/avl-vm/src/worker/lima.rs`), and that request is the only fetch. A label in `data` or `deps` puts the
+# archive into the analysis of `//...`. Then every IDE sync on a Mac downloads it.
+#
+# The archives are the GitHub release tarballs, byte-identical, on the Space file mirror. The cache redirector
+# does not serve `github.com/lima-vm`, and `bazel_downloader.cfg` routes `packages.jetbrains.team/files/`
+# through the redirector.
+#
+# To bump the pin:
+#   1. Download `lima-<version>-Darwin-arm64.tar.gz` and `-Darwin-x86_64.tar.gz` of the release and check them
+#      against its `SHA256SUMS`.
+#   2. Upload them to `lima/<version>/` in https://jetbrains.team/p/ij/packages/files/intellij-build-dependencies.
+#   3. Change `AIR_LIMA_VERSION` and both `sha256` values below.
+# `the_pinned_lima_meets_the_floor` (`crates/avl-vm/src/worker/lima/pin_tests.rs`) keeps the pin at or above
+# `MINIMUM_LIMA_VERSION` in `crates/avl-vm/src/worker/lima.rs`, which is the `minimumLimaVersion` of
+# `docker/engine.lima.yaml`.
+AIR_LIMA_VERSION = "2.2.0"
+
+air_lima_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# Only the executable is a target. The archive layout stays, because `limactl` finds `../share/lima`, with the
+# guest agent, from its real path.
+_AIR_LIMA_BUILD_FILE = """
+filegroup(
+    name = "limactl",
+    srcs = ["bin/limactl"],
+    visibility = ["//visibility:public"],
+)
+"""
+
+air_lima_archive(
+    name = "air_lima_darwin_arm64",
+    build_file_content = _AIR_LIMA_BUILD_FILE,
+    sha256 = "bbdef91774885a0d05f7b048c4eb89ae2bcf3a0c252ae7ca7934e63df76d93c3",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/lima/{v}/lima-{v}-Darwin-arm64.tar.gz".format(v = AIR_LIMA_VERSION),
+)
+
+air_lima_archive(
+    name = "air_lima_darwin_x86_64",
+    build_file_content = _AIR_LIMA_BUILD_FILE,
+    sha256 = "0d6f99c19f6e4bc3c92730c4c29d929e6927f0cb0a0ba1a84383367135a8ff31",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/lima/{v}/lima-{v}-Darwin-x86_64.tar.gz".format(v = AIR_LIMA_VERSION),
+)

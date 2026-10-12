@@ -1,0 +1,30 @@
+[0.009s][class,load] opened: /Applications/IDEA.app/Contents/jbr/Contents/Home/lib/modules
+[0.048s][class,load] java.lang.Object source: shared objects file
+[0.049s][class,load] java.lang.String source: shared objects file
+[0.051s][class,load] java.util.HashMap source: shared objects file (top)
+[0.095s][class,load] jdk.internal.module.ModuleBootstrap source: jrt:/java.base
+[0.128s][class,load] java.awt.Toolkit source: jrt:/java.desktop
+[0.290s][class,load] com.intellij.idea.Main source: file:/Applications/IDEA.app/Contents/lib/util-8.jar
+[0.305s][class,load] com.intellij.util.lang.PathClassLoader source: file:/Applications/IDEA.app/Contents/lib/util-8.jar
+[0.402s][class,load] java.lang.invoke.LambdaForm$MH/0x0000000801001000 source: __JVM_LookupDefineClass__
+[0.940s][class,load] com.intellij.idea.MainImpl source: com.intellij.util.lang.PathClassLoader
+[1.020s][class,load] com.intellij.ide.plugins.PluginManagerCore source: com.intellij.util.lang.PathClassLoader
+[1.120s][class,load] com.intellij.openapi.application.impl.ApplicationImpl source: com.intellij.util.lang.PathClassLoader @5e9f23b4
+[1.210s][class,load] com.intellij.ide.plugins.cl.PluginClassLoader source: com.intellij.util.lang.PathClassLoader
+[1.480s][class,load] com.intellij.platform.settings.local.SettingsControllerMediator source: com.intellij.ide.plugins.cl.PluginClassLoader
+[1.495s][class,load] com.intellij.platform.settings.local.LocalSettingsController source: com.intellij.ide.plugins.cl.PluginClassLoader
+[1.890s][class,load] com.intellij.openapi.project.impl.ProjectManagerImpl source: com.intellij.util.lang.PathClassLoader
+[1.905s][class,load] com.intellij.openapi.project.impl.ProjectManagerImpl$$Lambda/0x0000000801210000 source: com.intellij.openapi.project.impl.ProjectManagerImpl
+[2.120s][class,load] com.jetbrains.performancePlugin.ProjectLoaded source: com.intellij.ide.plugins.cl.PluginClassLoader
+[2.380s][class,load] org.intellij.plugins.markdown.lang.MarkdownFileType source: com.intellij.ide.plugins.cl.PluginClassLoader
+[2.395s][class,load] org.intellij.plugins.markdown.lang.MarkdownLanguage source: com.intellij.ide.plugins.cl.PluginClassLoader
+[2.700s][class,load] com.intellij.openapi.fileEditor.impl.EditorsSplitters source: com.intellij.util.lang.PathClassLoader
+[3.050s][class,load] com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl source: com.intellij.util.lang.PathClassLoader
+[3.290s][class,load] org.intellij.plugins.markdown.lang.parser.MarkdownParserAdapter source: com.intellij.ide.plugins.cl.PluginClassLoader
+[3.400s][class,load] com.android.tools.adtui.webp.WebpImageReaderSpi source: com.intellij.ide.plugins.cl.PluginClassLoader @6d3af739
+[3.650s][class,load] com.intellij.station.core.services.IdeStationServiceInitializedListener source: com.intellij.ide.plugins.cl.PluginClassLoader
+[3.900s][info][class,load] java.lang.invoke.LambdaForm$MH/0x0000000801400000 source: __JVM_LookupDefineClass__
+[4.200s][class,load] com.intellij.gateway.daemon.bridge.GatewayConnectorBridgeActivity source: com.intellij.ide.plugins.cl.PluginClassLoader
+[4.800s][class,load] com.intellij.dfa.analysis.rml.utils.RmlServiceResolver source: com.intellij.ide.plugins.cl.PluginClassLoader
+[5.300s][class,load] com.intellij.vcs.log.statistics.VcsLogTelemetryExporter source: com.intellij.ide.plugins.cl.PluginClassLoader
+[7.950s][class,load] com.intellij.openapi.application.impl.ApplicationImpl$exit$1 source: com.intellij.util.lang.PathClassLoader

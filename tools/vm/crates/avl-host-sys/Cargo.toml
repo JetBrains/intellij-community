@@ -1,0 +1,38 @@
+[package]
+name = "avl-host-sys"
+description = "Host system seams: subprocesses and the interrupt service, locks, private files, the guest setup with the Linux guest's packages, the read-only share set, and the detached trace viewer."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+async-trait.workspace = true
+avl-base.workspace = true
+avl-trace-tools.workspace = true
+avl-wire.workspace = true
+fscopy.workspace = true
+futures.workspace = true
+hex.workspace = true
+jiff.workspace = true
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+libc.workspace = true
+nix.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys.workspace = true
+
+[dev-dependencies]
+avl-testkit.workspace = true
+pretty_assertions.workspace = true
+tempfile.workspace = true

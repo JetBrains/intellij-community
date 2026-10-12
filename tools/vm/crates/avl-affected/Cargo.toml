@@ -1,0 +1,22 @@
+[package]
+name = "avl-affected"
+description = "The changed-path join of the Air suites over BT's catalog, the UI lanes a VM worker runs, and the bridge from BT's crates to the controller."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+avl-base.workspace = true
+bt-core.workspace = true
+distpath.workspace = true
+refusal.workspace = true
+regex.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+avl-testkit.workspace = true
+pretty_assertions.workspace = true
