@@ -14,6 +14,7 @@ import com.intellij.openapi.application.WriteLockReacquisitionListener
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
@@ -327,7 +328,11 @@ object InternalPsiVersioning {
   class PsiVersionRegistry {
     companion object {
       @JvmStatic
-      val instance: PsiVersionRegistry by lazy { PsiVersionRegistry() }
+      val instance: PsiVersionRegistry by lazy {
+        Cancellation.computeInNonCancelableSection<PsiVersionRegistry, Exception> {
+          PsiVersionRegistry()
+        }
+      }
     }
 
     private val garbageCollector = ApplicationManager.getApplication().serviceOrNull<PsiVersioningGarbageCollector>()
