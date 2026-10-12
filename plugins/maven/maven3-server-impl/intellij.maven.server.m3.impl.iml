@@ -10,7 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.maven.server" />
     <orderEntry type="module" module-name="intellij.maven.server.telemetry" />
-    <orderEntry type="module" module-name="intellij.maven" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.server.m3.common" />
     <orderEntry type="module" module-name="intellij.libraries.commons.logging" />
     <orderEntry type="module-library" scope="PROVIDED">
