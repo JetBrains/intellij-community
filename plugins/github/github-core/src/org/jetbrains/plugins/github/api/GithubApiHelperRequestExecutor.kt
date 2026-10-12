@@ -18,9 +18,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ThrowableConvertor
 import com.intellij.util.io.HttpSecurityUtil
 import com.intellij.util.net.PlatformHttpClient
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor.Companion.PLUGIN_USER_AGENT_NAME
 import org.jetbrains.plugins.github.exceptions.GithubConfusingException
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -38,6 +41,15 @@ import java.net.http.HttpResponse
 import java.nio.charset.Charset
 import kotlin.jvm.optionals.getOrNull
 
+private const val MAX_CONCURRENT_REQUESTS_REGISTRY_KEY = "github.api.max.concurrent.requests"
+/**
+ * The default maximum number of concurrent requests.
+ * GitHub allows no more than 100 concurrent requests:
+ * https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#about-secondary-rate-limits.
+ * The default stays below that limit.
+ */
+internal const val DEFAULT_MAX_CONCURRENT_REQUESTS = 50
+
 /**
  * [HttpApiHelper]-based executor
  */
@@ -46,6 +58,13 @@ internal class GithubApiHelperRequestExecutor(
 ) : GithubApiRequestExecutor() {
 
   constructor(useProxy: Boolean, tokenSupplier: (URL) -> String?) : this(createHelper(useProxy, tokenSupplier))
+
+  /**
+   * Limits the number of concurrent requests of this executor.
+   * The registry key [MAX_CONCURRENT_REQUESTS_REGISTRY_KEY] sets the limit.
+   */
+  private val requestsSemaphore =
+    Semaphore(Registry.intValue(MAX_CONCURRENT_REQUESTS_REGISTRY_KEY, DEFAULT_MAX_CONCURRENT_REQUESTS).coerceAtLeast(1))
 
   @Suppress("UsagesOfObsoleteApi")
   override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
@@ -57,7 +76,12 @@ internal class GithubApiHelperRequestExecutor(
     }
   }
 
-  override suspend fun <T> execute(request: GithubApiRequest<T>): T {
+  override suspend fun <T> execute(request: GithubApiRequest<T>): T =
+    requestsSemaphore.withPermit {
+      doExecute(request)
+    }
+
+  private suspend fun <T> doExecute(request: GithubApiRequest<T>): T {
     check(!service<GHRequestExecutorBreaker>().isRequestsShouldFail) {
       "Request failure was triggered by user action. This a pretty long description of this failure that should resemble some long error which can go out of bounds."
     }
