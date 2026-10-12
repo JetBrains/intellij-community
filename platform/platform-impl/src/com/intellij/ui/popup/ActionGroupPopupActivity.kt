@@ -13,10 +13,12 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.ui.ClientProperty
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.event.InputEvent
 
-internal class ActionGroupPopupActivity(
+@ApiStatus.Internal
+class ActionGroupPopupActivity(
   project: Project?,
   private val actionGroupId: @NonNls String?,
   private var place: String,
