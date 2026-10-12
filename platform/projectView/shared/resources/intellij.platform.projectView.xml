@@ -88,7 +88,9 @@
         <separator/>
         <action id="ProjectView.FlattenModules"
                 class="com.intellij.platform.projectView.actions.FlattenModules"
-                icon="AllIcons.ObjectBrowser.FlattenModules"/>
+                icon="AllIcons.ObjectBrowser.FlattenModules">
+          <override-text place="GoToAction"/>
+        </action>
         <action id="ProjectView.FlattenPackages"
                 class="com.intellij.platform.projectView.actions.FlattenPackages"
                 icon="AllIcons.ObjectBrowser.FlattenPackages"/>
