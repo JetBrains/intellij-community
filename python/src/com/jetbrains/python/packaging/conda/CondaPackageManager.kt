@@ -18,7 +18,10 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrThrow
+import com.intellij.openapi.diagnostic.thisLogger
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
+import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -100,20 +103,26 @@ internal class CondaPackageManager(project: Project, interpreter: PythonInterpre
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> = condaPackageEngine.loadPackagesCommand()
 
+  /**
+   * The outdated packages that conda reports, and the outdated packages that pip installed, as pip reports them.
+   * pip is asked only when the env has pip. When pip fails, the result has the conda packages only.
+   */
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> = coroutineScope {
     val condaOutdated = async {
       condaPackageEngine.loadOutdatedPackagesCommand()
     }
-    val pipOutdated = async {
-      pipPackageEngine.loadOutdatedPackagesCommand()
+    val pipOutdated = if (listInstalledPackagesSnapshot().any { it.name == PyPackageUtil.PIP }) {
+      async { pipPackageEngine.loadOutdatedPackagesCommand() }
     }
+    else null
 
     val condaPackages = condaOutdated.await().getOr {
       return@coroutineScope it
     }
-    val pipPackages = pipOutdated.await().getOr {
-      return@coroutineScope it
-    }
+    val pipPackages = pipOutdated?.await()
+                        ?.onFailure { thisLogger().warn("Failed to load outdated pip packages, only conda packages are reported: $it") }
+                        ?.getOrNull()
+                        .orEmpty()
 
     val onlyPipOutdated = pipPackages.filter { outdatedPackage ->
       val pythonPackage = listInstalledPackagesSnapshot().firstOrNull { it.name == outdatedPackage.name } ?: return@filter false
