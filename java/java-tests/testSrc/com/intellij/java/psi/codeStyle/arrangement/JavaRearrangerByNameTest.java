@@ -4,22 +4,29 @@ package com.intellij.java.psi.codeStyle.arrangement;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.nameRule;
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.rule;
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.ruleWithOrder;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PROTECTED;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME;
 
+@TestApplication
 public class JavaRearrangerByNameTest extends AbstractJavaRearrangerTest {
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  public void setUp() {
     getCommonSettings().BLANK_LINES_AROUND_METHOD = 0;
     getCommonSettings().BLANK_LINES_AROUND_CLASS = 0;
   }
 
+  @Test
   public void testOnlyNameCondition() {
     doTest("""
              class Test {
@@ -36,6 +43,7 @@ public class JavaRearrangerByNameTest extends AbstractJavaRearrangerTest {
            List.of(nameRule("get.*")));
   }
 
+  @Test
   public void testNameConditionAndOthers() {
     doTest("""
              class Test {
@@ -52,6 +60,7 @@ public class JavaRearrangerByNameTest extends AbstractJavaRearrangerTest {
            List.of(nameRule("get.*", PUBLIC), rule(PROTECTED)));
   }
 
+  @Test
   public void testNameAndSort() {
     doTest("""
              class Test {
@@ -70,6 +79,7 @@ public class JavaRearrangerByNameTest extends AbstractJavaRearrangerTest {
            List.of(ruleWithOrder(BY_NAME, nameRule("get.*"))));
   }
 
+  @Test
   public void testWithFormattingDisabled() {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     NamedScopeDescriptor descriptor = new NamedScopeDescriptor("testScope");

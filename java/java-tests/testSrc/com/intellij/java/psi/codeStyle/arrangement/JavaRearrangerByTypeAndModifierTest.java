@@ -1,8 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.codeStyle.arrangement;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
+
 import java.util.List;
 
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.rule;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.CLASS;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.ENUM;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD;
@@ -17,7 +21,9 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Mo
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.STATIC;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.VOLATILE;
 
+@TestApplication
 public class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerTest {
+  @Test
   public void test_complex_sample() {
     getCommonSettings().BLANK_LINES_AROUND_METHOD = 0;
     getCommonSettings().BLANK_LINES_AROUND_CLASS = 0;
@@ -55,6 +61,7 @@ public class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerT
                            rule(CLASS, PUBLIC), rule(CLASS)));
   }
 
+  @Test
   public void test_instance_initialization_block_bound_to_a_field() {
     doTest("""
              class Test {
@@ -73,6 +80,7 @@ public class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerT
                            rule(FIELD, PRIVATE)));
   }
 
+  @Test
   public void test_instance_initialization_block_as_the_first_child() {
     doTest("""
              class Test {
@@ -91,6 +99,7 @@ public class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerT
                            rule(FIELD, PRIVATE)));
   }
 
+  @Test
   public void test_getter_is_matched_by_public_method_rule() {
     doTest("""
              class Test {
@@ -123,6 +132,7 @@ public class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerT
              """, List.of(rule(FIELD), rule(PRIVATE, METHOD), rule(PUBLIC, METHOD)));
   }
 
+  @Test
   public void test_getter_is_matched_by_method_rule() {
     doTest("""
              class Test {
@@ -152,6 +162,7 @@ public class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerT
            List.of(rule(FIELD), rule(METHOD)));
   }
 
+  @Test
   public void test_getter_is_not_matched_by_private_method() {
     doTest("""
              class Test {
@@ -175,6 +186,7 @@ public class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerT
              """, List.of(rule(PRIVATE, METHOD), rule(FIELD)));
   }
 
+  @Test
   public void test_getter_is_matched_by_getter_rule() {
     doTest("""
              class Test {
@@ -212,6 +224,7 @@ public class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerT
                           rule(PUBLIC, METHOD)));
   }
 
+  @Test
   public void test_setter_is_matched_by_public_method_rule() {
     doTest("""
              class Test {
@@ -245,6 +258,7 @@ public class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerT
                           rule(PUBLIC, METHOD)));
   }
 
+  @Test
   public void test_setter_is_matched_by_method_rule() {
     doTest("""
              class Test {
@@ -274,6 +288,7 @@ public class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerT
            List.of(rule(FIELD), rule(METHOD)));
   }
 
+  @Test
   public void test_setter_is_not_matched_by_private_method() {
     doTest("""
              class Test {
@@ -297,6 +312,7 @@ public class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerT
              """, List.of(rule(PRIVATE, METHOD), rule(FIELD)));
   }
 
+  @Test
   public void test_setter_is_matched_by_setter_rule() {
     doTest("""
              class Test {
@@ -334,6 +350,7 @@ public class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerT
                           rule(PUBLIC, METHOD)));
   }
 
+  @Test
   public void test_setters_and_getters() {
     doTest("""
              class Test {

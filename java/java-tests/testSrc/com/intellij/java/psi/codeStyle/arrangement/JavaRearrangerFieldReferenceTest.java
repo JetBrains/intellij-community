@@ -2,9 +2,12 @@
 package com.intellij.java.psi.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.rule;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.CLASS;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD;
@@ -16,12 +19,14 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Mo
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.STATIC;
 
 @SuppressWarnings("ALL")
+@TestApplication
 public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest {
   private final List<StdArrangementMatchRule> defaultFieldsArrangement =
     List.of(rule(FIELD, STATIC, FINAL), rule(FIELD, PUBLIC),
             rule(FIELD, PROTECTED), rule(FIELD, PACKAGE_PRIVATE),
             rule(FIELD, PRIVATE));
   
+  @Test
   public void testFieldInitializerDependsOnFieldItSelf() {
     doTest("""
              class Improbabilia {
@@ -44,6 +49,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              }""", defaultFieldsArrangement);
   }
   
+  @Test
   public void testMethodReferences() {
     // IDEA-311599
     doTest("""
@@ -96,6 +102,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, defaultFieldsArrangement);
   }
   
+  @Test
   public void testDependenciesBetweenFields() {
     // IDEA-286442
     doTest("""
@@ -193,6 +200,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, defaultFieldsArrangement);
   }
 
+  @Test
   public void test_keep_referenced_package_private_field_before_public_one_which_has_reference_through_binary_expression() {
     doTest("""
              public class TestRunnable {
@@ -211,6 +219,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, defaultFieldsArrangement);
   }
 
+  @Test
   public void test_keep_referenced_fields_before_those_who_has_reference_through_binary_expression() {
     doTest("""
              public class javaTest {
@@ -225,6 +234,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, defaultFieldsArrangement);
   }
 
+  @Test
   public void test_keep_referenced_static_fields_before_those_who_has_reference_through_binary_expression() {
     doTest("""
              public class CodeFormatTest {
@@ -245,6 +255,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, defaultFieldsArrangement);
   }
 
+  @Test
   public void test_keep_referenced_static_fields_before_those_who_has_direct_reference() {
     doTest("""
              public class CodeFormatTest {
@@ -259,6 +270,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, defaultFieldsArrangement);
   }
 
+  @Test
   public void test_keep_referenced_fields_before_those_who_has_direct_reference() {
     doTest("""
              public class CodeFormatTest {
@@ -273,6 +285,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, defaultFieldsArrangement);
   }
 
+  @Test
   public void test_keep_referenced_fields_before_those_who_has_reference_through_polyadic_expression() {
     doTest("""
              public class CodeFormatTest {
@@ -287,6 +300,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, defaultFieldsArrangement);
   }
 
+  @Test
   public void test_keep_referenced_field_before_who_has_reference_through_parenthesized_nested_binary_expression() {
     doTest("""
              public class TestRunnable {
@@ -301,6 +315,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, defaultFieldsArrangement);
   }
 
+  @Test
   public void test_keep_referenced_fields_before_those_who_has_reference_through_nested_binary_expression() {
     doTest("""
              public class TestRunnable {
@@ -315,6 +330,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, defaultFieldsArrangement);
   }
 
+  @Test
   public void test_multiple_references_on_instance_fields() {
     doTest("""
              public class TestRunnable {
@@ -333,6 +349,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, defaultFieldsArrangement);
   }
 
+  @Test
   public void test_field_initializer_has_reference_to_method() {
     doTest("""
              public class TestRunnable {
@@ -358,6 +375,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
                           rule(FIELD, PACKAGE_PRIVATE), rule(METHOD, PUBLIC)));
   }
 
+  @Test
   public void test_illegal_field_reference_arranged_to_legal() {
     doTest("""
              public class Alfa {
@@ -376,6 +394,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, defaultFieldsArrangement);
   }
 
+  @Test
   public void test_field_references_work_ok_with_enums() {
     doTest("""
              public class Q {
@@ -418,6 +437,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, defaultFieldsArrangement);
   }
 
+  @Test
   public void test_IDEA_123733() {
     doTest("""
              class First {
@@ -444,6 +464,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, defaultFieldsArrangement);
   }
 
+  @Test
   public void test_IDEA_123875() {
     doTest("""
              public class RearrangeFail {
@@ -467,6 +488,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, List.of(rule(PUBLIC, STATIC, FINAL), rule(PRIVATE)));
   }
 
+  @Test
   public void test_IDEA_125099() {
     doTest("""
              public class test {
@@ -488,6 +510,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, List.of(rule(PUBLIC, STATIC, FINAL), rule(PRIVATE)));
   }
 
+  @Test
   public void test_IDEA_128071() {
     doTest("""
              public class FormatTest {
@@ -505,6 +528,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
                           rule(PUBLIC)));
   }
 
+  @Test
   public void test_field_dependency_through_method_call() {
     doTest("""
              public class TmpTest {
@@ -536,6 +560,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
                           rule(PUBLIC, METHOD), rule(PRIVATE, METHOD)));
   }
 
+  @Test
   public void test_only_dependencies_withing_same_initialization_scope() {
     doTest("""
              public class TestArrangementBuilder {
@@ -583,6 +608,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
                           rule(PRIVATE, FINAL), rule(PRIVATE)));
   }
 
+  @Test
   public void test_IDEA_246100() {
     doTest("""
              public class Test {
@@ -615,6 +641,7 @@ public class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest
              """, List.of(rule(STATIC, FINAL), rule(PRIVATE, STATIC, FINAL)));
   }
 
+  @Test
   public void test_IDEA_218936() {
     doTest("""
              public class TestOne {

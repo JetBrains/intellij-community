@@ -1,14 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.codeStyle.arrangement;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
+
 import java.util.List;
 
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.rule;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.CLASS;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PACKAGE_PRIVATE;
 
+@TestApplication
 public class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
+  @Test
   public void testPreserveRelativeBlankLines() {
     getCommonSettings().BLANK_LINES_AROUND_CLASS = 2;
     getCommonSettings().BLANK_LINES_AROUND_FIELD = 1;
@@ -63,6 +69,7 @@ public class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
              }""", classic);
   }
 
+  @Test
   public void testCutBlankLines() {
     getCommonSettings().BLANK_LINES_AROUND_FIELD = 0;
     getCommonSettings().BLANK_LINES_AROUND_METHOD = 1;
@@ -91,6 +98,7 @@ public class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
              }""", List.of(rule(FIELD, PACKAGE_PRIVATE), rule(METHOD)));
   }
 
+  @Test
   public void test_blank_lines_settings_are_not_applied_to_anonymous_classes() {
     getCommonSettings().BLANK_LINES_AROUND_CLASS = 1;
     String text = """
@@ -103,6 +111,7 @@ public class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
     doTest(text, text, List.of(rule(CLASS)));
   }
 
+  @Test
   public void test_statements_on_the_same_line() {
     String before = """
 
@@ -114,6 +123,7 @@ public class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
     doTest(before, before, List.of());
   }
 
+  @Test
   public void test_keep_blank_lines_between_fields() {
     String text = """
       public class Test {
@@ -127,6 +137,7 @@ public class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
     doTest(text, text, classic);
   }
 
+  @Test
   public void test_keep_blank_lines_between_fields_more_fair_test() {
     doTest("""
              public class Test {

@@ -1,8 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.codeStyle.arrangement;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.List;
 
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.rule;
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.ruleWithOrder;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.CLASS;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.CONSTRUCTOR;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.ENUM;
@@ -17,14 +23,15 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Mo
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.STATIC;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME;
 
+@TestApplication
 public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  public void setUp() {
     getCommonSettings().BLANK_LINES_AROUND_METHOD = 0;
     getCommonSettings().BLANK_LINES_AROUND_CLASS = 0;
   }
 
+  @Test
   public void test_fields_before_methods() {
     doTest("""
              class Test {
@@ -47,6 +54,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
              }""", List.of(rule(FIELD)));
   }
 
+  @Test
   public void test_anonymous_class_at_field_initializer() {
     //noinspection override
     doTest("""
@@ -88,6 +96,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
              }""", List.of(rule(FIELD)));
   }
 
+  @Test
   public void test_anonymous_class_at_method() {
     //noinspection MethodMayBeStatic
     doTest("""
@@ -123,6 +132,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
              }""", List.of(rule(FIELD)));
   }
 
+  @Test
   public void test_inner_class_interface_and_enum() {
     doTest("""
              class Test {
@@ -137,6 +147,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
              }""", List.of(rule(INTERFACE), rule(ENUM), rule(CLASS)));
   }
 
+  @Test
   public void test_ranges() {
     doTest("""
              class Test {
@@ -171,6 +182,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
              }""", List.of(rule(FIELD)));
   }
 
+  @Test
   public void test_methods_and_constructors() {
     doTest("""
              class Test {
@@ -185,6 +197,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
              }""", List.of(rule(CONSTRUCTOR), rule(METHOD)));
   }
 
+  @Test
   public void test_multiple_fields_in_one_row() {
     doTest("""
              class Test {
@@ -199,6 +212,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
              }""", List.of(rule(PUBLIC), rule(PROTECTED)));
   }
 
+  @Test
   public void test_multiline_multiple_field_variables_declaration() {
     doTest("""
              class Test {
@@ -213,6 +227,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
              }""", List.of(rule(FIELD, PUBLIC), rule(FIELD, PRIVATE)));
   }
 
+  @Test
   public void test_multiline_multiple_field_variables_declaration_with_initializers() {
     doTest("""
              class Test {
@@ -227,6 +242,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
              }""", List.of(rule(FIELD, PUBLIC), rule(FIELD, PRIVATE)));
   }
 
+  @Test
   public void test_incomplete_multiple_multiline_field_() {
     doTest("""
              class Test {
@@ -241,6 +257,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
              }""", List.of(rule(FIELD, PUBLIC), rule(FIELD, PRIVATE)));
   }
 
+  @Test
   public void test_fields_with_comments() {
     doTest("""
              class Test {
@@ -273,6 +290,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
              }""", List.of(ruleWithOrder(BY_NAME, rule(FIELD))));
   }
 
+  @Test
   public void test_anonymous_class_and_siblings() {
     doTest("""
              class Test {
@@ -310,6 +328,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
            List.of(rule(FIELD), rule(METHOD)));
   }
 
+  @Test
   public void test_multiple_elements_at_the_same_line() {
     doTest("""
              class Test {
@@ -329,6 +348,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
            List.of(rule(FIELD), rule(METHOD)));
   }
 
+  @Test
   public void test_IDEA_124077_Enum_code_reformat_destroys_enum() {
     doTest("""
              public enum ErrorResponse {
@@ -361,6 +381,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
            List.of(rule(METHOD), rule(FIELD)));
   }
 
+  @Test
   public void test_parameterized_class() {
     //noinspection Convert2Diamond
     doTest("""
@@ -400,6 +421,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
              """, List.of(rule(FIELD)));
   }
 
+  @Test
   public void test_overridden_method_is_matched_by_overridden_rule() {
     //noinspection RedundantMethodOverride
     doTest("""
@@ -446,6 +468,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
              """, List.of(rule(PUBLIC, METHOD), rule(PRIVATE, METHOD), rule(OVERRIDDEN)));
   }
 
+  @Test
   public void test_overridden_method_is_matched_by_method_rule_if_no_overridden_rule_found() {
     //noinspection RedundantMethodOverride
     doTest("""
@@ -493,6 +516,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
              """, List.of(rule(PUBLIC, METHOD), rule(PRIVATE, METHOD)));
   }
 
+  @Test
   public void test_initializer_block_after_fields() {
     doTest("""
              public class NewOneClass {
@@ -528,6 +552,7 @@ public class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
              """, List.of(rule(FIELD), rule(INIT_BLOCK)));
   }
 
+  @Test
   public void test_static_initializer_block() {
     doTest("""
              public class NewOneClass {

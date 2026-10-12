@@ -1,8 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.codeStyle.arrangement;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.List;
 
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.nameRule;
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.rule;
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.ruleWithOrder;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.ABSTRACT;
@@ -13,14 +20,15 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Or
 /**
  * @author Svetlana.Zemlyanskaya
  */
+@TestApplication
 public class JavaRearrangerSpecialRuleTest extends AbstractJavaRearrangerTest {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  public void setUp() {
     getCommonSettings().BLANK_LINES_AROUND_METHOD = 0;
     getCommonSettings().BLANK_LINES_AROUND_CLASS = 0;
   }
 
+  @Test
   public void test_name_and_visibility_conditions() {
     doTest("""
              class Test {
@@ -35,6 +43,7 @@ public class JavaRearrangerSpecialRuleTest extends AbstractJavaRearrangerTest {
              }""", List.of(rule(PUBLIC), nameRule("get.*", PUBLIC)));
   }
 
+  @Test
   public void test_modifier_conditions() {
     doTest("""
              class Test {
@@ -49,6 +58,7 @@ public class JavaRearrangerSpecialRuleTest extends AbstractJavaRearrangerTest {
              """, List.of(rule(PUBLIC), rule(PUBLIC, STATIC)));
   }
 
+  @Test
   public void test_multi_modifier_condition() {
     doTest("""
              class Test {
@@ -66,6 +76,7 @@ public class JavaRearrangerSpecialRuleTest extends AbstractJavaRearrangerTest {
                           rule(PUBLIC, ABSTRACT)));
   }
 
+  @Test
   public void test_modifier_conditions_with_sort() {
     doTest("""
              class Test {
@@ -87,6 +98,7 @@ public class JavaRearrangerSpecialRuleTest extends AbstractJavaRearrangerTest {
                           ruleWithOrder(BY_NAME, rule(PUBLIC, STATIC))));
   }
 
+  @Test
   public void test_different_entries_type_with_modifier_conditions() {
     doTest("""
              class Test {
