@@ -25,8 +25,6 @@
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.eel.impl"/>
     <module name="intellij.platform.eel.provider"/>
-    <module name="intellij.platform.execution"/>
-    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.feedback"/>
     <module name="intellij.platform.ide.codeinsight.inline"/>
     <module name="intellij.platform.ide.core"/>
@@ -46,6 +44,7 @@
     <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.rpc.topics"/>
     <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.terminal"/>
     <module name="intellij.platform.util.annotations"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>

@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.TerminateRemoteProcessDialog;
 import com.intellij.execution.TerminateRemoteProcessDialog.ProcessCloseConfirmationResult;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -186,7 +186,7 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
                                  @NotNull String processName,
                                  boolean modal,
                                  @Nullable Project project) {
-      super(project, ExecutionBundle.message("terminating.process.progress.title", processName));
+      super(project, LangBundle.message("terminating.process.progress.title", processName));
       myProcessHandler = processHandler;
       myModal = modal;
     }
@@ -214,7 +214,7 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
           semaphore.up();
         }
       });
-      progressIndicator.setText(ExecutionBundle.message("waiting.for.vm.detach.progress.text"));
+      progressIndicator.setText(LangBundle.message("waiting.for.vm.detach.progress.text"));
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {

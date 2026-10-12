@@ -1,5 +1,3 @@
-f:com.intellij.execution.TerminateRemoteProcessDialog
-- *s:show(com.intellij.openapi.project.Project,java.util.List,java.util.List):com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
 f:com.intellij.execution.runners.RunContentBuilder
 - com.intellij.execution.runners.RunTab
 - *sf:RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP:java.lang.String

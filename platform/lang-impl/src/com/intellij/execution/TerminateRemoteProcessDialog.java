@@ -7,13 +7,14 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ProcessCloseConfirmation;
 import com.intellij.ide.nls.NlsMessages;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,6 +26,9 @@ import java.util.List;
 import java.util.Set;
 
 public final class TerminateRemoteProcessDialog {
+  @ApiStatus.Internal
+  public static final Key<Boolean> ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY = Key.create("ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY");
+
   public static @NotNull ProcessCloseConfirmationResult show(
     Project project,
     @NotNull String sessionName,
@@ -64,9 +68,9 @@ public final class TerminateRemoteProcessDialog {
     }
 
     List<String> options = new ArrayList<>(3);
-    options.add(ExecutionBundle.message("button.terminate"));
+    options.add(LangBundle.message("button.terminate"));
     if (canDisconnect) {
-      options.add(ExecutionBundle.message("button.disconnect"));
+      options.add(LangBundle.message("button.disconnect"));
     }
     options.add(CommonBundle.getCancelButtonText());
     DoNotAskOption.Adapter doNotAskOption = new DoNotAskOption.Adapter() {
@@ -127,22 +131,22 @@ public final class TerminateRemoteProcessDialog {
   }
 
   private static boolean canDisconnect(@NotNull ProcessHandler processHandler) {
-    return !Boolean.TRUE.equals(processHandler.getUserData(RunContentManagerImpl.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY));
+    return !Boolean.TRUE.equals(processHandler.getUserData(ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY));
   }
 
   private static @NlsContexts.DialogTitle String getTitleText(@NotNull List<@NotNull String> sessionNames) {
     if (sessionNames.size() == 1) {
-      return ExecutionBundle.message("process.is.running.dialog.title", sessionNames.getFirst());
+      return LangBundle.message("process.is.running.dialog.title", sessionNames.getFirst());
     }
-    return ExecutionBundle.message("processes.are.running.dialog.title");
+    return LangBundle.message("processes.are.running.dialog.title");
   }
 
   private static @NlsContexts.DialogMessage String getMessageText(@NotNull List<@NotNull String> sessionNames) {
     if (sessionNames.size() == 1) {
-      return ExecutionBundle.message("terminate.process.confirmation.text", sessionNames.getFirst());
+      return LangBundle.message("terminate.process.confirmation.text", sessionNames.getFirst());
     }
     List<String> namesInQuotes = ContainerUtil.map(sessionNames, name -> "'%s'".formatted(name));
-    return ExecutionBundle.message("terminate.processes.confirmation.text", NlsMessages.formatNarrowAndList(namesInQuotes));
+    return LangBundle.message("terminate.processes.confirmation.text", NlsMessages.formatNarrowAndList(namesInQuotes));
   }
 
   private static ProcessCloseConfirmationResult getConfirmationResult(int button, boolean withDisconnect) {

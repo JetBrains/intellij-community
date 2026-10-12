@@ -540,6 +540,8 @@ a:com.intellij.codeInsight.template.postfix.templates.editable.EditablePostfixTe
 - <init>():V
 - s:editOptions(com.intellij.openapi.project.Project,com.intellij.codeInspection.options.OptionContainer,com.intellij.codeInspection.options.OptPane,java.lang.String,java.lang.Runnable):V
 - s:editOptions(com.intellij.openapi.project.Project,com.intellij.codeInspection.options.OptionContainer,java.lang.String,java.lang.Runnable):V
+f:com.intellij.execution.TerminateRemoteProcessDialog
+- *s:show(com.intellij.openapi.project.Project,java.util.List,java.util.List):com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
 *:com.intellij.execution.console.ConsoleLineModifier
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:modify(java.lang.String):java.lang.String
