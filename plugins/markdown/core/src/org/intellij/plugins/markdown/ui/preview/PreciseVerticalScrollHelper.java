@@ -22,18 +22,28 @@ class PreciseVerticalScrollHelper extends MouseAdapter {
 
   @Override
   public void mouseWheelMoved(MouseWheelEvent event) {
+    if (event.isShiftDown()) {
+      return;
+    }
     final var currentOffset = editor.getScrollingModel().getVerticalScrollOffset();
     if (lastOffset == currentOffset) {
-      boundaryReached(event);
+      if (isAtBoundary(currentOffset, event.getWheelRotation())) {
+        boundaryReached(event);
+      }
     } else {
       lastOffset = currentOffset;
     }
   }
 
-  private void boundaryReached(MouseWheelEvent event) {
-    if (event.isShiftDown()) {
-      return;
+  private boolean isAtBoundary(int offset, int rotation) {
+    if (rotation < 0) {
+      return offset <= 0;
     }
+    final var scrollBar = editor.getScrollPane().getVerticalScrollBar();
+    return offset >= scrollBar.getMaximum() - scrollBar.getVisibleAmount();
+  }
+
+  private void boundaryReached(MouseWheelEvent event) {
     final var actualPanel = htmlPanelSupplier.get();
     if (actualPanel == null) {
       return;
