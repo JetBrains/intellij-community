@@ -31,6 +31,17 @@ vocabulary! {
     pub enum HostAction {
         /// Approves the JetBrains Account login of the value `signInUrl` in the JetBrains Cloud emulator.
         AccountApproveSignIn = "account-approve-sign-in",
+        /// Waits until the controlled agent receives the prompt that `agentTurn` claimed, and answers it as `agentPrompt`.
+        AgentAwaitPrompt = "agent-await-prompt",
+        /// Makes the controlled agent end the turn of `agentPrompt`.
+        AgentCompletePrompt = "agent-complete-prompt",
+        /// Claims the next prompt of the session `agentSession` before the chat sends it, and answers the claim as `agentTurn`.
+        AgentExpectPrompt = "agent-expect-prompt",
+        /// Starts a session of the controlled agent of the fixture, gives the launch answers of the fixture, and answers
+        /// the session as `agentSession` and its thread as `agentThreadId`.
+        AgentLaunch = "agent-launch",
+        /// Makes the controlled agent ask for a form in the turn of `agentPrompt`, under the stated key and schema.
+        AgentRequestElicitation = "agent-request-elicitation",
         /// Pauses the next package download of the fake registry.
         ConsentHoldDownload = "consent-hold-download",
         /// Makes the fake registry fail the next package download.
@@ -49,6 +60,10 @@ vocabulary! {
 vocabulary! {
     /// The assertions that a lane runner checks on the host.
     pub enum HostAssertion {
+        /// The controlled agent of `agentSession` receives the stated action as the answer to the form of the stated key.
+        AgentAwaitElicitationResponse = "agent-await-elicitation-response",
+        /// The prompt `agentPrompt` holds exactly the stated text.
+        AgentPromptContent = "agent-prompt-content",
         /// The fake registry fails the next package download.
         ConsentDownloadFaultArmed = "consent-download-fault-armed",
         /// The fake registry answered the stated count of package requests since `consentRegistryBaseline`.
