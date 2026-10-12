@@ -162,6 +162,7 @@
     <action id="Terminal.CreateRectangularSelectionOnMouseDrag"
             class="com.intellij.terminal.frontend.action.TerminalCreateRectangularSelectionOnMouseDragAction"
             use-shortcut-of="EditorCreateRectangularSelectionOnMouseDrag">
+      <override-text place="GoToAction"/>
       <mouse-shortcut keystroke="shift alt button1" keymap="$default"/>
     </action>
     <action id="Terminal.Find" class="com.intellij.terminal.frontend.action.TerminalFindAction" use-shortcut-of="Find">
