@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopeUtil
@@ -134,6 +135,14 @@ internal class ScopeWalker(
       //MAYBE RC: wrap files into a cache-avoiding wrappers?
       //          It seems useless, since files are all indexable, so they are already scanned and cached in VFS -- but is it true?
       IndexableEntityProviderMethods.createIterators(moduleEntity, storage, project).mapTo(items) { WorkItem.Walk.Indexable(it) }
+    }
+    else if (FileBasedIndex.getInstance() !is FileBasedIndexEx) {
+      // A host can implement FileBasedIndex without FileBasedIndexEx. Then walk the workspace model modules.
+      val storage = WorkspaceModel.getInstance(project).currentSnapshot
+      for (moduleEntity in storage.entities(ModuleEntity::class.java)) {
+        IndexableEntityProviderMethods.createIterators(moduleEntity, storage, project).mapTo(items) { WorkItem.Walk.Indexable(it) }
+      }
+      nonIndexableWalked = false
     }
     else {
       LOG.assertTrue(!IdeProductMode.isLight, "Search in project should not happen in ijLight. Please use search in directory instead.")

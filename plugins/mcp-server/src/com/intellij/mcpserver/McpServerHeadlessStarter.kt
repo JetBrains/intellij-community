@@ -43,6 +43,7 @@ import kotlin.time.Duration.Companion.seconds
  *                                 tool itself is always exposed; the whitelist constrains tools it can invoke).
  *                                 If omitted, a built-in [DEFAULT_ALLOWED_TOOLS] whitelist is applied.
  *                                 Pass `--allowed-tools=*` to disable whitelist and expose all tools.
+ *   --search-format=<format>      `json` (default) or `compact`, one text line per `search_*` hit.
  */
 private sealed interface AllowedToolsSpec
 private data object WildcardAllowedTools : AllowedToolsSpec
@@ -104,6 +105,8 @@ internal class McpServerHeadlessStarter : ModernApplicationStarter() {
         System.err.println("MCP tools whitelist (default): ${DEFAULT_ALLOWED_TOOLS.joinToString(", ")} (mask: $mask)")
       }
     }
+
+    applySearchFormat(actualArgs)
 
     val projectPaths = parseProjectPaths(actualArgs)
 
@@ -224,6 +227,22 @@ internal class McpServerHeadlessStarter : ModernApplicationStarter() {
         System.err.println("Invalid --invocation-mode value: '$raw'. Expected 'direct' or 'via-router'.")
         null
       }
+    }
+  }
+
+  private fun applySearchFormat(args: List<String>) {
+    val raw = args.firstOrNull { it.startsWith("--search-format=") }
+                ?.removePrefix("--search-format=")
+                ?.trim()
+                ?.lowercase()
+              ?: "json"
+    when (raw) {
+      "compact" -> {
+        System.setProperty(SEARCH_COMPACT_OUTPUT_PROPERTY, "true")
+        System.err.println("MCP search format: compact (one line per hit, text hits carry the matched line)")
+      }
+      "json" -> System.err.println("MCP search format: json")
+      else -> System.err.println("Invalid --search-format value: '$raw'. Expected 'json' or 'compact'. Using json.")
     }
   }
 

@@ -276,6 +276,162 @@ class UniversalToolsetTest : GeneralMcpToolsetTestBase() {
   }
 
   @Test
+  fun execute_tool_rejects_an_unknown_parameter(): Unit = runBlocking(Dispatchers.Default) {
+    testMcpTool(
+      UniversalToolset::execute_tool.name,
+      buildJsonObject {
+        put("command", JsonPrimitive("search_file --q Test.java --line_end 240"))
+      }
+    ) { result ->
+      assert(result.isError == true) { "An unknown parameter should be refused, not ignored" }
+      val text = result.textContent.text
+      assert(text.contains("line_end")) { "The error should name the refused flag, got: $text" }
+    }
+  }
+
+  @Test
+  fun resolve_flag_name_folds_case_and_underscores() {
+    val schema = buildJsonObject {
+      put("file_path", buildJsonObject { put("type", JsonPrimitive("string")) })
+      put("offset", buildJsonObject { put("type", JsonPrimitive("integer")) })
+    }
+    val toolset = UniversalToolset()
+
+    assertThat(toolset.resolveFlagName("file_path", schema)).isEqualTo("file_path")
+    assertThat(toolset.resolveFlagName("filePath", schema)).isEqualTo("file_path")
+    assertThat(toolset.resolveFlagName("filepath", schema)).isEqualTo("file_path")
+    // parseArgsToJson converts a last line into a limit.
+    assertThat(toolset.resolveFlagName("line_end", schema)).isNull()
+    assertThat(toolset.resolveFlagName("nonsense", schema)).isNull()
+  }
+
+  @Test
+  fun resolve_flag_name_reaches_camel_case_properties() {
+    val schema = buildJsonObject {
+      put("filePath", buildJsonObject { put("type", JsonPrimitive("string")) })
+      put("errorsOnly", buildJsonObject { put("type", JsonPrimitive("boolean")) })
+    }
+    val toolset = UniversalToolset()
+
+    assertThat(toolset.resolveFlagName("file_path", schema)).isEqualTo("filePath")
+    assertThat(toolset.resolveFlagName("errors_only", schema)).isEqualTo("errorsOnly")
+  }
+
+  @Test
+  fun parse_args_to_json_maps_a_folded_name_onto_its_schema_property() {
+    val jsonArgs = parseUniversalArgs(
+      listOf("--filePath", "src/Main.java", "--Offset", "10"),
+      buildJsonObject {
+        put("file_path", buildJsonObject { put("type", JsonPrimitive("string")) })
+        put("offset", buildJsonObject { put("type", JsonPrimitive("integer")) })
+      },
+    )
+
+    assertThat(jsonArgs["file_path"].toString()).isEqualTo("\"src/Main.java\"")
+    // Resolved before conversion, so the integer schema of the real property applies.
+    assertThat(jsonArgs["offset"]).isEqualTo(JsonPrimitive(10L))
+  }
+
+  @Test
+  fun parse_args_to_json_converts_a_last_line_into_a_limit() {
+    val schema = buildJsonObject {
+      put("file_path", buildJsonObject { put("type", JsonPrimitive("string")) })
+      put("offset", buildJsonObject { put("type", JsonPrimitive("integer")) })
+      put("limit", buildJsonObject { put("type", JsonPrimitive("integer")) })
+    }
+
+    val windowed = parseUniversalArgs(
+      listOf("--file_path", "src/Main.java", "--offset", "10", "--end_line", "29"),
+      schema,
+    )
+    assertThat(windowed["file_path"].toString()).isEqualTo("\"src/Main.java\"")
+    assertThat(windowed["offset"]).isEqualTo(JsonPrimitive(10L))
+    // Lines 10..29 inclusive is 20 lines, not 29.
+    assertThat(windowed["limit"]).isEqualTo(JsonPrimitive(20L))
+
+    // The hyphenated spelling folds to the same name, and a missing offset means the file's start.
+    val fromStart = parseUniversalArgs(
+      listOf("--file_path", "src/Main.java", "--end-line", "90"),
+      schema,
+    )
+    assertThat(fromStart["limit"]).isEqualTo(JsonPrimitive(90L))
+    assertThat(fromStart["offset"]).isNull()
+  }
+
+  @Test
+  fun parse_args_to_json_refuses_both_a_limit_and_a_last_line() {
+    val error = assertThrows(McpExpectedError::class.java) {
+      parseUniversalArgs(
+        listOf("--file_path", "src/Main.java", "--limit", "5", "--line_end", "999"),
+        buildJsonObject {
+          put("file_path", buildJsonObject { put("type", JsonPrimitive("string")) })
+          put("offset", buildJsonObject { put("type", JsonPrimitive("integer")) })
+          put("limit", buildJsonObject { put("type", JsonPrimitive("integer")) })
+        },
+      )
+    }
+
+    assertThat(error.mcpErrorText).contains("--limit")
+    assertThat(error.mcpErrorText).contains("--line_end")
+  }
+
+  @Test
+  fun parse_args_to_json_refuses_a_last_line_before_the_offset() {
+    val error = assertThrows(McpExpectedError::class.java) {
+      parseUniversalArgs(
+        listOf("--file_path", "src/Main.java", "--offset", "100", "--end_line", "20"),
+        buildJsonObject {
+          put("file_path", buildJsonObject { put("type", JsonPrimitive("string")) })
+          put("offset", buildJsonObject { put("type", JsonPrimitive("integer")) })
+          put("limit", buildJsonObject { put("type", JsonPrimitive("integer")) })
+        },
+      )
+    }
+
+    assertThat(error.mcpErrorText).contains("--end_line")
+    assertThat(error.mcpErrorText).contains("100")
+  }
+
+  @Test
+  fun parse_args_to_json_only_converts_a_last_line_for_a_read_window() {
+    // The `search_file` limit counts hits, not lines.
+    val error = assertThrows(McpExpectedError::class.java) {
+      parseUniversalArgs(
+        listOf("--q", "Test.java", "--end_line", "240"),
+        buildJsonObject {
+          put("q", buildJsonObject { put("type", JsonPrimitive("string")) })
+          put("limit", buildJsonObject { put("type", JsonPrimitive("integer")) })
+        },
+      )
+    }
+
+    assertThat(error.mcpErrorText).contains("Unknown parameter '--end_line'")
+  }
+
+  @Test
+  fun parse_args_to_json_rejects_an_unknown_parameter() {
+    val error = assertThrows(McpExpectedError::class.java) {
+      parseUniversalArgs(
+        listOf("--recursive", "true"),
+        buildJsonObject {
+          put("file_path", buildJsonObject { put("type", JsonPrimitive("string")) })
+          put("limit", buildJsonObject { put("type", JsonPrimitive("integer")) })
+        },
+      )
+    }
+
+    assertThat(error.mcpErrorText).contains("Unknown parameter '--recursive'")
+    assertThat(error.mcpErrorText).contains("--file_path")
+  }
+
+  @Test
+  fun parse_args_to_json_passes_everything_through_an_empty_schema() {
+    val jsonArgs = parseUniversalArgs(listOf("--anything", "value"), buildJsonObject { })
+
+    assertThat(jsonArgs["anything"].toString()).isEqualTo("\"value\"")
+  }
+
+  @Test
   fun execute_tool_missing_required_parameter(): Unit = runBlocking(Dispatchers.Default) {
     testMcpTool(
       UniversalToolset::execute_tool.name,

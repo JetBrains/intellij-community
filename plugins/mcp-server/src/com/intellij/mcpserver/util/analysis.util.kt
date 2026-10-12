@@ -6,7 +6,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
@@ -24,12 +23,16 @@ suspend fun awaitExternalChangesAndIndexing(project: Project) {
   val dumbService = project.serviceAsync<DumbService>()
   // Get project roots
   val baseDirectories = project.getBaseDirectories()
-  (LocalFileSystem.getInstance() as LocalFileSystemImpl).markSuspiciousFilesDirty(emptyList<VirtualFile>())
-  val dirtyFiles = baseDirectories.filter { (it as VirtualFileSystemEntry).isDirty }
+  // A host that serves the `file` protocol itself has no refresh machinery to drive.
+  val localFileSystem = baseDirectories.firstNotNullOfOrNull { it.fileSystem as? LocalFileSystemImpl }
+  if (localFileSystem != null) {
+    localFileSystem.markSuspiciousFilesDirty(emptyList<VirtualFile>())
+    val dirtyFiles = baseDirectories.filterIsInstance<VirtualFileSystemEntry>().filter { it.isDirty }
 
-  if (dirtyFiles.isNotEmpty()) {
-    suspendCancellableCoroutine { cont ->
-      RefreshQueue.getInstance().refresh(async = true, recursive = true, finishRunnable = { cont.resume(Unit) }, files = dirtyFiles)
+    if (dirtyFiles.isNotEmpty()) {
+      suspendCancellableCoroutine { cont ->
+        RefreshQueue.getInstance().refresh(async = true, recursive = true, finishRunnable = { cont.resume(Unit) }, files = dirtyFiles)
+      }
     }
   }
 

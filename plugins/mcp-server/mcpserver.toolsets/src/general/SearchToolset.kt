@@ -12,6 +12,7 @@ import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.annotations.McpToolHintValue.FALSE
 import com.intellij.mcpserver.annotations.McpToolHintValue.TRUE
 import com.intellij.mcpserver.annotations.McpToolHints
+import com.intellij.mcpserver.isCompactSearchOutput
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
@@ -33,6 +34,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Segment
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.getPathMatcher
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -101,6 +103,12 @@ suspend fun <T> withSearchTimeoutOverride(project: Project, timeout: Duration, a
     state.timeoutOverride = previous
   }
 }
+
+@Internal
+const val SYMBOL_SEARCH_DEFAULT_LIMIT: Int = 50
+
+private const val MATCHED_LINE_LIMIT = 200
+
 private const val PATHS_DESCRIPTION = "Optional list of project-relative glob patterns to filter results. " +
                                       "Supports '!' excludes. Trailing '/' expands to '**'. " +
                                       "Patterns without '/' are treated as '**/pattern'. Empty strings are ignored."
@@ -137,7 +145,7 @@ class SearchToolset : McpToolset {
   ): SearchResult {
     if (q.isBlank()) mcpFail("Search text is empty")
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.searching.files.for.text", q))
-    return searchInFiles(q, paths, limit, isRegex = false)
+    return searchInFiles(q, paths, limit, isRegex = false).compactedIfEnabled()
   }
 
   @McpToolHints(readOnlyHint = TRUE, openWorldHint = FALSE)
@@ -157,7 +165,7 @@ class SearchToolset : McpToolset {
   ): SearchResult {
     if (q.isBlank()) mcpFail("Regex pattern is empty")
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.searching.content.with.regex", q))
-    return searchInFiles(q, paths, limit, isRegex = true)
+    return searchInFiles(q, paths, limit, isRegex = true).compactedIfEnabled()
   }
 
   @McpToolHints(readOnlyHint = TRUE, openWorldHint = FALSE)
@@ -178,7 +186,7 @@ class SearchToolset : McpToolset {
     @McpDescription(PATHS_DESCRIPTION) paths: List<String>? = null,
     @McpDescription("Whether to include SDK and library symbols. Disabled by default; if nothing suitable is found, try again with include_external=true.")
     include_external: Boolean = false,
-    @McpDescription("Maximum number of results to return") limit: Int = 1000,
+    @McpDescription("Maximum number of results to return") limit: Int = SYMBOL_SEARCH_DEFAULT_LIMIT,
   ): SearchResult {
     if (q.isBlank()) mcpFail("Search query is empty")
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.searching.files.for.text", q))
@@ -191,7 +199,7 @@ class SearchToolset : McpToolset {
         mcpFail("search_symbol is not supported by this IDE version")
       }
     }
-    return result.copy(partialResultReason = partialResultReason ?: result.partialResultReason)
+    return result.copy(partialResultReason = partialResultReason ?: result.partialResultReason).compactedIfEnabled()
   }
 
   @McpToolHints(readOnlyHint = TRUE, openWorldHint = FALSE)
@@ -213,7 +221,7 @@ class SearchToolset : McpToolset {
   ): SearchResult {
     if (q.isBlank()) mcpFail("Glob pattern is empty")
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.finding.files.by.glob", q))
-    return searchFiles(q, paths, includeExcluded, limit)
+    return searchFiles(q, paths, includeExcluded, limit).compactedIfEnabled()
   }
 }
 
@@ -324,6 +332,7 @@ private fun relativizeInProject(projectDirectories: List<Path>, projectDir: Path
  */
 private suspend fun mapUsagesToItems(usages: List<UsageInfo>, projectDir: Path): List<SearchItem> {
   val fileDocumentManager = serviceAsync<FileDocumentManager>()
+  val compact = isCompactSearchOutput()
   return readAction {
     usages.mapNotNull { usage ->
       val file = usage.virtualFile ?: return@mapNotNull null
@@ -338,9 +347,18 @@ private suspend fun mapUsagesToItems(usages: List<UsageInfo>, projectDir: Path):
         startColumn = snippet.startColumn,
         endLine = snippet.endLine,
         endColumn = snippet.endColumn,
+        matchedLine = if (compact) matchedLine(document, snippet.startLine) else null,
       )
     }
   }
+}
+
+private fun matchedLine(document: Document, line: Int): String {
+  if (document.lineCount == 0) return ""
+  val index = (line - 1).coerceIn(0, document.lineCount - 1)
+  val text = document.getText(TextRange(document.getLineStartOffset(index), document.getLineEndOffset(index)))
+  val trimmed = text.trim()
+  return if (trimmed.length <= MATCHED_LINE_LIMIT) trimmed else trimmed.take(MATCHED_LINE_LIMIT) + "…"
 }
 
 /**
@@ -810,22 +828,51 @@ data class SearchItem(
    * For search_file we only populate filePath; other fields remain null
    * because there is no text match to report for pure glob-based file search.
    * Match coordinates use 1-based line/column; end is exclusive.
+   * Only search_symbol populates name, presentation and container.
+   * Only the compact format populates matchedLine.
    */
   @JvmField val filePath: String,
   @JvmField val startLine: Int? = null,
   @JvmField val startColumn: Int? = null,
   @JvmField val endLine: Int? = null,
   @JvmField val endColumn: Int? = null,
-)
+  @JvmField @EncodeDefault(mode = EncodeDefault.Mode.NEVER) val name: String? = null,
+  @JvmField @EncodeDefault(mode = EncodeDefault.Mode.NEVER) val presentation: String? = null,
+  @JvmField @EncodeDefault(mode = EncodeDefault.Mode.NEVER) val container: String? = null,
+  @JvmField @EncodeDefault(mode = EncodeDefault.Mode.NEVER) val matchedLine: String? = null,
+) {
+  /** Renders the hit as `path:line:column name (container) matchedLine`, without the absent parts. */
+  fun toCompactLine(): String = buildString {
+    append(filePath)
+    if (startLine != null) {
+      append(':').append(startLine)
+      if (startColumn != null) append(':').append(startColumn)
+    }
+    if (name != null) append(' ').append(name)
+    if (container != null) append(" (").append(container).append(')')
+    if (matchedLine != null) append(' ').append(matchedLine)
+  }
+}
 
 @Internal
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class SearchResult(
-  @JvmField @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS) val items: List<SearchItem> = emptyList(),
+  @JvmField @EncodeDefault(mode = EncodeDefault.Mode.NEVER) val items: List<SearchItem> = emptyList(),
   @JvmField @EncodeDefault(mode = EncodeDefault.Mode.NEVER) val more: Boolean = false,
   @JvmField @EncodeDefault(mode = EncodeDefault.Mode.NEVER) val partialResultReason: String? = null,
-)
+  /** The hits as text lines in the compact format, in place of [items]. */
+  @JvmField @EncodeDefault(mode = EncodeDefault.Mode.NEVER) val hits: String? = null,
+) {
+  fun compactedIfEnabled(): SearchResult {
+    if (items.isEmpty() || !isCompactSearchOutput()) return this
+    return SearchResult(
+      more = more,
+      partialResultReason = partialResultReason,
+      hits = items.joinToString("\n") { it.toCompactLine() },
+    )
+  }
+}
 
 @Internal
 fun buildSearchSnippet(document: Document, textRange: Segment): SearchSnippet {

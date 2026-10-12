@@ -3,6 +3,7 @@
 package com.intellij.mcpserver.toolsets
 
 import com.intellij.mcpserver.GeneralMcpToolsetTestBase
+import com.intellij.mcpserver.SEARCH_COMPACT_OUTPUT_PROPERTY
 import com.intellij.mcpserver.toolsets.general.McpNavigationItemLocation
 import com.intellij.mcpserver.toolsets.general.McpNavigationItemMapper
 import com.intellij.mcpserver.toolsets.general.SEARCH_TIMEOUT_PARTIAL_RESULT_REASON
@@ -128,6 +129,7 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
     val items: List<SearchItem> = emptyList(),
     val more: Boolean = false,
     val partialResultReason: String? = null,
+    val hits: String? = null,
   )
 
   private val excludedDirName = "se_excluded_dir_51a2"
@@ -230,6 +232,43 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
       it.setBinaryContent(content.toByteArray())
     }
     file
+  }
+
+  @Test
+  fun search_text_in_compact_format_returns_one_line_per_hit_with_the_matched_text() =
+    runBlocking(Dispatchers.Default) {
+      awaitExternalChangesAndIndexing(project)
+      System.setProperty(SEARCH_COMPACT_OUTPUT_PROPERTY, "true")
+      try {
+        testMcpTool(
+          SearchToolset::search_text.name,
+          buildJsonObject { put("q", JsonPrimitive("Search Everywhere file content")) }
+        ) { actualResult ->
+          val result = parseResult(actualResult.textContent.text)
+          assertThat(result.items).isEmpty()
+          val hits = result.hits ?: error("A compact result should carry its hits as text")
+          val line = hits.lines().first { it.contains(searchFile.name) }
+          assertThat(line).matches(""".*${Regex.escape(searchFile.name)}:\d+:\d+ .*""")
+          assertThat(line).endsWith("Search Everywhere file content")
+        }
+      }
+      finally {
+        System.clearProperty(SEARCH_COMPACT_OUTPUT_PROPERTY)
+      }
+    }
+
+  @Test
+  fun search_text_in_the_default_format_carries_no_matched_line() = runBlocking(Dispatchers.Default) {
+    awaitExternalChangesAndIndexing(project)
+    testMcpTool(
+      SearchToolset::search_text.name,
+      buildJsonObject { put("q", JsonPrimitive("Search Everywhere file content")) }
+    ) { actualResult ->
+      val payload = actualResult.textContent.text
+      assertThat(payload).doesNotContain("matchedLine")
+      assertThat(payload).doesNotContain("hits")
+      assertThat(parseResult(payload).filePaths()).isNotEmpty()
+    }
   }
 
   @Test

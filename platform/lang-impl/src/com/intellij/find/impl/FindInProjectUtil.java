@@ -52,6 +52,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -204,7 +205,11 @@ public final class FindInProjectUtil {
     }
 
     String osIndependentDirectoryPath = FileUtilRt.toSystemIndependentName(directoryPath);
-    VirtualFile directory = LocalFileSystem.getInstance().findFileByPathWithoutCaching(osIndependentDirectoryPath);
+    // A host can serve the `file` protocol with its own file system.
+    VirtualFileSystem localFileSystem = VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL);
+    VirtualFile directory = localFileSystem instanceof LocalFileSystem local
+                            ? local.findFileByPathWithoutCaching(osIndependentDirectoryPath)
+                            : localFileSystem == null ? null : localFileSystem.findFileByPath(osIndependentDirectoryPath);
     if (directory == null || !directory.isDirectory()) {
 
       directory = null;

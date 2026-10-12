@@ -20,9 +20,11 @@ import com.intellij.navigation.NavigationItem
 import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
@@ -46,6 +48,8 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+
+private val LOG = fileLogger()
 
 /**
  * Searches for symbols via a customizable symbol search engine and maps them to [SearchItem]s.
@@ -231,12 +235,16 @@ private fun mapNavigationItem(
   if (!matchesPathScope(pathScope, projectDir, filePath)) return null
 
   val snippet = buildSnippet(project, fileDocumentManager, anchor)
+  val presentation = item.presentation
   return SearchItem(
     filePath = filePath,
     startLine = snippet?.startLine,
     startColumn = snippet?.startColumn,
     endLine = snippet?.endLine,
     endColumn = snippet?.endColumn,
+    name = item.name?.takeIf { it.isNotBlank() },
+    presentation = presentation?.presentableText?.takeIf { it.isNotBlank() && it != item.name },
+    container = presentation?.locationString?.takeIf { it.isNotBlank() },
   )
 }
 
@@ -299,7 +307,17 @@ private fun resolveNavigationAnchor(element: PsiElement): NavigationAnchor? {
   val originalElement = EditSourceUtil.getNavigatableOriginalElement(element) ?: element
   val navigationElement = originalElement.navigationElement ?: originalElement
   val gotoTarget = TargetElementUtil.getInstance().getGotoDeclarationTarget(originalElement, navigationElement) ?: navigationElement
-  val descriptor = PsiNavigationSupport.getInstance().getDescriptor(gotoTarget)
+  // A host without the navigation services has no descriptor. The PSI fallback below reports the same location.
+  val descriptor = try {
+    PsiNavigationSupport.getInstance().getDescriptor(gotoTarget)
+  }
+  catch (cancellation: ProcessCanceledException) {
+    throw cancellation
+  }
+  catch (unavailable: Throwable) {
+    LOG.debug("No navigation descriptor for $gotoTarget; falling back to its PSI location", unavailable)
+    null
+  }
   if (descriptor is OpenFileDescriptor) {
     val file = descriptor.file
     if (file.isValid) {

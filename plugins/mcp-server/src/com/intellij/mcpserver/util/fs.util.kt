@@ -37,8 +37,10 @@ private val logger = fileLogger()
 val Project.projectDirectory: Path
   get() {
     // don't use guessProjectDir() here because it may point to some internal directory (e.g. src instead of project root)
-    return if (this is ProjectStoreOwner) componentStore.projectBasePath
-    else mcpFail("The project directory cannot be determined.")
+    if (this is ProjectStoreOwner) return componentStore.projectBasePath
+    // A host without a project store, such as the language server analyzer, still has a base path.
+    basePath?.toNioPathOrNull()?.let { return it }
+    mcpFail("The project directory cannot be determined.")
   }
 
 /**

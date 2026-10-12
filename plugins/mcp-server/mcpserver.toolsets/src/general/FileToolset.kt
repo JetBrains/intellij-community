@@ -21,9 +21,9 @@ import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.readAndEdtWriteAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.findOrCreateFile
@@ -102,8 +102,9 @@ class FileToolset : McpToolset {
 
     if (file == null || !file.exists() || !file.isFile) mcpFail("File $filePath doesn't exist or can't be opened")
 
+    val fileEditorManager = project.serviceAsync<FileEditorManager>()
     withContext(Dispatchers.EDT) {
-      FileEditorManagerEx.getInstanceExAsync(project).openFile(file, options = FileEditorOpenOptions(requestFocus = true))
+      fileEditorManager.openFile(file, true)
     }
   }
 
@@ -119,7 +120,7 @@ class FileToolset : McpToolset {
     val project = currentCoroutineContext().project
     val projectDir = project.projectDirectory
 
-    val fileEditorManager = FileEditorManagerEx.getInstanceExAsync(project)
+    val fileEditorManager = project.serviceAsync<FileEditorManager>()
     val openFiles = fileEditorManager.openFiles
     val filePaths = openFiles.mapNotNull { projectDir.relativizeIfPossible(it) }
     val activeFilePath = fileEditorManager.selectedEditor?.file?.toNioPathOrNull()?.let { projectDir.relativize(it).pathString }

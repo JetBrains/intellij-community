@@ -8,6 +8,7 @@ import com.intellij.mcpserver.McpToolCallId
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.util.McpServerJson
 import com.intellij.mcpserver.mcpCallInfo
 import com.intellij.mcpserver.mcpCallOwnerIdsOf
@@ -47,6 +48,13 @@ import kotlin.time.TimeSource
 import com.intellij.mcpserver.McpTool as McpToolDef
 
 private const val FLAG_PREFIX = "--"
+private const val MAX_TOOL_NAME_SUGGESTIONS = 5
+
+private const val LIMIT_PROPERTY = "limit"
+private const val OFFSET_PROPERTY = "offset"
+
+/** Folded flag names for the last line to read. [UniversalToolset.parseArgsToJson] converts them into a limit. */
+private val LAST_LINE_FLAGS = setOf("endline", "lineend")
 
 private val LOG = fileLogger()
 
@@ -150,8 +158,9 @@ class UniversalToolset : McpToolset {
   }
 
   private suspend fun resolveRouterTools(): List<McpToolDef> {
+    // No session: the host runs the call outside an MCP session, for example as an LSP command.
     val sessionHandler = currentCoroutineContext().mcpCallInfo.sessionHandler
-                         ?: mcpFail("Session handler not available")
+                         ?: return McpServerService.getInstanceAsync().getMcpToolsAsync(useFiltersFromEP = false)
     val directTools = sessionHandler.toolsProvider.mcpTools.value
     val routerTools = sessionHandler.routerToolsProvider.mcpTools.value
     return (directTools + routerTools).distinctBy { it.descriptor.name }
@@ -160,11 +169,28 @@ class UniversalToolset : McpToolset {
   private fun findTool(name: String, all: List<McpToolDef>, dispatchEvent: ExecuteToolDispatchEvent): McpToolDef {
     LOG.trace { "Available tools: ${all.map { it.descriptor.name }.sorted().joinToString(", ")}" }
     val tool = all.find { it.descriptor.name == name }
-    if (tool == null) {
-      dispatchEvent.recordReject(McpDispatchRejectReason.UNKNOWN_TOOL)
-      mcpFail("Tool '$name' not found")
-    }
-    return tool
+    if (tool != null) return tool
+    dispatchEvent.recordReject(McpDispatchRejectReason.UNKNOWN_TOOL)
+    val suggestions = nearestToolNames(name, all)
+    if (suggestions.isEmpty()) mcpFail("Tool '$name' not found")
+    mcpFail("Tool '$name' not found. Did you mean: ${suggestions.joinToString(", ")}?")
+  }
+
+  /** Ranks the known tool names by shared name fragments, closest first. */
+  private fun nearestToolNames(name: String, all: List<McpToolDef>): List<String> {
+    val wanted = name.lowercase().split('_', '-').filter { it.isNotEmpty() }.toSet()
+    if (wanted.isEmpty()) return emptyList()
+    return all.asSequence()
+      .map { it.descriptor.name }
+      .map { candidate ->
+        val parts = candidate.lowercase().split('_', '-').filter { it.isNotEmpty() }.toSet()
+        candidate to parts.count { part -> wanted.any { it == part || it.contains(part) || part.contains(it) } }
+      }
+      .filter { (_, score) -> score > 0 }
+      .sortedByDescending { (_, score) -> score }
+      .map { (candidate, _) -> candidate }
+      .take(MAX_TOOL_NAME_SUGGESTIONS)
+      .toList()
   }
 
   private fun buildArguments(tool: McpToolDef, rawArgs: List<String>, dispatchEvent: ExecuteToolDispatchEvent): JsonObject {
@@ -178,7 +204,8 @@ class UniversalToolset : McpToolset {
     val missing = tool.descriptor.inputSchema.requiredProperties.filter { it !in jsonArgs }
     if (missing.isNotEmpty()) {
       dispatchEvent.recordReject(McpDispatchRejectReason.MISSING_REQUIRED_PARAMETERS)
-      mcpFail("Missing required parameters: ${missing.joinToString(", ")}")
+      val known = tool.descriptor.inputSchema.propertiesSchema.keys.joinToString(", ") { "--$it" }
+      mcpFail("Missing required parameters: ${missing.joinToString(", ")}. Accepted: $known")
     }
     return jsonArgs
   }
@@ -237,7 +264,9 @@ class UniversalToolset : McpToolset {
   }
 
   @VisibleForTesting
-  internal fun parseArgsToJson(args: List<String>, propertiesSchema: JsonObject): JsonObject = buildJsonObject {
+  internal fun parseArgsToJson(args: List<String>, propertiesSchema: JsonObject): JsonObject {
+    val resolvedArgs = LinkedHashMap<String, String>()
+    val unresolvedArgs = LinkedHashMap<String, String>()
     var i = 0
     while (i < args.size) {
       val arg = args[i]
@@ -249,10 +278,68 @@ class UniversalToolset : McpToolset {
       }
       val name = arg.substring(FLAG_PREFIX.length)
       val value = args.getOrNull(i + 1) ?: mcpFail("Parameter '$name' requires a value")
-      put(name, convertToJsonValue(name, value, propertiesSchema))
+      val resolved = resolveFlagName(name, propertiesSchema)
+      if (resolved != null) resolvedArgs[resolved] = value else unresolvedArgs[name] = value
       i += 2
     }
+
+    convertLastLineToLimit(resolvedArgs, unresolvedArgs, propertiesSchema)
+
+    // An empty schema has nothing to check a flag against, so it passes all flags through.
+    if (unresolvedArgs.isNotEmpty() && propertiesSchema.isNotEmpty()) {
+      val known = propertiesSchema.keys.joinToString(", ") { "$FLAG_PREFIX$it" }
+      mcpFail("Unknown parameter '$FLAG_PREFIX${unresolvedArgs.keys.first()}'. Accepted: $known")
+    }
+
+    return buildJsonObject {
+      for ((key, value) in resolvedArgs) put(key, convertToJsonValue(key, value, propertiesSchema))
+      for ((key, value) in unresolvedArgs) put(key, convertToJsonValue(key, value, propertiesSchema))
+    }
   }
+
+  /**
+   * Converts a last-line flag such as `--end_line` into the `limit` line count.
+   *
+   * Applies only to a tool that takes both `offset` and `limit`, because the `search_file` limit counts hits.
+   */
+  private fun convertLastLineToLimit(
+    resolvedArgs: MutableMap<String, String>,
+    unresolvedArgs: MutableMap<String, String>,
+    propertiesSchema: JsonObject,
+  ) {
+    if (!propertiesSchema.containsKey(LIMIT_PROPERTY) || !propertiesSchema.containsKey(OFFSET_PROPERTY)) return
+    val lastLineFlag = unresolvedArgs.keys.firstOrNull { foldFlagName(it) in LAST_LINE_FLAGS } ?: return
+    if (resolvedArgs.containsKey(LIMIT_PROPERTY)) {
+      mcpFail(
+        "Pass either '$FLAG_PREFIX$LIMIT_PROPERTY' (a line count) or " +
+        "'$FLAG_PREFIX$lastLineFlag' (a last line), not both."
+      )
+    }
+    val lastLine = unresolvedArgs.getValue(lastLineFlag).toLongOrNull()
+    val offset = resolvedArgs[OFFSET_PROPERTY]?.toLongOrNull() ?: 1L
+    if (lastLine == null || lastLine < offset) {
+      mcpFail(
+        "Parameter '$FLAG_PREFIX$lastLineFlag' must be a line number at or after the offset ($offset)."
+      )
+    }
+    resolvedArgs[LIMIT_PROPERTY] = (lastLine - offset + 1).toString()
+    unresolvedArgs.remove(lastLineFlag)
+  }
+
+  /**
+   * Returns the schema property for a flag, or `null`.
+   *
+   * The order is: the exact name, then the only property with the same folded name.
+   * A folded name is lowercase, without `_` and `-`.
+   */
+  @VisibleForTesting
+  internal fun resolveFlagName(name: String, propertiesSchema: JsonObject): String? {
+    if (propertiesSchema.containsKey(name)) return name
+    val folded = foldFlagName(name)
+    return propertiesSchema.keys.singleOrNull { foldFlagName(it) == folded }
+  }
+
+  private fun foldFlagName(name: String): String = name.lowercase().replace("_", "").replace("-", "")
 
   private fun convertToJsonValue(paramName: String, value: String, propertiesSchema: JsonObject): JsonElement {
     val paramSchema = propertiesSchema[paramName] as? JsonObject
