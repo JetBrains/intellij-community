@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
+import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +106,7 @@ final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
 
     @Override
     public boolean isAvailable(@NotNull Project project) {
-      return !project.getService(HgRepositoryManager.class).getRepositories().isEmpty();
+      return !VcsImplUtil.isVcsUiSuppressed(project) && !project.getService(HgRepositoryManager.class).getRepositories().isEmpty();
     }
 
     @Override

@@ -22,6 +22,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcs.git.GitDisplayName
 import com.intellij.vcs.git.branch.calcTooltip
+import com.intellij.vcsUtil.VcsImplUtil
 import git4idea.GitBranchesUsageCollector.branchWidgetClicked
 import git4idea.GitUtil
 import git4idea.branch.GitBranchIncomingOutgoingManager
@@ -123,7 +124,9 @@ open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(p
     override fun getDisplayName(): String = GitBundle.message("git.status.bar.widget.name")
 
     override fun isAvailable(project: Project): Boolean {
-      return (ExperimentalUI.isNewUI() || isEnabledByDefault) && !GitRepositoryManager.getInstance(project).repositories.isEmpty()
+      return (ExperimentalUI.isNewUI() || isEnabledByDefault) &&
+             !VcsImplUtil.isVcsUiSuppressed(project) &&
+             !GitRepositoryManager.getInstance(project).repositories.isEmpty()
     }
 
     override fun createWidget(project: Project): StatusBarWidget = GitBranchWidget(project)

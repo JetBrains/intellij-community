@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
@@ -181,7 +182,7 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
 
     @Override
     public boolean isAvailable(@NotNull Project project) {
-      return HgRemoteStatusUpdater.isCheckingEnabled(project);
+      return !VcsImplUtil.isVcsUiSuppressed(project) && HgRemoteStatusUpdater.isCheckingEnabled(project);
     }
 
     @Override
