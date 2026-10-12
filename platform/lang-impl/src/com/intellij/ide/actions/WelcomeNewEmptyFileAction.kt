@@ -186,9 +186,11 @@ private fun closeWelcomeFilesWithProject(project: Project, files: List<VirtualFi
 @ApiStatus.Internal
 @YesNoCancelResult
 fun askSaveWelcomeFile(file: VirtualFile, project: Project): Int {
-  return MessageDialogBuilder.yesNoCancel(IdeBundle.message("welcome.file.dialog.title", file.name),
-                                          IdeBundle.message("welcome.file.dialog.messages"))
+  val result = MessageDialogBuilder.yesNoCancel(IdeBundle.message("welcome.file.dialog.title", file.name),
+                                                IdeBundle.message("welcome.file.dialog.messages"))
     .yesText(IdeBundle.message("button.save")).noText(ApplicationBundle.message("settings.switch.project.button.dont.save")).show(project)
+  WelcomeFilesUsageCollector.logCloseDialogClosed(project, result, 1)
+  return result
 }
 
 /**
@@ -199,11 +201,13 @@ fun askSaveWelcomeFile(file: VirtualFile, project: Project): Int {
 @YesNoCancelResult
 fun askSaveWelcomeFiles(files: List<VirtualFile>, project: Project): Int {
   files.singleOrNull()?.let { return askSaveWelcomeFile(it, project) }
-  return MessageDialogBuilder.yesNoCancel(IdeBundle.message("welcome.files.dialog.title"),
-                                          IdeBundle.message("welcome.files.dialog.messages",
-                                                            files.size.toString(),
-                                                            files.joinToString("<br>") { it.name }))
+  val result = MessageDialogBuilder.yesNoCancel(IdeBundle.message("welcome.files.dialog.title"),
+                                                IdeBundle.message("welcome.files.dialog.messages",
+                                                                  files.size.toString(),
+                                                                  files.joinToString("<br>") { it.name }))
     .yesText(IdeBundle.message("button.save")).noText(ApplicationBundle.message("settings.switch.project.button.dont.save")).show(project)
+  WelcomeFilesUsageCollector.logCloseDialogClosed(project, result, files.size)
+  return result
 }
 
 /**
