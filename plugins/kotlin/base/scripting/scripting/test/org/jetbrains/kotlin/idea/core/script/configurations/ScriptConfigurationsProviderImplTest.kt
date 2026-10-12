@@ -1,7 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.configurations
 
+import com.intellij.ide.TrustedFilesService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.testFramework.replaceService
+import com.intellij.util.application
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.core.script.asCompilationConfiguration
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntityProvider
@@ -15,6 +20,20 @@ import kotlin.script.experimental.api.valueOrNull
 
 class ScriptConfigurationsProviderImplTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun runInDispatchThread(): Boolean = false
+
+    fun `test untrusted script is not processed`() {
+        val file = myFixture.addFileToProject("untrusted.main.kts", "@file:DependsOn(\"evil:payload:1.0\")")
+        application.replaceService(TrustedFilesService::class.java, object : TrustedFilesService {
+            override fun isTrusted(file: VirtualFile, project: Project): Boolean = false
+            override fun isTrustDecidedByFile(file: VirtualFile, project: Project): Boolean = true
+            override fun markExternallyOpened(file: VirtualFile) = Unit
+            override fun markExternallyOpenedIfOutsideProject(file: VirtualFile, project: Project) = Unit
+        }, testRootDisposable)
+
+        runBlocking { KotlinScriptService.getInstance(project).load(file.virtualFile) }
+
+        assertNull(KotlinScriptEntityProvider.findKotlinScriptEntity(project, file.virtualFile))
+    }
 
     fun `test cached configuration is reused for VirtualFileScriptSource`() {
         val file = myFixture.configureByText("test.kts", "val x = 1")
