@@ -164,7 +164,7 @@ object UniversalFileChooser {
     private val descriptor: FileChooserDescriptor,
     private val contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
     private val persistLocation: Boolean = true,
-    private val preselectPath: Path? = null
+    private val preselectPath: (suspend () -> Path?)? = null
   ) : DialogWrapper(project, parent, true, IdeModalityType.IDE), FileChooserDialog, PathChooserDialog {
     private lateinit var mainPanel: Panel
 
@@ -182,7 +182,7 @@ object UniversalFileChooser {
 
     override fun choose(project: Project?, vararg toSelect: VirtualFile?): Array<out VirtualFile?> {
       val explicit = toSelect.firstOrNull()?.let { runCatching { it.toNioPath() }.getOrNull() }
-      mainPanel.preselect(explicit)
+      mainPanel.preselect(explicit?.let { path -> suspend { path } })
       if (this.showAndGet()) {
         return chosenFiles.toArray(VirtualFile.EMPTY_ARRAY)
       }
@@ -191,7 +191,7 @@ object UniversalFileChooser {
 
     override fun choose(toSelect: VirtualFile?, callback: Consumer<in MutableList<VirtualFile>>) {
       val explicit = toSelect?.let { runCatching { it.toNioPath() }.getOrNull() }
-      mainPanel.preselect(explicit)
+      mainPanel.preselect(explicit?.let { path -> suspend { path } })
       if (showAndGet()) {
         val mutableList = mutableListOf<VirtualFile>()
         mutableList.addAll(chosenFiles)
@@ -282,7 +282,7 @@ object UniversalFileChooser {
     private val contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
     private val extraToolbarActions: ActionGroup = DefaultActionGroup(),
     private val extraPopupActions: ActionGroup = DefaultActionGroup(),
-    preselectPath: Path? = null
+    preselectPath: (suspend () -> Path?)? = null
   ) : JPanel(), FileBrowserPanel {
 
     companion object {
@@ -587,13 +587,21 @@ object UniversalFileChooser {
       }
     }
 
-    fun preselect(toSelect: Path?) {
+    fun preselect(toSelect: (suspend () -> Path?)?) {
       val requestId = ++preselectRequestId
       scope.launch {
         withContext(Dispatchers.IO) {
-          val target = pathToSelect(toSelect) ?: return@withContext
+          val requested = try {
+            toSelect?.invoke()
+          }
+          catch (e: Exception) {
+            rethrowControlFlowException(e)
+            logger<UniversalFileChooser>().warn("Failed to compute the path to preselect", e)
+            null
+          }
+          val target = pathToSelect(requested) ?: return@withContext
           val effective = if (descriptor is FileSaverDescriptor && Files.exists(target) && !Files.isDirectory(target)) {
-            target?.parent ?: target
+            target.parent ?: target
           }
           else {
             target
@@ -601,7 +609,7 @@ object UniversalFileChooser {
           runOnEdt {
             if (requestId != preselectRequestId) return@runOnEdt
             navigateToFile(effective, preselectPathText = true)
-            if (toSelect == null) {
+            if (requested == null) {
               preselectProjectTab(project)
             }
           }
