@@ -104,6 +104,28 @@ class IjentShellBootstrapTest {
 
   @Test
   @EnabledOnOs(OS.WINDOWS)
+  fun `the recovery bootstrap starts PowerShell without PATH`() {
+    val command = getIjentShellBootstrapCommand().substringBefore('\n')
+    val builder = ProcessBuilder("${System.getenv("SystemRoot")}\\System32\\cmd.exe", "/c", command)
+    builder.environment()["PATH"] = ""
+    val process = builder.start()
+    try {
+      process.outputStream.bufferedWriter().use {
+        it.appendLine("[Console]::Out.WriteLine('IJENT_RECOVERY_READY')")
+        it.appendLine("exit 0")
+      }
+      val output = process.inputStream.bufferedReader().readText()
+      val error = process.errorStream.bufferedReader().readText()
+      assertEquals(0, process.waitFor(), error)
+      assertTrue(output.lineSequence().any { it == "IJENT_RECOVERY_READY" }, output)
+    }
+    finally {
+      process.destroyForcibly()
+    }
+  }
+
+  @Test
+  @EnabledOnOs(OS.WINDOWS)
   fun `native PowerShell bootstrap keeps the same channel alive`() {
     val bootstrap = createShellBootstrap()
     val encoded = Base64.getEncoder().encodeToString(bootstrap.command.toByteArray(Charsets.UTF_16LE))
