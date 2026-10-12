@@ -4,6 +4,7 @@ package com.intellij.execution.ui;
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.execution.configuration.EnvironmentVariablesConfiguration;
 import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.icons.AllIcons;
@@ -260,7 +261,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     configuration.setProgramParameters(fromTextField(myProgramParametersComponent.getComponent(), configuration));
     configuration.setWorkingDirectory(fromTextField(myWorkingDirectoryField, configuration));
 
-    myEnvVariablesComponent.apply(configuration);
+    EnvironmentVariablesConfiguration.applyToConfiguration(myEnvVariablesComponent, configuration);
   }
 
   protected @Nullable String fromTextField(@NotNull TextAccessor textAccessor, @NotNull CommonProgramRunConfigurationParameters configuration) {
@@ -271,6 +272,6 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     setProgramParameters(configuration.getProgramParameters());
     setWorkingDirectory(PathUtil.toSystemDependentName(configuration.getWorkingDirectory()));
 
-    myEnvVariablesComponent.reset(configuration);
+    EnvironmentVariablesConfiguration.resetFromConfiguration(myEnvVariablesComponent, configuration);
   }
 }

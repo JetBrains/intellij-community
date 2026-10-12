@@ -202,6 +202,9 @@ c:com.intellij.execution.configuration.EnvironmentVariablesComponent
 - setEnvFilePaths(java.util.List):V
 - setEnvs(java.util.Map):V
 - setPassParentEnvs(Z):V
+f:com.intellij.execution.configuration.EnvironmentVariablesConfiguration
+- sf:applyToConfiguration(com.intellij.execution.configuration.EnvironmentVariablesComponent,com.intellij.execution.CommonProgramRunConfigurationParameters):V
+- sf:resetFromConfiguration(com.intellij.execution.configuration.EnvironmentVariablesComponent,com.intellij.execution.CommonProgramRunConfigurationParameters):V
 f:com.intellij.execution.configuration.EnvironmentVariablesData
 - equals(java.lang.Object):Z
 - getEnvironmentFile():java.lang.String

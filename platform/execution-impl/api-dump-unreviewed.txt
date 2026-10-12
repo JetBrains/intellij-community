@@ -294,11 +294,9 @@ c:com.intellij.execution.configuration.EnvironmentVariablesComponent
 - sf:NAME:java.lang.String
 - sf:VALUE:java.lang.String
 - f:myEnvVars:com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
-- apply(com.intellij.execution.CommonProgramRunConfigurationParameters):V
 - p:createBrowseComponent():com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 - s:readExternal(org.jdom.Element,java.util.Map):V
 - removeChangeListener(javax.swing.event.ChangeListener):V
-- reset(com.intellij.execution.CommonProgramRunConfigurationParameters):V
 - s:writeExternal(org.jdom.Element,java.util.Map):V
 f:com.intellij.execution.configuration.EnvironmentVariablesData
 - sf:DEFAULT:com.intellij.execution.configuration.EnvironmentVariablesData
