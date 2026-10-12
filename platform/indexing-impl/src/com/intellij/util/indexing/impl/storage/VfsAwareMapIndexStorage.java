@@ -12,7 +12,6 @@ import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.StorageLockContext;
-import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +20,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
+import java.util.function.IntPredicate;
 
 @Internal
 public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
@@ -160,9 +160,9 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
 
         Project project = scope.getProject();
         if (myKeyHashToVirtualFileMapping != null && project != null && idFilter != null) {
-          IntSet keyHashesBelongingToProject = myKeyHashToVirtualFileMapping.getSuitableKeyHashes(idFilter, project);
+          IntPredicate keyHashBelongsToProject = myKeyHashToVirtualFileMapping.getSuitableKeyHashes(idFilter, project);
           return doProcessKeys(key -> {
-            if (!keyHashesBelongingToProject.contains(myKeyDescriptor.getHashCode(key))) return true;
+            if (!keyHashBelongsToProject.test(myKeyDescriptor.getHashCode(key))) return true;
             return processor.process(key);
           });
         }

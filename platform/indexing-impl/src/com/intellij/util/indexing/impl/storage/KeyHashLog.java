@@ -44,6 +44,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntPredicate;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 
@@ -113,21 +114,22 @@ public final class KeyHashLog<Key> implements Closeable {
     appendKeyHashToVirtualFileMappingToLog(key, -inputId);
   }
 
-  //MAYBE RC: should we return an IntSet here? -- seems like IntPredicate is enough
-  public @NotNull IntSet getSuitableKeyHashes(@NotNull IdFilter filter,
-                                              @NotNull Project project) throws StorageException {
+  /// @return a predicate that accepts `key.hash` if the key is likely present in files that belong to `project` and match `filter`
+  public @NotNull IntPredicate getSuitableKeyHashes(@NotNull IdFilter filter,
+                                                    @NotNull Project project) throws StorageException {
     if (!ENABLE_CACHED_HASH_IDS || filter.getFilteringScopeType() != IdFilter.FilterScopeType.PROJECT_AND_LIBRARIES) {
-      return getSuitableKeyHashes(filter);
+      IntSet keyHashes = getSuitableKeyHashes(filter);
+      return keyHashes::contains;
     }
 
     long startedAt = System.currentTimeMillis();
-    IntSet keyHashes = myPerProjectKeyHashes.getKeyHashes(project, filter);
+    IntPredicate keyHashPredicate = myPerProjectKeyHashes.getKeyHashPredicate(project, filter);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Scanned keyHashToVirtualFileMapping of " + myBaseStorageFile + " for " + (System.currentTimeMillis() - startedAt));
     }
 
-    return keyHashes;
+    return keyHashPredicate;
   }
 
   private void appendKeyHashToVirtualFileMappingToLog(Key key, int inputId) throws StorageException {
@@ -391,8 +393,8 @@ public final class KeyHashLog<Key> implements Closeable {
   private final class PerProjectKeyHashes {
     private @NotNull SoftReference<InternalState> stateRef = new SoftReference<>(null);
 
-    private synchronized @NotNull IntSet getKeyHashes(@NotNull Project project,
-                                                      @NotNull IdFilter filter) throws StorageException {
+    private synchronized @NotNull IntPredicate getKeyHashPredicate(@NotNull Project project,
+                                                                   @NotNull IdFilter filter) throws StorageException {
       int currentFileLength = myKeyHashToVirtualFileMapping.getCurrentLength();
       InternalState state = stateRef.get();
       if (state == null || state.project != project) {
@@ -422,7 +424,12 @@ public final class KeyHashLog<Key> implements Closeable {
         }
       }
       stateRef = new SoftReference<>(state);
-      return state.keyHashes;
+      InternalState selectedState = state;
+      return keyHash -> contains(selectedState, keyHash);
+    }
+
+    private synchronized boolean contains(@NotNull InternalState state, int keyHash) {
+      return state.keyHashes.contains(keyHash);
     }
 
     private @NotNull InternalState createState(@NotNull Project project,

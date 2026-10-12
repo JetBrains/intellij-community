@@ -26,6 +26,7 @@ import java.lang.reflect.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
+import java.util.function.IntPredicate;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -123,7 +124,7 @@ public class KeyHashLogBenchmark {
   }
 
   @Benchmark
-  public IntSet lookupAfterAppend(TailScanState state) throws Exception {
+  public IntPredicate lookupAfterAppend(TailScanState state) throws Exception {
     return state.keyHashLog.getSuitableKeyHashes(ALL_FILES, PROJECT);
   }
 }
