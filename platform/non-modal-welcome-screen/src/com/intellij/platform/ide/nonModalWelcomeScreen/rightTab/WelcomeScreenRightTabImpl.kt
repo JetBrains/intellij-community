@@ -485,6 +485,7 @@ internal class WelcomeScreenRightTabImpl(
     return buildList {
       add(ButtonInfoPanelModel(WelcomeRightTabContentProvider.InfoButtonModel(IdeBundle.message("welcome.screen.plugins.title"),
                                                                               AllIcons.Nodes.Plugin) { project, _ ->
+        WelcomeScreenTabUsageCollector.logPluginsClicked()
         PluginManagerConfigurable.showSettingsDialogFromWelcomeScreen(project)
       }))
       add(ComboBoxInfoPanelModel(ThemeModel.getIcon(), "welcome.screen.right.tab.theme.switch.prefix", ThemeModel()))

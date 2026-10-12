@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 internal object WelcomeScreenTabUsageCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("welcome.screen.tab", 4)
+  private val GROUP = EventLogGroup("welcome.screen.tab", 6)
 
   private val welcomeTabIsEnabled: BooleanEventField = EventFields.Boolean("isEnabled")
   private val WELCOME_SCREEN_TAB_VISIBILITY_CHANGED = GROUP.registerEvent("welcome.screen.tab.visibility.changed", welcomeTabIsEnabled)
@@ -21,6 +21,9 @@ internal object WelcomeScreenTabUsageCollector : CounterUsagesCollector() {
   private val startupReopenLastProjectField: BooleanEventField = EventFields.Boolean("isReopenLastProject")
   private val WELCOME_SCREEN_STARTUP_OPTION_CHANGED = GROUP.registerEvent("welcome.screen.tab.startup.option.changed", startupReopenLastProjectField)
   fun logStartupOptionChanged(isReopenLastProject: Boolean): Unit = WELCOME_SCREEN_STARTUP_OPTION_CHANGED.log(isReopenLastProject)
+
+  private val WELCOME_SCREEN_PLUGINS_CLICKED = GROUP.registerEvent("welcome.screen.tab.plugins.clicked")
+  fun logPluginsClicked(): Unit = WELCOME_SCREEN_PLUGINS_CLICKED.log()
 
   override fun getGroup(): EventLogGroup = GROUP
 }
