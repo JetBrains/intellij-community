@@ -233,7 +233,7 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
             model("hints/compilerPlugins/supertypes", pattern = inlayHintsFileRegexp)
         }
 
-        testClass<AbstractKotlinCodeVisionProviderTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.codeInsight.codeVision.KotlinCodeVisionProviderTestGenerated") {
+        testClass<AbstractKotlinCodeVisionProviderTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.codeInsight.codeVision.KotlinCodeVisionProviderTestGenerated", junit5 = Junit5Suite()) {
             model("../../../idea/tests/testData/codeInsight/codeVision")
         }
 
