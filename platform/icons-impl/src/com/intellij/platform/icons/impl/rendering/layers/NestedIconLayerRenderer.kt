@@ -22,7 +22,7 @@ class NestedIconLayerRenderer(private val layer: NestedIconLayer, renderingConte
     override fun render(paintingContext: LayerPaintingContext) {
         val placement = layout.placement(paintingContext)
         val nestedLayerContext =
-            paintingContext.createNestedLayer(placement.bounds.x, placement.bounds.y, scale = placement.scale)
+            paintingContext.createNestedLayer(placement.bounds.x, placement.bounds.y, scale = placement.scale, alpha = layout.alpha)
         renderer.render(nestedLayerContext)
     }
 }

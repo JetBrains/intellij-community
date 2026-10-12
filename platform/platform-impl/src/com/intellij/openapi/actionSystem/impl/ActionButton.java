@@ -24,8 +24,10 @@ import com.intellij.openapi.actionSystem.ExperimentalIcons;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.actionSystem.ex.ActionIconDescriptors;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.DescriptorIcons;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,8 +45,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.platform.icons.AllIconDescriptors;
 import com.intellij.platform.icons.IconDescriptor;
-import com.intellij.platform.icons.scale.IconScale;
-import com.intellij.platform.icons.swing.SwingIconKt;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.popup.ActionPopupOptions;
@@ -107,10 +107,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private Supplier<? extends @NotNull Dimension> myMinimumButtonSizeFunction;
   private Icon myDisabledIcon;
   private Icon myIcon;
-  // experimental icons pipeline: createSwingIcon is expensive, so cache the bridge per descriptor
-  private IconDescriptor myIconDescriptor;
-  private Icon myDescriptorSwingIcon;
-  private Icon myDescriptorDisabledSwingIcon;
+  // experimental icons pipeline: keep the Swing icons while the descriptor and the theme stay the same
+  private DescriptorIcons myDescriptorIcons;
+  private DescriptorIcons myHoveredDescriptorIcons;
+  private DescriptorIcons mySelectedDescriptorIcons;
   protected final Presentation myPresentation;
   protected final AnAction myAction;
   protected final String myPlace;
@@ -337,6 +337,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         if (myNoIconsInPopup) {
           presentation.setIcon(null);
           presentation.setHoveredIcon(null);
+          presentation.setIconDescriptor(null);
+          presentation.setHoveredIconDescriptor(null);
         }
       }
     };
@@ -453,13 +455,18 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
    * @return button's icon. Icon depends on action's state and button's state. It means that the method returns
    *         disabled icon if action is disabled.
    *         In case of rollover (POPPED) or pressed (PUSHED) button's state hovered icon is used (if presented)
+   *         While the new icons pipeline is on, a selected button uses the selected icon descriptor,
+   *         and a POPPED or PUSHED button uses the hovered icon descriptor.
    *         If the action's icon is {@code null} then it returns
    *         an empty icon.
    */
   public Icon getIcon() {
     boolean enabled = isEnabled();
     int popState = getPopState();
-    Icon hoveredIcon = !ExperimentalIcons.isEnabled() && (popState == POPPED || popState == PUSHED) ? myPresentation.getHoveredIcon() : null;
+    // with the new icons pipeline, this is the selected or the hovered icon
+    Icon hoveredIcon = ExperimentalIcons.isEnabled()
+                       ? (enabled ? getDescriptorStateIcon(popState) : null)
+                       : (popState == POPPED || popState == PUSHED) ? myPresentation.getHoveredIcon() : null;
     Icon icon = enabled ? (hoveredIcon == null ? myIcon : hoveredIcon) : myDisabledIcon;
     return icon == null ? getFallbackIcon(enabled) : icon;
   }
@@ -499,15 +506,27 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   private void updateDescriptorIcons() {
-    IconDescriptor descriptor = myPresentation.getIconDescriptor();
-    IconDescriptor effective = descriptor != null ? descriptor : AllIconDescriptors.Toolbar.getUnknown();
-    if (!Objects.equals(effective, myIconDescriptor) || myDescriptorSwingIcon == null) {
-      myIconDescriptor = effective;
-      myDescriptorSwingIcon = SwingIconKt.createSwingIcon(effective, IconScale.Default);
-      myDescriptorDisabledSwingIcon = myLook.getDisabledIcon(myDescriptorSwingIcon);
+    IconDescriptor effective = Objects.requireNonNullElse(
+      ActionIconDescriptors.effective(myPresentation),
+      AllIconDescriptors.Toolbar.getUnknown()
+    );
+    myDescriptorIcons = DescriptorIcons.reuseOrBuild(effective, myDescriptorIcons);
+    myIcon = myDescriptorIcons.getIcon();
+    // The disabled icon comes from the descriptor, not from myLook.getDisabledIcon.
+    // HeaderToolbarButtonLook has its own disabled filter, and the new API has no equivalent yet.
+    myDisabledIcon = myDescriptorIcons.getDisabled();
+  }
+
+  private @Nullable Icon getDescriptorStateIcon(int popState) {
+    if (isSelected()) {
+      mySelectedDescriptorIcons = DescriptorIcons.reuseOrNull(myPresentation.getSelectedIconDescriptor(), mySelectedDescriptorIcons);
+      if (mySelectedDescriptorIcons != null) return mySelectedDescriptorIcons.getIcon();
     }
-    myIcon = myDescriptorSwingIcon;
-    myDisabledIcon = myDescriptorDisabledSwingIcon;
+    if (popState == POPPED || popState == PUSHED) {
+      myHoveredDescriptorIcons = DescriptorIcons.reuseOrNull(myPresentation.getHoveredIconDescriptor(), myHoveredDescriptorIcons);
+      if (myHoveredDescriptorIcons != null) return myHoveredDescriptorIcons.getIcon();
+    }
+    return null;
   }
 
   protected void updateToolTipText() {
