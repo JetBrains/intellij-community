@@ -33,6 +33,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WelcomeScreenCustomization
@@ -56,12 +57,14 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
+import com.intellij.ui.dsl.builder.Placeholder
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.layout.ValueComponentPredicate
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.initOnShow
+import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -118,9 +121,12 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
     val providerRecentProjectsCount = RecentProjectListActionProvider.getInstance().countProjectsFromProviders()
     WelcomeScreenCounterUsageCollector.reportWelcomeScreenShowed(recentProjectsCount, providerRecentProjectsCount)
 
-    val promo = WelcomeScreenComponentFactory.getSinglePromotion(recentProjectsCount == 0)
+    // the promotion is built after the tab is first shown: its promoters initialize their plugins, and the banner renders HTML
+    val isPromoForEmptyState = recentProjectsCount == 0
+    val isPromoVisible = AtomicBooleanProperty(false)
+    lateinit var promoPlaceholder: Placeholder
 
-    return panel {
+    val result = panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {
         row {
           val placeholder = placeholder()
@@ -147,16 +153,12 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
               putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
             }.component
         }
-        if (promo != null) {
-          row {
-            cell(promo)
-              .customize(UnscaledGaps(0, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET))
-              .align(AlignX.FILL)
-              .applyToComponent {
-                putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
-              }
-          }
-        }
+        // hidden without a promotion, so the other rows keep their layout until it comes
+        row {
+          promoPlaceholder = placeholder()
+            .customize(UnscaledGaps(0, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET))
+            .align(AlignX.FILL)
+        }.visibleIf(isPromoVisible)
 
         val errorReportAlert = createErrorReportAlert()
         if (errorReportAlert != null) {
@@ -172,6 +174,13 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
     }.apply {
       background = WelcomeScreenUIManager.getProjectsBackground()
     }
+    UiNotifyConnector.doWhenFirstShown(result) {
+      val promo = WelcomeScreenComponentFactory.getSinglePromotion(isPromoForEmptyState) ?: return@doWhenFirstShown
+      promo.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
+      promoPlaceholder.component = promo
+      isPromoVisible.set(true)
+    }
+    return result
   }
 
   private fun checkState() {
