@@ -27,7 +27,8 @@ pub(crate) const WELCOME_BECAME_VISIBLE: &str = "welcomeBecameVisible";
 pub(crate) const FRAME_BECAME_VISIBLE: &str = "frameBecameVisible";
 pub(crate) const FRAME_BECAME_INTERACTIVE: &str = "frameBecameInteractive";
 
-/// The metric keys of the report.
+/// The metric keys of the report. A start without a project has no end of its start-up, so its report, which the IDE
+/// writes at the exit, can lack [`TOTAL_DURATION`] or hold a negative one. The record keeps neither, with a note.
 pub(crate) const TOTAL_DURATION: &str = "totalDuration";
 /// The milliseconds from the JVM start to the start of the process clock, `jvm.loadingTime` of the report.
 pub(crate) const JVM_LOADING_TIME: &str = "jvm.loadingTime";
@@ -368,7 +369,15 @@ fn measure(run_dir: &Path, record: &mut RunRecord) -> Result<(), String> {
         record.notes.push(format!("{TRACE_FILE} is truncated; the reader closed it"));
     }
     if let Some(stats) = &stats {
-        metrics.insert(TOTAL_DURATION.to_owned(), as_f64(stats.total_duration));
+        match stats.total_duration {
+            Some(total_ms) if total_ms >= 0 => {
+                metrics.insert(TOTAL_DURATION.to_owned(), as_f64(total_ms));
+            }
+            Some(_) => record.notes.push(
+                "startup-stats.json has a negative totalDuration, as a start without a project writes it, so the run has none".to_owned(),
+            ),
+            None => record.notes.push("startup-stats.json has no totalDuration".to_owned()),
+        }
         if let Some(loading_ms) = stats.jvm_loading_ms() {
             metrics.insert(JVM_LOADING_TIME.to_owned(), as_f64(loading_ms));
         }

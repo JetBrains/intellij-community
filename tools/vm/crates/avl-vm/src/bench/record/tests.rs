@@ -4,8 +4,8 @@ use pretty_assertions::assert_eq;
 
 use super::{
     CLASSES_HIDDEN, CLASSES_JAR, CLASSES_JDK, CLASSES_NAMED, CLASSES_PLATFORM, CLASSES_PLUGINS, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT,
-    EMPTY_STATE_PREFIX, EMPTY_STATE_SPAN, JVM_LOADING_TIME, LaunchFacts, RunId, RunKind, RunRecord, WELCOME_BECAME_VISIBLE, collect,
-    named_at,
+    EMPTY_STATE_PREFIX, EMPTY_STATE_SPAN, JVM_LOADING_TIME, LaunchFacts, RunId, RunKind, RunRecord, TOTAL_DURATION, WELCOME_BECAME_VISIBLE,
+    collect, named_at,
 };
 use crate::bench::arm::Arm;
 use crate::bench::testing::{EMPTY_STATE_FIXTURE_SPANS, append_spans, empty_editor_run, fixture_session};
@@ -172,15 +172,55 @@ fn a_non_modal_run_passes_the_gate_and_has_the_welcome_spans() {
     );
 }
 
+/// A modal run reads the start-up report that the IDE writes at the exit. A start without a project ends no start-up,
+/// so a negative or a missing totalDuration is a note and no metric, and the other report metrics stay. The trace starts
+/// with `bootstrap`, so the spans of the welcome frame and their ends are on the clock of the anchors.
 #[test]
-fn a_modal_run_without_the_report_is_valid_with_a_note() {
+fn a_modal_run_reads_the_report_of_its_exit() {
     let (_dir, session) = fixture_session();
-    let record = collect(&session.join("modal-run-01"), &id(Arm::Modal), LaunchFacts::default());
+    let run = session.join("modal-run-01");
+    let record = collect(&run, &id(Arm::Modal), LaunchFacts::default());
     assert!(record.valid, "{:?}", record.reason);
     assert_eq!(
         record.notes,
-        vec!["no startup-stats.json".to_owned(), "no class-load.log".to_owned()]
+        ["startup-stats.json has a negative totalDuration, as a start without a project writes it, so the run has none"]
     );
+    let metric = |name: &str| record.metrics.get(name).copied();
+    assert_eq!(metric(TOTAL_DURATION), None);
+    for (name, value) in [
+        (JVM_LOADING_TIME, 352.0),
+        ("classLoading.time", 5240.0),
+        ("classLoading.edtTime", 26.0),
+        ("bootstrap", 44.1),
+        ("app initialization", 940.2),
+        ("welcome frame EDT waiting", 21.3),
+        ("welcome frame creating", 612.4),
+        ("welcome frame showing", 466.7),
+        ("app initialized callback end", 1254.4),
+        ("welcome frame creating end", 1863.0),
+        ("classes.named@welcomeBecameVisible", 25.0),
+        ("classes.named@quit", 27.0),
+    ] {
+        assert_eq!(metric(name), Some(value), "{name}");
+    }
+    assert!(
+        !record.metrics.contains_key("ProjectManager.openAsync"),
+        "a start without a project has no project span"
+    );
+
+    let path = run.join("startup-stats.json");
+    let mut report: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&path).expect("a report")).expect("a report");
+    report.as_object_mut().expect("an object").remove("totalDuration");
+    std::fs::write(&path, report.to_string()).expect("a report");
+    let record = collect(&run, &id(Arm::Modal), LaunchFacts::default());
+    assert_eq!(record.notes, ["startup-stats.json has no totalDuration"]);
+    assert_eq!(record.metrics.get(JVM_LOADING_TIME), Some(&352.0));
+
+    std::fs::remove_file(&path).expect("a removal");
+    std::fs::remove_file(run.join("class-load.log")).expect("a removal");
+    let record = collect(&run, &id(Arm::Modal), LaunchFacts::default());
+    assert!(record.valid, "{:?}", record.reason);
+    assert_eq!(record.notes, ["no startup-stats.json", "no class-load.log"]);
     assert_eq!(record.metrics.get("pluginClasses"), Some(&157.0));
     assert_eq!(
         record.classes_by_plugin.values().sum::<u64>(),

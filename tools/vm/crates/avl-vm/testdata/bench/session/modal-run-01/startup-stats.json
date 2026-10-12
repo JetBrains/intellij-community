@@ -1,0 +1,152 @@
+{
+ "version": "38",
+ "build": "263.SNAPSHOT",
+ "buildDate": "Thu, 1 Oct 2026 15:18:09 +0200",
+ "productCode": "IU",
+ "generated": "Thu, 1 Oct 2026 15:15:39 +0200",
+ "os": "macOS 26.7",
+ "runtime": "JetBrains s.r.o. 25.0.2 25.0.2+10-b432.48",
+ "classLoading": {
+  "time": 5240,
+  "searchTime": 287,
+  "defineTime": 4953,
+  "count": 191566
+ },
+ "resourceLoading": {
+  "time": 97,
+  "count": 27311
+ },
+ "langLoading": {
+  "elementTypeCount": 0
+ },
+ "jvm": {
+  "loadingTime": 352
+ },
+ "stats": {
+  "plugin": 166,
+  "component": {
+   "app": 0,
+   "project": 0,
+   "module": 0
+  },
+  "service": {
+   "app": 941,
+   "project": 0,
+   "module": 0
+  }
+ },
+ "plugins": [
+  {
+   "id": "com.intellij",
+   "classCount": 1610,
+   "classLoadingEdtTime": 21,
+   "classLoadingBackgroundTime": 977,
+   "loaderCount": 188,
+   "modules": [
+    {
+     "name": "intellij.platform.settings.local",
+     "classCount": 41,
+     "classLoadingEdtTime": 0
+    }
+   ]
+  },
+  {
+   "id": "com.intellij.platform.images",
+   "classCount": 38,
+   "classLoadingEdtTime": 3,
+   "classLoadingBackgroundTime": 12,
+   "loaderCount": 1,
+   "modules": []
+  },
+  {
+   "id": "intellij.webp",
+   "classCount": 9,
+   "classLoadingEdtTime": 2,
+   "classLoadingBackgroundTime": 4,
+   "loaderCount": 1,
+   "modules": []
+  }
+ ],
+ "icons": [
+  {
+   "name": "find-icon",
+   "count": 41,
+   "time": 9
+  },
+  {
+   "name": "find-icon-load",
+   "count": 44,
+   "time": 51
+  }
+ ],
+ "items": [
+  {
+   "n": "bootstrap",
+   "s": 0,
+   "d": 44,
+   "t": "d 1"
+  },
+  {
+   "n": "app initialization",
+   "s": 255,
+   "d": 940,
+   "t": "d 9"
+  },
+  {
+   "n": "app initialized callback",
+   "s": 1196,
+   "d": 58,
+   "t": "d 12"
+  },
+  {
+   "n": "isOpenProjectNeeded",
+   "s": 1197,
+   "d": 31,
+   "t": "d 14"
+  },
+  {
+   "n": "app frame created callback",
+   "s": 1198,
+   "d": 29,
+   "t": "d 14"
+  },
+  {
+   "n": "welcome frame EDT waiting",
+   "s": 1229,
+   "d": 21,
+   "t": "edt"
+  },
+  {
+   "n": "welcome frame creating",
+   "s": 1250,
+   "d": 612,
+   "t": "edt"
+  },
+  {
+   "n": "welcome menu bar creating",
+   "s": 1262,
+   "d": 47,
+   "t": "edt"
+  },
+  {
+   "n": "welcome tabs creating",
+   "s": 1312,
+   "d": 418,
+   "t": "edt"
+  },
+  {
+   "n": "welcome quick access panel creating",
+   "s": 1735,
+   "d": 63,
+   "t": "edt"
+  },
+  {
+   "n": "welcome frame showing",
+   "s": 1864,
+   "d": 466,
+   "t": "edt"
+  }
+ ],
+ "traceEvents": [],
+ "totalDuration": -4823117
+}

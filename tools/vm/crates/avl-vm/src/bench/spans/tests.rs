@@ -93,8 +93,8 @@ fn a_run_without_the_frame_has_the_window_from_the_process_start_to_the_main_anc
     assert!(
         modal.text().starts_with(
             "vm bench trace session modal-run-01 (the median run by welcomeBecameVisible)\nanchors (ms from the process start): \
-             welcomeBecameVisible 2336  application.exit 6891\nwindow 0..2336 ms, spans that start in it, >= 0 ms with the helper \
-             twins, 1 of 5 spans\n"
+             welcomeBecameVisible 2336  application.exit 7749\nwindow 0..2336 ms, spans that start in it, >= 0 ms with the helper \
+             twins, 12 of 16 spans\n"
         ),
         "{}",
         modal.text()

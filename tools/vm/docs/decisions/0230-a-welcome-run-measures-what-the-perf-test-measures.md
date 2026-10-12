@@ -11,7 +11,7 @@ Date: 2026-10-12
 Accepted. Extends [ADR 0193](0193-the-start-up-bench-is-a-vm-verb-over-a-staged-generation.md), which made the
 start-up bench a `vm` verb, and [ADR 0196](0196-the-class-count-of-a-bench-run-is-the-jvm-class-load-log.md), which
 made the JVM class-load log the class count of a run. Item 1 widens item 6 of ADR 0196 from the project arm to every
-arm. Items 4, 5 and 6 are later steps of this ADR, each in its own commit. The verbs are in
+arm. Items 4 and 5 are later steps of this ADR, each in its own commit. The verbs are in
 [the vm-lane README](../../README.md), section **The bench**, and the grammar of each is its `--help`.
 
 ## Context
@@ -60,9 +60,11 @@ computes it.**
    ends when the run passes its gate. It then holds the start-up, and not the hold and the quit.
 5. **A session can run over a staged generation.** A later step of this ADR, in its own commit. A session names a
    generation that exists and skips the build and the stage. Two sessions then measure the same bytes.
-6. **The modal arm has a report written at the exit.** A later step of this ADR, in its own commit. The IDE writes
-   the start-up report of a modal run at its exit, and the record reads it. The modal arm then has the report
-   metrics and the platform spans.
+6. **The modal arm has a report written at the exit.** A start without a project ends no start-up, so the modal
+   welcome frame creates the start-up service of the IDE, which writes the report at the exit. The coroutine spans of
+   the start reach the trace then too, `bootstrap` among them, so the trace origin is the process start. The record
+   reads both after the quit. The modal arm thus has the report metrics, the platform spans, the modal spans and
+   their ends. Such a report has a negative or no `totalDuration`, which the record drops with a note.
 
 ## Alternatives considered
 
@@ -88,4 +90,5 @@ computes it.**
 - The digest grows by the span ends, and by the modal spans in a session with the modal arm.
 - A span that the IDE does not write gives no metric, and the digest names it in its `not measured` line. A build
   from before the new spans still gives a summary.
-- Until item 6, the modal arm has no report, so its sums and its ends come from the trace alone.
+- A modal metric of the report is the state at the exit, not at the welcome event. The class counts of the modal
+  arm still stop at their anchor, because the class-load log has the time of each class.

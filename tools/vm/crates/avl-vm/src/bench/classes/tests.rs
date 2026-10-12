@@ -198,6 +198,7 @@ fn the_entries_are_the_first_classes_of_each_plugin_before_the_anchor() {
 #[test]
 fn the_entries_of_a_run_without_its_class_log_are_refused() {
     let (_dir, session) = fixture_session();
+    std::fs::remove_file(session.join("modal-run-01/class-load.log")).expect("a removal");
     let (reporter, _, _) = Reporter::in_memory("vm");
     replay(&session, &reporter).expect("a summary");
     let refusal = classes(
@@ -216,10 +217,12 @@ fn the_entries_of_a_run_without_its_class_log_are_refused() {
     );
 }
 
-/// An anchor that the arm does not have, and an arm that the session does not have, are usage refusals.
+/// An anchor that the arm does not have, and an arm that the session does not have, are usage refusals. A modal run
+/// without its class-load log has no anchor, and its plugin table covers the whole run.
 #[test]
 fn an_anchor_or_an_arm_that_the_session_lacks_is_a_usage_refusal() {
     let (_dir, session) = fixture_session();
+    std::fs::remove_file(session.join("modal-run-01/class-load.log")).expect("a removal");
     let (reporter, _, _) = Reporter::in_memory("vm");
     replay(&session, &reporter).expect("a summary");
     let refusal = |args: ClassesArgs| classes(&session, &args).expect_err("a refusal");

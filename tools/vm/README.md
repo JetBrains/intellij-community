@@ -164,7 +164,9 @@ welcome span or of a modal span is the sum of the spans of its name, as the perf
 repeats is a note of the run. The digest shows these sums in the groups `welcome spans` and `modal spans`. The group
 `span ends (ms from the process start)` holds the end of the first span of each start-up step, on the clock of the
 anchors such as `welcomeBecameVisible`. The report's `jvm.loadingTime`, the time of the JVM before that clock starts,
-is a metric of the first group.
+is a metric of the first group. A modal run opens no project, so the IDE writes its start-up report at the exit, and
+the record reads it after the quit. Its `totalDuration` is negative or missing, so it is a note of the run and no
+metric.
 
 | verb | the question it answers | its output |
 | --- | --- | --- |
@@ -202,7 +204,6 @@ What a session cannot measure yet:
   span, and `editor highlighting completed` is only an instant event of the start-up report, which the IDE writes
   once. So each run fails with a named reason, and the verb exits with 6. That is a gap of the product, not of the
   verb.
-- The modal arm writes no `startup-stats.json`, so it has no report metrics and no platform spans.
 
 ## Verification
 
