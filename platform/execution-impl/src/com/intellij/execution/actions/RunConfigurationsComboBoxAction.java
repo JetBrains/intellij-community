@@ -140,6 +140,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     catch (IndexNotReadyException e1) {
       presentation.setEnabled(false);
     }
+
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      presentation.setEnabledAndVisible(false);
+    }
   }
 
   protected @Nullable ExecutionTarget getSelectedExecutionTarget(AnActionEvent e) {
