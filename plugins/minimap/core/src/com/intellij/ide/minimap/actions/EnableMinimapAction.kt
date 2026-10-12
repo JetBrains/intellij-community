@@ -4,12 +4,10 @@ package com.intellij.ide.minimap.actions
 import com.intellij.ide.minimap.MinimapUsageCollector
 import com.intellij.ide.minimap.settings.MinimapSettings
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 
-class EnableMinimapAction : AnAction() {
-  override fun isDumbAware(): Boolean = true
-
+internal class EnableMinimapAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

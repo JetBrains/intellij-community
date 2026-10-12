@@ -79,8 +79,12 @@
     <action id="ToggleMinimap" class="com.intellij.ide.minimap.actions.ToggleMinimapAction" icon="AllIcons.Actions.Minimap">
       <add-to-group group-id="EditorTabsEntryPoint"/>
     </action>
-    <action id="EnableMinimap" class="com.intellij.ide.minimap.actions.EnableMinimapAction" icon="AllIcons.Actions.Minimap"/>
-    <action id="DisableMinimap" class="com.intellij.ide.minimap.actions.DisableMinimapAction"/>
+    <action id="EnableMinimap" class="com.intellij.ide.minimap.actions.EnableMinimapAction" icon="AllIcons.Actions.Minimap">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="DisableMinimap" class="com.intellij.ide.minimap.actions.DisableMinimapAction">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="OpenMinimapSettings" class="com.intellij.ide.minimap.actions.OpenMinimapSettingsAction"/>
     <action id="MoveMinimap" class="com.intellij.ide.minimap.actions.MoveMinimapAction"/>
     <action id="ToggleMinimapScaleMode" class="com.intellij.ide.minimap.actions.ToggleMinimapScaleModeAction"/>
