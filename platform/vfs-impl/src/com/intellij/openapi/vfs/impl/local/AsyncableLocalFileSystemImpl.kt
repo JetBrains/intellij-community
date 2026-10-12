@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.impl.async.BackpressureBySizeAndTaskCount
 import com.intellij.openapi.vfs.impl.async.MAX_ASYNC_UPDATES_POSTPONED
 import com.intellij.openapi.vfs.impl.async.MAX_ASYNC_UPDATES_SIZE_POSTPONED
 import com.intellij.openapi.vfs.newvfs.AsyncableFileSystem
+import com.intellij.openapi.vfs.newvfs.FileSystemUnavailableException
 import com.intellij.openapi.vfs.newvfs.persistent.executor.AsyncableFileIOTaskExecutor
 import com.intellij.util.concurrency.SequentialTaskExecutor.createSequentialApplicationPoolExecutor
 import com.intellij.util.io.UnsyncByteArrayInputStream
@@ -279,7 +280,14 @@ class AsyncableLocalFileSystemImpl : LocalFileSystemImpl(), AsyncableFileSystem 
     fsync()
   }
 
-  override fun getAttributes(file: VirtualFile): FileAttributes? {
+  override fun getAttributes(file: VirtualFile): FileAttributes? =
+    attributesWithPendingWrite(file) { super.getAttributes(it) }
+
+  @Throws(FileSystemUnavailableException::class)
+  override fun getAttributesOrThrowIfUnavailable(file: VirtualFile): FileAttributes? =
+    attributesWithPendingWrite(file) { super.getAttributesOrThrowIfUnavailable(it) }
+
+  private inline fun attributesWithPendingWrite(file: VirtualFile, readAttributes: (VirtualFile) -> FileAttributes?): FileAttributes? {
     //It is crucial to _first_ get unfinishedWriteOrError() tuple, and only _after_ request rawIoAttributes.
     // Otherwise, it could happen that rawIoAttributes are taken _before_ an async task is executed,
     // but unfinishedWriteOrError() is called _after_ the async task has already finished (=null)
@@ -295,7 +303,7 @@ class AsyncableLocalFileSystemImpl : LocalFileSystemImpl(), AsyncableFileSystem 
     if (fileId > 0) {
       val (unfinishedWrite, writeFailure) = unfinishedWriteOrError(fileId)
       if (unfinishedWrite != null) {
-        val rawIoAttributes = super.getAttributes(file)
+        val rawIoAttributes = readAttributes(file)
         if (rawIoAttributes == null) {
           //This branch shouldn't happen: in VFS create-file and write-file content are separate methods,
           // => one can't write content into a not-yet-existing file, because to write to a VirtualFile one must
@@ -314,13 +322,20 @@ class AsyncableLocalFileSystemImpl : LocalFileSystemImpl(), AsyncableFileSystem 
       }
     }
 
-    return super.getAttributes(file)
+    return readAttributes(file)
   }
 
   override fun listWithAttributes(
     dir: VirtualFile,
     childrenNames: Set<String?>?,
-  ): Map<String, FileAttributes> {
+  ): Map<String, FileAttributes> =
+    listWithAttributesAfterFlush { super.listWithAttributes(dir, childrenNames) }
+
+  @Throws(FileSystemUnavailableException::class)
+  override fun listWithAttributesOrThrowIfUnavailable(dir: VirtualFile, names: Set<String>?): Map<String, FileAttributes> =
+    listWithAttributesAfterFlush { super.listWithAttributesOrThrowIfUnavailable(dir, names) }
+
+  private inline fun listWithAttributesAfterFlush(listWithAttributes: () -> Map<String, FileAttributes>): Map<String, FileAttributes> {
     //RC: attributes should be adjusted so pending writes look like they've been already commited -- see
     //    getTimestamp/getLength/getAttributes().
     //    But adjustment is harder for listWithAttributes() because we don't know fileId(s) of children VirtualFile(s)
@@ -328,7 +343,7 @@ class AsyncableLocalFileSystemImpl : LocalFileSystemImpl(), AsyncableFileSystem 
     //    current listWithAttributes() call is a part of the loading process).
     //    So far I haven't found a better way to implement it than just flush all async changes:
     fsync()
-    return super.listWithAttributes(dir, childrenNames)
+    return listWithAttributes()
   }
 
   override fun getNioPath(file: VirtualFile): Path? {

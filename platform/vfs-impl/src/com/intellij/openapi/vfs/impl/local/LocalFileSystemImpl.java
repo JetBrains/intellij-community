@@ -20,9 +20,11 @@ import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
 import com.intellij.openapi.vfs.impl.SymlinksCapableFileSystem;
 import com.intellij.openapi.vfs.impl.local.windows.WindowsBufferedDirectoryStream;
 import com.intellij.openapi.vfs.newvfs.FileNavigator;
+import com.intellij.openapi.vfs.newvfs.FileSystemUnavailableException;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.UnavailabilityAwareFileSystem;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -63,7 +65,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @SuppressWarnings("removal")
 public class LocalFileSystemImpl
   extends LocalFileSystemBase
-  implements Disposable, BatchingFileSystem, VirtualFilePointerCapableFileSystem, SymlinksCapableFileSystem
+  implements Disposable, BatchingFileSystem, UnavailabilityAwareFileSystem, VirtualFilePointerCapableFileSystem, SymlinksCapableFileSystem
 {
   private static final int STATUS_UPDATE_PERIOD = 1000;
 
@@ -457,12 +459,21 @@ public class LocalFileSystemImpl
 
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    if (OS.CURRENT == OS.Windows && file.getParent() == null && file.getPath().startsWith("//")) {
+    if (isUncRoot(file)) {
       return UNC_ROOT_ATTRIBUTES;
     }
 
     FileAttributes attributes = myAttributeGetter.accessDiskWithCheckCanceled(file);
     return attributes;
+  }
+
+  @Override
+  public @Nullable FileAttributes getAttributesOrThrowIfUnavailable(@NotNull VirtualFile file) throws FileSystemUnavailableException {
+    return isUncRoot(file) ? UNC_ROOT_ATTRIBUTES : readAttributesOrThrowIfUnavailable(file);
+  }
+
+  private static boolean isUncRoot(VirtualFile file) {
+    return OS.CURRENT == OS.Windows && file.getParent() == null && file.getPath().startsWith("//");
   }
 
   private static String[] listChildren(VirtualFile dir) {
@@ -507,7 +518,26 @@ public class LocalFileSystemImpl
     return dir.isDirectory() ? myChildrenAttrGetter.accessDiskWithCheckCanceled(new Pair<>(dir, childrenNames)) : Map.of();
   }
 
+  @Override
+  public @NotNull Map<String, FileAttributes> listWithAttributesOrThrowIfUnavailable(
+    @NotNull VirtualFile dir,
+    @Nullable Set<String> names
+  ) throws FileSystemUnavailableException {
+    return dir.isDirectory() ? listWithAttributesImplOrThrowIfUnavailable(dir, names) : Map.of();
+  }
+
   private static Map<String, FileAttributes> listWithAttributesImpl(VirtualFile dir, @Nullable Set<String> filter) {
+    try {
+      return listWithAttributesImplOrThrowIfUnavailable(dir, filter);
+    }
+    catch (FileSystemUnavailableException e) {
+      LOG.warn(e);
+      return Map.of();
+    }
+  }
+
+  private static Map<String, FileAttributes> listWithAttributesImplOrThrowIfUnavailable(VirtualFile dir, @Nullable Set<String> filter)
+    throws FileSystemUnavailableException {
     try {
       var path = Path.of(toIoPath(dir));
       var paths = LocalFileSystemEelUtil.getAttributeListingPaths(path);
@@ -518,6 +548,7 @@ public class LocalFileSystemImpl
         return LocalFileSystemEelUtil.listWithAttributesUsingEel(paths.getSecond(), filter);
       }
     }
+    catch (FileSystemUnavailableException e) { throw e; }
     catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
     catch (IOException | RuntimeException e) { LOG.warn(e); }
     return Map.of();
@@ -553,10 +584,21 @@ public class LocalFileSystemImpl
 
   private static @Nullable FileAttributes readAttributes(VirtualFile file) {
     try {
+      return readAttributesOrThrowIfUnavailable(file);
+    }
+    catch (FileSystemUnavailableException e) {
+      LOG.warn(e);
+      return null;
+    }
+  }
+
+  private static @Nullable FileAttributes readAttributesOrThrowIfUnavailable(VirtualFile file) throws FileSystemUnavailableException {
+    try {
       var nioFile = Path.of(toIoPath(file));
       var attributes = readAttributesUsingEel(nioFile);
       return amendAttributes(nioFile, attributes);
     }
+    catch (FileSystemUnavailableException e) { throw e; }
     catch (NoSuchFileException e) { LOG.debug("File doesn't exist: " + e.getMessage()); }
     catch (AccessDeniedException e) { LOG.debug(e); }
     catch (IOException | RuntimeException e) { LOG.warn(e); }
