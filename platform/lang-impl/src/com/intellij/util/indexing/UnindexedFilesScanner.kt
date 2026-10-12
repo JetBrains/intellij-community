@@ -54,6 +54,7 @@ import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
+import com.intellij.util.indexing.roots.origin.CustomKindEntityOrigin
 import com.intellij.util.indexing.roots.origin.GenericContentEntityOrigin
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CancellationException
@@ -453,22 +454,24 @@ class UnindexedFilesScanner(
 
       val sharedExplanationLogger = IndexingReasonExplanationLogger()
       /**
-       * Always scan `ModuleIndexableFilesIteratorImpl` before `GenericContentEntityIteratorImpl`.
+       * Always scan `ModuleIndexableFilesIteratorImpl` before `GenericContentEntityIteratorImpl` and `CustomKindEntityIteratorImpl`.
        * The reason is that inside `SingleProviderIterator` we call `FilePropertyPusher`s
        * only if the provider's `origin` is an instance of `ModuleContentOrigin`.
-       * If we first scan a file via `GenericContentEntityIteratorImpl`, then the pushers will not be applied, and we will have added it
-       * to `indexableFilesDeduplicateFilter` already.
+       * If we first scan a file via a generic content or a custom kind iterator, then the pushers will not be applied, and we will have
+       * added it to `indexableFilesDeduplicateFilter` already.
        * By the time we scan it again via `ModuleIndexableFilesIterator` the file will be ignored
        * because of `indexableFilesDeduplicateFilter`, and therefore the `FilePropertyPusher`s will not run for that file.
        */
-      val (genericContentEntityProviders, otherProviders) = providers.partition { provider -> provider.origin is GenericContentEntityOrigin }
+      val (lateProviders, otherProviders) = providers.partition { provider ->
+        provider.origin is GenericContentEntityOrigin || provider.origin is CustomKindEntityOrigin
+      }
 
       withPrefetchForRemoteRoots(otherProviders.toRoots(project)) {
         collectIndexableFilesConcurrently(otherProviders, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
       }
 
-      withPrefetchForRemoteRoots(genericContentEntityProviders.toRoots(project)) {
-        collectIndexableFilesConcurrently(genericContentEntityProviders, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
+      withPrefetchForRemoteRoots(lateProviders.toRoots(project)) {
+        collectIndexableFilesConcurrently(lateProviders, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
       }
     }
 
