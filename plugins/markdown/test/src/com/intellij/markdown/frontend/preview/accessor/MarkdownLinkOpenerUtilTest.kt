@@ -32,4 +32,22 @@ class MarkdownLinkOpenerUtilTest {
     assertEquals("example.com", uri.host)
     assertEquals("anchor", uri.fragment)
   }
+
+  @Test
+  fun `an encoded Cyrillic fragment is decoded once`() {
+    val uri = MarkdownLinkOpenerUtil.createUri("file:///C:/project/target.md#%D1%82%D0%B5%D1%81%D1%82")
+              ?: error("The link must produce a URI")
+
+    assertEquals("тест", uri.fragment)
+    assertEquals("%D1%82%D0%B5%D1%81%D1%82", uri.rawFragment)
+  }
+
+  @Test
+  fun `an encoded percent sign is preserved after decoding`() {
+    val uri = MarkdownLinkOpenerUtil.createUri("file:///C:/project/target.md#%2520")
+              ?: error("The link must produce a URI")
+
+    assertEquals("%20", uri.fragment)
+    assertEquals("%2520", uri.rawFragment)
+  }
 }
