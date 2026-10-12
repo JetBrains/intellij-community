@@ -95,7 +95,9 @@ import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -112,6 +114,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Frame
@@ -169,12 +172,13 @@ internal class IdeProjectFrameAllocator(
     span("frame allocator foreground") {
       coroutineScope {
         val job = currentCoroutineContext().job
+        val frameLoadingDone = createFrameLoadingDone(foregroundJob = job)
         val frameSettingsDeferred = async(CoroutineName("project frame settings resolving")) {
           resolveFrameSettings()
         }
 
         val frameInitJob = launch(CoroutineName("project frame creating")) {
-          val loadingState = MutableLoadingState(done = job)
+          val loadingState = MutableLoadingState(done = frameLoadingDone)
           span("frame creation") {
             createFrameManager(loadingState, frameSettingsDeferred.await())
           }
@@ -276,6 +280,20 @@ internal class IdeProjectFrameAllocator(
           frameInitJob.join() // StatusBar needs to be created
           frameHelperInitJob.join()
           project.getOrCreateIdeFrameDeferred().complete(frameHelper)
+        }
+
+        launch {
+          val project = projectInitObservable.awaitProjectInit()
+          if (serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)) {
+            @Suppress("UsagesOfObsoleteApi")
+            completeFrameLoadingOnContentPainted(
+              scope = (project as ComponentManagerEx).getCoroutineScope(),
+              done = frameLoadingDone,
+              foregroundJob = job,
+              frameHelperInitJob = frameHelperInitJob,
+              contentPainted = project.getOrCreateFrameContentPaintedDeferred(),
+            )
+          }
         }
 
         launch {
@@ -1149,6 +1167,53 @@ private suspend fun installStatusBarWidgetsAndUpdateTitle(frameHelper: IdeProjec
     return
   }
   frameHelper.installDefaultProjectStatusBarWidgets(project)
+}
+
+/**
+ * Returns the job that ends the loading state of a frame: until it completes, the loading layer consumes the input.
+ * It completes when [foregroundJob] completes, and its cancellation, for example, by ESC on the loading layer, cancels [foregroundJob].
+ */
+@VisibleForTesting
+internal fun createFrameLoadingDone(foregroundJob: Job): CompletableJob {
+  val done = Job()
+  foregroundJob.invokeOnCompletion { cause ->
+    if (cause == null) {
+      done.complete()
+    }
+    else {
+      done.cancel(cause as? CancellationException ?: CancellationException("The frame loading failed", cause))
+    }
+  }
+  done.invokeOnCompletion { cause ->
+    if (cause is CancellationException) {
+      foregroundJob.cancel(cause)
+    }
+  }
+  return done
+}
+
+/**
+ * Completes [done] once [frameHelperInitJob] is done and [contentPainted] is completed,
+ * so the loading state of a welcome frame ends when its content is painted, not when the tail of the tool window initialization ends.
+ * The waiter runs in [scope], so it never holds [foregroundJob], and it stops when [foregroundJob] ends.
+ */
+@VisibleForTesting
+internal fun completeFrameLoadingOnContentPainted(
+  scope: CoroutineScope,
+  done: CompletableJob,
+  foregroundJob: Job,
+  frameHelperInitJob: Job,
+  contentPainted: Deferred<Unit>,
+) {
+  val waiter = scope.launch(CoroutineName("frame content painted waiting")) {
+    frameHelperInitJob.join()
+    contentPainted.await()
+    // a failed frame helper initialization cancels the foreground job, and the loading state ends with it
+    if (!frameHelperInitJob.isCancelled && !foregroundJob.isCancelled) {
+      done.complete()
+    }
+  }
+  foregroundJob.invokeOnCompletion { waiter.cancel() }
 }
 
 private class MutableLoadingState(override val done: Job) : FrameLoadingState
