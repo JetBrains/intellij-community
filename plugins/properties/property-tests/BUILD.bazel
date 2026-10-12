@@ -1,6 +1,17 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "propertyBased-tests_test",
+    jvm_flags = [
+        ## mirror settings set by org.jetbrains.intellij.build.impl.TestingTasksImpl.prepareEnvForTestRun
+        "-Djavax.xml.parsers.SAXParserFactory=com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
+    ],
+    tags = ["exploratory-tests"],
+    runtime_deps = [":propertyBased-tests_test_lib"],
+)
+### skip generation section `test intellij.properties.propertyBased.tests`
+
 ### auto-generated section `build intellij.properties.propertyBased.tests` start
 jvm_library(
     name = "propertyBased-tests",
@@ -135,10 +146,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.properties.propertyBased.tests` end
-
-### auto-generated section `test intellij.properties.propertyBased.tests` start
-jps_test(
-    name = "propertyBased-tests_test",
-    runtime_deps = [":propertyBased-tests_test_lib"],
-)
-### auto-generated section `test intellij.properties.propertyBased.tests` end
