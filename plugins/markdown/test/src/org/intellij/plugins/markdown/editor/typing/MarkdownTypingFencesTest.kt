@@ -2,15 +2,12 @@
 package org.intellij.plugins.markdown.editor.typing
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTestUtil
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.intellij.plugins.markdown.MarkdownTestingUtil
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 
@@ -36,12 +33,7 @@ class MarkdownTypingFencesTest : LightPlatformCodeInsightTestCase() {
       private val projectFixture = projectFixture(openAfterCreation = true)
     }
 
-    private val pathFixture = tempPathFixture()
-
-    @Suppress("unused")
-    private val moduleFixture = projectFixture.moduleFixture(pathFixture, addPathToSourceRoot = true)
-
-    private val myFixture by codeInsightFixture(projectFixture, pathFixture)
+    private val myFixture by codeInsightModuleFixture(projectFixture)
 
     private val lookup: LookupImpl? get() = CompletionAutoPopupTestUtil.getLookup(myFixture)
 

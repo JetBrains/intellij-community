@@ -7,12 +7,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.junit5.TestDisposable
-import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestUtil.dumpInlayHints
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -32,9 +30,7 @@ import kotlin.io.path.name
 import kotlin.io.path.readText
 
 abstract class AbstractKtCompilerDeclarationsHintProviderTestBase(val treatAsThirdParty: Boolean) {
-    private val pathFixture = tempPathFixture()
-    private val moduleFixture = projectFixture.moduleFixture(pathFixture, addPathToSourceRoot = true, moduleTypeId = descriptor.moduleTypeId)
-    private val myFixture by codeInsightFixture(projectFixture, pathFixture)
+    private val myFixture by codeInsightModuleFixture(projectFixture, descriptor.moduleTypeId)
 
     @TestDisposable
     lateinit var disposable: Disposable
@@ -44,7 +40,7 @@ abstract class AbstractKtCompilerDeclarationsHintProviderTestBase(val treatAsThi
 
     @BeforeEach
     fun setUp() {
-        val module = moduleFixture.get()
+        val module = myFixture.module
         val sdk = descriptor.sdk!!
         WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance().addJdk(sdk, disposable) }
         ModuleRootModificationUtil.setModuleSdk(module, sdk)
@@ -73,7 +69,7 @@ abstract class AbstractKtCompilerDeclarationsHintProviderTestBase(val treatAsThi
         val settings = parseSettings(text)
         val plugin = KotlinK2BundledCompilerPlugins.KOTLINX_SERIALIZATION_COMPILER_PLUGIN
 
-        moduleFixture.get().withCompilerPlugin(
+        myFixture.module.withCompilerPlugin(
             plugin,
             pluginJar = if (treatAsThirdParty) createThirdPartyCompilerPluginJar(plugin, tempDir) else plugin.bundledJarLocation,
         ) {

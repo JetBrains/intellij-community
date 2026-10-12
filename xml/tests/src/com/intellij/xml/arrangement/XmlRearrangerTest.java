@@ -3,7 +3,6 @@ package com.intellij.xml.arrangement;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
@@ -17,17 +16,15 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
 import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.nameRule;
 import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.ruleWithOrder;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME;
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.moduleFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
@@ -36,10 +33,7 @@ public class XmlRearrangerTest {
   @SuppressWarnings("deprecation")
   private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
 
-  private final TestFixture<Path> pathFixture = tempPathFixture();
-  @SuppressWarnings("unused")
-  private final TestFixture<Module> moduleFixture = moduleFixture(projectFixture, pathFixture, true);
-  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightFixture(projectFixture, pathFixture);
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
 
   private void doTest(@NotNull Map<String, ?> args) {
     RearrangerTestUtil.doTest(codeInsightFixture.get(), XmlFileType.INSTANCE, XMLLanguage.INSTANCE, args);

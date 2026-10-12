@@ -17,7 +17,6 @@ package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -29,14 +28,11 @@ import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Path;
 import java.util.Collections;
 
-import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.moduleFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -47,18 +43,16 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class FileUrlLocationTest {
   private static final TestFixture<Project> projectFixture = projectFixture();
 
-  private final TestFixture<Path> pathFixture = tempPathFixture();
-  private final TestFixture<Module> moduleFixture = moduleFixture(projectFixture, pathFixture, true);
-  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightFixture(projectFixture, pathFixture);
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
 
   @Test
   public void testExcluded() {
     runInEdtAndWait(() -> {
       codeInsightFixture.get().addFileToProject("secondary/my_example_spec.xml", "");
       ModuleRootModificationUtil.updateExcludedFolders(
-        moduleFixture.get(), ModuleRootManager.getInstance(moduleFixture.get()).getContentRoots()[0],
+        codeInsightFixture.get().getModule(), ModuleRootManager.getInstance(codeInsightFixture.get().getModule()).getContentRoots()[0],
         Collections.emptyList(),
-        Collections.singletonList(ModuleRootManager.getInstance(moduleFixture.get()).getContentRoots()[0].getUrl()));
+        Collections.singletonList(ModuleRootManager.getInstance(codeInsightFixture.get().getModule()).getContentRoots()[0].getUrl()));
       VirtualFile file = codeInsightFixture.get().configureByText(
         "my_example_spec.xml",
         """

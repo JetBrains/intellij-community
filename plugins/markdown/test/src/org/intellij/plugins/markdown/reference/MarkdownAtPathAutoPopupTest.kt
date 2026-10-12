@@ -4,13 +4,11 @@ package org.intellij.plugins.markdown.reference
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
-import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTestUtil
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.application
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -22,12 +20,7 @@ class MarkdownAtPathAutoPopupTest {
     private val projectFixture = projectFixture(openAfterCreation = true)
   }
 
-  private val pathFixture = tempPathFixture()
-
-  @Suppress("unused")
-  private val moduleFixture = projectFixture.moduleFixture(pathFixture, addPathToSourceRoot = true)
-
-  private val myFixture by codeInsightFixture(projectFixture, pathFixture)
+  private val myFixture by codeInsightModuleFixture(projectFixture)
 
   private val lookup: LookupImpl? get() = CompletionAutoPopupTestUtil.getLookup(myFixture)
 

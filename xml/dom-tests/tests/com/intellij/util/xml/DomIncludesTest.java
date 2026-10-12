@@ -20,7 +20,6 @@ import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
@@ -39,13 +38,11 @@ import com.intellij.util.xml.impl.DomManagerImpl;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightFixture;
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.moduleFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,10 +57,7 @@ public class DomIncludesTest {
 
   @SuppressWarnings("deprecation")
   private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
-  private final TestFixture<Path> pathFixture = tempPathFixture();
-  @SuppressWarnings("unused")
-  private final TestFixture<Module> moduleFixture = moduleFixture(projectFixture, pathFixture, true);
-  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightFixture(projectFixture, pathFixture);
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
 
   @Test
   public void testGetChildrenHonorsIncludes() throws Throwable {

@@ -4,7 +4,6 @@ package com.jetbrains.python;
 import com.intellij.editor.TodoItemsTestUtil;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.todo.TodoConfiguration;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoPattern;
@@ -15,10 +14,7 @@ import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Path;
-
-import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightFixture;
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.moduleFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
@@ -29,10 +25,7 @@ public class PyTodoTest {
   @SuppressWarnings("deprecation")
   private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
 
-  private final TestFixture<Path> pathFixture = tempPathFixture();
-  @SuppressWarnings("unused")
-  private final TestFixture<Module> moduleFixture = moduleFixture(projectFixture, pathFixture, true);
-  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightFixture(projectFixture, pathFixture);
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
 
   private void testTodos(String text) {
     TodoItemsTestUtil.testTodos(codeInsightFixture.get(), PythonFileType.INSTANCE.getDefaultExtension(), text);

@@ -158,7 +158,7 @@ fun codeInsightFixture(projectFixture: TestFixture<Project>): TestFixture<CodeIn
 /**
  * Creates a [CodeInsightTestFixture] with its own temporary directory and module in the [projectFixture] project.
  *
- * Each test gets a new temporary directory and a new module.
+ * Each test gets a new temporary directory and a new module of the [moduleTypeId] type.
  * The module uses the directory as its content and source root.
  * So a test does not see the files of an earlier test.
  * The project directory is not the module directory.
@@ -174,11 +174,15 @@ fun codeInsightFixture(projectFixture: TestFixture<Project>): TestFixture<CodeIn
  * private val myFixture by codeInsightModuleFixture(projectFixture)
  * ```
  */
+@JvmOverloads
 @TestOnly
-fun codeInsightModuleFixture(projectFixture: TestFixture<Project>): TestFixture<CodeInsightTestFixture> =
+fun codeInsightModuleFixture(
+  projectFixture: TestFixture<Project>,
+  moduleTypeId: String = "",
+): TestFixture<CodeInsightTestFixture> =
   testFixture("codeInsightModuleFixture") {
     val pathFixture = tempPathFixture()
-    projectFixture.moduleFixture(pathFixture, addPathToSourceRoot = true).init()
+    projectFixture.moduleFixture(pathFixture, addPathToSourceRoot = true, moduleTypeId = moduleTypeId).init()
     initialized(codeInsightFixture(projectFixture, pathFixture).init()) {}
   }
 

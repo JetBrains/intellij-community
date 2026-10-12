@@ -4,7 +4,6 @@ package com.intellij.java.codeInsight;
 import com.intellij.codeInsight.CommentByLineTestUtil;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -13,10 +12,7 @@ import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Path;
-
-import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightFixture;
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.moduleFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
@@ -26,10 +22,7 @@ public class JavaCommentByLinePerformanceTest {
   @SuppressWarnings("deprecation")
   private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
 
-  private final TestFixture<Path> pathFixture = tempPathFixture();
-  @SuppressWarnings("unused")
-  private final TestFixture<Module> moduleFixture = moduleFixture(projectFixture, pathFixture, true);
-  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightFixture(projectFixture, pathFixture);
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
 
   @Test
   public void testUncommentLargeFilePerformance() {

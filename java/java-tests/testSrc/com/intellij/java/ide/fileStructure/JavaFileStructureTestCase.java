@@ -21,7 +21,6 @@ import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider
 import com.intellij.ide.util.InheritedMembersNodeProvider;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.EdtTestUtil;
@@ -35,10 +34,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 
-import java.nio.file.Path;
-
-import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightFixture;
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.moduleFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
@@ -49,10 +45,7 @@ public abstract class JavaFileStructureTestCase {
   @SuppressWarnings("deprecation")
   private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
 
-  private final TestFixture<Path> pathFixture = tempPathFixture();
-  @SuppressWarnings("unused")
-  private final TestFixture<Module> moduleFixture = moduleFixture(projectFixture, pathFixture, true);
-  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightFixture(projectFixture, pathFixture);
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
 
   protected CodeInsightTestFixture myFixture;
   protected FileStructureTestFixture myPopupFixture;

@@ -7,7 +7,6 @@ import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -24,15 +23,13 @@ import com.intellij.ui.popup.list.ListPopupModel;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
-import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
 import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.MarkupSurroundTestFixtureKt.markupSurroundFixture;
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.moduleFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,10 +42,7 @@ public class XmlSurroundWithTest {
   @SuppressWarnings("deprecation")
   private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
 
-  private final TestFixture<Path> pathFixture = tempPathFixture();
-  @SuppressWarnings("unused")
-  private final TestFixture<Module> moduleFixture = moduleFixture(projectFixture, pathFixture, true);
-  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightFixture(projectFixture, pathFixture);
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
   private final TestFixture<MarkupSurroundTestFixture> surroundFixture = markupSurroundFixture(codeInsightFixture);
 
   @Test

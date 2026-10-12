@@ -4,7 +4,6 @@ package com.intellij.java.psi.codeStyle.arrangement;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil;
@@ -14,10 +13,9 @@ import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Path;
 import java.util.List;
 
-import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
 import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.rule;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.CLASS;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD;
@@ -25,7 +23,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.En
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.STATIC;
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.moduleFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
@@ -33,10 +30,7 @@ public abstract class AbstractJavaRearrangerTest {
   @SuppressWarnings("deprecation")
   private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
 
-  private final TestFixture<Path> pathFixture = tempPathFixture();
-  @SuppressWarnings("unused")
-  private final TestFixture<Module> moduleFixture = moduleFixture(projectFixture, pathFixture, true);
-  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightFixture(projectFixture, pathFixture);
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
 
   protected List<?> classic = List.of(rule(INTERFACE), rule(CLASS), 
                                       rule(FIELD, STATIC), rule(FIELD, PUBLIC), rule(FIELD),
