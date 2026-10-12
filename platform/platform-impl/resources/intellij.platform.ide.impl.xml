@@ -1578,6 +1578,17 @@
     <applicationService serviceImplementation="com.intellij.openapi.options.NonModalSettingsAdvancedSettingService"/>
     <advancedSetting id="ide.ui.non.modal.settings.window" default="true" groupKey="group.advanced.settings.ui"
                      service="com.intellij.openapi.options.NonModalSettingsAdvancedSettingService" property="nonModalSettingsWindow"/>
+    <registryKey
+      key="ide.settings.tool.window.enabled"
+      defaultValue="false"
+      description="Show Settings as a tool window with the settings tree at the bottom of the left toolbar, and show the settings page in an editor tab"
+    />
+    <toolWindow id="Settings" anchor="left" icon="AllIcons.General.Settings"
+                factoryClass="com.intellij.openapi.options.newEditor.SettingsToolWindowFactory"/>
+    <defaultToolWindowLayout implementation="com.intellij.openapi.options.newEditor.SettingsToolWindowLayoutExtension" order="last"/>
+    <fileEditorProvider implementation="com.intellij.openapi.options.newEditor.SettingsFileEditorProvider"/>
+    <fileIconProvider order="first" implementation="com.intellij.openapi.options.newEditor.SettingsFileIconProvider"/>
+    <editorAutoClosingHandler implementation="com.intellij.openapi.options.newEditor.SettingsTabAutoClosingHandler"/>
     <advancedSetting id="ide.ui.simplified.splash.image" default="false" groupKey="group.advanced.settings.ui"
                      service="com.intellij.ide.ui.SimplifiedSplashSettingProvider" property="useSimplifiedSplashImage"/>
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.DependencyFeatureCollector"/>

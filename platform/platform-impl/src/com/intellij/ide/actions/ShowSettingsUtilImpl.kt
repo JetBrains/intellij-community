@@ -26,6 +26,7 @@ import com.intellij.openapi.options.newEditor.SettingsDialogFactory
 import com.intellij.openapi.options.newEditor.SettingsDialogPerformanceTracker
 import com.intellij.openapi.options.newEditor.SettingsNonModalDialog
 import com.intellij.openapi.options.newEditor.SettingsNonModalDialogFactory
+import com.intellij.openapi.options.newEditor.SettingsToolWindowManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.currentOrDefaultProject
@@ -190,7 +191,12 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     val isModal = isModalRequired(project)
 
     if (!isModal) {
-      SettingsNonModalDialogFactory.getInstance().show(project!!, { filterEmptyGroups(groups()) }, toSelect, filter)
+      if (SettingsToolWindowManager.isEnabled(project!!)) {
+        SettingsToolWindowManager.getInstance(project).show({ filterEmptyGroups(groups()) }, toSelect, filter)
+      }
+      else {
+        SettingsNonModalDialogFactory.getInstance().show(project, { filterEmptyGroups(groups()) }, toSelect, filter)
+      }
     } else {
       val filteredGroups = filterEmptyGroups(groups())
       createDialogWrapper(project, filteredGroups, toSelect(filteredGroups), filter).show()
@@ -211,7 +217,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     SettingsDialogPerformanceTracker.markOpeningStarted()
 
     // an open window of the same project already holds a tree, so no tree is built for this call
-    if (withContext(Dispatchers.EDT) { SettingsNonModalDialog.navigateOpenDialog(project, null) { null } }) {
+    if (withContext(Dispatchers.EDT) { showOpenSettings(project) }) {
       return
     }
 
@@ -229,7 +235,12 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     val filteredGroups = filterEmptyGroups(groups)
     withContext(Dispatchers.EDT) {
       if (!isModal) {
-        SettingsNonModalDialogFactory.getInstance().show(project, { filteredGroups }, { null }, null)
+        if (SettingsToolWindowManager.isEnabled(project)) {
+          SettingsToolWindowManager.getInstance(project).show({ filteredGroups }, { null }, null)
+        }
+        else {
+          SettingsNonModalDialogFactory.getInstance().show(project, { filteredGroups }, { null }, null)
+        }
       } else {
         val settingsDialogFactory = serviceAsync<SettingsDialogFactory>()
         settingsDialogFactory.create(project, filteredGroups, null, null).show()
@@ -366,6 +377,14 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   }
 }
 
+/**
+ * Shows the Settings of [project] in the open non-modal window or in the Settings tool window, and returns `true`.
+ * Returns `false` when neither holds a tree, so that the caller builds a tree only then.
+ */
+private fun showOpenSettings(project: Project): Boolean {
+  return SettingsNonModalDialog.navigateOpenDialog(project, null) { null } || SettingsToolWindowManager.showIfCreated(project)
+}
+
 private fun getDialogWrapperFor(component: Component): DialogWrapper? {
   val window = UIUtil.getWindow(component)
   return (window as? DialogWrapperDialog)?.dialogWrapper
@@ -452,7 +471,7 @@ internal fun scheduleDoShowSettingsDialogWithACheckThatProjectIsInitialized(proj
     }
 
     // an open window of the same project already holds a tree, so no tree is built for this call
-    if (withContext(Dispatchers.EDT) { SettingsNonModalDialog.navigateOpenDialog(project, null) { null } }) {
+    if (withContext(Dispatchers.EDT) { showOpenSettings(project) }) {
       return@launch
     }
 
