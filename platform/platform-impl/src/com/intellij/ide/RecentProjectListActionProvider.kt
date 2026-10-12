@@ -45,9 +45,16 @@ open class RecentProjectListActionProvider {
   @Internal
   fun collectProjects(): List<RecentProjectTreeItem> = collectProjects(projectToFilterOut = null)
 
+  /**
+   * Returns the recent projects of [RecentProjectsManager] without the projects of the [RecentProjectProvider] extensions,
+   * so no provider is created: a provider may start a service to load its projects.
+   */
+  @Internal
+  fun collectLocalProjects(): List<RecentProjectTreeItem> = collectProjects(projectToFilterOut = null, includesProviders = false)
+
   open fun recentProjectsInDocSupported() = true
 
-  private fun collectProjects(projectToFilterOut: Project?): List<RecentProjectTreeItem> {
+  private fun collectProjects(projectToFilterOut: Project?, includesProviders: Boolean = true): List<RecentProjectTreeItem> {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
     val openedPaths = ProjectManagerEx.getOpenProjects().mapNotNullTo(LinkedHashSet()) {
       recentProjectManager.getProjectPath(it)?.invariantSeparatorsPathString
@@ -81,7 +88,7 @@ open class RecentProjectListActionProvider {
       createRecentProject(path = recentProject, duplicates = duplicates, projectGroup = null, recentProjectManager = recentProjectManager)
     }
 
-    val projectsFromEP = if (Registry.`is`("ide.recent.projects.query.ep.providers")) {
+    val projectsFromEP = if (includesProviders && Registry.`is`("ide.recent.projects.query.ep.providers")) {
       EP.extensionList.flatMap { createProjectsFromProvider(it) }
     }
     else {

@@ -113,13 +113,12 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
         checkState()
       }
     })
-    checkState()
+    // the providers of recent projects, for example Toolbox, are queried once the tab is shown: a provider may start its service
+    isPanelEmptyPredicate.set(getCurrentState(includesProviders = false) == PanelState.EMPTY)
   }
 
   override fun buildComponent(): JComponent {
     val recentProjectsCount = RecentProjectListActionProvider.getInstance().countLocalProjects()
-    val providerRecentProjectsCount = RecentProjectListActionProvider.getInstance().countProjectsFromProviders()
-    WelcomeScreenCounterUsageCollector.reportWelcomeScreenShowed(recentProjectsCount, providerRecentProjectsCount)
 
     // the promotion is built after the tab is first shown: its promoters initialize their plugins, and the banner renders HTML
     val isPromoForEmptyState = recentProjectsCount == 0
@@ -175,6 +174,10 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
       background = WelcomeScreenUIManager.getProjectsBackground()
     }
     UiNotifyConnector.doWhenFirstShown(result) {
+      checkState()
+      val providerRecentProjectsCount = RecentProjectListActionProvider.getInstance().countProjectsFromProviders()
+      WelcomeScreenCounterUsageCollector.reportWelcomeScreenShowed(recentProjectsCount, providerRecentProjectsCount)
+
       val promo = WelcomeScreenComponentFactory.getSinglePromotion(isPromoForEmptyState) ?: return@doWhenFirstShown
       promo.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
       promoPlaceholder.component = promo
@@ -447,8 +450,14 @@ private enum class PanelState {
   EMPTY, NOT_EMPTY
 }
 
-private fun getCurrentState(): PanelState {
-  val recentProjects = RecentProjectListActionProvider.getInstance().collectProjects()
+private fun getCurrentState(includesProviders: Boolean = true): PanelState {
+  val recentProjectListActionProvider = RecentProjectListActionProvider.getInstance()
+  val recentProjects = if (includesProviders) {
+    recentProjectListActionProvider.collectProjects()
+  }
+  else {
+    recentProjectListActionProvider.collectLocalProjects()
+  }
   val collectCloneableProjects = CloneableProjectsService.getInstance().collectCloneableProjects().toList()
   return if (recentProjects.isEmpty() && collectCloneableProjects.isEmpty()) {
     PanelState.EMPTY

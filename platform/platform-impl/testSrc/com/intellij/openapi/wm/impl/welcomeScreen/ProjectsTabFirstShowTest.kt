@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
+import com.intellij.ide.RecentProject
+import com.intellij.ide.RecentProjectListActionProvider
+import com.intellij.ide.RecentProjectProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -15,6 +18,7 @@ import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -45,6 +49,24 @@ internal class ProjectsTabFirstShowTest {
     }
   }
 
+  @Test
+  fun `the empty tab asks the recent project providers at its first show`() {
+    val provider = CountingRecentProjectProvider()
+    maskExtensions(ExtensionPointName<RecentProjectProvider>("com.intellij.recentProjectsProvider"), listOf(provider))
+    maskExtensions(StartPagePromoter.START_PAGE_PROMOTER_EP, emptyList())
+    // with a local recent project, the tab builds the recent project tree, and the tree asks the providers itself
+    assumeTrue(RecentProjectListActionProvider.getInstance().countLocalProjects() == 0, "the test application has recent projects")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        val component = ProjectsTab(disposable).associatedComponent
+        assertThat(provider.requestCount).isZero()
+
+        markAsShownFirstTime(component)
+        assertThat(provider.requestCount).isPositive()
+      }
+    }
+  }
+
   private fun <T : Any> maskExtensions(pointName: ExtensionPointName<T>, extensions: List<T>) {
     ExtensionTestUtil.maskExtensions(pointName, extensions, disposable, fireEvents = false)
   }
@@ -68,4 +90,16 @@ private class RecordingStartPagePromoter : StartPagePromoter {
   }
 
   override fun getPromotion(isEmptyState: Boolean): JComponent = JPanel().also { promotions.add(it) }
+}
+
+private class CountingRecentProjectProvider : RecentProjectProvider {
+  var requestCount: Int = 0
+
+  override val providerId: String
+    get() = "ProjectsTabFirstShowTest"
+
+  override fun getRecentProjects(): List<RecentProject> {
+    requestCount++
+    return emptyList()
+  }
 }
