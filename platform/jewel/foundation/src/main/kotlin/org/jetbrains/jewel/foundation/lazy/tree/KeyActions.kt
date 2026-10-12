@@ -7,6 +7,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.isCtrlPressed
+import androidx.compose.ui.input.pointer.isSecondaryPressed
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import kotlinx.coroutines.CoroutineScope
@@ -114,8 +115,18 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
         allKeys: List<SelectableLazyListKey>,
         key: Any,
     ) {
+        if (selectionMode == SelectionMode.None) return
+
         with(keybindings) {
             when {
+                pointerEvent.buttons.isSecondaryPressed && key in selectableLazyListState.selectedKeys -> {
+                    // do nothing
+                }
+
+                pointerEvent.buttons.isSecondaryPressed -> {
+                    resetSelection(selectableLazyListState, key, allKeys)
+                }
+
                 pointerEvent.keyboardModifiers.isContiguousSelectionKeyPressed &&
                     pointerEvent.keyboardModifiers.isCtrlPressed -> {
                     // do nothing
@@ -130,10 +141,7 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
                 }
 
                 else -> {
-                    if (selectionMode == SelectionMode.None) return
-
-                    selectableLazyListState.selectedKeys = setOf(key)
-                    selectableLazyListState.lastActiveItemIndex = allKeys.indexOfFirst { it.key == key }
+                    resetSelection(selectableLazyListState, key, allKeys)
                 }
             }
         }
@@ -211,6 +219,14 @@ public open class DefaultTreeViewPointerEventAction(private val treeState: TreeS
 
         with(keybindings) {
             when {
+                pointerEvent.buttons.isSecondaryPressed && key in selectableLazyListState.selectedKeys -> {
+                    // do nothing
+                }
+
+                pointerEvent.buttons.isSecondaryPressed -> {
+                    resetSelection(selectableLazyListState, key, allKeys)
+                }
+
                 pointerEvent.keyboardModifiers.isContiguousSelectionKeyPressed &&
                     pointerEvent.keyboardModifiers.isCtrlPressed -> {}
 
@@ -224,8 +240,7 @@ public open class DefaultTreeViewPointerEventAction(private val treeState: TreeS
                 }
 
                 else -> {
-                    selectableLazyListState.selectedKeys = setOf(key)
-                    selectableLazyListState.lastActiveItemIndex = allKeys.indexOfFirst { it.key == key }
+                    resetSelection(selectableLazyListState, key, allKeys)
                 }
             }
         }
@@ -287,6 +302,15 @@ public fun DefaultTreeViewKeyActions(treeState: TreeState): DefaultTreeViewKeyAc
             else -> DefaultTreeViewKeybindings
         }
     return DefaultTreeViewKeyActions(keybindings, DefaultTreeViewOnKeyEvent(keybindings, treeState))
+}
+
+private fun resetSelection(
+    selectableLazyListState: SelectableLazyListState,
+    key: Any,
+    allKeys: List<SelectableLazyListKey>,
+) {
+    selectableLazyListState.selectedKeys = setOf(key)
+    selectableLazyListState.lastActiveItemIndex = allKeys.indexOfFirst { it.key == key }
 }
 
 /**
