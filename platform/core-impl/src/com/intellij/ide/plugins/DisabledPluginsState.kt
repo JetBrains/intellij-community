@@ -157,7 +157,9 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     }
 
     private fun trySaveDisabledPlugins(pluginIds: Set<PluginId>, invalidate: Boolean): Boolean {
-      val saved = writeDisabledPlugins(pluginIds, invalidate)
+      val saved = synchronized(DisabledPluginsState::class.java) {
+        writeDisabledPlugins(pluginIds, invalidate)
+      }
       if (saved) {
         notifyDisabledPluginListeners()
       }
