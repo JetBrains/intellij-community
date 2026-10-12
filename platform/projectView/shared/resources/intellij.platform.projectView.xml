@@ -64,6 +64,7 @@
         <action id="ProjectView.ShowMembers"
                 class="com.intellij.platform.projectView.actions.ShowMembers"
                 icon="AllIcons.ObjectBrowser.ShowMembers">
+          <override-text place="GoToAction"/>
           <override-text place="ToolwindowPopup"/>
         </action>
         <action id="ProjectView.ShowExcludedFiles"

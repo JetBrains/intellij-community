@@ -55,7 +55,9 @@
       <action id="NavBarLocationBottom" class="com.intellij.platform.navbar.frontend.actions.NavBarBottomLocationAction"/>
       <action id="NavBarLocationHide" class="com.intellij.platform.navbar.frontend.actions.HideNavBarAction"/>
       <separator/>
-      <action id="ShowMembersInNavigationBar" class="com.intellij.platform.navbar.frontend.actions.ShowNavigationBarMembersAction"/>
+      <action id="ShowMembersInNavigationBar" class="com.intellij.platform.navbar.frontend.actions.ShowNavigationBarMembersAction">
+        <override-text place="GoToAction"/>
+      </action>
       <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewNavigationBar"/>
     </group>
     <action id="ViewMembersInNavigationBar" class="com.intellij.platform.navbar.frontend.actions.ViewNavigationBarMembersAction">
