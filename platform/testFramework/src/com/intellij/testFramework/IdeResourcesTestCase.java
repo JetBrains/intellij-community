@@ -15,7 +15,9 @@ import java.util.TreeSet;
  * This test-case should be extended in every IDE.
  *
  * @author gregsh
+ * @deprecated Use {@link IdeResourcesTestUtil} in a JUnit 5 test.
  */
+@Deprecated
 public abstract class IdeResourcesTestCase extends LightPlatformTestCase {
   public void testTipFilesPresent() {
     Collection<String> errors = new TreeSet<>();
