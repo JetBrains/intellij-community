@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
-import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.LoggerFactory;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -11,8 +10,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -54,16 +53,17 @@ public class OpenLogAction
     VirtualFile file = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(LoggerFactory.getLogFilePath());
     if (file != null) {
       VfsUtil.markDirtyAndRefresh(true, false, false, file);
-      final FileEditor[] editors = FileEditorManager.getInstance(project).openFile(file, true);
-      if (editors.length > 0 && IdeProductMode.isFrontend()) {
-        ClientLogFileBackendMirrorBinder.bindToBackendMirror(event, project, file);
-      }
-      if (editors.length > 0 && editors[0] instanceof TextEditor te) {
-        scrollToLastIDEStart(te);
-      }
-      else {
-        PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);
-      }
+      var manager = FileEditorManager.getInstance(project);
+      manager.requestOpenFile(file, FileEditorOpenRequest.withFocus(true)).thenAccept(composite -> {
+        var editors = composite.getAllEditors();
+        if (editors.isEmpty()) return;
+        if (IdeProductMode.isFrontend()) {
+          ClientLogFileBackendMirrorBinder.bindToBackendMirror(event, project, file);
+        }
+        if (editors.getFirst() instanceof TextEditor te) {
+          manager.runWhenLoaded(te.getEditor(), () -> scrollToLastIDEStart(te));
+        }
+      });
     }
     else {
       String title = "Cannot find '" + LoggerFactory.getLogFilePath() + "'";

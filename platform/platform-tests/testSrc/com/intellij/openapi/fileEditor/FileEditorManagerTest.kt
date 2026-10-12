@@ -316,6 +316,33 @@ class FileEditorManagerTest {
   }
 
   @Test
+  fun testCancellingPreparationSkipsOpenRequestCallback(): Unit = timeoutRunBlocking {
+    val started = CompletableDeferred<Unit>()
+    val release = CountDownLatch(1)
+    val file = createFileWithBlockedRead("cancelled-request.txt", started, release)
+    val progress = captureFilePreparation(file)
+    val request = withContext(Dispatchers.EDT) {
+      manager.requestOpenFile(file, FileEditorOpenRequest.withFocus(true))
+    }
+    val opening = request.thenAccept { error("The callback must not run after cancellation") }
+    try {
+      started.await()
+      progress.started.await().cancel()
+      assertFailsWith<CancellationException> { opening.await() }
+      withContext(Dispatchers.EDT) {
+        assertThat(manager.isFileOpen(file)).isFalse()
+      }
+      release.countDown()
+      assertThat(manager.openFile(file, FileEditorOpenOptions()).allEditors).isNotEmpty()
+    }
+    finally {
+      release.countDown()
+      request.cancel(false)
+      withContext(Dispatchers.EDT) { manager.closeFile(file) }
+    }
+  }
+
+  @Test
   fun testCancellingEditorPreparationPreservesOtherCopy(): Unit = timeoutRunBlocking {
     val file = getSourceFile("1.txt")
     val loaded = manager.openFile(file, FileEditorOpenOptions()) as EditorComposite
