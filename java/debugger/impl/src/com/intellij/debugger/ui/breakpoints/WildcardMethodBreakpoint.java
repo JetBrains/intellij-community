@@ -42,6 +42,7 @@ import com.intellij.util.PatternUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
+import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.MethodEntryRequest;
 import com.sun.jdi.request.MethodExitRequest;
@@ -55,6 +56,8 @@ import javax.swing.Icon;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
+
+import static com.intellij.debugger.impl.DebugUtilsKt.emulateMethodBreakpointsOnVM;
 
 public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointProperties> implements MethodBreakpointBase {
   private static final Logger LOG = Logger.getInstance(WildcardMethodBreakpoint.class);
@@ -279,8 +282,8 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
   }
 
   @Override
-  public boolean isEmulated() {
-    return getProperties().EMULATED;
+  public boolean isEmulated(@NotNull VirtualMachine vm) {
+    return getProperties().EMULATED && emulateMethodBreakpointsOnVM(vm);
   }
 
   @Override
