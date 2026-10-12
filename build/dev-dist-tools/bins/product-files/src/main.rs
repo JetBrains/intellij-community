@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 //! `product-files` renders the launch files of one product for one platform: `build.txt`, `bin/idea.properties`, the
-//! vmoptions file and `bin/product-info.json`.
+//! vmoptions file and `product-info.json`.
 //!
 //! The input is the launch model that the dev distribution plan generator writes for the product (`ProductLaunchModel`
 //! in `community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/productInfo`). The model states the facts

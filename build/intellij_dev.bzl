@@ -126,16 +126,30 @@ def _runfiles_home(ctx, placement, dist):
         home["plugins/plugin-classpath.txt"] = dist.plugin_classpath
     return home
 
+def _target_os(ctx):
+    """The OS token of the target platform, as `platform_parts` spells it: `darwin`, `linux` or `windows`."""
+    for os, constraint in [("darwin", ctx.attr._macos), ("linux", ctx.attr._linux), ("windows", ctx.attr._windows)]:
+        if ctx.target_platform_has_constraint(constraint[platform_common.ConstraintValueInfo]):
+            return os
+    fail("%s: the target platform is not macOS, Linux or Windows" % ctx.label)
+
+def _os_destination(ctx, attribute, os):
+    """The destination that the `string_dict` attribute `attribute` states for the OS token `os`."""
+    destinations = getattr(ctx.attr, attribute)
+    if os not in destinations:
+        fail("%s: `%s` states no destination for %s: %s" % (ctx.label, attribute, os, destinations))
+    return destinations[os]
+
 def _intellij_dev_java_launcher_impl(ctx):
-    windows = ctx.target_platform_has_constraint(ctx.attr._windows[platform_common.ConstraintValueInfo])
+    os = _target_os(ctx)
+    windows = os == "windows"
     dist = ctx.attr.dist[IntellijDevDistInfo]
     placement = dist.placement
     if placement == None or dist.core_classpath == None:
         fail("%s: %s is no local launch with a placement for every component" % (ctx.label, ctx.attr.dist.label))
-    vm_options = [destination for destination in placement.files if destination.startswith("bin/") and destination.endswith(".vmoptions")]
-    if len(vm_options) != 1:
-        fail("%s: the home has no single bin/*.vmoptions file: %s" % (ctx.label, vm_options))
-    for destination in ["bin/idea.properties", "bin/product-info.json"]:
+    vm_options = _os_destination(ctx, "vm_options", os)
+    product_info = _os_destination(ctx, "product_info", os)
+    for destination in ["bin/idea.properties", vm_options, product_info]:
         if destination not in placement.files:
             fail("%s: the home has no %s" % (ctx.label, destination))
 
@@ -154,8 +168,8 @@ def _intellij_dev_java_launcher_impl(ctx):
         sources = struct(
             ide_config = export.ide_config,
             idea_properties = tree + "/bin/idea.properties",
-            vm_options = tree + "/" + vm_options[0],
-            product_info = tree + "/bin/product-info.json",
+            vm_options = tree + "/" + vm_options,
+            product_info = tree + "/" + product_info,
             core_classpath = tree + "/core-classpath.txt",
             inputs = [export.ide_config, export.home],
         )
@@ -165,14 +179,14 @@ def _intellij_dev_java_launcher_impl(ctx):
         sources = struct(
             ide_config = dist.ide_config,
             idea_properties = placement.files["bin/idea.properties"],
-            vm_options = placement.files[vm_options[0]],
-            product_info = placement.files["bin/product-info.json"],
+            vm_options = placement.files[vm_options],
+            product_info = placement.files[product_info],
             core_classpath = dist.core_classpath,
             inputs = [
                 dist.ide_config,
                 placement.files["bin/idea.properties"],
-                placement.files[vm_options[0]],
-                placement.files["bin/product-info.json"],
+                placement.files[vm_options],
+                placement.files[product_info],
                 dist.core_classpath,
             ],
         )
@@ -200,7 +214,7 @@ def _intellij_dev_java_launcher_impl(ctx):
     arguments.add(home_path, format = "--home=%s")
     arguments.add(sources.idea_properties, format = "--idea-properties=%s")
     arguments.add(sources.vm_options, format = "--vm-options=%s")
-    arguments.add(vm_options[0], format = "--vm-options-destination=%s")
+    arguments.add(vm_options, format = "--vm-options-destination=%s")
     arguments.add(sources.product_info, format = "--product-info=%s")
     arguments.add(sources.core_classpath, format = "--core-classpath=%s")
     arguments.add(flags_file, format = "--flags-file=%s")
@@ -290,12 +304,16 @@ is the directory of `export`. `<name>.launch.json` names the real `java.exe`. It
     attrs = {
         "dist": attr.label(mandatory = True, providers = [IntellijDevDistInfo], doc = "The local launch of the distribution, the `_dist_launch` target. Its placement names the files of the home."),
         "export": attr.label(providers = [IntellijDevDistInfo], doc = "The self-contained distribution, the `_dist` target. The home on Windows, where it is mandatory."),
+        "vm_options": attr.string_dict(mandatory = True, doc = "The destination of the main vmoptions file in the home, `bin/<name>`, for each OS token: `darwin`, `linux` and `windows`. The argument file writer reads the file there."),
+        "product_info": attr.string_dict(mandatory = True, doc = "The destination of `product-info.json` in the home, for each OS token. The production place is the root, or `Resources/` for a macOS app."),
         "jvm_flags": attr.string_list(doc = "JVM flags; `$(location)` and make variables expand, and `${BUILD_WORKSPACE_DIRECTORY}` and `${HOME}` resolve at analysis."),
         "add_opens": attr.string_list(doc = "Packages opened to the unnamed module, as `java_binary.add_opens`."),
         "env": attr.string_dict(doc = "Environment variables `bazel run` sets for the IDE."),
         "data": attr.label_list(allow_files = True, doc = "Extra runfiles of the launcher."),
         "program_args": attr.string_list(doc = "The program arguments of the row, which the argument file holds after the main class. Each value is one argument; `$(location)` and make variables expand, and `${BUILD_WORKSPACE_DIRECTORY}` and `${HOME}` resolve at analysis. The first one names a custom command."),
         "_launch_args_tool": attr.label(default = Label("//build/dev-dist-tools/bins/dev-launch-args"), executable = True, cfg = "exec"),
+        "_linux": attr.label(default = Label("@platforms//os:linux")),
+        "_macos": attr.label(default = Label("@platforms//os:macos")),
         "_windows": attr.label(default = Label("@platforms//os:windows")),
     },
 )
@@ -304,6 +322,8 @@ def intellij_dev_java_launcher_binary(
         name,
         dist,
         export,
+        vm_options,
+        product_info,
         jvm_flags = [],
         env = {},
         program_args = [],
@@ -312,8 +332,9 @@ def intellij_dev_java_launcher_binary(
     """The `java` launcher of a composed dev distribution.
 
     `dist` is the `_dist_launch` target of the distribution, and `export` is its `_dist` target. Only Windows builds
-    `export`. The config and system directories are `out/dev-data/<name>/config` and `out/dev-data/<name>/system`, as
-    absolute paths.
+    `export`. `vm_options` and `product_info` map each OS token to the destination of the main vmoptions file and of
+    `product-info.json` in the home. The config and system directories are `out/dev-data/<name>/config` and
+    `out/dev-data/<name>/system`, as absolute paths.
     """
     intellij_dev_java_launcher(
         name = name,
@@ -324,6 +345,8 @@ def intellij_dev_java_launcher_binary(
             "@platforms//os:windows": export,
             "//conditions:default": None,
         }),
+        vm_options = vm_options,
+        product_info = product_info,
         jvm_flags = _runtime_jvm_flags(name, jvm_flags) + [
             # Not a build-time input: `AppMode.getDevIdeaProjectDir` and the webview native bridge read it at runtime,
             # and a dev launch has it only because `DevMainImpl` sets it from the project root it just built against.

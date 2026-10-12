@@ -2,6 +2,20 @@
 
 load(":dev_dist_build_date.bzl", "DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS")
 
+def product_info_destination(os, language_server):
+    """The path of `product-info.json` in a distribution, for an OS token of `platform_parts`.
+
+    The production writers own the rule. `MacDistributionBuilder.writeProductInfoFile` writes
+    `Resources/product-info.json`, and the root for a language server. `LinuxDistributionBuilder.writeProductJsonFile`
+    and `WindowsDistributionBuilder.writeProductJsonFile` write the root. The tool renders `vmOptionsFilePath` and
+    `launcherPath` relative to the directory of this path, as production does.
+    """
+    if os not in ("darwin", "linux", "windows"):
+        fail("'%s' is not an OS token of platform_parts" % os)
+    if os == "darwin" and not language_server:
+        return "Resources/product-info.json"
+    return "product-info.json"
+
 def _dev_dist_product_files_impl(ctx):
     outputs = [ctx.outputs.build_txt, ctx.outputs.idea_properties_out, ctx.outputs.vmoptions, ctx.outputs.product_info]
     args = ctx.actions.args()
@@ -41,10 +55,11 @@ def _dev_dist_product_files_impl(ctx):
     return [DefaultInfo(files = depset(outputs))]
 
 dev_dist_product_files = rule(
-    doc = """Renders `build.txt`, `bin/idea.properties`, the vmoptions file and `bin/product-info.json` of a product.
+    doc = """Renders `build.txt`, `bin/idea.properties`, the vmoptions file and `product-info.json` of a product.
 
     The four outputs have fixed names, because the vmoptions file name depends on the OS and a `select` cannot name an
-    output. The component that places them maps each one to its path in the distribution. The action reads the launch
+    output. The component that places them maps each one to its path in the distribution. `product_info_destination`
+    states the path of `product-info.json`. The action reads the launch
     model, the application info sources, `build.txt`, `OpenedPackages.txt`, one `idea.properties` and
     `common.vmoptions`, and nothing else. So it does not read the project model. The launch model states no fact of the
     application info and no build number. The action derives them from the declared sources. So an edit of the version,

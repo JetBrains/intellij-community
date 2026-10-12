@@ -3,7 +3,7 @@
 //! The application info of a product: its XML tree, its markers, the frontend merge, and the reader of its facts.
 //!
 //! The descriptor writer stamps and merges the application info. The product files tool reads the facts that
-//! `bin/product-info.json` states. Both follow `ApplicationInfoPropertiesImpl.kt`
+//! `product-info.json` states. Both follow `ApplicationInfoPropertiesImpl.kt`
 //! (`community/platform/build-scripts/src/org/jetbrains/intellij/build`), so the two tools share one port.
 
 pub mod descriptorxml;

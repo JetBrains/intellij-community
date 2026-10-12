@@ -5,7 +5,7 @@ use pretty_assertions::assert_eq;
 use super::{
     DYNAMIC_AGENT_OPTION, FORCE_MODAL_PROPERTY, INTEGRATION_TEST_PROPERTY, PRODUCT_INFO_FILE, Profiler, RunPlan, TRUST_PROPERTY,
     argfile_text, class_load_option, dist_options, entry_options, idea_log_pid, measure_options, product_info_file, profile_stop_argv,
-    quote_argument, sandbox_options, scheme_arguments, span_ended,
+    quote_argument, sandbox_options, scheme_arguments, span_ended, vm_options_file,
 };
 use crate::bench::arm::Arm;
 use crate::bench::profile::ProfileEvent;
@@ -285,6 +285,13 @@ fn an_argument_is_quoted_as_the_starter_quotes_it() {
     assert_eq!(argfile_text(&["a".to_owned(), "b c".to_owned()]), "a\nb\" \"c\n");
 }
 
+/// The `vmOptionsFilePath` of [`fake_dist`], relative to the directory of its `product-info.json`.
+const VM_OPTIONS_FILE_PATH: &str = if cfg!(target_os = "macos") {
+    "../bin/idea.vmoptions"
+} else {
+    "bin/idea.vmoptions"
+};
+
 /// A distribution with the files that the launch reads.
 fn fake_dist(root: &Path) -> std::path::PathBuf {
     let dist = root.join("idea_dist.dist");
@@ -295,12 +302,26 @@ fn fake_dist(root: &Path) -> std::path::PathBuf {
     std::fs::write(
         product_info,
         format!(
-            r#"{{"launch":[{{"additionalJvmArguments":["-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader","-Xbootclasspath/a:{}/lib/nio-fs.jar"]}}]}}"#,
+            r#"{{"launch":[{{"vmOptionsFilePath":"{VM_OPTIONS_FILE_PATH}","additionalJvmArguments":["-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader","-Xbootclasspath/a:{}/lib/nio-fs.jar"]}}]}}"#,
             super::home_macro()
         ),
     )
     .expect("the product info");
     dist
+}
+
+/// The path resolves by its text against the directory of the production place, as the launcher resolves it.
+#[test]
+fn the_vm_options_file_resolves_in_the_distribution() {
+    let dist = Path::new("/g/idea_dist.dist");
+    assert_eq!(
+        vm_options_file(dist, VM_OPTIONS_FILE_PATH).expect("the file"),
+        dist.join("bin").join("idea.vmoptions")
+    );
+    for refused in ["../../idea.vmoptions", "/bin/idea.vmoptions", "bin\\idea.vmoptions"] {
+        let error = vm_options_file(dist, refused).expect_err(refused);
+        assert!(format!("{error:#}").ends_with("is not a file of /g/idea_dist.dist"), "{error:#}");
+    }
 }
 
 /// The production place of `product-info.json` comes first, and `bin/product-info.json` is the fallback.
@@ -349,9 +370,12 @@ fn the_dist_options_are_the_vmoptions_the_product_info_and_the_starter_options()
             "-Didea.platform.prefix=idea".to_owned(),
         ]
     );
-    std::fs::write(dist.join("bin/other.vmoptions"), "").expect("a second vmoptions");
-    let error = dist_options(&dist, &config, Path::new("/repo")).expect_err("two vmoptions");
-    assert!(format!("{error:#}").ends_with("has no single *.vmoptions file"), "{error:#}");
+    // `product-info.json` names the main vmoptions file, so a second file in `bin` does not count.
+    std::fs::write(dist.join("bin/jetbrains_client.vmoptions"), "-Dfrom.frontend=1\n").expect("a second vmoptions");
+    assert_eq!(dist_options(&dist, &config, Path::new("/repo")).expect("the options"), options);
+    std::fs::write(dist.join(PRODUCT_INFO_FILE), r#"{"launch":[]}"#).expect("a product info without a launch");
+    let error = dist_options(&dist, &config, Path::new("/repo")).expect_err("no launch");
+    assert!(format!("{error:#}").ends_with("states no launch"), "{error:#}");
 }
 
 #[test]

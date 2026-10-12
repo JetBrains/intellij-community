@@ -12,7 +12,7 @@ tables name the community products and the community tables in `community`, see 
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_platform_jar")
 load("//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_platform_payload")
-load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "dev_dist_product_files")
+load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "dev_dist_product_files", "product_info_destination")
 load("//platform/build-scripts/bazel-rules:dev_dist_runtime_module_repository.bzl", "dev_dist_runtime_layout_parts", "dev_dist_runtime_module_repository")
 load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "intellij_dev_fragments_dist", "intellij_dev_packed_jars_component")
 load(":dev_launch_dependencies.bzl", "HOST_PLATFORMS", "platform_parts")
@@ -266,9 +266,21 @@ def _launcher_files(launcher, platform):
     ))
     return files
 
-# The component of `bin/idea.properties`, the vmoptions file, `bin/product-info.json` and `build.txt`, which the product
+# The component of `bin/idea.properties`, the vmoptions file, `product-info.json` and `build.txt`, which the product
 # files action renders from the launch model of the product.
 _PLATFORM_RESOURCES_FRAGMENT = "platform_resources"
+
+def _launch_destinations(plan, os):
+    """The destinations of the main vmoptions file and of `product-info.json`, as `struct(vm_options, product_info)`.
+
+    `os` is an OS token of `platform_parts`. The `platform_resources` component places the two files there, and the
+    `java` launcher of a row reads them there. The vmoptions file is `bin/<name>`, with the name of the plan.
+    `product_info_destination` states the other path.
+    """
+    return struct(
+        vm_options = "bin/" + plan.launch.vmoptions[os],
+        product_info = product_info_destination(os, plan.launch.launcher.language_server),
+    )
 
 def _fragment_suffix(fragment_name):
     """The target suffix of a platform component, `<platform set>_<suffix>`."""
@@ -485,11 +497,12 @@ def _platform_set(tables, product, name, target_platform, visibility):
         )
 
     def product_files_component():
-        # `build.txt`, `bin/idea.properties`, the vmoptions file and `bin/product-info.json`. The product files action
+        # `build.txt`, `bin/idea.properties`, the vmoptions file and `product-info.json`. The product files action
         # renders them from the launch model the plan generator writes for the product, so the component reads no project
         # model and starts no JVM. The action reads the application info sources and `build.txt` for the version, the
         # names and the build number. The rendered files have fixed names, and the component maps each one to its path in
-        # the distribution. The component also declares the main class of the launch model.
+        # the distribution. `_launch_destinations` states the paths of the vmoptions file and of `product-info.json`. The
+        # component also declares the main class of the launch model.
         files = name + "_product_files"
         application_info = tables.application_infos[product]
         dev_dist_product_files(
@@ -508,11 +521,12 @@ def _platform_set(tables, product, name, target_platform, visibility):
         )
 
         def placed(platform):
+            destinations = _launch_destinations(plan, platform_parts(platform).os)
             return {
                 "build.txt": ":%s/build.txt" % files,
                 "bin/idea.properties": ":%s/idea.properties" % files,
-                "bin/" + plan.launch.vmoptions[platform_parts(platform).os]: ":%s/vmoptions" % files,
-                "bin/product-info.json": ":%s/product-info.json" % files,
+                destinations.vm_options: ":%s/vmoptions" % files,
+                destinations.product_info: ":%s/product-info.json" % files,
             }
 
         intellij_dev_packed_jars_component(
@@ -741,11 +755,15 @@ def _declare_run_launcher(
     if tables.launcher_jvm_flags != None:
         jvm_flags = tables.launcher_jvm_flags(product, additional_modules, jvm_flags)
 
+    plan = _plan(tables, product)
+    destinations = {os: _launch_destinations(plan, os) for os in plan.launch.vmoptions}
     intellij_dev_java_launcher_binary(
         name = name,
         visibility = visibility,
         dist = "//%s:%s_dist_launch" % (native.package_name(), distribution),
         export = "//%s:%s_dist" % (native.package_name(), distribution),
+        vm_options = {os: destination.vm_options for os, destination in destinations.items()},
+        product_info = {os: destination.product_info for os, destination in destinations.items()},
         jvm_flags = jvm_flags,
         env = env,
         data = data,

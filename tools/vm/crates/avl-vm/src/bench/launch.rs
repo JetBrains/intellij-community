@@ -1,8 +1,8 @@
 //! The IDE processes of a session: the Starter-shaped command line over a generation, and the supervision of one run.
 //!
 //! The command line is the one the IDE Starter gives a locally built distribution (`IdeFromCodeInstaller`):
-//! `<java> @<argfile>`, where the argfile holds the JVM options of the distribution (`bin/*.vmoptions`,
-//! `-Djb.vmOptionsFile` and the `additionalJvmArguments` of `product-info.json`), the test options of the Starter, the
+//! `<java> @<argfile>`, where the argfile holds the JVM options of the distribution (the vmoptions file that
+//! `product-info.json` names, `-Djb.vmOptionsFile` and the `additionalJvmArguments`), the test options of the Starter, the
 //! options of the run with the JVM class-load log, the `--add-opens` lines of `OpenedPackages.txt` for this OS, `-classpath` with the entries of
 //! `core-classpath.txt`, and the main class of the dist config. Every path in it is a path of the generation.
 //!
@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use anyhow::{Context, bail};
+use anyhow::{Context, anyhow, bail};
 use avl_base::{Exit, Refusal};
 use avl_host_sys::{Ctx, ProcError, Runner, SpawnOptions};
 use serde::Deserialize;
@@ -251,6 +251,33 @@ fn product_info_file(dist: &Path) -> PathBuf {
     if dev_build.is_file() { dev_build } else { production }
 }
 
+/// The main vmoptions file of the distribution at `dist`, as the launcher finds it.
+///
+/// It is `vm_options_file_path`, the `vmOptionsFilePath` of the first launch, relative to the directory of
+/// [`PRODUCT_INFO_FILE`]. The `bin/product-info.json` of an older dev distribution holds the text of the production place,
+/// so the same base applies to it. The path resolves by its text, and a path that leaves `dist` fails.
+fn vm_options_file(dist: &Path, vm_options_file_path: &str) -> anyhow::Result<PathBuf> {
+    let leaves = || anyhow!("the vmOptionsFilePath '{vm_options_file_path}' is not a file of {}", dist.display());
+    if vm_options_file_path.starts_with('/') || vm_options_file_path.contains('\\') {
+        return Err(leaves());
+    }
+    let mut parts: Vec<&str> = PRODUCT_INFO_FILE.split('/').collect();
+    parts.pop();
+    for part in vm_options_file_path.split('/') {
+        match part {
+            "" | "." => {}
+            ".." => {
+                parts.pop().ok_or_else(leaves)?;
+            }
+            _ => parts.push(part),
+        }
+    }
+    if parts.is_empty() {
+        return Err(leaves());
+    }
+    Ok(parts.iter().fold(dist.to_path_buf(), |path, part| path.join(part)))
+}
+
 /// The JVM options of a distribution, as `readVmOptions` of the dev launch reads them, then the test options of the
 /// Starter and the platform prefix of the config.
 ///
@@ -259,24 +286,6 @@ fn product_info_file(dist: &Path) -> PathBuf {
 /// welcome events of the gate arrive as `validation.unmatched_rule`. The dev launcher of the BT version passed `true`
 /// too.
 pub(crate) fn dist_options(dist: &Path, config: &DistConfig, repo_root: &Path) -> anyhow::Result<Vec<String>> {
-    let bin = dist.join("bin");
-    let mut vm_options: Vec<PathBuf> = std::fs::read_dir(&bin)
-        .with_context(|| format!("cannot list {}", bin.display()))?
-        .filter_map(Result::ok)
-        .map(|entry| entry.path())
-        .filter(|path| path.extension().is_some_and(|extension| extension == "vmoptions"))
-        .collect();
-    let Some(vm_options_file) = vm_options.pop().filter(|_| vm_options.is_empty()) else {
-        bail!("{} has no single *.vmoptions file", bin.display());
-    };
-    let mut options: Vec<String> = files::read_text(&vm_options_file)?
-        .lines()
-        .map(str::trim)
-        .filter(|line| !line.is_empty() && !line.starts_with('#'))
-        .map(str::to_owned)
-        .collect();
-    options.push(property("jb.vmOptionsFile", &vm_options_file));
-
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase")]
     struct ProductInfo {
@@ -285,21 +294,32 @@ pub(crate) fn dist_options(dist: &Path, config: &DistConfig, repo_root: &Path) -
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase")]
     struct LaunchData {
+        vm_options_file_path: String,
         #[serde(default)]
         additional_jvm_arguments: Vec<String>,
     }
     let product_info_path = product_info_file(dist);
     let product_info: ProductInfo = serde_json::from_str(&files::read_text(&product_info_path)?)
-        .with_context(|| format!("{} has no `launch` list", product_info_path.display()))?;
+        .with_context(|| format!("{} has no `launch` list with a vmOptionsFilePath", product_info_path.display()))?;
+    let Some(launch) = product_info.launch.first() else {
+        bail!("{} states no launch", product_info_path.display());
+    };
+
+    let vm_options_file = vm_options_file(dist, &launch.vm_options_file_path)?;
+    let mut options: Vec<String> = files::read_text(&vm_options_file)?
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
+        .map(str::to_owned)
+        .collect();
+    options.push(property("jb.vmOptionsFile", &vm_options_file));
     let home = dist.display().to_string();
-    if let Some(launch) = product_info.launch.first() {
-        options.extend(
-            launch
-                .additional_jvm_arguments
-                .iter()
-                .map(|argument| argument.replace(home_macro(), &home)),
-        );
-    }
+    options.extend(
+        launch
+            .additional_jvm_arguments
+            .iter()
+            .map(|argument| argument.replace(home_macro(), &home)),
+    );
 
     let dist_name = dist.file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_default();
     options.extend([
@@ -309,7 +329,7 @@ pub(crate) fn dist_options(dist: &Path, config: &DistConfig, repo_root: &Path) -
         format!("-Ddev.build.dir={dist_name}"),
         property("idea.dev.project.root", repo_root),
         property("idea.home.path", dist),
-        property("idea.properties.file", &bin.join("idea.properties")),
+        property("idea.properties.file", &dist.join("bin").join("idea.properties")),
     ]);
     if let Some(prefix) = &config.platform_prefix {
         options.push(format!("-Didea.platform.prefix={prefix}"));

@@ -37,7 +37,7 @@ import java.nio.file.Files
 
 /**
  * The launch facts of one product: what `build.txt`, `bin/idea.properties`, the vmoptions file and
- * `bin/product-info.json` of a distribution state, for every OS and architecture.
+ * `product-info.json` of a distribution state, for every OS and architecture.
  *
  * It needs no build context. [computeProductLaunchModel] derives it. The dev distribution plan generator writes the
  * model of each split product as JSON, and the tool `product-files` renders the four files of one OS and

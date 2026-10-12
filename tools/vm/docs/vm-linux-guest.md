@@ -54,7 +54,7 @@ needs a real X server. Xvfb satisfies both.
 
 **A Linux distribution cross-builds here, and does so today.**
 `//plugins/air/tests/integration/ide:idea_air_lane_dist_linux`
-assembles on this macOS arm64 host and is a genuine Linux build: `bin/product-info.json` reports
+assembles on this macOS arm64 host and is a genuine Linux build: its `product-info.json` reports
 `Linux`/`aarch64` with launcher `bin/idea`, and `lib/native/linux-aarch64` where the macOS distribution
 has `mac-aarch64`. `//plugins/air/tests/integration/ui:ui_daemon` builds under
 `--define=air_lane_guest_os=linux` with its stub naming `idea_air_lane_dist_linux` and
