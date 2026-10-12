@@ -10,7 +10,7 @@
   <tx:advice id="defaultTxAdvice">
     <tx:attributes>
       <tx:method name="get*" read-only="true"/>
-      <tx:method name=""<caret>
+      <tx:method name=""<caret>/>
     </tx:attributes>
   </tx:advice>
 </beans>
