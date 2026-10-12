@@ -366,7 +366,8 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent {
     return new MyNode(copyrightConfigurable) {
       @Override
       public String getLocationString() {
-        return ((CopyrightConfigurable)getConfigurable()).isShareProfile()
+        if (!(getConfigurable() instanceof CopyrightConfigurable configurable)) return null;
+        return configurable.isShareProfile()
                ? CopyrightBundle.message("copyright.shared.description")
                : CopyrightBundle.message("copyright.local.description");
       }
