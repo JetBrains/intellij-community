@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager.ConflictResolution;
+import com.intellij.openapi.fileEditor.impl.FileCacheConflictCollector.AutomergeResult;
 import com.intellij.openapi.fileEditor.impl.FileCacheConflictCollector.DialogCause;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -83,9 +84,12 @@ public class MemoryDiskConflictResolver {
     return ConflictResolution.MERGE;
   }
 
+  /**
+   * Returns null when no client asked for a merge, or when the change makes no conflict.
+   */
   @RequiresReadLock
-  @Nullable ResolvedConflict tryMerge(@NotNull VFileContentChangeEvent event, @Nullable PrefetchedContent prefetched) {
-    if (prefetched == null || ConflictResolution.MERGE != getConflictResolution()) {
+  @Nullable MergeAttempt tryMerge(@NotNull VFileContentChangeEvent event, @Nullable PrefetchedContent prefetched) {
+    if (ConflictResolution.MERGE != getConflictResolution()) {
       return null;
     }
     VirtualFile file = event.getFile();
@@ -93,17 +97,20 @@ public class MemoryDiskConflictResolver {
     if (document == null) {
       return null;
     }
+    if (prefetched == null) {
+      return new MergeAttempt.Failed(event.isFromRefresh() ? AutomergeResult.NOT_PREFETCHED : AutomergeResult.NOT_FROM_REFRESH);
+    }
     CharSequence baseText = FileDocumentCommonText.getLastKnownCommonText(document);
     if (baseText == null) {
       // resolving the conflict without common base is too fragile
-      return null;
+      return new MergeAttempt.Failed(AutomergeResult.NO_COMMON_TEXT);
     }
     CharSequence diskText = prefetched.decodeText(file);
     CharSequence memoryText = document.getImmutableCharSequence();
     CharSequence mergedText = MergeResolveUtil.tryResolve(diskText, baseText, memoryText, ProgressManager::checkCanceled);
     if (mergedText == null) {
       // the conflict is too complex
-      return null;
+      return new MergeAttempt.Failed(AutomergeResult.CONFLICTING_CHANGES);
     }
     return new ResolvedConflict(mergedText, document.getModificationStamp());
   }
@@ -116,9 +123,6 @@ public class MemoryDiskConflictResolver {
     ConflictResolution resolution = getConflictResolution();
     if (resolution == ConflictResolution.KEEP_MEMORY_CHANGES) {
       // do nothing, ignoring disk content
-      return;
-    }
-    if (event.isFromSave()) {
       return;
     }
     VirtualFile file = event.getFile();
@@ -200,6 +204,10 @@ public class MemoryDiskConflictResolver {
   }
 
   private static @Nullable Document findConflictingDocument(@NotNull VFileContentChangeEvent event) {
+    // a save writes the file while its document is still unsaved, so the stamps differ as in a conflict
+    if (event.isFromSave()) {
+      return null;
+    }
     VirtualFile file = event.getFile();
     Document document = FileDocumentManager.getInstance().getCachedDocument(file);
     if (document == null || !FileDocumentManager.getInstance().isDocumentUnsaved(document)) {

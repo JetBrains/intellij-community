@@ -2,12 +2,14 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.impl.FileCacheConflictCollector.AutomergeResult;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
 
-final class ResolvedConflict {
+final class ResolvedConflict implements MergeAttempt {
   private final @NotNull CharSequence text;
   private final long expectedDocumentStamp;
+  private boolean applied;
 
   ResolvedConflict(@NotNull CharSequence text, long expectedDocumentStamp) {
     this.text = text;
@@ -24,5 +26,11 @@ final class ResolvedConflict {
   @RequiresWriteLock
   void applyTo(@NotNull Document document) {
     document.setText(text);
+    applied = true;
+  }
+
+  @Override
+  public @NotNull AutomergeResult result() {
+    return applied ? AutomergeResult.MERGED : AutomergeResult.NOT_APPLIED;
   }
 }

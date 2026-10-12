@@ -715,6 +715,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     List<LogEvent> events = collectEvents(() -> setFileText(file, "first\nsecond\nTHIRD\n"));
 
     assertConflictDialogClosed(events, "LOAD_FS_CHANGES", "AUTOMERGE_OFF");
+    assertEmpty(conflictEvents(events, "automerge.finished"));
   }
 
   /**
@@ -727,7 +728,82 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
     List<LogEvent> events = refreshAndCollectEvents(file, "first\nsecond-on-disk\nthird\n");
 
+    assertAutomergeFinished(events, "CONFLICTING_CHANGES");
     assertConflictDialogClosed(events, "KEEP_MEMORY_CHANGES", "AUTOMERGE_FAILED");
+  }
+
+  public void testAutomerge_reportsAMerge() throws Exception {
+    overrideConflictResolution(ConflictResolution.MERGE);
+    VirtualFile file = createFileWithUnsavedEdit("automerge-merged.txt");
+
+    List<LogEvent> events = refreshAndCollectEvents(file, "first\nsecond\nTHIRD\n");
+
+    assertAutomergeFinished(events, "MERGED");
+  }
+
+  public void testAutomerge_reportsAChangeFromInsideTheIde() throws Exception {
+    overrideConflictResolution(ConflictResolution.MERGE);
+    myAskReloadFromDiskResult = Boolean.FALSE;
+    VirtualFile file = createFileWithUnsavedEdit("automerge-not-from-refresh.txt");
+
+    List<LogEvent> events = collectEvents(() -> setFileText(file, "first\nsecond\nTHIRD\n"));
+
+    assertAutomergeFinished(events, "NOT_FROM_REFRESH");
+  }
+
+  public void testAutomerge_reportsADocumentWithoutCommonText() throws Exception {
+    // the document loads with the merge off, so it records no common text
+    Registry.get("ide.merge.external.changes").setValue(false, getTestRootDisposable());
+    VirtualFile file = createFileWithUnsavedEdit("automerge-no-common-text.txt");
+    Registry.get("ide.merge.external.changes").setValue(true);
+    overrideConflictResolution(ConflictResolution.MERGE);
+    myAskReloadFromDiskResult = Boolean.FALSE;
+
+    List<LogEvent> events = refreshAndCollectEvents(file, "first\nsecond\nTHIRD\n");
+
+    assertAutomergeFinished(events, "NO_COMMON_TEXT");
+  }
+
+  public void testAutomerge_reportsAMergeThatCannotApply() throws Exception {
+    overrideConflictResolution(ConflictResolution.MERGE);
+    myAskReloadFromDiskResult = Boolean.FALSE;
+    VirtualFile file = createFileWithUnsavedEdit("automerge-read-only.txt");
+    Document document = myDocumentManager.getCachedDocument(file);
+    assertNotNull(file.toString(), document);
+    document.setReadOnly(true);
+
+    List<LogEvent> events = refreshAndCollectEvents(file, "first\nsecond\nTHIRD\n");
+
+    assertAutomergeFinished(events, "NOT_APPLIED");
+  }
+
+  /**
+   * A save writes the file while its document is still unsaved, so the change looks like a conflict.
+   */
+  public void testAutomerge_reportsNothingForASave() throws Exception {
+    overrideConflictResolution(ConflictResolution.MERGE);
+    VirtualFile file = createFileWithUnsavedEdit("automerge-save.txt");
+    Document document = myDocumentManager.getCachedDocument(file);
+    assertNotNull(file.toString(), document);
+
+    List<LogEvent> events = collectEvents(() -> myDocumentManager.saveDocument(document));
+
+    assertEmpty(conflictEvents(events, "automerge.finished"));
+  }
+
+  /**
+   * Nothing reads the new content in advance here, and without a conflict that is no failure of the merge.
+   */
+  public void testAutomerge_reportsNothingForADocumentWithoutUnsavedChanges() throws Exception {
+    overrideConflictResolution(ConflictResolution.MERGE);
+    VirtualFile file = createFile("automerge-clean.txt", "first\nsecond\nthird\n");
+    Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
+
+    List<LogEvent> events = collectEvents(() -> setFileText(file, "first\nsecond\nTHIRD\n"));
+
+    assertEquals("first\nsecond\nTHIRD\n", document.getText());
+    assertEmpty(conflictEvents(events, "automerge.finished"));
   }
 
   /**
@@ -769,6 +845,12 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertEquals(answer, data.get("answer"));
     assertEquals(cause, data.get("cause"));
     assertEquals(false, data.get("difference_shown"));
+    assertEquals("PLAIN_TEXT", data.get("file_type"));
+  }
+
+  private static void assertAutomergeFinished(@NotNull List<LogEvent> events, @NotNull String result) {
+    Map<String, Object> data = assertOneElement(conflictEvents(events, "automerge.finished")).getEvent().getData();
+    assertEquals(result, data.get("result"));
     assertEquals("PLAIN_TEXT", data.get("file_type"));
   }
 
