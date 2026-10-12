@@ -49,6 +49,9 @@ private const val VISIBLE_ROW_COUNT = 10
 private const val PREVIEW_WIDTH = 360
 private const val PREVIEW_HEIGHT = 230
 
+/** The sample uses a slightly smaller font than the editor, so more of each line fits the narrow column. */
+private const val PREVIEW_FONT_SCALE = 0.9f
+
 /**
  * Theme chooser for the welcome screen's Theme control: a list that previews the highlighted theme, with a
  * Light/Dark switch in its header.
@@ -227,6 +230,8 @@ internal class WelcomeScreenThemeChooserPopup(
     fun applyGlobalScheme() {
       val scheme = EditorColorsManager.getInstance().globalScheme
       editor.colorsScheme = scheme
+      // Assigning a scheme resets the font size, so the reduction has to follow every assignment.
+      editor.setFontSize(scheme.editorFontSize2D * PREVIEW_FONT_SCALE)
       editor.highlighter = highlighterFactory.createEditorHighlighter(scheme, sample.fileName, null)
       editor.backgroundColor = scheme.defaultBackground
     }
