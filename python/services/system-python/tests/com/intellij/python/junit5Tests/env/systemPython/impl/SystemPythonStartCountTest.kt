@@ -5,9 +5,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl
+import com.intellij.python.community.services.systemPython.impl.EelDescriptorFilter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -56,6 +58,31 @@ internal class SystemPythonStartCountTest {
   }
 
   /**
+   * The service cannot see the end of an ephemeral environment, such as a Docker container.
+   * A record of the interpreter info would outlive that environment, so the search keeps no record.
+   * See IJPL-258353.
+   */
+  @Test
+  fun testEphemeralPythonIsNotRemembered(@TempDir dir: Path, @TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(5.minutes) {
+    val starts = dir.resolve("starts.txt")
+    val python = fakePython(dir, starts)
+    val application = ApplicationManager.getApplication()
+    application.registerExtension(SystemPythonProvider.EP, FixedPythonProvider(python), disposable)
+    application.registerExtension(EelDescriptorFilter.EP, EphemeralEelDescriptorFilter, disposable)
+    val sut = SystemPythonServiceImpl(this)
+
+    sut.findSystemPythons(localEel)
+    assertThat(starts.startCount()).describedAs("The first search must read the info of $python").isEqualTo(1)
+
+    sut.findSystemPythons(localEel)
+    assertThat(starts.startCount())
+      .describedAs("The environment is ephemeral, so the second search must start $python again")
+      .isEqualTo(2)
+
+    coroutineContext.job.cancelChildren() // The service updates its cache on the scope of this test
+  }
+
+  /**
    * A script that answers the one command the search runs, and records each start in [starts].
    *
    * Windows runs a `.bat`, which `Files.isExecutable` accepts by its extension, and which the exec service starts
@@ -79,5 +106,10 @@ internal class SystemPythonStartCountTest {
 
   private class FixedPythonProvider(private val python: PythonBinary) : SystemPythonProvider {
     override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> = Result.success(setOf(python))
+  }
+
+  /** Reports every environment as ephemeral, so the test does not need a real container. */
+  private object EphemeralEelDescriptorFilter : EelDescriptorFilter {
+    override fun isEphemeral(eelDescriptor: EelDescriptor): Boolean = true
   }
 }
