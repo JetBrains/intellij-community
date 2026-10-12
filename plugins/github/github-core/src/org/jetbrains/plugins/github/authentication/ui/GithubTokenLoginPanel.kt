@@ -23,7 +23,7 @@ import javax.swing.JTextField
 
 internal typealias UniqueLoginPredicate = (login: String, server: GithubServerPath) -> Boolean
 
-internal class GithubLoginPanel(
+internal class GithubTokenLoginPanel(
   cs: CoroutineScope,
   executorFactory: GithubApiRequestExecutor.Factory,
   isAccountUnique: UniqueLoginPredicate

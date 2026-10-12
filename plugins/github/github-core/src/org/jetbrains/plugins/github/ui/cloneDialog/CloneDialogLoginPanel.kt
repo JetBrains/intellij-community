@@ -45,7 +45,7 @@ import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.GHServerOffering
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.ui.GithubLoginPanel
+import org.jetbrains.plugins.github.authentication.ui.GithubTokenLoginPanel
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.SwingConstants
@@ -60,7 +60,7 @@ internal class CloneDialogLoginPanel(
   private val accountManager get() = service<GHAccountManager>()
 
   private val errorPanel = VerticalListPanel(10)
-  private val loginPanel = GithubLoginPanel(cs, GithubApiRequestExecutor.Factory.getInstance()) { name, server ->
+  private val tokenLoginPanel = GithubTokenLoginPanel(cs, GithubApiRequestExecutor.Factory.getInstance()) { name, server ->
     if (account == null) accountManager.isAccountUnique(server, name) else true
   }
   private val inlineCancelPanel = simplePanel()
@@ -82,12 +82,12 @@ internal class CloneDialogLoginPanel(
     buildLayout()
 
     if (account != null) {
-      loginPanel.setServer(account.server.toUrl(), false)
-      loginPanel.setLogin(account.name, false)
+      tokenLoginPanel.setServer(account.server.toUrl(), false)
+      tokenLoginPanel.setLogin(account.name, false)
     }
 
     loginButton.addActionListener { login() }
-    LoginAction().registerCustomShortcutSet(ENTER, loginPanel)
+    LoginAction().registerCustomShortcutSet(ENTER, tokenLoginPanel)
   }
 
   fun setCancelHandler(listener: () -> Unit) =
@@ -101,17 +101,17 @@ internal class CloneDialogLoginPanel(
 
   fun setTokenUi(needsWarning: Boolean = false) {
     setupNewUi(false, needsWarning)
-    loginPanel.setTokenUi()
+    tokenLoginPanel.setTokenUi()
   }
 
   fun setOAuthUi() {
     setupNewUi(true)
-    loginPanel.setOAuthUi()
+    tokenLoginPanel.setOAuthUi()
 
     login()
   }
 
-  fun setServer(path: String, editable: Boolean) = loginPanel.setServer(path, editable)
+  fun setServer(path: String, editable: Boolean) = tokenLoginPanel.setServer(path, editable)
 
   override fun dispose() {
     cancelLogin()
@@ -119,7 +119,7 @@ internal class CloneDialogLoginPanel(
 
   private fun buildLayout() {
     add(HorizontalListPanel().apply {
-      add(loginPanel)
+      add(tokenLoginPanel)
       add(inlineCancelPanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { left = scale(6) }) })
     })
     add(errorPanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { top = 0 }) })
@@ -129,7 +129,7 @@ internal class CloneDialogLoginPanel(
     loginButton.isVisible = !isOAuth
     backLink.text = if (isOAuth) IdeBundle.message("link.cancel") else IdeBundle.message("button.back")
 
-    loginPanel.footer = { if (!isOAuth) buttonPanel(needsWarning) } // footer is used to put buttons in 2-nd column - align under text boxes
+    tokenLoginPanel.footer = { if (!isOAuth) buttonPanel(needsWarning) } // footer is used to put buttons in 2-nd column - align under text boxes
     if (isOAuth) inlineCancelPanel.addToCenter(backLink)
     inlineCancelPanel.isVisible = isOAuth
 
@@ -158,15 +158,15 @@ internal class CloneDialogLoginPanel(
   private fun login() {
     cancelLogin()
 
-    loginPanel.setError(null)
+    tokenLoginPanel.setError(null)
     clearErrors()
     if (!doValidate()) return
 
     loginJob = cs.async(Dispatchers.Main.immediate + ModalityState.stateForComponent(this).asContextElement()) {
       try {
-        val (login, token) = loginPanel.acquireLoginAndToken()
+        val (login, token) = tokenLoginPanel.acquireLoginAndToken()
         logEvent()
-        val acc = account ?: GHAccountManager.createAccount(login, loginPanel.getServer())
+        val acc = account ?: GHAccountManager.createAccount(login, tokenLoginPanel.getServer())
         accountManager.updateAccount(acc, token)
         clearErrors()
       }
@@ -181,13 +181,13 @@ internal class CloneDialogLoginPanel(
   private fun logEvent() {
     GHLoginCollector.login(GHLoginData(
       loginSource = GHLoginSource.CLONE,
-      authType = if (loginPanel.isOAuthUi()) GHAuthType.OAUTH else GHAuthType.TOKEN,
-      serverOffering = GHServerOffering.of(loginPanel.getServer()),
+      authType = if (tokenLoginPanel.isOAuthUi()) GHAuthType.OAUTH else GHAuthType.TOKEN,
+      serverOffering = GHServerOffering.of(tokenLoginPanel.getServer()),
     ))
   }
 
   private fun doValidate(): Boolean {
-    errors = loginPanel.doValidateAll()
+    errors = tokenLoginPanel.doValidateAll()
     setErrors(errors)
 
     val toFocus = errors.firstOrNull()?.component

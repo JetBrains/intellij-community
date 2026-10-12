@@ -41,7 +41,7 @@ internal class GHTokenLoginDialog(
 
   private val cs = parentCs.childScope(javaClass.name, Dispatchers.EDT + ModalityState.stateForComponent(window).asContextElement())
 
-  private val loginPanel = GithubLoginPanel(cs, GithubApiRequestExecutor.Factory.getInstance()) { login, server ->
+  private val loginPanel = GithubTokenLoginPanel(cs, GithubApiRequestExecutor.Factory.getInstance()) { login, server ->
     model.isAccountUnique(server, login)
   }
 
