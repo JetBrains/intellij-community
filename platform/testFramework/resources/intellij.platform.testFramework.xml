@@ -10,7 +10,6 @@
     <module name="intellij.platform.analysis.impl"/>
     <module name="intellij.platform.backend.observation"/>
     <module name="intellij.platform.backend.workspace"/>
-    <module name="intellij.platform.buildView"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.codeStyle.impl"/>
     <module name="intellij.platform.concurrency"/>

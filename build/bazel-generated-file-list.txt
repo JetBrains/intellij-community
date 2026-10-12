@@ -1089,6 +1089,7 @@ platform/tasks-platform-impl/tasks.impl.bookmarks
 platform/tasks-platform-impl/tasks.impl.debugger
 platform/testFramework
 platform/testFramework/bootstrap
+platform/testFramework/buildView
 platform/testFramework/common
 platform/testFramework/core
 platform/testFramework/eelJava
