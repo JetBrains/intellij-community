@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
@@ -38,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -45,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GrFieldControlFlowPolicy;
@@ -197,8 +200,33 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
             }
           }
 
+          scope.accept(new GroovyRecursiveElementVisitor() {
+            @Override
+            public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
+              if (!PsiUtil.isAccessedForWriting(referenceExpression)) return;
+              PsiElement target = referenceExpression.resolve();
+              if (!(target instanceof GrVariable variable) || !variables.contains(target)
+                  || !variable.hasModifierProperty(PsiModifier.FINAL)) {
+                return;
+              }
+              if (isDefinitelyInvalidWriteAccess(variable, referenceExpression)) {
+                String message = GroovyBundle.message("cannot.assign.a.value.to.final.variable.0", variable.getName());
+                registerError(referenceExpression, message);
+              }
+            }
+          });
           highlightInvalidWriteAccess(getFlow(scopeToProcess), variables, forInParameters);
         }
+      }
+
+      private static boolean isDefinitelyInvalidWriteAccess(GrVariable variable, GrReferenceExpression access) {
+        final GrVariableDeclarationOwner owner = PsiTreeUtil.getParentOfType(variable, GrVariableDeclarationOwner.class);
+        PsiElement parent = access.getParent();
+        while (!(parent instanceof GrLambdaBody) && !(parent instanceof GrClosableBlock) && !(parent instanceof GrMethod)) {
+          if (parent == owner) return false;
+          parent = parent.getParent();
+        }
+        return parent != owner;
       }
 
       private void highlightInvalidWriteAccess(@NotNull GroovyControlFlow flow,
