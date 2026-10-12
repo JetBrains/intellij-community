@@ -13,6 +13,7 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
@@ -242,7 +243,7 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
       XDebugSession session = SoftReference.dereference(mySessionRef);
       if (session != null) {
         notification.expire();
-        session.stop();
+        ApplicationManager.getApplication().executeOnPooledThread(session::stop);
       }
     }
   }
