@@ -177,7 +177,11 @@ internal class DynamicPluginsSupportImpl(
           withModalProgress(criticalSectionModalProgressConfig.owner,
                             criticalSectionModalProgressConfig.title,
                             TaskCancellation.nonCancellable()) {
-            doUnloadAndLoad(loadSteps, unloadSteps, targetState, sequence)
+            reportSequentialProgress { criticalSectionReporter ->
+              context(criticalSectionReporter) {
+                doUnloadAndLoad(loadSteps, unloadSteps, targetState, sequence)
+              }
+            }
           }
         }
       }
