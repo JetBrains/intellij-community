@@ -58,6 +58,14 @@ public abstract class FileBreadcrumbsCollector {
   @ApiStatus.Internal
   public boolean requiresProvider() { return true; }
 
+  /**
+   * Returns {@code false} to hide the breadcrumbs bar in the editor of the given file.
+   * Sticky lines, diff viewer headers and the Recent Locations popup continue to use this collector.
+   */
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  public boolean isShownInEditor(@NotNull VirtualFile file) { return true; }
+
   public static FileBreadcrumbsCollector findBreadcrumbsCollector(Project project, VirtualFile file) {
     if (file != null) {
       for (FileBreadcrumbsCollector extension : EP_NAME.getExtensions(project)) {

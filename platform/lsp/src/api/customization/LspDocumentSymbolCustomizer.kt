@@ -19,6 +19,7 @@ open class LspDocumentSymbolSupport : LspDocumentSymbolCustomizer() {
 
   /**
    * Controls breadcrumbs, but also sticky lines, diff viewer headers and items in the Recent Locations popup.
+   * It also controls the members in the navigation bar when "Show members in navigation bar" is on.
    */
   override val breadcrumbsSupport: Boolean = true
 }

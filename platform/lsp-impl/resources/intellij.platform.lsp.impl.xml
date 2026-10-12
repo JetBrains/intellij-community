@@ -45,6 +45,8 @@
                  key="lsp.inheritance.markers.max.symbols"/>
     <registryKey defaultValue="1000" description="How long the document must stay stable before an LSP inheritance markers pull, in milliseconds"
                  key="lsp.inheritance.markers.quiescence.ms"/>
+    <registryKey defaultValue="true" key="lsp.navbar.members.hide.editor.breadcrumbs"
+                 description="Hide the editor breadcrumbs of a file when the navigation bar shows its LSP document symbols"/>
     <notificationGroup id="LSP window/showMessage"
                        displayType="BALLOON"
                        bundle="messages.LspBundle"
@@ -107,6 +109,7 @@
       implementation="com.intellij.platform.lsp.impl.features.workspaceSymbol.LspWorkspaceSymbolEqualityProvider"/>
     <fileBreadcrumbsCollector implementation="com.intellij.platform.lsp.impl.features.documentSymbol.LspFileBreadcrumbsCollector"
                               order="last, after PsiFileBreadcrumbsCollector"/>
+    <navbar implementation="com.intellij.platform.lsp.impl.features.documentSymbol.LspNavBarModelExtension"/>
     <platform.lang.lsWidget.itemsProvider id="LspWidgetItemsProvider"
                                           implementation="com.intellij.platform.lsp.impl.lsWidget.LspWidgetItemsProvider"/>
     <applicationService serviceInterface="com.intellij.platform.lsp.api.lsWidget.LspWidgetInternalService"

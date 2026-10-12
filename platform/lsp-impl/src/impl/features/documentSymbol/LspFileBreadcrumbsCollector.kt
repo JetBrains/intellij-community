@@ -21,17 +21,19 @@ internal class LspFileBreadcrumbsCollector(private val project: Project) : FileB
   override fun requiresProvider(): Boolean = false
 
   override fun handlesFile(file: VirtualFile): Boolean {
-    val lspClient = getLspClient(file)
+    val lspClient = findBreadcrumbsLspClient(project, file)
 
     return lspClient != null
   }
+
+  override fun isShownInEditor(file: VirtualFile): Boolean = !isEditorBreadcrumbsReplacedByNavBar()
 
   override fun watchForChanges(file: VirtualFile, editor: Editor, disposable: Disposable, changesHandler: Runnable) {
     PsiFileBreadcrumbsCollector.watchForChanges(project, file, disposable, changesHandler)
   }
 
   override fun computeCrumbs(file: VirtualFile, document: Document, offset: Int, forcedShown: Boolean?): Iterable<Crumb> {
-    val lspClient = getLspClient(file) ?: return emptyList()
+    val lspClient = findBreadcrumbsLspClient(project, file) ?: return emptyList()
     val documentSymbols = lspClient.requestExecutor.getDocumentSymbolsCaching(file) ?: return emptyList()
 
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return emptyList()
@@ -44,7 +46,7 @@ internal class LspFileBreadcrumbsCollector(private val project: Project) : FileB
   }
 
   override fun computeStickyLineInfos(file: VirtualFile, document: Document, offset: Int): List<StickyLineInfo> {
-    val lspClient = getLspClient(file) ?: return emptyList()
+    val lspClient = findBreadcrumbsLspClient(project, file) ?: return emptyList()
     val documentSymbols = lspClient.requestExecutor.getDocumentSymbolsCaching(file) ?: return emptyList()
 
 
@@ -63,32 +65,38 @@ internal class LspFileBreadcrumbsCollector(private val project: Project) : FileB
       StickyLineInfo(textOffset, endOffset, null)
     }
   }
+}
 
-  private fun getLspClient(file: VirtualFile): LspClientImpl? {
-    return LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file).firstOrNull {
-      it.descriptor.lspCustomization.documentSymbolCustomizer.breadcrumbsSupport &&
-      it.supportsDocumentSymbol(file)
+/**
+ * Finds the client that provides breadcrumbs and navigation bar members for [file].
+ */
+internal fun findBreadcrumbsLspClient(project: Project, file: VirtualFile): LspClientImpl? {
+  return LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file).firstOrNull {
+    it.descriptor.lspCustomization.documentSymbolCustomizer.breadcrumbsSupport &&
+    it.supportsDocumentSymbol(file)
+  }
+}
+
+/**
+ * Returns the symbols that contain [offset], from the outermost to the innermost.
+ */
+internal fun findSymbolsAroundOffset(document: Document, documentSymbols: List<DocumentSymbol>, offset: Int): List<DocumentSymbol> {
+  var currentLevelSymbols: List<DocumentSymbol>? = documentSymbols
+  val relevantSymbols = mutableListOf<DocumentSymbol>()
+
+  while (currentLevelSymbols != null) {
+    val child = currentLevelSymbols.find { documentSymbol ->
+      val startOffset = getOffsetInDocument(document, documentSymbol.range.start)
+      val endOffset = getOffsetInDocument(document, documentSymbol.range.end)
+      startOffset != null && offset >= startOffset && endOffset != null && offset <= endOffset
+    }
+    if (child != null) {
+      relevantSymbols.add(child)
+      currentLevelSymbols = child.children
+    }
+    else {
+      currentLevelSymbols = null
     }
   }
-
-  private fun findSymbolsAroundOffset(document: Document, documentSymbols: List<DocumentSymbol>, offset: Int): List<DocumentSymbol> {
-    var currentLevelSymbols: List<DocumentSymbol>? = documentSymbols
-    val relevantSymbols = mutableListOf<DocumentSymbol>()
-
-    while (currentLevelSymbols != null) {
-      val child = currentLevelSymbols.find { documentSymbol ->
-        val startOffset = getOffsetInDocument(document, documentSymbol.range.start)
-        val endOffset = getOffsetInDocument(document, documentSymbol.range.end)
-        startOffset != null && offset >= startOffset && endOffset != null && offset <= endOffset
-      }
-      if (child != null) {
-        relevantSymbols.add(child)
-        currentLevelSymbols = child.children
-      }
-      else {
-        currentLevelSymbols = null
-      }
-    }
-    return relevantSymbols
-  }
+  return relevantSymbols
 }
