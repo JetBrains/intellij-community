@@ -1,6 +1,7 @@
 """The launch files of a product, rendered by the tool `product-files` from the launch model of the product."""
 
 load(":dev_dist_build_date.bzl", "DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS")
+load(":dev_dist_content.bzl", "DevDistPlatformPayloadInfo")
 
 def product_info_destination(os, language_server):
     """The path of `product-info.json` in a distribution, for an OS token of `platform_parts`.
@@ -47,6 +48,15 @@ def _dev_dist_product_files_impl(ctx):
     if ctx.outputs.frontend_vmoptions:
         args.add("--frontend-vmoptions-out=" + ctx.outputs.frontend_vmoptions.path)
         outputs.append(ctx.outputs.frontend_vmoptions)
+    if ctx.attr.platform_payload:
+        # The names are known at analysis, so the action reads one small file and no jar of the payload.
+        core_classpath = ctx.actions.declare_file(ctx.label.name + ".core-classpath.txt")
+        ctx.actions.write(
+            core_classpath,
+            "".join([name + "\n" for name in ctx.attr.platform_payload[DevDistPlatformPayloadInfo].core_classpath_jar_names]),
+        )
+        args.add("--core-classpath-jar-names=" + core_classpath.path)
+        inputs.append(core_classpath)
     ctx.actions.run(
         executable = ctx.executable.tool,
         arguments = [args],
@@ -69,6 +79,9 @@ dev_dist_product_files = rule(
     application info and no build number. The action derives them from the declared sources. So an edit of the version,
     the suffix, the release date or the EAP flag changes no generated file. An edit of a common vmoptions line changes
     only `common.vmoptions`.
+
+    A classic-loader launch also reads the core classpath of the platform payload, as a file that the rule writes at
+    analysis. The tool renders the `bootClassPathJarNames` of the launch from it, as production does.
     """,
     implementation = _dev_dist_product_files_impl,
     attrs = {
@@ -110,6 +123,11 @@ dev_dist_product_files = rule(
         "product_info": attr.output(mandatory = True),
         "frontend_vmoptions": attr.output(
             doc = "The vmoptions file of the embedded frontend. Set it when the launch model states `frontendVmOptions`, and only then.",
+        ),
+        "platform_payload": attr.label(
+            providers = [DevDistPlatformPayloadInfo],
+            doc = "The platform payload of the distribution, for its core classpath. Set it for a classic-loader launch, and only then. " +
+                  "A modular-loader launch states `platform-loader.jar` in the launch model.",
         ),
     },
 )

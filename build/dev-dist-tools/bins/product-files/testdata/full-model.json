@@ -21,7 +21,9 @@
   "languageServer": true,
   "launch": {
     "mainClass": "com.intellij.platform.runtime.loader.IntellijLoader",
-    "bootClassPathJarNames": [],
+    "bootClassPathJarNames": [
+      "platform-loader.jar"
+    ],
     "jvmArguments": {
       "classLoader": "com.example.ServerClassLoader",
       "jnaNativeDir": "plugins/jna-plugin/lib/jna",
@@ -52,6 +54,9 @@
       "vmOptionsFilePath": {
         "Linux": "bin/qodana.vmoptions"
       },
+      "additionalBootClassPathJarNames": [
+        "nio-fs.jar"
+      ],
       "jvmArguments": "frontend",
       "qodana": true,
       "macJvmArguments": [

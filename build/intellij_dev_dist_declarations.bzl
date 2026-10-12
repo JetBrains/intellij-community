@@ -506,7 +506,8 @@ def _platform_set(tables, product, name, target_platform, visibility):
         # The action reads the application info sources and `build.txt` for the version, the names and the build number.
         # The rendered files have fixed names, and the component maps each one to its path in the distribution.
         # `_launch_destinations` states the paths of the vmoptions files and of `product-info.json`. The component also
-        # declares the main class of the launch model.
+        # declares the main class of the launch model. A classic-loader launch takes its boot class path from the core
+        # classpath of the platform payload. A modular-loader launch states `platform-loader.jar` in the model.
         files = name + "_product_files"
         frontend_vmoptions = getattr(plan.launch, "frontend_vmoptions", None)
         application_info = tables.application_infos[product]
@@ -524,6 +525,7 @@ def _platform_set(tables, product, name, target_platform, visibility):
             vmoptions = files + "/vmoptions",
             product_info = files + "/product-info.json",
             frontend_vmoptions = files + "/frontend.vmoptions" if frontend_vmoptions else None,
+            platform_payload = None if _modular_loader(tables, product) else ":" + name + "_platform_payload",
         )
 
         def placed(platform):

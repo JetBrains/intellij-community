@@ -3,12 +3,16 @@
 
 package org.jetbrains.intellij.build.dev
 
+import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.classPath.launchBootClassPathJarNames
+import org.jetbrains.intellij.build.classPath.splitDistributionCoreClassPathJarNames
+import org.jetbrains.intellij.build.impl.createPlatformLayout
 import org.jetbrains.intellij.build.impl.productInfo.ProductLaunchModel
 import org.jetbrains.intellij.build.impl.productInfo.computeDevProductLaunchModel
 import org.jetbrains.intellij.build.productLayout.discovery.PRODUCT_REGISTRY_PATH
@@ -40,11 +44,15 @@ fun buildProductInProcess(request: BuildRequest): DevBuildResult {
 /**
  * What the production writers write for the `platform_resources` component of one product: [files] for each platform,
  * keyed by the path in the distribution, and the [model] the plan generator computes for the product.
+ *
+ * [coreClassPathJarNames] is the core classpath of the split distribution, see [splitDistributionCoreClassPathJarNames].
+ * It is `null` for a modular-loader product, whose launch does not read it.
  */
 @ApiStatus.Internal
 class SplitPlatformResources(
   @JvmField val model: ProductLaunchModel,
   @JvmField val files: Map<Pair<OsFamily, JvmArchitecture>, Map<String, String>>,
+  @JvmField val coreClassPathJarNames: List<String>?,
 )
 
 /**
@@ -54,6 +62,9 @@ class SplitPlatformResources(
  * The files come from `writePlatformResourceFiles` over a build context with no additional modules, no runtime module
  * repository, and the pinned [buildDateInSeconds]. The launch model tests compare them with the renderers of [model].
  * [scratchDir] must be empty.
+ *
+ * No jar is packed, so `generateCoreClassPath` does not run. For a classic-loader product, the function sets the boot
+ * class path of the context from the core classpath of the split distribution, with the production rule.
  */
 @ApiStatus.Internal
 fun renderSplitPlatformResources(
@@ -83,6 +94,18 @@ fun renderSplitPlatformResources(
       buildOptionsTemplate = BuildOptions(),
       lifetime = lifetime,
     )
+    val coreClassPathJarNames = if (context.useModularLoader) {
+      null
+    }
+    else {
+      splitDistributionCoreClassPathJarNames(createPlatformLayout(context.productProperties, context.outputProvider))
+    }
+    if (coreClassPathJarNames != null) {
+      context.bootClassPathJarNames = launchBootClassPathJarNames(
+        coreClassPathJarNames = coreClassPathJarNames,
+        skipNioFs = isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix),
+      )
+    }
     val files = platforms.associateWith { (os, arch) ->
       configureTargetPlatform(context.options, request.copy(os = os, arch = arch))
       val runDir = Files.createDirectories(scratchDir.resolve("${os.osId}-${arch.name}"))
@@ -91,6 +114,7 @@ fun renderSplitPlatformResources(
     return SplitPlatformResources(
       model = computeDevProductLaunchModel(context.productProperties, context.outputProvider, buildDateInSeconds),
       files = files,
+      coreClassPathJarNames = coreClassPathJarNames,
     )
   }
 }

@@ -6,9 +6,10 @@
 //! The input is the launch model that the dev distribution plan generator writes for the product (`ProductLaunchModel`
 //! in `community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/productInfo`). The model states the facts
 //! of the product code. The tool reads the rest from the application info of the product and from `build.txt`, so an
-//! edit of the version, the suffix or the release date changes no generated file. The files must be the files that the
-//! production writers of the build scripts write, byte for byte. `DevDistProductLaunchModelTest` checks
-//! that for every split product and every host platform.
+//! edit of the version, the suffix or the release date changes no generated file. A classic-loader launch also reads the
+//! core classpath of the distribution for its boot class path. The files must be the files that the production writers
+//! of the build scripts write, byte for byte. `DevDistProductLaunchModelTest` checks that for every split product and
+//! every host platform.
 
 mod model;
 mod render;
@@ -47,6 +48,9 @@ struct Options {
     frontend_vm_options_out: Option<PathBuf>,
     /// The application info of the host product of a frontend.
     host_application_info: Option<PathBuf>,
+    /// The `lib/` jars of the core classpath, one name per line. It is required when the launch of the model states no
+    /// `bootClassPathJarNames`, and refused otherwise.
+    core_class_path_jar_names: Option<PathBuf>,
     /// `ProductProperties.appInfoXmlReplacements`, in their order.
     replacements: Vec<Replacement>,
 }
@@ -73,9 +77,9 @@ fn run(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors:
     0
 }
 
-/// Reads the options. Every option but `--frontend-vmoptions-out`, `--host-application-info` and `--replacement` is
-/// required, and the first missing one fails in this order. `--replacement` is the one option that a request can state
-/// more than once, as `KEY=VALUE`.
+/// Reads the options. Every option but `--frontend-vmoptions-out`, `--host-application-info`,
+/// `--core-classpath-jar-names` and `--replacement` is required, and the first missing one fails in this order.
+/// `--replacement` is the one option that a request can state more than once, as `KEY=VALUE`.
 fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Options> {
     let mut options = cli::parse(args)?;
     let model = options.require("--model")?.into();
@@ -98,6 +102,10 @@ fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Opt
         Some(value) if value.is_empty() => anyhow::bail!("--host-application-info must not be empty"),
         value => value.map(PathBuf::from),
     };
+    let core_class_path_jar_names = match options.take("--core-classpath-jar-names")? {
+        Some(value) if value.is_empty() => anyhow::bail!("--core-classpath-jar-names must not be empty"),
+        value => value.map(PathBuf::from),
+    };
     let replacements = Replacement::parse_all(&options.take_all("--replacement")?)?;
     options.finish()?;
     let Ok(build_date_seconds) = build_date_seconds.parse::<i64>() else {
@@ -118,6 +126,7 @@ fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Opt
         product_info_out,
         frontend_vm_options_out,
         host_application_info,
+        core_class_path_jar_names,
         replacements,
     })
 }
@@ -133,6 +142,19 @@ fn read_build_number(file: &Path) -> anyhow::Result<String> {
         anyhow::bail!("the build number is empty: {}", file.display());
     }
     Ok(build_number)
+}
+
+/// Reads the core classpath file: one `lib/`-relative jar name per line. An empty line and an empty list fail.
+fn read_core_class_path(file: &Path) -> anyhow::Result<Vec<String>> {
+    let text = read_text(file)?;
+    let names: Vec<String> = text.lines().map(str::to_owned).collect();
+    if names.is_empty() {
+        anyhow::bail!("the core classpath names no jar: {}", file.display());
+    }
+    if names.iter().any(String::is_empty) {
+        anyhow::bail!("the core classpath has an empty line: {}", file.display());
+    }
+    Ok(names)
 }
 
 fn render_to_files(options: &Options) -> anyhow::Result<()> {
@@ -151,10 +173,23 @@ fn render_to_files(options: &Options) -> anyhow::Result<()> {
     // own base file.
     let idea_properties = read_text(&options.idea_properties)?;
     let common_vm_options = read_text(&options.common_vm_options)?;
+    let core_class_path = match (&options.core_class_path_jar_names, &model.launch.boot_class_path_jar_names) {
+        (Some(file), None) => Some(read_core_class_path(file)?),
+        (None, Some(_)) => None,
+        (None, None) => anyhow::bail!(
+            "{} states no bootClassPathJarNames of the launch, so --core-classpath-jar-names is required",
+            options.model.display()
+        ),
+        (Some(_), Some(_)) => anyhow::bail!(
+            "--core-classpath-jar-names is set, but {} states the bootClassPathJarNames of the launch",
+            options.model.display()
+        ),
+    };
     let product = render::Product {
         model: &model,
         application_info: &application_info,
         build_number: &build_number,
+        core_class_path: core_class_path.as_deref(),
     };
     let files = render::render_launch_files(&product, target, &opened_packages, &idea_properties, &common_vm_options)
         .with_context(|| options.model.display().to_string())?;

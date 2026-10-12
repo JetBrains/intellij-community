@@ -25,7 +25,9 @@ import org.jetbrains.intellij.build.PRESIGNED_NATIVE_LIBS
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.SignNativeFileMode
 import org.jetbrains.intellij.build.buildSpan
-import org.jetbrains.intellij.build.classPath.contentModuleJarCoreClasspathEntries
+import org.jetbrains.intellij.build.classPath.bundledPluginsWithIdeaClassloader
+import org.jetbrains.intellij.build.classPath.platformLibraryJarDestination
+import org.jetbrains.intellij.build.classPath.splitDistributionCoreClassPathJarNames
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
 import org.jetbrains.intellij.build.devDist.isNativeTreeAsset
 import org.jetbrains.intellij.build.impl.BazelTargetsInfo
@@ -39,7 +41,6 @@ import org.jetbrains.intellij.build.impl.createProductModeContentModuleFilter
 import org.jetbrains.intellij.build.impl.getBundledPluginModules
 import org.jetbrains.intellij.build.impl.getLibNameBySourceFile
 import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
-import org.jetbrains.intellij.build.impl.nameToJarFileName
 import org.jetbrains.intellij.build.impl.nativeBinFiles
 import org.jetbrains.intellij.build.impl.productInfo.ProductLaunchModel
 import org.jetbrains.intellij.build.impl.productInfo.computeDevProductLaunchModel
@@ -1563,6 +1564,15 @@ private fun collectFragmentPlan(
   layout.getIncludedModuleLibraries().firstOrNull()?.let {
     error("${product.name}: the platform layout places the module library '${it.libraryName}' of '${it.moduleName}' outside its module jar")
   }
+  // A classic-loader launch also puts the jars of a `use-idea-classloader` plugin on its boot class path, see
+  // `generateCoreClasspathFromPlugins`. The product files action renders that list from the core classpath of `lib/`.
+  if (properties.rootModuleForModularLoader == null) {
+    val pluginsWithIdeaClassloader = bundledPluginsWithIdeaClassloader(properties, outputProvider)
+    check(pluginsWithIdeaClassloader.isEmpty()) {
+      "${product.name}: the bundled plugins $pluginsWithIdeaClassloader set use-idea-classloader. Production puts their jars on " +
+      "the boot class path of the launch, but the dev distribution renders that list from the jars of lib/ alone."
+    }
+  }
   // The entries a layout patcher of the product writes, keyed by the patched module, in the order the patchers write
   // them. See `DevPlatformPatchOwner`.
   val entryPatches = LinkedHashMap<String, LinkedHashMap<String, String>>()
@@ -1786,16 +1796,11 @@ private fun collectFragmentPlan(
         "${product.name}: a platform jar has no producer: " +
         layout.includedModules.map { it.relativeOutputFile }.distinct().filter { it !in handedOver }.joinToString()
       }
-      // The rule of `generateClassPathByLayoutReport` over the jars the fragment does not pack. A split fragment
-      // starts with `isBootClassPathCorrect = false`, so `nio-fs.jar` stays on the core classpath. The payload rule
-      // derives the core classpath again, and `moduleSystemLoadedLabels` proves that both answers are equal.
-      val libDir = Path.of("lib")
-      val coreClassPath = contentModuleJarCoreClasspathEntries(
-        libDir = libDir,
-        includedModules = layout.includedModules,
-        externallyPackedJars = handedOver,
-        skipNioFs = false,
-      ).mapTo(HashSet()) { libDir.relativize(it).invariantSeparatorsPathString }
+      // The rule of `generateClassPathByLayoutReport` over the jars the fragment does not pack. The check above makes
+      // `handedOver` the set of every module jar of the layout, which the function reads. The list keeps `nio-fs.jar`,
+      // as the payload does. The payload rule derives the core classpath again, and `moduleSystemLoadedLabels` proves
+      // that both answers are equal. The product files action renders the boot class path from the payload list.
+      val coreClassPath = splitDistributionCoreClassPathJarNames(layout).toHashSet()
       // The payload packs every handed-over jar, so a jar that the layout does not place is a defect of the handover.
       val notPlaced = packed.filterNot { it in placedLabels }
       check(notPlaced.isEmpty()) {
@@ -2127,9 +2132,8 @@ fun mergedPresignedNativeLibs(
  * The jars of [layout] that hold libraries and no module, keyed by destination: a project library that the layout
  * places in a jar of its own, such as `product-backend.jar`.
  *
- * The destination is the one `JarPackager` writes, see `computeProjectLibrariesSources`: the stated jar, or the library
- * name as `nameToJarFileName` spells it. A library whose destination holds a module is not here, because the residual
- * jar of that module merges it, see [layoutPlacedLibraryLabels].
+ * The destination is the one `JarPackager` writes, see [platformLibraryJarDestination]. A library whose destination
+ * holds a module is not here, because the residual jar of that module merges it, see [layoutPlacedLibraryLabels].
  *
  * `JarPackager` keeps the native files of such a library inside the jar, presigned or not, and so does the rule for a
  * jar with no module. The generator fails on a library that Bazel does not name, and on a library that
@@ -2150,12 +2154,7 @@ private fun collectLibraryOnlyJars(
   // `JarPackager` packs the project libraries sorted by name.
   for (data in layout.getIncludedProjectLibraries().sortedBy { it.libraryName }) {
     val outPath = data.outPath
-    val jarName = nameToJarFileName(data.libraryName)
-    val destination = when {
-      outPath == null -> jarName
-      outPath.endsWith(".jar") -> outPath
-      else -> "$outPath/$jarName"
-    }
+    val destination = platformLibraryJarDestination(data)
     if (destination in moduleDestinations) {
       continue
     }

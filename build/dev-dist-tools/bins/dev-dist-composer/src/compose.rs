@@ -1,9 +1,9 @@
 //! The composition of the component manifests into one distribution or into launch metadata only.
 //!
 //! This module holds every step that reads only manifests and records. [`crate::merge`] copies the component files
-//! of a full distribution.
+//! of a full distribution. The one exception is [`check_launch_class_path`], which reads the copied `product-info.json`.
 
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -11,9 +11,10 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context as _, Result, bail};
 use component::classpath;
 use component::layout::{CORE_CLASSPATH_FILE, FINGERPRINT_FILE, LOCAL_LAYOUT_FILE};
-use component::manifest::{self, ComponentManifest};
+use component::manifest::{self, ComponentEntry, ComponentManifest};
 use component::paths;
 use component::plugin_classpath::PLUGIN_CLASSPATH;
+use serde::Deserialize;
 
 use crate::spec::ComponentSources;
 use crate::{fingerprint, local_layout, merge, plugin_classpath};
@@ -175,9 +176,10 @@ pub(crate) fn validate_destinations(manifests: &[&ComponentManifest]) -> Result<
 ///
 /// The function runs [`validate_components`] and [`validate_destinations`] first. A failure there creates nothing.
 /// Then it requires that `target` is absent or an empty directory, and it creates it. For a full distribution, it
-/// calls [`merge::merge_components`] once with the components in spec order, under `span`. Launch metadata never copies
-/// a component file. Then the function writes the plugin classpath, writes the local layout for launch metadata, and
-/// computes the fingerprint. The caller writes `core-classpath.txt`, `fingerprint.txt` and the IDE config.
+/// calls [`merge::merge_components`] once with the components in spec order, under `span`, and then
+/// [`check_launch_class_path`]. Launch metadata never copies a component file, so it checks no launch. Then the
+/// function writes the plugin classpath, writes the local layout for launch metadata, and computes the fingerprint. The
+/// caller writes `core-classpath.txt`, `fingerprint.txt` and the IDE config.
 pub(crate) fn compose_components(
     components: &[DevBuildComponent],
     target: &Path,
@@ -230,6 +232,9 @@ where
         .flat_map(|manifest| manifest.core_class_path.iter().map(String::as_str))
         .collect();
     let core_class_path = classpath::order_core_classpath_entries(&core_class_path);
+    if options.source_runfiles.is_none() {
+        check_launch_class_path(&manifests, target, &core_class_path)?;
+    }
     if let Some(source_runfiles) = &options.source_runfiles {
         local_layout::write_local_layout(
             &manifests,
@@ -247,6 +252,91 @@ where
         core_class_path,
         fingerprint,
     })
+}
+
+/// The places of `product-info.json` in a distribution: the root, and `Resources/` of a macOS app.
+const PRODUCT_INFO_FILES: [&str; 2] = ["product-info.json", "Resources/product-info.json"];
+
+/// The main class of a modular-loader launch, `BuildContext.ideMainClassName` of such a product.
+const MODULAR_LOADER_MAIN_CLASS: &str = "com.intellij.platform.runtime.loader.IntellijLoader";
+
+/// The boot class path of a modular-loader launch.
+const PLATFORM_LOADER_JAR: &str = "platform-loader.jar";
+
+/// The jar of the multi-routing file system. `-Xbootclasspath/a:` puts it on the boot class path when the file system is
+/// on.
+const NIO_FS_JAR: &str = "nio-fs.jar";
+
+/// The fields of `product-info.json` that the check reads.
+#[derive(Deserialize)]
+struct ProductInfo {
+    launch: Vec<Launch>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Launch {
+    main_class: String,
+    #[serde(default)]
+    boot_class_path_jar_names: Vec<String>,
+    #[serde(default)]
+    additional_jvm_arguments: Vec<String>,
+}
+
+/// Checks that the main launch of the copied `product-info.json` starts with the core classpath of the distribution.
+///
+/// The native launcher builds the class path from `bootClassPathJarNames` alone, as `<home>/lib/<name>` for each name.
+/// So a classic-loader launch must name each jar of `core_class_path`, compared as sets. The check drops `nio-fs.jar`
+/// when an additional JVM argument puts it on `-Xbootclasspath/a:`. A modular-loader launch names `platform-loader.jar`
+/// alone. A distribution without `product-info.json` at a production place has no launch to check.
+fn check_launch_class_path(manifests: &[&ComponentManifest], target: &Path, core_class_path: &[String]) -> Result<()> {
+    let Some(relative_path) = manifests
+        .iter()
+        .flat_map(|manifest| &manifest.entries)
+        .filter(|entry| matches!(entry, ComponentEntry::ComponentFile { .. }))
+        .map(ComponentEntry::relative_path)
+        .find(|relative_path| PRODUCT_INFO_FILES.contains(relative_path))
+    else {
+        return Ok(());
+    };
+    let file = target.join(paths::from_slash(relative_path).as_ref());
+    let data = fs::read(&file).with_context(|| file.display().to_string())?;
+    let info: ProductInfo = serde_json::from_slice(&data).with_context(|| file.display().to_string())?;
+    let Some(launch) = info.launch.first() else {
+        bail!("{relative_path} states no launch");
+    };
+    if launch.main_class == MODULAR_LOADER_MAIN_CLASS {
+        if launch.boot_class_path_jar_names != [PLATFORM_LOADER_JAR] {
+            bail!(
+                "{relative_path}: the main launch starts the modular loader, so its bootClassPathJarNames must be \
+                 [{PLATFORM_LOADER_JAR}], not {:?}",
+                launch.boot_class_path_jar_names
+            );
+        }
+        return Ok(());
+    }
+    let nio_fs_on_boot_class_path = launch.additional_jvm_arguments.iter().any(|argument| {
+        argument.strip_prefix("-Xbootclasspath/a:").is_some_and(|value| {
+            value
+                .split([':', ';'])
+                .any(|entry| entry.rsplit(['/', '\\']).next() == Some(NIO_FS_JAR))
+        })
+    });
+    let expected: BTreeSet<String> = core_class_path
+        .iter()
+        .map(|entry| entry.strip_prefix("lib/").map_or_else(|| format!("../{entry}"), str::to_owned))
+        .filter(|name| !(nio_fs_on_boot_class_path && name == NIO_FS_JAR))
+        .collect();
+    let actual: BTreeSet<String> = launch.boot_class_path_jar_names.iter().cloned().collect();
+    let missing: Vec<&String> = expected.difference(&actual).collect();
+    let unexpected: Vec<&String> = actual.difference(&expected).collect();
+    if !missing.is_empty() || !unexpected.is_empty() {
+        bail!(
+            "{relative_path}: the bootClassPathJarNames of the main launch differ from the core classpath; \
+             missing: {missing:?}; not on the core classpath: {unexpected:?}"
+        );
+    }
+    Ok(())
 }
 
 /// Writes `plugins/plugin-classpath.txt` from the prefix and the records of all components, and returns its bytes. The

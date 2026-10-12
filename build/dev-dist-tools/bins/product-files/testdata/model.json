@@ -18,8 +18,7 @@
         "Linux": "bin/mcp-server.vmoptions",
         "Windows": "bin/mcp-server.vmoptions"
       },
-      "bootClassPathJarNames": [
-        "platform-loader.jar",
+      "additionalBootClassPathJarNames": [
         "../plugins/mcpserver-plugin/lib/intellij.mcpserver.stdio.jar"
       ],
       "mainClass": "com.intellij.mcpserver.stdio.McpStdioRunnerKt"

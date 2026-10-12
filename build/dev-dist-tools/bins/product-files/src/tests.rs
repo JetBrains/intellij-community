@@ -10,7 +10,7 @@ use testkit::{read_text, testdata};
 use crate::model::{JvmArguments, JvmArgumentsRef, LaunchModel, VmOptions, parse_launch_model};
 use crate::render::{
     LaunchFiles, LaunchNames, OS_LINUX, OS_MAC, OS_WINDOWS, Platform, Product, additional_jvm_arguments, common_vm_options,
-    insert_eap_vm_options, opened_packages, parse_platform, render_launch_files,
+    insert_eap_vm_options, launch_boot_class_path, opened_packages, parse_platform, render_launch_files,
 };
 use crate::run;
 
@@ -28,6 +28,13 @@ const HOST_PLATFORMS: [&str; 6] = [
 
 fn test_model(name: &str) -> LaunchModel {
     parse_launch_model(read_text(testdata(name)).as_bytes()).unwrap()
+}
+
+/// The core classpath of the test distribution, in the sorted order of the payload. It holds `nio-fs.jar`.
+const CORE_CLASS_PATH_FILE: &str = "core-classpath.txt";
+
+fn test_core_class_path() -> Vec<String> {
+    read_text(testdata(CORE_CLASS_PATH_FILE)).lines().map(str::to_owned).collect()
 }
 
 /// One test product: a launch model, its application info, the markers of that application info and its build number.
@@ -111,10 +118,17 @@ impl Fixture {
     ) -> anyhow::Result<LaunchFiles> {
         let application_info = self.read_application_info();
         let build_number = self.build_number();
+        // A classic-loader launch reads the core classpath, as the action passes it for such a model only.
+        let core_class_path = test_core_class_path();
         let product = Product {
             model,
             application_info: &application_info,
             build_number: &build_number,
+            core_class_path: model
+                .launch
+                .boot_class_path_jar_names
+                .is_none()
+                .then_some(core_class_path.as_slice()),
         };
         render_launch_files(&product, parse_platform(platform)?, opened, idea_properties, common)
     }
@@ -293,8 +307,8 @@ fn rendered_files_of_one_model() {
     );
 }
 
-/// The goldens are the bytes that the Go tool wrote for each test model on each host platform.
-/// `DevDistProductLaunchModelTest` checked the Go tool against the production writers.
+/// The goldens hold the bytes of each test model on each host platform. `DevDistProductLaunchModelTest` checks the tool
+/// against the production writers.
 #[test]
 fn product_info_matches_the_recorded_bytes_on_every_platform() {
     let opened = read_text(testdata("opened-packages.txt"));
@@ -398,6 +412,98 @@ fn frontend_vm_options_follow_the_pipeline_of_the_product() {
     assert_eq!(
         server.frontend_vm_options.as_deref(),
         Some("-Xms256m\n-Xmx1024m\n-XX:+Common\n-Dfrontend=1\n-Dawt.x=1\n")
+    );
+}
+
+/// A classic-loader launch takes the core classpath in the production order. The multi-routing file system puts
+/// `nio-fs.jar` on `-Xbootclasspath/a:`, so the list drops it then.
+#[test]
+fn launch_boot_class_path_follows_the_production_order() {
+    fn product<'a>(model: &'a LaunchModel, application_info: &'a ApplicationInfo, core: Option<&'a [String]>) -> Product<'a> {
+        Product {
+            model,
+            application_info,
+            build_number: "263.SNAPSHOT",
+            core_class_path: core,
+        }
+    }
+    let mut model = test_model(IDEA.model);
+    let application_info = IDEA.read_application_info();
+    let core = strings(&[
+        "b.jar",
+        "util.jar",
+        "nio-fs.jar",
+        "a.jar",
+        "platform-loader.jar",
+        "a.jar",
+        "util-8.jar",
+    ]);
+    assert_eq!(
+        launch_boot_class_path(&product(&model, &application_info, Some(&core))).unwrap(),
+        strings(&["platform-loader.jar", "util-8.jar", "util.jar", "a.jar", "b.jar"])
+    );
+
+    model.launch.jvm_arguments.multi_routing_file_system = false;
+    assert_eq!(
+        launch_boot_class_path(&product(&model, &application_info, Some(&core))).unwrap(),
+        strings(&["platform-loader.jar", "util-8.jar", "util.jar", "a.jar", "b.jar", "nio-fs.jar"])
+    );
+
+    // A modular-loader launch states its list and reads no core classpath.
+    model.launch.boot_class_path_jar_names = Some(strings(&["platform-loader.jar"]));
+    assert_eq!(
+        launch_boot_class_path(&product(&model, &application_info, None)).unwrap(),
+        strings(&["platform-loader.jar"])
+    );
+    let error = launch_boot_class_path(&product(&model, &application_info, Some(&core))).unwrap_err();
+    assert_eq!(
+        error.to_string(),
+        "the launch states bootClassPathJarNames, so it reads no core classpath"
+    );
+    model.launch.boot_class_path_jar_names = None;
+    let error = launch_boot_class_path(&product(&model, &application_info, None)).unwrap_err();
+    assert_eq!(
+        error.to_string(),
+        "the launch states no bootClassPathJarNames, so it needs the core classpath"
+    );
+}
+
+/// A command with additional jars takes the boot class path of the launch first. A frontend command keeps its own list.
+#[test]
+fn custom_commands_extend_the_boot_class_path_of_the_launch() {
+    let mut model = test_model(IDEA.model);
+    let files = IDEA.render(&model, "linux_x64", "", "").unwrap();
+    let info: Value = serde_json::from_str(&files.product_info).unwrap();
+    let launch = strings(&["platform-loader.jar", "util-8.jar", "util.jar", "product-backend.jar", "app.jar"]);
+    assert_eq!(info["launch"][0]["bootClassPathJarNames"], serde_json::json!(launch));
+    let mut stdio = launch;
+    stdio.push("../plugins/mcpserver-plugin/lib/intellij.mcpserver.stdio.jar".to_owned());
+    assert_eq!(
+        info["launch"][0]["customCommands"][0]["bootClassPathJarNames"],
+        serde_json::json!(stdio)
+    );
+
+    // A Qodana launch adds `nio-fs.jar` after the list, which has no `nio-fs.jar` with the multi-routing file system.
+    let server = test_model(SERVER.model);
+    let files = SERVER.render(&server, "linux_x64", "", "").unwrap();
+    let info: Value = serde_json::from_str(&files.product_info).unwrap();
+    assert_eq!(
+        info["launch"][0]["customCommands"][0]["bootClassPathJarNames"],
+        serde_json::json!(["platform-loader.jar", "nio-fs.jar"])
+    );
+
+    model.custom_commands[0].boot_class_path_jar_names = strings(&["own.jar"]);
+    let error = IDEA.render(&model, "linux_x64", "", "").unwrap_err();
+    assert_eq!(
+        error.to_string(),
+        r#"the custom command ["stdioMcpServer"] states both bootClassPathJarNames and additionalBootClassPathJarNames"#
+    );
+    model.custom_commands[0].additional_boot_class_path_jar_names.clear();
+    let files = IDEA.render(&model, "linux_x64", "", "").unwrap();
+    let info: Value = serde_json::from_str(&files.product_info).unwrap();
+    assert_eq!(
+        info["launch"][0]["customCommands"][0]["bootClassPathJarNames"],
+        serde_json::json!(["own.jar"])
     );
 }
 
@@ -565,6 +671,7 @@ fn the_tool_writes_the_four_files() {
         format!("--idea-properties-out={}", out("out.properties")),
         format!("--vmoptions-out={}", out("out.vmoptions")),
         format!("--product-info-out={}", out("product-info.json")),
+        format!("--core-classpath-jar-names={}", testdata(CORE_CLASS_PATH_FILE).display()),
     ];
     args.extend(IDEA.inputs());
     let result = run_tool(&args);
@@ -643,6 +750,76 @@ fn the_tool_writes_the_frontend_vmoptions_file_when_the_model_states_it() {
     ] {
         let result = run_tool(&args_of(model, &extra));
         assert_eq!((result.code, result.errors), want, "{extra:?}");
+    }
+}
+
+/// A classic-loader launch needs `--core-classpath-jar-names`, and a modular-loader launch refuses it.
+#[test]
+fn the_tool_reads_the_core_classpath_for_a_classic_launch() {
+    let tool = ToolRun::new();
+    let mut model: Value = serde_json::from_str(&read_text(testdata("model.json"))).unwrap();
+    model["launch"]["bootClassPathJarNames"] = serde_json::json!(["platform-loader.jar"]);
+    let modular_model = tool.write("modular-model.json", &model.to_string());
+    let classic_model = testdata("model.json").display().to_string();
+    let args_of = |model: &str, core_class_path: Option<String>| -> Vec<String> {
+        let mut args: Vec<String> = tool
+            .base_args()
+            .into_iter()
+            .filter(|arg| !arg.starts_with("--core-classpath-jar-names="))
+            .collect();
+        args[0] = format!("--model={model}");
+        args.extend(IDEA.inputs());
+        args.extend(core_class_path.map(|file| format!("--core-classpath-jar-names={file}")));
+        args
+    };
+    let core_file = testdata(CORE_CLASS_PATH_FILE).display().to_string();
+
+    let result = run_tool(&args_of(&modular_model, None));
+    assert_eq!(result.code, 0, "{}", result.errors);
+    assert_eq!(
+        tool.product_info()["launch"][0]["customCommands"][0]["bootClassPathJarNames"],
+        serde_json::json!([
+            "platform-loader.jar",
+            "../plugins/mcpserver-plugin/lib/intellij.mcpserver.stdio.jar"
+        ])
+    );
+
+    for (model, core_class_path, want) in [
+        (
+            classic_model.as_str(),
+            None,
+            (
+                1,
+                format!(
+                    "ERROR: {classic_model} states no bootClassPathJarNames of the launch, so --core-classpath-jar-names is required\n"
+                ),
+            ),
+        ),
+        (
+            modular_model.as_str(),
+            Some(core_file),
+            (
+                1,
+                format!("ERROR: --core-classpath-jar-names is set, but {modular_model} states the bootClassPathJarNames of the launch\n"),
+            ),
+        ),
+        (
+            classic_model.as_str(),
+            Some(String::new()),
+            (2, "ERROR: --core-classpath-jar-names must not be empty\n".to_owned()),
+        ),
+    ] {
+        let result = run_tool(&args_of(model, core_class_path.clone()));
+        assert_eq!((result.code, result.errors), want, "{model} {core_class_path:?}");
+    }
+
+    for (name, content, want) in [
+        ("empty.txt", "", "the core classpath names no jar"),
+        ("gap.txt", "a.jar\n\nb.jar\n", "the core classpath has an empty line"),
+    ] {
+        let file = tool.write(name, content);
+        let result = run_tool(&args_of(&classic_model, Some(file.clone())));
+        assert_eq!((result.code, result.errors), (1, format!("ERROR: {want}: {file}\n")), "{name}");
     }
 }
 
@@ -774,6 +951,7 @@ impl ToolRun {
             format!("--idea-properties-out={}", self.out("out.properties")),
             format!("--vmoptions-out={}", self.out("out.vmoptions")),
             format!("--product-info-out={}", self.out("product-info.json")),
+            format!("--core-classpath-jar-names={}", testdata(CORE_CLASS_PATH_FILE).display()),
         ]
     }
 

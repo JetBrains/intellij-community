@@ -18,7 +18,11 @@
       "javaExecutablePath": "jbr/bin/java.exe",
       "vmOptionsFilePath": "bin/idea64.exe.vmoptions",
       "bootClassPathJarNames": [
-        "platform-loader.jar"
+        "platform-loader.jar",
+        "util-8.jar",
+        "util.jar",
+        "product-backend.jar",
+        "app.jar"
       ],
       "additionalJvmArguments": [
         "-Xbootclasspath/a:%IDE_HOME%\\lib\\nio-fs.jar",
@@ -41,6 +45,10 @@
           "vmOptionsFilePath": "bin/mcp-server.vmoptions",
           "bootClassPathJarNames": [
             "platform-loader.jar",
+            "util-8.jar",
+            "util.jar",
+            "product-backend.jar",
+            "app.jar",
             "../plugins/mcpserver-plugin/lib/intellij.mcpserver.stdio.jar"
           ],
           "mainClass": "com.intellij.mcpserver.stdio.McpStdioRunnerKt"

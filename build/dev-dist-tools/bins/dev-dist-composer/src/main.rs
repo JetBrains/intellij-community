@@ -10,7 +10,8 @@
 //!
 //! The composer owns the composition of the component contract. [`spec`] reads the composition spec and the source
 //! bindings. [`compose`] checks the components and their destinations, then [`merge`] copies the files of a full
-//! distribution, and [`local_layout`] writes the layout of launch metadata. [`plugin_classpath`] joins the plugin
+//! distribution. [`compose`] then checks the launch class path of the copied `product-info.json`. [`local_layout`]
+//! writes the layout of launch metadata. [`plugin_classpath`] joins the plugin
 //! records, [`fingerprint`] computes fingerprint v5, and [`ide_config`] writes the file of `DevIdeConfig`.
 //! [`placement`] checks the home placement of the spec against the manifests.
 
