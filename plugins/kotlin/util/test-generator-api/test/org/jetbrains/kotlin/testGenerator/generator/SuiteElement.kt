@@ -234,7 +234,7 @@ class SuiteElement private constructor(
         appendLine("@TestApplication")
         junit5.classAnnotations.forEach { appendLine("@$it") }
         appendLine("@TestRoot(\"${group.modulePath}\")")
-        appendLine("@TestDataPath(\"\\\$CONTENT_ROOT\")")
+        appendLine("@TestDataPath(\"\\\$PROJECT_ROOT/community/plugins/kotlin/${group.modulePath}\")")
         appendLine("@TestMetadata(\"$testDataPath\")")
 
         val header = buildString {
