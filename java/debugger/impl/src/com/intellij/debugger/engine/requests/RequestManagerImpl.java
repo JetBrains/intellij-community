@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 public class RequestManagerImpl extends DebugProcessAdapterImpl implements RequestManager {
@@ -76,7 +77,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   private final Map<Requestor, Set<EventRequest>> myRequestorToBelongedRequests = new HashMap<>();
   private EventRequestManager myEventRequestManager;
 
-  private final Map<Requestor, InstrumentationBreakpointState> myInstrumentationInfo = new HashMap<>();
+  private final Map<Requestor, InstrumentationBreakpointState> myInstrumentationInfo = new ConcurrentHashMap<>();
 
   /**
    * It specifies the thread performing suspend-all stepping.
@@ -319,12 +320,12 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   public void deleteRequest(Requestor requestor) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     InstrumentationBreakpointState instrumentationInfo = getInstrumentationInfo(requestor);
     if (instrumentationInfo != null) {
       instrumentationInfo.updateInstrumentationModeEnabled(this, false);
     }
 
-    DebuggerManagerThreadImpl.assertIsManagerThread();
     myRequestWarnings.remove(requestor);
     if (!myDebugProcess.isAttached()) {
       return;
@@ -555,6 +556,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   @ApiStatus.Internal
   public void addInstrumentationInfo(@NotNull Requestor requestor, @NotNull InstrumentationBreakpointState info) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     myInstrumentationInfo.put(requestor, info);
   }
 
@@ -565,6 +567,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   @ApiStatus.Internal
   public void deleteInstrumentationInfoFor(@NotNull Requestor requestor) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     myInstrumentationInfo.remove(requestor);
   }
 }
