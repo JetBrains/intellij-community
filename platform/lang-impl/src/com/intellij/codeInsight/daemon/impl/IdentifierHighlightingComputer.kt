@@ -24,6 +24,8 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiDocumentListener
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
@@ -64,9 +66,11 @@ class IdentifierHighlightingComputer(
   fun computeRanges(): IdentifierHighlightingResult {
     ThreadingAssertions.assertBackgroundThread()
     ThreadingAssertions.assertReadAccess()
-    if (myCaretOffset < 0 || !myEnabled || isInlinePromptShown(myEditor)) {
+    val inlinePromptShown = isInlinePromptShown(myEditor)
+    val uncommited = PsiDocumentManager.getInstance(myPsiFile.project).isUncommited(myEditor.document)
+    if (myCaretOffset < 0 || !myEnabled || inlinePromptShown) {
       if (LOG.isDebugEnabled) {
-        LOG.debug("IdentifierHighlightingComputer.computeRanges empty $myCaretOffset $myEnabled ${isInlinePromptShown(myEditor)}")
+        LOG.debug("IdentifierHighlightingComputer.computeRanges empty $myCaretOffset $myEnabled $inlinePromptShown $uncommited")
       }
       return EMPTY_RESULT
     }
@@ -216,7 +220,7 @@ class IdentifierHighlightingComputer(
     }
   }
 
-  fun highlightTargetUsages(
+  private fun highlightTargetUsages(
     target: Symbol,
     myMarkupInfos: MutableCollection<in IdentifierOccurrence>,
     myTargets: MutableCollection<in Segment>,
@@ -279,12 +283,12 @@ class IdentifierHighlightingComputer(
   }
 
   companion object {
-    private val LOG = Logger.getInstance(IdentifierHighlightingComputer::class.java)
+    private val LOG: Logger = Logger.getInstance(IdentifierHighlightingComputer::class.java)
 
     private fun findTarget(editor: Editor, file: PsiFile, myCaretOffset: Int): PsiElement? {
       val offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), myCaretOffset)
       val psiElement = file.findElementAt(offset)
-      // LSP has an edge case when it tries to highlight a file with no (finegrained) PSI, where the only PSI element is the whole file.
+      // LSP has an edge case when it tries to highlight a file with no (fine-grained) PSI, where the only PSI element is the whole file.
       // In this situation we wouldn't want to cache the whole file as an underlying identifier
       return if (psiElement != null && psiElement.textRange == file.textRange) null else psiElement
     }
