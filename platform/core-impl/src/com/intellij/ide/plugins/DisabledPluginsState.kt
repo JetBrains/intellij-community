@@ -157,6 +157,14 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     }
 
     private fun trySaveDisabledPlugins(pluginIds: Set<PluginId>, invalidate: Boolean): Boolean {
+      val saved = writeDisabledPlugins(pluginIds, invalidate)
+      if (saved) {
+        notifyDisabledPluginListeners()
+      }
+      return saved
+    }
+
+    private fun writeDisabledPlugins(pluginIds: Set<PluginId>, invalidate: Boolean): Boolean {
       if (!PluginStringSetFile.writeIdsSafe(defaultFilePath, pluginIds, logger)) {
         return false
       }
@@ -164,10 +172,13 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       if (invalidate) {
         invalidate()
       }
+      return true
+    }
+
+    private fun notifyDisabledPluginListeners() {
       for (listener in ourDisabledPluginListeners) {
         listener.run()
       }
-      return true
     }
 
     @TestOnly
