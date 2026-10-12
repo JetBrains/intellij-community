@@ -48,6 +48,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
@@ -162,6 +163,26 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     }
 
     /**
+     * Returns the options that the directory branch of [openProjectAsync] and [doOpenProject] opens the directory [file] with.
+     * Unless [originalOptions] say otherwise, the configurators run and [file] is the project root directory.
+     *
+     * A `beforeInit` task marks the project as opened by this processor, see [isOpenedByPlatformProcessor].
+     * A `beforeOpen` task must not set the mark: any `beforeOpen` task makes the project manager initialize the frame
+     * only after the whole project preparation.
+     * The `beforeOpen` tasks of [originalOptions] run after the mark, so they can still reset it.
+     */
+    @VisibleForTesting
+    internal fun directoryOpenOptions(originalOptions: OpenProjectTask, file: Path): OpenProjectTask {
+      return originalOptions.copy(
+        runConfigurators = originalOptions.runConfigurators ?: true,
+        projectRootDir = originalOptions.projectRootDir ?: file,
+        beforeInitTasks = originalOptions.beforeInitTasks + { project ->
+          project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
+        },
+      )
+    }
+
+    /**
      * Do not use this method. It should be private. Use [ProjectUtil.openOrImport] or [ProjectUtil.openOrImportAsync]
      */
     @Internal
@@ -169,15 +190,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       LOG.info("Opening (sync) $file")
 
       if (originalOptions.createModule && Files.isDirectory(file)) {
-        val options = originalOptions.copy(
-          runConfigurators = originalOptions.runConfigurators ?: true,
-          projectRootDir = originalOptions.projectRootDir ?: file,
-          beforeOpenTasks = originalOptions.beforeOpenTasks + { project ->
-            project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
-            true
-          }
-        )
-        return ProjectManagerEx.getInstanceEx().openProject(file, options)
+        return ProjectManagerEx.getInstanceEx().openProject(file, directoryOpenOptions(originalOptions, file))
       }
 
       var options = originalOptions
@@ -258,14 +271,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         //  Now we try to not reject existing originalOptions and capture the intent (most notably - runConfigurators flag) on the callers side.
         return ProjectManagerEx.getInstanceEx().openProjectAsync(
           projectIdentityFile = file,
-          options = originalOptions.copy(
-            runConfigurators = originalOptions.runConfigurators ?: true,
-            projectRootDir = originalOptions.projectRootDir ?: file,
-            beforeOpenTasks = originalOptions.beforeOpenTasks + { project ->
-              project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
-              true
-            }
-          ),
+          options = directoryOpenOptions(originalOptions, file),
         )
       }
 
