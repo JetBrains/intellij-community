@@ -19,29 +19,34 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.InplaceIntroduceTestUtil;
 import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.MapDataContext;
+import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
+@TestApplication
 public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTest {
   @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
+  protected boolean isJava21() {
+    return true;
   }
 
   @Override
@@ -63,20 +68,24 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     return expr instanceof PsiLiteralExpression ? expr : null;
   }
 
+  @Test
   public void testFromExpression() {
      doTest(_ -> type("expr"));
   }
 
+  @Test
   public void testFromSelection() {
      doTest(_ -> type("a"));
   }
 
+  @Test
   public void testConflictingInnerClassName() {
     final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
     settings.INSERT_INNER_CLASS_IMPORTS = true;
     doTest(_ -> type("constants"));
   }
 
+  @Test
   public void testUnresolvedVariable() {
     JavaRefactoringSettings instance = JavaRefactoringSettings.getInstance();
     Boolean oldValue = instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE;
@@ -90,10 +99,12 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
 
   }
 
+  @Test
   public void testInsideInjectedString() {
     doTestInsideInjection(_ -> type("expr"));
   }
 
+  @Test
   public void testInjectedString() {
     doTestInsideInjection(_ -> {
      bringRealEditorBack();
@@ -101,74 +112,92 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
    });
   }
 
+  @Test
   public void testNoNameSuggested() {
     doTest(_ -> type("xyz"));
   }
 
+  @Test
   public void testPlaceInsideLoopAndRename() {
     doTestReplaceChoice("Runnable: () -> {...}", _ -> type("expr"));
   }
   
+  @Test
   public void testPlaceOutsideLoopAndRename() {
     doTestReplaceChoice(JavaBundle.message("target.code.block.presentable.text"), _ -> type("expr"));
   }
 
+  @Test
   public void testPlaceOutsideLambdaInIfWithoutBraces() {
     doTestReplaceChoice(JavaBundle.message("target.code.block.presentable.text"), _ -> type("expr"));
   }
 
+  @Test
   public void testPlaceOutsideLambdaInClass() {
     doTestReplaceChoice(JavaBundle.message("target.code.block.presentable.text"), _ -> type("expr"));
   }
 
+  @Test
   public void testPlaceInsideLambdaBody() {
     doTestReplaceChoice("Runnable: () -> {...}", _ -> type("expr"));
   }
 
+  @Test
   public void testPlaceInsideLambdaBody1() {
     doTestReplaceChoice("Predicate<String>: s -> {...}", _ -> type("first"));
   }
 
+  @Test
   public void testPlaceInsideLambdaBodyMultipleOccurrences1() {
     doTestReplaceChoice("Replace all 0 occurrences", "Runnable: () -> {...}", _ -> type("expr"), null);
   }
 
+  @Test
   public void testReplaceAllOnDummyCodeWithSameNameAsGenerated() {
     doTestReplaceChoice("Replace all 0 occurrences", _ -> type("expr"));
   }
 
+  @Test
   public void testReplaceAllIntroduceFieldInLocalClass() {
     doTestReplaceChoice("Replace all 0 occurrences", _ -> type("smth"));
   }
 
+  @Test
   public void testReplaceAllWithScopeInvalidation() {
     doTestReplaceChoice("Replace all 0 occurrences", _ -> type("newType"));
   }
 
+  @Test
   public void testRanges() {
      doTest(_ -> type("expr"));
   }
 
+  @Test
   public void testFromParenthesis() {
      doTest(_ -> type("expr"));
   }
 
+  @Test
   public void testConflictWithField() {
     doTest(_ -> type("height"));
   }
 
+  @Test
   public void testConflictWithFieldNoCast() {
     doTest(_ -> type("weights"));
   }
 
+  @Test
   public void testCast() {
     doTestTypeChange("Integer");
   }
 
+  @Test
   public void testCastToObject() {
     doTestTypeChange("Object");
   }
 
+  @Test
   public void testEscapePosition() {
     doTestStopEditing(_ -> {
      invokeEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
@@ -176,6 +205,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
    });
   }
 
+  @Test
   public void testEscapePositionIfTyped() {
     doTestStopEditing(_ -> {
      type("fooBar");
@@ -183,6 +213,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
    });
   }
 
+  @Test
   public void testRestoreEditorState() {
     doTestStopEditing(_ -> {
       invokeEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
@@ -190,40 +221,50 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
 
+  @Test
   public void testWritable() {
     doTestReplaceChoice("Replace read and write occurrences (will change semantics!)");
   }
 
+  @Test
   public void testNoWritable() {
     doTestReplaceChoice("Replace all occurrences but write");
   }
 
+  @Test
   public void testAllInsertFinal() {
     doTestReplaceChoice("Replace all 0 occurrences");
   }
 
+  @Test
   public void testAllIncomplete() {
     doTestReplaceChoice("Replace all 0 occurrences");
   }
 
+  @Test
   public void testStreamSimple() {
     doTestReplaceChoice("Extract as 'map' operation");
   }
 
+  @Test
   public void testStreamMultiple() {
     doTestReplaceChoice("Replace all 0 occurrences and extract as 'mapToInt' operation");
   }
 
+  @Test
   public void testStreamMultiline() {
     doTestReplaceChoice("Extract as 'map' operation");
   }
 
+  @Test
   public void testDuplicateInsideLiteral() { doTestReplaceChoice("Replace all 0 occurrences"); }
 
+  @Test
   public void testBrokenFormattingWithInValidation() {
     doTest(_ -> type("bool"));
   }
 
+  @Test
   public void testStopEditing() {
     doTestStopEditing(_ -> {
      invokeEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT);
@@ -232,44 +273,54 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
    });
   }
 
+  @Test
   public void testInBlock1() {
     doTestReplaceChoice("Replace 0 occurrences in 'else' block");
   }
 
+  @Test
   public void testSubExpression() {
     doTestReplaceChoice("Replace 0 occurrences in 'if' block");
   }
 
+  @Test
   public void testInBlock2() {
     doTestReplaceChoice("Replace 0 occurrences in 'if-then' block");
   }
 
+  @Test
   public void testInBlock3() {
     doTestReplaceChoice("Replace all 0 occurrences");
   }
 
+  @Test
   public void testInBlockLambda1() {
     doTestReplaceChoice("Replace 0 occurrences in 'lambda' block");
   }
 
+  @Test
   public void testInBlockLambda2() {
     doTestReplaceChoice("Replace 0 occurrences in outer 'lambda' block");
   }
 
+  @Test
   public void testAllLValues() {
     doTestReplaceChoice("Replace all 2 occurrences (will change semantics!)", null, null,
                         List.of("Replace this occurrence only", "Replace all 2 occurrences (will change semantics!)"));
   }
 
+  @Test
   public void testSelectLValueThenFilterIt() {
     doTestReplaceChoice("Replace read and write occurrences (will change semantics!)", null, null,
                         List.of("Replace this occurrence only", "Replace read and write occurrences (will change semantics!)"));
   }
 
+  @Test
   public void testSelectLValueThenFilterItFinal() {
     doTest(null);
   }
 
+  @Test
   public void testSuperExpression() {
     try {
       doTest(null);
@@ -281,10 +332,12 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     }
   }
 
+  @Test
   public void testHeavilyBrokenFile() {
     doTest(null);
   }
 
+  @Test
   public void testHeavilyBrokenFile2() {
     try {
       doTest(null);
@@ -294,85 +347,105 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     }
   }
 
+  @Test
   public void testHeavilyBrokenFile3() {
     doTest(null);
   }
 
+  @Test
   public void testHeavilyBrokenFile4() {
     doTest(null);
   }
 
+  @Test
   public void testHeavilyBrokenFile5() {
     doTest(null);
   }
 
+  @Test
   public void testHeavilyBrokenFile7() {
     doTestReplaceChoice("Replace all 0 occurrences");
   }
 
+  @Test
   public void testHeavilyBrokenFile8() {
     doTest(null);
   }
 
+  @Test
   public void testHeavilyBrokenFile9() {
     doTest(null);
   }
 
+  @Test
   public void testHeavilyBrokenFile10() {
     doTestReplaceChoice("Replace all 0 occurrences", _ -> type("xyz"));
   }
 
+  @Test
   public void testHeavilyBrokenFile11() {
-    assertThrows(CommonRefactoringUtil.RefactoringErrorHintException.class,
-                 "Selected block should represent an expression", () -> doTest(null));
+    assertThatThrownBy(() -> doTest(null)).isInstanceOf(CommonRefactoringUtil.RefactoringErrorHintException.class)
+      .hasMessageContaining("Selected block should represent an expression");
   }
 
+  @Test
   public void testHeavilyBrokenFile12() {
     doTestReplaceChoice("Replace all 0 occurrences");
   }
 
+  @Test
   public void testTernaryInstanceOfVar() {
     // Java 17 suggests pattern replacement which is undesired in this test
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_11, () -> doTest(null));
   }
 
+  @Test
   public void testAnnotationArgument() {
-    assertThrows(CommonRefactoringUtil.RefactoringErrorHintException.class,
-                 "Introduce Variable refactoring is not supported in the current context", () -> doTest(null));
+    assertThatThrownBy(() -> doTest(null)).isInstanceOf(CommonRefactoringUtil.RefactoringErrorHintException.class)
+      .hasMessageContaining("Introduce Variable refactoring is not supported in the current context");
   }
 
+  @Test
   public void testNullTypeAddCast() {
     doTestReplaceChoice("Replace all 0 occurrences");
   }
 
+  @Test
   public void testLambdaParameterAddCast() {
     doTestReplaceChoice("Replace all 0 occurrences");
   }
 
+  @Test
   public void testWhileTrue() {
     doTest(null);
   }
 
+  @Test
   public void testWhilePolyadicWholeCondition() {
     doTest(null);
   }
 
+  @Test
   public void testWhilePolyadicWholeConditionParens() {
     doTest(null);
   }
 
+  @Test
   public void testPatternUsedInSubsequentCondition() {
     doTest(null);
   }
 
+  @Test
   public void testNoExternalTypeAnnotations() {
     doTest(null);
   }
 
+  @Test
   public void testNoIllegalArgumentException() {
     doTest(null);
   }
 
+  @Test
   public void testVarWithCapture() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
       JavaRefactoringSettings instance = JavaRefactoringSettings.getInstance();
@@ -386,6 +459,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
   
+  @Test
   public void testVarWithCapture2() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
       JavaRefactoringSettings instance = JavaRefactoringSettings.getInstance();
@@ -399,51 +473,49 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
 
+  @Test
   public void testSplitMutuallyExclusiveIf() { doTestReplaceChoice("Replace all 0 occurrences"); }
 
+  @Test
   public void testDontSplitNotMutuallyExclusiveIf() { doTestReplaceChoice("Replace all 0 occurrences"); }
 
   private void doTestStopEditing(Consumer<? super AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
-    final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
-    try {
-      TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-      getEditor().getSettings().setVariableInplaceRenameEnabled(true);
-
-      final AbstractInplaceIntroducer introducer = invokeRefactoring();
-      pass.accept(introducer);
-      checkResultByFile(getBasePath() + name + "_after" + getExtension());
-    }
-    finally {
-      TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
-      if (state != null) {
-        state.gotoEnd(true);
+    InplaceIntroduceTestUtil.withInplaceRename(getFixture(), () -> {
+      try {
+        InplaceIntroduceTestUtil.runInCommand(getProject(), () -> {
+          final AbstractInplaceIntroducer introducer = invokeRefactoring();
+          pass.accept(introducer);
+        });
+        checkResultByFile(getBasePath() + name + "_after" + getExtension());
       }
-      getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
-    }
+      finally {
+        InplaceIntroduceTestUtil.runInCommand(getProject(), () -> {
+          TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
+          if (state != null) {
+            state.gotoEnd(true);
+          }
+        });
+      }
+    });
   }
 
   private void doTestTypeChange(String newType) {
     final Consumer<AbstractInplaceIntroducer> typeChanger = _ -> type(newType);
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
-    final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
-    try {
-      TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-      getEditor().getSettings().setVariableInplaceRenameEnabled(true);
-
-      final AbstractInplaceIntroducer introducer = invokeRefactoring();
-      TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
-      assert state != null;
-      state.previousTab();
-      typeChanger.accept(introducer);
-      state.gotoEnd(false);
+    InplaceIntroduceTestUtil.withInplaceRename(getFixture(), () -> {
+      InplaceIntroduceTestUtil.runInCommand(getProject(), () -> {
+        final AbstractInplaceIntroducer introducer = invokeRefactoring();
+        TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
+        assert state != null;
+        state.previousTab();
+        typeChanger.accept(introducer);
+        state.gotoEnd(false);
+      });
       checkResultByFile(getBasePath() + name + "_after" + getExtension());
-    }
-    finally {
-      getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
-    }
+    });
   }
 
   private void doTestReplaceChoice(String choiceText) {
@@ -461,29 +533,24 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
                                    @Nullable List<String> expectedOptions) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
-    final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
-    try {
-      TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-      getEditor().getSettings().setVariableInplaceRenameEnabled(true);
-
-      MyIntroduceHandler handler = createIntroduceHandler();
-      UiInterceptors.register(new ChooserInterceptor(expectedOptions, Pattern.quote(choiceText)));
-      if (secondChoiceText != null) {
-        UiInterceptors.register(new ChooserInterceptor(expectedOptions, Pattern.quote(secondChoiceText)));
-      }
-      final AbstractInplaceIntroducer<?, ?> introducer = invokeRefactoring(handler);
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-      if (pass != null) {
-        pass.accept(introducer);
-      }
-      TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
-      assert state != null;
-      state.gotoEnd(false);
+    InplaceIntroduceTestUtil.withInplaceRename(getFixture(), () -> {
+      InplaceIntroduceTestUtil.runInCommand(getProject(), () -> {
+        MyIntroduceHandler handler = createIntroduceHandler();
+        UiInterceptors.register(new ChooserInterceptor(expectedOptions, Pattern.quote(choiceText)));
+        if (secondChoiceText != null) {
+          UiInterceptors.register(new ChooserInterceptor(expectedOptions, Pattern.quote(secondChoiceText)));
+        }
+        final AbstractInplaceIntroducer<?, ?> introducer = invokeRefactoring(handler);
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+        if (pass != null) {
+          pass.accept(introducer);
+        }
+        TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
+        assert state != null;
+        state.gotoEnd(false);
+      });
       checkResultByFile(getBasePath() + name + "_after" + getExtension());
-    }
-    finally {
-      getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
-    }
+    });
   }
 
   private void invokeEditorAction(String actionId) {

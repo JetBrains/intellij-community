@@ -11,6 +11,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
+/**
+ * @deprecated Use {@link InplaceIntroduceTestUtil} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsightTestCase {
   protected abstract String getBasePath();
 
