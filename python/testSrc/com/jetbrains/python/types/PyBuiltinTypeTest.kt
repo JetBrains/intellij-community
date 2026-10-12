@@ -350,7 +350,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
     @Test
     fun `unary expr type`() = test("""
       expr = -1
-      #└ TYPE int
+      #└ TYPE Literal[-1]
       """.trimIndent())
 
     @Test

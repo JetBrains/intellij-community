@@ -691,7 +691,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       deducedType = newType;
     }
 
-    return new ControlFlowTypeResult(deducedType, foundPrefixCall);
+    // No fixed point: an operation such as `x = -~x` makes a new literal on each iteration.
+    return new ControlFlowTypeResult(PyLiteralType.upcastLiteralToClass(deducedType), foundPrefixCall);
   }
 
   /**
