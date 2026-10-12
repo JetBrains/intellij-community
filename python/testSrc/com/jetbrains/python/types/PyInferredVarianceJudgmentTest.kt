@@ -1050,4 +1050,22 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
         pass
     """.trimIndent())
 
+  @TestFor(issues = ["PY-53491"])
+  @Test
+  fun `Type parameter in a parameter annotation split over lines in another module`() = test(
+    """
+    from other import Box
+
+    def f(a: Box[object], b: Box[int]) -> None:
+        x: Box[int] = a
+        y: Box[object] = b
+    #                    └ WARNING Expected type 'Box[object]', got 'Box[int]' instead
+    """.trimIndent(),
+    "other.py" to """
+    class Box[T]:
+        def m(self, x: int
+                       | T) -> None: ...
+    """.trimIndent(),
+  )
+
 }
