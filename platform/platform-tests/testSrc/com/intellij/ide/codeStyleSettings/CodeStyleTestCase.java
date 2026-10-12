@@ -2,7 +2,7 @@
 package com.intellij.ide.codeStyleSettings;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.editor.EditorColorSchemeTestCase;
+import com.intellij.editor.EditorColorSchemeTestUtil;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.options.SchemeFactory;
 import com.intellij.openapi.options.SchemeImportException;
@@ -29,7 +29,7 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
   protected static final String BASE_PATH = PathManagerEx.getTestDataPath("/../../../platform/platform-tests/testData/codeStyle/");
 
   public static void assertXmlOutputEquals(String expected, Element root) throws IOException {
-    EditorColorSchemeTestCase.assertXmlOutputEquals(expected, root);
+    EditorColorSchemeTestUtil.assertXmlOutputEquals(expected, root);
   }
 
   protected static Element createOption(String name, String value) {
