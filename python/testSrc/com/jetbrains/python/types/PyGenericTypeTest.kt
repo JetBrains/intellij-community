@@ -396,7 +396,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       def outer[T]() -> None:
           def inner() -> None:
               expr = T
-      #       └ TYPE int
+      #       └ TYPE Literal[-1]
       
           T = -1
       """.trimIndent())

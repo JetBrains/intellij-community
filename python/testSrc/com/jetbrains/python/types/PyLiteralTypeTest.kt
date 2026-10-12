@@ -1243,4 +1243,174 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
       """.trimIndent())
   }
+
+  @Nested
+  inner class UnaryOperatorsOnLiterals {
+    @Test
+    @TestFor(issues = ["PY-80620"])
+    fun `unary operators on int literal`() = test("""
+      minus = -1
+      #       └ TYPE Literal[-1]
+      plus = +1
+      #      └ TYPE Literal[1]
+      invert = ~1
+      #        └ TYPE Literal[-2]
+      invert_zero = ~0
+      #             └ TYPE Literal[-1]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-80620"])
+    fun `nested unary operators on int literal`() = test("""
+      parenthesized = -(-1)
+      #               └ TYPE Literal[1]
+      double_minus = --1
+      #              └ TYPE Literal[1]
+      mixed = -~+1
+      #       └ TYPE Literal[2]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-80620"])
+    fun `unary operators on int literal variable`() = test("""
+      from typing import Final
+
+      final: Final = 1
+      inferred = 1
+      expr = -final
+      #└ TYPE Literal[-1]
+      expr = ~inferred
+      #└ TYPE Literal[-2]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-80620"])
+    fun `unary operators on union of int literals`() = test("""
+      from typing import Literal
+
+      def f(u: Literal[1, 2]):
+          expr = -u
+      #   └ TYPE Literal[-1, -2]
+          expr = +u
+      #   └ TYPE Literal[1, 2]
+          expr = ~u
+      #   └ TYPE Literal[-2, -3]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-80620"])
+    fun `unary operators on non-literal operands keep the operator return type`() = test("""
+      from typing import Literal
+
+      def f(i: int, b: Literal[True]):
+          expr = -i
+      #   └ TYPE int
+          expr = -b
+      #   └ TYPE int
+          expr = -True
+      #   └ TYPE int
+          expr = +True
+      #   └ TYPE int
+          expr = ~b
+      #   └ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-80620"])
+    fun `unary minus on IntEnum member`() = test("""
+      from enum import IntEnum
+
+      class Color(IntEnum):
+          RED = 1
+
+      expr = -Color.RED
+      #└ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-80620"])
+    fun `not on bool literal`() = test("""
+      from typing import Literal
+
+      def f(b: Literal[True], u: Literal[True, False], i: Literal[1]):
+          expr = not b
+      #   └ TYPE Literal[False]
+          expr = not False
+      #   └ TYPE Literal[True]
+          expr = not u
+      #   └ TYPE Literal[False, True]
+          expr = not i
+      #   └ TYPE bool
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-80620"])
+    fun `unary minus on int literal variable reassigned in loop`() = test("""
+      def f(c: bool):
+          x = 1
+          while c:
+              x = -x
+          expr = x
+      #   └ TYPE Literal[1, -1]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-80620"])
+    fun `unary operators that make new literals in loop widen to int`() = test("""
+      def f(c: bool):
+          x = 0
+          while c:
+              x = -~x
+          expr = x
+      #   └ TYPE Literal[0] | int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-80620"])
+    fun `unary operators in loop branches widen to int`() = test("""
+      def f(c: bool, d: bool):
+          x = 1
+          while c:
+              if d:
+                  x = ~x
+              else:
+                  x = -x
+          expr = x
+      #   └ TYPE Literal[1] | int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-80620"])
+    fun `unannotated variable assigned a negative int literal`() = test("""
+      a = 1
+      a = -1
+      expr = a
+      #└ TYPE Literal[-1]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-80620"])
+    fun `unary minus on int literal imported from another module`() = test("""
+      from m import a
+      expr = -a
+      #└ TYPE Literal[-1]
+      """.trimIndent(),
+      "m.py" to "a = 1",
+    )
+
+    @Test
+    @TestFor(issues = ["PY-80620"])
+    fun `unary operators on int literal against Literal annotation`() = test("""
+      from typing import Literal
+
+      def f(i: int):
+          a: Literal[-1] = -1
+          b: Literal[-2] = ~1
+          c: Literal[1] = -1
+      #                   ^^ WARNING Expected type 'Literal[1]', got 'Literal[-1]' instead
+          d: Literal[-1] = -i
+      #                    ^^ WARNING Expected type 'Literal[-1]', got 'int' instead
+          e: int = -1
+      """.trimIndent())
+  }
 }

@@ -888,7 +888,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(items: list[A]):
           item = items[0]
           _ = item(-7)
-      #   └ TYPE int
+      #   └ TYPE Literal[-7]
           _ = items[0](1)
       #   └ TYPE Literal[1]
       """.trimIndent())
