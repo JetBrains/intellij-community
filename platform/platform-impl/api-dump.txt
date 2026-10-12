@@ -1698,6 +1698,7 @@ com.intellij.ide.ui.search.ComponentHighlightingListener
 - a:highlight(javax.swing.JComponent,java.lang.String):V
 f:com.intellij.ide.ui.search.SearchUtil
 - sf:expand(com.intellij.openapi.options.ConfigurableGroup[]):java.util.List
+f:com.intellij.ide.ui.search.SearchUtilKt
 a:com.intellij.ide.util.ChooseElementsDialog
 - com.intellij.openapi.ui.DialogWrapper
 - getChosenElements():java.util.List

@@ -151,6 +151,9 @@ f:com.intellij.ide.startup.StartupActionScriptManager
 - propertyChange(java.beans.PropertyChangeEvent):V
 - show():V
 - uninstallingUI():V
+f:com.intellij.ide.ui.search.SearchUtilKt
+- *sf:nonSearchableGroupTitle(java.lang.String):com.intellij.ui.components.JBLabel
+- *sf:nonSearchableRowTitle(java.lang.String):javax.swing.JLabel
 f:com.intellij.ide.wizard.UIWizardUtil
 - *sf:runAfterOpened(com.intellij.ide.wizard.NewProjectWizardStep,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
 - *sf:setupProjectSafe(com.intellij.ide.wizard.NewProjectWizardStep,com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function0):V
