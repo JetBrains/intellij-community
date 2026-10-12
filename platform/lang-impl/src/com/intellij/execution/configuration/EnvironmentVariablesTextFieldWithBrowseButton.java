@@ -2,11 +2,11 @@
 package com.intellij.execution.configuration;
 
 import com.google.common.collect.ImmutableMap;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.util.EnvVariables;
 import com.intellij.execution.util.EnvVariablesTable;
 import com.intellij.execution.util.EnvironmentVariable;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -77,15 +77,15 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
         }
       }
     });
-    getTextField().getEmptyText().setText(ExecutionBundle.message("status.text.environment.variables"));
+    getTextField().getEmptyText().setText(LangBundle.message("status.text.environment.variables"));
   }
 
   private void addEnvFilesExtension() {
     if (myEnvFilesExtension != null) return;
     myEnvFilesExtension = ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover,
-                                             ExecutionBundle.message("tooltip.browse.for.environment.files"), true, () -> browseForEnvFile());
+                                             LangBundle.message("tooltip.browse.for.environment.files"), true, () -> browseForEnvFile());
     getTextField().addExtension(myEnvFilesExtension);
-    getTextField().getEmptyText().setText(ExecutionBundle.message("status.text.environment.variables.or.env.files"));
+    getTextField().getEmptyText().setText(LangBundle.message("status.text.environment.variables.or.env.files"));
   }
 
   private void browseForEnvFile() {
@@ -235,14 +235,16 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     }
   }
 
-  void setEnvFilePaths(@NotNull List<String> paths) {
+  @ApiStatus.Internal
+  public void setEnvFilePaths(@NotNull List<String> paths) {
     myEnvFilePaths = new ArrayList<>(paths);
     setData(myData);
     addEnvFilesExtension();
     fireEnvFilePathsChanged();
   }
 
-  @NotNull List<String> getEnvFilePaths() {
+  @ApiStatus.Internal
+  public @NotNull List<String> getEnvFilePaths() {
     return myEnvFilePaths;
   }
 
@@ -265,7 +267,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
 
   @Override
   protected @NotNull @NlsContexts.Tooltip String getIconTooltip() {
-    return ExecutionBundle.message("specify.environment.variables.tooltip") + " (" +
+    return LangBundle.message("specify.environment.variables.tooltip") + " (" +
            KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)) + ")";
   }
 

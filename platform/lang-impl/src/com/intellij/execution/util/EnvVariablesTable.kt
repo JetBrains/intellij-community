@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util
 
-import com.intellij.execution.ExecutionBundle
 import com.intellij.ide.CopyProvider
 import com.intellij.ide.PasteProvider
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -34,7 +34,7 @@ open class EnvVariablesTable : ListTableWithButtons<EnvironmentVariable>() {
   private var myPasteEnabled = false
 
   init {
-    getTableView().getEmptyText().setText(ExecutionBundle.message("empty.text.no.variables"))
+    getTableView().getEmptyText().setText(LangBundle.message("empty.text.no.variables"))
     val copyAction = ActionManager.getInstance().getAction(IdeActions.ACTION_COPY)
     if (copyAction != null) {
       copyAction.registerCustomShortcutSet(copyAction.getShortcutSet(), getTableView()) // no need to add in popup menu
@@ -108,7 +108,7 @@ open class EnvVariablesTable : ListTableWithButtons<EnvironmentVariable>() {
   }
 
   protected open inner class NameColumnInfo : ElementsColumnInfoBase<EnvironmentVariable>(
-    ExecutionBundle.message("env.variable.column.name.title")) {
+    LangBundle.message("env.variable.column.name.title")) {
     override fun valueOf(environmentVariable: EnvironmentVariable): String? {
       return environmentVariable.getName()
     }
@@ -135,7 +135,7 @@ open class EnvVariablesTable : ListTableWithButtons<EnvironmentVariable>() {
   }
 
   protected open inner class ValueColumnInfo : ElementsColumnInfoBase<EnvironmentVariable>(
-    ExecutionBundle.message("env.variable.column.value.title")) {
+    LangBundle.message("env.variable.column.value.title")) {
     override fun valueOf(environmentVariable: EnvironmentVariable): String? {
       return environmentVariable.getValue()
     }

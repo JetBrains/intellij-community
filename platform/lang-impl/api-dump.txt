@@ -1805,6 +1805,53 @@ f:com.intellij.conversion.impl.ConversionContextImpl
 - <init>(java.nio.file.Path):V
 - collapsePath(java.lang.String):java.lang.String
 - expandPath(java.lang.String):java.lang.String
+f:com.intellij.execution.configuration.EnvFilesDialog
+- <init>(javax.swing.JComponent,java.util.List,com.intellij.openapi.project.Project):V
+- b:<init>(javax.swing.JComponent,java.util.List,com.intellij.openapi.project.Project,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getProject():com.intellij.openapi.project.Project
+f:com.intellij.execution.configuration.EnvFilesDialogKt
+- sf:addEnvFile(java.awt.Component,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
+- bs:addEnvFile$default(java.awt.Component,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+c:com.intellij.execution.configuration.EnvironmentVariablesComponent
+- com.intellij.openapi.ui.LabeledComponent
+- com.intellij.ui.UserActivityProviderComponent
+- <init>():V
+- <init>(com.intellij.openapi.project.Project):V
+- addChangeListener(javax.swing.event.ChangeListener):V
+- getEnvData():com.intellij.execution.configuration.EnvironmentVariablesData
+- getEnvFilePaths():java.util.List
+- getEnvs():java.util.Map
+- isPassParentEnvs():Z
+- setEnvData(com.intellij.execution.configuration.EnvironmentVariablesData):V
+- setEnvFilePaths(java.util.List):V
+- setEnvs(java.util.Map):V
+- setPassParentEnvs(Z):V
+f:com.intellij.execution.configuration.EnvironmentVariablesData
+- equals(java.lang.Object):Z
+- getEnvironmentFile():java.lang.String
+- getEnvs():java.util.Map
+- hashCode():I
+- isPassParentEnvs():Z
+- s:readExternal(org.jdom.Element):com.intellij.execution.configuration.EnvironmentVariablesData
+- with(java.lang.String):com.intellij.execution.configuration.EnvironmentVariablesData
+- with(java.util.Map):com.intellij.execution.configuration.EnvironmentVariablesData
+- with(Z):com.intellij.execution.configuration.EnvironmentVariablesData
+- writeExternal(org.jdom.Element):V
+c:com.intellij.execution.configuration.EnvironmentVariablesDialog
+- com.intellij.openapi.ui.DialogWrapper
+c:com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
+- com.intellij.openapi.ui.TextFieldWithBrowseButton$NoPathCompletion
+- com.intellij.ui.UserActivityProviderComponent
+- <init>():V
+- <init>(com.intellij.openapi.project.Project):V
+- addChangeListener(javax.swing.event.ChangeListener):V
+- getData():com.intellij.execution.configuration.EnvironmentVariablesData
+- getEnvs():java.util.Map
+- getTextField():com.intellij.ui.components.fields.ExtendableTextField
+- isPassParentEnvs():Z
+- setData(com.intellij.execution.configuration.EnvironmentVariablesData):V
+- setEnvs(java.util.Map):V
+- setPassParentEnvs(Z):V
 a:com.intellij.execution.console.BaseConsoleExecuteActionHandler
 - com.intellij.execution.console.ConsoleExecuteAction$ConsoleExecuteActionHandler
 - <init>(Z):V
@@ -1939,6 +1986,42 @@ c:com.intellij.execution.services.ServiceViewToolWindowFactory
 - com.intellij.openapi.project.DumbAware
 - com.intellij.openapi.wm.ToolWindowFactory
 - <init>():V
+c:com.intellij.execution.util.EnvVariablesTable
+- com.intellij.execution.util.ListTableWithButtons
+- sf:Companion:com.intellij.execution.util.EnvVariablesTable$Companion
+- <init>():V
+- p:canDeleteElement(com.intellij.execution.util.EnvironmentVariable):Z
+- p:cloneElement(com.intellij.execution.util.EnvironmentVariable):com.intellij.execution.util.EnvironmentVariable
+- p:createElement():com.intellij.execution.util.EnvironmentVariable
+- p:createExtraToolbarActions():com.intellij.openapi.actionSystem.AnAction[]
+- p:createListModel():com.intellij.util.ui.ListTableModel
+- f:editVariableName(com.intellij.execution.util.EnvironmentVariable):V
+- getComponent():javax.swing.JComponent
+- f:getEnvironmentVariables():java.util.List
+- p:getSelection():java.util.List
+- p:isEmpty(com.intellij.execution.util.EnvironmentVariable):Z
+- sf:parseEnvsFromText(java.lang.String):java.util.Map
+- p:setModified():V
+- f:setPasteActionEnabled(Z):V
+- setValues(java.util.List):V
+f:com.intellij.execution.util.EnvVariablesTable$Companion
+- f:parseEnvsFromText(java.lang.String):java.util.Map
+pc:com.intellij.execution.util.EnvVariablesTable$NameColumnInfo
+- com.intellij.execution.util.ListTableWithButtons$ElementsColumnInfoBase
+- <init>(com.intellij.execution.util.EnvVariablesTable):V
+- p:getDescription(com.intellij.execution.util.EnvironmentVariable):java.lang.String
+- getEditor(com.intellij.execution.util.EnvironmentVariable):javax.swing.table.TableCellEditor
+- isCellEditable(com.intellij.execution.util.EnvironmentVariable):Z
+- setValue(com.intellij.execution.util.EnvironmentVariable,java.lang.String):V
+- valueOf(com.intellij.execution.util.EnvironmentVariable):java.lang.String
+pc:com.intellij.execution.util.EnvVariablesTable$ValueColumnInfo
+- com.intellij.execution.util.ListTableWithButtons$ElementsColumnInfoBase
+- <init>(com.intellij.execution.util.EnvVariablesTable):V
+- p:getDescription(com.intellij.execution.util.EnvironmentVariable):java.lang.String
+- getEditor(com.intellij.execution.util.EnvironmentVariable):javax.swing.table.TableCellEditor
+- isCellEditable(com.intellij.execution.util.EnvironmentVariable):Z
+- setValue(com.intellij.execution.util.EnvironmentVariable,java.lang.String):V
+- valueOf(com.intellij.execution.util.EnvironmentVariable):java.lang.String
 f:com.intellij.facet.impl.DefaultFacetsProvider
 - com.intellij.openapi.roots.ui.configuration.FacetsProvider
 c:com.intellij.facet.impl.FacetUtil

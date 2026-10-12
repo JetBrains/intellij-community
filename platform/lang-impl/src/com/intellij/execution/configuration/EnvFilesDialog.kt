@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configuration
 
-import com.intellij.execution.ExecutionBundle
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
@@ -22,7 +22,7 @@ class EnvFilesDialog(parentComponent: JComponent,
   private val model = CollectionListModel(envFilePaths)
   private val list = JBList(model)
   init {
-    title = ExecutionBundle.message("dialog.title.env.files")
+    title = LangBundle.message("dialog.title.env.files")
     init()
     list.selectedIndex = 0
   }

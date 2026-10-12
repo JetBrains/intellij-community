@@ -2765,6 +2765,67 @@ f:com.intellij.conversion.impl.ConversionContextImpl
 - f:loadConversionResult():com.intellij.conversion.impl.CachedConversionResult
 - f:saveConversionResult(kotlin.coroutines.Continuation):java.lang.Object
 - f:saveFiles(java.util.Collection):V
+f:com.intellij.execution.configuration.EnvFilesDialog
+- com.intellij.openapi.ui.DialogWrapper
+- f:getPaths():java.util.List
+- getPreferredFocusedComponent():com.intellij.ui.components.JBList
+f:com.intellij.execution.configuration.EnvFilesDialogKt
+- sf:addEnvFile(java.awt.Component,com.intellij.openapi.vfs.VirtualFile,kotlin.jvm.functions.Function1):V
+- bs:addEnvFile$default(java.awt.Component,com.intellij.openapi.vfs.VirtualFile,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+c:com.intellij.execution.configuration.EnvironmentVariablesComponent
+- sf:ENV:java.lang.String
+- sf:NAME:java.lang.String
+- sf:VALUE:java.lang.String
+- f:myEnvVars:com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
+- p:createBrowseComponent():com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
+- s:readExternal(org.jdom.Element,java.util.Map):V
+- removeChangeListener(javax.swing.event.ChangeListener):V
+- s:writeExternal(org.jdom.Element,java.util.Map):V
+f:com.intellij.execution.configuration.EnvironmentVariablesData
+- sf:DEFAULT:com.intellij.execution.configuration.EnvironmentVariablesData
+- configureCommandLine(com.intellij.execution.configurations.GeneralCommandLine,Z):V
+- s:create(java.util.Map,Z):com.intellij.execution.configuration.EnvironmentVariablesData
+- s:create(java.util.Map,Z,java.lang.String):com.intellij.execution.configuration.EnvironmentVariablesData
+- writeExternalNoDefault(org.jdom.Element):V
+c:com.intellij.execution.configuration.EnvironmentVariablesDialog
+- p:<init>(com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton):V
+- p:<init>(com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton,Z):V
+- p:createCenterPanel():javax.swing.JComponent
+- p:createEnvVariablesTable(java.util.List,Z):com.intellij.execution.configuration.EnvironmentVariablesDialog$MyEnvVariablesTable
+- p:doOKAction():V
+- p:doValidate():com.intellij.openapi.ui.ValidationInfo
+- p:getDimensionServiceKey():java.lang.String
+- getInitialSize():java.awt.Dimension
+pc:com.intellij.execution.configuration.EnvironmentVariablesDialog$MyEnvVariablesTable
+- com.intellij.execution.util.EnvVariablesTable
+- pf:myUserList:Z
+- p:<init>(com.intellij.execution.configuration.EnvironmentVariablesDialog,java.util.List,Z):V
+- p:createAddAction():com.intellij.ui.AnActionButtonRunnable
+- p:createExtraToolbarActions():com.intellij.openapi.actionSystem.AnAction[]
+- p:createListModel():com.intellij.util.ui.ListTableModel
+- p:createRemoveAction():com.intellij.ui.AnActionButtonRunnable
+pc:com.intellij.execution.configuration.EnvironmentVariablesDialog$MyEnvVariablesTable$MyNameColumnInfo
+- com.intellij.execution.util.EnvVariablesTable$NameColumnInfo
+- p:<init>(com.intellij.execution.configuration.EnvironmentVariablesDialog$MyEnvVariablesTable):V
+- getCustomizedRenderer(com.intellij.execution.util.EnvironmentVariable,javax.swing.table.TableCellRenderer):javax.swing.table.TableCellRenderer
+pc:com.intellij.execution.configuration.EnvironmentVariablesDialog$MyEnvVariablesTable$MyValueColumnInfo
+- com.intellij.execution.util.EnvVariablesTable$ValueColumnInfo
+- p:<init>(com.intellij.execution.configuration.EnvironmentVariablesDialog$MyEnvVariablesTable):V
+- getCustomizedRenderer(com.intellij.execution.util.EnvironmentVariable,javax.swing.table.TableCellRenderer):javax.swing.table.TableCellRenderer
+- isCellEditable(com.intellij.execution.util.EnvironmentVariable):Z
+c:com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
+- p:myData:com.intellij.execution.configuration.EnvironmentVariablesData
+- pf:myParentDefaults:java.util.Map
+- addEnvFilePathsChangeListener(javax.swing.event.ChangeListener):V
+- ps:convertToVariables(java.util.Map,Z):java.util.List
+- p:createDialog():com.intellij.execution.configuration.EnvironmentVariablesDialog
+- p:getDefaultIcon():javax.swing.Icon
+- p:getHoveredIcon():javax.swing.Icon
+- p:getIconTooltip():java.lang.String
+- p:isModifiedSysEnv(com.intellij.execution.util.EnvironmentVariable):Z
+- removeChangeListener(javax.swing.event.ChangeListener):V
+- removeEnvFilePathsChangeListener(javax.swing.event.ChangeListener):V
+- p:stringifyEnvs(com.intellij.execution.configuration.EnvironmentVariablesData):java.lang.String
 a:com.intellij.execution.console.BaseConsoleExecuteActionHandler
 - p:execute(java.lang.String,com.intellij.execution.console.LanguageConsoleView):V
 - getEmptyExecuteAction():java.lang.String

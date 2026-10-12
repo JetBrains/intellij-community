@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configuration;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.EnvVariablesTable;
 import com.intellij.execution.util.EnvironmentVariable;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -76,7 +76,7 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
     mySystemTable = createEnvVariablesTable(systemList, false);
 
     if (!alwaysIncludeSystemVars) {
-      myIncludeSystemVarsCb = new JCheckBox(ExecutionBundle.message("env.vars.system.include.title"));
+      myIncludeSystemVarsCb = new JCheckBox(LangBundle.message("env.vars.system.include.title"));
       myIncludeSystemVarsCb.setSelected(myParent.isPassParentEnvs());
       myIncludeSystemVarsCb.addActionListener(new ActionListener() {
         @Override
@@ -88,18 +88,18 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
     else {
       myIncludeSystemVarsCb = null;
     }
-    JLabel label = new JLabel(ExecutionBundle.message("env.vars.user.title"));
+    JLabel label = new JLabel(LangBundle.message("env.vars.user.title"));
     label.setLabelFor(myUserTable.getTableView().getComponent());
 
     myWholePanel = new JPanel(new MigLayout("fill, ins 0, gap 0, hidemode 3"));
     myWholePanel.add(label, "hmax pref, wrap");
     myWholePanel.add(myUserTable.getComponent(), "push, grow, wrap, gaptop 5");
-    JComponent tablesSeparator = myIncludeSystemVarsCb != null ? myIncludeSystemVarsCb : new JLabel(ExecutionBundle.message("env.vars.system.title"));
+    JComponent tablesSeparator = myIncludeSystemVarsCb != null ? myIncludeSystemVarsCb : new JLabel(LangBundle.message("env.vars.system.title"));
     myWholePanel.add(tablesSeparator, "hmax pref, wrap, gaptop 5");
     myWholePanel.add(mySystemTable.getComponent(), "push, grow, wrap, gaptop 5");
 
     updateSysTableState();
-    setTitle(ExecutionBundle.message("environment.variables.dialog.title"));
+    setTitle(LangBundle.message("environment.variables.dialog.title"));
     init();
   }
 

@@ -4,7 +4,7 @@
 
 package com.intellij.execution.configuration;
 
-import com.intellij.execution.ExecutionBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -48,7 +48,7 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     myProject = project;
     myEnvVars = createBrowseComponent();
     setComponent(myEnvVars);
-    setText(ExecutionBundle.message("environment.variables.component.title"));
+    setText(LangBundle.message("environment.variables.component.title"));
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, myEnvVars.getChildComponent());
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
   }
