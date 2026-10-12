@@ -1,18 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections
 
-import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.options.JavaClassValidator
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandQuickFix
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -34,7 +30,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.type
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
@@ -191,33 +186,22 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), Cleanu
                 && (receiverExpression as KtThisExpression).resolveSuccessfulSymbol() in outerClassSymbols
     }
 
-    private class RemoveInnerModifierFix : LocalQuickFix {
+    private class RemoveInnerModifierFix : ModCommandQuickFix() {
         override fun getName() = familyName
 
         override fun getFamilyName() = KotlinBundle.message("remove.redundant.0.modifier", KtTokens.INNER_KEYWORD.value)
 
-        override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
-            val targetClass = previewDescriptor.psiElement.getStrictParentOfType<KtClass>() ?: return IntentionPreviewInfo.EMPTY
-            val stopOffset = targetClass.body?.lBrace?.startOffsetInParent ?: targetClass.textLength
-            val classSignature = targetClass.text.substring(0, stopOffset)
-            return IntentionPreviewInfo.CustomDiff(KotlinFileType.INSTANCE, classSignature, classSignature.replace("inner ", ""))
-        }
+        override fun perform(project: Project, descriptor: ProblemDescriptor): ModCommand {
+            val targetClass = descriptor.psiElement.getStrictParentOfType<KtClass>() ?: return ModCommand.nop()
+            val references = ReferencesSearch.search(targetClass, targetClass.useScope).findAll().mapNotNull { it.element }
 
-        override fun startInWriteAction(): Boolean {
-            return false
-        }
+            return ModCommand.psiUpdate(targetClass) { writableTargetClass, updater ->
+                val writableReferences = references.mapNotNull { updater.getWritable(it) }
+                writableTargetClass.removeModifierKeyword(KtTokens.INNER_KEYWORD)
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val targetClass = descriptor.psiElement.getStrictParentOfType<KtClass>() ?: return
-            val allToModify = runWithModalProgressBlocking(project, QuickFixBundle.message("searching.for.usages.progress.title")) {
-                readAction {
-                    ReferencesSearch.search(targetClass, targetClass.useScope).findAll().mapNotNull { it.element }
-                }
-            }
-            val files = (allToModify.mapNotNull { it.containingFile }.distinct() + targetClass.containingFile).toTypedArray()
-            WriteCommandAction.writeCommandAction(project, *files).run<Throwable> {
-                targetClass.removeModifierKeyword(KtTokens.INNER_KEYWORD)
-                updateCallSites(allToModify, targetClass).filterIsInstance<KtQualifiedExpression>().forEach { shortenReferences(it) }
+                updateCallSites(writableReferences, writableTargetClass)
+                    .filterIsInstance<KtQualifiedExpression>()
+                    .forEach { shortenReferences(it) }
             }
         }
 
