@@ -1,12 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
+use std::collections::HashMap;
 use std::ffi::OsString;
 
 use appinfo::{ApplicationInfo, Replacement};
 use serde_json::Value;
 use testkit::{read_text, testdata};
 
-use crate::model::{JvmArguments, JvmArgumentsRef, LaunchModel, parse_launch_model};
+use crate::model::{JvmArguments, JvmArgumentsRef, LaunchModel, VmOptions, parse_launch_model};
 use crate::render::{
     LaunchFiles, LaunchNames, OS_LINUX, OS_MAC, OS_WINDOWS, Platform, Product, additional_jvm_arguments, common_vm_options,
     insert_eap_vm_options, opened_packages, parse_platform, render_launch_files,
@@ -361,6 +362,45 @@ fn language_server_vm_options_are_headless() {
     );
 }
 
+/// The vmoptions file of the embedded frontend has its own parts, the common lines and the EAP flag of the product.
+/// The headless rule of a language server applies to the file of the product only.
+#[test]
+fn frontend_vm_options_follow_the_pipeline_of_the_product() {
+    let mut model = test_model(IDEA.model);
+    let common = "-XX:+Common\n";
+    let plain = IDEA.render_with_common(&model, "linux_x64", "", "", common).unwrap();
+    assert_eq!(
+        plain.frontend_vm_options, None,
+        "a model without frontendVmOptions renders no frontend file"
+    );
+    model.frontend_vm_options = Some(VmOptions {
+        memory: strings(&["-Xms256m", "-Xmx1024m"]),
+        product: strings(&["-Dfrontend=1", "-Dawt.x=1"]),
+        os: HashMap::from([(OS_MAC.to_owned(), strings(&["-Dmac=frontend"]))]),
+    });
+    let mac = IDEA.render_with_common(&model, "darwin_aarch64", "", "", common).unwrap();
+    assert_eq!(mac.vm_options, format!("-Xmx2048m\n-XX:+Common\n{EAP_LINE}\n-Dx=mac\n"));
+    assert_eq!(
+        mac.frontend_vm_options,
+        Some(format!(
+            "-Xms256m\n-Xmx1024m\n-XX:+Common\n{EAP_LINE}\n-Dfrontend=1\n-Dawt.x=1\n-Dmac=frontend\n"
+        ))
+    );
+    // A release product gets no EAP line, and the model states no Windows lines of the frontend.
+    let windows = RELEASE.render_with_common(&model, "windows_x64", "", "", common).unwrap();
+    assert_eq!(
+        windows.frontend_vm_options.as_deref(),
+        Some("-Xms256m\r\n-Xmx1024m\r\n-XX:+Common\r\n-Dfrontend=1\r\n-Dawt.x=1\r\n")
+    );
+    model.language_server = true;
+    let server = RELEASE.render_with_common(&model, "linux_x64", "", "", common).unwrap();
+    assert_eq!(server.vm_options, "-Xmx2048m\n-XX:+Common\n-Dx=linux\n-Djava.awt.headless=true\n");
+    assert_eq!(
+        server.frontend_vm_options.as_deref(),
+        Some("-Xms256m\n-Xmx1024m\n-XX:+Common\n-Dfrontend=1\n-Dawt.x=1\n")
+    );
+}
+
 /// A custom command renders the block it names, and the build number replaces the token in its extra arguments.
 #[test]
 fn custom_commands_resolve_the_jvm_arguments_block() {
@@ -552,6 +592,58 @@ fn the_tool_writes_the_four_files() {
         result.errors,
         "ERROR: \"solaris_x64\" is not a host platform such as darwin_aarch64\n"
     );
+}
+
+/// A model with `frontendVmOptions` needs `--frontend-vmoptions-out`, and a model without it refuses the option.
+#[test]
+fn the_tool_writes_the_frontend_vmoptions_file_when_the_model_states_it() {
+    let tool = ToolRun::new();
+    let mut model: Value = serde_json::from_str(&read_text(testdata("model.json"))).unwrap();
+    model["frontendVmOptions"] = serde_json::json!({"memory": ["-Xmx1024m"], "os": {"Linux": ["-Dx=frontend"]}});
+    let frontend_model = tool.write("frontend-model.json", &model.to_string());
+    let plain_model = testdata("model.json").display().to_string();
+    let args_of = |model: &str, extra: &[String]| -> Vec<String> {
+        let mut args = tool.base_args();
+        args[0] = format!("--model={model}");
+        args.extend(IDEA.inputs());
+        args.extend(extra.iter().cloned());
+        args
+    };
+    let frontend_out = format!("--frontend-vmoptions-out={}", tool.out("frontend.vmoptions"));
+
+    let result = run_tool(&args_of(&frontend_model, std::slice::from_ref(&frontend_out)));
+    assert_eq!(result.code, 0, "{}", result.errors);
+    assert_eq!(
+        std::fs::read_to_string(tool.out("frontend.vmoptions")).unwrap(),
+        format!("-Xmx1024m\n{EAP_LINE}\n-Dx=frontend\n")
+    );
+
+    for (model, extra, want) in [
+        (
+            &frontend_model,
+            Vec::new(),
+            (
+                1,
+                format!("ERROR: {frontend_model} states frontendVmOptions, so --frontend-vmoptions-out is required\n"),
+            ),
+        ),
+        (
+            &plain_model,
+            vec![frontend_out],
+            (
+                1,
+                format!("ERROR: --frontend-vmoptions-out is set, but {plain_model} states no frontendVmOptions\n"),
+            ),
+        ),
+        (
+            &frontend_model,
+            strings(&["--frontend-vmoptions-out="]),
+            (2, "ERROR: --frontend-vmoptions-out must not be empty\n".to_owned()),
+        ),
+    ] {
+        let result = run_tool(&args_of(model, &extra));
+        assert_eq!((result.code, result.errors), want, "{extra:?}");
+    }
 }
 
 #[test]

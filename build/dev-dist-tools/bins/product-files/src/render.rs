@@ -4,7 +4,9 @@ use anyhow::bail;
 use appinfo::{ApplicationInfo, linux_frame_class};
 use serde::Serialize;
 
-use crate::model::{BUILD_NUMBER_TOKEN, CustomCommand, IdeaProperties, JvmArguments, JvmArgumentsRef, LaunchModel, LaunchProperty};
+use crate::model::{
+    BUILD_NUMBER_TOKEN, CustomCommand, IdeaProperties, JvmArguments, JvmArgumentsRef, LaunchModel, LaunchProperty, VmOptions,
+};
 
 // OS names are `OsFamily.osName`, and architecture names are `JvmArchitecture.dirName`.
 pub(crate) const OS_MAC: &str = "macOS";
@@ -37,12 +39,14 @@ pub(crate) fn parse_platform(name: &str) -> anyhow::Result<Platform> {
     }
 }
 
-/// The four launch files of one product and one platform.
+/// The launch files of one product and one platform.
 #[derive(Debug)]
 pub(crate) struct LaunchFiles {
     pub build_txt: String,
     pub idea_properties: String,
     pub vm_options: String,
+    /// The vmoptions file of the embedded frontend, when the model states `frontendVmOptions`.
+    pub frontend_vm_options: Option<String>,
     pub product_info: String,
 }
 
@@ -54,7 +58,7 @@ pub(crate) struct Product<'a> {
     pub build_number: &'a str,
 }
 
-/// Renders the four files. `common_vm_options_file` is the text of `bin/common.vmoptions`.
+/// Renders the files. `common_vm_options_file` is the text of `bin/common.vmoptions`.
 pub(crate) fn render_launch_files(
     product: &Product<'_>,
     target: Platform,
@@ -63,27 +67,14 @@ pub(crate) fn render_launch_files(
     common_vm_options_file: &str,
 ) -> anyhow::Result<LaunchFiles> {
     let model = product.model;
-    let separator = if target.os == OS_WINDOWS { "\r\n" } else { "\n" };
-    let mut vm_options = model.vm_options.memory.clone();
-    vm_options.extend(common_vm_options(common_vm_options_file));
-    vm_options.extend(model.vm_options.product.iter().cloned());
-    if let Some(os_vm_options) = model.vm_options.os.get(target.os) {
-        vm_options.extend(os_vm_options.iter().cloned());
-    }
-    if product.application_info.is_eap {
-        insert_eap_vm_options(&mut vm_options);
-    }
-    if model.language_server {
-        apply_headless_vm_options(&mut vm_options);
-    }
-    let mut vm_options_text = String::new();
-    for line in &vm_options {
-        if !line.is_ascii() {
-            bail!("the vmoptions line {line:?} is not ASCII");
-        }
-        vm_options_text.push_str(line);
-        vm_options_text.push_str(separator);
-    }
+    let is_eap = product.application_info.is_eap;
+    let vm_options = render_vm_options(&model.vm_options, target, common_vm_options_file, is_eap, model.language_server)?;
+    // The production writer reads the EAP flag of the frontend context. The plan generator checks that it is the flag
+    // of the product. The generator also refuses a frontend that is a language server, so the headless rule is off.
+    let frontend_vm_options = match &model.frontend_vm_options {
+        Some(parts) => Some(render_vm_options(parts, target, common_vm_options_file, is_eap, false)?),
+        None => None,
+    };
     let product_info = render_product_info(product, target, &opened_packages(opened_packages_file, target.os)?)?;
     Ok(LaunchFiles {
         build_txt: format!("{}-{}", model.product_code, product.build_number),
@@ -91,11 +82,45 @@ pub(crate) fn render_launch_files(
             &model.idea_properties,
             idea_properties_base,
             &model.data_directory_base_name,
-            product.application_info.is_eap,
+            is_eap,
         ),
-        vm_options: vm_options_text,
+        vm_options,
+        frontend_vm_options,
         product_info,
     })
+}
+
+/// `generateVmOptions` of `VmOptionsGenerator.kt` for one OS: the memory lines, the common lines, the product lines and
+/// the OS lines of `parts`, then the EAP line and the headless rule. Each line ends with the separator of the OS.
+fn render_vm_options(
+    parts: &VmOptions,
+    target: Platform,
+    common_vm_options_file: &str,
+    is_eap: bool,
+    headless: bool,
+) -> anyhow::Result<String> {
+    let separator = if target.os == OS_WINDOWS { "\r\n" } else { "\n" };
+    let mut lines = parts.memory.clone();
+    lines.extend(common_vm_options(common_vm_options_file));
+    lines.extend(parts.product.iter().cloned());
+    if let Some(os_vm_options) = parts.os.get(target.os) {
+        lines.extend(os_vm_options.iter().cloned());
+    }
+    if is_eap {
+        insert_eap_vm_options(&mut lines);
+    }
+    if headless {
+        apply_headless_vm_options(&mut lines);
+    }
+    let mut text = String::new();
+    for line in &lines {
+        if !line.is_ascii() {
+            bail!("the vmoptions line {line:?} is not ASCII");
+        }
+        text.push_str(line);
+        text.push_str(separator);
+    }
+    Ok(text)
 }
 
 /// The data directory name of the product: the base name, then the major version and the main part of the minor version.

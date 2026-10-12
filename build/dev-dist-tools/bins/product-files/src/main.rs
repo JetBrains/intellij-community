@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 //! `product-files` renders the launch files of one product for one platform: `build.txt`, `bin/idea.properties`, the
-//! vmoptions file and `product-info.json`.
+//! vmoptions file, `product-info.json` and, for a product with an embedded frontend, the vmoptions file of the frontend.
 //!
 //! The input is the launch model that the dev distribution plan generator writes for the product (`ProductLaunchModel`
 //! in `community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/productInfo`). The model states the facts
@@ -42,6 +42,9 @@ struct Options {
     idea_properties_out: PathBuf,
     vm_options_out: PathBuf,
     product_info_out: PathBuf,
+    /// The vmoptions file of the embedded frontend. It is required when the model states `frontendVmOptions`, and refused
+    /// otherwise.
+    frontend_vm_options_out: Option<PathBuf>,
     /// The application info of the host product of a frontend.
     host_application_info: Option<PathBuf>,
     /// `ProductProperties.appInfoXmlReplacements`, in their order.
@@ -70,9 +73,9 @@ fn run(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors:
     0
 }
 
-/// Reads the options. Every option but `--host-application-info` and `--replacement` is required, and the first
-/// missing one fails in this order. `--replacement` is the one option that a request can state more than once, as
-/// `KEY=VALUE`.
+/// Reads the options. Every option but `--frontend-vmoptions-out`, `--host-application-info` and `--replacement` is
+/// required, and the first missing one fails in this order. `--replacement` is the one option that a request can state
+/// more than once, as `KEY=VALUE`.
 fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Options> {
     let mut options = cli::parse(args)?;
     let model = options.require("--model")?.into();
@@ -87,6 +90,10 @@ fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Opt
     let idea_properties_out = options.require("--idea-properties-out")?.into();
     let vm_options_out = options.require("--vmoptions-out")?.into();
     let product_info_out = options.require("--product-info-out")?.into();
+    let frontend_vm_options_out = match options.take("--frontend-vmoptions-out")? {
+        Some(value) if value.is_empty() => anyhow::bail!("--frontend-vmoptions-out must not be empty"),
+        value => value.map(PathBuf::from),
+    };
     let host_application_info = match options.take("--host-application-info")? {
         Some(value) if value.is_empty() => anyhow::bail!("--host-application-info must not be empty"),
         value => value.map(PathBuf::from),
@@ -109,6 +116,7 @@ fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Opt
         idea_properties_out,
         vm_options_out,
         product_info_out,
+        frontend_vm_options_out,
         host_application_info,
         replacements,
     })
@@ -150,12 +158,25 @@ fn render_to_files(options: &Options) -> anyhow::Result<()> {
     };
     let files = render::render_launch_files(&product, target, &opened_packages, &idea_properties, &common_vm_options)
         .with_context(|| options.model.display().to_string())?;
-    for (path, content) in [
+    let mut outputs = vec![
         (&options.build_txt_out, &files.build_txt),
         (&options.idea_properties_out, &files.idea_properties),
         (&options.vm_options_out, &files.vm_options),
         (&options.product_info_out, &files.product_info),
-    ] {
+    ];
+    match (&options.frontend_vm_options_out, &files.frontend_vm_options) {
+        (Some(path), Some(content)) => outputs.push((path, content)),
+        (None, None) => {}
+        (None, Some(_)) => anyhow::bail!(
+            "{} states frontendVmOptions, so --frontend-vmoptions-out is required",
+            options.model.display()
+        ),
+        (Some(_), None) => anyhow::bail!(
+            "--frontend-vmoptions-out is set, but {} states no frontendVmOptions",
+            options.model.display()
+        ),
+    }
+    for (path, content) in outputs {
         std::fs::write(path, content).with_context(|| format!("cannot write {}", path.display()))?;
     }
     Ok(())

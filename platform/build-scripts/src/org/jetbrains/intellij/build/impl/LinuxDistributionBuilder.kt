@@ -181,6 +181,10 @@ class LinuxDistributionBuilder(
 
   override fun writeVmOptions(distBinDir: Path): Path = writeLinuxVmOptions(distBinDir, context)
 
+  override fun writeEmbeddedFrontendVmOptions(distBinDir: Path): Path? {
+    return context.getEmbeddedFrontendProductContext()?.let { writeLinuxVmOptions(distBinDir, it) }
+  }
+
   private fun generateReadme(unixDistPath: Path) {
     if (context.isLanguageServer) return
     val fullName = context.applicationInfo.fullProductName

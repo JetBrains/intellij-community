@@ -40,8 +40,9 @@ import java.nio.file.Files
  * `product-info.json` of a distribution state, for every OS and architecture.
  *
  * It needs no build context. [computeProductLaunchModel] derives it. The dev distribution plan generator writes the
- * model of each split product as JSON, and the tool `product-files` renders the four files of one OS and
- * architecture from it. They must be the files that the production writers write, byte for byte.
+ * model of each split product as JSON, and the tool `product-files` renders the files of one OS and architecture from
+ * it. A product with an embedded frontend has a fifth file, the vmoptions file of the frontend. The files must be the
+ * files that the production writers write, byte for byte.
  *
  * The model states each product fact once. It states no value that the version, the suffix, the release date, the EAP flag
  * or the build number decide. It keeps the product code, the environment variable name and the data directory base name.
@@ -72,6 +73,15 @@ data class ProductLaunchModel(
   @JvmField val frontendJvmArguments: ProductJvmArguments? = null,
   @JvmField val customCommands: List<ProductLaunchCustomCommand> = emptyList(),
   @JvmField val vmOptions: ProductVmOptions,
+  /**
+   * The vmoptions file of the embedded frontend, or `null` without one. The `thinClient` command names the file, see
+   * [frontendVmOptionsFileName].
+   *
+   * It mirrors [org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.writeEmbeddedFrontendVmOptions]. That
+   * writer calls `generateVmOptions` over the context of the embedded frontend. The tool inserts the EAP line by the EAP
+   * flag of the product. [computeProductLaunchModel] checks that the frontend has the same flag.
+   */
+  @JvmField val frontendVmOptions: ProductVmOptions? = null,
   @JvmField val ideaProperties: ProductLaunchIdeaProperties,
 )
 
@@ -232,7 +242,8 @@ private const val FRONTEND_MAC_ICON_JVM_ARGUMENT = $$"-Dapple.awt.application.ic
  * Derives the launch model of [product] from what a build context of it would read.
  *
  * [embeddedFrontend] is the frontend the product embeds, or `null`. [minRequiredJavaVersion] is the language level of
- * the project, and [bundledRuntimeBuild] the `runtimeBuild` of the dependencies.
+ * the project, and [bundledRuntimeBuild] the `runtimeBuild` of the dependencies. [pluginRepositoryVmOptions] and
+ * [frontendPluginRepositoryVmOptions] are the custom plugin repository lines of the product and of the frontend.
  */
 @ApiStatus.Internal
 fun computeProductLaunchModel(
@@ -241,6 +252,7 @@ fun computeProductLaunchModel(
   minRequiredJavaVersion: Int,
   bundledRuntimeBuild: String,
   pluginRepositoryVmOptions: List<String> = emptyList(),
+  frontendPluginRepositoryVmOptions: List<String> = emptyList(),
 ): ProductLaunchModel {
   val properties = product.properties
   val applicationInfo = product.applicationInfo
@@ -329,20 +341,39 @@ fun computeProductLaunchModel(
     ),
     frontendJvmArguments = ijLightFrontend?.let { productJvmArguments(it, bundledRuntimeVersion) },
     customCommands = customCommands,
-    vmOptions = ProductVmOptions(
-      memory = memoryVmOptions(properties.customJvmMemoryOptions),
-      product = buildList {
-        addAll(multiRoutingFileSystemVmOptions(properties.platformPrefix))
-        addAll(properties.additionalVmOptions)
-        addAll(pluginRepositoryVmOptions)
-      },
-      os = OsFamily.ALL.associate { it.osName to osVmOptions(it, properties.platformPrefix) }.filterValues { it.isNotEmpty() },
-    ),
+    vmOptions = productVmOptions(properties, pluginRepositoryVmOptions),
+    frontendVmOptions = embeddedFrontend?.let { frontend ->
+      check(!frontend.isLanguageServer) {
+        "The embedded frontend ${frontend.properties.platformPrefix} is a language server. The tool applies the headless rule to " +
+        "the vmoptions file of the product only."
+      }
+      check(frontend.applicationInfo.isEAP == applicationInfo.isEAP) {
+        "The embedded frontend ${frontend.properties.platformPrefix} has the EAP flag ${frontend.applicationInfo.isEAP}, but the " +
+        "product has ${applicationInfo.isEAP}. The tool inserts the EAP line of the frontend vmoptions file by the flag of the product."
+      }
+      productVmOptions(frontend.properties, frontendPluginRepositoryVmOptions)
+    },
     ideaProperties = ProductLaunchIdeaProperties(
       languageServerBase = product.isLanguageServer,
       additions = properties.additionalIDEPropertiesFilePaths.map { Files.readString(it) },
       fatalErrorNotification = !product.isLanguageServer,
     ),
+  )
+}
+
+/**
+ * The parts of the vmoptions file that `generateVmOptions` writes for [properties] on each OS, with
+ * [pluginRepositoryVmOptions] after the additional lines of the product.
+ */
+private fun productVmOptions(properties: ProductProperties, pluginRepositoryVmOptions: List<String>): ProductVmOptions {
+  return ProductVmOptions(
+    memory = memoryVmOptions(properties.customJvmMemoryOptions),
+    product = buildList {
+      addAll(multiRoutingFileSystemVmOptions(properties.platformPrefix))
+      addAll(properties.additionalVmOptions)
+      addAll(pluginRepositoryVmOptions)
+    },
+    os = OsFamily.ALL.associate { it.osName to osVmOptions(it, properties.platformPrefix) }.filterValues { it.isNotEmpty() },
   )
 }
 
@@ -428,6 +459,29 @@ internal fun vmOptionsFilePath(os: OsFamily, baseFileName: String, languageServe
 /** The name of the vmoptions file in `bin` of the distribution of [os]. */
 @ApiStatus.Internal
 fun ProductLaunchModel.vmOptionsFileName(os: OsFamily): String = vmOptionsFileName(os, baseFileName, languageServer)
+
+/**
+ * The name of the vmoptions file of the embedded frontend in `bin` of the distribution of [os], or `null` when the
+ * model states no [ProductLaunchModel.frontendVmOptions].
+ *
+ * The `thinClient` command states the path of the file relative to `product-info.json`. The name is the last part of
+ * that path. The function fails when the path does not lead to `bin`.
+ */
+@ApiStatus.Internal
+fun ProductLaunchModel.frontendVmOptionsFileName(os: OsFamily): String? {
+  if (frontendVmOptions == null) {
+    return null
+  }
+  val command = EMBEDDED_FRONTEND_COMMANDS.first()
+  val path = checkNotNull(customCommands.singleOrNull { command in it.commands }?.vmOptionsFilePath?.get(os.osName)) {
+    "The model states frontendVmOptions, but no $command command names a vmoptions file for ${os.osName}"
+  }
+  val name = path.substringAfterLast('/')
+  check(path == "bin/$name" || path == "../bin/$name") {
+    "The $command command names the vmoptions file $path for ${os.osName}, which is not a file of bin"
+  }
+  return name
+}
 
 /** The vmoptions file of a launch, as the distribution holds it. */
 internal fun vmOptionsFileName(os: OsFamily, baseFileName: String, languageServer: Boolean): String {

@@ -39,6 +39,8 @@ pub(crate) struct LaunchModel {
     #[serde(default)]
     pub custom_commands: Vec<CustomCommand>,
     pub vm_options: VmOptions,
+    /// The vmoptions file of the embedded frontend, with the parts of `vm_options`. The `thinClient` command names it.
+    pub frontend_vm_options: Option<VmOptions>,
     pub idea_properties: IdeaProperties,
 }
 

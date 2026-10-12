@@ -44,6 +44,9 @@ def _dev_dist_product_files_impl(ctx):
     args.add("--idea-properties-out=" + ctx.outputs.idea_properties_out.path)
     args.add("--vmoptions-out=" + ctx.outputs.vmoptions.path)
     args.add("--product-info-out=" + ctx.outputs.product_info.path)
+    if ctx.outputs.frontend_vmoptions:
+        args.add("--frontend-vmoptions-out=" + ctx.outputs.frontend_vmoptions.path)
+        outputs.append(ctx.outputs.frontend_vmoptions)
     ctx.actions.run(
         executable = ctx.executable.tool,
         arguments = [args],
@@ -57,7 +60,8 @@ def _dev_dist_product_files_impl(ctx):
 dev_dist_product_files = rule(
     doc = """Renders `build.txt`, `bin/idea.properties`, the vmoptions file and `product-info.json` of a product.
 
-    The four outputs have fixed names, because the vmoptions file name depends on the OS and a `select` cannot name an
+    A product with an embedded frontend also gets the vmoptions file of the frontend, so the rule has five outputs.
+    The outputs have fixed names, because the vmoptions file names depend on the OS and a `select` cannot name an
     output. The component that places them maps each one to its path in the distribution. `product_info_destination`
     states the path of `product-info.json`. The action reads the launch
     model, the application info sources, `build.txt`, `OpenedPackages.txt`, one `idea.properties` and
@@ -104,5 +108,8 @@ dev_dist_product_files = rule(
         "idea_properties_out": attr.output(mandatory = True),
         "vmoptions": attr.output(mandatory = True),
         "product_info": attr.output(mandatory = True),
+        "frontend_vmoptions": attr.output(
+            doc = "The vmoptions file of the embedded frontend. Set it when the launch model states `frontendVmOptions`, and only then.",
+        ),
     },
 )

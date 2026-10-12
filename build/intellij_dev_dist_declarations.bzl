@@ -266,20 +266,23 @@ def _launcher_files(launcher, platform):
     ))
     return files
 
-# The component of `bin/idea.properties`, the vmoptions file, `product-info.json` and `build.txt`, which the product
+# The component of `bin/idea.properties`, the vmoptions files, `product-info.json` and `build.txt`, which the product
 # files action renders from the launch model of the product.
 _PLATFORM_RESOURCES_FRAGMENT = "platform_resources"
 
 def _launch_destinations(plan, os):
-    """The destinations of the main vmoptions file and of `product-info.json`, as `struct(vm_options, product_info)`.
+    """The destinations of the launch files, as `struct(vm_options, product_info, frontend_vm_options)`.
 
-    `os` is an OS token of `platform_parts`. The `platform_resources` component places the two files there, and the
-    `java` launcher of a row reads them there. The vmoptions file is `bin/<name>`, with the name of the plan.
-    `product_info_destination` states the other path.
+    `os` is an OS token of `platform_parts`. The `platform_resources` component places the files there. The `java`
+    launcher of a row reads the main vmoptions file and `product-info.json` there. A vmoptions file is `bin/<name>`,
+    with the name of the plan. `product_info_destination` states the path of `product-info.json`.
+    `frontend_vm_options` is `None` for a product without an embedded frontend.
     """
+    frontend_vmoptions = getattr(plan.launch, "frontend_vmoptions", None)
     return struct(
         vm_options = "bin/" + plan.launch.vmoptions[os],
         product_info = product_info_destination(os, plan.launch.launcher.language_server),
+        frontend_vm_options = "bin/" + frontend_vmoptions[os] if frontend_vmoptions else None,
     )
 
 def _fragment_suffix(fragment_name):
@@ -497,13 +500,15 @@ def _platform_set(tables, product, name, target_platform, visibility):
         )
 
     def product_files_component():
-        # `build.txt`, `bin/idea.properties`, the vmoptions file and `product-info.json`. The product files action
-        # renders them from the launch model the plan generator writes for the product, so the component reads no project
-        # model and starts no JVM. The action reads the application info sources and `build.txt` for the version, the
-        # names and the build number. The rendered files have fixed names, and the component maps each one to its path in
-        # the distribution. `_launch_destinations` states the paths of the vmoptions file and of `product-info.json`. The
-        # component also declares the main class of the launch model.
+        # `build.txt`, `bin/idea.properties`, the vmoptions file and `product-info.json`. A product with an embedded
+        # frontend also gets the vmoptions file of the frontend. The product files action renders them from the launch
+        # model the plan generator writes for the product, so the component reads no project model and starts no JVM.
+        # The action reads the application info sources and `build.txt` for the version, the names and the build number.
+        # The rendered files have fixed names, and the component maps each one to its path in the distribution.
+        # `_launch_destinations` states the paths of the vmoptions files and of `product-info.json`. The component also
+        # declares the main class of the launch model.
         files = name + "_product_files"
+        frontend_vmoptions = getattr(plan.launch, "frontend_vmoptions", None)
         application_info = tables.application_infos[product]
         dev_dist_product_files(
             name = files,
@@ -518,16 +523,20 @@ def _platform_set(tables, product, name, target_platform, visibility):
             idea_properties_out = files + "/idea.properties",
             vmoptions = files + "/vmoptions",
             product_info = files + "/product-info.json",
+            frontend_vmoptions = files + "/frontend.vmoptions" if frontend_vmoptions else None,
         )
 
         def placed(platform):
             destinations = _launch_destinations(plan, platform_parts(platform).os)
-            return {
+            result = {
                 "build.txt": ":%s/build.txt" % files,
                 "bin/idea.properties": ":%s/idea.properties" % files,
                 destinations.vm_options: ":%s/vmoptions" % files,
                 destinations.product_info: ":%s/product-info.json" % files,
             }
+            if destinations.frontend_vm_options:
+                result[destinations.frontend_vm_options] = ":%s/frontend.vmoptions" % files
+            return result
 
         intellij_dev_packed_jars_component(
             name = name + "_" + _fragment_suffix(_PLATFORM_RESOURCES_FRAGMENT),

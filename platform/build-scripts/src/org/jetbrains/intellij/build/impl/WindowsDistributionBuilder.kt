@@ -237,6 +237,10 @@ internal class WindowsDistributionBuilder(
 
   override fun writeVmOptions(distBinDir: Path): Path = writeWindowsVmOptions(distBinDir, context)
 
+  override fun writeEmbeddedFrontendVmOptions(distBinDir: Path): Path? {
+    return context.getEmbeddedFrontendProductContext()?.let { writeWindowsVmOptions(distBinDir, it) }
+  }
+
   override fun distributionFilesBuilt(arch: JvmArchitecture): List<Path> {
     val archSuffix = suffix(arch)
     return sequenceOf(

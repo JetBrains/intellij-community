@@ -44,6 +44,7 @@ import org.jetbrains.intellij.build.impl.nativeBinFiles
 import org.jetbrains.intellij.build.impl.productInfo.ProductLaunchModel
 import org.jetbrains.intellij.build.impl.productInfo.computeDevProductLaunchModel
 import org.jetbrains.intellij.build.impl.productInfo.encodeProductLaunchModel
+import org.jetbrains.intellij.build.impl.productInfo.frontendVmOptionsFileName
 import org.jetbrains.intellij.build.impl.productInfo.vmOptionsFileName
 import org.jetbrains.intellij.build.isTestModule
 import org.jetbrains.intellij.build.mapConcurrent
@@ -3457,14 +3458,21 @@ private fun planFieldBodies(product: ProductFragmentPlan): List<PlanFieldBody> {
   }
   // The facts of the launch model that Bazel reads at analysis time. `DEV_DIST_LAUNCH_MODELS` names the model itself.
   val model = product.launchModel
+  val osTokens = listOf("darwin" to OsFamily.MACOS, "linux" to OsFamily.LINUX, "windows" to OsFamily.WINDOWS)
   result.add(PlanFieldBody("launch", buildString {
     append("struct(\n")
     append("    idea_properties = \"").append(product.ideaProperties).append("\",\n")
     append("    vmoptions = {\n")
-    for ((token, os) in listOf("darwin" to OsFamily.MACOS, "linux" to OsFamily.LINUX, "windows" to OsFamily.WINDOWS)) {
+    for ((token, os) in osTokens) {
       append("        \"").append(token).append("\": \"").append(model.vmOptionsFileName(os)).append("\",\n")
     }
     append("    },\n")
+    // The vmoptions file of the embedded frontend, on one line. The `thinClient` command of the model names it.
+    if (model.frontendVmOptions != null) {
+      append("    frontend_vmoptions = {")
+      osTokens.joinTo(this, separator = ", ") { (token, os) -> "\"$token\": \"${model.frontendVmOptionsFileName(os)}\"" }
+      append("},\n")
+    }
     append("    main_class = \"").append(model.launch.mainClass).append("\",\n")
     // The facts the native launcher files derive from, see `_launcher_files` in `intellij_dev_dist_declarations.bzl`.
     append("    launcher = struct(base_file_name = \"").append(model.baseFileName)
