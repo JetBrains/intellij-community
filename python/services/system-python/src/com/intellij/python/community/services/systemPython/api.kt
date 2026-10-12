@@ -4,7 +4,6 @@ package com.intellij.python.community.services.systemPython
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.services.shared.PythonInfoWithUiComparator
 import com.intellij.python.community.services.shared.PythonWithUi
 import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
@@ -35,11 +34,6 @@ interface SystemPythonService {
    */
   suspend fun findSystemPythons(eelApi: EelApi, forceRefresh: Boolean = false): List<SystemPython>
 
-  @Suppress("LocalEelUsage")
-  @Deprecated("Provide eel",
-              ReplaceWith("findSystemPythons(localEel)", "com.intellij.platform.eel.provider.localEel"))
-  suspend fun findSystemPythons(): List<SystemPython> = findSystemPythons(localEel)
-
   /**
    * When user provides a path to the python binary, use this method to the [SystemPython].
    * @return either [SystemPython] or an error if python is broken or not a system python.
@@ -62,11 +56,13 @@ sealed interface SysPythonRegisterError {
   /**
    * Virtual env, not a system python
    */
-  class NotASystemPython private constructor(val notSystemPython: VanillaPythonWithPythonInfo, override val asPyError: PyError) : SysPythonRegisterError {
+  class NotASystemPython private constructor(val notSystemPython: VanillaPythonWithPythonInfo, override val asPyError: PyError) :
+    SysPythonRegisterError {
     companion object : suspend (VanillaPythonWithPythonInfo) -> NotASystemPython {
       override suspend fun invoke(notSystemPython: VanillaPythonWithPythonInfo): NotASystemPython = NotASystemPython(
         notSystemPython = notSystemPython,
-        asPyError = MessageError(PySystemPythonBundle.message("py.system.python.service.python.is.not.system", notSystemPython.getReadableName()))
+        asPyError = MessageError(PySystemPythonBundle.message("py.system.python.service.python.is.not.system",
+                                                              notSystemPython.getReadableName()))
       )
     }
 
@@ -95,7 +91,8 @@ fun SystemPythonService(): SystemPythonService = ApplicationManager.getApplicati
  *
  * Instances could be obtained with [SystemPythonService]
  */
-class SystemPython private constructor(private val delegate: VanillaPythonWithPythonInfo, override val ui: PyToolUIInfo?) : VanillaPythonWithPythonInfo by delegate, PythonWithUi, Comparable<SystemPython> {
+class SystemPython private constructor(private val delegate: VanillaPythonWithPythonInfo, override val ui: PyToolUIInfo?) :
+  VanillaPythonWithPythonInfo by delegate, PythonWithUi, Comparable<SystemPython> {
 
   internal companion object {
     val comparator = PythonInfoWithUiComparator<SystemPython>()
