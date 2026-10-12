@@ -21,7 +21,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.productMode.ProductMode
 import com.intellij.util.ObjectUtils
-import com.intellij.util.PlatformUtils
+import com.intellij.util.PlatformUtils.freeIdePaidVersionName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
@@ -290,12 +290,9 @@ object DynamicPlugins {
     }
   }
 
-  /**
-   * Enabling the Ultimate plugin is a subscription activation from the user's point of view
-   */
-  private fun defaultLoadingTitle(plugins: List<PluginMainDescriptor>): @NlsContexts.ModalProgressTitle String {
+  internal fun defaultLoadingTitle(plugins: Collection<PluginMainDescriptor>): @NlsContexts.ModalProgressTitle String {
     return if (plugins.any { it.pluginId == PluginManagerCore.ULTIMATE_PLUGIN_ID }) {
-      IdeBundle.message("modal.progress.title.activating.ultimate.subscription", PlatformUtils.freeIdePaidVersionName())
+      IdeBundle.message("modal.progress.title.activating.ultimate.subscription", freeIdePaidVersionName())
     }
     else {
       IdeBundle.message("modal.progress.title.loading.plugins")

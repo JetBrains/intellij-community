@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -75,7 +76,7 @@ class DynamicPluginEnabler : PluginEnabler {
           expectToLoad = plugins.map { it.pluginId }
         ),
         targetProductMode = null,
-        progressTitle = progressTitle,
+        progressTitle = progressTitle ?: DynamicPlugins.defaultLoadingTitle(plugins),
       )
     }
 
@@ -151,7 +152,7 @@ class DynamicPluginEnabler : PluginEnabler {
         expectNotToLoad = plugins.map { it.pluginId }
       ),
       targetProductMode = null,
-      progressTitle = null,
+      progressTitle = IdeBundle.message("modal.progress.title.unloading.plugins"),
     )
     for (listener in pluginEnableStateChangedListeners) {
       try {
