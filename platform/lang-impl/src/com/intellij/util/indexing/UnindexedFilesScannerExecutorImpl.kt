@@ -284,6 +284,10 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
 
   private suspend fun runScanningTask(task: UnindexedFilesScanner, scanningParameters: ScanningIterators): ProjectScanningHistoryImpl {
     if (isIndexingActivitiesSuppressed(project)) {
+      if (scanningParameters.isFullIndexUpdate()) {
+        // the project opens in smart mode with empty indexes, so a requested rebuild must still reset the index status here
+        task.clearIndicesIfNecessary()
+      }
       return ProjectScanningHistoryImpl(project, scanningParameters.indexingReason, scanningParameters.scanningType).apply {
         scanningStarted()
         setWasCancelled("Scanning is suppressed by project frame capabilities")
