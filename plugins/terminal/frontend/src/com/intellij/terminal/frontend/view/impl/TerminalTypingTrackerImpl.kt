@@ -34,6 +34,7 @@ import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegra
 import org.jetbrains.plugins.terminal.view.shellIntegration.getTypedCommandText
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import javax.swing.KeyStroke
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -75,39 +76,43 @@ class TerminalTypingTrackerImpl(
     if (event.outputModel !== model) return
     if (shellIntegration.outputStatus.value != TerminalOutputStatus.TypingCommand) return
 
+    if (isInvalidatingKeyEvent(event.awtEvent)) {
+      LOG.trace {
+        "Typing input invalidated by ${KeyStroke.getKeyStrokeForEvent(event.awtEvent)}: " +
+        "pending=${pendingEvents.size}"
+      }
+      cancelSessionAndNotifyMismatch()
+      return
+    }
+
     when (event.awtEvent.id) {
       KeyEvent.KEY_TYPED -> if (!Character.isISOControl(event.awtEvent.keyChar)) {
         handleTyping(event, event.awtEvent.keyChar, event.cursorOffset)
       }
       KeyEvent.KEY_PRESSED -> when (event.awtEvent.keyCode) {
-        KeyEvent.VK_BACK_SPACE -> {
-          if (event.awtEvent.hasNoModifiers()) {
-            handleBackspace(event, event.cursorOffset)
-          }
-          else {
-            cancelSessionAndNotifyMismatch()
-          }
-        }
-        KeyEvent.VK_ENTER -> {
-          if (event.awtEvent.hasNoModifiers()) {
-            handleNewLine(event)
-          }
-          else {
-            cancelSessionAndNotifyMismatch()
-          }
-        }
-        KeyEvent.VK_TAB,
-        KeyEvent.VK_LEFT,
-        KeyEvent.VK_RIGHT,
-        KeyEvent.VK_UP,
-        KeyEvent.VK_DOWN,
-        KeyEvent.VK_HOME,
-        KeyEvent.VK_END,
-          -> {
-          LOG.trace { "Typing input invalidated by a navigation key: pending=${pendingEvents.size}" }
-          cancelSessionAndNotifyMismatch()
-        }
+        KeyEvent.VK_BACK_SPACE -> handleBackspace(event, event.cursorOffset)
+        KeyEvent.VK_ENTER -> handleNewLine(event)
       }
+    }
+  }
+
+  private fun isInvalidatingKeyEvent(event: KeyEvent): Boolean {
+    if (event.id != KeyEvent.KEY_PRESSED) return false
+
+    return when (event.keyCode) {
+      KeyEvent.VK_BACK_SPACE,
+      KeyEvent.VK_ENTER,
+        -> !event.hasNoModifiers()
+
+      KeyEvent.VK_TAB,
+      KeyEvent.VK_LEFT,
+      KeyEvent.VK_RIGHT,
+      KeyEvent.VK_UP,
+      KeyEvent.VK_DOWN,
+      KeyEvent.VK_HOME,
+      KeyEvent.VK_END,
+        -> true
+      else -> false
     }
   }
 
