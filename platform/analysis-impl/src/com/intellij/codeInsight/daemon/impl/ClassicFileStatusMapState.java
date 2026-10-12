@@ -52,13 +52,6 @@ final class ClassicFileStatusMapState implements FileStatusMapState {
   }
 
   @Override
-  public void markDefensivelyForAllPasses(@NotNull Project project) {
-    for (FileStatus status : myDocumentToStatusMap.values()) {
-      status.markDefensivelyForAllPasses(project);
-    }
-  }
-
-  @Override
   public String toString() {
     return myDocumentToStatusMap.toString();
   }

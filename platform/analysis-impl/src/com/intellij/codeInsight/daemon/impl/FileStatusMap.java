@@ -262,7 +262,9 @@ public final class FileStatusMap implements Disposable {
     // mark the whole file dirty in case no subsequent PSI events will come, but file requires re-highlighting nevertheless
     // e.g., in the case of quick typing/backspacing char
     synchronized (myFileStatusMapState) {
-      myFileStatusMapState.markDefensivelyForAllPasses(myProject);
+      for (FileStatus status : myFileStatusMapState.getFileStatuses(document)) {
+        status.markDefensivelyForAllPasses(myProject);
+      }
     }
   }
 
