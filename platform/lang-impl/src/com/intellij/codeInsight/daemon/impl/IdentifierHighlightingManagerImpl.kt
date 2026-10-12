@@ -140,8 +140,9 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
     val modStamp = (document as DocumentEx).modificationSequence
     var result: IdentifierHighlightingResult? = null
     var bestMarker: RangeMarker? = null
-    val offset = readAction { editor.getCaretModel().offset }
+    var offset = 0
     readAction {
+      offset = editor.getCaretModel().offset
       // find the range marker marked by "IDENT_MARKUP" user data, the smallest overlapping with "offset"
       // to resolve ambiguities e.g. between exit point highlighting "return xxx" and the reference highlighting "xxx"
       document.processRangeMarkersOverlappingWith(offset, offset, Processor { marker: RangeMarker ->
@@ -231,7 +232,7 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
 
   companion object {
     // stored in RangeMarker user data to be able to quickly retrieve all other ranges to highlight
-    private val IDENT_MARKUP = Key.create<IdentifierHighlightingResult>("IDENT_MARKUP")
+    private val IDENT_MARKUP: Key<IdentifierHighlightingResult> = Key.create("IDENT_MARKUP")
     // stored in Editor to be able to hard-retain range markers from IdentifierHighlightingResult
     private val EDITOR_IDENT_RESULTS: Key<MutableCollection<IdentifierHighlightingResult>> = Key.create("EDITOR_IDENT_RESULTS")
 
