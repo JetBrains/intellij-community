@@ -110,6 +110,9 @@ internal class WelcomeScreenThemeChooserPopup(
     val list = JBList(listModel)
     list.selectionMode = ListSelectionModel.SINGLE_SELECTION
     list.visibleRowCount = VISIBLE_ROW_COUNT
+    // The handler pops up a row that looks cut off, and it takes the list borders and the scrollbar for a cut.
+    // Long names are shortened by the renderer, so there is nothing to expand.
+    list.expandableItemsHandler.isEnabled = false
 
     // Mirrors ComboBoxPopup.configureList: combobox selection colours, and padding on the list rather
     // than on the cells, because the Kotlin UI DSL renderer brings its own item insets.
