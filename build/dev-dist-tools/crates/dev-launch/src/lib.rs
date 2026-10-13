@@ -2,8 +2,8 @@
 
 //! `dev-launch` composes the `java` command line of a dev distribution and the text of its argument file.
 //!
-//! The argument file writer `dev-launch-args` runs it in a Bazel action. A launcher that starts the IDE itself can run
-//! it on the OS that the IDE runs on. The steps are:
+//! The guest agent of `community/tools/vm` runs it on the OS that the IDE runs on, and writes the argument file of the
+//! lane IDE. No launch target of Bazel runs it, because a launch target starts the native launcher. The steps are:
 //!
 //! 1. [`Distribution::read`] reads the main class, the properties and the class path of the distribution.
 //! 2. [`java_arguments`] puts the caller flags before the properties of the distribution, the class path and the main
@@ -13,7 +13,5 @@
 mod jvm_args;
 mod properties;
 
-pub use jvm_args::{
-    Distribution, DistributionFiles, PATH_LIST_SEPARATOR, argument_file_text, java_arguments, quote_argument, read_class_path,
-};
+pub use jvm_args::{Distribution, DistributionFiles, argument_file_text, java_arguments, quote_argument, read_class_path};
 pub use properties::{ProductInfo, RUNTIME_MODULE_REPOSITORY_PROPERTY, custom_command, properties_of_files, read_lines};

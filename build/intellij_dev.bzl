@@ -104,10 +104,6 @@ _LAUNCH_VARIABLES = {
     "HOME": HOME,
 }
 
-# The flag that makes `DevMainKt` and `PreBuiltDevMain` select the custom command of the first program argument. The
-# native launcher selects the command from that argument itself, so the vmoptions file of a target leaves the flag out.
-_CUSTOM_COMMAND_FLAG = "-Didea.dev.mode.custom.command=true"
-
 def _resolve_variables(label, flag):
     """`flag` with each `${NAME}` of `_LAUNCH_VARIABLES` replaced. Any other `${NAME}` fails."""
     result = flag
@@ -197,11 +193,11 @@ def _merge_data(ctx, runfiles):
 def _vm_options_lines(ctx, placement, home_path, flags):
     """The lines of `<name>.vmoptions`, the user vmoptions file of the native launcher.
 
-    The lines are the flags of the row without `_CUSTOM_COMMAND_FLAG`. With `runtime_module_repository`, the last line
-    names `modules/module-descriptors.dat` of the home, unless a flag states the property. The launcher trims each line
-    and skips an empty line and a `#` line, so such a line fails here.
+    The lines are the flags of the row. With `runtime_module_repository`, the last line names
+    `modules/module-descriptors.dat` of the home, unless a flag states the property. The launcher trims each line and
+    skips an empty line and a `#` line, so such a line fails here.
     """
-    lines = [flag for flag in flags if flag != _CUSTOM_COMMAND_FLAG]
+    lines = list(flags)
     if ctx.attr.runtime_module_repository:
         if _RUNTIME_MODULE_REPOSITORY_FILE not in placement.files:
             fail("%s: `runtime_module_repository` is set, and the home has no %s" % (ctx.label, _RUNTIME_MODULE_REPOSITORY_FILE))

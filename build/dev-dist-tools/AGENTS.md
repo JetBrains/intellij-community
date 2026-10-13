@@ -4,8 +4,8 @@ Read [`README.md`](README.md) first. Read [Rust Code Style](../../.agents/skills
 idioms: the error model, the command line, the crate rule, the subset rule, the test layout, the lints and the banned
 methods. These rules apply to both workspaces, this one and `build/dev-dist-tools` in the ultimate root.
 
-- **Name no implementation language in a spec or in the guide.** Write "the packer", "the composer", "the collector",
-  "the descriptor writer", "the argument file writer". The language belongs in the ADRs only.
+- **Name no implementation language in a spec or in the guide.** Write "the packer", "the composer", "the collector"
+  and "the descriptor writer". The language belongs in the ADRs only.
 - **Pass the two gates.** Run `./build/dev-dist.cmd jars` and
   `./bazel.cmd test @community//build/dev-dist-tools/... //build/dev-dist-tools/...` from the ultimate root, then
   `./bazel.cmd test //build/dev-dist-tools/...` in `community/`. The clippy tests of the community crates run only

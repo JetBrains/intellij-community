@@ -16,10 +16,10 @@ use crate::properties::{
 
 /// The class path separator of the JVM on the host.
 #[cfg(windows)]
-pub const PATH_LIST_SEPARATOR: &str = ";";
+const PATH_LIST_SEPARATOR: &str = ";";
 /// The class path separator of the JVM on the host.
 #[cfg(not(windows))]
-pub const PATH_LIST_SEPARATOR: &str = ":";
+const PATH_LIST_SEPARATOR: &str = ":";
 
 /// What a distribution adds to the command line of `java`.
 pub struct Distribution {

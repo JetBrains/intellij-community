@@ -1,7 +1,0 @@
-load("//build/dev-dist-tools:defs.bzl", "dev_dist_rust_crate")
-
-# The argument file action of `intellij_dev_java_launcher` runs the `jvm-args` command of this binary.
-dev_dist_rust_crate(
-    name = "dev-launch-args",
-    closure = True,
-)
