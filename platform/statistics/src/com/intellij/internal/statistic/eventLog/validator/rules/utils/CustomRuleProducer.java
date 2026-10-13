@@ -1,11 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.rules.utils;
 
-import com.jetbrains.fus.reporting.api.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupContextData;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRuleFactory;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil;
@@ -20,13 +17,16 @@ public final class CustomRuleProducer extends UtilRuleProducer {
     myTestMode = StatisticsRecorderUtil.isTestModeEnabled(recorderId);
   }
 
+  /**
+   * Returns a {@link CustomRuleReference} instead of the rule extension, so the rules do not keep an extension of an unloaded plugin.
+   * A factory rule is created as before, because it gets the context of the group.
+   */
   @Override
   public @Nullable UtilValidationRule createValidationRule(@NotNull String value,
                                                            @NotNull EventGroupContextData contextData) {
-    for (CustomValidationRule extension : CustomValidationRule.EP_NAME.getExtensionList()) {
-      if (isAcceptedRule(extension) && extension.acceptRuleId(value)) {
-        return extension;
-      }
+    CustomRuleReference reference = new CustomRuleReference(value, myTestMode);
+    if (reference.resolve() != null) {
+      return reference;
     }
 
     for (CustomValidationRuleFactory extension : CustomValidationRuleFactory.EP_NAME.getExtensions()) {
@@ -35,15 +35,10 @@ public final class CustomRuleProducer extends UtilRuleProducer {
       }
     }
 
-    return null;
+    return reference;
   }
 
-  private boolean isAcceptedRule(FUSRule extension) {
-    if (extension instanceof TestModeValidationRule && !myTestMode) return false;
-    return isDevelopedByJetBrains(extension.getClass());
-  }
-
-  private static boolean isDevelopedByJetBrains(Class<?> clazz) {
+  static boolean isDevelopedByJetBrains(Class<?> clazz) {
     return ApplicationManager.getApplication().isUnitTestMode() ||
            PluginInfoDetectorKt.getPluginInfo(clazz).isDevelopedByJetBrains();
   }
