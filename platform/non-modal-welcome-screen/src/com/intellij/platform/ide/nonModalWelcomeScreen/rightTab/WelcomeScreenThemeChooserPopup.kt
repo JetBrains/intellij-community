@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenComboBoxKind
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector
@@ -55,7 +56,7 @@ private const val VISIBLE_ROW_COUNT = 10
  */
 private const val ROW_HEIGHT = 24
 
-/** Upper bound of the list width, counted in characters. A longer theme name is shortened with an ellipsis. */
+/** Longest theme name that a row shows in full. A longer name is shortened with an ellipsis. */
 private const val MAX_NAME_CHARS = 50
 
 private const val PREVIEW_WIDTH = 360
@@ -207,8 +208,8 @@ internal class WelcomeScreenThemeChooserPopup(
    *
    * By default a row is as high as the `List.rowHeight` of the active look and feel, and the list is as wide as
    * its widest name. Both change with the theme and with the Light/Dark switch, and the popup then jumps. Here
-   * every row is [ROW_HEIGHT] high, separator not counted, and has one width: the widest row of either family,
-   * capped at [MAX_NAME_CHARS] characters. The renderer draws a name that does not fit with an ellipsis.
+   * every row is [ROW_HEIGHT] high, separator not counted, and has one width: the widest row of either family.
+   * A name longer than [MAX_NAME_CHARS] characters ends with an ellipsis.
    */
   private fun createUniformRenderer(list: JBList<LafReference>, moreItem: LafReference): ListCellRenderer<LafReference> {
     val groups = ThemeListProvider.getInstance().getShownThemes().infos
@@ -220,8 +221,12 @@ internal class WelcomeScreenThemeChooserPopup(
     // a Beta badge, and a separator above the first theme of a group. That renderer does not let a caller set
     // the row size, so the same rows are drawn here.
     val renderer = listCellRenderer<LafReference> {
-      toolTipText = null
-      text(value.name)
+      // The text cell clips at the edge and draws no ellipsis, so a long name is shortened up front. The full
+      // name stays in the tooltip and in the accessible name.
+      val fullName = value.name
+      val shortName = StringUtil.shortenTextWithEllipsis(fullName, MAX_NAME_CHARS, 0, true)
+      toolTipText = if (shortName != fullName) fullName else null
+      text(shortName) { accessibleName = fullName }
       if (value.themeId.isEmpty()) {
         separator { }
       }
@@ -237,10 +242,11 @@ internal class WelcomeScreenThemeChooserPopup(
       rowWidth = fixedRowWidth
     }
 
-    val widestRow = (model.allItems() + moreItem).maxOfOrNull {
-      renderer.getListCellRendererComponent(list, it, -1, false, false).preferredSize.width
-    } ?: 0
-    fixedRowWidth = minOf(widestRow, list.getFontMetrics(list.font).charWidth('0') * MAX_NAME_CHARS)
+    // The index must not be -1. The renderer takes that for the collapsed item of a combobox, which has no
+    // insets, and the width then comes out too small by the insets of a real row.
+    fixedRowWidth = (model.allItems() + moreItem).maxOfOrNull {
+      renderer.getListCellRendererComponent(list, it, 0, false, false).preferredSize.width
+    }
     return renderer
   }
 
