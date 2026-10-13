@@ -18,18 +18,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-public class FrozenDocument implements DocumentEx {
+public final class FrozenDocument implements DocumentEx {
   private final DocumentSnapshot mySnapshot;
 
   FrozenDocument(@NotNull DocumentSnapshot snapshot) {
     mySnapshot = snapshot;
   }
 
-  public @NotNull FrozenDocument applyEvent(@NotNull DocumentEvent event, int newStamp) {
+  public @NotNull FrozenDocument applyEvent(@NotNull DocumentEvent event) {
     DocumentSnapshot snapshot = mySnapshot
       .applyOp(DocumentOp.deleteOp(event.getOffset(), event.getOldLength()))
       .applyOp(DocumentOp.insertOp(event.getOffset(), event.getNewFragment()))
-      .applyOp(DocumentOp.modStampOp(newStamp, false));
+      .applyOp(DocumentOp.modStampOp(0, false));
     return new FrozenDocument(snapshot);
   }
 
@@ -217,7 +217,6 @@ public class FrozenDocument implements DocumentEx {
     throw new UnsupportedOperationException();
   }
 
-  @ApiStatus.Internal
   @Override
   public @NotNull DocumentText getDocText() {
     return mySnapshot.text();
