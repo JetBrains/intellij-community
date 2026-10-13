@@ -77,6 +77,8 @@ private val supportedTypes: Set<ClassId> =
     buildSet {
         addAll(KaStandardTypeClassIds.PRIMITIVES)
         add(KaStandardTypeClassIds.STRING)
+        add(StandardClassIds.UByte)
+        add(StandardClassIds.UShort)
         add(StandardClassIds.UInt)
         add(StandardClassIds.ULong)
     }
