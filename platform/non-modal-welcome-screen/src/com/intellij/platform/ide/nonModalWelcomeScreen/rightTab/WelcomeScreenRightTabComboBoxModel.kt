@@ -15,6 +15,7 @@ import com.intellij.openapi.keymap.impl.keymapComparator
 import com.intellij.openapi.keymap.impl.ui.KeymapSchemeManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBColor
+import javax.swing.Icon
 
 /**
  * Restricts the theme list to themes of a single brightness, driven by the Light/Dark switch in the theme
@@ -67,7 +68,7 @@ internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
    * Name of the current item regardless of whether [items] still contains it, so a filtered-out
    * selection can still be displayed.
    */
-  fun currentItemName(): String = currentItem.toName()
+  open fun currentItemName(): String = currentItem.toName()
 
   fun setByIndex(index: Int, itemName: String) {
     val item = items[index]
@@ -112,6 +113,20 @@ internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
      * [currentItemName] is what keeps it visible in the combobox.
      */
     var brightnessFilter: ThemeBrightnessFilter? = null
+
+    /**
+     * The theme that the controls show instead of the active one. The theme chooser sets it while it is
+     * open, because a preview changes the active theme but must not change what the dropdown shows.
+     */
+    var pinnedItem: LafReference? = null
+
+    override fun currentItemName(): String = (pinnedItem ?: currentItem).name
+
+    /** The icon of the dropdown. It follows [pinnedItem], and the active theme when nothing is pinned. */
+    fun currentIcon(): Icon {
+      val isDark = pinnedItem?.let { laf.findLaf(it.themeId)?.isDark } ?: return getIcon()
+      return if (isDark) AllIcons.MeetNewUi.DarkTheme else AllIcons.MeetNewUi.LightTheme
+    }
 
     override val items: List<LafReference>
       get() = getThemes()

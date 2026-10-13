@@ -749,7 +749,7 @@ private class ComboBoxInfoPanelAction(
   override fun update(e: AnActionEvent) {
     // A brightness filter can hide the current item, so take its name directly.
     e.presentation.setText(comboModel.itemPrefix + model.currentItemName(), false)
-    e.presentation.icon = if (model is ThemeModel) ThemeModel.getIcon() else comboModel.icon
+    e.presentation.icon = if (model is ThemeModel) model.currentIcon() else comboModel.icon
   }
 
   @Suppress("SplitModeApiUsage")

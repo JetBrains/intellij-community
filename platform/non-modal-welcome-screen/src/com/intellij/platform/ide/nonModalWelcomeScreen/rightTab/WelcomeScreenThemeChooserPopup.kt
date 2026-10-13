@@ -5,6 +5,7 @@ import com.intellij.application.options.colors.highlighting.HighlightData
 import com.intellij.application.options.colors.highlighting.HighlightsExtractor
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ActivityTracker
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.ui.LafReference
 import com.intellij.ide.ui.UISettingsListener
@@ -119,6 +120,8 @@ internal class WelcomeScreenThemeChooserPopup(
     val moreItem = LafReference(NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.theme.more.in.appearance"), "")
     // Read before any preview. The check mark stays on the theme that the user has, not on the one in preview.
     val activeThemeId = model.currentItem.themeId
+    // The dropdown keeps showing that theme while a preview is applied. It is released when the popup goes.
+    model.pinnedItem = model.currentItem
 
     // The model lists the themes of plugins last. The renderer draws the Custom title over the first of them.
     var firstCustomThemeId: String? = null
@@ -217,6 +220,11 @@ internal class WelcomeScreenThemeChooserPopup(
     val popup = builder.createPopup()
     popupRef = popup
     Disposer.register(popup, popupDisposable)
+    // Nothing else refreshes the dropdown when the pin goes, for example after a choice that a preview applied.
+    Disposer.register(popupDisposable) {
+      model.pinnedItem = null
+      ActivityTracker.getInstance().inc()
+    }
 
     // The popup and its columns are sized in pixels once, when it opens. A change of the IDE zoom resizes the
     // sample and the header but not the popup, which squeezes the list. So the popup closes on that change.
