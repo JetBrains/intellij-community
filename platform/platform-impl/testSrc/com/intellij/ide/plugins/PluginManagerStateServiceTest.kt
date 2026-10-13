@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.core.CoreBundle
 import com.intellij.idea.TestFor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
@@ -67,6 +68,46 @@ internal class PluginManagerStateServiceTest {
     assertThat(loadedState.pluginLoadingProblemsForNotification).isEmpty()
     assertThat(loadedState.pluginsToEnable).isEmpty()
     assertThat(loadedState.pluginsToDisable).isEmpty()
+  }
+
+  @Test
+  @TestFor(issues = ["IJPL-246315", "IDEA-392708"])
+  fun `transitive disabled dependency is reported through the first plugin boundary`() {
+    install(
+      plugin("root") { name = "Root" },
+      plugin("intermediate") {
+        name = "Intermediate"
+        depends("root")
+      },
+      plugin("affected") {
+        name = "Affected"
+        depends("intermediate")
+      },
+    )
+
+    val state = publishAndGetState(buildPluginSet(disabledPluginIds = arrayOf("root")))
+    val rootId = PluginId.getId("root")
+    val intermediateId = PluginId.getId("intermediate")
+    val affectedId = PluginId.getId("affected")
+    val affectedReason = state.pluginNonLoadReasons[affectedId]
+    val intermediateReason = state.pluginNonLoadReasons[intermediateId]
+
+    assertThat(affectedReason).isInstanceOf(PluginDependencyCannotBeLoaded::class.java)
+    affectedReason as PluginDependencyCannotBeLoaded
+    assertThat(affectedReason.dependency.pluginId).isEqualTo(intermediateId)
+    assertThat(affectedReason.shortMessage)
+      .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.failed.to.load.plugin", "Intermediate"))
+    assertThat(intermediateReason).isInstanceOf(PluginDependencyIsDisabled::class.java)
+    intermediateReason as PluginDependencyIsDisabled
+    assertThat(intermediateReason.dependencyId).isEqualTo(rootId)
+    assertThat(intermediateReason.shortMessage)
+      .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", rootId))
+    assertThat(state.pluginLoadingProblemsForNotification).containsExactlyInAnyOrder(
+      CoreBundle.message("plugin.loading.error.long.depends.on.failed.to.load.plugin", "Affected", "Intermediate"),
+      CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "Intermediate", rootId),
+    )
+    assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(rootId to "Root"))
+    assertThat(state.pluginsToDisable).containsExactlyInAnyOrderEntriesOf(mapOf(affectedId to "Affected", intermediateId to "Intermediate"))
   }
 
   @Test
