@@ -252,6 +252,10 @@ internal fun scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(
         }
         // the EDT initializes the LaF first: the application loading waits for it, and no window needs the icon before the first frame
         initLafJob.join()
+        // the rendering keeps its place after the LaF initialization; it draws into plain images, so the EDT only sets them
+        span("window icon rendering") {
+          AppUIUtil.renderAppWindowIconImages()
+        }
         // Early Java2D/SVG icon rendering must not race splash peer creation.
         span("update window icon", RawSwingDispatcher) {
           AppUIUtil.updateAppWindowIcon(JOptionPane.getRootFrame())
