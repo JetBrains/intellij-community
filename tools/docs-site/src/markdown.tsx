@@ -12,6 +12,7 @@ import { isExternalPicture, picturePath } from '../scripts/docAssets.ts'
 import { contentPathOf, repoPathOf, resolveRepoPath, SOURCE_PATH_PATTERN } from '../scripts/sourcePaths.ts'
 import { docAssetUrl } from './docAssets'
 import { decisionRoute, docRoute, explainerRoute, guideRoute, isDecisionPath, normalizeMarkdownAppHref } from './router'
+import { codeSpanTarget } from './codeSpanLink.ts'
 import { site } from './site.ts'
 import { guideSlug } from './siteData.ts'
 import { repoSourceHref, sourceHref } from './sourceRef'
@@ -200,10 +201,14 @@ function transformRendered(html: string, baseDir: string, anchorHref?: AnchorHre
     }
     const text = code.textContent ?? ''
     if (SOURCE_PATH_PATTERN.test(text)) {
-      const [pathPart, fragment] = text.split('#')
-      const { contentRoot } = site().config
-      const repoPath = resolveRepoPath(contentRoot, baseDir, pathPart)
-      const contentPath = contentPathOf(contentRoot, repoPath)
+      const { config, index } = site()
+      const target = codeSpanTarget(text, baseDir, config.contentRoot, index.data.codeSpanPaths?.[baseDir])
+      if (target === null) {
+        // the span names no file of the repository, for example a path inside a jar
+        continue
+      }
+      const { repoPath, contentPath, fragment, label } = target
+      const pathPart = text.split('#')[0]
       const route = contentPath ? routeForPath(contentPath) : null
       if (route) {
         const link = doc.createElement('a')
@@ -217,7 +222,7 @@ function transformRendered(html: string, baseDir: string, anchorHref?: AnchorHre
         }
         else {
           link.className = 'code-link'
-          link.textContent = fragment ? `${repoPath}#${fragment}` : repoPath
+          link.textContent = label
         }
         code.replaceWith(link)
         continue
@@ -230,7 +235,7 @@ function transformRendered(html: string, baseDir: string, anchorHref?: AnchorHre
         const link = doc.createElement('a')
         link.href = href
         link.className = 'code-link'
-        link.textContent = fragment ? `${repoPath}#${fragment}` : repoPath
+        link.textContent = label
         link.title = repoPath
         if (external) {
           link.target = '_blank'

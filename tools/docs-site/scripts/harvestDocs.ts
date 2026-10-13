@@ -9,6 +9,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { checkDecisionRecords } from './adrFiles.ts'
+import { addCodeSpanPaths } from './codeSpans.ts'
 import { type AirDiagram, DIAGRAM_FILE_SUFFIX, type HarvestedDiagram, type HarvestedDiagramNode, type HarvestedDiagramStep } from './diagram.ts'
 import { checkDiagramFiles } from './diagramFiles.ts'
 import { collectPictureReferences } from './docAssets.ts'
@@ -60,6 +61,8 @@ export interface DocHarvest {
   pictures: Set<string>
   /** The hand-laid diagrams, with their references resolved. */
   diagrams: HarvestedDiagram[]
+  /** The code spans of the doc bodies that their folder does not resolve, by doc folder (codeSpans.ts). */
+  codeSpanPaths: Map<string, Map<string, string | null>>
 }
 
 export interface DocHarvestOptions {
@@ -151,6 +154,7 @@ export function harvestDocs(config: SiteConfig, provider: ModelProvider, options
   const docs: HarvestedDoc[] = []
   const bodies = new Map<string, string>()
   const pictures = new Set<string>()
+  const codeSpanPaths = new Map<string, Map<string, string | null>>()
 
   const harvestDoc = (docPath: string, defaultKind: DocKind): void => {
     const absolute = join(content, docPath)
@@ -197,6 +201,7 @@ export function harvestDocs(config: SiteConfig, provider: ModelProvider, options
     docs.push(doc)
     bodies.set(docPath, body)
     collectDocPictures(config, docPath, source, body, pictures, root)
+    addCodeSpanPaths(codeSpanPaths, config.contentRoot, docPath, body, root)
     options.onDoc?.(docPath, source)
   }
 
@@ -238,7 +243,7 @@ export function harvestDocs(config: SiteConfig, provider: ModelProvider, options
   // the prose of the explainers and the diagram cards, shared with the gate and the check script (proseLint.ts).
   // It runs after the diagram references resolved, so a prose finding hides no reference error.
   checkProse(config, root)
-  return { docs, bodies, pictures, diagrams }
+  return { docs, bodies, pictures, diagrams, codeSpanPaths }
 }
 
 /**

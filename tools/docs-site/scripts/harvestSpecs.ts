@@ -7,6 +7,7 @@
 
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join, relative, sep } from 'node:path'
+import { addCodeSpanPaths } from './codeSpans.ts'
 import { collectDocPictures, parseFrontmatter } from './harvestDocs.ts'
 import { contentDir, posixRelative, repoRoot, walkFiles } from './paths.ts'
 import type { SiteConfig } from './siteConfig.ts'
@@ -49,6 +50,8 @@ export interface SpecHarvest {
   bodies: Map<string, string>
   /** The content-relative paths of the pictures that the spec bodies reference. */
   pictures: Set<string>
+  /** The code spans of the spec bodies that their folder does not resolve, by spec folder (codeSpans.ts). */
+  codeSpanPaths: Map<string, Map<string, string | null>>
 }
 
 /** The spec files of the site: the absolute path of each file and the root that holds it, sorted by path. */
@@ -75,6 +78,7 @@ export function harvestSpecs(config: SpecHarvestConfig, root: string = repoRoot)
   const specs: HarvestedSpecFields[] = []
   const bodies = new Map<string, string>()
   const pictures = new Set<string>()
+  const codeSpanPaths = new Map<string, Map<string, string | null>>()
   for (const { file, specRoot } of specFiles(config, root)) {
     const source = readFileSync(file, 'utf8')
     const { meta, body } = parseFrontmatter(source)
@@ -105,6 +109,7 @@ export function harvestSpecs(config: SpecHarvestConfig, root: string = repoRoot)
     })
     bodies.set(path, body)
     collectDocPictures(config, path, source, body, pictures, root)
+    addCodeSpanPaths(codeSpanPaths, config.contentRoot, path, body, root)
   }
-  return { specs, bodies, pictures }
+  return { specs, bodies, pictures, codeSpanPaths }
 }

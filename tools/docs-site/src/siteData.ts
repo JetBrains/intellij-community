@@ -43,6 +43,8 @@ export interface SiteData {
   sources: Readonly<Record<string, () => Promise<unknown>>>
   /** The hashed URLs of the harvested pictures, by content-relative path. */
   assets: Readonly<Record<string, string>>
+  /** The code spans that the doc folder does not resolve, by doc folder (`CodeSpanPaths` of scripts/codeSpans.ts). */
+  codeSpanPaths?: Readonly<Record<string, Readonly<Record<string, string | null>>>>
 }
 
 /**
