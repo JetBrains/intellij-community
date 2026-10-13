@@ -171,6 +171,10 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/searchEverywhere/shared:searchEverywhere",
+        "//platform/searchEverywhere/shared:searchEverywhere_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.searchEverywhere.backend.tests` end

@@ -7,6 +7,7 @@ import com.intellij.ide.rpc.dataContextWithDiagnostics
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -27,7 +28,6 @@ import com.intellij.platform.searchEverywhere.SeTransferEvent
 import com.intellij.platform.searchEverywhere.SeTransferItem
 import com.intellij.platform.searchEverywhere.SeTransferSkippedItem
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
-import com.intellij.platform.searchEverywhere.id
 import com.intellij.platform.searchEverywhere.impl.SeFindToolWindowManager
 import com.intellij.platform.searchEverywhere.impl.SeItemRegistry
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
@@ -45,7 +45,6 @@ import com.intellij.platform.searchEverywhere.utils.SeResultsCountBalancer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
@@ -71,30 +70,28 @@ import java.util.concurrent.ConcurrentHashMap
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class SeBackendService(val project: Project, private val coroutineScope: CoroutineScope) {
-  /**
-   * A cache of providers holders. Could contain outdated sessions, so it is necessary to check [SeItemRegistry.isClosed]
-   */
   private val sessionIdToProviderHolders: ConcurrentHashMap<String, SeProvidersHolder> = ConcurrentHashMap()
 
+  private val sessions = SeBackendSessions { session ->
+    SeItemRegistry.getInstance().closeSession(session)
+    sessionIdToProviderHolders.remove(session.id)?.let(Disposer::dispose)
+  }
+
   private fun getCachedProviderOrNull(session: SeSession): SeProvidersHolder? {
-    if (SeItemRegistry.getInstance().isClosed(session)) return null
+    if (!sessions.isOpen(session)) return null
     return sessionIdToProviderHolders[session.id]
   }
 
   private val mutex: Mutex = Mutex()
 
-  fun openSession(session: SeSession): Flow<Unit> = flow {
-    try {
-      awaitCancellation()
-    }
-    finally {
-      closeSession(session)
-    }
-  }
+  suspend fun closeSession(session: SeSession): Unit = sessions.close(session)
 
-  private fun closeSession(session: SeSession) {
-    SeItemRegistry.getInstance().closeSession(session)
-    sessionIdToProviderHolders.remove(session.id)?.let(Disposer::dispose)
+  /**
+   * Returns the scope of a session of the client of [com.intellij.codeWithMe.ClientId.current].
+   * The scope ends when the client project session ends.
+   */
+  private fun clientScope(): CoroutineScope {
+    return project.currentSessionOrNull?.service<SeClientSessionScope>()?.coroutineScope ?: coroutineScope
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -183,14 +180,16 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     dataContextId: DataContextId?,
   ): SeProvidersHolder? =
     mutex.withLock {
-      val itemRegistry = SeItemRegistry.getInstance()
-      if (itemRegistry.isClosed(session)) return@withLock null
-      sessionIdToProviderHolders[session.id]?.let { return@withLock it }
+      getCachedProviderOrNull(session)?.let { return@withLock it }
+      if (sessions.isClosed(session)) return@withLock null
 
       if (dataContextId == null) {
         SeLog.error("Cannot create providers on the backend: no serialized data context")
         return@withLock null
       }
+
+      // The first call that needs the providers opens the session.
+      if (!sessions.openIfNotClosed(session, clientScope())) return@withLock null
 
       val dataContextResolution = withContext(Dispatchers.EDT) {
         dataContextId.dataContextWithDiagnostics()
@@ -211,8 +210,8 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
       SeLegacyContributorsRegistry.getInstance().register(session, providersHolder.legacyContributors, providersHolder)
 
       // The session can close during the suspensions above.
-      // Only one of closeSession() and this check removes the holder, so only one disposes it.
-      if (itemRegistry.isClosed(session)) {
+      // Only one of the close and this check removes the holder, so only one disposes it.
+      if (!sessions.isOpen(session)) {
         if (sessionIdToProviderHolders.remove(session.id, providersHolder)) {
           Disposer.dispose(providersHolder)
         }

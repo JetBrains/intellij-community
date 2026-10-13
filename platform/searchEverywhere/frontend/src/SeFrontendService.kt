@@ -59,10 +59,10 @@ import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
+import fleet.rpc.client.durable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -73,7 +73,6 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -171,11 +170,8 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     popupInstanceFuture = popupFuture
 
     coroutineScope.launch {
+      // The backend opens its part of the session on the first call that needs the providers.
       val session = SeSessionImpl(UUID.randomUUID().toString())
-      // Start at once, so that the backend gets the session before the other calls for it.
-      val backendSessionJob = launch(start = CoroutineStart.UNDISPATCHED) {
-        keepBackendSessionOpen(session)
-      }
       var sessionProvidersHolder: SeProvidersHolder? = null
       var initFailure: Throwable? = null
 
@@ -278,21 +274,28 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       }
       finally {
         sessionProvidersHolder?.let { Disposer.dispose(it) }
-        backendSessionJob.cancel()
+        closeBackendSession(session)
         SeItemRegistry.getInstance().closeSession(session)
       }
     }
   }
 
-  private suspend fun keepBackendSessionOpen(session: SeSession) {
+  /**
+   * Closes the backend [session] in the service scope, because the popup scope can be cancelled already.
+   * The close also forbids a later open, so a late call does not open the session again.
+   * If the close does not reach the backend, the backend closes the session at the end of the client session.
+   */
+  private fun closeBackendSession(session: SeSession) {
     val project = project ?: return
     val remoteApi = SeRemoteApi.tryGetInstance() ?: return
-    try {
-      remoteApi.openSession(project.projectId(), session).collect()
-    }
-    catch (e: Throwable) {
-      rethrowControlFlowException(e)
-      SeLog.warn("The backend session ended before the popup closed: $e")
+    coroutineScope.launch {
+      try {
+        durable { remoteApi.closeSession(project.projectId(), session) }
+      }
+      catch (e: Throwable) {
+        rethrowControlFlowException(e)
+        SeLog.warn("Cannot close the backend Search Everywhere session: $e")
+      }
     }
   }
 
