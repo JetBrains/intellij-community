@@ -5,20 +5,27 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.trackEachExtensionSafe
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.components.JBBox
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.BorderLayout
 import javax.swing.JComponent
 
@@ -32,6 +39,8 @@ internal class IdeProjectFrameHelper(
   loadingState: FrameLoadingState,
   projectFrameTypeId: String?,
 ) : ProjectFrameHelper(frame, loadingState, projectFrameTypeId) {
+  private val frameLoadingDone: Job = loadingState.done
+
   @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   lateinit var toolWindowPane: ToolWindowPane
     private set
@@ -46,7 +55,16 @@ internal class IdeProjectFrameHelper(
   }
 
   override suspend fun setProject(project: Project) {
-    installNorthComponents(project)
+    if (serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)) {
+      // a welcome-experience frame becomes interactive first: each north component, such as the navigation bar,
+      // builds its panel in EDT events that the tool window initialization would wait for
+      launchAfterFrameLoading(scope = coroutineScope, frameLoadingDone = frameLoadingDone, isProjectOpen = { project.isOpen }) {
+        installNorthComponents(project)
+      }
+    }
+    else {
+      installNorthComponents(project)
+    }
     super.setProject(project)
   }
 
@@ -112,5 +130,25 @@ internal class IdeProjectFrameHelper(
 
   override fun getNorthExtension(key: String): JComponent? {
     return northPanel?.components?.firstOrNull { ClientProperty.isSet(it, EXTENSION_KEY, key) } as? JComponent
+  }
+}
+
+/**
+ * Runs [task] in [scope] once [frameLoadingDone] completes, that is, once the frame is interactive.
+ * When the loading is cancelled and the project is closed, [task] does not run.
+ */
+@VisibleForTesting
+internal fun launchAfterFrameLoading(
+  scope: CoroutineScope,
+  frameLoadingDone: Job,
+  isProjectOpen: () -> Boolean,
+  task: suspend () -> Unit,
+): Job {
+  return scope.launch(CoroutineName("task after frame loading") + ModalityState.any().asContextElement()) {
+    frameLoadingDone.join()
+    if (frameLoadingDone.isCancelled && !isProjectOpen()) {
+      return@launch
+    }
+    task()
   }
 }
