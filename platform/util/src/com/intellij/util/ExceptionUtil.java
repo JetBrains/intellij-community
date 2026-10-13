@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.Function;
@@ -34,10 +35,12 @@ public final class ExceptionUtil {
    * exception within the cycle.
    */
   public static @NotNull Throwable getRootCause(@NotNull Throwable e) {
-    Throwable last = e;
-    for (Throwable cause : ExceptionUtilRt.cycleAwareCauseChain(e)) {
-      last = cause;
+    Throwable last;
+    final Iterator<Throwable> iterator = ExceptionUtilRt.causeChain(e);
+    do {
+      last = iterator.next();
     }
+    while (iterator.hasNext());
     return last;
   }
 
@@ -47,6 +50,11 @@ public final class ExceptionUtil {
 
   public static boolean causedBy(Throwable e, Class<?> klass) {
     return ExceptionUtilRt.causedBy(e, klass);
+  }
+
+  @ApiStatus.Experimental
+  public static Iterator<Throwable> causeChain(@NotNull Throwable e) {
+    return ExceptionUtilRt.causeChain(e);
   }
 
   /**

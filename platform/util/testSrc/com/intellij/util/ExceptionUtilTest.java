@@ -1,11 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.Spliterators;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class ExceptionUtilTest {
 
@@ -17,7 +26,7 @@ public class ExceptionUtilTest {
 
     Assertions
       .assertThat(ContainerUtil.map(ExceptionUtil.findCauseAndSuppressed(exc, Throwable.class), Throwable::getMessage))
-      .containsExactly("exc", "exc-cause", "exc-cause-cause",  "exc-suppressed", "exc-cause-suppressed");
+      .containsExactly("exc", "exc-cause", "exc-cause-cause", "exc-suppressed", "exc-cause-suppressed");
     Assertions
       .assertThat(ContainerUtil.map(ExceptionUtil.findCauseAndSuppressed(exc, IllegalStateException.class), Throwable::getMessage))
       .containsExactly("exc-cause-cause", "exc-cause-suppressed");
@@ -36,7 +45,7 @@ public class ExceptionUtilTest {
 
     Assertions
       .assertThat(ContainerUtil.map(ExceptionUtil.findCauseAndSuppressed(exc, Throwable.class), Throwable::getMessage))
-      .containsExactly("exc", "exc-cause", "exc-cause-cause",  "exc-suppressed", "exc-cause-suppressed");
+      .containsExactly("exc", "exc-cause", "exc-cause-cause", "exc-suppressed", "exc-cause-suppressed");
     Assertions
       .assertThat(ContainerUtil.map(ExceptionUtil.findCauseAndSuppressed(exc, IllegalStateException.class), Throwable::getMessage))
       .containsExactly("exc-cause-cause", "exc-cause-suppressed");
@@ -371,5 +380,76 @@ public class ExceptionUtilTest {
     Assertions
       .assertThat(ContainerUtil.map(ExceptionUtil.findCauseAndSuppressed(outer, Throwable.class), Throwable::getMessage))
       .containsExactly("outer", "middle", "innermost", "outer-suppressed");
+  }
+
+  @Test
+  public void causeChain() {
+    final Exception exception = new Exception("1", new Exception("2", new Exception("3")));
+
+    final Iterator<Throwable> iterator = ExceptionUtilRt.causeChain(exception);
+    Assertions
+      .assertThat(
+        StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false)
+          .map(e -> e.getMessage())
+          .collect(Collectors.joining(", "))
+      )
+      .isEqualTo("1, 2, 3");
+  }
+
+  @Nested
+  public class CauseCycles {
+    private static final int LOOP_LENGTH = 8;
+
+    private static Stream<Integer> loopArguments() {
+      return Stream.iterate(1, i -> i <= LOOP_LENGTH, i -> i + 1);
+    }
+
+    private static Exception makeExceptionWithLoop(final int loopLength) {
+      Exception exception = new Exception("0");
+      final Exception rootCause = exception;
+      for (int i = 1; i <= 8; i++) {
+        exception = new Exception(String.valueOf(i), exception);
+        if (loopLength == i) {
+          rootCause.initCause(exception);
+        }
+      }
+      return exception;
+    }
+
+    @ParameterizedTest
+    @MethodSource("loopArguments")
+    @Timeout(5)
+    public void ExceptionUtil_causeAndSuppressed(final int loopLength) {
+      Assertions
+        .assertThat(
+          ExceptionUtil.causeAndSuppressed(makeExceptionWithLoop(loopLength), Exception.class)
+            .map(e1 -> e1.getMessage())
+            .collect(Collectors.joining(", ")))
+        .isEqualTo("8, 7, 6, 5, 4, 3, 2, 1, 0");
+    }
+
+    @ParameterizedTest
+    @MethodSource("loopArguments")
+    @Timeout(5)
+    public void ExceptionUtil_getRootCause(final int loopLength) {
+      Assertions
+        .assertThat(ExceptionUtil.getRootCause(makeExceptionWithLoop(loopLength)).getMessage())
+        .describedAs("ExceptionUtil.getRootCause")
+        .isEqualTo("0");
+    }
+
+    @ParameterizedTest
+    @MethodSource("loopArguments")
+    @Timeout(5)
+    public void ExceptionUtilRt_causeChain(final int loopLength) {
+      Assertions
+        .assertThat(
+          StreamSupport.stream(Spliterators.spliteratorUnknownSize(ExceptionUtilRt.causeChain(makeExceptionWithLoop(loopLength)), 0), false)
+            .map(e -> e.getMessage())
+            .collect(Collectors.joining(", "))
+        )
+        .describedAs("ExceptionUtilRt.cycleAwareCauseChain")
+        .isEqualTo("8, 7, 6, 5, 4, 3, 2, 1, 0");
+    }
   }
 }

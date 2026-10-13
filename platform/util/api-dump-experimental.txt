@@ -121,6 +121,8 @@ com.intellij.ui.IconManager
 - *:createIconWithOverlay(javax.swing.Icon,javax.swing.Icon):javax.swing.Icon
 f:com.intellij.util.CoroutineScopeKt
 - *sf:cancelOnDispose(kotlinx.coroutines.Job,com.intellij.openapi.Disposable):V
+f:com.intellij.util.ExceptionUtil
+- *s:causeChain(java.lang.Throwable):java.util.Iterator
 *f:com.intellij.util.JavaCoroutines
 - sf:suspendJava(java.util.function.Consumer,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.util.TimeoutUtil
