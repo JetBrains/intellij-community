@@ -21,18 +21,24 @@ class InstanceContainerImpl @VisibleForTesting constructor(
   private val dynamicInstanceSupport: DynamicInstanceSupport?,
   ordered: Boolean,
   private val shouldTolerateIncorrectOverrides: Boolean,
+  private val isKeyClassUnloading: (Class<*>) -> Boolean = { false },
 ) : InstanceContainer, InstanceContainerInternal, MutableInstanceContainer {
 
+  /**
+   * @param isKeyClassUnloading tells whether the class loader of a key class unloads, see [InstanceContainerState.getByClass]
+   */
   constructor(
     scopeHolder: ScopeHolder,
     containerName: String,
     dynamicInstanceSupport: DynamicInstanceSupport?,
     ordered: Boolean,
+    isKeyClassUnloading: (Class<*>) -> Boolean = { false },
   ) : this(scopeHolder, containerName, dynamicInstanceSupport, ordered,
     // Use System.getProperty(), because the Registry is a service, and not available yet.
     // Default is `true` during the migration period, then will be changed to `false`
            shouldTolerateIncorrectOverrides = SystemProperties.getBooleanProperty("intellij.platform.instance.container.tolerate.incorrect.overrides",
-                                                                                  true))
+                                                                                  true),
+           isKeyClassUnloading = isKeyClassUnloading)
 
   override fun toString(): String {
     val state = _state
@@ -103,7 +109,7 @@ class InstanceContainerImpl @VisibleForTesting constructor(
   }
 
   override fun getInstanceHolder(keyClass: Class<*>): InstanceHolder? {
-    return state().getByClass(keyClass)
+    return state().getByClass(keyClass, isKeyClassUnloading)
   }
 
   override fun getInstanceHolder(keyClass: Class<*>, registerDynamic: Boolean): InstanceHolder? {
@@ -112,7 +118,7 @@ class InstanceContainerImpl @VisibleForTesting constructor(
     }
     lateinit var holder: InstanceHolder
     updateState { state: InstanceContainerState ->
-      state.getByClass(keyClass)?.let {
+      state.getByClass(keyClass, isKeyClassUnloading)?.let {
         return it
       }
       val dynamicInstanceInitializer = dynamicInstanceSupport.dynamicInstanceInitializer(instanceClass = keyClass) ?: return null

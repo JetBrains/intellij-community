@@ -28,8 +28,12 @@ internal class InstanceContainerState private constructor(
 
   fun getByName(keyClassName: String): InstanceHolder? = holders[keyClassName]
 
+  /**
+   * @param isKeyClassUnloading tells whether the class loader of a key class unloads.
+   * The state does not cache a missing holder for such a key class, so that the cache does not keep the class.
+   */
   @Suppress("UNCHECKED_CAST")
-  fun getByClass(keyClass: Class<*>): InstanceHolder? {
+  fun getByClass(keyClass: Class<*>, isKeyClassUnloading: (Class<*>) -> Boolean): InstanceHolder? {
     var cache = cacheHandle.getVolatile(this) as PersistentMap<Any, Any>
     while (true) {
       val cached = cache[keyClass]
@@ -38,6 +42,9 @@ internal class InstanceContainerState private constructor(
       }
 
       val holder = getByName(keyClass.name)
+      if (holder == null && isKeyClassUnloading(keyClass)) {
+        return null
+      }
       val newValue = cache.putting(keyClass, notNullizer.notNullize(holder))
       val witness = cacheHandle.compareAndExchange(this, cache, newValue)
       if (witness === cache) {
