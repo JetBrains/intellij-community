@@ -763,6 +763,25 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
   }
 
+  /**
+   * Stops the daemon after a change of the active editors.
+   * In the IDE startup, the editor that gains focus is the first editor itself, while its first pass still runs.
+   * The stop keeps the passes iff the first pass runs with the zero autoreparse delay and every running pass belongs to an editor that stays active.
+   * A cancel of the unfinished first pass would enable the autoreparse delay and postpone the first highlighting (IJPL-258446).
+   */
+  synchronized void stopProcessOnActiveEditorsChange(@NotNull List<? extends Editor> activeEditors) {
+    boolean keepUnfinishedFirstPass = !myAutoReparseDelayEnabled && !myDisposed && !myUpdateProgress.isEmpty() &&
+      ContainerUtil.and(myUpdateProgress.keySet(), fileEditor -> fileEditor instanceof TextEditor textEditor && activeEditors.contains(textEditor.getEditor()));
+    if (!keepUnfinishedFirstPass) {
+      stopProcess(true, "Active editor change");
+      return;
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("stopProcessOnActiveEditorsChange: keeping the unfinished first pass of the still-active editors");
+    }
+    scheduleIfNotRunning();
+  }
+
   synchronized void stopAndRestartMyProcess(@NotNull DaemonProgressIndicator indicator,
                                             @Nullable Throwable cause,
                                             @NotNull @NonNls String reason) {
