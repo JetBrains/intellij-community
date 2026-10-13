@@ -2,6 +2,7 @@
 name: Plugin Operations
 description: Stable behavior for plugin changes started or presented by the Plugins page.
 targets:
+  - ../../src/com/intellij/ide/plugins/PluginLoadingProblemAnalyzer.kt
   - ../../src/com/intellij/ide/plugins/UnifiedPluginsPageApplyState.kt
   - ../../src/com/intellij/ide/plugins/UnifiedPluginsPageSession.kt
   - ../../src/com/intellij/ide/plugins/newui/DefaultUiPluginManagerController.kt
@@ -22,6 +23,8 @@ targets:
   - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginsPageActions.kt
   - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinator.kt
   - ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageApplyStateTest.kt
+  - ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemControllerTest.kt
+  - ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt
   - ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/InstallPluginTerminalStateTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/LegacyPluginUiHostTest.kt
@@ -299,6 +302,29 @@ Untested: No focused test verifies clicks through the complete split frontend im
 Untested: No focused test verifies all product operation hooks on the unified page.
 
 ## Failure and Recovery
+
+- A loading problem must identify the disabled root of a required dependency chain, including intermediate plugins and content modules.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
+    `transitive disabled dependency reports the disabled root`;
+    `several intermediate plugins report one disabled root`;
+    `a required content module reports the transitive disabled root`;
+    `a core content module reports the disabled root instead of IDEA CORE`
+  )
+
+- The page must offer to enable required plugins, including the disabled root, instead of reporting that the intermediate plugin failed.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemControllerTest.kt (
+    `disabled dependency offers an Enable suggestion`;
+    `a transitive disabled dependency offers an Enable suggestion`
+  )
+
+- The page must suppress loading problems for an affected plugin that the user disables in the session.
+- The page must remove the Enable suggestion when the session dependencies resolve.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemControllerTest.kt (
+    `a disabled affected plugin suppresses loading problems`;
+    `a disabled affected plugin suppresses transitive loading problems`;
+    `resolved session dependencies suppress the Enable suggestion`;
+    `resolved transitive session dependencies suppress the Enable suggestion`
+  )
 
 - One failed Update All target must not hide successful target results.
 - A failed physical target must take precedence over a missing target.

@@ -224,7 +224,7 @@ internal object PluginLoadingProblemAnalyzer {
         val excludedRequiredDescriptor = boundaryExclusion[1]
         val rootCauseDescriptor = exclusionChain.last()
         val rootCause = resolvedPluginSet.getExclusionReason(rootCauseDescriptor)!!
-        if (rootCause is PluginIsMarkedDisabled && rootCause.descriptor.pluginId == excludedRequiredDescriptor.pluginId) {
+        if (rootCause is PluginIsMarkedDisabled) {
           registerLoadingError(pluginDependencyIsDisabled(plugin, rootCause.descriptor.pluginId, shouldNotifyUser))
         }
         else {

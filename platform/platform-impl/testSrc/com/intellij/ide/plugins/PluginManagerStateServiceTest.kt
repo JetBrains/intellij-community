@@ -4,10 +4,15 @@ package com.intellij.ide.plugins
 import com.intellij.core.CoreBundle
 import com.intellij.idea.TestFor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.plugins.PluginSpec
+import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.dependencies
 import com.intellij.platform.testFramework.plugins.depends
 import com.intellij.platform.testFramework.plugins.installAt
+import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
@@ -71,7 +76,7 @@ internal class PluginManagerStateServiceTest {
 
   @Test
   @TestFor(issues = ["IJPL-246315", "IDEA-392708"])
-  fun `transitive disabled dependency is reported through the first plugin boundary`() {
+  fun `transitive disabled dependency reports the disabled root`() {
     install(
       plugin("root") { name = "Root" },
       plugin("intermediate") {
@@ -91,18 +96,142 @@ internal class PluginManagerStateServiceTest {
     val affectedReason = state.pluginNonLoadReasons[affectedId]
     val intermediateReason = state.pluginNonLoadReasons[intermediateId]
 
-    assertThat(affectedReason!!.disabledDependencyId).isNull()
+    assertThat(affectedReason!!.disabledDependencyId).isEqualTo(rootId)
     assertThat(intermediateReason!!.disabledDependencyId).isEqualTo(rootId)
     assertThat(affectedReason.shortMessage)
-      .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.failed.to.load.plugin", "Intermediate"))
+      .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", rootId))
     assertThat(intermediateReason.shortMessage)
       .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", rootId))
     assertThat(state.pluginLoadingProblemsForNotification).containsExactlyInAnyOrder(
-      CoreBundle.message("plugin.loading.error.long.depends.on.failed.to.load.plugin", "Affected", "Intermediate"),
+      CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "Affected", rootId),
       CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "Intermediate", rootId),
     )
     assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(rootId to "Root"))
     assertThat(state.pluginsToDisable).containsExactlyInAnyOrderEntriesOf(mapOf(affectedId to "Affected", intermediateId to "Intermediate"))
+
+    val loadedPluginSet = buildPluginSet()
+    val loadedState = publishAndGetState(loadedPluginSet)
+
+    assertThat(loadedPluginSet.enabledPlugins.map { it.pluginId }).contains(rootId, intermediateId, affectedId)
+    assertThat(loadedState.pluginNonLoadReasons).isEmpty()
+    assertThat(loadedState.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(loadedState.pluginsToEnable).isEmpty()
+    assertThat(loadedState.pluginsToDisable).isEmpty()
+  }
+
+  @Test
+  fun `several intermediate plugins report one disabled root`() {
+    install(plugin("root") { name = "Root" })
+    for (index in 0..2) {
+      install(plugin("dependent$index") {
+        name = "Dependent $index"
+        depends(if (index == 0) "root" else "dependent${index - 1}")
+      })
+    }
+
+    val state = publishAndGetState(buildPluginSet(disabledPluginIds = arrayOf("root")))
+    val rootId = PluginId.getId("root")
+
+    assertThat(state.pluginNonLoadReasons).hasSize(3)
+    for (problem in state.pluginNonLoadReasons.values) {
+      assertThat(problem.disabledDependencyId).isEqualTo(rootId)
+      assertThat(problem.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", rootId))
+    }
+    assertThat(state.pluginLoadingProblemsForNotification).containsExactlyInAnyOrderElementsOf(
+      (0..2).map { CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "Dependent $it", rootId) },
+    )
+    assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(rootId to "Root"))
+  }
+
+  @Test
+  fun `a required content module reports the transitive disabled root`() {
+    install(
+      plugin("root") { name = "Root" },
+      plugin("intermediate") {
+        name = "Intermediate"
+        depends("root")
+      },
+      plugin("affected") {
+        name = "Affected"
+        content {
+          module("affected.required", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+            dependencies { plugin("intermediate") }
+          }
+        }
+      },
+    )
+
+    val state = publishAndGetState(buildPluginSet(disabledPluginIds = arrayOf("root")))
+    val rootId = PluginId.getId("root")
+    val reason = state.pluginNonLoadReasons[PluginId.getId("affected")]
+
+    assertThat(reason!!.disabledDependencyId).isEqualTo(rootId)
+    assertThat(reason.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", rootId))
+    assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(rootId to "Root"))
+  }
+
+  @Test
+  @TestFor(issues = ["IJPL-246315"])
+  fun `a core content module reports the disabled root instead of IDEA CORE`() {
+    install(
+      plugin("root") { name = "Root" },
+      plugin(PluginManagerCore.CORE_PLUGIN_ID) {
+        name = "IDEA CORE"
+        content(namespace = "jetbrains") {
+          module("core.bridge") {
+            moduleVisibility = ModuleVisibilityValue.PUBLIC
+            dependencies { plugin("root") }
+          }
+        }
+      },
+      plugin("affected") {
+        name = "Affected"
+        dependencies { module("core.bridge") }
+      },
+    )
+
+    val pluginSet = buildPluginSet(disabledPluginIds = arrayOf("root"))
+    val state = publishAndGetState(pluginSet)
+    val rootId = PluginId.getId("root")
+    val affectedId = PluginId.getId("affected")
+    val reason = state.pluginNonLoadReasons[affectedId]
+
+    assertThat(pluginSet.enabledPlugins.map { it.pluginId }).contains(PluginManagerCore.CORE_ID)
+    assertThat(pluginSet.resolvedPluginSet.getExclusionReason(pluginSet.allPlugins.single { it.pluginId == rootId }))
+      .isInstanceOf(PluginIsMarkedDisabled::class.java)
+    assertThat(state.pluginNonLoadReasons).containsOnlyKeys(affectedId)
+    assertThat(reason!!.disabledDependencyId).isEqualTo(rootId)
+    assertThat(reason.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", rootId))
+    assertThat(state.pluginLoadingProblemsForNotification)
+      .containsExactly(CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "Affected", rootId))
+    assertThat(state.pluginsToEnable).containsExactlyEntriesOf(mapOf(rootId to "Root"))
+    assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(affectedId to "Affected"))
+  }
+
+  @Test
+  fun `a root that is not disabled keeps the failed intermediate explanation`() {
+    install(
+      plugin("root") {
+        name = "Root"
+        depends("missing")
+      },
+      plugin("intermediate") {
+        name = "Intermediate"
+        depends("root")
+      },
+      plugin("affected") {
+        name = "Affected"
+        depends("intermediate")
+      },
+    )
+
+    val state = publishAndGetState(buildPluginSet())
+    val reason = state.pluginNonLoadReasons[PluginId.getId("affected")]
+
+    assertThat(reason!!.disabledDependencyId).isNull()
+    assertThat(reason.shortMessage)
+      .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.failed.to.load.plugin", "Intermediate"))
+    assertThat(state.pluginsToEnable).isEmpty()
   }
 
   @Test

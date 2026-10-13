@@ -51,8 +51,30 @@ internal class PluginLoadingProblemControllerTest {
   }
 
   @Test
-  fun `a disabled affected plugin suppresses loading problems`(): Unit = timeoutRunBlocking {
-    installDisabledDependency()
+  fun `a transitive disabled dependency offers an Enable suggestion`(): Unit = timeoutRunBlocking {
+    installDisabledDependency(transitive = true)
+
+    val result = DefaultUiPluginManagerController.getErrors(session.sessionId, PluginId.getId("affected"))
+
+    assertThat(result.suggestToEnableRequiredPlugins).isTrue()
+    assertThat(result.requiredPluginNames).containsExactly("Root")
+    assertThat(result.loadingError).isNull()
+  }
+
+  @Test
+  fun `a disabled affected plugin suppresses loading problems`(): Unit = checkDisabledAffectedPlugin(transitive = false)
+
+  @Test
+  fun `a disabled affected plugin suppresses transitive loading problems`(): Unit = checkDisabledAffectedPlugin(transitive = true)
+
+  @Test
+  fun `resolved session dependencies suppress the Enable suggestion`(): Unit = checkResolvedSessionDependencies(transitive = false)
+
+  @Test
+  fun `resolved transitive session dependencies suppress the Enable suggestion`(): Unit = checkResolvedSessionDependencies(transitive = true)
+
+  private fun checkDisabledAffectedPlugin(transitive: Boolean): Unit = timeoutRunBlocking {
+    installDisabledDependency(transitive)
     session.pluginStates[PluginId.getId("affected")] = PluginEnabledState.DISABLED
 
     val result = DefaultUiPluginManagerController.getErrors(session.sessionId, PluginId.getId("affected"))
@@ -62,9 +84,8 @@ internal class PluginLoadingProblemControllerTest {
     assertThat(result.loadingError).isNull()
   }
 
-  @Test
-  fun `resolved session dependencies suppress the Enable suggestion`(): Unit = timeoutRunBlocking {
-    installDisabledDependency()
+  private fun checkResolvedSessionDependencies(transitive: Boolean): Unit = timeoutRunBlocking {
+    installDisabledDependency(transitive)
     session.pluginStates[PluginId.getId("root")] = PluginEnabledState.ENABLED
     DefaultUiPluginManagerController.updatePluginDependenciesSync(session.sessionId)
 
@@ -75,11 +96,18 @@ internal class PluginLoadingProblemControllerTest {
     assertThat(result.loadingError).isNull()
   }
 
-  private fun installDisabledDependency() {
+  private fun installDisabledDependency(transitive: Boolean = false) {
     plugin("root") { name = "Root" }.installAt(tempDir)
+    if (transitive) {
+      plugin("intermediate") {
+        name = "Intermediate"
+        depends("root")
+      }.installAt(tempDir)
+      session.pluginStates[PluginId.getId("intermediate")] = PluginEnabledState.ENABLED
+    }
     plugin("affected") {
       name = "Affected"
-      depends("root")
+      depends(if (transitive) "intermediate" else "root")
     }.installAt(tempDir)
     val pluginSet = PluginSetTestBuilder.fromPath(tempDir)
       .withDisabledPlugins("root")
