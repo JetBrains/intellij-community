@@ -8,7 +8,8 @@ use serde::Deserialize;
 use crate::inventory::{Classpath, JarRecord, SourcedFile};
 
 /// One record of `--jars-file` or `--files-file`. A jar record states no `executable`, and a file record states it.
-/// Only a jar record can state `tree`, which names a native tree directory in place of a jar.
+/// Only a jar record can state `tree`, which names a native tree directory in place of a jar. Only a file record can
+/// state `checkSourceMode`, which the rule writes for each file of an unpacked archive.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 struct Record {
@@ -22,6 +23,8 @@ struct Record {
     tree: bool,
     #[serde(default)]
     core_class_path: bool,
+    #[serde(default)]
+    check_source_mode: bool,
 }
 
 fn read_records(file: &str) -> anyhow::Result<Vec<Record>> {
@@ -43,6 +46,9 @@ pub(crate) fn platform_jars(file: &str) -> anyhow::Result<Vec<JarRecord>> {
         }
         if record.tree && record.core_class_path {
             bail!("{file}: record {number} states coreClassPath for a native tree, which is no jar");
+        }
+        if record.check_source_mode {
+            bail!("{file}: record {number} states checkSourceMode, which only a file record can");
         }
         // The destination of the jar, not the name of its file: a platform jar can name a subdirectory of `lib/`. A
         // tree record names the directory of the library below `lib/`, as the Kotlin packer places `lib/jna/`.
@@ -67,7 +73,10 @@ pub(crate) fn platform_jars(file: &str) -> anyhow::Result<Vec<JarRecord>> {
 }
 
 /// The explicit files of `intellij_dev_packed_jars_component`, each at its `relativePath`.
-pub(crate) fn explicit_files(file: &str) -> anyhow::Result<Vec<SourcedFile>> {
+///
+/// `os` is the target OS of the manifest. A record that states `checkSourceMode` gets the mode check of the inventory,
+/// unless the target OS is `windows`: Windows gives a file no executable bit.
+pub(crate) fn explicit_files(file: &str, os: &str) -> anyhow::Result<Vec<SourcedFile>> {
     let records = read_records(file)?;
     let mut files = Vec::with_capacity(records.len());
     for (index, record) in records.into_iter().enumerate() {
@@ -84,6 +93,7 @@ pub(crate) fn explicit_files(file: &str) -> anyhow::Result<Vec<SourcedFile>> {
         distpath::validate_path(&record.relative_path).with_context(|| format!("{file}: record {number}"))?;
         files.push(SourcedFile {
             executable,
+            check_source_mode: record.check_source_mode && os != "windows",
             ..SourcedFile::new(record.source, record.relative_path)
         });
     }

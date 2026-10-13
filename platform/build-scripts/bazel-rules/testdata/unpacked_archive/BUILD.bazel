@@ -1,0 +1,15 @@
+# The fixture of an unpacked archive. It mirrors the BUILD file of a `dev_launch_extracted_repo`: each file is exported
+# by its path below the package, and `files` groups them.
+package(default_visibility = ["//platform/build-scripts/bazel-rules:__pkg__"])
+
+files = glob(
+    ["**"],
+    exclude = ["BUILD.bazel"],
+)
+
+exports_files(files)
+
+filegroup(
+    name = "files",
+    srcs = files,
+)

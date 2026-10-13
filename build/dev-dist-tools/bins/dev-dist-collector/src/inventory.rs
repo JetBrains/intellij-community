@@ -36,6 +36,9 @@ pub(crate) struct SourcedFile {
     /// The mode of the source in its inventory.
     pub(crate) mode: Option<u32>,
     pub(crate) classpath: Classpath,
+    /// The inventory refuses a source with an executable mode bit when the file is not `executable`. A file of an
+    /// unpacked archive sets it, so that a new archive cannot lose the bit of a program unnoticed.
+    pub(crate) check_source_mode: bool,
 }
 
 impl SourcedFile {
@@ -148,6 +151,15 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
                 file.source.display()
             );
         };
+        if file.check_source_mode && !file.executable && filemeta::permissions(&source_metadata) & 0o111 != 0 {
+            bail!(
+                "source of '{}' has an executable mode bit, but the record states no executable bit: {}. \
+                 unpacked_archive_executables must name '{}'",
+                file.relative_path,
+                file.source.display(),
+                file.relative_path
+            );
+        }
         let absolute = paths::absolute_path(&file.source)?;
         let hash = if let Some(&hash) = hashes.get(&absolute) {
             hash

@@ -639,12 +639,56 @@ def _jar_destinations(ctx, records):
             by_source[source.file.path] = entry
     return [by_source[source] for source in sorted(by_source.keys())]
 
+def _names_destination(pattern, destination):
+    """Whether `pattern` names `destination`: the same path, or with a final `/` the directory that holds it directly."""
+    if pattern.endswith("/"):
+        return destination.startswith(pattern) and "/" not in destination[len(pattern):]
+    return pattern == destination
+
+def _place_unpacked_archives(ctx, files, records, destinations, executables):
+    """Places every file of each `unpacked_archives` target at `<directory>/<path in the archive>`.
+
+    The path in the archive is the label name of the file. The BUILD file of a `dev_launch_extracted_repo` exports each
+    file by its path in the root package, so the name is the path below the archive root. A record also states
+    `checkSourceMode`: the collector then refuses a source with an executable bit that the record does not state.
+    """
+    patterns = ctx.attr.unpacked_archive_executables
+    used_patterns = {}
+    for target, directory in ctx.attr.unpacked_archives.items():
+        if not directory or directory.startswith("/") or directory.endswith("/"):
+            fail("%s: %s needs a relative directory without a final '/', not '%s'" % (ctx.label, target.label, directory))
+        for file in target[DefaultInfo].files.to_list():
+            if file.is_directory:
+                fail("%s: %s provides the directory %s; an unpacked archive provides ordinary files" % (ctx.label, target.label, file.path))
+            if not file.is_source:
+                fail("%s: %s provides the generated file %s; an unpacked archive provides source files" % (ctx.label, target.label, file.path))
+            relative_path = directory + "/" + file.owner.name
+            if relative_path in destinations:
+                fail("%s: duplicate destination: %s" % (ctx.label, relative_path))
+            destinations[relative_path] = file
+            matched = [pattern for pattern in patterns if _names_destination(pattern, relative_path)]
+            for pattern in matched:
+                used_patterns[pattern] = True
+            executable = bool(matched)
+            if executable:
+                executables.append(relative_path)
+            files.append(file)
+            records.append({
+                "source": file.path,
+                "relativePath": relative_path,
+                "executable": executable,
+                "checkSourceMode": True,
+            })
+    for pattern in patterns:
+        if pattern not in used_patterns:
+            fail("%s: unpacked_archive_executables names '%s', which matches no file of unpacked_archives" % (ctx.label, pattern))
+
 def _packed_jars_component_impl(ctx):
     if ctx.attr.plugin_classpath_prefix and not ctx.attr.platform_payload:
         fail("%s: plugin_classpath_prefix needs platform_payload" % ctx.label)
     if ctx.attr.platform_payload:
-        if ctx.attr.files or ctx.attr.executable_files:
-            fail("%s: files and executable_files cannot be combined with platform_payload" % ctx.label)
+        if ctx.attr.files or ctx.attr.executable_files or ctx.attr.unpacked_archives:
+            fail("%s: files, executable_files and unpacked_archives cannot be combined with platform_payload" % ctx.label)
         jars = ctx.attr.platform_payload[DevDistPlatformPayloadInfo].packed_jars.to_list()
         records = ctx.attr.platform_payload[DevDistPlatformPayloadInfo].packed_metadata.to_list()
         trees = [record.native_tree for record in records if record.native_tree]
@@ -675,8 +719,10 @@ def _packed_jars_component_impl(ctx):
             main_class = ctx.attr.main_class,
         )
 
-    if not ctx.attr.files and not ctx.attr.executable_files:
-        fail("%s: either platform_payload or nonempty files or executable_files is required" % ctx.label)
+    if not ctx.attr.files and not ctx.attr.executable_files and not ctx.attr.unpacked_archives:
+        fail("%s: either platform_payload or nonempty files, executable_files or unpacked_archives is required" % ctx.label)
+    if ctx.attr.unpacked_archive_executables and not ctx.attr.unpacked_archives:
+        fail("%s: unpacked_archive_executables needs unpacked_archives" % ctx.label)
     files = []
     records = []
     destinations = {}
@@ -697,6 +743,7 @@ def _packed_jars_component_impl(ctx):
                 "relativePath": relative_path,
                 "executable": executable,
             })
+    _place_unpacked_archives(ctx, files, records, destinations, executables)
     metadata = ctx.actions.declare_file(ctx.label.name + ".files.json")
     ctx.actions.write(metadata, json.encode(records))
     args = ctx.actions.args()
@@ -719,6 +766,10 @@ intellij_dev_packed_jars_component = rule(
     lib/<native_lib_dir>/. The manifest marks the jars that the payload puts on the core classpath. Alternatively, set files and executable_files to map distribution paths to source labels,
     so one source can go to several paths; the composer gives a file of executable_files the executable bit. The modes cannot be combined. The action reads
     only these sources and writes one manifest. The composer copies the files directly from their sources.
+
+    The file mode also takes unpacked_archives: each file of an extracted repository goes below one directory, at its
+    path in the archive. unpacked_archive_executables names the destinations that get the executable bit. The collector
+    refuses an archive file with an executable bit that this list does not name, on macOS and Linux.
     """,
     implementation = _packed_jars_component_impl,
     attrs = _COLLECTOR_ATTRS | {
@@ -728,6 +779,15 @@ intellij_dev_packed_jars_component = rule(
         ),
         "files": attr.string_keyed_label_dict(allow_files = True, doc = "Maps each distribution path to its source label. The composer copies the file as is."),
         "executable_files": attr.string_keyed_label_dict(allow_files = True, doc = "Maps each distribution path to its source label. The composer copies the file with the executable bit."),
+        "unpacked_archives": attr.label_keyed_string_dict(
+            allow_files = True,
+            doc = "Maps the `:files` filegroup of a `dev_launch_extracted_repo` to a distribution directory. " +
+                  "Each file goes to `<directory>/<path in the archive>`.",
+        ),
+        "unpacked_archive_executables": attr.string_list(
+            doc = "The destinations of `unpacked_archives` that get the executable bit. A value with a final `/` names " +
+                  "a directory, and the files directly in it are executable. Each value must name a file.",
+        ),
         "plugin_classpath_prefix": attr.label(
             allow_single_file = True,
             doc = "The `plugin-classpath.txt` prefix that `dev_dist_product_descriptor` writes. Only with `platform_payload`.",

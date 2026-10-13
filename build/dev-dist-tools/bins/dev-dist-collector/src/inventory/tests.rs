@@ -283,6 +283,58 @@ fn inventory_rejects_a_link_with_an_executable_override() {
     require_error(inventory(&[file]), "symbolic link has an executable override: bin/current");
 }
 
+/// A file of an unpacked archive keeps no executable bit of its source unnoticed: the record must state the bit.
+#[cfg(unix)]
+#[test]
+fn inventory_refuses_an_executable_source_that_the_record_does_not_mark() {
+    let directory = TempDir::new();
+    let java = directory.join("jbr/bin/java");
+    write_file(&java, "program");
+    testkit::set_mode(&java, 0o755);
+    let unmarked = SourcedFile {
+        check_source_mode: true,
+        ..SourcedFile::new(&java, "jbr/bin/java")
+    };
+    require_error(
+        inventory(&[unmarked]),
+        &format!(
+            "source of 'jbr/bin/java' has an executable mode bit, but the record states no executable bit: {java}. \
+             unpacked_archive_executables must name 'jbr/bin/java'"
+        ),
+    );
+}
+
+/// The mode check passes an executable file, a source without an executable bit, and a file outside an unpacked archive.
+#[cfg(unix)]
+#[test]
+fn inventory_accepts_the_source_mode_that_the_record_states() {
+    let directory = TempDir::new();
+    let java = directory.join("jbr/bin/java");
+    write_file(&java, "program");
+    testkit::set_mode(&java, 0o755);
+    let release = directory.join("jbr/release");
+    write_file(&release, "data");
+    testkit::set_mode(&release, 0o644);
+    let files = [
+        SourcedFile {
+            executable: true,
+            check_source_mode: true,
+            ..SourcedFile::new(&java, "jbr/bin/java")
+        },
+        SourcedFile {
+            check_source_mode: true,
+            ..SourcedFile::new(&release, "jbr/release")
+        },
+        SourcedFile::new(&java, "bin/java-copy"),
+    ];
+    let (entries, _) = inventory(&files).unwrap();
+    let executables: Vec<(&str, bool)> = entries.iter().map(|entry| (entry.relative_path(), entry.executable())).collect();
+    assert_eq!(
+        executables,
+        [("bin/java-copy", false), ("jbr/bin/java", true), ("jbr/release", false)]
+    );
+}
+
 #[test]
 fn inventory_rejects_non_files() {
     let directory = TempDir::new();
