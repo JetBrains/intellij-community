@@ -49,6 +49,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.hideNativeLinuxTitle
@@ -78,7 +79,6 @@ import com.jetbrains.WindowDecorations
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
 import java.awt.Component
@@ -213,6 +213,20 @@ class MainToolbar(
     return InternalUICustomization.runGlobalCGTransformWithInactiveFrameSupport(this, g)
   }
 
+  /**
+   * Waits until the first fill of a header toolbar may run, see `FrameLoadingState.mainMenuFillPermit`.
+   * A welcome-experience frame fills it after its content paints:
+   * the creation and the first update of each widget are EDT events that the tool window initialization would wait for.
+   */
+  internal suspend fun awaitFirstFillPermit() {
+    val permit = ProjectFrameHelper.getFrameHelper(frame)?.mainMenuFillPermit ?: return
+    if (!permit.isCompleted) {
+      span("main toolbar fill: frame content painted waiting") {
+        permit.join()
+      }
+    }
+  }
+
   suspend fun init(customTitleBar: WindowDecorations.CustomTitleBar? = null) {
     val schema = CustomActionsSchema.getInstanceAsync()
     val actionGroups = computeMainActionGroups(schema, projectFrameTypeId = frame.rootPane.getProjectFrameTypeId())
@@ -221,7 +235,7 @@ class MainToolbar(
       CustomizationUtil.createToolbarCustomizationHandler(it, MAIN_TOOLBAR_ID, this, ActionPlaces.MAIN_TOOLBAR)
     }
 
-    val widgets = withContext(Dispatchers.UiWithModelAccess) {
+    val widgets = span("main toolbar widgets creating", Dispatchers.UiWithModelAccess) {
       removeAll()
 
       flavor.addWidget()
@@ -240,7 +254,7 @@ class MainToolbar(
 
     for (widget in widgets) {
       // separate EDT action - avoid long-running update
-      withContext(Dispatchers.UiWithModelAccess) {
+      span("main toolbar widget first update", Dispatchers.UiWithModelAccess) {
         widget.first.updateActions()
       }
     }

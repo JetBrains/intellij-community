@@ -655,6 +655,7 @@ internal interface FrameLoadingState {
    * Completes when the first fill of the main menu may run.
    * The fill of a welcome-experience frame waits until the frame content paints: its EDT part takes the write-intent lock,
    * and the lock waits for the background write actions of the project pre-init while it holds the EDT.
+   * The toolbar of a custom frame header waits for the same permit, see `MainToolbar.awaitFirstFillPermit`.
    */
   val mainMenuFillPermit: Job
 }

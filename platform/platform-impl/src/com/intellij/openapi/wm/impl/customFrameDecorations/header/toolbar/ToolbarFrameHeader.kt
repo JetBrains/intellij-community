@@ -333,6 +333,10 @@ internal class ToolbarFrameHeader(
       toolbarPlaceholder.removeAll()
       MainToolbar(coroutineScope = coroutineScope.childScope("MainToolbar"), frame = frame, isFullScreen = isFullScreen)
     }
+    // a compact header shows its title instead of the toolbar and adds the title after the fill, so it does not wait
+    if (!compactHeader) {
+      newToolbar.awaitFirstFillPermit()
+    }
     newToolbar.init(customTitleBar)
 
     withContext(Dispatchers.EDT) {
