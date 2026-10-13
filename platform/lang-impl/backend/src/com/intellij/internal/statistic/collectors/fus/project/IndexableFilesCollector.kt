@@ -14,8 +14,8 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
-import kotlin.coroutines.coroutineContext
 
 internal class IndexableFilesCollector : ProjectUsagesCollector() {
   private val GROUP = EventLogGroup("project.indexable.files", 4)
@@ -26,7 +26,7 @@ internal class IndexableFilesCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   override suspend fun collect(project: Project): Set<MetricEvent> {
-    val context = coroutineContext
+    val context = currentCoroutineContext()
 
     var allIndexableFiles = 0
     var inContentIndexableFiles = 0
