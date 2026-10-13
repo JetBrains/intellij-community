@@ -1,33 +1,14 @@
 // The metadata of a bundled doc: the ADR status, date and topic, the guide group, and the note state (ADR 0199).
-// Shared by scripts/harvest.ts (node) and the site (browser), so it stays plain TypeScript with no import.
+// Shared by scripts/harvestDocs.ts (node) and the site (browser), so it imports nothing from node. The topics and the
+// guide groups come from the site config (siteConfig.ts).
 
-/** The topics of a decision record, in the order of the Decisions page filter. */
-export const ADR_TOPICS = [
-  { id: 'sessions', label: 'Sessions' },
-  { id: 'acp', label: 'ACP and agents' },
-  { id: 'launch', label: 'Launch and composer' },
-  { id: 'ide-ui', label: 'Frames and tool windows' },
-  { id: 'cloud', label: 'Cloud runs' },
-  { id: 'genui-mcp', label: 'GenUI and MCP' },
-  { id: 'platform', label: 'Platform and modules' },
-  { id: 'testing', label: 'Tests and UI lanes' },
-  { id: 'docs-site', label: 'Docs site' },
-] as const
+import type { LabeledId } from './siteConfig.ts'
 
-export type AdrTopic = typeof ADR_TOPICS[number]['id']
+/** A topic id of the site config (`decisions.topics`). */
+export type AdrTopic = string
 
-/** The topic that the Decisions page hides until the reader asks for it. */
-export const HIDDEN_ADR_TOPIC: AdrTopic = 'docs-site'
-
-/** The groups of the Guides page, in page order. */
-export const GUIDE_GROUPS = [
-  { id: 'sessions', label: 'Sessions and agents' },
-  { id: 'acp', label: 'ACP protocol' },
-  { id: 'testing', label: 'Testing and release' },
-  { id: 'docs', label: 'Docs and specs' },
-] as const
-
-export type GuideGroup = typeof GUIDE_GROUPS[number]['id']
+/** A guide group id of the site config (`guideGroups`). */
+export type GuideGroup = string
 
 export const NOTE_STATES = ['active', 'historical'] as const
 
@@ -45,7 +26,7 @@ export type AdrStatus = typeof ADR_STATUSES[number]['id']
 export interface AdrMeta {
   /**
    * The four-digit number from the file name of a record before 2026-10-12, for example `0197`, or null for a
-   * record that the date and the slug name (`2026-10-12-<slug>.md`, scripts/adrFiles.ts).
+   * record that the date and the slug name (`2026-10-12-<slug>.md`, adrFiles.ts).
    */
   number: string | null
   status: AdrStatus
@@ -54,7 +35,7 @@ export interface AdrMeta {
   /** The `Date:` line, which a dated record also carries in its file name, or null when a numbered record has none. */
   date: string | null
   topic: AdrTopic
-  /** The plugins/air-relative path of the record that supersedes this one, or null. */
+  /** The content-root-relative path of the record that supersedes this one, or null. */
   supersededBy: string | null
 }
 
@@ -76,12 +57,9 @@ export function adrNumberedTitle(meta: AdrMeta, title: string): string {
   return meta.number === null ? title : `${Number(meta.number)}. ${title}`
 }
 
-export function isAdrTopic(value: string): value is AdrTopic {
-  return ADR_TOPICS.some(topic => topic.id === value)
-}
-
-export function isGuideGroup(value: string): value is GuideGroup {
-  return GUIDE_GROUPS.some(group => group.id === value)
+/** True when `value` is the id of one entry of `entries`: a topic or a guide group of the site config. */
+export function isLabeledId(entries: readonly LabeledId[], value: string): boolean {
+  return entries.some(entry => entry.id === value)
 }
 
 export function isNoteState(value: string): value is NoteState {
@@ -138,11 +116,12 @@ export function adrStatusSummary(statusText: string): string {
 
 /**
  * The metadata of the decision record at `path` (`docs/decisions/<file>.md`). Throws with the path when the
- * file name has neither a number nor a date, or the record has no known status or no known topic, so the harvest
- * fails on a malformed record.
+ * file name has neither a number nor a date, or the record has no known status or no topic of `topics`, so the
+ * harvest fails on a malformed record. `topics` is `decisions.topics` of the site config.
  */
-export function parseAdrMeta(path: string, body: string, topic: string | undefined): AdrMeta {
-  const fileName = path.slice(path.lastIndexOf('/') + 1)
+export function parseAdrMeta(path: string, body: string, topic: string | undefined, topics: readonly LabeledId[]): AdrMeta {
+  const folder = path.slice(0, path.lastIndexOf('/') + 1)
+  const fileName = path.slice(folder.length)
   const prefix = /^(\d{4}-\d{2}-\d{2}|\d{4})-/.exec(fileName)?.[1]
   if (prefix === undefined) {
     throw new Error(`harvest: ${path}: a decision record file name starts with a date, YYYY-MM-DD-, or with the four-digit number of a record before 2026-10-12`)
@@ -156,8 +135,8 @@ export function parseAdrMeta(path: string, body: string, topic: string | undefin
   if (status === null) {
     throw new Error(`harvest: ${path}: the status "${statusText.slice(0, 60)}" names no known status`)
   }
-  if (topic === undefined || !isAdrTopic(topic)) {
-    throw new Error(`harvest: ${path}: frontmatter "topic:" is missing or unknown; use one of ${ADR_TOPICS.map(t => t.id).join(', ')}`)
+  if (topic === undefined || !isLabeledId(topics, topic)) {
+    throw new Error(`harvest: ${path}: frontmatter "topic:" is missing or unknown; use one of ${topics.map(t => t.id).join(', ')}`)
   }
   const superseding = status === 'superseded' || status === 'partly-superseded' ? adrSupersededBy(statusText) : null
   return {
@@ -166,6 +145,6 @@ export function parseAdrMeta(path: string, body: string, topic: string | undefin
     statusText: adrStatusSummary(statusText),
     date: /^Date:\s*(\d{4}-\d{2}-\d{2})/m.exec(body)?.[1] ?? (number === null ? prefix : null),
     topic,
-    supersededBy: superseding === null ? null : `docs/decisions/${superseding}`,
+    supersededBy: superseding === null ? null : `${folder}${superseding}`,
   }
 }

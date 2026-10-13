@@ -1,20 +1,18 @@
-// Source-path helpers that the Air harvest (node) and the Air site (browser) share. All paths POSIX.
+// Source-path helpers that the harvest (node) and the site (browser) share. All paths POSIX.
 //
-// Two path spaces exist: most references stay inside plugins/air ("air-relative", the form
-// stored in arch-data.json), but spec [@test] targets may climb out to other repo parts
-// (community/platform, ...). Resolution therefore happens in repo-root space; `airPathOf`
-// recovers the air-relative form when a repo path is inside the plugin.
-
-export const AIR_PREFIX = 'plugins/air/'
+// Two path spaces exist: most references stay inside the content root of the site ("content-relative", the form
+// stored in the harvested data; `contentRoot` of the site config, `plugins/air` for Air), but spec [@test] targets
+// may climb out to other repo parts (community/platform, ...). Resolution therefore happens in repo-root space;
+// `contentPathOf` recovers the content-relative form when a repo path is inside the content root.
 
 /**
- * Resolves `relativePath` against an air-relative `baseDir`, returning a repo-root-relative
- * path (`plugins/air/<module>/...` or `community/...`). `..` clamps at the repo root; both observed
+ * Resolves `relativePath` against a content-relative `baseDir`, returning a repo-root-relative
+ * path (`plugins/air/<module>/...` or `community/...` for Air). `..` clamps at the repo root; both observed
  * spec spellings (`../../<module>/…` and `../../../../plugins/air/<module>/…`) normalize to
  * the same result.
  */
-export function resolveRepoPath(baseDir: string, relativePath: string): string {
-  const parts = ['plugins', 'air', ...(baseDir === '' ? [] : baseDir.split('/'))]
+export function resolveRepoPath(contentRoot: string, baseDir: string, relativePath: string): string {
+  const parts = [...contentRoot.split('/').filter(part => part !== '' && part !== '.'), ...(baseDir === '' ? [] : baseDir.split('/'))]
   for (const segment of relativePath.split('/')) {
     if (segment === '..') {
       parts.pop()
@@ -26,9 +24,10 @@ export function resolveRepoPath(baseDir: string, relativePath: string): string {
   return parts.join('/')
 }
 
-/** plugins/air-relative form of a repo-root-relative path, or null when outside the plugin. */
-export function airPathOf(repoPath: string): string | null {
-  return repoPath.startsWith(AIR_PREFIX) ? repoPath.slice(AIR_PREFIX.length) : null
+/** The content-relative form of a repo-root-relative path, or null when the path is outside the content root. */
+export function contentPathOf(contentRoot: string, repoPath: string): string | null {
+  const prefix = contentRoot === '' || contentRoot === '.' ? '' : `${contentRoot}/`
+  return repoPath.startsWith(prefix) ? repoPath.slice(prefix.length) : null
 }
 
 const EXTENSION_LANGS: Record<string, string> = {

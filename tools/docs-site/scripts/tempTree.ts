@@ -1,6 +1,6 @@
 // A temporary file tree for a script test, removed after each test.
 //
-// A check over the repository (adrFiles.ts of the Air site, scripts/proseLint.ts) takes a root. A test builds a small tree
+// A check over the repository (scripts/adrFiles.ts, scripts/proseLint.ts) takes a root. A test builds a small tree
 // under the temporary directory of the OS, runs the check against it, and the `afterEach` hook removes the tree.
 
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'

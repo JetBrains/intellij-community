@@ -1,8 +1,8 @@
 // The shape of an explainer (ADR 0203): a markdown doc under docs/explainers/ whose `##` headings are
-// the chapters, each with at most one ```air-diagram fence. Shared by scripts/harvest.ts (node) and
+// the chapters, each with at most one diagram fence. Shared by scripts/harvestDocs.ts (node) and
 // the site (browser), so this file imports nothing from node.
 
-import { findAirDiagramFences, parseAirDiagramFence } from './diagram.ts'
+import { findDiagramFences, parseDiagramFence } from './diagram.ts'
 
 export interface ExplainerChapter {
   /** The route segment: the slug of the heading. */
@@ -71,21 +71,21 @@ export function splitExplainerChapters(body: string, path: string): ExplainerPar
     }
     seen.add(id)
     const source = section.lines.join('\n')
-    const fences = findAirDiagramFences(source)
+    const fences = findDiagramFences(source)
     if (fences.length > 1) {
-      throw new Error(`${path}: chapter '${section.title}' has ${fences.length} air-diagram fences; one at most`)
+      throw new Error(`${path}: chapter '${section.title}' has ${fences.length} diagram fences; one at most`)
     }
     let diagram: string | null = null
     let step: number | null = null
     if (fences.length === 1) {
-      const { spec, errors } = parseAirDiagramFence(fences[0].body)
+      const { spec, errors } = parseDiagramFence(fences[0].body)
       if (spec === null) {
         throw new Error(`${path}: chapter '${section.title}': ${errors.join('; ')}`)
       }
       diagram = spec.id
       step = spec.step
     }
-    const markdown = source.replace(/^```air-diagram[ \t]*\n[\s\S]*?^```[ \t]*$\n?/gm, '').trim()
+    const markdown = source.replace(/^```(?:air-)?diagram[ \t]*\n[\s\S]*?^```[ \t]*$\n?/gm, '').trim()
     return { id, title: section.title, markdown, diagram, step }
   })
   // the frontmatter title is the page title, so the H1 of the body stays out of the intro

@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { adrDisplayTitle, adrLabel, type AdrMeta, adrNumberedTitle, adrOrderKey, adrStatus, adrStatusText, adrSupersededBy, parseAdrMeta } from './docMeta.ts'
 
+const TOPICS = [{ id: 'docs-site', label: 'Docs site' }]
+
 describe('decision record metadata', () => {
   it('drops the number prefix of every title style', () => {
     assert.equal(adrDisplayTitle('197. A session is state'), 'A session is state')
@@ -34,7 +36,7 @@ describe('decision record metadata', () => {
 
   it('fails on a record with no known status or topic', () => {
     const body = '# 9. T\n\nDate: 2026-07-01\n\n## Status\n\nAccepted.\n'
-    assert.deepStrictEqual(parseAdrMeta('docs/decisions/0009-t.md', body, 'docs-site'), {
+    assert.deepStrictEqual(parseAdrMeta('docs/decisions/0009-t.md', body, 'docs-site', TOPICS), {
       number: '0009',
       status: 'accepted',
       statusText: 'Accepted.',
@@ -42,15 +44,15 @@ describe('decision record metadata', () => {
       topic: 'docs-site',
       supersededBy: null,
     })
-    assert.throws(() => parseAdrMeta('docs/decisions/0009-t.md', body, undefined), /topic/)
-    assert.throws(() => parseAdrMeta('docs/decisions/0009-t.md', body, 'misc'), /topic/)
-    assert.throws(() => parseAdrMeta('docs/decisions/0009-t.md', '# 9. T\n', 'docs-site'), /Status/)
-    assert.throws(() => parseAdrMeta('docs/decisions/t.md', body, 'docs-site'), /YYYY-MM-DD/)
+    assert.throws(() => parseAdrMeta('docs/decisions/0009-t.md', body, undefined, TOPICS), /topic/)
+    assert.throws(() => parseAdrMeta('docs/decisions/0009-t.md', body, 'misc', TOPICS), /topic/)
+    assert.throws(() => parseAdrMeta('docs/decisions/0009-t.md', '# 9. T\n', 'docs-site', TOPICS), /Status/)
+    assert.throws(() => parseAdrMeta('docs/decisions/t.md', body, 'docs-site', TOPICS), /YYYY-MM-DD/)
   })
 
   it('reads a dated record: no number, and the date from the file name', () => {
     const body = '# T\n\n## Status\n\nSuperseded by [the next](2026-11-01-next.md).\n'
-    assert.deepStrictEqual(parseAdrMeta('docs/decisions/2026-10-12-t.md', body, 'docs-site'), {
+    assert.deepStrictEqual(parseAdrMeta('docs/decisions/2026-10-12-t.md', body, 'docs-site', TOPICS), {
       number: null,
       status: 'superseded',
       statusText: 'Superseded by the next.',

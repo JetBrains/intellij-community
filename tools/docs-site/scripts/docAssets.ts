@@ -1,13 +1,13 @@
 // Picture references in a bundled markdown body. The harvest copies each referenced picture under
-// generated/assets/<plugins/air-relative path>, and the site maps it to a hashed URL (src/docAssets.ts).
-// Shared by scripts/harvest.ts (node) and src/markdown.tsx (browser), so it stays plain TypeScript.
+// generated/assets/<content-relative path>, and the site maps it to a hashed URL (src/docAssets.ts of Air).
+// Shared by scripts/harvestDocs.ts (node) and the markdown renderer of a site (browser), so it stays plain TypeScript.
 
-import { airPathOf, resolveRepoPath } from './sourcePaths.ts'
+import { contentPathOf, resolveRepoPath } from './sourcePaths.ts'
 
 export interface PictureReference {
   /** The picture source as the markdown writes it. */
   source: string
-  /** The plugins/air-relative path of the picture, or null when the source leaves plugins/air. */
+  /** The content-relative path of the picture, or null when the source leaves the content root. */
   path: string | null
   /** The picture title, which the site shows as the caption, or null. */
   title: string | null
@@ -25,8 +25,8 @@ export function isExternalPicture(source: string): boolean {
   return /^(?:[a-z][a-z\d+.-]*:|\/\/)/i.test(source)
 }
 
-/** The plugins/air-relative path of a local picture source, resolved from `baseDir`; null when it leaves plugins/air. */
-export function picturePath(baseDir: string, source: string): string | null {
+/** The content-relative path of a local picture source, resolved from `baseDir`; null when it leaves `contentRoot`. */
+export function picturePath(contentRoot: string, baseDir: string, source: string): string | null {
   if (source.startsWith('/')) {
     return null
   }
@@ -37,7 +37,7 @@ export function picturePath(baseDir: string, source: string): string | null {
   catch {
     return null
   }
-  return airPathOf(resolveRepoPath(baseDir, decoded))
+  return contentPathOf(contentRoot, resolveRepoPath(contentRoot, baseDir, decoded))
 }
 
 /** The lines of a markdown body with each fenced block and each code span removed; the line numbers stay. */
@@ -61,9 +61,9 @@ function linesWithoutCode(body: string): string[] {
 
 /**
  * The local pictures that a markdown body references as `![alt](source "title")`, resolved from the
- * plugins/air-relative `baseDir` of the body. A URL source is skipped, and code is never read.
+ * content-relative `baseDir` of the body. A URL source is skipped, and code is never read.
  */
-export function collectPictureReferences(body: string, baseDir: string): PictureReference[] {
+export function collectPictureReferences(contentRoot: string, body: string, baseDir: string): PictureReference[] {
   const references: PictureReference[] = []
   for (const [index, line] of linesWithoutCode(body).entries()) {
     for (const match of line.matchAll(PICTURE)) {
@@ -73,7 +73,7 @@ export function collectPictureReferences(body: string, baseDir: string): Picture
       }
       references.push({
         source,
-        path: picturePath(baseDir, source),
+        path: picturePath(contentRoot, baseDir, source),
         title: match[2] === undefined ? null : match[2].slice(1, -1),
         line: index + 1,
       })

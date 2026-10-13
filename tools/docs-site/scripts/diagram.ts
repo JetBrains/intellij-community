@@ -2,29 +2,14 @@
 // and rows, and declares the edges and the numbered steps. Nothing is auto-laid: the renderer only
 // converts the grid to pixels (src/graph/diagramLayout.ts).
 //
-// The Air site shares it among scripts/diagramFiles.ts (node: reads the YAML files), scripts/harvest.ts
-// (node: resolves the references), and src/markdown.tsx (browser: parses the ```air-diagram fence), so
-// this file imports nothing from node.
+// The kernel shares it among scripts/diagramFiles.ts (node: reads the YAML files), scripts/harvestDocs.ts (node:
+// resolves the references), and the markdown renderer of a site (browser: parses the ```diagram fence), so this file
+// imports nothing from node. The node kinds and the planned values come from the site config (siteConfig.ts).
 
 import { fenceEntries } from './fence.ts'
 
-export const DIAGRAM_NODE_KINDS = [
-  'service',
-  'state',
-  'reducer',
-  'store',
-  'rpc',
-  'reaction',
-  'surface',
-  'writer',
-  'action',
-  'log',
-  'actor',
-  'module',
-  'target',
-] as const
-
-export type DiagramNodeKind = typeof DIAGRAM_NODE_KINDS[number]
+/** A node kind of the site config (`diagram.kinds`). */
+export type DiagramNodeKind = string
 
 export const DIAGRAM_SIDES = ['top', 'right', 'bottom', 'left'] as const
 
@@ -35,10 +20,17 @@ export const DIAGRAM_COLORS = ['indigo', 'sky', 'blue', 'green', 'amber', 'red',
 
 export type DiagramColor = typeof DIAGRAM_COLORS[number]
 
-/** The phase that builds a planned part. `open` names a part that waits for a decision. */
-export const DIAGRAM_PLANNED = ['phase-1', 'phase-2', 'phase-4', 'open'] as const
+/** A planned value of the site config (`diagram.planned`): the phase that builds a planned part, or an open decision. */
+export type DiagramPlanned = string
 
-export type DiagramPlanned = typeof DIAGRAM_PLANNED[number]
+/** The node kinds and the planned values that a site accepts (`diagramGrammar` of siteConfig.ts). */
+export interface DiagramGrammar {
+  kinds: readonly string[]
+  planned: readonly string[]
+}
+
+/** A Bazel label: an optional repository, a package path, and an optional target name. */
+const BAZEL_LABEL = /^(@[a-z_]+)?\/\/[^:]*(:[A-Za-z0-9_.+-]+)?$/
 
 /** The limits that keep a diagram readable. The review checklist of ADR 0203 names the rest. */
 export const DIAGRAM_LIMITS = {
@@ -93,9 +85,11 @@ export interface DiagramNode {
   span: number
   /** A Kotlin type that the harvest resolves to a declaration. */
   symbol: string | null
-  /** A plugins/air path, for a node whose code is not a type. */
+  /** A path under the content root of the site, for a node whose code is not a type. */
   source: string | null
   line: number | null
+  /** A Bazel label, for a node that is a build target. The key is absent when the node names no target. */
+  target?: string
   module: string | null
   spec: string | null
   adr: string | null
@@ -148,9 +142,11 @@ export interface HarvestedDiagramNode extends DiagramNode {
   symbolRef: { file: string, line: number } | null
   /** The `source` file with its `line`, or null. */
   sourceRef: { file: string, line: number } | null
+  /** The `BUILD.bazel` line of `target`. The key is absent when the node names no target. */
+  targetRef?: { file: string, line: number }
   /** The title of the ADR, when `adr` is set. */
   adrTitle: string | null
-  /** The path of the ADR under plugins/air, when `adr` is set. */
+  /** The path of the ADR under the content root, when `adr` is set. */
   adrPath: string | null
 }
 
@@ -332,9 +328,10 @@ export function edgeId(from: string, to: string): string {
 
 /**
  * Validates a parsed YAML document and gives the typed diagram. Throws one error that lists every
- * finding, prefixed with the diagram id. `id` is the file name without `.diagram.yaml`.
+ * finding, prefixed with the diagram id. `id` is the file name without `.diagram.yaml`. `grammar` holds the
+ * node kinds and the planned values of the site.
  */
-export function validateDiagram(raw: unknown, id: string): AirDiagram {
+export function validateDiagram(raw: unknown, id: string, grammar: DiagramGrammar): AirDiagram {
   const errors = new Errors(id)
   if (!isRecord(raw)) {
     errors.add('the file must hold one mapping')
@@ -445,7 +442,11 @@ export function validateDiagram(raw: unknown, id: string): AirDiagram {
     if (line !== null && source === null) {
       errors.add(`${where}: 'line' needs 'source'`)
     }
-    const kind = readOneOf(entry, 'kind', DIAGRAM_NODE_KINDS, errors, where)
+    const target = readString(entry, 'target', errors, where)
+    if (target !== null && !BAZEL_LABEL.test(target)) {
+      errors.add(`${where}: 'target' must be a Bazel label such as //pkg:name, got '${target}'`)
+    }
+    const kind = readOneOf(entry, 'kind', grammar.kinds, errors, where)
     if (kind === null && entry.kind === undefined) {
       errors.add(`${where}: 'kind' is required`)
     }
@@ -469,18 +470,19 @@ export function validateDiagram(raw: unknown, id: string): AirDiagram {
       id: nodeId,
       title: requireString(entry, 'title', errors, where, DIAGRAM_LIMITS.nodeTitleLength),
       text: readString(entry, 'text', errors, where, DIAGRAM_LIMITS.nodeTextLength),
-      kind: kind ?? 'service',
+      kind: kind ?? '',
       col: at?.col ?? '',
       row: at?.row ?? 1,
       span,
       symbol: readString(entry, 'symbol', errors, where),
       source,
       line,
+      ...(target === null ? {} : { target }),
       module: readString(entry, 'module', errors, where),
       spec: readString(entry, 'spec', errors, where),
       adr: readString(entry, 'adr', errors, where),
       concept: readString(entry, 'concept', errors, where),
-      planned: readOneOf(entry, 'planned', DIAGRAM_PLANNED, errors, where),
+      planned: readOneOf(entry, 'planned', grammar.planned, errors, where),
       dashed: readBoolean(entry, 'dashed', errors, where),
       detail: readString(entry, 'detail', errors, where),
     })
@@ -600,8 +602,8 @@ export interface AirDiagramFenceParseResult {
   errors: string[]
 }
 
-/** Parses the body of a ```air-diagram fence: line-based `key: value`, like the air-view fence. */
-export function parseAirDiagramFence(text: string): AirDiagramFenceParseResult {
+/** Parses the body of a ```diagram fence: line-based `key: value`, like the air-view fence. */
+export function parseDiagramFence(text: string): AirDiagramFenceParseResult {
   const errors: string[] = []
   let id: string | null = null
   let step: number | null = null
@@ -650,10 +652,13 @@ export function parseAirDiagramFence(text: string): AirDiagramFenceParseResult {
   return { spec: id === null ? null : { id, step, height, title }, errors }
 }
 
-/** The ```air-diagram fences of a markdown source, with the 1-based line of each opening fence. */
-export function findAirDiagramFences(source: string): { line: number, body: string }[] {
+/**
+ * The diagram fences of a markdown source, with the 1-based line of each opening fence. `diagram` is the kernel name
+ * of the fence. The Air docs use the older name `air-diagram`, and the kernel accepts it too.
+ */
+export function findDiagramFences(source: string): { line: number, body: string }[] {
   const fences: { line: number, body: string }[] = []
-  for (const fence of source.matchAll(/^```air-diagram[ \t]*\n([\s\S]*?)^```[ \t]*$/gm)) {
+  for (const fence of source.matchAll(/^```(?:air-)?diagram[ \t]*\n([\s\S]*?)^```[ \t]*$/gm)) {
     fences.push({ line: source.slice(0, fence.index).split('\n').length, body: fence[1] })
   }
   return fences

@@ -1,35 +1,34 @@
-// The prose gate of the Air explainers and of the diagram cards (the readable-docs guide).
+// The prose gate of the explainers and of the diagram cards of a site (the readable-docs guide of Air).
 //
 // An explainer and a card describe the shape of today for a reader at the whiteboard. The gate checks the four
-// rules of that text that a machine can decide: a sentence over 25 words, a history mark (an issue id, a round,
-// a commit hash), a card over the hard cap of ADR 0204, and a count that rots. The other lenses of the guide need
-// a reviewer.
+// rules of that text that a machine can decide: a long sentence, a history mark (an issue id, a round, a commit
+// hash), a card over the hard cap of ADR 0204, and a count that rots. The other lenses of the guide need a reviewer.
+// The limits and the history marks come from `prose` of the site config.
 //
-// The gate reads the prose of `docs/explainers/*.md` and the `summary`, `text`, `detail`, and `caption` fields of
-// `docs/diagrams/*.diagram.yaml`. It does not read the frontmatter, a fenced block, a table row, or a heading. A
-// code span counts as one word.
+// The gate reads the prose of the explainers (`docs.explainers`) and the `summary`, `text`, `detail`, and `caption`
+// fields of the diagrams (`docs.diagrams`). It does not read the frontmatter, a fenced block, a table row, or a
+// heading. A code span counts as one word.
 //
-// The check is one owner for three callers: `pnpm run check`, scripts/gate.ts (the JUnit gate, on bun), and the
-// harvest. It throws with every finding. Each caller gives the root of the docs, for Air `plugins/air`.
+// The check is one owner for three callers: the `check` script of a site, the gate of a site (the Air JUnit gate
+// runs on bun), and the harvest. It throws with every finding.
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { withoutFencedBlocks } from './fence.ts'
+import { contentDir, isMainModule, repoRoot, runCheck } from './paths.ts'
+import type { SiteConfig } from './siteConfig.ts'
 import { parseYaml } from './yamlCompat.ts'
 
-export const EXPLAINERS_DIR = 'docs/explainers'
-export const PROSE_DIAGRAMS_DIR = 'docs/diagrams'
+/** The part of the site config that the check reads. */
+export type ProseConfig = Pick<SiteConfig, 'contentRoot' | 'docs' | 'prose'>
 
-/** The most words in one sentence. */
-export const MAX_SENTENCE_WORDS = 25
-/** The most words in one card (`detail:`), the hard cap of ADR 0204. */
-export const MAX_CARD_WORDS = 150
+/** The limits of the check: `prose` of the site config. */
+export type ProseLimits = SiteConfig['prose']
 
 export type ProseRule = 'sentence-length' | 'history' | 'card-length' | 'rotting-count'
 
 export interface ProseFinding {
-  /** The file, relative to plugins/air. */
+  /** The file, relative to the content root. */
   path: string
   /** The 1-based line, or null when the YAML parser of the runtime gives no positions. */
   line: number | null
@@ -46,8 +45,14 @@ export function formatProseFinding(finding: ProseFinding): string {
   return `${finding.path}${line}${field}: ${finding.rule}: ${finding.excerpt}`
 }
 
-/** An issue id, a round, a "Since IJAI" with no number, and a bare commit hash. */
-const HISTORY = /\bIJAI-\d+\b|\b[Rr]ound \d+\b|\bSince IJAI\b(?!-\d)|\b[0-9a-f]{13}\b/g
+/** The history marks of a site that names none: a round and a bare commit hash. */
+const DEFAULT_HISTORY = /\b[Rr]ound \d+\b|\b[0-9a-f]{13}\b/g
+
+/** The history pattern of `limits` with the global flag, which `matchAll` needs. */
+function historyPattern(limits: ProseLimits): RegExp {
+  const pattern = limits.historyPattern ?? DEFAULT_HISTORY
+  return pattern.global ? pattern : new RegExp(pattern.source, `${pattern.flags}g`)
+}
 /** A count of parts that rots. A number that names a schema, a version, a phase, or an ADR is no count. */
 const ROTTING_COUNT = /(?<!\b(?:[Ss]chema|[Vv]ersion|[Pp]hase|ADR) )\b\d+ (?:actions|event types|values|reactions|lines|files)\b/
 const CODE_SPAN = /(`+)([\s\S]*?[^`])\1(?!`)/g
@@ -130,14 +135,15 @@ function excerptOf(sentence: string): string {
 }
 
 /** The findings of one block of prose: a paragraph, a list item, or a YAML field. */
-function checkBlock(block: LinedText, report: (line: number, rule: ProseRule, excerpt: string) => void): void {
+function checkBlock(block: LinedText, limits: ProseLimits, report: (line: number, rule: ProseRule, excerpt: string) => void): void {
   const prose = normalize(block)
+  const history = historyPattern(limits)
   for (const sentence of splitSentences(prose)) {
     const words = countWords(sentence.text)
-    if (words > MAX_SENTENCE_WORDS) {
+    if (words > limits.maxSentenceWords) {
       report(sentence.line, 'sentence-length', `${words} words: "${excerptOf(sentence.text)}"`)
     }
-    const marks = [...new Set(Array.from(sentence.text.matchAll(HISTORY), match => `"${match[0]}"`))]
+    const marks = [...new Set(Array.from(sentence.text.matchAll(history), match => `"${match[0]}"`))]
     if (marks.length > 0) {
       report(sentence.line, 'history', `${marks.join(', ')} in "${excerptOf(sentence.text)}"`)
     }
@@ -193,10 +199,10 @@ export function explainerBlocks(source: string): LinedText[] {
 }
 
 /** The findings of one explainer. */
-export function checkExplainerProse(path: string, source: string): ProseFinding[] {
+export function checkExplainerProse(path: string, source: string, limits: ProseLimits): ProseFinding[] {
   const findings: ProseFinding[] = []
   for (const block of explainerBlocks(source)) {
-    checkBlock(block, (line, rule, excerpt) => findings.push({ path, line, field: null, rule, excerpt }))
+    checkBlock(block, limits, (line, rule, excerpt) => findings.push({ path, line, field: null, rule, excerpt }))
   }
   return findings
 }
@@ -271,7 +277,7 @@ export function diagramFields(source: string): DiagramField[] {
 }
 
 /** The findings of one diagram file. */
-export function checkDiagramProse(path: string, source: string): ProseFinding[] {
+export function checkDiagramProse(path: string, source: string, limits: ProseLimits): ProseFinding[] {
   const findings: ProseFinding[] = []
   for (const field of diagramFields(source)) {
     const line = field.line
@@ -286,13 +292,13 @@ export function checkDiagramProse(path: string, source: string): ProseFinding[] 
         current++
       }
     }
-    checkBlock({ text, lines }, (sentenceLine, rule, excerpt) => {
+    checkBlock({ text, lines }, limits, (sentenceLine, rule, excerpt) => {
       findings.push({ path, line: line === null ? null : sentenceLine, field: field.label, rule, excerpt })
     })
     if (field.path.at(-1) === 'detail') {
       const words = countWords(normalize({ text, lines }).text)
-      if (words > MAX_CARD_WORDS) {
-        findings.push({ path, line, field: field.label, rule: 'card-length', excerpt: `${words} words, the cap is ${MAX_CARD_WORDS}` })
+      if (words > limits.maxCardWords) {
+        findings.push({ path, line, field: field.label, rule: 'card-length', excerpt: `${words} words, the cap is ${limits.maxCardWords}` })
       }
     }
   }
@@ -303,43 +309,36 @@ function markdownFiles(dir: string, suffix: string): string[] {
   return existsSync(dir) ? readdirSync(dir).filter(entry => entry.endsWith(suffix)).sort() : []
 }
 
-/** Every finding of the explainers and the diagram cards under `root` (for Air, plugins/air). */
-export function readProseFindings(root: string): { files: number, findings: ProseFinding[] } {
+/** Every finding of the explainers and the diagram cards of the site. */
+export function readProseFindings(config: ProseConfig, root: string = repoRoot): { files: number, findings: ProseFinding[] } {
+  const content = contentDir(config, root)
+  const { explainers: explainersDir, diagrams: diagramsDir } = config.docs
   const findings: ProseFinding[] = []
-  const explainers = markdownFiles(join(root, EXPLAINERS_DIR), '.md')
+  const explainers = markdownFiles(join(content, explainersDir), '.md')
   for (const entry of explainers) {
-    const path = `${EXPLAINERS_DIR}/${entry}`
-    findings.push(...checkExplainerProse(path, readFileSync(join(root, path), 'utf8')))
+    const path = `${explainersDir}/${entry}`
+    findings.push(...checkExplainerProse(path, readFileSync(join(content, path), 'utf8'), config.prose))
   }
-  const diagrams = markdownFiles(join(root, PROSE_DIAGRAMS_DIR), '.diagram.yaml')
+  const diagrams = markdownFiles(join(content, diagramsDir), '.diagram.yaml')
   for (const entry of diagrams) {
-    const path = `${PROSE_DIAGRAMS_DIR}/${entry}`
-    findings.push(...checkDiagramProse(path, readFileSync(join(root, path), 'utf8')))
+    const path = `${diagramsDir}/${entry}`
+    findings.push(...checkDiagramProse(path, readFileSync(join(content, path), 'utf8'), config.prose))
   }
   return { files: explainers.length + diagrams.length, findings }
 }
 
 /** Reads the explainers and the diagram cards. Throws with every finding. Returns the number of files read. */
-export function checkProse(root: string): number {
-  const { files, findings } = readProseFindings(root)
+export function checkProse(config: ProseConfig, root: string = repoRoot): number {
+  const { files, findings } = readProseFindings(config, root)
   if (findings.length > 0) {
-    throw new Error(`prose: ${findings.length} finding(s); see plugins/air/docs/guides/readable-docs-guide.md\n${findings.map(formatProseFinding).join('\n')}`)
+    const guide = config.prose.guide === null ? '' : `; see ${config.prose.guide}`
+    throw new Error(`prose: ${findings.length} finding(s)${guide}\n${findings.map(formatProseFinding).join('\n')}`)
   }
   return files
 }
 
-// --- CLI (`pnpm run check`): the argument is the root of the docs --------------------------------------
+// --- CLI: `node proseLint.ts <site.config.ts>` -----------------------------------------------------
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  try {
-    const root = process.argv[2]
-    if (root === undefined) {
-      throw new Error('usage: node proseLint.ts ROOT, where ROOT is the root of the docs')
-    }
-    console.log(`prose: ok (${checkProse(resolve(root))} files)`)
-  }
-  catch (error) {
-    console.error(error instanceof Error ? error.message : String(error))
-    process.exitCode = 1
-  }
+if (isMainModule(import.meta.url)) {
+  await runCheck('prose', config => `${checkProse(config)} files`)
 }

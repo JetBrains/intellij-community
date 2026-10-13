@@ -2,17 +2,18 @@
 // as the `dark` class on <html> (shadcn convention) so CSS tokens and React Flow's colorMode
 // stay in sync. index.html carries an inline copy of this logic so the first paint has the
 // right class before this module loads — keep the storage key and resolution in sync with it.
+// The site gives the storage key (`themeStorageKey` of the site config) to initTheme before it renders.
 
 import { useEffect, useState } from 'react'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type ResolvedTheme = 'light' | 'dark'
 
-const STORAGE_KEY = 'air-docs-theme'
+let storageKey: string | null = null
 const media = window.matchMedia('(prefers-color-scheme: dark)')
 
 function storedMode(): ThemeMode {
-  const value = localStorage.getItem(STORAGE_KEY)
+  const value = storageKey === null ? null : localStorage.getItem(storageKey)
   return value === 'light' || value === 'dark' ? value : 'system'
 }
 
@@ -24,7 +25,11 @@ function apply(mode: ThemeMode): void {
   document.documentElement.classList.toggle('dark', resolveTheme(mode) === 'dark')
 }
 
-apply(storedMode())
+/** Sets the localStorage key of the theme mode and applies the stored mode. A site calls it once, before it renders. */
+export function initTheme(key: string): void {
+  storageKey = key
+  apply(storedMode())
+}
 
 /**
  * The currently applied theme, tracked via the `dark` class — usable from components
@@ -60,11 +65,13 @@ export function useTheme(): { mode: ThemeMode, resolved: ResolvedTheme, set: (mo
   }, [mode])
 
   const set = (next: ThemeMode) => {
-    if (next === 'system') {
-      localStorage.removeItem(STORAGE_KEY)
-    }
-    else {
-      localStorage.setItem(STORAGE_KEY, next)
+    if (storageKey !== null) {
+      if (next === 'system') {
+        localStorage.removeItem(storageKey)
+      }
+      else {
+        localStorage.setItem(storageKey, next)
+      }
     }
     setMode(next)
   }

@@ -20,12 +20,29 @@ first build of a site.
 
 ## Contents
 
-- `scripts/`: the node and bun side. The hand-laid diagram grammar (`diagram.ts`), the fence helpers (`fence.ts`),
-  the explainer chapters, the decision record metadata, the prose check, the doc pictures, the source paths, and
-  the test helpers.
+- `scripts/`: the node and bun side. The site config (`siteConfig.ts`), the model provider (`modelProvider.ts`), the
+  hand-laid diagram grammar (`diagram.ts`), the fence helpers (`fence.ts`), the explainer chapters, the decision
+  record metadata, the decision check (`adrFiles.ts`), the diagram check (`diagramFiles.ts`), the prose check, the
+  doc harvest (`harvestDocs.ts`), the doc pictures, the source paths, the repository paths (`paths.ts`), and the test
+  helpers.
 - `src/`: the browser side. The diagram layout, the diagram card, the shared node chrome, the diagram edges, and
   the theme state.
 - `styles/`: the Tailwind entry and the site styles. A site imports them.
+
+## Site config
+
+Each site has a `site.config.ts` with a default export of the `SiteConfig` shape (`scripts/siteConfig.ts`). It gives
+the paths of the site, the decision folders, the decision topics, the guide groups, the diagram node kinds, and the
+prose limits. The kernel checks and the doc harvest read only this config, and a site gives its model to the harvest
+as a `ModelProvider`.
+
+Each check has a CLI that takes the config of the site:
+
+```sh
+node ../../../community/tools/docs-site/scripts/diagramFiles.ts site.config.ts
+node ../../../community/tools/docs-site/scripts/adrFiles.ts site.config.ts
+node ../../../community/tools/docs-site/scripts/proseLint.ts site.config.ts
+```
 
 ## Import convention
 
