@@ -1,6 +1,5 @@
 package com.intellij.polySymbols.testFramework
 
-import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2
@@ -39,8 +38,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.search.SearchScope
-import com.intellij.refactoring.rename.RenameProcessor
-import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -109,6 +106,14 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
   }
 
   protected open fun waitForAsyncOperationsToCompleteAfterEdit() {
+
+  }
+
+  /**
+   * Runs in [doSymbolRenameTest] after the caret move and before the rename.
+   * The usage search of the rename can need the result of a background task. A subclass can wait for that task here.
+   */
+  protected open fun beforeSymbolRename() {
 
   }
 
@@ -866,6 +871,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
       configureCodeStyleSettings = configureCodeStyleSettings,
     ) {
       signature?.let { moveToOffsetBySignature(it) }
+      beforeSymbolRename()
       renameSymbolAtCaret(newName, searchCommentsAndText)
     }
   }
