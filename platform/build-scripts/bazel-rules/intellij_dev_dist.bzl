@@ -152,9 +152,9 @@ IntellijDevFragmentInfo = provider(
 DevDistPlacementInfo = provider(
     doc = """Where a component places its files in a home, known at analysis.
 
-    A launcher that starts `java` directly links its home from these paths in its runfiles tree, because Bazel writes a
-    runfiles tree only from paths that analysis knows. Every destination is in slash form, relative to the home. The
-    composer checks the placement against the component manifest, see `placement.rs` of the composer.""",
+    A launch target links its home from these paths in its runfiles tree, because Bazel writes a runfiles tree only
+    from paths that analysis knows. Every destination is in slash form, relative to the home. The composer checks the
+    placement against the component manifest, see `placement.rs` of the composer.""",
     fields = {
         "files": "Dictionary from a file destination to its `File`.",
         "trees": "Dictionary from a directory destination to a directory `File` that holds every entry below it at the same relative path.",

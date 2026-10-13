@@ -4,7 +4,7 @@ The twin of `build/dev_run_configuration_test.bzl` of the ultimate checkout. `de
 at load time on a row of a product that the generated plan does not serve. A Starlark test cannot catch a `fail()`, so
 the check has one test: every community product passes it. The golden lists below are the platform components that
 each community distribution composes. A change in the component layout has to change this file too. The last two
-tests pin the production place of `product-info.json`, which the platform resources and the `java` launcher read, and
+tests pin the production place of `product-info.json`, which the platform resources and the native launcher read, and
 the home prefix of a distribution.
 """
 

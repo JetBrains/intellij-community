@@ -2,7 +2,6 @@
 
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load("@dev_launch_paths//:paths.bzl", "HOME", "OUTPUT_BASE", "WORKSPACE_ROOT")
-load("@intellij_add_opens//:intellij_add_opens.bzl", "INTELLIJ_ADD_OPENS")
 load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "IntellijDevDistInfo", "dist_home_path")
 
 # Names the prepared distribution for its consumer: the prebuilt dev-build runner of IDE Starter in a test, and
@@ -45,7 +44,7 @@ DEFAULT_JVM_FLAGS = [
 # defaults.
 _DATA_PROPERTIES = ["idea.config.path", "idea.system.path", "idea.log.path"]
 
-# The workspace root in the flags of a `java` launcher. `$$` is a literal `$`, so the rule gets
+# The workspace root in the flags of a launch target. `$$` is a literal `$`, so the rule gets
 # `${BUILD_WORKSPACE_DIRECTORY}` and resolves it at analysis.
 _LAUNCHER_WORKSPACE = "$${BUILD_WORKSPACE_DIRECTORY}"
 
@@ -55,7 +54,7 @@ def dev_launch_jvm_flags(name, jvm_flags = [], workspace = _LAUNCHER_WORKSPACE):
     The data directories are below `out/dev-data/<name>`: `config`, `system`, `system/log` and `config/plugins`. On
     macOS `out/dev-data` is a link to a directory outside the workspace. `jvm_flags` must not state a data directory.
 
-    `workspace` spells the workspace root. A `java` launcher keeps the default, which its rule resolves at analysis.
+    `workspace` spells the workspace root. A launch target keeps the default, which its rule resolves at analysis.
     The sibling vmoptions file of an export passes the absolute root, because no rule expands its lines. So a launch
     target and a bare start of an export get the same flags.
     """
@@ -86,8 +85,8 @@ def export_vm_options(name, runtime_module_repository):
 
     The lines are `dev_launch_jvm_flags` over `out/dev-data/<name>`, with absolute paths. With
     `runtime_module_repository`, the last line names `modules/module-descriptors.dat` of the home of the export as the
-    runtime module repository, as the argument file writer does. Pass it only when the export has that file and its
-    `product-info.json` does not state the property.
+    runtime module repository, as the vmoptions file of a launch target does. Pass it only when the export has that
+    file and its `product-info.json` does not state the property.
     """
     lines = dev_launch_jvm_flags(name, workspace = WORKSPACE_ROOT)
     if runtime_module_repository:
@@ -98,15 +97,15 @@ def export_vm_options(name, runtime_module_repository):
 # directory, or its `home_prefix` child as in the export: `ide_home/Contents` on macOS.
 _LAUNCH_HOME = "ide_home"
 
-# The variables that a flag of a launch target can name. Neither `java` nor the native launcher expands them, so the
-# rule resolves them at analysis.
+# The variables that a flag of a launch target can name. The native launcher does not expand them, so the rule resolves
+# them at analysis.
 _LAUNCH_VARIABLES = {
     "BUILD_WORKSPACE_DIRECTORY": WORKSPACE_ROOT,
     "HOME": HOME,
 }
 
-# The flag that makes the argument file writer select the custom command of the first program argument. The native
-# launcher selects the command from that argument itself, so its vmoptions file leaves the flag out.
+# The flag that makes `DevMainKt` and `PreBuiltDevMain` select the custom command of the first program argument. The
+# native launcher selects the command from that argument itself, so the vmoptions file of a target leaves the flag out.
 _CUSTOM_COMMAND_FLAG = "-Didea.dev.mode.custom.command=true"
 
 def _resolve_variables(label, flag):
@@ -138,12 +137,6 @@ def _cmd_argument(label, argument):
     if '"' in argument or argument.endswith("\\") or "\n" in argument or "\r" in argument:
         fail("%s: the program argument %s cannot be one argument of a `.cmd` file" % (label, repr(argument)))
     return '"%s"' % argument.replace("%", "%%")
-
-def _java_file(ctx, java_runtime):
-    for file in java_runtime.files.to_list():
-        if file.path == java_runtime.java_executable_exec_path:
-            return file
-    fail("%s: the Java runtime has no file %s" % (ctx.label, java_runtime.java_executable_exec_path))
 
 def _runfiles_home(ctx, placement, dist):
     """The entries of the runfiles home: a dictionary from a destination to its `File`."""
@@ -177,10 +170,10 @@ def _runfiles_home_root(dist):
         return _LAUNCH_HOME + "/" + dist.home_prefix
     return _LAUNCH_HOME
 
-def _home_root_symlinks(ctx, placement, dist):
-    """The `root_symlinks` of the runfiles home below `ide_home`."""
+def _home_root_symlinks(dist, home):
+    """The `root_symlinks` of the runfiles home below `ide_home`. `home` is the dictionary of `_runfiles_home`."""
     root = _runfiles_home_root(dist)
-    return {root + "/" + destination: file for destination, file in _runfiles_home(ctx, placement, dist).items()}
+    return {root + "/" + destination: file for destination, file in home.items()}
 
 def _target_os(ctx):
     """The OS token of the target platform, as `platform_parts` spells it: `darwin`, `linux` or `windows`."""
@@ -201,76 +194,6 @@ def _merge_data(ctx, runfiles):
         runfiles = runfiles.merge(ctx.runfiles(transitive_files = target[DefaultInfo].files)).merge(target[DefaultInfo].default_runfiles)
     return runfiles
 
-def _java_launch(ctx, dist, placement, vm_options, product_info, java_runtime, flags, program_args):
-    """The `java` launch of Linux: a link to `java`, which reads `@<name>.jvm.args`."""
-    executable = ctx.actions.declare_file(ctx.label.name)
-    runfiles_directory = _execroot_path(ctx, executable.path) + ".runfiles"
-    home_path = runfiles_directory + "/" + _runfiles_home_root(dist)
-
-    flags_file = ctx.actions.declare_file(ctx.label.name + ".jvm-flags.txt")
-    ctx.actions.write(flags_file, "".join([flag + "\n" for flag in flags]))
-
-    argfile = ctx.actions.declare_file(ctx.label.name + ".jvm.args")
-    arguments = ctx.actions.args()
-    arguments.add("jvm-args")
-    arguments.add(dist.ide_config, format = "--ide-config=%s")
-    arguments.add(home_path, format = "--home=%s")
-    arguments.add(placement.files["bin/idea.properties"], format = "--idea-properties=%s")
-    arguments.add(placement.files[vm_options], format = "--vm-options=%s")
-    arguments.add(vm_options, format = "--vm-options-destination=%s")
-    arguments.add(placement.files[product_info], format = "--product-info=%s")
-    arguments.add(dist.core_classpath, format = "--core-classpath=%s")
-    arguments.add(flags_file, format = "--flags-file=%s")
-    arguments.add_all(program_args, format_each = "--program-arg=%s")
-    if _RUNTIME_MODULE_REPOSITORY_FILE in placement.files:
-        arguments.add("--runtime-module-repository")
-    arguments.add(argfile, format = "--output=%s")
-    ctx.actions.run(
-        executable = ctx.executable._launch_args_tool,
-        arguments = [arguments],
-        inputs = [
-            dist.ide_config,
-            placement.files["bin/idea.properties"],
-            placement.files[vm_options],
-            placement.files[product_info],
-            dist.core_classpath,
-            flags_file,
-        ],
-        outputs = [argfile],
-        # The file holds absolute local paths, so no shared cache may keep it.
-        execution_requirements = {"no-remote-cache": "1", "no-remote-exec": "1"},
-        mnemonic = "DevLaunchJvmArgs",
-        progress_message = "Writing the JVM arguments of %{label}",
-    )
-
-    ctx.actions.symlink(output = executable, target_file = _java_file(ctx, java_runtime), is_executable = True)
-    runfiles = _merge_data(ctx, ctx.runfiles(
-        files = [executable],
-        transitive_files = java_runtime.files,
-        symlinks = {ctx.label.name + ".jvm.args": argfile},
-        root_symlinks = _home_root_symlinks(ctx, placement, dist),
-    ))
-
-    # The java stub of rules_java gives these two to the IDE.
-    environment = dict(ctx.attr.env)
-    environment.update({"JAVA_RUNFILES": runfiles_directory, "RUNFILES_DIR": runfiles_directory})
-
-    # The run handler of the devkit Bazel plugin reads this file. It starts `java` with the debug options before the
-    # argument file.
-    launch = ctx.actions.declare_file(ctx.label.name + ".launch.json")
-    ctx.actions.write(launch, json.encode_indent({
-        "version": 2,
-        "java": _execroot_path(ctx, java_runtime.java_executable_exec_path),
-        "argfile": "%s/%s/%s.jvm.args" % (runfiles_directory, ctx.workspace_name, ctx.label.name),
-        "runfilesDirectory": runfiles_directory,
-        "workingDirectory": "%s/%s" % (runfiles_directory, ctx.workspace_name),
-        "env": environment,
-    }) + "\n")
-    return [
-        DefaultInfo(executable = executable, files = depset([executable, argfile, launch]), runfiles = runfiles),
-        RunEnvironmentInfo(environment = environment),
-    ]
-
 def _vm_options_lines(ctx, placement, home_path, flags):
     """The lines of `<name>.vmoptions`, the user vmoptions file of the native launcher.
 
@@ -289,8 +212,34 @@ def _vm_options_lines(ctx, placement, home_path, flags):
             fail("%s: the JVM flag %s cannot be one line of a vmoptions file" % (ctx.label, repr(line)))
     return lines
 
+def _sh_stub(launch_environment, launcher_path, program_args, launcher_source):
+    """The text of the `sh` stub of macOS and Linux.
+
+    With `launcher_source`, the absolute path of the launcher file that Bazel builds, the stub first makes the launcher
+    of the home a real file with the same bytes. Linux passes it.
+    """
+    lines = ["#!/bin/sh"] + ["export %s=%s" % (name, shell.quote(value)) for name, value in launch_environment.items()]
+    launcher = shell.quote(launcher_path)
+    if launcher_source:
+        lines.extend([
+            "# The launcher reads its path from /proc/self/exe, which resolves every link. So the launcher of the home",
+            "# must be a real file. Bazel restores the link when the runfiles manifest changes. Then this step copies",
+            "# the file again. IJPL-258306 removes this step.",
+            "launcher=" + launcher,
+            "source=" + shell.quote(launcher_source),
+            'if [ -L "$launcher" ] || ! cmp -s "$source" "$launcher" 2>/dev/null; then',
+            '  cp "$source" "$launcher.tmp.$$" && chmod 755 "$launcher.tmp.$$" && mv -f "$launcher.tmp.$$" "$launcher" || {',
+            '    rm -f "$launcher.tmp.$$"',
+            "    exit 1",
+            "  }",
+            "fi",
+        ])
+        launcher = '"$launcher"'
+    lines.append("exec " + " ".join([launcher] + [shell.quote(argument) for argument in program_args] + ['"$@"']))
+    return "".join([line + "\n" for line in lines])
+
 def _native_launch(ctx, os, dist, placement, java_runtime, flags, program_args):
-    """The launch of macOS and Windows: a stub that starts the production native launcher of the home.
+    """The launch of a target: a stub that starts the production native launcher of the home.
 
     The launcher reads `<name>.vmoptions` through `<ENV>_VM_OPTIONS` and starts the runtime of `<ENV>_JDK`.
     """
@@ -308,9 +257,13 @@ def _native_launch(ctx, os, dist, placement, java_runtime, flags, program_args):
         if not ctx.attr.export:
             fail("%s: a launch target on Windows needs `export`, the self-contained distribution of the row" % ctx.label)
         export = ctx.attr.export[IntellijDevDistInfo]
+        home = None
         home_path = _execroot_path(ctx, dist_home_path(export))
     else:
         export = None
+
+        # One call declares each executable copy once. The root symlinks and the Linux stub share the result.
+        home = _runfiles_home(ctx, placement, dist)
         home_path = runfiles_directory + "/" + _runfiles_home_root(dist)
     launcher_path = home_path + "/" + launcher
 
@@ -318,16 +271,16 @@ def _native_launch(ctx, os, dist, placement, java_runtime, flags, program_args):
     ctx.actions.write(vm_options_file, "".join([line + "\n" for line in _vm_options_lines(ctx, placement, home_path, flags)]))
     vm_options_path = _execroot_path(ctx, vm_options_file.path)
 
-    if windows:
-        jdk_path = _execroot_path(ctx, java_runtime.java_home)
-        jdk_files = []
-    else:
+    if os == "darwin":
         # The launcher appends `Contents/Home` to a runtime on macOS, and the runtime of the toolchain is flat. So
         # `<name>.jdk/Contents/Home` is a link to the runtime.
         jdk_link = ctx.actions.declare_symlink(ctx.label.name + ".jdk/Contents/Home")
         ctx.actions.symlink(output = jdk_link, target_path = _execroot_path(ctx, java_runtime.java_home))
         jdk_path = _execroot_path(ctx, executable.path) + ".jdk"
         jdk_files = [jdk_link]
+    else:
+        jdk_path = _execroot_path(ctx, java_runtime.java_home)
+        jdk_files = []
     launch_environment = {
         ctx.attr.env_var_base_name + "_VM_OPTIONS": vm_options_path,
         ctx.attr.env_var_base_name + "_JDK": jdk_path,
@@ -349,17 +302,12 @@ def _native_launch(ctx, os, dist, placement, java_runtime, flags, program_args):
         # `bazel run` starts the stub in `<name>.cmd.runfiles`.
         working_directory = runfiles_directory
     else:
-        ctx.actions.write(
-            executable,
-            "#!/bin/sh\n" +
-            "".join(["export %s=%s\n" % (name, shell.quote(value)) for name, value in launch_environment.items()]) +
-            "exec %s\n" % " ".join([shell.quote(launcher_path)] + [shell.quote(argument) for argument in program_args] + ['"$@"']),
-            is_executable = True,
-        )
+        launcher_source = _execroot_path(ctx, home[launcher].path) if os == "linux" else None
+        ctx.actions.write(executable, _sh_stub(launch_environment, launcher_path, program_args, launcher_source), is_executable = True)
         runfiles = ctx.runfiles(
             files = [executable, vm_options_file] + jdk_files,
             transitive_files = java_runtime.files,
-            root_symlinks = _home_root_symlinks(ctx, placement, dist),
+            root_symlinks = _home_root_symlinks(dist, home),
         )
         environment = dict(ctx.attr.env)
         environment.update({"JAVA_RUNFILES": runfiles_directory, "RUNFILES_DIR": runfiles_directory})
@@ -411,41 +359,38 @@ def _intellij_dev_java_launcher_impl(ctx):
         for argument in ctx.attr.program_args
     ]
 
-    java_runtime = ctx.toolchains["@bazel_tools//tools/jdk:runtime_toolchain_type"].java_runtime
-    if os == "linux":
-        add_opens = ["--add-opens=%s=ALL-UNNAMED" % package for package in ctx.attr.add_opens]
-        return _java_launch(ctx, dist, placement, vm_options, product_info, java_runtime, flags + add_opens, program_args)
-
     # The native launcher applies the `--add-opens` lines of `additionalJvmArguments`. The product files action renders
     # them for the target OS, as production does, so the vmoptions file of the row has none.
+    java_runtime = ctx.toolchains["@bazel_tools//tools/jdk:runtime_toolchain_type"].java_runtime
     return _native_launch(ctx, os, dist, placement, java_runtime, flags, program_args)
 
 intellij_dev_java_launcher = rule(
     doc = """Starts a composed dev distribution, `bazel run //<package>:<name>`.
 
-On macOS and Windows the executable is a stub that starts the production native launcher of the home. The stub sets
-`<ENV>_VM_OPTIONS` to `<name>.vmoptions` and `<ENV>_JDK` to the Java runtime. Then it runs the launcher with the
-program arguments of the row and its own arguments. `<name>.vmoptions` holds the JVM flags of the row, one per line.
-The launcher reads it after the vmoptions file of the distribution and before `additionalJvmArguments` of
-`product-info.json`. The launcher takes the `--add-opens` lines of that list, which the product files action renders
-for the target OS. So the file has no `add_opens` line. The launcher selects a custom command from the first program
-argument. On macOS the stub is an `sh` file
-and the home is `<name>.runfiles/ide_home/Contents`, as the home of the export is `Contents`. The launcher keeps the
-path of the link, so it finds `ide_home/Contents/Resources/product-info.json`. `<ENV>_JDK` names `<name>.jdk`, whose
-`Contents/Home` links to the flat runtime. Windows builds no runfiles tree, so the stub is `<name>.cmd` and the home
-is the home of `export`. The stub runs the console launcher, so `bazel run` keeps a console.
+The executable is a stub that starts the production native launcher of the home. The stub sets `<ENV>_VM_OPTIONS` to
+`<name>.vmoptions` and `<ENV>_JDK` to the Java runtime. Then it runs the launcher with the program arguments of the row
+and its own arguments. `<name>.vmoptions` holds the JVM flags of the row, one per line. The launcher reads it after the
+vmoptions file of the distribution and before `additionalJvmArguments` of `product-info.json`. The launcher takes the
+`--add-opens` lines of that list, which the product files action renders for the target OS. So the file has no
+`--add-opens` line. The launcher selects a custom command from the first program argument.
 
-On Linux the launcher finds no home through a link (IJPL-258306). So the executable is a link to the `java` of the
-Java runtime. Its `args` are `@<name>.jvm.args`, the argument file that `dev-launch-args jvm-args` writes at build time.
-The file holds the `add_opens` lines and ends with the main class and the program arguments of the row. A caller adds
-JVM flags through `JDK_JAVA_OPTIONS`.
+On macOS the stub is an `sh` file, and the home is `<name>.runfiles/ide_home/Contents`, as the home of the export is
+`Contents`. The launcher keeps the path of the link, so it finds `ide_home/Contents/Resources/product-info.json`.
+`<ENV>_JDK` names `<name>.jdk`, whose `Contents/Home` links to the flat runtime.
 
-`bazel run //<package>:<name> -- <argument>` adds a program argument after the ones of the row. No process runs
-before the native launcher or `java`, and a launch writes no file. `bazel run` starts the executable in
-`<name>.runfiles/_main`, or in `<name>.cmd.runfiles` on Windows, so every path is absolute. `<name>.launch.json` states
-the absolute paths, the working directory and the environment of a launch. On Linux it has version 2 and names `java`
-and the argument file. On macOS and Windows it has version 3 and names the launcher, the vmoptions file and the program
-arguments.""",
+On Linux the stub is an `sh` file, and the home is `<name>.runfiles/ide_home`. The launcher resolves the links of its
+own path, so from a link it finds no home (IJPL-258306). So the stub first replaces the link `ide_home/bin/<base>` with
+a copy of the launcher file. It copies when the entry is a link or `cmp` finds other bytes. `<ENV>_JDK` names the flat
+runtime.
+
+Windows builds no runfiles tree, so the stub is `<name>.cmd` and the home is the home of `export`. The stub runs the
+console launcher, so `bazel run` keeps a console.
+
+`bazel run //<package>:<name> -- <argument>` adds a program argument after the ones of the row. `bazel run` starts the
+executable in `<name>.runfiles/_main`, or in `<name>.cmd.runfiles` on Windows, so every path is absolute. On macOS and
+Windows no process runs before the native launcher, and a launch writes no file. On Linux the stub runs `cmp`, and it
+writes the launcher copy after a change of the runfiles manifest. `<name>.launch.json` has version 3. It states the
+launcher, the vmoptions file, the program arguments, the working directory and the environment of a launch.""",
     implementation = _intellij_dev_java_launcher_impl,
     executable = True,
     fragments = ["java"],
@@ -453,17 +398,15 @@ arguments.""",
     attrs = {
         "dist": attr.label(mandatory = True, providers = [IntellijDevDistInfo], doc = "The local launch of the distribution, the `_dist_launch` target. Its placement names the files of the home, and its `home_prefix` names the directory of the home below `ide_home`."),
         "export": attr.label(providers = [IntellijDevDistInfo], doc = "The self-contained distribution, the `_dist` target. The home on Windows, where it is mandatory."),
-        "vm_options": attr.string_dict(mandatory = True, doc = "The destination of the main vmoptions file in the home, `bin/<name>`, for each OS token: `darwin`, `linux` and `windows`. The argument file writer reads the file there."),
+        "vm_options": attr.string_dict(mandatory = True, doc = "The destination of the main vmoptions file in the home, `bin/<name>`, for each OS token: `darwin`, `linux` and `windows`. The native launcher reads the file there, and the rule checks that the home has it."),
         "product_info": attr.string_dict(mandatory = True, doc = "The destination of `product-info.json` in the home, for each OS token. The production place is the root, or `Resources/` for a macOS app."),
-        "launcher": attr.string_dict(doc = "The destination of the native launcher in the home, for each OS token that starts one: `darwin` and `windows`. Linux starts `java`."),
+        "launcher": attr.string_dict(doc = "The destination of the native launcher in the home, for each OS token: `darwin`, `linux` and `windows`."),
         "env_var_base_name": attr.string(doc = "The base of the variables `<base>_VM_OPTIONS` and `<base>_JDK` that the native launcher reads. It is the `envVarBaseName` of the product, or of the custom command that the first program argument selects."),
         "runtime_module_repository": attr.bool(doc = "Whether `<name>.vmoptions` names `modules/module-descriptors.dat` of the home as the runtime module repository. Set it when the home has the file and `product-info.json` does not state the property."),
         "jvm_flags": attr.string_list(doc = "JVM flags; `$(location)` and make variables expand, and `${BUILD_WORKSPACE_DIRECTORY}` and `${HOME}` resolve at analysis."),
-        "add_opens": attr.string_list(doc = "Packages opened to the unnamed module, as `java_binary.add_opens`. Only the Linux argument file holds them. The native launcher takes the `--add-opens` lines of `product-info.json`."),
         "env": attr.string_dict(doc = "Environment variables `bazel run` sets for the IDE."),
         "data": attr.label_list(allow_files = True, doc = "Extra runfiles of the launch target."),
         "program_args": attr.string_list(doc = "The program arguments of the row, which come before the arguments of `bazel run`. Each value is one argument; `$(location)` and make variables expand, and `${BUILD_WORKSPACE_DIRECTORY}` and `${HOME}` resolve at analysis. The first one can select a custom command."),
-        "_launch_args_tool": attr.label(default = Label("//build/dev-dist-tools/bins/dev-launch-args"), executable = True, cfg = "exec"),
         "_linux": attr.label(default = Label("@platforms//os:linux")),
         "_macos": attr.label(default = Label("@platforms//os:macos")),
         "_windows": attr.label(default = Label("@platforms//os:windows")),
@@ -490,7 +433,8 @@ def intellij_dev_java_launcher_binary(
     `export`. `vm_options`, `product_info` and `launcher` map each OS token to the destination of the main vmoptions
     file, of `product-info.json` and of the native launcher in the home. `env_var_base_name` and
     `runtime_module_repository` are the attributes of the rule. The config and system directories are
-    `out/dev-data/<name>/config` and `out/dev-data/<name>/system`, as absolute paths.
+    `out/dev-data/<name>/config` and `out/dev-data/<name>/system`, as absolute paths. The stub names the program
+    arguments of the row itself, so the target has no `args`.
     """
     intellij_dev_java_launcher(
         name = name,
@@ -507,15 +451,7 @@ def intellij_dev_java_launcher_binary(
         env_var_base_name = env_var_base_name,
         runtime_module_repository = runtime_module_repository,
         jvm_flags = dev_launch_jvm_flags(name, jvm_flags),
-        add_opens = INTELLIJ_ADD_OPENS,
         env = env,
-        # On Linux `bazel run` starts `java` in `<name>.runfiles/_main`, which holds the argument file. The file holds
-        # the program arguments, so a `bazel run` argument comes after them. The stub of macOS and Windows names the
-        # program arguments itself.
-        args = select({
-            "@platforms//os:linux": ["@%s.jvm.args" % name],
-            "//conditions:default": [],
-        }),
         program_args = program_args,
         data = data,
     )

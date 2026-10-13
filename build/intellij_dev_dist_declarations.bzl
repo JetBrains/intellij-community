@@ -277,7 +277,7 @@ _DEV_JVM_ARGUMENTS = ["-Didea.use.dev.build.server=true"]
 def _launch_destinations(plan, os):
     """The destinations of the launch files, as `struct(vm_options, product_info, frontend_vm_options)`.
 
-    `os` is an OS token of `platform_parts`. The `platform_resources` component places the files there. The `java`
+    `os` is an OS token of `platform_parts`. The `platform_resources` component places the files there. The native
     launcher of a row reads the main vmoptions file and `product-info.json` there. A vmoptions file is `bin/<name>`,
     with the name of the plan. `product_info_destination` states the path of `product-info.json`.
     `frontend_vm_options` is `None` for a product without an embedded frontend.
@@ -290,11 +290,11 @@ def _launch_destinations(plan, os):
     )
 
 def _launcher_destinations(launcher):
-    """The destination of the native launcher that a launch target starts, for each OS token that starts one.
+    """The destination of the native launcher that a launch target starts, for each OS token.
 
-    `launcher` is the `launch.launcher` struct of a plan. macOS starts `bin/<base>`, which every macOS home has. Windows
-    starts the console launcher, so `bazel run` keeps a console. A product without one starts its GUI launcher. Linux
-    starts `java` until IJPL-258306 ships, so it has no entry.
+    `launcher` is the `launch.launcher` struct of a plan. macOS and Linux start `bin/<base>`, which every home of these
+    OSes has. Windows starts the console launcher, so `bazel run` keeps a console. A product without one starts its GUI
+    launcher.
     """
     base = launcher.base_file_name
     if launcher.windows_console:
@@ -303,7 +303,7 @@ def _launcher_destinations(launcher):
         windows = "bin/%s.exe" % (base if launcher.language_server else base + "64")
     else:
         fail("The launcher '%s' has no Windows launcher" % base)
-    return {"darwin": "bin/" + base, "windows": windows}
+    return {"darwin": "bin/" + base, "linux": "bin/" + base, "windows": windows}
 
 def _env_var_base_name(launch, program_args):
     """The base of the variables that the native launcher reads for a row with `program_args`.
@@ -812,8 +812,8 @@ def _declare_run_launcher(
     """The launcher `name`, the launcher over the distribution `_declare_run_distribution` declared as `distribution`.
 
     The row is an `intellij_dev_java_launcher` over `<distribution>_dist_launch`, with the home `<distribution>_dist` on
-    Windows. On macOS and Windows it starts the native launcher with the variables of `_env_var_base_name`. Its
-    vmoptions file names the runtime module repository under the rule of `export_vm_options`.
+    Windows. It starts the native launcher with the variables of `_env_var_base_name`. Its vmoptions file names the
+    runtime module repository under the rule of `export_vm_options`.
     """
     for flag in jvm_flags:
         if flag.startswith("-Dadditional.modules="):
