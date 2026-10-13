@@ -14,6 +14,7 @@ import com.intellij.util.indexing.IndexFilterExcludingExtension
 import com.intellij.util.indexing.IndexedFile
 import com.intellij.util.indexing.hints.BaseFileTypeInputFilter
 import com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -23,13 +24,14 @@ import com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy
  * @see IndexFilterExcludingExtension
  */
 @Service //RC: why is it a service? All other filters are just a regular POJO
-internal class TrigramIndexFilter : BaseFileTypeInputFilter(FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION) {
+@ApiStatus.Internal
+class TrigramIndexFilter : BaseFileTypeInputFilter(FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION) {
 
   companion object {
     @JvmStatic
-    val ENABLE_EXTENSION_EXCLUDES_REGISTRY_KEY = "ide.index.trigram.enable.exclude.extensions"
+    val ENABLE_EXTENSION_EXCLUDES_REGISTRY_KEY: String = "ide.index.trigram.enable.exclude.extensions"
 
-    /** @see TrigramIndexRegistryValueListener */
+    /** `TrigramIndexRegistryValueListener` in `intellij.platform.lang.impl.backend` rebuilds the index when this value changes. */
     private val ENABLE_EXTENSION_EXCLUDES = Registry.`is`(ENABLE_EXTENSION_EXCLUDES_REGISTRY_KEY, false)
 
     private val EXTENSION_EXCLUDES: CustomizableExcludeExtensions = CustomizableExcludeExtensions(
