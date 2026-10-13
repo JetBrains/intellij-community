@@ -318,6 +318,7 @@ com.intellij.util.DataUrl
 f:com.intellij.util.DataUrl$Companion
 - f:isDataUrl(java.lang.String):Z
 - f:parse(java.lang.String):com.intellij.util.DataUrl
+f:com.intellij.util.ExceptionUtilsKt
 com.intellij.util.Function
 - java.util.function.Function
 - apply(java.lang.Object):java.lang.Object

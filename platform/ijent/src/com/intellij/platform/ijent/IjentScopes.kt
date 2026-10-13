@@ -13,6 +13,7 @@ import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.toSafeDeferred
 import com.intellij.platform.ijent.spi.IjentThreadPool
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.causeChain
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -93,7 +94,7 @@ class ParentOfIjentScopes(val s: CoroutineScope) {
     // `invokeOnCompletion` is `@InternalCoroutinesApi`, and it is documented as "shouldn't be used by anyone",
     // but it's used in >20 other places in the repository, and "clean" alternatives are worse.
     ijentJob.invokeOnCompletion(onCancelling = true, invokeImmediately = true) { error ->
-      val rootCause = error?.causeSequence()?.find { it !is CancellationException }
+      val rootCause = error?.causeChain()?.find { it !is CancellationException }
       if (rootCause is Exception) {
         ijentScope.handleSessionError(rootCause)
       }
@@ -102,7 +103,7 @@ class ParentOfIjentScopes(val s: CoroutineScope) {
     // It completes only when the scope ends without an exit reason. This happens only after an `Error`, for example `OutOfMemoryError`.
     val fatalError = CompletableDeferred<Throwable>()
     ijentJob.invokeOnCompletion { error ->
-      when (val rootCause = error?.causeSequence()?.find { it !is CancellationException }) {
+      when (val rootCause = error?.causeChain()?.find { it !is CancellationException }) {
         null -> {
           // A cancelled session boundary scope means that the parent is cancelled. It is a normal shutdown, not a bug.
           if (error != null && !sessionBoundaryScope.coroutineContext.job.isCancelled) {
@@ -503,7 +504,7 @@ class IjentScope internal constructor(
    */
   private fun preferCallerError(exitReasonCopy: Exception, callerErr: Exception): Exception {
     val exitReason = exitReasonCopy.cause ?: return exitReasonCopy
-    return if (callerErr.causeSequence().drop(1).any { it === exitReason }) callerErr else exitReasonCopy
+    return if (callerErr.causeChain().drop(1).any { it === exitReason }) callerErr else exitReasonCopy
   }
 
   /**
@@ -667,11 +668,6 @@ fun <T> IjentScope.asyncSafeInParent(
   block: suspend CoroutineScope.() -> T,
 ): SafeDeferred<T> {
   return toSafeDeferred(parent.s.async(context, start, block))
-}
-
-@PublishedApi
-internal fun Throwable.causeSequence(): Sequence<Throwable> {
-  return generateSequence(this, Throwable::cause)
 }
 
 private fun Job.containsJob(job: Job): Boolean {

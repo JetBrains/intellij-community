@@ -1,14 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 public final class ExceptionUtilRt {
 
@@ -53,34 +57,35 @@ public final class ExceptionUtilRt {
   }
 
   /**
-   * The causes strictly after {@code start} (not {@code start} itself), stopping when the chain ends or Floyd's
-   * two-pointer ("tortoise and hare") cycle detection catches it looping back on an earlier node. Single-use: the
-   * result is its own {@link Iterator}, so iterating it twice yields nothing the second time.
+   * Returns an iterator over the exception and its causes.
+   * <p>
+   * Always yields the first element at the beginning.
+   * <p>
+   * In case of a cycle, the iterator stops right before the first repeated element.
    */
-  static Iterable<Throwable> cycleAwareCauseChain(@Nullable Throwable start) {
-    return new CauseChain(start);
+  @ApiStatus.Experimental
+  public static Iterator<Throwable> causeChain(@NotNull Throwable start) {
+    return new CauseChainIterator(start);
   }
 
-  private static final class CauseChain implements Iterable<Throwable>, Iterator<Throwable> {
-    private Throwable current;
-    private Throwable slow;
-    private boolean advanceSlow;
+  private static class CauseChainIterator implements Iterator<Throwable> {
+    private final Set<Throwable> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+    private @Nullable Throwable current;
+    private boolean loaded = false;
 
-    private CauseChain(@Nullable Throwable start) {
+    CauseChainIterator(@NotNull Throwable start) {
       current = start;
-      slow = start;
-    }
-
-    @Override
-    public Iterator<Throwable> iterator() {
-      return this;
     }
 
     @Override
     public boolean hasNext() {
-      if (current == null) return false;
-      Throwable cause = current.getCause();
-      return cause != null && cause != current;
+      if (!loaded) {
+        loaded = true;
+        if (current != null && !seen.add(current)) {
+          current = null;
+        }
+      }
+      return current != null;
     }
 
     @Override
@@ -88,17 +93,25 @@ public final class ExceptionUtilRt {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
-      Throwable cause = current.getCause();
-      current = cause;
-      if (advanceSlow) {
-        slow = slow.getCause();
-        if (slow == current) {
-          current = null; // cycle detected: stop the walk here, same as reaching the end of the chain
-        }
-      }
-      advanceSlow = !advanceSlow;
-      return cause;
+      Throwable r = current;
+      current = current.getCause();
+      loaded = false;
+      return r;
     }
+  }
+
+  static Iterable<Throwable> cycleAwareCauseChain(@Nullable Throwable start) {
+    if (start != null) {
+      start = start.getCause();
+    }
+    if (start == null) return Collections.emptyList();
+    final Throwable start1 = start;
+    return new Iterable<Throwable>() {
+      @Override
+      public @NotNull Iterator<Throwable> iterator() {
+        return causeChain(start1);
+      }
+    };
   }
 
   @NotNull

@@ -14,6 +14,7 @@ import com.intellij.platform.ijent.IjentLog
 import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentProcessExited
 import com.intellij.platform.ijent.IjentScope
+import com.intellij.util.causeChain
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.NonCancellable
@@ -259,7 +260,7 @@ object IjentSessionMediatorUtils {
       awaitCancellation()
     }
     catch (err: Exception) {
-      val actualErrors = generateSequence(err, Throwable::cause).filterTo(mutableListOf()) { it !is CancellationException }
+      val actualErrors = err.causeChain().filterTo(mutableListOf()) { it !is CancellationException }
 
       val existingIjentUnavailableException = actualErrors.filterIsInstance<EelUnavailableException>().firstOrNull()
       if (existingIjentUnavailableException != null) {
