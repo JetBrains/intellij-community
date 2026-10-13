@@ -413,7 +413,8 @@ Two `jps_test` targets launch an IDE: `//plugins/air/tests/integration/ui:ui_tes
 needs. The IDE arrives as an already-assembled distribution: `//plugins/air/tests/integration/ide:idea_air_lane_dist_linux` on
 the default guest, and `//plugins/air/tests/integration/ide:idea_air_lane_dist` on a macOS one. `-Dair.lane.ide.config` names
 that distribution's `_ide_config` companion target rather than the distribution itself. Beside it the targets
-carry the guest agent, the IDE flags file and the JBR archive that the IDE runs on.
+carry the guest agent and the IDE flags file. The IDE runs on `jbr/` of the distribution, the production JBR, and
+gets JCEF from the JCEF plugin of the distribution.
 
 `run` resolves the selector with bt's resolution logic. It runs `bazel build` on the host against
 its warm cache, then it launches the built test stub in the guest. The launch environment is the one
@@ -463,9 +464,9 @@ lane build with options of its own discarded the analysis of every other command
 the lane's: one test before a lane build cost 11.6 s of analysis on 2026-10-10. The guest is therefore a target, and
 the lane builds no runfile links: the controller reads the MANIFEST of the runtime descriptor on every host.
 
-A lane IDE downloads nothing. Under the daemon it runs on the daemon's own staged JVM, which the
-controller stages from the JBR archive of the runtime descriptor. A standalone lane run stages the JBR
-archive of its target with the guest agent's `stage`, and the IDE runs on that JVM.
+A lane IDE downloads nothing and stages no JVM. It runs on `jbr/` of its distribution, under the daemon and
+in a standalone lane run. The daemon itself runs on a JVM that the controller stages from the JBR archive of the
+runtime descriptor.
 
 **Remounting is a correctness requirement, not hygiene.** A VirtioFS guest keeps a dead node for any
 file the host rewrites after the mount. `stat` then still answers from the cache, while `open` fails
