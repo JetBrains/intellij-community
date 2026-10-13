@@ -2,6 +2,7 @@
 package com.intellij.openapi.project
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.util.indexing.IndexingBundle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +15,8 @@ import org.jetbrains.annotations.TestOnly
 @Service(Service.Level.PROJECT)
 class DumbServiceScanningListener(private val project: Project, private val cs: CoroutineScope) {
   fun subscribe() {
-    subscribe(UnindexedFilesScannerExecutor.getInstance(project).isRunning)
+    val scannerExecutor = project.serviceOrNull<UnindexedFilesScannerExecutor>() ?: return
+    subscribe(scannerExecutor.isRunning)
   }
 
   private fun subscribe(scanningState: StateFlow<Boolean>) {
