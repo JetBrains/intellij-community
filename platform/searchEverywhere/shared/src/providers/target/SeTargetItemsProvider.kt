@@ -151,7 +151,7 @@ class SeTargetItemsProvider<T> private constructor(
     return SeTargetPresentableItemImpl(
       rawItem = item.rawItem,
       matchers = item.matchers,
-      composedWeight = item.composedWeight,
+      composedWeight = withDeprecationComponent(item.composedWeight, presentation),
       presentation = presentation,
       extendedInfo = getExtendedInfo(item),
       isMultiSelectionSupported = true, // AbstractGotoSEContributor supports it for every goto model
@@ -346,8 +346,6 @@ class SeTargetItemsProvider<T> private constructor(
     val sentWeight = weight.first
     if (runs != null && !runs.accept(element, sentWeight)) return true
 
-    val fullWeight = withDeprecationComponent(weight, element)
-
     // A write action cancels a `send` that waits for the consumer, and the read action restarts: that attempt must send the item.
     var delivered = false
     try {
@@ -357,7 +355,7 @@ class SeTargetItemsProvider<T> private constructor(
         }
         // `send` waits for the consumer while the read lock is held, so the wait goes into the log.
         stats.measure(stats.blockedInSendNanos) {
-          send(SeTargetRawItemImpl(element, fullWeight, itemMatchers(defaultMatchers, model, element)))
+          send(SeTargetRawItemImpl(element, weight, itemMatchers(defaultMatchers, model, element)))
         }
         delivered = true
       }

@@ -135,10 +135,7 @@ class SeTargetItemPresentationBuilder {
         val simpleAttrs = SimpleTextAttributes.fromTextAttributes(attrs)
         simpleAttrs.isWaved && attrs.effectColor == JBColor.RED
       } == true)
-      .withPresentableTextStrikethrough(tp.presentableTextAttributes?.let { attrs ->
-        SimpleTextAttributes.fromTextAttributes(attrs).isStrikeout ||
-        attrs.additionalEffects?.contains(EffectType.STRIKEOUT) == true
-      } == true)
+      .withPresentableTextStrikethrough(tp.isPresentableTextStrikethrough())
       .withContainerText(tp.containerText)
       .withContainerTextMatchedRanges((matchers?.locationMatcher as? MinusculeMatcher)?.calcMatchedRanges(tp.containerText))
       .withLocationText(tp.locationText)
@@ -206,3 +203,11 @@ data class SeTargetItemPresentationImpl(
            locationText == other.locationText
   }
 }
+
+/** Returns true when Search Everywhere draws the presentable text of this presentation with a strikethrough. */
+@ApiStatus.Internal
+fun TargetPresentation.isPresentableTextStrikethrough(): Boolean =
+  presentableTextAttributes?.let { attrs ->
+    SimpleTextAttributes.fromTextAttributes(attrs).isStrikeout ||
+    attrs.additionalEffects?.contains(EffectType.STRIKEOUT) == true
+  } == true
