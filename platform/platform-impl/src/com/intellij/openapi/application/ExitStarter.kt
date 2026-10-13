@@ -24,6 +24,7 @@ class ExitStarter private constructor() : ApplicationStarterBase(0, 1, 2) {
   }
 
   companion object {
+    @JvmStatic
     fun forceExitApplication(reason: @NonNls String, restart: Boolean = false) {
       val application = ApplicationManager.getApplication()
       // We need to invoke the method in Modality.any() to execute the method even (especially) if the modality stack is not empty
