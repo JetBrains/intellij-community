@@ -1,12 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The bash half of the polyglot wrappers, without Bazel: the Git Bash hand-off, the roots in both checkout layouts,
-// the override, and the jscpd paths that need no Bazel. Run with `node --test community/tools/polyglot-wrapper.test.mjs`.
+// the override, the build step against a stand-in `bazel.cmd`, and the jscpd paths that need no Bazel.
+// Run with `node --test community/tools/polyglot-wrapper.test.mjs`.
 
 import {after, before, describe, it} from "node:test"
 import {deepEqual, equal, match} from "node:assert/strict"
 import {spawnSync} from "node:child_process"
-import {chmod, copyFile, mkdir, mkdtemp, realpath, rm, writeFile} from "node:fs/promises"
+import {chmod, copyFile, mkdir, mkdtemp, readdir, realpath, rm, writeFile} from "node:fs/promises"
 import {tmpdir} from "node:os"
 import {dirname, join} from "node:path"
 import process from "node:process"
@@ -141,5 +142,107 @@ describe("jscpd without Bazel", () => {
     const result = bash([join(checkout, "tools", "jscpd.cmd"), "--version"], {cwd: checkout})
     equal(result.status, 78)
     match(result.stderr, /^jscpd: found no JSCPD_VERSION line in /)
+  })
+})
+
+describe("the build step", () => {
+  /**
+   * An Ultimate-shaped checkout whose `bazel.cmd` is a stand-in: it prints one line of noise on stderr, and it
+   * writes the event file that its `--build_event_json_file=` argument names, with the content of
+   * `STUB_BAZEL_EVENTS`. `STUB_BAZEL_FAIL` makes it exit 1 before the event file.
+   * @param {string} name
+   * @param {string[]} wrappers
+   */
+  async function checkout(name, wrappers) {
+    const root = join(scratch, name)
+    const tools = join(root, "community", "tools")
+    await mkdir(tools, {recursive: true})
+    await writeFile(join(root, "MODULE.bazel"), "")
+    await writeExecutable(root, "bazel.cmd", [
+      'echo "bazel noise" >&2',
+      '[ -n "${STUB_BAZEL_FAIL:-}" ] && exit 1',
+      'for a in "$@"; do case "$a" in --build_event_json_file=*) events="${a#--build_event_json_file=}" ;; esac; done',
+      'printf "%s\\n" "$STUB_BAZEL_EVENTS" > "$events"',
+    ].join("\n"))
+    for (const wrapper of [...wrappers, "polyglot-wrapper.sh"]) {
+      await copyFile(join(toolsDir, wrapper), join(tools, wrapper))
+    }
+    return {root, tools}
+  }
+
+  /**
+   * The stand-in for the binary a build makes. Its base name is what the reader matches, so it is the name of the
+   * real binary, in a directory of the checkout `name`.
+   * @param {string} name
+   * @param {string} basename
+   * @param {string} body
+   */
+  async function fakeBinary(name, basename, body) {
+    const dir = join(scratch, name, "bin")
+    await mkdir(dir, {recursive: true})
+    return writeExecutable(dir, basename, body)
+  }
+
+  /**
+   * One `namedSetOfFiles` record that names the given files, as `--nobuild_event_json_file_path_conversion` writes it.
+   * @param {string[]} paths
+   */
+  function namedSetOfFiles(paths) {
+    const files = paths.map((path) => `{"name":"${path.split("/").pop()}","uri":"file://${path}"}`)
+    return `{"id":{"namedSet":{"id":"0"}},"namedSetOfFiles":{"files":[${files.join(",")}]}}`
+  }
+
+  it("polyglot_built_file answers the last file with the base name, across records", async () => {
+    const events = join(scratch, "events.json")
+    await writeFile(events, [
+      namedSetOfFiles(["/out/a/bt.d", "/out/a/bt"]),
+      '{"id":{"progress":{}},"progress":{"stderr":"\\"uri\\":\\"file:///decoy/bt\\" is text"}}',
+      namedSetOfFiles(["/out/b/bt"]),
+    ].join("\n"))
+    const script = `. "${toolsDir}/polyglot-wrapper.sh"; polyglot_built_file "${events}" bt; polyglot_built_file "${events}" vm`
+    const result = bash(["-c", script])
+    equal(result.status, 0, result.stderr)
+    deepEqual(result.stdout.split("\n"), ["/out/b/bt", "", ""])
+  })
+
+  it("bt runs the binary the event file names, with the build noise on stderr", async () => {
+    const {root, tools} = await checkout("build-ok", ["bt.cmd"])
+    const binary = await fakeBinary("build-ok", "bt", 'echo "$BUILD_WORKSPACE_DIRECTORY"; for a in "$@"; do printf "%s\\n" "$a"; done')
+    const result = bash([join(tools, "bt.cmd"), "x", "y z"], {env: {STUB_BAZEL_EVENTS: namedSetOfFiles([binary])}})
+    equal(result.status, 0, result.stderr)
+    deepEqual(result.stdout.split("\n").filter(Boolean), [root, "x", "y z"])
+    equal(result.stderr, "bazel noise\n")
+  })
+
+  it("bt exits 6 when the build fails, and 6 when the event file names no binary", async () => {
+    const {tools} = await checkout("build-fails", ["bt.cmd"])
+    const failed = bash([join(tools, "bt.cmd")], {env: {STUB_BAZEL_FAIL: "1", STUB_BAZEL_EVENTS: ""}})
+    equal(failed.status, 6)
+    match(failed.stderr, /^bazel noise\nbt: could not build @community\/\/tools\/bt:bt; see the bazel output above\n$/)
+    const unresolved = bash([join(tools, "bt.cmd")], {env: {STUB_BAZEL_EVENTS: namedSetOfFiles(["/out/other"])}})
+    equal(unresolved.status, 6)
+    match(unresolved.stderr, /bt: could not resolve bt from @community\/\/tools\/bt:bt \(got ''\)\n$/)
+  })
+
+  it("vm keeps the build noise off a piped stderr, and shows it when the build fails", async () => {
+    const {tools} = await checkout("build-log", ["vm.cmd"])
+    const binary = await fakeBinary("build-log", "vm", 'echo controller')
+    const quiet = bash([join(tools, "vm.cmd")], {env: {STUB_BAZEL_EVENTS: namedSetOfFiles([binary])}})
+    equal(quiet.status, 0, quiet.stderr)
+    equal(quiet.stdout, "controller\n")
+    equal(quiet.stderr, "")
+    const failed = bash([join(tools, "vm.cmd")], {env: {STUB_BAZEL_FAIL: "1", STUB_BAZEL_EVENTS: ""}})
+    equal(failed.status, 78)
+    equal(failed.stderr, "bazel noise\nvm: could not build @community//tools/vm:vm; see the bazel output above\n")
+  })
+
+  it("leaves no event file or log behind", async () => {
+    const {root, tools} = await checkout("build-clean", ["bt.cmd", "vm.cmd"])
+    const bt = await fakeBinary("build-clean", "bt", 'exit 0')
+    const vm = await fakeBinary("build-clean", "vm", 'exit 0')
+    bash([join(tools, "bt.cmd")], {env: {STUB_BAZEL_EVENTS: namedSetOfFiles([bt])}})
+    bash([join(tools, "vm.cmd")], {env: {STUB_BAZEL_EVENTS: namedSetOfFiles([vm])}})
+    bash([join(tools, "vm.cmd")], {env: {STUB_BAZEL_FAIL: "1", STUB_BAZEL_EVENTS: ""}})
+    deepEqual(await readdir(join(root, "out", "air")), [])
   })
 })

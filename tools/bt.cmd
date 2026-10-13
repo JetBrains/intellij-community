@@ -72,26 +72,8 @@ unset JAVA_RUNFILES RUNFILES_DIR RUNFILES_MANIFEST_FILE RUNFILES_MANIFEST_ONLY T
 # worth reporting, not a reason to quietly build a different one.
 polyglot_exec_override bt AIR_BT_BIN 6 "$@"
 
-# The local file with the base name $2 that the build event file $1 names. The build names its top-level outputs in
-# `namedSetOfFiles` records, one JSON record per line, and `--nobuild_event_json_file_path_conversion` makes every URI
-# `file://<path>`. An event file that names no such file answers the empty string.
-built_file() {
-  awk -v name="$2" '{
-    line = $0
-    while (match(line, /"uri":"file:\/\/[^"]*"/)) {
-      uri = substr(line, RSTART + 14, RLENGTH - 15)
-      line = substr(line, RSTART + RLENGTH)
-      count = split(uri, parts, "/")
-      if (parts[count] == name) found = uri
-    }
-  } END { print found }' "$1"
-}
-
-mkdir -p "$root/out/air"
-events="$root/out/air/bt.events.$$.json"
-# `--config=bt` (`community/common.bazelrc`) keeps Bazel's progress and result lines out of the wrapper's output contract,
-# and `>&2` keeps whatever is left off stdout, where a `--json` run writes exactly one payload. A failure
-# here is infrastructure, which this wrapper reports as 6 - BT's own code for a run that said nothing about
+# The build output goes to stderr as it comes, so stdout stays for the one payload a `--json` run writes. A failure
+# of the build is infrastructure, which this wrapper reports as 6 - BT's own code for a run that said nothing about
 # the tests.
 #
 # 6 is right *here* and wrong in vm.cmd, which uses 78 for the same class of failure. Both wrappers report
@@ -99,20 +81,7 @@ events="$root/out/air/bt.events.$$.json"
 # 6 as `exit::INFRA`, which already means "the run said nothing", so wrapper and binary agree; the VM
 # controller defines 6 as `Exit::TESTS_FAILED`, a red lane. **The asymmetry is deliberate; do not harmonize
 # the two wrappers on one number.**
-if ! (cd "$root" && ./bazel.cmd build --config=bt "--build_event_json_file=$events" \
-  --nobuild_event_json_file_path_conversion "$target" >&2); then
-  rm -f "$events"
-  echo "bt: could not build $target; see the bazel output above" >&2
-  exit 6
-fi
-
-resolved="$(built_file "$events" bt)"
-rm -f "$events"
-resolved="$(polyglot_real_path "$resolved")"
-if [ ! -x "$resolved" ]; then
-  echo "bt: could not resolve BT from $target (got '$resolved')" >&2
-  exit 6
-fi
+polyglot_build_binary bt "$target" 6 bt
 
 exec "$resolved" "$@"
 

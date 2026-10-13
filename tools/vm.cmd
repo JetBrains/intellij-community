@@ -91,52 +91,11 @@ unset JAVA_RUNFILES RUNFILES_DIR RUNFILES_MANIFEST_FILE RUNFILES_MANIFEST_ONLY T
 # mistake worth reporting, not a reason to quietly build a different one.
 polyglot_exec_override vm AIR_VM_BIN 78 "$@"
 
-# The local file with the base name $2 that the build event file $1 names. The build names its top-level outputs in
-# `namedSetOfFiles` records, one JSON record per line, and `--nobuild_event_json_file_path_conversion` makes every URI
-# `file://<path>`. An event file that names no such file answers the empty string.
-built_file() {
-  awk -v name="$2" '{
-    line = $0
-    while (match(line, /"uri":"file:\/\/[^"]*"/)) {
-      uri = substr(line, RSTART + 14, RLENGTH - 15)
-      line = substr(line, RSTART + RLENGTH)
-      count = split(uri, parts, "/")
-      if (parts[count] == name) found = uri
-    }
-  } END { print found }' "$1"
-}
-
-mkdir -p "$root/out/air"
-events="$root/out/air/vm.events.$$.json"
-build_log="$root/out/air/vm.build.$$.log"
-build=(./bazel.cmd build --config=bt "--build_event_json_file=$events"
-  --nobuild_event_json_file_path_conversion "$target")
-# `--config=bt` (`community/common.bazelrc`) keeps Bazel's progress and result lines short. For a pipe, the log file keeps
-# the rest out of both envelope streams; a terminal sees it (note 6 above). A failure here is infrastructure,
-# which this wrapper reports as 78 - the one code no controller command uses (note 4 above).
-if [ -t 2 ]; then
-  if ! (cd "$root" && "${build[@]}" >&2); then
-    rm -f "$events"
-    echo "vm: could not build $target; see the bazel output above" >&2
-    exit 78
-  fi
-elif ! (cd "$root" && "${build[@]}" >"$build_log" 2>&1); then
-  cat "$build_log" >&2
-  rm -f "$events" "$build_log"
-  echo "vm: could not build $target; see the bazel output above" >&2
-  exit 78
-fi
-rm -f "$build_log"
-
-# The controller reads the same event file of its own lane build, so this is the one way to ask Bazel where its
-# output went.
-resolved="$(built_file "$events" vm)"
-rm -f "$events"
-resolved="$(polyglot_real_path "$resolved")"
-if [ ! -x "$resolved" ]; then
-  echo "vm: could not resolve the controller from $target (got '$resolved')" >&2
-  exit 78
-fi
+# `log`: for a pipe, the build output goes to a log file and reaches stderr only when the build fails; a terminal
+# sees it (note 6 above). A failure here is infrastructure, which this wrapper reports as 78 - the one code no
+# controller command uses (note 4 above). The controller reads the same kind of event file for its own lane build,
+# so this is the one way to ask Bazel where its output went.
+polyglot_build_binary vm "$target" 78 vm log
 
 exec "$resolved" "$@"
 
