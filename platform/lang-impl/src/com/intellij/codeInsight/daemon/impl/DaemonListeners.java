@@ -243,8 +243,8 @@ public final class DaemonListeners implements Disposable {
       }
 
       myActiveEditors = activeEditors.isEmpty() ? Collections.emptyList() : new ArrayList<>(activeEditors);
-      // do not stop daemon if idea loses/gains focus
-      stopDaemon(true, "Active editor change");
+      // in the IDE startup, the editor that gains focus is the first editor itself; this stop keeps its unfinished first pass (IJPL-258446)
+      myDaemonCodeAnalyzer.stopProcessOnActiveEditorsChange(activeEditors);
       if (ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext()) {
         // editor appear in modal context, re-enable the daemon
         myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
