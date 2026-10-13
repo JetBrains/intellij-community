@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.markdown.frontend.runner
+package com.intellij.markdown.frontend.execution
 
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.execution.executors.DefaultRunExecutor

@@ -19,6 +19,7 @@ dev_dist_plugin(
         "intellij.markdown.spellchecker",
         "intellij.markdown.compose.preview",
         "intellij.markdown.frontend",
+        "intellij.markdown.frontend.execution",
         "intellij.markdown.backend",
         "intellij.markdown.java",
         "intellij.markdown.fenceInjector.textMate",
