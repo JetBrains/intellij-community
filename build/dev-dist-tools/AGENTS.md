@@ -12,7 +12,7 @@ methods. These rules apply to both workspaces, this one and `build/dev-dist-tool
   there: the clippy aspect skips a target of an external repository.
 - **Treat a closure change as a choice.** A new crate in the `closure.txt` of an action tool reruns every action of
   that tool at each change of the crate. State the reason in the commit message, and regenerate the file with the
-  commands of the README. [ADR 0043](../../../build/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md)
+  commands of the README. [ADR 0043](../../../build/docs/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md)
   records the crate rule.
 - **Refresh the Bazel lockfiles after a change of `Cargo.lock`.** Run the two commands of the README, in `community/`
   and in the ultimate root.

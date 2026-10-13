@@ -18,7 +18,7 @@ The rule reads an embedded declaration only. A declaration that is not embedded 
 
 ## Which route to pick
 
-A library module takes the lowest route that works. `build/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md`
+A library module takes the lowest route that works. `build/docs/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md`
 holds the decision; this is the short form.
 
 1. **Isolate.** One plugin uses the library, so that plugin registers the module as private content. This rule

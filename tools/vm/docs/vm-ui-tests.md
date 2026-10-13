@@ -31,7 +31,7 @@ macOS guest, for the golden image, and for the Parallels VM. It is needed for a 
 takes the user's own screen and focus.
 
 The host-side provider, layout-plan, fragment and composition flow is documented
-in [Dev-build architecture](../../../../build/dev-build-architecture.md). The guest consumes a
+in [Dev-build architecture](../../../../build/docs/guides/dev-build-architecture.md). The guest consumes a
 self-contained Bazel distribution, and it needs no checkout of its own. Nothing caches a guest run,
 so an iteration runs every suite it selects again. On 2026-09-30 the `ui` lane was 71 tests in 40
 classes, and it took 750 s of test time on a Tart Linux worker with a cold daemon. Ask `vm.cmd suites <paths>` what your change reaches, then run `run --changed <paths>`. To

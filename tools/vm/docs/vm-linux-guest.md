@@ -15,7 +15,7 @@ lives: that backend's separate open list was retired on 2026-08-23 once its gold
 lane was finally measured on it.
 
 For the host-side Bazel assembly and launch boundary, see
-[Dev-build architecture](../../../../build/dev-build-architecture.md).
+[Dev-build architecture](../../../../build/docs/guides/dev-build-architecture.md).
 
 ## Why ask
 

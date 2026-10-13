@@ -17,7 +17,7 @@ import kotlin.io.path.walk
  * `contentModuleJarPath`, over the facts each side reads itself. A derivation that calls the build's own placement
  * code reads the build's facts, and the gate can then never fail. ADR 0008 records this in the rejected alternative
  * "Calling `computeOutputJarPath`" and in its amendment of 2026-09-24, in
- * `build/decisions/0008-the-content-leaf-follows-the-descriptor-leaf.md`.
+ * `build/docs/decisions/0008-the-content-leaf-follows-the-descriptor-leaf.md`.
  *
  * So no source under the derivation directory may name a member of [FORBIDDEN]. The scan reads code only. A
  * comment may name a forbidden member, for example to say what the code does not call.

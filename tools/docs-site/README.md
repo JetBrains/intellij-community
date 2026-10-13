@@ -99,7 +99,7 @@ Every site builds with one node and one pnpm. Bazel declares them:
 
 The aliases are in `//build`, not in this directory. The root `.bazelignore` lists `community`, so a package here
 has no root label. The pins stay in the ultimate module, per
-[build ADR 0009](../../../build/decisions/0009-bun-pins-in-the-ultimate-module.md), and the community module cannot
+[build ADR 0009](../../../build/docs/decisions/0009-bun-pins-in-the-ultimate-module.md), and the community module cannot
 see the archives of the root module.
 
 The kernel `package.json` is the source of the versions: `engines.node` and `packageManager`.

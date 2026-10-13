@@ -79,7 +79,7 @@ A crate exists when two binaries share it, or when it is the frozen-bytes engine
 `avl-report` writes the bytes an agent reads. Code that one binary uses is a module of that binary. So the `vm`
 controller holds the modules `bench`, `console`, `daemon`, `lane`, `report` and `worker`, and `air-trace` holds `serve`
 and `plan`.
-`build/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md` states the same rule for the dev-dist tools.
+`build/docs/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md` states the same rule for the dev-dist tools.
 The crates form a DAG with the contracts at the bottom. `avl-wire`,
 `avl-trace` and `avl-testkit` depend on no sibling, and `avl-trace-tools` stands on `avl-trace` alone. `avl-record`
 links `avl-trace` and no other sibling, so the recorder links no packer, no discovery and no URL code. `avl-base`
