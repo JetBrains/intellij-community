@@ -53,7 +53,7 @@ import org.jetbrains.annotations.Nls
 import javax.swing.JCheckBox
 
 internal class AccessibilityConfigurable : BoundSearchableConfigurable(
-  message("configurable.AccessibilityConfigurable.display.name"), "preferences.lookFeel", "preferences.accessibility",
+  message("configurable.AccessibilityConfigurable.display.name"), "settings.accessibility", "preferences.accessibility",
 ), BackedByPersistentState {
   override fun getBackingComponents(): Collection<PersistentStateComponent<*>> =
     listOf(UISettings.getInstance(), GeneralSettings.getInstance(), service<AccessibilitySettings>(),
