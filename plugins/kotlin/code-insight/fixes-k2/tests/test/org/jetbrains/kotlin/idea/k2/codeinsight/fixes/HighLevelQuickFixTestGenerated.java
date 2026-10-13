@@ -17891,6 +17891,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/functionNestedType2.kt");
             }
 
+            @TestMetadata("functionReferenceExtensionReceiver.kt")
+            public void testFunctionReferenceExtensionReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/functionReferenceExtensionReceiver.kt");
+            }
+
             @TestMetadata("functionReflectType.kt")
             public void testFunctionReflectType() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/functionReflectType.kt");
