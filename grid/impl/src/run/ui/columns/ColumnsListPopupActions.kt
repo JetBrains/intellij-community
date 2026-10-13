@@ -2,7 +2,6 @@ package com.intellij.database.run.ui.columns
 
 import com.intellij.database.DataGridBundle
 import com.intellij.database.run.actions.disableWithReason
-import com.intellij.ide.actions.CopyAction
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -11,11 +10,10 @@ import com.intellij.openapi.project.DumbAwareAction
 
 internal const val COLUMNS_LIST_POPUP_GROUP: String = "Console.TableResult.ColumnsList.Popup"
 
-internal class ColumnsListCopyNamesAction : CopyAction() {
+internal class ColumnsListCopyNamesAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    super.update(e)
     val actions = e.getData(ColumnsListActions.DATA_KEY)
     e.presentation.isEnabledAndVisible = actions != null && e.getData(PlatformDataKeys.COPY_PROVIDER) === actions.copyProvider &&
                                          actions.copyTargetCount > 0
@@ -26,7 +24,7 @@ internal class ColumnsListCopyNamesAction : CopyAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val actions = e.getData(ColumnsListActions.DATA_KEY) ?: return
-    if (e.getData(PlatformDataKeys.COPY_PROVIDER) === actions.copyProvider) super.actionPerformed(e)
+    if (e.getData(PlatformDataKeys.COPY_PROVIDER) === actions.copyProvider) actions.copyProvider.performCopy(e.dataContext)
   }
 }
 
