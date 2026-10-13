@@ -6,6 +6,8 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.util.ui.JdkConstants.FontStyle;
 import it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap;
 
+import java.awt.Font;
+
 /**
  * Cache of char widths for different font styles
  */
@@ -13,11 +15,30 @@ final class CharWidthCache {
   private static final int CACHE_SIZE_LIMIT = 1024;
   private static final float SHIFT = 1f;
 
+  private static final int[] FONT_STYLES = {Font.PLAIN, Font.BOLD, Font.ITALIC, Font.BOLD | Font.ITALIC};
+
   private final EditorView myView;
   private final Int2FloatOpenHashMap myCache = new Int2FloatOpenHashMap();
+  private float myMaxPrintableAsciiWidth = -1;
 
   CharWidthCache(EditorView view) {
     myView = view;
+  }
+
+  /**
+   * Returns the width of the widest printable ASCII character over all font styles.
+   */
+  float getMaxPrintableAsciiWidth() {
+    if (myMaxPrintableAsciiWidth < 0) {
+      float maxWidth = 0;
+      for (@FontStyle int fontStyle : FONT_STYLES) {
+        for (int codePoint = ' '; codePoint <= '~'; codePoint++) {
+          maxWidth = Math.max(maxWidth, getCodePointWidth(codePoint, fontStyle));
+        }
+      }
+      myMaxPrintableAsciiWidth = maxWidth;
+    }
+    return myMaxPrintableAsciiWidth;
   }
 
   float getCodePointWidth(int codePoint, @FontStyle int fontStyle) {
@@ -32,6 +53,7 @@ final class CharWidthCache {
 
   void clear() {
     myCache.clear();
+    myMaxPrintableAsciiWidth = -1;
   }
 
   private float calcValue(int codePoint, @FontStyle int fontStyle) {

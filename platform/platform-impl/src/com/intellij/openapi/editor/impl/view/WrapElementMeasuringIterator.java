@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.CustomWrap;
@@ -31,6 +31,39 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
     myView = view;
     this.inlineInlays = inlineInlays;
     this.afterLineEndInlays = afterLineEndInlays;
+  }
+
+  /**
+   * Checks that the text in the range fits into the width, and does not measure each character for that.
+   * The check is conservative.
+   * It counts each printable ASCII character as the widest one, and it fails on any other character except the tab.
+   * The range must hold no line break, fold region, inlay, or custom wrap, and the editor must have no character grid.
+   *
+   * @param startX the x coordinate at the start of the range
+   * @return {@code true} if {@link #getElementEndX} stays within the width for each character in the range
+   */
+  public static boolean surelyFits(@NotNull EditorView view, @NotNull CharSequence text, int startOffset, int endOffset,
+                                   float startX, float width) {
+    float charWidth = view.getMaxPrintableAsciiWidth();
+    float plainSpaceWidth = view.getPlainSpaceWidth();
+    int tabSize = view.getTabSize();
+    float x = startX;
+    for (int offset = startOffset; offset < endOffset; offset++) {
+      char c = text.charAt(offset);
+      if (c == '\t') {
+        x = EditorUtil.nextTabStop(x, plainSpaceWidth, tabSize);
+      }
+      else if (c >= ' ' && c <= '~') {
+        x += charWidth;
+      }
+      else {
+        return false;
+      }
+      if (x > width) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public float getElementEndX(float startX) {

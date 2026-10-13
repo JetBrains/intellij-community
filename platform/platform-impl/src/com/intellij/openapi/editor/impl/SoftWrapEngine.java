@@ -82,12 +82,14 @@ public final class SoftWrapEngine {
     var customWraps = myEditor.getCustomWrapModel().getWrapsInRange(startOffset, maxEndOffset);
 
     var grid = myEditor.getCharacterGrid();
-    if (grid != null && myAllowGridModeOptimizations
-        && inlineInlays.isEmpty() && afterLineEndInlays.isEmpty() && customWraps.isEmpty()
-        && !SoftWrapHelper.hasCollapsedOffsetsIn(myEditor.getFoldingModel(), startOffset, maxEndOffset)) {
+    boolean plainText = inlineInlays.isEmpty() && afterLineEndInlays.isEmpty() && customWraps.isEmpty()
+                        && !SoftWrapHelper.hasCollapsedOffsetsIn(myEditor.getFoldingModel(), startOffset, maxEndOffset);
+    if (grid != null && myAllowGridModeOptimizations && plainText) {
       generateGridSoftWraps(grid, startOffset, minEndOffset, maxEndOffset);
       return;
     }
+    // A line that surely fits gets no soft wrap. The engine skips such lines and measures only the other lines.
+    boolean skipFittingLines = grid == null && plainText;
 
     SoftWrap lastSoftWrap = null;
     boolean minWrapOffsetAtFolding = false;
@@ -106,8 +108,18 @@ public final class SoftWrapEngine {
       x = lastSoftWrap == null ? 0 : lastSoftWrap.getIndentInPixels();
     }
 
+    int measuringStartOffset = startOffset;
+    if (skipFittingLines && lastSoftWrap == null && DocumentUtil.isAtLineStart(startOffset, myDocument)) {
+      measuringStartOffset = skipFittingLines(startOffset, x, minEndOffset, maxEndOffset);
+      if (measuringStartOffset < 0) {
+        return;
+      }
+      if (measuringStartOffset != startOffset) {
+        x = 0;
+      }
+    }
     WrapElementMeasuringIterator it =
-      new WrapElementMeasuringIterator(myView, startOffset, maxEndOffset, inlineInlays, afterLineEndInlays, customWraps);
+      new WrapElementMeasuringIterator(myView, measuringStartOffset, maxEndOffset, inlineInlays, afterLineEndInlays, customWraps);
     while (!it.atEnd()) {
       if (it.isAtCustomWrap()) {
         minWrapOffset = -1;
@@ -127,6 +139,17 @@ public final class SoftWrapEngine {
         if (it.getElementEndOffset() > minEndOffset) {
           myEvent.setActualEndOffset(it.getElementEndOffset());
           return;
+        }
+        if (skipFittingLines) {
+          int lineStartOffset = it.getElementEndOffset();
+          int nextOffset = skipFittingLines(lineStartOffset, 0, minEndOffset, maxEndOffset);
+          if (nextOffset < 0) {
+            return;
+          }
+          if (nextOffset != lineStartOffset) {
+            it.advanceTo(nextOffset);
+            continue;
+          }
         }
       }
       else {
@@ -170,6 +193,34 @@ public final class SoftWrapEngine {
       it.advance();
     }
     myEvent.setActualEndOffset(maxEndOffset);
+  }
+
+  /**
+   * Skips the lines that start at the offset and surely fit into the visible width.
+   * A skipped line gets no soft wrap, the same as with the measuring.
+   *
+   * @param offset the start offset of a line
+   * @param startX the x coordinate at the start of the line
+   * @return the start offset of the first line to measure, or -1 if the generation is complete
+   */
+  private int skipFittingLines(int offset, float startX, int minEndOffset, int maxEndOffset) {
+    int line = myDocument.getLineNumber(offset);
+    float x = startX;
+    while (offset < maxEndOffset) {
+      int lineEndOffset = myDocument.getLineEndOffset(line);
+      if (!WrapElementMeasuringIterator.surelyFits(myView, myText, offset, lineEndOffset, x, myVisibleWidth)) {
+        return offset;
+      }
+      int nextOffset = line + 1 < myDocument.getLineCount() ? myDocument.getLineStartOffset(line + 1) : lineEndOffset;
+      if (nextOffset > minEndOffset || nextOffset >= maxEndOffset) {
+        myEvent.setActualEndOffset(nextOffset > minEndOffset ? nextOffset : maxEndOffset);
+        return -1;
+      }
+      offset = nextOffset;
+      line++;
+      x = 0;
+    }
+    return offset;
   }
 
   private SoftWrap createSoftWrap(SoftWrap lastSoftWrap,
