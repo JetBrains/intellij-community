@@ -4,7 +4,7 @@ package com.intellij.python.junit5Tests.env.venv.showCase
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.junit5Tests.framework.env.pyInterpreterFixture
+import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -17,7 +17,7 @@ class PyEnvWithVenvShowCaseTest {
   private val tempPathFixture = tempPathFixture()
   private val projectFixture = projectFixture()
   private val pyProjectFixture = projectFixture.pyProjectFixture(tempPathFixture)
-  private val venvFixture = projectFixture.pyInterpreterFixture().pyVenvFixture( // <-- venv fixture
+  private val venvFixture = pyEnvironmentFixture().pyVenvFixture( // <-- venv fixture
     where = tempPathFixture,
     pyProjectFixture = pyProjectFixture
   )

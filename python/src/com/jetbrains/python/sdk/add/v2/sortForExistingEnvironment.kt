@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.python.sdk.backend.getSdkAPI
-import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
 import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.sdk.pySdkAdditionalData
@@ -27,11 +26,6 @@ private enum class Group {
    * SDK venvs, associated with a current module
    */
   ASSOC_WITH_PROJ_ROOT,
-
-  /**
-   * SDK venvs no associated with any project
-   */
-  SHARED_VENVS,
 
   /**
    * Venvs in a user home
@@ -101,9 +95,6 @@ suspend fun <P : PathHolder> sortForExistingEnvironment(
             // module == null, associated path != null: associated sdk can't be used without a module
             return@groupBy Group.REDUNDANT
           }
-          if (it.pythonInterpreterWrapper.pythonInterpreter.getSdkAPI().associatedModulePath == null) { // Shared SDK
-            return@groupBy Group.SHARED_VENVS
-          }
         }
       }
       return@groupBy if (it.homePath.toStringForUI().startsWith(venvRoot)) Group.VENVS_IN_USER_HOME else Group.OTHER
@@ -114,8 +105,10 @@ suspend fun <P : PathHolder> sortForExistingEnvironment(
       }.joinToString("\n"))
     }
 
+    // A Python at the path of a redundant SDK is the interpreter of another Python project, so it is hidden too.
+    val redundantPaths = groupedPythons[Group.REDUNDANT].orEmpty().map { it.homePath }.toSet()
     groupedPythons.filterKeys { it != Group.REDUNDANT }.toSortedMap().flatMap { (_, pythons) ->
       pythons.sorted()
-    }.distinctBy { it.homePath }
+    }.filter { it.homePath !in redundantPaths }.distinctBy { it.homePath }
   }
 }

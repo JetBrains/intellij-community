@@ -125,7 +125,8 @@ public final class PythonSdkUtil {
 
   /** The id its provider declares in xml, or {@code null} when no environment was detected. */
   private static @Nullable String kindIdOf(@NotNull Sdk sdk) {
-    PythonEnvironment environment = PythonInterpreterKt.pythonInterpreter(sdk, false).getPythonEnvironment();
+    PythonInterpreter interpreter = PythonInterpreterKt.pythonInterpreterResult(sdk, false).getSuccessOrNull();
+    PythonEnvironment environment = interpreter == null ? null : PythonInterpreterKt.getDetectedEnvironment(interpreter);
     return environment == null ? null : PythonEnvironmentExtKt.getKindId(environment);
   }
 }

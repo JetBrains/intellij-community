@@ -24,7 +24,7 @@ internal class BlackReformatFragmentTest {
     val tempPathFixture = tempPathFixture()
     val projectFixture = projectFixture(tempPathFixture, openAfterCreation = true)
     val pyProjectFixture = projectFixture.pyProjectFixture(tempPathFixture)
-    val sdkFixture = projectFixture.pyInterpreterFixture().pyEnvInterpreterFixture(pyProjectFixture)
+    val sdkFixture = pyProjectFixture.pyInterpreterFixture()
 
     @JvmStatic
     @BeforeAll

@@ -120,12 +120,14 @@ internal class PythonLanguageRuntimeUI(
 
     val interpreter = runWithSdkConfigurationLock(project) {
       withContext(TraceContext(message("trace.context.add.remote.python.sdk.dialog", targetSupplier.get().getTargetType().displayName))) {
-        sdkManager.setupSdk(ModuleOrProject.ModuleAndProject(module)).onFailure {
+        val built = sdkManager.setupSdk(ModuleOrProject.ModuleAndProject(module)).onFailure {
           errorSink.emit(it)
-        }.successOrNull?.also {
-          module.asPyProjectAddingFacet()?.setPythonInterpreter(it, waitForSnapshot = false)
-          PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(it, false)
-        }
+        }.successOrNull ?: return@withContext null
+        // The interpreter the module then has: the registry can adopt an existing SDK for it.
+        val set = module.asPyProjectAddingFacet()?.setPythonInterpreter(built, waitForSnapshot = false)?.onFailure {
+          errorSink.emit(it)
+        }?.successOrNull ?: return@withContext null
+        set.also { PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(it, false) }
       }
     }
 

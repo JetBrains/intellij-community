@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterKt;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
@@ -82,7 +83,7 @@ import java.util.function.Function;
 
 import static com.intellij.openapi.util.NlsContexts.NotificationContent;
 import static com.intellij.openapi.util.NlsContexts.NotificationTitle;
-import static com.intellij.python.sdk.backend.PythonInterpreterKt.pythonInterpreter;
+import static com.intellij.python.sdk.backend.PythonInterpreterKt.pythonInterpreterOrThrow;
 import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REFRESH_SKELETONS_FAILED;
 import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REMOTE_INTERPRETER_SUPPORT_IS_NOT_AVAILABLE;
 
@@ -340,7 +341,7 @@ public final class PythonSdkUpdater {
     updateSdkVersion(sdk);
     if (PythonSdkUtil.isRemote(sdk)) return;
 
-    PythonInterpreter pythonInterpreter = pythonInterpreter(sdk, true);
+    PythonInterpreter pythonInterpreter = pythonInterpreterOrThrow(sdk, true);
 
     try {
       updateSdkPaths(
@@ -500,7 +501,7 @@ public final class PythonSdkUpdater {
       return null;
     }
 
-    final var homePath = richSdk.getPythonHomePath();
+    final var homePath = PythonInterpreterKt.getDetectedHomePath(richSdk);
     final VirtualFile homeFolder = homePath != null ? VirtualFileManager.getInstance().findFileByNioPath(homePath) : null;
 
     final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(path);
@@ -520,7 +521,7 @@ public final class PythonSdkUpdater {
       return false;
     }
 
-    final var pythonHome = pythonInterpreter.getPythonHomePath();
+    final var pythonHome = PythonInterpreterKt.getDetectedHomePath(pythonInterpreter);
     final var envRoot = pythonHome != null ? VirtualFileManager.getInstance().findFileByNioPath(pythonHome) : null;
     // Under a module root but outside the interpreter's own home → treat as project-local, not an SDK root.
     return envRoot == null || !VfsUtilCore.isAncestor(envRoot, file, false);
@@ -595,7 +596,7 @@ public final class PythonSdkUpdater {
           "Starting SDK refresh for '" + mySdk.getName() + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
       }
       try {
-        PythonInterpreter pythonInterpreter = pythonInterpreter(mySdk, true);
+        PythonInterpreter pythonInterpreter = pythonInterpreterOrThrow(mySdk, true);
         PythonPackageManager manager = PythonPackageManager.Companion.forPythonInterpreter(myProject, pythonInterpreter);
         PyTargetsIntrospectionFacade targetsFacade = PyTargetsIntrospectionFacade.create(mySdk, myProject);
         String version = targetsFacade.getInterpreterVersion();
@@ -719,7 +720,7 @@ public final class PythonSdkUpdater {
         // The interpreter does not run: a user can delete or break it at any moment.
         // That is a problem of the environment, not a defect of the code, so it is a warning and a notification.
         LOG.warn("Skeleton generation failed for " + interpreterName, exception);
-        if (pythonInterpreter.getPythonEnvironment() != null) {
+        if (PythonInterpreterKt.getDetectedEnvironment(pythonInterpreter) != null) {
           notifyWarning(PyBundle.message("sdk.gen.failed.skeletons.title", interpreterName),
                         PyBundle.message("sdk.gen.failed.interpreter.unavailable"),
                         REFRESH_SKELETONS_FAILED);

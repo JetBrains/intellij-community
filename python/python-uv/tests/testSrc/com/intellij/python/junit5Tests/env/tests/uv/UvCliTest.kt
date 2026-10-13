@@ -216,7 +216,7 @@ class UvCliTest {
   }
 
   @Test
-  fun testPython(): Unit = timeoutRunBlocking(60.seconds) {
+  fun testPythonDirAndList(): Unit = timeoutRunBlocking(60.seconds) {
     val python = myRuntime.uvCli().python()
     assertTrue(python.dir().getOrThrow().isNotBlank())
     python.list(onlyInstalled = true).getOrThrow()

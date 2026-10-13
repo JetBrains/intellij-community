@@ -3,8 +3,8 @@
 
 package com.jetbrains.python.sdk.evolution
 
+import com.intellij.python.sdk.backend.detectedEnvironment
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
-import com.intellij.python.sdk.backend.ref
 import com.intellij.python.sdk.backend.interpreterItem
 import com.intellij.python.sdk.common.PyInterpreterRef
 import com.jetbrains.python.project.PyProject
@@ -70,7 +70,7 @@ import com.intellij.python.sdk.backend.evolution.toSectionLabel
 import com.intellij.python.sdk.backend.evolution.withCreators
 import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.python.sdk.common.EvoRowAction
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
 import com.intellij.python.sdk.common.evolution.EvoBasePythonDto
@@ -123,6 +123,7 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
 import com.jetbrains.python.sdk.configuration.getInterpreterCreator
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
+import com.intellij.python.pyproject.model.evolution.setOnWorkspace
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.sdk.evolution.PyEvoSdkApiImpl.applySdk
 import com.jetbrains.python.sdk.evolution.PyEvoSdkApiImpl.dependencyFileContext
@@ -729,11 +730,11 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
         }.getOr { return@withSdkConfigurationLock it.error.toSelectError(workspace.project) }
         is EvoRowAction.Autoconfigure -> error("handled above")
       }
-      workspace.applySdk(pythonInterpreter)
+      val applied = workspace.applySdk(pythonInterpreter).getOr { return@withSdkConfigurationLock it.error.toSelectError(workspace.project) }
       // Keeps `python.new.interpreter.added` continuous across the classic→evo widget migration: without this, every
       // interpreter configured through the widget — now the default in both PyCharm and IDEA — is missing from that
       // group, and the series reads as a decline in interpreter creation rather than a change of entry point.
-      PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(pythonInterpreter, ref.evoReusesExistingEnv())
+      PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(applied, ref.evoReusesExistingEnv())
       EvoSelectResultDto.Ok
     }
   }
@@ -798,8 +799,8 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
                              spec)
       }.getOr { return@withSdkConfigurationLock it.error.toSelectError(workspace.project) }
       refreshRebuiltSdk(pythonInterpreter, workspace.project)
-      workspace.applySdk(pythonInterpreter)
-      PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(pythonInterpreter, false)
+      val applied = workspace.applySdk(pythonInterpreter).getOr { return@withSdkConfigurationLock it.error.toSelectError(workspace.project) }
+      PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(applied, false)
       EvoSelectResultDto.Ok
     }
   }
@@ -865,7 +866,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val updated = withContext(Dispatchers.IO) {
       PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(pythonInterpreter.getSdkAPI(), project)
     }
-    if (!updated) LOG.warn("Evo: rebuilt ${pythonInterpreter.pythonBinaryPath ?: pythonInterpreter}, but could not re-read its version and paths")
+    if (!updated) LOG.warn("Evo: rebuilt ${pythonInterpreter.detectedEnvironment?.pythonBinaryPath ?: pythonInterpreter}, but could not re-read its version and paths")
   }
 
   /**
@@ -965,11 +966,8 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
    * The widget does not read the snapshot back, so it does not wait for it. Must be called under the SDK-configuration
    * lock.
    */
-  private suspend fun EvoWorkspace.applySdk(pythonInterpreter: PythonInterpreter) {
-    for (member in members) {
-      member.pyProject.setPythonInterpreter(pythonInterpreter, waitForSnapshot = false)
-    }
-  }
+  private suspend fun EvoWorkspace.applySdk(pythonInterpreter: PythonInterpreter): PyResult<PythonInterpreter> =
+    setOnWorkspace(pythonInterpreter)
 
   /**
    * Runs the setup option [toolId] (a "Shortcuts" row) for the module — the same work the "no interpreter configured"
@@ -1047,11 +1045,11 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     }
     // A tool root outside the widget's own workspace (a differently-scoped tool) still gets the SDK, as before. The
     // widget's workspace is tool-agnostic, so a tool that declares another root is not covered by [EvoWorkspace].
-    module.getRootModuleOrNull(option.toolId)?.asPyProject()?.setPythonInterpreter(sdk, waitForSnapshot = false)
-    applySdk(sdk)
+    val applied = applySdk(sdk).getOr { return it }
+    module.getRootModuleOrNull(option.toolId)?.asPyProject()?.setPythonInterpreter(applied, waitForSnapshot = false)?.getOr { return it }
     // Same continuity argument as in doSelectInterpreter: a "Shortcuts" row configures an interpreter too, and the
     // `python.sdk.configuration` events these options already emit describe the env creation, not the SDK that landed.
-    PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk, isPreviouslyConfigured = false)
+    PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(applied, isPreviouslyConfigured = false)
     return PyResult.success(Unit)
   }
 
@@ -1175,7 +1173,8 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     // Each "no" below is logged, because the user is shown one line saying the environment cannot be rebuilt and the
     // reasons are not alike: an interpreter no node owns, a remote one, and a tool that declined all read the same.
     val binary =
-      interpreter.pythonBinaryPath ?: return null.also { LOG.info("Evo: no rebuild for $interpreter, which has no interpreter path") }
+      interpreter.detectedEnvironment?.pythonBinaryPath
+      ?: return null.also { LOG.info("Evo: no rebuild for $interpreter, which has no interpreter path") }
     val nodeId =
       providers.nodeIdFor(interpreter) ?: return null.also { LOG.info("Evo: no rebuild for $binary, whose flavor no node claims") }
     val toolId = providers.firstOrNull { it.toolId.id == nodeId }?.toolId ?: return null
@@ -1256,8 +1255,15 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
       // The callback may run inside a write action, and the setter does its own EDT write, so it runs on a background
       // coroutine. The widget does not read the snapshot back.
       widgetScope.launch {
-        val interpreter = sdk.pythonInterpreterAsync()
-        for (member in target.workspace.members) member.pyProject.setPythonInterpreter(interpreter, waitForSnapshot = false)
+        // A broken SDK names no interpreter, so the members get none, as for no SDK.
+        val interpreter = sdk.pythonInterpreterResultAsync().successOrNull
+        if (interpreter == null) {
+          for (member in target.workspace.members) member.pyProject.setPythonInterpreter(null, waitForSnapshot = false)
+        }
+        else {
+          val result = target.workspace.setOnWorkspace(interpreter)
+          if (result is com.jetbrains.python.Result.Failure) ErrorSink().emit(result.error, project)
+        }
       }
     }
     val action = actions.getOrNull(index) ?: run {

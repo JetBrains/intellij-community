@@ -9,7 +9,7 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.pyproject.PyDependencyGroup
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPIPackageUtil
@@ -34,7 +34,7 @@ internal class PipPackageManagerEngine(
   private val sdk: Sdk,
 ) : PythonPackageManagerEngine {
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
-    val manager = PythonPackageManager.forPythonInterpreter(project, sdk.pythonInterpreterAsync())
+    val manager = PythonPackageManager.forPythonInterpreter(project, sdk.pythonInterpreterResultAsync().getOr { return it })
 
     PipManagementInstaller(sdk, manager).installManagementIfNeeded().getOr { return it }
 
@@ -96,7 +96,7 @@ internal class PipPackageManagerEngine(
 
     thisLogger().debug("Running python packaging tool. Operation: $operation")
     ExecService().executeHelper(
-      sdk.pythonInterpreterAsync(),
+      sdk.pythonInterpreterResultAsync().getOr { return@withContext it },
       PyHelper(PACKAGING_TOOL_NAME),
       parameters,
     )

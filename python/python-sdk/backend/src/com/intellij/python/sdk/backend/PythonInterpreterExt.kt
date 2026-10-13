@@ -48,12 +48,15 @@ private fun EelOsFamily.executableName(binaryName: String): String = when (this)
  * binary — or `null` when the tool is not installed there.
  *
  * The receiver is the interpreter because that is what determines where to look: the answer is a property of this
- * environment, not of the tool. Only local interpreters are supported for now.
+ * environment, not of the tool. Only a native interpreter is supported: `null` for a target.
  */
 fun PythonInterpreter.findToolExecutable(tool: PyTool, executableName: String = tool.packageName.name): Path? =
-  pythonBinaryPath?.let { binary ->
-    val osFamily = binary.getEelDescriptor().osFamily
-    binary.resolveSibling(osFamily.executableName(executableName)).takeIf { it.isExecutable() }
+  when (this) {
+    is NativePythonInterpreter -> {
+      val osFamily = pythonBinary.getEelDescriptor().osFamily
+      pythonBinary.resolveSibling(osFamily.executableName(executableName)).takeIf { it.isExecutable() }
+    }
+    is TargetPythonInterpreter -> null
   }
 
 /**
@@ -86,12 +89,15 @@ fun PythonInterpreter.getSdkAPI(): Sdk = sdk
  * Nothing caches this: it reads a few fields, so computing it again is cheaper than remembering it.
  */
 fun PythonInterpreter.getPythonInfo(): PyResult<PythonInfo> {
-  val detection = environmentResult
-  if (detection is Result.Failure) return detection
+  val environment = when (this) {
+    is NativePythonInterpreter -> environmentResult.getOr { return it }
+    // A target interpreter has no detected environment: its version is the one the SDK records.
+    is TargetPythonInterpreter -> null
+  }
   associationProblem()?.let { return it }
 
   // The environment's own version first, since it is exact; then the SDK's, which carries a `Python ` prefix.
-  val recorded = pythonEnvironment?.version ?: sdk.versionString?.let { VERSION_NUMBER_RE.find(it)?.value }
+  val recorded = environment?.version ?: sdk.versionString?.let { VERSION_NUMBER_RE.find(it)?.value }
   return recordedPythonInfo(recorded)?.let { PyResult.success(it) }
          ?: PyResult.localizedError(PySdkBundle.message("python.sdk.version.not.recorded", sdk.name))
 }
@@ -119,8 +125,7 @@ suspend fun Iterable<Sdk>.pyInterpreterItems(): List<PyInterpreterItem> = mapNot
  * This SDK as a UI list holds it, or `null` for a broken SDK that has no ref: no row stands for it. For a caller
  * that the platform hands an [Sdk], such as the status bar or a run configuration.
  */
-suspend fun Sdk.interpreterItem(): PyInterpreterItem? =
-  if (interpreterRefOf(this) == null) null else pythonInterpreterAsync().asItem()
+suspend fun Sdk.interpreterItem(): PyInterpreterItem? = pythonInterpreterResultAsync().successOrNull?.asItem()
 
 /**
  * Whether this SDK's interpreter can be used, for a Java caller that cannot suspend.
@@ -130,7 +135,7 @@ suspend fun Sdk.interpreterItem(): PyInterpreterItem? =
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 @RequiresBlockingContext
 fun Sdk.isInterpreterUsable(): Boolean =
-  runBlockingMaybeCancellable { pythonInterpreterAsync().getPythonInfo() } is Result.Success
+  runBlockingMaybeCancellable { pythonInterpreterResultAsync().successOrNull?.getPythonInfo() } is Result.Success<*>
 
 /**
  * The SDK this item names, or `null` when no SDK has its key any more.
@@ -182,7 +187,13 @@ fun PythonInterpreter.isFor(sdk: Sdk): Boolean = this.sdk == sdk
  */
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun PythonInterpreter.libDirectory(): VirtualFile? =
-  if (pythonEnvironment?.libRoot != null) venvLibDirectory() else stdlibLibDirectory()
+  if (venvLibRoot() != null) venvLibDirectory() else stdlibLibDirectory()
+
+/** The library root of the environment of a native interpreter, or `null` for a target or an environment without one. */
+private fun PythonInterpreter.venvLibRoot(): Path? = when (this) {
+  is NativePythonInterpreter -> pythonEnvironment?.libRoot
+  is TargetPythonInterpreter -> null
+}
 
 /**
  * The `site-packages/` directory inside this SDK's [libDirectory], or `null` when either the lib
@@ -206,8 +217,16 @@ fun PythonInterpreter.sitePackagesDirectory(): VirtualFile? = libDirectory()?.fi
  * stdlib (which is included in the venv's class roots), not the venv's own (mostly empty) lib.
  */
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-fun PythonInterpreter.stdlibLibDirectory(): VirtualFile? {
-  for (file in sdkClassRoots) {
+fun PythonInterpreter.stdlibLibDirectory(): VirtualFile? = sdk.stdlibLibDirectory()
+
+/**
+ * [PythonInterpreter.stdlibLibDirectory] for an SDK that has no interpreter yet, such as an SDK without an owner.
+ *
+ * The scan reads only the class roots of the SDK, so it needs no interpreter.
+ */
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+fun Sdk.stdlibLibDirectory(): VirtualFile? {
+  for (file in runReadActionBlocking { rootProvider.getFiles(OrderRootType.CLASSES) }) {
     if (!file.isValid) continue
     if ((file.findChild("__future__.py") != null || file.findChild("__future__.pyc") != null) &&
         file.findChild("xml") != null && file.findChild("email") != null) {
@@ -232,7 +251,7 @@ fun PythonInterpreter.stdlibLibDirectory(): VirtualFile? {
  */
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun PythonInterpreter.venvLibDirectory(): VirtualFile? {
-  val libRoot = pythonEnvironment?.libRoot ?: return null
+  val libRoot = venvLibRoot() ?: return null
   val classRoots = sdkClassRoots
   // Empty in case of a temporary empty SDK created to install package management.
   if (classRoots.isEmpty()) {

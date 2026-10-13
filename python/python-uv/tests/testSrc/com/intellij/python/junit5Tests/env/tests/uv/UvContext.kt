@@ -67,7 +67,13 @@ internal data class UvContext(
 
 private val capitalLetterRegex = "(?<=.)[A-Z]".toRegex()
 
+/** The project names that `uv init` rejects. */
+private val namesRejectedByUv = setOf("python")
+
+/** The project name for this test, such as `help` for `testHelp`. It fails for a name that `uv init` rejects. */
 internal fun TestInfo.projectName(): String {
   val testName = this.displayName.removePrefix("test").substringBefore("(")
-  return testName.replace(capitalLetterRegex, "-$0").lowercase()
+  val name = testName.replace(capitalLetterRegex, "-$0").lowercase()
+  check(name !in namesRejectedByUv) { "uv init rejects the project name `$name`. Rename the test ${this.displayName}." }
+  return name
 }

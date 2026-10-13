@@ -3,16 +3,13 @@ package com.intellij.python.test.env.conda
 
 import com.intellij.execution.processTools.getResultStdout
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.jetbrains.python.project.PyProject
-import com.jetbrains.python.project.project
 import com.intellij.python.test.env.core.CacheKey
 import com.intellij.python.test.env.core.PyEnvDownloadCache
 import com.intellij.python.test.env.core.PyEnvironment
@@ -27,7 +24,8 @@ import com.intellij.util.system.OS
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.getOrThrow
-import com.jetbrains.python.packaging.PyCondaPackageService
+import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
@@ -329,18 +327,23 @@ class CondaPyEnvironment(
     }
   }
 
-  // The conda SDK creation takes no PyProject yet, so a conda interpreter is shared.
-  override suspend fun prepareSdk(pyProject: PyProject): PythonInterpreter = prepareSharedSdk(pyProject.project)
+  /** The conda interpreter of this environment for [pyProject]. It is not registered yet: set it on [pyProject]. */
+  override suspend fun prepareSdk(pyProject: PyProject): PythonInterpreter =
+    condaEnv().createSdkFromThisEnv(ModuleOrProject.ModuleAndProject(pyProject), null, pyProject.baseDir).getOrThrow()
 
-  override suspend fun prepareSharedSdk(project: Project): PythonInterpreter {
-    // Save a path to conda because some legacy code might use it instead of a full conda path from additional data
-    PyCondaPackageService.onCondaEnvCreated(condaExecutable.pathString)
+  /**
+   * The conda interpreter of this environment for the old fixtures, which have no project. It is not in the SDK table:
+   * the fixture adds it. The env dir is its owner directory.
+   */
+  override suspend fun prepareSdk(): PythonInterpreter {
+    val project = ProjectManager.getInstance().defaultProject
+    return condaEnv().createSdkFromThisEnv(ModuleOrProject.ProjectOnly(project), null, envPath).getOrThrow()
+  }
+
+  private fun condaEnv(): PyCondaEnv {
     return PyCondaEnv(
       envIdentity = PyCondaEnvIdentity.UnnamedEnv(envPath.pathString, isBase = true),
       fullCondaPathOnTarget = condaExecutable.toString(),
-    ).createSdkFromThisEnv(project, null, envPath).getOrThrow()
+    )
   }
-
-  // The old fixtures have no project. The SDK table is global, so the default project adds the SDK.
-  override suspend fun prepareSdk(): PythonInterpreter = prepareSharedSdk(ProjectManager.getInstance().defaultProject)
 }

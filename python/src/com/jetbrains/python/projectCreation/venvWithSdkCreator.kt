@@ -40,7 +40,7 @@ import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
-import com.jetbrains.python.project.PyProject.Companion.asPyProject
+import com.jetbrains.python.sdk.asPyProjectAddingFacet
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.moduleIfExists
@@ -123,8 +123,10 @@ suspend fun createVenvAndSdk(
     // generated files should be readable by VFS
     VfsUtil.markDirtyAndRefresh(false, true, true, vfsPath)
   }
-  module.asPyProject()?.setPythonInterpreter(sdk)
-  return Result.success(sdk)
+  // A module of another IDE, such as CLion, gets the Python facet here, so it becomes a PyProject.
+  val pyProject = module.asPyProjectAddingFacet() ?: return PyResult.localizedError(PyBundle.message("python.sdk.project.working.directory.not.found"))
+  val interpreter = pyProject.setPythonInterpreter(sdk).getOr { return it } ?: return PyResult.localizedError(PyBundle.message("project.error.cant.venv"))
+  return Result.success(interpreter)
 }
 
 /**
@@ -207,5 +209,5 @@ private suspend fun getSdk(pythonPath: PythonBinary, module: Module): PyResult<P
       ?.let { return@withProgressText it }
 
     val additionalData = createVenvAdditionalData(module).getOr { return@withProgressText it }
-    return@withProgressText createSdk(module.project, PathHolder.Eel(pythonPath), additionalData)
+    return@withProgressText createSdk(ModuleOrProject.ModuleAndProject(module), PathHolder.Eel(pythonPath), additionalData)
   }

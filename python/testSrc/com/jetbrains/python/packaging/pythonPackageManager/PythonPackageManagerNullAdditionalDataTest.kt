@@ -1,107 +1,82 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pythonPackageManager
 
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
-import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.allure.Layers
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkModificator
-import com.intellij.openapi.projectRoots.SdkTypeId
-import com.jetbrains.env.EnvTestTagsRequired
-import com.jetbrains.env.PyEnvTestCase
-import com.jetbrains.env.PyExecutionFixtureTestTask
-import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.hasInstalledPackage
-import com.jetbrains.python.packaging.management.toInstallRequest
-import com.jetbrains.python.packaging.repository.PyPiPackageRepository
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
+import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
+import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.jetbrains.python.Result
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
-import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData
+import com.jetbrains.python.sdk.flavors.PyFlavorData
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
 
-
+/**
+ * A Python SDK with no SDK data names no interpreter, so no package manager can open for it. The IDE treats such an SDK
+ * as no SDK: the interpreter lookup fails with the message that asks the user to recreate the SDK.
+ */
 @Subsystems.PackagingRequirements
 @Layers.Functional
-class PythonPackageManagerNullAdditionalDataTest : PyEnvTestCase() {
-  companion object {
-    private val PKG = PythonRepositoryPackageSpecification(PyPiPackageRepository, "requests")
-  }
-
-  @EnvTestTagsRequired(tags = ["python3.8"])
+@TestApplication
+internal class PythonPackageManagerNullAdditionalDataTest {
   @Test
-  fun testInstallUninstallPackageWithNullAdditionalDataPython38() {
-    runPythonTest(PythonPackageManagerNullAdditionalDataTask(PKG))
+  fun `an SDK with null additional data names no interpreter`(@TempDir home: Path): Unit = timeoutRunBlocking {
+    val sdk = pythonSdk(home, data = null)
+
+    assertBrokenConfiguration(sdk.pythonInterpreterResultAsync(), sdk.name)
   }
 
-  @EnvTestTagsRequired(tags = ["python3.9"])
   @Test
-  fun testInstallUninstallPackageWithNullAdditionalDataPython39() {
-    runPythonTest(PythonPackageManagerNullAdditionalDataTask(PKG))
+  fun `an SDK with no home path names no interpreter`(@TempDir home: Path): Unit = timeoutRunBlocking {
+    val sdk = pythonSdk(homePath = null, data = venvData(home))
+
+    assertBrokenConfiguration(sdk.pythonInterpreterResultAsync(), sdk.name)
   }
 
-  @EnvTestTagsRequired(tags = ["python3.10"])
   @Test
-  fun testInstallUninstallPackageWithNullAdditionalDataPython310() {
-    runPythonTest(PythonPackageManagerNullAdditionalDataTask(PKG))
+  fun `an SDK with a home path and data names an interpreter`(@TempDir home: Path): Unit = timeoutRunBlocking {
+    val sdk = pythonSdk(home, venvData(home))
+
+    val interpreter = sdk.pythonInterpreterResultAsync().orThrow()
+
+    assertThat(interpreter.ownerDir).isEqualTo(home)
   }
 
-  @EnvTestTagsRequired(tags = ["python3.11"])
-  @Test
-  fun testInstallUninstallPackageWithNullAdditionalDataPython311() {
-    runPythonTest(PythonPackageManagerNullAdditionalDataTask(PKG))
-  }
+  private suspend fun pythonSdk(home: Path, data: PythonSdkAdditionalData?): ProjectJdkImpl =
+    pythonSdk(home.resolve("bin").resolve("python").toString(), data)
 
-  @EnvTestTagsRequired(tags = ["python3.12"])
-  @Test
-  fun testInstallUninstallPackageWithNullAdditionalDataPython312() {
-    runPythonTest(PythonPackageManagerNullAdditionalDataTask(PKG))
-  }
-}
-
-
-class PythonPackageManagerNullAdditionalDataTask(private val pkg: PythonRepositoryPackageSpecification) : PyExecutionFixtureTestTask("") {
-
-  private suspend fun createSdkWithNullAdditionalData(sdkTypeId: SdkTypeId, homePath: String, existingSdk: Sdk): Sdk {
-    val sdkTable = ProjectJdkTable.getInstance()
-
-    return edtWriteAction {
-      val newSdk = sdkTable.createSdk(SDK_NAME, sdkTypeId)
-      configureSdk(newSdk, homePath, existingSdk)
-      newSdk
+  private suspend fun pythonSdk(homePath: String?, data: PythonSdkAdditionalData?): ProjectJdkImpl {
+    val sdk = ProjectJdkImpl(SDK_NAME, PythonSdkType.getInstance())
+    // A commit of an SDK modificator needs the write lock, also for an SDK outside the SDK table.
+    edtWriteAction {
+      val modificator = sdk.sdkModificator
+      modificator.homePath = homePath
+      modificator.sdkAdditionalData = data
+      modificator.commitChanges()
     }
+    return sdk
   }
 
-  private fun configureSdk(sdk: Sdk, homePath: String, existingSdk: Sdk) {
-    val modificator: SdkModificator = sdk.sdkModificator
-    modificator.apply {
-      this.homePath = homePath
-      this.versionString = existingSdk.versionString
-      this.sdkAdditionalData = null
-      commitChanges()
-    }
+  private fun venvData(home: Path): PythonSdkAdditionalData =
+    PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance()), home)
+
+  private fun assertBrokenConfiguration(result: PyResult<*>, sdkName: String) {
+    assertThat(result).isInstanceOf(Result.Failure::class.java)
+    val error = (result as Result.Failure).error
+    assertThat(error.message).isEqualTo(PySdkBundle.message("python.sdk.broken.configuration", sdkName))
   }
 
-  override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
-    requireNotNull(existingSdk) { "Sdk should be not bull" }
-
-    val pythonSdkType = PythonSdkType.getInstance()
-
-    runBlocking {
-      val configuredSdk = createSdkWithNullAdditionalData(pythonSdkType, sdkHome, existingSdk)
-      val manager = PythonPackageManager.forPythonInterpreter(myFixture.project, configuredSdk.pythonInterpreterAsync())
-
-      manager.installPackage(pkg.toInstallRequest(), emptyList())
-      assertTrue("Package should be installed", manager.hasInstalledPackage(pkg.name))
-
-      manager.uninstallPackage(pkg.name)
-      assertTrue("Package should be uninstalled", !manager.hasInstalledPackage(pkg.name))
-    }
-  }
-
-  companion object {
-    private const val SDK_NAME = "Python Null Additional Data"
+  private companion object {
+    const val SDK_NAME = "Python Null Additional Data"
   }
 }

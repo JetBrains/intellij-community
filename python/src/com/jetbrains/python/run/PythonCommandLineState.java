@@ -834,8 +834,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Sdk sdk = runParams.getSdk();
     if (sdk == null) return;
 
-    PythonInterpreter pythonInterpreter = PythonInterpreterKt.pythonInterpreter(sdk, false);
-    boolean shouldActivate = (Registry.is("python.activate.virtualenv.on.run") && pythonInterpreter.isActivatable());
+    // A broken SDK names no interpreter, so there is nothing to activate.
+    PythonInterpreter pythonInterpreter = PythonInterpreterKt.pythonInterpreterResult(sdk, false).getSuccessOrNull();
+    boolean shouldActivate = Registry.is("python.activate.virtualenv.on.run") && pythonInterpreter != null &&
+                             PythonInterpreterKt.isDetectedActivatable(pythonInterpreter);
     if (!shouldActivate) return;
 
     // A failed activation read is already logged by ActivatableEnvironmentService; fall back to no extra vars here.

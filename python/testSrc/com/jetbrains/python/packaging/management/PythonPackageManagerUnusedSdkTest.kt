@@ -34,7 +34,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 
 /**
  * A package manager watches the paths of its interpreter and asks for a full update on a change, and that update starts
@@ -92,7 +92,7 @@ internal class PythonPackageManagerUnusedSdkTest {
 
     // The structure has landed, so an absent watcher is a decision and not a moment before one
     EvoPyProjectModel.getInstance(project).snapshot()
-    assertThat(service.impl().watchesInterpreterPaths(interpreter.sdk)).isFalse()
+    assertThat(service.impl().watchesInterpreterPaths(interpreter.getSdkAPI())).isFalse()
   }
 
   /**
@@ -109,7 +109,7 @@ internal class PythonPackageManagerUnusedSdkTest {
     val service = project.service<PythonPackageManagerService>()
     val manager = service.forPythonInterpreter(project, interpreter)
     EvoPyProjectModel.getInstance(project).snapshot()
-    assertThat(service.impl().watchesInterpreterPaths(interpreter.sdk)).isFalse()
+    assertThat(service.impl().watchesInterpreterPaths(interpreter.getSdkAPI())).isFalse()
 
     module.useInterpreter(interpreter)
 
@@ -156,8 +156,8 @@ internal class PythonPackageManagerUnusedSdkTest {
     service.awaitWatcher(interpreter, watched = true)
 
     val watcherGone = AtomicBoolean()
-    Disposer.register(service.impl().interpreterPathsWatcher(interpreter.sdk)!!, Disposable { watcherGone.set(true) })
-    WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance().removeJdk(interpreter.sdk) }
+    Disposer.register(service.impl().interpreterPathsWatcher(interpreter.getSdkAPI())!!, Disposable { watcherGone.set(true) })
+    WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance().removeJdk(interpreter.getSdkAPI()) }
 
     assertThat(watcherGone.get()).describedAs("The watcher outlived the interpreter it watches").isTrue()
   }
@@ -181,7 +181,7 @@ internal class PythonPackageManagerUnusedSdkTest {
     service.awaitWatcher(interpreter, watched = true)
 
     val watcherGone = AtomicBoolean()
-    Disposer.register(service.impl().interpreterPathsWatcher(interpreter.sdk)!!, Disposable { watcherGone.set(true) })
+    Disposer.register(service.impl().interpreterPathsWatcher(interpreter.getSdkAPI())!!, Disposable { watcherGone.set(true) })
     Disposer.dispose(service.impl())
 
     assertThat(watcherGone.get()).describedAs("The watcher outlived the project that owns it").isTrue()
@@ -191,7 +191,7 @@ internal class PythonPackageManagerUnusedSdkTest {
 
   /** The structure is published on a flow, so a watcher appears and goes after the change, not with it. */
   private suspend fun PythonPackageManagerService.awaitWatcher(interpreter: PythonInterpreter, watched: Boolean) {
-    while (impl().watchesInterpreterPaths(interpreter.sdk) != watched) {
+    while (impl().watchesInterpreterPaths(interpreter.getSdkAPI()) != watched) {
       delay(50.milliseconds)
     }
   }
@@ -206,11 +206,11 @@ internal class PythonPackageManagerUnusedSdkTest {
       modificator.commitChanges()
       ProjectJdkTable.getInstance().addJdk(sdk, disposable)
     }
-    return sdk.pythonInterpreterAsync()
+    return sdk.pythonInterpreterResultAsync().orThrow()
   }
 
   private fun Module.useInterpreter(interpreter: PythonInterpreter) {
-    WriteAction.runAndWait<RuntimeException> { ModuleRootModificationUtil.setModuleSdk(this, interpreter.sdk) }
+    WriteAction.runAndWait<RuntimeException> { ModuleRootModificationUtil.setModuleSdk(this, interpreter.getSdkAPI()) }
   }
 
   /** The SDK of the interpreter, for the platform calls and the watcher checks, which take one. */

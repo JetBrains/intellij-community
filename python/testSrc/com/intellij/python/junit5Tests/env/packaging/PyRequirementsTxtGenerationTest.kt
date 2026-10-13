@@ -12,7 +12,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.guessModuleDir
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.junit5Tests.framework.env.pyInterpreterFixture
+import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.junit5Tests.framework.metaInfo.Repository
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfoData
@@ -55,7 +55,7 @@ internal class PyRequirementsTxtGenerationTest {
   private val sourceRoot = pyProjectFixture.rootSourceRootFixture()
 
   @Suppress("unused")
-  private val venvFixture = projectFixture.pyInterpreterFixture().pyVenvFixture(
+  private val venvFixture = pyEnvironmentFixture().pyVenvFixture(
     where = tempPathFixture,
     pyProjectFixture = pyProjectFixture,
   )

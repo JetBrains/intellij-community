@@ -7,9 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 /**
- * The identity of one interpreter of a `PyProject`: where it runs ([mode]), the tool that manages its environment
- * ([manager], by the `fusId` of its `PyTool`), and the [envRef] by which that manager finds the environment again. Only the manager reads
- * [envRef]: it is a path for uv, a name for hatch.
+ * The identity of one interpreter of a `PyProject`: where it runs ([mode]), and which environment it is there ([env]).
  *
  * It names a tool by its id, not by the tool itself, so it travels to the frontend, and it stays valid when the plugin
  * of the tool is not loaded.
@@ -23,7 +21,15 @@ import org.jetbrains.annotations.NonNls
  */
 @ApiStatus.Internal
 @Serializable
-data class PyInterpreterRef(val mode: Mode, val manager: FusId, val envRef: PyEnvRef) {
+data class PyInterpreterRef(val mode: Mode, val env: PyEnvId) {
+  constructor(mode: Mode, manager: FusId, envRef: PyEnvRef) : this(mode, PyEnvId(manager, envRef))
+
+  /** The tool that manages the environment, see [PyEnvId.manager]. */
+  val manager: FusId get() = env.manager
+
+  /** The name of the environment for [manager], see [PyEnvId.envRef]. */
+  val envRef: PyEnvRef get() = env.envRef
+
   /** Where the interpreter runs. */
   @Serializable
   sealed interface Mode {
@@ -66,6 +72,15 @@ data class PyInterpreterRef(val mode: Mode, val manager: FusId, val envRef: PyEn
     }
   }
 }
+
+/**
+ * An environment, without where it runs: the tool that manages it ([manager], by the `fusId` of its `PyTool`), and the
+ * [envRef] by which that manager finds it again. Only the manager reads [envRef]: it is a path for uv, a name for hatch.
+ * A [PyInterpreterRef] adds the mode.
+ */
+@ApiStatus.Internal
+@Serializable
+data class PyEnvId(val manager: FusId, val envRef: PyEnvRef)
 
 /**
  * The part of a [PyInterpreterRef] by which its manager finds the environment again. Only the manager gives it a

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.terminal
 
+import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.ModuleUtilCore
@@ -22,7 +23,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.python.sdk.backend.PythonEnvironment
 import com.intellij.python.sdk.backend.ShellActivation
-import com.intellij.python.sdk.backend.pythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreterResult
 import com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.orLogException
@@ -167,7 +168,9 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
       return
     }
 
-    val pythonEnvironment = sdk.pythonInterpreter().environmentResult?.orLogException(logger) ?: run {
+    // A broken SDK names no interpreter, and a target one has no environment on this machine.
+    val interpreter = sdk.pythonInterpreterResult().successOrNull as? NativePythonInterpreter
+    val pythonEnvironment = interpreter?.environmentResult?.orLogException(logger) ?: run {
       logger.warn("Cannot detect Python environment for SDK ${sdk.homePath}, skipping activation")
       return
     }

@@ -1,6 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.bridge
 
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.emit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -10,7 +14,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.util.CatchingConsumer
 import com.intellij.webcore.packaging.InstalledPackage
 import com.intellij.webcore.packaging.PackageVersionComparator
@@ -39,11 +43,24 @@ internal class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) 
 
   // The old API is sync, but every method runs its work in a coroutine or a blocking runner, so it detects the
   // interpreter there.
-  private suspend fun manager(): PythonPackageManager = PythonPackageManager.forPythonInterpreter(project, sdk.pythonInterpreterAsync())
+  //
+  // A broken SDK names no interpreter, so it has no packages: each method then gives its empty answer, and an action the
+  // user asked for reports the error.
+  private suspend fun interpreter(): PyResult<PythonInterpreter> = sdk.pythonInterpreterResultAsync()
 
-  private suspend fun repositoryManager() = manager().repositoryManager
+  private suspend fun manager(): PythonPackageManager? =
+    interpreter().successOrNull?.let { PythonPackageManager.forPythonInterpreter(project, it) }
 
-  private suspend fun managerUI(): PythonPackageManagerUI = PythonPackageManagerUI.forPackageManager(manager())
+  private suspend fun repositoryManager() = manager()?.repositoryManager
+
+  /** The package manager UI, or `null` after the error of a broken SDK is shown to the user. */
+  private suspend fun managerUIOrReport(): PythonPackageManagerUI? {
+    val interpreter = interpreter().getOr {
+      ErrorSink().emit(it.error, project)
+      return null
+    }
+    return PythonPackageManagerUI.forPackageManager(PythonPackageManager.forPythonInterpreter(project, interpreter))
+  }
 
   var useConda: Boolean = true
   val isConda: Boolean
@@ -51,7 +68,7 @@ internal class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) 
 
   override fun getInstalledPackagesList(): List<InstalledPackage> {
     val packages = runWithModalBlockingOrInBackground(project, PyBundle.message("python.packaging.list.packages")) {
-      manager().listInstalledPackages()
+      manager()?.listInstalledPackages().orEmpty()
     }
     return packages.map { InstalledPackage(it.name, it.version) }
   }
@@ -60,8 +77,8 @@ internal class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) 
   override fun getAllPackages(): List<RepoPackage> {
     runBlockingMaybeCancellable {
       repositoryManager()
-        .initCaches()
-        .onFailure {
+        ?.initCaches()
+        ?.onFailure {
           it.notify(project)
         }
     }
@@ -70,7 +87,7 @@ internal class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) 
 
   override fun getAllPackagesCached(): List<RepoPackage> {
     val packages = runWithModalBlockingOrInBackground(project, PyBundle.message("python.packaging.list.packages")) {
-      manager().listInstalledPackages()
+      manager()?.listInstalledPackages().orEmpty()
     }
     return packages.map { RepoPackage(it.name, null, null) }
   }
@@ -78,8 +95,8 @@ internal class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) 
   override fun reloadAllPackages(): List<RepoPackage> {
     return runBlockingCancellable {
       repositoryManager()
-        .refreshCaches()
-        .onFailure {
+        ?.refreshCaches()
+        ?.onFailure {
           it.notify(project)
         }
       allPackages
@@ -96,21 +113,22 @@ internal class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) 
   ) {
     scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
       val versionSpec = version?.let { pyRequirementVersionSpec(PyRequirementRelation.EQ, version) }
-      managerUI().installPackageBackground(repoPackage.name, versionSpec, listOfNotNull(extraOptions))
+      managerUIOrReport()?.installPackageBackground(repoPackage.name, versionSpec, listOfNotNull(extraOptions))
     }
   }
 
 
   override fun uninstallPackages(installedPackages: List<InstalledPackage>, listener: Listener) {
     scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
-      managerUI().uninstallPackagesBackground(installedPackages.map<InstalledPackage, @NlsSafe String> { it.name })
+      managerUIOrReport()?.uninstallPackagesBackground(installedPackages.map<InstalledPackage, @NlsSafe String> { it.name })
     }
   }
 
 
   override fun fetchPackageVersions(packageName: String, consumer: CatchingConsumer<in List<String>, in Exception>) {
     scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
-      when (val result = repositoryManager().getPackageDetails(packageName, null)) {
+      val repository = repositoryManager() ?: return@launch consumer.consume(brokenSdkException())
+      when (val result = repository.getPackageDetails(packageName, null)) {
         is com.jetbrains.python.Result.Success -> consumer.consume(result.result.availableVersions.sortedWith(PackageVersionComparator.VERSION_COMPARATOR.reversed()))
         is com.jetbrains.python.Result.Failure -> consumer.consume(Exception(result.error.message))
       }
@@ -119,7 +137,8 @@ internal class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) 
 
   override fun fetchPackageDetails(packageName: String, consumer: CatchingConsumer<in String, in Exception>) {
     scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
-      when (val result = repositoryManager().getPackageDetails(packageName, null)) {
+      val repository = repositoryManager() ?: return@launch consumer.consume(brokenSdkException())
+      when (val result = repository.getPackageDetails(packageName, null)) {
         is com.jetbrains.python.Result.Success -> consumer.consume(buildDescription(result.result))
         is com.jetbrains.python.Result.Failure -> consumer.consume(Exception(result.error.message))
       }
@@ -132,10 +151,13 @@ internal class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) 
 
   override fun fetchLatestVersion(pkg: InstalledPackage, consumer: CatchingConsumer<in String, in Exception>) {
     scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
-      val latestVersion = repositoryManager().getLatestVersion(pkg.name, null)?.presentableText
+      val latestVersion = repositoryManager()?.getLatestVersion(pkg.name, null)?.presentableText
       consumer.consume(latestVersion)
     }
   }
+
+  /** The error of a broken SDK, for a consumer that takes an [Exception]. */
+  private suspend fun brokenSdkException(): Exception = Exception(interpreter().errorOrNull?.message)
 
   private fun buildDescription(details: PythonPackageDetails): String {
     return buildString {

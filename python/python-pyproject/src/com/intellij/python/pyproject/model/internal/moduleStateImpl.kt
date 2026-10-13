@@ -4,7 +4,7 @@ import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.model.api.ModuleSdkState
 import com.intellij.python.pyproject.model.api.SdkForModuleConfigInstruction
 import com.intellij.python.pyproject.model.evolution.getInterpreter
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
@@ -23,8 +23,10 @@ internal suspend fun PyProject.getModuleSdkStateImpl(
 ): ModuleSdkState {
   // The live SDK decides, as the configuration lock needs a true answer at this instant. The interpreter itself comes
   // from the snapshot, which [autoConfigureSdk] keeps in step with every write.
+  // A broken SDK, one that names no interpreter, counts as no SDK, so it can be configured again.
   val currentSdk = residesOnModule.findPythonSdk()
-  if (currentSdk != null) return ModuleSdkState.HasSdk(getInterpreter() ?: currentSdk.pythonInterpreterAsync())
+  val interpreter = currentSdk?.let { getInterpreter() ?: it.pythonInterpreterResultAsync().successOrNull }
+  if (interpreter != null) return ModuleSdkState.HasSdk(interpreter)
   return ModuleSdkState.NoSdk(suggestConfigInstruction(configuratorsByTool, fresh))
 }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.hatch.impl.sdk
 
+import java.nio.file.Path
 import com.jetbrains.python.sdk.PySdkDataProvider
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.intellij.python.sdk.common.PyEnvRef
@@ -27,6 +28,8 @@ internal class HatchSdkDataProvider : PySdkDataProvider {
     envRef: PyEnvRef,
     pythonBinary: P,
     fileSystem: FileSystem<P>,
+    requirementsFile: Path?,
   ): PythonSdkAdditionalData =
     HatchSdkAdditionalData(hatchWorkingDirectory = pyProject.baseDir, hatchEnvironmentName = envRef.value)
+      .also { it.requirementsPath = requirementsFile }
 }

@@ -11,6 +11,7 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.venvReader.Directory
@@ -30,7 +31,7 @@ class PyVenvCreationManuallyShowCaseTest {
   fun createVenvTest(@PythonBinaryPath python: PythonBinary, @TempDir venvDir: Directory): Unit = timeoutRunBlocking(5.minutes) {
     val venvPython = createVenv(python, venvDir).getOrThrow()
     val additionalData = createVenvAdditionalData(venvDir.parent)
-    val interpreter = createSdk(projectFixture.get(), PathHolder.Eel(venvPython), additionalData).getOrThrow()
+    val interpreter = createSdk(ModuleOrProject.ProjectOnly(projectFixture.get()), PathHolder.Eel(venvPython), additionalData).getOrThrow()
     val sdk = interpreter.getSdkAPI()
     val flavorAndData = sdk.pySdkAdditionalData.flavorAndData
     assertTrue(flavorAndData.sdkSeemsValid(sdk, null),

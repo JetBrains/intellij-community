@@ -82,15 +82,6 @@ val PythonSdkFlavor<*>.manager: FusId
   get() = FusId(managerId)
 
 /**
- * The ref of this interpreter. An SDK without a ref is not an interpreter of any
- * [com.jetbrains.python.project.PyProject], see [PythonInterpreterRegistry], so a [PythonInterpreter] of the
- * registry always has one.
- */
-@get:ApiStatus.Internal
-val PythonInterpreter.ref: PyInterpreterRef
-  get() = interpreterRefOf(sdk) ?: error("$this has no ref, so no PyProject can have it")
-
-/**
  * The env ref of an environment for a manager that names it by its path. A local path is normalized, so the
  * [Sdk.getHomePath] of an SDK and a [PathHolder] give one env ref for one file.
  *

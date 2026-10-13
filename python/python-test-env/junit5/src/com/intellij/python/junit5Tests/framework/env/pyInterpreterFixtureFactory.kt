@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.framework.env
 
-import com.intellij.openapi.project.Project
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.test.env.common.PredefinedPyEnvironments
 import com.intellij.python.test.env.core.PyEnvironment
@@ -13,6 +12,7 @@ import com.intellij.testFramework.junit5.fixture.TestFixtureInitializer
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.project
+import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 
 /**
  * Creates an interpreter fixture using tags from [@PyEnvTestCase][com.intellij.python.junit5Tests.framework.env.PyEnvTestCase] annotation.
@@ -45,47 +45,33 @@ fun TestFixture<PyProject>.pyInterpreterFixture(
 }
 
 /**
- * Creates a shared interpreter fixture using tags from [@PyEnvTestCase][com.intellij.python.junit5Tests.framework.env.PyEnvTestCase]
- * annotation. A shared interpreter belongs to no [PyProject] of this project.
- *
- * @throws IllegalStateException if @PyEnvTestCase annotation is not found on the test class
+ * Creates the environment from the tags of [@PyEnvTestCase][com.intellij.python.junit5Tests.framework.env.PyEnvTestCase].
+ * Requires the test class to be annotated with @PyEnvTestCase. The environment adds no interpreter to a project: use it
+ * as the base Python of a venv fixture, which needs only its binary.
  */
-fun TestFixture<Project>.pyInterpreterFixture(): TestFixture<PyInterpreterFixture<PyEnvironment>> = testFixture { context ->
-  val project = this@pyInterpreterFixture.init()
-  initializedSharedTestFixture(project, RunOnEnvironmentsExtension.getPythonEnvironment(context.extensionContext))
+fun pyEnvironmentFixture(): TestFixture<PyEnvironment> = testFixture { context ->
+  val env = RunOnEnvironmentsExtension.getPythonEnvironment(context.extensionContext)
+  initialized(env) {
+    env.close()
+  }
 }
 
-/** Creates a shared interpreter, which belongs to no [PyProject] of this project. */
-fun TestFixture<Project>.pyInterpreterFixture(
-  env: PredefinedPyEnvironments,
-): TestFixture<PyInterpreterFixture<PyEnvironment>> = pyInterpreterFixture(env.spec)
-
-fun TestFixture<Project>.pyInterpreterFixture(
-  envSpec: PyEnvironmentSpec<*>,
-): TestFixture<PyInterpreterFixture<PyEnvironment>> = testFixture { context ->
-  val project = this@pyInterpreterFixture.init()
-  val factory = getOrCreatePyEnvironmentFactory(context.extensionContext)
-  initializedSharedTestFixture(project, factory.createEnvironment(envSpec))
+/** Creates the environment [env], see the overload without arguments. */
+fun pyEnvironmentFixture(env: PredefinedPyEnvironments): TestFixture<PyEnvironment> = testFixture { context ->
+  val environment = getOrCreatePyEnvironmentFactory(context.extensionContext).createEnvironment(env.spec)
+  initialized(environment) {
+    environment.close()
+  }
 }
 
 private suspend fun TestFixtureInitializer.R<PyInterpreterFixture<PyEnvironment>>.initializedTestFixture(
   pyProject: PyProject,
   env: PyEnvironment,
 ): TestFixtureInitializer.InitializedTestFixture<PyInterpreterFixture<PyEnvironment>> {
-  val interpreter = env.prepareSdk(pyProject)
+  val interpreter = pyProject.setPythonInterpreter(env.prepareSdk(pyProject)).orThrow()!!
   return initialized(PyInterpreterFixture(interpreter, env, pyProject.project)) {
+    pyProject.setPythonInterpreter(null).orThrow()
     PythonInterpreterRegistry.getInstance(pyProject.project).removePythonInterpreter(pyProject, interpreter)
-    env.close()
-  }
-}
-
-private suspend fun TestFixtureInitializer.R<PyInterpreterFixture<PyEnvironment>>.initializedSharedTestFixture(
-  project: Project,
-  env: PyEnvironment,
-): TestFixtureInitializer.InitializedTestFixture<PyInterpreterFixture<PyEnvironment>> {
-  val interpreter = env.prepareSharedSdk(project)
-  return initialized(PyInterpreterFixture(interpreter, env, project)) {
-    PythonInterpreterRegistry.getInstance(project).removePythonInterpreterWithoutPyProject(interpreter)
     env.close()
   }
 }

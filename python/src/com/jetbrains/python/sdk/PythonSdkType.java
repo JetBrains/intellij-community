@@ -7,6 +7,9 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -259,8 +262,16 @@ public final class PythonSdkType extends SdkType {
                                  @NotNull JComponent parentComponent,
                                  @Nullable Sdk selectedSdk,
                                  @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
-    PyAddSdkDialog.show(project, null, sdk -> {
+    DataContext dataContext = DataManager.getInstance().getDataContext(parentComponent);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    // Every interpreter belongs to a module. The generic SDK UI may have none, and then there is nothing to add to.
+    Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
+    if (project == null || module == null) {
+      Messages.showInfoMessage(parentComponent, PyBundle.message("python.sdk.add.python.interpreter.no.module"),
+                               PyBundle.message("python.sdk.add.python.interpreter.title"));
+      return;
+    }
+    PyAddSdkDialog.show(project, module, sdk -> {
       sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
       sdkCreatedCallback.accept(sdk);
     });

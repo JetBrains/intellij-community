@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.conda
 
+import java.nio.file.Path
 import com.intellij.python.sdk.backend.resolveExecutable
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
@@ -22,15 +23,16 @@ internal class CondaSdkDataProvider : PySdkDataProvider {
     envRef: PyEnvRef,
     pythonBinary: P,
     fileSystem: FileSystem<P>,
+    requirementsFile: Path?,
   ): PythonSdkAdditionalData {
     // The env ref is the name of a named env, or the path of an unnamed one.
     val home = fileSystem.resolvePythonHome(pythonBinary)
     val envPath = home.toStringForExecution()
     val identity = if (isCondaPathEnvRef(envRef)) PyCondaEnvIdentity.UnnamedEnv(envPath, isBase = isCondaRoot(fileSystem, home))
     else PyCondaEnvIdentity.NamedEnv(envRef.value, envPath)
-    // conda is resolved again when it runs, so a path that does not resolve here is not stored.
+    // conda is found before this runs: the env was listed with it, and its binary was found with it.
     val condaPath = fileSystem.resolveExecutable(CondaPyTool.getInstance())?.toStringForExecution().orEmpty()
-    return condaSdkDataOf(PyCondaEnv(identity, condaPath), pyProject.baseDir)
+    return condaSdkDataOf(PyCondaEnv(identity, condaPath), pyProject.baseDir).also { it.requirementsPath = requirementsFile }
   }
 
   /**

@@ -15,7 +15,8 @@ import com.intellij.python.venv.createVenvAdditionalData
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.getOrThrow
-import com.jetbrains.python.sdk.SdkCreationAdvancedOpts
+import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.pythonSdk
@@ -25,8 +26,10 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.project
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.junit5Tests.framework.env.PyInterpreterFixture
+import com.intellij.testFramework.junit5.fixture.TestFixtureInitializer
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 
@@ -45,21 +48,23 @@ fun TestFixture<SdkFixture<PyEnvironment>>.pyVenvFixture(
     val venvDir = workingDirectory.resolve(".venv")
     val venvPython = createVenv(env.pythonPath, venvDir).getOrThrow()
     val additionalData = createVenvAdditionalData(workingDirectory)
-    if (module == null) {
-      // With no module this fixture stands for a *shared* venv, so it must not keep the association a new SDK derives
-      // from its working directory: sortForExistingEnvironment only treats an unassociated SDK as SHARED_VENVS.
-      additionalData.associatedModulePath = null
-    }
-    // The SDK table is global, so a fixture with no module adds its SDK through the default project.
+    // The SDK table is global, so a fixture with no module builds its SDK through the default project.
     val project = module?.project ?: ProjectManager.getInstance().defaultProject
-    val interpreter = createSdk(
-      project,
-      PathHolder.Eel(venvPython),
-      additionalData,
-      advancedOpts = SdkCreationAdvancedOpts(persist = addToSdkTable),
-    ).orThrow()
+    val moduleOrProject = module?.let { ModuleOrProject.ModuleAndProject(it) } ?: ModuleOrProject.ProjectOnly(project)
+    // The interpreter is not registered: this old fixture adds its SDK to the table itself.
+    val interpreter = createSdk(moduleOrProject, PathHolder.Eel(venvPython), additionalData).orThrow()
     val sdk = interpreter.getSdkAPI()
     if (addToSdkTable) {
+      if (module == null) {
+        // With no module this fixture stands for a *shared* venv, so it must not keep the association a new SDK
+        // derives from its working directory.
+        edtWriteAction {
+          val modificator = sdk.sdkModificator
+          (modificator.sdkAdditionalData as PythonSdkAdditionalData).associatedModulePath = null
+          modificator.commitChanges()
+        }
+      }
+      edtWriteAction { ProjectJdkTable.getInstance().addJdk(sdk) }
       if (module != null) {
         module.pythonSdk = sdk
         sdk.setAssociationToModule(module)
@@ -67,46 +72,51 @@ fun TestFixture<SdkFixture<PyEnvironment>>.pyVenvFixture(
     }
     initialized(sdk) {
       edtWriteAction {
-        ProjectJdkTable.getInstance().removeJdk(sdk)
+        if (ProjectJdkTable.getInstance().findJdk(sdk.name) == sdk) ProjectJdkTable.getInstance().removeJdk(sdk)
       }
     }
   }
 }
 
 /**
- * Creates a virtual env in [where] and adds its interpreter to the project of the interpreter fixture. With a
- * [pyProjectFixture], that Python project also gets the interpreter.
+ * Creates a virtual env in [where] and sets its interpreter on the Python project of [pyProjectFixture]. It returns when
+ * the project is indexed with the roots of the new interpreter, so a test can highlight next.
  */
+@JvmName("pyEnvironmentVenvFixture")
+fun TestFixture<PyEnvironment>.pyVenvFixture(
+  where: TestFixture<Path>,
+  pyProjectFixture: TestFixture<PyProject>,
+): TestFixture<PythonInterpreter> = testFixture {
+  initVenvInterpreter(this@pyVenvFixture.init(), where, pyProjectFixture)
+}
+
+/** [pyVenvFixture] on the environment of an interpreter fixture, for a test that also uses that interpreter. */
 fun TestFixture<PyInterpreterFixture<PyEnvironment>>.pyVenvFixture(
   where: TestFixture<Path>,
-  pyProjectFixture: TestFixture<PyProject>? = null,
+  pyProjectFixture: TestFixture<PyProject>,
 ): TestFixture<PythonInterpreter> = testFixture {
   val interpreterFixture = this@pyVenvFixture.init()
-  val project = interpreterFixture.project
-  val pyProject = pyProjectFixture?.init()
+  initVenvInterpreter(interpreterFixture.env, where, pyProjectFixture)
+}
+
+private suspend fun TestFixtureInitializer.R<PythonInterpreter>.initVenvInterpreter(
+  env: PyEnvironment,
+  where: TestFixture<Path>,
+  pyProjectFixture: TestFixture<PyProject>,
+): TestFixtureInitializer.InitializedTestFixture<PythonInterpreter> {
+  val pyProject = pyProjectFixture.init()
   val workingDirectory = where.init()
   val venvDir = workingDirectory.resolve(".venv")
-  val venvPython = withContext(Dispatchers.EDT) { createVenv(interpreterFixture.env.pythonPath, venvDir).getOrThrow() }
-  // With a Python project the venv belongs to it, so its SDK is associated with the project at creation.
-  val additionalData = if (pyProject != null) createVenvAdditionalData(pyProject.residesOnModule).getOrThrow() else createVenvAdditionalData(workingDirectory)
-  // With no Python project the SDK gets no association. It belongs to the Python project at its working directory.
-  val opts = SdkCreationAdvancedOpts()
-  val interpreter = if (pyProject != null) {
-    createSdk(pyProject, PathHolder.Eel(venvPython), additionalData, advancedOpts = opts).orThrow()
-  }
-  else {
-    createSdk(project, PathHolder.Eel(venvPython), additionalData, advancedOpts = opts).orThrow()
-  }
-  pyProject?.setPythonInterpreter(interpreter)
-  initialized(interpreter) {
-    val registry = PythonInterpreterRegistry.getInstance(project)
-    if (pyProject != null) {
-      pyProject.setPythonInterpreter(null)
-      registry.removePythonInterpreter(pyProject, interpreter)
-    }
-    else {
-      registry.removePythonInterpreterWithoutPyProject(interpreter)
-    }
+  val venvPython = withContext(Dispatchers.EDT) { createVenv(env.pythonPath, venvDir).getOrThrow() }
+  // The venv belongs to the Python project, so its SDK is associated with that project at creation.
+  val additionalData = createVenvAdditionalData(pyProject.residesOnModule).getOrThrow()
+  val built = createSdk(pyProject, PathHolder.Eel(venvPython), additionalData).orThrow()
+  val interpreter = pyProject.setPythonInterpreter(built).orThrow()!!
+  awaitPythonInterpreterReady(interpreter, pyProject.project)
+  return initialized(interpreter) {
+    awaitPythonInterpreterUpdateBeforeRemoval(interpreter)
+    pyProject.setPythonInterpreter(null).orThrow()
+    PythonInterpreterRegistry.getInstance(pyProject.project).removePythonInterpreter(pyProject, interpreter)
   }
 }
 
