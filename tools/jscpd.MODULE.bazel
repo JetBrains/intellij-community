@@ -1,26 +1,23 @@
 # jscpd, the copy-paste detector that `community/tools/jscpd.cmd` runs. The pin replaces the tool-wrapper download.
 #
-# No `BUILD` file may put `@jscpd_*` in `data` or `deps`. The wrapper asks for the host target with `bazel cquery`
-# at its first run of a version, and that request is the only fetch. A label in `data` or `deps` puts the archive into
-# the analysis of `//...`. Then every IDE sync downloads it.
+# No `BUILD` file may put `@jscpd_*` or `//tools:jscpd` in `data` or `deps`. The wrapper asks for the host binary with
+# `bazel cquery` at its first run of a version, and that request is the only fetch. A label in `data` or `deps` puts
+# the archive into the analysis of `//...`. Then every IDE sync downloads it.
 #
-# The archives are the GitHub release archives, byte-identical, on the Space file mirror. The cache redirector does not
-# serve `github.com/kucherenko/jscpd`, and `bazel_downloader.cfg` routes `packages.jetbrains.team/files/` through the
-# redirector. jscpd ships only `.tar.gz` archives for Windows. Bazel extracts them on every host, and
-# `tool-wrapper.ps1` cannot.
+# The archives are the GitHub release archives. `build/bazel_downloader.cfg` rewrites `github.com/` to the cache
+# redirector, and the redirector serves `github.com/kucherenko/jscpd`. jscpd ships only `.tar.gz` archives for
+# Windows. Bazel extracts them on every host, and `tool-wrapper.ps1` cannot.
 #
 # To bump the pin:
-#   1. Download the six `jscpd-<platform>.tar.gz` of the release and check them against its `checksums.txt`.
-#   2. Upload them to `jscpd/<version>/` in https://jetbrains.team/p/ij/packages/files/intellij-build-dependencies.
-#   3. Change `JSCPD_VERSION` and the six `sha256` below.
-#   4. Write `plugins/air/.jscpd-baseline.json` with the old and the new version on one clean tree. A fingerprint can
+#   1. Change `JSCPD_VERSION` and copy the six `sha256` below from the `checksums.txt` of the release.
+#   2. Write `plugins/air/.jscpd-baseline.json` with the old and the new version on one clean tree. A fingerprint can
 #      depend on the version. When the two files differ, put the new baseline in the same change.
 # `jscpd.cmd` reads `JSCPD_VERSION` from this file, so the line keeps the shape `JSCPD_VERSION = "<version>"`.
 JSCPD_VERSION = "5.4.1"
 
-JSCPD_BASE_URL = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jscpd"
+JSCPD_BASE_URL = "https://github.com/kucherenko/jscpd/releases/download"
 
-# The host key of `jscpd.cmd` and of the alias in `BUILD.bazel`, to the release platform and the sha256 of its archive.
+# The host key of the `config_setting` in `BUILD.bazel`, to the release platform and the sha256 of its archive.
 JSCPD_PLATFORMS = {
     "darwin_aarch64": ("darwin-arm64", "48dedc0b8fa4f2900fc6ac8f06797e8eee7e36a8ab4f67f54b1ad25fd7ae103c"),
     "darwin_x64": ("darwin-x64", "101a9b9e0d1a4ffea7b9ac86d91003745ef471f00a8a2a921353a65647b5d12f"),
@@ -44,7 +41,7 @@ filegroup(
 )
 """.format(binary = "jscpd.exe" if host.startswith("windows") else "jscpd"),
         sha256 = archive[1],
-        url = "{base}/{version}/jscpd-{platform}.tar.gz".format(
+        url = "{base}/v{version}/jscpd-{platform}.tar.gz".format(
             base = JSCPD_BASE_URL,
             platform = archive[0],
             version = JSCPD_VERSION,

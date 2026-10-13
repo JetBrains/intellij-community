@@ -6,12 +6,13 @@ GOTO :CMDSCRIPT
 # jscpd, the copy-paste detector, at the version that `jscpd.MODULE.bazel` pins.
 #
 # The wrapper never runs a locally installed jscpd, because a fingerprint of the clone baseline can depend on the
-# version. Bazel downloads the archive from the Space mirror, checks its sha256 and extracts it. Bazel does this on
-# Windows too, where jscpd ships only `.tar.gz` archives.
+# version. Bazel downloads the release archive through the cache redirector, checks its sha256 and extracts it. Bazel
+# does this on Windows too, where jscpd ships only `.tar.gz` archives.
 #
-# The first run of a version asks Bazel for the absolute path of the host binary. It writes the path to
-# `out/jscpd/jscpd-<version>-<host>`. Each later run reads that file and spawns no Bazel. The version is the cache key,
-# so a version bump makes an old entry unreachable, not wrong. A path that does not exist any more resolves again.
+# The first run of a version asks Bazel for the absolute path of `//tools:jscpd`, whose `select` picks the host
+# binary. It writes the path to `out/jscpd/jscpd-<version>-<host>`. Each later run reads that file and spawns no
+# Bazel. The version is the cache key, so a version bump makes an old entry unreachable, not wrong. A path that does
+# not exist any more resolves again.
 # `plugins/air/docs/decisions/0017-bazel-provided-bt.md` records this design for the old BT wrapper.
 #
 # `JSCPD_BIN` names an explicit binary and skips Bazel.
@@ -51,25 +52,9 @@ if [ -z "$version" ]; then
   exit 78
 fi
 
-case "$(uname -s)" in
-  Darwin) os="darwin" ;;
-  Linux) os="linux" ;;
-  *)
-    echo "jscpd: no pinned jscpd for the operating system $(uname -s)" >&2
-    exit 78
-    ;;
-esac
-case "$(uname -m)" in
-  arm64 | aarch64) arch="aarch64" ;;
-  x86_64 | amd64) arch="x64" ;;
-  *)
-    echo "jscpd: no pinned jscpd for the architecture $(uname -m)" >&2
-    exit 78
-    ;;
-esac
-host="${os}_${arch}"
-
-cache="$root/out/jscpd/jscpd-$version-$host"
+# The host is part of the cache name, so a checkout that a guest mounts does not read the path of another machine.
+# Bash sets both variables, so the warm path starts no process for them.
+cache="$root/out/jscpd/jscpd-$version-$OSTYPE-$HOSTTYPE"
 if [ -f "$cache" ]; then
   resolved=""
   IFS= read -r resolved < "$cache" || true
@@ -78,7 +63,7 @@ if [ -f "$cache" ]; then
   fi
 fi
 
-label="${label_prefix}tools:jscpd_$host"
+label="${label_prefix}tools:jscpd"
 echo "jscpd: the first run of jscpd $version asks Bazel for $label" >&2
 if ! files="$(cd "$root" && ./bazel.cmd cquery --ui_event_filters=-info --noshow_progress --output=files "$label")"; then
   echo "jscpd: bazel cquery failed for $label; see the bazel output above" >&2
@@ -141,22 +126,16 @@ set "VERSION="
 for /f "tokens=2 delims== " %%v in ('findstr /b /c:"JSCPD_VERSION = " "%COMMUNITY_ROOT%\tools\jscpd.MODULE.bazel"') do set "VERSION=%%~v"
 if not defined VERSION goto :NOVERSION
 
-REM The registry tells the architecture of the machine. The environment variable tells that of the current process.
-set "ARCH="
-set "HOST="
-for /f "tokens=3 delims= " %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "PROCESSOR_ARCHITECTURE"') do set "ARCH=%%a"
-if "%ARCH%"=="ARM64" set "HOST=windows_aarch64"
-if "%ARCH%"=="AMD64" set "HOST=windows_x64"
-if not defined HOST goto :NOHOST
-
-set "CACHE=%ROOT%\out\jscpd\jscpd-%VERSION%-%HOST%"
+REM The host is part of the cache name, as in the bash half. PROCESSOR_ARCHITECTURE is that of this process, which
+REM is enough for a cache name. Bazel picks the host binary through the select of //tools:jscpd.
+set "CACHE=%ROOT%\out\jscpd\jscpd-%VERSION%-%OS%-%PROCESSOR_ARCHITECTURE%"
 set "RESOLVED="
 if exist "%CACHE%" set /p RESOLVED=<"%CACHE%"
 if not defined RESOLVED goto :RESOLVE
 if exist "%RESOLVED%" goto :RUN
 
 :RESOLVE
-set "LABEL=%LABEL_PREFIX%tools:jscpd_%HOST%"
+set "LABEL=%LABEL_PREFIX%tools:jscpd"
 echo jscpd: the first run of jscpd %VERSION% asks Bazel for %LABEL% 1>&2
 if not exist "%ROOT%\out\jscpd" mkdir "%ROOT%\out\jscpd"
 REM One %RANDOM% read, reused: two reads give two different names.
@@ -195,10 +174,6 @@ exit /B 78
 
 :NOVERSION
 echo jscpd: found no JSCPD_VERSION line in %COMMUNITY_ROOT%\tools\jscpd.MODULE.bazel 1>&2
-exit /B 78
-
-:NOHOST
-echo jscpd: no pinned jscpd for the Windows architecture %ARCH% 1>&2
 exit /B 78
 
 :BAZELFAILED

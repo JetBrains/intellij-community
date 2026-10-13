@@ -1,44 +1,65 @@
-# The pinned jscpd of each host, one alias per repository of `jscpd.MODULE.bazel`. A repository of this module has no
-# name that the ultimate root can see, so `jscpd.cmd` asks Bazel for these labels. Its `cquery` is the only reader.
-# Each alias is `manual`, so `//...` does not download the archive.
+# The pinned jscpd of the host, from the repositories of `jscpd.MODULE.bazel`. A repository of this module has no
+# name that the ultimate root can see, so `jscpd.cmd` asks Bazel for `//tools:jscpd`, and the `select` picks the
+# repository of the host. That `cquery` is the only reader. The alias is `manual`, so `//...` downloads no archive.
+# A host without a `config_setting` fails the `select`, and the wrapper shows that Bazel output.
 alias(
-    name = "jscpd_darwin_aarch64",
-    actual = "@jscpd_darwin_aarch64//:binary",
+    name = "jscpd",
+    actual = select({
+        ":darwin_aarch64": "@jscpd_darwin_aarch64//:binary",
+        ":darwin_x64": "@jscpd_darwin_x64//:binary",
+        ":linux_aarch64": "@jscpd_linux_aarch64//:binary",
+        ":linux_x64": "@jscpd_linux_x64//:binary",
+        ":windows_aarch64": "@jscpd_windows_aarch64//:binary",
+        ":windows_x64": "@jscpd_windows_x64//:binary",
+    }),
     tags = ["manual"],
     visibility = ["//visibility:public"],
 )
 
-alias(
-    name = "jscpd_darwin_x64",
-    actual = "@jscpd_darwin_x64//:binary",
-    tags = ["manual"],
-    visibility = ["//visibility:public"],
+config_setting(
+    name = "darwin_aarch64",
+    constraint_values = [
+        "@platforms//os:macos",
+        "@platforms//cpu:aarch64",
+    ],
 )
 
-alias(
-    name = "jscpd_linux_aarch64",
-    actual = "@jscpd_linux_aarch64//:binary",
-    tags = ["manual"],
-    visibility = ["//visibility:public"],
+config_setting(
+    name = "darwin_x64",
+    constraint_values = [
+        "@platforms//os:macos",
+        "@platforms//cpu:x86_64",
+    ],
 )
 
-alias(
-    name = "jscpd_linux_x64",
-    actual = "@jscpd_linux_x64//:binary",
-    tags = ["manual"],
-    visibility = ["//visibility:public"],
+config_setting(
+    name = "linux_aarch64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
 )
 
-alias(
-    name = "jscpd_windows_aarch64",
-    actual = "@jscpd_windows_aarch64//:binary",
-    tags = ["manual"],
-    visibility = ["//visibility:public"],
+config_setting(
+    name = "linux_x64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
 )
 
-alias(
-    name = "jscpd_windows_x64",
-    actual = "@jscpd_windows_x64//:binary",
-    tags = ["manual"],
-    visibility = ["//visibility:public"],
+config_setting(
+    name = "windows_aarch64",
+    constraint_values = [
+        "@platforms//os:windows",
+        "@platforms//cpu:aarch64",
+    ],
+)
+
+config_setting(
+    name = "windows_x64",
+    constraint_values = [
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
+    ],
 )
