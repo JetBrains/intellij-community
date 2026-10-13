@@ -15,7 +15,7 @@ load("//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plat
 load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "dev_dist_product_files", "home_prefix", "product_info_destination")
 load("//platform/build-scripts/bazel-rules:dev_dist_runtime_module_repository.bzl", "dev_dist_runtime_layout_parts", "dev_dist_runtime_module_repository")
 load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "intellij_dev_fragments_dist", "intellij_dev_packed_jars_component")
-load(":dev_launch_dependencies.bzl", "HOST_PLATFORMS", "platform_parts")
+load(":dev_launch_dependencies.bzl", "HOST_PLATFORMS", "jbr_runtime_repository_label", "platform_parts")
 load(":intellij_dev.bzl", "export_vm_options", "intellij_dev_java_launcher_binary")
 
 def _plugin_component_entries(platform_prefix, tier, entries):
@@ -221,7 +221,8 @@ PACKED_JARS_COMPONENT = "platform_packed_content_modules"
 
 # The component that places the platform's declared dist files: the files of the unpacked dev-launch archives that
 # `PlatformLayout.withDistFiles` names, at their distribution paths. The generated plan states them per host platform.
-# The component also places the native launcher files, which `_launcher_files` derives from the launch facts of the plan.
+# The component also places the native launcher files, which `_launcher_files` derives from the launch facts of the plan,
+# and the files of the bundled runtime below `jbr/`.
 PLATFORM_ASSETS_COMPONENT = "platform_assets"
 
 # The unpacked launcher archive, and its spelling of the `platform_parts` tokens in `<OS>-<Arch>/`.
@@ -265,6 +266,24 @@ def _launcher_files(launcher, platform):
         executable = False,
     ))
     return files
+
+# The directory of the bundled runtime in a distribution home. On macOS the runtime is a bundle with `Contents/Home`.
+_RUNTIME_DIRECTORY = "jbr"
+
+def _runtime_executables(platform):
+    """The `unpacked_archive_executables` values of the bundled runtime of one host platform.
+
+    The composer gives the executable bit only to a destination that this list names.
+    """
+    os = platform_parts(platform).os
+    if os == "windows":
+        return []
+
+    # BundledRuntimeImpl.executableFilesPatterns
+    if os == "darwin":
+        # Production omits `jspawnhelper` on macOS. The archive gives it the executable bit, and `posix_spawn` needs it.
+        return [_RUNTIME_DIRECTORY + "/Contents/Home/bin/", _RUNTIME_DIRECTORY + "/Contents/Home/lib/jspawnhelper"]
+    return [_RUNTIME_DIRECTORY + "/bin/", _RUNTIME_DIRECTORY + "/lib/jexec", _RUNTIME_DIRECTORY + "/lib/jspawnhelper"]
 
 # The component of `bin/idea.properties`, the vmoptions files, `product-info.json` and `build.txt`, which the product
 # files action renders from the launch model of the product.
@@ -588,7 +607,8 @@ def _platform_set(tables, product, name, target_platform, visibility):
     def assets_component():
         # The generated plan states each file as `struct(source, path, executable)` per host platform, and
         # `_launcher_files` adds the launcher files in the same shape. The rule takes the files as two path-to-label
-        # dicts, one per executable bit. The path is the key, so one source can go to two paths.
+        # dicts, one per executable bit. The path is the key, so one source can go to two paths. The bundled runtime goes
+        # in as an unpacked archive, and the rule refuses a runtime file at the path of an explicit asset.
         def platform_files(platform):
             entries = getattr(plan, "platform_assets", {}).get(platform, []) + _launcher_files(plan.launch.launcher, platform)
             paths = {}
@@ -614,6 +634,8 @@ def _platform_set(tables, product, name, target_platform, visibility):
             target_platform = target_platform,
             files = selected(False),
             executable_files = selected(True),
+            unpacked_archives = per_platform(lambda platform: {jbr_runtime_repository_label(platform): _RUNTIME_DIRECTORY}),
+            unpacked_archive_executables = per_platform(_runtime_executables),
         )
 
     # Declared in the layout's order, which is the composition order the returned lists state.
