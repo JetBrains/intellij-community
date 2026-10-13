@@ -410,7 +410,17 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
    * Looks for the place for a new project
    */
   protected @NotNull Path findSequentNonExistingUntitled() {
-    return FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), myNewProjectName, "").toPath();
+    Path baseDirectory = getBaseDirectory();
+    File parent = baseDirectory != null ? baseDirectory.toFile() : new File(ProjectUtil.getBaseDir());
+    return FileUtil.findSequentNonexistentFile(parent, myNewProjectName, "").toPath();
+  }
+
+  /**
+   * The directory that holds the directory of the new project.
+   * A {@code null} value means the default location of the IDE.
+   */
+  protected final @Nullable Path getBaseDirectory() {
+    return myProjectStep != null ? myProjectStep.getBaseDirectory() : null;
   }
 
   @Override
