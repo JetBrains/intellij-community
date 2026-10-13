@@ -13,7 +13,7 @@ private val SUPPRESSED_DIAGNOSTIC_CODES = setOf(UNTYPED_IMPORT)
 
 private val PYREFLY_UNRESOLVED_REFERENCE_CODES = PyLspUnresolvedReferenceCodes(
   unknownName = setOf("unknown-name"),
-  missingImport = setOf("missing-import", "missing-source-for-stubs", "missing-source"),
+  missingImport = setOf("missing-import"),
   missingModuleAttribute = setOf("missing-module-attribute"),
   missingSource = setOf("missing-source-for-stubs", "missing-source"),
 )
