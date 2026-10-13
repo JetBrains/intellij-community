@@ -348,7 +348,7 @@ object MultiverseFileViewProviderCacheLog {
   }
 }
 
-private object NullFile : LightVirtualFile()
+private val NullFile: VirtualFile = LightVirtualFile.builder().creationTrace(null).build()
 
 private typealias FullCacheMap = ConcurrentMap<VirtualFile, FileProviderMap>
 
