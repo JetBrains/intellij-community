@@ -16,6 +16,8 @@ import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVal
 import {ToggleGroup, ToggleGroupItem} from './components/ui/toggle-group'
 import {cn} from './lib/utils'
 import {ADR_STATUSES, type AdrStatus} from '../scripts/docMeta'
+import {repoPathOf} from '../scripts/sourcePaths'
+import {site} from './site'
 import {sourceHref} from './sourceRef'
 
 /** Centered doc page shell; `toc` enables the wide-viewport two-column layout (content + TocAside).
@@ -54,7 +56,7 @@ export function SourceFooter({ path }: { path: string }) {
       <Separator className="mb-3" />
       Source:{' '}
       <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}>
-        <code>plugins/air/{path}</code>
+        <code>{repoPathOf(site().config.contentRoot, path)}</code>
         {external && <span aria-hidden="true"> ↗</span>}
       </a>
     </footer>

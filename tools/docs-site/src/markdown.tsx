@@ -9,7 +9,7 @@ import { marked } from 'marked'
 import { Fragment, lazy, Suspense, type MouseEvent, type ReactNode, useEffect, useMemo } from 'react'
 import { parseDiagramFence } from '../scripts/diagram.ts'
 import { isExternalPicture, picturePath } from '../scripts/docAssets.ts'
-import { contentPathOf, resolveRepoPath, SOURCE_PATH_PATTERN } from '../scripts/sourcePaths.ts'
+import { contentPathOf, repoPathOf, resolveRepoPath, SOURCE_PATH_PATTERN } from '../scripts/sourcePaths.ts'
 import { docAssetUrl } from './docAssets'
 import { decisionRoute, docRoute, explainerRoute, guideRoute, isDecisionPath, normalizeMarkdownAppHref } from './router'
 import { site } from './site.ts'
@@ -247,7 +247,7 @@ function transformRendered(html: string, baseDir: string, anchorHref?: AnchorHre
       const link = doc.createElement('a')
       link.href = href
       link.className = 'symbol-link'
-      link.title = `${site().config.contentRoot}/${location.file}:${location.line}`
+      link.title = `${repoPathOf(site().config.contentRoot, location.file)}:${location.line}`
       if (external) {
         link.target = '_blank'
         link.rel = 'noreferrer'

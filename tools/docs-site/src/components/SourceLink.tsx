@@ -1,6 +1,7 @@
 // Source-linked chips shared by the pages and the detail panel: one `file:line` link into the
 // in-site source viewer (or GitHub when the file is not bundled), and a concept's `api:` anchors.
 
+import { repoPathOf } from '../../scripts/sourcePaths.ts'
 import { ChipLink, ChipLinks } from '../furniture'
 import { site } from '../site.ts'
 import { sourceHref } from '../sourceRef'
@@ -15,7 +16,7 @@ export interface SymbolRef {
 
 /** The tooltip of a source link: the repository path, the line, and where the link opens. */
 function sourceTitle(file: string | null, line: number | null | undefined, external: boolean): string {
-  return `${site().config.contentRoot}/${file}${line ? `:${line}` : ''}${external ? ' on GitHub' : ''}`
+  return `${repoPathOf(site().config.contentRoot, `${file}`)}${line ? `:${line}` : ''}${external ? ' on GitHub' : ''}`
 }
 
 /** A content-relative source path, linked to the in-site viewer (or GitHub when unbundled). */

@@ -30,6 +30,11 @@ export function contentPathOf(contentRoot: string, repoPath: string): string | n
   return repoPath.startsWith(prefix) ? repoPath.slice(prefix.length) : null
 }
 
+/** The repo-root-relative form of a content-relative path. A content root of `''` or `.` is the repository root. */
+export function repoPathOf(contentRoot: string, contentPath: string): string {
+  return contentRoot === '' || contentRoot === '.' ? contentPath : `${contentRoot}/${contentPath}`
+}
+
 const EXTENSION_LANGS: Record<string, string> = {
   kt: 'kotlin',
   kts: 'kotlin',

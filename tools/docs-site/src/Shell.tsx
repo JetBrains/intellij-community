@@ -191,7 +191,7 @@ export function Shell({ config, parts }: { config: SiteConfig, parts: ShellParts
             href={homeRoute()}
           >
             <span
-              className="product-mark inline-grid size-6 flex-none place-items-center rounded-md bg-(image:--brand-gradient) text-3xs font-bold tracking-[0.04em] text-white shadow-sm"
+              className="product-mark inline-grid h-6 min-w-6 flex-none place-items-center rounded-md px-0.5 bg-(image:--brand-gradient) text-3xs font-bold tracking-[0.04em] text-white shadow-sm"
               aria-hidden="true"
             >
               {config.brandMark}

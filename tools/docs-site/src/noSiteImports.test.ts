@@ -27,7 +27,7 @@ function specifiers(source: string): string[] {
 test('no kernel module imports a site', () => {
   const self = fileURLToPath(import.meta.url)
   // this file holds the forbidden forms as the fixture of the scan test
-  const offenders = ['src', 'scripts', 'e2e'].flatMap(dir => sourceFiles(join(kernelRoot, dir))).filter(file => file !== self).flatMap(file => {
+  const offenders = ['src', 'scripts', 'e2e', 'vite'].flatMap(dir => sourceFiles(join(kernelRoot, dir))).filter(file => file !== self).flatMap(file => {
     const bad = specifiers(readFileSync(file, 'utf8'))
       .filter(specifier => specifier.startsWith('@/') || specifier.includes('plugins/air') || specifier.includes('../../../plugins'))
     return bad.map(specifier => `${relative(kernelRoot, file)}: ${specifier}`)

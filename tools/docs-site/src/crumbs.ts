@@ -8,6 +8,7 @@
 // section.
 
 import { adrNumberedTitle } from '../scripts/docMeta.ts'
+import { repoPathOf } from '../scripts/sourcePaths.ts'
 import { catalogAnchor, guidesRoute, hrefForRoute, parentOf } from './router'
 import type { AnyRoute, KernelRoute } from './routeTable.ts'
 import { site } from './site.ts'
@@ -48,7 +49,7 @@ const LEAVES: { [P in KernelPage]?: (route: KernelRouteOf<P>) => RouteCrumb[] } 
       doc ? { label: doc.title } : { label: route.path, mono: true },
     ]
   },
-  'source': route => [{ label: `${site().config.contentRoot}/${route.path}`, mono: true }],
+  'source': route => [{ label: repoPathOf(site().config.contentRoot, route.path), mono: true }],
 }
 
 export function crumbsForRoute(route: AnyRoute): RouteCrumb[] {

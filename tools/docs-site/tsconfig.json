@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["scripts", "src", "e2e"]
+  "include": ["scripts", "src", "e2e", "vite"]
 }

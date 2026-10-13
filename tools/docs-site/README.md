@@ -7,7 +7,7 @@ the `.ts` files as they are.
 ## Consumers
 
 - The Air architecture site, `plugins/air/docs`.
-- The dev distribution site, `build/docs`. This site does not exist yet.
+- The dev distribution site, `build/docs`.
 
 A site depends on the kernel with a `link:` dependency in its `package.json`:
 
@@ -23,12 +23,15 @@ first build of a site.
 - `scripts/`: the node and bun side. The site config (`siteConfig.ts`), the model provider (`modelProvider.ts`), the
   hand-laid diagram grammar (`diagram.ts`), the fence helpers (`fence.ts`), the explainer chapters, the decision
   record metadata, the decision check (`adrFiles.ts`), the diagram check (`diagramFiles.ts`), the prose check, the
-  doc harvest (`harvestDocs.ts`), the doc pictures, the source paths, the repository paths (`paths.ts`), and the test
-  helpers.
+  doc harvest (`harvestDocs.ts`), the spec harvest (`harvestSpecs.ts`), the doc pictures, the source paths, the
+  repository paths (`paths.ts`), and the test helpers.
 - `src/`: the browser side. The app shell (`Shell.tsx`, `createSite.tsx`), the route table and the router, the nav
   and crumb models, the search and the command palette, the markdown renderer, the generic pages (guides,
   explainers, decisions, docs, the source viewer), the hand-laid diagram, the shadcn components, and the theme state.
 - `styles/`: the Tailwind entry and the site styles. A site imports them.
+- `vite/`: the Vite plugin that runs the harvest of a site before a build and after a change in the dev server
+  (`harvestPlugin.ts`). It declares the part of the Vite plugin shape that it uses, so the kernel has no Vite
+  dependency.
 - `e2e/`: the static server of a built site, the page helpers, the diagram shots, and the e2e suite of the generic
   pages (`kernel.test.ts`).
 
