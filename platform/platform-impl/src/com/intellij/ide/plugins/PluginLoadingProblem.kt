@@ -19,6 +19,7 @@ sealed interface PluginLoadingProblem {
   val detailedMessage: @NlsContexts.DetailedDescription String
   val shortMessage: @NlsContexts.Label String
   val shouldNotifyUser: Boolean
+  val disabledDependencyId: PluginId? get() = null
 }
 
 @ApiStatus.Internal
@@ -79,6 +80,7 @@ class PluginDependencyIsDisabled(
   val dependencyId: PluginId, // TODO id is not enough, should show name instead; requires name resolution context
   override val shouldNotifyUser: Boolean,
 ) : PluginLoadingProblem {
+  override val disabledDependencyId: PluginId get() = dependencyId
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", plugin.name, dependencyId)
   override val shortMessage: @NlsContexts.Label String

@@ -52,6 +52,7 @@ internal class PluginManagerStateServiceTest {
     val dependencyId = PluginId.getId("bar")
     val reason = initialState.pluginNonLoadReasons[dependentId]
 
+    assertThat(reason!!.disabledDependencyId).isEqualTo(dependencyId)
     assertThat(reason).isInstanceOf(PluginDependencyIsDisabled::class.java)
     reason as PluginDependencyIsDisabled
     assertThat(reason.dependencyId).isEqualTo(dependencyId)
@@ -92,6 +93,8 @@ internal class PluginManagerStateServiceTest {
     val affectedReason = state.pluginNonLoadReasons[affectedId]
     val intermediateReason = state.pluginNonLoadReasons[intermediateId]
 
+    assertThat(affectedReason!!.disabledDependencyId).isNull()
+    assertThat(intermediateReason!!.disabledDependencyId).isEqualTo(rootId)
     assertThat(affectedReason).isInstanceOf(PluginDependencyCannotBeLoaded::class.java)
     affectedReason as PluginDependencyCannotBeLoaded
     assertThat(affectedReason.dependency.pluginId).isEqualTo(intermediateId)
@@ -155,6 +158,7 @@ internal class PluginManagerStateServiceTest {
     val pluginId = PluginId.getId("foo")
     val reason = state.pluginNonLoadReasons[pluginId]
 
+    assertThat(reason!!.disabledDependencyId).isNull()
     assertThat(reason).isInstanceOf(PluginDependencyIsNotInstalled::class.java)
     reason as PluginDependencyIsNotInstalled
     assertThat(reason.dependencyNameOrId).isEqualTo("missing")
