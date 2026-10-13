@@ -54,6 +54,7 @@ class TrustedProjectStartupDialog private constructor(
   private val trustButtonText: @NlsContexts.Button String,
   private val distrustButtonText: @NlsContexts.Button String,
   private val cancelButtonText: @NlsContexts.Button String,
+  private val isSafeModeOffered: Boolean,
 ) : TrustAlertDialog(project) {
   private val windowsDefender = AtomicBooleanProperty(pathsToExclude.isNotEmpty())
   private val trustAll = AtomicBooleanProperty(false)
@@ -188,21 +189,25 @@ class TrustedProjectStartupDialog private constructor(
       close(0, true, ExitActionType.YES)
     }
     this.trustAction = trustAction
-    val actions = mutableListOf(
-      trustAction,
-      alertAction(distrustButtonText, isFocused = true) {
-        userChoice = OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE
-        close(1, false, ExitActionType.NO)
-      },
-    )
-    if (hasCancelButton()) {
-      actions += alertAction(cancelButtonText) {
-        userChoice = OpenUntrustedProjectChoice.CANCEL
-        close(2, false, ExitActionType.CANCEL)
+    val hasCancelButton = hasCancelButton()
+    return buildList {
+      add(trustAction)
+      // Safe mode is still offered when it is the only way out, because the cancel button can be turned off (see [hasCancelButton]).
+      if (isSafeModeOffered || !hasCancelButton) {
+        add(alertAction(distrustButtonText, isFocused = true) {
+          userChoice = OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE
+          close(1, false, ExitActionType.NO)
+        })
       }
-    }
-    actions += helpAction
-    return actions.toTypedArray()
+      if (hasCancelButton) {
+        // Without safe mode, cancelling is the way to decline, so it takes the focus that safe mode would have had.
+        add(alertAction(cancelButtonText, isFocused = !isSafeModeOffered) {
+          userChoice = OpenUntrustedProjectChoice.CANCEL
+          close(2, false, ExitActionType.CANCEL)
+        })
+      }
+      add(helpAction)
+    }.toTypedArray()
   }
 
   private fun getOpenChoice(): OpenUntrustedProjectChoice = userChoice
@@ -260,8 +265,9 @@ class TrustedProjectStartupDialog private constructor(
       trustButtonText: @NlsContexts.Button String,
       distrustButtonText: @NlsContexts.Button String,
       cancelButtonText: @NlsContexts.Button String,
+      isSafeModeOffered: Boolean = true,
     ): TrustedProjectStartupDialog = TrustedProjectStartupDialog(
-      project, projectPath, emptyList(), null, title, message, trustButtonText, distrustButtonText, cancelButtonText
+      project, projectPath, emptyList(), null, title, message, trustButtonText, distrustButtonText, cancelButtonText, isSafeModeOffered
     )
 
     suspend fun showAndGet(
@@ -272,12 +278,13 @@ class TrustedProjectStartupDialog private constructor(
       trustButtonText: @NlsContexts.Button String,
       distrustButtonText: @NlsContexts.Button String,
       cancelButtonText: @NlsContexts.Button String,
+      isSafeModeOffered: Boolean,
     ): DialogChoice {
       val (pathsToExclude, projectParentPathToExclude) = getDefenderExcludePaths(project, projectPath)
       return ourDialogChoice ?: withContext(Dispatchers.EDT) {
         val dialog = TrustedProjectStartupDialog(
           project, projectPath, pathsToExclude, projectParentPathToExclude,
-          title, message, trustButtonText, distrustButtonText, cancelButtonText
+          title, message, trustButtonText, distrustButtonText, cancelButtonText, isSafeModeOffered
         )
         dialog.show()
         DialogChoice(dialog.getOpenChoice(), dialog.isTrustAll(), dialog.getDefenderExcludePaths())

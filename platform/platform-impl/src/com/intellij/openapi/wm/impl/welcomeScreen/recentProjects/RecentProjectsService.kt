@@ -9,6 +9,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -190,8 +191,12 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
   /**
    * Confirms trust before the project is loaded. An already-answered project shows no dialog.
    *
-   * The dialog's own result only says the user did not cancel: "Preview in Safe Mode" also returns true, and it records the project as
-   * distrusted. A safe mode project refuses every Git command, so the trust state, not the dialog's result, decides whether to go on.
+   * The dialog does not offer "Preview in Safe Mode", because a safe mode project activates no VCS at all: it maps no VCS root and holds no
+   * repository, so every action reached from here would have nothing to run on. Declining is the cancel button, which records nothing and
+   * leaves the project unanswered, so the next attempt asks again.
+   *
+   * The dialog's own result only says the user did not cancel, and a project distrusted elsewhere is answered without showing any dialog, so
+   * the trust state decides whether to go on.
    */
   private suspend fun confirmTrust(projectPath: Path): Boolean {
     val projectName = projectPath.fileName?.toString() ?: projectPath.toString()
@@ -199,6 +204,8 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
       projectRoot = projectPath,
       project = null,
       title = IdeBundle.message("untrusted.project.open.dialog.title", projectName),
+      message = IdeBundle.message("untrusted.project.vcs.dialog.text", ApplicationInfo.getInstance().fullApplicationName),
+      isSafeModeOffered = false,
     )
     return TrustedProjects.isProjectTrusted(projectPath)
   }
