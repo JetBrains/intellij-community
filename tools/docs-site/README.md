@@ -23,7 +23,7 @@ first build of a site.
 - `scripts/`: the node and bun side. The site config (`siteConfig.ts`), the model provider (`modelProvider.ts`), the
   hand-laid diagram grammar (`diagram.ts`), the fence helpers (`fence.ts`), the explainer chapters, the decision
   record metadata, the decision check (`adrFiles.ts`), the diagram check (`diagramFiles.ts`), the prose check, the
-  vocabulary check (`vocabulary.ts`), the doc harvest (`harvestDocs.ts`), the spec harvest (`harvestSpecs.ts`), the doc pictures, the source paths, the
+  vocabulary check (`vocabulary.ts`), the spec check (`specRefs.ts`), the doc harvest (`harvestDocs.ts`), the spec harvest (`harvestSpecs.ts`), the doc pictures, the source paths, the
   repository paths (`paths.ts`), and the test helpers.
 - `src/`: the browser side. The app shell (`Shell.tsx`, `createSite.tsx`), the route table and the router, the nav
   and crumb models, the search and the command palette, the markdown renderer, the generic pages (guides,
@@ -71,7 +71,13 @@ node ../../../community/tools/docs-site/scripts/diagramFiles.ts site.config.ts
 node ../../../community/tools/docs-site/scripts/adrFiles.ts site.config.ts
 node ../../../community/tools/docs-site/scripts/proseLint.ts site.config.ts
 node ../../../community/tools/docs-site/scripts/vocabulary.ts site.config.ts
+node ../../../community/tools/docs-site/scripts/specRefs.ts site.config.ts
 ```
+
+The spec check (`specRefs.ts`) resolves the `targets` and the `[@test]` links of the specs, and the relative `.md` links
+and anchors of the specs and the prose docs. With `specs.style: 'plain-1'`, it also checks the sentence budget, the
+requirement budget, the template sections, and the style of each spec under the first spec root. The Air site does not
+run it yet. Its guides link the hash routes of the site, and `AirSpecReferencesTest` owns the Air spec references.
 
 ## Import convention
 

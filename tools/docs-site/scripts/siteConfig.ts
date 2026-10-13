@@ -107,9 +107,9 @@ export interface SiteConfig {
     roots: string[]
     /** The file name suffix of a spec. */
     suffix: string
-    /** The spec format, or null for the free format. */
+    /** The spec format, or null for the free format. With `plain-1`, the spec check applies the style rules (specRefs.ts). */
     style: 'plain-1' | null
-    /** The sections that every spec has, or null when the site checks no sections. */
+    /** The `##` headings that a `plain-1` spec can use, or null when the site checks no sections. */
     templateSections: string[] | null
   }
   /** The folders that a `source:` reference and a spec target can name, relative to the repository root. */
