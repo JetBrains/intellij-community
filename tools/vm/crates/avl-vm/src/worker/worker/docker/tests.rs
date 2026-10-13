@@ -135,6 +135,49 @@ async fn a_pool_start_refuses_to_recreate_a_leased_running_container() {
     assert_eq!(docker(&fixture).state(&ctx(), worker).await.unwrap(), ContainerState::Running);
 }
 
+/// `pool start all` starts the slots which it can and names the slot that it refused. The first slot runs a stale
+/// container under the lease of another holder, so it is refused `worker_leased`. The start goes on with the next
+/// slot.
+///
+/// The fake holds one container for every name, so the second slot finds the container of the first slot running.
+/// The second slot has no create record, so its start makes the container again under its own name.
+#[tokio::test]
+async fn a_pool_start_of_all_starts_the_other_slots_and_names_the_refused_one() {
+    let fixture = Fixture::docker_builder().env("AIR_VM_WORKERS", "air-docker-1,air-docker-2").build();
+    let [leased, free] = [0, 1].map(|index| fixture.worker(index).to_owned());
+    fixture.manager.start(&ctx(), &leased).await.unwrap();
+    fixture.write_lease(&leased, "another-session");
+    declare_stale_container(&fixture, &leased);
+    let before = fixture.fake.calls().len();
+
+    let refusal = fixture.manager.pool(&ctx(), PoolCommand::Start(PoolTarget::All)).await.unwrap_err();
+    assert_eq!(
+        (refusal.code.as_ref(), refusal.exit),
+        ("start_incomplete", Exit::TEMP_FAIL),
+        "{refusal:?}"
+    );
+    assert_eq!(refusal.message, format!("started {free}; not started: {leased} (worker_leased)"));
+    let details = refusal.details().expect("the per-worker outcome");
+    assert_eq!(
+        (&details["backend"], &details["action"], &details["target"]),
+        (&serde_json::json!("docker"), &serde_json::json!("start"), &serde_json::json!("all"))
+    );
+    assert_eq!(details["workers"], serde_json::json!({ free.as_str(): "started" }));
+    let refused = details["refused"].as_object().unwrap();
+    assert_eq!(refused.len(), 1, "{details}");
+    assert_eq!(refused[&leased]["code"], "worker_leased");
+    let after: Vec<String> = fixture.fake.calls()[before..].to_vec();
+    assert!(after.contains(&format!("start {free}")), "{after:#?}");
+    assert!(
+        !after
+            .iter()
+            .any(|call| call.ends_with(leased.as_str())
+                && (call.starts_with("stop ") || call.starts_with("rm ") || call.starts_with("start "))),
+        "{after:#?}"
+    );
+    assert!(fixture.settings.lease_path(&leased).exists());
+}
+
 /// A container that does not run is made again for any caller, leased or not: nothing runs in it, and its volume
 /// stays.
 #[tokio::test]

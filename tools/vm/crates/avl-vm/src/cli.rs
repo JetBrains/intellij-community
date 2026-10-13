@@ -321,11 +321,17 @@ pub(crate) enum PoolVerb {
         golden: Option<String>,
     },
     /// Starts every worker, or one.
+    ///
+    /// A named worker answers its own refusal. "all" starts the other workers and then refuses start_incomplete,
+    /// naming each refused worker: 75 when a lease or a lock was the only thing in its way, 1 when something is broken.
     Start {
         #[arg(value_name = "all|worker", default_value = "all", value_parser = pool_target)]
         target: PoolTarget,
     },
     /// Stops every worker, or one.
+    ///
+    /// A named worker answers its own refusal. "all" stops the other workers and then refuses stop_incomplete,
+    /// naming each refused worker: 75 when a lease or a lock was the only thing in its way, 1 when something is broken.
     Stop {
         #[arg(value_name = "all|worker", default_value = "all", value_parser = pool_target)]
         target: PoolTarget,
