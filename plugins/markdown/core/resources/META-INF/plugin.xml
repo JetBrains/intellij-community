@@ -33,8 +33,6 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.execution"/>
-    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
@@ -597,7 +595,7 @@
     </group>
 
     <group id="Markdown.Tools" popup="true">
-      <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
+      <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroupPlaceholder"/>
       <action id="Markdown.ImportFromDocx"
               class="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"/>
       <action id="Markdown.Export"

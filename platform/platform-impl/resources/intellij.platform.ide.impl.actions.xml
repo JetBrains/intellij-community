@@ -511,6 +511,7 @@
       <separator/>
       <group id="OtherMenu"/>
       <group id="ToolsMenu.Services" popup="true" searchable="false"/>
+      <reference id="ExternalToolsGroupPlaceholder"/>
     </group>
     <action id="MinimizeCurrentWindow" class="com.intellij.ide.actions.MinimizeCurrentWindowAction"/>
     <action id="ZoomCurrentWindow" class="com.intellij.ide.actions.ZoomCurrentWindowAction"/>

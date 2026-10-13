@@ -145,7 +145,6 @@
     </group>
     <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup">
       <add-to-group group-id="ExternalToolsGroupPlaceholder"/>
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
 
