@@ -106,7 +106,8 @@ internal class FileTestFixtureImpl(
 
   private fun createFixtureRoot(relativePath: String): VirtualFile {
     val systemPath = Path.of(PathManager.getSystemPath())
-    val systemDirectory = systemPath.findOrCreateDirectory().refreshAndGetVirtualDirectory()
+    // The Gradle sync stores canonical paths, so the fixture root must not contain a symbolic link.
+    val systemDirectory = systemPath.findOrCreateDirectory().toRealPath().refreshAndGetVirtualDirectory()
     val fixtureRoot = "FileTestFixture/$relativePath"
     VfsRootAccess.allowRootAccess(testRootDisposable, systemDirectory.path + "/$fixtureRoot")
     return runWriteActionAndWait {
