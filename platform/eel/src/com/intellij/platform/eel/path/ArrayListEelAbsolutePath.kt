@@ -195,44 +195,34 @@ internal class ArrayListEelAbsolutePath private constructor(
     /** https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#unc-paths */
     private fun findAbsoluteUncPath(raw: String, descriptor: EelDescriptor): ArrayListEelAbsolutePath? {
       if (raw.length < 3) return null
-      if (raw.getOrNull(0) != raw.getOrNull(1)) return null
+      val separators = EelOsFamily.Windows.directorySeparators
+      if (raw[0] != raw[1] || raw[0] !in separators) return null
 
-      var index = 2
-      // Skipping slashes.
-      while (raw[index] in "/\\") {
-        if (++index == raw.length) return null
+      val components = raw.substring(2).split(*separators)
+
+      val serverName = components.getOrNull(0)
+      if (serverName.isNullOrEmpty()) {
+        throw EelPathException(raw, "Empty server name in UNC path")
+      }
+      if (checkFileName(serverName, isWindows = true) != null) {
+        throw EelPathException(raw, "Incorrect server name in UNC path")
       }
 
-      run {
-        val error = checkFileName(raw.substring(2, index), isWindows = true)
-        if (error != null) throw EelPathException(raw, "Incorrect server name in UNC path")
+      val shareName = components.getOrNull(1)
+      if (shareName.isNullOrEmpty()) {
+        throw EelPathException(raw, "Empty share name in UNC path")
+      }
+      if (checkFileName(shareName, isWindows = true) != null) {
+        throw EelPathException(raw, "Incorrect share name in UNC path")
       }
 
-      val shareNameStart = index
-
-      if (++index == raw.length) throw EelPathException(raw, "Empty share name in UNC path")
-
-      // Skipping the server/host name.
-      while (raw[index] !in "/\\") {
-        if (++index == raw.length) break
-      }
-
-      run {
-        val error = checkFileName(raw.substring(shareNameStart, index), isWindows = true)
-        if (error != null) throw EelPathException(raw, "Incorrect share name in UNC path")
-      }
-
-      val parts = raw.substring(index)
-        .splitToSequence('/', '\\')
-        .filter(String::isNotEmpty)
-        .toList()
-
+      val parts = components.subList(2, components.size).filter(String::isNotEmpty)
       for (part in parts) {
         val error = checkFileName(part, isWindows = true)
         if (error != null) throw EelPathException(raw, error)
       }
 
-      return ArrayListEelAbsolutePath(descriptor, Root.Windows(raw.substring(0, index).replace("/", "\\") + "\\" + parts.first()), parts.drop(1))
+      return ArrayListEelAbsolutePath(descriptor, Root.Windows("\\\\" + serverName + "\\" + shareName), parts)
     }
 
     /** https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#traditional-dos-paths */
