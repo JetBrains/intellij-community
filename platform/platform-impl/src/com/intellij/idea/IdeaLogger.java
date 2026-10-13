@@ -37,7 +37,9 @@ import java.util.logging.Logger;
 
 public final class IdeaLogger extends JulLogger {
   @SuppressWarnings("StaticNonFinalField") public static String ourLastActionId = "";
-  // when not null, holds the first of errors that occurred
+  /// When not null, holds the first of the errors that occurred.
+  /// A test framework throws it at the end of a test.
+  /// The logger keeps it only in the unit test mode, so in production it is always null.
   @SuppressWarnings("StaticNonFinalField") public static Exception ourErrorsOccurred;
 
   /// We try to report exceptions thrown from frequently called methods (e.g. [Component#paint(Graphics)]) judiciously,
@@ -207,7 +209,8 @@ public final class IdeaLogger extends JulLogger {
       detailString = "\nDetails: " + detailString;
     }
 
-    if (ourErrorsOccurred == null) {
+    //noinspection TestOnlyProblems
+    if (ourErrorsOccurred == null && PluginManagerCore.isUnitTestMode) {
       var mess = "Logger errors occurred. See IDEA logs for details. " +
                  (message == null || message.isEmpty() ? "" : "Error message is '" + message + "'");
       //noinspection AssignmentToStaticFieldFromInstanceMethod
