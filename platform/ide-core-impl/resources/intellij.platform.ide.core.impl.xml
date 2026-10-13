@@ -98,6 +98,10 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  defaultValue="[beforeLoad|asyncPostReconfiguration*]"
                  restartRequired="true"
                  description="Changes the way IDE waits for plugins to unload during dynamic plugin reconfiguration"/>
+    <registryKey key="ide.plugins.warmup.classloaders.on.load"
+                 defaultValue="false"
+                 restartRequired="false"
+                 description="Warms up the plugin class loaders before the extension registration on a dynamic plugin load IJPL-257845"/>
     <registryKey defaultValue="false" key="scanning.should.pause.dumb.queue" restartRequired="true"
                  description="Pause dumb queue (including indexing) while scanning is in progress."/>
     <registryKey defaultValue="true" key="vfs.refresh.should.pause.dumb.queue" restartRequired="true"

@@ -445,8 +445,10 @@ internal class DynamicPluginsSupportImpl(
       try {
         attachClassLoaders(targetPluginSet, groups, reusedGroups)
 
-        tracer.spanBuilder(DynamicPlugins.WARMUP_CLASSLOADERS_SPAN).useWithScope {
-          warmupClassLoaders(groups)
+        if (Registry.`is`("ide.plugins.warmup.classloaders.on.load", false)) {
+          tracer.spanBuilder(DynamicPlugins.WARMUP_CLASSLOADERS_SPAN).useWithScope {
+            warmupClassLoaders(groups)
+          }
         }
 
         val listenerCallbacks = mutableListOf<ExtensionPointDeferredListenersNotification>()
