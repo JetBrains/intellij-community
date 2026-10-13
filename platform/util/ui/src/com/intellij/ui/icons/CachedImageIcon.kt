@@ -77,12 +77,21 @@ open class CachedImageIcon private constructor(
   private val colorPatcher: ColorPatcherStrategy = GlobalColorPatcherStrategy,
   private val toolTip: Supplier<String?>? = null,
   private val scaleContext: ScaleContext? = null,
-  @Internal val originalLoader: ImageDataLoader = loader,
+  originalLoader: ImageDataLoader = loader,
   // Do not use it directly for rendering - use `getEffectiveAttributes`
   // isDark is not defined in most cases, and we use a global state at the call moment.
   private val attributes: IconAttributes = IconAttributes(),
   private val iconCache: ScaledIconCache = ScaledIconCache(),
 ) : CopyableIcon, ScalableIcon, DarkIconProvider, IconPathProvider, IconWithToolTip, IconWithShape {
+  /**
+   * The loader before a path patch. A path transform change resets [loader] to it.
+   * [detachClassLoader] replaces it with an [EmptyImageDataLoader], so the icon holds no class loader after the detach.
+   */
+  @Internal
+  @Volatile
+  var originalLoader: ImageDataLoader = originalLoader
+    private set
+
   private var pathTransformModCount = -1
   private var loaderModCount = -1
 
@@ -403,7 +412,9 @@ open class CachedImageIcon private constructor(
         return false
       }
 
-      this.loader = EmptyImageDataLoader
+      val detached = EmptyImageDataLoader(path = originalLoader.path, expUIPath = originalLoader.expUIPath)
+      this.loader = detached
+      this.originalLoader = detached
       iconCache.clear()
       return true
     }

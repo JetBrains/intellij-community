@@ -5,11 +5,14 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.ui.icons.getReflectiveIcon
 import com.intellij.ui.icons.isReflectivePath
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import org.junit.jupiter.api.Test
+import java.awt.GraphicsEnvironment
+import java.net.URLClassLoader
 import javax.swing.Icon
 
 class IconLoaderTest {
@@ -70,7 +73,63 @@ class IconLoaderTest {
       IconLoader.getDarkIcon(layered, true)
     }
   }
+
+  /**
+   * IJPL-252580 the disabled icon cache keeps an icon of an unloaded plugin
+   */
+  @Test
+  fun detachClassLoaderClearsDisabledIconOfThatLoader() {
+    withIconOfOwnClassLoader { classLoader, icon ->
+      val disabledIcon = IconLoader.getDisabledIcon(icon)
+      assertThat(IconLoader.getDisabledIcon(icon)).isSameAs(disabledIcon)
+
+      IconLoader.detachClassLoader(classLoader)
+
+      assertThat(IconLoader.getDisabledIcon(icon)).isNotSameAs(disabledIcon)
+    }
+  }
+
+  /**
+   * IJPL-252580 a path transform change after the detach must not re-attach the class loader of the icon
+   */
+  @Test
+  fun detachedIconStaysDetachedAfterTransformChange() {
+    withIconOfOwnClassLoader { classLoader, icon ->
+      assertThat(icon.url).isNotNull()
+
+      IconLoader.detachClassLoader(classLoader)
+      assertThat(icon.url).isNull()
+      assertThat(icon.originalPath).isEqualTo(TEST_ICON_PATH)
+
+      IconLoader.clearCache()
+      assertThat(icon.url).isNull()
+      assertThat(icon.originalPath).isEqualTo(TEST_ICON_PATH)
+    }
+  }
+
+  /**
+   * Runs [body] with a platform icon that a child class loader of the test loaded, and with the icon loader on.
+   * The child class loader stands for a plugin class loader.
+   * After [body], the icon loader goes back off in a headless JVM, as it starts there.
+   */
+  private fun withIconOfOwnClassLoader(body: (ClassLoader, CachedImageIcon) -> Unit) {
+    URLClassLoader(emptyArray(), IconLoaderTest::class.java.classLoader).use { classLoader ->
+      IconLoader.activate()
+      try {
+        val icon = IconLoader.getIcon("/$TEST_ICON_PATH", classLoader)
+        assertThat(icon).isInstanceOf(CachedImageIcon::class.java)
+        body(classLoader, icon as CachedImageIcon)
+      }
+      finally {
+        if (GraphicsEnvironment.isHeadless()) {
+          IconLoader.deactivate()
+        }
+      }
+    }
+  }
 }
+
+private const val TEST_ICON_PATH = "general/add.svg"
 
 internal class TestIcons {
   companion object {

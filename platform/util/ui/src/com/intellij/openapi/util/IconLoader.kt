@@ -337,6 +337,8 @@ object IconLoader {
   }
 
   /**
+   * Removes the icons of [classLoader] from the icon cache and clears the caches of derived icons, such as disabled icons.
+   *
    * Used from java in MPS.
    */
   @JvmStatic
@@ -344,6 +346,7 @@ object IconLoader {
     iconCache.asMap().entries.removeIf { (key, icon) ->
       icon.detachClassLoader(classLoader) || key.second === classLoader
     }
+    clearCacheOnUpdateTransform()
   }
 
   @JvmStatic
