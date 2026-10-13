@@ -7,7 +7,6 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeTooltipManager
 import com.intellij.ide.RecentProjectsManagerBase
-import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.ide.unscaledProjectIconSize
 import com.intellij.idea.ActionsBundle
@@ -65,7 +64,6 @@ import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
-import com.intellij.util.ThreeState
 import com.intellij.util.asSafely
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBDimension
@@ -90,7 +88,6 @@ import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
-import java.nio.file.Path
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -1009,16 +1006,6 @@ class RecentProjectFilteringTree internal constructor(
   }
 }
 
-/**
- * Whether the VCS actions may run on the recent project at [projectPath].
- *
- * False only once the user has explicitly distrusted the project, which "Preview in Safe Mode" also does: a safe mode project refuses every
- * Git command, so offering the menu would open a popup that cannot work. An unanswered project stays true, because that is every recent
- * project nobody has opened yet, and the menu is what brings the trust dialog up.
- */
-private fun isVcsActionsAllowed(projectPath: String): Boolean =
-  runCatching { TrustedProjects.getProjectTrustedState(Path.of(projectPath)) }.getOrNull() != ThreeState.NO
-
 private sealed class RecentProjectRowButton(
   val icon: Icon,
   val hoveredIcon: Icon = icon,
@@ -1071,9 +1058,7 @@ private fun rowButtons(
   when (item) {
     is RecentProjectItem -> listOfNotNull(
       RecentProjectRowButton.CancelTask.takeIf { runningTask?.cancellable == true },
-      RecentProjectRowButton.VcsActions.takeIf {
-        isProjectValid && item.vcsActionsEnabled && isVcsActionsAllowed(item.projectPath)
-      },
+      RecentProjectRowButton.VcsActions.takeIf { isProjectValid && item.vcsActionsEnabled },
       if (isProjectValid) RecentProjectRowButton.MoreActions else RecentProjectRowButton.Remove,
     )
     is CloneableProjectItem -> when (item.cloneableProject.cloneStatus) {
