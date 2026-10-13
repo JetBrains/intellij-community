@@ -498,6 +498,23 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   @NotNull
   Promise<? super Object> select(@Nullable Configurable configurable) {
+    return queueSelection(configurable);
+  }
+
+  /**
+   * Selects {@code configurable} on the next EDT event, without the merge delay of {@link #select(Configurable)}.
+   * Use it for the first page of a new Settings editor.
+   * The first selection has nothing to merge with, so it does not need the merge delay.
+   * The selection still runs after the current EDT event, so the window shows before the page is created.
+   */
+  @NotNull
+  Promise<? super Object> selectWithoutDelay(@Nullable Configurable configurable) {
+    Promise<? super Object> promise = queueSelection(configurable);
+    myQueue.sendFlush();
+    return promise;
+  }
+
+  private @NotNull Promise<? super Object> queueSelection(@Nullable Configurable configurable) {
     AsyncPromise<? super Object> promise = new AsyncPromise<>();
     myQueuedConfigurable = configurable;
     myQueue.queue(new Update(this) {
