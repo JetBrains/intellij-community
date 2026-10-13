@@ -2,13 +2,16 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.xmlValue
 import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.DynamicTest.dynamicTest
+import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
@@ -17,25 +20,24 @@ internal class PluginUiModelAdapterTest {
   @TempDir
   lateinit var pluginsDir: Path
 
-  @Test
-  fun `content modules use XML loading rules`() {
-    val descriptor = loadDescriptorInTest(
-      plugin("test.plugin") {
-        content {
-          module("required.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) {}
-          module("embedded.module", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {}
-          module("optional.module", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {}
-          module("on.demand.module", loadingRule = ModuleLoadingRuleValue.ON_DEMAND) {}
-        }
-      },
-      pluginsDir,
-    )
+  @TestFactory
+  fun `module loading rule survives a DTO round trip`(): List<DynamicTest> {
+    return ModuleLoadingRuleValue.entries.map { loadingRule ->
+      dynamicTest(loadingRule.name) {
+        val descriptor = loadDescriptorInTest(
+          plugin("test.plugin") {
+            content {
+              module("test.module", loadingRule = loadingRule) {}
+            }
+          },
+          pluginsDir.resolve(loadingRule.name),
+        )
 
-    assertThat(descriptor.toPluginContentModules().map { it.moduleName to it.loadingRule }).containsExactly(
-      "required.module" to "required",
-      "embedded.module" to "embedded",
-      "optional.module" to "optional",
-      "on.demand.module" to "on-demand",
-    )
+        val contentModule = descriptor.toPluginContentModules().single()
+        val restoredLoadingRule = ModuleLoadingRuleValue.entries.find { it.xmlValue == contentModule.loadingRule }
+
+        assertThat(restoredLoadingRule).isEqualTo(loadingRule)
+      }
+    }
   }
 }
