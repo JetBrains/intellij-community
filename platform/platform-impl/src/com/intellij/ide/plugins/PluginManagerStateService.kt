@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nls
 import java.lang.ref.WeakReference
 
 internal data class PluginManagerStateSnapshot(
-  val pluginNonLoadReasons: Map<PluginId, PluginNonLoadReason>,
+  val pluginNonLoadReasons: Map<PluginId, PluginLoadingProblem>,
   val pluginsToDisable: Map<PluginId, String>,
   val pluginsToEnable: Map<PluginId, String>,
   val pluginLoadingProblemsForNotification: List<@Nls String>,
@@ -31,7 +31,7 @@ class PluginManagerStateService {
   @Volatile
   private var cachedState: CachedState? = null
 
-  fun getPluginNonLoadReason(pluginId: PluginId): PluginNonLoadReason? =
+  fun getPluginNonLoadReason(pluginId: PluginId): PluginLoadingProblem? =
     getCurrentState()?.pluginNonLoadReasons?.get(pluginId)
 
   @Synchronized
@@ -78,7 +78,7 @@ class PluginManagerStateService {
     val pluginsToDisable = HashMap<PluginId, String>()
     val pluginsToEnable = HashMap<PluginId, String>()
 
-    fun registerLoadingError(loadingError: PluginNonLoadReason) {
+    fun registerLoadingError(loadingError: PluginLoadingProblem) {
       pluginNonLoadReasons[loadingError.plugin.pluginId] = loadingError
       pluginsToDisable[loadingError.plugin.pluginId] = loadingError.plugin.name
       if (loadingError is PluginDependencyIsDisabled) {
@@ -141,7 +141,7 @@ class PluginManagerStateService {
   }
 
   private fun preparePluginErrors(
-    pluginNonLoadReasons: Map<PluginId, PluginNonLoadReason>,
+    pluginNonLoadReasons: Map<PluginId, PluginLoadingProblem>,
     descriptorLoadingErrors: List<PluginDescriptorLoadingError>,
     cycleErrors: List<@Nls String>,
     initContext: PluginInitializationContext,
@@ -166,7 +166,7 @@ class PluginManagerStateService {
     return if (reportingPolicy.reportToUser) globalErrors + mapForUserNotification(loadingErrors) else emptyList()
   }
 
-  private fun mapForUserNotification(loadingErrors: Collection<PluginNonLoadReason>): List<@Nls String> =
+  private fun mapForUserNotification(loadingErrors: Collection<PluginLoadingProblem>): List<@Nls String> =
     loadingErrors.asSequence()
       .filter { it.shouldNotifyUser }
       .map { it.detailedMessage }
@@ -208,7 +208,7 @@ class PluginManagerStateService {
     exclusionReason: DescriptorExclusionReason,
     plugin: PluginMainDescriptor,
     resolvedPluginSet: ResolvedPluginSet,
-    registerLoadingError: (PluginNonLoadReason) -> Unit,
+    registerLoadingError: (PluginLoadingProblem) -> Unit,
     candidateSet: UnambiguousPluginSet,
   ) {
     val shouldNotifyUser = !plugin.isImplementationDetail && !pluginRequiresUltimatePluginButItsDisabled(

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 @ApiStatus.Experimental
-sealed interface PluginNonLoadReason {
+sealed interface PluginLoadingProblem {
   val plugin: IdeaPluginDescriptor
   val detailedMessage: @NlsContexts.DetailedDescription String
   val shortMessage: @NlsContexts.Label String
@@ -22,7 +22,7 @@ sealed interface PluginNonLoadReason {
 }
 
 @ApiStatus.Internal
-fun DescriptorExclusionReason.toSelectionPluginNonLoadReason(): PluginNonLoadReason? {
+fun DescriptorExclusionReason.toSelectionPluginNonLoadReason(): PluginLoadingProblem? {
   val plugin = descriptor.getMainDescriptor()
   return when (this) {
     is PluginIsIncompatibleWithProduct -> incompatibilityReason.convertToUIError(descriptor)
@@ -43,7 +43,7 @@ fun DescriptorExclusionReason.toSelectionPluginNonLoadReason(): PluginNonLoadRea
 }
 
 /** temporary migration helper */
-internal fun PluginIncompatibilityReason.convertToUIError(descriptor: IdeaPluginDescriptorImpl): PluginNonLoadReason {
+internal fun PluginIncompatibilityReason.convertToUIError(descriptor: IdeaPluginDescriptorImpl): PluginLoadingProblem {
   return when (this) {
     is PluginIncompatibilityReason.IncompatibleWithCpuArch -> PluginIsIncompatibleWithHostCpu(descriptor, requiredArch, hostArch)
     is PluginIncompatibilityReason.IncompatibleWithHostPlatform -> PluginIsIncompatibleWithHostPlatform(descriptor, requiredOS, hostOS.name)
@@ -56,7 +56,7 @@ internal fun PluginIncompatibilityReason.convertToUIError(descriptor: IdeaPlugin
 
 private class PluginIdConflictNonLoadReason(
   private val reason: PluginDeclaresConflictingId,
-) : PluginNonLoadReason {
+) : PluginLoadingProblem {
   override val plugin: PluginMainDescriptor get() = reason.descriptor
 
   override val detailedMessage: @NlsContexts.DetailedDescription String
@@ -78,7 +78,7 @@ class PluginDependencyIsDisabled(
   override val plugin: IdeaPluginDescriptor,
   val dependencyId: PluginId, // TODO id is not enough, should show name instead; requires name resolution context
   override val shouldNotifyUser: Boolean,
-) : PluginNonLoadReason {
+) : PluginLoadingProblem {
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", plugin.name, dependencyId)
   override val shortMessage: @NlsContexts.Label String
@@ -88,7 +88,7 @@ class PluginDependencyIsDisabled(
 @ApiStatus.Internal
 class NonBundledPluginsAreExplicitlyDisabled(
   override val plugin: IdeaPluginDescriptor
-): PluginNonLoadReason {
+): PluginLoadingProblem {
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.custom.plugin.loading.disabled", plugin.name)
   override val shortMessage: @NlsContexts.Label String
@@ -99,7 +99,7 @@ class NonBundledPluginsAreExplicitlyDisabled(
 @ApiStatus.Internal
 class PluginIsMarkedBroken(
   override val plugin: IdeaPluginDescriptor,
-): PluginNonLoadReason {
+): PluginLoadingProblem {
   // FIXME confusing messages
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.marked.as.broken", plugin.name, plugin.version)
@@ -111,7 +111,7 @@ class PluginIsMarkedBroken(
 @ApiStatus.Internal
 class PluginIsCompatibleOnlyWithIntelliJIDEA(
   override val plugin: IdeaPluginDescriptor,
-): PluginNonLoadReason {
+): PluginLoadingProblem {
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", plugin.name)
   override val shortMessage: @NlsContexts.Label String
@@ -124,7 +124,7 @@ class PluginIsIncompatibleWithHostPlatform(
   override val plugin: IdeaPluginDescriptor,
   val requiredOs: IdeaPluginOsRequirement,
   val hostOs: @NlsSafe String,
-): PluginNonLoadReason {
+): PluginLoadingProblem {
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.incompatible.with.platform", plugin.name, plugin.version, requiredOs, hostOs)
   override val shortMessage: @NlsContexts.Label String
@@ -137,7 +137,7 @@ class PluginIsIncompatibleWithHostCpu(
   override val plugin: IdeaPluginDescriptor,
   val requiredCpuArch: PluginCpuArchRequirement,
   val hostCpu: @NlsSafe CpuArch,
-): PluginNonLoadReason {
+): PluginLoadingProblem {
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.incompatible.with.cpu", plugin.name, plugin.version, requiredCpuArch, hostCpu)
   override val shortMessage: @NlsContexts.Label String
@@ -149,7 +149,7 @@ class PluginIsIncompatibleWithHostCpu(
 class PluginSinceBuildConstraintViolation(
   override val plugin: IdeaPluginDescriptor,
   val productBuildNumber: BuildNumber,
-): PluginNonLoadReason {
+): PluginLoadingProblem {
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = buildCompatibilityDetailedMessage("plugin.loading.error.long.incompatible.since.build",
                                               "plugin.loading.error.long.incompatible.since.build.on.remote.dev.side",
@@ -165,7 +165,7 @@ class PluginSinceBuildConstraintViolation(
 class PluginUntilBuildConstraintViolation(
   override val plugin: IdeaPluginDescriptor,
   val productBuildNumber: BuildNumber,
-): PluginNonLoadReason {
+): PluginLoadingProblem {
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = buildCompatibilityDetailedMessage("plugin.loading.error.long.incompatible.until.build",
                                               "plugin.loading.error.long.incompatible.until.build.on.remote.dev.side",
@@ -204,7 +204,7 @@ private fun remoteDevPluginLoadingSide(): @Nls String? {
 @ApiStatus.Internal
 class PluginMalformedSinceUntilConstraints(
   override val plugin: IdeaPluginDescriptor,
-): PluginNonLoadReason {
+): PluginLoadingProblem {
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.failed.to.load.requirements.for.ide.version", plugin.name)
   override val shortMessage: @NlsContexts.Label String
@@ -215,7 +215,7 @@ class PluginMalformedSinceUntilConstraints(
 @ApiStatus.Internal
 class PluginLoadingIsDisabledCompletely(
   override val plugin: IdeaPluginDescriptor,
-): PluginNonLoadReason {
+): PluginLoadingProblem {
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.plugin.loading.disabled", plugin.name)
   override val shortMessage: @NlsContexts.Label String
@@ -228,7 +228,7 @@ class PluginPackagePrefixConflict(
   override val plugin: PluginModuleDescriptor,
   val module: PluginModuleDescriptor,
   val conflictingModule: PluginModuleDescriptor,
-): PluginNonLoadReason {
+): PluginLoadingProblem {
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message(
       "plugin.loading.error.long.package.prefix.conflict",
@@ -268,7 +268,7 @@ class PluginIsIncompatibleWithAnotherPlugin(
   override val plugin: IdeaPluginDescriptor,
   val incompatiblePlugin: IdeaPluginDescriptor,
   override val shouldNotifyUser: Boolean,
-): PluginNonLoadReason {
+): PluginLoadingProblem {
   // FIXME confusing message
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.ide.contains.conflicting.module", plugin.name, incompatiblePlugin.pluginId)
@@ -281,7 +281,7 @@ class PluginDependencyCannotBeLoaded(
   override val plugin: IdeaPluginDescriptor,
   val dependency: IdeaPluginDescriptor,
   override val shouldNotifyUser: Boolean
-): PluginNonLoadReason {
+): PluginLoadingProblem {
   private val dependencyName: @NlsSafe String get() = dependency.name ?: dependency.pluginId.idString
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.depends.on.failed.to.load.plugin", plugin.name, dependencyName)
@@ -294,7 +294,7 @@ class PluginDependencyIsNotInstalled(
   override val plugin: IdeaPluginDescriptor,
   val dependencyNameOrId: @NlsSafe String,
   override val shouldNotifyUser: Boolean
-): PluginNonLoadReason {
+): PluginLoadingProblem {
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.depends.on.not.installed.plugin", plugin.name, dependencyNameOrId)
   override val shortMessage: @NlsContexts.Label String
@@ -304,7 +304,7 @@ class PluginDependencyIsNotInstalled(
 @ApiStatus.Internal
 class PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins(
   override val plugin: IdeaPluginDescriptor,
-): PluginNonLoadReason {
+): PluginLoadingProblem {
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.not.required.for.explicitly.configured.subset", plugin.name)
   override val shortMessage: @NlsContexts.Label String

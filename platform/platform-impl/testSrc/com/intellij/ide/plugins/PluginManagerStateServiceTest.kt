@@ -170,7 +170,7 @@ internal class PluginManagerStateServiceTest {
     return checkNotNull(service.getCurrentState(USER_REPORTING_POLICY))
   }
 
-  private fun reasonTypes(state: PluginManagerStateSnapshot): Map<PluginId, Class<out PluginNonLoadReason>> =
+  private fun reasonTypes(state: PluginManagerStateSnapshot): Map<PluginId, Class<out PluginLoadingProblem>> =
     state.pluginNonLoadReasons.mapValues { it.value.javaClass }
 
   private fun reasonMessages(state: PluginManagerStateSnapshot): Map<PluginId, Pair<String, String>> =

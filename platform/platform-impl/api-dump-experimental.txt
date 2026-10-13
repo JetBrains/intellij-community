@@ -89,15 +89,15 @@ f:com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager
 - sf:isTrusted(com.intellij.openapi.project.Project):Z
 - sf:isTrustedCheckDisabled():Z
 - sf:setTrusted(com.intellij.openapi.project.Project,Z):V
-f:com.intellij.ide.plugins.PluginNode
-- com.intellij.ide.plugins.IdeaPluginDescriptor
-- *:getChannel():java.lang.String
-- *:setChannel(java.lang.String):V
-*:com.intellij.ide.plugins.PluginNonLoadReason
+*:com.intellij.ide.plugins.PluginLoadingProblem
 - a:getDetailedMessage():java.lang.String
 - a:getPlugin():com.intellij.ide.plugins.IdeaPluginDescriptor
 - a:getShortMessage():java.lang.String
 - a:getShouldNotifyUser():Z
+f:com.intellij.ide.plugins.PluginNode
+- com.intellij.ide.plugins.IdeaPluginDescriptor
+- *:getChannel():java.lang.String
+- *:setChannel(java.lang.String):V
 f:com.intellij.ide.startup.StartupActionScriptManager
 - *s:addActionCommandsToBeginning(java.util.List):V
 *f:com.intellij.ide.ui.PopupLocationTracker
