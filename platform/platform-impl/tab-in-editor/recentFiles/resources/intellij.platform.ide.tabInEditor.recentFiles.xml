@@ -1,0 +1,12 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.tabInEditor"/>
+    <module name="intellij.platform.recentFiles"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <recentFiles.excluder implementation="com.intellij.platform.ide.tabInEditor.recentFiles.ToolWindowEditorTabRecentFilesExcluder"/>
+  </extensions>
+</idea-plugin>
