@@ -416,7 +416,9 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
         }
         commitComponent(sessionManager, info, name, modificationCountChanged, isExternalSystemStorageEnabled)
-        info.updateModificationCount(currentModificationCount)
+        if (ClientId.isCurrentlyUnderLocalId || info.stateSpec?.perClient == true) {
+          info.updateModificationCount(currentModificationCount)
+        }
       }
       catch (e: Throwable) {
         saveResult.addError(Exception("Cannot get $name component state", e))
