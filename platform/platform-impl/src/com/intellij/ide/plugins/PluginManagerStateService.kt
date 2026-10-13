@@ -81,8 +81,8 @@ class PluginManagerStateService {
     fun registerLoadingError(loadingError: PluginLoadingProblem) {
       pluginNonLoadReasons[loadingError.plugin.pluginId] = loadingError
       pluginsToDisable[loadingError.plugin.pluginId] = loadingError.plugin.name
-      if (loadingError is PluginDependencyIsDisabled) {
-        val disabledDependencyId = loadingError.dependencyId
+      val disabledDependencyId = loadingError.disabledDependencyId
+      if (disabledDependencyId != null) {
         if (initContext.isPluginDisabled(disabledDependencyId)) {
           val disabledPlugin = candidateSubset.resolvePluginId(disabledDependencyId)
           if (disabledPlugin != null) {

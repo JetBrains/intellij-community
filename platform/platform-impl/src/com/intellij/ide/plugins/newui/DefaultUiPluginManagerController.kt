@@ -13,7 +13,6 @@ import com.intellij.ide.plugins.InstallPluginRequest
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.InstalledPluginsTableModel
 import com.intellij.ide.plugins.PendingDynamicPluginInstall
-import com.intellij.ide.plugins.PluginDependencyIsDisabled
 import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.PluginEnabler
@@ -1036,7 +1035,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     }
 
     val loadingError = service<PluginManagerStateService>().getPluginNonLoadReason(pluginId)
-    val disabledDependency = if (loadingError is PluginDependencyIsDisabled) loadingError.dependencyId else null
+    val disabledDependency = loadingError?.disabledDependencyId
     if (disabledDependency == null) {
       return CheckErrorsResult(loadingError = loadingError?.shortMessage, isDisabledDependencyError = true)
     }
