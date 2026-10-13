@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProviders
 import com.intellij.codeInsight.daemon.LineMarkerSettings
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -19,7 +20,6 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
@@ -132,7 +132,8 @@ class GutterIconsConfigurable : BoundSearchableConfigurable(
 
   class ShowSettingsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
     override fun actionPerformed(e: AnActionEvent) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(e.project, GutterIconsConfigurable::class.java)
+      // in split mode, the client node of this page has another class, so the search uses the id
+      ShowSettingsUtilImpl.showSettingsDialog(e.project, ID, null)
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
