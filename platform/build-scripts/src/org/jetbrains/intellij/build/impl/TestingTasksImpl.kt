@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
@@ -1088,7 +1089,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
           old.createDirectories()
           val testProcessName = systemProperties["intellij.build.test.process.name"] ?: error("'intellij.build.test.process.name' is not set")
-          createIndexedTempDirectory(old, "junit-$testProcessName-")
+          FileUtil.createTempDirectory(old.toFile(), "junit-$testProcessName-", null, false).toPath()
         }
         val ideaConfigPath = Path.of(systemProperties[PathManager.PROPERTY_CONFIG_PATH] ?: error("'${PathManager.PROPERTY_CONFIG_PATH}' is not set")).resolve(ideaLogPath.fileName)  // reuse the same junit-* name
         ideaConfigPath.deleteRecursively()
