@@ -248,6 +248,11 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
     }
 
     @Override
+    public boolean isSynthetic() {
+      return true;
+    }
+
+    @Override
     public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
       return NodeSortOrder.SCRATCH_ROOT;
     }

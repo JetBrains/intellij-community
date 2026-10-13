@@ -22,6 +22,7 @@ internal class ProjectViewNodeModelBuilderImpl<T : ProjectViewNodeUserObject>(pr
   private var isDirectory = false
   private var isExpandOnDoubleClick = true
   private var shouldBeInitiallyExpanded: Boolean? = null
+  private var isSynthetic: Boolean = false
 
   override fun setModel(model: BackendProjectViewNodeModel<*>) {
     model as ProjectViewNodeModelImpl<*>
@@ -33,6 +34,7 @@ internal class ProjectViewNodeModelBuilderImpl<T : ProjectViewNodeUserObject>(pr
     includedInExpandAll = model.isIncludedInExpandAll()
     isDirectory = model.isDirectory()
     isExpandOnDoubleClick = model.expandOnDoubleClick()
+    isSynthetic = model.isSynthetic()
   }
 
   override fun buildPresentation(build: (TreeNodePresentationBuilder) -> Unit) {
@@ -71,6 +73,10 @@ internal class ProjectViewNodeModelBuilderImpl<T : ProjectViewNodeUserObject>(pr
     this.shouldBeInitiallyExpanded = shouldBeInitiallyExpanded
   }
 
+  override fun setIsSynthetic(isSynthetic: Boolean) {
+    this.isSynthetic = isSynthetic
+  }
+
   fun build(): ProjectViewNodeModelImpl<T> {
     val pathElementType = this.pathElementType
                           ?: (userObject as? PathElementIdProvider)?.pathElementType
@@ -90,6 +96,7 @@ internal class ProjectViewNodeModelBuilderImpl<T : ProjectViewNodeUserObject>(pr
       isDirectory = isDirectory,
       isExpandOnDoubleClick = isExpandOnDoubleClick,
       shouldBeInitiallyExpanded = shouldBeInitiallyExpanded ?: isDirectory,
+      isSynthetic = isSynthetic,
     )
   }
 }
@@ -115,6 +122,7 @@ data class ProjectViewNodeModelImpl<T : ProjectViewNodeUserObject>(
     isDirectory: Boolean,
     isExpandOnDoubleClick: Boolean,
     shouldBeInitiallyExpanded: Boolean,
+    isSynthetic: Boolean,
   ) : this(
     userObject,
     id,
@@ -128,6 +136,7 @@ data class ProjectViewNodeModelImpl<T : ProjectViewNodeUserObject>(
       isDirectory,
       isExpandOnDoubleClick,
       shouldBeInitiallyExpanded, 
+      isSynthetic, 
     ),
   )
 
@@ -153,6 +162,8 @@ data class ProjectViewNodeModelImpl<T : ProjectViewNodeUserObject>(
 
   override fun expandOnDoubleClick(): Boolean = (flags and FLAG_EXPAND_ON_DOUBLE_CLICK) != 0
 
+  override fun isSynthetic(): Boolean = (flags and FLAG_IS_SYNTHETIC) != 0
+
   override fun putInfo(info: MutableMap<in String, in String>) {
     info["id"] = presentation.mainText
   }
@@ -164,6 +175,7 @@ private const val FLAG_INCLUDED_IN_EXPAND_ALL = (1 shl 2)
 private const val FLAG_IS_DIRECTORY = (1 shl 3)
 private const val FLAG_EXPAND_ON_DOUBLE_CLICK = (1 shl 4)
 private const val FLAG_SHOULD_BE_INITIALLY_EXPANDED = (1 shl 5)
+private const val FLAG_IS_SYNTHETIC = (1 shl 6)
 
 private fun flags(
   canNavigate: Boolean,
@@ -172,13 +184,15 @@ private fun flags(
   isDirectory: Boolean,
   isExpandOnDoubleClick: Boolean,
   shouldBeInitiallyExpanded: Boolean,
+  isSynthetic: Boolean,
 ): Int =
   (if (canNavigate) FLAG_CAN_NAVIGATE else 0) or
   (if (canNavigateToSource) FLAG_CAN_NAVIGATE_TO_SOURCE else 0) or 
   (if (isIncludedInExpandAll) FLAG_INCLUDED_IN_EXPAND_ALL else 0) or
   (if (isDirectory) FLAG_IS_DIRECTORY else 0) or
   (if (isExpandOnDoubleClick) FLAG_EXPAND_ON_DOUBLE_CLICK else 0) or
-  (if (shouldBeInitiallyExpanded) FLAG_SHOULD_BE_INITIALLY_EXPANDED else 0)
+  (if (shouldBeInitiallyExpanded) FLAG_SHOULD_BE_INITIALLY_EXPANDED else 0) or
+  (if (isSynthetic) FLAG_IS_SYNTHETIC else 0)
 
 @ApiStatus.Experimental
 const val SUPER_ROOT_ID: Long = 0L

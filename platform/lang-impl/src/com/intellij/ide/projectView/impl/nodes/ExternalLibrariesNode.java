@@ -64,6 +64,11 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
   }
 
   @Override
+  public boolean isSynthetic() {
+    return true;
+  }
+
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     Project project = Objects.requireNonNull(getProject());
     ProjectFileIndex index = ProjectFileIndex.getInstance(project);

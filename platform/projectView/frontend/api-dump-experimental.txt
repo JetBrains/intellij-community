@@ -6,7 +6,7 @@
 - a:isCurrent():Z
 - a:manage(kotlin.coroutines.Continuation):java.lang.Object
 - a:restoreStateFrom(org.jdom.Element):V
-- a:saveStateTo(org.jdom.Element):V
+- a:saveStateTo(org.jdom.Element):Z
 - a:setCurrent(Z):V
 *:com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneModel
 - a:createPane(com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor):com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane

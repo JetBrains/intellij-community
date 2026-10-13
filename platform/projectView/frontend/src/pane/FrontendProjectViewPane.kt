@@ -30,9 +30,26 @@ interface FrontendProjectViewPane {
   var isCurrent: Boolean
   
   val selectInTargets: Collection<SelectInTarget>
-  
+
+  /**
+   * Saves the current state of the pane into the specified XML element.
+   * 
+   * A pane may choose not to save its state if it's empty.
+   * The definition of empty is up to the pane's implementation.
+   * It may not be actually empty, but contain some "service" nodes,
+   * such as, for example, External Libraries.
+   * 
+   * Normally, an empty state indicates a pane that was not fully initialized,
+   * and therefore overwriting the previously saved state could be undesirable.
+   * This is especially important in remdev scenarios when initialization can take a while.
+   * 
+   * If `false` is returned, then this function should not write any state to the `element`,
+   * but even if it does, this state will be ignored.
+   * 
+   * @return `true` iff the state should be persisted
+   */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun saveStateTo(element: Element)
+  fun saveStateTo(element: Element): Boolean
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun restoreStateFrom(element: Element?)

@@ -279,6 +279,24 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value>
   }
 
   /**
+   * Determines whether the node represents actual project directories and files.
+   * <p>
+   *   Most nodes should return {@code false} here, which is the default.
+   *   But nodes that can be present even in an otherwise empty project should override it to return {@code true}.
+   *   Good examples are "libraries", "services", "scratches", etc.
+   *   The return value is used to determine whether the state of the tree is empty (contains only synthetic nodes)
+   *   and should not be saved to avoid overwriting a non-empty state.
+   * </p>
+   * <p>
+   *   The root node is always considered synthetic, there's no need to override this function for the tree root.
+   * </p>
+   * @return {@code true} iff the node doesn't represent actual project content
+   */
+  public boolean isSynthetic() {
+    return false;
+  }
+
+  /**
    * This method is intended to separate the sorting of folders and files and
    * to simplify implementing the {@link #getSortKey} and {@link #getTypeSortKey} methods.
    *

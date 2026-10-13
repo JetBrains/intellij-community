@@ -4,6 +4,7 @@
 package com.intellij.platform.projectView.impl
 
 import com.intellij.ide.projectView.NodeSortKey
+import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
 import com.intellij.ide.projectView.impl.GroupByTypeComparator
 import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode
@@ -77,6 +78,10 @@ private data class TreeStructureProjectViewNodeImpl(
   
   fun shouldBeInitiallyExpanded(): Boolean {
     return (elementDescriptor as? AbstractTreeNode<*>)?.shouldBeInitiallyExpanded() == true
+  }
+  
+  fun isSynthetic(): Boolean {
+    return (elementDescriptor as? ProjectViewNode<*>)?.isSynthetic == true
   }
 }
 
@@ -152,6 +157,7 @@ class TreeStructureProjectViewNodeProvider(
       nodeBuilder.setIsDirectory(node.isDirectory())
       nodeBuilder.setExpandOnDoubleClick(node.isExpandOnDoubleClick())
       nodeBuilder.setShouldBeInitiallyExpanded(node.shouldBeInitiallyExpanded())
+      nodeBuilder.setIsSynthetic(node.isSynthetic())
     }
   }
 

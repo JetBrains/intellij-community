@@ -28,6 +28,7 @@ sealed interface ProjectViewNodeModelBuilder {
   fun setIsDirectory(isDirectory: Boolean)
   fun setExpandOnDoubleClick(isExpandOnDoubleClick: Boolean)
   fun setShouldBeInitiallyExpanded(shouldBeInitiallyExpanded: Boolean)
+  fun setIsSynthetic(isSynthetic: Boolean)
 }
 
 @ApiStatus.Experimental
@@ -38,6 +39,7 @@ sealed interface ProjectViewNodeModel : ExpandOnDoubleClickSupport, TreeNodeWith
   fun isIncludedInExpandAll(): Boolean
   fun isDirectory(): Boolean
   fun shouldBeInitiallyExpanded(): Boolean
+  fun isSynthetic(): Boolean
 }
 
 @ApiStatus.Experimental
