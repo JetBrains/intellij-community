@@ -79,6 +79,7 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.checkForNonsenseBounds
 import com.intellij.openapi.wm.impl.updateFullScreenState
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.preloadRecentProjectsWithoutCurrent
 import com.intellij.platform.diagnostic.telemetry.impl.getTraceActivity
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -149,6 +150,10 @@ internal class IdeProjectFrameAllocator(
   override suspend fun preInitProject(project: Project) {
     // the earliest point that knows the project, before the background write actions of the pre-init
     permitMainMenuFill(project)
+    if (serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)) {
+      // the left panel of the welcome frame takes the list instead of collecting it on the EDT
+      preloadRecentProjectsWithoutCurrent(project)
+    }
     project.getOrCreatePostOpenEditorsDeferred()
     (FileEditorManager.getInstanceAsync(project) as? FileEditorManagerImpl)?.initJob?.join()
   }

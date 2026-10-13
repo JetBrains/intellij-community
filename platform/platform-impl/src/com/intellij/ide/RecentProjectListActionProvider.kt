@@ -62,7 +62,10 @@ open class RecentProjectListActionProvider {
     val allRecentProjectPaths = LinkedHashSet(recentProjectManager.getRecentPaths())
     if (projectToFilterOut != null) {
       recentProjectManager.getProjectPath(projectToFilterOut)?.let {
-        allRecentProjectPaths.remove(it.invariantSeparatorsPathString)
+        val path = it.invariantSeparatorsPathString
+        allRecentProjectPaths.remove(path)
+        // the filtered-out project counts as open: a collection that runs before it is added to the open projects names the same duplicates
+        openedPaths.add(path)
       }
     }
 
