@@ -10,8 +10,6 @@ import com.intellij.sh.completion.ShFileCompletionTest;
 import com.intellij.sh.completion.ShKeywordCompletionTest;
 import com.intellij.sh.editor.ShTypingTest;
 import com.intellij.sh.formatter.ShLineIndentProviderTest;
-import com.intellij.sh.oldParser.ShOldParserTest;
-import com.intellij.sh.parser.ShParserTest;
 import com.intellij.sh.parser.ShShebangParserUtilTest;
 import com.intellij.sh.rename.ShFunctionRenamingTest;
 import com.intellij.sh.rename.ShRenameAllOccurrencesTest;
@@ -35,8 +33,6 @@ public final class ShTestSuite {
   public static final class ParserSuite {
     public static Test suite() {
       TestSuite suite = new TestSuite("Parser");
-      suite.addTestSuite(ShParserTest.class);
-      suite.addTestSuite(ShOldParserTest.class);
       suite.addTestSuite(ShShebangParserUtilTest.class);
       return suite;
     }

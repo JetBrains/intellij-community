@@ -2,75 +2,118 @@
 package com.intellij.java.parser;
 
 import com.intellij.PathJavaTestUtil;
-import com.intellij.java.frontback.psi.impl.syntax.JavaSyntaxDefinitionExtension;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
-import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
 import com.intellij.platform.syntax.tree.SyntaxNode;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.testFramework.ExtensionTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataFile;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
-public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixtureKt.parsingFixture;
+import static com.intellij.testFramework.UsefulTestCase.assertSameLines;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 
+public abstract class AbstractBasicJavaParsingTestCase {
+  private static final TestFixture<Project> projectFixture = projectFixture();
+
+  protected final TestFixture<ParsingTestFixture> parsingFixture;
   private final AbstractBasicJavaParsingTestConfigurator myConfigurator;
   @Nullable
   private SyntaxNode myKmpTree;
 
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public AbstractBasicJavaParsingTestCase(String dataPath, AbstractBasicJavaParsingTestConfigurator configurator) {
     this(dataPath, "java", configurator);
   }
 
   public AbstractBasicJavaParsingTestCase(String dataPath, String fileExt, AbstractBasicJavaParsingTestConfigurator configurator) {
-    super("psi/" + dataPath, fileExt, new JavaParserDefinition());
+    parsingFixture = parsingFixture(projectFixture, PathJavaTestUtil.getCommunityJavaTestDataPath() + "/" + "psi/" + dataPath, fileExt,
+                                    new JavaParserDefinition());
     myConfigurator = configurator;
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    getProject().registerService(WorkspaceModelTopics.class, new WorkspaceModelTopics());
-    addExplicit(LanguageSyntaxDefinitions.getINSTANCE(), JavaLanguage.INSTANCE, new JavaSyntaxDefinitionExtension());
+  @BeforeEach
+  protected void setUpJavaParsing() {
     myConfigurator.setUp(this);
   }
 
-  @Override
-  protected String getTestDataPath() {
-    return PathJavaTestUtil.getCommunityJavaTestDataPath();
+  public final @NotNull Project getProject() {
+    return parsingFixture.get().getProject();
   }
 
   public final <T> void addExplicit(@NotNull LanguageExtension<T> collector, @NotNull Language language, @NotNull T object) {
-    addExplicitExtension(collector, language, object);
+    parsingFixture.get().addExplicitExtension(collector, language, object);
   }
 
   public final <T> void addExplicit(@NotNull ExtensionPointName<T> extensionPointName, @NotNull T extension) {
-    registerExtension(extensionPointName, extension);
+    ExtensionTestUtil.addExtensions(extensionPointName, List.of(extension), parsingFixture.get().getTestRootDisposable());
   }
 
   public final <T> void addExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<T> extensionClass) {
-    super.registerExtensionPoint(extensionPointName, extensionClass);
+    ExtensionsAreaImpl area = (ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea();
+    if (!area.hasExtensionPoint(extensionPointName)) {
+      area.registerExtensionPoint(extensionPointName, extensionClass.getName(), ExtensionPoint.Kind.INTERFACE,
+                                  parsingFixture.get().getTestRootDisposable());
+    }
   }
 
-  @Override
-  protected PsiFile createFile(@NotNull String name, @NotNull String text) {
-    PsiFile file = super.createFile(name, text);
+  public final void clearCachesOfLanguageExtension(@NotNull Language language, @NotNull LanguageExtension<?> instance) {
+    instance.clearCache(language);
+    Disposer.register(parsingFixture.get().getTestRootDisposable(), () -> instance.clearCache(language));
+  }
+
+  protected final @NotNull String getTestName() {
+    return parsingFixture.get().getTestName();
+  }
+
+  protected final @NotNull String getFileExt() {
+    return parsingFixture.get().getFileExt();
+  }
+
+  protected final @NotNull String loadFile(@NotNull @TestDataFile String name) {
+    return parsingFixture.get().loadFile(name);
+  }
+
+  protected @NotNull PsiFile createPsiFile(@NotNull String name, @NotNull String text) {
+    PsiFile file = parsingFixture.get().createPsiFile(name, text);
     myConfigurator.configure(file);
     return file;
+  }
+
+  protected void doTest(boolean checkResult) {
+    ParsingTestFixture fixture = parsingFixture.get();
+    String name = fixture.getTestName();
+    String text = fixture.loadFile(name + "." + fixture.getFileExt());
+    PsiFile file = parseFile(name, text);
+    if (checkResult) {
+      checkResult(name, file);
+    }
+    else {
+      ReadAction.computeBlocking(
+        () -> ParsingTestFixture.toParseTreeText(file, fixture.getSkipSpaces(), fixture.getIncludeRanges()));
+    }
   }
 
   protected void doParserTest(JavaParserUtil.@NotNull ParserWrapper parser) {
@@ -78,29 +121,25 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
   }
 
   protected void doParserTest(@NotNull Object parser) {
-    String name = getTestName(false);
-    try {
-      String text = loadFile(name + "." + myFileExt);
-      doParserTest(text, parser);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    String name = getTestName();
+    String text = loadFile(name + "." + getFileExt());
+    doParserTest(text, parser);
   }
 
   protected void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
     myConfigurator.setLanguageLevel(languageLevel);
   }
 
-  @Override
   protected void checkResult(@NotNull @TestDataFile String targetDataName,
-                             @NotNull PsiFile file) throws IOException {
+                             @NotNull PsiFile file) {
+    ParsingTestFixture fixture = parsingFixture.get();
     if (myConfigurator.checkPsi()) {
-      super.checkResult(targetDataName, file);
+      fixture.checkResult(targetDataName, file);
     }
 
-    String treeDump = DebugUtil.nodeTreeAsElementTypeToString(file.getNode(), !skipSpaces()).trim();
-    assertSameLinesWithFile(getExpectedFileName(targetDataName), treeDump);
+    String treeDump = ReadAction.computeBlocking(
+      () -> DebugUtil.nodeTreeAsElementTypeToString(file.getNode(), !fixture.getSkipSpaces()).trim());
+    PlatformTestUtil.assertSameLinesWithFile(getExpectedFileName(targetDataName), treeDump);
 
     if (myKmpTree == null) return;
     checkKmpTree(targetDataName);
@@ -123,18 +162,18 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
   }
 
   private @NotNull String getExpectedFileName(@NotNull String targetDataName) {
-    return myFullDataPath + File.separatorChar + targetDataName + "_node.txt";
+    return parsingFixture.get().getFullDataPath() + File.separatorChar + targetDataName + "_node.txt";
   }
 
-  @Override
   protected @NotNull PsiFile parseFile(@NotNull String name, @NotNull String text) {
     myKmpTree = myConfigurator.createFileSyntaxNode(text, null);
+    ParsingTestFixture fixture = parsingFixture.get();
     PsiFile psiFile = myConfigurator.createPsiFileForFullTestFile(this, name, text);
     if (psiFile != null) {
-      myFile = psiFile;
+      fixture.setFile(psiFile);
       return psiFile;
     }
-    return super.parseFile(name, text);
+    return fixture.checkParsedFile(createPsiFile(name, text), text);
   }
 
   protected void doParserTest(@NotNull String text,
@@ -144,16 +183,13 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
 
   protected void doParserTest(@NotNull String text,
                               @NotNull Object parser) {
-    String name = getTestName(false);
-    myFile = myConfigurator.createPsiFile(this, name, text, parser);
+    ParsingTestFixture fixture = parsingFixture.get();
+    String name = fixture.getTestName();
+    PsiFile file = ReadAction.computeBlocking(() -> myConfigurator.createPsiFile(this, name, text, parser));
+    fixture.setFile(file);
     if (parser instanceof JavaParserUtil.@NotNull ParserWrapper wrapper) {
       myKmpTree = myConfigurator.createFileSyntaxNode(text, wrapper);
     }
-    try {
-      checkResult(name, myFile);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    checkResult(name, file);
   }
 }

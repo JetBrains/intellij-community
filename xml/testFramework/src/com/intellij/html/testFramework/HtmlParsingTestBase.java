@@ -2,10 +2,11 @@
 package com.intellij.html.testFramework;
 
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lexer.EmbeddedTokenTypesProvider;
 import com.intellij.xml.testFramework.XmlParsingTestBase;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AssumptionViolatedException;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assumptions.abort;
 
 public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
 
@@ -13,12 +14,6 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
                                 @NotNull String fileExt,
                                 ParserDefinition @NotNull ... definitions) {
     super(dataPath, fileExt, definitions);
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    registerExtensionPoint(EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME, EmbeddedTokenTypesProvider.class);
   }
 
   @Override
@@ -30,32 +25,39 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
     doTest(text, "test.html");
   }
 
+  @Test
   @Override
   public void testDtdUrl1() {
-    throw new AssumptionViolatedException("disable");
+    abort("disable");
   }
 
+  @Test
   @Override
   public void testCustomMimeType() {
-    throw new AssumptionViolatedException("disable");
+    abort("disable");
   }
 
+  @Test
   public void testHtmlDoctype1() throws Exception {
     doTestHtml("<!DOCTYPE html>\n");
   }
 
+  @Test
   public void testHtmlDoctype2() throws Exception {
     doTestHtml(" <!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n");
   }
 
+  @Test
   public void testHtmlDoctype3() throws Exception {
     doTestHtml(" <!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n");
   }
 
+  @Test
   public void testHtmlCharEntityRef() throws Exception {
     doTestHtml("&#xAAff;&#XaaFF;&#x&#X<tag attr='&#xAAff;&#XaaFF;&#x&#X'/>");
   }
 
+  @Test
   public void testHtmlComments() throws Exception {
     doTestHtml("""
                  <!--Valid comment-->
@@ -67,6 +69,7 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
                  """);
   }
 
+  @Test
   public void testHtmlIEConditionalComments1() throws Exception {
     doTestHtml("""
                  <!--[if IE 6]>
@@ -74,6 +77,7 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
                  <![endif]-->""");
   }
 
+  @Test
   public void testHtmlIEConditionalComments2() throws Exception {
     doTestHtml("""
                  <!--[if lte IE 7]>
@@ -83,6 +87,7 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
                  <![endif]-->""");
   }
 
+  @Test
   public void testHtmlIEConditionalComments3() throws Exception {
     doTestHtml("""
                  <!--[if !IE]>-->
@@ -90,11 +95,13 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
                  <!--<![endif]-->""");
   }
 
+  @Test
   public void testScriptEmbeddingParsing() throws Exception {
     doTestHtml("<script type=\"foo/bar\"><div></div></script>\n" +
                "<script type=\"foo/bar\"><div> </div></script>");
   }
 
+  @Test
   public void testSpecialTagsParsing() throws Exception {
     doTestHtml("""
                  <head><title>This is my <title>&lt;<!--</title><body>
@@ -103,6 +110,7 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
                  <textarea>this {{text}} {area} &nbsp; <is></cool></textarea>""");
   }
 
+  @Test
   public void testPAutoClose() throws Exception {
     doTestHtml("""
                  <div>
@@ -112,6 +120,7 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
                  """);
   }
 
+  @Test
   public void testScriptWithinScript() throws Exception {
     doTestHtml("""
                  <script>
@@ -119,6 +128,7 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
                  </script>""");
   }
 
+  @Test
   public void testTemplateWithinP() throws Exception {
     doTestHtml("""
                  <div class="card-body">
@@ -130,6 +140,7 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
                  </div>""");
   }
 
+  @Test
   public void testCustomTagWithinP() throws Exception {
     doTestHtml("""
                  <p class="quotationAuthor">
@@ -145,6 +156,7 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
                  </p>""");
   }
 
+  @Test
   public void testTemplateWithinCell() throws Exception {
     doTestHtml("""
                  <table border="1">
@@ -162,6 +174,7 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
                  """);
   }
 
+  @Test
   public void testPAutoClosedByDl() throws Exception {
     doTestHtml("""
                  <p>
@@ -172,6 +185,7 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
                  """);
   }
 
+  @Test
   public void testNestedCustomTable() throws Exception {
     doTestHtml("""
                  <p-table>
@@ -199,6 +213,7 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
                  """);
   }
 
+  @Test
   public void testMenuLi() throws Exception {
     doTestHtml("""
                  <ul>
@@ -225,6 +240,7 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
                  """);
   }
 
+  @Test
   public void testTagOmissionP() throws Exception {
     doTestHtml("""
                  <body>
@@ -237,6 +253,7 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
                  """);
   }
 
+  @Test
   public void testTagOmissionUlLi() throws Exception {
     doTestHtml("""
                  <ul>
@@ -254,18 +271,21 @@ public abstract class HtmlParsingTestBase extends XmlParsingTestBase {
                  """);
   }
 
+  @Test
   public void testPMustBeClosedCustomTag() throws Exception {
     doTestHtml("""
                  <my-component>foo<p>bar</my-component>
                  """);
   }
 
+  @Test
   public void testPMustBeClosedA() throws Exception {
     doTestHtml("""
                  <a href="foo">foo<p>bar</a>
                  """);
   }
 
+  @Test
   public void testPIsAutoClosed() throws Exception {
     doTestHtml("""
                  <div>foo<p>bar</div>

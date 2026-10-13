@@ -1,77 +1,72 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dtd;
 
-import com.intellij.lang.LanguageASTFactory;
-import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.dtd.DTDParserDefinition;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.xml.XMLParserDefinition;
-import com.intellij.lang.xml.XmlASTFactory;
+import com.intellij.openapi.project.Project;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.parsing.xml.DtdParsing;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.StartTagEndTokenProvider;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlEntityContextType;
-import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-import static com.intellij.xml.testFramework.XmlElementTypeServiceHelper.registerXmlElementTypeServices;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixtureKt.parsingFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 
-public class DtdParsingTest extends ParsingTestCase {
+@TestApplication
+public class DtdParsingTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
 
-  public DtdParsingTest() {
-    super("psi/dtd", "dtd", new DTDParserDefinition(), new XMLParserDefinition());
+  private final TestFixture<ParsingTestFixture> parsingFixture =
+    parsingFixture(projectFixture, PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/" + "/" + "psi/dtd",
+                   "dtd", new DTDParserDefinition(), new XMLParserDefinition());
+
+  private void doTestDtd(@NonNls String text) {
+    ParsingTestFixture fixture = parsingFixture.get();
+    PsiFile file = fixture.createFile("test.dtd", text);
+    fixture.checkResult("test" + fixture.getTestName(), file);
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    registerXmlElementTypeServices(getApplication(), getTestRootDisposable());
-    addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, new XmlASTFactory());
-    addExplicitExtension(LanguageASTFactory.INSTANCE, DTDLanguage.INSTANCE, new XmlASTFactory());
-    registerExtensionPoint(StartTagEndTokenProvider.EP_NAME, StartTagEndTokenProvider.class);
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";
-  }
-
-  private void doTestDtd(@NonNls String text) throws Exception {
-    PsiFile file = createFile("test.dtd", text);
-    checkResult("test" + getTestName(false), file);
-  }
-
-  public void testAttlist1() throws Exception {
+  @Test
+  public void testAttlist1() {
     doTestDtd("<!ATTLIST termdef id ID #REQUIRED name CDATA #IMPLIED>");
   }
 
-  public void testAttlist2() throws Exception {
+  @Test
+  public void testAttlist2() {
     doTestDtd("<!ATTLIST termdef type (bullets|ordered|glossary)  \"ordered\">");
   }
 
-  public void testAttlist3() throws Exception {
+  @Test
+  public void testAttlist3() {
     doTestDtd("<!ATTLIST termdef  method  CDATA   #FIXED \"POST\">");
   }
 
-  public void testAttlist4() throws Exception {
+  @Test
+  public void testAttlist4() {
     doTestDtd("<!ATTLIST termdef default-charset %CHARSET; \"iso-8859-1\">");
   }
 
-  public void testComment2() throws Exception {
+  @Test
+  public void testComment2() {
     doTestDtd("<!ELEMENT data-sources (#PCDATA)> <!-- abc --> <!ATTLIST data-sources path CDATA #IMPLIED");
   }
 
+  @Test
   public void testManualEmptyAttributeParsing() {
     String value = "<a><b c=\"\" > </b> </a>";
     final CompositeElement element = parseManually(value, XmlElementType.XML_ELEMENT_DECL, XmlEntityContextType.GENERIC_XML);
-    checkResult("testManualEmptyAttributeParsing.txt", DebugUtil.treeToString(element, true));
+    parsingFixture.get().checkResult("testManualEmptyAttributeParsing.txt", DebugUtil.treeToString(element, true));
   }
 
   private static CompositeElement parseManually(final String value,
@@ -80,23 +75,28 @@ public class DtdParsingTest extends ParsingTestCase {
     return (CompositeElement)new DtdParsing(value, xmlElementDecl, parseType, null).parse();
   }
 
-  public void testDtd1() throws Exception {
+  @Test
+  public void testDtd1() {
     doTestDtd("<!ELEMENT data-sources (#PCDATA)> <!ATTLIST data-sources path CDATA #IMPLIED>");
   }
 
-  public void testElementDecl1() throws Exception {
+  @Test
+  public void testElementDecl1() {
     doTestDtd("<!ELEMENT data-sources EMPTY>");
   }
 
-  public void testElementDecl2() throws Exception {
+  @Test
+  public void testElementDecl2() {
     doTestDtd("<!ELEMENT data-sources ANY>");
   }
 
-  public void testConditionalSection1() throws Exception {
+  @Test
+  public void testConditionalSection1() {
     doTestDtd("<![ INCLUDE [ <!ELEMENT data-sources ANY> ]]>");
   }
 
-  public void testConditionalSection2() throws Exception {
+  @Test
+  public void testConditionalSection2() {
     doTestDtd("""
                 <![%sgml.features;[
                 <![IGNORE[
@@ -105,7 +105,8 @@ public class DtdParsingTest extends ParsingTestCase {
                 ]]>""");
   }
 
-  public void testConditionalSection3() throws Exception {
+  @Test
+  public void testConditionalSection3() {
     doTestDtd("""
                 <!ENTITY % dbhier.module "INCLUDE">
                 <![ %dbhier.module; [
@@ -116,44 +117,54 @@ public class DtdParsingTest extends ParsingTestCase {
                 ]]>""");
   }
 
-  public void testEntityRef3() throws Exception {
+  @Test
+  public void testEntityRef3() {
     doTestDtd("<!ELEMENT project (target | taskdef | %types; | property )*>");
   }
 
-  public void testEntityRef5() throws Exception {
+  @Test
+  public void testEntityRef5() {
     doTestDtd("<!ATTLIST a %coreattrs; version CDATA #FIXED \"1.0\"");
   }
 
-  public void testEntityRef6() throws Exception {
+  @Test
+  public void testEntityRef6() {
     doTestDtd("&common;");
   }
 
-  public void testEntityRef7() throws Exception {
+  @Test
+  public void testEntityRef7() {
     doTestDtd("<!ATTLIST foo someBoolean (%boolean;) \"true\" someString CDATA #IMPLIED >");
   }
 
-  public void testEntityDecl1() throws Exception {
+  @Test
+  public void testEntityDecl1() {
     doTestDtd("<!ENTITY % types \"fileset | patternset mapper\">");
   }
 
-  public void testEntityDecl2() throws Exception {
+  @Test
+  public void testEntityDecl2() {
     doTestDtd("<!ENTITY types \"fileset | patternset mapper\">");
   }
 
-  public void testEntityDecl3() throws Exception {
+  @Test
+  public void testEntityDecl3() {
     doTestDtd("<!ENTITY build-common SYSTEM \"common.xml\">");
   }
 
-  public void testEntityDecl4() throws Exception {
+  @Test
+  public void testEntityDecl4() {
     doTestDtd(
       "<!ENTITY open-hatch PUBLIC \"-//Textuality//TEXT Standard open-hatch boilerplate//EN\" \"http://www.textuality.com/boilerplate/OpenHatch.xml\">");
   }
 
-  public void testNotation1() throws Exception {
+  @Test
+  public void testNotation1() {
     doTestDtd("<!NOTATION data-sources SYSTEM \"x3\">");
   }
 
-  public void testPrologInDtd() throws Exception {
+  @Test
+  public void testPrologInDtd() {
     doTestDtd("""
                 <?xml version="1.0" encoding="ISO-8859-1"?>
                 <!ELEMENT idea-plugin>
@@ -161,41 +172,48 @@ public class DtdParsingTest extends ParsingTestCase {
                     url CDATA #IMPLIED>""");
   }
 
-  public void testEmptyElementsInDtd() throws Exception {
+  @Test
+  public void testEmptyElementsInDtd() {
     doTestDtd("""
                 <!ELEMENT >
                 <!ELEMENT name (,)
                 <!ATTLIST > <!ELEMENT zzz (aa?, bb)+> <!ELEMENT xxx(aaa,)><!ATTLIST %aaa;>""");
   }
 
-  public void testElementDeclaration() throws Exception {
+  @Test
+  public void testElementDeclaration() {
     doTestDtd(
       "<!ELEMENT xxx EMPTY>\n<!ELEMENT xxx2 ANY>\n<!ELEMENT %name.para; %content.para; >\n<!ELEMENT xxx3 (#PCDATA | a) >\n<!ELEMENT xxx4 >");
   }
 
-  public void testEntityDeclaration() throws Exception {
+  @Test
+  public void testEntityDeclaration() {
     doTestDtd("<!ENTITY xxx > <!ENTITY >");
   }
 
+  @Test
   public void testEntityDeclaration2() {
     String s = "| %pre.qname; | %blockquote.qname; | %address.qname;";
     CompositeElement element =
       parseManually(s, XmlElementType.XML_ELEMENT_CONTENT_SPEC, XmlEntityContextType.ELEMENT_CONTENT_SPEC);
-    checkResult("testEntityDeclaration2.txt", DebugUtil.treeToString(element, true));
+    parsingFixture.get().checkResult("testEntityDeclaration2.txt", DebugUtil.treeToString(element, true));
   }
 
-  public void testEntityInAttlistDeclaration() throws Exception {
+  @Test
+  public void testEntityInAttlistDeclaration() {
     doTestDtd("<!ATTLIST %span.qname;      %Common.attrib;>");
   }
 
-  public void testSGMLDtd() throws Exception {
+  @Test
+  public void testSGMLDtd() {
     doTestDtd("""
                 <!ELEMENT name - - (%inline;)* +(A)> <!ATTLIST (A|B) >
                 <!ELEMENT (E|E2) - O (%flow;)*       -- table header cell, table data cell-->
                 <!ELEMENT BODY O O (%block;|SCRIPT)+ +(INS|DEL) -- document body -->""");
   }
 
-  public void testKeywordsAsName() throws Exception {
+  @Test
+  public void testKeywordsAsName() {
     doTestDtd("""
                 <!ELEMENT FIELD ANY>
                 <!ELEMENT PUBLIC ANY>
@@ -204,7 +222,8 @@ public class DtdParsingTest extends ParsingTestCase {
                 <!ELEMENT AND (FIELD|PUBLIC|EMPTY|ANY)*>""");
   }
 
-  public void testKeywordsAsAttributeName() throws Exception {
+  @Test
+  public void testKeywordsAsAttributeName() {
     doTestDtd("<!ATTLIST park conditionType (DONT_CARE|EMPTY|VALUE|REGEXP) 'DONT_CARE'>");
   }
 }

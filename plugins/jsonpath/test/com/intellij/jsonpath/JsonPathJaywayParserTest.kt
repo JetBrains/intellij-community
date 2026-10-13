@@ -1,161 +1,204 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jsonpath
 
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
+
 // Behavior compatible with com.jayway.jsonpath
+@TestApplication
 class JsonPathJaywayParserTest : JsonPathParsingTestCase("jayway") {
+  @Test
   fun testProgrammaticFilterPlaceholder() {
-    doCodeTest("\$.programmatic_filter[?]") // ? will be replaced by programmatic filter at runtime
+    parsing.doCodeTest("\$.programmatic_filter[?]") // ? will be replaced by programmatic filter at runtime
   }
 
+  @Test
   fun testFunctionWithArgumentExpression() {
-    doCodeTest("\$.sum(\$..timestamp)")
+    parsing.doCodeTest("\$.sum(\$..timestamp)")
   }
 
+  @Test
   fun testFunctionWithMultipleArgs() {
-    doCodeTest("\$.max(\$..timestamp.avg(), 100)")
+    parsing.doCodeTest("\$.max(\$..timestamp.avg(), 100)")
   }
 
+  @Test
   fun testFunctionOnTopLevel() {
-    doCodeTest("concat(\"/\", \$.key)")
+    parsing.doCodeTest("concat(\"/\", \$.key)")
   }
 
+  @Test
   fun testFilterWithComparison() {
-    doCodeTest("\$.batches.results[?(@.values.length() >= \$.batches.minBatchSize)].values.avg()")
+    parsing.doCodeTest("\$.batches.results[?(@.values.length() >= \$.batches.minBatchSize)].values.avg()")
   }
 
+  @Test
   fun testNestedFunctionCall() {
-    doCodeTest("\$.avg(\$.numbers.min(), \$.numbers.max())")
+    parsing.doCodeTest("\$.avg(\$.numbers.min(), \$.numbers.max())")
   }
 
+  @Test
   fun testFunctionLiteralArg() {
-    doCodeTest("\$.sum(50)")
+    parsing.doCodeTest("\$.sum(50)")
   }
 
+  @Test
   fun testStringLiteralsConcat() {
-    doCodeTest("\$.text.concat(\"-\", \"some\")")
+    parsing.doCodeTest("\$.text.concat(\"-\", \"some\")")
   }
 
+  @Test
   fun testRegexMatch() {
-    doCodeTest("\$.text[?(@ =~ /9.*9/)]")
+    parsing.doCodeTest("\$.text[?(@ =~ /9.*9/)]")
   }
 
+  @Test
   fun testRegexCaseInsensitive() {
-    doCodeTest("\$.data_text[?(@ =~ /test/i)]")
+    parsing.doCodeTest("\$.data_text[?(@ =~ /test/i)]")
   }
 
+  @Test
   fun testRegexWithSlashes() {
-    doCodeTest("\$.regex[?(@ =~ /^\\w+\$/U)]")
+    parsing.doCodeTest("\$.regex[?(@ =~ /^\\w+\$/U)]")
   }
 
+  @Test
   fun testRegexWithEscapedSlash() {
-    doCodeTest("\$[?(@ =~ /\\/|x/)]")
+    parsing.doCodeTest("\$[?(@ =~ /\\/|x/)]")
   }
 
+  @Test
   fun testMultipleQuotedPaths() {
-    doCodeTest("\$['a', 'x']")
+    parsing.doCodeTest("\$['a', 'x']")
   }
 
+  @Test
   fun testMixedSegmentTypes() {
-    doCodeTest("\$['a', 'c'].v")
+    parsing.doCodeTest("\$['a', 'c'].v")
   }
 
+  @Test
   fun testDotBeforeQuotedSegment() {
-    doCodeTest("\$.['store'].['book'][0]")
+    parsing.doCodeTest("\$.['store'].['book'][0]")
   }
 
+  @Test
   fun testQuotedSegmentWithFilter() {
-    doCodeTest("\$['a', 'c'][?(@.flag)].v")
+    parsing.doCodeTest("\$['a', 'c'][?(@.flag)].v")
   }
 
+  @Test
   fun testQuotedSegmentInTheMiddle() {
-    doCodeTest("\$.x[*]['a', 'c'].v")
+    parsing.doCodeTest("\$.x[*]['a', 'c'].v")
   }
 
+  @Test
   fun testDashInsideIdentifier() {
-    doCodeTest("\$.int-max-property")
+    parsing.doCodeTest("\$.int-max-property")
   }
 
+  @Test
   fun testAndOperator() {
-    doCodeTest("\$.text[?(@.name == 'name' && $.length() > 2)]")
+    parsing.doCodeTest("\$.text[?(@.name == 'name' && $.length() > 2)]")
   }
 
+  @Test
   fun testOrOperator() {
-    doCodeTest("\$.text[?(@.name == 'name' || $.length() < 2)]")
+    parsing.doCodeTest("\$.text[?(@.name == 'name' || $.length() < 2)]")
   }
 
+  @Test
   fun testSubsequentArrayIndexes() {
-    doCodeTest("\$..[2][3]")
+    parsing.doCodeTest("\$..[2][3]")
   }
 
+  @Test
   fun testScanWithFilter() {
-    doCodeTest("\$..*[?(@.length() > 5)]")
+    parsing.doCodeTest("\$..*[?(@.length() > 5)]")
   }
 
+  @Test
   fun testMultiPropsInTheMiddle() {
-    doCodeTest("\$[*][*]['a', 'c'].v")
+    parsing.doCodeTest("\$[*][*]['a', 'c'].v")
   }
 
+  @Test
   fun testInOperatorUpperCase() {
-    doCodeTest("$[?(@.a IN @.b)]")
+    parsing.doCodeTest("$[?(@.a IN @.b)]")
   }
 
+  @Test
   fun testInOperatorLowerCase() {
-    doCodeTest("$[?('demo' in @.array)]")
+    parsing.doCodeTest("$[?('demo' in @.array)]")
   }
 
+  @Test
   fun testEmptyOperatorWithConstant() {
-    doCodeTest("$[?(@.array empty true)]")
+    parsing.doCodeTest("$[?(@.array empty true)]")
   }
 
+  @Test
   fun testEmptyOperatorWithExpression() {
-    doCodeTest("$[?(@.array empty @.flag)]")
+    parsing.doCodeTest("$[?(@.array empty @.flag)]")
   }
 
+  @Test
   fun testArrayLiterals() {
-    doCodeTest("\$.store.bicycle[?(@.gears == [23, 50])]")
+    parsing.doCodeTest("\$.store.bicycle[?(@.gears == [23, 50])]")
   }
 
+  @Test
   fun testArrayLiteralsFromBothSides() {
-    doCodeTest("\$.bicycle[?([1, 2] contains [1])]")
+    parsing.doCodeTest("\$.bicycle[?([1, 2] contains [1])]")
   }
 
+  @Test
   fun testObjectLiterals() {
-    doCodeTest("\$.store.bicycle[?(@.extra == {\"x\":0})]")
+    parsing.doCodeTest("\$.store.bicycle[?(@.extra == {\"x\":0})]")
   }
 
+  @Test
   fun testComplexObjectLiterals() {
-    doCodeTest("\$.store.bicycle[?(@.extra == { 'x': [{}, {'key' : 'value'}] })]")
+    parsing.doCodeTest("\$.store.bicycle[?(@.extra == { 'x': [{}, {'key' : 'value'}] })]")
   }
 
+  @Test
   fun testEqOperators() {
-    doCodeTest("@.demo[?(@.a == 1 && @.b === 'x')]")
+    parsing.doCodeTest("@.demo[?(@.a == 1 && @.b === 'x')]")
   }
 
+  @Test
   fun testNeOperators() {
-    doCodeTest("@.demo[?(@.a != 2 && @.b !== 'x')]")
+    parsing.doCodeTest("@.demo[?(@.a != 2 && @.b !== 'x')]")
   }
 
+  @Test
   fun testIndexWithoutContext() {
-    doCodeTest("[0]")
+    parsing.doCodeTest("[0]")
   }
 
+  @Test
   fun testWildcardIndex() {
-    doCodeTest("*[0]")
+    parsing.doCodeTest("*[0]")
   }
 
+  @Test
   fun testQuotedPathAfterIndex() {
-    doCodeTest("[0][\"id\"]")
+    parsing.doCodeTest("[0][\"id\"]")
   }
 
+  @Test
   fun testDotAfterIndex() {
-    doCodeTest("[0].id")
+    parsing.doCodeTest("[0].id")
   }
 
+  @Test
   fun testRepeatedWildcard() {
-    doCodeTest("**")
+    parsing.doCodeTest("**")
   }
 
+  @Test
   fun testRepeatedWildcardInTheMiddle() {
-    doCodeTest("[1].**.created")
+    parsing.doCodeTest("[1].**.created")
   }
 }

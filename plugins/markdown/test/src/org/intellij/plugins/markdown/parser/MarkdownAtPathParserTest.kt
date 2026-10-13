@@ -1,24 +1,38 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.parser
 
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
+
+@TestApplication
 class MarkdownAtPathParserTest : MarkdownParsingTestCase("parser/atpath") {
-  fun testSimplePath() = doTest(true)
+  @Test
+  fun testSimplePath() = parsing.doTest(true)
 
-  fun testTopLevelFile() = doTest(true)
+  @Test
+  fun testTopLevelFile() = parsing.doTest(true)
 
-  fun testRelativePath() = doTest(true)
+  @Test
+  fun testRelativePath() = parsing.doTest(true)
 
-  fun testMultiplePaths() = doTest(true)
+  @Test
+  fun testMultiplePaths() = parsing.doTest(true)
 
-  fun testSurroundedByText() = doTest(true)
+  @Test
+  fun testSurroundedByText() = parsing.doTest(true)
 
-  fun testFollowedByPunctuation() = doTest(true)
+  @Test
+  fun testFollowedByPunctuation() = parsing.doTest(true)
 
-  fun testInsideCodeSpan() = doTest(true)
+  @Test
+  fun testInsideCodeSpan() = parsing.doTest(true)
 
-  fun testInsideInlineLink() = doTest(true)
+  @Test
+  fun testInsideInlineLink() = parsing.doTest(true)
 
-  fun testEmailAndMention() = doTest(true)
+  @Test
+  fun testEmailAndMention() = parsing.doTest(true)
 
-  fun testAlongsideTestLink() = doTest(true)
+  @Test
+  fun testAlongsideTestLink() = parsing.doTest(true)
 }

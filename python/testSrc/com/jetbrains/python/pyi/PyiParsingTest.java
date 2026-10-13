@@ -17,42 +17,42 @@ package com.jetbrains.python.pyi;
 
 import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.allure.Layers;
-import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PythonDialectsTokenSetContributor;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.jetbrains.python.PythonParserDefinition;
 import com.jetbrains.python.PythonTestUtil;
-import com.jetbrains.python.PythonTokenSetContributor;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixtureKt.parsingFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 @TestDataPath("$CONTENT_ROOT/../testData/pyi/parsing")
 @Subsystems.Parsing
 @Layers.Functional
-public class PyiParsingTest extends ParsingTestCase {
-  public PyiParsingTest() {
-    super("pyi/parsing", "pyi", new PyiParserDefinition(), new PythonParserDefinition());
-  }
+@TestApplication
+public class PyiParsingTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
-    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath();
-  }
+  private final TestFixture<ParsingTestFixture> parsingFixture =
+    parsingFixture(projectFixture, PythonTestUtil.getTestDataPath() + "/pyi/parsing", "pyi", false,
+                   new PyiParserDefinition(), new PythonParserDefinition());
 
   private void doTest() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testSimple() {
     doTest();
-    assertInstanceOf(myFile, PyiFile.class);
-    final PyiFile pyiFile = (PyiFile)myFile;
-    assertEquals(LanguageLevel.getLatest(), pyiFile.getLanguageLevel());
+    assertInstanceOf(PyiFile.class, parsingFixture.get().getFile());
+    final PyiFile pyiFile = (PyiFile)parsingFixture.get().getFile();
+    assertEquals(LanguageLevel.getLatest(), ReadAction.computeBlocking(() -> pyiFile.getLanguageLevel()));
   }
 }

@@ -4,188 +4,163 @@ package com.jetbrains.python.console;
 import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.allure.Layers;
 
-import com.intellij.lang.LanguageASTFactory;
-import com.intellij.mock.MockApplication;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.lang.Language;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PyElementTypesFacade;
-import com.jetbrains.python.PyElementTypesFacadeImpl;
-import com.jetbrains.python.PyLanguageFacade;
-import com.jetbrains.python.PyLanguageFacadeImpl;
-import com.jetbrains.python.PythonDialectsTokenSetContributor;
-import com.jetbrains.python.PythonLanguage;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.jetbrains.python.PythonParserDefinition;
-import com.jetbrains.python.PythonRuntimeService;
-import com.jetbrains.python.PythonRuntimeServiceImpl;
 import com.jetbrains.python.PythonTestUtil;
-import com.jetbrains.python.PythonTokenSetContributor;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyPsiFacade;
-import com.jetbrains.python.psi.impl.PyPsiFacadeImpl;
-import com.jetbrains.python.psi.impl.PythonASTFactory;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixtureKt.parsingFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @TestDataPath("$CONTENT_ROOT/../testData/ipython/")
 @Subsystems.PythonConsole
 @Layers.Functional
-public class PythonConsoleParsingTest extends ParsingTestCase {
+@TestApplication
+public class PythonConsoleParsingTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
+
+  private final TestFixture<ParsingTestFixture> parsingFixture =
+    parsingFixture(projectFixture, PythonTestUtil.getTestDataPath() + "/psi", "py", false, new PythonParserDefinition());
+
   private LanguageLevel myLanguageLevel = LanguageLevel.getDefault();
 
-  private Disposable myServiceDisposable;
-
-
-  public PythonConsoleParsingTest() {
-    super("psi", "py", new PythonParserDefinition());
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    Registry.markAsLoaded();
-    registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
-    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
-    addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), new PythonASTFactory());
-    getProject().registerService(PyPsiFacade.class, PyPsiFacadeImpl.class);
-    getApplication().registerService(PyElementTypesFacade.class, PyElementTypesFacadeImpl.class);
-    getApplication().registerService(PyLanguageFacade.class, PyLanguageFacadeImpl.class);
-
-    if (PythonRuntimeService.getInstance() == null) {
-      myServiceDisposable = Disposer.newDisposable();
-      ((MockApplication)ApplicationManager.getApplication()).registerService(PythonRuntimeService.class, new PythonRuntimeServiceImpl(), myServiceDisposable);
-    }
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath();
-  }
-
+  @Test
   public void testQuestionEnd() {
     PsiFile psiFile = consoleFile("sys?");
-    assertFalse(PsiTreeUtil.hasErrorElements(psiFile));
+    assertFalse(ReadAction.computeBlocking(() -> PsiTreeUtil.hasErrorElements(psiFile)));
   }
 
+  @Test
   public void testDoubleQuestionEnd() {
     PsiFile psiFile = consoleFile("sys??");
-    assertFalse(PsiTreeUtil.hasErrorElements(psiFile));
+    assertFalse(ReadAction.computeBlocking(() -> PsiTreeUtil.hasErrorElements(psiFile)));
   }
 
+  @Test
   public void testQuestionStart() {
     PsiFile psiFile = consoleFile("?sys");
-    assertFalse(PsiTreeUtil.hasErrorElements(psiFile));
+    assertFalse(ReadAction.computeBlocking(() -> PsiTreeUtil.hasErrorElements(psiFile)));
   }
 
+  @Test
   public void testDoubleQuestionStart() {
     PsiFile psiFile = consoleFile("??sys");
-    assertFalse(PsiTreeUtil.hasErrorElements(psiFile));
+    assertFalse(ReadAction.computeBlocking(() -> PsiTreeUtil.hasErrorElements(psiFile)));
   }
 
+  @Test
   public void testSlashGlobals() {
     PsiFile psiFile = consoleFile("/globals");
-    assertFalse(PsiTreeUtil.hasErrorElements(psiFile));
+    assertFalse(ReadAction.computeBlocking(() -> PsiTreeUtil.hasErrorElements(psiFile)));
   }
 
+  @Test
   public void testComma() {
     PsiFile psiFile = consoleFile(", call while True");
-    assertFalse(PsiTreeUtil.hasErrorElements(psiFile));
+    assertFalse(ReadAction.computeBlocking(() -> PsiTreeUtil.hasErrorElements(psiFile)));
   }
 
+  @Test
   public void testSemicolon() {
     PsiFile psiFile = consoleFile("; length str");
-    assertFalse(PsiTreeUtil.hasErrorElements(psiFile));
+    assertFalse(ReadAction.computeBlocking(() -> PsiTreeUtil.hasErrorElements(psiFile)));
   }
 
+  @Test
   public void testCallNoAutomagic() {
     PsiFile psiFile = consoleFile("; length str");
-    assertFalse(PsiTreeUtil.hasErrorElements(psiFile));
+    assertFalse(ReadAction.computeBlocking(() -> PsiTreeUtil.hasErrorElements(psiFile)));
   }
 
-  public void testConsoleSingleStringLiteral() throws IOException {
+  @Test
+  public void testConsoleSingleStringLiteral() {
     PsiFile psiFile = consoleFile("\"foo\"");
-    checkResult(getTestName(), psiFile);
+    parsingFixture.get().checkResult(parsingFixture.get().getTestName(), psiFile);
   }
 
-  public void testConsoleSingleStringLiteralTripleQuoted() throws IOException {
+  @Test
+  public void testConsoleSingleStringLiteralTripleQuoted() {
     PsiFile psiFile = consoleFile("\"\"\"foo\"\"\"");
-    checkResult(getTestName(), psiFile);
+    parsingFixture.get().checkResult(parsingFixture.get().getTestName(), psiFile);
   }
 
-  public void testConsoleSingleBytesLiteral() throws IOException {
+  @Test
+  public void testConsoleSingleBytesLiteral() {
     PsiFile psiFile = consoleFile("b\"foo\"");
-    checkResult(getTestName(), psiFile);
+    parsingFixture.get().checkResult(parsingFixture.get().getTestName(), psiFile);
   }
 
-  public void testConsoleSingleBytesLiteralTripleQuoted() throws IOException {
+  @Test
+  public void testConsoleSingleBytesLiteralTripleQuoted() {
     PsiFile psiFile = consoleFile("b\"\"\"foo\"\"\"");
-    checkResult(getTestName(), psiFile);
+    parsingFixture.get().checkResult(parsingFixture.get().getTestName(), psiFile);
   }
 
-  public void testConsoleSingleStringLiteralNewLineBefore() throws IOException {
+  @Test
+  public void testConsoleSingleStringLiteralNewLineBefore() {
     PsiFile psiFile = consoleFile("\n\"foo\"");
-    checkResult(getTestName(), psiFile);
+    parsingFixture.get().checkResult(parsingFixture.get().getTestName(), psiFile);
   }
 
-  public void testConsoleSingleStringLiteralNewLineAfter() throws IOException {
+  @Test
+  public void testConsoleSingleStringLiteralNewLineAfter() {
     PsiFile psiFile = consoleFile("\"foo\"\n");
-    checkResult(getTestName(), psiFile);
+    parsingFixture.get().checkResult(parsingFixture.get().getTestName(), psiFile);
   }
 
-  public void testConsoleSingleStringLiteralWhitespaceAfter() throws IOException {
+  @Test
+  public void testConsoleSingleStringLiteralWhitespaceAfter() {
     PsiFile psiFile = consoleFile("\"foo\"    ");
-    checkResult(getTestName(), psiFile);
+    parsingFixture.get().checkResult(parsingFixture.get().getTestName(), psiFile);
   }
 
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;
     try {
-      doTest(true);
+      doTest();
     }
     finally {
       myLanguageLevel = prev;
     }
   }
 
-  private PsiFile consoleFile(String text) {
-    return createPsiFile("Console", text);
+  private void doTest() {
+    ParsingTestFixture fixture = parsingFixture.get();
+    String name = fixture.getTestName();
+    String text = fixture.loadFile(name + "." + fixture.getFileExt());
+    PsiFile file = fixture.checkParsedFile(createFile(name + "." + fixture.getFileExt(), text), text);
+    fixture.checkResult(name, file);
   }
 
-  @Override
-  protected PsiFile createFile(@NotNull String name, @NotNull String text) {
-    LightVirtualFile originalFile = new LightVirtualFile(name, myLanguage, text);
-    LightVirtualFile virtualFile = new LightVirtualFile(name, myLanguage, text);
+  private PsiFile consoleFile(String text) {
+    return createFile("Console." + parsingFixture.get().getFileExt(), text);
+  }
+
+  private PsiFile createFile(@NotNull String name, @NotNull String text) {
+    Language language = parsingFixture.get().getLanguage();
+    LightVirtualFile originalFile = new LightVirtualFile(name, language, text);
+    LightVirtualFile virtualFile = new LightVirtualFile(name, language, text);
     virtualFile.setOriginalFile(originalFile);
 
     originalFile.setCharset(StandardCharsets.UTF_8);
     PythonLanguageLevelPusher.specifyFileLanguageLevel(originalFile, myLanguageLevel);
     PyConsoleUtil.markIPython(originalFile);
-    return createFile(virtualFile);
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      if (myServiceDisposable != null) {
-        Disposer.dispose(myServiceDisposable);
-      }
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+    return parsingFixture.get().createFile(virtualFile);
   }
 }
-

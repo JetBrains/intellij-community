@@ -2,19 +2,36 @@
 
 package org.jetbrains.kotlin.ide.konan
 
-import com.intellij.testFramework.ParsingTestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.parsingFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.util.slashedPath
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class NativeDefinitionsParsingTest : ParsingTestCase("", "def", NativeDefinitionsParserDefinition()) {
+@TestApplication
+class NativeDefinitionsParsingTest {
+    companion object {
+        private val projectFixture = projectFixture()
+    }
 
-    fun testAllProperties() = doTest(true)
+    private val parsing by parsingFixture(
+        projectFixture,
+        KotlinRoot.DIR.resolve("native/tests/testData/colorHighlighting").slashedPath + "/",
+        "def",
+        definitions = arrayOf(NativeDefinitionsParserDefinition()),
+    )
 
-    fun testBadDefinitions() = doTest(true)
+    @BeforeEach
+    fun setUp() {
+        parsing.skipSpaces = false
+        parsing.includeRanges = true
+    }
 
-    override fun getTestDataPath(): String = KotlinRoot.DIR.resolve("native/tests/testData/colorHighlighting").slashedPath
+    @Test
+    fun testAllProperties() = parsing.doTest(true)
 
-    override fun skipSpaces(): Boolean = false
-
-    override fun includeRanges(): Boolean = true
+    @Test
+    fun testBadDefinitions() = parsing.doTest(true)
 }

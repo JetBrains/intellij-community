@@ -16,7 +16,9 @@
 package com.intellij.java.parser.declarationParsing;
 
 import com.intellij.java.parser.JavaParsingTestConfigurator;
+import com.intellij.testFramework.junit5.TestApplication;
 
+@TestApplication
 public class CommentBindingTest extends AbstractBasicCommentBindingTest {
   public CommentBindingTest() {
     super(new JavaParsingTestConfigurator());

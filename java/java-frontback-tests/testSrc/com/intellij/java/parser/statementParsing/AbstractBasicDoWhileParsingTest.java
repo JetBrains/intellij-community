@@ -4,25 +4,34 @@ package com.intellij.java.parser.statementParsing;
 import com.intellij.java.parser.AbstractBasicJavaParsingTestCase;
 import com.intellij.java.parser.AbstractBasicJavaParsingTestConfigurator;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 public abstract class AbstractBasicDoWhileParsingTest extends AbstractBasicJavaParsingTestCase {
   public AbstractBasicDoWhileParsingTest(@NotNull AbstractBasicJavaParsingTestConfigurator configurator) {
     super("parser-full/statementParsing/do-while", configurator);
   }
 
+  @Test
   public void testNormal() { doTest(true); }
 
+  @Test
   public void testUncomplete1() { doTest(true); }
 
+  @Test
   public void testUncomplete2() { doTest(true); }
 
+  @Test
   public void testUncomplete3() { doTest(true); }
 
+  @Test
   public void testUncomplete4() { doTest(true); }
 
+  @Test
   public void testUncomplete5() { doTest(true); }
 
+  @Test
   public void testUncomplete6() { doTest(true); }
 
+  @Test
   public void testUncomplete7() { doTest(true); }
 }

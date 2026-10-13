@@ -16,9 +16,13 @@
 package org.intellij.plugins.markdown.parser
 
 import com.intellij.idea.TestFor
+import com.intellij.testFramework.junit5.TestApplication
 import org.intellij.plugins.markdown.highlighting.MarkdownColorSettingsPage
+import org.junit.jupiter.api.Test
 
+@TestApplication
 class MarkdownParserTest: MarkdownParsingTestCase("parser") {
+  @Test
   fun testColorsAndFontsSample() {
     val colorSettingsPage = MarkdownColorSettingsPage()
     var demoText = colorSettingsPage.demoText
@@ -26,40 +30,52 @@ class MarkdownParserTest: MarkdownParsingTestCase("parser") {
       demoText = demoText.replace("<$tag>".toRegex(), "")
       demoText = demoText.replace("</$tag>".toRegex(), "")
     }
-    doCodeTest(demoText)
+    parsing.doCodeTest(demoText)
   }
 
-  fun testCodeBlock() = doTest(true)
+  @Test
+  fun testCodeBlock() = parsing.doTest(true)
 
-  fun testCodeSpan() = doTest(true)
+  @Test
+  fun testCodeSpan() = parsing.doTest(true)
 
-  fun testHighlight() = doTest(true)
+  @Test
+  fun testHighlight() = parsing.doTest(true)
 
-  fun testComment() = doTest(true)
+  @Test
+  fun testComment() = parsing.doTest(true)
 
-  fun testComplex() = doTest(true)
+  @Test
+  fun testComplex() = parsing.doTest(true)
 
   @TestFor(issues = ["IDEA-213125"])
-  fun testTableWithEscapedPipe() = doTest(true)
+  @Test
+  fun testTableWithEscapedPipe() = parsing.doTest(true)
 
   @TestFor(issues = ["IDEA-213125"])
-  fun testTableWithEscapedPipeInsideCodeSpan() = doTest(true)
+  @Test
+  fun testTableWithEscapedPipeInsideCodeSpan() = parsing.doTest(true)
 
   @TestFor(issues = ["IDEA-308695"])
-  fun testTableWithSmallCells() = doTest(true)
+  @Test
+  fun testTableWithSmallCells() = parsing.doTest(true)
 
   @TestFor(issues = ["IDEA-308695"])
-  fun testTableWithEmptyCells() = doTest(true)
+  @Test
+  fun testTableWithEmptyCells() = parsing.doTest(true)
 
   @TestFor(issues = ["IDEA-308695"])
-  fun testTableWithEmptyCellsAndTrailingWhitespace() = doTest(true)
+  @Test
+  fun testTableWithEmptyCellsAndTrailingWhitespace() = parsing.doTest(true)
 
   /**
    * A link label is part of a full reference link only when it immediately follows the link text,
    * so bracketed text separated by whitespace stays a pair of shortcut reference links.
    */
-  fun testReferenceLinkLabelSeparatedFromLinkText() = doTest(true)
+  @Test
+  fun testReferenceLinkLabelSeparatedFromLinkText() = parsing.doTest(true)
 
   @TestFor(issues = ["IJPL-172056"])
-  fun testLinkDestinationWithUnderscore() = doTest(true)
+  @Test
+  fun testLinkDestinationWithUnderscore() = parsing.doTest(true)
 }

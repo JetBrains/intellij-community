@@ -3,12 +3,21 @@ package org.editorconfig.language.parser
 
 import com.intellij.editorconfig.common.plugin.EditorConfigParserDefinition
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.testFramework.ParsingTestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.parsingFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
 
-abstract class EditorConfigParsingTestBase(dataPath: String) : ParsingTestCase(dataPath, "editorconfig", true,
-                                                                               EditorConfigParserDefinition()) {
-  override fun getTestDataPath() =
-    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/parser"
+abstract class EditorConfigParsingTestBase(dataPath: String) {
+  companion object {
+    private val projectFixture = projectFixture()
+  }
 
-  protected fun doTest() = doTest(true)
+  private val parsing by parsingFixture(
+    projectFixture,
+    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/parser/$dataPath",
+    "editorconfig",
+    true,
+    EditorConfigParserDefinition(),
+  )
+
+  protected fun doTest() = parsing.doTest(true)
 }

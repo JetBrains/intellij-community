@@ -16,7 +16,9 @@
 package com.intellij.java.parser.statementParsing;
 
 import com.intellij.java.parser.JavaParsingTestConfigurator;
+import com.intellij.testFramework.junit5.TestApplication;
 
+@TestApplication
 public class DeclarationsWithGenericsParsingTest extends AbstractBasicDeclarationsWithGenericsParsingTest {
   public DeclarationsWithGenericsParsingTest() {
     super(new JavaParsingTestConfigurator());

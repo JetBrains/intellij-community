@@ -1,375 +1,373 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp;
 
-import com.intellij.mock.MockSmartPointerManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.project.Project;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.testFramework.ParsingTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.EnumSet;
 
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixtureKt.parsingFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 import static org.intellij.lang.regexp.RegExpCapability.POSIX_BRACKET_EXPRESSIONS;
 
 /**
  * @author Bas Leijdekkers
  */
-public class RegExpParsingTest extends ParsingTestCase {
+@TestApplication
+public class RegExpParsingTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
 
-  public RegExpParsingTest() {
-    super("psi", "regexp", new RegExpParserDefinition());
-  }
+  private final TestFixture<ParsingTestFixture> parsingFixture =
+    parsingFixture(projectFixture, PathManagerEx.getCommunityHomePath() + "/RegExpSupport/testData/psi", "regexp",
+                   new RegExpParserDefinition());
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    project.registerService(SmartPointerManager.class, new MockSmartPointerManager(project));
-  }
+  @Test public void testSimple1() { parsingFixture.get().doCodeTest("|"); }
+  @Test public void testSimple2() { parsingFixture.get().doCodeTest("(|\\$.*)\\.class"); }
+  @Test public void testSimple3() { parsingFixture.get().doCodeTest("abc"); }
+  @Test public void testSimple4() { parsingFixture.get().doCodeTest("multiple words of text"); }
+  @Test public void testSimple5() { parsingFixture.get().doCodeTest("ab|cd"); }
+  @Test public void testSimple6() { parsingFixture.get().doCodeTest("a*"); }
+  @Test public void testSimple7() { parsingFixture.get().doCodeTest("ab*c"); }
+  @Test public void testSimple8() { parsingFixture.get().doCodeTest("ab*bc"); }
+  @Test public void testSimple9() { parsingFixture.get().doCodeTest("ab+bc"); }
+  @Test public void testSimple10() { parsingFixture.get().doCodeTest("ab?bc"); }
+  @Test public void testSimple11() { parsingFixture.get().doCodeTest("ab?c"); }
+  @Test public void testSimple12() { parsingFixture.get().doCodeTest("a.c"); }
+  @Test public void testSimple13() { parsingFixture.get().doCodeTest("a.*c"); }
+  @Test public void testSimple14() { parsingFixture.get().doCodeTest("*a"); }
+  @Test public void testSimple15() { parsingFixture.get().doCodeTest("a{1}"); }
+  @Test public void testSimple16() { parsingFixture.get().doCodeTest("a{}"); }
+  @Test public void testSimple17() { parsingFixture.get().doCodeTest("a{"); }
+  @Test public void testSimple18() { parsingFixture.get().doCodeTest("a}"); }
+  @Test public void testSimple19() { parsingFixture.get().doCodeTest("a{1,}"); }
+  @Test public void testSimple20() { parsingFixture.get().doCodeTest("a{1,2}"); }
+  @Test public void testSimple21() { parsingFixture.get().doCodeTest("a{1,foo}"); }
+  @Test public void testSimple22() { parsingFixture.get().doCodeTest("\\;"); }
+  @Test public void testSimple23() { parsingFixture.get().doCodeTest(""); }
 
-  @Override
-  protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/RegExpSupport/testData";
-  }
+  @Test public void testQuantifiers1() { parsingFixture.get().doCodeTest("a?"); }
+  @Test public void testQuantifiers2() { parsingFixture.get().doCodeTest("a+"); }
+  @Test public void testQuantifiers3() { parsingFixture.get().doCodeTest("a*"); }
+  @Test public void testQuantifiers4() { parsingFixture.get().doCodeTest("a??"); }
+  @Test public void testQuantifiers5() { parsingFixture.get().doCodeTest("a+?"); }
+  @Test public void testQuantifiers6() { parsingFixture.get().doCodeTest("a*?"); }
+  @Test public void testQuantifiers7() { parsingFixture.get().doCodeTest("a?+"); }
+  @Test public void testQuantifiers8() { parsingFixture.get().doCodeTest("a++"); }
+  @Test public void testQuantifiers9() { parsingFixture.get().doCodeTest("a*+"); }
+  @Test public void testQuantifiers10() { parsingFixture.get().doCodeTest("a**"); }
+  @Test public void testQuantifiers11() { parsingFixture.get().doCodeTest("a{2}"); }
+  @Test public void testQuantifiers12() { parsingFixture.get().doCodeTest("a{1,2}"); }
+  @Test public void testQuantifiers13() { parsingFixture.get().doCodeTest("a{2,1}"); }
+  @Test public void testQuantifiers14() { parsingFixture.get().doCodeTest("a{0,1}"); }
+  @Test public void testQuantifiers15() { parsingFixture.get().doCodeTest("a{1,}"); }
+  @Test public void testQuantifiers16() { parsingFixture.get().doCodeTest("a{0,}"); }
+  @Test public void testQuantifiers17() { parsingFixture.get().doCodeTest("a{1}"); }
+  @Test public void testQuantifiers18() { parsingFixture.get().doCodeTest("a{3,3}"); }
+  @Test public void testQuantifiers19() { parsingFixture.get().doCodeTest("a{"); }
+  @Test public void testQuantifiers20() { parsingFixture.get().doCodeTest("a}"); }
+  @Test public void testQuantifiers21() { parsingFixture.get().doCodeTest("a{}"); }
+  @Test public void testQuantifiers22() { parsingFixture.get().doCodeTest("{1,2}"); }
 
-  public void testSimple1() throws IOException { doCodeTest("|"); }
-  public void testSimple2() throws IOException { doCodeTest("(|\\$.*)\\.class"); }
-  public void testSimple3() throws IOException { doCodeTest("abc"); }
-  public void testSimple4() throws IOException { doCodeTest("multiple words of text"); }
-  public void testSimple5() throws IOException { doCodeTest("ab|cd"); }
-  public void testSimple6() throws IOException { doCodeTest("a*"); }
-  public void testSimple7() throws IOException { doCodeTest("ab*c"); }
-  public void testSimple8() throws IOException { doCodeTest("ab*bc"); }
-  public void testSimple9() throws IOException { doCodeTest("ab+bc"); }
-  public void testSimple10() throws IOException { doCodeTest("ab?bc"); }
-  public void testSimple11() throws IOException { doCodeTest("ab?c"); }
-  public void testSimple12() throws IOException { doCodeTest("a.c"); }
-  public void testSimple13() throws IOException { doCodeTest("a.*c"); }
-  public void testSimple14() throws IOException { doCodeTest("*a"); }
-  public void testSimple15() throws IOException { doCodeTest("a{1}"); }
-  public void testSimple16() throws IOException { doCodeTest("a{}"); }
-  public void testSimple17() throws IOException { doCodeTest("a{"); }
-  public void testSimple18() throws IOException { doCodeTest("a}"); }
-  public void testSimple19() throws IOException { doCodeTest("a{1,}"); }
-  public void testSimple20() throws IOException { doCodeTest("a{1,2}"); }
-  public void testSimple21() throws IOException { doCodeTest("a{1,foo}"); }
-  public void testSimple22() throws IOException { doCodeTest("\\;"); }
-  public void testSimple23() throws IOException { doCodeTest(""); }
+  @Test public void testCharclasses1() { parsingFixture.get().doCodeTest("a[bc]d"); }
+  @Test public void testCharclasses2() { parsingFixture.get().doCodeTest("a[b-d]e"); }
+  @Test public void testCharclasses3() { parsingFixture.get().doCodeTest("a[b-d]"); }
+  @Test public void testCharclasses4() { parsingFixture.get().doCodeTest("a[b-a]"); }
+  @Test public void testCharclasses5() { parsingFixture.get().doCodeTest("a[-b]"); }
+  @Test public void testCharclasses6() { parsingFixture.get().doCodeTest("a[b-]"); }
+  @Test public void testCharclasses7() { parsingFixture.get().doCodeTest("[a-[b]]"); }
+  @Test public void testCharclasses8() { parsingFixture.get().doCodeTest("a[b&&[cd]]"); }
+  @Test public void testCharclasses9() { parsingFixture.get().doCodeTest("a[b-&&[cd]]"); }
+  @Test public void testCharclasses10() { parsingFixture.get().doCodeTest("a[b&&-]"); }
+  @Test public void testCharclasses11() { parsingFixture.get().doCodeTest("a[b&&-b]"); }
+  @Test public void testCharclasses12() { parsingFixture.get().doCodeTest("[&&]"); }
+  @Test public void testCharclasses13() { parsingFixture.get().doCodeTest("[&&[^\\d]]"); }
+  @Test public void testCharclasses14() { parsingFixture.get().doCodeTest("[a&&]"); }
+  @Test public void testCharclasses15() { parsingFixture.get().doCodeTest("a[b&&c&&d]"); }
+  @Test public void testCharclasses16() { parsingFixture.get().doCodeTest("a[b&&c&&d-e&&f]"); }
+  @Test public void testCharclasses17() { parsingFixture.get().doCodeTest("[a&&]"); }
+  @Test public void testCharclasses18() { parsingFixture.get().doCodeTest("a[a[b][c]]"); }
+  @Test public void testCharclasses19() { parsingFixture.get().doCodeTest("[a-[]]"); }
+  @Test public void testCharclasses20() { parsingFixture.get().doCodeTest("[a-[b"); }
+  @Test public void testCharclasses21() { parsingFixture.get().doCodeTest("[a[^b]]"); }
+  @Test public void testCharclasses22() { parsingFixture.get().doCodeTest("a[a[b[c]][d]]"); }
+  @Test public void testCharclasses23() { parsingFixture.get().doCodeTest("a[\\t--]"); }
+  @Test public void testCharclasses24() { parsingFixture.get().doCodeTest("a[\\t--]"); }
+  @Test public void testCharclasses25() { parsingFixture.get().doCodeTest("a[\\t---]"); }
+  @Test public void testCharclasses26() { parsingFixture.get().doCodeTest("a[-]?c"); }
+  @Test public void testCharclasses27() { parsingFixture.get().doCodeTest("a["); }
+  @Test public void testCharclasses28() { parsingFixture.get().doCodeTest("a]"); }
+  @Test public void testCharclasses29() { parsingFixture.get().doCodeTest("[a-["); }
+  @Test public void testCharclasses30() { parsingFixture.get().doCodeTest("a[]]"); }
+  @Test public void testCharclasses31() { parsingFixture.get().doCodeTest("a[^bc]d"); }
+  @Test public void testCharclasses32() { parsingFixture.get().doCodeTest("a[^bc]"); }
+  @Test public void testCharclasses33() { parsingFixture.get().doCodeTest("a[]b"); }
+  @Test public void testCharclasses34() { parsingFixture.get().doCodeTest("[^]"); }
+  @Test public void testCharclasses35() { parsingFixture.get().doCodeTest("[abhgefdc]ij"); }
+  @Test public void testCharclasses36() { parsingFixture.get().doCodeTest("[a-zA-Z_][a-zA-Z0-9_]*"); }
+  @Test public void testCharclasses37() { parsingFixture.get().doCodeTest("([a-c]+?)c"); }
+  @Test public void testCharclasses38() { parsingFixture.get().doCodeTest("([ab]*?)b"); }
+  @Test public void testCharclasses39() { parsingFixture.get().doCodeTest("([ab]*)b"); }
+  @Test public void testCharclasses40() { parsingFixture.get().doCodeTest("([ab]??)b"); }
+  @Test public void testCharclasses41() { parsingFixture.get().doCodeTest("(c[ab]?)b"); }
+  @Test public void testCharclasses42() { parsingFixture.get().doCodeTest("(c[ab]??)b"); }
+  @Test public void testCharclasses43() { parsingFixture.get().doCodeTest("(c[ab]*?)b"); }
+  @Test public void testCharclasses44() { parsingFixture.get().doCodeTest("a[bcd]+dcdcde"); }
+  @Test public void testCharclasses45() { parsingFixture.get().doCodeTest("[k]"); }
+  @Test public void testCharclasses46() { parsingFixture.get().doCodeTest("a[bcd]*dcdcde"); }
+  @Test public void testCharclasses47() { parsingFixture.get().doCodeTest("[^ab]*"); }
+  @Test public void testCharclasses48() { parsingFixture.get().doCodeTest("a[.]b"); }
+  @Test public void testCharclasses49() { parsingFixture.get().doCodeTest("a[+*?]b"); }
+  @Test public void testCharclasses50() { parsingFixture.get().doCodeTest("a[\\p{IsDigit}\\p{IsAlpha}]b"); }
+  @Test public void testCharclasses51() { parsingFixture.get().doCodeTest("[\\p{L}&&[^\\p{Lu}]]"); }
+  @Test public void testCharclasses52() { parsingFixture.get().doCodeTest("\\pL\\pM\\pZ\\pS\\pN\\pP\\pC\\PL\\PM\\PZ\\PS\\PN\\PP\\PC"); }
+  @Test public void testCharclasses53() { parsingFixture.get().doCodeTest("\\pA"); }
+  @Test public void testCharclasses54() { parsingFixture.get().doCodeTest("\\pl"); }
+  @Test public void testCharclasses55() { parsingFixture.get().doCodeTest("a\\p"); }
+  @Test public void testCharclasses56() { parsingFixture.get().doCodeTest("a\\p{}"); }
+  @Test public void testCharclasses57() { parsingFixture.get().doCodeTest("a\\p}"); }
+  @Test public void testCharclasses58() { parsingFixture.get().doCodeTest("a\\p{123}"); }
+  @Test public void testCharclasses59() { parsingFixture.get().doCodeTest("[\\p{nothing}]"); }
+  @Test public void testCharclasses60() { parsingFixture.get().doCodeTest("a\\p{*}b"); }
+  @Test public void testCharclasses61() { parsingFixture.get().doCodeTest("[\\w-\\w]"); }
+  @Test public void testCharclasses62() { parsingFixture.get().doCodeTest("[a-\\w]"); }
+  @Test public void testCharclasses63() { parsingFixture.get().doCodeTest("(?x)abc #foo \\q bar\n# foo\n(?-xi)xyz(?i:ABC)"); }
+  @Test public void testCharclasses64() { parsingFixture.get().doCodeTest("[\\ud800\\udc00-\\udbff\\udfff]"); }
+  @Test public void testCharclasses65() { parsingFixture.get().doCodeTest("\\R"); }
+  @Test public void testCharclasses66() { parsingFixture.get().doCodeTest("\\X"); }
+  @Test public void testCharclasses67() { parsingFixture.get().doCodeTest("\\-[\\*\\-\\[\\]\\\\\\+]"); }
+  @Test public void testCharclasses68() { parsingFixture.get().doCodeTest("[\\b]"); }
+  @Test public void testCharClasses69() { parsingFixture.get().doCodeTest("\\p{^L}"); }
+  @Test public void testCharClasses70() { parsingFixture.get().doCodeTest("[&&&&a]"); }
+  @Test public void testCharClasses71() { parsingFixture.get().doCodeTest("[a-\\Qz\\E]"); }
+  @Test public void testCharClasses72() { parsingFixture.get().doCodeTest("([\\^])"); }
+  @Test public void testCharClasses73() { parsingFixture.get().doCodeTest("[i-[:]]*"); }
+  @Test public void testCharClasses74() { parsingFixture.get().doCodeTest("[\\w-z]"); }
 
-  public void testQuantifiers1() throws IOException { doCodeTest("a?"); }
-  public void testQuantifiers2() throws IOException { doCodeTest("a+"); }
-  public void testQuantifiers3() throws IOException { doCodeTest("a*"); }
-  public void testQuantifiers4() throws IOException { doCodeTest("a??"); }
-  public void testQuantifiers5() throws IOException { doCodeTest("a+?"); }
-  public void testQuantifiers6() throws IOException { doCodeTest("a*?"); }
-  public void testQuantifiers7() throws IOException { doCodeTest("a?+"); }
-  public void testQuantifiers8() throws IOException { doCodeTest("a++"); }
-  public void testQuantifiers9() throws IOException { doCodeTest("a*+"); }
-  public void testQuantifiers10() throws IOException { doCodeTest("a**"); }
-  public void testQuantifiers11() throws IOException { doCodeTest("a{2}"); }
-  public void testQuantifiers12() throws IOException { doCodeTest("a{1,2}"); }
-  public void testQuantifiers13() throws IOException { doCodeTest("a{2,1}"); }
-  public void testQuantifiers14() throws IOException { doCodeTest("a{0,1}"); }
-  public void testQuantifiers15() throws IOException { doCodeTest("a{1,}"); }
-  public void testQuantifiers16() throws IOException { doCodeTest("a{0,}"); }
-  public void testQuantifiers17() throws IOException { doCodeTest("a{1}"); }
-  public void testQuantifiers18() throws IOException { doCodeTest("a{3,3}"); }
-  public void testQuantifiers19() throws IOException { doCodeTest("a{"); }
-  public void testQuantifiers20() throws IOException { doCodeTest("a}"); }
-  public void testQuantifiers21() throws IOException { doCodeTest("a{}"); }
-  public void testQuantifiers22() throws IOException { doCodeTest("{1,2}"); }
+  @Test public void testGroups1() { parsingFixture.get().doCodeTest("()ef"); }
+  @Test public void testGroups2() { parsingFixture.get().doCodeTest("()*"); }
+  @Test public void testGroups3() { parsingFixture.get().doCodeTest("()"); }
+  @Test public void testGroups4() { parsingFixture.get().doCodeTest("(|)"); }
+  @Test public void testGroups5() { parsingFixture.get().doCodeTest("(*)b"); }
+  @Test public void testGroups6() { parsingFixture.get().doCodeTest("((a))"); }
+  @Test public void testGroups7() { parsingFixture.get().doCodeTest("(a)b(c)"); }
+  @Test public void testGroups8() { parsingFixture.get().doCodeTest("(a*)*"); }
+  @Test public void testGroups9() { parsingFixture.get().doCodeTest("(a*)+"); }
+  @Test public void testGroups10() { parsingFixture.get().doCodeTest("(a|)*"); }
+  @Test public void testGroups11() { parsingFixture.get().doCodeTest("(ab|cd)e"); }
+  @Test public void testGroups12() { parsingFixture.get().doCodeTest("(.*)c(.*)"); }
+  @Test public void testGroups13() { parsingFixture.get().doCodeTest("\\((.*), (.*)\\)"); }
+  @Test public void testGroups14() { parsingFixture.get().doCodeTest("a(bc)d"); }
+  @Test public void testGroups15() { parsingFixture.get().doCodeTest("([abc])*d"); }
+  @Test public void testGroups16() { parsingFixture.get().doCodeTest("((((((((((a)))))))))"); }
+  @Test public void testGroups17() { parsingFixture.get().doCodeTest("([abc])*bcd"); }
+  @Test public void testGroups18() { parsingFixture.get().doCodeTest("(a|b)c*d"); }
+  @Test public void testGroups19() { parsingFixture.get().doCodeTest("a([bc]*)c*"); }
+  @Test public void testGroups20() { parsingFixture.get().doCodeTest("((a)(b)c)(d)"); }
+  @Test public void testGroups21() { parsingFixture.get().doCodeTest("(ab|a)b*c"); }
+  @Test public void testGroups22() { parsingFixture.get().doCodeTest("(ab|ab*)bc"); }
+  @Test public void testGroups23() { parsingFixture.get().doCodeTest("(a|b|c|d|e)f"); }
+  @Test public void testGroups24() { parsingFixture.get().doCodeTest("a([bc]*)(c*d)"); }
+  @Test public void testGroups25() { parsingFixture.get().doCodeTest("a([bc]+)(c*d)"); }
+  @Test public void testGroups26() { parsingFixture.get().doCodeTest("a([bc]*)(c+d)"); }
+  @Test public void testGroups27() { parsingFixture.get().doCodeTest("(a+|b)*"); }
+  @Test public void testGroups28() { parsingFixture.get().doCodeTest("(a+|b)+"); }
+  @Test public void testGroups29() { parsingFixture.get().doCodeTest("(a+|b)?"); }
+  @Test public void testGroups30() { parsingFixture.get().doCodeTest("(^*"); }
+  @Test public void testGroups31() { parsingFixture.get().doCodeTest(")("); }
+  @Test public void testGroups32() { parsingFixture.get().doCodeTest("(?i:*)"); }
+  @Test public void testGroups33() { parsingFixture.get().doCodeTest("(?<asdf>[a-c])\\1"); }
+  @Test public void testGroups34() { parsingFixture.get().doCodeTest("(?<asdf>[a-c])\\k<asdf>"); }
+  @Test public void testGroups35() { parsingFixture.get().doCodeTest("\\k<adsf>"); }
+  @Test public void testGroups36() { parsingFixture.get().doCodeTest("(?P<name>{"); }
+  @Test public void testGroups37() { parsingFixture.get().doCodeTest("(?P=name)"); }
+  @Test public void testGroups38() { parsingFixture.get().doCodeTest("\\g'name'"); }
+  @Test public void testGroups39() { parsingFixture.get().doCodeTest("(?(name)yes-pattern|no-pattern)"); }
+  @Test public void testGroups40() { parsingFixture.get().doCodeTest("(?(name)yes-pattern|{"); }
+  @Test public void testGroups41() { parsingFixture.get().doCodeTest("(?>atomic)"); }
+  @Test public void testGroups42() { parsingFixture.get().doCodeTest("(?:non-capturing)"); }
+  @Test public void testGroups43() { parsingFixture.get().doCodeTest("(?(name)yes-pattern|no_pattern|maybe-pattern)"); }
 
-  public void testCharclasses1() throws IOException { doCodeTest("a[bc]d"); }
-  public void testCharclasses2() throws IOException { doCodeTest("a[b-d]e"); }
-  public void testCharclasses3() throws IOException { doCodeTest("a[b-d]"); }
-  public void testCharclasses4() throws IOException { doCodeTest("a[b-a]"); }
-  public void testCharclasses5() throws IOException { doCodeTest("a[-b]"); }
-  public void testCharclasses6() throws IOException { doCodeTest("a[b-]"); }
-  public void testCharclasses7() throws IOException { doCodeTest("[a-[b]]"); }
-  public void testCharclasses8() throws IOException { doCodeTest("a[b&&[cd]]"); }
-  public void testCharclasses9() throws IOException { doCodeTest("a[b-&&[cd]]"); }
-  public void testCharclasses10() throws IOException { doCodeTest("a[b&&-]"); }
-  public void testCharclasses11() throws IOException { doCodeTest("a[b&&-b]"); }
-  public void testCharclasses12() throws IOException { doCodeTest("[&&]"); }
-  public void testCharclasses13() throws IOException { doCodeTest("[&&[^\\d]]"); }
-  public void testCharclasses14() throws IOException { doCodeTest("[a&&]"); }
-  public void testCharclasses15() throws IOException { doCodeTest("a[b&&c&&d]"); }
-  public void testCharclasses16() throws IOException { doCodeTest("a[b&&c&&d-e&&f]"); }
-  public void testCharclasses17() throws IOException { doCodeTest("[a&&]"); }
-  public void testCharclasses18() throws IOException { doCodeTest("a[a[b][c]]"); }
-  public void testCharclasses19() throws IOException { doCodeTest("[a-[]]"); }
-  public void testCharclasses20() throws IOException { doCodeTest("[a-[b"); }
-  public void testCharclasses21() throws IOException { doCodeTest("[a[^b]]"); }
-  public void testCharclasses22() throws IOException { doCodeTest("a[a[b[c]][d]]"); }
-  public void testCharclasses23() throws IOException { doCodeTest("a[\\t--]"); }
-  public void testCharclasses24() throws IOException { doCodeTest("a[\\t--]"); }
-  public void testCharclasses25() throws IOException { doCodeTest("a[\\t---]"); }
-  public void testCharclasses26() throws IOException { doCodeTest("a[-]?c"); }
-  public void testCharclasses27() throws IOException { doCodeTest("a["); }
-  public void testCharclasses28() throws IOException { doCodeTest("a]"); }
-  public void testCharclasses29() throws IOException { doCodeTest("[a-["); }
-  public void testCharclasses30() throws IOException { doCodeTest("a[]]"); }
-  public void testCharclasses31() throws IOException { doCodeTest("a[^bc]d"); }
-  public void testCharclasses32() throws IOException { doCodeTest("a[^bc]"); }
-  public void testCharclasses33() throws IOException { doCodeTest("a[]b"); }
-  public void testCharclasses34() throws IOException { doCodeTest("[^]"); }
-  public void testCharclasses35() throws IOException { doCodeTest("[abhgefdc]ij"); }
-  public void testCharclasses36() throws IOException { doCodeTest("[a-zA-Z_][a-zA-Z0-9_]*"); }
-  public void testCharclasses37() throws IOException { doCodeTest("([a-c]+?)c"); }
-  public void testCharclasses38() throws IOException { doCodeTest("([ab]*?)b"); }
-  public void testCharclasses39() throws IOException { doCodeTest("([ab]*)b"); }
-  public void testCharclasses40() throws IOException { doCodeTest("([ab]??)b"); }
-  public void testCharclasses41() throws IOException { doCodeTest("(c[ab]?)b"); }
-  public void testCharclasses42() throws IOException { doCodeTest("(c[ab]??)b"); }
-  public void testCharclasses43() throws IOException { doCodeTest("(c[ab]*?)b"); }
-  public void testCharclasses44() throws IOException { doCodeTest("a[bcd]+dcdcde"); }
-  public void testCharclasses45() throws IOException { doCodeTest("[k]"); }
-  public void testCharclasses46() throws IOException { doCodeTest("a[bcd]*dcdcde"); }
-  public void testCharclasses47() throws IOException { doCodeTest("[^ab]*"); }
-  public void testCharclasses48() throws IOException { doCodeTest("a[.]b"); }
-  public void testCharclasses49() throws IOException { doCodeTest("a[+*?]b"); }
-  public void testCharclasses50() throws IOException { doCodeTest("a[\\p{IsDigit}\\p{IsAlpha}]b"); }
-  public void testCharclasses51() throws IOException { doCodeTest("[\\p{L}&&[^\\p{Lu}]]"); }
-  public void testCharclasses52() throws IOException { doCodeTest("\\pL\\pM\\pZ\\pS\\pN\\pP\\pC\\PL\\PM\\PZ\\PS\\PN\\PP\\PC"); }
-  public void testCharclasses53() throws IOException { doCodeTest("\\pA"); }
-  public void testCharclasses54() throws IOException { doCodeTest("\\pl"); }
-  public void testCharclasses55() throws IOException { doCodeTest("a\\p"); }
-  public void testCharclasses56() throws IOException { doCodeTest("a\\p{}"); }
-  public void testCharclasses57() throws IOException { doCodeTest("a\\p}"); }
-  public void testCharclasses58() throws IOException { doCodeTest("a\\p{123}"); }
-  public void testCharclasses59() throws IOException { doCodeTest("[\\p{nothing}]"); }
-  public void testCharclasses60() throws IOException { doCodeTest("a\\p{*}b"); }
-  public void testCharclasses61() throws IOException { doCodeTest("[\\w-\\w]"); }
-  public void testCharclasses62() throws IOException { doCodeTest("[a-\\w]"); }
-  public void testCharclasses63() throws IOException { doCodeTest("(?x)abc #foo \\q bar\n# foo\n(?-xi)xyz(?i:ABC)"); }
-  public void testCharclasses64() throws IOException { doCodeTest("[\\ud800\\udc00-\\udbff\\udfff]"); }
-  public void testCharclasses65() throws IOException { doCodeTest("\\R"); }
-  public void testCharclasses66() throws IOException { doCodeTest("\\X"); }
-  public void testCharclasses67() throws IOException { doCodeTest("\\-[\\*\\-\\[\\]\\\\\\+]"); }
-  public void testCharclasses68() throws IOException { doCodeTest("[\\b]"); }
-  public void testCharClasses69() throws IOException { doCodeTest("\\p{^L}"); }
-  public void testCharClasses70() throws IOException { doCodeTest("[&&&&a]"); }
-  public void testCharClasses71() throws IOException { doCodeTest("[a-\\Qz\\E]"); }
-  public void testCharClasses72() throws IOException { doCodeTest("([\\^])"); }
-  public void testCharClasses73() throws IOException { doCodeTest("[i-[:]]*"); }
-  public void testCharClasses74() throws IOException { doCodeTest("[\\w-z]"); }
+  @Test public void testEscapes1() { parsingFixture.get().doCodeTest("\\q"); }
+  @Test public void testEscapes2() { parsingFixture.get().doCodeTest("\\#"); }
+  @Test public void testEscapes3() { parsingFixture.get().doCodeTest("a\\"); }
+  @Test public void testEscapes4() { parsingFixture.get().doCodeTest("a\\(b"); }
+  @Test public void testEscapes5() { parsingFixture.get().doCodeTest("a\\(*b"); }
+  @Test public void testEscapes6() { parsingFixture.get().doCodeTest("a\\\\b"); }
+  @Test public void testEscapes7() { parsingFixture.get().doCodeTest("\\u004a"); }
+  @Test public void testEscapes8() { parsingFixture.get().doCodeTest("\\0123"); }
+  @Test public void testEscapes9() { parsingFixture.get().doCodeTest("\\0"); }
+  @Test public void testEscapes10() { parsingFixture.get().doCodeTest("\\x4a"); }
+  @Test public void testEscapes11() { parsingFixture.get().doCodeTest("\\x{0}"); }
+  @Test public void testEscapes12() { parsingFixture.get().doCodeTest("\\x{2011F}"); }
+  @Test public void testEscapes13() { parsingFixture.get().doCodeTest("[\\x4a-\\x4b]"); }
+  @Test public void testEscapes14() { parsingFixture.get().doCodeTest("[a-a]"); }
+  @Test public void testEscapes15() { parsingFixture.get().doCodeTest("[\\x4a-\\x3f]"); }
+  @Test public void testEscapes16() { parsingFixture.get().doCodeTest("[\\udbff\\udfff-\\ud800\\udc00]"); }
+  @Test public void testEscapes17() { parsingFixture.get().doCodeTest("[\\ud800\\udc00-\\udbff\\udfff]"); }
+  @Test public void testEscapes18() { parsingFixture.get().doCodeTest("[z-a]"); }
+  @Test public void testEscapes19() { parsingFixture.get().doCodeTest("[a-z]"); }
+  @Test public void testEscapes20() { parsingFixture.get().doCodeTest("a\\Qabc?*+.))]][]\\Eb"); }
+  @Test public void testEscapes21() { parsingFixture.get().doCodeTest("(a\\Qabc?*+.))]][]\\Eb)"); }
+  @Test public void testEscapes22() { parsingFixture.get().doCodeTest("[\\Qabc?*+.))]][]\\E]"); }
+  @Test public void testEscapes23() { parsingFixture.get().doCodeTest("a\\Qabc?*+.))]][]\\E)"); }
+  @Test public void testEscapes24() { parsingFixture.get().doCodeTest("\\Q\\j\\E"); }
+  @Test public void testEscapes25() { parsingFixture.get().doCodeTest("\\c0"); }
+  @Test public void testEscapes26() { parsingFixture.get().doCodeTest("[\\]]"); }
+  @Test public void testEscapes27() { parsingFixture.get().doCodeTest("[^\\]]"); }
+  @Test public void testEscapes28() { parsingFixture.get().doCodeTest("[a\\]]"); }
+  @Test public void testEscapes29() { parsingFixture.get().doCodeTest("[^a\\]]"); }
+  @Test public void testEscapes30() { parsingFixture.get().doCodeTest("\\[\\]$"); }
+  @Test public void testEscapes31() { parsingFixture.get().doCodeTest("\\ud800"); }
 
-  public void testGroups1() throws IOException { doCodeTest("()ef"); }
-  public void testGroups2() throws IOException { doCodeTest("()*"); }
-  public void testGroups3() throws IOException { doCodeTest("()"); }
-  public void testGroups4() throws IOException { doCodeTest("(|)"); }
-  public void testGroups5() throws IOException { doCodeTest("(*)b"); }
-  public void testGroups6() throws IOException { doCodeTest("((a))"); }
-  public void testGroups7() throws IOException { doCodeTest("(a)b(c)"); }
-  public void testGroups8() throws IOException { doCodeTest("(a*)*"); }
-  public void testGroups9() throws IOException { doCodeTest("(a*)+"); }
-  public void testGroups10() throws IOException { doCodeTest("(a|)*"); }
-  public void testGroups11() throws IOException { doCodeTest("(ab|cd)e"); }
-  public void testGroups12() throws IOException { doCodeTest("(.*)c(.*)"); }
-  public void testGroups13() throws IOException { doCodeTest("\\((.*), (.*)\\)"); }
-  public void testGroups14() throws IOException { doCodeTest("a(bc)d"); }
-  public void testGroups15() throws IOException { doCodeTest("([abc])*d"); }
-  public void testGroups16() throws IOException { doCodeTest("((((((((((a)))))))))"); }
-  public void testGroups17() throws IOException { doCodeTest("([abc])*bcd"); }
-  public void testGroups18() throws IOException { doCodeTest("(a|b)c*d"); }
-  public void testGroups19() throws IOException { doCodeTest("a([bc]*)c*"); }
-  public void testGroups20() throws IOException { doCodeTest("((a)(b)c)(d)"); }
-  public void testGroups21() throws IOException { doCodeTest("(ab|a)b*c"); }
-  public void testGroups22() throws IOException { doCodeTest("(ab|ab*)bc"); }
-  public void testGroups23() throws IOException { doCodeTest("(a|b|c|d|e)f"); }
-  public void testGroups24() throws IOException { doCodeTest("a([bc]*)(c*d)"); }
-  public void testGroups25() throws IOException { doCodeTest("a([bc]+)(c*d)"); }
-  public void testGroups26() throws IOException { doCodeTest("a([bc]*)(c+d)"); }
-  public void testGroups27() throws IOException { doCodeTest("(a+|b)*"); }
-  public void testGroups28() throws IOException { doCodeTest("(a+|b)+"); }
-  public void testGroups29() throws IOException { doCodeTest("(a+|b)?"); }
-  public void testGroups30() throws IOException { doCodeTest("(^*"); }
-  public void testGroups31() throws IOException { doCodeTest(")("); }
-  public void testGroups32() throws IOException { doCodeTest("(?i:*)"); }
-  public void testGroups33() throws IOException { doCodeTest("(?<asdf>[a-c])\\1"); }
-  public void testGroups34() throws IOException { doCodeTest("(?<asdf>[a-c])\\k<asdf>"); }
-  public void testGroups35() throws IOException { doCodeTest("\\k<adsf>"); }
-  public void testGroups36() throws IOException { doCodeTest("(?P<name>{"); }
-  public void testGroups37() throws IOException { doCodeTest("(?P=name)"); }
-  public void testGroups38() throws IOException { doCodeTest("\\g'name'"); }
-  public void testGroups39() throws IOException { doCodeTest("(?(name)yes-pattern|no-pattern)"); }
-  public void testGroups40() throws IOException { doCodeTest("(?(name)yes-pattern|{"); }
-  public void testGroups41() throws IOException { doCodeTest("(?>atomic)"); }
-  public void testGroups42() throws IOException { doCodeTest("(?:non-capturing)"); }
-  public void testGroups43() throws IOException { doCodeTest("(?(name)yes-pattern|no_pattern|maybe-pattern)"); }
+  @Test public void testAnchors1() { parsingFixture.get().doCodeTest("^*"); }
+  @Test public void testAnchors2() { parsingFixture.get().doCodeTest("$*"); }
+  @Test public void testAnchors3() { parsingFixture.get().doCodeTest("^abc"); }
+  @Test public void testAnchors4() { parsingFixture.get().doCodeTest("^abc$"); }
+  @Test public void testAnchors5() { parsingFixture.get().doCodeTest("abc$"); }
+  @Test public void testAnchors6() { parsingFixture.get().doCodeTest("^"); }
+  @Test public void testAnchors7() { parsingFixture.get().doCodeTest("$"); }
+  @Test public void testAnchors8() { parsingFixture.get().doCodeTest("$b"); }
+  @Test public void testAnchors9() { parsingFixture.get().doCodeTest("^(ab|cd)e"); }
+  @Test public void testAnchors10() { parsingFixture.get().doCodeTest("^a(bc+|b[eh])g|.h$"); }
 
-  public void testEscapes1() throws IOException { doCodeTest("\\q"); }
-  public void testEscapes2() throws IOException { doCodeTest("\\#"); }
-  public void testEscapes3() throws IOException { doCodeTest("a\\"); }
-  public void testEscapes4() throws IOException { doCodeTest("a\\(b"); }
-  public void testEscapes5() throws IOException { doCodeTest("a\\(*b"); }
-  public void testEscapes6() throws IOException { doCodeTest("a\\\\b"); }
-  public void testEscapes7() throws IOException { doCodeTest("\\u004a"); }
-  public void testEscapes8() throws IOException { doCodeTest("\\0123"); }
-  public void testEscapes9() throws IOException { doCodeTest("\\0"); }
-  public void testEscapes10() throws IOException { doCodeTest("\\x4a"); }
-  public void testEscapes11() throws IOException { doCodeTest("\\x{0}"); }
-  public void testEscapes12() throws IOException { doCodeTest("\\x{2011F}"); }
-  public void testEscapes13() throws IOException { doCodeTest("[\\x4a-\\x4b]"); }
-  public void testEscapes14() throws IOException { doCodeTest("[a-a]"); }
-  public void testEscapes15() throws IOException { doCodeTest("[\\x4a-\\x3f]"); }
-  public void testEscapes16() throws IOException { doCodeTest("[\\udbff\\udfff-\\ud800\\udc00]"); }
-  public void testEscapes17() throws IOException { doCodeTest("[\\ud800\\udc00-\\udbff\\udfff]"); }
-  public void testEscapes18() throws IOException { doCodeTest("[z-a]"); }
-  public void testEscapes19() throws IOException { doCodeTest("[a-z]"); }
-  public void testEscapes20() throws IOException { doCodeTest("a\\Qabc?*+.))]][]\\Eb"); }
-  public void testEscapes21() throws IOException { doCodeTest("(a\\Qabc?*+.))]][]\\Eb)"); }
-  public void testEscapes22() throws IOException { doCodeTest("[\\Qabc?*+.))]][]\\E]"); }
-  public void testEscapes23() throws IOException { doCodeTest("a\\Qabc?*+.))]][]\\E)"); }
-  public void testEscapes24() throws IOException { doCodeTest("\\Q\\j\\E"); }
-  public void testEscapes25() throws IOException { doCodeTest("\\c0"); }
-  public void testEscapes26() throws IOException { doCodeTest("[\\]]"); }
-  public void testEscapes27() throws IOException { doCodeTest("[^\\]]"); }
-  public void testEscapes28() throws IOException { doCodeTest("[a\\]]"); }
-  public void testEscapes29() throws IOException { doCodeTest("[^a\\]]"); }
-  public void testEscapes30() throws IOException { doCodeTest("\\[\\]$"); }
-  public void testEscapes31() throws IOException { doCodeTest("\\ud800"); }
+  @Test public void testNamedchars1() { parsingFixture.get().doCodeTest("a*b\\s+c"); }
+  @Test public void testNamedchars2() { parsingFixture.get().doCodeTest("\\d+"); }
+  @Test public void testNamedchars3() { parsingFixture.get().doCodeTest("^\\p{javaJavaIdentifierStart}+\\p{javaJavaIdentifierPart}+$"); }
+  @Test public void testNamedchars4() { parsingFixture.get().doCodeTest("\\p{IsDigit}\\p{IsAlpha}"); }
+  @Test public void testNamedchars5() { parsingFixture.get().doCodeTest("\\p{InLATIN_1_SUPPLEMENT}"); }
+  @Test public void testNamedchars6() { parsingFixture.get().doCodeTest("[a-e]?d\\\\e"); }
+  @Test public void testNamedchars7() { parsingFixture.get().doCodeTest("((\\w+)/)*(\\w+)"); }
+  @Test public void testNamedchars8() { parsingFixture.get().doCodeTest("\\p{Digit}+"); }
+  @Test public void testNamedchars9() { parsingFixture.get().doCodeTest("[:xdigit:]+"); }
+  @Test public void testNamedchars10() { parsingFixture.get().doCodeTest("\\p{unknown}+"); }
+  @Test public void testNamedchars11() { parsingFixture.get().doCodeTest("[:^xdigit:]+"); }
+  @Test public void testNamedchars12() { parsingFixture.get().doCodeTest("\\p{InArabic Extended-A}"); }
+  @Test public void testNamedchars13() { parsingFixture.get().doCodeTest("\\N{Mahjong Tile Winter}"); }
+  @Test public void testNamedchars14() { parsingFixture.get().doCodeTest("[\\N{Mahjong Tile Winter}]"); }
+  @Test public void testNamedchars15() { parsingFixture.get().doCodeTest("[\\N{LATIN SMALL LETTER A}-\\N{LATIN SMALL LETTER Z}]"); }
 
-  public void testAnchors1() throws IOException { doCodeTest("^*"); }
-  public void testAnchors2() throws IOException { doCodeTest("$*"); }
-  public void testAnchors3() throws IOException { doCodeTest("^abc"); }
-  public void testAnchors4() throws IOException { doCodeTest("^abc$"); }
-  public void testAnchors5() throws IOException { doCodeTest("abc$"); }
-  public void testAnchors6() throws IOException { doCodeTest("^"); }
-  public void testAnchors7() throws IOException { doCodeTest("$"); }
-  public void testAnchors8() throws IOException { doCodeTest("$b"); }
-  public void testAnchors9() throws IOException { doCodeTest("^(ab|cd)e"); }
-  public void testAnchors10() throws IOException { doCodeTest("^a(bc+|b[eh])g|.h$"); }
+  @Test public void testBackrefs1() { parsingFixture.get().doCodeTest("(ac*)c*d[ac]*\\1"); }
+  @Test public void testBackrefs2() { parsingFixture.get().doCodeTest("(.)=\\1"); }
+  @Test public void testBackrefs3() { parsingFixture.get().doCodeTest("([ab])=\\1"); }
+  @Test public void testBackrefs4() { parsingFixture.get().doCodeTest("([ab]+)=\\1"); }
+  @Test public void testBackrefs5() { parsingFixture.get().doCodeTest("(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\\105"); }
+  @Test public void testBackrefs6() { parsingFixture.get().doCodeTest("(.)\\11"); }
+  @Test public void testBackrefs7() { parsingFixture.get().doCodeTest("([ab]+)=\\2"); }
+  @Test public void testBackrefs8() { parsingFixture.get().doCodeTest("([ab]+)=\\3"); }
+  @Test public void testBackrefs9() { parsingFixture.get().doCodeTest("([ab]+=\\1)"); }
 
-  public void testNamedchars1() throws IOException { doCodeTest("a*b\\s+c"); }
-  public void testNamedchars2() throws IOException { doCodeTest("\\d+"); }
-  public void testNamedchars3() throws IOException { doCodeTest("^\\p{javaJavaIdentifierStart}+\\p{javaJavaIdentifierPart}+$"); }
-  public void testNamedchars4() throws IOException { doCodeTest("\\p{IsDigit}\\p{IsAlpha}"); }
-  public void testNamedchars5() throws IOException { doCodeTest("\\p{InLATIN_1_SUPPLEMENT}"); }
-  public void testNamedchars6() throws IOException { doCodeTest("[a-e]?d\\\\e"); }
-  public void testNamedchars7() throws IOException { doCodeTest("((\\w+)/)*(\\w+)"); }
-  public void testNamedchars8() throws IOException { doCodeTest("\\p{Digit}+"); }
-  public void testNamedchars9() throws IOException { doCodeTest("[:xdigit:]+"); }
-  public void testNamedchars10() throws IOException { doCodeTest("\\p{unknown}+"); }
-  public void testNamedchars11() throws IOException { doCodeTest("[:^xdigit:]+"); }
-  public void testNamedchars12() throws IOException { doCodeTest("\\p{InArabic Extended-A}"); }
-  public void testNamedchars13() throws IOException { doCodeTest("\\N{Mahjong Tile Winter}"); }
-  public void testNamedchars14() throws IOException { doCodeTest("[\\N{Mahjong Tile Winter}]"); }
-  public void testNamedchars15() throws IOException { doCodeTest("[\\N{LATIN SMALL LETTER A}-\\N{LATIN SMALL LETTER Z}]"); }
+  @Test public void testComplex1() { parsingFixture.get().doCodeTest("z(\\w\\s+(?:\\w\\s+\\w)+)z"); }
+  @Test public void testComplex2() { parsingFixture.get().doCodeTest("(([hH][tT]{2}[pP]|[fF][tT][pP]):\\/\\/)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
+  @Test public void testComplex3() { parsingFixture.get().doCodeTest("((?:[hH][tT]{2}[pP]|[fF][tT][pP]):\\/\\/)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
+  @Test public void testComplex4() { parsingFixture.get().doCodeTest("(([hH][tT]{2}[pP]|[fF][tT][pP]):\\/\\/)?[a-zA-Z0-9\\-]+(?:\\.[a-zA-Z0-9\\-]+)*"); }
+  @Test public void testComplex5() { parsingFixture.get().doCodeTest("(?:([hH][tT]{2}[pP]|[fF][tT][pP]):\\/\\/)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
+  @Test public void testComplex6() { parsingFixture.get().doCodeTest("^(?:([hH][tT]{2}[pP]|[fF][tT][pP]):\\/\\/)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*$"); }
+  @Test public void testComplex7() { parsingFixture.get().doCodeTest("^(?:(?:[hH][tT]{2}[pP]|[fF][tT][pP]):\\/\\/)?[a-zA-Z0-9\\-]+(?:\\.[a-zA-Z0-9\\-]+)*$"); }
 
-  public void testBackrefs1() throws IOException { doCodeTest("(ac*)c*d[ac]*\\1"); }
-  public void testBackrefs2() throws IOException { doCodeTest("(.)=\\1"); }
-  public void testBackrefs3() throws IOException { doCodeTest("([ab])=\\1"); }
-  public void testBackrefs4() throws IOException { doCodeTest("([ab]+)=\\1"); }
-  public void testBackrefs5() throws IOException { doCodeTest("(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\\105"); }
-  public void testBackrefs6() throws IOException { doCodeTest("(.)\\11"); }
-  public void testBackrefs7() throws IOException { doCodeTest("([ab]+)=\\2"); }
-  public void testBackrefs8() throws IOException { doCodeTest("([ab]+)=\\3"); }
-  public void testBackrefs9() throws IOException { doCodeTest("([ab]+=\\1)"); }
+  @Test public void testIncomplete1() { parsingFixture.get().doCodeTest("abc\\"); }
+  @Test public void testIncomplete2() { parsingFixture.get().doCodeTest("abc[\\"); }
+  @Test public void testIncomplete3() { parsingFixture.get().doCodeTest("abc\\x"); }
+  @Test public void testIncomplete4() { parsingFixture.get().doCodeTest("abc\\x1"); }
+  @Test public void testIncomplete5() { parsingFixture.get().doCodeTest("abc\\x{"); }
+  @Test public void testIncomplete6() { parsingFixture.get().doCodeTest("abc\\x{}"); }
+  @Test public void testIncomplete7() { parsingFixture.get().doCodeTest("abc\\x{0"); }
+  @Test public void testIncomplete8() { parsingFixture.get().doCodeTest("abc\\u"); }
+  @Test public void testIncomplete9() { parsingFixture.get().doCodeTest("abc\\u22"); }
+  @Test public void testIncomplete10() { parsingFixture.get().doCodeTest("\\Qabc"); }
+  @Test public void testIncomplete11() { parsingFixture.get().doCodeTest("\\Q"); }
+  @Test public void testIncomplete12() { parsingFixture.get().doCodeTest("\\E"); }
+  @Test public void testIncomplete13() { parsingFixture.get().doCodeTest("a|*"); }
 
-  public void testComplex1() throws IOException { doCodeTest("z(\\w\\s+(?:\\w\\s+\\w)+)z"); }
-  public void testComplex2() throws IOException { doCodeTest("(([hH][tT]{2}[pP]|[fF][tT][pP]):\\/\\/)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
-  public void testComplex3() throws IOException { doCodeTest("((?:[hH][tT]{2}[pP]|[fF][tT][pP]):\\/\\/)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
-  public void testComplex4() throws IOException { doCodeTest("(([hH][tT]{2}[pP]|[fF][tT][pP]):\\/\\/)?[a-zA-Z0-9\\-]+(?:\\.[a-zA-Z0-9\\-]+)*"); }
-  public void testComplex5() throws IOException { doCodeTest("(?:([hH][tT]{2}[pP]|[fF][tT][pP]):\\/\\/)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
-  public void testComplex6() throws IOException { doCodeTest("^(?:([hH][tT]{2}[pP]|[fF][tT][pP]):\\/\\/)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*$"); }
-  public void testComplex7() throws IOException { doCodeTest("^(?:(?:[hH][tT]{2}[pP]|[fF][tT][pP]):\\/\\/)?[a-zA-Z0-9\\-]+(?:\\.[a-zA-Z0-9\\-]+)*$"); }
+  @Test public void testRegressions1() { parsingFixture.get().doCodeTest("("); }
+  @Test public void testRegressions2() { parsingFixture.get().doCodeTest("[^^]"); }
+  @Test public void testRegressions3() { parsingFixture.get().doCodeTest("a)b"); }
+  @Test public void testRegressions4() { parsingFixture.get().doCodeTest("\\s*@return(?:s)?\\s*(?:(?:\\{|:)?\\s*(?([^\\s\\}]+)\\s*\\}?\\s*)?(.*)"); }
 
-  public void testIncomplete1() throws IOException { doCodeTest("abc\\"); }
-  public void testIncomplete2() throws IOException { doCodeTest("abc[\\"); }
-  public void testIncomplete3() throws IOException { doCodeTest("abc\\x"); }
-  public void testIncomplete4() throws IOException { doCodeTest("abc\\x1"); }
-  public void testIncomplete5() throws IOException { doCodeTest("abc\\x{"); }
-  public void testIncomplete6() throws IOException { doCodeTest("abc\\x{}"); }
-  public void testIncomplete7() throws IOException { doCodeTest("abc\\x{0"); }
-  public void testIncomplete8() throws IOException { doCodeTest("abc\\u"); }
-  public void testIncomplete9() throws IOException { doCodeTest("abc\\u22"); }
-  public void testIncomplete10() throws IOException { doCodeTest("\\Qabc"); }
-  public void testIncomplete11() throws IOException { doCodeTest("\\Q"); }
-  public void testIncomplete12() throws IOException { doCodeTest("\\E"); }
-  public void testIncomplete13() throws IOException { doCodeTest("a|*"); }
+  @Test public void testOptions1() { parsingFixture.get().doCodeTest("(?iZm)abc"); }
+  @Test public void testOptions2() { parsingFixture.get().doCodeTest("(?idmsuxU)nice"); }
+  @Test public void testOptions3() { parsingFixture.get().doCodeTest("(?idm-suxU)one(?suxU-idm)two"); }
+  @Test public void testOptions4() { parsingFixture.get().doCodeTest("(?i|abc"); }
 
-  public void testRegressions1() throws IOException { doCodeTest("("); }
-  public void testRegressions2() throws IOException { doCodeTest("[^^]"); }
-  public void testRegressions3() throws IOException { doCodeTest("a)b"); }
-  public void testRegressions4() throws IOException { doCodeTest("\\s*@return(?:s)?\\s*(?:(?:\\{|:)?\\s*(?([^\\s\\}]+)\\s*\\}?\\s*)?(.*)"); }
+  @Test public void testTests1() { parsingFixture.get().doCodeTest("abc)"); }
+  @Test public void testTests2() { parsingFixture.get().doCodeTest("(abc"); }
+  @Test public void testTests3() { parsingFixture.get().doCodeTest("a+b+c"); }
+  @Test public void testTests4() { parsingFixture.get().doCodeTest("a**"); }
+  @Test public void testTests5() { parsingFixture.get().doCodeTest("a++"); }
+  @Test public void testTests6() { parsingFixture.get().doCodeTest("ab*"); }
+  @Test public void testTests7() { parsingFixture.get().doCodeTest("abcd*efg"); }
+  @Test public void testTests8() { parsingFixture.get().doCodeTest("a|b|c|d|e"); }
+  @Test public void testTests9() { parsingFixture.get().doCodeTest("(bc+d$|ef*g.|h?i(j|k))"); }
+  @Test public void testTests10() { parsingFixture.get().doCodeTest("a*(b*c*)"); }
+  @Test public void testTests11() { parsingFixture.get().doCodeTest("a?b+c*"); }
+  @Test public void testTests12() { parsingFixture.get().doCodeTest("i am a green (giant|man|martian)"); }
+  @Test public void testTests13() { parsingFixture.get().doCodeTest("(wee|week)(knights|knight)"); }
+  @Test public void testTests14() { parsingFixture.get().doCodeTest("(a.*b)(a.*b)"); }
+  @Test public void testTests15() { parsingFixture.get().doCodeTest("(\\s*\\w+)?"); }
+  @Test public void testTests16() { parsingFixture.get().doCodeTest("(?:a)"); }
+  @Test public void testTests17() { parsingFixture.get().doCodeTest("(?:\\w)"); }
+  @Test public void testTests18() { parsingFixture.get().doCodeTest("(?:\\w\\s\\w)+"); }
+  @Test public void testTests19() { parsingFixture.get().doCodeTest("(a\\w)(?:,(a\\w))+"); }
+  @Test public void testTests20() { parsingFixture.get().doCodeTest("abc.*?x+yz"); }
+  @Test public void testTests21() { parsingFixture.get().doCodeTest("abc.+?x+yz"); }
+  @Test public void testTests22() { parsingFixture.get().doCodeTest("a.+?(c|d)"); }
+  @Test public void testTests23() { parsingFixture.get().doCodeTest("a.+(c|d)"); }
+  @Test public void testTests24() { parsingFixture.get().doCodeTest("a+?b+?c+?"); }
 
-  public void testOptions1() throws IOException { doCodeTest("(?iZm)abc"); }
-  public void testOptions2() throws IOException { doCodeTest("(?idmsuxU)nice"); }
-  public void testOptions3() throws IOException { doCodeTest("(?idm-suxU)one(?suxU-idm)two"); }
-  public void testOptions4() throws IOException { doCodeTest("(?i|abc"); }
+  @Test public void testRealLife1() { parsingFixture.get().doCodeTest("x:found=\"(true|false)\""); }
+  @Test public void testRealLife2() { parsingFixture.get().doCodeTest("(?:\\s)|(?:/\\*.*\\*/)|(?://[^\\n]*)"); }
+  @Test public void testRealLife3() { parsingFixture.get().doCodeTest("((?:\\p{Alpha}\\:)?[0-9 a-z_A-Z\\-\\\\./]+)"); }
+  @Test public void testRealLife4() { parsingFixture.get().doCodeTest("^[\\w\\+\\.\\-]{2,}:"); }
+  @Test public void testRealLife5() { parsingFixture.get().doCodeTest("#(.*)$"); }
+  @Test public void testRealLife6() { parsingFixture.get().doCodeTest("^(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)"); }
+  @Test public void testRealLife7() { parsingFixture.get().doCodeTest("(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)"); }
+  @Test public void testRealLife8() { parsingFixture.get().doCodeTest("usd [+-]?[0-9]+.[0-9][0-9]"); }
+  @Test public void testRealLife9() { parsingFixture.get().doCodeTest("\\b(\\w+)(\\s+\\1)+\\b"); }
+  @Test public void testRealLife10() { parsingFixture.get().doCodeTest(".*?(<(error|warning|info)(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?(?: type=\"([0-9A-Z_]+)\")?(?: foreground=\"([0-9xa-f]+)\")?(?: background=\"([0-9xa-f]+)\")?(?: effectcolor=\"([0-9xa-f]+)\")?(?: effecttype=\"([A-Z]+)\")?(?: fonttype=\"([0-9]+)\")?(/)?>)(.*)"); }
 
-  public void testTests1() throws IOException { doCodeTest("abc)"); }
-  public void testTests2() throws IOException { doCodeTest("(abc"); }
-  public void testTests3() throws IOException { doCodeTest("a+b+c"); }
-  public void testTests4() throws IOException { doCodeTest("a**"); }
-  public void testTests5() throws IOException { doCodeTest("a++"); }
-  public void testTests6() throws IOException { doCodeTest("ab*"); }
-  public void testTests7() throws IOException { doCodeTest("abcd*efg"); }
-  public void testTests8() throws IOException { doCodeTest("a|b|c|d|e"); }
-  public void testTests9() throws IOException { doCodeTest("(bc+d$|ef*g.|h?i(j|k))"); }
-  public void testTests10() throws IOException { doCodeTest("a*(b*c*)"); }
-  public void testTests11() throws IOException { doCodeTest("a?b+c*"); }
-  public void testTests12() throws IOException { doCodeTest("i am a green (giant|man|martian)"); }
-  public void testTests13() throws IOException { doCodeTest("(wee|week)(knights|knight)"); }
-  public void testTests14() throws IOException { doCodeTest("(a.*b)(a.*b)"); }
-  public void testTests15() throws IOException { doCodeTest("(\\s*\\w+)?"); }
-  public void testTests16() throws IOException { doCodeTest("(?:a)"); }
-  public void testTests17() throws IOException { doCodeTest("(?:\\w)"); }
-  public void testTests18() throws IOException { doCodeTest("(?:\\w\\s\\w)+"); }
-  public void testTests19() throws IOException { doCodeTest("(a\\w)(?:,(a\\w))+"); }
-  public void testTests20() throws IOException { doCodeTest("abc.*?x+yz"); }
-  public void testTests21() throws IOException { doCodeTest("abc.+?x+yz"); }
-  public void testTests22() throws IOException { doCodeTest("a.+?(c|d)"); }
-  public void testTests23() throws IOException { doCodeTest("a.+(c|d)"); }
-  public void testTests24() throws IOException { doCodeTest("a+?b+?c+?"); }
+  @Test public void testBug1() { parsingFixture.get().doCodeTest("[{][\\w\\.]*[}]"); }
+  @Test public void testBug2() { parsingFixture.get().doCodeTest("[a-z0-9!\\#$%&'*+/=?^_`{|}~-]+"); }
+  @Test public void testBug3() { parsingFixture.get().doCodeTest("[\\{]"); }
+  @Test public void testBug4() { parsingFixture.get().doCodeTest("{"); }
+  @Test public void testBug5() { parsingFixture.get().doCodeTest("\\{"); }
+  @Test public void testBug6() { parsingFixture.get().doCodeTest("(<=\\s)-{3,}(?>\\s)"); }
+  @Test public void testBug7() { parsingFixture.get().doCodeTest("(?x)a\\ b\\ c"); }
+  @Test public void testBug8() { parsingFixture.get().doCodeTest("a\\ b"); }
+  @Test public void testBug9() { parsingFixture.get().doCodeTest("(^|\\.)\\*(?=(\\.|$))"); }
+  @Test public void testBug10() { parsingFixture.get().doCodeTest("\\h \\H \\v \\V"); }
 
-  public void testRealLife1() throws IOException { doCodeTest("x:found=\"(true|false)\""); }
-  public void testRealLife2() throws IOException { doCodeTest("(?:\\s)|(?:/\\*.*\\*/)|(?://[^\\n]*)"); }
-  public void testRealLife3() throws IOException { doCodeTest("((?:\\p{Alpha}\\:)?[0-9 a-z_A-Z\\-\\\\./]+)"); }
-  public void testRealLife4() throws IOException { doCodeTest("^[\\w\\+\\.\\-]{2,}:"); }
-  public void testRealLife5() throws IOException { doCodeTest("#(.*)$"); }
-  public void testRealLife6() throws IOException { doCodeTest("^(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)"); }
-  public void testRealLife7() throws IOException { doCodeTest("(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)"); }
-  public void testRealLife8() throws IOException { doCodeTest("usd [+-]?[0-9]+.[0-9][0-9]"); }
-  public void testRealLife9() throws IOException { doCodeTest("\\b(\\w+)(\\s+\\1)+\\b"); }
-  public void testRealLife10() throws IOException { doCodeTest(".*?(<(error|warning|info)(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?(?: type=\"([0-9A-Z_]+)\")?(?: foreground=\"([0-9xa-f]+)\")?(?: background=\"([0-9xa-f]+)\")?(?: effectcolor=\"([0-9xa-f]+)\")?(?: effecttype=\"([A-Z]+)\")?(?: fonttype=\"([0-9]+)\")?(/)?>)(.*)"); }
+  @Test public void testParse1() { parsingFixture.get().doCodeTest("123 | 456"); }
+  @Test public void testParse2() { parsingFixture.get().doCodeTest("1**"); }
+  @Test public void testParse3() { parsingFixture.get().doCodeTest("(([hH][tT]{2}[pP]|[fF][tT][pP])://)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
 
-  public void testBug1() throws IOException { doCodeTest("[{][\\w\\.]*[}]"); }
-  public void testBug2() throws IOException { doCodeTest("[a-z0-9!\\#$%&'*+/=?^_`{|}~-]+"); }
-  public void testBug3() throws IOException { doCodeTest("[\\{]"); }
-  public void testBug4() throws IOException { doCodeTest("{"); }
-  public void testBug5() throws IOException { doCodeTest("\\{"); }
-  public void testBug6() throws IOException { doCodeTest("(<=\\s)-{3,}(?>\\s)"); }
-  public void testBug7() throws IOException { doCodeTest("(?x)a\\ b\\ c"); }
-  public void testBug8() throws IOException { doCodeTest("a\\ b"); }
-  public void testBug9() throws IOException { doCodeTest("(^|\\.)\\*(?=(\\.|$))"); }
-  public void testBug10() throws IOException { doCodeTest("\\h \\H \\v \\V"); }
+  @Test public void testCategoryShorthand1() { parsingFixture.get().doCodeTest("\\pL"); }
 
-  public void testParse1() throws IOException { doCodeTest("123 | 456"); }
-  public void testParse2() throws IOException { doCodeTest("1**"); }
-  public void testParse3() throws IOException { doCodeTest("(([hH][tT]{2}[pP]|[fF][tT][pP])://)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
-
-  public void testCategoryShorthand1() throws IOException { doCodeTest("\\pL"); }
-
-  public void testCapabilitiesProvider() throws IOException {
+  @Test
+  public void testCapabilitiesProvider() {
+    ParsingTestFixture fixture = parsingFixture.get();
     RegExpCapabilitiesProvider provider = (host, def) -> EnumSet.of(POSIX_BRACKET_EXPRESSIONS);
-    try {
-      RegExpCapabilitiesProvider.EP.addExplicitExtension(RegExpLanguage.INSTANCE, provider);
-      PsiFile file = createPsiFile("c", "(?#xxx)");
+    fixture.addExplicitExtension(RegExpCapabilitiesProvider.EP, RegExpLanguage.INSTANCE, provider);
+    PsiFile file = fixture.createPsiFile("c", "(?#xxx)");
+    PsiFile injected = fixture.createPsiFile("a", "[[:blank:]]");
+    fixture.setFile(injected);
+    ReadAction.runBlocking(() -> {
       PsiComment context = SyntaxTraverser.psiTraverser(file).filter(PsiComment.class).first();
-      myFile = createPsiFile("a", "[[:blank:]]");
-      SmartPsiElementPointer<PsiComment> pointer = SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(context, file);
-      myFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
-      ensureParsed(myFile);
-      checkResult(myFilePrefix + getTestName(), myFile);
-    }
-    finally {
-      RegExpCapabilitiesProvider.EP.removeExplicitExtension(RegExpLanguage.INSTANCE, provider);
-    }
+      SmartPsiElementPointer<PsiComment> pointer =
+        SmartPointerManager.getInstance(fixture.getProject()).createSmartPsiElementPointer(context, file);
+      injected.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
+      ParsingTestUtil.ensureParsed(injected);
+    });
+    fixture.checkResult(fixture.getFilePrefix() + fixture.getTestName(), injected);
   }
 }

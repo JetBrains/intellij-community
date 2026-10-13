@@ -2,169 +2,182 @@
 
 package com.intellij.lang.ant;
 
-import com.intellij.lang.LanguageASTFactory;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.xml.XMLParserDefinition;
-import com.intellij.lang.xml.XmlASTFactory;
-import com.intellij.lang.xml.XmlSyntaxDefinitionExtension;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.platform.syntax.psi.ElementTypeConverters;
-import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
-import com.intellij.psi.xml.StartTagEndTokenProvider;
-import com.intellij.psi.xml.XmlElementTypeConverterExtension;
-import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-import static com.intellij.xml.testFramework.XmlElementTypeServiceHelper.registerXmlElementTypeServices;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixtureKt.parsingFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 
-public class AntParsingTest extends ParsingTestCase {
+@TestApplication
+public class AntParsingTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
 
-  public AntParsingTest() {
-    super("", "ant", new XMLParserDefinition());
-  }
+  private final TestFixture<ParsingTestFixture> parsingFixture =
+    parsingFixture(projectFixture, PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi", "ant", new XMLParserDefinition());
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    registerXmlElementTypeServices(getApplication(), getTestRootDisposable());
-    addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, new XmlASTFactory());
-    addExplicitExtension(LanguageSyntaxDefinitions.getINSTANCE(), XMLLanguage.INSTANCE, new XmlSyntaxDefinitionExtension());
-    addExplicitExtension(ElementTypeConverters.getInstance(), XMLLanguage.INSTANCE, new XmlElementTypeConverterExtension());
-    registerExtensionPoint(new ExtensionPointName<>("com.intellij.xml.startTagEndToken"),
-                           StartTagEndTokenProvider.class);
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi";
-  }
-
+  @Test
   public void testSingleProject() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testProjectWithDefaultTarget() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testProjectWithDescriptions() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testProjectWithDependentTargets() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testSimpleProperties() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testPropertyLocation() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testPropertyFile() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testSimpleAntCall() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testAntCallNestedTargets() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testAntComments() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testPrologEpilogue() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testMacroDef() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testPresetDef() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testForwardMacroDef() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testSequentialParallel() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testAvailable() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testChecksum() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testChecksum1() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testCondition() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testUptodate() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testDirname() throws Exception {
-    doTest(SystemInfo.isWindows ? "_w" : "_u");
+    parsingFixture.get().doTest(SystemInfo.isWindows ? "_w" : "_u");
   }
 
+  @Test
   public void testBasename() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testLoadFile() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testTempFile() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testLength() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testPathConvert() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testWhichResource() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testP4Counter() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testJarLibResolve() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testAntTask() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testJava() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testBuildNumber() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 }

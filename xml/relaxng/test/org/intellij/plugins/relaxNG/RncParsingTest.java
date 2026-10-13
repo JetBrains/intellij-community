@@ -16,36 +16,47 @@
 
 package org.intellij.plugins.relaxNG;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
+
+@TestApplication
 public class RncParsingTest extends AbstractParsingTest {
   public RncParsingTest() {
     super("complex");
   }
 
+  @Test
   public void testExternal() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testMain() {
-   doTest(true);
+   parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testElements() {
-   doTest(true);
+   parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testProperties() {
-   doTest(true);
+   parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testDatatype() {
-   doTest(true);
+   parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testRelaxNG() {
-   doTest(true);
+   parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testDocbook() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 }

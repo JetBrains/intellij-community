@@ -3,237 +3,241 @@ package com.intellij.sh.oldParser;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.sh.parser.ShParserDefinition;
-import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.openapi.project.Project;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class ShOldParserTest extends ParsingTestCase {
-  public ShOldParserTest() {
-    super("oldParser", "sh", true, new ShParserDefinition());
-  }
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixtureKt.parsingFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 
-  @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/core/testData";
-  }
+@TestApplication
+public class ShOldParserTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
 
-  public void testAppendAssignment()                    { doTest(true); }
-  public void testArithForCommand1()                    { doTest(true); }
-  public void testArithmeticArrayRefs()                 { doTest(true); }
-  public void testArithmeticComplexExpressions()        { doTest(true); }
-  public void testArithmeticForLoop()                   { doTest(true); }
-  public void testArithmeticForLoopVarError()           { doTest(true); }
-  public void testArithmeticNumbers()                   { doTest(true); }
-  public void testArithmeticParse()                     { doTest(true); }
-  public void testArithmeticParseAssignments()          { doTest(true); }
-  public void testArithmeticParseAssignmentsErrors()    { doTest(true); }
-  public void testArithmeticParseList()                 { doTest(true); }
-  public void testArithmeticParseParentheses()          { doTest(true); }
-  public void testArithmeticParseSquareMode()           { doTest(true); }
-  public void testArithmeticTristateOperator()          { doTest(true); }
-  public void testArithmeticVarAssignment()             { doTest(true); }
-  public void testArrayAssignment()                     { doTest(true); }
-  public void testArrayVar()                            { doTest(true); }
-  public void testAssigmentCommands()                   { doTest(true); }
-  public void testBackquoteCommand()                    { doTest(true); }
-  public void testBackquoteCommandErrors()              { doTest(true); }
-  public void testBacktickParsing()                     { doTest(true); }
-  public void testBodyWithErrors()                      { doTest(true); }
-  public void testBuildInCommandDeclare()               { doTest(true); }
-  public void testCaseSimple1()                         { doTest(true); }
-  public void testCheckErrorMarkers()                   { doTest(true); }
-  public void testCommandParseAssignment()              { doTest(true); }
-  public void testCommandWithErrors()                   { doTest(true); }
-  public void testComplicatedHereDoc()                  { doTest(true); }
-  public void testComplicatedHereDocs()                 { doTest(true); }
-  public void testComposedCommand()                     { doTest(true); }
-  public void testComposedDefaultValue()                { doTest(true); }
-  public void testConditionalAdvancedExpressions()      { doTest(true); }
-  public void testConditionalSingleTest()               { doTest(true); }
-  public void testConditionalWithBackquote()            { doTest(true); }
-  public void testDeclareParse()                        { doTest(true); }
-  public void testDollarCommand()                       { doTest(true); }
-  public void testEchoWithUmlauts()                     { doTest(true); }
-  public void testEmbeddedVars()                        { doTest(true); }
-  public void testEmptyArithmeticExpression()           { doTest(true); }
-  public void testEvalParse()                           { doTest(true); }
-  public void testExportParse()                         { doTest(true); }
-  public void testFileParsing3()                        { doTest(true); }
-  public void testFileParsing4()                        { doTest(true); }
-  public void testForCommand()                          { doTest(true); }
-  public void testForLoopCompoundBlock()                { doTest(true); }
-  public void testFunction()                            { doTest(true); }
-  public void testFunction2()                           { doTest(true); }
-  public void testFunctionDefinition()                  { doTest(true); }
-  public void testFunctionWithReadArgs()                { doTest(true); }
-  public void testGetoptsBuiltin()                      { doTest(true); }
-  public void testGetoptsIsValid()                      { doTest(true); }
-  public void testHereDocMarkerExclamation()            { doTest(true); }
-  public void testHereDocVar()                          { doTest(true); }
-  public void testHereStrings()                         { doTest(true); }
-  public void testHereWhitespacePrefix()                { doTest(true); }
-  public void testHeredocInLoop()                       { doTest(true); }
-  public void testHeredocTwice()                        { doTest(true); }
-  public void testIfExpression()                        { doTest(true); }
-  public void testIfCommand1()                          { doTest(true); }
-  public void testIfCommand2()                          { doTest(true); }
-  public void testIfCommand3()                          { doTest(true); }
-  public void testIfCommand4()                          { doTest(true); }
-  public void testIfParse()                             { doTest(true); }
-  public void testIfWithFaultyRedirect()                { doTest(true); }
-  public void testIfWithLocalVarRedirect()              { doTest(true); }
-  public void testIfWithNormalRedirect()                { doTest(true); }
-  public void testIfWithReadRedirect()                  { doTest(true); }
-  public void testIncludeCommandParseErrors()           { doTest(true); }
-  public void testIncludeCommandParseSimpleDot()        { doTest(true); }
-  public void testIncludeCommandParseSimpleSource()     { doTest(true); }
-  public void testIntegration1()                        { doTest(true); }
-  public void testIntegration10()                       { doTest(true); }
-  public void testIntegration11()                       { doTest(true); }
-  public void testIntegration12()                       { doTest(true); }
-  public void testIntegration13()                       { doTest(true); }
-  public void testIntegration14()                       { doTest(true); }
-  public void testIntegration15()                       { doTest(true); }
-  public void testIntegration16()                       { doTest(true); }
-  public void testIntegration2()                        { doTest(true); }
-  public void testIntegration3()                        { doTest(true); }
-  public void testIntegration4()                        { doTest(true); }
-  public void testIntegration5()                        { doTest(true); }
-  public void testIntegration6()                        { doTest(true); }
-  public void testIntegration7()                        { doTest(true); }
-  public void testIntegration8()                        { doTest(true); }
-  public void testIntegration9()                        { doTest(true); }
-  public void testInvalidHereDoc()                      { doTest(true); }
-  public void testIsBackquoteCommand()                  { doTest(true); }
-  public void testIssue118()                            { doTest(true); }
-  public void testIssue125()                            { doTest(true); }
-  public void testIssue201()                            { doTest(true); }
-  public void testIssue243()                            { doTest(true); }
-  public void testIssue265()                            { doTest(true); }
-  public void testIssue272()                            { doTest(true); }
-  public void testIssue302()                            { doTest(true); }
-  public void testIssue312()                            { doTest(true); }
-  public void testIssue320()                            { doTest(true); }
-  public void testIssue329()                            { doTest(true); }
-  public void testIssue330()                            { doTest(true); }
-  public void testIssue333()                            { doTest(true); }
-  public void testIssue341()                            { doTest(true); }
-  public void testIssue350()                            { doTest(true); }
-  public void testIssue351()                            { doTest(true); }
-  public void testIssue389()                            { doTest(true); }
-  public void testIssue393()                            { doTest(true); }
-  public void testIssue401()                            { doTest(true); }
-  public void testIssue431()                            { doTest(true); }
-  public void testIssue432()                            { doTest(true); }
-  public void testIssue458()                            { doTest(true); }
-  public void testIssue474()                            { doTest(true); }
-  public void testIssue515()                            { doTest(true); }
-  public void testIssue657()                            { doTest(true); }
-  public void testIssue89()                             { doTest(true); }
-  public void testIssue244()                            { doTest(true); }
-  public void testIssue367()                            { doTest(true); }
-  public void testIssue412()                            { doTest(true); }
-  public void testIssue460()                            { doTest(true); }
-  public void testLetParse()                            { doTest(true); }
-  public void testLocalParsing()                        { doTest(true); }
-  public void testLocalParsingEmbedded()                { doTest(true); }
-  public void testMapfileParse()                        { doTest(true); }
-  public void testMultiwordPattern()                    { doTest(true); }
-  public void testNegationOperator()                    { doTest(true); }
-  public void testNestedIf()                            { doTest(true); }
-  public void testNestedInIf()                          { doTest(true); }
-  public void testNestedStatements()                    { doTest(true); }
-  public void testNewlinesAfterCommand()                { doTest(true); }
-  public void testParameterExpansionParse()             { doTest(true); }
-  public void testParse1()                              { doTest(true); }
-  public void testParse2()                              { doTest(true); }
-  public void testParse3()                              { doTest(true); }
-  public void testParse4()                              { doTest(true); }
-  public void testParseAdvanced()                       { doTest(true); }
-  public void testParseArithmeticCommand1()             { doTest(true); }
-  public void testParseArrayAssignment()                { doTest(true); }
-  public void testParseArrayVarAssign()                 { doTest(true); }
-  public void testParseArrayVarRef()                    { doTest(true); }
-  public void testParseAssignment()                     { doTest(true); }
-  public void testParseAssignment1()                    { doTest(true); }
-  public void testParseCombinedCommand()                { doTest(true); }
-  public void testParseCompoundList()                   { doTest(true); }
-  public void testParseCompoundList0()                  { doTest(true); }
-  public void testParseCompoundList1()                  { doTest(true); }
-  public void testParseCompoundList2()                  { doTest(true); }
-  public void testParseCompoundList3()                  { doTest(true); }
-  public void testParseCompoundList5()                  { doTest(true); }
-  public void testParseCompoundList6()                  { doTest(true); }
-  public void testParseEmbeddedVar()                    { doTest(true); }
-  public void testParseError1()                         { doTest(true); }
-  public void testParseGroupCommand()                   { doTest(true); }
-  public void testParseInvalidLengthExpansion()         { doTest(true); }
-  public void testParseLengthExpansion()                { doTest(true); }
-  public void testParseList1Complex1()                  { doTest(true); }
-  public void testParseList1Error1()                    { doTest(true); }
-  public void testParseList1SimpleWithNewlines()        { doTest(true); }
-  public void testParsePipelineCommand2()               { doTest(true); }
-  public void testParsePipelineCommand3()               { doTest(true); }
-  public void testParsePipelineCommand4()               { doTest(true); }
-  public void testPiplelineParse()                      { doTest(true); }
-  public void testParseReplace()                        { doTest(true); }
-  public void testParseSimpleCommand2()                 { doTest(true); }
-  public void testParseSimpleCommandCombined()          { doTest(true); }
-  public void testParseSimpleCommandCombined3()         { doTest(true); }
-  public void testParseSimpleCommandCombinedError()     { doTest(true); }
-  public void testParseSimpleList1()                    { doTest(true); }
-  public void testParseSimpleList2()                    { doTest(true); }
-  public void testParseSimpleList3()                    { doTest(true); }
-  public void testParseSimpleListError1()               { doTest(true); }
-  public void testParseSubstitution()                   { doTest(true); }
-  public void testParseSubstitution2()                  { doTest(true); }
-  public void testParseWord2()                          { doTest(true); }
-  public void testParsingArrayVar()                     { doTest(true); }
-  public void testPipelineWithConditional()             { doTest(true); }
-  public void testPrintfNoVar()                         { doTest(true); }
-  public void testPrintfVarDef()                        { doTest(true); }
-  public void testProcessSubstitution()                 { doTest(true); }
-  public void testRedirectionProcessSubstitution()      { doTest(true); }
-  public void testReadIsValid()                         { doTest(true); }
-  public void testReadarrayParse()                      { doTest(true); }
-  public void testRedirectErrors()                      { doTest(true); }
-  public void testRedirectWithArithmeticCommand()       { doTest(true); }
-  public void testRedirects()                           { doTest(true); }
-  public void testRegExp()                              { doTest(true); }
-  public void testSelectCommand1()                      { doTest(true); }
-  public void testSelectLoop()                          { doTest(true); }
-  public void testShebang()                             { doTest(true); }
-  public void testSimpleHereDocs()                      { doTest(true); }
-  public void testSimpleListParsing()                   { doTest(true); }
-  public void testSpecialVars()                         { doTest(true); }
-  public void testSquareArithmetic()                    { doTest(true); }
-  public void testSubshell()                            { doTest(true); }
-  public void testSubshellCommand1()                    { doTest(true); }
-  public void testTrapParse()                           { doTest(true); }
-  public void testTypesetParse()                        { doTest(true); }
-  public void testUnsetArrayAssignment()                { doTest(true); }
-  public void testUntilParse()                          { doTest(true); }
-  public void testVariableArrayParsing()                { doTest(true); }
-  public void testVariableDollar()                      { doTest(true); }
-  public void testVariableParsing()                     { doTest(true); }
-  public void testWhileLoopSimple()                     { doTest(true); }
-  public void testWhileLoopSimple2()                    { doTest(true); }
-  public void testWhileParse()                          { doTest(true); }
-  public void testIfCommandError1()                     { doTest(true); }
-  public void testIfCommandError2()                     { doTest(true); }
-  public void testIfErrorConstruct()                    { doTest(true); }
-  public void testIfIncompleteParse()                   { doTest(true); }
-  public void testSelectIncompleteParse()               { doTest(true); }
-  public void testWhileErrorConstruct()                 { doTest(true); }
-  public void testWhileIncompleteParse()                { doTest(true); }
-  public void testWhileLoopError1()                     { doTest(true); }
-  public void testUntilIncompleteParse()                { doTest(true); }
-  public void testCaseError1()                          { doTest(true); }
-  public void testCaseError2()                          { doTest(true); }
-  public void testForIncompleteParse()                  { doTest(true); }
-  public void testFunctionDefError()                    { doTest(true); }
-  public void testParseSimpleCommandAssignment1()       { doTest(true); }
-  public void testConditionalError()                    { doTest(true); }
-  public void testParseGroupCommandError()              { doTest(true); }
-  public void testSelectErrors()                        { doTest(true); }
-  public void testForCommandError1()                    { doTest(true); }
-  public void testForErrors()                           { doTest(true); }
+  private final TestFixture<ParsingTestFixture> parsingFixture =
+    parsingFixture(projectFixture, PluginPathManager.getPluginHomePath("sh") + "/core/testData/oldParser", "sh", true, new ShParserDefinition());
+
+  @Test public void testAppendAssignment()                    { parsingFixture.get().doTest(true); }
+  @Test public void testArithForCommand1()                    { parsingFixture.get().doTest(true); }
+  @Test public void testArithmeticArrayRefs()                 { parsingFixture.get().doTest(true); }
+  @Test public void testArithmeticComplexExpressions()        { parsingFixture.get().doTest(true); }
+  @Test public void testArithmeticForLoop()                   { parsingFixture.get().doTest(true); }
+  @Test public void testArithmeticForLoopVarError()           { parsingFixture.get().doTest(true); }
+  @Test public void testArithmeticNumbers()                   { parsingFixture.get().doTest(true); }
+  @Test public void testArithmeticParse()                     { parsingFixture.get().doTest(true); }
+  @Test public void testArithmeticParseAssignments()          { parsingFixture.get().doTest(true); }
+  @Test public void testArithmeticParseAssignmentsErrors()    { parsingFixture.get().doTest(true); }
+  @Test public void testArithmeticParseList()                 { parsingFixture.get().doTest(true); }
+  @Test public void testArithmeticParseParentheses()          { parsingFixture.get().doTest(true); }
+  @Test public void testArithmeticParseSquareMode()           { parsingFixture.get().doTest(true); }
+  @Test public void testArithmeticTristateOperator()          { parsingFixture.get().doTest(true); }
+  @Test public void testArithmeticVarAssignment()             { parsingFixture.get().doTest(true); }
+  @Test public void testArrayAssignment()                     { parsingFixture.get().doTest(true); }
+  @Test public void testArrayVar()                            { parsingFixture.get().doTest(true); }
+  @Test public void testAssigmentCommands()                   { parsingFixture.get().doTest(true); }
+  @Test public void testBackquoteCommand()                    { parsingFixture.get().doTest(true); }
+  @Test public void testBackquoteCommandErrors()              { parsingFixture.get().doTest(true); }
+  @Test public void testBacktickParsing()                     { parsingFixture.get().doTest(true); }
+  @Test public void testBodyWithErrors()                      { parsingFixture.get().doTest(true); }
+  @Test public void testBuildInCommandDeclare()               { parsingFixture.get().doTest(true); }
+  @Test public void testCaseSimple1()                         { parsingFixture.get().doTest(true); }
+  @Test public void testCheckErrorMarkers()                   { parsingFixture.get().doTest(true); }
+  @Test public void testCommandParseAssignment()              { parsingFixture.get().doTest(true); }
+  @Test public void testCommandWithErrors()                   { parsingFixture.get().doTest(true); }
+  @Test public void testComplicatedHereDoc()                  { parsingFixture.get().doTest(true); }
+  @Test public void testComplicatedHereDocs()                 { parsingFixture.get().doTest(true); }
+  @Test public void testComposedCommand()                     { parsingFixture.get().doTest(true); }
+  @Test public void testComposedDefaultValue()                { parsingFixture.get().doTest(true); }
+  @Test public void testConditionalAdvancedExpressions()      { parsingFixture.get().doTest(true); }
+  @Test public void testConditionalSingleTest()               { parsingFixture.get().doTest(true); }
+  @Test public void testConditionalWithBackquote()            { parsingFixture.get().doTest(true); }
+  @Test public void testDeclareParse()                        { parsingFixture.get().doTest(true); }
+  @Test public void testDollarCommand()                       { parsingFixture.get().doTest(true); }
+  @Test public void testEchoWithUmlauts()                     { parsingFixture.get().doTest(true); }
+  @Test public void testEmbeddedVars()                        { parsingFixture.get().doTest(true); }
+  @Test public void testEmptyArithmeticExpression()           { parsingFixture.get().doTest(true); }
+  @Test public void testEvalParse()                           { parsingFixture.get().doTest(true); }
+  @Test public void testExportParse()                         { parsingFixture.get().doTest(true); }
+  @Test public void testFileParsing3()                        { parsingFixture.get().doTest(true); }
+  @Test public void testFileParsing4()                        { parsingFixture.get().doTest(true); }
+  @Test public void testForCommand()                          { parsingFixture.get().doTest(true); }
+  @Test public void testForLoopCompoundBlock()                { parsingFixture.get().doTest(true); }
+  @Test public void testFunction()                            { parsingFixture.get().doTest(true); }
+  @Test public void testFunction2()                           { parsingFixture.get().doTest(true); }
+  @Test public void testFunctionDefinition()                  { parsingFixture.get().doTest(true); }
+  @Test public void testFunctionWithReadArgs()                { parsingFixture.get().doTest(true); }
+  @Test public void testGetoptsBuiltin()                      { parsingFixture.get().doTest(true); }
+  @Test public void testGetoptsIsValid()                      { parsingFixture.get().doTest(true); }
+  @Test public void testHereDocMarkerExclamation()            { parsingFixture.get().doTest(true); }
+  @Test public void testHereDocVar()                          { parsingFixture.get().doTest(true); }
+  @Test public void testHereStrings()                         { parsingFixture.get().doTest(true); }
+  @Test public void testHereWhitespacePrefix()                { parsingFixture.get().doTest(true); }
+  @Test public void testHeredocInLoop()                       { parsingFixture.get().doTest(true); }
+  @Test public void testHeredocTwice()                        { parsingFixture.get().doTest(true); }
+  @Test public void testIfExpression()                        { parsingFixture.get().doTest(true); }
+  @Test public void testIfCommand1()                          { parsingFixture.get().doTest(true); }
+  @Test public void testIfCommand2()                          { parsingFixture.get().doTest(true); }
+  @Test public void testIfCommand3()                          { parsingFixture.get().doTest(true); }
+  @Test public void testIfCommand4()                          { parsingFixture.get().doTest(true); }
+  @Test public void testIfParse()                             { parsingFixture.get().doTest(true); }
+  @Test public void testIfWithFaultyRedirect()                { parsingFixture.get().doTest(true); }
+  @Test public void testIfWithLocalVarRedirect()              { parsingFixture.get().doTest(true); }
+  @Test public void testIfWithNormalRedirect()                { parsingFixture.get().doTest(true); }
+  @Test public void testIfWithReadRedirect()                  { parsingFixture.get().doTest(true); }
+  @Test public void testIncludeCommandParseErrors()           { parsingFixture.get().doTest(true); }
+  @Test public void testIncludeCommandParseSimpleDot()        { parsingFixture.get().doTest(true); }
+  @Test public void testIncludeCommandParseSimpleSource()     { parsingFixture.get().doTest(true); }
+  @Test public void testIntegration1()                        { parsingFixture.get().doTest(true); }
+  @Test public void testIntegration10()                       { parsingFixture.get().doTest(true); }
+  @Test public void testIntegration11()                       { parsingFixture.get().doTest(true); }
+  @Test public void testIntegration12()                       { parsingFixture.get().doTest(true); }
+  @Test public void testIntegration13()                       { parsingFixture.get().doTest(true); }
+  @Test public void testIntegration14()                       { parsingFixture.get().doTest(true); }
+  @Test public void testIntegration15()                       { parsingFixture.get().doTest(true); }
+  @Test public void testIntegration16()                       { parsingFixture.get().doTest(true); }
+  @Test public void testIntegration2()                        { parsingFixture.get().doTest(true); }
+  @Test public void testIntegration3()                        { parsingFixture.get().doTest(true); }
+  @Test public void testIntegration4()                        { parsingFixture.get().doTest(true); }
+  @Test public void testIntegration5()                        { parsingFixture.get().doTest(true); }
+  @Test public void testIntegration6()                        { parsingFixture.get().doTest(true); }
+  @Test public void testIntegration7()                        { parsingFixture.get().doTest(true); }
+  @Test public void testIntegration8()                        { parsingFixture.get().doTest(true); }
+  @Test public void testIntegration9()                        { parsingFixture.get().doTest(true); }
+  @Test public void testInvalidHereDoc()                      { parsingFixture.get().doTest(true); }
+  @Test public void testIsBackquoteCommand()                  { parsingFixture.get().doTest(true); }
+  @Test public void testIssue118()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue125()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue201()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue243()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue265()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue272()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue302()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue312()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue320()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue329()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue330()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue333()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue341()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue350()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue351()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue389()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue393()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue401()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue431()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue432()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue458()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue474()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue515()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue657()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue89()                             { parsingFixture.get().doTest(true); }
+  @Test public void testIssue244()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue367()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue412()                            { parsingFixture.get().doTest(true); }
+  @Test public void testIssue460()                            { parsingFixture.get().doTest(true); }
+  @Test public void testLetParse()                            { parsingFixture.get().doTest(true); }
+  @Test public void testLocalParsing()                        { parsingFixture.get().doTest(true); }
+  @Test public void testLocalParsingEmbedded()                { parsingFixture.get().doTest(true); }
+  @Test public void testMapfileParse()                        { parsingFixture.get().doTest(true); }
+  @Test public void testMultiwordPattern()                    { parsingFixture.get().doTest(true); }
+  @Test public void testNegationOperator()                    { parsingFixture.get().doTest(true); }
+  @Test public void testNestedIf()                            { parsingFixture.get().doTest(true); }
+  @Test public void testNestedInIf()                          { parsingFixture.get().doTest(true); }
+  @Test public void testNestedStatements()                    { parsingFixture.get().doTest(true); }
+  @Test public void testNewlinesAfterCommand()                { parsingFixture.get().doTest(true); }
+  @Test public void testParameterExpansionParse()             { parsingFixture.get().doTest(true); }
+  @Test public void testParse1()                              { parsingFixture.get().doTest(true); }
+  @Test public void testParse2()                              { parsingFixture.get().doTest(true); }
+  @Test public void testParse3()                              { parsingFixture.get().doTest(true); }
+  @Test public void testParse4()                              { parsingFixture.get().doTest(true); }
+  @Test public void testParseAdvanced()                       { parsingFixture.get().doTest(true); }
+  @Test public void testParseArithmeticCommand1()             { parsingFixture.get().doTest(true); }
+  @Test public void testParseArrayAssignment()                { parsingFixture.get().doTest(true); }
+  @Test public void testParseArrayVarAssign()                 { parsingFixture.get().doTest(true); }
+  @Test public void testParseArrayVarRef()                    { parsingFixture.get().doTest(true); }
+  @Test public void testParseAssignment()                     { parsingFixture.get().doTest(true); }
+  @Test public void testParseAssignment1()                    { parsingFixture.get().doTest(true); }
+  @Test public void testParseCombinedCommand()                { parsingFixture.get().doTest(true); }
+  @Test public void testParseCompoundList()                   { parsingFixture.get().doTest(true); }
+  @Test public void testParseCompoundList0()                  { parsingFixture.get().doTest(true); }
+  @Test public void testParseCompoundList1()                  { parsingFixture.get().doTest(true); }
+  @Test public void testParseCompoundList2()                  { parsingFixture.get().doTest(true); }
+  @Test public void testParseCompoundList3()                  { parsingFixture.get().doTest(true); }
+  @Test public void testParseCompoundList5()                  { parsingFixture.get().doTest(true); }
+  @Test public void testParseCompoundList6()                  { parsingFixture.get().doTest(true); }
+  @Test public void testParseEmbeddedVar()                    { parsingFixture.get().doTest(true); }
+  @Test public void testParseError1()                         { parsingFixture.get().doTest(true); }
+  @Test public void testParseGroupCommand()                   { parsingFixture.get().doTest(true); }
+  @Test public void testParseInvalidLengthExpansion()         { parsingFixture.get().doTest(true); }
+  @Test public void testParseLengthExpansion()                { parsingFixture.get().doTest(true); }
+  @Test public void testParseList1Complex1()                  { parsingFixture.get().doTest(true); }
+  @Test public void testParseList1Error1()                    { parsingFixture.get().doTest(true); }
+  @Test public void testParseList1SimpleWithNewlines()        { parsingFixture.get().doTest(true); }
+  @Test public void testParsePipelineCommand2()               { parsingFixture.get().doTest(true); }
+  @Test public void testParsePipelineCommand3()               { parsingFixture.get().doTest(true); }
+  @Test public void testParsePipelineCommand4()               { parsingFixture.get().doTest(true); }
+  @Test public void testPiplelineParse()                      { parsingFixture.get().doTest(true); }
+  @Test public void testParseReplace()                        { parsingFixture.get().doTest(true); }
+  @Test public void testParseSimpleCommand2()                 { parsingFixture.get().doTest(true); }
+  @Test public void testParseSimpleCommandCombined()          { parsingFixture.get().doTest(true); }
+  @Test public void testParseSimpleCommandCombined3()         { parsingFixture.get().doTest(true); }
+  @Test public void testParseSimpleCommandCombinedError()     { parsingFixture.get().doTest(true); }
+  @Test public void testParseSimpleList1()                    { parsingFixture.get().doTest(true); }
+  @Test public void testParseSimpleList2()                    { parsingFixture.get().doTest(true); }
+  @Test public void testParseSimpleList3()                    { parsingFixture.get().doTest(true); }
+  @Test public void testParseSimpleListError1()               { parsingFixture.get().doTest(true); }
+  @Test public void testParseSubstitution()                   { parsingFixture.get().doTest(true); }
+  @Test public void testParseSubstitution2()                  { parsingFixture.get().doTest(true); }
+  @Test public void testParseWord2()                          { parsingFixture.get().doTest(true); }
+  @Test public void testParsingArrayVar()                     { parsingFixture.get().doTest(true); }
+  @Test public void testPipelineWithConditional()             { parsingFixture.get().doTest(true); }
+  @Test public void testPrintfNoVar()                         { parsingFixture.get().doTest(true); }
+  @Test public void testPrintfVarDef()                        { parsingFixture.get().doTest(true); }
+  @Test public void testProcessSubstitution()                 { parsingFixture.get().doTest(true); }
+  @Test public void testRedirectionProcessSubstitution()      { parsingFixture.get().doTest(true); }
+  @Test public void testReadIsValid()                         { parsingFixture.get().doTest(true); }
+  @Test public void testReadarrayParse()                      { parsingFixture.get().doTest(true); }
+  @Test public void testRedirectErrors()                      { parsingFixture.get().doTest(true); }
+  @Test public void testRedirectWithArithmeticCommand()       { parsingFixture.get().doTest(true); }
+  @Test public void testRedirects()                           { parsingFixture.get().doTest(true); }
+  @Test public void testRegExp()                              { parsingFixture.get().doTest(true); }
+  @Test public void testSelectCommand1()                      { parsingFixture.get().doTest(true); }
+  @Test public void testSelectLoop()                          { parsingFixture.get().doTest(true); }
+  @Test public void testShebang()                             { parsingFixture.get().doTest(true); }
+  @Test public void testSimpleHereDocs()                      { parsingFixture.get().doTest(true); }
+  @Test public void testSimpleListParsing()                   { parsingFixture.get().doTest(true); }
+  @Test public void testSpecialVars()                         { parsingFixture.get().doTest(true); }
+  @Test public void testSquareArithmetic()                    { parsingFixture.get().doTest(true); }
+  @Test public void testSubshell()                            { parsingFixture.get().doTest(true); }
+  @Test public void testSubshellCommand1()                    { parsingFixture.get().doTest(true); }
+  @Test public void testTrapParse()                           { parsingFixture.get().doTest(true); }
+  @Test public void testTypesetParse()                        { parsingFixture.get().doTest(true); }
+  @Test public void testUnsetArrayAssignment()                { parsingFixture.get().doTest(true); }
+  @Test public void testUntilParse()                          { parsingFixture.get().doTest(true); }
+  @Test public void testVariableArrayParsing()                { parsingFixture.get().doTest(true); }
+  @Test public void testVariableDollar()                      { parsingFixture.get().doTest(true); }
+  @Test public void testVariableParsing()                     { parsingFixture.get().doTest(true); }
+  @Test public void testWhileLoopSimple()                     { parsingFixture.get().doTest(true); }
+  @Test public void testWhileLoopSimple2()                    { parsingFixture.get().doTest(true); }
+  @Test public void testWhileParse()                          { parsingFixture.get().doTest(true); }
+  @Test public void testIfCommandError1()                     { parsingFixture.get().doTest(true); }
+  @Test public void testIfCommandError2()                     { parsingFixture.get().doTest(true); }
+  @Test public void testIfErrorConstruct()                    { parsingFixture.get().doTest(true); }
+  @Test public void testIfIncompleteParse()                   { parsingFixture.get().doTest(true); }
+  @Test public void testSelectIncompleteParse()               { parsingFixture.get().doTest(true); }
+  @Test public void testWhileErrorConstruct()                 { parsingFixture.get().doTest(true); }
+  @Test public void testWhileIncompleteParse()                { parsingFixture.get().doTest(true); }
+  @Test public void testWhileLoopError1()                     { parsingFixture.get().doTest(true); }
+  @Test public void testUntilIncompleteParse()                { parsingFixture.get().doTest(true); }
+  @Test public void testCaseError1()                          { parsingFixture.get().doTest(true); }
+  @Test public void testCaseError2()                          { parsingFixture.get().doTest(true); }
+  @Test public void testForIncompleteParse()                  { parsingFixture.get().doTest(true); }
+  @Test public void testFunctionDefError()                    { parsingFixture.get().doTest(true); }
+  @Test public void testParseSimpleCommandAssignment1()       { parsingFixture.get().doTest(true); }
+  @Test public void testConditionalError()                    { parsingFixture.get().doTest(true); }
+  @Test public void testParseGroupCommandError()              { parsingFixture.get().doTest(true); }
+  @Test public void testSelectErrors()                        { parsingFixture.get().doTest(true); }
+  @Test public void testForCommandError1()                    { parsingFixture.get().doTest(true); }
+  @Test public void testForErrors()                           { parsingFixture.get().doTest(true); }
 }

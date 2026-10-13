@@ -5,22 +5,29 @@ import com.jetbrains.python.allure.Components;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
-import com.intellij.lang.LanguageASTFactory;
-import com.intellij.testFramework.ParsingTestCase;
-import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationParserDefinition;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
-import com.jetbrains.python.documentation.doctest.PyDoctestTokenSetContributor;
 import com.jetbrains.python.psi.PyEllipsisLiteralExpression;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PythonVisitorFilter;
-import com.jetbrains.python.psi.impl.PythonASTFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.List;
+
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixtureKt.parsingFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Mikhail Golubev
@@ -28,120 +35,105 @@ import java.util.List;
 @Subsystems.CodeInsight
 @Components.Parsing
 @Layers.Functional
-public class PyFunctionTypeAnnotationParsingTest extends ParsingTestCase {
-  public PyFunctionTypeAnnotationParsingTest() {
-    super("functionTypeComment/parsing", "functionTypeComment", new PyFunctionTypeAnnotationParserDefinition(), new PythonParserDefinition());
-  }
+@TestApplication
+public class PyFunctionTypeAnnotationParsingTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    getApplication().registerService(PyElementTypesFacade.class, PyElementTypesFacadeImpl.class);
-    registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
-    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
-    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PyDoctestTokenSetContributor());
-    addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), new PythonASTFactory());
-  }
+  private final TestFixture<ParsingTestFixture> parsingFixture =
+    parsingFixture(projectFixture, PythonTestUtil.getTestDataPath() + "/functionTypeComment/parsing", "functionTypeComment", false,
+                   new PyFunctionTypeAnnotationParserDefinition(), new PythonParserDefinition());
 
-  @Override
-  protected void tearDown() throws Exception {
-    // clear cached extensions
-    try {
-      PythonVisitorFilter.INSTANCE.removeExplicitExtension(PythonLanguage.INSTANCE, (visitorClass, file) -> false);
-      PythonVisitorFilter.INSTANCE.removeExplicitExtension(PyFunctionTypeAnnotationDialect.INSTANCE, (visitorClass, file) -> false);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
-  @Override
-  protected void doCodeTest(@NotNull String typeAnnotation) {
-    try {
-      super.doCodeTest(typeAnnotation);
-    }
-    catch (IOException e) {
-      throw new AssertionError(e);
-    }
+  private void doCodeTest(@NotNull String typeAnnotation) {
+    parsingFixture.get().doCodeTest(typeAnnotation);
   }
 
   @Nullable
   private PyFunctionTypeAnnotation getParsedAnnotation() {
-    final PyFunctionTypeAnnotationFile file = assertInstanceOf(myFile, PyFunctionTypeAnnotationFile.class);
+    final PyFunctionTypeAnnotationFile file = assertInstanceOf(PyFunctionTypeAnnotationFile.class, parsingFixture.get().getFile());
     return file.getAnnotation();
   }
 
+  @Test
   public void testEmpty() {
     doCodeTest("() -> None");
 
-    final PyFunctionTypeAnnotation annotation = getParsedAnnotation();
-    assertNotNull(annotation);
-    assertEmpty(annotation.getParameterTypeList().getParameterTypes());
-    final PyExpression returnType = annotation.getReturnType();
-    assertNotNull(returnType);
-    assertEquals("None", returnType.getText());
+    ReadAction.runBlocking(() -> {
+      final PyFunctionTypeAnnotation annotation = getParsedAnnotation();
+      assertNotNull(annotation);
+      assertTrue(annotation.getParameterTypeList().getParameterTypes().isEmpty());
+      final PyExpression returnType = annotation.getReturnType();
+      assertNotNull(returnType);
+      assertEquals("None", returnType.getText());
+    });
   }
 
+  @Test
   public void testSimple() {
     doCodeTest("(int, str) -> None");
   }
 
+  @Test
   public void testVarargs() {
     doCodeTest("(*int, **str) -> None");
   }
 
+  @Test
   public void testEllipsis() {
     doCodeTest("(...) -> None");
-    final PyFunctionTypeAnnotation annotation = getParsedAnnotation();
-    final List<PyExpression> paramTypes = annotation.getParameterTypeList().getParameterTypes();
-    assertSize(1, paramTypes);
-    assertInstanceOf(paramTypes.get(0), PyEllipsisLiteralExpression.class);
-    final PyExpression returnType = annotation.getReturnType();
-    assertNotNull(returnType);
+    ReadAction.runBlocking(() -> {
+      final PyFunctionTypeAnnotation annotation = getParsedAnnotation();
+      final List<PyExpression> paramTypes = annotation.getParameterTypeList().getParameterTypes();
+      assertEquals(1, paramTypes.size());
+      assertInstanceOf(PyEllipsisLiteralExpression.class, paramTypes.get(0));
+      final PyExpression returnType = annotation.getReturnType();
+      assertNotNull(returnType);
+    });
   }
 
+  @Test
   public void testNoReturnType() {
     doCodeTest("(int) -> ");
-    final PyFunctionTypeAnnotation annotation = getParsedAnnotation();
-    final List<PyExpression> paramTypes = annotation.getParameterTypeList().getParameterTypes();
-    assertSize(1, paramTypes);
-    assertNull(annotation.getReturnType());
+    ReadAction.runBlocking(() -> {
+      final PyFunctionTypeAnnotation annotation = getParsedAnnotation();
+      final List<PyExpression> paramTypes = annotation.getParameterTypeList().getParameterTypes();
+      assertEquals(1, paramTypes.size());
+      assertNull(annotation.getReturnType());
+    });
   }
 
+  @Test
   public void testNoArrowAndReturnType() {
     doCodeTest("(int)");
   }
 
+  @Test
   public void testNoClosingParenthesis() {
     doCodeTest("(int");
   }
 
+  @Test
   public void testDanglingComma() {
     doCodeTest("(int,) -> None");
   }
 
+  @Test
   public void testEmptyFunctionType() {
     doCodeTest("");
-    assertNull(getParsedAnnotation());
+    assertNull(ReadAction.computeBlocking(() -> getParsedAnnotation()));
   }
 
+  @Test
   public void testNoTypeAfterStar() {
     doCodeTest("(*) -> int");
   }
 
+  @Test
   public void testLambdaAsFirstType() {
     doCodeTest("(lambda: 42");
   }
 
+  @Test
   public void testDefAsFirstType() {
     doCodeTest("(def foo)");
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath();
   }
 }

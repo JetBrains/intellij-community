@@ -16,7 +16,9 @@
 package com.intellij.java.parser.statementParsing;
 
 import com.intellij.java.parser.JavaParsingTestConfigurator;
+import com.intellij.testFramework.junit5.TestApplication;
 
+@TestApplication
 public class ForParsingTest extends AbstractBasicForParsingTest {
   public ForParsingTest() {
     super(new JavaParsingTestConfigurator());

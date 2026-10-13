@@ -2,54 +2,58 @@
 package com.intellij.sh.parser;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.openapi.project.Project;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class ShParserTest extends ParsingTestCase {
-  public ShParserTest() {
-    super("parser", "sh", true, new ShParserDefinition());
-  }
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixtureKt.parsingFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 
-  @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("sh") + "/core/testData";
-  }
+@TestApplication
+public class ShParserTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
 
-  public void testArithmeticExpansion() { doTest(true); }
-  public void testTrickyStrings() { doTest(true); }
-  public void testStrings()       { doTest(true); }
-  public void testStrings2()      { doTest(true); }
-  public void testShebang()       { doTest(true); }
-  public void testFirst()         { doTest(true); }
-  public void testLines()         { doTest(true); }
-  public void testCase()          { doTest(true); }
-  public void testEcho()          { doTest(true); }
-  public void testFor()           { doTest(true); }
-  public void testSelect()        { doTest(true); }
-  public void testExpr()          { doTest(true); }
-  public void testHeredoc()       { doTest(true); }
-  public void testHereEof()       { doTest(true); }
-  public void testIf()            { doTest(true); }
-  public void testConditional()   { doTest(true); }
-  public void testBacktick()      { doTest(true); }
-  public void testFunction()      { doTest(true); }
-  public void testTrap()          { doTest(true); }
-  public void testMacports()      { doTest(true); }
-  public void testParams()        { doTest(true); }
-  public void testDict()          { doTest(true); }
-  public void testRecover()       { doTest(true); }
-  public void testGit()           { doTest(true); }
-  public void testGaudi()         { doTest(true); }
-  public void testPipeline()      { doTest(true); }
-  public void testCommands()      { doTest(true); }
-  public void testRegex()         { doTest(true); }
-  public void testRegex2()        { doTest(true); }
-  public void testRedirection()   { doTest(true); }
-  public void testRedirection2()  { doTest(true); }
-  public void testSource()        { doTest(true); }
-  public void testRedirectErrors(){ doTest(true); }
-  public void testIdea263122()    { doTest(true); } // IDEA-263122
-  public void testIdea244342()    { doTest(true); } // IDEA-244342
-  public void testIdea279283()    { doTest(true); } // IDEA-279283
-  public void testInstallJdk()    { doTest(true); }
-  public void testTest(){ doTest(true); }
+  private final TestFixture<ParsingTestFixture> parsingFixture =
+    parsingFixture(projectFixture, PluginPathManager.getPluginHomePath("sh") + "/core/testData/parser", "sh", true, new ShParserDefinition());
+
+  @Test public void testArithmeticExpansion() { parsingFixture.get().doTest(true); }
+  @Test public void testTrickyStrings() { parsingFixture.get().doTest(true); }
+  @Test public void testStrings()       { parsingFixture.get().doTest(true); }
+  @Test public void testStrings2()      { parsingFixture.get().doTest(true); }
+  @Test public void testShebang()       { parsingFixture.get().doTest(true); }
+  @Test public void testFirst()         { parsingFixture.get().doTest(true); }
+  @Test public void testLines()         { parsingFixture.get().doTest(true); }
+  @Test public void testCase()          { parsingFixture.get().doTest(true); }
+  @Test public void testEcho()          { parsingFixture.get().doTest(true); }
+  @Test public void testFor()           { parsingFixture.get().doTest(true); }
+  @Test public void testSelect()        { parsingFixture.get().doTest(true); }
+  @Test public void testExpr()          { parsingFixture.get().doTest(true); }
+  @Test public void testHeredoc()       { parsingFixture.get().doTest(true); }
+  @Test public void testHereEof()       { parsingFixture.get().doTest(true); }
+  @Test public void testIf()            { parsingFixture.get().doTest(true); }
+  @Test public void testConditional()   { parsingFixture.get().doTest(true); }
+  @Test public void testBacktick()      { parsingFixture.get().doTest(true); }
+  @Test public void testFunction()      { parsingFixture.get().doTest(true); }
+  @Test public void testTrap()          { parsingFixture.get().doTest(true); }
+  @Test public void testMacports()      { parsingFixture.get().doTest(true); }
+  @Test public void testParams()        { parsingFixture.get().doTest(true); }
+  @Test public void testDict()          { parsingFixture.get().doTest(true); }
+  @Test public void testRecover()       { parsingFixture.get().doTest(true); }
+  @Test public void testGit()           { parsingFixture.get().doTest(true); }
+  @Test public void testGaudi()         { parsingFixture.get().doTest(true); }
+  @Test public void testPipeline()      { parsingFixture.get().doTest(true); }
+  @Test public void testCommands()      { parsingFixture.get().doTest(true); }
+  @Test public void testRegex()         { parsingFixture.get().doTest(true); }
+  @Test public void testRegex2()        { parsingFixture.get().doTest(true); }
+  @Test public void testRedirection()   { parsingFixture.get().doTest(true); }
+  @Test public void testRedirection2()  { parsingFixture.get().doTest(true); }
+  @Test public void testSource()        { parsingFixture.get().doTest(true); }
+  @Test public void testRedirectErrors(){ parsingFixture.get().doTest(true); }
+  @Test public void testIdea263122()    { parsingFixture.get().doTest(true); } // IDEA-263122
+  @Test public void testIdea244342()    { parsingFixture.get().doTest(true); } // IDEA-244342
+  @Test public void testIdea279283()    { parsingFixture.get().doTest(true); } // IDEA-279283
+  @Test public void testInstallJdk()    { parsingFixture.get().doTest(true); }
+  @Test public void testTest(){ parsingFixture.get().doTest(true); }
 }
