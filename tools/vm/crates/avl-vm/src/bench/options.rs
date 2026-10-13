@@ -17,9 +17,9 @@ pub(crate) const DEFAULT_TARGET: &str = "//build:idea_dist";
 pub(crate) const LONG_ABOUT: &str = "Measures the start-up of the IDE on this macOS host, from a staged copy of its dev \
 distribution, and takes no worker and no lease.
 
-welcome, open-project and project build the self-contained distribution --target and its row launcher with the host Bazel build. \
-They stage both as an immutable generation under the runtime root, keyed by their digest. Every IDE run starts from \
-that generation, never from bazel-out. The answer is the summary, also in <session>/summary.json, and a text digest.
+welcome, open-project and project build the self-contained distribution --target with the host Bazel build. They \
+stage it with its JBR as an immutable generation under the runtime root, keyed by its digest. Every IDE run starts \
+from that generation, never from bazel-out. The answer is the summary, also in <session>/summary.json, and a text digest.
 
 A session holds a lock from its build to its summary, so a second session or a gc on this host is refused with \
 bench_busy. When AIR_VM_BIN names the vm binary, a session notes its age. A source under crates/ that is newer is a \
@@ -227,7 +227,7 @@ pub(crate) const DEFAULT_OPEN_PROJECT_RUNS: u32 = 3;
 /// The options of a verb that starts the IDE.
 #[derive(Clone, Debug, PartialEq, clap::Args)]
 pub(crate) struct LaunchArgs {
-    /// The Bazel label of the self-contained distribution. Its row launcher, the label without `_dist`, gives the JBR.
+    /// The Bazel label of the self-contained distribution. The IDE starts with the JBR inside the distribution.
     #[arg(long, value_name = "LABEL", default_value = DEFAULT_TARGET, value_parser = flag_value)]
     pub(crate) target: String,
     /// The time to wait after the event of the gate, before the quit: `3s`, `500ms`, `1m` or `0`.

@@ -192,9 +192,10 @@ that the JVM loads, and the digest notes how many samples it left out.
 | `ls` | Which sessions does this host have? | One line per session, newest first, with a name that the other verbs accept. |
 | `gc` | Which generations can go? | One line per removed generation, with its size. |
 
-A session stages a generation under `<runtime root>/bench/generations/<digest>/`. The generation holds the clones of
-the `.dist` directory and of the JBR home of the row launcher, the dist config and `OpenedPackages.txt`. The digest of
-these four inputs is the key, so a generation that exists is reused. Its files are read-only. Its `generation.json`
+A session stages a generation under `<runtime root>/bench/generations/<digest>/`. The generation holds the clone of
+the `.dist` directory, the dist config and `OpenedPackages.txt`. The home in the `.dist` directory holds the JBR at
+`jbr/Contents/Home`, as a macOS production distribution does, and every run starts with that JBR. The digest of these
+three inputs is the key, so a generation that exists is reused. Its files are read-only. Its `generation.json`
 names the commit of the checkout that built it. A run starts from the home that the dist config names: the `.dist`
 directory, or its `Contents` for a macOS app.
 

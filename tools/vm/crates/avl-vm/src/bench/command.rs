@@ -184,7 +184,7 @@ impl Bench<'_> {
                 ),
             ));
         }
-        let launcher_label = resolve::launcher_label(&args.target)?;
+        resolve::check_dist_label(&args.target)?;
         ensure_host_paths(ctx, self.runner, self.settings).await?;
         let repo = self.settings.host_repo()?.to_path_buf();
         let binary_age = binary::age(self.environment, &repo);
@@ -232,9 +232,7 @@ impl Bench<'_> {
         let _journal = journal::attach(&bench_root, self.reporter, &actor);
         std::fs::create_dir_all(&session).map_err(|error| session_failed(format!("cannot create {}: {error}", session.display())))?;
         self.reporter.note(format!("session {}", session.display()), None);
-        let result = self
-            .measure(ctx, plan, args, max_load, &repo, &license, &session, &launcher_label, warnings)
-            .await;
+        let result = self.measure(ctx, plan, args, max_load, &repo, &license, &session, warnings).await;
         self.reporter
             .publish(Event::RunFinished(journal::run_finished(result.as_ref().err())), None);
         result
@@ -249,7 +247,6 @@ impl Bench<'_> {
         repo: &Path,
         license: &Path,
         session: &Path,
-        launcher_label: &str,
         mut warnings: Vec<String>,
     ) -> Result<Outcome, Refusal> {
         let (generation, git, target) = if let Some(prefix) = &args.generation {
@@ -259,9 +256,8 @@ impl Bench<'_> {
             (staged.generation, git, staged.target)
         } else {
             let build_log = session.join("build.log");
-            let labels = [args.target.clone(), launcher_label.to_owned()];
-            self.bazel.build_labels(ctx, &build_log, &labels).await?;
-            let sources = resolve::sources(ctx, self.bazel, repo, &args.target, launcher_label).await?;
+            self.bazel.build_labels(ctx, &build_log, std::slice::from_ref(&args.target)).await?;
+            let sources = resolve::sources(ctx, self.bazel, repo, &args.target).await?;
             let git = self.git_info(ctx, repo).await;
             let generation = stage::stage(ctx, self.locks, &self.settings.runtime_root, &sources, &git, self.reporter).await?;
             (generation, git, args.target.clone())
