@@ -188,7 +188,10 @@ internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
      * Every theme name, ignoring [brightnessFilter], so a control can be sized once and not resize as the
      * filter narrows the list.
      */
-    fun allItemNames(): List<String> = getThemes(filter = null).map { it.name }
+    fun allItemNames(): List<String> = allItems().map { it.name }
+
+    /** Every theme, ignoring [brightnessFilter]. */
+    fun allItems(): List<LafReference> = getThemes(filter = null)
 
     private fun getThemes(filter: ThemeBrightnessFilter? = brightnessFilter): List<LafReference> {
       // Filtering happens before mapping, because only UIThemeLookAndFeelInfo carries isDark.

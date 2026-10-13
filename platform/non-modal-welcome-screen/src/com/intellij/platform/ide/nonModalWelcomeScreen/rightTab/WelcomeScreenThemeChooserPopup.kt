@@ -4,8 +4,8 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 import com.intellij.application.options.colors.highlighting.HighlightData
 import com.intellij.application.options.colors.highlighting.HighlightsExtractor
 import com.intellij.ide.actions.ShowSettingsUtilImpl
-import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafReference
+import com.intellij.ide.ui.ThemeListProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.EditorFactory
@@ -25,17 +25,20 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenComboBoxKind
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.ThemeModel
 import com.intellij.ui.CollectionListModel
+import com.intellij.ui.components.Badge
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelected
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.ListCellRenderer
 import javax.swing.ListSelectionModel
 import javax.swing.ScrollPaneConstants
 import javax.swing.Timer
@@ -46,8 +49,23 @@ private const val PREVIEW_THROTTLING_MS = 500
 
 private const val VISIBLE_ROW_COUNT = 10
 
+/**
+ * Height of a plain row, unscaled. It is the row height of the new UI themes. The rows must not depend on the
+ * look and feel, because the old Darcula theme has a row height of 20 and the popup then looks lower.
+ */
+private const val ROW_HEIGHT = 24
+
+/** Upper bound of the list width, counted in characters. A longer theme name is shortened with an ellipsis. */
+private const val MAX_NAME_CHARS = 50
+
 private const val PREVIEW_WIDTH = 360
 private const val PREVIEW_HEIGHT = 230
+
+/** Unscaled gap above and below the text of a Light/Dark segment. See [WelcomeScreenThemeChooserPopup.createBrightnessSwitch]. */
+private const val SWITCH_VERTICAL_GAP = 5
+
+/** Distance from the left edge of the sample editor to its text. */
+private const val PREVIEW_TITLE_INDENT = 10
 
 /** The sample uses a slightly smaller font than the editor, so more of each line fits the narrow column. */
 private const val PREVIEW_FONT_SCALE = 0.9f
@@ -121,9 +139,8 @@ internal class WelcomeScreenThemeChooserPopup(
     val popupDisposable = Disposer.newDisposable("WelcomeScreenThemeChooserPopup")
 
     val builder = PopupChooserBuilder(list)
-    // The renderer the Appearance settings combobox uses, so rows match the platform's theme popup:
-    // names, a Beta badge and restart hint where a theme needs one, and group separators.
-    builder.setRenderer(LafManager.getInstance().getLookAndFeelCellRenderer(list))
+    // Rows look like the ones in the platform's theme popup: names, a Beta badge, and group separators.
+    builder.setRenderer(createUniformRenderer(list, moreItem))
     builder.setNorthComponent(createHeader(createBrightnessSwitch(initialFilter, listModel, list, ::listItems)))
     previewSample?.let { builder.setEastComponent(createCodePreview(it, popupDisposable)) }
     builder.setAutoselectOnMouseMove(true)
@@ -183,6 +200,48 @@ internal class WelcomeScreenThemeChooserPopup(
     }
 
     return popup
+  }
+
+  /**
+   * Renderer whose rows do not change size with the theme or with the theme family.
+   *
+   * By default a row is as high as the `List.rowHeight` of the active look and feel, and the list is as wide as
+   * its widest name. Both change with the theme and with the Light/Dark switch, and the popup then jumps. Here
+   * every row is [ROW_HEIGHT] high, separator not counted, and has one width: the widest row of either family,
+   * capped at [MAX_NAME_CHARS] characters. The renderer draws a name that does not fit with an ellipsis.
+   */
+  private fun createUniformRenderer(list: JBList<LafReference>, moreItem: LafReference): ListCellRenderer<LafReference> {
+    val groups = ThemeListProvider.getInstance().getShownThemes().infos
+    fun isBeta(themeId: String) = groups.any { group -> group.items.any { it.id == themeId && it.isRestartRequired() } }
+
+    var fixedRowWidth: Int? = null
+
+    // The content is the one that LafManager.getLookAndFeelCellRenderer draws on the welcome screen: the name,
+    // a Beta badge, and a separator above the first theme of a group. That renderer does not let a caller set
+    // the row size, so the same rows are drawn here.
+    val renderer = listCellRenderer<LafReference> {
+      toolTipText = null
+      text(value.name)
+      if (value.themeId.isEmpty()) {
+        separator { }
+      }
+      else {
+        if (isBeta(value.themeId)) {
+          icon(Badge.beta)
+        }
+        groups.firstOrNull { value.themeId == it.items.firstOrNull()?.id }?.let { group ->
+          separator { text = group.title }
+        }
+      }
+      rowHeight = JBUI.scale(ROW_HEIGHT)
+      rowWidth = fixedRowWidth
+    }
+
+    val widestRow = (model.allItems() + moreItem).maxOfOrNull {
+      renderer.getListCellRendererComponent(list, it, -1, false, false).preferredSize.width
+    } ?: 0
+    fixedRowWidth = minOf(widestRow, list.getFontMetrics(list.font).charWidth('0') * MAX_NAME_CHARS)
+    return renderer
   }
 
   /**
@@ -275,7 +334,11 @@ internal class WelcomeScreenThemeChooserPopup(
       }
       SegmentedButton.createPresentation(text = NonModalWelcomeScreenBundle.message(textKey))
     }
-    switch.spacing = IntelliJSpacingConfiguration()
+    // A segment is as high as the larger of its text plus these gaps and `Button.minimumSize` less 2, and the
+    // minimum depends on the theme. The gaps are large enough to always win, so the switch keeps its height.
+    switch.spacing = object : IntelliJSpacingConfiguration() {
+      override val segmentedButtonVerticalGap: Int = SWITCH_VERTICAL_GAP
+    }
     switch.items = listOf(ThemeBrightnessFilter.DARK, ThemeBrightnessFilter.LIGHT)
     switch.accessibleContext.accessibleName =
       NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.theme.brightness.accessible.name")
@@ -311,6 +374,8 @@ internal class WelcomeScreenThemeChooserPopup(
     if (previewSample != null) {
       val title = JBLabel(NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.theme.preview.title"))
       title.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+      // The editor pads its text from its own edge, so the title takes the same indent to start over the code.
+      title.border = JBUI.Borders.emptyLeft(PREVIEW_TITLE_INDENT)
       val titleBox = object : JPanel(BorderLayout()) {
         override fun getPreferredSize(): Dimension = Dimension(JBUI.scale(PREVIEW_WIDTH), super.getPreferredSize().height)
       }
