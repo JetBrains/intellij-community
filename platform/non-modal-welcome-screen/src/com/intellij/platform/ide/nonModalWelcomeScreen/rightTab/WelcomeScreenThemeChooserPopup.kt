@@ -5,6 +5,8 @@ import com.intellij.application.options.colors.highlighting.HighlightData
 import com.intellij.application.options.colors.highlighting.HighlightsExtractor
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.ui.LafReference
+import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.ui.ThemeListProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -13,6 +15,8 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.event.SelectionEvent
+import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.ui.popup.JBPopup
@@ -202,6 +206,18 @@ internal class WelcomeScreenThemeChooserPopup(
     popupRef = popup
     Disposer.register(popup, popupDisposable)
 
+    // The popup and its columns are sized in pixels once, when it opens. A change of the IDE zoom resizes the
+    // sample and the header but not the popup, which squeezes the list. So the popup closes on that change.
+    val ideScaleOnOpen = UISettingsUtils.getInstance().currentIdeScale
+    ApplicationManager.getApplication().messageBus.connect(popupDisposable)
+      .subscribe(UISettingsListener.TOPIC, UISettingsListener {
+        if (UISettingsUtils.getInstance().currentIdeScale != ideScaleOnOpen) {
+          ApplicationManager.getApplication().invokeLater {
+            if (!popup.isDisposed) popup.cancel()
+          }
+        }
+      })
+
     // Both of these need the scroll pane, which the builder creates inside createPopup, hence the order.
     builder.scrollPane?.let { scrollPane ->
       // The popup sizes the list column, not the longest theme name, so a horizontal scrollbar would
@@ -302,13 +318,26 @@ internal class WelcomeScreenThemeChooserPopup(
       isIndentGuidesShown = false
       additionalLinesCount = 0
       additionalColumnsCount = 0
+      // The sample is not an editor to work in. With Ctrl and the wheel it would also change the font size
+      // of the global scheme when the user has the persistent zoom on.
+      isWheelFontChangeEnabled = false
     }
+
+    // The viewer still lets the mouse select text, so a selection is dropped as soon as it appears.
+    editor.selectionModel.addSelectionListener(object : SelectionListener {
+      override fun selectionChanged(e: SelectionEvent) {
+        if (editor.selectionModel.hasSelection()) {
+          editor.selectionModel.removeSelection()
+        }
+      }
+    }, parent)
 
     fun applyGlobalScheme() {
       val scheme = EditorColorsManager.getInstance().globalScheme
       editor.colorsScheme = scheme
-      // Assigning a scheme resets the font size, so the reduction has to follow every assignment.
-      editor.setFontSize(scheme.editorFontSize2D * PREVIEW_FONT_SCALE)
+      // Assigning a scheme resets the font size, so the reduction has to follow every assignment. The scheme
+      // holds the size before the IDE zoom, and editors apply the zoom on top of it, so this does the same.
+      editor.setFontSize(UISettingsUtils.getInstance().scaleFontSize(scheme.editorFontSize2D) * PREVIEW_FONT_SCALE)
       editor.highlighter = highlighterFactory.createEditorHighlighter(scheme, sample.fileName, null)
       editor.backgroundColor = scheme.defaultBackground
     }
