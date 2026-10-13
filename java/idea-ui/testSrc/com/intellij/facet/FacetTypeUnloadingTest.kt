@@ -11,7 +11,12 @@ import com.intellij.facet.mock.runWithRegisteredFacetTypes
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.testFramework.HeavyPlatformTestCase
+import java.util.concurrent.atomic.AtomicInteger
 
 class FacetTypeUnloadingTest : HeavyPlatformTestCase() {
   fun `test unload and load facet`() {
@@ -109,6 +114,46 @@ class FacetTypeUnloadingTest : HeavyPlatformTestCase() {
     //suppressed until https://youtrack.jetbrains.com/issue/IDEA-294031 being fixed
     @Suppress("AssertBetweenInconvertibleTypes")
     assertSame(mockFacet, mockSubFacet.underlyingFacet)
+  }
+
+  fun `test unload and load facets in two modules`() {
+    val secondModule = createModule("second")
+    val facetEvents = countFacetEvents()
+    runWithRegisteredFacetTypes(MockFacetType()) {
+      runWriteAction {
+        for (m in listOf(module, secondModule)) {
+          val model = FacetManager.getInstance(m).createModifiableModel()
+          model.addFacet(MockFacet(m, "mock", MockFacetConfiguration("${m.name} data")))
+          model.commit()
+        }
+      }
+      facetEvents.set(0)
+    }
+
+    assertEquals(1, facetEvents.get())
+    for (m in listOf(module, secondModule)) {
+      assertTrue(FacetManager.getInstance(m).getFacetsByType(MockFacetType.ID).isEmpty())
+    }
+    assertSameElements(InvalidFacetManager.getInstance(myProject).invalidFacets.map { it.module }, module, secondModule)
+
+    facetEvents.set(0)
+    registerFacetType(MockFacetType(), testRootDisposable)
+    assertEquals(1, facetEvents.get())
+    assertTrue(InvalidFacetManager.getInstance(myProject).invalidFacets.isEmpty())
+    for (m in listOf(module, secondModule)) {
+      val mockFacet = FacetManager.getInstance(m).getFacetsByType(MockFacetType.ID).single()
+      assertEquals("${m.name} data", mockFacet.configuration.data)
+    }
+  }
+
+  private fun countFacetEvents(): AtomicInteger {
+    val counter = AtomicInteger()
+    myProject.messageBus.connect(testRootDisposable).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      override fun changed(event: VersionedStorageChange) {
+        if (event.getChanges(FacetEntity::class.java).isNotEmpty()) counter.incrementAndGet()
+      }
+    })
+    return counter
   }
 
   override fun setUp() {
