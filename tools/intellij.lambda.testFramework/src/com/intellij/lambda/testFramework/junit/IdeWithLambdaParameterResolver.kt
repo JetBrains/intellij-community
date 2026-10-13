@@ -8,7 +8,7 @@ import org.junit.jupiter.api.extension.ParameterResolver
 
 class IdeWithLambdaParameterResolver : ParameterResolver {
   override fun supportsParameter(parameterContext: ParameterContext, extensionContext: ExtensionContext): Boolean =
-    parameterContext.parameter.type.isAssignableFrom(IdeWithLambda::class.java)
+    parameterContext.parameter.type == IdeWithLambda::class.java
 
   override fun resolveParameter(parameterContext: ParameterContext, extensionContext: ExtensionContext): Any {
     return LambdaIdeSession.current(extensionContext)
