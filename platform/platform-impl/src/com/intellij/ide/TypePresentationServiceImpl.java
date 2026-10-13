@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.ide.presentation.PresentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,7 +65,7 @@ public final class TypePresentationServiceImpl extends TypePresentationService {
   }
 
   private @Nullable <T> T findFirst(Class<?> clazz, @NotNull Function<? super PresentationTemplate, ? extends T> f) {
-    Set<PresentationTemplate> templates = mySuperClasses.get(clazz);
+    Set<PresentationTemplate> templates = isClassUnloading(clazz) ? collectTemplates(clazz) : mySuperClasses.get(clazz);
     for (PresentationTemplate template : templates) {
       T result = f.apply(template);
       if (result != null) {
@@ -108,6 +109,11 @@ public final class TypePresentationServiceImpl extends TypePresentationService {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        mySuperClasses.clear();
+      }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         mySuperClasses.clear();
       }
     });
@@ -155,11 +161,17 @@ public final class TypePresentationServiceImpl extends TypePresentationService {
 
   private final Map<String, NullableLazyValue<Icon>> myIcons = new HashMap<>();
   private final Map<String, NullableLazyValue<String>> myNames = new HashMap<>();
-  private final Map<Class<?>, Set<PresentationTemplate>> mySuperClasses = ConcurrentFactoryMap.createMap(key -> {
+  private final Map<Class<?>, Set<PresentationTemplate>> mySuperClasses = ConcurrentFactoryMap.createMap(this::collectTemplates);
+
+  private @NotNull Set<PresentationTemplate> collectTemplates(@NotNull Class<?> aClass) {
     Set<PresentationTemplate> templates = new LinkedHashSet<>();
-    walkSupers(key, new LinkedHashSet<>(), templates);
+    walkSupers(aClass, new LinkedHashSet<>(), templates);
     return templates;
-  });
+  }
+
+  private static boolean isClassUnloading(@NotNull Class<?> aClass) {
+    return aClass.getClassLoader() instanceof PluginAwareClassLoader classLoader && classLoader.getState() != PluginAwareClassLoader.ACTIVE;
+  }
 
   private void walkSupers(Class<?> aClass, Set<? super Class<?>> classes, Set<? super PresentationTemplate> templates) {
     if (!classes.add(aClass)) {

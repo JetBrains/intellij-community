@@ -26,6 +26,7 @@ import com.intellij.ide.plugins.testPluginSrc.registryAccess.MyRegistryAccessor
 import com.intellij.ide.plugins.testPluginSrc.registryAccess.MyRegistryAccessorService
 import com.intellij.ide.plugins.testPluginSrc.testPSC.MyPersistentComponent
 import com.intellij.ide.plugins.testPluginSrc.testPSC.impl.MyPersistentComponentImpl
+import com.intellij.ide.plugins.testPluginSrc.typePresentation.TypePresentationLookupService
 import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.MyUISettingsListener
 import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.MyUISettingsListenerService
 import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.foo.MyFooUISettingsListener
@@ -93,6 +94,7 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.ui.switcher.ShowQuickActionPopupAction
 import com.intellij.util.KeyedLazyInstanceEP
 import com.intellij.util.application
+import com.intellij.util.ref.GCWatcher
 import com.intellij.util.ui.UIUtil
 import org.junit.Rule
 import org.junit.Test
@@ -786,6 +788,19 @@ class DynamicPluginsTest {
   }
 
   @Test
+  fun `type presentation lookup during unload does not keep plugin class loader`() {
+    val pluginSet = buildPluginSet(pluginsDir) {
+      plugin("plugin") {
+        includePackageClassFiles<TypePresentationLookupService>()
+      }
+    }
+    val plugin = pluginSet.getEnabledPlugin("plugin")
+    loadPluginInTestAndCheckClassLoaderCollected(plugin) {
+      assertThat(application.getTestHandleService<TypePresentationLookupService, _, _>(plugin)).isNotNull()
+    }
+  }
+
+  @Test
   fun `project service can be acquired from extension listener - StartupActivity`() {
     val project = projectRule.project
     StartupManagerImpl.addActivityEpListener(project)
@@ -1427,6 +1442,18 @@ private fun loadPluginInTest(plugin: PluginMainDescriptor, actionWithPluginLoade
   finally {
     assertThat(unloadAndUninstallPlugin(plugin)).isTrue()
   }
+}
+
+/**
+ * Runs [loadPluginInTest] and then checks that nothing keeps the class loader of the plugin after the unload.
+ */
+private fun loadPluginInTestAndCheckClassLoaderCollected(plugin: PluginMainDescriptor, actionWithPluginLoaded: () -> Unit) {
+  lateinit var classLoaderWatcher: GCWatcher
+  loadPluginInTest(plugin) {
+    classLoaderWatcher = GCWatcher.tracking(plugin.pluginClassLoader)
+    actionWithPluginLoaded()
+  }
+  classLoaderWatcher.ensureCollectedWithinTimeout(10_000) { UIUtil.dispatchAllInvocationEvents() }
 }
 
 /** note: can't cast the output to [T], [T] can only be loaded by the isolated classloader of [descriptor] */
