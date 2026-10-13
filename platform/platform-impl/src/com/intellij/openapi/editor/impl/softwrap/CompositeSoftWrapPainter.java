@@ -1,16 +1,21 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ColorProvider;
+import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
+import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.font.FontRenderContext;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -99,6 +104,27 @@ public final class CompositeSoftWrapPainter implements SoftWrapPainter {
 
   public CompositeSoftWrapPainter(EditorEx editor) {
     myEditor = editor;
+  }
+
+  /**
+   * Finds the fonts for the soft wrap signs in the order of {@link #initDelegateIfNecessary}.
+   * The font registry keeps the fonts, so the next search with the same font preferences is fast.
+   * Call it off the EDT, because the first search can be slow.
+   * The slow glyph check in the preferred font families runs without the registry lock, see {@link ComplementaryFontsRegistry#preloadGlyph}.
+   */
+  @ApiStatus.Internal
+  public static void preloadSignFonts(@NotNull FontPreferences preferences) {
+    FontRenderContext context = FontInfo.getFontRenderContext(null);
+    for (Map<SoftWrapDrawingType, Character> symbols : SYMBOLS) {
+      boolean canUse = true;
+      for (char symbol : symbols.values()) {
+        ComplementaryFontsRegistry.preloadGlyph(symbol, Font.PLAIN, preferences);
+        canUse &= ComplementaryFontsRegistry.getFontAbleToDisplay(symbol, Font.PLAIN, preferences, context).canDisplay(symbol);
+      }
+      if (canUse) {
+        return;
+      }
+    }
   }
 
   private static @Nullable Character parse(String key) {

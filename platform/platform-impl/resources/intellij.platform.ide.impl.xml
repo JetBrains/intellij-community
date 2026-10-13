@@ -473,6 +473,7 @@
                         serviceImplementation="com.intellij.openapi.wm.impl.DialogBackgroundImageProviderImpl"/>
     <applicationLoadHandler implementation="com.intellij.util.imageio.ImageReaderWriterSpiRegistrar"/>
     <applicationActivity implementation="com.intellij.ide.debug.ImageDebugUtilLoader"/>
+    <applicationActivity implementation="com.intellij.openapi.editor.impl.softwrap.SoftWrapSignFontPreloader"/>
     <applicationService serviceImplementation="com.intellij.ui.WaylandAppIconPatcher"
                         preload="notHeadless"
                         os="linux"/>
