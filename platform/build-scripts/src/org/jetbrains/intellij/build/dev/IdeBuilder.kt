@@ -559,11 +559,7 @@ private fun prepareDevRunDir(request: BuildRequest): Path {
     "JetBrainsClient" -> "${request.baseIdePlatformPrefixForFrontend ?: ""}${request.platformPrefix}"
     else -> request.platformPrefix
   }
-  val productDirSuffix = when {
-    System.getProperty("intellij.build.minimal").toBoolean() -> "-ij-void"
-    request.scrambleTool != null -> "-scrambled"
-    else -> ""
-  }
+  val productDirSuffix = if (request.scrambleTool != null) "-scrambled" else ""
   // Keep the product-identifying head (dev-run prefix + product name + suffix) intact, and spend the remaining
   // path-length budget on the classifier, truncating it from the front so its discriminative xxh3 hash tail survives.
   // Truncating the whole string with `takeLast` used to drop the product prefix from the front whenever
@@ -871,12 +867,7 @@ internal fun createDevBuildContext(
     PathClassLoader(UrlClassLoader.build().files(classPathFiles).parent(BuildRequest::class.java.classLoader))
   }
 
-  val className = if (System.getProperty("intellij.build.minimal").toBoolean()) {
-    "org.jetbrains.intellij.build.IjLightProperties"
-  }
-  else {
-    productConfiguration.className
-  }
+  val className = productConfiguration.className
   val properties = spanBuilder("create product properties").setAttribute("className", className).use {
     doCreateProductProperties(classLoader = classLoader, className = className, classPathFiles = classPathFiles, projectDir = projectDir, platformPrefix = platformPrefix)
   }

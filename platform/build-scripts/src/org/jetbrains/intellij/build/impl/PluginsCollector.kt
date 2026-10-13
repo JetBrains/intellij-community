@@ -127,7 +127,6 @@ fun collectCompatiblePluginsToPublish(
     descriptorFiles = descriptorFiles,
   ))
 
-  val minimal = System.getProperty("intellij.build.minimal").toBoolean()
   // One walk over the project serves both maps. The walk reads every plugin descriptor once, and the two maps
   // differ only in the bundled plugins and in the implementation-detail plugins, which a filter states.
   val allDescriptors = collectPluginDescriptors(
@@ -141,7 +140,7 @@ fun collectCompatiblePluginsToPublish(
     descriptorFiles = descriptorFiles,
   )
   val allBundledPluginModules = java.util.Set.copyOf(bundledPluginModules)
-  val descriptorMap = allDescriptors.filterValuesTo { it.mainModule !in allBundledPluginModules && (minimal || !it.isImplementationDetail) }
+  val descriptorMap = allDescriptors.filterValuesTo { it.mainModule !in allBundledPluginModules && !it.isImplementationDetail }
   val descriptorMapWithBundled = allDescriptors.filterValuesTo { !it.isImplementationDetail }
   val productModuleAliases = productProperties.getProductContentDescriptor()?.productModuleAliases?.map { it.value } ?: emptyList()
   val bundledPluginIds = descriptorMapWithBundled.values
