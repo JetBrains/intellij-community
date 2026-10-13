@@ -1985,6 +1985,8 @@ c:com.intellij.notification.impl.ui.StickyButton
 - p:createUI():javax.swing.plaf.ButtonUI
 - getForeground():java.awt.Color
 - setUI(javax.swing.plaf.ButtonUI):V
+@:com.intellij.openapi.DelicateLockingApi
+- java.lang.annotation.Annotation
 c:com.intellij.openapi.actionSystem.SplitButtonAction
 - com.intellij.openapi.actionSystem.ActionGroupWrapper
 - com.intellij.openapi.actionSystem.ex.CustomComponentAction

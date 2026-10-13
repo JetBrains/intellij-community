@@ -18,6 +18,7 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.LangBundle
 import com.intellij.notebook.editor.BackedVirtualFile
+import com.intellij.openapi.DelicateLockingApi
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
@@ -57,17 +58,15 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.ClientFileEditorManager
 import com.intellij.openapi.fileEditor.CompositeTabIconHolderCreator
+import com.intellij.openapi.fileEditor.EditorOpenFuture
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorOpenRequest
-import com.intellij.openapi.fileEditor.ex.buildFileEditorOpenOptions
-import com.intellij.openapi.fileEditor.ex.resolveOpenMode
 import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.fileEditor.EditorOpenFuture
 import com.intellij.openapi.fileEditor.FileEditorNavigatable
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditorState
@@ -77,6 +76,8 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
+import com.intellij.openapi.fileEditor.ex.buildFileEditorOpenOptions
+import com.intellij.openapi.fileEditor.ex.resolveOpenMode
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TEXT_EDITOR_PROVIDER_TYPE_ID
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
@@ -2900,6 +2901,7 @@ fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
   }
 }
 
+@OptIn(DelicateLockingApi::class)
 @Suppress("RAW_RUN_BLOCKING")
 @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun Job.waitBlockingAndPumpEdt() {

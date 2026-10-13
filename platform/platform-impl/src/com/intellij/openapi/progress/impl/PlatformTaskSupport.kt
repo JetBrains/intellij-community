@@ -6,6 +6,7 @@ import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.consumeUnrelatedEvent
+import com.intellij.openapi.DelicateLockingApi
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -720,6 +721,7 @@ private fun IdeEventQueue.pumpEventsForHierarchy(
  * Schedule an [EmptyRunnable] on [exitCondition] change to unlock the thread if needed.
  */
 @Internal
+@DelicateLockingApi
 fun IdeEventQueue.pumpEventsForHierarchy(exitCondition: () -> Boolean) {
   resetThreadContext {
     pumpEventsForHierarchy(

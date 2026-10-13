@@ -5,6 +5,7 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.isCoroutineDumpEnabled
+import com.intellij.openapi.DelicateLockingApi
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.inModalContext
@@ -40,6 +41,7 @@ private val LOG = Logger.getInstance("#com.intellij.ide.shutdown")
 
 // todo convert ApplicationImpl and IdeEventQueue to kotlin
 
+@OptIn(DelicateLockingApi::class)
 internal fun cancelAndJoinBlocking(application: ApplicationImpl, exitContext: CoroutineContext) {
   EDT.assertIsEdt()
   LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed)
