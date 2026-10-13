@@ -233,6 +233,7 @@ class ArtifactModifiableModelBridge(
       }
     }
     (ArtifactPointerManager.getInstance(project) as ArtifactPointerManagerImpl).disposePointers(artifacts)
+    manager.artifactWithDiffs.removeAll { it.entityStorage === versionedOnBuilder }
 
     val current = WorkspaceModel.getInstance(project).currentSnapshot
     val changes = (diff as MutableEntityStorageInstrumentation).collectChanges()[ArtifactEntity::class.java] ?: emptyList()
