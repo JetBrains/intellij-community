@@ -1999,6 +1999,9 @@ a:com.intellij.execution.ui.BaseContentCloseListener
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.project.VetoableProjectManagerListener
 - com.intellij.ui.content.ContentManagerListener
+c:com.intellij.execution.ui.layout.impl.JBRunnerTabs
+- com.intellij.ui.tabs.impl.SingleHeightTabs
+- com.intellij.execution.ui.layout.impl.JBRunnerTabsBase
 c:com.intellij.execution.util.EnvVariablesTable
 - com.intellij.execution.util.ListTableWithButtons
 - sf:Companion:com.intellij.execution.util.EnvVariablesTable$Companion

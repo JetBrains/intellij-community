@@ -519,9 +519,6 @@ c:com.intellij.execution.ui.actions.CloseAction
 f:com.intellij.execution.ui.layout.actions.RestoreLayoutAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
-c:com.intellij.execution.ui.layout.impl.JBRunnerTabs
-- com.intellij.ui.tabs.impl.SingleHeightTabs
-- com.intellij.execution.ui.layout.impl.JBRunnerTabsBase
 f:com.intellij.execution.ui.layout.impl.RunnerContentUi
 - com.intellij.execution.ui.layout.CellTransform$Facade
 - com.intellij.execution.ui.layout.ViewContext

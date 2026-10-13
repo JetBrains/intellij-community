@@ -2984,6 +2984,25 @@ pa:com.intellij.execution.ui.BaseContentCloseListener$WaitForProcessTask
 - a:onCancel():V
 - run(com.intellij.openapi.progress.ProgressIndicator):V
 - shouldStartInBackground():Z
+c:com.intellij.execution.ui.layout.impl.JBRunnerTabs
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.ActionManager,com.intellij.openapi.wm.IdeFocusManager,com.intellij.openapi.Disposable):V
+- s:create(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):com.intellij.execution.ui.layout.impl.JBRunnerTabsBase
+- p:createTabLabel(com.intellij.ui.tabs.TabInfo):com.intellij.ui.tabs.impl.TabLabel
+- p:createTabPainterAdapter():com.intellij.ui.tabs.impl.TabPainterAdapter
+- s:getTabLabelPreferredHeight():I
+- getToolbarInset():I
+- processDropOver(com.intellij.ui.tabs.TabInfo,com.intellij.ui.awt.RelativePoint):V
+- shouldAddToGlobal(java.awt.Point):Z
+- useSmallLabels():Z
+f:com.intellij.execution.ui.layout.impl.JBRunnerTabs$JBRunnerTabsBorder
+- javax.swing.border.Border
+- getEffectiveBorder():java.awt.Insets
+- paintBorder(java.awt.Component,java.awt.Graphics,I,I,I,I):V
+- setSideMask(I):V
+com.intellij.execution.ui.layout.impl.JBRunnerTabsBase
+- com.intellij.ui.tabs.JBTabsEx
+- a:shouldAddToGlobal(java.awt.Point):Z
 f:com.intellij.facet.impl.DefaultFacetsProvider
 - sf:INSTANCE:com.intellij.openapi.roots.ui.configuration.FacetsProvider
 - <init>():V
