@@ -623,9 +623,9 @@ async fn a_process_table_answers_the_probe_in_place_of_the_host() {
             matches!(pid, 7 | 8)
         }
 
-        fn field(&self, pid: i32, field: PsField) -> Option<String> {
+        fn field(&self, pid: i32, field: PsField) -> Result<Option<String>, Refusal> {
             assert!(self.holds(pid), "the table was asked about pid {pid}, which it does not hold");
-            (pid == 7).then(|| format!("{field:?}"))
+            Ok((pid == 7).then(|| format!("{field:?}")))
         }
     }
     let ctx = Ctx::background();

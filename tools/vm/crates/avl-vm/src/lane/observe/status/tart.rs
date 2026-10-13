@@ -252,7 +252,7 @@ async fn tart_worker_status(
         provenance_ready,
         provenance_error,
         state,
-        pid: identity.filter(|_| host_process).map(|identity| identity.pid),
+        pid: identity.filter(|_| host_process).map(|identity| identity.process.pid),
         guest_agent,
         console_login: probed.console_login,
         worker_storage_ready: probed.worker_storage_ready,

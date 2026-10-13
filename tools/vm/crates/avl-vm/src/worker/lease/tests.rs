@@ -564,7 +564,7 @@ async fn a_release_of_a_worker_whose_vm_is_missing_skips_the_guest() {
     let outcome = release(&fixture, &lease_file(&held), &FakeProbe::default()).await.unwrap();
     assert_eq!(outcome.text, "released=air-macos-1");
     assert_eq!(outcome.data["workerVmMissing"], Value::Bool(true));
-    assert_eq!(outcome.data["staleRunProcess"], Value::from(stale.identity.pid));
+    assert_eq!(outcome.data["staleRunProcess"], Value::from(stale.identity.process.pid));
     assert!(read_lease(&fixture.settings.lease_path("air-macos-1")).unwrap().is_none());
     assert!(!lease_file(&held).exists());
     assert!(fixture.guest.lines().is_empty(), "{:?}", fixture.guest.lines());

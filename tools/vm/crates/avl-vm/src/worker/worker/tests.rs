@@ -18,7 +18,7 @@ use pretty_assertions::assert_eq;
 
 use super::tart::SuspendedState;
 use super::*;
-use crate::worker::tart::ProcessIdentity;
+use crate::worker::tart::PidReceipt;
 use crate::worker::testing::{CONSOLE_LOGIN, Fixture, find_step, manager_over};
 use avl_base::RefusalExt;
 
@@ -124,7 +124,7 @@ async fn the_process_receipt_round_trips_and_is_refused_field_by_field() {
     let fixture = Fixture::macos();
     let worker = fixture.worker(0);
     let identity = fixture.run_as_fake_process(worker).await;
-    assert!(!identity.process_start.is_empty() && !identity.process_command.is_empty());
+    assert!(!identity.process.process_start.is_empty() && !identity.process.process_command.is_empty());
     let path = fixture.settings.pid_path(worker);
     assert_eq!(std::fs::metadata(&path).unwrap().permissions().mode() & 0o7777, 0o600);
     assert_eq!(tart(&fixture).read_process_identity(worker), Some(identity.clone()));
@@ -133,18 +133,20 @@ async fn the_process_receipt_round_trips_and_is_refused_field_by_field() {
     assert!(
         written.starts_with(&format!(
             "{{\"schemaVersion\":1,\"worker\":\"{worker}\",\"pid\":{},\"processStart\":",
-            identity.pid
+            identity.process.pid
         )),
         "{written}"
     );
 
-    let damaged = |edit: fn(&mut ProcessIdentity)| {
-        let mut broken = ProcessIdentity {
+    let damaged = |edit: fn(&mut PidReceipt)| {
+        let mut broken = PidReceipt {
             schema_version: SCHEMA_VERSION,
             worker: worker.to_owned(),
-            pid: 1,
-            process_start: "s".to_owned(),
-            process_command: "c".to_owned(),
+            process: avl_host_sys::ProcessIdentity {
+                pid: 1,
+                process_start: "s".to_owned(),
+                process_command: "c".to_owned(),
+            },
         };
         edit(&mut broken);
         broken
@@ -158,9 +160,9 @@ async fn the_process_receipt_round_trips_and_is_refused_field_by_field() {
             "another worker's receipt",
             damaged(|identity| identity.worker = "somebody-else".to_owned()),
         ),
-        ("no pid", damaged(|identity| identity.pid = 0)),
-        ("no start time", damaged(|identity| identity.process_start.clear())),
-        ("no command line", damaged(|identity| identity.process_command.clear())),
+        ("no pid", damaged(|identity| identity.process.pid = 0)),
+        ("no start time", damaged(|identity| identity.process.process_start.clear())),
+        ("no command line", damaged(|identity| identity.process.process_command.clear())),
     ] {
         std::fs::write(&path, serde_json::to_vec(&broken).unwrap()).unwrap();
         assert_eq!(tart(&fixture).read_process_identity(worker), None, "{name}");
@@ -688,11 +690,15 @@ async fn a_start_spawns_identifies_and_provisions() {
     let identity = tart(&fixture)
         .read_process_identity(worker)
         .expect("a started worker leaves an identifiable run process behind");
-    assert!(identity.process_command.contains("run"), "{}", identity.process_command);
+    assert!(
+        identity.process.process_command.contains("run"),
+        "{}",
+        identity.process.process_command
+    );
     // Its own session, so the terminal's Ctrl-C and the controller's exit leave it running.
     assert_eq!(
-        nix::unistd::getsid(Some(nix::unistd::Pid::from_raw(identity.pid))).ok(),
-        Some(nix::unistd::Pid::from_raw(identity.pid))
+        nix::unistd::getsid(Some(nix::unistd::Pid::from_raw(identity.process.pid))).ok(),
+        Some(nix::unistd::Pid::from_raw(identity.process.pid))
     );
     let calls = fixture.fake.calls();
     let run = calls
@@ -1018,7 +1024,7 @@ async fn a_lazy_start_ends_a_stale_run_process_before_cloning() {
         "{calls:#?}"
     );
     let identity = tart(&fixture).read_process_identity(worker).unwrap();
-    assert_ne!(identity.pid, stale.identity.pid);
+    assert_ne!(identity.process.pid, stale.identity.process.pid);
 }
 
 /// The repair after a missing-VM release: `pool recycle` ends the stale process, deletes nothing Tart does not list,
@@ -1047,7 +1053,7 @@ async fn recycle_after_a_missing_vm_release_stops_the_stale_run_process_and_clon
         "{calls:#?}"
     );
     let identity = tart(&fixture).read_process_identity(&worker).unwrap();
-    assert_ne!(identity.pid, stale.identity.pid);
+    assert_ne!(identity.process.pid, stale.identity.process.pid);
 }
 
 // --- an interrupt --------------------------------------------------------------------------------------------

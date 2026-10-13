@@ -38,7 +38,7 @@ use nix::sys::signal::{Signal, killpg};
 use nix::unistd::Pid;
 
 #[cfg(unix)]
-use crate::worker::tart::{MINIMUM_VERSION, ProcessIdentity};
+use crate::worker::tart::{MINIMUM_VERSION, PidReceipt};
 use crate::worker::worker::{Dependencies, GuestBootBuilder, IdleStopRequest, Lease, Manager, Timings, builds_nothing};
 
 /// The version the fake `tart` answers. A Windows host has no fake `tart`, and its fake `docker` reads no version.
@@ -181,7 +181,7 @@ impl Fixture {
     /// Makes a worker read as running: a live process of the fake table stands in for its `tart run` process. Nothing
     /// ends that process, and a `tart stop` does not end it either. Its command is no `tart run`, so no path takes it
     /// for an orphaned run process.
-    pub(crate) async fn run_as_fake_process(&self, worker: &str) -> ProcessIdentity {
+    pub(crate) async fn run_as_fake_process(&self, worker: &str) -> PidReceipt {
         let pid = self.processes.start(&format!("stand-in for the run process of {worker}"));
         self.manager
             .write_process_identity(&Ctx::background(), worker, pid)
@@ -441,13 +441,13 @@ fn manager_with_bazel(
 #[cfg(unix)]
 pub(crate) struct StaleRun {
     child: std::process::Child,
-    pub(crate) identity: ProcessIdentity,
+    pub(crate) identity: PidReceipt,
 }
 
 #[cfg(unix)]
 impl Drop for StaleRun {
     fn drop(&mut self) {
-        let _ = killpg(Pid::from_raw(self.identity.pid), Signal::SIGKILL);
+        let _ = killpg(Pid::from_raw(self.identity.process.pid), Signal::SIGKILL);
         let _ = self.child.wait();
     }
 }
@@ -466,15 +466,15 @@ impl Drop for RunProcessReaper {
                 continue;
             };
             // Never this test process, which a suite of the real `ps` probe can record.
-            if u32::try_from(identity.pid).ok() != Some(std::process::id()) {
-                let _ = killpg(Pid::from_raw(identity.pid), Signal::SIGKILL);
+            if u32::try_from(identity.process.pid).ok() != Some(std::process::id()) {
+                let _ = killpg(Pid::from_raw(identity.process.pid), Signal::SIGKILL);
             }
         }
     }
 }
 
 #[cfg(unix)]
-fn read_identity(path: &std::path::Path) -> Option<ProcessIdentity> {
+fn read_identity(path: &std::path::Path) -> Option<PidReceipt> {
     serde_json::from_slice(&std::fs::read(path).ok()?).ok()
 }
 

@@ -48,6 +48,7 @@ use group::{ProcessGroup, exit_code};
 
 mod answer;
 pub(crate) mod group;
+mod identity;
 mod probe;
 mod stream;
 // The tests drive `/bin/sh`.
@@ -56,6 +57,7 @@ mod stream;
 mod tests;
 
 pub use answer::{ProbeExit, ProbeOutput, probe_unanswered};
+pub use identity::ProcessIdentity;
 pub use probe::{ProcessTable, PsField};
 pub use stream::{GuestStream, PipedChild};
 
