@@ -9,12 +9,9 @@ import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join, relative, sep } from 'node:path'
 import { addCodeSpanPaths } from './codeSpans.ts'
 import { collectDocPictures, parseFrontmatter } from './harvestDocs.ts'
-import { contentDir, posixRelative, repoRoot, walkFiles } from './paths.ts'
+import { contentDir, posixRelative, repoRoot, specFiles } from './paths.ts'
 import type { SiteConfig } from './siteConfig.ts'
 import { resolveRepoPath } from './sourcePaths.ts'
-
-/** The directories under a spec root that hold no authored spec, in addition to `docs.skipDirs`. */
-const SKIP_DIRS: readonly string[] = ['node_modules', 'generated', 'test-results']
 
 /** The part of the site config that the spec harvest reads. */
 export type SpecHarvestConfig = Pick<SiteConfig, 'contentRoot' | 'docs' | 'specs'>
@@ -52,21 +49,6 @@ export interface SpecHarvest {
   pictures: Set<string>
   /** The code spans of the spec bodies that their folder does not resolve, by spec folder (codeSpans.ts). */
   codeSpanPaths: Map<string, Map<string, string | null>>
-}
-
-/** The spec files of the site: the absolute path of each file and the root that holds it, sorted by path. */
-function specFiles(config: SpecHarvestConfig, root: string): { file: string, specRoot: string }[] {
-  const skipDirs = new Set([...SKIP_DIRS, ...config.docs.skipDirs])
-  const owner = new Map<string, string>()
-  for (const specRoot of config.specs.roots) {
-    const dir = join(root, specRoot)
-    walkFiles(dir, entry => skipDirs.has(entry) || entry.startsWith('.'), (file) => {
-      if (file.endsWith(config.specs.suffix) && !owner.has(file)) {
-        owner.set(file, dir)
-      }
-    })
-  }
-  return [...owner].map(([file, specRoot]) => ({ file, specRoot })).sort((a, b) => a.file < b.file ? -1 : a.file > b.file ? 1 : 0)
 }
 
 /**

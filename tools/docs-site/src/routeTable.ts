@@ -2,7 +2,8 @@
 // section, and the crumb head all come from it. The first entry that matches wins, in both directions. Legacy entries
 // only parse, so old links and bookmarks keep working.
 //
-// The kernel owns the routes of the generic pages: home, guides, explainers, decisions, docs, and sources. A site adds
+// The kernel owns the routes of the generic pages: home, guides, explainers, decisions, docs, sources, and the launch
+// picker when the site config has one. A site adds
 // its own routes as route extensions, which come before the kernel routes in the table.
 //
 // The module is pure: it reads no bundler state, so a node unit test loads it.
@@ -44,8 +45,20 @@ export type KernelRoute =
   | { page: 'source', path: string, selection: SourceLineSelection | null }
   | { page: 'doc', path: string, anchor: string | null }
 
+/**
+ * The route of the launch picker, with its search text. It is not a {@link KernelRoute}: the route exists only when the
+ * site has a launch picker, so a site without one keeps a route union without it.
+ */
+export interface LaunchRoute {
+  page: 'launch'
+  q: string | null
+}
+
 /** The nav sections that the kernel routes mark as active. */
 export type KernelNavSection = 'guides' | 'explainers' | 'decisions'
+
+/** The nav section of the launch picker. */
+export type LaunchNavSection = 'launch'
 
 /** The head crumb of a route: the section label, and the index page that it links to. */
 export interface RouteParent {
@@ -356,9 +369,12 @@ const GUIDES: RouteParent = { label: 'Guides', route: { page: 'guides', anchor: 
 const EXPLAINERS: RouteParent = { label: 'Explainers', route: { page: 'explainers', anchor: null } as KernelRoute }
 const DECISIONS: RouteParent = { label: 'Decisions', route: { page: 'decisions', anchor: null, status: null, topic: null } as KernelRoute }
 
-/** The routes of the kernel pages, in table order. A site puts its route extensions before them. */
-export function kernelRouteEntries(config: Pick<SiteConfig, 'docs'>): RouteEntry[] {
-  const route = routeBuilder<KernelRoute, KernelNavSection>()
+/**
+ * The routes of the kernel pages, in table order. A site puts its route extensions before them. The launch route is
+ * in the table only when the site has a launch picker.
+ */
+export function kernelRouteEntries(config: Pick<SiteConfig, 'docs' | 'launchPicker'>): RouteEntry[] {
+  const route = routeBuilder<KernelRoute | LaunchRoute, KernelNavSection | LaunchNavSection>()
   const { isDecisionPath, decisionSlug } = decisionPaths(config.docs.decisions)
   return [
     route('home', '/', { section: null }),
@@ -378,6 +394,7 @@ export function kernelRouteEntries(config: Pick<SiteConfig, 'docs'>): RouteEntry
     }),
     route('decision', '/decisions/:slug/:anchor?', { when: ({ slug }) => !isCatalogAnchor(slug), section: 'decisions', parent: DECISIONS }),
     route('source', '/source/*path', { query: { selection: lineRange('line') }, section: null, parent: { label: 'Source' } }),
+    ...config.launchPicker ? [route('launch', '/launch', { query: { q: text }, section: 'launch' })] : [],
     // a decision record had a doc URL before it had its own page
     route('decision', '/doc/:path/:anchor?', {
       legacy: true,
@@ -530,6 +547,6 @@ export function createRouteTable(entries: readonly RouteEntry[]): RouteTable {
 }
 
 /** The table of a site: its route extensions first, then the kernel routes. */
-export function siteRouteTable(config: Pick<SiteConfig, 'docs'>, extensions: readonly RouteExtension[]): RouteTable {
+export function siteRouteTable(config: Pick<SiteConfig, 'docs' | 'launchPicker'>, extensions: readonly RouteExtension[]): RouteTable {
   return createRouteTable([...extensions, ...kernelRouteEntries(config)])
 }

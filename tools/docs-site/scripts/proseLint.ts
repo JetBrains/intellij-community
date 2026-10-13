@@ -215,7 +215,7 @@ catch {
   yamlModule = null
 }
 
-interface DiagramField {
+export interface DiagramField {
   /** The YAML path of the field, such as `['nodes', 3, 'detail']`. */
   path: (string | number)[]
   /** The label of the field in a finding, such as `node api, detail`. */
@@ -235,28 +235,46 @@ function list(value: unknown): unknown[] {
   return Array.isArray(value) ? value : []
 }
 
+/** The name of a text field of a diagram. */
+export type DiagramFieldName = 'title' | 'summary' | 'text' | 'detail' | 'caption'
+
+/** The fields that the prose check reads. A title is no prose: the diagram grammar caps its length. */
+const PROSE_FIELDS: ReadonlySet<DiagramFieldName> = new Set(['summary', 'text', 'detail', 'caption'])
+
 /**
- * The prose fields of a diagram. The line comes from the npm `yaml` parser. Under the bun of the JUnit gate, with no
- * node_modules, the field label alone locates a finding.
+ * The text fields of a diagram whose names are in `names`: the title and the summary of the diagram, the title of a
+ * column and of a group, the title, the text and the detail of a node, and the title and the caption of a step. The
+ * line comes from the npm `yaml` parser. Under the bun of the JUnit gate, with no node_modules, the field label alone
+ * locates a finding.
  */
-export function diagramFields(source: string): DiagramField[] {
+export function diagramFields(source: string, names: ReadonlySet<DiagramFieldName> = PROSE_FIELDS): DiagramField[] {
   const data = record(parseYaml(source))
   const fields: DiagramField[] = []
   const add = (path: (string | number)[], label: string, value: unknown): void => {
-    if (typeof value === 'string') {
+    if (typeof value === 'string' && names.has(path.at(-1) as DiagramFieldName)) {
       fields.push({ path, label, line: null, literal: false, value })
     }
   }
+  add(['title'], 'title', data.title)
   add(['summary'], 'summary', data.summary)
+  for (const part of ['columns', 'groups'] as const) {
+    list(data[part]).forEach((entry, index) => {
+      const fieldsOf = record(entry)
+      const id = typeof fieldsOf.id === 'string' ? fieldsOf.id : String(index)
+      add([part, index, 'title'], `${part === 'columns' ? 'column' : 'group'} ${id}, title`, fieldsOf.title)
+    })
+  }
   list(data.nodes).forEach((node, index) => {
     const fieldsOf = record(node)
     const id = typeof fieldsOf.id === 'string' ? fieldsOf.id : String(index)
+    add(['nodes', index, 'title'], `node ${id}, title`, fieldsOf.title)
     add(['nodes', index, 'text'], `node ${id}, text`, fieldsOf.text)
     add(['nodes', index, 'detail'], `node ${id}, detail`, fieldsOf.detail)
   })
   list(data.steps).forEach((step, index) => {
     const fieldsOf = record(step)
     const title = typeof fieldsOf.title === 'string' ? fieldsOf.title : String(index + 1)
+    add(['steps', index, 'title'], `step ${title}, title`, fieldsOf.title)
     add(['steps', index, 'caption'], `step ${title}, caption`, fieldsOf.caption)
   })
   if (yamlModule !== null) {

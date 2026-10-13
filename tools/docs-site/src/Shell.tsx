@@ -27,7 +27,7 @@ import {
   parseRoute,
   ROUTE_CHANGE_EVENT,
 } from './router'
-import type { AnyRoute, KernelRoute } from './routeTable.ts'
+import type { AnyRoute, KernelRoute, LaunchRoute } from './routeTable.ts'
 
 /** The component a page module exports under `name`, as a lazy chunk. */
 export function lazyPage<Module extends Record<Name, ComponentType<any>>, Name extends keyof Module & string>(
@@ -45,6 +45,7 @@ const GuidePage = lazyPage(() => import('./pages/GuidePage'), 'GuidePage')
 const ExplainerPage = lazyPage(() => import('./pages/ExplainerPage'), 'ExplainerPage')
 const ExplainersPage = lazyPage(() => import('./pages/ExplainersPage'), 'ExplainersPage')
 const GuidesPage = lazyPage(() => import('./pages/GuidesPage'), 'GuidesPage')
+const LaunchPage = lazyPage(() => import('./pages/LaunchPage'), 'LaunchPage')
 
 /** Renders the page of one route. */
 export type PageRenderer<R extends AnyRoute = any> = (route: R) => ReactNode
@@ -69,10 +70,10 @@ export interface ShellParts {
   pageIdentity?: (route: AnyRoute) => string | undefined
 }
 
-type KernelRouteOf<P extends KernelRoute['page']> = Extract<KernelRoute, { page: P }>
+type KernelRouteOf<P extends KernelRoute['page'] | LaunchRoute['page']> = Extract<KernelRoute | LaunchRoute, { page: P }>
 
 /** One renderer per kernel page; the mapped type makes a new kernel route a compile error until it gets one. */
-const KERNEL_PAGES: { [P in Exclude<KernelRoute['page'], 'home'>]: (route: KernelRouteOf<P>) => ReactNode } = {
+const KERNEL_PAGES: { [P in Exclude<KernelRoute['page'] | LaunchRoute['page'], 'home'>]: (route: KernelRouteOf<P>) => ReactNode } = {
   'guides': route => <GuidesPage anchor={route.anchor} />,
   'guide': route => <GuidePage slug={route.slug} anchor={route.anchor} />,
   'explainers': route => <ExplainersPage anchor={route.anchor} />,
@@ -85,6 +86,7 @@ const KERNEL_PAGES: { [P in Exclude<KernelRoute['page'], 'home'>]: (route: Kerne
     </Suspense>
   ),
   'doc': route => <DocPage path={route.path} anchor={route.anchor} />,
+  'launch': route => <LaunchPage query={route.q} />,
 }
 
 function currentRoute(): AnyRoute {

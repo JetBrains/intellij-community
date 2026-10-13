@@ -11,6 +11,7 @@ import {
   type DecisionPaths,
   type DecisionStatusFilter,
   type KernelRoute,
+  type LaunchRoute,
   type RouteExtension,
   type RouteParent,
   type RouteTable,
@@ -18,7 +19,7 @@ import {
 } from './routeTable.ts'
 
 export { catalogAnchor, isCatalogAnchor } from './routeTable.ts'
-export type { AnyRoute, DecisionStatusFilter, KernelRoute, RouteParent, SourceLineSelection } from './routeTable.ts'
+export type { AnyRoute, DecisionStatusFilter, KernelRoute, LaunchRoute, RouteParent, SourceLineSelection } from './routeTable.ts'
 
 /** The event that `navigate` sends. The shell reads the new route on it. */
 export const ROUTE_CHANGE_EVENT = 'docs-site-route-change'
@@ -33,7 +34,7 @@ interface InstalledRoutes {
 let installed: InstalledRoutes | null = null
 
 /** Installs the route table of the site. `createSite` calls it once, before the first render. */
-export function installRoutes(config: Pick<SiteConfig, 'base' | 'docs'>, extensions: readonly RouteExtension[]): void {
+export function installRoutes(config: Pick<SiteConfig, 'base' | 'docs' | 'launchPicker'>, extensions: readonly RouteExtension[]): void {
   const basePath = config.base.endsWith('/') ? config.base : `${config.base}/`
   const table = siteRouteTable(config, extensions)
   installed = {
@@ -144,6 +145,12 @@ export function decisionRoute(path: string, anchor?: string): string {
 
 export function docRoute(path: string, anchor?: string): string {
   return kernelHref({ page: 'doc', path, anchor: anchor ?? null })
+}
+
+/** The launch picker, with the search text `query`. Only a site with a launch picker has the route. */
+export function launchRoute(query?: string): string {
+  const route: LaunchRoute = { page: 'launch', q: query ?? null }
+  return hrefForRoute(route)
 }
 
 // --- links and navigation ------------------------------------------------------------------------

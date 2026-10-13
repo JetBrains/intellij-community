@@ -18,6 +18,7 @@ import { type ExplainerChapter, splitExplainerChapters } from './explainerDoc.ts
 import type { ModelProvider, SourceLocation } from './modelProvider.ts'
 import { contentDir, repoRoot } from './paths.ts'
 import { checkProse } from './proseLint.ts'
+import { checkVocabulary } from './vocabulary.ts'
 import type { SiteConfig } from './siteConfig.ts'
 
 export { slugify } from './explainerDoc.ts'
@@ -146,7 +147,7 @@ function markdownEntries(content: string, folder: string): string[] {
 
 /**
  * Harvests the docs and the diagrams of a site. Throws on the first malformed doc, on every finding of the decision,
- * diagram, and prose checks, and on the first diagram reference that the provider does not resolve.
+ * diagram, prose, and vocabulary checks, and on the first diagram reference that the provider does not resolve.
  */
 export function harvestDocs(config: SiteConfig, provider: ModelProvider, options: DocHarvestOptions = {}): DocHarvest {
   const root = options.root ?? repoRoot
@@ -243,6 +244,8 @@ export function harvestDocs(config: SiteConfig, provider: ModelProvider, options
   // the prose of the explainers and the diagram cards, shared with the gate and the check script (proseLint.ts).
   // It runs after the diagram references resolved, so a prose finding hides no reference error.
   checkProse(config, root)
+  // the terms of the site vocabulary, shared with the gate and the check script (vocabulary.ts)
+  checkVocabulary(config, undefined, root)
   return { docs, bodies, pictures, diagrams, codeSpanPaths }
 }
 

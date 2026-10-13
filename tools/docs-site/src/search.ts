@@ -3,7 +3,8 @@
 // The provider order is the result order and the group order of the palette.
 
 import { ADR_STATUSES, adrLabel, adrNumberedTitle } from '../scripts/docMeta.ts'
-import { decisionRoute, docRoute, explainerRoute, guideRoute } from './router'
+import type { SiteConfig } from '../scripts/siteConfig.ts'
+import { decisionRoute, docRoute, explainerRoute, guideRoute, launchRoute } from './router'
 import { site } from './site.ts'
 import { guideSlug } from './siteData.ts'
 import { sourceHref } from './sourceRef'
@@ -124,8 +125,27 @@ export const symbolSearch: SearchProvider = {
   },
 }
 
-/** The providers of a site that names none. */
+/** The launch targets of the launch picker. A result opens the picker with the name of the target as the search text. */
+export const launchSearch: SearchProvider = {
+  kinds: ['Launch'],
+  search(needle) {
+    const { config, index } = site()
+    if (config.launchPicker === null) {
+      return []
+    }
+    return (index.data.launch ?? [])
+      .filter(entry => `${entry.name} ${entry.target}`.toLowerCase().includes(needle))
+      .map(entry => ({ ref: `launch:${entry.target}`, kind: 'Launch', title: entry.name, detail: entry.target, route: launchRoute(entry.name) }))
+  },
+}
+
+/** The providers of a site that names none and has no launch picker. */
 export const KERNEL_SEARCH_PROVIDERS: readonly SearchProvider[] = [docSearch, specSearch, symbolSearch]
+
+/** The providers of a site that names none: the launch targets come after the specs when the site has a launch picker. */
+export function kernelSearchProviders(config: Pick<SiteConfig, 'launchPicker'>): readonly SearchProvider[] {
+  return config.launchPicker === null ? KERNEL_SEARCH_PROVIDERS : [docSearch, specSearch, launchSearch, symbolSearch]
+}
 
 /** The result kinds of the site, in palette group order. */
 export function searchKinds(): string[] {

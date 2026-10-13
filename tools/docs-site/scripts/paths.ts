@@ -50,6 +50,27 @@ export function walkFiles(dir: string, skips: (entry: string) => boolean, visit:
   }
 }
 
+/** The directories under a spec root that hold no authored spec, in addition to `docs.skipDirs`. */
+const SPEC_SKIP_DIRS: readonly string[] = ['node_modules', 'generated', 'test-results']
+
+/**
+ * The spec files of the site: the absolute path of each file and the root that holds it, sorted by path. A spec file
+ * belongs to the first root of `specs.roots` that holds it.
+ */
+export function specFiles(config: Pick<SiteConfig, 'docs' | 'specs'>, root: string = repoRoot): { file: string, specRoot: string }[] {
+  const skipDirs = new Set([...SPEC_SKIP_DIRS, ...config.docs.skipDirs])
+  const owner = new Map<string, string>()
+  for (const specRoot of config.specs.roots) {
+    const dir = join(root, specRoot)
+    walkFiles(dir, entry => skipDirs.has(entry) || entry.startsWith('.'), (file) => {
+      if (file.endsWith(config.specs.suffix) && !owner.has(file)) {
+        owner.set(file, dir)
+      }
+    })
+  }
+  return [...owner].map(([file, specRoot]) => ({ file, specRoot })).sort((a, b) => a.file < b.file ? -1 : a.file > b.file ? 1 : 0)
+}
+
 /** Loads the default export of a `site.config.ts` module. A relative path resolves against the working directory. */
 export async function loadSiteConfig(path: string | undefined): Promise<SiteConfig> {
   if (path === undefined) {

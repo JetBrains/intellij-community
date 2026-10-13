@@ -3,15 +3,15 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { createRouteTable, kernelRouteEntries, routeBuilder, siteRouteTable, text, type KernelRoute } from './routeTable.ts'
+import { createRouteTable, kernelRouteEntries, type LaunchRoute, routeBuilder, siteRouteTable, text, type KernelRoute } from './routeTable.ts'
 
-const CONFIG = { docs: { decisions: ['docs/decisions'] } } as Parameters<typeof kernelRouteEntries>[0]
+const CONFIG = { docs: { decisions: ['docs/decisions'] }, launchPicker: { defaultName: 'IDEA', explainChapter: null } } as Parameters<typeof kernelRouteEntries>[0]
 const table = createRouteTable(kernelRouteEntries(CONFIG))
 const parse = (input: string, basePrefix = '') => table.parse(input, basePrefix)
-const build = (route: KernelRoute, basePrefix = '') => table.build(route, basePrefix)
+const build = (route: KernelRoute | LaunchRoute, basePrefix = '') => table.build(route, basePrefix)
 
 /** One sample per canonical kernel entry, with its canonical URL. */
-const SAMPLES: readonly (readonly [KernelRoute, string])[] = [
+const SAMPLES: readonly (readonly [KernelRoute | LaunchRoute, string])[] = [
   [{ page: 'home' }, '/'],
   [{ page: 'guides', anchor: null }, '/guides'],
   [{ page: 'guide', slug: 'flow-authoring-guide', anchor: 'steps' }, '/guides/flow-authoring-guide/steps'],
@@ -22,6 +22,7 @@ const SAMPLES: readonly (readonly [KernelRoute, string])[] = [
   [{ page: 'decision', slug: '0197-a-session-is-state', anchor: 'context' }, '/decisions/0197-a-session-is-state/context'],
   [{ page: 'source', path: 'docs/src/router.ts', selection: { start: 3, end: 9 } }, '/source/docs/src/router.ts?line=3-9'],
   [{ page: 'doc', path: 'spec/README.md', anchor: 'layout' }, '/doc/spec%2FREADME.md/layout'],
+  [{ page: 'launch', q: 'IDEA Community' }, '/launch?q=IDEA+Community'],
 ]
 
 test('every canonical sample round-trips in both directions', () => {
@@ -64,7 +65,7 @@ test('every legacy and degraded input parses to its canonical route', () => {
 })
 
 test('the app route heads are the first literal of every entry', () => {
-  assert.deepEqual(table.heads().toSorted(), ['decisions', 'doc', 'explain', 'guides', 'source'])
+  assert.deepEqual(table.heads().toSorted(), ['decisions', 'doc', 'explain', 'guides', 'launch', 'source'])
 })
 
 test('a doc route to a decision record builds the decision page', () => {
@@ -101,7 +102,7 @@ type SiteRoute = KernelRoute | { page: 'launch', q: string | null } | { page: 'l
 
 test('a route extension comes before the kernel routes, so it can claim a kernel URL', () => {
   const route = routeBuilder<SiteRoute, 'launch'>()
-  const site = siteRouteTable(CONFIG, [
+  const site = siteRouteTable({ ...CONFIG, launchPicker: null }, [
     route('legacy-home', '/', { legacy: true, query: { sel: text }, when: ({ sel }) => sel !== null }),
     route('launch', '/launch', { query: { q: text }, section: 'launch' }),
   ])
@@ -111,4 +112,13 @@ test('a route extension comes before the kernel routes, so it can claim a kernel
   assert.equal(site.build(launch), '/launch?q=idea')
   assert.equal(site.entryFor(launch).section, 'launch')
   assert.deepEqual(site.heads().toSorted(), ['decisions', 'doc', 'explain', 'guides', 'launch', 'source'])
+})
+
+test('the launch route exists only when the site has a launch picker', () => {
+  const without = createRouteTable(kernelRouteEntries({ ...CONFIG, launchPicker: null }))
+  assert.deepEqual(without.parse('/launch'), { page: 'home' })
+  assert.ok(!without.rows().some(row => row.page === 'launch'))
+  assert.deepEqual(parse('/launch'), { page: 'launch', q: null })
+  const launch: LaunchRoute = { page: 'launch', q: null }
+  assert.equal(table.entryFor(launch).section, 'launch')
 })

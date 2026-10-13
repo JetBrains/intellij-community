@@ -33,7 +33,10 @@ export interface DiagramPlannedPhase {
   cardText: string
 }
 
-/** One term rule of the vocabulary check. The check arrives with the build site; no site uses it yet. */
+/**
+ * One term rule of the vocabulary check (vocabulary.ts). The check finds the term, or the term with an `s`, as a whole
+ * word, case-insensitive, outside code spans and fenced blocks. A space of the term matches any whitespace.
+ */
 export interface VocabularyRule {
   /** The term that the prose must not use. */
   term: string
@@ -41,6 +44,23 @@ export interface VocabularyRule {
   replacement: string | null
   /** Why the term is out. */
   reason: string
+  /** The places where the term can stay. */
+  allowed?: {
+    /** Content-relative doc paths. A `*` matches any characters inside one path segment. */
+    docs?: string[]
+    /** Sections as `<doc path>#<heading slug>`. A section includes its subsections. */
+    sections?: string[]
+    /** Content-relative paths. The label of a link to one of them can use the term. */
+    linkPaths?: string[]
+  }
+}
+
+/** The launch picker of a site: the page at /launch that lists the launch targets of the site data. */
+export interface LaunchPickerConfig {
+  /** The name of the entry that the page selects when the query names none, for example `IDEA`. */
+  defaultName: string
+  /** The route path of the explainer chapter that explains a launch, or null. The page links it only when it exists. */
+  explainChapter: string | null
 }
 
 export interface SiteConfig {
@@ -143,7 +163,7 @@ export interface SiteConfig {
   /** The vocabulary check, or null when the site has none. */
   vocabulary: VocabularyRule[] | null
   /** The launch picker, or null when the site has none. */
-  launchPicker: { explainChapter: string } | null
+  launchPicker: LaunchPickerConfig | null
 }
 
 /** The node kinds and the planned values that the diagram grammar accepts. */

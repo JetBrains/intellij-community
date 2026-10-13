@@ -31,6 +31,22 @@ export interface SiteSymbol {
   line: number
 }
 
+/** One launch target of the launch picker: a Bazel target that builds a dev distribution and starts the IDE. */
+export interface LaunchEntry {
+  /** The name of the IDE run configuration, for example `IDEA`. */
+  name: string
+  /** The Bazel label, for example `//build:idea`. */
+  target: string
+  /** The command that starts the target from the repository root, for example `./bazel.cmd run //build:idea`. */
+  command: string
+  /** The repository half that declares the target. */
+  half: 'ultimate' | 'community'
+  /** The run configuration file, relative to the repository root. */
+  configurationFile: string
+  /** The product of the distribution, for example `Idea`. */
+  product?: string
+}
+
 /** The read model of the kernel pages. */
 export interface SiteData {
   docs: readonly HarvestedDoc[]
@@ -45,6 +61,8 @@ export interface SiteData {
   assets: Readonly<Record<string, string>>
   /** The code spans that the doc folder does not resolve, by doc folder (`CodeSpanPaths` of scripts/codeSpans.ts). */
   codeSpanPaths?: Readonly<Record<string, Readonly<Record<string, string | null>>>>
+  /** The entries of the launch picker, sorted by name (`launchPicker` of the site config). */
+  launch?: readonly LaunchEntry[]
 }
 
 /**

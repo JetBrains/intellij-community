@@ -23,11 +23,11 @@ first build of a site.
 - `scripts/`: the node and bun side. The site config (`siteConfig.ts`), the model provider (`modelProvider.ts`), the
   hand-laid diagram grammar (`diagram.ts`), the fence helpers (`fence.ts`), the explainer chapters, the decision
   record metadata, the decision check (`adrFiles.ts`), the diagram check (`diagramFiles.ts`), the prose check, the
-  doc harvest (`harvestDocs.ts`), the spec harvest (`harvestSpecs.ts`), the doc pictures, the source paths, the
+  vocabulary check (`vocabulary.ts`), the doc harvest (`harvestDocs.ts`), the spec harvest (`harvestSpecs.ts`), the doc pictures, the source paths, the
   repository paths (`paths.ts`), and the test helpers.
 - `src/`: the browser side. The app shell (`Shell.tsx`, `createSite.tsx`), the route table and the router, the nav
   and crumb models, the search and the command palette, the markdown renderer, the generic pages (guides,
-  explainers, decisions, docs, the source viewer), the hand-laid diagram, the shadcn components, and the theme state.
+  explainers, decisions, docs, the source viewer, the launch picker), the hand-laid diagram, the shadcn components, and the theme state.
 - `styles/`: the Tailwind entry and the site styles. A site imports them.
 - `vite/`: the Vite plugin that runs the harvest of a site before a build and after a change in the dev server
   (`harvestPlugin.ts`). It declares the part of the Vite plugin shape that it uses, so the kernel has no Vite
@@ -43,7 +43,8 @@ A site calls `createSite(config, parts)` in its `src/main.tsx`, after it imports
 - `home`, `nav`, `pages`: the Home page, the nav table, and the renderers of the site pages by route page.
 - `routes`: the route extensions of the site pages, made with `routeBuilder`. They come before the kernel routes.
 - `data`: the `SiteData` read model: the harvested docs, diagrams, specs, and symbols, and the glob loaders of the
-  harvested markdown, sources, and pictures (`harvestedFiles`). The site calls `import.meta.glob` itself.
+  harvested markdown, sources, and pictures (`harvestedFiles`). The site calls `import.meta.glob` itself. A site with
+  a `launchPicker` in its config gives the `launch` entries too. With no entry, the site has no launch route.
 - Optional: `crumbs`, `canvasPages`, `pageIdentity`, `fenceRenderers`, `refLinks`, `searchProviders`, `stepRef`, and
   `palette`. `site.ts` and `createSite.tsx` document each one.
 
@@ -59,8 +60,8 @@ name to the catalog file. The kernel copies of those names are stock shadcn with
 ## Site config
 
 Each site has a `site.config.ts` with a default export of the `SiteConfig` shape (`scripts/siteConfig.ts`). It gives
-the paths of the site, the decision folders, the decision topics, the guide groups, the diagram node kinds, and the
-prose limits. The kernel checks and the doc harvest read only this config, and a site gives its model to the harvest
+the paths of the site, the decision folders, the decision topics, the guide groups, the diagram node kinds, the
+prose limits, the term rules of the vocabulary check, and the launch picker. The kernel checks and the doc harvest read only this config, and a site gives its model to the harvest
 as a `ModelProvider`.
 
 Each check has a CLI that takes the config of the site:
@@ -69,6 +70,7 @@ Each check has a CLI that takes the config of the site:
 node ../../../community/tools/docs-site/scripts/diagramFiles.ts site.config.ts
 node ../../../community/tools/docs-site/scripts/adrFiles.ts site.config.ts
 node ../../../community/tools/docs-site/scripts/proseLint.ts site.config.ts
+node ../../../community/tools/docs-site/scripts/vocabulary.ts site.config.ts
 ```
 
 ## Import convention

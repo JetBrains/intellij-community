@@ -12,7 +12,7 @@ import type { CrumbLeaves, FenceRenderer, PaletteText, RefLinks, SiteRuntime } f
 import { installSite } from './site.ts'
 import { installRoutes } from './router'
 import type { RouteExtension } from './routeTable.ts'
-import { KERNEL_SEARCH_PROVIDERS, type SearchProvider } from './search'
+import { kernelSearchProviders, type SearchProvider } from './search'
 import { Shell, type ShellParts } from './Shell'
 import { siteIndex, type SiteData } from './siteData.ts'
 import { initTheme } from './theme'
@@ -27,7 +27,10 @@ export interface SiteParts extends ShellParts {
   fenceRenderers?: Readonly<Record<string, FenceRenderer>>
   /** The links that only the site can resolve. */
   refLinks?: RefLinks
-  /** The search providers, in palette order. The default is the kernel providers of the docs, the specs, and the symbols. */
+  /**
+   * The search providers, in palette order. The default is the kernel providers of the docs, the specs, the launch
+   * targets when the site has a launch picker, and the symbols.
+   */
   searchProviders?: readonly SearchProvider[]
   /** The row under a diagram step that binds to a site entity. */
   stepRef?: SiteRuntime['stepRef']
@@ -43,15 +46,19 @@ const DEFAULT_PALETTE: PaletteText = {
   placeholder: 'Search guides, explainers, decisions, specs, symbols…',
 }
 
-/** Installs the site and mounts its shell into `#root`. */
-export function createSite(config: SiteConfig, parts: SiteParts): void {
+/**
+ * Installs the site and mounts its shell into `#root`. The launch picker is on only when the config names one and the
+ * site data has launch entries.
+ */
+export function createSite(siteConfig: SiteConfig, parts: SiteParts): void {
+  const config = siteConfig.launchPicker !== null && (parts.data.launch?.length ?? 0) === 0 ? { ...siteConfig, launchPicker: null } : siteConfig
   installRoutes(config, parts.routes)
   installSite({
     config,
     index: siteIndex(parts.data, config),
     refLinks: parts.refLinks ?? {},
     fenceRenderers: parts.fenceRenderers ?? {},
-    searchProviders: parts.searchProviders ?? KERNEL_SEARCH_PROVIDERS,
+    searchProviders: parts.searchProviders ?? kernelSearchProviders(config),
     crumbs: parts.crumbs ?? {},
     stepRef: parts.stepRef ?? null,
     palette: parts.palette ?? DEFAULT_PALETTE,
