@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.CompositeTabIconHolderCreator
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ReadmeShownUsageCollector.README_OPENED_ON_START_TS
@@ -666,6 +667,11 @@ class EditorWindow internal constructor(
 
   internal fun hasClosedTabs(): Boolean = !removedTabs.isEmpty()
 
+  @RequiresEdt
+  internal fun forgetClosedTabsOf(classLoaders: Collection<ClassLoader>) {
+    removedTabs.removeAll { it.isLoadedBy(classLoaders) }
+  }
+
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun restoreClosedTab() {
     val info = removedTabs.removeLastOrNull() ?: return
@@ -1187,6 +1193,21 @@ private fun swapComponents(parent: JPanel, toAdd: JComponent, toRemove: JCompone
 internal val TabInfo.composite: EditorComposite
   get() = (component as EditorCompositePanel).composite
 
+/**
+ * Removes the closed tabs of the [classLoaders] from the closed-tab history of each editor window of the [project].
+ * A closed tab belongs to a class loader when the class of its file or of its file system comes from that class loader.
+ */
+@RequiresEdt
+internal fun forgetClosedTabsOf(project: Project, classLoaders: Collection<ClassLoader>) {
+  val manager = FileEditorManagerEx.getInstanceExIfCreated(project) as? FileEditorManagerImpl ?: return
+  for (splitters in manager.getAllSplitters()) {
+    for (window in splitters.windows()) {
+      window.forgetClosedTabsOf(classLoaders)
+    }
+    splitters.currentWindow?.forgetClosedTabsOf(classLoaders)
+  }
+}
+
 private data class RemovedTabInfo(
   private val file: VirtualFile,
   val openOptions: FileEditorOpenOptions,
@@ -1196,5 +1217,9 @@ private data class RemovedTabInfo(
       return file
     }
     return VirtualFileManager.getInstance().findFileByUrl(file.url)
+  }
+
+  fun isLoadedBy(classLoaders: Collection<ClassLoader>): Boolean {
+    return file.javaClass.classLoader in classLoaders || file.fileSystem.javaClass.classLoader in classLoaders
   }
 }
