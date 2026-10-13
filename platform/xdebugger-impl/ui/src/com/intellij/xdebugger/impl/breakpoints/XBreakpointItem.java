@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -171,6 +172,11 @@ public class XBreakpointItem extends BreakpointItem {
 
       for (RangeHighlighter highlighter : documentModel.getAllHighlighters()) {
         if (highlighter.isValid() && highlighter.getUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY) == Boolean.TRUE) {
+          var renderer = highlighter.getGutterIconRenderer();
+          if (renderer != null && renderer.getVerticalAlignment() == GutterIconRenderer.VerticalAlignment.BETWEEN_LINES) {
+            // An inter-line breakpoint has no text highlight in the main editor, so the preview has none too.
+            continue;
+          }
           int line1 = editor.offsetToLogicalPosition(highlighter.getStartOffset()).line;
           if (line1 != line) {
             if (highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) {

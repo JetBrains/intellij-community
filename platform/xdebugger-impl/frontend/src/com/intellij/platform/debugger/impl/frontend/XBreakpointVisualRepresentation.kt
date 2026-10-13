@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.LazyRangeMarkerFactory
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
@@ -31,6 +32,7 @@ import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlight
 import com.intellij.util.DocumentUtil
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointInlayManager
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeWithDocumentDelegation
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
@@ -89,7 +91,6 @@ class XBreakpointVisualRepresentation internal constructor(
   val highlighter: RangeHighlighter?
     get() = rangeMarker as? RangeHighlighter
 
-
   fun doUpdateUI(callOnUpdate: Runnable) {
     channel.trySend(UpdateUICallback(callOnUpdate))
   }
@@ -113,9 +114,10 @@ class XBreakpointVisualRepresentation internal constructor(
     withContext(Dispatchers.EDT) {
       val highlightRange = myBreakpoint.getHighlightRangeSuspend()
       if (highlightRange !is XLineBreakpointHighlighterRange.Available) return@withContext
-      val range = highlightRange.range
-
-      val attributes = getBreakpointAttributes()
+      val (range, attributes) = when (myBreakpoint.getPlacement()) {
+        XLineBreakpointVerticalPlacement.ON_LINE -> highlightRange.range to getBreakpointAttributes()
+        XLineBreakpointVerticalPlacement.INTER_LINE -> null to null
+      }
       val highlighter = getHighlighterIfValid(range, document, attributes)
 
       myBreakpoint.updateIcon()
@@ -146,7 +148,7 @@ class XBreakpointVisualRepresentation internal constructor(
         || !highlighter.isValid()
         //breakpoint range marker is out-of-sync with actual breakpoint text range
         || range != null && highlighter.textRange != range
-        || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), document)
+        || !DocumentUtil.isValidOffset(highlighter.getEndOffset(), document)
         || !Comparing.equal(highlighter.getTextAttributes(null), attributes)
     ) {
       removeHighlighter()
@@ -166,9 +168,8 @@ class XBreakpointVisualRepresentation internal constructor(
     return attributes
   }
 
-  private fun createHighlighter(document: Document, range: TextRange?, attributes: TextAttributes?) {
+  private fun createHighlighter(document: Document, range: TextRange?, attributes: TextAttributes?, line: Int = myBreakpoint.getLine()) {
     var highlighter: RangeHighlighter? = null
-    val line = myBreakpoint.getLine()
     if (!DocumentUtil.isValidLine(line, document)) return
     val markupModel = DocumentMarkupModel.forDocument(document, myProject, true) as MarkupModelEx
     if (range != null && !range.isEmpty) {
@@ -180,7 +181,7 @@ class XBreakpointVisualRepresentation internal constructor(
       }
     }
     if (highlighter == null) {
-      highlighter = markupModel.addPersistentLineHighlighter(line, DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes)
+      highlighter = createHighlighter(document, markupModel, line, myBreakpoint.getPlacement(), attributes)
     }
     if (highlighter == null) return
     highlighter.setGutterIconRenderer(myBreakpoint.getGutterIconRenderer())
@@ -189,6 +190,58 @@ class XBreakpointVisualRepresentation internal constructor(
     this.rangeMarker = highlighter
 
     redrawInlineInlays()
+  }
+
+  internal fun updateInterLineHighlighter() {
+    when (myBreakpoint.getPlacement()) {
+      XLineBreakpointVerticalPlacement.ON_LINE -> return
+      XLineBreakpointVerticalPlacement.INTER_LINE -> {}
+    }
+    val highlighter = highlighter
+    if (highlighter == null || !highlighter.isValid) return
+
+    val document = highlighter.document
+    var line = document.getLineNumber(highlighter.endOffset)
+    while (line < document.lineCount && DocumentUtil.isLineEmpty(document, line)) {
+      line++
+    }
+    if (line == document.lineCount || highlighter.startOffset > document.getLineStartOffset(line)) {
+      highlighter.dispose()
+      return
+    }
+    val range = getInterLineHighlighterRange(document, line)
+    if (highlighter.textRange != range) {
+      val attributes = highlighter.getTextAttributes(null)
+      highlighter.dispose()
+      createHighlighter(document, null, attributes, line)
+    }
+  }
+
+  private fun createHighlighter(
+    document: Document,
+    markupModel: MarkupModelEx,
+    line: Int,
+    placement: XLineBreakpointVerticalPlacement,
+    attributes: TextAttributes?,
+  ): RangeHighlighterEx? = when (placement) {
+    XLineBreakpointVerticalPlacement.ON_LINE ->
+      markupModel.addPersistentLineHighlighter(line, DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes)
+    XLineBreakpointVerticalPlacement.INTER_LINE  -> {
+      val range = getInterLineHighlighterRange(document, line)
+      markupModel.addRangeHighlighterAndChangeAttributes(null, range.startOffset, range.endOffset, DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER,
+                                                         HighlighterTargetArea.EXACT_RANGE, false, null)
+    }
+  }
+
+  /**
+   * Returns the range of an inter-line highlighter.
+   * It covers the line separator before [line] and the first character of [line].
+   */
+  private fun getInterLineHighlighterRange(document: Document, line: Int): TextRange {
+    val lineStartOffset = document.getLineStartOffset(line)
+    val startOffset = if (line > 0) document.getLineEndOffset(line - 1) else lineStartOffset
+    val endOffset = minOf(lineStartOffset + 1, document.getLineEndOffset(line))
+    return TextRange(startOffset, endOffset)
   }
 
   private suspend fun findDocument(file: VirtualFile, mayDecompile: Boolean): Document? {

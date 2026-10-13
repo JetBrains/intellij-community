@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupIterator
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.ui.ColorUtil
 import com.intellij.util.IconUtil
 import java.awt.Color
@@ -85,6 +86,11 @@ class MinimapBreakpointCollector(private val editor: Editor) {
     if (visibleEndOffset <= visibleStartOffset) return null
     val startOffset = highlighter.startOffset
     val endOffset = highlighter.endOffset
+    if (highlighter.gutterIconRenderer?.verticalAlignment == GutterIconRenderer.VerticalAlignment.BETWEEN_LINES) {
+      val lastVisibleOffset = if (visibleEndOffset == document.textLength) visibleEndOffset else visibleEndOffset - 1
+      if (endOffset !in visibleStartOffset..lastVisibleOffset) return null
+      return document.getLineNumber(endOffset)
+    }
     if (endOffset <= visibleStartOffset || startOffset >= visibleEndOffset) return null
 
     val clampedOffset = startOffset.coerceIn(visibleStartOffset, visibleEndOffset - 1)

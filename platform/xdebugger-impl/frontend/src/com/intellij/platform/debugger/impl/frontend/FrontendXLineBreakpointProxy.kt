@@ -234,10 +234,15 @@ internal class FrontendXLineBreakpointProxy(
   }
 
   fun updatePosition() {
+    visualRepresentation.updateInterLineHighlighter()
     val highlighter: RangeMarker? = visualRepresentation.rangeMarker
     if (highlighter != null && highlighter.isValid()) {
       lineSourcePosition = null // reset the source position even if the line number has not changed, as the offset may be cached inside
-      positionChanged(highlighter.getDocument().getLineNumber(highlighter.getStartOffset()), visualLineMightBeChanged = false)
+      val offset = when (getPlacement()) {
+        XLineBreakpointVerticalPlacement.ON_LINE -> highlighter.startOffset
+        XLineBreakpointVerticalPlacement.INTER_LINE -> highlighter.endOffset
+      }
+      positionChanged(highlighter.getDocument().getLineNumber(offset), visualLineMightBeChanged = false)
     }
   }
 

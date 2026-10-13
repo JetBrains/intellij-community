@@ -1215,9 +1215,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     myLineToGutterRenderersCacheForLogicalLines = logicalLinesMatchVisualOnes();
     Int2ObjectMap<List<GutterMark>> lineToGutterRenderers = new Int2ObjectOpenHashMap<>();
     processGutterRangeHighlighters(0, myDocument.getTextLength(), highlighter -> {
-      GutterMark renderer = highlighter.getGutterIconRenderer();
+      GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
       if (shouldBeShown(renderer) && isHighlighterVisible(highlighter)) {
-        int line = myEditor.offsetToVisualLine(highlighter.getStartOffset());
+        var offset = renderer.getVerticalAlignment() == GutterIconRenderer.VerticalAlignment.BETWEEN_LINES
+                     ? highlighter.getEndOffset() : highlighter.getStartOffset();
+        int line = myEditor.offsetToVisualLine(offset);
         List<GutterMark> renderers = lineToGutterRenderers.get(line);
         if (renderers == null) {
           renderers = new SmartList<>();
