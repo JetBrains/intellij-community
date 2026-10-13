@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.Nls
 
+// @spec platform/platform-impl/spec/plugin-manager/plugin-loading-problems.spec.md
 internal object PluginLoadingProblemAnalyzer {
   internal fun calculateState(
     pluginSet: PluginSet,
