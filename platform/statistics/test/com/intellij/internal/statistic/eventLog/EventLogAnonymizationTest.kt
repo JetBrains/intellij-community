@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.TestMutableComponentManager
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -19,9 +20,13 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 @TestApplication
 @SystemProperty(propertyKey = "idea.headless.statistics.salt", propertyValue = "fus-test-salt")
@@ -86,6 +91,52 @@ internal class EventLogAnonymizationTest {
     assertEquals(fus.deviceId, trace.deviceId)
     assertEquals(fus.machineId, trace.machineId)
     assertSame(trace, configuration.getOrCreate("TRACE", "FUS"))
+  }
+
+  @Test
+  @SystemProperty(propertyKey = "idea.headless.statistics.device.id", propertyValue = "fus-test-device")
+  @SystemProperty(propertyKey = "idea.headless.statistics.device.id.trace", propertyValue = "trace-test-device")
+  fun `concurrent recorder initialization shares one TRACE configuration`() {
+    val callerCount = 12
+    val executor = Executors.newFixedThreadPool(callerCount) { task ->
+      Thread(task, "TRACE Initialization Test").apply { isDaemon = true }
+    }
+    Disposer.register(disposable) {
+      executor.shutdownNow()
+      assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS), "The callers did not stop")
+    }
+    repeat(20) {
+      val configuration = EventLogConfiguration()
+      val fus = configuration.getOrCreate("FUS")
+      val ready = CountDownLatch(callerCount)
+      val start = CountDownLatch(1)
+      val callers = List(callerCount) { index ->
+        executor.submit<EventLogRecorderConfiguration> {
+          ready.countDown()
+          assertTrue(start.await(10, TimeUnit.SECONDS), "The start gate did not open")
+          val recorder = when (index % 3) {
+            0 -> configuration.getOrCreate("FUS")
+            1 -> configuration.getOrCreate("TRACE")
+            else -> configuration.getOrCreate("TRACE", "FUS")
+          }
+          assertEquals("fus-test-device", recorder.deviceId)
+          assertEquals(fus.machineId, recorder.machineId)
+          assertEquals(fus.anonymize("session-id", true), recorder.anonymize("session-id", true))
+          assertEquals(fus.anonymize("turn-id", true), recorder.anonymize("turn-id", true))
+          recorder
+        }
+      }
+
+      assertTrue(ready.await(10, TimeUnit.SECONDS), "The callers did not reach the start gate")
+      start.countDown()
+      val recorders = callers.map { it.get(10, TimeUnit.SECONDS) }
+      val trace = configuration.getOrCreate("TRACE")
+      assertEquals("FUS", trace.alternativeRecorderId)
+      recorders.forEachIndexed { index, recorder ->
+        assertSame(if (index % 3 == 0) fus else trace, recorder)
+      }
+      assertSame(trace, configuration.getOrCreate("TRACE", "FUS"))
+    }
   }
 
   @Test
