@@ -876,10 +876,11 @@ each run under `<runtime root>/runs`. It serves zips by byte range without unpac
 when a run appears or a run's journal grows. It listens on 127.0.0.1 only. `--root DIR` adds a place to look.
 `pnpm dev` in `plugins/air/docs` proxies `/__air` to it, so the viewer under development reads the same runs.
 
-When the site in `out/air-site` is missing, or older than `plugins/air/docs/src`, the server builds it once in
-the background: `pnpm install --frozen-lockfile` when `plugins/air/docs` has no `node_modules`, then
-`pnpm build`. The page says that the site is building, or why the build failed. The node and the pnpm are the
-ones `//:MODULE.bazel` pins for the site (`//plugins/air/docs/toolchain:air_docs_node`, `//plugins/air/docs/toolchain:air_docs_pnpm`), which the server asks
+When the site in `out/air-site` is missing, or older than `plugins/air/docs/src` or the `src`, `scripts` and
+`styles` of the kernel `community/tools/docs-site`, the server builds it once in the background:
+`pnpm install --frozen-lockfile` in the kernel and then in `plugins/air/docs`, each when it has no `node_modules`,
+then `pnpm build`. The page says that the site is building, or why the build failed. The node and the pnpm are the
+ones `//:MODULE.bazel` pins for the docs sites (`//build:docs_site_node`, `//build:docs_site_pnpm`), which the server asks
 Bazel for in the checkout `BUILD_WORKSPACE_DIRECTORY` names; Bazel fetches them the first time, and a regular
 build never does. Nothing has to be on the PATH. `AIR_TRACE_NODE` and `AIR_TRACE_PNPM`, set together, name the two
 directly; a server started outside a checkout uses the `pnpm` on its PATH.

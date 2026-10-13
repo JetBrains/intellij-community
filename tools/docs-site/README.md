@@ -85,6 +85,27 @@ node ../../../community/tools/docs-site/scripts/proseLint.ts site.config.ts
   kernel `src`, so Tailwind finds the classes of the kernel components.
 - The site `tsconfig.json` extends `tsconfig.base.json` of the kernel.
 
+## Toolchain
+
+Every site builds with one node and one pnpm. Bazel declares them:
+
+- `//build:docs_site_node` and `//build:docs_site_pnpm` select the archive of the host. Both aliases are `manual`,
+  so `bazel build //...` does not download them.
+- `air-trace serve` is the first client. It asks for the two labels with `bazel cquery --output=files` and builds the
+  Air site with them. It installs the kernel first when the kernel has no `node_modules`.
+- `//:MODULE.bazel` pins the versions in `DOCS_SITE_NODE_VERSION` and `DOCS_SITE_PNPM_VERSION`, with the checksums
+  in `DOCS_SITE_NODE_PLATFORMS` and `DOCS_SITE_PNPM_PLATFORMS`. The archive build files are
+  `build/BUILD.docs_site_node.bazel` and `build/BUILD.docs_site_pnpm.bazel`.
+
+The aliases are in `//build`, not in this directory. The root `.bazelignore` lists `community`, so a package here
+has no root label. The pins stay in the ultimate module, per
+[build ADR 0009](../../../build/decisions/0009-bun-pins-in-the-ultimate-module.md), and the community module cannot
+see the archives of the root module.
+
+The kernel `package.json` is the source of the versions: `engines.node` and `packageManager`.
+`DocsSiteToolchainConsistencyTest` fails when the pins drift from it. It also fails when a site names another
+`packageManager`, or declares a kernel dependency at another version.
+
 ## Tests
 
 ```sh

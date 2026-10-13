@@ -13,7 +13,9 @@ use avl_wire::progress::{
 };
 
 use super::super::journals::STOPPED_AFTER;
-use super::super::service::{PATH_PNPM, SITE_SOURCES_DIR, SiteTools, site_needs_build, site_steps};
+use super::super::service::{
+    KERNEL_SOURCES_DIRS, PATH_PNPM, SITE_SOURCES_DIR, SiteTools, site_installs, site_needs_build, site_source_dirs, site_steps,
+};
 #[cfg(unix)]
 use super::super::service::{build_site_with, detach};
 use super::*;
@@ -510,7 +512,7 @@ fn site_project(scratch: &Scratch, source_time: SystemTime) -> PathBuf {
 fn build_site(
     run: impl Fn(PathBuf, state::BuildOutput) -> futures::future::BoxFuture<'static, Result<(), Refusal>> + Send + Sync + 'static,
 ) -> state::BuildSite {
-    Arc::new(move |project, output, _cancel| run(project, output))
+    Arc::new(move |project, _kernel, output, _cancel| run(project, output))
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -608,11 +610,11 @@ async fn a_current_site_is_not_built() {
 
     let stale = site_project(&scratch, SystemTime::now() + Duration::from_hours(1));
     assert_eq!(
-        site_needs_build(Some(&stale), Some(&site)),
+        site_needs_build(Some(&stale), None, Some(&site)),
         Some("the site is older than its sources")
     );
     assert_eq!(
-        site_needs_build(Some(&scratch.dir()), Some(&site)),
+        site_needs_build(Some(&scratch.dir()), None, Some(&site)),
         None,
         "a directory without package.json"
     );
@@ -759,7 +761,7 @@ fn the_site_is_installed_before_it_is_built_when_its_dependencies_are_missing() 
     };
     let project = Path::new("/repo/plugins/air/docs");
 
-    let steps = site_steps(&tools, project, true);
+    let steps = site_steps(&tools, &[project], project);
     assert_eq!(
         steps.iter().map(|step| step.label.as_str()).collect::<Vec<_>>(),
         [
@@ -780,7 +782,7 @@ fn the_site_is_installed_before_it_is_built_when_its_dependencies_are_missing() 
         ["--dir", "/repo/plugins/air/docs", "install", "--frozen-lockfile"].map(OsString::from)
     );
 
-    let built_only = site_steps(&tools, project, false);
+    let built_only = site_steps(&tools, &[], project);
     assert_eq!(
         built_only.iter().map(|step| step.label.as_str()).collect::<Vec<_>>(),
         ["pnpm --dir /repo/plugins/air/docs build"],
@@ -789,8 +791,113 @@ fn the_site_is_installed_before_it_is_built_when_its_dependencies_are_missing() 
 }
 
 #[test]
+fn the_kernel_is_installed_before_the_project_that_links_it() {
+    let tools = SiteTools::Pinned {
+        node: PathBuf::from("/tools/node/bin/node"),
+        pnpm: PathBuf::from("/tools/pnpm/pnpm"),
+    };
+    let kernel = Path::new("/repo/community/tools/docs-site");
+    let project = Path::new("/repo/plugins/air/docs");
+
+    let steps = site_steps(&tools, &[kernel, project], project);
+    assert_eq!(
+        steps.iter().map(|step| step.label.as_str()).collect::<Vec<_>>(),
+        [
+            "pnpm --dir /repo/community/tools/docs-site install --frozen-lockfile",
+            "pnpm --dir /repo/plugins/air/docs install --frozen-lockfile",
+            "pnpm --dir /repo/plugins/air/docs build",
+        ]
+    );
+    assert_eq!(
+        steps[0].args,
+        ["--dir", "/repo/community/tools/docs-site", "install", "--frozen-lockfile"].map(OsString::from)
+    );
+}
+
+#[test]
+fn only_a_directory_without_node_modules_is_installed() {
+    let scratch = Scratch::default();
+    let kernel = scratch.dir().join("kernel");
+    let project = scratch.dir().join("docs");
+    write_file(&kernel.join("package.json"), b"{}");
+    write_file(&project.join("package.json"), b"{}");
+
+    assert_eq!(site_installs(&project, Some(&kernel)), [kernel.as_path(), project.as_path()]);
+
+    fs::create_dir_all(kernel.join("node_modules")).expect("the kernel's node_modules");
+    assert_eq!(
+        site_installs(&project, Some(&kernel)),
+        [project.as_path()],
+        "an installed kernel is not installed again"
+    );
+
+    fs::create_dir_all(project.join("node_modules")).expect("the project's node_modules");
+    assert!(site_installs(&project, Some(&kernel)).is_empty(), "nothing is missing");
+
+    let no_kernel = scratch.dir().join("no-kernel");
+    fs::create_dir_all(&no_kernel).expect("a directory without package.json");
+    fs::remove_dir_all(project.join("node_modules")).expect("drop the project's node_modules");
+    assert_eq!(
+        site_installs(&project, Some(&no_kernel)),
+        [project.as_path()],
+        "a kernel without package.json is not installed"
+    );
+    assert_eq!(site_installs(&project, None), [project.as_path()]);
+}
+
+#[test]
+fn the_staleness_check_reads_the_kernel_sources_too() {
+    let kernel = Path::new("/repo/community/tools/docs-site");
+    let project = Path::new("/repo/plugins/air/docs");
+    assert_eq!(
+        site_source_dirs(project, Some(kernel)),
+        [
+            "/repo/plugins/air/docs/src",
+            "/repo/community/tools/docs-site/src",
+            "/repo/community/tools/docs-site/scripts",
+            "/repo/community/tools/docs-site/styles",
+        ]
+        .map(PathBuf::from)
+    );
+    assert_eq!(site_source_dirs(project, None), [PathBuf::from("/repo/plugins/air/docs/src")]);
+}
+
+#[test]
+fn a_kernel_edit_makes_the_site_stale() {
+    for dir in KERNEL_SOURCES_DIRS {
+        let scratch = Scratch::default();
+        let project = site_project(&scratch, SystemTime::now() - Duration::from_hours(2));
+        let site = scratch.dir().join("site");
+        let index = site.join("index.html");
+        write_file(&index, b"<!doctype html>");
+        set_modified(&index, SystemTime::now() - Duration::from_hours(1));
+        let kernel = scratch.dir().join("kernel");
+        let source = kernel.join(dir).join("edited.ts");
+        write_file(&source, b"export {}");
+        set_modified(&source, SystemTime::now() - Duration::from_hours(2));
+        assert_eq!(
+            site_needs_build(Some(&project), Some(&kernel), Some(&site)),
+            None,
+            "{dir}: nothing is newer"
+        );
+
+        set_modified(&source, SystemTime::now());
+        assert_eq!(
+            site_needs_build(Some(&project), Some(&kernel), Some(&site)),
+            Some("the site is older than its sources"),
+            "{dir}: a kernel file newer than the site"
+        );
+        assert_eq!(
+            site_needs_build(Some(&project), None, Some(&site)),
+            None,
+            "{dir}: without the kernel only the project's sources count"
+        );
+    }
+}
+
+#[test]
 fn outside_a_checkout_the_site_is_built_with_the_pnpm_on_the_path() {
-    let steps = site_steps(&SiteTools::Path, Path::new("/docs"), false);
+    let steps = site_steps(&SiteTools::Path, &[], Path::new("/docs"));
     assert_eq!(steps.len(), 1);
     assert_eq!(steps[0].program, PathBuf::from(PATH_PNPM));
     assert_eq!(steps[0].path_prefix, None, "the PATH is left as it is");
@@ -833,7 +940,7 @@ async fn the_pinned_pnpm_runs_each_step_with_the_pinned_node_first_on_the_path()
     let (output, lines) = kept_output();
 
     let tools = SiteTools::Pinned { node: node.clone(), pnpm };
-    build_site_with(&tools, &project, true, &output, &CancellationToken::new())
+    build_site_with(&tools, &[&project], &project, &output, &CancellationToken::new())
         .await
         .expect("both steps pass");
 
@@ -877,7 +984,7 @@ async fn a_failing_install_stops_the_build_and_names_the_step() {
     let (output, _lines) = kept_output();
 
     let tools = SiteTools::Pinned { node, pnpm };
-    let failed = build_site_with(&tools, &project, true, &output, &CancellationToken::new())
+    let failed = build_site_with(&tools, &[&project], &project, &output, &CancellationToken::new())
         .await
         .expect_err("the install fails");
 
