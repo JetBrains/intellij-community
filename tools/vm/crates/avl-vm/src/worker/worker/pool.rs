@@ -115,15 +115,8 @@ impl Manager {
             rendered.push(format!("{worker}={state}"));
             states.insert(worker, state);
         }
-        let mut data = json!({ "backend": self.settings.backend, "action": switch.as_str(), "workers": states });
-        if switch == Switch::Stop
-            && let Some(engine) = self.stop_pool_engine(ctx).await?
-        {
-            rendered.push(format!("engine={engine}"));
-            data["engine"] = Value::from(engine);
-        }
         Ok(Outcome {
-            data,
+            data: json!({ "backend": self.settings.backend, "action": switch.as_str(), "workers": states }),
             text: rendered.join("\n"),
         })
     }
@@ -242,9 +235,10 @@ impl Manager {
     /// like every other one, so the seal is re-read and the new worker's provenance receipt is written.
     pub(crate) async fn pool_recycle(&self, ctx: &Ctx, target: &PoolTarget) -> Result<Outcome, Refusal> {
         self.require_recyclable()?;
-        // Before the gate, which would start an engine that the delete is about to remove.
+        // Before the gate: the builder delete leaves an Apple `container` server that is down as it is, and the gate
+        // would start it.
         if *target == PoolTarget::All {
-            self.delete_pool_engine(ctx).await?;
+            self.delete_pool_builder(ctx).await?;
         }
         self.machine.require_available(ctx, "").await?;
         // Both the delete and the start declare this worker's shares, so the host paths must be resolved first.

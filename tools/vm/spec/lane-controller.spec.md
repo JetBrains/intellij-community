@@ -314,10 +314,12 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-base/src/config/tests.rs
 
 - A macOS host that names no engine runs the Docker workers on Apple `container` from macOS 26 on Apple silicon.
-  An older macOS runs them on the Lima engine. `AIR_VM_DOCKER_ENGINE=lima` or `container` overrides the version. A
-  host that names an engine in `DOCKER_BIN` or `DOCKER_HOST` keeps that engine.
+  Another Mac keeps the engine of its host environment. Its first engine command refuses `docker_missing` when that
+  engine does not answer. A host that names an engine in `DOCKER_BIN` or `DOCKER_HOST` keeps that engine. A set
+  `AIR_VM_DOCKER_ENGINE` is refused `invalid_environment`.
   [@test] ../crates/avl-base/src/config/tests.rs (`the_macos_version_chooses_the_engine`)
-  [@test] ../crates/avl-base/src/config/tests.rs (`the_container_choice_applies_only_to_a_mac_that_names_no_engine`)
+  [@test] ../crates/avl-base/src/config/tests.rs (`the_removed_engine_variable_is_refused`)
+  [@test] ../crates/avl-vm/src/worker/docker/tests.rs (`an_older_mac_that_names_no_engine_is_told_the_two_ways_out`)
 
 - On Apple `container`, the controller uses the server of the login session and never stops it. It starts a server
   that is down. It refuses a server of another install with another major version.

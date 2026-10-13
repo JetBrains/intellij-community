@@ -275,10 +275,6 @@ impl Host {
         built: &Arc<PreparedBuild>,
         body: &impl AsyncFn(&P, usize, Lease, &Arc<PreparedBuild>) -> T,
     ) -> (Vec<Option<Result<T, Refusal>>>, Option<&'static str>) {
-        // The whole set is this invocation's while the bodies run, so one body's recreate of the Lima engine does not
-        // stop for a sibling's lease.
-        let leases: Vec<Lease> = held.iter().map(|item| item.lease.clone()).collect();
-        let _held = self.manager.hold_leases(&leases);
         let interrupt = self.interrupts.token();
         let mut settled: Vec<Option<Result<T, Refusal>>> = held.iter().map(|_| None).collect();
         let mut pending: FuturesUnordered<_> = held

@@ -14,6 +14,8 @@ the Lima engine as the engine of a macOS host. The Lima engine of
 [ADR 0189](0189-the-docker-engine-is-a-lima-vm-the-controller-owns.md) stays in the code, as the engine of an older
 macOS and as the opt-out. A later ADR removes it. The number skips 0223, because the docs here also cite the ADRs of
 `plugins/air/docs/decisions`, and 0223 is taken there. How the lane uses the engine is [the VM guide](../vm-ui-tests.md).
+Superseded in part by [the Lima engine is retired](2026-10-13-the-lima-engine-is-retired.md), which removes the Lima
+engine and `AIR_VM_DOCKER_ENGINE`.
 
 ## Context
 

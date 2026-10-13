@@ -35,18 +35,14 @@ pub(crate) struct Fixture {
     processes: Arc<FakeProcesses>,
 }
 
-/// The engine of a Docker fixture: the one the pool's environment gives, the Lima engine, or Apple `container`.
+/// The engine of a Docker fixture: the one the pool's environment gives, or Apple `container`.
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(
     windows,
-    expect(
-        dead_code,
-        reason = "the Lima and the Apple container fixtures run shell fakes, so they are Unix only"
-    )
+    expect(dead_code, reason = "the Apple container fixture runs shell fakes, so it is Unix only")
 )]
 enum Engine {
     Default,
-    Lima,
     AppleContainer,
 }
 
@@ -66,19 +62,13 @@ impl Fixture {
         Self::build(backend, guest_os, None, Engine::Default)
     }
 
-    /// A Docker pool on the Lima engine, whose Bazel resolves the pinned `limactl` to the fake.
-    #[cfg(unix)]
-    pub(crate) fn docker_lima() -> Self {
-        Self::build(Backend::Docker, GuestOs::Linux, None, Engine::Lima)
-    }
-
     /// A Docker pool on the Apple `container` engine, over the fake `container` that `CONTAINER_BIN` names.
     #[cfg(unix)]
     pub(crate) fn docker_container() -> Self {
         Self::build(Backend::Docker, GuestOs::Linux, None, Engine::AppleContainer)
     }
 
-    /// The Linux pool: one Docker slot over the fake `docker`, on an external engine.
+    /// The Linux pool: one Docker slot over the fake `docker`, on the host engine.
     pub(crate) fn docker() -> Self {
         Self::new(Backend::Docker, GuestOs::Linux)
     }
@@ -103,15 +93,11 @@ impl Fixture {
     }
 
     fn build(backend: Backend, guest_os: GuestOs, host_git: Option<bool>, engine: Engine) -> Self {
-        let lima = engine == Engine::Lima;
         // Both binaries, because a `status` over a Parallels pool reaches `prlctl` while every other test here
         // reaches `tart`, and the two names are what keep the two `exec` grammars apart.
         let mut builder = HostPool::builder(backend, guest_os, MINIMUM_VERSION).with_parallels();
         if host_git.is_some() {
             builder = builder.with_git().unresolved_host_paths();
-        }
-        if lima {
-            builder = builder.with_lima_engine();
         }
         if engine == Engine::AppleContainer {
             builder = builder.with_container_engine();
@@ -132,17 +118,13 @@ impl Fixture {
         };
         let processes = Arc::new(FakeProcesses::default());
         let runner = pool.runner().with_process_table(Arc::clone(&processes) as Arc<dyn ProcessTable>);
-        #[cfg(unix)]
-        let bazel = lima.then(|| Arc::new(pool.pinned_bazel()) as Arc<dyn avl_host_sys::guest::BazelHost>);
-        #[cfg(windows)]
-        let bazel = None;
         let manager = Manager::new(Dependencies {
             settings: Arc::clone(&pool.settings),
             locks: Arc::new(LockManager::new(runner.clone())),
             runner,
             reporter: quiet(),
             channel: (!container_linux).then(|| guests.factory()),
-            bazel,
+            bazel: None,
             build_guest_boot: builds_nothing(),
         });
         manager.prepare_runtime_dirs().expect("the runtime directories are created");

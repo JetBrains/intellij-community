@@ -10,7 +10,6 @@ use std::sync::LazyLock;
 
 use crate::worker::docker::{ContainerState, Docker, ImageSource};
 use crate::worker::hypervisor::Machine;
-use crate::worker::lima::EngineState;
 use crate::worker::worker::{Manager, read_idle_stop_record, read_lease};
 use avl_base::format::words;
 use avl_base::{Backend, Config, Outcome, Refusal};
@@ -261,8 +260,7 @@ struct DockerWorkerStatus {
     worker: String,
     exists: bool,
     /// The engine's word: `absent`, `created`, `running`, `exited`, `stopped` (Apple `container`), or another word kept
-    /// as the engine said it. `unknown` when the Lima engine or the Apple server does not run, because `status` never
-    /// starts it.
+    /// as the engine said it. `unknown` when the Apple server does not run, because `status` never starts it.
     state: String,
     /// The exit code of the entrypoint on an exited container, and null in every other state.
     exit_code: Option<i32>,
@@ -292,12 +290,10 @@ struct DockerWorkerStatus {
 #[serde(rename_all = "camelCase")]
 struct DockerStatusData {
     backend: Backend,
-    /// `lima` for the controller's Lima VM, `container` for Apple `container`, `host` for the engine of the host
-    /// environment.
+    /// `container` for Apple `container`, `host` for the engine of the host environment.
     engine: &'static str,
-    /// Lima's word for its VM (`Absent`, `Stopped`, `Running`, or another word kept as Lima said it), or the word of
-    /// the Apple `container` server (`running` or `stopped`). Null for the engine of the host environment, which this
-    /// controller does not own.
+    /// The word of the Apple `container` server, `running` or `stopped`. Null for the engine of the host environment,
+    /// which this controller does not own.
     engine_status: Option<String>,
     /// The slot count of the pool.
     pool_size: usize,
@@ -315,7 +311,7 @@ struct DockerStatusData {
 ///
 /// `pulled` when the pool's image record says this tag was pulled; `local` when the engine has the tag and the
 /// record says built, or says nothing about this tag; `missing` when the engine does not have the tag; `unknown` when
-/// the Lima engine does not run and nothing asked it.
+/// the Apple `container` server does not run and nothing asked it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 enum ImageSourceWord {
@@ -347,32 +343,16 @@ struct DockerImage {
 /// Read-only toward the engine: `docker version`, `docker image inspect`, one `docker inspect` per slot, and
 /// `docker exec` of read-only probes in a running container. It never creates, starts, stops, removes or builds.
 ///
-/// Read-only toward the Lima engine too: `limactl list` only, and none at all for an engine never created. An engine
-/// that does not run is reported with its word, and no `docker` command asks it, so every row says `unknown`. The
-/// gate of a running Lima engine is not run, because it would make an engine of another template again. The pinned
-/// CLI is resolved, and the engine answers the questions below.
-///
 /// Read-only toward the Apple `container` server too: `system status` only. A server that is down is reported
-/// `stopped` and is not started.
+/// `stopped` and is not started, and every row then says `unknown`.
 async fn docker_status(ctx: &Ctx, manager: &Manager, docker: &Docker) -> Result<Outcome, Refusal> {
     let settings = manager.settings();
-    let (engine_status, reachable) = match docker.engine() {
-        None if docker.apple().is_some() => {
-            let running = docker.reach_engine(ctx).await?;
-            (Some(if running { "running" } else { "stopped" }.to_owned()), running)
-        }
-        None => {
-            docker.require_available(ctx, "").await?;
-            (None, true)
-        }
-        Some(lima) => {
-            let state = lima.state(ctx).await?;
-            let running = state == EngineState::Running;
-            if running {
-                docker.resolved_program(ctx).await?;
-            }
-            (Some(state.as_str().to_owned()), running)
-        }
+    let (engine_status, reachable) = if docker.apple().is_some() {
+        let running = docker.reach_engine(ctx).await?;
+        (Some(if running { "running" } else { "stopped" }.to_owned()), running)
+    } else {
+        docker.require_available(ctx, "").await?;
+        (None, true)
     };
     // Before the fan-out, for the reason the Tart report gives: the parity and the declaration questions both need
     // these paths.
@@ -497,7 +477,8 @@ fn idle_stop_at(settings: &Config, worker: &str) -> Option<String> {
     read_idle_stop_record(settings, worker).map(|record| record.deadline)
 }
 
-/// The row of a worker whose Lima engine does not run: only the lease and the image tag are known without the engine.
+/// The row of a worker whose Apple `container` server does not run: only the lease and the image tag are known without
+/// the engine.
 fn unreachable_docker_worker_status(settings: &Config, worker: &str, image: &DockerImage) -> Result<DockerWorkerStatus, Refusal> {
     Ok(DockerWorkerStatus {
         worker: worker.to_owned(),

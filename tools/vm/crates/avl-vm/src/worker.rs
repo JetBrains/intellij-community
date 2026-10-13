@@ -25,7 +25,6 @@ pub(crate) mod container_linux;
 pub(crate) mod docker;
 pub(crate) mod hypervisor;
 pub(crate) mod lease;
-pub(crate) mod lima;
 #[cfg(unix)]
 pub(crate) mod parallels;
 pub(crate) mod pin;

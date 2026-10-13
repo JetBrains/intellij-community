@@ -365,10 +365,9 @@ crate.from_cargo(
 )
 use_repo(crate, "bt")
 
-# The Air UI-lane controller, `tools/vm`: the pinned Docker CLI, Lima and Tart, and the crate hub `@avl`.
+# The Air UI-lane controller, `tools/vm`: the pinned Apple container, Docker CLI and Tart, and the crate hub `@avl`.
 include("//tools/vm:container.MODULE.bazel")
 include("//tools/vm:docker.MODULE.bazel")
-include("//tools/vm:lima.MODULE.bazel")
 include("//tools/vm:tart.MODULE.bazel")
 include("//tools/vm:avl.MODULE.bazel")
 include("//:fleet/kmp.MODULE.bazel")

@@ -103,16 +103,8 @@ impl Fixture {
         }
     }
 
-    /// A Docker pool of one slot on the Lima engine: the fake `limactl`, resolved as the pinned one, starts the
-    /// engine, and the fake `docker` of `DOCKER_BIN` answers the backend. The engine is pinned in the settings, so the
-    /// fixture runs on every Unix host.
-    #[cfg(unix)]
-    pub(crate) fn docker_lima() -> Self {
-        Self::docker_builder().lima_engine().build()
-    }
-
-    /// A Docker pool of one slot on the Apple `container` engine, over the fake `container`. The engine is pinned in
-    /// the settings, so the fixture runs on every Unix host.
+    /// A Docker pool of one slot on the Apple `container` engine, over the fake `container`. The settings load as a
+    /// Mac of macOS 26 loads them, so the fixture runs on every Unix host.
     #[cfg(unix)]
     pub(crate) fn docker_container() -> Self {
         Self::docker_builder().container_engine().build()
@@ -323,10 +315,12 @@ impl FixtureBuilder {
         self
     }
 
-    /// Runs the Docker pool on the Lima engine, with a Bazel that resolves the pinned `limactl`.
+    /// Leaves `DOCKER_BIN` and `DOCKER_HOST` unset, with a Bazel that resolves the pinned Docker CLI to the fake. On a
+    /// release of [`FixtureBuilder::on_macos`] that runs no Apple `container`, the pool keeps the host engine and names
+    /// none.
     #[cfg(unix)]
-    pub(crate) fn lima_engine(mut self) -> Self {
-        self.pool = self.pool.with_lima_engine();
+    pub(crate) fn unnamed_engine(mut self) -> Self {
+        self.pool = self.pool.without_named_engine();
         self.pinned_bazel = true;
         self
     }

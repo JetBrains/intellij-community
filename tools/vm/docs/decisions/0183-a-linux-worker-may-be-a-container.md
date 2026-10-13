@@ -22,6 +22,8 @@ Amended 2026-09-30: on a macOS host with no engine named, the engine is a Lima V
 ([ADR 0189](0189-the-docker-engine-is-a-lima-vm-the-controller-owns.md)). Amended the same day: `GUEST_PACKAGES` holds
 `git`. The Docker base has none, the Tart base ships it, and five `ui` scenarios failed on a Docker worker without it.
 
+Amended 2026-10-13: [the Lima engine is retired](2026-10-13-the-lima-engine-is-retired.md) removes that Lima VM.
+
 Superseded in part on 2026-09-30: [ADR 0190](0190-the-docker-engine-is-the-default-worker.md) makes the Docker container
 the default worker, with two slots. It supersedes point 7 and the one-slot default of point 6.
 

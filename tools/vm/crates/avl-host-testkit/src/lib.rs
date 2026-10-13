@@ -80,8 +80,8 @@ pub fn load_config(backend: Backend, guest_os: GuestOs, environment: &[(String, 
 
 /// The macOS release every fixture loads on: macOS 26 on Apple silicon, the first release that runs Apple `container`
 /// by default. Pinned and not read from the host, so a suite resolves the same engine on every macOS release. A suite
-/// that needs one engine still chooses it ([`crate::pool::HostPoolBuilder::with_lima_engine`],
-/// [`crate::pool::HostPoolBuilder::with_container_engine`]).
+/// that needs one engine still chooses it: [`crate::pool::HostPoolBuilder::with_container_engine`] runs Apple
+/// `container`, and `DOCKER_BIN` or `DOCKER_HOST` names the host engine.
 pub const FIXTURE_MACOS: MacosHost = MacosHost {
     major: 26,
     apple_silicon: true,

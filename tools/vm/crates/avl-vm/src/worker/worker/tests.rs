@@ -38,8 +38,7 @@ fn lease_of(worker: &str, token: &str) -> Lease {
     }
 }
 
-// Two leases are one when the worker and the token agree, whoever holds them; the held set forgets a lease by that
-// comparison too.
+// Two leases are one when the worker and the token agree, whoever holds them.
 #[test]
 fn a_lease_is_its_worker_and_its_token() {
     let lease = lease_of("air-macos-1", "token-1");
@@ -49,13 +48,6 @@ fn a_lease_is_its_worker_and_its_token() {
     }));
     assert!(!lease.same_lease(&lease_of("air-macos-1", "token-2")));
     assert!(!lease.same_lease(&lease_of("air-macos-2", "token-1")));
-
-    let held = Arc::new(HeldLeases::default());
-    let guard = held.hold(std::slice::from_ref(&lease));
-    assert!(held.contains(&lease));
-    assert!(!held.contains(&lease_of("air-macos-1", "token-2")));
-    drop(guard);
-    assert!(!held.contains(&lease));
 }
 
 // A probe inside a wait gets what is left of the wait, so a guest that stops answering cannot carry the wait past

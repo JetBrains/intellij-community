@@ -2,18 +2,15 @@ load("//tools/vm:avl.bzl", "avl_crate")
 
 avl_crate(
     closure = True,
-    # The Docker worker's image definition and the Lima template of its engine, which `worker::docker` and
-    # `worker::lima` embed (`include_str!`).
+    # The Docker worker's image definition, which `worker::docker` embeds (`include_str!`).
     compile_data = [
         "//tools/vm:docker/Dockerfile",
         "//tools/vm:docker/air-display",
-        "//tools/vm:docker/engine.lima.yaml",
     ],
     portable = True,
     test_data = [
         "//tools/vm:container.MODULE.bazel",
         "//tools/vm:docker.MODULE.bazel",
-        "//tools/vm:lima.MODULE.bazel",
         "//tools/vm:provision/versions.env",
         "//tools/vm:tart.MODULE.bazel",
         # The golden trace bundle, one of the scenarios of the fixture run of `report time`.

@@ -73,8 +73,6 @@ pub(crate) use idle_stop::IdleStopRequest;
 #[cfg(all(test, unix))]
 pub(crate) use idle_stop::IdleStopVerdict;
 pub(crate) use idle_stop::{read_idle_stop_record, remove_idle_stop_record};
-pub(crate) use lifecycle::lease_authorizes;
-pub(crate) use lifecycle::{HeldLeases, HeldLeasesGuard};
 pub(crate) use lifecycle::{StartState, StopState, Timings};
 pub(crate) use pool::{PoolCommand, PoolTarget};
 
@@ -190,8 +188,6 @@ pub(crate) struct Manager {
     bazel: Option<Arc<dyn BazelHost>>,
     build_boot: GuestBootBuilder,
     timings: Timings,
-    /// The leases this invocation holds while it runs one body per leased worker ([`Manager::hold_leases`]).
-    held: Arc<HeldLeases>,
     /// How a lease release starts the detached process of an idle stop ([`idle_stop::spawn_detached_idle_stop`]).
     idle_stop: idle_stop::IdleStopSpawner,
 }
@@ -213,27 +209,15 @@ impl Manager {
             bazel,
             build_guest_boot,
         } = dependencies;
-        // The Lima engine is reached through its forwarded socket, and the pinned CLI finds its `docker-buildx` through
-        // its own configuration directory, on every engine. The pairs are on the manager's runner, so the guest
-        // channel's `docker exec` and every layer that spawns through this runner reach the same engine with the same
-        // CLI.
-        let docker_host = settings.runs_lima_engine().then(|| crate::worker::lima::docker_host(&settings));
-        // The Apple `container` engine runs no Docker CLI, so it gets neither.
+        // The pinned CLI finds its `docker-buildx` through its own configuration directory. The variable is on the
+        // manager's runner, so the guest channel's `docker exec` and every layer that spawns through this runner run
+        // the same CLI. The Apple `container` engine runs no Docker CLI, so it does not get it.
         let docker_config = (settings.backend == Backend::Docker && settings.docker.is_none() && !settings.runs_container_engine())
             .then(|| settings.docker_config_dir().to_string_lossy().into_owned());
-        let overrides: Vec<(&str, &str)> = [
-            docker_host.as_deref().map(|value| ("DOCKER_HOST", value)),
-            docker_config.as_deref().map(|value| ("DOCKER_CONFIG", value)),
-        ]
-        .into_iter()
-        .flatten()
-        .collect();
-        let runner = if overrides.is_empty() {
-            runner
-        } else {
-            runner.with_overrides(&overrides)
+        let runner = match docker_config.as_deref() {
+            Some(directory) => runner.with_overrides(&[("DOCKER_CONFIG", directory)]),
+            None => runner,
         };
-        let held = Arc::new(HeldLeases::default());
         // One resolver for the pinned tools of every backend, so a pool resolves them all with one query.
         let pinned = Arc::new(PinnedTools::new(Arc::clone(&settings), runner.clone(), bazel.clone()));
         let machine = match settings.backend {
@@ -247,7 +231,6 @@ impl Manager {
                 reporter.clone(),
                 Arc::clone(&locks),
                 pinned,
-                Arc::clone(&held),
             )),
             Backend::ContainerLinux => {
                 Machine::ContainerLinux(ContainerLinux::new(Arc::clone(&settings), runner.clone(), reporter.clone()))
@@ -263,19 +246,12 @@ impl Manager {
             reporter,
             locks,
             machine: Arc::new(machine),
-            held,
             channel,
             bazel,
             build_boot: build_guest_boot,
             timings,
             idle_stop: Arc::new(idle_stop::spawn_detached_idle_stop),
         }
-    }
-
-    /// Records `leases` as this invocation's own until the answer is dropped: the leased driver holds its whole set
-    /// while the bodies run. A pool-wide operation then does not stop for a sibling's lease ([`HeldLeases`]).
-    pub(crate) fn hold_leases(&self, leases: &[Lease]) -> HeldLeasesGuard {
-        self.held.hold(leases)
     }
 
     /// The configuration this controller runs with, which every caller of it also needs.
@@ -465,12 +441,11 @@ impl Manager {
     ///
     /// - OrbStack, on 2026-09-29: `cat` read the new content at once, `open` never failed with ENOENT, and only `stat`
     ///   answered the old size for about a second.
-    /// - The Lima engine (vz, virtiofs), on 2026-09-30: a path that the guest looked up in the second before the host
-    ///   rename kept a dead node, so `open` failed with ENOENT and `stat` answered the old size. The dead node cleared
-    ///   by itself within 0.73 s to 1.02 s, in the VM and in the container. From +1 s every probe was fresh.
+    /// - Apple `container` 1.5.0 (virtiofs), on 2026-10-09: a path that the guest looked up in the second before the
+    ///   host rename kept a dead node, so `open` failed with ENOENT and `stat` answered the old size. The dead node
+    ///   expired in under 60 ms.
     ///
-    /// The settle of two seconds covers both. `drop_caches` in the engine VM also clears the dead node at once, but
-    /// the settle makes it unnecessary.
+    /// The settle of two seconds covers both.
     pub(crate) async fn refresh_shares(&self, ctx: &Ctx, worker: &str) -> Result<(), Refusal> {
         match self.share_mount() {
             ShareMount::VirtioFs => {
@@ -490,8 +465,8 @@ impl Manager {
                     worker,
                     format!(
                         "{worker}: bind mounts serve fresh bytes; settled {} s for the virtiofs dead nodes and \
-                         attribute cache (measured on OrbStack on 2026-09-29, and on Lima vz on 2026-09-30, where a \
-                         dead node lives under 1 s)",
+                         attribute cache (measured on OrbStack on 2026-09-29, and on Apple container on 2026-10-09, \
+                         where a dead node lives under 60 ms)",
                         settle.as_secs_f64()
                     ),
                 );

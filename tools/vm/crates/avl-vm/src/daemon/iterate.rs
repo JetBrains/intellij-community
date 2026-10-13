@@ -525,7 +525,7 @@ impl Host {
     /// record is forgotten: the start neither probes nor retires it, and the daemon starts as on a worker with no
     /// healthy daemon.
     async fn gate_iteration(&self, ctx: &Ctx, lease: &Lease, scope: &Scope) -> Result<bool, Refusal> {
-        self.manager.machine().require_available_for_lease(ctx, lease).await?;
+        self.manager.machine().require_available(ctx, &lease.worker).await?;
         if self.manager.guest_declaration_current(ctx, lease).await? {
             return Ok(false);
         }

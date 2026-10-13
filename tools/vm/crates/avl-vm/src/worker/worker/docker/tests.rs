@@ -266,6 +266,19 @@ async fn a_docker_stop_stops_a_running_container_once() {
     assert_eq!(fixture.manager.stop(&ctx(), worker).await.unwrap(), StopState::AlreadyStopped);
 }
 
+/// `pool stop` answers the state of each worker that it stopped, and nothing about the engine: the engine of the host
+/// environment is the operator's, and no command of this controller stops it.
+#[tokio::test]
+async fn a_pool_stop_names_its_workers_and_no_engine() {
+    let fixture = Fixture::docker();
+    let worker = fixture.worker(0).to_owned();
+    fixture.manager.start_without_lifecycle_lock(&ctx(), &worker).await.unwrap();
+    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Stop(PoolTarget::All)).await.unwrap();
+    assert_eq!(outcome.data["workers"][&worker], "stopped");
+    assert!(outcome.data.get("engine").is_none(), "{}", outcome.data);
+    assert_eq!(outcome.text, format!("{worker}=stopped"));
+}
+
 /// A lease release of a stopped container is refused the start a release gate would need, as on Tart.
 #[tokio::test]
 async fn a_stopped_docker_worker_is_not_release_ready() {

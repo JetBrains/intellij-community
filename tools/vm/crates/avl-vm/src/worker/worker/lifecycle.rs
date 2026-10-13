@@ -8,10 +8,8 @@
 //!
 //! A backend that cannot do an operation answers [`unsupported`], which keeps the refusal code a caller branches on.
 
-use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use avl_base::sync::lock;
 use avl_base::{Exit, Outcome, Refusal};
 use avl_host_sys::guest::ensure_host_paths;
 use avl_host_sys::{Backoff, Ctx};
@@ -26,55 +24,8 @@ use crate::worker::hypervisor::unsupported;
 
 /// Whether `authorized`, the lease a caller holds, is the lease `held` that the worker's lease file records: the same
 /// worker and the same token. The one test of "this lease is the caller's own" for every guard.
-pub(crate) fn lease_authorizes(authorized: Option<&Lease>, held: &Lease) -> bool {
+fn lease_authorizes(authorized: Option<&Lease>, held: &Lease) -> bool {
     authorized.is_some_and(|authorized| authorized.same_lease(held))
-}
-
-/// The leases this process holds while it runs one body per leased worker, such as the shards of `shard`.
-///
-/// One per invocation, as the manager is. An operation that reaches every worker of the pool, the recreate of the
-/// Lima engine, does not stop for a lease of this set: the sibling bodies of the same command wait for that operation
-/// under the same lock, and none of them has a container that another session uses. A lease of another process still
-/// stops it.
-///
-/// No `Debug`: the tokens are secrets.
-#[derive(Default)]
-pub(crate) struct HeldLeases {
-    leases: Mutex<Vec<Lease>>,
-}
-
-impl HeldLeases {
-    /// Records `leases` as held until the answer is dropped.
-    pub(crate) fn hold(self: &Arc<Self>, leases: &[Lease]) -> HeldLeasesGuard {
-        lock(&self.leases).extend(leases.iter().cloned());
-        HeldLeasesGuard {
-            owner: Arc::clone(self),
-            leases: leases.to_vec(),
-        }
-    }
-
-    /// Whether `held`, the lease a worker's lease file records, is one of this process's leases.
-    pub(crate) fn contains(&self, held: &Lease) -> bool {
-        lock(&self.leases).iter().any(|lease| lease_authorizes(Some(lease), held))
-    }
-}
-
-/// Keeps a set of leases in [`HeldLeases`], and takes them out again when dropped.
-#[must_use = "the leases count as held only while the guard lives"]
-pub(crate) struct HeldLeasesGuard {
-    owner: Arc<HeldLeases>,
-    leases: Vec<Lease>,
-}
-
-impl Drop for HeldLeasesGuard {
-    fn drop(&mut self) {
-        let mut held = lock(&self.owner.leases);
-        for lease in &self.leases {
-            if let Some(index) = held.iter().position(|candidate| candidate.same_lease(lease)) {
-                held.remove(index);
-            }
-        }
-    }
 }
 
 /// The budgets and the pauses of the poll loops, each of which runs through [`Poll`](avl_host_sys::Poll). The
@@ -121,8 +72,8 @@ pub(crate) struct Timings {
     /// thirty seconds.
     pub(crate) teardown_grace: Duration,
     /// What a Docker worker's share refresh waits: two seconds. A bind mount answered a replaced file's old size for
-    /// about a second on OrbStack (2026-09-29), and kept a dead node for under a second on the Lima engine
-    /// (2026-09-30). See [`Manager::refresh_shares`].
+    /// about a second on OrbStack (2026-09-29), and kept a dead node for under 60 ms on Apple `container`
+    /// (2026-10-09). See [`Manager::refresh_shares`].
     pub(crate) docker_share_settle: Duration,
     /// How long a Docker start waits for the pool-wide image lock that another start holds while it builds. Thirty
     /// minutes, because the first build installs the guest packages and takes minutes; the waiter then finds the
@@ -367,31 +318,14 @@ impl Manager {
         }
     }
 
-    /// What `pool stop` does for the whole pool after it stopped its targets. Answers the word the outcome reports
-    /// for the pool's engine, or `None` when the backend has no engine of its own. Only the Docker backend on its
-    /// Lima engine has one, and the engine of the host environment is the operator's: no command of this controller
-    /// stops it.
-    pub(super) async fn stop_pool_engine(&self, ctx: &Ctx) -> Result<Option<String>, Refusal> {
-        match self.machine.as_ref() {
-            Machine::Docker(docker) => match docker.engine() {
-                Some(engine) => self.stop_docker_engine(ctx, docker, engine).await.map(Some),
-                None => Ok(None),
-            },
-            #[cfg(unix)]
-            Machine::Tart(_) | Machine::Parallels(_) => Ok(None),
-            Machine::ContainerLinux(_) => Ok(None),
-        }
-    }
-
     // --- pool init, pool gc and pool recycle -----------------------------------------------------------------
 
     /// `pool init` for a caller that already holds the pool's locks.
     ///
-    /// Four different operations behind one verb. A Tart macOS pool clones a sealed golden and audits it; a Tart
-    /// Linux pool clones a public image by tag, where there is no seal because there is nothing baked in to audit; a
-    /// Parallels pool has nothing to create at all and re-provisions the VM the operator made; a Docker pool builds
-    /// its image and creates every slot's container. `golden` is the golden VM that the operator named, and only a
-    /// Tart macOS pool takes one.
+    /// Four different operations behind one verb. A Tart pool clones the sealed macOS golden and audits it. A
+    /// Parallels pool has nothing to create, and it provisions again the VM that the operator made. A Docker pool
+    /// builds its image and creates the container of each slot. A container-linux pool starts its one container.
+    /// `golden` is the golden VM that the operator named, and only a Tart pool takes one.
     pub(crate) async fn pool_init_without_lifecycle_lock(&self, ctx: &Ctx, golden: Option<&str>) -> Result<Outcome, Refusal> {
         match self.machine.as_ref() {
             #[cfg(unix)]
@@ -434,16 +368,13 @@ impl Manager {
         }
     }
 
-    /// What `pool recycle all` does for the whole pool before it unmakes the slots. Only the Docker backend does
-    /// something. On its Lima engine it deletes the engine, so the recycle makes the whole pool again, the engine VM
-    /// included. On the Apple `container` engine it deletes the builder VM.
-    pub(super) async fn delete_pool_engine(&self, ctx: &Ctx) -> Result<(), Refusal> {
+    /// What `pool recycle all` does for the whole pool before it unmakes the slots. Only the Docker backend on the
+    /// Apple `container` engine does something: it deletes the builder VM. The engine of the host environment is the
+    /// operator's, and no command of this controller changes it.
+    pub(super) async fn delete_pool_builder(&self, ctx: &Ctx) -> Result<(), Refusal> {
         match self.machine.as_ref() {
-            Machine::Docker(docker) => match docker.engine() {
-                Some(engine) => self.delete_docker_engine(ctx, engine).await,
-                None if docker.apple().is_some() => self.delete_docker_builder(ctx, docker).await,
-                None => Ok(()),
-            },
+            Machine::Docker(docker) if docker.apple().is_some() => self.delete_docker_builder(ctx, docker).await,
+            Machine::Docker(_) => Ok(()),
             #[cfg(unix)]
             Machine::Tart(_) | Machine::Parallels(_) => Ok(()),
             Machine::ContainerLinux(_) => Ok(()),

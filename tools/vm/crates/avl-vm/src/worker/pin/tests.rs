@@ -16,12 +16,12 @@ fn a_pool_runs_from_its_pins_only_what_no_variable_names() {
     assert_eq!(PinnedTool::of_pool(&named.settings), []);
     let docker = HostPool::builder(Backend::Docker, GuestOs::Linux, MINIMUM_VERSION).build();
     assert_eq!(PinnedTool::of_pool(&docker.settings), []);
-    let lima = HostPool::builder(Backend::Docker, GuestOs::Linux, MINIMUM_VERSION)
-        .with_lima_engine()
+    let cli = HostPool::builder(Backend::Docker, GuestOs::Linux, MINIMUM_VERSION)
+        .without_docker_bin()
         .build();
     assert_eq!(
-        PinnedTool::of_pool(&lima.settings),
-        [PinnedTool::DockerCli, PinnedTool::DockerBuildx, PinnedTool::Limactl]
+        PinnedTool::of_pool(&cli.settings),
+        [PinnedTool::DockerCli, PinnedTool::DockerBuildx]
     );
     // The Apple container engine runs no Docker CLI, and `CONTAINER_BIN` names the fake, so nothing is pinned.
     let container = HostPool::builder(Backend::Docker, GuestOs::Linux, MINIMUM_VERSION)
@@ -44,18 +44,13 @@ fn a_pool_runs_from_its_pins_only_what_no_variable_names() {
 #[tokio::test]
 async fn one_query_resolves_every_pinned_tool_of_a_pool() {
     let pool = HostPool::builder(Backend::Docker, GuestOs::Linux, MINIMUM_VERSION)
-        .with_lima_engine()
+        .without_docker_bin()
         .build();
     let bazel = Arc::new(pool.pinned_bazel());
     let host: Arc<dyn BazelHost> = bazel.clone();
     let pinned = PinnedTools::new(Arc::clone(&pool.settings), pool.runner(), Some(host));
     let ctx = Ctx::background();
-    for tool in [
-        PinnedTool::Limactl,
-        PinnedTool::DockerCli,
-        PinnedTool::DockerBuildx,
-        PinnedTool::Limactl,
-    ] {
+    for tool in [PinnedTool::DockerBuildx, PinnedTool::DockerCli, PinnedTool::DockerBuildx] {
         let path = pinned
             .path(&ctx, tool)
             .await
@@ -81,12 +76,11 @@ async fn a_pool_without_bazel_resolves_nothing() {
     assert_eq!(pinned.path(&Ctx::background(), PinnedTool::Tart).await.unwrap(), None);
 }
 
-/// Writes the two `.MODULE.bazel` files of a Lima pool into the checkout of `pool`, so the record can key on them.
-fn write_lima_pins(pool: &HostPool, docker: &str) {
+/// Writes the `.MODULE.bazel` file of the pinned Docker CLI into the checkout of `pool`, so the record can key on it.
+fn write_docker_pin(pool: &HostPool, docker: &str) {
     let directory = pool.root().join("community/tools/vm");
     std::fs::create_dir_all(&directory).unwrap();
     std::fs::write(directory.join("docker.MODULE.bazel"), docker).unwrap();
-    std::fs::write(directory.join("lima.MODULE.bazel"), "lima pin\n").unwrap();
 }
 
 /// The resolution of every tool of `pool` by a fresh resolver over `bazel`, as the next process makes it, and what that
@@ -107,9 +101,9 @@ async fn resolve_as_a_new_process(pool: &HostPool, bazel: &Arc<PinnedBazel>) -> 
 #[tokio::test]
 async fn a_recorded_path_answers_the_next_process_without_a_query() {
     let pool = HostPool::builder(Backend::Docker, GuestOs::Linux, MINIMUM_VERSION)
-        .with_lima_engine()
+        .without_docker_bin()
         .build();
-    write_lima_pins(&pool, "docker pin\n");
+    write_docker_pin(&pool, "docker pin\n");
     let bazel = Arc::new(pool.pinned_bazel());
 
     let (first, asked) = resolve_as_a_new_process(&pool, &bazel).await;
@@ -123,13 +117,13 @@ async fn a_recorded_path_answers_the_next_process_without_a_query() {
 #[tokio::test]
 async fn a_changed_pin_resolves_again() {
     let pool = HostPool::builder(Backend::Docker, GuestOs::Linux, MINIMUM_VERSION)
-        .with_lima_engine()
+        .without_docker_bin()
         .build();
-    write_lima_pins(&pool, "docker pin\n");
+    write_docker_pin(&pool, "docker pin\n");
     let bazel = Arc::new(pool.pinned_bazel());
     resolve_as_a_new_process(&pool, &bazel).await;
 
-    write_lima_pins(&pool, "docker pin, bumped\n");
+    write_docker_pin(&pool, "docker pin, bumped\n");
     let (_, asked) = resolve_as_a_new_process(&pool, &bazel).await;
     assert_eq!(asked, ["cquery", "info"]);
 }
@@ -138,9 +132,9 @@ async fn a_changed_pin_resolves_again() {
 #[tokio::test]
 async fn a_recorded_file_that_is_gone_resolves_again() {
     let pool = HostPool::builder(Backend::Docker, GuestOs::Linux, MINIMUM_VERSION)
-        .with_lima_engine()
+        .without_docker_bin()
         .build();
-    write_lima_pins(&pool, "docker pin\n");
+    write_docker_pin(&pool, "docker pin\n");
     let bazel = Arc::new(pool.pinned_bazel());
     resolve_as_a_new_process(&pool, &bazel).await;
     let record = pool.settings.runtime_root.join(PINNED_TOOLS_RECORD);
@@ -157,7 +151,7 @@ async fn a_recorded_file_that_is_gone_resolves_again() {
 #[tokio::test]
 async fn a_checkout_without_the_pins_records_nothing() {
     let pool = HostPool::builder(Backend::Docker, GuestOs::Linux, MINIMUM_VERSION)
-        .with_lima_engine()
+        .without_docker_bin()
         .build();
     resolve_as_a_new_process(&pool, &Arc::new(pool.pinned_bazel())).await;
     assert!(!pool.settings.runtime_root.join(PINNED_TOOLS_RECORD).exists());

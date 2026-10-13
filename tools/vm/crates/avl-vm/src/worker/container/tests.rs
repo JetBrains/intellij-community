@@ -112,6 +112,7 @@ mod lifecycle {
 
     use super::*;
     use crate::worker::docker::{Docker, ImageSource};
+    use crate::worker::pin::PinnedTools;
     use crate::worker::testing::Fixture;
     use crate::worker::worker::{PoolCommand, PoolTarget, StartState};
 
@@ -372,9 +373,27 @@ mod lifecycle {
         );
     }
 
-    /// `AIR_VM_DOCKER_ENGINE=container` on macOS 15 is refused `container_macos_too_old` before any `container`
-    /// command runs. A `CONTAINER_BIN` that names no CLI gets the same refusal, so a Mac without the tool gets it too.
-    /// The remedy names the floor and the Lima engine.
+    /// A Docker backend over the settings of `fixture` after `pin` changes a host fact. The settings keep the Apple
+    /// `container` engine, which the engine rule never chooses on such a host.
+    fn pinned_docker(fixture: &Fixture, pin: impl FnOnce(&mut Config)) -> Docker {
+        let mut settings = (*fixture.settings).clone();
+        pin(&mut settings);
+        let settings = Arc::new(settings);
+        let runner = fixture.manager.runner().clone();
+        Docker::new(
+            Arc::clone(&settings),
+            runner.clone(),
+            avl_host_testkit::quiet(),
+            Arc::new(LockManager::new(runner.clone())),
+            Arc::new(PinnedTools::new(settings, runner, None)),
+        )
+    }
+
+    /// The engine rule keeps the host engine on macOS 15, so only settings that pin the engine reach this gate. It
+    /// refuses `container_macos_too_old` before any `container` command runs. A `CONTAINER_BIN` that names no CLI gets
+    /// the same refusal, so a Mac without the tool gets it too. A host that is not Apple silicon is refused as well.
+    /// The remedy names the two ways out: a Docker engine in `DOCKER_BIN` or `DOCKER_HOST`, or a Mac of macOS 26 or
+    /// newer on Apple silicon.
     #[tokio::test]
     async fn an_older_macos_is_refused_before_any_container_command() {
         let macos_15 = MacosHost {
@@ -382,23 +401,42 @@ mod lifecycle {
             apple_silicon: true,
         };
         for container_bin in [None, Some("/nonexistent/bin/container")] {
-            let mut builder = Fixture::docker_builder().container_engine().on_macos(macos_15);
+            let mut builder = Fixture::docker_builder().container_engine();
             if let Some(path) = container_bin {
                 builder = builder.env("CONTAINER_BIN", path);
             }
             let fixture = builder.build();
-            assert!(fixture.settings.runs_container_engine(), "{container_bin:?}");
-            let refusal = docker(&fixture).require_available(&ctx(), "").await.unwrap_err();
+            let backend = pinned_docker(&fixture, |settings| settings.macos = Some(macos_15));
+            assert!(backend.apple().is_some(), "{container_bin:?}");
+            let refusal = backend.require_available(&ctx(), "").await.unwrap_err();
             assert_eq!(
                 (refusal.code.as_ref(), refusal.exit),
                 ("container_macos_too_old", Exit::USAGE),
                 "{container_bin:?}"
             );
-            for named in ["macOS 26 or newer", "runs macOS 15", "AIR_VM_DOCKER_ENGINE=lima"] {
-                assert!(refusal.message.contains(named), "{named:?} in {}", refusal.message);
-            }
+            assert_eq!(
+                refusal.message,
+                "the Apple container engine needs macOS 26 or newer, and this host runs macOS 15; name a Docker engine \
+                 with DOCKER_BIN or DOCKER_HOST, or run the lane on a Mac with macOS 26 or newer on Apple silicon",
+                "{container_bin:?}"
+            );
             assert_eq!(fixture.fake.calls(), Vec::<String>::new(), "{container_bin:?}");
         }
+        let fixture = Fixture::docker_container();
+        let refusal = pinned_docker(&fixture, |settings| settings.guest_arch = GuestArch::X86_64)
+            .require_available(&ctx(), "")
+            .await
+            .unwrap_err();
+        assert_eq!(refusal.code, "unsupported_backend_operation");
+        assert!(
+            refusal.message.ends_with(
+                "the Apple container engine runs on Apple silicon only; name a Docker engine with DOCKER_BIN or \
+                 DOCKER_HOST, or run the lane on a Mac with macOS 26 or newer on Apple silicon"
+            ),
+            "{}",
+            refusal.message
+        );
+        assert_eq!(fixture.fake.calls(), Vec::<String>::new());
     }
 
     /// A server of another install with another major version is refused, and the controller does not touch it. One
@@ -533,6 +571,17 @@ mod lifecycle {
                 .any(|call| call.starts_with("system stop") || call.starts_with("builder ")),
             "{calls:#?}"
         );
+    }
+
+    /// `pool gc` on a server that is down starts nothing, and it keeps every slot with the word `engine-stopped`.
+    #[tokio::test]
+    async fn a_pool_gc_on_a_stopped_server_starts_nothing() {
+        let fixture = Fixture::docker_container();
+        let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap();
+        assert_eq!(outcome.data["kept"][fixture.worker(0)], "engine-stopped");
+        assert_eq!(outcome.text, "removed=(none)");
+        let calls = fixture.fake.calls();
+        assert!(!calls.iter().any(|call| call.starts_with("system start")), "{calls:#?}");
     }
 
     /// `pool recycle all` stops and deletes the builder, deletes the container by force, finds no volume to delete,

@@ -3,8 +3,8 @@
 `BT --lane ui` and `--lane ui-real` launch a real IDE with `InputEventsRobot`. That robot posts
 component-relative events through the IDE event queue, and it never moves the physical pointer.
 `BT --lane gui-chat` may still use `SmoothRobot` and physical input. A UI lane is run and judged in
-a VM, and the controller's default is a Linux container on a Docker engine. On a Mac that engine is Apple
-`container`, or a Lima VM on a macOS older than 26. The VM isolates the host session, and it gives a failure a real screenshot. Never move a run onto the host silently.
+a VM, and the controller's default is a Linux container on a Docker engine. On a Mac of macOS 26 or newer, on Apple
+silicon, that engine is Apple `container`. The VM isolates the host session, and it gives a failure a real screenshot. Never move a run onto the host silently.
 
 The flow lanes validate Swing and AWT component behaviour. They do not validate native title bars
 and menus, OS dialogs, WindowServer hit testing, or physical focus. That coverage stays separate.
@@ -54,11 +54,11 @@ runs in it.
 
 | | Docker (default) | Tart macOS | Parallels | container-linux |
 | --- | --- | --- | --- | --- |
-| machine | a container on Apple `container` or on the controller's Lima VM, or on the engine that `DOCKER_BIN` or `DOCKER_HOST` names | a Tart VM | one Parallels VM | the container of the `testing-ui` skill, on Apple `container`, rootless Podman or `wslc` |
+| machine | a container on Apple `container`, or on the engine of the host environment, which `DOCKER_BIN` or `DOCKER_HOST` can name | a Tart VM | one Parallels VM | the container of the `testing-ui` skill, on Apple `container`, rootless Podman or `wslc` |
 | image | a Dockerfile from a digest-pinned `ubuntu:26.04`, pulled from the JetBrains registry by its content tag, built when the pull fails | a sealed Packer golden | one pre-existing VM | the skill's image, which its `start` builds |
 | session | `Xvfb :88` and fluxbox, from the image's entrypoint | Aqua | Aqua | the skill's `Xvnc :1`, with noVNC |
-| root disk and memory | on Apple `container` a VM of its own, 8 GiB; on Lima the engine VM's, shared by every container | 120 GB, 32 GiB | the VM's own | the container's disk, 6 GiB |
-| `pool stop` | stops the container, and on Lima then the VM when nothing is leased, keeps nothing warm; on Apple `container` an unleased worker also stops by itself an hour after its release | `tart suspend`, keeps the daemon and the IDE | suspends | removes the container and the staged runtime with it, keeps nothing warm |
+| root disk and memory | on Apple `container` a VM of its own, 8 GiB; on the engine of the host environment the engine's, shared by every container | 120 GB, 32 GiB | the VM's own | the container's disk, 6 GiB |
+| `pool stop` | stops the container and never an engine, keeps nothing warm; on Apple `container` an unleased worker also stops by itself an hour after its release | `tart suspend`, keeps the daemon and the IDE | suspends | removes the container and the staged runtime with it, keeps nothing warm |
 | Robot screenshot | a real frame | black, see ADR 0113 | a real frame | a real frame |
 | Peekaboo | no | no | yes | no |
 | provenance | the base digest and the image tag | a seal receipt per worker | none | none |
@@ -67,8 +67,8 @@ runs in it.
 Docker is the default on every host
 ([ADR 0190](decisions/0190-the-docker-engine-is-the-default-worker.md)), and it is the one Linux worker
 ([the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). A red run
-there is a verdict. `java.awt.Robot` captures a real frame there, so a failure arrives with a picture. It needs
-no installation, and one engine holds two lanes. `--backend container-linux` runs the same Linux guest profile
+there is a verdict. `java.awt.Robot` captures a real frame there, so a failure arrives with a picture. On a Mac of
+macOS 26 or newer, on Apple silicon, it needs no installation. One engine holds two lanes. `--backend container-linux` runs the same Linux guest profile
 in the container of the `testing-ui` skill, on every host of the skill. The skill's noVNC is the live view
 ([the lane runs in the testing-ui container](decisions/2026-10-04-the-lane-runs-in-the-testing-ui-container.md)), and
 [the container-linux backend becomes the default worker](decisions/2026-10-09-the-container-linux-backend-becomes-the-default-worker.md) decides that it becomes the
@@ -216,10 +216,10 @@ The share is a bind mount at `/mnt/AirVmShares/<share-name>`, read-only, which i
 parity layout expects. **There is no remount on Docker.** A spike on 2026-09-29 replaced a file by rename
 on the host, as Bazel does. In the container, `cat` returned the new bytes at once, and `open` never
 failed with `ENOENT`. Only `stat` was late: it reported the old size at +0 s and the new size from +1 s
-on. On the Lima engine, on 2026-09-30, `open` failed with `ENOENT` after the rename when the guest had
-looked the path up just before it. That dead node expired by itself in under one second, and no remount
-was needed ([ADR 0189](decisions/0189-the-docker-engine-is-a-lima-vm-the-controller-owns.md)). So a
-remount on Docker is a 2 s settle for the virtiofs dead nodes and the attribute cache, on both engines.
+on. On Apple `container`, on 2026-10-09, `open` failed with `ENOENT` after the rename when the guest had
+read the path just before it. That dead node expired by itself after 34 ms to 58 ms. No remount was
+needed ([Apple container is a second engine of the Docker backend](decisions/2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend.md)).
+So a remount on Docker is a 2 s settle for the virtiofs dead nodes and the attribute cache, on both engines.
 A lane run on Docker goes through
 the same daemon, and the remount step of the daemon becomes the 2 s settle. The controller recreates a
 container when its create arguments change. The record of those arguments covers the share, the image
@@ -237,51 +237,41 @@ removes the container and its volume. `pool gc` removes stopped, unleased contai
 volumes. `vnc`, `peekaboo` and `image validate|build` have no meaning here, and they refuse with
 `unsupported_backend_operation` (exit 2).
 
-One rule decides the engine, and no flag selects it ([ADR 0224](decisions/0224-apple-container-is-the-default-engine-of-a-mac.md)). When `DOCKER_BIN` or
-`DOCKER_HOST` names an engine, the controller runs that CLI against that engine. When neither variable
-is set, a macOS host of macOS 26 or newer, on Apple silicon, runs Apple `container`. An older macOS runs
-a Docker CLI that Bazel pins against a Lima VM that the controller owns. `AIR_VM_DOCKER_ENGINE=lima` or
-`AIR_VM_DOCKER_ENGINE=container` overrides the version either way. On a macOS older than 26, the engine
-gate refuses `AIR_VM_DOCKER_ENGINE=container` with `container_macos_too_old` (exit 2), before it runs a
-`container` command. The controller reads the version from the host at each command. So a Mac installs
-nothing, as for Tart. OrbStack is the fast path, and the first two lane rows of the cost table ran on it.
-A Mac with OrbStack keeps it with one variable:
+One rule decides the engine, and no flag selects it
+([the Lima engine is retired](decisions/2026-10-13-the-lima-engine-is-retired.md)). When `DOCKER_BIN` or `DOCKER_HOST`
+names an engine, the controller runs that CLI against that engine, on every host. When neither variable is set, a
+macOS host of macOS 26 or newer, on Apple silicon, runs Apple `container`. Every other Mac keeps the engine of its
+host environment: an older macOS, an Intel Mac, and a Mac whose version cannot be read. On such a Mac, the Docker CLI
+asks only `/var/run/docker.sock`. When no engine answers on that socket, a command that needs the engine refuses
+`docker_missing`. Its remedy names two ways out. Name a Docker engine with `DOCKER_BIN` or `DOCKER_HOST`, or run the
+lane on a Mac with macOS 26 or newer on Apple silicon. `suites` still works, and `status` refuses `docker_missing`
+with the same remedy. A Linux or a Windows host keeps the engine it has. The controller reads the version from the
+host at each command, and no setting overrides it. So a Mac of macOS 26 or newer on Apple silicon installs nothing, as
+for Tart. `status` names the engine in its first line, `engine=host` or `engine=container`, and it never starts the
+engine. OrbStack is the fast path, and the first two lane rows of the cost table ran on it. A Mac with OrbStack keeps
+it with one variable, and an older Mac names its engine in the same way:
 
 ```bash
 export DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock   # or DOCKER_BIN=<OrbStack's docker>
 ```
 
-The Lima VM is `air-docker-engine` under `AIR_VM_LIMA_HOME`, made from `community/tools/vm/docker/engine.lima.yaml`.
-It boots Ubuntu 26.04 and runs a rootful `dockerd` of the Ubuntu archive. Lima forwards the Docker socket
-through its SSH connection, and on 26.04 that connection runs over vsock, not through Lima's userspace
-network stack ([ADR 0191](decisions/0191-the-engine-vm-leaves-the-usernet-path.md)). The VM has one
-network, the usernet of Lima. Its disk is raw. It mounts the home read-only at its host path, as
-the default template of Lima does, so the share binds as on any engine. A Bazel output user root outside the
-home is refused `share_outside_home`. The checkout may lie anywhere, because no share holds it. The socket reaches the controller
-as `DOCKER_HOST`. The pinned CLI has no `buildx`, so the controller also pins buildx. With the pinned
-CLI (`DOCKER_BIN` unset), the controller passes `DOCKER_CONFIG=<runtime root>/docker-config` and names
-the pinned plugin in its `config.json`, on every engine. It keeps every other key of that file, so a
-`docker login` made there survives. A CLI that `DOCKER_BIN` names keeps its own configuration.
-`AIR_VM_CPU` and `AIR_VM_ROOT_DISK_GB` size the VM with the Linux defaults. `AIR_VM_MEMORY_MB` has a
-larger default for the engine, because the two containers share its memory. The skill's settings
-reference lists the values.
-
-A Docker command that needs the engine starts it, under one engine lock, so concurrent commands start
-it once. The first start downloads the cloud image and runs `apt-get`, so it takes minutes. Lima keeps
-the image in `~/Library/Caches/lima`, which every Lima home shares, so a VM that is made again
-downloads no image. A change of the home, a size or an image pin makes the VM again, and a checkout
-switch keeps it. A lease of another process blocks that recreate. The leases of one `shard` or `flake` do not. `pool stop` stops the VM after the
-containers, when no worker is leased and no container runs. `pool recycle all` deletes the VM unless a
-worker holds a lease of another process, and `pool recycle <worker>` keeps it. `pool gc` keeps it, and on a stopped VM it runs
-no `docker` command. `pool stop`, `pool gc` and `lease release` never start the VM or make it again. A
-`lease release` on a VM that does not run refuses `worker_stopped`. `status` never starts the VM, and it names the engine in its first line. A
+On a Mac, an unset `DOCKER_BIN` is a Docker CLI that Bazel pins. That CLI has no `buildx`, so the controller also pins
+buildx. With the pinned CLI, the controller passes `DOCKER_CONFIG=<runtime root>/docker-config` and names the pinned
+plugin in its `config.json`. So the pinned CLI reads no context of `~/.docker`. The controller keeps every other key
+of that file, so a `docker login` made there survives. A CLI that `DOCKER_BIN` names keeps its own configuration. A
 publish with the pinned CLI needs a login into that configuration first:
 
 ```bash
 DOCKER_CONFIG="<runtime root>/docker-config" docker login <registry>
 ```
 
-A Linux or a Windows host keeps the engine it has, because Lima needs QEMU on Linux and WSL2 on Windows.
+A Lima VM of an earlier controller stays on disk, and the controller does not know it. A running one keeps its
+memory. The pinned `limactl` is gone, so stop and delete the VM with a `limactl` of your own. When the VM does not
+run, remove `~/.local/state/JetBrains/air-vm-ui-tests/lima` instead:
+
+```bash
+LIMA_HOME=~/.local/state/JetBrains/air-vm-ui-tests/lima limactl delete --force air-docker-engine
+```
 
 On Apple `container` ([Apple container is a second engine of the Docker backend](decisions/2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend.md)),
 each container is a VM of its own. The controller runs the Apple CLI that Bazel pins in
@@ -290,12 +280,6 @@ each container is a VM of its own. The controller runs the Apple CLI that Bazel 
 ```bash
 env -u DOCKER_HOST ./community/tools/vm.cmd run AgentSessionToolWindowComposerUiTest
 ```
-
-- **The move from Lima.** The first `run` or `pool start` on Apple `container` makes the worker
-  containers again on that engine, and it downloads the worker image from the file mirror. The Lima VM stays on disk, and a
-  running one keeps its memory. `AIR_VM_DOCKER_ENGINE=lima ./community/tools/vm.cmd pool stop` stops it,
-  and `AIR_VM_DOCKER_ENGINE=lima ./community/tools/vm.cmd pool recycle all` deletes it
-  ([ADR 0224](decisions/0224-apple-container-is-the-default-engine-of-a-mac.md)).
 
 - **One server per login session.** The controller uses the server that runs, on the default data root of the tool.
   It never stops the server, because a `system stop` stops every container of the session, also the containers of
@@ -327,7 +311,7 @@ env -u DOCKER_HOST ./community/tools/vm.cmd run AgentSessionToolWindowComposerUi
 - **A boot that fails.** The engine keeps no exit code. A container that stops while it starts is refused
   `container_exited`, with its log and its boot log, which holds the code.
 
-A shell that exports `DOCKER_HOST`, for example for OrbStack, keeps the external engine. Unset it for the run, as the
+A shell that exports `DOCKER_HOST`, for example for OrbStack, keeps that engine. Unset it for the run, as the
 example does.
 
 The live lane `ui-live` runs on the Docker guest too, but only when a caller names it, because each of its scenarios
@@ -711,7 +695,8 @@ Agents consume the JSON report.
 
 The fixed costs around a lane, measured on `air-linux-1`, each reproduced on the same worker and
 day. `air-linux-1` was a Tart Linux worker, which
-the decision [the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md) retired, so its rows are history:
+the decision [the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md) retired, so its rows are history.
+The decision [the Lima engine is retired](decisions/2026-10-13-the-lima-engine-is-retired.md) retired the Lima engine, so its rows are history too:
 
 | what | cost |
 | --- | --- |
@@ -721,20 +706,20 @@ the decision [the Docker image carries Node, and the Tart Linux worker is retire
 | a second run of one class against the warm IDE | 11 s |
 | one run of `AgentSessionToolWindowComposerUiTest` on `air-docker-1`, after a cold daemon start | 234 s of tests for 8 scenarios, after a 37.1 s host build |
 | a later run of the same class against the warm IDE on `air-docker-1` (`ide reuse`) | 286.6 s of tests for 8 scenarios, after a 75.4 s host build |
-| the `ui` lane, 71 tests in 40 classes, on `air-docker-1` on the Lima engine: cold daemon, then warm daemon | 756.4 s, then 697.0 s of tests |
+| the `ui` lane, 71 tests in 40 classes, on `air-docker-1` on the Lima engine, since retired: cold daemon, then warm daemon | 756.4 s, then 697.0 s of tests |
 | the same lane on `air-linux-1`, in the next hour: cold daemon, then warm daemon | 750.4 s, then 860.1 s of tests |
-| the `ui-real` lane, 4 tests in 2 classes: twice on the Lima engine, then on `air-linux-1` | 70.5 s and 70.4 s, then 84.6 s of tests |
-| the first start of the Lima engine, with the cloud image in Lima's cache | 76 s |
-| the first start of the Lima engine, with the cloud image download | 147.4 s, of which the download is 103 s |
-| the engine recreate with the image download from the mirror, plus an image build (`pool start`) | 322 s, of which the engine start is 189 s |
-| a warm stop, then a warm start, of the Lima engine | 11.1 s, then 19.8 s |
-| the first start of the Lima engine on Ubuntu 26.04, with the image download from the mirror | 197 s, of which the download and its conversion are 137 s |
-| in the Lima log, a warm start of the engine inside `pool start` or `run`, on Ubuntu 26.04, then on 24.04 | 7 s, then 15 s |
+| the `ui-real` lane, 4 tests in 2 classes: twice on the Lima engine, since retired, then on `air-linux-1` | 70.5 s and 70.4 s, then 84.6 s of tests |
+| the first start of the Lima engine, since retired, with the cloud image in Lima's cache | 76 s |
+| the first start of the Lima engine, since retired, with the cloud image download | 147.4 s, of which the download is 103 s |
+| the recreate of the Lima engine, since retired, with the image download from the mirror, plus an image build (`pool start`) | 322 s, of which the engine start is 189 s |
+| a warm stop, then a warm start, of the Lima engine, since retired | 11.1 s, then 19.8 s |
+| the first start of the Lima engine, since retired, on Ubuntu 26.04, with the image download from the mirror | 197 s, of which the download and its conversion are 137 s |
+| in the Lima log, a warm start of the Lima engine, since retired, inside `pool start` or `run`, on Ubuntu 26.04, then on 24.04 | 7 s, then 15 s |
+| a warm `pool stop`, then `pool start`, of the Lima engine, since retired, on Ubuntu 26.04 | 20.3 s, then 39.5 s |
 | the `ui` lane of `flow-new-session`, 9 tests in 4 classes, on `container-linux-1` on a Mac with Apple `container`: cold daemon, then warm daemon | 152 s, then 84 s; 65 s of tests each |
 | the same lane on an Ubuntu 26.04 host with 8 cores and rootless Podman 5.7: cold daemon after a cold Bazel build, then warm daemon | 760 s, of which the Bazel build is 497 s and the tests 200 s; then 223 s, of which the tests are 143 s |
 | the same lane on a Windows 10 PC with WSL 2.9.13 and `wslc`: a fresh container with a cold daemon, then warm daemon | 283 s, of which the daemon start is 84 s and the tests 159 s; then 134 s, of which the tests are 102 s |
-| a warm `pool stop`, then `pool start`, on Ubuntu 26.04 | 20.3 s, then 39.5 s |
-| `shard --shards 2` of the `ui` lane on two containers of one engine | 429 s makespan, 770 s serial |
+| `shard --shards 2` of the `ui` lane on two containers of the Lima engine, since retired | 429 s makespan, 770 s serial |
 
 The two single-class rows on `air-docker-1` ran on OrbStack. Each is one iteration on 2026-09-29, and
 all 8 scenarios passed in each. In the cold run, every trace has a video. A third iteration also
@@ -747,8 +732,8 @@ does not call one of them faster. The `shard` row is one iteration on 2026-09-30
 measured ([ADR 0190](decisions/0190-the-docker-engine-is-the-default-worker.md)). The engine rows come from
 [ADR 0189](decisions/0189-the-docker-engine-is-a-lima-vm-the-controller-owns.md). The ADR 0189 rows ran on Ubuntu
 24.04. The 26.04 rows come from [ADR 0191](decisions/0191-the-engine-vm-leaves-the-usernet-path.md), on
-2026-10-01, and each is one sample. The lane time on 26.04 is not measured yet, because the tree held another
-session's half-finished edits. ADR 0191 names the runs that are still owed.
+2026-10-01, and each is one sample. The lane time on 26.04 was never measured. The runs that ADR 0191
+names are no longer owed, because the engine is retired.
 
 The **daemon** is the expensive warm state, several times the IDE it holds. A restart that keeps the
 IDE saves the launch and its readiness dwell, and it pays the rest of the restart. Read those rows

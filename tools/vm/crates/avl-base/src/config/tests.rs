@@ -44,7 +44,7 @@ fn docker() -> Selection {
 }
 
 /// macOS 15 on Apple silicon: the release a macOS host of these tests resolves on, unless a test names another. It
-/// runs the Lima engine by default.
+/// keeps the host engine.
 const MACOS_15: MacosHost = MacosHost {
     major: 15,
     apple_silicon: true,
@@ -88,7 +88,11 @@ fn load_on_release(host: HostOs, macos: MacosHost, selection: Selection, environ
 }
 
 fn refuse_on(host: HostOs, selection: Selection, environment: &Environment) -> Refusal {
-    match Config::load_on(host, facts(MACOS_15), selection, environment, Path::new(WORKSPACE)) {
+    refuse_on_release(host, MACOS_15, selection, environment)
+}
+
+fn refuse_on_release(host: HostOs, macos: MacosHost, selection: Selection, environment: &Environment) -> Refusal {
+    match Config::load_on(host, facts(macos), selection, environment, Path::new(WORKSPACE)) {
         Ok(config) => panic!("the environment was accepted on {host}: {config:?}"),
         Err(refusal) => refusal,
     }
@@ -98,7 +102,7 @@ fn refuse(selection: Selection, environment: &Environment) -> Refusal {
     refuse_on(POOL_HOST, selection, environment)
 }
 
-// A Docker worker on a Linux host, so the engine is external and the defaults are the same on every host.
+// A Docker worker on a Linux host, so the engine is the host engine and the defaults are the same on every host.
 #[test]
 fn the_linux_defaults_are_the_documented_ones() {
     let config = load_on(HostOs::Linux, docker(), &env(&[]));
@@ -247,14 +251,14 @@ fn a_windows_host_drives_the_two_container_backends() {
     );
 }
 
-// Every host that is given no backend runs the Docker pool and loads its settings: a Mac of macOS 15 on the Lima engine,
-// a Linux host, which has no Tart, and a Windows host, which drives Docker only, on the engine they have.
+// Every host that is given no backend runs the Docker pool and loads its settings: a Mac of macOS 15, a Linux host,
+// which has no Tart, and a Windows host, which drives Docker only, each on the engine of its host environment.
 #[test]
 fn every_host_defaults_to_docker() {
     for (host, engine) in [
-        (HostOs::Macos, DockerEngine::Lima),
-        (HostOs::Linux, DockerEngine::External),
-        (HostOs::Windows, DockerEngine::External),
+        (HostOs::Macos, DockerEngine::Host),
+        (HostOs::Linux, DockerEngine::Host),
+        (HostOs::Windows, DockerEngine::Host),
     ] {
         let config = load_on(host, Selection::DEFAULT, &env(&[]));
         assert_eq!(
@@ -396,7 +400,7 @@ fn the_presentation_defaults_on_and_turns_off_by_name() {
 
 // The pins come from the image pipeline's own `versions.env`, embedded at compile time. This reads the same file
 // at run time, so an `include_str!` path that points anywhere else fails here. It also checks every name the crate
-// reads: `GOLDEN_VM`, `NODE_MAJOR`, `DOCKER_BASE_IMAGE` and the Lima images.
+// reads: `GOLDEN_VM`, `NODE_MAJOR` and `DOCKER_BASE_IMAGE`.
 #[test]
 fn the_pins_are_the_image_pipelines_own() {
     let path = avl_testkit::repo_path("tools/vm/provision/versions.env");
@@ -405,7 +409,8 @@ fn the_pins_are_the_image_pipelines_own() {
 
     let parsed = pins::parse(&on_disk).expect("versions.env parses");
     assert!(!parsed.contains_key("LINUX_BASE_REFERENCE"), "the Tart Linux base is retired");
-    assert!(!pins::tart_golden_vm().is_empty());
+    assert!(!parsed.keys().any(|name| name.starts_with("LIMA_")), "the Lima engine is retired");
+    assert_ne!(pins::tart_golden_vm(), "");
     assert!(pins::guest_node_major() > 0);
     // A Docker Hub reference, pinned by digest.
     let docker_base = pins::docker_base_image();
@@ -413,21 +418,6 @@ fn the_pins_are_the_image_pipelines_own() {
         docker_base.starts_with("ubuntu:") && docker_base.contains("@sha256:"),
         "{docker_base}"
     );
-    // The Lima engine's cloud images: on the Space file mirror, which keeps a dated directory that Ubuntu prunes, with
-    // a whole sha256 each, and one image per architecture.
-    for arch in [GuestArch::Arm64, GuestArch::X86_64] {
-        let (url, sha256) = pins::lima_base_image(arch);
-        assert!(
-            url.starts_with("https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/ubuntu-cloud-images/")
-                && url.ends_with(".img"),
-            "{url}"
-        );
-        assert!(url.contains(arch.oci_arch()), "{arch}: {url}");
-        assert!(
-            sha256.len() == 64 && sha256.bytes().all(|byte| byte.is_ascii_hexdigit()),
-            "{arch}: {sha256}"
-        );
-    }
 }
 
 #[test]
@@ -560,7 +550,7 @@ fn bridged_networking_carries_its_interface() {
 #[test]
 fn every_refusal_has_its_code_and_exit_status() {
     type Case<'a> = (&'a str, &'a [(&'a str, &'a str)], &'a str, &'a str);
-    let cases: [Case<'_>; 22] = [
+    let cases: [Case<'_>; 20] = [
         (
             "no home to build the runtime root from",
             &[("HOME", "")],
@@ -604,18 +594,6 @@ fn every_refusal_has_its_code_and_exit_status() {
             &[("AIR_VM_SUSPENDABLE", "maybe")],
             "invalid_environment",
             "boolean",
-        ),
-        (
-            "a disk below the floor",
-            &[("AIR_VM_ROOT_DISK_GB", "39")],
-            "invalid_environment",
-            "at least 40",
-        ),
-        (
-            "a disk past its ceiling",
-            &[("AIR_VM_ROOT_DISK_GB", "4001")],
-            "invalid_environment",
-            "4000",
         ),
         (
             "the removed repository share",
@@ -684,7 +662,7 @@ fn every_refusal_has_its_code_and_exit_status() {
             "distinct",
         ),
     ];
-    // A Docker pool on a macOS host, so the Lima engine reads the disk size and its floor.
+    // A Docker pool on a macOS host, which reads every variable of the table.
     for (what, pairs, code, mentions) in cases {
         let refusal = refuse_on(HostOs::Macos, docker(), &env(pairs));
         assert_eq!(refusal.code, code, "{what}: {}", refusal.message);
@@ -693,15 +671,28 @@ fn every_refusal_has_its_code_and_exit_status() {
     }
 }
 
-// The floor is per guest, because the images are different sizes. The Linux floor is that of the Lima engine.
+// Only a Tart worker has a disk that the controller sizes: 120 GB by default, from 80 to 4000. The floor holds the
+// macOS image and the writable state. A Docker pool does not read the setting, so a value that a shell still exports
+// is not refused there.
 #[test]
-fn the_disk_floor_is_per_guest() {
-    assert_eq!(
-        load_on(HostOs::Macos, docker(), &env(&[("AIR_VM_ROOT_DISK_GB", "40")])).vm_root_disk_gb,
-        40
-    );
-    let refusal = refuse(tart_macos(), &env(&[("AIR_VM_ROOT_DISK_GB", "79")]));
-    assert!(refusal.message.contains("at least 80"), "{}", refusal.message);
+fn only_a_tart_worker_has_a_disk_size() {
+    assert_eq!(load(tart_macos(), &env(&[])).vm_root_disk_gb, 120);
+    assert_eq!(load(tart_macos(), &env(&[("AIR_VM_ROOT_DISK_GB", "80")])).vm_root_disk_gb, 80);
+    for (value, mentions) in [("79", "at least 80"), ("4001", "4000"), ("many", "AIR_VM_ROOT_DISK_GB")] {
+        let refusal = refuse(tart_macos(), &env(&[("AIR_VM_ROOT_DISK_GB", value)]));
+        assert_eq!(
+            (refusal.code.as_ref(), refusal.exit),
+            ("invalid_environment", Exit::USAGE),
+            "{value}"
+        );
+        assert!(refusal.message.contains(mentions), "{value}: {}", refusal.message);
+    }
+    for host in [HostOs::Macos, HostOs::Linux, HostOs::Windows] {
+        for value in ["39", "4001", "many"] {
+            let pool = load_on(host, docker(), &env(&[("AIR_VM_ROOT_DISK_GB", value)]));
+            assert_eq!(pool.vm_root_disk_gb, 0, "{host} {value}");
+        }
+    }
 }
 
 // A count is a trimmed base-ten integer and nothing else: every other spelling is refused rather than
@@ -914,15 +905,20 @@ fn a_pool_setting_wins_over_the_host_memory() {
     assert_eq!((named.workers.len(), named.pool_rule), (1, PoolRule::Named));
 }
 
-// The Lima engine shares one VM of 16 GiB, and an external engine has no cap, so both keep 2 slots on a large host.
+// A container on the host engine has no cap, so that pool keeps 2 slots on a large host: a named engine and an older
+// Mac alike. A Tart pool keeps 2 slots too.
 #[test]
 fn only_the_container_pool_follows_the_host_memory() {
-    let lima = container_pool(Some(128 * GIB), &[("AIR_VM_DOCKER_ENGINE", "lima")]);
-    assert_eq!(lima.docker_engine, DockerEngine::Lima);
-    assert_eq!((lima.workers.len(), lima.pool_rule), (2, PoolRule::Default));
-    let external = container_pool(Some(128 * GIB), &[("DOCKER_HOST", "unix:///var/run/docker.sock")]);
-    assert_eq!(external.docker_engine, DockerEngine::External);
-    assert_eq!((external.workers.len(), external.pool_rule), (2, PoolRule::Default));
+    let named = container_pool(Some(128 * GIB), &[("DOCKER_HOST", "unix:///var/run/docker.sock")]);
+    assert_eq!(named.docker_engine, DockerEngine::Host);
+    assert_eq!((named.workers.len(), named.pool_rule), (2, PoolRule::Default));
+    let older_facts = HostFacts {
+        macos: Some(MACOS_15),
+        memory_mib: Some(128 * GIB),
+    };
+    let older = Config::load_on(HostOs::Macos, older_facts, docker(), &env(&[]), Path::new(WORKSPACE)).unwrap();
+    assert_eq!(older.docker_engine, DockerEngine::Host);
+    assert_eq!((older.workers.len(), older.pool_rule), (2, PoolRule::Default));
     let facts = HostFacts {
         macos: Some(MACOS_26),
         memory_mib: Some(128 * GIB),
@@ -941,7 +937,10 @@ fn the_idle_stop_is_the_container_engines_alone() {
     assert_eq!(pool(&[("AIR_VM_IDLE_STOP", "60")]), Some(Duration::from_secs(60)));
     assert_eq!(pool(&[("AIR_VM_IDLE_STOP", "0")]), Some(Duration::ZERO));
     assert_eq!(pool(&[("AIR_VM_IDLE_STOP", "off")]), None);
-    assert_eq!(pool(&[("AIR_VM_IDLE_STOP", "60"), ("AIR_VM_DOCKER_ENGINE", "lima")]), None);
+    assert_eq!(
+        pool(&[("AIR_VM_IDLE_STOP", "60"), ("DOCKER_HOST", "unix:///var/run/docker.sock")]),
+        None
+    );
     assert_eq!(load(docker(), &env(&[("AIR_VM_IDLE_STOP", "60")])).idle_stop, None);
     assert_eq!(load(tart_macos(), &env(&[])).idle_stop, None);
     for malformed in ["-1", "1h", "1.5", "never"] {
@@ -1092,9 +1091,8 @@ fn the_docker_defaults_are_the_linux_guests_with_two_slots() {
         Some("registry.jetbrains.team/p/ij/containers-public")
     );
     assert!(!config.docker_push);
-    // The disk is the Lima engine's on a macOS host, and a container has none of its own on another engine.
-    let engine_disk = if POOL_HOST == HostOs::Macos { 80 } else { 0 };
-    assert_eq!(config.vm_root_disk_gb, engine_disk);
+    // A container has no disk that the controller sizes.
+    assert_eq!(config.vm_root_disk_gb, 0);
     assert_eq!(config.vm_screen, None);
     // A slot of its own directory, so a container cannot share state with a Tart slot of the same name.
     assert_eq!(config.worker_key("air-docker-1"), "docker-air-docker-1");
@@ -1123,7 +1121,7 @@ fn a_docker_pool_reads_its_own_settings_and_bounds() {
         ]),
     );
     assert_eq!(config.docker.as_deref(), Some(Path::new("/opt/orbstack/bin/docker")));
-    assert_eq!(config.docker_engine, DockerEngine::External);
+    assert_eq!(config.docker_engine, DockerEngine::Host);
     assert_eq!(config.docker_image, "registry.example/air/ui-worker");
     assert_eq!(config.workers, ["air-docker-1", "air-docker-2", "air-docker-3"]);
     assert_eq!(config.vm_screen.as_deref(), Some("2560x1440x24"));
@@ -1224,13 +1222,13 @@ fn the_image_mirror_is_a_url_or_off() {
     }
 
     let apple = |pairs: &[(&str, &str)]| {
-        let mut all = vec![("AIR_VM_DOCKER_ENGINE", "container"), ("AIR_VM_DOCKER_PUSH", "1")];
+        let mut all = vec![("AIR_VM_DOCKER_PUSH", "1")];
         all.extend_from_slice(pairs);
         env(&all)
     };
-    let config = load_on(HostOs::Macos, docker(), &apple(&[("AIR_VM_DOCKER_REGISTRY", "off")]));
+    let config = load_on_release(HostOs::Macos, MACOS_26, docker(), &apple(&[("AIR_VM_DOCKER_REGISTRY", "off")]));
     assert!(config.runs_container_engine() && config.docker_push);
-    let refusal = refuse_on(HostOs::Macos, docker(), &apple(&[("AIR_VM_IMAGE_MIRROR", "off")]));
+    let refusal = refuse_on_release(HostOs::Macos, MACOS_26, docker(), &apple(&[("AIR_VM_IMAGE_MIRROR", "off")]));
     assert_eq!(refusal.code, "invalid_environment");
     assert!(refusal.message.contains("AIR_VM_IMAGE_MIRROR=off"), "{}", refusal.message);
     // The other engines keep the registry rule.
@@ -1392,72 +1390,44 @@ fn a_container_linux_pool_has_one_slot() {
 
 // --- the Docker engine -----------------------------------------------------------------------------------------
 
-/// The engine rule: a variable that names an engine wins on every host, and with neither set a macOS 15 host runs the
-/// Lima engine with the pinned CLI, and another host runs `docker` on `PATH` against the engine it has.
+/// The engine rule: a variable that names an engine wins on every host. With neither set, a macOS 15 host keeps the
+/// host engine with the pinned CLI, and another host runs `docker` on `PATH` against the engine it has.
 #[test]
 fn the_docker_engine_follows_the_environment_and_the_host() {
     let docker_on_path = Some(PathBuf::from("docker"));
     let named = Some(PathBuf::from("/opt/orbstack/bin/docker"));
-    type Case<'a> = (HostOs, &'a [(&'a str, &'a str)], DockerEngine, Option<PathBuf>);
+    type Case<'a> = (HostOs, &'a [(&'a str, &'a str)], Option<PathBuf>);
     let cases: [Case<'_>; 9] = [
-        (HostOs::Macos, &[], DockerEngine::Lima, None),
-        (
-            HostOs::Macos,
-            &[("DOCKER_BIN", "/opt/orbstack/bin/docker")],
-            DockerEngine::External,
-            named.clone(),
-        ),
-        (
-            HostOs::Macos,
-            &[("DOCKER_HOST", "unix:///var/run/docker.sock")],
-            DockerEngine::External,
-            None,
-        ),
-        (HostOs::Linux, &[], DockerEngine::External, docker_on_path.clone()),
-        (
-            HostOs::Linux,
-            &[("DOCKER_BIN", "/opt/orbstack/bin/docker")],
-            DockerEngine::External,
-            named.clone(),
-        ),
-        (
-            HostOs::Linux,
-            &[("DOCKER_HOST", "tcp://engine:2375")],
-            DockerEngine::External,
-            docker_on_path.clone(),
-        ),
-        (HostOs::Windows, &[], DockerEngine::External, docker_on_path.clone()),
-        (
-            HostOs::Windows,
-            &[("DOCKER_BIN", "/opt/orbstack/bin/docker")],
-            DockerEngine::External,
-            named,
-        ),
+        (HostOs::Macos, &[], None),
+        (HostOs::Macos, &[("DOCKER_BIN", "/opt/orbstack/bin/docker")], named.clone()),
+        (HostOs::Macos, &[("DOCKER_HOST", "unix:///var/run/docker.sock")], None),
+        (HostOs::Linux, &[], docker_on_path.clone()),
+        (HostOs::Linux, &[("DOCKER_BIN", "/opt/orbstack/bin/docker")], named.clone()),
+        (HostOs::Linux, &[("DOCKER_HOST", "tcp://engine:2375")], docker_on_path.clone()),
+        (HostOs::Windows, &[], docker_on_path.clone()),
+        (HostOs::Windows, &[("DOCKER_BIN", "/opt/orbstack/bin/docker")], named),
         (
             HostOs::Windows,
             &[("DOCKER_HOST", "npipe:////./pipe/docker_engine")],
-            DockerEngine::External,
             docker_on_path,
         ),
     ];
-    for (host, pairs, engine, program) in cases {
+    for (host, pairs, program) in cases {
         let config = load_on(host, docker(), &env(pairs));
-        assert_eq!(config.docker_engine, engine, "{host} {pairs:?}");
+        assert_eq!(config.docker_engine, DockerEngine::Host, "{host} {pairs:?}");
         assert_eq!(config.docker, program, "{host} {pairs:?}");
-        assert_eq!(config.runs_lima_engine(), engine == DockerEngine::Lima, "{host} {pairs:?}");
+        assert!(!config.runs_container_engine(), "{host} {pairs:?}");
         assert_eq!(
             config.docker_host.as_deref(),
             pairs.iter().find(|(name, _)| *name == "DOCKER_HOST").map(|(_, value)| *value),
             "{host} {pairs:?}"
         );
     }
-    // The engine is a fact of the Docker backend only: a Tart pool on a Mac runs no Lima engine.
-    assert!(!load_on(HostOs::Macos, tart_macos(), &env(&[])).runs_lima_engine());
 }
 
-/// The version rule of a macOS host that names no engine: macOS 26 or newer on Apple silicon runs Apple `container`,
-/// and an older macOS runs the Lima engine. `AIR_VM_DOCKER_ENGINE` overrides the version either way, and
-/// `DOCKER_HOST` still names the external engine. ADR 0224 records the rule.
+/// The version rule of a macOS host that names no engine: macOS 26 or newer on Apple silicon runs Apple `container`.
+/// An older macOS, an Intel Mac and a Mac of unknown release keep the host engine. `DOCKER_BIN` and `DOCKER_HOST`
+/// name the host engine on every release. ADR 0224 records the rule.
 #[test]
 fn the_macos_version_chooses_the_engine() {
     let intel_26 = MacosHost {
@@ -1466,54 +1436,54 @@ fn the_macos_version_chooses_the_engine() {
     };
     let macos_27 = MacosHost { major: 27, ..MACOS_26 };
     type Case<'a> = (MacosHost, &'a [(&'a str, &'a str)], DockerEngine);
-    let cases: [Case<'_>; 10] = [
+    let cases: [Case<'_>; 7] = [
         (MACOS_26, &[], DockerEngine::AppleContainer),
         (macos_27, &[], DockerEngine::AppleContainer),
-        (MACOS_15, &[], DockerEngine::Lima),
+        (MACOS_15, &[], DockerEngine::Host),
         // Apple builds `container` for Apple silicon only.
-        (intel_26, &[], DockerEngine::Lima),
-        (MACOS_26, &[("AIR_VM_DOCKER_ENGINE", "lima")], DockerEngine::Lima),
-        (MACOS_15, &[("AIR_VM_DOCKER_ENGINE", "container")], DockerEngine::AppleContainer),
-        (MACOS_26, &[("DOCKER_HOST", "unix:///var/run/docker.sock")], DockerEngine::External),
-        (
-            MACOS_26,
-            &[
-                ("DOCKER_HOST", "unix:///var/run/docker.sock"),
-                ("AIR_VM_DOCKER_ENGINE", "container"),
-            ],
-            DockerEngine::External,
-        ),
-        (MACOS_26, &[("DOCKER_BIN", "/opt/orbstack/bin/docker")], DockerEngine::External),
-        // An empty variable reads as unset, so the version chooses.
-        (MACOS_26, &[("AIR_VM_DOCKER_ENGINE", "")], DockerEngine::AppleContainer),
+        (intel_26, &[], DockerEngine::Host),
+        (MACOS_26, &[("DOCKER_HOST", "unix:///var/run/docker.sock")], DockerEngine::Host),
+        (MACOS_26, &[("DOCKER_BIN", "/opt/orbstack/bin/docker")], DockerEngine::Host),
+        (MACOS_15, &[("DOCKER_BIN", "/opt/orbstack/bin/docker")], DockerEngine::Host),
     ];
     for (macos, pairs, engine) in cases {
         let config = load_on_release(HostOs::Macos, macos, docker(), &env(pairs));
         assert_eq!(config.docker_engine, engine, "{macos:?} {pairs:?}");
+        assert_eq!(
+            config.runs_container_engine(),
+            engine == DockerEngine::AppleContainer,
+            "{macos:?} {pairs:?}"
+        );
     }
-    // A macOS host whose release is unknown runs the Lima engine.
+    // A macOS host whose release is unknown keeps the host engine.
     let unknown = Config::load_on(HostOs::Macos, HostFacts::default(), docker(), &env(&[]), Path::new(WORKSPACE)).unwrap();
-    assert_eq!(unknown.docker_engine, DockerEngine::Lima);
+    assert_eq!(unknown.docker_engine, DockerEngine::Host);
     // The release takes no part on another host.
     for host in [HostOs::Linux, HostOs::Windows] {
         assert_eq!(
             load_on_release(host, MACOS_26, docker(), &env(&[])).docker_engine,
-            DockerEngine::External,
+            DockerEngine::Host,
             "{host}"
         );
     }
-    // A macOS 26 worker gets the memory of one container, and no engine disk.
+    // A macOS 26 worker gets the memory of one container, and no disk.
     let config = load_on_release(HostOs::Macos, MACOS_26, docker(), &env(&[]));
     assert_eq!((config.vm_memory_mib, config.vm_root_disk_gb), (CONTAINER_WORKER_MEMORY_MIB, 0));
     assert_eq!(CONTAINER_MACOS_MAJOR, 26);
+    assert_eq!(
+        (DockerEngine::Host.as_str(), DockerEngine::AppleContainer.as_str()),
+        ("host", "container")
+    );
+    // The engine is a fact of the Docker backend only: a Tart pool on such a Mac runs no Apple `container`.
+    assert!(!load_on_release(HostOs::Macos, MACOS_26, tart_macos(), &env(&[])).runs_container_engine());
 }
 
-/// The settings keep the release of a macOS host, so the gate of the Apple `container` engine can refuse an older
-/// macOS that `AIR_VM_DOCKER_ENGINE=container` chose. Another host keeps no release.
+/// The settings keep the release of a macOS host, which the gate of the Apple `container` engine reads. Another host
+/// keeps no release.
 #[test]
 fn the_settings_keep_the_macos_release() {
-    let chosen = load_on_release(HostOs::Macos, MACOS_15, docker(), &env(&[("AIR_VM_DOCKER_ENGINE", "container")]));
-    assert_eq!((chosen.docker_engine, chosen.macos), (DockerEngine::AppleContainer, Some(MACOS_15)));
+    let older = load_on_release(HostOs::Macos, MACOS_15, docker(), &env(&[]));
+    assert_eq!((older.docker_engine, older.macos), (DockerEngine::Host, Some(MACOS_15)));
     assert_eq!(load_on_release(HostOs::Linux, MACOS_26, docker(), &env(&[])).macos, None);
 }
 
@@ -1549,85 +1519,65 @@ fn the_macos_release_is_the_major_of_the_product_version() {
     assert_eq!(product_major("<plist><dict></dict></plist>"), None);
 }
 
-/// The Lima home is under the XDG state directory on every host, so the socket path stays short, and its files are
-/// in the runtime root beside the Docker records.
+/// `AIR_VM_DOCKER_ENGINE` is removed. A set value of any word is refused on every host and every backend, and the
+/// message says that the macOS version chooses the engine. An empty value reads as unset.
 #[test]
-fn the_lima_engine_paths_are_short_and_pool_wide() {
-    let config = load_on(HostOs::Macos, docker(), &env(&[]));
-    assert_eq!(
-        config.lima_home,
-        Path::new("/Users/air/.local/state/JetBrains/air-vm-ui-tests/lima")
+fn the_removed_engine_variable_is_refused() {
+    for host in [HostOs::Macos, HostOs::Linux, HostOs::Windows] {
+        for value in ["container", "lima", "orbstack"] {
+            let refusal = refuse_on(host, docker(), &env(&[("AIR_VM_DOCKER_ENGINE", value)]));
+            assert_eq!(
+                (refusal.code.as_ref(), refusal.exit),
+                ("invalid_environment", Exit::USAGE),
+                "{host} {value}"
+            );
+            for named in [
+                "AIR_VM_DOCKER_ENGINE is removed",
+                "the macOS version chooses the engine",
+                "DOCKER_HOST",
+            ] {
+                assert!(refusal.message.contains(named), "{named:?} in {}", refusal.message);
+            }
+        }
+    }
+    let refusal = refuse_on_release(
+        HostOs::Macos,
+        MACOS_26,
+        tart_macos(),
+        &env(&[("AIR_VM_DOCKER_ENGINE", "container")]),
     );
-    assert_eq!(
-        config.lima_socket_path(),
-        Path::new("/Users/air/.local/state/JetBrains/air-vm-ui-tests/lima/air-docker-engine/sock/docker.sock")
-    );
-    let root = config.runtime_root.clone();
-    assert_eq!(config.lima_engine_record_path(), root.join("lima-engine.json"));
-    assert_eq!(config.lima_engine_log_path(), root.join("lima-engine.log"));
-    assert_eq!(config.lima_template_path(), root.join("lima-engine.yaml"));
-    // The engine VM has the CPUs and the disk of a Linux worker, and the memory of the two lanes that share it.
-    assert_eq!(
-        (config.vm_cpu, config.vm_memory_mib, config.vm_root_disk_gb),
-        (8, LIMA_ENGINE_MEMORY_MIB, 80)
-    );
-    assert_eq!(LIMA_ENGINE_MEMORY_MIB, 16_384);
-    // The override wins over the engine default.
-    assert_eq!(
-        load_on(HostOs::Macos, docker(), &env(&[("AIR_VM_MEMORY_MB", "8192")])).vm_memory_mib,
-        8_192
-    );
-    let moved = load_on(HostOs::Macos, docker(), &env(&[("AIR_VM_LIMA_HOME", "/tmp/lima")]));
-    assert_eq!(moved.lima_socket_path(), Path::new("/tmp/lima/air-docker-engine/sock/docker.sock"));
+    assert_eq!(refusal.code, "invalid_environment");
+    let empty = load_on_release(HostOs::Macos, MACOS_26, docker(), &env(&[("AIR_VM_DOCKER_ENGINE", "")]));
+    assert_eq!(empty.docker_engine, DockerEngine::AppleContainer);
 }
 
-/// `AIR_VM_DOCKER_ENGINE=container` chooses Apple `container` on a macOS host that names no engine. A variable that
-/// names an engine still wins, and a Linux or a Windows host keeps the engine it has.
+/// `AIR_VM_LIMA_HOME` is removed with the Lima engine. A set value is refused on every host and every backend, and
+/// the message says that the variable is removed. An empty value reads as unset.
 #[test]
-fn the_container_choice_applies_only_to_a_mac_that_names_no_engine() {
-    let chosen = [("AIR_VM_DOCKER_ENGINE", "container")];
-    let config = load_on(HostOs::Macos, docker(), &env(&chosen));
-    assert_eq!(config.docker_engine, DockerEngine::AppleContainer);
-    assert_eq!(config.docker_engine.as_str(), "container");
-    assert!(config.runs_container_engine() && !config.runs_lima_engine());
-    assert_eq!(config.container, None);
-    for (host, pairs) in [
-        (
-            HostOs::Macos,
-            &[("AIR_VM_DOCKER_ENGINE", "container"), ("DOCKER_BIN", "/opt/orbstack/bin/docker")][..],
-        ),
-        (
-            HostOs::Macos,
-            &[
-                ("AIR_VM_DOCKER_ENGINE", "container"),
-                ("DOCKER_HOST", "unix:///var/run/docker.sock"),
-            ][..],
-        ),
-        (HostOs::Linux, &chosen[..]),
-        (HostOs::Windows, &chosen[..]),
-    ] {
+fn the_removed_lima_home_is_refused() {
+    let lima_home = [("AIR_VM_LIMA_HOME", "/Users/air/.local/state/JetBrains/air-vm-ui-tests/lima")];
+    for host in [HostOs::Macos, HostOs::Linux, HostOs::Windows] {
+        let refusal = refuse_on(host, docker(), &env(&lima_home));
         assert_eq!(
-            load_on(host, docker(), &env(pairs)).docker_engine,
-            DockerEngine::External,
-            "{host} {pairs:?}"
+            (refusal.code.as_ref(), refusal.exit),
+            ("invalid_environment", Exit::USAGE),
+            "{host}"
+        );
+        assert!(
+            refusal.message.starts_with("AIR_VM_LIMA_HOME is removed with the Lima engine"),
+            "{}",
+            refusal.message
         );
     }
-    assert_eq!(
-        load_on(HostOs::Macos, docker(), &env(&[("AIR_VM_DOCKER_ENGINE", "lima")])).docker_engine,
-        DockerEngine::Lima
-    );
-    let refusal = refuse_on(HostOs::Macos, docker(), &env(&[("AIR_VM_DOCKER_ENGINE", "orbstack")]));
-    assert_eq!(refusal.code, "invalid_environment");
-    assert!(refusal.message.contains(r#""lima" or "container""#), "{}", refusal.message);
-    // The engine is a fact of the Docker backend only.
-    assert!(!load_on(HostOs::Macos, tart_macos(), &env(&chosen)).runs_container_engine());
+    assert_eq!(refuse(tart_macos(), &env(&lima_home)).code, "invalid_environment");
+    load_on(HostOs::Macos, docker(), &env(&[("AIR_VM_LIMA_HOME", "")]));
 }
 
 /// On the Apple `container` engine the memory is per worker, the CPUs are those of a Linux worker, no disk is sized,
 /// and `CONTAINER_BIN` and `AIR_VM_DNS` are read.
 #[test]
 fn a_container_worker_has_its_own_memory_and_takes_a_nameserver() {
-    let config = load_on(HostOs::Macos, docker(), &env(&[("AIR_VM_DOCKER_ENGINE", "container")]));
+    let config = load_on_release(HostOs::Macos, MACOS_26, docker(), &env(&[]));
     assert_eq!(
         (config.vm_cpu, config.vm_memory_mib, config.vm_root_disk_gb),
         (8, CONTAINER_WORKER_MEMORY_MIB, 0)
@@ -1635,61 +1585,32 @@ fn a_container_worker_has_its_own_memory_and_takes_a_nameserver() {
     assert_eq!(CONTAINER_WORKER_MEMORY_MIB, 8_192);
     assert_eq!(config.vm_dns, None);
     assert_eq!(config.container_system_log_path(), config.runtime_root.join("container-system.log"));
-    let named = load_on(
+    let named = load_on_release(
         HostOs::Macos,
+        MACOS_26,
         docker(),
         &env(&[
-            ("AIR_VM_DOCKER_ENGINE", "container"),
             ("CONTAINER_BIN", "/usr/local/bin/container"),
             ("AIR_VM_DNS", "10.0.0.53"),
             ("AIR_VM_MEMORY_MB", "6144"),
         ]),
     );
+    assert!(named.runs_container_engine());
     assert_eq!(named.container.as_deref(), Some(Path::new("/usr/local/bin/container")));
     assert_eq!(named.vm_dns.as_deref(), Some("10.0.0.53"));
     assert_eq!(named.vm_memory_mib, 6_144);
-    let refusal = refuse_on(
-        HostOs::Macos,
-        docker(),
-        &env(&[("AIR_VM_DOCKER_ENGINE", "container"), ("AIR_VM_DNS", "dns.example")]),
-    );
+    let refusal = refuse_on_release(HostOs::Macos, MACOS_26, docker(), &env(&[("AIR_VM_DNS", "dns.example")]));
     assert_eq!(refusal.code, "invalid_environment");
     assert!(refusal.message.contains("AIR_VM_DNS"), "{}", refusal.message);
     assert_eq!(CONTAINER_LABEL, "@community//tools/vm:air_container_darwin_arm64");
     assert_eq!(label_target(CONTAINER_LABEL), "air_container_darwin_arm64");
 }
 
-/// A Unix socket path must stay under 104 bytes. The suffix under the Lima home is 35 bytes, so a home of 68 bytes
-/// is the longest one accepted. The engine start asks the check, and the load accepts a long home: a command that
-/// never starts the engine, such as `status` or `suites`, must not be refused over the socket.
+/// The labels name the aliases of the repositories of `docker.MODULE.bazel`, one per host architecture, and the target
+/// of each alias is the repository name.
 #[test]
-fn a_lima_home_too_long_for_the_socket_is_refused() {
-    let home = |length: usize| format!("/{}", "a".repeat(length - 1));
-    let longest = home(68);
-    let config = load_on(HostOs::Macos, docker(), &env(&[("AIR_VM_LIMA_HOME", &longest)]));
-    assert_eq!(config.lima_socket_path().as_os_str().len(), DOCKER_SOCKET_PATH_LIMIT);
-
-    config.require_short_lima_socket().unwrap();
-
-    let too_long = home(69);
-    let config = load_on(HostOs::Macos, docker(), &env(&[("AIR_VM_LIMA_HOME", &too_long)]));
-    assert_eq!(config.docker_engine, DockerEngine::Lima);
-    let refusal = config.require_short_lima_socket().unwrap_err();
-    assert_eq!((refusal.code.as_ref(), refusal.exit), ("lima_home_too_long", Exit::USAGE));
-    assert!(
-        refusal.message.contains("AIR_VM_LIMA_HOME") && refusal.message.contains("103 bytes"),
-        "{}",
-        refusal.message
-    );
-}
-
-/// The labels name the aliases of the repositories of `docker.MODULE.bazel` and `lima.MODULE.bazel`, one per host
-/// architecture, and the target of each alias is the repository name.
-#[test]
-fn the_pinned_docker_cli_and_limactl_labels_follow_the_architecture() {
+fn the_pinned_docker_cli_labels_follow_the_architecture() {
     assert_eq!(docker_cli_label(GuestArch::Arm64), "@community//tools/vm:air_docker_darwin_arm64");
     assert_eq!(docker_cli_label(GuestArch::X86_64), "@community//tools/vm:air_docker_darwin_x86_64");
-    assert_eq!(limactl_label(GuestArch::Arm64), "@community//tools/vm:air_lima_darwin_arm64");
-    assert_eq!(limactl_label(GuestArch::X86_64), "@community//tools/vm:air_lima_darwin_x86_64");
     assert_eq!(label_target(TART_LABEL), "air_tart");
 }

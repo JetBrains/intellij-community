@@ -97,6 +97,42 @@ async fn a_silent_engine_and_a_missing_cli_are_docker_missing() {
     assert!(refusal.message.contains("DOCKER_BIN"), "{}", refusal.message);
 }
 
+/// A Mac older than macOS 26 that names no engine keeps the host engine with the pinned CLI, and the load refuses
+/// nothing. Its first engine command, `docker version`, refuses `docker_missing` when no engine answers. The remedy
+/// names two ways out: a Docker engine in `DOCKER_BIN` or `DOCKER_HOST`, or a Mac of macOS 26 or newer on Apple
+/// silicon. It does not name the container-linux backend. A named engine is told to start.
+#[cfg(unix)]
+#[tokio::test]
+async fn an_older_mac_that_names_no_engine_is_told_the_two_ways_out() {
+    let macos_15 = avl_base::config::MacosHost {
+        major: 15,
+        apple_silicon: true,
+    };
+    let fixture = Fixture::docker_builder().unnamed_engine().on_macos(macos_15).build();
+    let settings = &fixture.settings;
+    assert_eq!(settings.docker_engine, avl_base::DockerEngine::Host);
+    assert_eq!((settings.docker.as_deref(), settings.docker_host.as_deref()), (None, None));
+    fixture.fake.answer(Answer::VersionExit, "1");
+    let refusal = docker(&fixture).require_available(&ctx(), "").await.unwrap_err();
+    assert_eq!((refusal.code.as_ref(), refusal.exit), ("docker_missing", Exit::UNAVAILABLE));
+    assert!(fixture.fake.saw_call_containing("version --format {{.Server.Os}}/{{.Server.Arch}}"));
+    assert!(
+        refusal.message.ends_with(
+            "this Mac runs no Apple container; name a Docker engine with DOCKER_BIN or DOCKER_HOST, or run the lane on \
+             a Mac with macOS 26 or newer on Apple silicon"
+        ),
+        "{}",
+        refusal.message
+    );
+    assert!(!refusal.message.contains("container-linux"), "{}", refusal.message);
+
+    let named = Fixture::docker();
+    named.fake.answer(Answer::VersionExit, "1");
+    let refusal = docker(&named).require_available(&ctx(), "").await.unwrap_err();
+    assert_eq!(refusal.code, "docker_missing");
+    assert!(refusal.message.ends_with("start the Docker engine"), "{}", refusal.message);
+}
+
 // --- the plugin configuration of the pinned CLI -----------------------------------------------------------------
 
 /// The plugin directory is merged into the configuration, so the `auths` of a `docker login` for a publish survive.

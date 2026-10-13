@@ -19,6 +19,9 @@ names as the fallback.
 Amended on 2026-10-09: [ADR 0224](0224-apple-container-is-the-default-engine-of-a-mac.md) makes Apple `container` the
 engine of point 1 on macOS 26 or newer, on Apple silicon. An older macOS keeps the Lima engine.
 
+Superseded in part on 2026-10-13: [the Lima engine is retired](2026-10-13-the-lima-engine-is-retired.md) removes the
+Lima engine of point 1 and its memory default of point 3.
+
 To be superseded: [the container-linux backend becomes the default worker](2026-10-09-the-container-linux-backend-becomes-the-default-worker.md), of 2026-10-09, decides
 that the container-linux backend becomes the default worker. Its switch commit supersedes the default here; the
 Docker backend stays available by name until its removal.
