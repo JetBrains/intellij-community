@@ -51,8 +51,10 @@ public interface AdditionalLibraryRootsListener {
                                            @NotNull Collection<? extends VirtualFile> oldRoots,
                                            @NotNull Collection<? extends VirtualFile> newRoots,
                                            @NotNull String libraryNameForDebug) {
-    AdditionalLibraryRootsListenerHelper.getInstance()
-      .handleAdditionalLibraryRootsChanged(project, presentableLibraryName, oldRoots, newRoots, libraryNameForDebug);
+    AdditionalLibraryRootsListenerHelper helper = AdditionalLibraryRootsListenerHelper.getInstance();
+    if (helper != null) {
+      helper.handleAdditionalLibraryRootsChanged(project, presentableLibraryName, oldRoots, newRoots, libraryNameForDebug);
+    }
     project.getMessageBus().syncPublisher(TOPIC).libraryRootsChanged(presentableLibraryName, oldRoots, newRoots, libraryNameForDebug);
   }
 }
