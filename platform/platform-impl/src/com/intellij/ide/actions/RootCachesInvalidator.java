@@ -3,15 +3,10 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.util.gist.GistManager;
-import com.intellij.util.indexing.FileBasedIndex;
 
 final class RootCachesInvalidator extends CachesInvalidator {
   @Override
   public void invalidateCaches() {
-    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
-    if (fileBasedIndex != null) {
-      fileBasedIndex.invalidateCaches();
-    }
     GistManager.getInstance().invalidateData();
   }
 }

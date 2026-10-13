@@ -104,6 +104,7 @@
     <projectIndexingActivityHistoryListener implementation="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporterListener"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.IndexesScanningSkipCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.project.IndexableFilesCollector"/>
+    <cachesInvalidator implementation="com.intellij.util.indexing.FileBasedIndexCachesInvalidator" order="after rootCachesInvalidator"/>
     <recoveryAction implementation="com.intellij.util.indexing.RescanIndexesAction"/>
     <recoveryAction implementation="com.intellij.util.indexing.ReindexAction"/>
     <recoveryAction implementation="com.intellij.util.indexing.RefreshIndexableFilesAction"/>
