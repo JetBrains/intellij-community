@@ -5,12 +5,12 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.StartId
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
 
@@ -26,10 +26,7 @@ class BuildOutputParserDispatcherImpl(
   internal val reader = BuildOutputReplayableLineReaderImpl(linesBufferSize, pushBackBufferSize)
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val coroutineScope = GlobalScope.childScope(
-    BuildOutputParserDispatcherImpl::class.java.name,
-    Dispatchers.IO.limitedParallelism(Int.MAX_VALUE, "BuildOutputParserDispatcher")
-  )
+  private val coroutineScope = GlobalScope.childScope(BuildOutputParserDispatcherImpl::class.java.name, Dispatchers.IO)
 
   private val parserAction = coroutineScope.launch {
     try {
@@ -75,7 +72,6 @@ class BuildOutputParserDispatcherImpl(
     parserAction.join()
   }
 
-  @Suppress("RAW_RUN_BLOCKING")
   private class BuildOutputInstantReaderWrapper(
     private val bufferedReader: BuildOutputReplayableLineReader,
     private val parentEventId: StartId,
@@ -86,7 +82,7 @@ class BuildOutputParserDispatcherImpl(
     override fun getParentEventId() = parentEventId
 
     override fun readLine(): String? {
-      val line = runBlocking { bufferedReader.readLine() }
+      val line = runBlockingCancellable { bufferedReader.readLine() }
       if (line != null) linesRead++
       return line
     }
