@@ -1,0 +1,250 @@
+/* Plain CSS for DOM the TSX doesn't render class-by-class: element defaults, the typography
+   plugin's palette wiring, and elements generated into markdown at runtime (heading anchors,
+   symbol/code links). Everything else — page furniture, layout, chips — lives as Tailwind
+   utilities in the TSX components (see src/furniture.tsx and docs/.ai/styling.md). */
+
+/* Element defaults on top of Tailwind preflight. Same `base` cascade layer, but this file is
+   imported after tailwind.css in main.tsx, so these rules win within the layer (load-bearing
+   ordering) while utilities still override them all. */
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+    background: var(--background);
+    color: var(--foreground);
+  }
+
+  a {
+    color: var(--primary);
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  /* .code-link: markdown-generated source/symbol links (transformRendered in markdown.tsx)
+     share the inline-code chip chrome */
+  code,
+  .code-link {
+    font-family: var(--font-mono), monospace;
+    font-size: 0.86em;
+    background: var(--code-bg);
+    border-radius: 4px;
+    padding: 0.1em 0.35em;
+  }
+
+  /* The site's content rhythm: JSX pages render bare h2/h3/p inside sections and used to lean
+     on browser defaults, which preflight zeroes. Sizes come from the @theme ramp; margins
+     approximate the browser defaults the pages were designed against. Deliberately no list
+     bullets or other element skins — styling stays opt-in. */
+  h1 {
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-block: 0 0.6em;
+  }
+
+  h2 {
+    font-size: var(--text-xl);
+    font-weight: 700;
+    margin-block: 1.2em 0.5em;
+  }
+
+  h3 {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    margin-block: 1.1em 0.4em;
+  }
+
+  h4 {
+    font-weight: 600;
+    margin-block: 1em 0.4em;
+  }
+
+  p {
+    margin-block: 0.7em;
+  }
+
+  strong,
+  b {
+    font-weight: 600;
+  }
+}
+
+/* wide markdown tables scroll instead of blowing out a phone viewport (below Tailwind's md) */
+@media (width < 48rem) {
+  .markdown-body table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+/* Markdown element styling comes from @tailwindcss/typography — `prose` plus the `prose-*`
+   modifier utilities composed in markdown.tsx. This block is the palette wiring (the "prism.css"
+   of markdown): it retargets the plugin's --tw-prose-* variables to the semantic tokens, so
+   light/dark follows the theme class with no `prose-invert`. Below it: only what modifiers can't
+   express (inherited sizing for embedded contexts, nested-p quote pseudo-elements). */
+.markdown-body {
+  --tw-prose-body: var(--foreground);
+  --tw-prose-headings: var(--foreground);
+  --tw-prose-lead: var(--muted-foreground);
+  --tw-prose-links: var(--primary);
+  --tw-prose-bold: var(--foreground);
+  --tw-prose-counters: var(--muted-foreground);
+  --tw-prose-bullets: var(--muted-foreground);
+  --tw-prose-hr: var(--input);
+  --tw-prose-quotes: var(--muted-foreground);
+  --tw-prose-quote-borders: var(--input);
+  --tw-prose-captions: var(--muted-foreground);
+  --tw-prose-kbd: var(--foreground);
+  --tw-prose-code: var(--foreground);
+  --tw-prose-pre-code: var(--foreground);
+  --tw-prose-pre-bg: var(--muted);
+  --tw-prose-th-borders: var(--input);
+  --tw-prose-td-borders: var(--input);
+
+  /* keep the site's dense 15px/1.55 rhythm and let embedded contexts (detail panel, flow
+     cards) keep their smaller inherited size instead of prose's 1rem/1.75 */
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* prose's quote marks live on nested p pseudo-elements a prose-blockquote: modifier can't reach */
+.markdown-body blockquote p:first-of-type::before,
+.markdown-body blockquote p:last-of-type::after {
+  content: none;
+}
+
+/* JS-applied flash on anchor navigation */
+.anchor-highlight {
+  animation: anchor-flash 2s ease-out;
+}
+
+@keyframes anchor-flash {
+  from {
+    background: color-mix(in srgb, var(--primary) 25%, transparent);
+  }
+
+  to {
+    background: transparent;
+  }
+}
+
+/* Hover-revealed `#` link injected into markdown headings (and feature cards). */
+.heading-anchor {
+  margin-left: 8px;
+  color: var(--muted-foreground);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+h1:hover .heading-anchor,
+h2:hover .heading-anchor,
+h3:hover .heading-anchor,
+h4:hover .heading-anchor,
+.heading-anchor:focus-visible {
+  opacity: 1;
+}
+
+.heading-anchor:hover {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+/* No pointer to hover with — keep the anchor visible on touch devices. */
+@media (hover: none) {
+  .heading-anchor {
+    opacity: 1;
+  }
+}
+
+a.symbol-link code {
+  color: var(--primary);
+  background: var(--primary-tint);
+}
+
+a.symbol-link:hover {
+  text-decoration: none;
+}
+
+a.symbol-link:hover code {
+  text-decoration: underline;
+}
+
+/* A doc picture alone in its paragraph (transformPicture in markdown.tsx). The frame keeps the natural
+   width of the picture and scrolls, so the text of a wide picture keeps its size; a narrow picture sits
+   in the middle. The picture carries its own background, so the dark theme shows it on a light panel.
+   The chrome mirrors the caption of .embedded-diagram and .hand-laid-diagram. */
+.doc-figure {
+  margin-block: 1.375rem;
+}
+
+.doc-figure-frame {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.markdown-body .doc-figure img {
+  max-width: none;
+  margin: 0 auto;
+}
+
+.markdown-body .doc-figure figcaption {
+  margin-top: 0.25rem;
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+}
+
+/* a relative picture that harvest did not copy, styled as the .air-view-error block */
+.doc-figure-error {
+  display: inline-block;
+  border: 1px solid var(--tag-ui);
+  border-radius: calc(var(--radius) * 0.8);
+  padding: 0.5rem 0.875rem;
+  font-size: var(--text-sm);
+  color: var(--tag-ui);
+}
+
+/* Print to PDF from the browser: the content column only, the full page height, and each figure on one
+   sheet. A wide figure shrinks to the sheet width, because paper does not scroll. */
+@media print {
+  html,
+  body,
+  #root,
+  .app-shell {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .route-outlet {
+    overflow: visible;
+  }
+
+  .topbar,
+  .page-breadcrumb-bar,
+  .toc-aside,
+  .heading-anchor,
+  .doc-figure-open {
+    display: none;
+  }
+
+  .doc-figure,
+  .embedded-diagram,
+  .hand-laid-diagram {
+    break-inside: avoid;
+  }
+
+  .doc-figure-frame {
+    overflow: visible;
+  }
+
+  .markdown-body .doc-figure img {
+    max-width: 100%;
+    height: auto;
+  }
+}

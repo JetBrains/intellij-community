@@ -1,0 +1,241 @@
+/* Tailwind v4 entry in the stock shadcn single-file shape (imports → dark variant → :root/.dark
+   token blocks → @theme) so `shadcn init/add/apply` can rewrite or merge it without a manual
+   restore step. The site's own element rhythm (headings/paragraphs for bare-element JSX
+   sections) lives in prose.css @layer base, loaded after this file so it overrides preflight
+   within the base layer.
+
+   The structural scales live HERE: the @theme static type ramp below and Tailwind's default
+   rem-based spacing scale. Colors stay semantic: the :root/.dark blocks define the shadcn token
+   vocabulary (--background, --muted, --primary, …) with literal values, and the @theme inline
+   block aliases them into shadcn's standard utility vocabulary (bg-background,
+   text-muted-foreground, border-input, …), so color utilities emit var(--…) and follow the
+   theme switch at runtime. Never hard-code px font sizes or use text-[..px] arbitrary values —
+   extend the @theme ramp instead. */
+
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@plugin '@tailwindcss/typography';
+
+/* the components of the kernel; a site adds an @source for its own directories outside the Vite root */
+@source '../src';
+
+@custom-variant dark (&:is(.dark *));
+
+/* ── design tokens ────────────────────────────────────────────────────────────
+   Values are literal OKLCH from Tailwind's default palette (categorical accents use -600
+   shades on light and -400 on dark; neutrals use the zinc scale; the primary is indigo —
+   indigo-600 on light, where it colors bare link text on white and shares the shade with
+   --layer-indigo, and indigo-300 on dark, one step brighter than --layer-indigo's indigo-400
+   so the two stay distinct). --brand-gradient runs from indigo to violet, one step darker on
+   dark so white text on it keeps its contrast. Components and canvas.css consume ONLY the
+   semantic tokens — never raw palette values.
+
+   Vocabulary shift from the pre-shadcn site: --primary is the indigo brand/link color (the old
+   --accent), while --accent is the neutral hover surface (the old --bg-hover). */
+
+:root {
+  color-scheme: light;
+
+  /* shadcn semantic tokens */
+  --background: #fff;
+  --foreground: oklch(21% 0.006 285.885); /* zinc-900 */
+  --card: #fff;
+  --card-foreground: var(--foreground);
+  --popover: #fff;
+  --popover-foreground: var(--foreground);
+  --primary: oklch(51.1% 0.262 276.966); /* indigo-600 */
+  --primary-foreground: #fff;
+  --primary-tint: color-mix(in srgb, var(--primary) 8%, transparent);
+  /* the default button states of the GenUI catalog (ADR 0218), with the catalog fallback formulas */
+  --primary-hover: color-mix(in oklab, var(--primary) 85%, var(--background));
+  --primary-pressed: color-mix(in oklab, var(--primary) 80%, var(--foreground));
+  --primary-disabled: color-mix(in oklab, var(--primary) 45%, var(--background));
+  /* the brand fill behind white text (the product mark, the Home hero) */
+  --brand-gradient: linear-gradient(135deg, oklch(51.1% 0.262 276.966) /* indigo-600 */, oklch(54.1% 0.281 293.009) /* violet-600 */);
+  --secondary: oklch(96.7% 0.001 286.375); /* zinc-100 */
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(98.5% 0 0); /* zinc-50 */
+  --muted-foreground: oklch(55.2% 0.016 285.938); /* zinc-500 */
+  --accent: oklch(96.7% 0.001 286.375); /* zinc-100 */
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(57.7% 0.245 27.325); /* red-600 */
+  --warning: oklch(66.6% 0.179 58.318); /* amber-600 */
+  --success: oklch(62.7% 0.194 149.214); /* green-600 */
+  --border: oklch(92% 0.004 286.32); /* zinc-200 */
+  --input: oklch(87.1% 0.006 286.286); /* zinc-300 */
+  --ring: var(--primary);
+  --radius: 10px;
+
+  /* domain tokens */
+  --canvas: oklch(98.5% 0 0); /* zinc-50 */
+  --module-bg: oklch(96.7% 0.001 286.375); /* zinc-100 */
+  --edge-stroke: oklch(70.5% 0.015 286.067); /* zinc-400 */
+  --code-bg: rgb(0 0 0 / 6%);
+
+  /* hairline ring on raised/floating surfaces — the templates' dark ring-white/10 elevation
+     idiom; deliberately a no-op (transparent) in light, where borders + shadows carry depth */
+  --edge-highlight: transparent;
+
+  --shadow-tint: rgb(31 35 40 / 12%);
+  --shadow-tint-strong: rgb(31 35 40 / 22%);
+  --shadow-1: 0 1px 3px var(--shadow-tint);
+  --shadow-2: 0 8px 32px var(--shadow-tint-strong);
+
+  --layer-indigo: oklch(51.1% 0.262 276.966); /* indigo-600 */
+  --layer-sky: oklch(58.8% 0.158 241.966); /* sky-600 */
+  --layer-blue: oklch(54.6% 0.245 262.881); /* blue-600 */
+  --layer-green: oklch(62.7% 0.194 149.214); /* green-600 */
+  --layer-amber: oklch(66.6% 0.179 58.318); /* amber-600 */
+  --layer-red: oklch(57.7% 0.245 27.325); /* red-600 */
+  --layer-neutral: oklch(55.2% 0.016 285.938); /* zinc-500 */
+
+  --tag-target: oklch(55.8% 0.288 302.321); /* purple-600 */
+  --tag-durable: oklch(62.7% 0.194 149.214); /* green-600 */
+  --tag-live: oklch(54.6% 0.245 262.881); /* blue-600 */
+  --tag-ui: oklch(57.7% 0.245 27.325); /* red-600 */
+  /* custom bronze — no Tailwind equivalent (amber is the "amber" layer, yellow too saturated) */
+  --tag-terminalBacked: #9a6a2f;
+  --tag-structured: oklch(60% 0.118 184.704); /* teal-600 */
+
+  /* structural scales (type ramp, radii, spacing) live in the @theme blocks below; font families
+     are 'Inter Variable' / 'JetBrains Mono Variable' from @fontsource-variable packages imported
+     in main.tsx */
+  font-family: var(--font-sans), sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --background: oklch(14.1% 0.005 285.823); /* zinc-950 */
+  --foreground: oklch(96.7% 0.001 286.375); /* zinc-100 */
+  --card: oklch(21% 0.006 285.885); /* zinc-900 */
+  --popover: oklch(21% 0.006 285.885); /* zinc-900 */
+  --primary: oklch(78.5% 0.115 274.713); /* indigo-300 */
+  --primary-foreground: oklch(14.1% 0.005 285.823); /* zinc-950 */
+  --primary-tint: color-mix(in srgb, var(--primary) 12%, transparent);
+  --primary-hover: color-mix(in oklab, var(--primary) 85%, var(--background));
+  --primary-pressed: color-mix(in oklab, var(--primary) 80%, var(--foreground));
+  --primary-disabled: color-mix(in oklab, var(--primary) 45%, var(--background));
+  --brand-gradient: linear-gradient(135deg, oklch(45.7% 0.24 277.023) /* indigo-700 */, oklch(49.1% 0.27 292.581) /* violet-700 */);
+  --secondary: oklch(27.4% 0.006 286.033); /* zinc-800 */
+  --muted: oklch(27.4% 0.006 286.033); /* zinc-800 */
+  --muted-foreground: oklch(70.5% 0.015 286.067); /* zinc-400 */
+  --accent: oklch(37% 0.013 285.805); /* zinc-700 */
+  --destructive: oklch(70.4% 0.191 22.216); /* red-400 */
+  --warning: oklch(82.8% 0.189 84.429); /* amber-400 */
+  --success: oklch(79.2% 0.209 151.711); /* green-400 */
+  --border: oklch(27.4% 0.006 286.033); /* zinc-800 */
+  --input: oklch(37% 0.013 285.805); /* zinc-700 */
+
+  --canvas: oklch(14.1% 0.005 285.823); /* zinc-950 */
+  --module-bg: oklch(21% 0.006 285.885); /* zinc-900 */
+  --edge-stroke: oklch(44.2% 0.017 285.786); /* zinc-600 */
+  --code-bg: rgb(255 255 255 / 7%);
+  --edge-highlight: rgb(255 255 255 / 8%);
+
+  --shadow-tint: rgb(0 0 0 / 40%);
+  --shadow-tint-strong: rgb(0 0 0 / 55%);
+
+  --layer-indigo: oklch(67.3% 0.182 276.935); /* indigo-400 */
+  --layer-sky: oklch(74.6% 0.16 232.661); /* sky-400 */
+  --layer-blue: oklch(70.7% 0.165 254.624); /* blue-400 */
+  --layer-green: oklch(79.2% 0.209 151.711); /* green-400 */
+  --layer-amber: oklch(82.8% 0.189 84.429); /* amber-400 */
+  --layer-red: oklch(70.4% 0.191 22.216); /* red-400 */
+  --layer-neutral: oklch(70.5% 0.015 286.067); /* zinc-400 */
+
+  --tag-target: oklch(71.4% 0.203 305.504); /* purple-400 */
+  --tag-durable: oklch(79.2% 0.209 151.711); /* green-400 */
+  --tag-live: oklch(70.7% 0.165 254.624); /* blue-400 */
+  --tag-ui: oklch(70.4% 0.191 22.216); /* red-400 */
+  --tag-terminalBacked: #d6a35c;
+  --tag-structured: oklch(77.7% 0.152 181.912); /* teal-400 */
+}
+
+/* static: the plain CSS files (canvas/prose/source) consume var(--text-*)/var(--font-*) outside
+   the Tailwind pipeline, so every step must be emitted even when no utility uses it */
+@theme static {
+  /* dense IDE-like type ramp (px, deliberately finer-grained than Tailwind's default —
+     10–13.5px steps carry canvas/chip text); sizes only, line-height inherits the root 1.55 */
+  --text-*: initial;
+  --text-3xs: 10px;
+  --text-2xs: 11.5px;
+  --text-xs: 12px;
+  --text-detail: 12.5px;
+  --text-sm: 13px;
+  --text-node: 13.5px;
+  --text-base: 15px;
+  --text-lg: 17px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+  /* the Home hero headline only */
+  --text-3xl: 38px;
+
+  --font-sans: 'Inter Variable', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* the wide-viewport threshold where doc pages gain the TOC aside column (toc: variant) */
+  --breakpoint-toc: 1150px;
+}
+
+@theme inline {
+  /* shadcn semantic vocabulary — tokens defined in the :root/.dark blocks above */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-tint: var(--primary-tint);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-pressed: var(--primary-pressed);
+  --color-primary-disabled: var(--primary-disabled);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* shadcn radius formula, driven by --radius: 10px above
+     (sm 6px / md 8px / lg 10px / xl 14px — the site's dense radii) */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* vendored Nova components use font-heading; the site has a single family */
+  --font-heading: var(--font-sans);
+
+  /* domain tokens */
+  --color-canvas: var(--canvas);
+  --color-module: var(--module-bg);
+  --color-code: var(--code-bg);
+  --color-edge-highlight: var(--edge-highlight);
+  --shadow-card: var(--shadow-1);
+  --shadow-pop: var(--shadow-2);
+}
+
+@layer base {
+  /* shadcn's global defaults, as plain CSS (no @apply in this codebase): components rely on
+     border/outline colors defaulting to the themed tokens */
+  * {
+    border-color: var(--border);
+    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+  }
+}
