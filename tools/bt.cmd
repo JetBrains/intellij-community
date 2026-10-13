@@ -89,11 +89,10 @@ exec "$resolved" "$@"
 
 setlocal
 
-REM Same design as the POSIX half: no cache, AIR_BT_BIN honored first, otherwise resolve through
-REM `bazel run --script_path` on every invocation and exec the launcher's binary. The launcher is only read
-REM for its last line, never executed, so the Windows formatter's leading `cd /d <runfiles dir>` does not
-REM force a separate code path. BT is a developer tool used on Windows, which is why nothing on this
-REM target's dependency path may be Windows-incompatible.
+REM Same design as the POSIX half: no cache, AIR_BT_BIN honored first, otherwise a `bazel build` on every
+REM invocation, and the binary from the build event file (the `build` step of polyglot-wrapper.cmd). BT is a
+REM developer tool used on Windows, which is why nothing on this target's dependency path may be
+REM Windows-incompatible.
 
 call "%~dp0polyglot-wrapper.cmd"
 set "TARGET=%LABEL_PREFIX%tools/bt:bt"
@@ -128,29 +127,10 @@ if defined AIR_BT_BIN (
   exit /B %ERRORLEVEL%
 )
 
-if not exist "%ROOT%\out\air" mkdir "%ROOT%\out\air"
-REM One %RANDOM% read, reused: two reads would produce two different names.
-set "LAUNCHER=%ROOT%\out\air\bt.launcher.%RANDOM%"
-pushd "%ROOT%"
-call bazel.cmd run --config=bt --script_path="%LAUNCHER%" "%TARGET%" 1>&2
-set "STATUS=%ERRORLEVEL%"
-popd
-if not "%STATUS%"=="0" (
-  if exist "%LAUNCHER%" del /q "%LAUNCHER%"
-  echo bt: could not build %TARGET%; see the bazel output above 1>&2
-  exit /B 6
-)
-
-REM Only the last line is wanted - `<binary> <args> %*` - so the loop deliberately overwrites.
-set "RESOLVED="
-for /f "usebackq tokens=1" %%b in ("%LAUNCHER%") do set "RESOLVED=%%~b"
-del /q "%LAUNCHER%"
-if not defined RESOLVED goto :RESOLVEFAILED
-if not exist "%RESOLVED%" goto :RESOLVEFAILED
+REM The build output goes to stderr as it comes, as in the POSIX half. A failure exits 6, for the reason the POSIX
+REM half gives.
+call "%POLYGLOT_WRAPPER%" build bt "%TARGET%" 6 bt.exe
+if not "%ERRORLEVEL%"=="0" exit /B %ERRORLEVEL%
 
 "%RESOLVED%"%ARGS%
 exit /B %ERRORLEVEL%
-
-:RESOLVEFAILED
-echo bt: could not resolve BT from %TARGET% ^(got '%RESOLVED%'^) 1>&2
-exit /B 6

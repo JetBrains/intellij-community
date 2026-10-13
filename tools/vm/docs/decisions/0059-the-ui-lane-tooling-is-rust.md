@@ -250,7 +250,7 @@ pull gates are in `avl-host-sys`, which Windows does not build, so no Windows st
 **A shipped binary is always optimized.** `avl_binary` in `avl.bzl` builds its binary with
 `compilation_mode=opt`, for the host or one named platform. In fastbuild every crate is `-Copt-level=0`, and the
 WebP stills, the X11 frame copies and the zip deflate then run ten times slower or worse inside a lane that measures
-time. An `avl_binary` gives exactly one file. `bazel run --script_path` in the wrappers, `$(rlocationpath)` in
+time. An `avl_binary` gives exactly one file. The build event file of a wrapper, `$(rlocationpath)` in
 `ui_lane_ide.bzl` and the controller's `cquery` for the guest agent each need one. The labels are at the vm-lane
 root: `:vm`, `:bt`, `:air-trace`, `:air-trace-record`, `:air-trace-record-linux-arm64`, `:vm-guest-agent`,
 `:vm-guest-agent-linux-arm64`, `:vm-guest-agent-darwin-arm64` and `:bt-windows-x86_64`.
