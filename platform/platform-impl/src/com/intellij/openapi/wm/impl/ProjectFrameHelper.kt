@@ -458,8 +458,9 @@ abstract class ProjectFrameHelper internal constructor(
   override fun getProject(): Project? = project
 
   // any activities that will not access a workspace model
+  // without [initializesStatusBar], the caller calls [initializeStatusBar] later
   @Internal
-  suspend fun setRawProject(project: Project) {
+  suspend fun setRawProject(project: Project, initializesStatusBar: Boolean = true) {
     LOG.info("Setting project frame to $project")
 
     if (this.project === project) {
@@ -472,14 +473,24 @@ abstract class ProjectFrameHelper internal constructor(
     withContext(Dispatchers.UiWithModelAccess) {
       applyInitBounds()
 
-      if (statusBar == null) {
-        LOG.error("Status bar is null, so it won't be initialized")
+      if (initializesStatusBar) {
+        initializeStatusBar()
       }
-      statusBar?.initialize()
     }
     frameDecorator?.setProject()
 
     LOG.info("Project frame set to $project")
+  }
+
+  /**
+   * Starts the progress reporting of the status bar: the clone tasks and the background tasks of the project.
+   */
+  @RequiresEdt
+  internal fun initializeStatusBar() {
+    if (statusBar == null) {
+      LOG.error("Status bar is null, so it won't be initialized")
+    }
+    statusBar?.initialize()
   }
 
   @Internal

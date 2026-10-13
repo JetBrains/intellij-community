@@ -227,9 +227,12 @@ internal class IdeProjectFrameAllocator(
 
           launch {
             val windowManager = serviceAsync<WindowManager>() as WindowManagerImpl
+            // a welcome-experience frame starts the progress reporting of its status bar with its widgets, once it is interactive
+            val isWelcomeExperience = serviceAsync<ProjectFrameCapabilitiesService>()
+              .has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)
             span("frame assignment", Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
               windowManager.assignFrame(frameHelper, project)
-              frameHelper.setRawProject(project)
+              frameHelper.setRawProject(project, initializesStatusBar = !isWelcomeExperience)
             }
           }
 
@@ -1227,6 +1230,7 @@ internal suspend fun isReadmeLookupOnStartupEnabled(project: Project): Boolean {
  * Installs the default status bar widgets of [project] and updates the frame title.
  * A [ProjectFrameCapability.WELCOME_EXPERIENCE] project installs its widgets after [frameLoadingJob] completes,
  * because the creation and the `install` of each widget is an EDT event that delays the frame becoming interactive.
+ * Its status bar starts the progress reporting at the same time, see [ProjectFrameHelper.setRawProject].
  */
 private suspend fun installStatusBarWidgetsAndUpdateTitle(frameHelper: IdeProjectFrameHelper, project: Project, frameLoadingJob: Job) {
   if (!serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)) {
@@ -1240,6 +1244,9 @@ private suspend fun installStatusBarWidgetsAndUpdateTitle(frameHelper: IdeProjec
   frameLoadingJob.join()
   if (frameLoadingJob.isCancelled && !project.isOpen) {
     return
+  }
+  withContext(Dispatchers.UiWithModelAccess) {
+    frameHelper.initializeStatusBar()
   }
   frameHelper.installDefaultProjectStatusBarWidgets(project)
 }
