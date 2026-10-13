@@ -31,6 +31,8 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -50,6 +52,8 @@ class InstalledPluginsTabSearchResultPanel(
   private val myPluginModelFacade: PluginModelFacade,
   private val myWaitForInstalledPanelModel: suspend () -> Unit,
 ) : SearchResultPanel(coroutineScope, installedController, panel, false) {
+  private var invalidFixJob: Job? = null
+
   override fun setupEmptyText() {
     myPanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.nothing.found"))
     val query = query
@@ -181,24 +185,37 @@ class InstalledPluginsTabSearchResultPanel(
       if (parser.invalid) {
         myPluginModelFacade.getModel().setInvalidFixCallback(Runnable {
           val group = group
+          if (group !== result) {
+            return@Runnable
+          }
           if (group.ui == null) {
             myPluginModelFacade.getModel().setInvalidFixCallback(null)
             return@Runnable
           }
 
           val resultPanel = panel
-
-          for (descriptor in ArrayList<PluginUiModel>(group.getModels())) {
-            if (myPluginModelFacade.getErrors(descriptor).isEmpty()) {
+          val descriptors = ArrayList<PluginUiModel>(group.getModels())
+          invalidFixJob?.cancel()
+          invalidFixJob = coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            val fixedPlugins = withContext(Dispatchers.IO) {
+              descriptors.filter { descriptor ->
+                ensureActive()
+                myPluginModelFacade.getErrors(descriptor).isEmpty()
+              }
+            }
+            if (group !== this@InstalledPluginsTabSearchResultPanel.group || group.ui == null) {
+              return@launch
+            }
+            for (descriptor in fixedPlugins) {
               resultPanel.removeFromGroup(group, descriptor)
             }
-          }
 
-          group.titleWithCount()
-          fullRepaint()
-          if (group.getModels().isEmpty()) {
-            myPluginModelFacade.getModel().setInvalidFixCallback(null)
-            removeGroup()
+            group.titleWithCount()
+            fullRepaint()
+            if (group.getModels().isEmpty()) {
+              myPluginModelFacade.getModel().setInvalidFixCallback(null)
+              removeGroup()
+            }
           }
         })
       }
