@@ -313,7 +313,7 @@ object Git {
   fun fetch(repositoryDirectory: Path, remote: String = "") {
     val cmdName = "git-fetch"
 
-    val arguments = mutableListOf("git", "fetch")
+    val arguments = mutableListOf("git", "fetch", "--no-auto-maintenance")
     if (remote.isNotEmpty()) arguments.add(remote)
 
     onRemote(cmdName) {
@@ -337,7 +337,7 @@ object Git {
         presentableName = cmdName,
         workDir = repositoryDirectory.toAbsolutePath(),
         timeout = 10.minutes,
-        args = listOf("git", "pull"),
+        args = listOf("git", "-c", "maintenance.auto=false", "pull"),
         stdoutRedirect = ExecOutputRedirect.ToStdOutAndTail("[$cmdName]"),
         stderrRedirect = ExecOutputRedirect.ToStdOutAndTail("[$cmdName]"),
         onlyEnrichExistedEnvVariables = true
