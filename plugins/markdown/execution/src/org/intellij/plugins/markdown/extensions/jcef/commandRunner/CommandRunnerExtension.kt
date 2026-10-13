@@ -38,7 +38,6 @@ import org.intellij.plugins.markdown.MarkdownUsageCollector.RUNNER_EXECUTED
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
-import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.BrowserPipe
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
@@ -53,13 +52,13 @@ import java.util.concurrent.ConcurrentHashMap
 class CommandRunnerExtension(
   val panel: MarkdownHtmlPanel,
   private val provider: Provider
-): MarkdownBrowserPreviewExtension {
+): MarkdownCommandRunnerPreviewExtension {
   private val sessionKey = UUID.randomUUID().toString()
   override val scripts: List<String> = listOf("commandRunner/commandRunner.js")
   override val styles: List<String> = listOf("commandRunner/commandRunner.css")
   private val hash2Cmd = ConcurrentHashMap<String, String>()
 
-  fun resetCommands() {
+  override fun resetCommands() {
     hash2Cmd.clear()
   }
 
@@ -109,7 +108,7 @@ class CommandRunnerExtension(
     }
   }
 
-  fun processCodeLine(rawCodeLine: String, insideFence: Boolean): String {
+  override fun processCodeLine(rawCodeLine: String, insideFence: Boolean): String {
     processLine(rawCodeLine, !insideFence)?.let { hash ->
       return getHtmlForLineRunner(insideFence, hash)
     }
@@ -144,7 +143,7 @@ class CommandRunnerExtension(
            "</a>"
   }
 
-  fun processCodeBlock(codeFenceRawContent: String, language: String): String {
+  override fun processCodeBlock(codeFenceRawContent: String, language: String): String {
     try {
       val lang = CodeFenceLanguageGuesser.guessLanguageForExecution(language)
       val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(lang) }
@@ -293,8 +292,10 @@ class CommandRunnerExtension(
     provider.extensions.remove(panel.virtualFile)
   }
 
-  class Provider: MarkdownBrowserPreviewExtension.Provider {
+  class Provider: MarkdownCommandRunnerPreviewExtension.Provider {
     val extensions = ConcurrentHashMap<VirtualFile, CommandRunnerExtension>()
+
+    override fun getExtension(file: VirtualFile): CommandRunnerExtension? = extensions[file]
 
     override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
       val virtualFile = panel.virtualFile ?: return null
@@ -311,11 +312,9 @@ class CommandRunnerExtension(
     private const val RUN_LINE_ICON = "commandRunner/run.png"
     private const val RUN_BLOCK_ICON = "commandRunner/runrun.png"
 
-    const val extensionId = "MarkdownCommandRunnerExtension"
+    const val extensionId: String = MarkdownCommandRunnerPreviewExtension.EXTENSION_ID
 
-    fun isExtensionEnabled(): Boolean {
-      return MarkdownExtensionsSettings.getInstance().extensionsEnabledState[extensionId] ?: true
-    }
+    fun isExtensionEnabled(): Boolean = MarkdownCommandRunnerPreviewExtension.isEnabled()
 
     fun getRunnerByFile(file: VirtualFile) : CommandRunnerExtension? {
       val provider = MarkdownExtensionsUtil.findBrowserExtensionProvider<Provider>()
@@ -457,14 +456,6 @@ class CommandRunnerExtension(
       return line
     }
   }
-}
-
-enum class RunnerPlace {
-  EDITOR, PREVIEW
-}
-
-enum class RunnerType {
-  BLOCK, LINE
 }
 
 @ApiStatus.Internal

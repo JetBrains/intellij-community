@@ -57,9 +57,6 @@
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
-    <extensionPoint qualifiedName="org.intellij.markdown.markdownRunner"
-                    interface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.frontMatterFoldingPolicy"
                     interface="org.intellij.plugins.markdown.folding.MarkdownFrontMatterFoldingPolicy"
                     dynamic="true"/>
@@ -76,12 +73,5 @@
     <registryKey key="markdown.live.preview.image.max.megapixels"
                  defaultValue="4"
                  description="Maximum image megapixel count for Markdown live preview."/>
-  </extensions>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService
-      serviceInterface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.PreviewCommandRunnability"
-      serviceImplementation="org.intellij.plugins.markdown.extensions.jcef.commandRunner.LocalPreviewCommandRunnability"
-      open="true"/>
   </extensions>
 </idea-plugin>

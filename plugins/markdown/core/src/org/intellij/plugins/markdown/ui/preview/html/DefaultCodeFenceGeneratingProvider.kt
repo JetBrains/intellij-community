@@ -12,7 +12,7 @@ import org.intellij.markdown.html.entities.EntityConverter
 import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter
 import org.intellij.plugins.markdown.extensions.common.highlighter.buildHighlightedFenceContent
-import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownCommandRunnerPreviewExtension
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 
@@ -57,11 +57,11 @@ internal class DefaultCodeFenceGeneratingProvider(
   }
 
   private fun processCodeBlock(codeFenceRawContent: String, language: String): String {
-    return file?.let(CommandRunnerExtension::getRunnerByFile)?.processCodeBlock(codeFenceRawContent, language) ?: ""
+    return file?.let(MarkdownCommandRunnerPreviewExtension::getByFile)?.processCodeBlock(codeFenceRawContent, language) ?: ""
   }
 
   private fun processCodeLine(rawCodeLine: String): String {
-    return file?.let(CommandRunnerExtension::getRunnerByFile)?.processCodeLine(rawCodeLine, true) ?: ""
+    return file?.let(MarkdownCommandRunnerPreviewExtension::getByFile)?.processCodeLine(rawCodeLine, true) ?: ""
   }
 
   override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {

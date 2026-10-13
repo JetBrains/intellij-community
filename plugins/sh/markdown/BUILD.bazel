@@ -30,6 +30,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//plugins/markdown/core:markdown",
+        "//plugins/markdown/execution",
         "//platform/core-api:core",
         "//plugins/sh/core",
         "//platform/ide-core",
@@ -58,6 +59,7 @@ jvm_library(
         # do not sort,
         ":markdown",
         "//plugins/markdown/core:markdown_test_lib",
+        "//plugins/markdown/execution:execution_test_lib",
         "//platform/core-api:core_test_lib",
         "//plugins/sh/core:core_test_lib",
         "//platform/ide-core:ide-core_test_lib",

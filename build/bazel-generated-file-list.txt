@@ -1676,6 +1676,7 @@ plugins/markdown/core
 plugins/markdown/core/backend
 plugins/markdown/core/frontend
 plugins/markdown/core/frontend/execution
+plugins/markdown/execution
 plugins/markdown/fenceInjection
 plugins/markdown/figmaAdvertiser
 plugins/markdown/frontmatter

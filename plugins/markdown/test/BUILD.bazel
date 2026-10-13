@@ -22,6 +22,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//plugins/markdown/core:markdown",
+        "//plugins/markdown/execution",
         "//plugins/markdown/jcef",
         "//plugins/markdown/projectView",
         "//plugins/markdown/java",
@@ -96,6 +97,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
+        "//plugins/markdown/execution",
+        "//plugins/markdown/execution:execution_test_lib",
         "//plugins/markdown/core/frontend",
         "//plugins/markdown/core/frontend:frontend_test_lib",
         "//plugins/markdown/core/frontend/execution",
