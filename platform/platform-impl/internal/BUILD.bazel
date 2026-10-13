@@ -72,13 +72,12 @@ jvm_library(
         "//platform/progress/shared:ide-progress",
         "//libraries/jbr",
         "//platform/projectModel-impl",
-        "//platform/execution",
         "//platform/consoleView",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/locking-impl",
         "//platform/lang-impl",
-        "//platform/execution-impl",
         "//platform/platform-impl/maintenance",
+        "//platform/consoleView/impl",
     ],
 )
 
@@ -142,13 +141,12 @@ jvm_library(
         "//platform/progress/shared:ide-progress_test_lib",
         "//libraries/jbr:jbr_test_lib",
         "//platform/projectModel-impl:projectModel-impl_test_lib",
-        "//platform/execution:execution_test_lib",
         "//platform/consoleView:consoleView_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/locking-impl:locking-impl_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/execution-impl:execution-impl_test_lib",
         "//platform/platform-impl/maintenance:maintenance_test_lib",
+        "//platform/consoleView/impl:impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.internal` end

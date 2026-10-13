@@ -3,7 +3,6 @@ package com.intellij.unscramble
 
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.filters.Filter
-import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.impl.AnalyzeStacktraceConsoleUtil
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.impl.ConsoleViewUtil
@@ -45,8 +44,9 @@ import javax.swing.JPanel
 class AnalyzeStacktraceUtil private constructor() {
   @ApiStatus.Internal
   companion object {
+    @Deprecated("Use [AnalyzeStacktraceConsoleUtil.createConsole] or [AnalyzeStacktraceConsoleUtil.ANALYZE_STACKTRACE_FILTER_EP_NAME] instead")
     @JvmField
-    val EP_NAME: ProjectExtensionPointName<Filter> = ProjectExtensionPointName<Filter>("com.intellij.analyzeStacktraceFilter")
+    val EP_NAME: ProjectExtensionPointName<Filter> = AnalyzeStacktraceConsoleUtil.ANALYZE_STACKTRACE_FILTER_EP_NAME
 
     @ApiStatus.Experimental
     private val EP_CONTENT_PROVIDER = ExtensionPointName<StacktraceTabContentProvider>("com.intellij.analyzeStacktraceRunContentProvider")
@@ -82,9 +82,7 @@ class AnalyzeStacktraceUtil private constructor() {
       icon: Icon?,
       withExecutor: Boolean = true,
     ): RunContentDescriptor {
-      val builder = TextConsoleBuilderFactory.getInstance().createBuilder(project)
-      builder.filters(EP_NAME.getExtensions(project))
-      val consoleView = builder.getConsole()
+      val consoleView = AnalyzeStacktraceConsoleUtil.createConsole(project)
 
       val toolbarActions = DefaultActionGroup()
       val consoleComponent = consoleFactory?.createConsoleComponent(consoleView, toolbarActions)
