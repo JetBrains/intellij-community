@@ -471,8 +471,10 @@ internal class TreeBasedFrontendProjectViewPane(
     }
   }
 
-  override fun saveStateTo(element: Element) {
+  override fun saveStateTo(element: Element): Boolean {
+    if (paneTreeModel.isEffectivelyEmpty) return false
     TreeState.createOn(tree, true, false, true).writeExternal(element)
+    return true
   }
 
   override fun restoreStateFrom(element: Element?) {

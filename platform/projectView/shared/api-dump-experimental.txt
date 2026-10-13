@@ -141,6 +141,7 @@
 - a:getId():J
 - a:isDirectory():Z
 - a:isIncludedInExpandAll():Z
+- a:isSynthetic():Z
 - a:shouldBeInitiallyExpanded():Z
 *:com.intellij.platform.projectView.pane.ProjectViewNodeModelBuilder
 - a:buildPresentation(kotlin.jvm.functions.Function1):V
@@ -149,6 +150,7 @@
 - a:setExpandOnDoubleClick(Z):V
 - a:setIncludedInExpandAll(Z):V
 - a:setIsDirectory(Z):V
+- a:setIsSynthetic(Z):V
 - a:setModel(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):V
 - a:setPathElementId(java.lang.String):V
 - a:setPathElementType(java.lang.String):V

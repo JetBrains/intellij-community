@@ -126,7 +126,9 @@ internal class FrontendWelcomeScreenLeftPanel(
 
   override suspend fun manage() { }
 
-  override fun saveStateTo(element: Element) { }
+  override fun saveStateTo(element: Element): Boolean {
+    return false
+  }
 
   override fun restoreStateFrom(element: Element?) { }
 }

@@ -907,6 +907,7 @@ a:com.intellij.ide.projectView.ProjectViewNode
 - getSortOrder(com.intellij.ide.projectView.NodeSortSettings):com.intellij.ide.projectView.NodeSortOrder
 - getTitle():java.lang.String
 - getVirtualFile():com.intellij.openapi.vfs.VirtualFile
+- isSynthetic():Z
 - someChildContainsFile(com.intellij.openapi.vfs.VirtualFile):Z
 com.intellij.ide.projectView.SelectableTreeStructureProvider
 - com.intellij.ide.projectView.TreeStructureProvider

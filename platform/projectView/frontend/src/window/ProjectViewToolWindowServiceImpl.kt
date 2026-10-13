@@ -381,9 +381,13 @@ internal class ProjectViewToolWindowServiceImpl(
     }
     val paneElement = Element("pane")
     paneElement.setAttribute("pane", pane.id.idString)
-    pane.saveStateTo(paneElement)
-    persistentState.putPaneState(pane.id, paneElement)
-    LOG.debug { "Saved the last state for ${pane.id}" }
+    if (pane.saveStateTo(paneElement)) {
+      persistentState.putPaneState(pane.id, paneElement)
+      LOG.debug { "Saved the last state for ${pane.id}" }
+    }
+    else {
+      LOG.debug { "Not saved the effectively empty state for ${pane.id}" }
+    }
   }
 
   private inner class PaneManager(

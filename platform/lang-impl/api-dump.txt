@@ -3143,6 +3143,7 @@ com.intellij.ide.projectView.impl.nodes.DropTargetNode
 c:com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode
 - com.intellij.ide.projectView.ProjectViewNode
 - getChildren():java.util.Collection
+- isSynthetic():Z
 com.intellij.ide.projectView.impl.nodes.FileNodeWithNestedFileNodes
 - a:getNestedFileNodes():java.util.Collection
 a:com.intellij.ide.projectView.impl.nodes.ModuleGroupNode
