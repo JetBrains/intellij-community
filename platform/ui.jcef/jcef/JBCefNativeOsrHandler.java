@@ -60,7 +60,8 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
     SharedMemory.WithRaster mem = mySharedMemCache.get(sharedMemName, sharedMemHandle);
     mem.setWidth(width);
     mem.setHeight(height);
-    mem.setDirtyRectsCount(dirtyRectsCount);
+    // 0 - the entire frame image is used
+    mem.setDirtyRectsCount(isDirtyRectsEnabled() ? dirtyRectsCount : 0);
 
     if (popup) {
       JBHiDPIScaledImage image = myPopupImage;
