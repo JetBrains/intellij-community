@@ -54,7 +54,7 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
     LOG.debug("TODO watch (frontend): scheduleRemoteTodoFilesWatch start, builder=${treeBuilder.javaClass.name}")
     remoteTodoFilesWatchJob?.cancel()
 
-    val todoScope: TodoScope = treeBuilder.scope ?: return CompletableFuture.completedFuture(null)
+    val todoScope: TodoScope = treeBuilder.scope ?: return scheduleCacheClear()
     val filter = treeBuilder.todoTreeStructure.todoFilter
     val scanCompleted = CompletableFuture<Unit>()
 
@@ -80,9 +80,18 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
     return scanCompleted
   }
 
+  private fun scheduleCacheClear(): CompletableFuture<*> {
+    val job = scope.launch(Dispatchers.Default + ClientId.current.asContextElement()) {
+      treeBuilder.applyRemoteTodoEvent(TodoEvent.AllItemsRemoved)
+      treeBuilder.clearCache()
+      readAction { treeBuilder.updateVisibleTree() }
+    }
+    remoteTodoFilesWatchJob = job
+    return job.asCompletableFuture()
+  }
+
   fun scheduleCacheAndTreeUpdate(vararg constraints: ReadConstraint): CompletableFuture<*> {
-    val todoScope = treeBuilder.scope
-    if (shouldUseSplitTodo() && todoScope != null) {
+    if (shouldUseSplitTodo()) {
       return scheduleRemoteTodoFilesWatch(*constraints)
     }
     return scope.launch(Dispatchers.EDT + ClientId.current.asContextElement()) {
