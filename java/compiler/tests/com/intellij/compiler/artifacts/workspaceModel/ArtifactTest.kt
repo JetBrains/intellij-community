@@ -59,6 +59,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.testFramework.JUnit38AssumeSupportRunner
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.workspaceModel.updateProjectModel
@@ -344,6 +345,29 @@ class ArtifactTest : ArtifactsTestCase() {
       listOf(modifiableArtifact, addedArtifact)
     }
     LeakHunter.checkLeak(project, ArtifactBridge::class.java) { bridge -> bridges.any { it === bridge } }
+  }
+
+  fun `test commit of one model keeps bridges of another model`() = runWriteAction {
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    // Add via model, so the artifact has no bridge yet
+    workspaceModel.updateProjectModel {
+      it addEntity ArtifactEntity("X", PlainArtifactType.ID, true, MySource) {
+        rootElement = ArtifactRootElementEntity(MySource)
+      }
+    }
+
+    val manager = ArtifactManager.getInstance(project)
+    val modelB = manager.createModifiableModel()
+    val bridgeB = modelB.findArtifact("X") as ArtifactBridge
+
+    val modelA = manager.createModifiableModel()
+    modelA.addArtifact("Y", PlainArtifactType.getInstance())
+    modelA.commit()
+    assertTrue(bridgeB.entityStorage is VersionedEntityStorageOnBuilder)
+
+    modelB.commit()
+    assertSame((workspaceModel as WorkspaceModelInternal).entityStorage, bridgeB.entityStorage)
+    assertSame(bridgeB, manager.findArtifact("X"))
   }
 
   fun `test project does not keep bridge of removed artifact`() {

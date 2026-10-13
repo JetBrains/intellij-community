@@ -64,8 +64,6 @@ class ArtifactManagerBridge(private val project: Project, coroutineScope: Corout
 
   private val resolvingContext = DefaultPackagingElementResolvingContext(project)
 
-  internal val artifactWithDiffs: MutableList<ArtifactBridge> = mutableListOf()
-
   // Weak keys: an artifact bridge stays here only while other code references it
   private val bridges = ConcurrentCollectionFactory.createConcurrentWeakIdentityMap<ArtifactBridge, Boolean>()
 
@@ -259,8 +257,8 @@ class ArtifactManagerBridge(private val project: Project, coroutineScope: Corout
     }
 
     // Set actual storages
-    artifactWithDiffs.forEach { it.setActualStorage() }
-    artifactWithDiffs.clear()
+    artifactModel.bridgesWithDiff.forEach { it.setActualStorage() }
+    artifactModel.bridgesWithDiff.clear()
 
     val entityStorage = (project.workspaceModel as WorkspaceModelInternal).entityStorage
     added.forEach { bridge ->
