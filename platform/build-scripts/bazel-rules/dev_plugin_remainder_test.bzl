@@ -59,6 +59,17 @@ _fixture_library = rule(
     doc = "A library container: the shape the library generator emits for a multi-jar library.",
 )
 
+def _jar_file_impl(ctx):
+    jar = ctx.outputs.jar
+    ctx.actions.write(jar, _EMPTY_JAR)
+    return [DefaultInfo(files = depset([jar]))]
+
+_jar_file = rule(
+    implementation = _jar_file_impl,
+    outputs = {"jar": "%{name}.jar"},
+    doc = "One jar file without a provider: the shape of a library jar the library generator copies under its own label.",
+)
+
 def _file_impl(ctx):
     output = ctx.actions.declare_file(ctx.label.name + ".json")
     ctx.actions.write(output, ctx.attr.content)
@@ -300,6 +311,47 @@ _library_catalogue_test = analysistest.make(
         "containers": attr.label_list(mandatory = True, providers = [JavaInfo], doc = "The library containers the catalogue expands."),
     },
 )
+
+def _archive_catalogue_test_impl(ctx):
+    """An archive is one artifact under its ID, and one content entry under its own label with its one file. The
+    catalogue reads it in the configuration of a compiled input. A resource stays in the product configuration."""
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    catalogue = target[DevPluginArtifactCatalogueInfo]
+    asserts.equals(env, ctx.attr.artifact_ids, catalogue.artifacts.keys())
+    archive = catalogue.artifacts["archive"]
+    asserts.equals(env, ctx.file.archive.short_path, archive.short_path)
+    asserts.equals(env, catalogue.artifacts["compiled"].root.path, archive.root.path)
+    asserts.false(env, catalogue.artifacts["raw"].root.path == archive.root.path)
+
+    content = target[DevDistContentInfo]
+    asserts.equals(env, [catalogue.artifacts["compiled"].short_path], _short_paths(content.module_jars.to_list()))
+    entries = content.library_jars.to_list()
+    asserts.equals(env, [str(ctx.attr.archive.label)], [entry.label for entry in entries])
+    if entries:
+        asserts.equals(env, [archive.short_path], _short_paths(entries[0].jars))
+    return analysistest.end(env)
+
+_archive_catalogue_test = analysistest.make(
+    _archive_catalogue_test_impl,
+    config_settings = _PRODUCT_CONFIG,
+    attrs = {
+        "archive": attr.label(mandatory = True, allow_single_file = [".jar"], doc = "The library jar the catalogue names as an archive."),
+        "artifact_ids": attr.string_list(default = ["compiled", "archive", "raw"], doc = "The catalogue IDs in their order."),
+    },
+)
+
+def _resource_jar_catalogue_test_impl(ctx):
+    """A jar among the resource inputs is one artifact under its ID and no content."""
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    asserts.equals(env, ["downloaded"], target[DevPluginArtifactCatalogueInfo].artifacts.keys())
+    content = target[DevDistContentInfo]
+    asserts.equals(env, [], content.module_jars.to_list())
+    asserts.equals(env, [], content.library_jars.to_list())
+    return analysistest.end(env)
+
+_resource_jar_catalogue_test = analysistest.make(_resource_jar_catalogue_test_impl)
 
 def _expected_failure_test_impl(ctx):
     env = analysistest.begin(ctx)
@@ -891,6 +943,37 @@ def dev_plugin_remainder_test_suite(name):
         containers = [":" + name + "_two_library", ":" + name + "_shared_library"],
     )
 
+    # A library jar the plan names jar by jar is an archive input. The catalogue binds it under its ID and hands it to
+    # the content boundary under its own label, in the neutral configuration of the compiled inputs. A jar among the
+    # resource inputs is a resource and no content: a downloaded jar arrives that way.
+    archive = name + "_archive"
+    _jar_file(name = archive)
+    archive_compiled = name + "_archive_compiled"
+    _fixture_module(name = archive_compiled, module_name = "test." + archive_compiled)
+    archive_catalogue = name + "_archive_catalogue"
+    dev_plugin_artifact_catalogue(
+        name = archive_catalogue,
+        artifact_inputs = {":" + archive_compiled: "compiled"},
+        archive_inputs = {":" + archive: "archive"},
+        resource_inputs = {":" + raw: "raw"},
+    )
+    archive_catalogue_test = archive_catalogue + "_test"
+    _archive_catalogue_test(
+        name = archive_catalogue_test,
+        target_under_test = ":" + archive_catalogue,
+        archive = ":" + archive,
+    )
+    resource_jar_catalogue = name + "_resource_jar_catalogue"
+    dev_plugin_artifact_catalogue(
+        name = resource_jar_catalogue,
+        resource_inputs = {":" + archive: "downloaded"},
+    )
+    resource_jar_catalogue_test = resource_jar_catalogue + "_test"
+    _resource_jar_catalogue_test(
+        name = resource_jar_catalogue_test,
+        target_under_test = ":" + resource_jar_catalogue,
+    )
+
     # An optional source tree: the same target and ID shape as a required tree, present with files below the prefix
     # and absent with none. A required tree with no file below its prefix fails, and an optional ID must name a tree.
     absent_prefix = native.package_name() + "/" + source_files + ".absent"
@@ -1237,6 +1320,34 @@ def dev_plugin_remainder_test_suite(name):
         )
         placement_tests.append(placement_test)
 
+    # The variant sorts a resource whose label names a jar into the archive inputs. So a library jar the plan names
+    # jar by jar reaches the content boundary in the neutral configuration without a generated argument of its own.
+    archive_chain = name + "_archive_chain"
+    dev_dist_complex_plugin_variant(
+        name = archive_chain,
+        projection = ":" + plan_file,
+        execution_version = 1,
+        descriptor = ":" + normal_descriptor,
+        plugin_directory = "plugins/test",
+        component_name = "plugin-test",
+        target_platform = "linux_x64",
+        artifact_inputs = {":" + archive_compiled: "compiled"},
+        resource_inputs = {
+            ":" + normal_descriptor: "descriptor",
+            ":" + archive + ".jar": "archive",
+            ":" + raw: "raw",
+        },
+        remainder_files = {"lib/test.jar": []},
+        tags = ["manual"],
+    )
+    archive_chain_test = archive_chain + "_catalogue_test"
+    _archive_catalogue_test(
+        name = archive_chain_test,
+        target_under_test = ":" + archive_chain + "_catalogue",
+        archive = ":" + archive + ".jar",
+        artifact_ids = ["compiled", "archive", "descriptor", "raw"],
+    )
+
     # A chain over a plan file with a layout-assets operation. The packer executes the operation in the remainder
     # action. The same action writes the asset table and the classpath record the component reads.
     plan_chain = name + "_plan_chain"
@@ -1568,6 +1679,8 @@ def dev_plugin_remainder_test_suite(name):
             source_tree_catalogue_test,
         ] + optional_source_tree_tests + [
             library_catalogue_test,
+            archive_catalogue_test,
+            resource_jar_catalogue_test,
             unsafe_source_tree_graph_test,
         ] + remainder_tests + outputs_tests + placement_tests + [
             component_test,
@@ -1579,5 +1692,6 @@ def dev_plugin_remainder_test_suite(name):
             plan_chain_remainder_test,
             plan_chain_component_test,
             plan_home_test,
+            archive_chain_test,
         ] + derived_tests + folded_tests + class_tests + refused_graph_tests,
     )

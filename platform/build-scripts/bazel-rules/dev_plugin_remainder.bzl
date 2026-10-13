@@ -379,21 +379,32 @@ def _transitioned_target(value, attribute, optional = False):
     return value[0]
 
 _CompiledArtifactInputsInfo = provider(
-    doc = "Resolved compiled inputs and library containers in the neutral product configuration.",
+    doc = "Resolved compiled inputs, library archives and library containers in the neutral product configuration.",
     fields = {
         "inputs": "The resolved artifact_inputs dictionary.",
+        "archives": "The resolved archive_inputs dictionary: one library jar per artifact ID.",
         "libraries": "The resolved libraries dictionary: one library container target per library ID.",
     },
 )
 
 def _compiled_artifact_inputs_impl(ctx):
-    return [DefaultInfo(files = depset()), _CompiledArtifactInputsInfo(inputs = ctx.attr.artifact_inputs, libraries = ctx.attr.libraries)]
+    return [
+        DefaultInfo(files = depset()),
+        _CompiledArtifactInputsInfo(inputs = ctx.attr.artifact_inputs, archives = ctx.attr.archive_inputs, libraries = ctx.attr.libraries),
+    ]
 
 _compiled_artifact_inputs = rule(
     implementation = _compiled_artifact_inputs_impl,
+    # A rule transition: a Starlark transition on a label-keyed dict attribute crashes Bazel 9.1.
     cfg = _module_transition,
     attrs = {
         "artifact_inputs": attr.label_keyed_string_dict(allow_files = True),
+        "archive_inputs": attr.label_keyed_string_dict(
+            allow_files = [".jar"],
+            doc = """The library jars the plan names jar by jar, mapped to stable artifact IDs. They are in the neutral
+product configuration, like every library container. A simple plugin of the same product names such a jar by the same
+label, and the content boundary accepts one file per label.""",
+        ),
         "libraries": attr.label_keyed_string_dict(
             providers = [JavaInfo],
             doc = "Library containers mapped to stable library IDs. The catalogue expands each to its member jars.",
@@ -484,17 +495,23 @@ def _library_members(ctx, identifier, target, artifacts, libraries, members_by_p
         members.append(member)
     return members
 
+def _is_one_jar(target, file):
+    """Whether a catalogue input is one jar file and not a descriptor."""
+    return DevDistPluginDescriptorInfo not in target and file.extension == "jar" and not file.is_directory
+
 def _dev_plugin_artifact_catalogue_impl(ctx):
     artifacts = {}
     compiled = ctx.attr.compiled_inputs[_CompiledArtifactInputsInfo]
-    for attribute, inputs in [("artifact_inputs", compiled.inputs), ("resource_inputs", ctx.attr.resource_inputs)]:
+    for attribute, inputs in [("artifact_inputs", compiled.inputs), ("archive_inputs", compiled.archives), ("resource_inputs", ctx.attr.resource_inputs)]:
         for target, identifier in inputs.items():
             identifier = _catalogue_id(identifier)
             if identifier in artifacts:
                 fail("duplicate catalogue ID: %s" % identifier)
             file = _artifact_file(target)
-            if attribute == "resource_inputs" and _KtJvmInfo in target:
-                fail("compiled modules must use artifact_inputs, not resource_inputs: %s" % target.label)
+            if attribute != "artifact_inputs" and _KtJvmInfo in target:
+                fail("compiled modules must use artifact_inputs, not %s: %s" % (attribute, target.label))
+            if attribute == "archive_inputs" and not _is_one_jar(target, file):
+                fail("archive_inputs must name one jar file: %s" % target.label)
             _validate_catalogue_root(file, artifacts)
             artifacts[identifier] = file
     source_tree_graph = _transitioned_target(ctx.attr.source_tree_graph, "source_tree_graph", optional = True)
@@ -516,12 +533,12 @@ def _dev_plugin_artifact_catalogue_impl(ctx):
         content_library_jars.append(library_entries(ctx, [target], attr_name = "libraries")[0])
     catalogue = _write_catalogue(ctx, artifacts, libraries)
 
-    # The raw content: the compiled module jars and the library containers, in the neutral configuration, and the
-    # archives. A compiled input is a module target or the `<target>.jar` output file of one; both give the module's
+    # The raw content: the compiled module jars, the library containers and the archives, all in the neutral product
+    # configuration. A compiled input is a module target or the `<target>.jar` output file of one; both give the module's
     # own jar, whose owner is the module rule. An archive is one jar of a library the plan names jar by jar, because the
-    # library shares another jar with a second library. It arrives as a resource input and is keyed by its own label,
-    # the way `dev_plugin.bzl` carries a jar file token. A descriptor or any other resource is no content, so a
-    # reference that lays the plugin out without packing it declares neither.
+    # library shares another jar with a second library. It is keyed by its own label, the way `dev_plugin.bzl` carries a
+    # jar file token. A descriptor or any other resource is no content. So a reference that lays the plugin out without
+    # packing it declares neither.
     content_module_jars = []
     for target in compiled.inputs.keys():
         if DevDistPluginDescriptorInfo in target:
@@ -529,12 +546,8 @@ def _dev_plugin_artifact_catalogue_impl(ctx):
         jar = _artifact_file(target)
         if jar.extension == "jar" and not jar.is_directory:
             content_module_jars.append(jar)
-    for target in ctx.attr.resource_inputs.keys():
-        if DevDistPluginDescriptorInfo in target or _KtJvmInfo in target:
-            continue
-        files = target[DefaultInfo].files.to_list()
-        if len(files) == 1 and files[0].extension == "jar" and not files[0].is_directory:
-            content_library_jars.append(struct(label = str(target.label), jars = (files[0],)))
+    for target in compiled.archives.keys():
+        content_library_jars.append(struct(label = str(target.label), jars = (_artifact_file(target),)))
     return [
         DefaultInfo(files = depset([catalogue])),
         DevPluginArtifactCatalogueInfo(
@@ -551,7 +564,7 @@ _dev_plugin_artifact_catalogue = rule(
         "compiled_inputs": attr.label(mandatory = True, providers = [_CompiledArtifactInputsInfo]),
         "resource_inputs": attr.label_keyed_string_dict(
             allow_files = True,
-            doc = "Resources and descriptor providers in the catalogue's product configuration.",
+            doc = "Resources and descriptor providers in the catalogue's product configuration. A library jar is an archive input.",
         ),
         "source_tree_graph": attr.label(
             cfg = _module_transition,
@@ -562,12 +575,14 @@ _dev_plugin_artifact_catalogue = rule(
     },
 )
 
-def dev_plugin_artifact_catalogue(name, artifact_inputs = {}, libraries = {}, tags = [], **kwargs):
-    """Binds neutral compiled inputs, library containers and product-scoped resources to the catalogue.
+def dev_plugin_artifact_catalogue(name, artifact_inputs = {}, archive_inputs = {}, libraries = {}, tags = [], **kwargs):
+    """Binds neutral compiled inputs, library archives and library containers, and product-scoped resources, to the catalogue.
 
     Args:
         name: The target name.
         artifact_inputs: Compiled targets mapped to stable artifact IDs.
+        archive_inputs: The library jars the plan names jar by jar, mapped to stable artifact IDs. Neutral like the
+            compiled inputs.
         libraries: Library container targets mapped to stable library IDs. The catalogue expands each to its member
             jars, so no label here carries a version.
         tags: Additional tags for the catalogue target.
@@ -578,6 +593,7 @@ def dev_plugin_artifact_catalogue(name, artifact_inputs = {}, libraries = {}, ta
     _compiled_artifact_inputs(
         name = compiled_inputs,
         artifact_inputs = artifact_inputs,
+        archive_inputs = archive_inputs,
         libraries = libraries,
         tags = ["manual"],
         visibility = ["//visibility:private"],
@@ -1070,6 +1086,26 @@ def _dict_for_platform(values, platform, what):
         fail("two %s entries name the same key on %s: %s" % (what, platform, sorted(values.keys())))
     return result
 
+# The repositories whose jar-file labels the generator records for a library jar, as `isRecordedJarFileLabel` of
+# `devDistPluginBuildPlan.kt` lists them. The empty name is the checkout, which a label without `//` names too.
+_LIBRARY_JAR_REPOSITORIES = ["", "@community", "@lib", "@ultimate_lib"]
+
+def _is_library_jar_label(label):
+    """Whether a label names a jar file of the checkout or of a `lib` repository. The generator records a library jar
+    under such a label."""
+    repository = label.split("//")[0] if "//" in label else ""
+    return label.endswith(".jar") and repository in _LIBRARY_JAR_REPOSITORIES
+
+def _split_library_jars(resource_inputs):
+    """The resource inputs in two dicts: the library jars the plan names jar by jar, then every other resource.
+
+    A downloaded file is a label of a download repository, and the descriptor is a rule target. The catalogue checks
+    that each archive is one jar file.
+    """
+    archives = {label: identifier for label, identifier in resource_inputs.items() if _is_library_jar_label(label)}
+    resources = {label: identifier for label, identifier in resource_inputs.items() if label not in archives}
+    return archives, resources
+
 def _resolve_slot(main_module, value, values):
     """Resolves a destination that is one `{platform:<name>}` slot from the chain's `platform_values`."""
     if not value.startswith(_TOKEN_PREFIX):
@@ -1179,7 +1215,9 @@ def dev_dist_complex_plugin(
             `@community//plugins/kotlin/plugin`. Empty for a plan file in the package of the call.
         directory_name: The layout's explicit directory name, or empty for the one derived from the main module.
         artifact_inputs: Compiled targets mapped to stable artifact IDs.
-        resource_inputs: Resource targets mapped to stable artifact IDs, without the descriptor.
+        resource_inputs: Resource targets mapped to stable artifact IDs, without the descriptor. A label that names a
+            jar file of the checkout or of a `lib` repository is a library jar the plan names jar by jar. The chain
+            reads it in the neutral product configuration.
         libraries: Library container targets mapped to stable library IDs. The catalogue expands each to its member
             jars.
         source_tree_targets: Declared source targets keyed by the artifact ID of each normalized directory.
@@ -1286,7 +1324,8 @@ def dev_dist_complex_plugin_variant(
         source_tree_prefixes: Repository-relative source prefix keyed by the source tree artifact ID.
         optional_source_trees: Source tree IDs that may have no files and then materialize as empty directories.
         artifact_inputs: Compiled targets mapped to stable artifact IDs.
-        resource_inputs: Resource and descriptor targets mapped to stable artifact IDs.
+        resource_inputs: Resource and descriptor targets mapped to stable artifact IDs. A label that names a jar file
+            of the checkout or of a `lib` repository is an archive input of the catalogue.
         libraries: Library container targets mapped to stable library IDs.
         independent_artifacts: The `content_module_jar` targets whose jar the plugin reuses. Both rules read the jar
             and the module name from `ContentModuleJarInfo`; the module name is the artifact ID of the reused jar.
@@ -1314,10 +1353,12 @@ def dev_dist_complex_plugin_variant(
         optional_source_trees = optional_source_trees,
         tags = tags,
     )
+    archives, resources = _split_library_jars(resource_inputs)
     dev_plugin_artifact_catalogue(
         name = catalogue,
         artifact_inputs = artifact_inputs,
-        resource_inputs = resource_inputs,
+        archive_inputs = archives,
+        resource_inputs = resources,
         source_tree_graph = ":" + graph if source_tree_targets else None,
         libraries = libraries,
         tags = tags,
