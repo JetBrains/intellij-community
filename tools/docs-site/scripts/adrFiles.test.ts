@@ -117,11 +117,16 @@ describe('the references', () => {
     assert.throws(() => checkDecisionRecords(config(), root), /4 stale reference\(s\)/)
   })
 
-  it('let a number of allowDuplicateNumbers name two records, and find a bare mention of it ambiguous', () => {
+  it('let a number of allowDuplicateNumbers name two records, and find a mention of it ambiguous unless it links the record', () => {
     const files = {
       [`${DECISION_FOLDERS[0]}/0012-the-lane-is-a-module.md`]: NUMBERED,
       [`${DECISION_FOLDERS[1]}/0012-the-lane-is-a-crate.md`]: NUMBERED.replace('a module', 'a crate'),
-      'plugins/air/spec/a.spec.md': 'See [the lane](../docs/decisions/0012-the-lane-is-a-module.md).\nADR 0012 is the lane.\n',
+      'plugins/air/spec/a.spec.md': [
+        'See [the lane](../docs/decisions/0012-the-lane-is-a-module.md).',
+        'ADR 0012 is the lane.',
+        'See [ADR 0012](../docs/decisions/0012-the-lane-is-a-module.md) and [ADR 0012](../../../community/tools/vm/docs/decisions/0012-the-lane-is-a-crate.md).',
+        'See [ADR 0012 and a guide](../docs/guides/a.md).',
+      ].join('\n'),
     }
     assert.throws(() => readDecisionRecords(config(), repo(files)), /number 0012 is also the number of/)
     const root = repo(files)
@@ -129,6 +134,7 @@ describe('the references', () => {
     assert.equal(records.length, 2)
     assert.deepStrictEqual(checkDecisionReferences(records, config(['0012']), root).map(finding => `${finding.path}:${finding.line}: ${finding.message}`), [
       'plugins/air/spec/a.spec.md:2: "ADR 0012" is ambiguous: 2 records take the number; link the record',
+      'plugins/air/spec/a.spec.md:4: "ADR 0012" is ambiguous: 2 records take the number; link the record',
     ])
   })
 })

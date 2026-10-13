@@ -164,6 +164,8 @@ export function readDecisionRecords(config: DecisionConfig, root: string = repoR
 }
 
 const LINK = /]\(<?([^)\s>]+?\.md)(?:#[^)\s>]*)?>?\)/g
+/** A markdown link with its text, for example `[ADR 0005](0005-a-record.md)`. */
+const TEXT_LINK = /\[([^\]]*)]\(<?([^)\s>]+?\.md)(?:#[^)\s>]*)?>?\)/g
 const MENTION = /\bADR\s+(\d{3,4})\b/g
 
 /** The source files whose comments cite a record. */
@@ -179,7 +181,8 @@ export interface DecisionReferenceFinding {
 /**
  * The findings about the references under `decisions.referenceRoots`: a markdown link into a decision folder whose
  * target does not exist, and an `ADR NNNN` mention, in markdown or in a source comment, that names no numbered
- * record or names two. A fenced block is not read, so a guide can show the shape of a name.
+ * record or names two. A mention that is the text of a link to a record with its number names that record. A fenced
+ * block is not read, so a guide can show the shape of a name.
  */
 export function checkDecisionReferences(records: readonly DecisionRecord[], config: DecisionConfig, root: string = repoRoot): DecisionReferenceFinding[] {
   const paths = new Set(records.map(record => record.path))
@@ -189,6 +192,7 @@ export function checkDecisionReferences(records: readonly DecisionRecord[], conf
       recordsByNumber.set(record.number, (recordsByNumber.get(record.number) ?? 0) + 1)
     }
   }
+  const numbersByPath = new Map(records.filter(record => record.number !== null).map(record => [record.path, record.number]))
   const folders = config.decisions.folders.map(folder => resolve(root, folder))
   const skipDirs = new Set([...SKIP_DIRS, ...config.decisions.skipDirs])
   const findings: DecisionReferenceFinding[] = []
@@ -202,13 +206,20 @@ export function checkDecisionReferences(records: readonly DecisionRecord[], conf
       const source = readFileSync(file, 'utf8')
       const lines = (markdown ? withoutFencedBlocks(source) : source).split('\n')
       lines.forEach((text, index) => {
+        // The text of a link to a numbered record, as [start, end, number of the target].
+        const linkedTexts = markdown
+          ? [...text.matchAll(TEXT_LINK)].flatMap((link) => {
+              const target = numbersByPath.get(posix(relative(root, resolve(dirname(file), link[2]))))
+              return target === undefined ? [] : [{ start: link.index + 1, end: link.index + 1 + link[1].length, number: target }]
+            })
+          : []
         for (const mention of text.matchAll(MENTION)) {
           const number = mention[1].padStart(4, '0')
           const count = recordsByNumber.get(number) ?? 0
           if (count === 0) {
             findings.push({ path, line: index + 1, message: `"${mention[0]}" names no decision record` })
           }
-          else if (count > 1) {
+          else if (count > 1 && !linkedTexts.some(linked => linked.number === number && linked.start <= mention.index && mention.index < linked.end)) {
             findings.push({ path, line: index + 1, message: `"${mention[0]}" is ambiguous: ${count} records take the number; link the record` })
           }
         }
