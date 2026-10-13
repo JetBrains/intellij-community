@@ -31,6 +31,8 @@ vocabulary! {
     pub enum HostAction {
         /// Approves the JetBrains Account login of the value `signInUrl` in the JetBrains Cloud emulator.
         AccountApproveSignIn = "account-approve-sign-in",
+        /// Waits until the IDE sends the held load `agentLoad` for `agentSession`, and neither binds nor answers it.
+        AgentAwaitHeldLoad = "agent-await-held-load",
         /// Waits until the controlled agent receives a claimed prompt, the claim of the stated text in `agentSession` or
         /// else the latest claim `agentTurn`, and answers the prompt as `agentPrompt`.
         AgentAwaitPrompt = "agent-await-prompt",
@@ -47,6 +49,8 @@ vocabulary! {
         /// Starts a session of the controlled agent of the fixture, gives the launch answers of the fixture, and answers
         /// the session as `agentSession` and its thread as `agentThreadId`.
         AgentLaunch = "agent-launch",
+        /// Makes the agent of `agentSession` fail every session load and new session with the stated message until the reset.
+        AgentRefuseConnects = "agent-refuse-connects",
         /// Makes the controlled agent answer the held load `agentLoad`, so the restore of the session ends.
         AgentReleaseHeldLoad = "agent-release-held-load",
         /// Makes the controlled agent ask for a form in the turn of `agentPrompt`, under the stated key and schema.
