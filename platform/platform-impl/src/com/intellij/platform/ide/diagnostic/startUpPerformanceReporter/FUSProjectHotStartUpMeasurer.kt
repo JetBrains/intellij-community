@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.EmptyProjectMarker
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
-import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.isRemDevTestWorkaround
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.isRemDevFrontend
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.PlatformUtils
 import com.intellij.util.containers.ComparatorUtil
@@ -176,18 +176,15 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.SplashBecameVisibleEvent())
   }
 
-  fun isReopenAndWelcomeScreenStatEnabled(): Boolean {
-    if (AppMode.isMonolith()) return true
-    if (isRemDevTestWorkaround()) return true
-    return false
-  }
+  fun isReopenAndWelcomeScreenStatEnabled(): Boolean =
+    AppMode.isMonolith() || isRemDevFrontend()
 
   /**
-   * See IJPL-206077 and IJPL-200676
-   * For now this collector works in rem dev only for a client in integration tests;
-   * only one project marker - [EmptyProjectMarker] is used in that case.
+   * The collector runs on the frontend (the JetBrains Client and IJ Light) with one project marker, [EmptyProjectMarker].
+   * It does not run on the backend. The split-mode design is IJPL-200676.
    */
-  private fun isRemDevTestWorkaround(): Boolean = PlatformUtils.isJetBrainsClient() && ApplicationManagerEx.isInIntegrationTest()
+  private fun isRemDevFrontend(): Boolean =
+    PlatformUtils.isJetBrainsClient()
 
   fun getStartUpContextElementIntoIdeStarter(close: Boolean): CoroutineContext.Element? {
     val close = close || !isReopenAndWelcomeScreenStatEnabled()
@@ -227,16 +224,15 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   /**
-   * For IJPL-206077 reopening projects in rem dev mode doesn't get marker from IdeStarter
-   * and uses this method as `I swear it's the project reopening part`. Passing that marker would be a cleaner solution,
-   * but it's still not implemented.
+   * The JetBrains Client opens the project outside the `IdeStarter` coroutine,
+   * so the marker from [getStartUpContextElementIntoIdeStarter] does not reach it.
+   * This method supplies the marker. It does not report the start of the IDE.
+   * Passing the real marker is not implemented (IJPL-200676).
    *
-   * The difference with [getStartUpContextElementIntoIdeStarter] is that this method doesn't notify about beginning of starting an IDE
-   *
-   * @see isRemDevTestWorkaround
+   * @see isRemDevFrontend
    */
   fun getContextElementForRemDevWorkaround(): CoroutineContext {
-    return if (isRemDevTestWorkaround()) {
+    return if (isRemDevFrontend()) {
       MyMarker
     }
     else {
