@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.application
 import com.intellij.testFramework.junit5.RunInEdt
@@ -15,12 +16,15 @@ import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import java.awt.Dimension
 import java.awt.Rectangle
+import java.lang.reflect.Modifier
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 @TestApplication
 @RunInEdt(allMethods = false)
@@ -47,6 +51,40 @@ class ActionToolbarTest {
     PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync())
     toolbar.assertToolbarTexts("1", "22", "33")
     assertSame(button1, toolbar.components[0], "First button must be reused")
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun testToolbarKeepsNoThrowable() {
+    val toolbar = ActionToolbarImpl("Test", DefaultActionGroup(), false)
+    val throwableFields = ActionToolbarImpl::class.java.declaredFields
+      .filter { !Modifier.isStatic(it.modifiers) }
+      .filter { it.trySetAccessible() && it.get(toolbar) is Throwable }
+      .map { it.name }
+    assertEquals(emptyList(), throwableFields, "A Throwable keeps the Class of each frame and the class loader of a caller")
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun testNewButtonsOnEveryUpdateErrorHasCreationTrace() {
+    class A : AnAction("A") {
+      override fun actionPerformed(e: AnActionEvent) = Unit
+    }
+
+    val group = object : ActionGroup() {
+      override fun getActionUpdateThread() = ActionUpdateThread.EDT
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> = arrayOf(A())
+    }
+    val toolbar = ActionToolbarImpl("Test", group, false)
+    val error = LoggedErrorProcessor.executeAndReturnLoggedError {
+      repeat(20) {
+        PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync())
+      }
+    }
+    val creationTrace = assertNotNull(error.cause)
+    assertEquals("toolbar creation trace", creationTrace.message)
+    assertTrue(creationTrace.stackTrace.any { it.methodName == "testNewButtonsOnEveryUpdateErrorHasCreationTrace" },
+               creationTrace.stackTraceToString())
   }
 
   @Test

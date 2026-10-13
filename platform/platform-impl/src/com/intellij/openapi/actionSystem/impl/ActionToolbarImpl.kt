@@ -155,6 +155,14 @@ private const val LOADING_LABEL = "LOADING_LABEL"
 private const val SUPPRESS_ACTION_COMPONENT_WARNING = "ActionToolbarImpl.suppressCustomComponentWarning"
 private const val SUPPRESS_TARGET_COMPONENT_WARNING = "ActionToolbarImpl.suppressTargetComponentWarning"
 
+private fun captureCreationStackTrace(): Array<StackTraceElement>? {
+  val app = ApplicationManager.getApplication()
+  if (app == null || !(app.isInternal || app.isUnitTestMode)) {
+    return null
+  }
+  return Throwable().stackTrace
+}
+
 @ApiStatus.Internal
 open class ActionToolbarImpl @JvmOverloads constructor(
   place: String,
@@ -163,7 +171,11 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   decorateButtons: Boolean = false,
   customizable: Boolean = true,
 ) : JPanel(null), ActionToolbar, QuickActionProvider, AlphaAnimated {
-  private val myCreationTrace = Throwable("toolbar creation trace")
+  /**
+   * The stack of the constructor call, for the diagnostics of this toolbar. It is recorded only in internal mode and in unit tests.
+   * It holds no [Class], so it keeps no class loader of a caller.
+   */
+  private val myCreationStackTrace: Array<StackTraceElement>? = captureCreationStackTrace()
 
   private val myComponentBounds = ArrayList<Rectangle>()
   private var myMinimumButtonSizeSupplier: Supplier<out Dimension> = Supplier { Dimension() }
@@ -222,7 +234,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   init {
     if (ActionPlaces.UNKNOWN == place || place.isEmpty()) {
       LOG.warn(Throwable("Please do not use ActionPlaces.UNKNOWN or the empty place. " +
-                         "Any string unique enough to deduce the toolbar location will do.", myCreationTrace))
+                         "Any string unique enough to deduce the toolbar location will do."))
     }
 
     alphaContext.animator.setVisibleImmediately(true)
@@ -1025,7 +1037,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       LOG.warn(Throwable(
         "'$myPlace' toolbar manual update is ignored. " +
         "Newly created toolbars are updated automatically on `addNotify`.",
-        myCreationTrace))
+        creationTrace()))
       return
     }
     updateActionsWithoutLoadingIcon(includeInvisible)
@@ -1110,10 +1122,10 @@ open class ActionToolbarImpl @JvmOverloads constructor(
           PluginManagerCore.isRunningFromSources() ||
           AppMode.isRunningFromDevBuild() ||
           ApplicationManager.getApplication().isInternal) {
-        LOG.error(Throwable(message, myCreationTrace))
+        LOG.error(Throwable(message, creationTrace()))
       }
       else {
-        LOG.warn(Throwable(message, myCreationTrace))
+        LOG.warn(Throwable(message, creationTrace()))
       }
       myUpdatesWithNewButtons = -1
       myForcedUpdatesWithNewButtons = -1
@@ -1401,11 +1413,16 @@ open class ActionToolbarImpl @JvmOverloads constructor(
         "'" + myPlace + "' toolbar by default uses any focused component to update its actions. " +
         "Toolbar actions that need local UI context would be incorrectly disabled. " +
         "Please call toolbar.setTargetComponent() explicitly.",
-        myCreationTrace))
+        creationTrace()))
     }
     val target = (if (myTargetComponent != null) myTargetComponent
     else com.intellij.util.IJSwingUtilities.getFocusedComponentInWindowOrSelf(this))!!
     return DataManager.getInstance().getDataContext(target)
+  }
+
+  private fun creationTrace(): Throwable? {
+    val stackTrace = myCreationStackTrace ?: return null
+    return Throwable("toolbar creation trace").also { it.stackTrace = stackTrace }
   }
 
   override fun processMouseMotionEvent(e: MouseEvent) {
