@@ -493,6 +493,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             public void testOperationUnary() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/addExclExclCall/operationUnary.kt");
             }
+
+            @TestMetadata("typealiasCallableReference.kt")
+            public void testTypealiasCallableReference() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addExclExclCall/typealiasCallableReference.kt");
+            }
         }
     }
 
