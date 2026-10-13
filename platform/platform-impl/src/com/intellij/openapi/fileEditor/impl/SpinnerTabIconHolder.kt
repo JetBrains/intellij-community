@@ -24,7 +24,11 @@ import javax.swing.Icon
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class SpinnerTabIconHolder(composite: EditorComposite, private val owner: TabInfo) : TabInfoIconHolder {
+internal class SpinnerTabIconHolder(
+  composite: EditorComposite,
+  private val owner: TabInfo,
+  startupIcon: Icon? = null,
+) : TabInfoIconHolder {
   private val delayFromRegistry = Registry.intValue("editor.loading.spinner.delay.ms", 0).milliseconds
   private val isStaticSpinner = Registry.`is`("editor.loading.spinner.static")
 
@@ -41,14 +45,14 @@ internal class SpinnerTabIconHolder(composite: EditorComposite, private val owne
     composite.coroutineScope.launch(CoroutineName("EditorComposite(file=${composite.file.name}.iconLoading") + ModalityState.any()
       .asContextElement()) out@{
       val loadingSpinnerWaiting = launch {
-        if (!isStaticSpinner) {
+        if (startupIcon == null && !isStaticSpinner) {
           delay(delayFromRegistry)
         }
       }
       val iconProcessingWaiting = launch { composite.waitForAvailableWithoutTriggeringInit() }
       select {
         loadingSpinnerWaiting.onJoin {
-          setLoadingSpinner()
+          setLoadingSpinner(startupIcon)
         }
         iconProcessingWaiting.onJoin {
           loadingSpinnerWaiting.cancel()
@@ -69,12 +73,13 @@ internal class SpinnerTabIconHolder(composite: EditorComposite, private val owne
     }
   }
 
-  private suspend fun setLoadingSpinner() {
-    if (isStaticSpinner) {
-      setIconImmediately(AllIcons.Ide.GrayDot)
-    } else {
-      setIconImmediately(AnimatedIcon.Default.INSTANCE)
+  private suspend fun setLoadingSpinner(placeholder: Icon?) {
+    val iconToSet = when {
+        placeholder != null -> placeholder
+        isStaticSpinner -> AllIcons.Ide.GrayDot
+        else -> AnimatedIcon.Default.INSTANCE
     }
+    setIconImmediately(iconToSet)
   }
 
   private suspend fun startIconProcessing() {

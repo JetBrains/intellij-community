@@ -1645,11 +1645,12 @@ fun setupFileTab(
     notFullyPreparedFile.presentableName
   }
 
+  var cachedIcon: Icon? = null
   val initialTabIcon = if (tabIconTask == null) {
     null
   }
   else {
-    val cachedIcon = tabEntry.icon
+    cachedIcon = tabEntry.icon
       ?.takeIf { fileEntry.ideFingerprint == ideFingerprint() }
       ?.let { decodeCachedImageIconFromByteArray(it) }
     if (cachedIcon == null) {
@@ -1701,6 +1702,7 @@ fun setupFileTab(
     fileEntry = fileEntry,
     file = notFullyPreparedFile,
     hint = hint,
+    cachedTabIcon = cachedIcon,
     customizer = { tab ->
       tab.setText(initialTabTitle)
       tab.setIcon(initialTabIcon)
@@ -1751,6 +1753,7 @@ data class FileToOpen(
   @JvmField val hint: FileEditorOpenOptionsHint?,
   @JvmField val fileEntry: FileEntry,
   @JvmField val customizer: (TabInfo) -> Unit,
+  @JvmField val cachedTabIcon: Icon? = null,
 )
 
 private fun resolveFileOrLogError(fileEntry: FileEntry, virtualFileManager: VirtualFileManager, project: Project): VirtualFile? {

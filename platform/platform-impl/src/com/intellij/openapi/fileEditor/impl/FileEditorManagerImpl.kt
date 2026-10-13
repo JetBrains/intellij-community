@@ -2543,7 +2543,7 @@ open class FileEditorManagerImpl(
         }
       }
       val customizer = { tab: TabInfo ->
-        tab.setIconHolder(CompositeTabIconHolderCreator.getInstance().createTabIconHolder(composite, tab))
+        tab.setIconHolder(CompositeTabIconHolderCreator.getInstance().createTabIconHolder(composite, tab, item.cachedTabIcon))
         item.customizer(tab)
       }
 
