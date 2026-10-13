@@ -22,10 +22,11 @@ internal const val SETTINGS_TOOL_WINDOW_REGISTRY_KEY: String = "ide.settings.too
  * Creates the Settings tool window. It shows the search field and the settings tree of [SettingsToolWindowManager].
  *
  * The stripe button stays below every other button of the left toolbar, and the tool window docks on the left.
- * The registry key [SETTINGS_TOOL_WINDOW_REGISTRY_KEY] shows and hides the stripe button at once.
+ * A project that opens with the registry key [SETTINGS_TOOL_WINDOW_REGISTRY_KEY] off has no Settings tool window,
+ * so nothing of it shows in the menus. Turning the key off later hides the stripe button at once.
  */
 internal class SettingsToolWindowFactory : ToolWindowFactory, DumbAware {
-  override fun shouldBeAvailable(project: Project): Boolean {
+  override suspend fun isApplicableAsync(project: Project): Boolean {
     return RegistryManager.getInstance().`is`(SETTINGS_TOOL_WINDOW_REGISTRY_KEY)
   }
 
@@ -54,6 +55,10 @@ internal class SettingsToolWindowLayoutExtension : DefaultToolWindowLayoutExtens
   }
 
   override fun buildV2Layout(builder: DefaultToolWindowLayoutBuilder) {
+    // with the key off, the project has no Settings tool window, so a layout must get no entry for it
+    if (!RegistryManager.getInstance().`is`(SETTINGS_TOOL_WINDOW_REGISTRY_KEY)) {
+      return
+    }
     builder.left.addOrUpdate(SETTINGS_TOOL_WINDOW_ID) {
       weight = 0.2f
       seedIntoExistingLayout()

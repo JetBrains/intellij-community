@@ -1581,6 +1581,7 @@
     <registryKey
       key="ide.settings.tool.window.enabled"
       defaultValue="false"
+      restartRequired="true"
       description="Show Settings as a tool window with the settings tree at the bottom of the left toolbar, and show the settings page in an editor tab"
     />
     <toolWindow id="Settings" anchor="left" icon="AllIcons.General.Settings"
