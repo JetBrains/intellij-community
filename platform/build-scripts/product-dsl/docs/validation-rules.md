@@ -31,6 +31,7 @@ plugin that owns the API, then a shared module set. Read
 | 18 | Module in multiple plugins | Plugin layouts | [module-in-multiple-plugins.md](validators/module-in-multiple-plugins.md) |
 | 19 | Content module dependency declarations | Content module | [content-module-dependency-declaration.md](validators/content-module-dependency-declaration.md) |
 | 20 | Restricted module activation | Product | [restricted-module-activation.md](validators/restricted-module-activation.md) |
+| 21 | Platform library copies | Bundled plugins | [platform-library-copy.md](validators/platform-library-copy.md) |
 
 ## When Validation Runs
 

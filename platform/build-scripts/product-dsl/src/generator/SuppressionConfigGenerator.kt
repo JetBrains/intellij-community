@@ -143,6 +143,8 @@ internal object SuppressionConfigGenerator : PipelineNode {
       // Copied without a change, like validationExceptions. A grandfathered copy conflict is a manual
       // decision, so the generator neither adds nor removes an entry.
       contentModuleCopyConflicts = existingConfig.contentModuleCopyConflicts,
+      // copied without a change for the same reason
+      platformLibraryCopies = existingConfig.platformLibraryCopies,
       suppressedErrors = filteredSuppressedErrors,
     )
 

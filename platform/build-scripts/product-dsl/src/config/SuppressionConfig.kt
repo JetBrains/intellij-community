@@ -66,6 +66,20 @@ data class ContentModuleCopyConflictException(
 )
 
 /**
+ * An allowed copy of platform libraries in one content module of a bundled plugin.
+ *
+ * The key is the content module name. A coordinate that [coordinates] does not list still fails.
+ * Read `docs/validators/platform-library-copy.md` for the rule.
+ */
+@Serializable
+data class PlatformLibraryCopyException(
+  /** The `groupId:artifactId` coordinates that the module may copy. */
+  @JvmField val coordinates: Set<String> = emptySet(),
+  /** Why the entry exists. Free text. `DEBT:` marks a copy that is expected to go away. */
+  @JvmField val reason: String = "",
+)
+
+/**
  * Validation exceptions for a content module.
  */
 @Serializable
@@ -129,6 +143,17 @@ data class SuppressionConfig(
    * Never remove an `INTENTIONAL:` entry, because the generator would then fail on a wanted pattern.
    */
   @JvmField val contentModuleCopyConflicts: Map<ContentModuleName, ContentModuleCopyConflictException> = emptyMap(),
+
+  /**
+   * Allowed copies of platform libraries.
+   *
+   * Key: the content module of a bundled plugin (e.g., "intellij.libraries.reactor.netty.http")
+   * Value: the coordinates that the module may copy, and why
+   *
+   * Suppresses a [org.jetbrains.intellij.build.productLayout.model.error.PlatformLibraryCopyViolation] by module and
+   * coordinate. The generator copies this map without a change, like [contentModuleCopyConflicts].
+   */
+  @JvmField val platformLibraryCopies: Map<ContentModuleName, PlatformLibraryCopyException> = emptyMap(),
 
   /**
    * Direct error key suppression for pipeline errors.

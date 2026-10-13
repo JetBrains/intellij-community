@@ -132,4 +132,7 @@ internal object NodeIds {
 
   /** Community license coverage for a library that a community or core module set ships */
   @JvmField val COMMUNITY_LIBRARY_LICENSE_VALIDATION = NodeId("communityLibraryLicenseValidation", NodeCategory.VALIDATION)
+
+  /** A bundled plugin must not pack a copy of a library that an embedded library module provides */
+  @JvmField val PLATFORM_LIBRARY_COPY_VALIDATION = NodeId("platformLibraryCopyValidation", NodeCategory.VALIDATION)
 }

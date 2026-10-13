@@ -50,6 +50,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaLibraryType
 import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
@@ -57,6 +58,7 @@ import org.jetbrains.jps.model.serialization.impl.JpsModuleSerializationDataExte
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 /**
  * Test DSL for building JPS projects, plugin models, and integration test setups.
@@ -178,6 +180,10 @@ class JpsProjectBuilder(private val baseDir: Path) {
           scope = modDep.scope
         }
       }
+
+      for (libSpec in spec.moduleLibraries) {
+        addModuleLibrary(jpsModule, libSpec, mavenRepository = baseDir.resolve("m2"))
+      }
     }
 
     return JpsProjectContext(
@@ -187,6 +193,22 @@ class JpsProjectBuilder(private val baseDir: Path) {
   }
 }
 
+private fun addModuleLibrary(module: JpsModule, spec: ModuleLibrarySpec, mavenRepository: Path) {
+  val coordinates = spec.artifacts.map { it.split(':') }
+  val (groupId, artifactId, version) = coordinates.first()
+  val library = module.libraryCollection.addLibrary(
+    spec.name,
+    JpsRepositoryLibraryType.INSTANCE,
+    JpsElementFactory.getInstance().createSimpleElement(JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version)),
+  )
+  for ((group, artifact, artifactVersion) in coordinates) {
+    val jar = mavenRepository.resolve("${group.replace('.', '/')}/$artifact/$artifactVersion/$artifact-$artifactVersion.jar")
+    library.addRoot("jar://${jar.invariantSeparatorsPathString}${JpsPathUtil.JAR_SEPARATOR}", JpsOrderRootType.COMPILED)
+  }
+  val dependency = module.dependenciesList.addLibraryDependency(library)
+  JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).scope = spec.scope
+}
+
 @JpsTestDsl
 class JpsModuleBuilder(private val name: String) {
   var imlContent: String? = null
@@ -194,6 +216,7 @@ class JpsModuleBuilder(private val name: String) {
   var resourceRoot: String? = null
   internal val libraryDeps = mutableListOf<LibraryDep>()
   internal val moduleDeps = mutableListOf<ModuleDep>()
+  internal val moduleLibraries = mutableListOf<ModuleLibrarySpec>()
 
   fun libraryDep(name: String, scope: JpsJavaDependencyScope = JpsJavaDependencyScope.COMPILE, exported: Boolean = false) {
     libraryDeps.add(LibraryDep(name, scope, exported))
@@ -201,6 +224,15 @@ class JpsModuleBuilder(private val name: String) {
 
   fun moduleDep(name: String, scope: JpsJavaDependencyScope = JpsJavaDependencyScope.COMPILE, exported: Boolean = false) {
     moduleDeps.add(ModuleDep(name, scope, exported))
+  }
+
+  /**
+   * Adds a module-level repository library with one `CLASSES` root per artifact, under a fake Maven repository.
+   *
+   * Each artifact is `groupId:artifactId:version`. The first artifact is the main artifact of the library.
+   */
+  fun mavenModuleLibrary(name: String, artifacts: List<String>, scope: JpsJavaDependencyScope = JpsJavaDependencyScope.COMPILE) {
+    moduleLibraries.add(ModuleLibrarySpec(name, artifacts, scope))
   }
 
   fun resourceRoot(relativePath: String = "resources") {
@@ -215,6 +247,7 @@ class JpsModuleBuilder(private val name: String) {
       resourceRoot = resourceRoot,
       libraryDeps = libraryDeps.toList(),
       moduleDeps = moduleDeps.toList(),
+      moduleLibraries = moduleLibraries.toList(),
     )
   }
 }
@@ -226,6 +259,13 @@ internal data class JpsModuleSpec(
   @JvmField val resourceRoot: String?,
   @JvmField val libraryDeps: List<LibraryDep>,
   @JvmField val moduleDeps: List<ModuleDep>,
+  @JvmField val moduleLibraries: List<ModuleLibrarySpec>,
+)
+
+internal data class ModuleLibrarySpec(
+  @JvmField val name: String,
+  @JvmField val artifacts: List<String>,
+  @JvmField val scope: JpsJavaDependencyScope,
 )
 
 internal data class JpsLibrarySpec(

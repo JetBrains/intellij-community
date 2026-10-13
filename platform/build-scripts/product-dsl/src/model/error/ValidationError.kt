@@ -81,6 +81,8 @@ enum class ErrorCategory {
   PLUGIN_VARIANT_OVERLAP,
   /** [MissingLibraryLicenseError] - hard failure, not suppressible */
   MISSING_LIBRARY_LICENSE,
+  /** [PlatformLibraryCopyError] - hard failure, not suppressible */
+  PLATFORM_LIBRARY_COPY,
   /** [ModuleInMultiplePluginsError] - hard failure, allowlisted by name in the generator */
   MODULE_IN_MULTIPLE_PLUGINS,
 }
@@ -148,6 +150,7 @@ fun ValidationError.errorId(): String {
     is UnusedSharedLibraryModuleError -> "unused-shared-library:$context"
     is PluginVariantOverlapError -> "plugin-variant-overlap:$context"
     is MissingLibraryLicenseError -> "missing-library-license:$context"
+    is PlatformLibraryCopyError -> "platform-library-copy:$context"
     is ModuleInMultiplePluginsError -> "module-in-multiple-plugins:$context"
   }
 }
