@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.branch.DvcsBranchUtil;
@@ -38,6 +38,7 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
+import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.VcsActivity;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
@@ -88,6 +89,7 @@ public class CompareBranchesDiffPanel extends JPanel implements UiDataProvider {
     myLabel.setBackground(null);
     myLabel.setOpaque(false);
     myLabel.setFocusable(false);
+    myLabel.setBorder(JBUI.Borders.empty(0, 12));
     myLabel.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
