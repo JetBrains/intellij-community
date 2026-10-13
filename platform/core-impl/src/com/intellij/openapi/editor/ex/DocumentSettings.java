@@ -2,11 +2,9 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * This class is responsible for storing document-wide flags like
@@ -68,9 +66,4 @@ public interface DocumentSettings {
   void assertWritable(@NotNull Document hostDocument);
 
   void assertInsideCommand();
-
-  @Contract(pure = true)
-  @Nullable ReadonlyFragmentModificationHandler readOnlyHandler();
-
-  void setReadOnlyHandler(@Nullable ReadonlyFragmentModificationHandler readonlyHandler);
 }

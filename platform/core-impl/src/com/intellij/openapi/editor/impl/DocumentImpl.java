@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentCore;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -418,16 +417,6 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
       return true;
     }
     return StripTrailingSpacesUtil.stripTrailingSpaces(project, hostDocument(), inChangedLinesOnly, caretOffsets);
-  }
-
-  @ApiStatus.Internal
-  public @Nullable ReadonlyFragmentModificationHandler getReadonlyFragmentModificationHandler() {
-    return impl.settings().readOnlyHandler();
-  }
-
-  @ApiStatus.Internal
-  public void setReadonlyFragmentModificationHandler(@Nullable ReadonlyFragmentModificationHandler readonlyFragmentModificationHandler) {
-    impl.settings().setReadOnlyHandler(readonlyFragmentModificationHandler);
   }
 
   @ApiStatus.Internal
