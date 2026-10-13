@@ -9,7 +9,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 
-internal class GutterIconsConfigurableUI(val list: CheckBoxList<GutterIconDescriptor?>) {
+internal class GutterIconsConfigurableUI(val list: CheckBoxList<GutterIconDescriptor>) {
 
   @JvmField
   val panel: DialogPanel = panel {

@@ -1,289 +1,239 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.application.options.editor;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.application.options.editor
 
-import com.intellij.codeInsight.daemon.GutterIconDescriptor;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
-import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
-import com.intellij.codeInsight.daemon.LineMarkerProviders;
-import com.intellij.codeInsight.daemon.LineMarkerSettings;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.lang.LanguageExtensionPoint;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.CheckBoxList;
-import com.intellij.ui.ListSpeedSearch;
-import com.intellij.ui.SeparatorWithText;
-import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-
-import javax.swing.BorderFactory;
-import javax.swing.Icon;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.ListSelectionModel;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeListener;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.Point;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Supplier;
+import com.intellij.codeInsight.daemon.GutterIconDescriptor
+import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
+import com.intellij.codeInsight.daemon.LineMarkerProviders
+import com.intellij.codeInsight.daemon.LineMarkerSettings
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.CheckBoxList
+import com.intellij.ui.ListSpeedSearch
+import com.intellij.ui.SeparatorWithText
+import com.intellij.ui.speedSearch.SpeedSearchSupply
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import java.awt.BorderLayout
+import java.awt.Dimension
+import java.awt.Point
+import javax.swing.BorderFactory
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.ListSelectionModel
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 
 /**
  * @author Dmitry Avdeev
  */
 @ApiStatus.Internal
-public final class GutterIconsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  public static final @NonNls String ID = "editor.preferences.gutterIcons";
+class GutterIconsConfigurable : SearchableConfigurable, Configurable.NoScroll {
+  private val myDescriptors = ArrayList<GutterIconDescriptor>()
+  private val myFirstDescriptors = HashMap<GutterIconDescriptor, PluginDescriptor>()
+  private val list: CheckBoxList<GutterIconDescriptor> = createList(myFirstDescriptors)
+  private val ui = GutterIconsConfigurableUI(list)
 
-  private final GutterIconsConfigurableUI ui;
-  private final CheckBoxList<GutterIconDescriptor> myList;
+  @get:TestOnly
+  val descriptors: List<GutterIconDescriptor>
+    get() = myDescriptors
 
-  public GutterIconsConfigurable() {
-    myList = new CheckBoxList<>() {
-      @Override
-      protected JComponent adjustRendering(JComponent rootComponent, JCheckBox checkBox, int index, boolean selected, boolean hasFocus) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder());
-        GutterIconDescriptor descriptor = myList.getItemAt(index);
-        Icon icon = descriptor == null ? null : descriptor.getIcon();
-        JLabel label = new JLabel(icon == null ? EmptyIcon.ICON_16 : icon);
-        label.setOpaque(true);
-        label.setPreferredSize(new Dimension(25, -1));
-        label.setHorizontalAlignment(SwingConstants.CENTER);
-        panel.add(label, BorderLayout.WEST);
-        panel.add(checkBox, BorderLayout.CENTER);
-        panel.setBackground(getBackground(false));
-        label.setBackground(getBackground(selected));
-        if (!checkBox.isOpaque()) {
-          checkBox.setOpaque(true);
-        }
-        checkBox.setBorder(null);
+  override fun getDisplayName(): @Nls String = IdeBundle.message("configurable.GutterIconsConfigurable.display.name")
 
-        PluginDescriptor pluginDescriptor = myFirstDescriptors.get(descriptor);
-        if (pluginDescriptor != null) {
-          SeparatorWithText separator = new SeparatorWithText();
-          String name = getPluginDisplayName(pluginDescriptor);
-          separator.setCaption(name);
-          panel.add(separator, BorderLayout.NORTH);
-        }
+  override fun getHelpTopic(): String = "reference.settings.editor.gutter.icons"
 
-        return panel;
-      }
+  override fun getId(): String = ID
 
-      @Override
-      protected @Nullable Point findPointRelativeToCheckBox(int x, int y, @NotNull JCheckBox checkBox, int index) {
-        return super.findPointRelativeToCheckBoxWithAdjustedRendering(x, y, checkBox, index);
-      }
-    };
-    myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    myList.setBorder(BorderFactory.createEmptyBorder());
-    ListSpeedSearch.installOn(myList, JCheckBox::getText);
-
-    ui = new GutterIconsConfigurableUI(myList);
+  override fun createComponent(): JComponent {
+    val pluginDescriptors = HashMap<GutterIconDescriptor, PluginDescriptor>()
+    myDescriptors.addAll(collectDescriptors(pluginDescriptors))
+    myFirstDescriptors.putAll(findFirstDescriptors(myDescriptors, pluginDescriptors))
+    list.setItems(myDescriptors) { it.name }
+    ui.showGutterIconsJBCheckBox.addChangeListener { list.isEnabled = ui.showGutterIconsJBCheckBox.isSelected }
+    SwingUtilities.updateComponentTreeUI(ui.panel) // TODO: create Swing components in this method (see javadoc)
+    return ui.panel
   }
 
-  private final List<GutterIconDescriptor> myDescriptors = new ArrayList<>();
-  private final Map<GutterIconDescriptor, PluginDescriptor> myFirstDescriptors = new HashMap<>();
-
-  @Override
-  public @Nls String getDisplayName() {
-    return IdeBundle.message("configurable.GutterIconsConfigurable.display.name");
+  override fun isModified(): Boolean {
+    val settings = LineMarkerSettings.getSettings()
+    return myDescriptors.any { list.isItemSelected(it) != settings.isEnabled(it) } ||
+           ui.showGutterIconsJBCheckBox.isSelected != EditorSettingsExternalizable.getInstance().areGutterIconsShown()
   }
 
-  @Override
-  public @NotNull String getHelpTopic() {
-    return "reference.settings.editor.gutter.icons";
+  override fun apply() {
+    val editorSettings = EditorSettingsExternalizable.getInstance()
+    val gutterIconsShown = ui.showGutterIconsJBCheckBox.isSelected
+    if (gutterIconsShown != editorSettings.areGutterIconsShown()) {
+      editorSettings.setGutterIconsShown(gutterIconsShown)
+      reinitAllEditors()
+    }
+    val settings = LineMarkerSettings.getSettings()
+    for (descriptor in myDescriptors) {
+      settings.setEnabled(descriptor, list.isItemSelected(descriptor))
+    }
+    for (project in ProjectManager.getInstance().openProjects) {
+      DaemonCodeAnalyzerEx.getInstanceEx(project).restart("GutterIconsConfigurable.apply")
+    }
+    ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.GUTTER_ICONS_CONFIGURABLE_TOPIC)
+      .changesApplied()
   }
 
-  @Override
-  public @NotNull JComponent createComponent() {
-    LanguageExtensionPoint<LineMarkerProvider>[] extensions = LineMarkerProviders.EP_NAME.getExtensions();
-    NullableFunction<LanguageExtensionPoint<LineMarkerProvider>, PluginDescriptor> function =
-      point1 -> {
-        LineMarkerProvider instance = point1.getInstance();
-        return instance instanceof LineMarkerProviderDescriptor && ((LineMarkerProviderDescriptor)instance).getName() != null
-               ? point1.getPluginDescriptor()
-               : null;
-      };
-    MultiMap<PluginDescriptor, LanguageExtensionPoint<LineMarkerProvider>> map = ContainerUtil.groupBy(Arrays.asList(extensions), function);
-    Map<GutterIconDescriptor, PluginDescriptor> pluginDescriptorMap = new HashMap<>();
-    Set<String> ids = new HashSet<>();
-    for (final PluginDescriptor descriptor : map.keySet()) {
-      Collection<LanguageExtensionPoint<LineMarkerProvider>> points = map.get(descriptor);
-      for (LanguageExtensionPoint<LineMarkerProvider> extensionPoint : points) {
-        GutterIconDescriptor instance = (GutterIconDescriptor)extensionPoint.getInstance();
-        if (instance.getOptions().length > 0) {
-          for (GutterIconDescriptor option : instance.getOptions()) {
-            if (ids.add(option.getId())) {
-              myDescriptors.add(option);
-              pluginDescriptorMap.put(option, descriptor);
-            }
+  override fun reset() {
+    val settings = LineMarkerSettings.getSettings()
+    for (descriptor in myDescriptors) {
+      list.setItemSelected(descriptor, settings.isEnabled(descriptor))
+    }
+    val gutterIconsShown = EditorSettingsExternalizable.getInstance().areGutterIconsShown()
+    ui.showGutterIconsJBCheckBox.isSelected = gutterIconsShown
+    list.isEnabled = gutterIconsShown
+  }
+
+  override fun disposeUIResources() {
+    for (listener in ui.showGutterIconsJBCheckBox.changeListeners) {
+      ui.showGutterIconsJBCheckBox.removeChangeListener(listener)
+    }
+  }
+
+  override fun enableSearch(option: String?): Runnable = Runnable {
+    if (option == null) return@Runnable
+    SpeedSearchSupply.getSupply(list, true)?.findAndSelectElement(option)
+  }
+
+  companion object {
+    @NonNls
+    const val ID: String = "editor.preferences.gutterIcons"
+  }
+
+  class ShowSettingsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+    override fun actionPerformed(e: AnActionEvent) {
+      ShowSettingsUtil.getInstance().showSettingsDialog(e.project, GutterIconsConfigurable::class.java)
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+  }
+}
+
+private fun collectDescriptors(pluginDescriptors: MutableMap<GutterIconDescriptor, PluginDescriptor>): List<GutterIconDescriptor> {
+  val pointsByPlugin = LineMarkerProviders.EP_NAME.extensionList
+    .filter { point ->
+      val instance = point.instance
+      instance is LineMarkerProviderDescriptor && instance.name != null
+    }
+    .groupBy { it.pluginDescriptor }
+  val descriptors = ArrayList<GutterIconDescriptor>()
+  val ids = HashSet<String>()
+  for ((pluginDescriptor, points) in pointsByPlugin) {
+    for (point in points) {
+      val instance = point.instance as GutterIconDescriptor
+      if (instance.options.isNotEmpty()) {
+        for (option in instance.options) {
+          if (ids.add(option.id)) {
+            descriptors.add(option)
+            pluginDescriptors[option] = pluginDescriptor
           }
         }
-        else {
-          if (ids.add(instance.getId())) {
-            myDescriptors.add(instance);
-          }
-          pluginDescriptorMap.put(instance, descriptor);
+      }
+      else {
+        if (ids.add(instance.id)) {
+          descriptors.add(instance)
         }
+        pluginDescriptors[instance] = pluginDescriptor
       }
     }
-    /*
-    List<GutterIconDescriptor> options = new ArrayList<GutterIconDescriptor>();
-    for (Iterator<GutterIconDescriptor> iterator = myDescriptors.iterator(); iterator.hasNext(); ) {
-      GutterIconDescriptor descriptor = iterator.next();
-      if (descriptor.getOptions().length > 0) {
-        options.addAll(Arrays.asList(descriptor.getOptions()));
-        iterator.remove();
+  }
+  descriptors.sortWith { o1, o2 ->
+    val byPlugin = StringUtil.naturalCompare(getPluginDisplayName(pluginDescriptors.getValue(o1)),
+                                             getPluginDisplayName(pluginDescriptors.getValue(o2)))
+    if (byPlugin != 0) byPlugin else StringUtil.naturalCompare(o1.name, o2.name)
+  }
+  return descriptors
+}
+
+private fun findFirstDescriptors(
+  descriptors: List<GutterIconDescriptor>,
+  pluginDescriptors: Map<GutterIconDescriptor, PluginDescriptor>,
+): Map<GutterIconDescriptor, PluginDescriptor> {
+  val firstDescriptors = HashMap<GutterIconDescriptor, PluginDescriptor>()
+  var current: PluginId? = null
+  for (descriptor in descriptors) {
+    val pluginDescriptor = pluginDescriptors[descriptor] ?: continue
+    val pluginId = pluginDescriptor.pluginId
+    // You get different plugin descriptors for `GutterIconDescriptor`s from the same plugin
+    // if they are located in different plugin modules.
+    // But there is no reason to put them into separate UI groups especially taking into account
+    // we sort `descriptors` only by plugin name, so compare plugin descriptors by their id
+    if (pluginId != current) {
+      firstDescriptors[descriptor] = pluginDescriptor
+      current = pluginId
+    }
+  }
+  return firstDescriptors
+}
+
+private fun createList(firstDescriptors: Map<GutterIconDescriptor, PluginDescriptor>): CheckBoxList<GutterIconDescriptor> {
+  val list = object : CheckBoxList<GutterIconDescriptor>() {
+    override fun adjustRendering(rootComponent: JComponent, checkBox: JCheckBox, index: Int, selected: Boolean, hasFocus: Boolean): JComponent {
+      val panel = JPanel(BorderLayout())
+      panel.border = BorderFactory.createEmptyBorder()
+      val descriptor = getItemAt(index)
+      val label = JLabel(descriptor?.icon ?: EmptyIcon.ICON_16)
+      label.isOpaque = true
+      label.preferredSize = Dimension(25, -1)
+      label.horizontalAlignment = SwingConstants.CENTER
+      panel.add(label, BorderLayout.WEST)
+      panel.add(checkBox, BorderLayout.CENTER)
+      panel.background = getBackground(false)
+      label.background = getBackground(selected)
+      if (!checkBox.isOpaque) {
+        checkBox.isOpaque = true
       }
-    }
-    myDescriptors.addAll(options);
-    */
-    myDescriptors.sort((o1, o2) -> {
-      int byPlugin = StringUtil.naturalCompare(getPluginDisplayName(pluginDescriptorMap.get(o1)),
-                                               getPluginDisplayName(pluginDescriptorMap.get(o2)));
-      return byPlugin != 0 ?
-             byPlugin :
-             StringUtil.naturalCompare(o1.getName(), o2.getName());
-    });
-    PluginId current = null;
-    for (GutterIconDescriptor descriptor : myDescriptors) {
-      PluginDescriptor pluginDescriptor = pluginDescriptorMap.get(descriptor);
-      PluginId pluginId = pluginDescriptor != null ? pluginDescriptor.getPluginId() : null;
-      // You get different plugin descriptors for `GutterIconDescriptor`s from the same plugin
-      // if they are located in different plugin modules.
-      // But there is no reason to put them into separate UI groups especially taking into account
-      // we sort `myDescriptors` only by plugin name, so compare plugin descriptors by their id
-      if (pluginId != null && !pluginId.equals(current)) {
-        myFirstDescriptors.put(descriptor, pluginDescriptor);
-        current = pluginId;
+      checkBox.border = JBUI.Borders.empty()
+
+      val pluginDescriptor = descriptor?.let { firstDescriptors[it] }
+      if (pluginDescriptor != null) {
+        val separator = SeparatorWithText()
+        separator.caption = getPluginDisplayName(pluginDescriptor)
+        panel.add(separator, BorderLayout.NORTH)
       }
+
+      return panel
     }
 
-    myList.setItems(myDescriptors, GutterIconDescriptor::getName);
-    ui.showGutterIconsJBCheckBox.addChangeListener(_ -> myList.setEnabled(ui.showGutterIconsJBCheckBox.isSelected()));
-    SwingUtilities.updateComponentTreeUI(ui.panel); // TODO: create Swing components in this method (see javadoc)
-    return ui.panel;
-  }
-
-  @Override
-  public boolean isModified() {
-    for (GutterIconDescriptor descriptor : myDescriptors) {
-      if (myList.isItemSelected(descriptor) != LineMarkerSettings.getSettings().isEnabled(descriptor)) {
-        return true;
-      }
-    }
-    return ui.showGutterIconsJBCheckBox.isSelected() != EditorSettingsExternalizable.getInstance().areGutterIconsShown();
-  }
-
-  @Override
-  public void apply() throws ConfigurationException {
-    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-    if (ui.showGutterIconsJBCheckBox.isSelected() != editorSettings.areGutterIconsShown()) {
-      editorSettings.setGutterIconsShown(ui.showGutterIconsJBCheckBox.isSelected());
-      EditorOptionsPanelKt.reinitAllEditors();
-    }
-    for (GutterIconDescriptor descriptor : myDescriptors) {
-      LineMarkerSettings.getSettings().setEnabled(descriptor, myList.isItemSelected(descriptor));
-    }
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      DaemonCodeAnalyzerEx.getInstanceEx(project).restart("GutterIconsConfigurable.apply");
-    }
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorOptionsListener.GUTTER_ICONS_CONFIGURABLE_TOPIC)
-      .changesApplied();
-  }
-
-  @Override
-  public void reset() {
-    for (GutterIconDescriptor descriptor : myDescriptors) {
-      myList.setItemSelected(descriptor, LineMarkerSettings.getSettings().isEnabled(descriptor));
-    }
-    boolean gutterIconsShown = EditorSettingsExternalizable.getInstance().areGutterIconsShown();
-    ui.showGutterIconsJBCheckBox.setSelected(gutterIconsShown);
-    myList.setEnabled(gutterIconsShown);
-  }
-
-  @Override
-  public void disposeUIResources() {
-    for (ChangeListener listener : ui.showGutterIconsJBCheckBox.getChangeListeners()) {
-      ui.showGutterIconsJBCheckBox.removeChangeListener(listener);
+    override fun findPointRelativeToCheckBox(x: Int, y: Int, checkBox: JCheckBox, index: Int): Point? {
+      return findPointRelativeToCheckBoxWithAdjustedRendering(x, y, checkBox, index)
     }
   }
+  list.selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
+  list.border = BorderFactory.createEmptyBorder()
+  ListSpeedSearch.installOn(list) { it.text }
+  return list
+}
 
-  private static @Nls String getPluginDisplayName(@NotNull PluginDescriptor pluginDescriptor) {
-    return pluginDescriptor instanceof IdeaPluginDescriptor &&
-           PluginManagerCore.CORE_ID.equals(pluginDescriptor.getPluginId()) ?
-           IdeBundle.message("title.common") :
-           pluginDescriptor.getName();
+private fun getPluginDisplayName(pluginDescriptor: PluginDescriptor): @Nls String {
+  return if (pluginDescriptor is IdeaPluginDescriptor && PluginManagerCore.CORE_ID == pluginDescriptor.pluginId) {
+    IdeBundle.message("title.common")
   }
-
-  @Override
-  public @NotNull String getId() {
-    return ID;
-  }
-
-  @Override
-  public @NotNull Runnable enableSearch(String option) {
-    return () -> Objects.requireNonNull(SpeedSearchSupply.getSupply(myList, true)).findAndSelectElement(option);
-  }
-
-  @TestOnly
-  public List<GutterIconDescriptor> getDescriptors() { return myDescriptors; }
-
-  public static final class ShowSettingsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
-    public ShowSettingsAction() {
-    }
-
-    public ShowSettingsAction(@NotNull Supplier<@NlsActions.ActionText String> dynamicText) {
-      super(dynamicText);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(e.getProject(), GutterIconsConfigurable.class);
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
+  else {
+    pluginDescriptor.name
   }
 }
