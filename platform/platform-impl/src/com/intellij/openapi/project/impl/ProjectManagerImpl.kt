@@ -20,6 +20,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.internal.statistic.collectors.fus.ProjectlessData
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.collectors.fus.ProjectlessLifecycleCollector
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
@@ -1304,9 +1305,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   private suspend fun closeAndDisposeKeepingFrame(project: Project, enableReuse: Boolean = true): Boolean {
     return withContext(Dispatchers.EDT) {
+      // The usage statistics read the mark while the project closes. A cancelled close removes it.
+      project.putUserData(ProjectlessLifecycleCollector.CLOSED_BY_ANOTHER_PROJECT, true)
+      var closed = false
       try {
         val windowManager = serviceAsync<WindowManager>() as WindowManagerEx
-        writeIntentReadAction {
+        closed = writeIntentReadAction {
           if (enableReuse) {
             windowManager.withFrameReuseEnabled().use {
               closeProject(project, checkCanClose = true)
@@ -1316,6 +1320,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             closeProject(project, checkCanClose = true)
           }
         }
+        closed
       }
       catch (@Suppress("IncorrectCancellationExceptionHandling") ce: CancellationException) {
         ensureActive()
@@ -1327,6 +1332,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       catch (e: Throwable) {
         LOG.error(e)
         true
+      }
+      finally {
+        if (!closed && !project.isDisposed) {
+          project.putUserData(ProjectlessLifecycleCollector.CLOSED_BY_ANOTHER_PROJECT, null)
+        }
       }
     }
   }
