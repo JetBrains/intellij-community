@@ -2479,8 +2479,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * Asks the animation cache to hold the content behind {@code locations}, so the frames that follow can be blitted.
    */
   @ApiStatus.Internal
-  public void prefetchCaretFrames(@NotNull List<CaretRectangle> locations, @NotNull CaretRepaintMetrics repaintMetrics) {
-    myView.prefetchCaretFrames(locations, repaintMetrics);
+  public void prefetchCaretFrames(
+    @NotNull List<CaretRectangle> locations,
+    @NotNull CaretRepaintMetrics repaintMetrics,
+    boolean forcePrefetch
+  ) {
+    myView.prefetchCaretFrames(locations, repaintMetrics, forcePrefetch);
   }
 
   @Override

@@ -301,7 +301,11 @@ internal class EditorCaretMutator internal constructor(
     // then skip the redraw that would bring it back.
     val prefetch = step.prefetch
     if (prefetch != null) {
-      editor.prefetchCaretFrames(prefetch, nextState.repaintMetrics())
+      editor.prefetchCaretFrames(
+        prefetch,
+        nextState.repaintMetrics(),
+        step.moved
+      )
     }
   }
 

@@ -404,8 +404,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myPainter.invalidateCache(clip);
   }
 
-  public void prefetchCaretFrames(@NotNull List<CaretRectangle> locations, @NotNull CaretRepaintMetrics repaintMetrics) {
-    myPainter.prefetchCaretFrames(locations, repaintMetrics);
+  public void prefetchCaretFrames(@NotNull List<CaretRectangle> locations, @NotNull CaretRepaintMetrics repaintMetrics, boolean forcePrefetch) {
+    myPainter.prefetchCaretFrames(locations, repaintMetrics, forcePrefetch);
   }
 
   @RequiresEdt
