@@ -58,6 +58,7 @@ class SmartPointerTracker(initialModCount: Long) {
    */
   private var knownContexts: MutableSet<CodeInsightContext>? = null
 
+  /** Registers [pointer] in this tracker and adds the context of its holder to [knownContexts]. */
   @JvmName("startTracking")
   @Synchronized
   internal fun startTracking(pointer: SmartPsiElementPointerImpl<*>) {
@@ -84,6 +85,7 @@ class SmartPointerTracker(initialModCount: Long) {
     elementInfo.fileHolder.context?.let { knownContexts?.add(it) }
   }
 
+  /** Removes [reference] from its list. The reference queue calls it after the GC collects the pointer. */
   @Synchronized
   private fun removeReference(reference: PointerReference) {
     when (reference) {
@@ -92,6 +94,7 @@ class SmartPointerTracker(initialModCount: Long) {
     }
   }
 
+  /** Sorts the self-pointers by [MarkerCache.INFO_COMPARATOR] when an earlier change broke the order. */
   private fun ensureSorted() {
     if (mySorted) return
     selfInfoList.sort { p1, p2 ->
@@ -100,6 +103,7 @@ class SmartPointerTracker(initialModCount: Long) {
     mySorted = true
   }
 
+  /** Applies the document [events] to the cached range markers. [frozen] is the document state before the events. */
   @JvmName("updateMarkers")
   @Synchronized
   internal fun updateMarkers(frozen: FrozenDocument, events: List<DocumentEvent>) {
@@ -109,6 +113,7 @@ class SmartPointerTracker(initialModCount: Long) {
     }
   }
 
+  /** Returns the range of [info] after the uncommitted document [events], or `null` when the range is gone. */
   @JvmName("getUpdatedRange")
   @Synchronized
   internal fun getUpdatedRange(
@@ -119,6 +124,7 @@ class SmartPointerTracker(initialModCount: Long) {
     return markerCache.getUpdatedRange(info, document, events)
   }
 
+  /** Moves the stub-based [info] to the range of the AST [element] and marks the cached ranges as changed. */
   @JvmName("switchStubToAst")
   @Synchronized
   internal fun switchStubToAst(info: AnchorElementInfo, element: PsiElement) {
@@ -127,6 +133,7 @@ class SmartPointerTracker(initialModCount: Long) {
     mySorted = false
   }
 
+  /** Prepares the self-pointers for a document commit. A stub-based pointer moves to the AST before the commit. */
   @JvmName("fastenBelts")
   @Synchronized
   internal fun fastenBelts(manager: SmartPointerManagerEx) {
@@ -137,6 +144,7 @@ class SmartPointerTracker(initialModCount: Long) {
     }
   }
 
+  /** Checks the cached element of each element pointer after a reparse. A file range pointer stays as it is. */
   @JvmName("updatePointerTargetsAfterReparse")
   @Synchronized
   internal fun updatePointerTargetsAfterReparse() {
@@ -148,6 +156,10 @@ class SmartPointerTracker(initialModCount: Long) {
     }
   }
 
+  /**
+   * Keeps the cached element of [pointer] when it is still valid at [pointerRange].
+   * Otherwise, restores the pointer and caches the result.
+   */
   private fun <E : PsiElement> updatePointerTarget(
     pointer: SmartPsiElementPointerImpl<E>,
     pointerRange: Segment?,
@@ -179,6 +191,7 @@ class SmartPointerTracker(initialModCount: Long) {
     }
   }
 
+  /** Returns the self-pointer infos that have a range, sorted by [MarkerCache.INFO_COMPARATOR]. */
   @JvmName("getSortedInfos")
   @Synchronized
   internal fun getSortedInfos(): List<SelfElementInfo> {
@@ -195,6 +208,7 @@ class SmartPointerTracker(initialModCount: Long) {
     return infos
   }
 
+  /** Returns the infos of all live pointers: the self-pointers, with or without a range, and the file pointers. */
   @Synchronized
   internal fun getContextAwareInfos(): List<ContextAwareInfo> = buildList(selfInfoList.size + fileInfoList.size) {
     selfInfoList.processAlivePointers { pointer ->
@@ -207,6 +221,7 @@ class SmartPointerTracker(initialModCount: Long) {
     }
   }
 
+  /** Returns the number of tracked self-pointers. */
   @TestOnly
   @Synchronized
   fun getSize(): Int = selfInfoList.size
@@ -223,14 +238,23 @@ class SmartPointerTracker(initialModCount: Long) {
     pushContextMapping(mapping)
   }
 
+  /**
+   * Returns `true` when a generation bump happened after the last [revalidate].
+   * The read takes no lock.
+   */
   fun isPossiblyInvalidated(manager: SmartPointerManagerEx): Boolean =
     manager.possiblyInvalidationModCounter.modificationCount > validationModCount
 
+  /**
+   * Queues a context mapping from `MultiverseFileViewProviderCache`.
+   * The next [revalidate] applies the queued mappings in order. A `null` value means that the context is gone.
+   */
   @Synchronized
   internal fun pushContextMapping(mapping: Map<CodeInsightContext, CodeInsightContext?>) {
     pendingContextMappings.add(mapping)
   }
 
+  /** Drops the queued mappings, the interned holders, and [knownContexts]. The pointer manager calls it when it is disposed. */
   @JvmName("clearPendingState")
   @Synchronized
   internal fun clearPendingState() {
@@ -242,6 +266,10 @@ class SmartPointerTracker(initialModCount: Long) {
   private val SmartPsiElementPointerImpl<*>.selfInfo: SelfElementInfo
     get() = this.elementInfo as SelfElementInfo
 
+  /**
+   * Updates the contexts of the pointer holders after a generation bump. It does nothing when no bump happened since the last call.
+   * It applies the queued mappings when there are some. Otherwise, it drops the contexts that the file no longer has.
+   */
   @Synchronized
   fun revalidate(virtualFile: VirtualFile, manager: SmartPointerManagerEx) {
     val currentModCount = manager.possiblyInvalidationModCounter.modificationCount
@@ -259,6 +287,10 @@ class SmartPointerTracker(initialModCount: Long) {
     }
   }
 
+  /**
+   * Moves each info whose context is a key of [composedMapping] to the mapped context, and refreshes [knownContexts].
+   * It skips the scan when [knownContexts] is known and holds no key of the mapping.
+   */
   private fun remapContexts(virtualFile: VirtualFile, composedMapping: Map<CodeInsightContext, CodeInsightContext?>) {
     val cached = knownContexts
     if (cached == null || composedMapping.keys.any { it in cached }) {
@@ -343,11 +375,13 @@ class SmartPointerTracker(initialModCount: Long) {
     return contexts
   }
 
+  /** Returns the one [FileHolder] of this tracker for [context]. A `null` context has its own holder. */
   internal fun createFileHolderInterned(virtualFile: VirtualFile, context: CodeInsightContext?): FileHolder =
     holderCache.computeIfAbsent(context ?: NullContext) { c -> FileHolder.create(c.takeUnless { it === NullContext }, virtualFile) }
 
   private object NullContext: CodeInsightContext
 
+  /** Composes the queued [mappings] into one mapping. The later mappings apply to the results of the earlier ones. */
   private fun composeMappings(
     mappings: List<Map<CodeInsightContext, CodeInsightContext?>>,
   ): Map<CodeInsightContext, CodeInsightContext?> {
@@ -511,6 +545,7 @@ class SmartPointerTracker(initialModCount: Long) {
       }
     }
 
+    /** Removes the references to the pointers that the GC collected. */
     @JvmStatic
     @VisibleForTesting
     fun processQueue() {
