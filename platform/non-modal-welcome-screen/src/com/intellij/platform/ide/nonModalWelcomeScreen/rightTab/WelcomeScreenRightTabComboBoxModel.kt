@@ -6,6 +6,7 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafReference
 import com.intellij.ide.ui.ThemeListProvider
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
+import com.intellij.ide.ui.laf.isThemeFromPlugin
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
@@ -193,14 +194,19 @@ internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
     /** Every theme, ignoring [brightnessFilter]. */
     fun allItems(): List<LafReference> = getThemes(filter = null)
 
+    /** Tells if [item] comes from a plugin that is not bundled. [items] lists such themes after all others. */
+    fun isCustom(item: LafReference): Boolean = laf.findLaf(item.themeId)?.isThemeFromPlugin == true
+
     private fun getThemes(filter: ThemeBrightnessFilter? = brightnessFilter): List<LafReference> {
       // Filtering happens before mapping, because only UIThemeLookAndFeelInfo carries isDark.
       val groupedThemes = ThemeListProvider.getInstance().getShownThemes()
-      return groupedThemes.infos.asSequence()
+      val themes = groupedThemes.infos.asSequence()
         .flatMap { it.items }
         .filter { filter == null || filter.accepts(it) }
-        .map { LafReference(it.name, it.id) }
         .toList()
+      // A stable split keeps the order of the provider inside both parts.
+      val (custom, bundled) = themes.partition { it.isThemeFromPlugin }
+      return (bundled + custom).map { LafReference(it.name, it.id) }
     }
 
     private val laf: LafManager

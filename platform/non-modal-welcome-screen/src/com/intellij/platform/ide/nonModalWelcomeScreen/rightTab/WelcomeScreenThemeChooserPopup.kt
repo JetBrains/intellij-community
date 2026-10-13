@@ -3,6 +3,7 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
 import com.intellij.application.options.colors.highlighting.HighlightData
 import com.intellij.application.options.colors.highlighting.HighlightsExtractor
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.ui.LafReference
 import com.intellij.ide.ui.UISettingsListener
@@ -114,7 +115,13 @@ internal class WelcomeScreenThemeChooserPopup(
     // An empty theme id makes the platform renderer draw a separator above the row. The row opens the
     // Appearance settings and is not a theme, so the previewer never sees it: its index is past the themes.
     val moreItem = LafReference(NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.theme.more.in.appearance"), "")
-    fun listItems() = model.items + moreItem
+    // The model lists the themes of plugins last. The renderer draws the Custom title over the first of them.
+    var firstCustomThemeId: String? = null
+    fun listItems(): List<LafReference> {
+      val themes = model.items
+      firstCustomThemeId = themes.firstOrNull { model.isCustom(it) }?.themeId
+      return themes + moreItem
+    }
 
     val listModel = CollectionListModel(listItems())
     val list = JBList(listModel)
@@ -154,7 +161,7 @@ internal class WelcomeScreenThemeChooserPopup(
 
     val builder = PopupChooserBuilder(list)
     // Rows look like the ones in the platform's theme popup: names, a Beta badge, and group separators.
-    builder.setRenderer(createUniformRenderer(list, moreItem))
+    builder.setRenderer(createUniformRenderer(list, moreItem) { firstCustomThemeId })
     builder.setNorthComponent(createHeader(createBrightnessSwitch(initialFilter, listModel, list, ::listItems)))
     previewSample?.let { builder.setEastComponent(createCodePreview(it, popupDisposable)) }
     // The room under the content lives in its own component. The list border is the builder's, and a theme
@@ -239,15 +246,20 @@ internal class WelcomeScreenThemeChooserPopup(
    * every row is [ROW_HEIGHT] high, separator not counted, and has one width: the widest row of either family.
    * A name longer than [MAX_NAME_CHARS] characters ends with an ellipsis.
    */
-  private fun createUniformRenderer(list: JBList<LafReference>, moreItem: LafReference): ListCellRenderer<LafReference> {
+  private fun createUniformRenderer(
+    list: JBList<LafReference>,
+    moreItem: LafReference,
+    firstCustomThemeId: () -> String?,
+  ): ListCellRenderer<LafReference> {
     val groups = ThemeListProvider.getInstance().getShownThemes().infos
     fun isBeta(themeId: String) = groups.any { group -> group.items.any { it.id == themeId && it.isRestartRequired() } }
 
     var fixedRowWidth: Int? = null
 
-    // The content is the one that LafManager.getLookAndFeelCellRenderer draws on the welcome screen: the name,
-    // a Beta badge, and a separator above the first theme of a group. That renderer does not let a caller set
-    // the row size, so the same rows are drawn here.
+    // The content is close to what LafManager.getLookAndFeelCellRenderer draws on the welcome screen: the name
+    // and a Beta badge. That renderer does not let a caller set the row size, so the rows are drawn here. The
+    // groups of the provider are not shown. The themes are one block, and the themes of plugins follow under
+    // the Custom title.
     val renderer = listCellRenderer<LafReference> {
       // The text cell clips at the edge and draws no ellipsis, so a long name is shortened up front. The full
       // name stays in the tooltip and in the accessible name.
@@ -262,8 +274,8 @@ internal class WelcomeScreenThemeChooserPopup(
         if (isBeta(value.themeId)) {
           icon(Badge.beta)
         }
-        groups.firstOrNull { value.themeId == it.items.firstOrNull()?.id }?.let { group ->
-          separator { text = group.title }
+        if (value.themeId == firstCustomThemeId()) {
+          separator { text = IdeBundle.message("combobox.list.custom.section.title") }
         }
       }
       rowHeight = JBUI.scale(ROW_HEIGHT)
