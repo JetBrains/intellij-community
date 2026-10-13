@@ -704,29 +704,10 @@ private class ComboBoxInfoPanelAction(
 
   private val model = comboModel.model
 
-  private val popupState = PopupState.forPopup()
+  private val chooserState = PopupState.forPopup()
 
-  /**
-   * The button that [createCustomComponent] made. The popup anchors to it, because the data context of
-   * the event only knows the toolbar's target, which is the whole tab.
-   */
+  // The data context of an event knows only the target of the toolbar, which is the whole tab.
   private var comboButton: JComponent? = null
-
-  /**
-   * Opens the chooser above [owner] instead of underneath it, which is where the base class would open it.
-   *
-   * The footer sits at the bottom of the welcome screen, so a popup underneath does not fit on screen.
-   * The state guard stops a second click from stacking another popup. The extra popup would revert the
-   * preview when it closes.
-   */
-  private fun showThemeChooser(themeModel: ThemeModel, owner: JComponent) {
-    if (popupState.isShowing || popupState.isRecentlyHidden) {
-      return
-    }
-    val popup = WelcomeScreenThemeChooserPopup(themeModel, contentProvider.getThemePreviewSample()).createPopup(owner, null)
-    popupState.prepareToShow(popup)
-    popup.show(PopupShowOptions.aboveComponent(owner))
-  }
 
   init {
     templatePresentation.text = comboModel.itemPrefix
@@ -747,7 +728,6 @@ private class ComboBoxInfoPanelAction(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    // A brightness filter can hide the current item, so take its name directly.
     e.presentation.setText(comboModel.itemPrefix + model.currentItemName(), false)
     e.presentation.icon = if (model is ThemeModel) model.currentIcon() else comboModel.icon
   }
@@ -775,6 +755,16 @@ private class ComboBoxInfoPanelAction(
     }
     step.defaultOptionIndex = model.currentItemIndex()
     return JBPopupFactory.getInstance().createListPopup(step)
+  }
+
+  // The base class shows a popup underneath the button, and the footer is at the bottom of the screen. So the chooser opens above it.
+  private fun showThemeChooser(themeModel: ThemeModel, owner: JComponent) {
+    if (chooserState.isShowing || chooserState.isRecentlyHidden) {
+      return
+    }
+    val popup = WelcomeScreenThemeChooserPopup(themeModel, contentProvider.getThemePreviewSample()).createPopup(owner)
+    chooserState.prepareToShow(popup)
+    popup.show(PopupShowOptions.aboveComponent(owner))
   }
 }
 

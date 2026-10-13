@@ -33,36 +33,25 @@ interface WelcomeRightTabContentProvider {
     get() = 3
 
   /**
-   * Whether the Theme control opens a richer chooser instead of a plain combobox popup: a list that
-   * previews the highlighted theme (reverting when dismissed without a choice, like the platform's Theme
-   * quick-switcher) with a Light/Dark switch in its header.
-   *
-   * Off by default, so products that do not opt in keep the plain combobox.
+   * Tells if the Theme control opens the theme chooser instead of a plain list.
+   * The chooser previews the highlighted theme, and it has a Light/Dark switch. The default is `false`.
    */
   val isThemeChooserPopupEnabled: Boolean
     get() = false
 
-  /**
-   * Sample code shown beside the theme list, so the user can judge a theme on real code.
-   * Null leaves the chooser as a list alone.
-   */
+  /** The code that the theme chooser shows beside the list, or `null` for no code. */
   fun getThemePreviewSample(): ThemePreviewSample? = null
 
   /**
-   * Code the theme chooser renders beside its list. [fileName] only selects the syntax highlighting;
-   * no file is created and the name is never shown.
+   * The code of the theme chooser sample.
+   *
+   * @param fileName selects the highlighting only. No file exists.
+   * @param highlightTags maps a `<tag>` in [text] to the external name of a color scheme key.
+   * A lexer cannot know the roles of identifiers, so the tags state them. The editor does not get the tags.
    */
   class ThemePreviewSample(
     val fileName: String,
     val text: @NlsSafe String,
-    /**
-     * Maps a `<tag>` in [text] to the external name of the colour-scheme key that paints it.
-     *
-     * A lexer alone colours keywords, strings, numbers, comments and punctuation. It cannot tell a class
-     * from a field, because that needs analysis, and the welcome screen has no project to analyse. So the
-     * sample states its own semantics, the way the colour-scheme settings preview marks up its demo text.
-     * The tags are cut out of the text before it reaches the editor.
-     */
     val highlightTags: Map<String, String> = emptyMap(),
   )
 

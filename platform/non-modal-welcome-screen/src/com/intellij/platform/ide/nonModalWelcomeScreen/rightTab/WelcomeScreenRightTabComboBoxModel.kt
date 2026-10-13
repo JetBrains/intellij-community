@@ -17,44 +17,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBColor
 import javax.swing.Icon
 
-/**
- * Restricts the theme list to themes of a single brightness, driven by the Light/Dark switch in the theme
- * chooser popup. See [WelcomeRightTabContentProvider.isThemeChooserPopupEnabled].
- */
-internal enum class ThemeBrightnessFilter {
-  LIGHT,
-  DARK;
-
-  fun accepts(theme: UIThemeLookAndFeelInfo): Boolean = (this == DARK) == theme.isDark
-
-  companion object {
-    fun of(isDark: Boolean): ThemeBrightnessFilter = if (isDark) DARK else LIGHT
-  }
-}
-
-/**
- * Applies an item as a live preview while the user moves through the combobox popup list, and restores the
- * original state when the popup is dismissed without a choice.
- *
- * A preview is a real state change, not a sandbox: nothing rolls it back automatically, so the caller must
- * [restore] on every path that closes the popup without a choice.
- */
-internal interface ComboBoxPreviewer {
-  /** State to hand back to [restore] if the popup closes without a choice. */
-  fun capture(): Any?
-
-  /** Applies the item at [index] as a preview. Returns `false` when that item must not be previewed. */
-  fun preview(index: Int): Boolean
-
-  fun restore(snapshot: Any?)
-}
-
 internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
   abstract val items: List<T>
-
-  /** Non-null when this model's items can be applied as a preview while the popup list is navigated. */
-  open val previewer: ComboBoxPreviewer?
-    get() = null
 
   abstract var currentItem: T
 
@@ -64,11 +28,8 @@ internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
 
   fun currentItemIndex(): Int = items.indexOf(currentItem)
 
-  /**
-   * Name of the current item regardless of whether [items] still contains it, so a filtered-out
-   * selection can still be displayed.
-   */
-  open fun currentItemName(): String = currentItem.toName()
+  /** The name that the control shows. */
+  open fun currentItemName(): @NlsSafe String = currentItem.toName()
 
   fun setByIndex(index: Int, itemName: String) {
     val item = items[index]
@@ -106,30 +67,13 @@ internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
     }
 
     /**
-     * When set, [items] only lists themes of that brightness. `null` lists every theme, which is the
-     * behaviour for products that do not show the brightness switch.
-     *
-     * Changing this does not apply a theme: [currentItem] may end up outside [items], and
-     * [currentItemName] is what keeps it visible in the combobox.
-     */
-    var brightnessFilter: ThemeBrightnessFilter? = null
-
-    /**
-     * The theme that the controls show instead of the active one. The theme chooser sets it while it is
-     * open, because a preview changes the active theme but must not change what the dropdown shows.
+     * The theme that the control shows instead of the active one, or `null` to show the active one.
+     * The theme chooser pins the theme that the user has, because a preview changes the active theme.
      */
     var pinnedItem: LafReference? = null
 
-    override fun currentItemName(): String = (pinnedItem ?: currentItem).name
-
-    /** The icon of the dropdown. It follows [pinnedItem], and the active theme when nothing is pinned. */
-    fun currentIcon(): Icon {
-      val isDark = pinnedItem?.let { laf.findLaf(it.themeId)?.isDark } ?: return getIcon()
-      return if (isDark) AllIcons.MeetNewUi.DarkTheme else AllIcons.MeetNewUi.LightTheme
-    }
-
     override val items: List<LafReference>
-      get() = getThemes()
+      get() = themes(filter = null)
 
     override var currentItem: LafReference
       get() = laf.lookAndFeelReference
@@ -147,17 +91,54 @@ internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
 
     override fun LafReference.toName(): String = name
 
-    /** Brightness of the active theme, so the switch can open on the family the user is already in. */
+    override fun currentItemName(): @NlsSafe String = (pinnedItem ?: currentItem).name
+
+    /** The icon of the control. It follows the brightness of [pinnedItem], or of the active theme. */
+    fun currentIcon(): Icon {
+      val isDark = pinnedItem?.let { findTheme(it)?.isDark } ?: return getIcon()
+      return if (isDark) AllIcons.MeetNewUi.DarkTheme else AllIcons.MeetNewUi.LightTheme
+    }
+
     fun currentBrightness(): ThemeBrightnessFilter {
       return ThemeBrightnessFilter.of(laf.currentUIThemeLookAndFeel?.isDark ?: JBColor.isBright().not())
     }
 
+    /** The themes that [filter] accepts, or all themes for `null`. The themes of plugins come last. */
+    fun themes(filter: ThemeBrightnessFilter?): List<LafReference> {
+      val themes = ThemeListProvider.getInstance().getShownThemes().infos
+        .flatMap { it.items }
+        .filter { filter == null || filter.accepts(it) }
+      return themes.customLast { it.isThemeFromPlugin }.map { LafReference(it.name, it.id) }
+    }
+
+    fun isCustom(item: LafReference): Boolean = findTheme(item)?.isThemeFromPlugin == true
+
+    fun isRestartRequired(item: LafReference): Boolean = findTheme(item)?.isRestartRequired() == true
+
+    private fun findTheme(item: LafReference): UIThemeLookAndFeelInfo? {
+      return ThemeListProvider.getInstance().getShownThemes().infos.firstNotNullOfOrNull { group ->
+        group.items.find { it.id == item.themeId }
+      }
+    }
+
+    /** The theme to give to [restore] when a preview ends without a choice. */
+    fun capture(): UIThemeLookAndFeelInfo? = laf.currentUIThemeLookAndFeel
+
+    /** Applies [item] without a restart prompt. Returns `false` when [item] is not a theme or needs a restart to show. */
+    fun preview(item: LafReference): Boolean {
+      val theme = laf.findLaf(item.themeId) ?: return false
+      if (theme.isRestartRequired()) return false
+      applyForPreview(theme)
+      return true
+    }
+
+    fun restore(snapshot: UIThemeLookAndFeelInfo?) {
+      snapshot?.let(::applyForPreview)
+    }
+
     /**
-     * Commits [item] as the user's actual choice.
-     *
-     * The [currentItem] setter short-circuits when the theme is already active, which is the normal case
-     * here because a preview has just applied it — and its restart check goes with it. So the check is
-     * issued explicitly in that case, and left to the setter otherwise, to avoid asking twice.
+     * Applies [item] as the choice of the user. A preview has usually applied the theme already,
+     * and then the [currentItem] setter does nothing, so the restart prompt comes from here.
      */
     fun commit(item: LafReference) {
       val appliedByPreview = laf.currentUIThemeLookAndFeel?.id == item.themeId
@@ -169,62 +150,18 @@ internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
       }
     }
 
-    override val previewer: ComboBoxPreviewer = object : ComboBoxPreviewer {
-      override fun capture(): Any? = laf.currentUIThemeLookAndFeel
-
-      override fun preview(index: Int): Boolean {
-        val themeId = items.getOrNull(index)?.themeId ?: return false
-        val theme = laf.findLaf(themeId) ?: return false
-        // The platform's own theme quick-switcher skips these as well: a theme that needs a restart
-        // cannot be shown correctly without one, so previewing it would just look broken.
-        if (theme.isRestartRequired()) return false
-        applyForPreview(theme)
-        return true
-      }
-
-      override fun restore(snapshot: Any?) {
-        applyForPreview(snapshot as? UIThemeLookAndFeelInfo ?: return)
-      }
-    }
-
-    /**
-     * Differs from the commit path in two ways, both deliberate:
-     *
-     * - `async = false`, like the platform's own theme quick-switcher. Applying asynchronously spreads the
-     *   switch over several EDT events, and the window deactivation in between cancels the open popup —
-     *   which then reverts the preview and drops the user out of the list.
-     * - no [LafManager.checkRestart]: a preview must not pop a restart prompt for a theme the user has
-     *   not actually chosen.
-     */
+    // A synchronous switch keeps the window active, so the open popup survives it.
     private fun applyForPreview(theme: UIThemeLookAndFeelInfo) {
       QuickChangeLookAndFeel.switchLafAndUpdateUI(laf, theme, false)
-    }
-
-    /**
-     * Every theme name, ignoring [brightnessFilter], so a control can be sized once and not resize as the
-     * filter narrows the list.
-     */
-    fun allItemNames(): List<String> = allItems().map { it.name }
-
-    /** Every theme, ignoring [brightnessFilter]. */
-    fun allItems(): List<LafReference> = getThemes(filter = null)
-
-    /** Tells if [item] comes from a plugin that is not bundled. [items] lists such themes after all others. */
-    fun isCustom(item: LafReference): Boolean = laf.findLaf(item.themeId)?.isThemeFromPlugin == true
-
-    private fun getThemes(filter: ThemeBrightnessFilter? = brightnessFilter): List<LafReference> {
-      // Filtering happens before mapping, because only UIThemeLookAndFeelInfo carries isDark.
-      val groupedThemes = ThemeListProvider.getInstance().getShownThemes()
-      val themes = groupedThemes.infos.asSequence()
-        .flatMap { it.items }
-        .filter { filter == null || filter.accepts(it) }
-        .toList()
-      // A stable split keeps the order of the provider inside both parts.
-      val (custom, bundled) = themes.partition { it.isThemeFromPlugin }
-      return (bundled + custom).map { LafReference(it.name, it.id) }
     }
 
     private val laf: LafManager
       get() = LafManager.getInstance()
   }
+}
+
+/** Moves the items that [isCustom] accepts to the end. The order inside both parts stays the same. */
+internal fun <T> List<T>.customLast(isCustom: (T) -> Boolean): List<T> {
+  val (custom, other) = partition(isCustom)
+  return other + custom
 }
