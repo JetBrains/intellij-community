@@ -38,7 +38,7 @@ pub(crate) mod tart;
 )]
 pub(crate) mod worker;
 
-mod secure;
+pub(crate) mod secure;
 
 #[cfg(test)]
 mod testing;

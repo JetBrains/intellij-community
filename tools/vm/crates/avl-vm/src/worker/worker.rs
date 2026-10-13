@@ -50,6 +50,7 @@ use crate::worker::hypervisor::Machine;
 #[cfg(unix)]
 use crate::worker::parallels::Parallels;
 use crate::worker::pin::PinnedTools;
+use crate::worker::secure::read_json_record;
 #[cfg(unix)]
 use crate::worker::tart::Tart;
 
@@ -123,16 +124,10 @@ pub(crate) fn read_lease(path: &Path) -> Result<Option<Lease>, Refusal> {
             format!("invalid lease state at {}{reason}", path.display()),
         )
     };
-    let content = match std::fs::read(path) {
-        Ok(content) => content,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-        Err(error) => return Err(corrupt(format!(": {error}"))),
-    };
-    let lease: Lease = serde_json::from_slice(&content).map_err(|error| corrupt(format!(": {error}")))?;
-    if !lease.is_complete() {
-        return Err(corrupt(String::new()));
+    match read_json_record::<Lease>(path).map_err(|error| corrupt(format!(": {error}")))? {
+        Some(lease) if !lease.is_complete() => Err(corrupt(String::new())),
+        lease => Ok(lease),
     }
-    Ok(Some(lease))
 }
 
 // --- the worker manager ----------------------------------------------------------------------------------------

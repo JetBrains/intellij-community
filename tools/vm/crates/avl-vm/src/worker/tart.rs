@@ -30,7 +30,7 @@ use tokio::sync::OnceCell;
 
 use crate::worker::hypervisor::unsupported;
 use crate::worker::pin::{PinnedTool, PinnedTools, parse_version};
-use crate::worker::secure::{Requirements, SecureReadError, read_private_file, write_json_line};
+use crate::worker::secure::{Requirements, SecureReadError, read_json_record, read_private_file, write_json_line};
 use avl_base::RefusalExt;
 
 /// The timeout of a Tart query: `tart list` and `tart --version` read the local VM directories and answer at once.
@@ -177,8 +177,7 @@ impl Tart {
     /// build does not speak - because the caller's next question is always "is this worker running", and there is
     /// no version of "the record is damaged" that should answer yes to it.
     pub(crate) fn read_process_identity(&self, worker: &str) -> Option<PidReceipt> {
-        let content = std::fs::read(self.settings.pid_path(worker)).ok()?;
-        let receipt: PidReceipt = serde_json::from_slice(&content).ok()?;
+        let receipt: PidReceipt = read_json_record(&self.settings.pid_path(worker)).ok().flatten()?;
         let valid = receipt.schema_version == SCHEMA_VERSION
             && receipt.worker == worker
             && receipt.process.pid > 0

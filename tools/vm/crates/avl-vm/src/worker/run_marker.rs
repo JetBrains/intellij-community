@@ -16,6 +16,7 @@ use avl_report::digest::sha256_text;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+use crate::worker::secure::read_json_record;
 use crate::worker::worker::{Lease, Manager};
 
 #[cfg(test)]
@@ -78,16 +79,10 @@ pub(crate) fn read_run_marker(settings: &Config, worker: &str) -> Result<Option<
             format!("invalid run marker at {}{reason}", path.display()),
         )
     };
-    let content = match std::fs::read(&path) {
-        Ok(content) => content,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-        Err(error) => return Err(corrupt(format!(": {error}"))),
-    };
-    let marker: RunMarker = serde_json::from_slice(&content).map_err(|error| corrupt(format!(": {error}")))?;
-    if !marker.is_complete(worker) {
-        return Err(corrupt(String::new()));
+    match read_json_record::<RunMarker>(&path).map_err(|error| corrupt(format!(": {error}")))? {
+        Some(marker) if !marker.is_complete(worker) => Err(corrupt(String::new())),
+        marker => Ok(marker),
     }
-    Ok(Some(marker))
 }
 
 /// Removes the run marker of `worker`. A worker without a marker is no error.

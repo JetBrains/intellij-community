@@ -7,6 +7,8 @@ use avl_base::{Config, Exit, OrRefuse, Refusal};
 use avl_host_sys::guest::guest_join;
 use serde::{Deserialize, Serialize};
 
+use crate::worker::secure::read_json_record;
+
 #[cfg(test)]
 #[cfg(unix)]
 mod tests;
@@ -47,8 +49,7 @@ impl HostState {
     /// `None` covers every way of not having one - no file, unreadable JSON, a missing
     /// field - because they all mean the same thing: no compatible daemon, start a fresh one.
     pub(crate) fn read(settings: &Config, worker: &str) -> Option<Self> {
-        let content = std::fs::read(Self::path(settings, worker)).ok()?;
-        serde_json::from_slice(&content).ok()
+        read_json_record(&Self::path(settings, worker)).ok().flatten()
     }
 
     /// Records the daemon a worker now runs, privately and atomically.

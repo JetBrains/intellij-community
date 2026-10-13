@@ -65,7 +65,7 @@ use tokio::sync::OnceCell;
 use crate::worker::container::{AppleContainer, BUILDER_MEMORY, container_missing, is_not_found};
 use crate::worker::hypervisor::unsupported;
 use crate::worker::pin::{PinnedTool, PinnedTools};
-use crate::worker::secure::write_json_line;
+use crate::worker::secure::{read_json_record, write_json_line};
 
 /// The timeout of `docker version`, the gate that asks the engine. An engine that answers does so at once, and one
 /// that does not answer within it is `docker_missing`, which a caller retries against.
@@ -991,8 +991,7 @@ impl Docker {
     /// The record of where the pool's image came from, or `None` for every kind of wrong: absent, unparseable,
     /// another schema.
     pub(crate) fn read_image_record(&self) -> Option<ImageRecord> {
-        let content = std::fs::read(self.settings.docker_image_record_path()).ok()?;
-        let record: ImageRecord = serde_json::from_slice(&content).ok()?;
+        let record: ImageRecord = read_json_record(&self.settings.docker_image_record_path()).ok().flatten()?;
         (record.schema_version == SCHEMA_VERSION).then_some(record)
     }
 
@@ -1419,8 +1418,7 @@ impl Docker {
     /// worker's, another schema. The caller's question is "may I keep this container", and no damaged record may
     /// answer yes.
     pub(crate) fn read_create_record(&self, worker: &str) -> Option<CreateRecord> {
-        let content = std::fs::read(self.settings.docker_create_record_path(worker)).ok()?;
-        let record: CreateRecord = serde_json::from_slice(&content).ok()?;
+        let record: CreateRecord = read_json_record(&self.settings.docker_create_record_path(worker)).ok().flatten()?;
         (record.schema_version == SCHEMA_VERSION && record.worker == worker && !record.argv.is_empty()).then_some(record)
     }
 
