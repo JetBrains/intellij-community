@@ -1207,7 +1207,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
 
     val stripeButton = if (preparedTask.isButtonNeeded) {
-      buttonManager.createStripeButton(toolWindow = toolWindow, info = infoSnapshot, task = RegisterToolWindowTask(task))
+      // a batch registration, which registers the activation actions later, refreshes its buttons after them
+      buttonManager.createStripeButton(
+        toolWindow = toolWindow,
+        info = infoSnapshot,
+        task = RegisterToolWindowTask(task),
+        isRefreshedAfterRegistration = !ensureToolWindowActionRegistered,
+      )
     }
     else {
       LOG.debug {

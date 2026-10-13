@@ -169,7 +169,12 @@ internal class ToolWindowPaneOldButtonManager(paneId: String) : ToolWindowButton
     stripes.forEach(Stripe::reset)
   }
 
-  override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager {
+  override fun createStripeButton(
+    toolWindow: ToolWindowImpl,
+    info: WindowInfo,
+    task: RegisterToolWindowTask?,
+    isRefreshedAfterRegistration: Boolean,
+  ): StripeButtonManager {
     val button = StripeButton(toolWindow)
     button.isSelected = info.isVisible
     button.updatePresentation()

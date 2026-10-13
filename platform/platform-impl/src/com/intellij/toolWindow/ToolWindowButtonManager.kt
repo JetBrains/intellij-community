@@ -46,7 +46,16 @@ internal interface ToolWindowButtonManager {
 
   fun reset()
 
-  fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager
+  /**
+   * With [isRefreshedAfterRegistration], the registration refreshes the button once it registers the activation actions,
+   * see `ToolWindowSetInitializer.postEntryProcessing`, so the button does not run a full action update when it is added.
+   */
+  fun createStripeButton(
+    toolWindow: ToolWindowImpl,
+    info: WindowInfo,
+    task: RegisterToolWindowTask?,
+    isRefreshedAfterRegistration: Boolean = false,
+  ): StripeButtonManager
 
   fun hasButtons(): Boolean
 }

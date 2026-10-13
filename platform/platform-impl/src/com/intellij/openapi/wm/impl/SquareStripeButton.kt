@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareToggleAction
@@ -79,7 +80,12 @@ internal abstract class AbstractSquareStripeButton(
   }
 }
 
-internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
+/**
+ * With [syncsOnFirstUpdate], the first update, which [addNotify] runs, only applies the state of the tool window to the presentation.
+ * The registration batch of the button refreshes its tooltip and icon later, see `ToolWindowSetInitializer.postEntryProcessing`,
+ * and the look reads the state of the tool window when it paints, so the full update would only build a data context for nothing.
+ */
+internal class SquareStripeButton(val toolWindow: ToolWindowImpl, private var syncsOnFirstUpdate: Boolean = false) :
   AbstractSquareStripeButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), null), UISettingsListener {
 
   companion object {
@@ -119,6 +125,19 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
     updateToolTipText()
 
     myPresentation.icon = scaleIcon((toolWindow.icon ?: AllIcons.Toolbar.Unknown) as ScalableIcon)
+  }
+
+  override fun update() {
+    if (!syncsOnFirstUpdate) {
+      super.update()
+      return
+    }
+
+    syncsOnFirstUpdate = false
+    // what `SquareAnActionButton.isSelected` sets; the icon is the scaled icon of the tool window that the presentation supplies
+    myPresentation.isVisible = toolWindow.isShowStripeButton && toolWindow.isAvailable
+    Toggleable.setSelected(myPresentation, toolWindow.isVisible)
+    updateIcon()
   }
 
   fun isHovered(): Boolean = myRollover

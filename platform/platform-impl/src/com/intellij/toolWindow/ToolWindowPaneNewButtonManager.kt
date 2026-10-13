@@ -254,8 +254,13 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
     return listOfNotNull(left, right, top, bottom)
   }
 
-  override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager {
-    val manager = createStripeButton(toolWindow)
+  override fun createStripeButton(
+    toolWindow: ToolWindowImpl,
+    info: WindowInfo,
+    task: RegisterToolWindowTask?,
+    isRefreshedAfterRegistration: Boolean,
+  ): StripeButtonManager {
+    val manager = createStripeButton(toolWindow, isRefreshedAfterRegistration)
 
     findStripe(toolWindow = toolWindow, anchor = toolWindow.windowInfo.anchor, isSplit = toolWindow.isSplitMode).addButton(manager)
     return manager
@@ -269,8 +274,8 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
     return findToolbar(anchor, isSplit).getStripeFor(anchor)
   }
 
-  protected fun createStripeButton(toolWindow: ToolWindowImpl): StripeButtonManager {
-    val squareStripeButton = SquareStripeButton(toolWindow)
+  protected fun createStripeButton(toolWindow: ToolWindowImpl, isRefreshedAfterRegistration: Boolean = false): StripeButtonManager {
+    val squareStripeButton = SquareStripeButton(toolWindow, syncsOnFirstUpdate = isRefreshedAfterRegistration)
     return object : StripeButtonManager {
       override val id: String = toolWindow.id
       override val toolWindow: ToolWindowImpl = toolWindow
