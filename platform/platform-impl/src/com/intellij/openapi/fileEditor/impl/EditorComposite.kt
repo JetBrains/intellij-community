@@ -634,11 +634,14 @@ open class EditorComposite internal constructor(
       firstEditor = false
     }
 
-    // handles changes of selected editor
+    // handles changes of selected editor;
+    // until the composite lists its editors, the tabs show the list they were created with,
+    // after that editors are added and removed, and the tabs follow the composite list
     tabbedPane.addChangeListener {
       val selectedIndex = tabbedPaneWrapper!!.selectedIndex
       require(selectedIndex != -1)
-      _selectedEditorWithProvider.value = fileEditorWithProviders.get(selectedIndex)
+      val editors = if (isAvailable()) this.fileEditorWithProviders.value else fileEditorWithProviders
+      _selectedEditorWithProvider.value = editors.get(selectedIndex)
     }
     return tabbedPane
   }
@@ -929,22 +932,22 @@ open class EditorComposite internal constructor(
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun removeEditor(editorTypeId: String) {
     val fileEditorWithProviderList = fileEditorWithProviders
-    val toRemove = mutableListOf<FileEditorWithProvider>()
-    for ((index, item) in fileEditorWithProviderList.value.asReversed().withIndex()) {
-      val (fileEditor, provider) = item
+    val oldList = fileEditorWithProviderList.value
+    // update the list before the tabs, so that the selection listener of the tabs maps a tab index to the remaining editors
+    fileEditorWithProviderList.value = oldList.filter { it.provider.editorTypeId != editorTypeId }
+    // the tabs are in the list order; go from the end so that an index stays valid after the tabs after it are removed
+    for (index in oldList.indices.reversed()) {
+      val (fileEditor, provider) = oldList.get(index)
       if (provider.editorTypeId != editorTypeId) {
         continue
       }
 
       tabbedPaneWrapper?.removeTabAt(index)
-      toRemove.add(item)
       topComponents.remove(fileEditor)
       bottomComponents.remove(fileEditor)
       displayNames.remove(fileEditor)
       Disposer.dispose(fileEditor)
     }
-
-    fileEditorWithProviderList.update { oldList -> oldList.toMutableList().also { it.removeAll(toRemove) } }
 
     if (fileEditorWithProviderList.value.isEmpty()) {
       compositePanel.removeAll()
