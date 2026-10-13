@@ -56,6 +56,9 @@ private const val VISIBLE_ROW_COUNT = 10
  */
 private const val ROW_HEIGHT = 24
 
+/** Unscaled room that the rows get beyond their widest content, so the last characters do not touch the scrollbar. */
+private const val ROW_WIDTH_RESERVE = 16
+
 /** Longest theme name that a row shows in full. A longer name is shortened with an ellipsis. */
 private const val MAX_NAME_CHARS = 50
 
@@ -249,7 +252,7 @@ internal class WelcomeScreenThemeChooserPopup(
     // insets, and the width then comes out too small by the insets of a real row.
     fixedRowWidth = (model.allItems() + moreItem).maxOfOrNull {
       renderer.getListCellRendererComponent(list, it, 0, false, false).preferredSize.width
-    }
+    }?.plus(JBUI.scale(ROW_WIDTH_RESERVE))
     return renderer
   }
 
