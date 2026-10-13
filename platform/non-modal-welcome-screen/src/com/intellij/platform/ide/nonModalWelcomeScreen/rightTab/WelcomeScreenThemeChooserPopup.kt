@@ -56,6 +56,9 @@ private const val VISIBLE_ROW_COUNT = 10
  */
 private const val ROW_HEIGHT = 24
 
+/** Unscaled room under the list and the sample. */
+private const val BOTTOM_PADDING = 10
+
 /** Unscaled room that the rows get beyond their widest content, so the last characters do not touch the scrollbar. */
 private const val ROW_WIDTH_RESERVE = 16
 
@@ -150,6 +153,9 @@ internal class WelcomeScreenThemeChooserPopup(
     builder.setRenderer(createUniformRenderer(list, moreItem))
     builder.setNorthComponent(createHeader(createBrightnessSwitch(initialFilter, listModel, list, ::listItems)))
     previewSample?.let { builder.setEastComponent(createCodePreview(it, popupDisposable)) }
+    // The room under the content lives in its own component. The list border is the builder's, and a theme
+    // change can replace it, so a padding there does not hold.
+    builder.setSouthComponent(createBottomSpacer())
     builder.setAutoselectOnMouseMove(true)
     builder.setRequestFocus(true)
     builder.setCancelOnClickOutside(true)
@@ -369,6 +375,13 @@ internal class WelcomeScreenThemeChooserPopup(
     }
 
     return switch
+  }
+
+  private fun createBottomSpacer(): JComponent {
+    val spacer = JPanel()
+    spacer.isOpaque = false
+    spacer.preferredSize = Dimension(0, JBUI.scale(BOTTOM_PADDING))
+    return spacer
   }
 
   /**
