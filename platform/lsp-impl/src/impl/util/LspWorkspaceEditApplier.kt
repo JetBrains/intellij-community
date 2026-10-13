@@ -9,7 +9,7 @@ import org.eclipse.lsp4j.WorkspaceEdit
 
 internal class LspWorkspaceEditApplier private constructor(private val intentionAction: LspIntentionAction) {
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun applyWorkspaceEdit() {
     intentionAction.invoke(null)
   }

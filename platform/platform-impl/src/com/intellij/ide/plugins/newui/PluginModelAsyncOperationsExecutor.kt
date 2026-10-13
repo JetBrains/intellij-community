@@ -30,14 +30,14 @@ import kotlin.coroutines.CoroutineContext
 internal class PluginOperationUiBridge {
   private val handles = mutableSetOf<PluginOperationUiHandle>()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createHandle(parentComponent: JComponent): PluginOperationUiHandle {
     return PluginOperationUiHandle(parentComponent) { handle ->
       handles.remove(handle)
     }.also(handles::add)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun detach() {
     handles.toList().forEach(PluginOperationUiHandle::detach)
   }
@@ -50,14 +50,14 @@ internal class PluginOperationUiHandle(
   private var parentComponent: JComponent? = parentComponent
   private var detached = false
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun captureContext(modalityComponent: JComponent? = parentComponent): PluginOperationUiContext {
     if (modalityComponent == null) return PluginOperationUiContext.withoutParent()
     val modalityState = ModalityState.stateForComponent(modalityComponent)
     return PluginOperationUiContext(modalityState, ::getParentComponent)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun detach() {
     if (detached) return
     detached = true
@@ -65,7 +65,7 @@ internal class PluginOperationUiHandle(
     onDetached(this)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun getParentComponent(): JComponent? = parentComponent
 }
 
@@ -73,7 +73,7 @@ internal class PluginOperationUiContext(
   val modalityState: ModalityState,
   private val parentComponent: () -> JComponent?,
 ) {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getParentComponent(): JComponent? = parentComponent()
 
   companion object {

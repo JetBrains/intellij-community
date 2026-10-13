@@ -146,7 +146,7 @@ open class BalloonLayoutImpl(private val parent: JRootPane, insets: Insets) : Ba
     add(newBalloon = balloon, layoutData = null)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun add(newBalloon: Balloon, layoutData: Any?) {
     val merge = merge(layoutData)
     if (merge == null) {

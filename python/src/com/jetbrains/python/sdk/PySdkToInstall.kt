@@ -53,7 +53,7 @@ internal class PySdkToInstall(
     renderer.icon = AllIcons.Actions.Download
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @Internal
   override fun install(module: Module?, systemWideSdksDetector: () -> List<Sdk>): Result<Sdk> {
     val project = module?.project

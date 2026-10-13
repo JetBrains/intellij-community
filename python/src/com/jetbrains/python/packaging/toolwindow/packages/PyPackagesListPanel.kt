@@ -64,13 +64,13 @@ internal class PyPackagesListPanel(
 
   override fun dispose() {}
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun showSearchResult(installed: List<DisplayablePackage>, repoData: List<PyPackagesViewData>) {
     showPackageList()
     tablesView.showSearchResult(installed, repoData)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun resetSearch(installed: List<DisplayablePackage>, currentInterpreter: PythonInterpreter?) {
     showPackageList()
     tablesView.resetSearch(installed, currentInterpreter)
@@ -97,12 +97,12 @@ internal class PyPackagesListPanel(
     tablesView.collapseAll()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun showNoSdkMessage() {
     setContentPanel(noSdkPanel)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun showNoPackagesMessage() {
     setContentPanel(noPackagesPanel)
   }
@@ -112,7 +112,7 @@ internal class PyPackagesListPanel(
    *
    * [actions] become links under the reason, in the order given.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun showPackagesUnavailableMessage(description: @Nls String, actions: List<PackagesUnavailableAction>) {
     packagesUnavailablePanel.emptyText.apply {
       clear()

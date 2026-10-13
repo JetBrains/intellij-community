@@ -41,10 +41,10 @@ interface TerminalPromptModel : Disposable {
   /**
    * Clears the document modifications history, so it is no more possible to Undo/Redo the changes made before this call.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun resetChangesHistory()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun setErrorDescription(errorDescription: TerminalPromptErrorDescription?)
 
   fun addErrorStateListener(listener: TerminalPromptErrorStateListener, parentDisposable: Disposable)

@@ -147,7 +147,7 @@ suspend fun <T> tryWithSdkConfigurationLock(
  * throws [IllegalStateException] if the lock is already held (see [withSdkConfigurationLock]).
  */
 @ApiStatus.Internal
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 @RequiresBlockingContext
 fun <T> runWithSdkConfigurationLock(
   project: Project,

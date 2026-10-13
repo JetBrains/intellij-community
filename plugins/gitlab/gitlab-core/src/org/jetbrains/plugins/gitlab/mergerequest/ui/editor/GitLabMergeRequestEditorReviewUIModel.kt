@@ -185,7 +185,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     gotoComment(noteId)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun gotoComment(threadId: String) {
     val (change, unmappedLine) = fileVm.getThreadPosition(threadId) ?: return
 

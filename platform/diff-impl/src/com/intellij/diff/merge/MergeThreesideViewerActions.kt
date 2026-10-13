@@ -66,7 +66,7 @@ internal abstract class ApplySelectedChangesActionBase protected constructor(
     })
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected open fun getSelectedChanges(side: ThreeSide): List<TextMergeChange> {
     val editor = viewer.getEditor(side)
     val lines = DiffUtil.getSelectedLines(editor)

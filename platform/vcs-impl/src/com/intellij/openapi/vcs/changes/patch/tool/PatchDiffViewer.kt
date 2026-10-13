@@ -131,7 +131,7 @@ internal class PatchDiffViewer(
     editor.getGutterComponentEx().revalidateMarkup()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun createToolbarActions(): List<AnAction> {
     return buildList {
       add(ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_TOOLBAR))

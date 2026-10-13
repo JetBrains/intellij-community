@@ -51,7 +51,7 @@ interface CommitMessageUi : TextAccessor {
 }
 
 fun interface CommitMessageListener : EventListener {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun onTextChanged(text: String)
 }
 

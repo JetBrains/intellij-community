@@ -39,7 +39,7 @@ internal class GradientTextureCache(
     })
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getTexture(graphics: Graphics2D, width: Int): Paint? {
     val realWidth = floor(JBUIScale.sysScale(graphics) * width).toInt()
     if (realWidth != texture?.image?.width) {

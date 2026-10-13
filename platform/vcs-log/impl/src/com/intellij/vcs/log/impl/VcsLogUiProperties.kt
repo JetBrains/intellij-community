@@ -8,21 +8,21 @@ import org.jetbrains.annotations.NonNls
 import java.util.EventListener
 
 interface VcsLogUiProperties {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   operator fun <T> get(property: VcsLogUiProperty<T>): T
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   operator fun <T> set(property: VcsLogUiProperty<T>, value: T)
 
   fun <T> exists(property: VcsLogUiProperty<T>): Boolean
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun addChangeListener(listener: PropertiesChangeListener)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun addChangeListener(listener: PropertiesChangeListener, parent: Disposable)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun removeChangeListener(listener: PropertiesChangeListener)
 
   open class VcsLogUiProperty<T>(val name: @NonNls String) {

@@ -94,7 +94,7 @@ open class LookupManagerImpl(private val myProject: Project) : LookupManager() {
     return if (lookup.showLookup()) lookup else null
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun createLookup(editor: Editor,
                             items: Array<LookupElement>,
                             prefix: String,

@@ -253,7 +253,7 @@ class ChangeListManagerImpl(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun deleteEmptyChangeLists() {
     val config = VcsConfiguration.getInstance(project)
 
@@ -300,12 +300,12 @@ class ChangeListManagerImpl(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun blockModalNotifications() {
     modalNotificationsBlocked = true
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun unblockModalNotifications() {
     modalNotificationsBlocked = false
     deleteEmptyChangeLists()
@@ -1125,7 +1125,7 @@ class ChangeListManagerImpl(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun updateChangeListAvailability() {
     if (project.isDisposed()) return
 

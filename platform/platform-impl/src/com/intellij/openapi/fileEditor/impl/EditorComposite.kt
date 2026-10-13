@@ -369,7 +369,7 @@ open class EditorComposite internal constructor(
   }
 
   // for remote dev - we don't care about performance for now
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun blockingHandleModel(model: EditorCompositeModel) {
     val fileEditorWithProviders = model.fileEditorAndProviderList
     fileEditorWithProviders.assignEditorProperties()
@@ -400,7 +400,7 @@ open class EditorComposite internal constructor(
   }
 
   // for remote dev - we don't care about performance for now
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun blockingHandleModel2(model: EditorCompositeModel) {
     val fileEditorWithProviders = model.fileEditorAndProviderList
     fileEditorWithProviders.assignEditorProperties()
@@ -444,7 +444,7 @@ open class EditorComposite internal constructor(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private suspend fun applyFileEditorsInEdtWithSpans(
     fileEditorWithProviders: List<FileEditorWithProvider>,
     states: List<FileEditorState?>,
@@ -468,7 +468,7 @@ open class EditorComposite internal constructor(
     setFileEditorsInEdt(fileEditorWithProviders = fileEditorWithProviders, selectedEditor = fileEditorWithProviderToSelect)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun applyFileEditorsInEdt(
     fileEditorWithProviders: List<FileEditorWithProvider>,
     states: List<FileEditorState?>,
@@ -483,7 +483,7 @@ open class EditorComposite internal constructor(
     setFileEditorsInEdt(fileEditorWithProviders = fileEditorWithProviders, selectedEditor = fileEditorWithProviderToSelect)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun restoreEditorStatesInEdt(fileEditorWithProviders: List<FileEditorWithProvider>, states: List<FileEditorState?>) =
     WriteIntentReadAction.run {
       for ((index, fileEditorWithProvider) in fileEditorWithProviders.withIndex()) {
@@ -496,7 +496,7 @@ open class EditorComposite internal constructor(
       }
     }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun setEditorComponentInEdt(
     fileEditorWithProviders: List<FileEditorWithProvider>,
     selectedFileEditorProvider: FileEditorProvider?,
@@ -522,7 +522,7 @@ open class EditorComposite internal constructor(
     return fileEditorWithProviderToSelect
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun validateEditorComponentInEdt() = WriteIntentReadAction.run {
     computeOrLogException(
       lambda = {
@@ -535,7 +535,7 @@ open class EditorComposite internal constructor(
     )
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun selectEditorInEdt(fileEditorWithProviderToSelect: FileEditorWithProvider?) = WriteIntentReadAction.run {
     computeOrLogException(
       lambda = { fileEditorWithProviderToSelect?.fileEditor?.selectNotify() },
@@ -543,7 +543,7 @@ open class EditorComposite internal constructor(
     )
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun setFileEditorsInEdt(fileEditorWithProviders: List<FileEditorWithProvider>, selectedEditor: FileEditorWithProvider?) =
     WriteIntentReadAction.run {
       // Only after applyFileEditorsInEdt - for external clients composite API should use _actual_ _applied_ state, not intermediate.
@@ -754,7 +754,7 @@ open class EditorComposite internal constructor(
     manageTopOrBottomComponent(editor = editor, component = component, top = false, remove = true)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun manageTopOrBottomComponent(editor: FileEditor, component: JComponent, top: Boolean, remove: Boolean) {
     val container = (if (top) topComponents.get(editor) else bottomComponents.get(editor))!!
     val uICustomization = InternalUICustomization.getInstance()
@@ -903,7 +903,7 @@ open class EditorComposite internal constructor(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun addEditor(editor: FileEditor, provider: FileEditorProvider) {
     val editorWithProvider = FileEditorWithProvider(editor, provider)
     fileEditorWithProviders.update { it + editorWithProvider }
@@ -939,7 +939,7 @@ open class EditorComposite internal constructor(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun removeEditor(editorTypeId: String) {
     val fileEditorWithProviderList = fileEditorWithProviders
     val oldList = fileEditorWithProviderList.value
@@ -1270,7 +1270,7 @@ private fun isDumbAware(editor: FileEditor): Boolean {
   return editor.getUserData(FileEditorManagerKeys.DUMB_AWARE) == true && (editor !is PossiblyDumbAware || (editor as PossiblyDumbAware).isDumbAware)
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 internal fun focusEditorOnComposite(
   composite: EditorComposite,
   splitters: EditorsSplitters,

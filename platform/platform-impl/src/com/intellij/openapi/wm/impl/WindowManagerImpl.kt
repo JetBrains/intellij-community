@@ -321,7 +321,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun releaseFrame(releasedFrameHelper: ProjectFrameHelper) {
     val project = releasedFrameHelper.project
     if (project != null) {

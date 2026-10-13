@@ -216,6 +216,6 @@ abstract class AbstractMavenImportingTest(
     TestFile(it.name.removePrefix(prefix), it.content)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected abstract fun doTestAction(mainFile: TestFile)
 }

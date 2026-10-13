@@ -20,7 +20,7 @@ class SimpleDiffVirtualFile(val request: DiffRequest) : DiffVirtualFile(DiffBund
     val request: DiffRequest
   ) : DiffRequestProcessor(project) {
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     @Synchronized
     override fun updateRequest(force: Boolean, scrollToChangePolicy: DiffUserDataKeysEx.ScrollToPolicy?) {
       applyRequest(request, force, scrollToChangePolicy)

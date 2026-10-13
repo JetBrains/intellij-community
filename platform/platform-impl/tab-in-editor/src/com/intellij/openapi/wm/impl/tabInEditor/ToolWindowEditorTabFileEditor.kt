@@ -70,7 +70,7 @@ internal class ToolWindowEditorTabFileEditor(
   /**
    * Puts the session component into [wrapper], and restores the content first if it is not restored yet.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun initContent(wrapper: Wrapper) {
     val session = tabManager.getOrRestoreSession(file)
     if (session == null) {

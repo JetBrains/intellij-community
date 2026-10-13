@@ -9,24 +9,24 @@ import org.jetbrains.annotations.ApiStatus
 interface CodeReviewNavigableEditorViewModel {
   val canNavigate: Boolean
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun canGotoNextComment(threadId: String): Boolean
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun canGotoNextComment(line: Int): Boolean
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun canGotoPreviousComment(threadId: String): Boolean
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun canGotoPreviousComment(line: Int): Boolean
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun gotoNextComment(threadId: String)
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun gotoNextComment(line: Int)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun gotoPreviousComment(threadId: String)
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun gotoPreviousComment(line: Int)
 
   companion object {

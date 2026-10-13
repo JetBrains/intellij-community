@@ -54,7 +54,7 @@ interface ErrorNotifier {
   @CalledInAny
   fun showError(@Nls(capitalization = Sentence) text: String)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun executeTask(@Nls(capitalization = Title) title: String, cancellable: Boolean, action: () -> Unit)
 
   @CalledInAny

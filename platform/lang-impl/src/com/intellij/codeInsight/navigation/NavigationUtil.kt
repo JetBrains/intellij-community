@@ -764,7 +764,7 @@ private data class NavigationSnapshot(
   }
 
   companion object {
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun capture(project: Project): NavigationSnapshot {
       val fem = FileEditorManager.getInstance(project)
       val editor = fem.selectedTextEditor

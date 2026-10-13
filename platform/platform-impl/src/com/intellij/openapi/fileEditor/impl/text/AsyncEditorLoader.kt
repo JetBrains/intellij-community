@@ -150,7 +150,7 @@ class AsyncEditorLoader internal constructor(
 
   // executed in the same EDT task where TextEditorImpl is created
   @Internal
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun start(textEditor: TextEditorImpl, task: Deferred<*>) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       startInTests(task = task)
@@ -230,7 +230,7 @@ class AsyncEditorLoader internal constructor(
     return provider.getStateImpl(project, editor, level)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun setEditorState(state: TextEditorState, exactState: Boolean, editor: EditorEx) {
     provider.setStateImpl(project = project, editor = editor, state = state, exactState = exactState)
 
@@ -252,7 +252,7 @@ class AsyncEditorLoader internal constructor(
 
 private class DelayedScrollState(@JvmField val relativeCaretPosition: Int, @JvmField val exactState: Boolean)
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun restoreCaretPosition(editor: EditorEx, delayedScrollState: DelayedScrollState, coroutineScope: CoroutineScope) {
   EditorUtil.runWhenViewportReady(editor, coroutineScope) {
     scrollToCaret(

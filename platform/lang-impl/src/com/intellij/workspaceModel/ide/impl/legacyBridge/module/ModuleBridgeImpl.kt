@@ -190,7 +190,7 @@ open class ModuleBridgeImpl(
     }
 
     // separate method to see it in a profiler
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     private fun doInitFacetsInEdt(
       modules: Collection<Pair<ModuleEntity, ModuleBridge>>,
       facetManagerFactory: FacetManagerFactory,

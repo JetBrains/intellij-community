@@ -42,10 +42,10 @@ value class InlineEditRequestJob(private val job: Job) : Disposable {
 @ApiStatus.Internal
 sealed interface InlineEditRequestExecutor : Disposable {
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun switchRequest(onJobCreated: (InlineEditRequestJob) -> Unit, newRequest: suspend CoroutineScope.() -> Unit)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun cancelActiveRequest()
 
   suspend fun awaitActiveRequest()
@@ -103,7 +103,7 @@ private class InlineEditRequestExecutorImpl(parentScope: CoroutineScope) : Inlin
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun switchRequest(onJobCreated: (InlineEditRequestJob) -> Unit, newRequest: suspend CoroutineScope.() -> Unit) {
     ThreadingAssertions.assertEventDispatchThread()
     if (checkNotCancelled()) {

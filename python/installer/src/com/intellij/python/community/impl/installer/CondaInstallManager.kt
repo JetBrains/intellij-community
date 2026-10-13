@@ -84,7 +84,7 @@ object CondaInstallManager {
     Product.Anaconda to listOf(WindowsInstaller("%UserProfile%\\anaconda3"), shellScriptInstaller, applePkgInstaller),
   )
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun installLatest(project: Project?, product: Product = Product.Miniconda) {
     val latestRelease = SdksKeeper.condaReleases(product).firstOrNull()
                         ?: error("There is no available conda releases of the product $product")

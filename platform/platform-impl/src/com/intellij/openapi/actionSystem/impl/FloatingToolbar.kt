@@ -110,13 +110,13 @@ abstract class FloatingToolbar(
     return hint?.isVisible == true
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun hide() {
     hint?.hide()
     hint = null
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private suspend fun showIfHidden() {
     preventHintFromShowing = true
     val enabled = writeIntentReadAction(::isEnabled)
@@ -168,7 +168,7 @@ abstract class FloatingToolbar(
     check(hintRequests.tryEmit(HintRequest.Hide))
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun updateLocationIfShown() {
     hint?.let(::showHint)
   }

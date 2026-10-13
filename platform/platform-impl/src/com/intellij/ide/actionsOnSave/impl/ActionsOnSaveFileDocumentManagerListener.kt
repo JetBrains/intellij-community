@@ -77,7 +77,7 @@ class ActionsOnSaveFileDocumentManagerListener private constructor(private val p
      * Implementations don't need to save modified documents.
      * Note that the passed documents may be unsaved if already modified by some other save action.
      */
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     open fun processDocuments(project: Project, documents: Array<Document>) {
     }
   }
@@ -211,7 +211,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private suspend fun processSavedDocuments() {
     val documentsAndModStamps = filesToProcess.associate { file ->
       val document = FileDocumentManager.getInstance().getDocument(file)
@@ -258,7 +258,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
    * It's invoked in a background thread with a cancelable background progress bar.
    * This API is preferred for actions that update the saved file contents, for example, format files on save.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private suspend fun runActionsOnSave(projectDocuments: List<Document>) {
     val projectActionsOnSave = EP_NAME.extensionList.filter { it.isEnabledForProject(project) }
 

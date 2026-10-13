@@ -22,7 +22,7 @@ interface EditorTracker {
   @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   val activeEditors: List<Editor>
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @TestOnly
   fun setActiveEditorsInTests(editors: List<Editor>)
 }

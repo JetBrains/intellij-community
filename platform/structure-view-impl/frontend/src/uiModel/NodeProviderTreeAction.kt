@@ -24,13 +24,13 @@ class NodeProviderTreeAction(
   var nodesLoaded: Boolean = false
     private set
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun setNodesByParentId(nodesByParentId: Map<Int, List<StructureViewNode>>) {
     myNodesByParentId = nodesByParentId
     nodesLoaded = true
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun getNodes(parent: StructureUiTreeElement): List<StructureViewNode> {
     return myNodesByParentId[parent.id] ?: emptyList()
   }

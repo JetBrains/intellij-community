@@ -267,7 +267,7 @@ object AppUIUtil {
    * [com.intellij.ide.gdpr.showConsentsAgreementIfNeeded] instead of a direct call.
    */
   @Internal
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun showConsentsDialog(consents: ConsentsState): List<Consent>? {
     if (consents.allConsents.isEmpty()) {
       return null

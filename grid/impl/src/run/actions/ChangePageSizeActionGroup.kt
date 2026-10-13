@@ -107,7 +107,7 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
     return createCustomComponentForResultViewToolbar(this, presentation, place)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun updatePresentation(state: ChangePageSizeActionState, presentation: Presentation, settings: DataGridSettings?) {
     val oldState = getActionState(presentation)
     if (oldState == state) return

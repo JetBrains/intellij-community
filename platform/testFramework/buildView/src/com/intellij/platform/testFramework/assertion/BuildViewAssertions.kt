@@ -91,7 +91,7 @@ object BuildViewAssertions {
   fun assertBuildViewSelectionText(buildView: BuildView, nodeName: String, assert: (String) -> Unit): Unit =
     assertBuildViewSelectionText(buildView.treeConsoleView, nodeName, assert = assert)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun buildBuildViewTree(treeConsoleView: BuildTreeConsoleView): SimpleTree<BuildViewNodeContent> {
 
     treeConsoleView.addFilter(SUCCESSFUL_STEPS_FILTER)
@@ -101,7 +101,7 @@ object BuildViewAssertions {
       .mapTreeValues { BuildViewNodeContent(treeConsoleView, it.value) }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun getBuildViewNodeContent(
     treeConsoleView: BuildTreeConsoleView,
     nodeMatcher: NodeMatcher<BuildViewNodeContent>,

@@ -149,6 +149,6 @@ interface EndpointsDocumentationProvider<G : Any, E : Any, R : Any> : EndpointsP
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun prepareDocumentationRequest(group: G, endpoint: E): R?
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getEndpointDocumentation(request: R, parentDisposable: Disposable): JComponent?
 }

@@ -32,7 +32,7 @@ internal fun Content.setPendingTerminalTab(tab: TerminalSessionPersistedTab?) {
 /**
  * Builds this content into a usual terminal tab if it is a pending tab. Does nothing otherwise.
  */
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 internal fun Content.buildPendingTerminalTab(project: Project) {
   val storedTab = getPendingTerminalTab() ?: return
   // Remove the stored tab first, so a selection change during the build does not build the tab again.

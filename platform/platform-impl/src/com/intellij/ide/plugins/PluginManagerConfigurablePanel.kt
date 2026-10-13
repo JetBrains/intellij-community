@@ -176,7 +176,7 @@ class PluginManagerConfigurablePanel @RequiresEdt(generateAssertion = false /* I
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun createCardPanel(selectionTab: Int): MultiPanel {
     val cardPanel = object : MultiPanel() {
       override fun create(key: Int?): JComponent {
@@ -555,7 +555,7 @@ class PluginManagerConfigurablePanel @RequiresEdt(generateAssertion = false /* I
     updateSelectionTab(INSTALLED_TAB)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun onPluginInstalledFromDisk(callbackData: PluginInstallCallbackData) {
     PluginModelAsyncOperationsExecutor.updateErrors(
       coroutineScope,
@@ -676,7 +676,7 @@ class PluginManagerConfigurablePanel @RequiresEdt(generateAssertion = false /* I
       super.actionPerformed(e)
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     override fun onPluginInstalledFromDisk(callbackData: PluginInstallCallbackData, project: Project?) {
       if (pluginManagerCustomizer != null) {
         pluginManagerCustomizer.updateAfterModification {

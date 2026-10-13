@@ -342,7 +342,7 @@ class CodeFloatingToolbar(
     return disposable
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @ApiStatus.Internal
   fun cancelActivePopup() {
     activeMenuPopup?.cancel()

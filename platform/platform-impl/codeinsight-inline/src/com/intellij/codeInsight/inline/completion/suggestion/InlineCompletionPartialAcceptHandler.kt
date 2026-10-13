@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.NonExtendable
 interface InlineCompletionPartialAcceptHandler {
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @RequiresWriteLock
   fun insertNextWord(
     editor: Editor,
@@ -23,7 +23,7 @@ interface InlineCompletionPartialAcceptHandler {
     elements: List<InlineCompletionElement>
   ): List<InlineCompletionElement>
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @RequiresWriteLock
   fun insertNextLine(
     editor: Editor,

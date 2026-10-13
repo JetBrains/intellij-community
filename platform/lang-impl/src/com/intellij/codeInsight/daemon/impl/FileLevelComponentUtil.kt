@@ -15,7 +15,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun doAddFileLevelInfoComponent(
   info: HighlightInfo,
   psiFile: PsiFile,
@@ -35,7 +35,7 @@ fun doAddFileLevelInfoComponent(
   return component
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun doRemoveFileLevelInfoComponent(
   info: HighlightInfo,
   fileEditor: FileEditor,

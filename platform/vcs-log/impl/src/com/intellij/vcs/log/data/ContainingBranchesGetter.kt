@@ -54,7 +54,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun cache(commitId: CommitId, branches: List<String>, branchesChecksum: Int) {
     if (branchesChecksum == currentBranchesChecksum) {
       cache.put(commitId, branches)
@@ -62,7 +62,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun clearCache() {
     cache.invalidateAll()
     taskExecutor.clear()

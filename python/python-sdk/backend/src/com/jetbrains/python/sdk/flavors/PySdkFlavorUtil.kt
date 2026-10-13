@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NonNls
 internal fun getFileExecutionError(@NonNls fullPath: String, targetEnvConfig: TargetEnvironmentConfiguration?): @Nls String? =
   validateExecutableFile(ValidationRequest(fullPath, platformAndRoot = targetEnvConfig.getPlatformAndRoot()))?.message
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 internal fun getFileExecutionErrorOnEdt(@NonNls fullPath: String, targetEnvConfig: TargetEnvironmentConfiguration?): @Nls String? =
   runWithModalProgressBlocking(ModalTaskOwner.guess(), "...") {
     withContext(Dispatchers.IO) {

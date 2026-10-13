@@ -111,7 +111,7 @@ class StickyLinesCollector(private val project: Project, private val document: D
     return infos
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun applyLines(psiFile: PsiFile, lines: Collection<StickyLineInfo>) {
     ThreadingAssertions.assertEventDispatchThread()
 

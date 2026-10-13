@@ -81,7 +81,7 @@ interface CodeReviewChangeListViewModel {
 
   @ApiStatus.Experimental
   interface WithViewedState : WithDetails {
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean)
   }
 

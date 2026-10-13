@@ -23,7 +23,7 @@ class InlineCompletionState internal constructor() : Disposable {
     _elements.add(element)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun clear() {
     _elements.clear()
     Disposer.disposeChildren(elementsDisposable) { true }

@@ -19,7 +19,7 @@ interface XDebuggerExecutionPointManager {
 
   fun setExecutionPoint(mainSourcePosition: XSourcePosition?, alternativeSourcePosition: XSourcePosition?, isTopFrame: Boolean, navigationSourceKind: XSourceKind)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun isFullLineHighlighterAt(file: VirtualFile, line: Int, project: Project, isToCheckTopFrameOnly: Boolean): Boolean
 
   fun clearExecutionPoint()

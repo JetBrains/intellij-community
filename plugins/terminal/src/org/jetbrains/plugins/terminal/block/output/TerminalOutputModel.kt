@@ -32,34 +32,34 @@ interface TerminalOutputModel {
   /**
    * @param terminalWidth number of columns at the moment of block creation. It is used to properly position the right prompt.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createBlock(command: String?, prompt: TerminalPromptRenderingInfo?, terminalWidth: Int): CommandBlock
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun finalizeBlock(activeBlock: CommandBlock)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun removeBlock(block: CommandBlock)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun clearBlocks()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun trimOutput()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getHighlightings(block: CommandBlock): List<HighlightingInfo>
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun putHighlightings(block: CommandBlock, highlightings: List<HighlightingInfo>)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getHighlightingsSnapshot(): TerminalOutputHighlightingsSnapshot
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun setBlockInfo(block: CommandBlock, info: CommandBlockInfo)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getBlockInfo(block: CommandBlock): CommandBlockInfo?
 
   fun addListener(listener: TerminalOutputModelListener, disposable: Disposable? = null)
@@ -85,7 +85,7 @@ internal fun TerminalOutputModel.getByOffset(offset: Int): CommandBlock? {
   return blocks.find { offset in (it.startOffset..it.endOffset) }
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 internal fun TerminalOutputModel.getBlockBounds(block: CommandBlock): Rectangle {
   val topY = editor.offsetToXY(block.startOffset).y - TerminalUi.blockTopInset
   val bottomY = editor.offsetToXY(block.endOffset).y + editor.lineHeight + TerminalUi.blockBottomInset

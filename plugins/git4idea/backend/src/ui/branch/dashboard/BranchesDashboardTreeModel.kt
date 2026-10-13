@@ -195,7 +195,7 @@ abstract class BranchesDashboardTreeModelBase(
 
   protected abstract fun refreshTree()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected fun updateBranchesTree() {
     val forceReload = groupingConfig[GroupingKey.GROUPING_BY_REPOSITORY] == true
     val changed = reloadBranches(forceReload)

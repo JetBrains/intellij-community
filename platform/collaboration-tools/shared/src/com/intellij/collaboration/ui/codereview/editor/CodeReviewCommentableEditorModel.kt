@@ -6,20 +6,20 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 interface CodeReviewCommentableEditorModel {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun canCreateComment(lineIdx: Int): Boolean
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun requestNewComment(lineIdx: Int)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun cancelNewComment(lineIdx: Int) {}
 
   interface WithMultilineComments : CodeReviewCommentableEditorModel {
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun canCreateComment(lineRange: LineRange): Boolean
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun requestNewComment(lineRange: LineRange)
   }
 

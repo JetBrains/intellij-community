@@ -143,7 +143,7 @@ suspend fun <T> withModalProgress(
 }
 
 @RequiresBlockingContext
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun <T> runWithModalProgressBlocking(
   project: Project,
   title: @ModalProgressTitle String,

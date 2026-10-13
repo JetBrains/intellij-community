@@ -42,7 +42,7 @@ abstract class DeclarativeInlayRendererBase<Model>(
 
   abstract val presentationLists: List<InlayPresentationList>
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @ApiStatus.Internal
   abstract fun updateModel(newModel: Model)
 

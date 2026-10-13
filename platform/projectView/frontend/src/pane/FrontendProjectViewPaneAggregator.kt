@@ -133,7 +133,7 @@ internal class FrontendProjectViewPaneAggregator(
     }.distinctUntilChanged()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createPane(descriptor: ProjectViewPaneDescriptorImpl): FrontendProjectViewPane? {
     return when (descriptor.kind) {
       ProjectViewPaneKind.BACKEND -> TreeBasedFrontendProjectViewPane(project, descriptor)

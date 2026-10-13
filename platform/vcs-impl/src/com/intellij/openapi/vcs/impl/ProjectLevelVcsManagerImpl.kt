@@ -478,13 +478,13 @@ class ProjectLevelVcsManagerImpl(
   @CalledInAny
   fun isBackgroundTaskRunning(vararg keys: Any): Boolean = backgroundRunningTasks.contains(ActionKey(*keys))
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun startBackgroundTask(vararg keys: Any) {
     ThreadingAssertions.assertEventDispatchThread()
     LOG.assertTrue(backgroundRunningTasks.add(ActionKey(*keys)))
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun stopBackgroundTask(vararg keys: Any) {
     ThreadingAssertions.assertEventDispatchThread()
     LOG.assertTrue(backgroundRunningTasks.remove(ActionKey(*keys)))
@@ -614,7 +614,7 @@ class ProjectLevelVcsManagerImpl(
     VcsInitialization.getInstance(project).waitFinished()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun showUpdateProjectInfo(
     updatedFiles: UpdatedFiles?,
     displayActionName: String?,

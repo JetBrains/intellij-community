@@ -36,7 +36,7 @@ interface TerminalTypingTracker {
  */
 @ApiStatus.Internal
 interface TerminalTypingListener {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun onTypingEvent(event: TerminalTypingEvent)
 }
 

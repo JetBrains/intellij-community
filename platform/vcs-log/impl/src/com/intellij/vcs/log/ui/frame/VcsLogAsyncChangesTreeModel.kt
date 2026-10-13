@@ -82,7 +82,7 @@ class VcsLogAsyncChangesTreeModel(
 
   var isShowChangesFromParents: Boolean
     get() = _isShowChangesFromParents
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     set(value) {
       if (uiProperties[MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS] != value) {
         uiProperties[MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS] = value
@@ -99,7 +99,7 @@ class VcsLogAsyncChangesTreeModel(
     }
   var isShowOnlyAffectedChanges: Boolean
     get() = _isShowOnlyAffectedChanges
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     set(value) {
       if (uiProperties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] != value) {
         uiProperties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] = value

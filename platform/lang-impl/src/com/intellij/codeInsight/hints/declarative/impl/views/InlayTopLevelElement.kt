@@ -25,7 +25,7 @@ import java.awt.geom.Rectangle2D
  */
 @ApiStatus.Internal
 interface InlayTopLevelElement<Model> : Invalidable, InlayElementWithMargins<InlayTextMetricsStorage> {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun paint(
     inlay: Inlay<*>,
     g: Graphics2D,
@@ -34,16 +34,16 @@ interface InlayTopLevelElement<Model> : Invalidable, InlayElementWithMargins<Inl
     textMetricsStorage: InlayTextMetricsStorage,
   )
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun findEntryAtPoint(pointInsideInlay: Point, textMetricsStorage: InlayTextMetricsStorage): CapturedPointInfo?
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun updateModel(newModel: Model)
 }
 
 @ApiStatus.Internal
 interface Invalidable {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun invalidate()
 }
 

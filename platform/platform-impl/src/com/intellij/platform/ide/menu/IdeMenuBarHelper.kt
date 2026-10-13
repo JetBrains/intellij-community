@@ -197,7 +197,7 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
     return focusedWindow !is Dialog || !focusedWindow.isModal
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   final override fun updateMenuActions(forceRebuild: Boolean) {
     if (forceRebuild && LOG.isDebugEnabled) {
       LOG.debug(Throwable("Force rebuild menu bar"))
@@ -205,7 +205,7 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
     check(updateRequests.tryEmit(forceRebuild))
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected abstract suspend fun doUpdateVisibleActions(newVisibleActions: List<ActionGroup>, forceRebuild: Boolean)
 }
 

@@ -49,7 +49,7 @@ internal class IdeVcsLogManager(
   private val mainUiState = MutableStateFlow<MainVcsLogUi?>(null)
   val mainUi: MainVcsLogUi? get() = mainUiState.value
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createUi() {
     mainUiCs = cs.childScope("UI scope of $name", Dispatchers.UiImmediate)
 
@@ -72,7 +72,7 @@ internal class IdeVcsLogManager(
     tabsManager.createTabs()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun runInMainUi(consumer: (MainVcsLogUi) -> Unit) {
     val toolWindow = VcsLogContentUtil.getToolWindow(project)
     if (toolWindow == null) {
@@ -97,12 +97,12 @@ internal class IdeVcsLogManager(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun openNewLogTab(location: VcsLogTabLocation, filters: VcsLogFilterCollection): MainVcsLogUi {
     return tabsManager.openAnotherLogTab(filters, location)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun openNewLogTab(filters: VcsLogFilterCollection): MainVcsLogUi {
     return tabsManager.openAnotherLogTab(filters, VcsLogTabLocation.TOOL_WINDOW)
   }
@@ -280,7 +280,7 @@ internal class IdeVcsLogManager(
     return ui
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun disposeUi() {
     Disposer.dispose(tabsManager)
     mainUiCs.cancel()

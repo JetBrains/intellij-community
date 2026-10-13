@@ -78,13 +78,13 @@ interface LangSupport {
    * @throws NoSdkException in the case no valid SDK is available, yet it's required for the given project
    */
   @Throws(NoSdkException::class)
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk?
 
   /**
    * [sdk] is from [getSdkForProject]
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun applyProjectSdk(sdk: Sdk, project: Project)
 
   fun applyToProjectAfterConfigure(): (Project) -> Unit

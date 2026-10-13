@@ -22,7 +22,7 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
     return _groupingKeys.contains(groupingKey)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   operator fun set(groupingKey: String, state: Boolean) {
     if (!isAvailable(groupingKey)) throw IllegalArgumentException("Unknown grouping $groupingKey") // NON-NLS
 
@@ -43,14 +43,14 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
   val isNone: Boolean get() = _groupingKeys.isEmpty()
   val isDirectory: Boolean get() = this[DIRECTORY_GROUPING]
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun setGroupingKeysOrSkip(newGroupingKeys: Collection<String>) {
     _groupingKeys.clear()
     _groupingKeys += newGroupingKeys.filter { groupingKey -> isAvailable(groupingKey) }
   }
 
   @ApiStatus.Internal
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun setGroupingKeys(groupingKeys: Collection<String>) {
     val oldGroupingKeys = _groupingKeys.toSet()
     setGroupingKeysOrSkip(groupingKeys)

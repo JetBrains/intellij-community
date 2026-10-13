@@ -93,7 +93,7 @@ internal class CherryPickedCommitsHighlighter(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun startTask(dataPack: VcsLogDataPack, branchToCompare: String) {
     ThreadingAssertions.assertEventDispatchThread()
     if (comparedBranch != null) {
@@ -112,14 +112,14 @@ internal class CherryPickedCommitsHighlighter(
     startTask(dataPack)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun stopTaskAndUnhighlight() {
     ThreadingAssertions.assertEventDispatchThread()
     stopTask()
     unhighlight()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun hasHighlightingOrInProgress(): Boolean {
     ThreadingAssertions.assertEventDispatchThread()
     return comparedBranch != null

@@ -140,7 +140,7 @@ private class InputTextEchoer(val outputModel: MutableTerminalOutputModelImpl, v
   private val lineBuffer: StringBuilder = StringBuilder()
   private val jobs: MutableList<Job> = CopyOnWriteArrayList()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun echo(textChunk: String) {
     check(!textChunk.contains('\n'))
     lineBuffer.append(textChunk)

@@ -499,10 +499,10 @@ abstract class DumbService {
    * @see [DUMB_MODE]
    */
   interface DumbModeListener {
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun enteredDumbMode() {}
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun exitDumbMode() {}
   }
 

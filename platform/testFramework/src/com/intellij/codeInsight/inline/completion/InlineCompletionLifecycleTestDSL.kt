@@ -280,7 +280,7 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @ICAssert
   suspend fun assertContextExists(): InlineCompletionContext = withContext(Dispatchers.EDT) {
     val contextOrNull = InlineCompletionContext.getOrNull(fixture.editor)

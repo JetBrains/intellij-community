@@ -113,7 +113,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     return dataSupplier.get()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun createLogTabAndCalculateIfRangesAreReachable(
     dataPack: VcsLogGraphData,
     logManager: VcsLogManager,

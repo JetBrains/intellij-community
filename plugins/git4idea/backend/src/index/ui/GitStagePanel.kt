@@ -229,7 +229,7 @@ internal class GitStagePanel(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun update() {
     if (commitWorkflowHandler.workflow.isExecuting) {
       hasPendingUpdates = true

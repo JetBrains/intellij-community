@@ -70,7 +70,7 @@ open class ShowIntentionActionsHandler : CodeInsightActionHandler {
   companion object {
     @ApiStatus.Internal
     @JvmStatic
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun calcCachedIntentions(
       project: Project,
       editor: Editor,

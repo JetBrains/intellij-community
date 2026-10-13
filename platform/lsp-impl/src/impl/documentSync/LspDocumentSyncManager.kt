@@ -230,7 +230,7 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
    *
    * Full `DidChangeTextDocumentParams` can only be calculated *after* the document mutation, because it needs the new text.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun onDocumentChanged(event: DocumentEvent, file: VirtualFile) {
     if (client.textDocumentSyncKind == TextDocumentSyncKind.Full && isFileOpened(file)) {
       client.documentMapping.getAdapterForFile(file).sendDidChangeFull(client, file, event.document)

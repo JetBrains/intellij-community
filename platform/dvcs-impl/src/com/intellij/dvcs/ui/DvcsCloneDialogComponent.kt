@@ -123,10 +123,10 @@ abstract class DvcsCloneDialogComponent @ApiStatus.Internal constructor(
 
   override fun dispose() {}
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected open fun isOkActionEnabled(): Boolean = getUrl().isNotBlank()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected fun updateOkActionState(dialogStateListener: VcsCloneDialogComponentStateListener) {
     dialogStateListener.onOkActionEnabled(isOkActionEnabled())
   }

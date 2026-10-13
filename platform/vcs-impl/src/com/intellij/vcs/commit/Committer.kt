@@ -97,22 +97,22 @@ abstract class Committer(
 }
 
 interface CommitterResultHandler : EventListener {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun onSuccess() {
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun onCancel() {
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun onFailure() {
   }
 
   /**
    * 'onFinally' that might be delayed until VFS/CLM refreshes are done.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun onAfterRefresh() {
   }
 }

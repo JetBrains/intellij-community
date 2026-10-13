@@ -64,7 +64,7 @@ interface Elf {
    * This method is not gated by [ElfFeatureFlag]; the caller is responsible for
    * checking [ElfFeatureFlag.isEnabled] before entering the scope.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun <T> withElfScope(@RequiresEdt action: () -> T): T
 
   /**

@@ -94,7 +94,7 @@ class EditorCodeVisionContext(
     _extensions.add(extension)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun notifyPendingLenses() {
     EditorThreading.assertInteractionAllowed()
     if (!hasPendingLenses) {
@@ -108,13 +108,13 @@ class EditorCodeVisionContext(
   val hasAnyPendingLenses: Boolean
     get() = hasPendingLenses || extensions.any { it.hasAnyPendingLenses }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun setZombieResults(lenses: List<Pair<TextRange, CodeVisionEntry>>) {
     zombies = lenses.filter { (range, _) -> range.isValidFor(editor.document) }.toList()
     setResults(zombies)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun setResults(lenses: List<Pair<TextRange, CodeVisionEntry>>) {
     ThreadingAssertions.assertEventDispatchThread()
     LOG.trace("Have new lenses ${lenses.size}")

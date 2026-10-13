@@ -243,10 +243,10 @@ interface BranchesDashboardTreeSelectionHandler {
   @set:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   var selectionAction: SelectionAction?
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun filterBy(branches: List<String>, repositories: Set<GitRepository> = emptySet())
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun navigateTo(navigatable: VcsLogNavigatable, focus: Boolean)
 
   /**

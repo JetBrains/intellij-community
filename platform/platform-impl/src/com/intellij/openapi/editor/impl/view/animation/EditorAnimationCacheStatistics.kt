@@ -19,19 +19,19 @@ object EditorAnimationCacheStatistics {
   private val misses = IntArray(STATISTICS_BUCKET_COUNT)
   private val stamps = arrayOfNulls<AnimationTimeMark>(STATISTICS_BUCKET_COUNT)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun recordHit(): Boolean {
     hits[bucketAt()]++
     return true
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun recordMiss(): Boolean {
     misses[bucketAt()]++
     return false
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun hitRate(): CacheHitRate? {
     val elapsedBuckets = currentBucket()
     val newest = currentStamp(elapsedBuckets)

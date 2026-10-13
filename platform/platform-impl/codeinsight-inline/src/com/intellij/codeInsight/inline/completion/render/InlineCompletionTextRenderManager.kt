@@ -547,7 +547,7 @@ class InlineCompletionTextRenderManager private constructor(
     }
 
     @ApiStatus.Experimental
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     internal fun render(
       editor: Editor,
       text: String,
@@ -574,7 +574,7 @@ class InlineCompletionTextRenderManager private constructor(
     }
 
     @ApiStatus.Internal
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun requestRerendering(editor: Editor) {
       ThreadingAssertions.assertEventDispatchThread()
       val storage = editor.getUserData(STORAGE_KEY) ?: return

@@ -235,7 +235,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   private fun needScheduleEvaluation(): Boolean = !isDone && !PowerSaveMode.isEnabled()
 
   @VisibleForTesting
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun scheduleEvaluation(component: Component?, x: Int, y: Int): Job? {
     // It is important to extract the repaint target here:
     // the component may be a temporary component used by some list or tree to paint elements

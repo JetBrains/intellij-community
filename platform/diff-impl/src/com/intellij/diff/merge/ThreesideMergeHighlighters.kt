@@ -39,7 +39,7 @@ class ThreesideMergeHighlighters(
       installInnerHighlighters()
     }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun reinstallAll() {
     destroyHighlighters()
     installHighlighters()

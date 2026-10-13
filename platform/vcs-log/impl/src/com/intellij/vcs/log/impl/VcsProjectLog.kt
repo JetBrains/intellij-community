@@ -53,7 +53,7 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
   /**
    * Open a new log tab with the given filters applied.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   open fun openLogTab(filters: VcsLogFilterCollection): MainVcsLogUi? = null
 
   /**
@@ -109,10 +109,10 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
   internal abstract suspend fun invalidateCaches()
 
   interface ProjectLogListener {
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun logCreated(manager: VcsLogManager)
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun logDisposed(manager: VcsLogManager)
   }
 
@@ -142,7 +142,7 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
     /**
      * @see VcsProjectLog.runWhenLogIsReady
      */
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun runWhenLogIsReady(project: Project, action: (VcsLogManager) -> Unit) {
       getInstance(project).runWhenLogIsReady(action)
     }
@@ -151,7 +151,7 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
      * @see VcsProjectLog.runInMainUi
      */
     @JvmStatic
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun runInMainLog(project: Project, @RequiresEdt consumer: (MainVcsLogUi) -> Unit) {
       if (!isAvailable(project)) {
         VcsLogContentUtil.showLogIsNotAvailableMessage(project)
@@ -162,7 +162,7 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
     }
 
     @JvmStatic
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun showRevisionInMainLog(project: Project, root: VirtualFile, hash: Hash) {
       if (!isAvailable(project)) return
       getInstance(project).showRevisionInMainLog(root, hash)
@@ -171,7 +171,7 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
     /**
      * Consider using [showRevisionInMainLog] when the root is known
      */
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     @JvmStatic
     fun showRevisionInMainLog(project: Project, hash: Hash) {
       if (!isAvailable(project)) return

@@ -134,7 +134,7 @@ class TerminalOutputScrollingModelImpl(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun scrollToCursor(force: Boolean) {
     if (force) {
       shouldScrollToCursor = true
@@ -145,7 +145,7 @@ class TerminalOutputScrollingModelImpl(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun scrollByLines(lines: Int) {
     val maxOffset = maxScrollOffset()
     // The top visual line shown when scrolled all the way down. Reaching it means "at the bottom" -> resume following.
@@ -171,7 +171,7 @@ class TerminalOutputScrollingModelImpl(
     editor.scrollingModel.scrollVertically(targetOffset)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun scrollByPages(pages: Int) {
     val pageLines = (editor.scrollingModel.visibleArea.height / editor.lineHeight).coerceAtLeast(1)
     scrollByLines(pageLines * pages)

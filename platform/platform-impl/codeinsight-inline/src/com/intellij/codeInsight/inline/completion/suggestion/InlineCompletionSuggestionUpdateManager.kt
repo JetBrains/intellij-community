@@ -44,7 +44,7 @@ interface InlineCompletionSuggestionUpdateManager {
    *
    * It is called on some event when inline completion variants are already provided and initialized (they may be not computed yet).
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun update(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult
 
   /**
@@ -58,7 +58,7 @@ interface InlineCompletionSuggestionUpdateManager {
    * `false` if the session should be invalidated and a new one should be started.
    */
   @ApiStatus.Experimental
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun updateWhileNoVariants(event: InlineCompletionEvent): Boolean {
     return event !is InlineCompletionEvent.DocumentChange && event !is InlineCompletionEvent.Backspace
   }
@@ -117,38 +117,38 @@ interface InlineCompletionSuggestionUpdateManager {
       }
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun onDocumentChange(event: InlineCompletionEvent.DocumentChange, variant: InlineCompletionVariant.Snapshot): UpdateResult = Invalidated
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun onDirectCall(event: InlineCompletionEvent.DirectCall, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun onLookupEvent(event: InlineCompletionEvent.InlineLookupEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
 
     @ApiStatus.Experimental
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun onBackspace(event: InlineCompletionEvent.Backspace, variant: InlineCompletionVariant.Snapshot): UpdateResult = Invalidated
 
     @ApiStatus.Experimental
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun onInsertNextWord(event: InlineCompletionEvent.InsertNextWord, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
 
     @ApiStatus.Experimental
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun onInsertNextLine(event: InlineCompletionEvent.InsertNextLine, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
 
     @ApiStatus.Experimental
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun onSuggestionInserted(event: InlineCompletionEvent.SuggestionInserted, variant: InlineCompletionVariant.Snapshot): UpdateResult {
       error("A session cannot be updated on the ${event::class.simpleName}, because this event destroyed the session.")
     }
 
     @ApiStatus.Experimental
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun onManualCall(event: InlineCompletionEvent.ManualCall, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     @ApiStatus.ScheduledForRemoval
     @Deprecated("Do not extend `InlineCompletionEvent`. Use `ManualCall` instead.")
     fun onCustomEvent(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same

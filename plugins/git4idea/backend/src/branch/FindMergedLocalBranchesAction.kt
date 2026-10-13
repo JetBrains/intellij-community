@@ -280,7 +280,7 @@ internal class FindMergedLocalBranchesAction : DumbAwareAction() {
   }
 
   @Suppress("SameParameterValue")
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun runInBackgroundWhenLogIsAvailable(
     project: Project,
     cs: CoroutineScope,

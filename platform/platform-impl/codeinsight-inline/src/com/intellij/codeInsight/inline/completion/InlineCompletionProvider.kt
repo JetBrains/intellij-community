@@ -90,7 +90,7 @@ interface InlineCompletionProvider {
    *
    * @return True if the feature is enabled for the event, false otherwise.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun isEnabled(event: InlineCompletionEvent): Boolean
 
   /**

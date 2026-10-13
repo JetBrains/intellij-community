@@ -97,7 +97,7 @@ class TerminalCommandCompletionService(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun invokeCompletion(
     terminalView: TerminalView,
     editor: Editor,
@@ -231,7 +231,7 @@ class TerminalCommandCompletionService(
    * Returns true if the cursor is at the same position and there is the same command text that was
    * at the initialization of the completion context.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun checkContextValid(context: TerminalCommandCompletionContext): Boolean {
     val outputModel = context.outputModel
     val activeBlock = context.shellIntegration.blocksModel.activeBlock as TerminalCommandBlock
@@ -247,7 +247,7 @@ class TerminalCommandCompletionService(
            && curCommandText == contextCommandText
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun createCompletionProcess(
     context: TerminalCommandCompletionContext,
     coroutineScope: CoroutineScope,
@@ -285,7 +285,7 @@ class TerminalCommandCompletionService(
     return model.getText(start, end).toString()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun obtainLookup(editor: Editor, project: Project, isAutoPopup: Boolean): LookupImpl {
     val existing = LookupManager.getActiveLookup(editor) as? LookupImpl
     if (existing != null && existing.isCompletion) {

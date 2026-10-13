@@ -33,7 +33,7 @@ internal object GitCheckoutInOtherWorktreeDialogs {
   }
 
   @JvmStatic
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun buildAndShow(
     project: Project,
     branchName: String,

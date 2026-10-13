@@ -349,7 +349,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
     job.start()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun updateNotification(fileEditor: FileEditor, provider: EditorNotificationProvider, component: JComponent?) {
     val panels = fileEditor.getUserData(EDITOR_NOTIFICATION_PROVIDER)
     val providerClass = provider.javaClass

@@ -27,7 +27,7 @@ internal class LegacyPluginRowFactory @RequiresEdt(generateAssertion = false /* 
   private val sectionContexts = HashMap<PluginSectionId, SectionContext>()
   private val eventHandler = UnifiedPluginRowEventHandler(onSelectionChanged, onKeyboardNavigation, onSelectAllRequested)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun specification(section: PluginSectionState, item: PluginItemState): PluginRowSpecification<Any> {
     val context = sectionContext(section)
     val model = requireNotNull(item.modelHandle) { "Plugin ${item.pluginId} has no model handle" }.model
@@ -41,7 +41,7 @@ internal class LegacyPluginRowFactory @RequiresEdt(generateAssertion = false /* 
     )
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun createRow(occurrenceId: PluginOccurrenceId, item: PluginItemState, renderKey: Any): PluginRow {
     val context = checkNotNull(sectionContexts[occurrenceId.sectionId]) {
       "Section ${occurrenceId.sectionId} must be prepared before creating rows"
@@ -67,7 +67,7 @@ internal class LegacyPluginRowFactory @RequiresEdt(generateAssertion = false /* 
     return LegacyPluginRow(component, eventHandler, host)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun rowsRendered(bindings: List<PluginRowBinding<PluginRow>>) {
     bindings.forEach { binding ->
       val row = binding.row as LegacyPluginRow

@@ -69,7 +69,7 @@ class TestDiffContent(
       super.startListen()
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     private fun replaceString(document: Document, newText: CharSequence) {
       try {
         myDuringModification = true

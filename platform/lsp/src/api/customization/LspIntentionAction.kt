@@ -118,7 +118,7 @@ open class LspIntentionAction(protected val lspClient: LspClient, private val in
    * Make sure to call [isAvailable] before calling [invoke],
    * otherwise the auxiliary [uriToDocumentMap] will be not ready and the `CodeAction` will not be applied.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun invoke(contextFile: VirtualFile?) {
     val uriToDocumentMap = this.uriToDocumentMap ?: return
     val files = uriToDocumentMap.map { FileDocumentManager.getInstance().getFile(it.value) }

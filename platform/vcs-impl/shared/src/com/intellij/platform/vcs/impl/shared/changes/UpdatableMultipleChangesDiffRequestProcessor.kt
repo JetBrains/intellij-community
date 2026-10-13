@@ -31,14 +31,14 @@ abstract class UpdatableMultipleChangesDiffRequestProcessor(
    * The 0-based position of the change that the processor shows now among the changes that the diff toolbar reaches.
    * The value is `-1` if the position is unknown.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   abstract fun getCurrentChangeIndex(): Int
 
   /**
    * The paths of all the changes that the processor can show, in navigation order.
    * The value is `null` if the processor cannot list its changes.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   open fun getAllChangePaths(): List<FilePath>? = null
 
   /**

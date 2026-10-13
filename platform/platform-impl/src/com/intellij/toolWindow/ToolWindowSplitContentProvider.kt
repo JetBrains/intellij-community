@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 interface ToolWindowSplitContentProvider {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createContentCopy(project: Project, content: Content): Content
 }
 

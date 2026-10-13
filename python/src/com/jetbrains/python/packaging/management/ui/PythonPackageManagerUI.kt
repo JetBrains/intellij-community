@@ -174,7 +174,7 @@ class PythonPackageManagerUI private constructor(
    *
    * @return list of all installed packages after installation, or null if the operation failed
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @RequiresBlockingContext
   @ApiStatus.Experimental
   fun installPackagesWithModalProgressBlocking(vararg packages: String): List<PythonPackage>? {
@@ -209,7 +209,7 @@ class PythonPackageManagerUI private constructor(
      */
     @JvmStatic
     @ApiStatus.Internal
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun installPackagesWithModalProgressBlocking(project: Project, sdk: Sdk, vararg packages: String): List<PythonPackage>? {
       val interpreter = runWithModalProgressBlocking(project, PyBundle.message("python.packaging.installing.packages")) {
         val result = sdk.pythonInterpreterResultAsync()

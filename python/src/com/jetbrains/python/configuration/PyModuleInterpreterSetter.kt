@@ -20,7 +20,7 @@ import com.jetbrains.python.sdk.runWithSdkConfigurationLock
  * [setPythonInterpreter] for the Java Settings page, which applies on the EDT and cannot suspend. It runs under a modal
  * progress and the configuration lock. Settings does not read the snapshot back, so it does not wait for it.
  */
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 internal fun setPythonInterpreterBlocking(module: Module, sdk: Sdk?) {
   runWithSdkConfigurationLock(module.project) {
     // A broken SDK names no interpreter, so the module gets none, as for no SDK.

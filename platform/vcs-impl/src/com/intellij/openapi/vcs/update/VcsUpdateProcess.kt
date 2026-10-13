@@ -30,7 +30,7 @@ private val LOG = logger<VcsUpdateProcess>()
 
 @ApiStatus.Experimental
 object VcsUpdateProcess {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun launchUpdate(
     project: Project,
     actionInfo: ActionInfo,
@@ -44,7 +44,7 @@ object VcsUpdateProcess {
   }
 
   @ApiStatus.Internal
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun launchUpdate(
     project: Project,
     actionInfo: ActionInfo,
@@ -76,7 +76,7 @@ object VcsUpdateProcess {
    * Remote Branch"). Returns the roots and spec for [update], or null when there is nothing to update or the user canceled.
    */
   @ApiStatus.Internal
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun prepareUpdate(
     project: Project,
     actionInfo: ActionInfo,
@@ -216,7 +216,7 @@ object VcsUpdateProcess {
   }
 
   @ApiStatus.Internal
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun showOptionsDialog(
     project: Project,
     actionInfo: ActionInfo,

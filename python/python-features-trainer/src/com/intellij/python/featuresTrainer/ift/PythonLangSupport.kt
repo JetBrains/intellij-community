@@ -68,7 +68,7 @@ internal class PythonLangSupport(private val errorSink: ErrorSink = ErrorSink())
   }
 
   @Throws(NoSdkException::class)
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk = runWithSdkConfigurationLock(project) {
     when (val r = createVenvAndSdk(ModuleOrProject.ProjectOnly(project))) {
       is Result.Failure -> {
@@ -80,7 +80,7 @@ internal class PythonLangSupport(private val errorSink: ErrorSink = ErrorSink())
   }
 
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun applyProjectSdk(sdk: Sdk, project: Project) {
   }
 

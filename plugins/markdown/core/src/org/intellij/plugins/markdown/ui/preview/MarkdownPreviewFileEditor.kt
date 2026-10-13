@@ -235,7 +235,7 @@ class MarkdownPreviewFileEditor(
     return preferredProvider
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun updateHtml() {
     cancelHtmlUpdate()
     startHtmlUpdate()
@@ -297,7 +297,7 @@ class MarkdownPreviewFileEditor(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun detachHtmlPanel() {
     val panel = this.panel
     if (panel != null) {
@@ -308,7 +308,7 @@ class MarkdownPreviewFileEditor(
     putUserData(PREVIEW_BROWSER, null)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun attachHtmlPanel() {
     ThreadingAssertions.assertEventDispatchThread()
 

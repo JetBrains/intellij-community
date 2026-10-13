@@ -404,7 +404,7 @@ open class IdeErrorsDialog(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun updateControls() {
     myLoadingDecorator.startLoading(false)
     myUpdateControlsJob.cancel(null)
@@ -455,7 +455,7 @@ open class IdeErrorsDialog(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun updateLabels(cluster: ErrorMessageCluster): ErrorReportSubmitter? {
     val message = cluster.first
     myCountLabel.text = DiagnosticBundle.message("error.list.message.index.count", myIndex + 1, myMessageClusters.size)
@@ -600,7 +600,7 @@ open class IdeErrorsDialog(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun reportMessage(cluster: ErrorMessageCluster, parentComponent: Component): Boolean {
     val submitter = cluster.submitter ?: return false
     val message = cluster.first

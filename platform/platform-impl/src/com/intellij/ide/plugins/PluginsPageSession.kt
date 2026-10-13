@@ -11,7 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import javax.swing.JComponent
 
 internal interface PluginsPageSession : Disposable {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getCenterComponent(controller: Configurable.TopComponentController): JComponent
 
   fun getComponent(): JComponent
@@ -39,19 +39,19 @@ internal interface PluginsPageSession : Disposable {
 
   fun select(pluginIds: Collection<PluginId>)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun enableSearch(option: String?): Runnable?
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun enableSearch(option: String?, ignoreTagMarketplaceTab: Boolean): Runnable?
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun openMarketplaceTab(option: String)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun openInstalledTab(option: String)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun openInstalledTabWithSearch(option: String): Runnable? {
     openInstalledTab("")
     return enableSearch(option, ignoreTagMarketplaceTab = true)
@@ -68,7 +68,7 @@ internal enum class PluginsPageInitialNavigationTarget {
   Installed,
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 internal fun createPluginsPageSession(
   searchQuery: String?,
   openSource: PluginManagerOpenSourceEnum,

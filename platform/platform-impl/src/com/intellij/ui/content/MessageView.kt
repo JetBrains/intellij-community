@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 interface MessageView {
   val contentManager: ContentManager
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @ApiStatus.Obsolete(since = "2024.2")
   fun runWhenInitialized(runnable: Runnable)
 

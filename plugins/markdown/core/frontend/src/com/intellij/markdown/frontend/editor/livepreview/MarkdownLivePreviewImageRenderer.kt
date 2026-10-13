@@ -56,7 +56,7 @@ internal class MarkdownLivePreviewImageRenderer(project: Project, private val ed
     requestedDestinations.clear()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun reconcile(presentation: MarkdownLivePreviewPresentation?) {
     reconcileImages(presentation?.elements?.mapNotNull { it.spec as? MarkdownLivePreviewSpec.Image }.orEmpty())
   }

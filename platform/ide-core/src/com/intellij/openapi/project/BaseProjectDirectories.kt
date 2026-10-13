@@ -54,7 +54,7 @@ abstract class BaseProjectDirectories(private val project: Project) {
   /**
    * Call this method when list of project base directories was changed
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected fun fireChange(diff: BaseProjectDirectoriesDiff) {
     project.messageBus.syncPublisher(TOPIC).changed(project, diff)
   }

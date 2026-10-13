@@ -149,6 +149,6 @@ interface XSmartStepIntoHandlerEntry {
 @ApiStatus.Internal
 fun interface XStackFramesListColorsCache {
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun get(stackFrame: XStackFrame, project: Project): Color?
 }

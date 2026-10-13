@@ -298,7 +298,7 @@ object PluginInstaller {
 
   @ApiStatus.Internal
   @JvmStatic
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun installFromDisk(
     model: InstalledPluginsTableModel,
     pluginEnabler: PluginEnabler,
@@ -470,7 +470,7 @@ object PluginInstaller {
 
   @ApiStatus.Internal
   @JvmStatic
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun installAndLoadDynamicPlugin(file: Path, descriptor: IdeaPluginDescriptorImpl): Boolean {
     return installAndLoadDynamicPlugin(file, null, descriptor)
   }
@@ -480,7 +480,7 @@ object PluginInstaller {
    */
   @ApiStatus.Internal
   @JvmStatic
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun installAndLoadDynamicPlugin(
     file: Path,
     parent: JComponent?,
@@ -563,7 +563,7 @@ object PluginInstaller {
 
   @ApiStatus.Internal
   @JvmStatic
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun installPluginFromCallbackData(callbackData: PluginInstallCallbackData) {
     val descriptor = callbackData.pluginDescriptor
     val file = callbackData.file

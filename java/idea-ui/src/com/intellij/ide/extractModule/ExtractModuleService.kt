@@ -95,7 +95,7 @@ class ExtractModuleService(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
 ) {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun buildProjectAndExtractModule(
     directory: VirtualFile,
     module: Module,

@@ -40,7 +40,7 @@ private val LOG = fileLogger()
  * Watches the terminal tab changes in the [contentManager] and updates persisted tabs in [TerminalTabsStorage].
  */
 @OptIn(FlowPreview::class)
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 internal fun installTerminalTabsPersistence(
   project: Project,
   contentManager: ContentManager,
@@ -63,7 +63,7 @@ internal fun installTerminalTabsPersistence(
   }
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun persistTerminalTabs(project: Project, contentManager: ContentManager) {
   try {
     val tabs = contentManager.contentsRecursively.mapNotNull { it.computePersistedTabOrNull() }
@@ -79,7 +79,7 @@ private fun persistTerminalTabs(project: Project, contentManager: ContentManager
  * Returns the state to store for the terminal tab or the pending tab (see [getPendingTerminalTab]) in this content.
  * Returns `null` if the content is not a terminal tab, or if the tab opted out of restoring.
  */
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun Content.computePersistedTabOrNull(): TerminalSessionPersistedTab? {
   val tab = getTerminalTab() ?: return getPendingTerminalTab()
   // A tab that opted out of restoring is left out of the stored state entirely: restoring one means
@@ -88,7 +88,7 @@ private fun Content.computePersistedTabOrNull(): TerminalSessionPersistedTab? {
   return if (tab.restoreOnProjectReopen) computePersistedTab(tab) else null
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 internal fun computePersistedTab(tab: TerminalToolWindowTab): TerminalSessionPersistedTab {
   val title = tab.view.title
   val requestedProcessOptions = tab.processOptions
@@ -127,7 +127,7 @@ internal fun TerminalToolWindowTabBuilder.applyPersistedTab(tab: TerminalSession
  * 2. TerminalView title changes
  * 3. TerminalView working directory changes
  */
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun listenTerminalTabChangeEvents(
   project: Project,
   contentManager: ContentManager,

@@ -335,7 +335,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     setGlobalScheme(scheme, processChangeSynchronously = false)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun setCurrentSchemeOnLafChange(scheme: EditorColorsScheme) {
     if (scheme === schemeManager.activeScheme) {
       return
@@ -355,14 +355,14 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   }
 
   // refreshAllEditors is not enough - for example, change "Errors and warnings -> Typo" from green (default) to red
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun dropPsiCaches() {
     for (project in ProjectManager.getInstance().getOpenProjects()) {
       PsiManager.getInstance(project).dropPsiCaches()
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun callGlobalSchemeChange(scheme: EditorColorsScheme?) {
     schemeModificationCounter.incrementAndGet()
     // we need to push events to components that use editor font, e.g., HTML editor panes

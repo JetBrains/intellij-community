@@ -23,7 +23,7 @@ interface FrontendDiffExtension {
    *
    * @param disposable disposable that can be used for extensions of this view
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun install(
     context: FrontendDiffContext,
     request: FrontendDiffRequest,

@@ -220,23 +220,23 @@ class CloneableProjectsService {
   }
 
   interface CloneProjectListener {
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) {
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun onCloneRemoved() {
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun onCloneSuccess() {
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun onCloneFailed() {
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun onCloneCanceled() {
     }
   }

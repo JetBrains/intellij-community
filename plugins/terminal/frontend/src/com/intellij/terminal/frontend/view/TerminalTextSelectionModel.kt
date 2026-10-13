@@ -26,7 +26,7 @@ interface TerminalTextSelectionModel {
    * Updates the selection range in the currently active output model
    * ([org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet.active]).
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun updateSelection(newSelection: TerminalTextSelection?)
 
   fun addListener(parentDisposable: Disposable, listener: TerminalTextSelectionListener)

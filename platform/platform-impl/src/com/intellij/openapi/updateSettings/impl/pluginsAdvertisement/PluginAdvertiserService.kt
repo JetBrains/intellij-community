@@ -410,7 +410,7 @@ open class PluginAdvertiserServiceImpl(
    *   `notify`, which raises no balloon while an earlier balloon of the group is visible and none
    *   at all for a group the user set to no popup.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun notifyUser(
     bundledPlugins: List<String>,
     suggestionPlugins: List<PluginDownloader>,

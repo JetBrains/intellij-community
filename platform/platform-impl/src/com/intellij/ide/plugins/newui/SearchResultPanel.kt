@@ -86,7 +86,7 @@ abstract class SearchResultPanel(
     query = ""
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   open fun setQuery(query: String) {
     assert(EDT.isCurrentThreadEdt())
     if (query == this.query) {

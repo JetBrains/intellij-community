@@ -32,7 +32,7 @@ internal abstract class BgtTreeWalker<N : Any>(
 
   override fun promise(): Promise<TreePath> = promise
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun start(node: N?) {
     if (node != null) {
       stack.addLast(Level(null, ArrayDeque(listOf(node))))
@@ -40,12 +40,12 @@ internal abstract class BgtTreeWalker<N : Any>(
     lookingForNextNode.enter()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun setChildren(children: Collection<N>) {
     requestingChildren.setChildren(children)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun setError(error: Throwable) {
     failure.enter(error)
   }

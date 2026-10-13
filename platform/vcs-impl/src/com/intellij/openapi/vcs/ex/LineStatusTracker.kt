@@ -34,15 +34,15 @@ interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
   /**
    * Whether tracker gutter markers are visible in a given [Editor].
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun isAvailableAt(editor: Editor): Boolean {
     return editor.settings.isLineMarkerAreaShown && !DiffUtil.isDiffEditor(editor)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun scrollAndShowHint(range: Range, editor: Editor)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun showHint(range: Range, editor: Editor)
 }
 
@@ -74,7 +74,7 @@ interface LocalLineStatusTracker<R : Range> : LineStatusTracker<R> {
              val showErrorStripeMarkers: Boolean,
              val detectWhitespaceChangedLines: Boolean)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun isAvailableAt(editor: Editor): Boolean {
     return mode.isVisible && super.isAvailableAt(editor)
   }
@@ -112,14 +112,14 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
     })
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun isDetectWhitespaceChangedLines(): Boolean = mode.isVisible && mode.detectWhitespaceChangedLines
 
   override fun isClearLineModificationFlagOnRollback(): Boolean = true
 
   abstract override val Block.ourData: LocalBlockData
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   abstract fun setBaseRevision(vcsContent: CharSequence)
 
   override fun setBaseRevisionContent(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
@@ -224,7 +224,7 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
     documentTracker.freeze(Side.RIGHT)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun unfreeze() {
     documentTracker.unfreeze(Side.LEFT)
     documentTracker.unfreeze(Side.RIGHT)

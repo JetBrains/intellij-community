@@ -141,13 +141,13 @@ open class VcsLogManager @Internal constructor(
   }
 
   @Internal
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun freezeLog() {
     frozen = true
   }
 
   @Internal
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun unfreezeLog() {
     if (frozen) {
       frozen = false
@@ -174,7 +174,7 @@ open class VcsLogManager @Internal constructor(
    * Schedules Log initialization and update even when none of the log tabs is visible and a power save mode is enabled.
    */
   @Internal
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun scheduleUpdate() {
     initialize()
     postponableRefresher.refreshPostponedRoots()
@@ -285,7 +285,7 @@ open class VcsLogManager @Internal constructor(
   }
 
   @Internal
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected open fun disposeUi() {
     ThreadingAssertions.assertEventDispatchThread()
     managedUis.values.toList().forEach { Disposer.dispose(it) }
@@ -338,7 +338,7 @@ open class VcsLogManager @Internal constructor(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun requestRefresh(root: VirtualFile) {
     val shouldBePostponed = frozen || !(keepUpToDate() || isLogVisible)
     postponableRefresher.refresh(root, shouldBePostponed)

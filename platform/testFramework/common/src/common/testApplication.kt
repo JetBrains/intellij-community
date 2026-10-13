@@ -411,7 +411,7 @@ fun assertNonDefaultProjectsAreNotLeaked(ignoredTraverseEntries : List<IgnoredTr
 }
 
 @TestOnly
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun waitForAppLeakingThreads(application: Application, timeout: Long, timeUnit: TimeUnit) {
   require(!application.isDisposed)
   ThreadingAssertions.assertEventDispatchThread()
@@ -432,7 +432,7 @@ fun waitForAppLeakingThreads(application: Application, timeout: Long, timeUnit: 
   }
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 @TestOnly
 fun waitForAllDocumentsCommitted(timeout: Long, timeUnit: TimeUnit) {
   val documentCommitThread = serviceIfCreated<DocumentCommitProcessor>() as? DocumentCommitThread

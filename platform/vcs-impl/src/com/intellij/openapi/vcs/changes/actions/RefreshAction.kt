@@ -31,7 +31,7 @@ class RefreshAction : AnAction(), DumbAware {
                 replaceWith = ReplaceWith("ChangeListManagerRefreshHelper.launchRefreshOrNotifyFrozen(project)",
                                           "com.intellij.openapi.vcs.changes.ChangeListManagerRefreshHelper"))
     @JvmStatic
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun doRefresh(project: Project) {
       ChangeListManagerRefreshHelper.launchRefreshOrNotifyFrozen(project)
     }

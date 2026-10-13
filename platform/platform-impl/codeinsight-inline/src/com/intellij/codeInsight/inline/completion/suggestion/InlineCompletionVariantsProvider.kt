@@ -15,16 +15,16 @@ import kotlinx.coroutines.launch
 
 internal interface InlineCompletionVariantsProvider : Disposable {
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun useNextVariant(): InlineCompletionPresentableVariant
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun usePrevVariant(): InlineCompletionPresentableVariant
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun captureVariants(): List<InlineCompletionVariant.Snapshot>
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun update(event: InlineCompletionEvent, updateManager: (InlineCompletionVariant.Snapshot) -> UpdateResult): Boolean
 }
 
@@ -114,31 +114,31 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt(generateAs
 
   override fun dispose() = Unit
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected abstract fun elementShown(variantIndex: Int, elementIndex: Int, element: InlineCompletionElement)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected abstract fun disposeCurrentVariant()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected abstract fun beforeVariantSwitched(fromVariantIndex: Int, toVariantIndex: Int, explicit: Boolean)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected abstract fun variantChanged(event: InlineCompletionEvent, variantIndex: Int, old: List<InlineCompletionElement>, new: List<InlineCompletionElement>)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected abstract fun variantInvalidated(event: InlineCompletionEvent, variantIndex: Int)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected abstract fun dataChanged()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected fun currentVariant(): InlineCompletionPresentableVariant {
     ThreadingAssertions.assertEventDispatchThread()
     return currentVariant
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected fun elementComputed(variantIndex: Int, elementIndex: Int, element: InlineCompletionElement) {
     ThreadingAssertions.assertEventDispatchThread()
     validateIndex(variantIndex)
@@ -157,7 +157,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt(generateAs
     dataChanged() // It makes sense to update every time because data may be shared
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected suspend fun variantComputing(variantIndex: Int, computation: suspend () -> Unit): Boolean {
     ThreadingAssertions.assertEventDispatchThread()
     val state = variantsStates[variantIndex]
@@ -175,7 +175,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt(generateAs
     return !state.isInvalidated()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun getSnapshot(index: Int): InlineCompletionVariant.Snapshot {
     val state = variantsStates[index]
     return InlineCompletionVariant.Snapshot(
@@ -192,13 +192,13 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt(generateAs
     )
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun invalidate(event: InlineCompletionEvent, variantIndex: Int) {
     variantInvalidated(event, variantIndex)
     variantsStates[variantIndex].invalidate()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun variantStartedComputing(variantIndex: Int) {
     ThreadingAssertions.assertEventDispatchThread()
 
@@ -210,7 +210,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt(generateAs
     state.status = Status.IN_PROGRESS_EMPTY
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun variantComputed(variantIndex: Int) {
     ThreadingAssertions.assertEventDispatchThread()
     validateIndex(variantIndex)
@@ -270,7 +270,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt(generateAs
    *
    * [force] means that no checks whether this variant is valid to show are going to be run.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun prepareVariant(index: Int, force: Boolean): InlineCompletionPresentableVariantImpl {
     ThreadingAssertions.assertEventDispatchThread()
     check(force || isPossibleToShow(index))
@@ -282,7 +282,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt(generateAs
   /**
    * Creates [InlineCompletionPresentableVariant] for the variant [index] and fills it with elements.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun getVariant(index: Int, force: Boolean): InlineCompletionPresentableVariantImpl {
     val variant = prepareVariant(index, force)
     val state = variantsStates[index]
@@ -295,7 +295,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt(generateAs
   /**
    * Same as [getVariant], but also sets [currentVariant] to it.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun useVariant(index: Int, force: Boolean): InlineCompletionPresentableVariantImpl {
     val fromIndex = currentVariant.index
     if (index == fromIndex) {
@@ -311,14 +311,14 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt(generateAs
     return variant
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun updateCurrentVariant() {
     disposeCurrentVariant()
     currentVariant = getVariant(currentVariant.index, true)
     dataChanged()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected fun forceNextVariant() {
     val nextIndex = currentVariant.index + 1
     validateIndex(nextIndex)
@@ -373,7 +373,7 @@ private class InlineCompletionPresentableVariantImpl(
   private val onAdd: (InlineCompletionElement, Int) -> Unit,
 ) : InlineCompletionPresentableVariant {
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun addElement(element: InlineCompletionElement, elementIndex: Int) {
     ThreadingAssertions.assertEventDispatchThread()
     onAdd(element, elementIndex)

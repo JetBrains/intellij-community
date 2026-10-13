@@ -16,13 +16,13 @@ interface ActiveChangeListTracker {
     fun getInstance(project: Project): ActiveChangeListTracker = project.service()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getActiveChangeListId(): String?
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun isActiveChangeList(changeList: LocalChangeList): Boolean
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun runUnderChangeList(changelistId: String, task: Runnable)
 }
 

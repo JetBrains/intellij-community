@@ -301,7 +301,7 @@ class InfoAndProgressPanel internal constructor(
     return result
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun addProgress(original: ProgressModel, info: TaskInfo) {
     // `openProcessPopup` may require the dispatch thread
     ThreadingAssertions.assertEventDispatchThread()
@@ -336,7 +336,7 @@ class InfoAndProgressPanel internal constructor(
 
   private fun hasProgressIndicators(): Boolean = originalsLock.withLockCancellable { !originals.isEmpty() }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun removeProgress(progress: MyProgressComponent) {
     ThreadingAssertions.assertEventDispatchThread()
     originalsLock.withLockCancellable {

@@ -47,7 +47,7 @@ import javax.swing.JComponent
 class LineStatusMarkerPopupService {
   private var activePopupDisposable: CheckedDisposable? = null
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun buildAndShowPopup(parentDisposable: Disposable, editor: Editor, mousePosition: Point?, builder: (popupDisposable: Disposable) -> LineStatusMarkerPopupPanel) {
     val popupDisposable = getNextPopupDisposable(parentDisposable)
     val markerPopupPanel = builder(popupDisposable)
@@ -65,7 +65,7 @@ class LineStatusMarkerPopupService {
     if (activePopupDisposable != null) Disposer.dispose(activePopupDisposable!!)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun showPopupAt(
     editor: Editor,
     panel: LineStatusMarkerPopupPanel,

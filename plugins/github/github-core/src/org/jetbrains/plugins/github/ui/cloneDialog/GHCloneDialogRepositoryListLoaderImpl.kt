@@ -43,7 +43,7 @@ internal class GHCloneDialogRepositoryListLoaderImpl(parentCs: CoroutineScope) :
 
   private val jobsMap = mutableMapOf<GithubAccount, Job>()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun loadRepositories(account: GithubAccount) {
     val currentJob = jobsMap[account]
     if (currentJob != null && !currentJob.isCancelled && !currentJob.isCompleted) return

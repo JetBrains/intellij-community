@@ -31,7 +31,7 @@ import javax.swing.JPanel
 
 @ApiStatus.Internal
 object GHPRTimelineComponentFactory {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun create(
     project: Project, cs: CoroutineScope,
     projectVm: GHPRConnectedProjectViewModel, timelineVm: GHPRTimelineViewModel,

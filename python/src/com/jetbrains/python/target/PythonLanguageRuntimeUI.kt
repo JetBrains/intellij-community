@@ -114,7 +114,7 @@ internal class PythonLanguageRuntimeUI(
     this@PythonLanguageRuntimeUI.stateChangedCallback = stateChangedCallback
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun createCustomTool(): PythonInterpreter? {
     val sdkManager = mainPanel.currentSdkManager
 

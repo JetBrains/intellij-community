@@ -16,13 +16,13 @@ interface CodeReviewEditorGutterActionableChangesModel : CodeReviewEditorGutterC
   @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   var shouldHighlightDiffRanges: Boolean
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getBaseContent(lines: LineRange): String?
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun showDiff(lineIdx: Int?)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun addDiffHighlightListener(disposable: Disposable, listener: () -> Unit)
 
   companion object {

@@ -121,7 +121,7 @@ internal class LspClientConsole(project: Project) : Disposable {
     console.print(line, contentType)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getComponent(): JComponent {
     panel?.let { return it }
 
@@ -138,11 +138,11 @@ internal class LspClientConsole(project: Project) : Disposable {
   }
 
   @TestOnly
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getConsoleTextForTests(): String = getConsoleViewForTests().text
 
   @TestOnly
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getConsoleViewForTests(): ConsoleViewImpl {
     val consoleViewImpl = console as ConsoleViewImpl
     consoleViewImpl.component // make sure the console editor is initialized

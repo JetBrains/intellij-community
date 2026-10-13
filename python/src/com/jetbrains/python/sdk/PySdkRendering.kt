@@ -71,7 +71,7 @@ suspend fun List<Sdk>.groupInterpreterItemsByTypes(module: Module?): Map<PyRende
  * list, where before PY-91967 each row probed the file system under a modal progress of its own while it was painted.
  */
 @ApiStatus.Internal
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun List<Sdk>.groupInterpreterItemsByTypesUnderProgress(
   module: Module?,
   owner: JComponent,
@@ -86,7 +86,7 @@ fun List<Sdk>.groupInterpreterItemsByTypesUnderProgress(
  * Order is kept, so a caller that also holds the SDKs can line the two lists up.
  */
 @ApiStatus.Internal
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun List<Sdk>.interpreterItemsUnderProgress(owner: JComponent): List<PyInterpreterItem> =
   runWithModalProgressBlocking(ModalTaskOwner.component(owner), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
     pyInterpreterItems()
@@ -96,7 +96,7 @@ fun List<Sdk>.interpreterItemsUnderProgress(owner: JComponent): List<PyInterpret
  * The same, for a caller that has no component to hang the progress on yet, such as a form constructor.
  */
 @ApiStatus.Internal
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun List<Sdk>.interpreterItemsUnderProgress(project: Project): List<PyInterpreterItem> =
   runWithModalProgressBlocking(ModalTaskOwner.project(project), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
     pyInterpreterItems()
@@ -117,7 +117,7 @@ private suspend fun pyProjectInterpreters(project: Project, module: Module?): Li
  * cannot suspend. See [pyProjectInterpreters].
  */
 @ApiStatus.Internal
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun pyProjectInterpreterItemsUnderProgress(project: Project, module: Module?, owner: JComponent): List<PyInterpreterItem> =
   runWithModalProgressBlocking(ModalTaskOwner.component(owner), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
     pyProjectInterpreters(project, module).map { it.asItem() }
@@ -125,7 +125,7 @@ fun pyProjectInterpreterItemsUnderProgress(project: Project, module: Module?, ow
 
 /** The same, for a caller that has no component to hang the progress on yet, such as a form constructor. */
 @ApiStatus.Internal
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun pyProjectInterpreterItemsUnderProgress(project: Project, module: Module?): List<PyInterpreterItem> =
   runWithModalProgressBlocking(ModalTaskOwner.project(project), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
     pyProjectInterpreters(project, module).map { it.asItem() }
@@ -136,7 +136,7 @@ fun pyProjectInterpreterItemsUnderProgress(project: Project, module: Module?): L
  * [interpreterItemsUnderProgress]. See [pyProjectInterpreters].
  */
 @ApiStatus.Internal
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun pyProjectPythonSdksUnderProgress(project: Project, module: Module?): List<Sdk> =
   runWithModalProgressBlocking(ModalTaskOwner.project(project), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
     @Suppress("DEPRECATION") // A Java caller still holds SDKs.

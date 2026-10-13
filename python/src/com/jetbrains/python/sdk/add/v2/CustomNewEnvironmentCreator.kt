@@ -124,7 +124,7 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
    * 6. Runs `(pythonExecutable -m) pip install <package_name> --user`.
    * 7. Reruns `detectExecutable`.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected fun createInstallFix(errorSink: ErrorSink): ActionLink? {
     // We can only install things on eel
     val eelDescriptor = when (val r = model.fileSystem.eelOrTarget) {

@@ -99,7 +99,7 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun manageContent(toolWindow: ToolWindow) {
     toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
 

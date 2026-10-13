@@ -125,7 +125,7 @@ internal class FrontendXLineBreakpointVisualizationManager(
     StartupManager.getInstance(project).runAfterOpened { queueAllBreakpointsUpdate() }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun updateBreakpoints(document: Document) {
     val breakpoints = manager.getDocumentBreakpointProxies(document)
 

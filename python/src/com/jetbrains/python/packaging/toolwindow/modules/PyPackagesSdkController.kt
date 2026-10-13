@@ -100,7 +100,7 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
   /** The interpreters of every Python project, as the list holds them. */
   private suspend fun loadItems(): List<PyInterpreterItem> = allInterpreters().map { (_, item) -> item }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun refreshModuleList(items: List<PyInterpreterItem>) {
     (sdkList.model as DefaultListModel<PyInterpreterItem>).apply {
       removeAllElements()

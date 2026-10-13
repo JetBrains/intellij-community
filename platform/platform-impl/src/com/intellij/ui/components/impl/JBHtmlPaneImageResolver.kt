@@ -30,7 +30,7 @@ class JBHtmlPaneImageResolver(
      *
      * @return resolved image, or `null` if no image can be found by this `url`
      */
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun resolveImage(url: String): Image?
   }
 

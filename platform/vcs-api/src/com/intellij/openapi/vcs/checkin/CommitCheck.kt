@@ -42,7 +42,7 @@ interface CommitCheck : PossiblyDumbAware {
    *
    * @return `true` if commit check should be run for the commit and `false` otherwise
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun isEnabled(): Boolean
 
   /**
@@ -56,7 +56,7 @@ interface CommitCheck : PossiblyDumbAware {
    *
    * @return a commit problem found by the commit check or `null` if no problems found
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   suspend fun runCheck(commitInfo: CommitInfo): CommitProblem?
 
   enum class ExecutionOrder {
@@ -105,7 +105,7 @@ interface CommitProblem {
    *
    * Method is not called for non-modal commit modes.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun showModalSolution(project: Project, commitInfo: CommitInfo): CheckinHandler.ReturnResult {
     if (this is CommitProblemWithDetails) {
       val commit = MessageDialogBuilder.yesNoCancel(VcsBundle.message("checkin.commit.checks.failed"), text)
@@ -171,7 +171,7 @@ interface CommitProblemWithDetails : CommitProblem {
    * Allows showing details for the problem (ex: by opening a toolwindow tab with a list of failed inspections).
    * Modal dialog will be closed after this call if it is shown.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun showDetails(project: Project)
 }
 

@@ -101,7 +101,7 @@ private class SettingsSynchronizerState {
   // accessed only from the EDT
   @JvmField var scheduledFuture: ScheduledFuture<*>? = null
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun stopSyncingByTimer() {
     if (scheduledFuture != null) {
       scheduledFuture!!.cancel(true)
@@ -132,7 +132,7 @@ private class SettingsSynchronizer : ApplicationActivationListener {
     service<SettingsSynchronizerState>().stopSyncingByTimer()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun setupSyncingByTimer(): ScheduledFuture<*> {
     val delay = autoSyncDelay
     return service<SettingsSynchronizerState>().executorService.scheduleWithFixedDelay(Runnable {

@@ -5,7 +5,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 
 interface ChangesViewContentManagerListener {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun toolWindowMappingChanged()
 
   companion object {

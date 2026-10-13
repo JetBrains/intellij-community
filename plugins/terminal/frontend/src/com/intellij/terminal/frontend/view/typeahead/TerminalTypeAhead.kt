@@ -15,14 +15,14 @@ interface TerminalTypeAhead {
    * Tries to insert the given [string] at the current cursor position.
    * If it is not possible, do nothing.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun type(string: String)
 
   /**
    * Tries to remove the character before the current cursor position.
    * If it is not possible, do nothing.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun backspace()
 
   companion object {

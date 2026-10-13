@@ -15,7 +15,7 @@ import org.jetbrains.annotations.TestOnly
 import kotlin.time.Duration
 import kotlin.time.toKotlinDuration
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project: Project) {
   repeat(3) {
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
@@ -26,7 +26,7 @@ fun executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project: Project) {
   }
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun executeSomeCoroutineTasksAndDispatchAllInvocationEvents() {
   repeat(3) {
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()

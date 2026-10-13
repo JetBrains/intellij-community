@@ -13,7 +13,7 @@ interface CustomToolLanguageConfigurable<T> {
   /**
    * Call [validate] first to make sure there are no errors
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createCustomTool(): T?
 
   fun validate(): Collection<ValidationInfo>

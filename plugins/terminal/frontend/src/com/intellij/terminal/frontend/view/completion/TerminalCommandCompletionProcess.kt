@@ -133,7 +133,7 @@ internal class TerminalCommandCompletionProcess(
   }
 
   /** Returns true if the completion popup was shown to the user */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun tryInsertOrShowPopup(): Boolean {
     lookup.isCalculating = false
     lookup.refreshUi(true, false)
@@ -170,7 +170,7 @@ internal class TerminalCommandCompletionProcess(
    * Similar to [com.intellij.codeInsight.completion.CompletionProgressIndicator.hideAutopopupIfMeaningless]
    * but closes the lookup even if was called manually.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun closeLookupIfMeaningless() {
     if (lookup.isLookupDisposed || lookup.isCalculating || restartPending) {
       return
@@ -182,7 +182,7 @@ internal class TerminalCommandCompletionProcess(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun isPopupMeaningless(): Boolean {
     val items = lookup.items
     return items.isEmpty() || items.all {
@@ -223,7 +223,7 @@ internal class TerminalCommandCompletionProcess(
     restartOnPrefixChange = true
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun cancel() {
     coroutineScope.cancel()
     lookup.isCalculating = false

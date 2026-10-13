@@ -42,7 +42,7 @@ internal class FileHistoryTabsManager(val project: Project, coroutineScope: Coro
     })
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun openFileHistoryTab(logManager: VcsLogManager, path: FilePath, root: VirtualFile, hash: Hash?): FileHistoryUi {
     historyTabs.add(FileHistoryTab(path, root, hash))
     return doOpenFileHistoryTab(logManager, path, root, hash, true)
@@ -58,7 +58,7 @@ internal class FileHistoryTabsManager(val project: Project, coroutineScope: Coro
     return ui
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun findUi(select: Boolean, condition: (FileHistoryUi) -> Boolean): FileHistoryUi? {
     return VcsLogContentUtil.findLogUi(project, FileHistoryUi::class.java, select, condition)
   }

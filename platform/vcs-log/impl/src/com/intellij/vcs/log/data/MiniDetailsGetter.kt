@@ -102,7 +102,7 @@ class MiniDetailsGetter internal constructor(
 
   override fun saveInCache(commit: VcsLogCommitStorageIndex, details: VcsCommitMetadata) = cache.put(commit, details)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun cacheCommit(commitId: VcsLogCommitStorageIndex, taskNumber: Long) {
     // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
     // even if it will be loaded within a previous query
@@ -111,7 +111,7 @@ class MiniDetailsGetter internal constructor(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun cacheCommits(commits: IntOpenHashSet) {
     val taskNumber = currentTaskIndex++
     commits.forEach(IntConsumer { commit -> cacheCommit(commit, taskNumber) })

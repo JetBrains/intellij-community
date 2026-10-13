@@ -28,7 +28,7 @@ fun interface UiDataProvider {
    * Override what is already in the sink or add new data.
    * Called in EDT.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun uiDataSnapshot(sink: DataSink)
 
   companion object {

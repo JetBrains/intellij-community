@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.NonExtendable
 interface ChangesViewEx : ChangesViewI {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @ApiStatus.Internal
   fun getOrCreateCommitChangesView(): ChangesViewProxy
 

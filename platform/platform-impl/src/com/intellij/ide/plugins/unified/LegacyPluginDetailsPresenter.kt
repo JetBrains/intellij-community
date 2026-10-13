@@ -34,7 +34,7 @@ internal class LegacyPluginDetailsPresenter @RequiresEdt(generateAssertion = fal
     layout.show(root, activeMode.name)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun render(mode: PluginDetailsMode, selection: List<PluginDetailsSelection>) {
     check(!closed) { "Plugin details presenter is closed" }
     val selectedRows = selection.map {
@@ -71,7 +71,7 @@ internal class LegacyPluginDetailsPresenter @RequiresEdt(generateAssertion = fal
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun beforeRowRelease(occurrenceId: PluginOccurrenceId, row: PluginRow) {
     if (closed) return
     require(row is LegacyPluginRow) { "Legacy details require a legacy plugin row" }
@@ -87,7 +87,7 @@ internal class LegacyPluginDetailsPresenter @RequiresEdt(generateAssertion = fal
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun close() {
     if (closed) return
     closed = true

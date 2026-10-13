@@ -98,7 +98,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     private val trackerListener = MyTrackerListener()
     private val disposable get() = this@PartiallyExcludedFilesStateHolder
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun install(project: Project) {
       with(LineStatusTrackerManager.getInstanceImpl(project)) {
         addTrackerListener(this@MyTrackerManagerListener, disposable)
@@ -106,7 +106,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
       }
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     override fun onTrackerAdded(tracker: LineStatusTracker<*>) {
       if (tracker !is PartialLocalLineStatusTracker) return
 
@@ -116,7 +116,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
       tracker.addListener(trackerListener, disposable)
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     override fun onTrackerRemoved(tracker: LineStatusTracker<*>) {
       if (tracker !is PartialLocalLineStatusTracker) return
 
@@ -167,7 +167,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun updateExclusionStates() {
     val newTrackerStates = computeTrackerExclusionStates()
 
@@ -193,7 +193,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     return result
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun setIncludedElements(elements: Collection<T>) {
     val set: MutableSet<T> = createElementsSet(elements)
     trackers.forEach { (element, tracker) ->
@@ -229,7 +229,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     fireInclusionChanged()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun excludeElements(elements: Collection<T>) {
     for (element in elements) {
       findTrackerFor(element)?.setExcludedFromCommit(element, true)
@@ -249,7 +249,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     fireInclusionChanged()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun retainElements(elements: Collection<T>) {
     val toRetain = createElementsSet(elements)
 

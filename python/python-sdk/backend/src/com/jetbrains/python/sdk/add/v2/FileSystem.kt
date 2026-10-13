@@ -71,7 +71,7 @@ interface FileSystem<P : PathHolder> {
   ): List<ExistingSelectableInterpreter<P>>
 
   // TODO: Almost same as configureFileBrowseEditor, unify
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createBrowseFolderListener(
     textField: TextFieldWithBrowseButton,
     descriptor: FileChooserDescriptor,
@@ -81,7 +81,7 @@ interface FileSystem<P : PathHolder> {
   ): ActionListener?
 
   // TODO: Almost same as createBrowseFolderListener, unify
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun <T> configureFileBrowseEditor(
     fieldAccessor: TextComponentAccessor<ComboBox<T>>,
     comboBox: ComboBox<T>,

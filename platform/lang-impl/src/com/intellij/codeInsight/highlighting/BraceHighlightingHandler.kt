@@ -108,7 +108,7 @@ class BraceHighlightingHandler internal constructor(
     }
 
     @JvmStatic
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun showScopeHint(
       editor: Editor,
       psiFile: PsiFile,
@@ -124,7 +124,7 @@ class BraceHighlightingHandler internal constructor(
      * `endLine`
      */
     @JvmStatic
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun lineMarkFragment(editor: EditorEx, document: Document, startLine: Int, endLine: Int, matched: Boolean) {
       removeLineMarkers(editor)
 
@@ -165,7 +165,7 @@ class BraceHighlightingHandler internal constructor(
       return highlighters
     }
     @ApiStatus.Internal
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun clearBraceHighlighters(editor: Editor) {
       val highlighters = getHighlightersList(editor)
       for (highlighter in highlighters) {
@@ -189,7 +189,7 @@ class BraceHighlightingHandler internal constructor(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @ApiStatus.Internal
   fun updateBraces(needMatching: Boolean) {
     ThreadingAssertions.assertEventDispatchThread()
@@ -258,7 +258,7 @@ class BraceHighlightingHandler internal constructor(
   private val editorHighlighter: EditorHighlighter
     get() = getLazyParsableHighlighterIfAny(project, editor, psiFile)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun highlightScope(offset: Int) {
     if (!psiFile.isValid) {
       return
@@ -289,7 +289,7 @@ class BraceHighlightingHandler internal constructor(
    *
    * @param isAdjustedPosition true mean s that `offset` been adjusted, e.g. spaces been skipped before or after caret position
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun doHighlight(offset: Int, isAdjustedPosition: Boolean) {
     if (editor.foldingModel.isOffsetCollapsed(offset)) {
       return
@@ -313,7 +313,7 @@ class BraceHighlightingHandler internal constructor(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun highlightRightBrace(iterator: HighlighterIterator, fileType: FileType) {
     val brace1 = TextRange.create(iterator.start, iterator.end)
     val matched = BraceMatchingUtil.matchBrace(document.charsSequence, fileType, iterator, false)
@@ -321,7 +321,7 @@ class BraceHighlightingHandler internal constructor(
     highlightBraces(brace2, brace1, matched, false, fileType)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun highlightLeftBrace(iterator: HighlighterIterator, scopeHighlighting: Boolean, fileType: FileType) {
     val brace1Start = TextRange.create(iterator.start, iterator.end)
     val matched = BraceMatchingUtil.matchBrace(document.charsSequence, fileType, iterator, true)
@@ -330,7 +330,7 @@ class BraceHighlightingHandler internal constructor(
     highlightBraces(brace1Start, brace2End, matched, scopeHighlighting, fileType)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun highlightBraces(lBrace: TextRange?, rBrace: TextRange?, matched: Boolean, scopeHighlighting: Boolean, fileType: FileType) {
     if (!matched && fileType === FileTypes.PLAIN_TEXT) {
       return
@@ -363,7 +363,7 @@ class BraceHighlightingHandler internal constructor(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun highlightBrace(braceRange: TextRange, matched: Boolean) {
     ThreadingAssertions.assertEventDispatchThread()
     val coerced = coerceToDocumentRange(braceRange, document)
@@ -394,7 +394,7 @@ class BraceHighlightingHandler internal constructor(
     return toRemove
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun showScopeHint(lbraceStart: Int, lbraceEnd: Int) {
     showScopeHint(lbraceStart, lbraceEnd) { offset ->
       if (psiFile !is PsiPlainTextFile && psiFile.isValid) {
@@ -414,7 +414,7 @@ class BraceHighlightingHandler internal constructor(
    *
    * @param startComputation optional adjuster for the brace start offset
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun showScopeHint(leftBraceStart: Int, leftBraceEnd: Int, startComputation: IntUnaryOperator?) {
     val editor = editor
     val project = editor.project ?: return
@@ -460,7 +460,7 @@ class BraceHighlightingHandler internal constructor(
   }
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun removeLineMarkers(editor: EditorEx) {
   ThreadingAssertions.assertEventDispatchThread()
   val marker = editor.getUserData(LINE_MARKER_IN_EDITOR_KEY)

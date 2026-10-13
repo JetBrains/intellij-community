@@ -59,7 +59,7 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
 
       override fun needToCheckFocus(): Boolean = false
 
-      @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+      @RequiresEdt
       override fun scrollToSource(tree: Component) {
         val path = (tree as? XDebuggerTree)?.selectionPath ?: return
         (path.lastPathComponent as? XValueNodeImpl)?.valueContainer?.let { xValueContainer ->

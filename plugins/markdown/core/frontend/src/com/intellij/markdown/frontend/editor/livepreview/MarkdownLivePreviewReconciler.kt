@@ -141,7 +141,7 @@ class MarkdownLivePreviewReconciler private constructor(
   }
 
   @TestOnly
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun hasCurrentSpecs(): Boolean = currentPresentation() != null
 
   /**
@@ -149,7 +149,7 @@ class MarkdownLivePreviewReconciler private constructor(
    * only what actually differs. Does nothing while the specs describe an older state of the document; the
    * next highlighting pass supersedes them.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun reconcileNow() {
     if (updating || editor.isDisposed || disposed || editor.document.isInBulkUpdate) return
     if (!editor.isLivePreviewEnabled() || presentation == null) {
@@ -434,7 +434,7 @@ class MarkdownLivePreviewReconciler private constructor(
     private val KEY = Key.create<MarkdownLivePreviewReconciler>("markdown.live.preview.reconciler")
 
     /** The reconciler for [editor], attaching one on first use. Null in cases a reconciler can't be created. */
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun getOrCreate(editor: Editor): MarkdownLivePreviewReconciler? {
       if (editor !is EditorEx || editor.isDisposed) return null
       val project = editor.project ?: return null

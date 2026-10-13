@@ -80,7 +80,7 @@ class PostCommitChecksHandler(val project: Project) {
     lastJob?.cancel()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun startPostCommitChecksTask(commitInfo: StaticCommitInfo, commitChecks: List<CommitCheck>) {
     val previousJob = lastJob
     @OptIn(DelicateCoroutinesApi::class)

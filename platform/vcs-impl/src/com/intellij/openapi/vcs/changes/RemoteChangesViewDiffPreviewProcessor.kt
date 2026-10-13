@@ -88,7 +88,7 @@ internal class RemoteChangesViewDiffPreviewProcessor(
   // Update
   //
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun refresh(fromModelRefresh: Boolean) {
     if (isDisposed) return
 
@@ -107,7 +107,7 @@ internal class RemoteChangesViewDiffPreviewProcessor(
     setCurrentPath(selectedPath)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun clear() {
     if (currentPath != null) {
       currentPath = null
@@ -116,7 +116,7 @@ internal class RemoteChangesViewDiffPreviewProcessor(
     dropCaches()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun setCurrentPath(path: ChangesTreePath?) {
     currentPath = path
     updateRequest()

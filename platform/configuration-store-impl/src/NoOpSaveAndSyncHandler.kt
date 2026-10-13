@@ -28,7 +28,7 @@ internal open class NoOpSaveAndSyncHandler : SaveAndSyncHandler() {
 
   override fun maybeRefresh(modalityState: ModalityState) {}
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean = true
 }
 

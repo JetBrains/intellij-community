@@ -54,7 +54,7 @@ class PostponableLogRefresher internal constructor(private val logData: VcsLogDa
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun refresh(root: VirtualFile, postponed: Boolean) {
     if (postponed) {
       LOG.debug("Postponed refresh for $root")
@@ -65,12 +65,12 @@ class PostponableLogRefresher internal constructor(private val logData: VcsLogDa
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun hasPostponedRoots(): Boolean {
     return !rootsToRefresh.isEmpty()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun refreshPostponedRoots() {
     val toRefresh = rootsToRefresh.toSet()
     rootsToRefresh.removeAll(toRefresh) // clear the set, but keep roots which could possibly arrive after collecting them in the var.

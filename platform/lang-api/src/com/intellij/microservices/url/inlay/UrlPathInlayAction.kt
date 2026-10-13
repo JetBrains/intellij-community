@@ -18,11 +18,11 @@ interface UrlPathInlayAction {
   @get:ListItem
   val name: String
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun actionPerformed(file: PsiFile, editor: Editor, urlPathContext: UrlPathContext, mouseEvent: MouseEvent) {
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun actionPerformed(file: PsiFile, editor: Editor, urlPathInlayHint: UrlPathInlayHint, mouseEvent: MouseEvent) {
     actionPerformed(file, editor, urlPathInlayHint.context, mouseEvent)
   }

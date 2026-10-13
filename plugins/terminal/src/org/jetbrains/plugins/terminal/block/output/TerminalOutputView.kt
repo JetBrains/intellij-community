@@ -51,14 +51,14 @@ class TerminalOutputView(
     component = TerminalOutputPanel()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun installSearchComponent(searchComponent: SearchReplaceComponent) {
     component.add(searchComponent, JLayeredPane.POPUP_LAYER as Any)  // cast to Any needed to call right method overload
     component.revalidate()
     component.repaint()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun removeSearchComponent(searchComponent: SearchReplaceComponent) {
     component.remove(searchComponent)
     component.revalidate()

@@ -59,7 +59,7 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
       return myViews.firstNotNullOfOrNull { (suite, view) -> suite.takeIf { selectedContent === manager.getContent(view) } }
     }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun activateToolwindow(view: CoverageView) {
     val manager = myContentManager ?: return
     manager.setSelectedContent(manager.getContent(view))
@@ -67,7 +67,7 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
     toolWindow.activate(null, false)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createView(suitesBundle: CoverageSuitesBundle, activate: Boolean) {
     var coverageView = myViews[suitesBundle]
     val manager = getContentManager() ?: return

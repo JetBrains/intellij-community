@@ -233,7 +233,7 @@ object GHAccountsUtil {
   /**
    * Internal login API, see [reLogIn] for public API
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @JvmOverloads
   @ApiStatus.Internal
   fun requestNewToken(
@@ -250,7 +250,7 @@ object GHAccountsUtil {
   /**
    * Internal login API, see [reLogIn] for public API
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @JvmOverloads
   @JvmStatic
   @ApiStatus.Internal
@@ -291,7 +291,7 @@ object GHAccountsUtil {
   /**
    * Internal login API, see [logIn] for public API
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @JvmOverloads
   @JvmStatic
   @ApiStatus.Internal
@@ -331,7 +331,7 @@ object GHAccountsUtil {
     return model.authData
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @JvmStatic
   @ApiStatus.Internal
   fun login(model: GHLoginModel, request: GHLoginRequest, project: Project?, parentComponent: Component?) {

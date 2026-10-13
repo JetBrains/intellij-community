@@ -40,7 +40,7 @@ internal class CollectZippedLogsAction : AnAction(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   override fun actionPerformed(e: AnActionEvent) = perform(e.project)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun perform(project: Project?) {
     val doNotShowDialog = PropertiesComponent.getInstance().getBoolean(CONFIRMATION_DIALOG)
     if (!doNotShowDialog) {

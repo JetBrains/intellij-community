@@ -24,14 +24,14 @@ abstract class VcsCloneDialogExtensionComponent : Disposable {
    *
    * It is called once when extension is selected first time
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   abstract fun getView(): JComponent
 
   /**
    * Performs primary clone/checkout action. [doClone] is called from the UI-thread, but internal heavy clone task should be scheduled
    * in background
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   abstract fun doClone(checkoutListener: CheckoutProvider.Listener)
 
   /**
@@ -39,7 +39,7 @@ abstract class VcsCloneDialogExtensionComponent : Disposable {
    *
    * @see com.intellij.openapi.ui.DialogWrapper.doValidateAll
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   abstract fun doValidateAll(): List<ValidationInfo>
 
   /**
@@ -47,7 +47,7 @@ abstract class VcsCloneDialogExtensionComponent : Disposable {
    *
    * @see com.intellij.openapi.ui.DialogWrapper.getPreferredFocusedComponent
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   open fun getPreferredFocusedComponent(): JComponent? = null
 
   /**
@@ -55,17 +55,17 @@ abstract class VcsCloneDialogExtensionComponent : Disposable {
    *
    * @see VcsCloneDialogComponentStateListener
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun addComponentStateListener(componentStateListener: VcsCloneDialogComponentStateListener) {
     listeners.addListener(componentStateListener)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun removeComponentListener(componentStateListener: VcsCloneDialogComponentStateListener) {
     listeners.removeListener(componentStateListener)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   abstract fun onComponentSelected()
 
   final override fun dispose(): Unit = listeners.listeners.clear()

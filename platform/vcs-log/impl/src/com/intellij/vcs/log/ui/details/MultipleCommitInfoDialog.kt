@@ -126,7 +126,7 @@ abstract class MultipleCommitInfoDialog(private val project: Project, commits: L
    * is preserved and the first commit is selected; on failure the error is shown in the list's empty text.
    * A previously started load, if any, is cancelled. Intended for dialogs constructed with an empty list.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected fun loadCommitsInBackground(loader: ThrowableComputable<List<VcsCommitMetadata>, VcsException>) {
     commitsLoadingPanel.loadChangesInBackground(loader) { commits ->
       setCommits(commits ?: emptyList())

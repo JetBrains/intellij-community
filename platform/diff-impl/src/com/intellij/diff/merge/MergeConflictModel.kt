@@ -112,7 +112,7 @@ class MergeConflictModel(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private suspend fun setInitialOutputContent(document: Document, content: CharSequence): Boolean = withContext(Dispatchers.EDT) {
     DiffUtil.executeWriteCommand(document, project, DiffBundle.message("message.init.merge.content.command")) {
       document.setText(content)
@@ -151,7 +151,7 @@ class MergeConflictModel(
     canResolveChangeAutomatically(change.index, ThreeSide.BASE)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun ignoreChange(index: Int, side: Side, resolveChange: Boolean) {
     val change = getByIndex(index)
     if (!change.isConflict || resolveChange) {
@@ -341,7 +341,7 @@ class MergeConflictModel(
     getAllChanges().forEach { change: TextMergeChange -> markChangeResolved(change.index) }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun markChangeResolved(change: TextMergeChange, side: Side) {
     if (change.isResolved) return
     change.setResolved(side, true)
@@ -352,7 +352,7 @@ class MergeConflictModel(
     resultModel.invalidateChange(change.index)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun markChangeResolved(changeIndex: Int) {
     val change = getByIndex(changeIndex)
     if (change.isResolved) return

@@ -343,7 +343,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     pageSource.start()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun getCenterComponent(controller: Configurable.TopComponentController): JComponent {
     controller.showProgressIndicator(false)
     controller.showResetAction(false)
@@ -464,10 +464,10 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun enableSearch(option: String?): Runnable? = enableSearch(option, ignoreTagMarketplaceTab = false)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun enableSearch(option: String?, ignoreTagMarketplaceTab: Boolean): Runnable? {
     val query = option.orEmpty()
     val calledFromSpotlight = isCalledFromSpotlightPainter()
@@ -490,7 +490,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun openMarketplaceTab(option: String) {
     applyQueryIntent(
       normalizeMarketplaceNavigationQuery(option),
@@ -499,7 +499,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     )
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun openInstalledTab(option: String) {
     applyQueryIntent(
       option,
@@ -508,13 +508,13 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     )
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun openInstalledTabWithSearch(option: String): Runnable? {
     openInstalledTab(option)
     return null
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun dispose() {
     synchronized(callbackLock) {
       if (disposeStarted) return
@@ -716,7 +716,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     recalculatePluginUpdates()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun handleUpdateAllIntent(intent: UnifiedPluginUpdateAllIntent) {
     when (intent) {
       UnifiedPluginUpdateAllIntent.Update -> updateAllController.requestUpdateAll()
@@ -731,7 +731,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun renderPageSourceState(state: UnifiedPluginsPageSourceState) {
     pendingSelectionSourcesSettled = state.sourcesSettled
     if (renderedRepositoryContentRevision != state.repositoryContentRevision) {

@@ -237,7 +237,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun updateHighlighted(project: Project, hostEditor: Editor, coroutineScope: CoroutineScope) {
     ThreadingAssertions.assertEventDispatchThread()
     val hostDocument = hostEditor.document
@@ -318,7 +318,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private suspend fun isEditorUpToDate(
     hostEditor: Editor,
     offsetBefore: Int,
@@ -336,7 +336,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
            && hostEditor.getUserData(BACKGROUND_TASK_KEY) == job
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun applyBraceMatching(
     project: Project,
     newEditor: Editor,
@@ -399,7 +399,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     private val BACKGROUND_TASK_KEY: Key<Job> = Key.create("BACKGROUND_TASK")
 
     @TestOnly
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun waitForIdentifierHighlighting(editor: Editor) {
       ThreadingAssertions.assertEventDispatchThread()
       val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
@@ -422,7 +422,7 @@ private val LOG: Logger = Logger.getInstance(BackgroundHighlighter::class.java)
 @ApiStatus.Internal
 class BackgroundHighlighterPerProject(@JvmField val coroutineScope: CoroutineScope) : Disposable.Default
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun selectionRangeToFind(editor: Editor): TextRange? {
   ThreadingAssertions.assertEventDispatchThread()
   val document = editor.document
@@ -451,7 +451,7 @@ private fun selectionRangeToFind(editor: Editor): TextRange? {
   return caret.selectionRange
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun highlightSelection(project: Project, editor: Editor, executor: Executor): Boolean {
   ThreadingAssertions.assertEventDispatchThread()
   val document = editor.document
@@ -517,7 +517,7 @@ private fun highlightSelection(project: Project, editor: Editor, executor: Execu
   return true
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun removeSelectionHighlights(editor: Editor) {
   ThreadingAssertions.assertEventDispatchThread()
   val highlighters = (editor as UserDataHolderEx).getAndUpdateUserData(SELECTION_HIGHLIGHTS) { null }?.highlighters ?: return

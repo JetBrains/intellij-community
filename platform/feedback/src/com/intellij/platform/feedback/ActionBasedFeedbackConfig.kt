@@ -83,7 +83,7 @@ fun ActionBasedFeedbackConfig.isSuitableToShow(project: Project): Boolean {
  *
  * @see isSuitableToShow
  */
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun ActionBasedFeedbackConfig.showFeedbackDialog(project: Project, forTest: Boolean) {
   val dialog = createFeedbackDialog(project, forTest)
   val isOk = dialog.showAndGet()

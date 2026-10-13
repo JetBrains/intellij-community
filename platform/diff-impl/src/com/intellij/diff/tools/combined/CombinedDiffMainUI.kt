@@ -120,7 +120,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeAction:
     DiffUsageTriggerCollector.logShowCombinedDiffTool(model.project, diffToolChooser.getActiveTool(), model.context.getUserData(DiffUserDataKeys.PLACE))
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun setContent(viewer: CombinedDiffViewer) {
     clear()
     contentPanel.setContent(viewer.component)
@@ -133,19 +133,19 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeAction:
     mainToolbar.setVerticalSizeReferent(component)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun setSearchController(searchController: CombinedDiffSearchController) {
     this.searchController = searchController
     combinedDiffUIState.setSearchMode(true)
     mainToolbar.setSearchComponent(searchController.searchComponent)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun updateSearch(context: CombinedDiffSearchContext) {
     searchController?.update(context)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun closeSearch() {
     searchController = null
     mainToolbar.hideSearch()

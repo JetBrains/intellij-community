@@ -113,13 +113,13 @@ internal class DataGridSearchSessionWorker(
     return result
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun submitStartSearch() {
     searchInfo = null
     requests.tryEmit(true)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun submitStartSearchWithoutSelection() {
     searchInfo = null
     requests.tryEmit(false)

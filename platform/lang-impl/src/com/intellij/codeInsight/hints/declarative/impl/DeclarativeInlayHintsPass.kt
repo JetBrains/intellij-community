@@ -135,7 +135,7 @@ class DeclarativeInlayHintsPass(
     @ApiStatus.Internal
     val passSourceId: String = DeclarativeInlayHintsPass::class.java.name
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     @ApiStatus.Internal
     fun applyInlayData(
       editor: Editor,

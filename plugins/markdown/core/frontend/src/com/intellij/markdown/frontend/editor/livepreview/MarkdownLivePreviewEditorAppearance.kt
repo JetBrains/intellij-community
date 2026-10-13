@@ -38,7 +38,7 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
     })
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun change(isLivePreviewEnabled: Boolean) = if (isLivePreviewEnabled) apply() else restore()
 
   private fun apply() {
@@ -103,7 +103,7 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
   companion object {
     private val KEY = Key.create<MarkdownLivePreviewEditorAppearance>("markdown.live.preview.appearance")
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun getOrCreate(editor: EditorEx): MarkdownLivePreviewEditorAppearance? {
       if (editor.isDisposed) return null
       editor.getUserData(KEY)?.let { return it }

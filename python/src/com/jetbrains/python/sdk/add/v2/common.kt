@@ -187,7 +187,7 @@ enum class PythonInterpreterSelectionMethod {
   CREATE_NEW, SELECT_EXISTING
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 internal suspend fun installBaseSdk(installRequest: InstallablePythonSdk): kotlin.Result<PythonInterpreter> {
   val installed = installRequest.install(null) {
     PythonSdkUtil.getAllSdks()

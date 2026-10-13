@@ -232,10 +232,10 @@ fun hideSplash() {
  * Creates a splash window with the splash image of [appInfo]. The window is not visible.
  */
 @Internal
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun blockingCreateSplash(appInfo: ApplicationInfo): Window = Splash(requireNotNull(blockingLoadSplashImage(appInfo)))
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 internal fun blockingLoadSplashImage(appInfo: ApplicationInfo): BufferedImage? {
   return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
     loadSplashImage(appInfo)

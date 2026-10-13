@@ -294,7 +294,7 @@ object GitRemoteBranchesUtil {
     return GitStandardRemoteBranch(headRemote, remoteBranch)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun checkoutRemoteBranch(
     repository: GitRepository,
     branch: GitRemoteBranch,
@@ -319,7 +319,7 @@ object GitRemoteBranchesUtil {
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @JvmStatic
   fun checkoutRemoteBranch(project: Project, repositories: List<GitRepository>, remoteBranchName: String) {
     GitRemoteBranchCheckoutUtil.checkoutRemoteBranch(project, repositories, remoteBranchName)

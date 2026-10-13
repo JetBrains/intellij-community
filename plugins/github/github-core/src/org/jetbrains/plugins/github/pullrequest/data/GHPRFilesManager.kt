@@ -6,13 +6,13 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 internal interface GHPRFilesManager {
   val id: String
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createAndOpenTimelineFile(prId: GHPRIdentifier, requestFocus: Boolean)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createAndOpenDiffFile(prId: GHPRIdentifier?, requestFocus: Boolean)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun updateTimelineFilePresentation(prId: GHPRIdentifier)
 
   suspend fun closeNewPrFile()

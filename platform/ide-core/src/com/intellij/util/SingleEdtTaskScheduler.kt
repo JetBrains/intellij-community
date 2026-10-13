@@ -68,7 +68,7 @@ class SingleEdtTaskScheduler private constructor(kind: UiDispatcherKind) {
   }
 
   @TestOnly
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getAlarm(): SingleAlarm {
     return impl
   }

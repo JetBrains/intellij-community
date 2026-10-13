@@ -309,7 +309,7 @@ class FileStatusManagerImpl(private val project: Project, coroutineScope: Corout
     return FileStatus.NOT_CHANGED
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun refreshFileStatusFromDocument(file: VirtualFile) {
     if (LOG.isDebugEnabled) {
       val document = FileDocumentManager.getInstance().getDocument(file)

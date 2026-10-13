@@ -140,7 +140,7 @@ class EditorCellOutputsView(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun updateData(outputs: List<EditorCellOutput>): Boolean {
     var outputs = outputs
     if(outputs.isNotEmpty()) {

@@ -49,7 +49,7 @@ class MarkdownTableAlignmentController(private val editor: Editor) : Disposable 
 
   private var disposed = false
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun start() {
     subscribe()
     startRefreshLoop()
@@ -62,7 +62,7 @@ class MarkdownTableAlignmentController(private val editor: Editor) : Disposable 
     Disposer.dispose(model)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun scheduleRefresh() {
     if (disposed) return
     refreshRequests.trySend(Unit)
@@ -81,7 +81,7 @@ class MarkdownTableAlignmentController(private val editor: Editor) : Disposable 
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun performRefresh() {
     if (disposed || editor.isDisposed) return
     val project = editor.project ?: return

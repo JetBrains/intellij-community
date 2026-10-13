@@ -50,7 +50,7 @@ internal class StructureUiModelImpl(private val dtoId: StructureViewDtoId) {
   val minimumAutoExpandDepth: Int
     get() = dto?.minimumAutoExpandDepth ?: 2
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun initActions(modelDto: StructureViewModelDto) {
     dto = modelDto
 
@@ -63,10 +63,10 @@ internal class StructureUiModelImpl(private val dtoId: StructureViewDtoId) {
     logger.trace { "StructureUiModelImpl[$dtoId]: initialized actions; enabledActions=${myEnabledActionNames}" }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getActions(): Collection<StructureTreeAction> = myActions
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun isActionEnabled(action: StructureTreeAction): Boolean {
     return action.name in myEnabledActionNames
   }
@@ -76,7 +76,7 @@ internal class StructureUiModelImpl(private val dtoId: StructureViewDtoId) {
    *
    * Returns `false` if the action already had that state, in which case the caller must not notify the backend.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun setActionEnabled(action: StructureTreeAction, isEnabled: Boolean): Boolean {
     val affectiveIsEnabled = isEnabled != action.isReverted
 
@@ -103,7 +103,7 @@ internal class StructureUiModelImpl(private val dtoId: StructureViewDtoId) {
     return true
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun applyNodesModel(
     rootDto: StructureViewTreeElementDto,
     nodeProviders: List<NodeProviderNodesDto>,
@@ -171,12 +171,12 @@ internal class StructureUiModelImpl(private val dtoId: StructureViewDtoId) {
     myModelListeners.clear()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun fireTreeChanged() {
     myModelListeners.forEach { it.onTreeChanged() }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun fireActionsChanged() {
     myModelListeners.forEach { it.onActionsChanged() }
   }

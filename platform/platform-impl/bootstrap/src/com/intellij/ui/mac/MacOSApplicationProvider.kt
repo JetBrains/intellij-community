@@ -175,7 +175,7 @@ private fun installAutoUpdateMenu() {
   Foundation.invoke(pool, Foundation.createSelector("release"))
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun getNonDefaultProject(): Project? {
   @Suppress("DEPRECATION")
   var project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().dataContext)

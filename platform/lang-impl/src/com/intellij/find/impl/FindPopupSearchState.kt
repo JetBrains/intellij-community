@@ -82,7 +82,7 @@ class FindPopupSearchState {
   }
 
   /** "The next addRow should clear the table" consume. Returns true exactly once per fresh search. */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun consumeNeedReset(): Boolean {
     if (!needReset) return false
     needReset = false
@@ -118,39 +118,39 @@ class FindPopupSearchState {
   }
 
   // --- Frozen prefix / dedup ----------------------------------------------
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun containsRowKey(key: String): Boolean {
     return currentRowKeys.contains(key)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun recordRowKey(key: String) {
     currentRowKeys.add(key)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun forgetRowKey(key: String) {
     currentRowKeys.remove(key)
   }
 
   // --- Cumulative file count ----------------------------------------------
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun recordFilePath(path: String) {
     cumulativeFilePaths.add(path)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun cumulativeFileCount(): Int {
     return cumulativeFilePaths.size
   }
 
   // --- Cumulative usage count ---------------------------------------------
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun incrementUsageCount() {
     cumulativeUsageCount++
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun cumulativeUsageCount(): Int {
     return cumulativeUsageCount
   }

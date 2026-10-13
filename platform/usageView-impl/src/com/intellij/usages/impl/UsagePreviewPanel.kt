@@ -305,7 +305,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   public override fun updateLayoutLater(infos: List<UsageInfo>, usageView: UsageView) {
     disposeAndRemoveSimilarUsagesToolbar()
     val usageViewImpl = usageView as? UsageViewImpl
@@ -371,7 +371,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
    * Show loading state in the preview panel. Intended to be called when lazy preview is enabled
    * and usages are being calculated asynchronously.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @Internal
   fun showLoading() {
     ThreadingAssertions.assertEventDispatchThread()

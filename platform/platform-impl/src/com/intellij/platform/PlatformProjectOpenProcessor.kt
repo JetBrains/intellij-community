@@ -399,7 +399,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return moduleRef.get()
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     @Internal
     fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
       return runWithModalProgressBlocking(project, "") {
@@ -563,7 +563,7 @@ internal suspend fun releaseCommandLineWaitIfNotOpen(wait: CommandLineFileWait) 
  * Nothing to release if the editor area was never built: `mainSplitters` is a `lateinit` assigned inside `initJob`, and where that job
  * did not complete, editor restoring never took a hold either.
  */
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun endStartupEmptyStatePresentationHold(project: Project) {
   if (project.isDisposed) {
     return

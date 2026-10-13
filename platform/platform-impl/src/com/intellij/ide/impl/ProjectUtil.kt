@@ -673,7 +673,7 @@ object ProjectUtil {
   }
 
   @JvmStatic
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun openOrCreateProject(name: String, file: Path): Project? = runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
     openOrCreateProjectInner(name, file)
   }

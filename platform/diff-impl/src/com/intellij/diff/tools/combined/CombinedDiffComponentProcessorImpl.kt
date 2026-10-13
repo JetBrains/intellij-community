@@ -172,7 +172,7 @@ class CombinedDiffComponentProcessorImpl(
       combinedViewer = createCombinedViewer(false)
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     override fun onRequestsLoaded(blockId: CombinedBlockId, request: DiffRequest) {
       val viewer = combinedViewer ?: return
       buildBlockContent(mainUi, model.context, request, blockId)?.let { newContent ->
@@ -183,7 +183,7 @@ class CombinedDiffComponentProcessorImpl(
       viewer.contentChanged()
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     override fun onRequestContentsUnloaded(requests: Map<CombinedBlockId, DiffRequest>) {
       val viewer = combinedViewer ?: return
 

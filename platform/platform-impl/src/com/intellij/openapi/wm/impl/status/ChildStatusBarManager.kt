@@ -27,7 +27,7 @@ internal class ChildStatusBarManager(
 
   fun isEmpty(): Boolean = children.isEmpty()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createChild(coroutineScope: CoroutineScope, currentFileEditorFlow: StateFlow<FileEditor?>): IdeStatusBarImpl {
     EDT.assertIsEdt()
     val bar = IdeStatusBarImpl(

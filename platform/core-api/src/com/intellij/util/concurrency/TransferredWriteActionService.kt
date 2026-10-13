@@ -44,6 +44,6 @@ interface TransferredWriteActionService {
    * from EDT write actions.
    */
   @RequiresWriteLock
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun runOnBackgroundThreadWithTransferredWriteActionAndWait(@RequiresBackgroundThread @RequiresWriteLock action: Runnable)
 }

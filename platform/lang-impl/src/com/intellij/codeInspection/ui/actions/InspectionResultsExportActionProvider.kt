@@ -110,7 +110,7 @@ abstract class InspectionResultsExportActionProvider(
     outputPath: Path,
   )
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   open fun onExportSuccessful(data: UserDataHolderEx) {}
 
   /**

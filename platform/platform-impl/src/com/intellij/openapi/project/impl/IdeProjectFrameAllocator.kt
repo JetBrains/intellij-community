@@ -1162,7 +1162,7 @@ private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob:
   }
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun restoreStartupEditorFocus(project: Project, restore: ProjectViewStartupFocusRestore) {
   val focusOwner = restore.focusOwner
   val currentFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
@@ -1199,7 +1199,7 @@ private val PROJECT_VIEW_STARTUP_READY_TIMEOUT = 5.seconds
  * nothing here to focus. Where that is only because it has not been opened *yet*, the claim is already known to be given up by the time
  * it is, and it is opened focused instead.
  */
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun focusProjectViewIfOpened(project: Project) {
   if (project.isDisposed) {
     return

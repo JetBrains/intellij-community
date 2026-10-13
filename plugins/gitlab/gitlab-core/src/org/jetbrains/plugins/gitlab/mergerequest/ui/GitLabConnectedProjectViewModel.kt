@@ -80,7 +80,7 @@ interface GitLabConnectedProjectViewModel {
   fun viewMergeRequestList()
   fun closeNewMergeRequestDetails()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun openMergeRequestTimeline(mrIid: String, focus: Boolean)
 
   /**
@@ -262,7 +262,7 @@ abstract class GitLabConnectedProjectViewModelBase(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   abstract fun openMergeRequestDiff(mrIid: String, focus: Boolean)
 
   companion object {

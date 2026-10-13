@@ -81,7 +81,7 @@ class TerminalPromptController(
     listeners.add(listener)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun handleEnterPressed() {
     val customHandlers = TerminalPromptCustomEnterHandler.EP_NAME.extensionList
     for (handler in customHandlers) {
@@ -91,23 +91,23 @@ class TerminalPromptController(
     commandExecutor.startCommandExecution(model.commandText)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun performPaste(dataContext: DataContext? = null) {
     val context = dataContext ?: editor.dataContext
     editor.pasteProvider.performPaste(context)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun showCommandHistory() {
     listeners.forEach { it.commandHistoryStateChanged(showing = true) }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun onCommandHistoryClosed() {
     listeners.forEach { it.commandHistoryStateChanged(showing = false) }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun showCommandSearch() {
     listeners.forEach { it.commandSearchRequested() }
   }
@@ -115,7 +115,7 @@ class TerminalPromptController(
   interface PromptStateListener {
     fun commandHistoryStateChanged(showing: Boolean) {}
     fun commandSearchRequested() {}
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun promptVisibilityChanged(visible: Boolean) {}
   }
 

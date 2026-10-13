@@ -175,9 +175,9 @@ private class CombinedDiffContext(private val project: Project) : DiffContext() 
 interface CombinedDiffModelListener : EventListener {
   fun onModelReset()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun onRequestsLoaded(blockId: CombinedBlockId, request: DiffRequest)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun onRequestContentsUnloaded(requests: Map<CombinedBlockId, DiffRequest>)
 }

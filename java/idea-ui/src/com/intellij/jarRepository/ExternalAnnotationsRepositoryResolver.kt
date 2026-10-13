@@ -169,7 +169,7 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
       }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun updateLibrary(roots: List<OrderRoot>?,
                             library: Library) {
     if (library !is LibraryEx || library.isDisposed) return

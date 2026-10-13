@@ -64,7 +64,7 @@ internal fun navigateRequestLazy(
 }
 
 @Internal
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 @JvmOverloads
 fun navigateRequest(
   project: Project,

@@ -26,7 +26,7 @@ class TaskCheckinHandlerFactory : CheckinHandlerFactory() {
 
   private class TaskCheckinHandler(val panel: CheckinProjectPanel) : CheckinHandler(), DumbAware {
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     override fun checkinSuccessful() {
       val message = panel.getCommitMessage()
       val project = panel.getProject()

@@ -7,12 +7,12 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 
 internal interface GHPRDataProviderRepository {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getDataProvider(id: GHPRIdentifier, hostCs: CoroutineScope): GHPRDataProvider
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun findDataProvider(id: GHPRIdentifier): GHPRDataProvider?
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun addDetailsLoadedListener(hostCs: CoroutineScope, listener: (GHPullRequest) -> Unit)
 }

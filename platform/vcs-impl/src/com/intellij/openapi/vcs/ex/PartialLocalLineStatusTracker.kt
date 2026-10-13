@@ -85,7 +85,7 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
    */
   fun hasPartialChangesToCommit(): Boolean
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun handlePartialCommit(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitHelper
   fun getChangesToBeCommitted(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): String?
   fun getPartialCommitContent(changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitContent?
@@ -116,7 +116,7 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
 }
 
 abstract class PartialCommitHelper(val content: String) {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   abstract fun applyChanges()
 }
 
@@ -235,7 +235,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     eventDispatcher.multicaster.onChangeListMarkerChange(this)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun setBaseRevision(vcsContent: CharSequence) {
     val changelistId = if (!isInitialized) initialChangeListId else null
     initialChangeListId = null
@@ -258,7 +258,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     if (isValid()) eventDispatcher.multicaster.onBecomingValid(this)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun replayChangesFromDocumentEvents(events: List<DocumentEvent>) {
     if (events.isEmpty() || !blocks.isEmpty()) return
     updateDocument(Side.LEFT) { vcsDocument ->
@@ -410,7 +410,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun registerUndoAction(undo: Boolean) {
     val undoState = collectRangeStates()
     val action = MyUndoableAction(project, document, undoState, undo)
@@ -575,7 +575,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun rollbackChanges(changelistsIds: List<String>, honorExcludedFromCommit: Boolean) {
     val toCommitCondition = ToCommitCondition(changelistsIds, honorExcludedFromCommit)
     runBulkRollback(toCommitCondition)
@@ -748,7 +748,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
   }
 
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun moveToChangelist(range: Range, changelist: LocalChangeList) {
     val newRange = blockOperations.findBlock(range)
     if (newRange != null) {
@@ -756,12 +756,12 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun moveToChangelist(lines: BitSet, changelist: LocalChangeList) {
     moveToChangelist({ it.isSelectedByLine(lines) }, changelist)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @ApiStatus.Internal
   fun recreateBlocks(map: Map<Range, LocalChangeList>) {
     changeListManager.executeUnderReadActionDataLock {
@@ -780,7 +780,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun moveToChangelist(condition: (Block) -> Boolean, changelist: LocalChangeList) {
     changeListManager.executeUnderReadActionDataLock {
       if (changeListManager.getChangeList(changelist.id) == null) return@executeUnderReadActionDataLock
@@ -814,7 +814,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     return ExclusionState.ALL_INCLUDED // no changes - all included
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun setExcludedFromCommit(isExcluded: Boolean) {
     setExcludedFromCommit({ true }, isExcluded)
 
@@ -928,7 +928,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun restoreState(state: State): Boolean {
     if (state is FullState) {
       return restoreFullState(state)
@@ -967,7 +967,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     return success
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun restoreState(states: List<RangeState>): Boolean {
     var success = false
     documentTracker.doFrozen {

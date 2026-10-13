@@ -11,7 +11,7 @@ internal interface CrossFilePrevNextDifferenceIterableSupport {
    *
    * @return true if the next file should be displayed, false if the [prepareGoNext] should be called first
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun canGoNextNow(): Boolean
 
   /**
@@ -19,19 +19,19 @@ internal interface CrossFilePrevNextDifferenceIterableSupport {
    *
    * @return true if the next file should be displayed, false if the [prepareGoPrev] should be called first
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun canGoPrevNow(): Boolean
 
   /**
    * Prepare to move to the next file
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun prepareGoNext(dataContext: DataContext)
 
   /**
    * Prepare to move to the prev file
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun prepareGoPrev(dataContext: DataContext)
 
   /**

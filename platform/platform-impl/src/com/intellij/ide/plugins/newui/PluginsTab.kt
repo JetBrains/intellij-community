@@ -49,7 +49,7 @@ abstract class PluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 
   protected abstract val detailsPage: PluginDetailsPageComponent
   protected abstract val searchPanel: SearchResultPanel
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createPanel(): JComponent {
     val listPanel = JPanel(BorderLayout())
     listPanel.setBorder(CustomLineBorder(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR, JBUI.insetsTop(1)))
@@ -71,7 +71,7 @@ abstract class PluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 
     return splitter
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected abstract fun createPluginsPanel(): JComponent
 
   protected abstract fun updateMainSelection(selectionListener: Consumer<in PluginsGroupComponent?>)

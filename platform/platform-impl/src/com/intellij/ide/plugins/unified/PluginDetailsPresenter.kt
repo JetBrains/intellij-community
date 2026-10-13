@@ -17,13 +17,13 @@ internal data class PluginDetailsSelection(
 internal interface PluginDetailsPresenter : AutoCloseable {
   val component: JComponent
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun render(mode: PluginDetailsMode, selection: List<PluginDetailsSelection>)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun beforeRowRelease(occurrenceId: PluginOccurrenceId, row: PluginRow)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun close()
 }
 

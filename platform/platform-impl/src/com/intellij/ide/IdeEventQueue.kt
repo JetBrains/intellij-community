@@ -242,7 +242,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun setIdleTracker(value: () -> Unit) {
     EDT.assertIsEdt()
     idleTracker = value

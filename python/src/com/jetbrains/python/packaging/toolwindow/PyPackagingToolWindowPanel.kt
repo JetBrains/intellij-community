@@ -260,7 +260,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     packageListController.startSdkInit()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun setInterpreterPath(path: String?) {
     headerTitleRenderer?.update(path)
   }
@@ -269,7 +269,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     packageListController.setLoadingState(visible)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun syncSdkControllerSelection(interpreter: PythonInterpreter?) {
     moduleController.refreshAndSyncSelection(interpreter)
   }

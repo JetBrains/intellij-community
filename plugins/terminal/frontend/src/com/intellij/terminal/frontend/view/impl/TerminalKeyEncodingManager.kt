@@ -22,7 +22,7 @@ class TerminalKeyEncodingManager(
 
   private var curEncodingState: EncodingState? = null
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun getCode(key: Int, modifiers: Int): ByteArray? {
     val newEncodingState = sessionModel.terminalState.value.toEncodingState()
     if (curEncodingState != newEncodingState) {

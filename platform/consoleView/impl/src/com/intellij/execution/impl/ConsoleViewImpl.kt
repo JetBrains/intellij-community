@@ -515,7 +515,7 @@ open class ConsoleViewImpl protected constructor(
   }
 
   @TestOnly
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun waitAllRequests() {
     assert(ApplicationManager.getApplication().isUnitTestMode)
     val future = ApplicationManager.getApplication().executeOnPooledThread {
@@ -1712,7 +1712,7 @@ private fun isVScrollAtTheBottom(editor: EditorEx, useImmediatePosition: Boolean
   return scrollBarPosition == scrollBar.maximum - scrollBar.visibleAmount
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun registerActionHandler(editor: Editor, @Suppress("SameParameterValue") actionId: String) {
   val action = ActionManager.getInstance().getAction(actionId)
   action.registerCustomShortcutSet(action.shortcutSet, editor.contentComponent)

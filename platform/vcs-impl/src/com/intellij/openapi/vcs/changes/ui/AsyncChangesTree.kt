@@ -213,7 +213,7 @@ abstract class AsyncChangesTree : ChangesTree {
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private suspend fun updateTreeModel(requestId: Int, treeModel: DefaultTreeModel, treeStateStrategy: TreeStateStrategy<*>?) {
     try {
       _pendingColors.resetReplayCache()
@@ -248,7 +248,7 @@ abstract class AsyncChangesTree : ChangesTree {
     return super.isEmptyTextVisible() && (_busy?.value != true)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun updatePaintBusy(isBusy: Boolean) {
     setPaintBusy(isBusy)
     repaint() // repaint empty text

@@ -49,7 +49,7 @@ class TargetCustomToolPanel(
     languagePanel?.configurable?.apply()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createCustomTool(): Any? {
     return customToolLanguageConfigurable?.createCustomTool()
   }

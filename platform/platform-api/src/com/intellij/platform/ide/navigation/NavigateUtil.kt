@@ -228,7 +228,7 @@ private inline fun dispatchNavigateRequest(
  * Captures EDT-only navigation inputs (focus/[DataContext], [ModalityState], [ClientId]).
  * [ClientId] is captured only for context propagation into the async navigation, not for lifetime.
  */
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 @ApiStatus.Internal
 private fun createNavigationContext(
   project: Project,
@@ -244,14 +244,14 @@ private fun createNavigationContext(
   )
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun getOrCreateAsyncDataContext(project: Project, dataContext: DataContext?): DataContext? {
   ThreadingAssertions.assertEventDispatchThread()
   val context = dataContext ?: fetchDataContext(project) ?: return null
   return IdeUiService.getInstance().createAsyncDataContext(context)
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun fetchDataContext(project: Project): DataContext? {
   ThreadingAssertions.assertEventDispatchThread()
   val component = IdeFocusManager.getInstance(project).getFocusOwner()

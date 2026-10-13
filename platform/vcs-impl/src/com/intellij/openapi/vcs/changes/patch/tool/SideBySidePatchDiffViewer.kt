@@ -260,7 +260,7 @@ internal class SideBySidePatchDiffViewer(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun createToolbarActions(): List<AnAction> {
     return buildList {
       add(ToggleAutoScrollAction(textSettings))

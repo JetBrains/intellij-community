@@ -133,7 +133,7 @@ internal class ProjectViewToolWindowServiceImpl(
 
   override fun getActionSupport(): ProjectViewActionSupport = optionService
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun setupToolWindow(toolWindow: ToolWindow) {
     ProjectViewInitNotifier.getInstance(project).initStarted()
     toolWindow.setDefaultContentUiType(ToolWindowContentUiType.COMBO)
@@ -558,7 +558,7 @@ internal class ProjectViewToolWindowServiceImpl(
       initialized.await()
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     private fun addOrReplaceContent(): PaneContent? {
       paneContentManager.ensureContentsOrdered()
 
@@ -611,7 +611,7 @@ internal class ProjectViewToolWindowServiceImpl(
       }
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun findContent(id: ProjectViewPaneId): PaneContent? {
       for (i in 0 until contentManager.contentCount) {
         val content = contentManager.getContent(i) ?: continue
@@ -621,12 +621,12 @@ internal class ProjectViewToolWindowServiceImpl(
       return null
     }
     
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun isSelected(paneContent: PaneContent): Boolean {
       return contentManager.isSelected(paneContent.content)
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun createAndAddContent(pane: FrontendProjectViewPane): PaneContent? {
       val newContent = ContentFactory.getInstance().createContent(
         /* component = */ pane.component,
@@ -681,12 +681,12 @@ internal class ProjectViewToolWindowServiceImpl(
       return index
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun setSelectedContent(newContent: PaneContent) {
       contentManager.setSelectedContent(newContent.content)
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun removeAndDisposeContent(paneContent: PaneContent) {
       if (contentManager.removeContent(paneContent.content, true)) {
         panes -= paneContent.id
@@ -694,7 +694,7 @@ internal class ProjectViewToolWindowServiceImpl(
       }
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun ensureContentsOrdered() {
       val order = descriptorOrder() // take a snapshot as it's updated concurrently
       val currentDescriptorOrder = (0 until contentManager.contentCount).mapNotNull { i ->

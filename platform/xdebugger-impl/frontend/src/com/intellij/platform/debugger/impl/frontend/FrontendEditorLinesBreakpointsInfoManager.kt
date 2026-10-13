@@ -184,7 +184,7 @@ private class EditorBreakpointLinesInfoMap(
     cs.cancel()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun Editor.viewportIndicesInclusive(): Pair<Int, Int> {
     if (isDisposed) {
       throw CancellationException()

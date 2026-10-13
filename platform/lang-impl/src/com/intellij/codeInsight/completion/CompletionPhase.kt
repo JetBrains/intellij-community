@@ -131,7 +131,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
      * Several typedHandlers can request auto-popup completion during processing of a single event.
      * We need to trigger read-action for them independently because they can have different conditions for starting completion.
      */
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     private fun addRequest() {
       when (val cur = myState) {
         Cancelled, Disposed, Success -> {
@@ -148,7 +148,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
     /**
      * the current request was not successful (most likely because of the failed condition), but other requests still have a chance to succeed.
      */
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     private fun cancelThisRequest() {
       when (val cur = myState) {
         Disposed, Cancelled, Success -> {
@@ -175,7 +175,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
     /**
      * At least one of the requests succeeded, the completion process has been started, no more requests are necessary.
      */
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     private fun requestCompleted() {
       LOG.trace { "Request completed" }
       LOG.assertTrue(myState is InProgress, "myState=$myState")
@@ -231,7 +231,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
        * @param prevIndicator   the completion indicator, if any. The indicator exists if completion was already started and we restart it with new parameters.
        */
       @ApiStatus.Internal
-      @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+      @RequiresEdt
       @JvmStatic
       fun scheduleAsyncCompletion(
         editor: Editor,
@@ -293,7 +293,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
         return completionEditor
       }
 
-      @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+      @RequiresEdt
       private fun startAsyncCompletionIfNotExpired(
         phase: CommittingDocuments,
         completionEditor: Editor?,
@@ -341,7 +341,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
         doInvokeCompletionOnCommittedDocument(completionType, autopopup, project, completionEditor, phase.indicator?.invocationCount ?: 0)
       }
 
-      @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+      @RequiresEdt
       private fun doInvokeCompletionOnCommittedDocument(
         completionType: CompletionType,
         isAutopopup: Boolean,
@@ -360,7 +360,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
         handler.invokeCompletion(project, editor, invocationCount, false)
       }
 
-      @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+      @RequiresEdt
       private fun getCompletionPhase(
         prevIndicator: CompletionProgressIndicator?,
         topLevelEditor: Editor,
@@ -416,7 +416,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       }
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     private fun cancelPhase() {
       when (myState) {
         Cancelled, Disposed, Success -> {}
@@ -447,7 +447,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       cancelOnEditorLoseFocus(indicator)
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     private fun restartOnWriteAction() {
       if (ApplicationManagerEx.getApplicationEx().isWriteActionPending) {
         doRestartBecauseOfWriteAction()

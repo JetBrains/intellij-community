@@ -15,9 +15,9 @@ interface LightEditServiceListener {
     val TOPIC: Topic<LightEditServiceListener> = Topic(LightEditServiceListener::class.java, Topic.BroadcastDirection.NONE)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun lightEditWindowOpened(project: Project) {}
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun lightEditWindowClosed(project: Project) {}
 }

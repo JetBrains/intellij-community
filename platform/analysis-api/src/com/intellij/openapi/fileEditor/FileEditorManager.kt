@@ -389,7 +389,7 @@ abstract class FileEditorManager {
    * The replacement can complete asynchronously, thus, not blocking the caller thread with potentially heavy operations.
    */
   @Deprecated("Use non-blocking variant", ReplaceWith("requestOpenEditor(descriptor, requets)"))
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun openEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): @Unmodifiable List<FileEditor> {
     return openFileEditor(descriptor, focusEditor)
   }
@@ -399,7 +399,7 @@ abstract class FileEditorManager {
    * The replacement can complete asynchronously, thus, not blocking the caller thread with potentially heavy operations.
    */
   @Deprecated("Use non-blocking variant", ReplaceWith("requestOpenEditor(descriptor, request)"))
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   abstract fun openFileEditor(descriptor: FileEditorNavigatable, focusEditor: Boolean): @Unmodifiable List<FileEditor>
 
   /**
@@ -469,7 +469,7 @@ abstract class FileEditorManager {
    * @param file file to check
    */
   @ApiStatus.Internal
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   open fun hasPinnedEditorTab(file: VirtualFile): Boolean {
     return false
   }
@@ -482,7 +482,7 @@ abstract class FileEditorManager {
    * @param pinned whether the editor tab should be pinned
    */
   @ApiStatus.Internal
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   open fun setPinnedEditorTab(file: VirtualFile, pinned: Boolean) { }
 
   /**

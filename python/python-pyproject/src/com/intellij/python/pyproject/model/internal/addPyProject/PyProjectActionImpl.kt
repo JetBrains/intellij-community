@@ -36,7 +36,7 @@ internal abstract class PyProjectActionImpl protected constructor(private val fo
   }
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val presenter = e.projectCreationPresenter(forNewProject) ?: return

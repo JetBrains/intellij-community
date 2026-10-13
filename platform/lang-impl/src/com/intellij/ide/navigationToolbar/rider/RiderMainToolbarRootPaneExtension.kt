@@ -174,7 +174,7 @@ open class RiderMainToolbarRootPaneManager(private val project: Project) : Simpl
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun applyTo(actions: Map<String, ActionGroup?>, component: JComponent, layout: BorderLayout) {
     actions.mapValues { (_, actionGroup) ->
       if (actionGroup != null) {

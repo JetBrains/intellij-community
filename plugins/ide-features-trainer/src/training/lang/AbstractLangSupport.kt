@@ -70,7 +70,7 @@ abstract class AbstractLangSupport : LangSupport {
 
   open val readMeCreator: ReadMeCreator? = null
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk? {
     try {
       // Use no SDK if it's a valid for this language
@@ -94,7 +94,7 @@ abstract class AbstractLangSupport : LangSupport {
     })
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun applyProjectSdk(sdk: Sdk, project: Project) {
     CommandProcessor.getInstance().executeCommand(project, {
       ApplicationManager.getApplication().runWriteAction {

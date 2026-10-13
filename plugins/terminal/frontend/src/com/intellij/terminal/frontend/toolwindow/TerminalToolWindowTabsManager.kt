@@ -37,14 +37,14 @@ interface TerminalToolWindowTabsManager {
    *
    * Supports both tool-window attached tabs and tabs created with `shouldAddToToolWindow(false)`.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun closeTab(tab: TerminalToolWindowTab)
 
   /**
    * Close the given tool window tab but leave the underlying terminal process running.
    * So, the [TerminalToolWindowTab] can be able to be used in the other context (for example, to be opened as the editor tab).
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun detachTab(tab: TerminalToolWindowTab)
 
   /**
@@ -54,7 +54,7 @@ interface TerminalToolWindowTabsManager {
    * Worth specifying when the terminal tool window is split to open the tab in the specific area.
    * If it is `null`, the tab will be opened in the top-left split area (or in the main area if there are no splits).
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun attachTab(
     tab: TerminalToolWindowTab,
     contentManager: ContentManager? = null,

@@ -26,7 +26,7 @@ import java.nio.file.Path
  * User can choose either ``\\wsl$`` path for [distro] or Windows path (only if [accessWindowsFs] set).
  * [customFileDescriptor] adds additional filters, and accomplished with roots (according to [accessWindowsFs])
  */
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun browseWslPath(
   linuxPathField: TextAccessor,
   distro: WSLDistribution,

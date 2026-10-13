@@ -15,7 +15,7 @@ import javax.swing.JComponent
 interface FrontendProjectViewPaneModel {
   suspend fun describe(builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createPane(descriptor: ProjectViewPaneDescriptor): FrontendProjectViewPane
 }
 
@@ -48,10 +48,10 @@ interface FrontendProjectViewPane {
    * 
    * @return `true` iff the state should be persisted
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun saveStateTo(element: Element): Boolean
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun restoreStateFrom(element: Element?, options: RestorePaneStateOptions)
 
   suspend fun manage()

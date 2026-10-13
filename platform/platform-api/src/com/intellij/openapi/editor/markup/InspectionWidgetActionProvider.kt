@@ -21,6 +21,6 @@ interface InspectionWidgetActionProvider {
    *
    * AnAction may implement Disposable, its `dispose` method will be called on editor disposal on the action unregistration
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createAction(editor: Editor): AnAction?
 }

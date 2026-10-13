@@ -321,7 +321,7 @@ class SuggestedRefactoringChangeListener(
       return SignatureUpdate.NextSignature(anchor, refactoringSupport)
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     private fun applySignatureUpdate(editingState: SignatureEditingState, update: SignatureUpdate) {
       if (this@SuggestedRefactoringChangeListener.editingState !== editingState) return
 

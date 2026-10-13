@@ -858,7 +858,7 @@ private fun showErrors(project: Project?, @NlsContexts.DialogMessage message: St
   }
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private suspend fun showResults(
   project: Project?,
   downloaders: List<PluginDownloader>,

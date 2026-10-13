@@ -1500,7 +1500,7 @@ open class JBTabsImpl internal constructor(
   }
 
   @Internal
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun setTabs(tabs: List<TabInfo>) {
     for (tab in tabs) {
       tab.changeSupport.addPropertyChangeListener(this)
@@ -1653,7 +1653,7 @@ open class JBTabsImpl internal constructor(
   }
 
   @Internal
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun selectTabSilently(tab: TabInfo) {
     setSelectedInfo(tab)
     setComponentZOrder(tab.tabLabel!!, 0)
@@ -2712,7 +2712,7 @@ open class JBTabsImpl internal constructor(
     return result
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @Internal
   fun removeTabWithoutChangingSelection(info: TabInfo) {
     if (removeNotifyInProgress) {

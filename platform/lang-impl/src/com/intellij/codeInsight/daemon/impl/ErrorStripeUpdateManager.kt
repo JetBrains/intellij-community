@@ -107,7 +107,7 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
   }
 
   @Deprecated("Use launchRepaintErrorStripePanel(List<Editor>) or launchRepaintErrorStripePanel(Editor, PsiFile) instead")
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun repaintErrorStripePanel(editor: Editor, psiFile: PsiFile?) {
     if (!project.isInitialized()) {
       return
@@ -149,7 +149,7 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @JvmName("setOrRefreshErrorStripeRenderer")
   internal fun setOrRefreshErrorStripeRenderer(model: EditorMarkupModel, file: PsiFile) {
     if (refreshErrorStripeRenderer(model)) {

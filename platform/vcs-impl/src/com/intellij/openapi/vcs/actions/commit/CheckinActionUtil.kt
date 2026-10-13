@@ -117,7 +117,7 @@ internal object CheckinActionUtil {
     )
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun performCheckInAfterUpdate(
     project: Project,
     selectedChanges: List<Change>,

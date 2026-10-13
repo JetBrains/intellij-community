@@ -88,7 +88,7 @@ internal fun TerminalView.getRunningProcessExecutableForFus(): String? {
   return TerminalCommandUsageStatistics.getLoggableCommandData(commandLine, expandAbsoluteOrRelativePath = true).command
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 internal fun ContentManager.getTerminalTabs(): List<TerminalToolWindowTab> {
   return contentsRecursively.mapNotNull { it.getTerminalTab() }
 }

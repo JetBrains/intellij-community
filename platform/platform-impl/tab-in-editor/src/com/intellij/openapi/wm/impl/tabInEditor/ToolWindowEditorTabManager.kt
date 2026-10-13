@@ -69,7 +69,7 @@ class ToolWindowEditorTabManager(
    * Returns `null` if [file] has neither a session nor a pending state, or if the content cannot be restored.
    * The pending state is removed in both cases, so a failed restore is not repeated.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun getOrRestoreSession(file: ToolWindowEditorTabFile): ToolWindowEditorTabSession? {
     sessionByFile[file]?.let { return it }
     // Remove the state first, so a nested call during the restore does not restore the content again.
@@ -135,7 +135,7 @@ class ToolWindowEditorTabManager(
    * @param content the tool window content being moved to the editor
    * @return the file representing [content] in the editor
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun createEditorTabFileForContent(
     toolWindowId: String,
     content: Content,
@@ -180,7 +180,7 @@ class ToolWindowEditorTabManager(
    * @param state the persisted editor-tab state containing the serialized tool window content
    * @return `true` if the content was successfully restored and attached; `false` otherwise
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun restoreEditorTabFileContent(
     file: ToolWindowEditorTabFile,
     state: ToolWindowEditorTabState,
@@ -205,7 +205,7 @@ class ToolWindowEditorTabManager(
    *
    * The newly created session is registered in [sessionByFile].
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun attachContentToFile(
     file: ToolWindowEditorTabFile,
     content: Content,
@@ -223,7 +223,7 @@ class ToolWindowEditorTabManager(
   /**
    * Attaches [content] to [file] with its presentation driven by [presentationFlow].
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun attachContentToFile(
     file: ToolWindowEditorTabFile,
     content: Content,
@@ -263,7 +263,7 @@ class ToolWindowEditorTabManager(
    * while its tool window has no support registered.
    */
   @TestOnly
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun createTransientEditorTabFileForTest(
     toolWindowId: String,
     content: Content,
@@ -284,7 +284,7 @@ class ToolWindowEditorTabManager(
    * @param releaseContent whether the session's content should also be released;
    * false when ownership of the content is transferred elsewhere
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun closeEditorTabFile(file: ToolWindowEditorTabFile, releaseContent: Boolean) {
     if (file.getUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN) == true) {
       return

@@ -121,14 +121,14 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
 
   private val defaultSortedProvidersList = mutableListOf<String>()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun initializeIfNeeded() {
     if (_isInitialised) return
     initialize()
     _isInitialised = true
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected open fun initialize() {
     lifeSettingModel.isRegistryEnabled.whenTrue(codeVisionLifetime) { enableCodeVisionLifetime ->
       runReadActionBlocking {
@@ -410,7 +410,7 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     editor.putUserData(editorTrackingStart, editorOpenedMark)
     var calcRunning = false
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun recalculateLenses(lensesToUpdate: UpdateLensesRequest = UpdateLensesRequest.All) {
       val editorManager = FileEditorManager.getInstance(project)
       if (!isInlaySettingsEditor(editor) && !editorManager.selectedEditors.any {

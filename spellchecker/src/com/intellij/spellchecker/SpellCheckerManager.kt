@@ -147,7 +147,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
     fillEngineDictionary(spellChecker)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun removeDictionaries(removedDictionaries: List<String>) {
     if (removedDictionaries.isEmpty()) return
     val spellChecker = spellChecker ?: return

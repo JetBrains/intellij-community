@@ -40,7 +40,7 @@ class ProjectPathImpl(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun onProjectFileNameChanged(code: suspend (projectPathName: @NlsSafe String) -> Unit) {
     uiServices.runWhenComponentDisplayed(field) {
       val job = coroutineContext.job

@@ -72,7 +72,7 @@ internal class EditorCaretMutator internal constructor(
    * Adopts the settings and the caret measurements of the editor. The view has to reinit its own settings first,
    * because it measures the caret from a font cache that only its own reinit drops.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun reinitSettings() {
     settings.set(editor.caretAnimationSettings())
     val repaintMetrics = editor.view.caretRepaintMetrics
@@ -154,7 +154,7 @@ internal class EditorCaretMutator internal constructor(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun caretMoved() {
     if (!editor.isPurePaintingMode && updateCursor.getAndSet(false)) {
       val placements = editor.caretPlacements()
@@ -192,7 +192,7 @@ internal class EditorCaretMutator internal constructor(
   /**
    * Produces one step on the calling thread, so that a settled move appears without waiting for the loop.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun advanceNow(tick: CaretTick) {
     val step = advanceStep(prefetching = false, stopWhenIdle = false) {
       tick

@@ -16,7 +16,7 @@ interface AutoScrollToSourceTaskManager {
     fun getInstance(): AutoScrollToSourceTaskManager = ApplicationManager.getApplication().service()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun scheduleScrollToSource(
     handler: AutoScrollToSourceHandler,
     dataContext: DataContext,

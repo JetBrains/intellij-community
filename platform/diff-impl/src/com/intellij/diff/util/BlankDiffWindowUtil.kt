@@ -57,7 +57,7 @@ object BlankDiffWindowUtil {
 
   internal fun getRecentFiles(): List<RecentBlankContent> = ourRecentFiles.toList()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun saveRecentContents(request: DiffRequest) {
     if (request is ContentDiffRequest) {
       for (content in request.contents) {
@@ -66,7 +66,7 @@ object BlankDiffWindowUtil {
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun saveRecentContent(content: DiffContent) {
     if (content !is DocumentContent) return
     if (!DiffUtil.isUserDataFlagSet(REMEMBER_CONTENT_KEY, content)) return

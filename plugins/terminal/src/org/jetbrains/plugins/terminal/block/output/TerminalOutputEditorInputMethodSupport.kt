@@ -162,7 +162,7 @@ class TerminalOutputEditorInputMethodSupport(
     private var cursorOffset: Int = -1
     private var job: Job? = null
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun start() {
       val initialCaretPosition = getCaretPosition() ?: return
       showInlayAt(editor.logicalPositionToOffset(initialCaretPosition))
@@ -200,7 +200,7 @@ class TerminalOutputEditorInputMethodSupport(
       inlay = null
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun cancel() {
       job?.cancel()
       hideInlay()

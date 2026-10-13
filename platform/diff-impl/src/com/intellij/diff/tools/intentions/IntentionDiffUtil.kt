@@ -47,7 +47,7 @@ data class CreatedPreviewUI(
 @ApiStatus.Internal
 object IntentionDiffUtil {
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createPreviewUi(
     project: Project, diffDisposable: Disposable, fileNameDisplay: String, fileTypeIcon: Icon, contextName: String? = null,
   ): CreatedPreviewUI {

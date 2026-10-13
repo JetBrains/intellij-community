@@ -55,7 +55,7 @@ class MinimapHoverController(
     scope.cancel()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun onSnapshot(snapshot: MinimapSnapshot) {
     hoverEnabled = settings.state.showHover && hoverPolicy.isHoverEnabled(panel.editor, snapshot)
     if (!hoverEnabled) {
@@ -77,13 +77,13 @@ class MinimapHoverController(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun paint(graphics: Graphics2D) {
     if (!hoverEnabled) return
     presenter.paint(graphics)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun hideBalloon() {
     cancelHoverComputation()
     hoverStateMachine.updateTarget(null)
@@ -91,12 +91,12 @@ class MinimapHoverController(
     presenter.hide()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun onMouseEntered() {
     delayNextHover = true
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun onMouseExited() {
     if (dragging) {
       lastMousePoint = null
@@ -106,7 +106,7 @@ class MinimapHoverController(
     updateHover(null)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun onScroll(point: Point?) {
     point?.let {
       lastMousePoint = Point(it)
@@ -118,18 +118,18 @@ class MinimapHoverController(
     updateActiveTargetForPoint(snapshot, lastPoint)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun startDragging() {
     dragging = true
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun stopDragging(point: Point?) {
     dragging = false
     updateHover(point)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun updateHover(point: Point?) {
     if (point == null) {
       cancelHoverComputation()
@@ -173,7 +173,7 @@ class MinimapHoverController(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun computeHoverTargetAsync(snapshot: MinimapSnapshot, point: Point, onResult: (MinimapHoverTarget?) -> Unit) {
     hoverComputationJob?.cancel()
     hoverComputationJob = scope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {

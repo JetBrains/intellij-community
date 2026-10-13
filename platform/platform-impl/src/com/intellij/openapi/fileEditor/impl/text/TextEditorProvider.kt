@@ -240,7 +240,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     return TextEditorState(carets, relativeCaretPosition)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   open fun setStateImpl(project: Project?, editor: Editor, state: TextEditorState, exactState: Boolean) {
     val carets = state.carets
     if (carets.isNotEmpty()) {

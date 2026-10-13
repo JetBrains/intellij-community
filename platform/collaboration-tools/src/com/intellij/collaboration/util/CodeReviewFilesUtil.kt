@@ -15,7 +15,7 @@ object CodeReviewFilesUtil {
    * Without this [FileEditorManager.closeFile] will throw an exception
    */
   @ApiStatus.Experimental
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @RequiresWriteLock
   fun closeFilesSafely(manager: FileEditorManager, files: Collection<VirtualFile>) {
     // otherwise the exception is thrown when removing an editor tab

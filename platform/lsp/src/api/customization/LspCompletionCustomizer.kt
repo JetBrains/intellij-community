@@ -41,7 +41,7 @@ open class LspCompletionSupport : LspCompletionCustomizer() {
    * Implementations may override this function and return `false` to ignore the presence of the typed character
    * in the server's `CompletionOptions.triggerCharacters`.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @RequiresWriteLock
   open fun isTriggerCharacterRespected(charTyped: Char): Boolean = true
 

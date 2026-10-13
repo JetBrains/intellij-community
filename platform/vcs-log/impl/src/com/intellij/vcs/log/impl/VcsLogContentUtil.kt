@@ -119,7 +119,7 @@ object VcsLogContentUtil {
 
   @Deprecated("Use {@link VcsProjectLog#runInMainLog} instead",
               ReplaceWith("VcsProjectLog.runInMainLog(project, consumer)", "com.intellij.vcs.log.impl.VcsProjectLog"))
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @JvmStatic
   fun runInMainLog(project: Project, consumer: Consumer<in MainVcsLogUi>) {
     VcsProjectLog.runInMainLog(project) {

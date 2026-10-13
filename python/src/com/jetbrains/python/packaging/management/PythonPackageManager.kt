@@ -697,7 +697,7 @@ value class PyWorkspaceMember(val name: String)
  */
 @ApiStatus.Internal
 interface DependenciesExporter {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun export(file: PsiFile)
 }
 

@@ -53,7 +53,7 @@ private class SyncAction(private val syncType: SyncType,
   }
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 @VisibleForTesting
 fun doSync(icsManager: IcsManager, project: Project?, syncType: SyncType, url: String, owner: ModalTaskOwner): String? {
   IcsActionsLogger.logSettingsSync(project, syncType)

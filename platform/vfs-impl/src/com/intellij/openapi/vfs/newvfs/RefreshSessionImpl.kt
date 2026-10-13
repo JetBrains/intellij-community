@@ -283,7 +283,7 @@ internal class RefreshSessionImpl internal constructor(
     worker?.cancel()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun fireEvents(events: List<CompoundVFileEvent>, appliers: AsyncEventSupport.ChangeAppliers, excludeAsyncListeners: Boolean) {
     try {

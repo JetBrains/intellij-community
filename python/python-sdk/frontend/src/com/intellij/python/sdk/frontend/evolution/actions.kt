@@ -250,7 +250,7 @@ internal fun recreateEvoEnv(
  * The choice lives here rather than in the panel behind it because this is the dialog that commits: everything the
  * rebuild does is decided on one screen, and a box the user ticked and then abandoned decides nothing.
  */
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun confirmRecreate(
   project: Project,
   envTitle: @NlsSafe String,

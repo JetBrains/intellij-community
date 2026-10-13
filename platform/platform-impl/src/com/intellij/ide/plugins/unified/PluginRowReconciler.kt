@@ -11,7 +11,7 @@ internal class PluginRowReconciler<Row : Any, RenderKey : Any> @RequiresEdt(gene
 ) : AutoCloseable {
   private var entries = LinkedHashMap<PluginOccurrenceId, Entry<Row, RenderKey>>()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun reconcile(specifications: List<PluginRowSpecification<RenderKey>>): List<PluginRowBinding<Row>> {
     validateSpecifications(specifications)
 
@@ -45,10 +45,10 @@ internal class PluginRowReconciler<Row : Any, RenderKey : Any> @RequiresEdt(gene
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun row(occurrenceId: PluginOccurrenceId): Row? = entries[occurrenceId]?.row
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun close() {
     val removedEntries = entries
     entries = LinkedHashMap()

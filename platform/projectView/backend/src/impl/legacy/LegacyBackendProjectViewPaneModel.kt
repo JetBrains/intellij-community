@@ -280,7 +280,7 @@ private class LegacyBackendProjectViewPaneModel(
    * gives all the keys the copy/paste/delete handlers need, including the pane's own
    * [com.intellij.openapi.actionSystem.PlatformDataKeys.DELETE_ELEMENT_PROVIDER] choice.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun selectionDataContext(nodeIds: List<Long>): DataContext {
     return CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
       sink[CommonDataKeys.PROJECT] = project

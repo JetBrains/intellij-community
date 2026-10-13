@@ -65,7 +65,7 @@ open class CloseProjectWindowHelper {
     return frame.rootPane.getClientProperty(WindowTabsComponent.CLOSE_TAB_KEY) == true
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   open fun windowClosing(project: Project?) {
     WriteIntentReadAction.run {
 
@@ -91,7 +91,7 @@ open class CloseProjectWindowHelper {
 
   protected open fun getNumberOfOpenedProjects(): Int = ProjectManager.getInstance().openProjects.size
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected open fun closeProjectAndShowWelcomeFrameIfNoProjectOpened(project: Project?) {
     SaveAndSyncHandler.getInstance().withDisabledAutoSaveBlocking {
       if (project != null && project.isOpen) {
@@ -137,7 +137,7 @@ internal fun opensWelcomeScreenProject(): Boolean {
  *
  * @return true on success. Returns `false` when a listener vetoes the close.
  */
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 internal fun closeAndDisposeProject(project: Project, keepFrame: Boolean): Boolean {
   if (!keepFrame) {
     return ProjectManager.getInstance().closeAndDispose(project)

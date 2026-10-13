@@ -25,7 +25,7 @@ import javax.swing.JPanel
  * By default, it shows a "pycharm.free.mode.upgrade.body" promo text.
  * Could be customized by passing descriptionHtml and features list. In this case, default text will be substituted to features list.
  */
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun createPromoPanel(
   @Nls descriptionHtml: String? = null,
   features: List<PromoFeatureListItem>? = null,

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
  * Checks out a remote branch into a new or an existing local branch.
  */
 object GitRemoteBranchCheckoutUtil {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @JvmStatic
   fun checkoutRemoteBranch(project: Project, repositories: List<GitRepository>, remoteBranchName: String) {
     val suggestedLocalName = repositories.firstNotNullOf { it.branches.findRemoteBranch(remoteBranchName)?.nameForRemoteOperations }
@@ -23,7 +23,7 @@ object GitRemoteBranchCheckoutUtil {
   }
 
   @ApiStatus.Internal
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @JvmStatic
   fun checkoutRemoteBranch(
     project: Project,
@@ -49,7 +49,7 @@ object GitRemoteBranchCheckoutUtil {
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun askNewBranchNameAndCheckout(
     project: Project, repositories: List<GitRepository>, remoteBranchName: String, suggestedLocalName: String, callInAwtLater: Runnable?,
   ) {

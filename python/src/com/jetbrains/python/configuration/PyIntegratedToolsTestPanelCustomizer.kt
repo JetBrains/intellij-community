@@ -12,11 +12,11 @@ interface PyIntegratedToolsTestPanelCustomizer {
     private val EP_NAME: ExtensionPointName<PyIntegratedToolsTestPanelCustomizer> =
       ExtensionPointName.create("com.jetbrains.python.configuration.pyIntegratedToolsTestPanelCustomizer")
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     @JvmStatic
     fun createPanels(): List<DialogPanel> = EP_NAME.extensionList.map { it.createPanel() }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createPanel(): DialogPanel
 }

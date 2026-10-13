@@ -30,19 +30,19 @@ class InlineCompletionContext internal constructor(
     @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     get() = assureNotDisposed { myState }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun isCurrentlyDisplaying(): Boolean = state.elements.any { it.isVisible() }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun startOffset(): Int? = state.firstElement()?.startOffset()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun endOffset(): Int? = state.lastElement()?.endOffset()
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun textToInsert(): String = state.elements.joinToString("") { it.element.text }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun clear() {
     assureNotDisposed { state.clear() }
   }
@@ -53,7 +53,7 @@ class InlineCompletionContext internal constructor(
    * * The only operation you can safely use is [isDisposed]. Always check it before accessing any elements.
    * * Disposing of a context guarantees that all elements were cleared.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun dispose() {
     clear()
     isDisposed = true

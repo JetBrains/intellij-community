@@ -68,7 +68,7 @@ class GitCloneDialogComponent(project: Project,
     rememberedInputs.cloneParentDir = parentDirectory
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun onComponentSelected(dialogStateListener: VcsCloneDialogComponentStateListener) {
     updateOkActionState(dialogStateListener)
 
@@ -135,7 +135,7 @@ class GitCloneDialogComponent(project: Project,
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun isOkActionEnabled(): Boolean = super.isOkActionEnabled() && versionCheckState == VersionCheckState.SUCCESS
 
   private fun notifyCloneError(project: Project) {

@@ -55,7 +55,7 @@ class TerminalSelectionController(
     })
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun selectRelativeBlock(isBelow: Boolean, dropCurrentSelection: Boolean) {
     val primaryBlock = selectionModel.primarySelection ?: return
     val curIndex = outputModel.blocks.indexOf(primaryBlock).takeIf { it >= 0 } ?: return
@@ -76,14 +76,14 @@ class TerminalSelectionController(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun selectLastBlock() {
     val block = outputModel.blocks.lastOrNull() ?: return
     selectionModel.selectedBlocks = listOf(block)
     makeBlockVisible(block)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun clearSelection() {
     selectionModel.selectedBlocks = emptyList()
     textSelectionModel.removeSelection()

@@ -177,7 +177,7 @@ private class Osc8HyperlinksRenderer(
    * Relies on the hover tracking of [applier]; a hovered filter-based hyperlink is not in
    * [appliedUriById], so it yields `null`.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun hoveredLinkUri(): @NlsSafe String? {
     val hovered = applier.getHoveredHyperlink() ?: return null
     return appliedUriById[hovered.id]

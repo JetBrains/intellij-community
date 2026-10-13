@@ -47,7 +47,7 @@ class IdentifierHighlighterUpdater(
    *
    * In brace matching case this is done from [com.intellij.codeInsight.highlighting.BraceHighlightingHandler.highlightBraces]
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @ApiStatus.Internal
   fun doAdditionalCodeBlockHighlighting(result: IdentifierHighlightingResult) {
     val myCodeBlockMarkerRanges = getCodeBlockMarkerRanges(result)

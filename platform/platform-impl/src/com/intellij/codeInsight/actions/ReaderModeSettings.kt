@@ -113,7 +113,7 @@ interface ReaderModeSettings : Disposable {
       this.putUserData(MATCHES_READER_MODE_KEY, value)
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     private fun applyModeChanged(project: Project, editor: Editor, matchMode: Boolean, fileIsOpenAlready: Boolean) {
       if (editor.isDisposed) {
         return

@@ -743,7 +743,7 @@ class MavenProjectsManagerAutoImportTest(mavenVersion: String, modelVersion: Str
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun scheduleProjectImportAndWaitWithoutCheckFloatingBarEdt() {
     ExternalSystemProjectTracker.getInstance(maven.project).scheduleProjectRefresh()
   }

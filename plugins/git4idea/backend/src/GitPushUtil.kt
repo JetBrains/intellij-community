@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
 
 object GitPushUtil {
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @JvmStatic
   fun findOrPushRemoteBranch(project: Project,
                              progressIndicator: ProgressIndicator,
@@ -78,7 +78,7 @@ object GitPushUtil {
     return future
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun inputPushTarget(repository: GitRepository,
                               remote: GitRemote,
                               localBranch: GitLocalBranch,

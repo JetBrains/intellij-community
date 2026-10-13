@@ -84,7 +84,7 @@ class DocumentTracker(
     application.addApplicationListener(MyApplicationListener(), this)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun dispose() {
     ThreadingAssertions.assertEventDispatchThread()
 
@@ -96,7 +96,7 @@ class DocumentTracker(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun addHandler(newHandler: Handler) {
     handlers.add(newHandler)
   }
@@ -120,14 +120,14 @@ class DocumentTracker(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun unfreeze(side: Side) {
     LOCK.write {
       freezeHelper.unfreeze(side)
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   inline fun doFrozen(task: () -> Unit) {
     doFrozen(Side.LEFT) {
       doFrozen(Side.RIGHT) {
@@ -136,7 +136,7 @@ class DocumentTracker(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   inline fun doFrozen(side: Side, task: () -> Unit) {
     freeze(side)
     try {
@@ -155,7 +155,7 @@ class DocumentTracker(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun replaceDocument(side: Side, newDocument: Document) {
     assert(!LOCK.isHeldByCurrentThread)
 
@@ -237,12 +237,12 @@ class DocumentTracker(
   }
 
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun partiallyApplyBlocks(side: Side, condition: (Block) -> RangeExclusionState) {
     partiallyApplyBlocks(side, condition, { _, _ -> })
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun partiallyApplyBlocks(side: Side, condition: (Block) -> RangeExclusionState, consumer: (Range, shift: Int) -> Unit) {
     if (isDisposed) return
 
@@ -349,7 +349,7 @@ class DocumentTracker(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun setFrozenState(lineRanges: List<Range>): Boolean {
     if (isDisposed) return false
     assert(freezeHelper.isFrozen(Side.LEFT) && freezeHelper.isFrozen(Side.RIGHT))

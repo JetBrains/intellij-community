@@ -137,7 +137,7 @@ class TerminalToolWindowTabsManagerImpl(
   }
 
   @VisibleForTesting
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun onToolWindowShown(toolWindow: ToolWindow) {
     if (isTabsRestorePending) {
       isTabsRestorePending = false
@@ -155,7 +155,7 @@ class TerminalToolWindowTabsManagerImpl(
    * Adds the stored tabs as pending tabs (see [getPendingTerminalTab]) before the tabs that are already in the tool window.
    * The tab that becomes selected is built right away by [installPendingTabsBuilding].
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun restoreTabs(toolWindow: ToolWindow) {
     val contentManager = toolWindow.contentManager
     installPendingTabsBuilding(project, contentManager, coroutineScope.childScope("TerminalPendingTabsBuilding"))
@@ -311,7 +311,7 @@ class TerminalToolWindowTabsManagerImpl(
    * Adds [storedTab] to the tool window at [index] as a pending tab (see [getPendingTerminalTab]) without selecting it.
    * The tab label and tooltip are the same as the built tab will have.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun addPendingTab(storedTab: TerminalSessionPersistedTab, index: Int) {
     val title = TerminalTitle()
     title.applyTabName(storedTab.name, storedTab.isUserDefinedName)
@@ -340,7 +340,7 @@ class TerminalToolWindowTabsManagerImpl(
     return toolWindow
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun installTabsPersistence() {
     val toolWindow = getToolWindow()
     installTerminalTabsPersistence(
@@ -394,7 +394,7 @@ class TerminalToolWindowTabsManagerImpl(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun createDetachedTab(
     row: TerminalSessionPersistedTab,
   ): TerminalToolWindowTab {

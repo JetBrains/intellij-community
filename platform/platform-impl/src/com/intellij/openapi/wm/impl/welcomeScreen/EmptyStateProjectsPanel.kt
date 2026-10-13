@@ -41,7 +41,7 @@ import java.awt.Font
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 internal fun emptyStateProjectPanel(disposable: Disposable): JComponent = panel {
   row {
     label(WelcomeScreenComponentFactory.getApplicationTitle()).applyToComponent {

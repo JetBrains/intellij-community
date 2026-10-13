@@ -26,7 +26,7 @@ interface DefaultCommitMessagePolicy {
   }
 
   interface CommitMessageController {
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun setCommitMessage(message: CommitMessage)
 
     /**
@@ -34,7 +34,7 @@ interface DefaultCommitMessagePolicy {
      *
      * @see [AbstractCommitMessagePolicy.DelayedMessageProvidersSupport]
      */
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun tryRestoreCommitMessage()
   }
 }

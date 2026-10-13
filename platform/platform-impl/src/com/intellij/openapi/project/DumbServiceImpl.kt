@@ -333,7 +333,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   // We cannot make this function `suspend`, because we have a contract that if dumb task is queued from EDT, dumb service becomes dumb
   // immediately. DumbService.queue is blocking method at the moment.
   @RequiresBlockingContext
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun incrementDumbCounterBlocking(trace: Throwable) {
     if (tryIncrementStateCounter()) {
       dumbModeStartTrace = trace
@@ -429,7 +429,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
 
   // this method is not `suspend` for the sake of symmetry: incrementDumbCounter is not `suspend` as of now
   @RequiresBlockingContext
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun decrementDumbCounterBlocking() {
     // If there are other dumb tasks - just decrement the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
     // Otherwise, decrement the counter under write action because this will change dumb state

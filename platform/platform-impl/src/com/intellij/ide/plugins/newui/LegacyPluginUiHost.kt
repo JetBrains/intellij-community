@@ -122,7 +122,7 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
     return facade.getEnabledStatesSnapshot(plugins)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun setTopController(controller: Configurable.TopComponentController) {
     lifecycle.checkActive()
     topController.attach(controller)
@@ -139,7 +139,7 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
     repositoryPlugins.set(plugins)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createInstallFromDiskAction(
     parentComponent: JComponent,
     beforeAction: () -> Unit,
@@ -162,7 +162,7 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun completeInstallFromDisk(
     callbackData: PluginInstallCallbackData,
     errors: List<HtmlChunk>,
@@ -172,7 +172,7 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
     model.pluginInstalledFromDisk(callbackData, errors, source)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun enable(descriptors: Set<IdeaPluginDescriptor>) {
     lifecycle.checkActive()
     model.enable(descriptors)
@@ -192,7 +192,7 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun createPluginUpdateOperationContext(update: PluginUiModel): PluginOperationContext {
     lifecycle.checkActive()
     return PluginOperationContext.create(
@@ -202,7 +202,7 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
     )
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun startPluginUpdate(
     installedPlugin: PluginUiModel,
     update: PluginUiModel,
@@ -228,7 +228,7 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun requestRestart(customizer: PluginManagerCustomizer, parentComponent: JComponent) {
     customizer.requestRestart(facade, parentComponent)
   }
@@ -243,7 +243,7 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
     eventSink.requestSessionClose(installationMovedToBackground = false)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun createRowRenderKey(
     plugin: PluginUiModel,
     group: PluginsGroup,
@@ -254,7 +254,7 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
     return ListPluginComponent.createRenderKey(facade, plugin, group, listModel, marketplace)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun createRowRenderKey(
     plugin: PluginUiModel,
     group: PluginsGroup,
@@ -276,7 +276,7 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
     )
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createRow(
     plugin: PluginUiModel,
     group: PluginsGroup,
@@ -305,7 +305,7 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
     ).also(rows::add)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun createRow(
     plugin: PluginUiModel,
     group: PluginsGroup,
@@ -338,14 +338,14 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
     ).also(rows::add)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun releaseRow(row: ListPluginComponent) {
     if (rows.remove(row)) {
       row.close()
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createDetails(
     searchListener: LinkListener<Any>,
     marketplace: Boolean,
@@ -368,7 +368,7 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
     return component
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun releaseDetails(component: PluginDetailsPageComponent) {
     if (details.remove(component)) {
       component.detach()
@@ -394,7 +394,7 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
   /**
    * Detaches all page UI. [closeSession] must be false when reset with session removal or restart handling owns the backend session.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun dispose(closeSession: Boolean): Boolean {
     val installationMovedToBackground = lifecycle.disposeUi()
     if (closeSession) {

@@ -103,7 +103,7 @@ internal open class StoreReloadManagerImpl(protected val project: Project, corou
    *
    * @return set of projects that need to be fully re-loaded to apply the changes
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected open suspend fun doReloadChangedStorages(): Set<Project> {
     val projectsToReload = LinkedHashSet<Project>()
 

@@ -77,7 +77,7 @@ class PyPseudoKeywordPatternInlayActionHandler(private val cs: CoroutineScope) :
 
   data class Payload(val classPattern: SmartPsiElementPointer<PyClassPattern>, val keyword: String) : InlayActionPayload
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun handleClick(e: EditorMouseEvent, payload: InlayActionPayload) {
     payload as Payload
 

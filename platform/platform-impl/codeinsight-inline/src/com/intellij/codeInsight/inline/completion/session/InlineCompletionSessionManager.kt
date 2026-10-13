@@ -24,7 +24,7 @@ abstract class InlineCompletionSessionManager(private val editor: Editor) {
    * @see invalidate
    * @see updateSession
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   protected abstract fun onUpdate(session: InlineCompletionSession, result: UpdateSessionResult)
 
   protected open fun onCreated(): Unit = Unit
@@ -33,7 +33,7 @@ abstract class InlineCompletionSessionManager(private val editor: Editor) {
 
   protected abstract fun getSuggestionUpdater(provider: InlineCompletionProvider): InlineCompletionSuggestionUpdateManager
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun createSession(
     provider: InlineCompletionProvider,
     request: InlineCompletionRequest,
@@ -52,7 +52,7 @@ abstract class InlineCompletionSessionManager(private val editor: Editor) {
     return newSession
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun removeSession() {
     ThreadingAssertions.assertEventDispatchThread()
     check(currentSession != null) { "Session does not exist." }
@@ -64,7 +64,7 @@ abstract class InlineCompletionSessionManager(private val editor: Editor) {
   /**
    * Calls [onUpdate] with passed [UpdateSessionResult.Invalidated], if session exists.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun invalidate(reason: UpdateSessionResult.Invalidated.Reason) {
     currentSession?.let { session -> onUpdate(session, UpdateSessionResult.Invalidated(reason)) }
   }
@@ -81,7 +81,7 @@ abstract class InlineCompletionSessionManager(private val editor: Editor) {
    *
    * @see InlineCompletionSuggestionUpdateManager
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun updateSession(request: InlineCompletionRequest): Boolean {
     val session = currentSession
     if (session == null) {

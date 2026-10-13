@@ -154,7 +154,7 @@ abstract class LineStatusMarkerRenderer internal constructor(
     override fun getPaintedRanges(): List<Range> = getRanges().orEmpty()
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun updateHighlighters() {
     if (disposed) return
 
@@ -182,7 +182,7 @@ abstract class LineStatusMarkerRenderer internal constructor(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun updateErrorStripeHighlighters() {
     val ranges = getRanges()
     if (!shouldPaintErrorStripeMarkers() || ranges.isNullOrEmpty()) {

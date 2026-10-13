@@ -64,7 +64,7 @@ internal fun Release.selectInstallations(installers: List<BinaryInstaller>): Lis
   }
 }
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun <T> installBinary(installation: BinaryInstallation, project: Project?, postInstall: () -> T? = { null }): Result<T> {
   val (release, binary, installer) = installation
   try {

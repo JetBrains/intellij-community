@@ -108,7 +108,7 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
         configureAndGetConfiguredModules(project, excludeModules)
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     override fun configureAndGetConfiguredModules(project: Project, excludeModules: Collection<Module>): Set<Module> {
         val dialog = ConfigureDialogWithModulesAndVersion(
             project,

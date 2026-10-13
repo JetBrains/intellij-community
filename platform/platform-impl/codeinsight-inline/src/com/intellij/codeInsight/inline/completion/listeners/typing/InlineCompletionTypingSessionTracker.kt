@@ -44,7 +44,7 @@ class InlineCompletionTypingSessionTracker(
       field = value
     }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun startTypingSession(editor: Editor) {
     ThreadingAssertions.assertEventDispatchThread()
     val context = TypingSession.TypingSessionStateContext(sendEvent) {
@@ -55,7 +55,7 @@ class InlineCompletionTypingSessionTracker(
   }
 
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun collectTypedCharOrInvalidateSession(documentEvent: DocumentEvent, editor: Editor) {
     ThreadingAssertions.assertEventDispatchThread()
     val session = editor.getUserData(TYPING_SESSION_KEY)
@@ -71,13 +71,13 @@ class InlineCompletionTypingSessionTracker(
   /**
    * In the case of a paired enclosure inserted, it will be processed differently than just a regular typed char.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun expectPairedEnclosure(editor: Editor, expectedEnclosure: String) {
     ThreadingAssertions.assertEventDispatchThread()
     editor.getUserData(TYPING_SESSION_KEY)?.handlePairedEnclosure(expectedEnclosure)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun endTypingSession(editor: Editor) {
     ThreadingAssertions.assertEventDispatchThread()
     val session = editor.getUserData(TYPING_SESSION_KEY) ?: return
@@ -89,13 +89,13 @@ class InlineCompletionTypingSessionTracker(
     editor.removeUserData(TYPING_SESSION_KEY)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun isTypingInProgress(editor: Editor): Boolean {
     ThreadingAssertions.assertEventDispatchThread()
     return editor.getUserData(TYPING_SESSION_KEY) != null
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun <T> withIgnoringDocumentChanges(block: () -> T): T = withIgnoringChanges(
     property = ::ignoreDocumentChanges,
     block = block,
@@ -103,7 +103,7 @@ class InlineCompletionTypingSessionTracker(
   )
 
   @ApiStatus.Experimental
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   internal fun <T> withIgnoringCaretMovement(block: () -> T): T = withIgnoringChanges(
     property = ::ignoreCaretMovements,
     block = block,
@@ -137,17 +137,17 @@ class InlineCompletionTypingSessionTracker(
   internal class TypingSession(private val typingContext: TypingSessionStateContext) {
     var state: InlineCompletionTypingState = InlineCompletionTypingState.AwaitInitialEvent
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun handleDocumentChange(event: DocumentEvent, editor: Editor) {
       state = state.onDocumentChange(typingContext, event, editor)
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun handlePairedEnclosure(expectedEnclosure: String) {
       state = state.onPairedEnclosure(typingContext, expectedEnclosure)
     }
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun handleCaretMove(event: CaretEvent, editor: Editor) {
       state = state.onCaretMove(typingContext, event, editor)
     }

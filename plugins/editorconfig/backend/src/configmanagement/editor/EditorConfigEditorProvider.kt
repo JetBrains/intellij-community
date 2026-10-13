@@ -104,7 +104,7 @@ private class EditorBuilderState(
   @JvmField val contextFile: VirtualFile?,
 )
 
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 private fun build(project: Project, file: VirtualFile, precomputedState: EditorBuilderState): FileEditor {
   val result: FileEditor
   val contextFile = precomputedState.contextFile

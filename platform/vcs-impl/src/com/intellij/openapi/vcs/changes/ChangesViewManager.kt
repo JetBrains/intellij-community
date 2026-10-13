@@ -63,7 +63,7 @@ class ChangesViewManager internal constructor(private val project: Project, priv
   internal var changesView: ChangesViewProxy? = null
     private set
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   @ApiStatus.Internal
   override fun getOrCreateCommitChangesView(): ChangesViewProxy {
     return changesView ?: run {

@@ -271,7 +271,7 @@ private object EditorFontMetricsCache {
      */
     private val cache = WeakHashMap<Editor, CachedEntry>()
 
-    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    @RequiresEdt
     fun getMetrics(editor: Editor): InlayTextMetrics {
         EDT.assertIsEdt()
 

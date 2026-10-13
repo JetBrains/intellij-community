@@ -191,7 +191,7 @@ data class EelFileSystem(
 
   override fun createTargetRequest(): TargetEnvironmentRequest = LocalTargetEnvironmentRequest()
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun <T> configureFileBrowseEditor(
     fieldAccessor: TextComponentAccessor<ComboBox<T>>,
     comboBox: ComboBox<T>,
@@ -561,7 +561,7 @@ internal data class TargetFileSystem(
   override fun createTargetRequest(): TargetEnvironmentRequest =
     targetEnvironmentConfiguration.createEnvironmentRequest(project = null)
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun <T> configureFileBrowseEditor(
     fieldAccessor: TextComponentAccessor<ComboBox<T>>,
     comboBox: ComboBox<T>,

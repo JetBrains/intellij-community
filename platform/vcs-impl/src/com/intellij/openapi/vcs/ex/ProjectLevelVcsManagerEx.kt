@@ -34,7 +34,7 @@ abstract class ProjectLevelVcsManagerEx : ProjectLevelVcsManager() {
   @Deprecated("Implementation detail")
   abstract val contentManager: ContentManager?
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   abstract fun showUpdateProjectInfo(
     updatedFiles: UpdatedFiles?,
     @Nls displayActionName: @Nls String?,

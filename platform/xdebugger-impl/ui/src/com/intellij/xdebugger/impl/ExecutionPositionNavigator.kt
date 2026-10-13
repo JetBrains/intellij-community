@@ -89,7 +89,7 @@ internal class ExecutionPositionNavigator(
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun navigateTo(openFileDescriptor: OpenFileDescriptor, navigationMode: ExecutionPositionNavigationMode) {
     when (navigationMode) {
       ExecutionPositionNavigationMode.OPEN -> {

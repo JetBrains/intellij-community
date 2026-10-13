@@ -136,31 +136,31 @@ internal class GHPRReviewFileEditorModel internal constructor(
   override fun canGotoPreviousComment(threadId: String): Boolean = fileVm.lookupPreviousComment(threadId) != null
   override fun canGotoPreviousComment(line: Int): Boolean = fileVm.lookupPreviousComment(line.shiftLineToBefore()) != null
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun gotoNextComment(threadId: String) {
     val commentId = fileVm.lookupNextComment(threadId) ?: return
     gotoComment(commentId)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun gotoNextComment(line: Int) {
     val commentId = fileVm.lookupNextComment(line.shiftLineToBefore()) ?: return
     gotoComment(commentId)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun gotoPreviousComment(threadId: String) {
     val commentId = fileVm.lookupPreviousComment(threadId) ?: return
     gotoComment(commentId)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   override fun gotoPreviousComment(line: Int) {
     val commentId = fileVm.lookupPreviousComment(line.shiftLineToBefore()) ?: return
     gotoComment(commentId)
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun gotoComment(threadId: String) {
     val (change, unmappedLine) = fileVm.getThreadPosition(threadId) ?: return
     val line = if (change == fileVm.change) {

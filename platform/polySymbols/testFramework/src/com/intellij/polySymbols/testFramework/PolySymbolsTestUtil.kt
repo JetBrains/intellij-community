@@ -680,7 +680,7 @@ fun CodeInsightTestFixture.findUsages(target: SearchTarget): Collection<Usage> {
 }
 
 @JvmOverloads
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+@RequiresEdt
 fun CodeInsightTestFixture.checkGTDUOutcome(expectedOutcome: GotoDeclarationOrUsageHandler2.GTDUOutcome?, signature: String? = null) {
   if (signature != null) {
     moveToOffsetBySignature(signature)

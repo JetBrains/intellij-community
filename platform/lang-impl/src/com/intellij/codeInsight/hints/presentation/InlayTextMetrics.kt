@@ -47,7 +47,7 @@ class InlayTextMetricsStorage(val editor: Editor) {
    *  This leads to excessive checks whether they are actual ([getCurrentStamp])
    *  and performance problems.
    *  */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   fun <T> checkpoint(block: () -> T): T {
     if (isInsideCheckpoint) {
       return block()
