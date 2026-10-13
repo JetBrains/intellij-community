@@ -97,6 +97,14 @@ def export_vm_options(name, runtime_module_repository):
 # directory, or its `home_prefix` child as in the export: `ide_home/Contents` on macOS.
 _LAUNCH_HOME = "ide_home"
 
+# The `java` of the bundled runtime in the home, for each OS token. The native launcher finds the runtime at `<home>/jbr`
+# when no variable and no user file names one. On macOS it appends `Contents/Home` to the runtime.
+_RUNTIME_JAVA = {
+    "darwin": "jbr/Contents/Home/bin/java",
+    "linux": "jbr/bin/java",
+    "windows": "jbr/bin/java.exe",
+}
+
 # The variables that a flag of a launch target can name. The native launcher does not expand them, so the rule resolves
 # them at analysis.
 _LAUNCH_VARIABLES = {
@@ -234,18 +242,20 @@ def _sh_stub(launch_environment, launcher_path, program_args, launcher_source):
     lines.append("exec " + " ".join([launcher] + [shell.quote(argument) for argument in program_args] + ['"$@"']))
     return "".join([line + "\n" for line in lines])
 
-def _native_launch(ctx, os, dist, placement, java_runtime, flags, program_args):
+def _native_launch(ctx, os, dist, placement, flags, program_args):
     """The launch of a target: a stub that starts the production native launcher of the home.
 
-    The launcher reads `<name>.vmoptions` through `<ENV>_VM_OPTIONS` and starts the runtime of `<ENV>_JDK`.
+    The launcher reads `<name>.vmoptions` through `<ENV>_VM_OPTIONS`. It finds the bundled runtime at `<home>/jbr`.
     """
     windows = os == "windows"
     launcher = _os_destination(ctx, "launcher", os)
     if launcher not in placement.files or launcher not in placement.executables:
         fail("%s: the home has no executable launcher %s" % (ctx.label, launcher))
-    for name in ["_VM_OPTIONS", "_JDK"]:
-        if ctx.attr.env_var_base_name + name in ctx.attr.env:
-            fail("%s: `env` states %s, which the rule owns" % (ctx.label, ctx.attr.env_var_base_name + name))
+    java = _RUNTIME_JAVA[os]
+    if java not in placement.files or (not windows and java not in placement.executables):
+        fail("%s: the home has no executable runtime %s" % (ctx.label, java))
+    if ctx.attr.env_var_base_name + "_VM_OPTIONS" in ctx.attr.env:
+        fail("%s: `env` states %s, which the rule owns" % (ctx.label, ctx.attr.env_var_base_name + "_VM_OPTIONS"))
 
     executable = ctx.actions.declare_file(ctx.label.name + (".cmd" if windows else ""))
     runfiles_directory = _execroot_path(ctx, executable.path) + ".runfiles"
@@ -267,23 +277,13 @@ def _native_launch(ctx, os, dist, placement, java_runtime, flags, program_args):
     ctx.actions.write(vm_options_file, "".join([line + "\n" for line in _vm_options_lines(ctx, placement, home_path, flags)]))
     vm_options_path = _execroot_path(ctx, vm_options_file.path)
 
-    if os == "darwin":
-        # The launcher appends `Contents/Home` to a runtime on macOS, and the runtime of the toolchain is flat. So
-        # `<name>.jdk/Contents/Home` is a link to the runtime.
-        jdk_link = ctx.actions.declare_symlink(ctx.label.name + ".jdk/Contents/Home")
-        ctx.actions.symlink(output = jdk_link, target_path = _execroot_path(ctx, java_runtime.java_home))
-        jdk_path = _execroot_path(ctx, executable.path) + ".jdk"
-        jdk_files = [jdk_link]
-    else:
-        jdk_path = _execroot_path(ctx, java_runtime.java_home)
-        jdk_files = []
     launch_environment = {
         ctx.attr.env_var_base_name + "_VM_OPTIONS": vm_options_path,
-        ctx.attr.env_var_base_name + "_JDK": jdk_path,
     }
 
-    # The stub sets the two variables itself, so a start of the stub outside `bazel run` never reads the user
-    # vmoptions file of an installed IDE.
+    # The stub sets the variable itself, so a start of the stub outside `bazel run` never reads the user vmoptions file
+    # of an installed IDE. The stub sets no `<ENV>_JDK`. So the launcher takes the user `.jdk` file of the product, or
+    # else the bundled runtime of the home.
     if windows:
         ctx.actions.write(
             executable,
@@ -292,7 +292,7 @@ def _native_launch(ctx, os, dist, placement, java_runtime, flags, program_args):
             " ".join(['"%s"' % _windows_path(ctx.label, launcher_path)] + [_cmd_argument(ctx.label, argument) for argument in program_args] + ["%*"]) + "\r\n",
             is_executable = True,
         )
-        runfiles = ctx.runfiles(files = [executable, vm_options_file, export.home, export.ide_config], transitive_files = java_runtime.files)
+        runfiles = ctx.runfiles(files = [executable, vm_options_file, export.home, export.ide_config])
         environment = dict(ctx.attr.env)
 
         # `bazel run` starts the stub in `<name>.cmd.runfiles`.
@@ -301,8 +301,7 @@ def _native_launch(ctx, os, dist, placement, java_runtime, flags, program_args):
         launcher_source = _execroot_path(ctx, home[launcher].path) if os == "linux" else None
         ctx.actions.write(executable, _sh_stub(launch_environment, launcher_path, program_args, launcher_source), is_executable = True)
         runfiles = ctx.runfiles(
-            files = [executable, vm_options_file] + jdk_files,
-            transitive_files = java_runtime.files,
+            files = [executable, vm_options_file],
             root_symlinks = _home_root_symlinks(dist, home),
         )
         environment = dict(ctx.attr.env)
@@ -322,7 +321,7 @@ def _native_launch(ctx, os, dist, placement, java_runtime, flags, program_args):
         "env": environment,
     }) + "\n")
     return [
-        DefaultInfo(executable = executable, files = depset([executable, vm_options_file, launch] + jdk_files), runfiles = runfiles),
+        DefaultInfo(executable = executable, files = depset([executable, vm_options_file, launch]), runfiles = runfiles),
         RunEnvironmentInfo(environment = environment),
     ]
 
@@ -357,30 +356,30 @@ def _intellij_dev_java_launcher_impl(ctx):
 
     # The native launcher applies the `--add-opens` lines of `additionalJvmArguments`. The product files action renders
     # them for the target OS, as production does, so the vmoptions file of the row has none.
-    java_runtime = ctx.toolchains["@bazel_tools//tools/jdk:runtime_toolchain_type"].java_runtime
-    return _native_launch(ctx, os, dist, placement, java_runtime, flags, program_args)
+    return _native_launch(ctx, os, dist, placement, flags, program_args)
 
 intellij_dev_java_launcher = rule(
     doc = """Starts a composed dev distribution, `bazel run //<package>:<name>`.
 
-The executable is a stub that starts the production native launcher of the home. The stub sets `<ENV>_VM_OPTIONS` to
-`<name>.vmoptions` and `<ENV>_JDK` to the Java runtime. Then it runs the launcher with the program arguments of the row
-and its own arguments. `<name>.vmoptions` holds the JVM flags of the row, one per line. The launcher reads it after the
+The executable is a stub that starts the production native launcher of the home. The stub sets one variable,
+`<ENV>_VM_OPTIONS`, to `<name>.vmoptions`. Then it runs the launcher with the program arguments of the row and its own
+arguments. The launcher finds the bundled runtime at `<home>/jbr`, its third place. The launcher checks `bin/java` of a
+runtime, and the rule checks that the home has that file of the bundled runtime. `<name>.vmoptions` holds the JVM flags of the row, one per line. The launcher reads it after the
 vmoptions file of the distribution and before `additionalJvmArguments` of `product-info.json`. The launcher takes the
 `--add-opens` lines of that list, which the product files action renders for the target OS. So the file has no
 `--add-opens` line. The launcher selects a custom command from the first program argument.
 
 On macOS the stub is an `sh` file, and the home is `<name>.runfiles/ide_home/Contents`, as the home of the export is
 `Contents`. The launcher keeps the path of the link, so it finds `ide_home/Contents/Resources/product-info.json`.
-`<ENV>_JDK` names `<name>.jdk`, whose `Contents/Home` links to the flat runtime.
+It appends `Contents/Home` to the runtime, so the runtime is `ide_home/Contents/jbr/Contents/Home`.
 
 On Linux the stub is an `sh` file, and the home is `<name>.runfiles/ide_home`. The launcher resolves the links of its
 own path, so from a link it finds no home (IJPL-258306). So the stub first replaces the link `ide_home/bin/<base>` with
-a copy of the launcher file. It copies when the entry is a link or `cmp` finds other bytes. `<ENV>_JDK` names the flat
-runtime.
+a copy of the launcher file. It copies when the entry is a link or `cmp` finds other bytes. The runtime is
+`ide_home/jbr`.
 
-Windows builds no runfiles tree, so the stub is `<name>.cmd` and the home is the home of `export`. The stub runs the
-console launcher, so `bazel run` keeps a console.
+Windows builds no runfiles tree, so the stub is `<name>.cmd` and the home is the home of `export`. The runtime is
+`jbr` of that home. The stub runs the console launcher, so `bazel run` keeps a console.
 
 `bazel run //<package>:<name> -- <argument>` adds a program argument after the ones of the row. `bazel run` starts the
 executable in `<name>.runfiles/_main`, or in `<name>.cmd.runfiles` on Windows, so every path is absolute. On macOS and
@@ -390,14 +389,13 @@ launcher, the vmoptions file, the program arguments, the working directory and t
     implementation = _intellij_dev_java_launcher_impl,
     executable = True,
     fragments = ["java"],
-    toolchains = ["@bazel_tools//tools/jdk:runtime_toolchain_type"],
     attrs = {
         "dist": attr.label(mandatory = True, providers = [IntellijDevDistInfo], doc = "The local launch of the distribution, the `_dist_launch` target. Its placement names the files of the home, and its `home_prefix` names the directory of the home below `ide_home`."),
         "export": attr.label(providers = [IntellijDevDistInfo], doc = "The self-contained distribution, the `_dist` target. The home on Windows, where it is mandatory."),
         "vm_options": attr.string_dict(mandatory = True, doc = "The destination of the main vmoptions file in the home, `bin/<name>`, for each OS token: `darwin`, `linux` and `windows`. The native launcher reads the file there, and the rule checks that the home has it."),
         "product_info": attr.string_dict(mandatory = True, doc = "The destination of `product-info.json` in the home, for each OS token. The production place is the root, or `Resources/` for a macOS app."),
         "launcher": attr.string_dict(doc = "The destination of the native launcher in the home, for each OS token: `darwin`, `linux` and `windows`."),
-        "env_var_base_name": attr.string(doc = "The base of the variables `<base>_VM_OPTIONS` and `<base>_JDK` that the native launcher reads. It is the `envVarBaseName` of the product, or of the custom command that the first program argument selects."),
+        "env_var_base_name": attr.string(doc = "The base of the variable `<base>_VM_OPTIONS` that the native launcher reads. It is the `envVarBaseName` of the product, or of the custom command that the first program argument selects."),
         "runtime_module_repository": attr.bool(doc = "Whether `<name>.vmoptions` names `modules/module-descriptors.dat` of the home as the runtime module repository. Set it when the home has the file and `product-info.json` does not state the property."),
         "jvm_flags": attr.string_list(doc = "JVM flags; `$(location)` and make variables expand, and `${BUILD_WORKSPACE_DIRECTORY}` and `${HOME}` resolve at analysis."),
         "env": attr.string_dict(doc = "Environment variables `bazel run` sets for the IDE."),

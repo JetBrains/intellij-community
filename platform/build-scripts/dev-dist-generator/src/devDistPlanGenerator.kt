@@ -3478,8 +3478,8 @@ private fun planFieldBodies(product: ProductFragmentPlan): List<PlanFieldBody> {
       .append("\", language_server = ").append(starlarkBoolean(model.languageServer))
       .append(", windows_gui = ").append(starlarkBoolean(product.windowsGuiLauncher))
       .append(", windows_console = ").append(starlarkBoolean(product.windowsConsoleLauncher)).append("),\n")
-    // The base of the environment variables that the native launcher reads, such as `IDEA_VM_OPTIONS` and `IDEA_JDK`.
-    // A custom command can state its own base, so a launch target that starts the command sets the variables of it.
+    // The base of the environment variables that the native launcher reads, such as `IDEA_VM_OPTIONS`.
+    // A custom command can state its own base, so a launch target that starts the command sets the variable of it.
     append("    env_var_base_name = \"").append(model.envVarBaseName).append("\",\n")
     val commandEnvVarBaseNames = model.customCommands.flatMap { command ->
       val base = command.envVarBaseName ?: return@flatMap emptyList()
