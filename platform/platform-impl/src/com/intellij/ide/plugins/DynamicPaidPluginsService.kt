@@ -95,9 +95,11 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
     val pluginEnabler = PluginEnabler.getInstance()
 
     if (loadablePlugins.isNotEmpty()) {
-      enablePlugins(pluginEnabler, loadablePlugins, restart = false, project = project,
-                    progressTitle = IdeBundle.message("modal.progress.title.activating.ultimate.subscription",
-                                                      PlatformUtils.freeIdePaidVersionName()))
+      withPluginsMarkedDisabled(requireRestartPlugins) {
+        enablePlugins(pluginEnabler, loadablePlugins, restart = false, project = project,
+                      progressTitle = IdeBundle.message("modal.progress.title.activating.ultimate.subscription",
+                                                        PlatformUtils.freeIdePaidVersionName()))
+      }
     }
     else {
       logger.debug("No plugins loadable without restart plugins found to be enabled.")
@@ -168,6 +170,32 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
 
     if (restart) {
       ApplicationManagerEx.getApplicationEx().restart(true)
+    }
+  }
+
+  /**
+   * Marks [plugins] disabled while [action] runs, and marks them enabled again after it.
+   *
+   * [DynamicPlugins.findMaxLoadableSubsetApproximation] tests the loadable plugins with the other candidates disabled.
+   * The real load computes its target state from [DisabledPluginsState], so it must see the same disabled plugins.
+   * Otherwise, it also resolves [plugins] and fails on them.
+   *
+   * [PluginEnabler.HEADLESS] changes only the persistent flag. It does not load or unload a plugin.
+   */
+  private inline fun withPluginsMarkedDisabled(plugins: List<IdeaPluginDescriptor>, action: () -> Unit) {
+    if (plugins.isEmpty()) {
+      action()
+      return
+    }
+    // TODO The plugin manager shows only the state of these plugins, so the user cannot see why they are not loaded.
+    //  Add an IntelliJImposedModuleExclusionReason for a temporary exclusion and exclude the plugins with it instead.
+    //  Then the plugin manager can process this root cause and show a correct UI state with a clear message.
+    PluginEnabler.HEADLESS.disable(plugins)
+    try {
+      action()
+    }
+    finally {
+      PluginEnabler.HEADLESS.enable(plugins)
     }
   }
 

@@ -496,7 +496,15 @@ object DynamicPlugins {
    * Note: this method should not be expected to produce the exact max loadable subset, because the actual maximum may actually require a lot of computation.
    * Instead, expect this method to employ heuristics to get some approximation in a reasonable time.
    *
-   * @param plugins ids of plugins from the current context that are disabled, but there is a demand to load as many of them as possible dynamically
+   * Each test of a subset treats the plugins from [plugins] outside of the subset as disabled.
+   * So the test state resolves the subset and the other plugins that are not disabled, but not the other candidates.
+   * A plugin that cannot load dynamically then fails only the tests of the subsets that contain it.
+   *
+   * The caller must load the result in the same state.
+   * So the plugins from [plugins] outside of the result must stay disabled during the load.
+   *
+   * @param plugins ids of plugins from the current context that are not loaded, but there is a demand to load as many of them as
+   *   possible dynamically. A plugin can be disabled, or it can be enabled but not resolved because a dependency was disabled.
    * @return a list of ids of plugins that can be enabled and loaded dynamically together
    */
   @ApiStatus.Internal
@@ -511,7 +519,7 @@ object DynamicPlugins {
         include = emptyList(),
         exclude = emptyList(),
         pretendEnabled = candidates.toList(),
-        pretendDisabled = emptyList(),
+        pretendDisabled = plugins.filter { it !in candidates },
       ).valueOrNull ?: return externalConflict
       val excludedCandidates: List<PluginId> = candidates.filter { candidateId ->
         val candidate = newState.resolvedPluginSet.candidateSet.resolvePluginId(candidateId)
