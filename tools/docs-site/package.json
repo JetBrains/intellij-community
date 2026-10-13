@@ -2,7 +2,7 @@
   "name": "@ij/docs-site",
   "private": true,
   "type": "module",
-  "description": "The shared kernel of the architecture docs sites: the diagram grammar, the doc checks, the diagram renderer, the theme, and the styles. TypeScript sources, no build step.",
+  "description": "The shared kernel of the architecture docs sites: the diagram grammar, the doc checks, the app shell, the generic pages, the palette, the theme, the styles, and the e2e suite of the generic pages. TypeScript sources, no build step.",
   "engines": {
     "node": ">=26.0.0"
   },
@@ -23,10 +23,12 @@
     "marked": "18.0.14",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "react-resizable-panels": "4.13.2",
     "shiki": "4.4.3",
     "tw-animate-css": "1.4.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@tailwindcss/typography": "0.5.20",
     "@types/node": "26.6.2",
     "@types/react": "19.3.0",
