@@ -18,7 +18,11 @@ use std::ops::Deref;
 use std::sync::{Arc, Mutex};
 
 #[cfg(unix)]
+use avl_base::Reporter;
+#[cfg(unix)]
 use avl_base::config::MacosHost;
+#[cfg(unix)]
+use avl_base::report::SinkGuard;
 use avl_base::{Backend, Config, GuestArch, GuestOs, SCHEMA_VERSION};
 use avl_host_sys::Runner;
 use avl_host_sys::guest::BazelHost;
@@ -26,17 +30,21 @@ use avl_host_sys::guest::BazelHost;
 use avl_host_sys::interrupt::Interrupts;
 use avl_host_sys::lock::LockManager;
 #[cfg(unix)]
-use avl_host_sys::{Ctx, ProcessTable};
+use avl_host_sys::{Ctx, ProcessIdentity, ProcessTable};
 use avl_host_testkit::{ChannelFactory, FakeGuests, HostPool, HostPoolBuilder, quiet};
 #[cfg(unix)]
 use avl_host_testkit::{FakeProcesses, PinnedBazel};
 #[cfg(unix)]
 use avl_testkit::tartfake::Answer;
 #[cfg(unix)]
+use avl_wire::progress::{Kind, Record};
+#[cfg(unix)]
 use nix::sys::signal::{Signal, killpg};
 #[cfg(unix)]
 use nix::unistd::Pid;
 
+#[cfg(unix)]
+use crate::worker::run_marker::{RunMarker, write_marker_by_hand};
 #[cfg(unix)]
 use crate::worker::tart::{MINIMUM_VERSION, PidReceipt};
 use crate::worker::worker::{Dependencies, GuestBootBuilder, IdleStopRequest, Lease, Manager, Timings, builds_nothing};
@@ -187,6 +195,59 @@ impl Fixture {
             .write_process_identity(&Ctx::background(), worker, pid)
             .await
             .expect("the fake process can be identified")
+    }
+
+    /// Declares a process of the fixture's process table whose every probe gives no answer, and answers its pid.
+    pub(crate) fn start_unanswered_process(&self) -> i32 {
+        self.processes.start_unanswered()
+    }
+
+    /// The identity of a live process of another controller: a new process of the fixture's process table.
+    pub(crate) async fn another_process(&self) -> ProcessIdentity {
+        let pid = self.processes.start("vm run, a controller in another checkout");
+        self.manager
+            .runner()
+            .identify(&Ctx::background(), pid)
+            .await
+            .expect("the fake table answers")
+            .expect("a declared process has an identity")
+    }
+
+    /// The identity of a process that is gone: the fixture's process table holds the pid, and declares no process
+    /// for it.
+    pub(crate) fn gone_process() -> ProcessIdentity {
+        ProcessIdentity {
+            pid: 0x7FFF_FFF0,
+            process_start: "Sun Aug 23 00:00:00 2026".to_owned(),
+            process_command: "vm run, a controller that died".to_owned(),
+        }
+    }
+
+    /// Writes a run marker of `process` for `lease` by hand, as another controller writes one, and answers it.
+    pub(crate) fn write_run_marker(&self, lease: &Lease, run_id: &str, process: ProcessIdentity) -> RunMarker {
+        write_marker_by_hand(&self.settings, lease, run_id, process)
+    }
+
+    /// A second controller over the same pool and the same guests, as another process sees the pool. Its lock manager
+    /// speaks for a live process of the fixture's process table. So a run marker of either manager is a live run of
+    /// another process to the other one. It starts no idle stop process.
+    pub(crate) fn another_controller(&self) -> Manager {
+        let runner = self.runner_with(&Interrupts::detached());
+        let pid = self.processes.start("vm, another controller of the suite");
+        let channel = (self.settings.backend != Backend::ContainerLinux).then(|| self.guest.factory());
+        Manager::with_timings(
+            Dependencies {
+                settings: Arc::clone(&self.settings),
+                locks: Arc::new(LockManager::for_process(runner.clone(), pid)),
+                runner,
+                reporter: quiet(),
+                channel,
+                bazel: self.bazel.clone().map(|bazel| bazel as Arc<dyn BazelHost>),
+                build_guest_boot: builds_nothing(),
+            },
+            Timings::fast(),
+        )
+        .with_idle_stop_spawner(Arc::new(|_: &Manager, _: &IdleStopRequest| Ok(())))
     }
 
     /// Makes a worker read as running on a `tart run` of its own whose VM Tart does not list: the fake's `run`,
@@ -476,6 +537,34 @@ impl Drop for RunProcessReaper {
 #[cfg(unix)]
 fn read_identity(path: &std::path::Path) -> Option<PidReceipt> {
     serde_json::from_slice(&std::fs::read(path).ok()?).ok()
+}
+
+/// Every note that a reporter publishes while this lives.
+#[cfg(unix)]
+pub(crate) struct Notes {
+    notes: Arc<Mutex<Vec<String>>>,
+    _sink: SinkGuard,
+}
+
+#[cfg(unix)]
+impl Notes {
+    pub(crate) fn start(reporter: &Reporter) -> Self {
+        let notes: Arc<Mutex<Vec<String>>> = Arc::default();
+        let sink = {
+            let notes = Arc::clone(&notes);
+            reporter.add_sink(move |record: &Record| {
+                if record.event == Kind::Note {
+                    avl_base::sync::lock(&notes).push(record.message.clone());
+                }
+            })
+        };
+        Self { notes, _sink: sink }
+    }
+
+    /// The notes so far, in order.
+    pub(crate) fn all(&self) -> Vec<String> {
+        avl_base::sync::lock(&self.notes).clone()
+    }
 }
 
 /// What `/usr/bin/who` answers in a macOS guest whose console is logged in.

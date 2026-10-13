@@ -15,8 +15,9 @@ use std::sync::Arc;
 use crate::worker::docker::CreateRecord;
 use crate::worker::hypervisor::Machine;
 use crate::worker::lease::write_lease_receipt;
+use crate::worker::run_marker::write_marker_by_hand;
 use crate::worker::tart::MINIMUM_VERSION;
-use crate::worker::worker::{Dependencies, Lease, Manager, builds_nothing};
+use crate::worker::worker::{Dependencies, Lease, Manager, builds_nothing, read_lease};
 use avl_base::{Backend, GuestOs, SCHEMA_VERSION};
 use avl_host_sys::guest::write_init_receipt;
 use avl_host_sys::lock::LockManager;
@@ -192,6 +193,23 @@ impl Fixture {
         encoded.push(b'\n');
         std::fs::write(self.settings.lease_path(worker), encoded).expect("the lease is written");
         write_lease_receipt(&self.settings, &lease).expect("the receipt is written")
+    }
+
+    /// Puts the run marker of a live process of another controller on `worker`, for the lease that the worker has, and
+    /// answers the run id. A run of another process is then in flight on the worker.
+    pub(crate) async fn run_of_another_process(&self, worker: &str) -> String {
+        let lease = read_lease(&self.settings.lease_path(worker))
+            .expect("the lease reads")
+            .expect("the worker is leased");
+        let pid = self.processes.start("vm run, a controller in another checkout");
+        let process = self
+            .manager
+            .runner()
+            .identify(&Ctx::background(), pid)
+            .await
+            .expect("the fake table answers")
+            .expect("a declared process has an identity");
+        write_marker_by_hand(&self.settings, &lease, "suite-user-run-1", process).run_id
     }
 }
 

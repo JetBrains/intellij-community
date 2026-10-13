@@ -4,7 +4,8 @@
 //! - [`StartState`] and [`StopState`], what a start or a stop found;
 //! - the lifecycle operations of [`Manager`]. Each is one `match` on the [`Machine`], and each arm calls the body in
 //!   the file of its backend: `worker/tart.rs`, `worker/parallels.rs`, `worker/docker.rs` and `worker/container_linux.rs`;
-//! - [`Manager::require_unleased`], the lease guard of a lifecycle operation.
+//! - [`Manager::require_unleased`], the lease guard of a lifecycle operation. The run guard beside it,
+//!   [`Manager::require_no_run`], lives with the run marker in `worker/run_marker.rs`.
 //!
 //! A backend that cannot do an operation answers [`unsupported`], which keeps the refusal code a caller branches on.
 
@@ -21,6 +22,7 @@ use super::{Lease, Manager, read_lease};
 use crate::worker::hypervisor::Machine;
 #[cfg(unix)]
 use crate::worker::hypervisor::unsupported;
+use crate::worker::lease::ACQUIRE_LOCK_TIMEOUT;
 
 /// Whether `authorized`, the lease a caller holds, is the lease `held` that the worker's lease file records: the same
 /// worker and the same token. The one test of "this lease is the caller's own" for every guard.
@@ -79,6 +81,9 @@ pub(crate) struct Timings {
     /// minutes, because the first build installs the guest packages and takes minutes; the waiter then finds the
     /// image and builds nothing.
     pub(crate) docker_image_wait: Duration,
+    /// How long the end of a run waits for the lifecycle lock to remove its run marker:
+    /// [`ACQUIRE_LOCK_TIMEOUT`], because only short operations hold the lock.
+    pub(crate) run_marker_lock_wait: Duration,
 }
 
 impl Default for Timings {
@@ -96,6 +101,7 @@ impl Default for Timings {
             teardown_grace: Duration::from_secs(30),
             docker_share_settle: Duration::from_secs(2),
             docker_image_wait: Duration::from_mins(30),
+            run_marker_lock_wait: ACQUIRE_LOCK_TIMEOUT,
         }
     }
 }
@@ -118,6 +124,7 @@ impl Timings {
             teardown_grace: Duration::from_millis(200),
             docker_share_settle: Duration::from_millis(10),
             docker_image_wait: Duration::from_millis(100),
+            run_marker_lock_wait: Duration::from_millis(200),
         }
     }
 }
@@ -163,7 +170,8 @@ impl Manager {
     ///
     /// It takes the whole lease rather than its worker name because one of the repairs is a restart, and a restart of
     /// a leased worker has to be authorized: the lease that authorizes it is the caller's own. The caller holds the
-    /// worker's lifecycle lock, so every start and stop here is the lock-free one.
+    /// worker's lifecycle lock, or the worker's run marker, which excludes every other lifecycle operation. So every
+    /// start and stop here is the lock-free one.
     pub(crate) async fn require_ready(&self, ctx: &Ctx, lease: &Lease) -> Result<(), Refusal> {
         ensure_host_paths(ctx, &self.runner, &self.settings).await?;
         match self.machine.as_ref() {
@@ -239,15 +247,19 @@ impl Manager {
 
     // --- start -----------------------------------------------------------------------------------------------
 
-    /// Brings one worker up, taking its lifecycle lock.
+    /// Brings one worker up, taking its lifecycle lock. A run of another live process on the worker refuses the
+    /// start as `lease_busy`.
     pub(crate) async fn start(&self, ctx: &Ctx, worker: &str) -> Result<StartState, Refusal> {
         self.settings.require_pool_worker(worker)?;
-        self.with_lifecycle_lock(ctx, worker, "pool-start", self.start_without_lifecycle_lock(ctx, worker))
-            .await
+        self.with_lifecycle_lock(ctx, worker, "pool-start", async {
+            self.require_no_run(ctx, worker, "pool-start").await?;
+            self.start_without_lifecycle_lock(ctx, worker).await
+        })
+        .await
     }
 
-    /// Brings one worker up for a caller that already holds its lifecycle lock. Every lease operation is such a
-    /// caller: the lock is shared between lease and lifecycle operations.
+    /// Brings one worker up for a caller that already holds its lifecycle lock or its run marker. Every lease
+    /// operation is such a caller: the lock is shared between lease and lifecycle operations.
     ///
     /// No caller authorizes a lease here. A Docker readiness gate starts the container itself with the caller's own
     /// lease, which may make a running container again ([`Manager::reconcile_docker_container`]).
@@ -300,6 +312,9 @@ impl Manager {
     ///
     /// The guard exists so that `pool stop` cannot pull a worker out from under another holder; it was never meant to
     /// stop a holder from restarting the worker it leased, which is what a checkout switch needs.
+    ///
+    /// The run guard comes first, so a run of another live process refuses the stop as `lease_busy` and names the run.
+    /// An authorized stop from inside a run finds the run marker of its own process, and passes.
     pub(crate) async fn stop_without_lifecycle_lock(
         &self,
         ctx: &Ctx,
@@ -307,6 +322,7 @@ impl Manager {
         authorized: Option<&Lease>,
     ) -> Result<StopState, Refusal> {
         self.settings.require_pool_worker(worker)?;
+        self.require_no_run(ctx, worker, "stop").await?;
         self.require_unleased(worker, "stop", authorized)?;
         match self.machine.as_ref() {
             #[cfg(unix)]

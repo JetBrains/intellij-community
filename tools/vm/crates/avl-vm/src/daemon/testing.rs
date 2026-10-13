@@ -8,7 +8,7 @@
 //! the fake `tart` relays with `nc` to the server's loopback listener.
 //!
 //! The runner probes [`FakeProcesses`] and not the host. So a worker that reads as running does so on a loaded host
-//! too.
+//! too. The table declares the process that the controller of the suite speaks for, so a run marker names it.
 
 use std::collections::{BTreeMap, VecDeque};
 use std::io;
@@ -833,10 +833,12 @@ impl DaemonFixture {
             .with_process_table(Arc::clone(&processes) as Arc<dyn ProcessTable>);
         let (reporter, stdout, stderr) = Reporter::in_memory("vm-test");
         reporter.set_mode(Mode::Stream);
+        // The hermetic table holds no process of the suite itself, so the controller speaks for a declared one.
+        let controller = processes.start("vm, the controller of the suite");
         let manager = Arc::new(Manager::with_timings(
             Dependencies {
                 settings: Arc::clone(&settings),
-                locks: Arc::new(LockManager::new(runner.clone())),
+                locks: Arc::new(LockManager::for_process(runner.clone(), controller)),
                 runner: runner.clone(),
                 reporter,
                 // A container-linux pool is reached through the production channel, which the manager builds itself.
@@ -1142,6 +1144,43 @@ impl DaemonFixture {
     /// The first worker's lease and its receipt.
     pub(crate) fn lease_receipt(&self) -> PathBuf {
         self.leased_by(&self.worker, "suite", self.settings.guest_os)
+    }
+
+    /// A second controller over the same pool, guests, Bazel and daemon double, as another process sees the pool. Its
+    /// lock manager speaks for another process of the fake table. So a run marker of either controller is a live run
+    /// of another process to the other one.
+    pub(crate) fn another_controller(&self) -> Arc<Host> {
+        let pid = self.processes.start("vm, another controller of the suite");
+        let (reporter, _, _) = Reporter::in_memory("vm-test");
+        reporter.set_mode(Mode::Stream);
+        let over_hypervisor = self.guests.is_none();
+        let manager = Arc::new(Manager::with_timings(
+            Dependencies {
+                settings: Arc::clone(&self.settings),
+                locks: Arc::new(LockManager::for_process(self.runner.clone(), pid)),
+                runner: self.runner.clone(),
+                reporter,
+                channel: if self.settings.backend == Backend::ContainerLinux {
+                    None
+                } else {
+                    self.guests.as_ref().map(FakeGuests::factory)
+                },
+                bazel: over_hypervisor
+                    .then(|| Arc::new(PinnedBazel::tart(self.pool.fake.executable())) as Arc<dyn avl_host_sys::guest::BazelHost>),
+                build_guest_boot: builds_nothing(),
+            },
+            Timings::fast(),
+        ));
+        Arc::new(
+            Host::new(
+                manager,
+                self.runner.clone(),
+                self.bazel.clone(),
+                avl_base::Environment::from_pairs(self.pool.environment.iter().cloned()),
+            )
+            .with_poll_clock(Arc::clone(&self.host.clock))
+            .with_stdin(Arc::clone(&self.stdin) as Arc<dyn crate::lane::secrets::SecretStdin>),
+        )
     }
 }
 

@@ -280,6 +280,11 @@ impl Manager {
         &self.machine
     }
 
+    /// How long the end of a run waits for the lifecycle lock to remove its run marker.
+    pub(crate) const fn run_marker_lock_wait(&self) -> Duration {
+        self.timings.run_marker_lock_wait
+    }
+
     /// The Tart backend, when this pool is a Tart one: `status` reads VM states and root disks through it.
     #[cfg(unix)]
     pub(crate) fn tart(&self) -> Option<&Tart> {
@@ -328,8 +333,9 @@ impl Manager {
     /// The lock every operation on one worker takes.
     ///
     /// One lock for lease operations and lifecycle operations alike, which is what makes the `_without_lifecycle_lock`
-    /// variants safe to call from inside a lease operation: the caller already holds this, and taking it again would
-    /// refuse against itself. Never deleted, and kept by `pool recycle`: a `flock` binds to the inode.
+    /// variants safe to call from inside a lease operation: the caller already holds this, or the worker's run marker,
+    /// which excludes every other lifecycle operation. Taking the lock again would refuse against itself. Never
+    /// deleted, and kept by `pool recycle`: a `flock` binds to the inode.
     pub(crate) fn lifecycle_lock_path(&self, worker: &str) -> PathBuf {
         self.settings.worker_dir(worker).join("lease-operation.lock")
     }

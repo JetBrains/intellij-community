@@ -1805,6 +1805,11 @@ impl Config {
         self.worker_dir(worker).join("lease.json")
     }
 
+    /// The run marker of a worker: it names the run in flight on the worker, its lease and its process.
+    pub fn run_marker_path(&self, worker: &str) -> PathBuf {
+        self.worker_dir(worker).join("run.json")
+    }
+
     /// The `docker create` arguments a Docker worker's container was made with. The Docker twin of
     /// [`Config::suspended_state_path`]: a record that differs from the current arguments means the container
     /// declares other shares or another image, and is made again.

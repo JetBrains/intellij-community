@@ -273,11 +273,11 @@ impl Host {
     /// One iteration on one worker, as a value.
     ///
     /// Lock-free and non-throwing, deliberately, because both callers that need several of these need it that way.
-    /// The worker's lifecycle lock is the caller's: `lease` is the one [`crate::worker::lease::with_lease_operation`]
-    /// handed it, and a second acquisition of the same lock by the same live process is refused rather than
-    /// reclaimed, so an iteration that took its own lock could only ever run one deep. And an attempt that failed is
-    /// an answer: N attempts across N workers cannot be reported at all if the first failure unwinds the caller.
-    /// `run` is the degenerate case - one attempt, whose error it answers.
+    /// The worker's run marker is the caller's: `lease` is the one [`crate::worker::lease::with_run_marker`] handed
+    /// it. A second run marker of one process on one worker is refused. So an iteration that wrote its own marker
+    /// could only ever run one deep. And an attempt that failed is an answer: N attempts across N workers cannot be
+    /// reported at all if the first failure unwinds the caller. `run` is the degenerate case - one attempt, whose
+    /// error it answers.
     ///
     /// `secrets` are `run`'s `--test-env` files, and empty for `shard` and `flake`.
     #[expect(clippy::too_many_arguments, reason = "one iteration's inputs, each from a different owner")]

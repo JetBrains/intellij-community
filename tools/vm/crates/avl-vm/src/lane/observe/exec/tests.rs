@@ -37,6 +37,29 @@ async fn exec_is_refused_while_a_run_is_active() {
     );
 }
 
+/// `exec` acts on the worker, so a run of another live process refuses it as `lease_busy` and names the run. No
+/// command reaches the guest.
+#[tokio::test]
+async fn exec_is_refused_while_a_run_of_another_process_is_in_flight() {
+    let fixture = Fixture::docker();
+    fixture.mark_ready("air-docker-1").await;
+    let receipt = fixture.lease_receipt("air-docker-1");
+    let run = fixture.run_of_another_process("air-docker-1").await;
+    let refusal = refusal(
+        command_exec(
+            &Ctx::background(),
+            &fixture.manager,
+            words(["--", "/bin/echo", "hi"]),
+            Some(&receipt),
+            Output::Json,
+        )
+        .await,
+    );
+    assert_eq!(refusal.code, "lease_busy", "{}", refusal.message);
+    assert!(refusal.message.contains(&format!("has run {run} in flight")), "{}", refusal.message);
+    assert_eq!(fixture.channel("air-docker-1").lines(), Vec::<String>::new());
+}
+
 #[tokio::test]
 async fn exec_runs_the_command_as_the_worker_user() {
     let fixture = Fixture::docker();

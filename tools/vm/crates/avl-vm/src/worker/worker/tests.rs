@@ -331,6 +331,76 @@ async fn stop_accepts_the_holders_own_lease() {
     );
 }
 
+// --- the run guard -------------------------------------------------------------------------------------------
+
+/// `pool start` and `pool stop` of a worker with a run of another live process in flight refuse `lease_busy` and name
+/// the run. They touch nothing.
+#[tokio::test]
+async fn pool_start_and_stop_refuse_a_worker_with_a_run_in_flight() {
+    let fixture = Fixture::macos();
+    let worker = fixture.worker(0).to_owned();
+    let lease = fixture.write_lease(&worker, "the-holders-token");
+    fixture.write_run_marker(&lease, "suite-user-run-1", fixture.another_process().await);
+    let refusal = fixture
+        .manager
+        .pool(&ctx(), PoolCommand::Start(PoolTarget::Worker(worker.clone())))
+        .await
+        .unwrap_err();
+    assert_eq!((refusal.code.as_ref(), refusal.exit), ("lease_busy", Exit::TEMP_FAIL));
+    assert!(refusal.message.contains("has run suite-user-run-1 in flight"), "{refusal}");
+    assert_eq!(fixture.fake.calls(), Vec::<String>::new());
+    // `pool stop` meets the run guard before the lease guard, so it names the run too. A stop that the holder's own
+    // lease authorizes refuses as well.
+    let refusal = fixture
+        .manager
+        .pool(&ctx(), PoolCommand::Stop(PoolTarget::Worker(worker.clone())))
+        .await
+        .unwrap_err();
+    assert_eq!((refusal.code.as_ref(), refusal.exit), ("lease_busy", Exit::TEMP_FAIL));
+    assert!(refusal.message.contains("has run suite-user-run-1 in flight"), "{refusal}");
+    let refusal = fixture
+        .manager
+        .stop_without_lifecycle_lock(&ctx(), &worker, Some(&lease))
+        .await
+        .unwrap_err();
+    assert_eq!(refusal.code, "lease_busy");
+    assert_eq!(fixture.fake.calls(), Vec::<String>::new());
+}
+
+/// `pool gc` keeps the worker of a run as `leased`. A run holds a lease, and the gc needs no lock of the run to see it.
+#[tokio::test]
+async fn pool_gc_keeps_the_worker_of_a_run() {
+    let fixture = Fixture::macos();
+    let worker = fixture.worker(0).to_owned();
+    let lease = fixture.write_lease(&worker, "the-holders-token");
+    fixture.write_run_marker(&lease, "suite-user-run-1", fixture.another_process().await);
+    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap();
+    assert_eq!(outcome.data["kept"][&worker], "leased", "{}", outcome.data);
+    assert!(fixture.settings.run_marker_path(&worker).exists());
+}
+
+/// The gate of a container-linux run forgets the guest of a new container. It keeps the lease and the run marker,
+/// which are the run's, and the reports.
+#[tokio::test]
+async fn forgetting_a_guest_keeps_the_lease_and_the_run_marker() {
+    let fixture = Fixture::macos();
+    let worker = fixture.worker(0);
+    let lease = fixture.write_lease(worker, "the-holders-token");
+    fixture.write_run_marker(&lease, "suite-user-run-1", fixture.another_process().await);
+    let directory = fixture.settings.worker_dir(worker);
+    std::fs::write(directory.join("daemon.json"), "{}").unwrap();
+    std::fs::create_dir_all(directory.join("reports/run-1")).unwrap();
+    fixture.manager.forget_guest(worker).unwrap();
+    assert!(!directory.join("daemon.json").exists());
+    for kept in [
+        fixture.settings.lease_path(worker),
+        fixture.settings.run_marker_path(worker),
+        directory.join("reports"),
+    ] {
+        assert!(kept.exists(), "{} is gone", kept.display());
+    }
+}
+
 // --- pool commands ---------------------------------------------------------------------------------------------
 
 /// `pool init` is pool-wide, so one leased worker refuses the whole operation rather than initializing the rest.

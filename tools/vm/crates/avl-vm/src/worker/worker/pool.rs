@@ -189,10 +189,18 @@ impl Manager {
 
     /// Forgets what the host recorded about a guest that is gone, for a worker that stays: a container-linux
     /// container the script made again has a fresh disk, so the agent, the stage and the daemon records of the
-    /// previous one describe nothing. The lease is the caller's, and `reports` holds what earlier runs pulled out.
+    /// previous one describe nothing. The lease and the run marker are the caller's, because the gate of a run calls
+    /// this. `reports` holds what earlier runs pulled out.
     pub(super) fn forget_guest(&self, worker: &str) -> Result<(), Refusal> {
         let settings = &self.settings;
-        self.remove_worker_state_except(worker, &[settings.lease_path(worker), settings.worker_dir(worker).join("reports")])
+        self.remove_worker_state_except(
+            worker,
+            &[
+                settings.lease_path(worker),
+                settings.run_marker_path(worker),
+                settings.worker_dir(worker).join("reports"),
+            ],
+        )
     }
 
     /// Removes a worker's host state but the lifecycle lock file and `kept`.

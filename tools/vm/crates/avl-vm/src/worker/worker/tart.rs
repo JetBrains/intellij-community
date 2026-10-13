@@ -498,7 +498,8 @@ impl Manager {
     ///
     /// Lazy: a pool slot is a name the controller may use, not a VM that must already exist. The first operation on
     /// a free slot clones it from the golden and boots it. The first operation on a suspended slot resumes it. The
-    /// caller holds the worker's lifecycle lock, so every start and stop here is the lock-free one.
+    /// caller holds the worker's lifecycle lock, or the worker's run marker, which excludes every other lifecycle
+    /// operation. So every start and stop here is the lock-free one.
     pub(super) async fn require_tart_ready(&self, ctx: &Ctx, tart: &Tart, lease: &Lease) -> Result<(), Refusal> {
         let worker = lease.worker.as_str();
         tart.require_available(ctx, worker).await?;

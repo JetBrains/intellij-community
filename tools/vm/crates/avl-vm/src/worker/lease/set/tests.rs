@@ -101,13 +101,13 @@ async fn release_workers_finishes_the_set_and_names_what_stayed_held() {
 
 // --- a busy worker ---------------------------------------------------------------------------------------------
 
-/// Holds the lifecycle lock of a worker, as a lane run does for the whole run.
+/// Holds the lifecycle lock of a worker, as a start does.
 async fn busy(fixture: &Fixture, worker: &str) -> LockGuard {
     fixture.manager.prepare_runtime_dirs().unwrap();
     fixture
         .manager
         .locks()
-        .acquire(&ctx(), &fixture.manager.lifecycle_lock_path(worker), "run", "busy")
+        .acquire(&ctx(), &fixture.manager.lifecycle_lock_path(worker), "pool-start", "busy")
         .await
         .unwrap()
 }
@@ -121,13 +121,13 @@ fn leased(fixture: &Fixture, worker: &str, holder: &str) -> Lease {
     lease
 }
 
-/// One running lane must not refuse the whole pool. The busy worker is not available, and the acquisition leases a
+/// One busy worker must not refuse the whole pool. The busy worker is not available, and the acquisition leases a
 /// free one. `worker_busy` is the answer only when the busy worker was in the way and no lease could be placed.
 #[tokio::test]
 async fn an_acquisition_skips_a_busy_worker_and_leases_a_free_one() {
     let fixture = pool("air-macos-1,air-macos-2");
     leased(&fixture, fixture.worker(0), "peer");
-    let run = busy(&fixture, fixture.worker(0)).await;
+    let start = busy(&fixture, fixture.worker(0)).await;
     let held = acquire_workers(&ctx(), &fixture.manager, &request("next", 1, false)).await.unwrap();
     assert_eq!((held[0].lease.worker.as_str(), held[0].recovered), (fixture.worker(1), false));
 
@@ -137,7 +137,7 @@ async fn an_acquisition_skips_a_busy_worker_and_leases_a_free_one() {
     assert_eq!((refusal.code.as_ref(), refusal.exit), ("worker_busy", Exit::TEMP_FAIL));
     assert!(refusal.message.contains(fixture.worker(0)), "{refusal}");
     // With no busy worker in the way, the full pool is exhausted.
-    drop(run);
+    drop(start);
     let refusal = acquire_workers(&ctx(), &fixture.manager, &request("third", 1, false))
         .await
         .unwrap_err();
@@ -159,7 +159,7 @@ async fn an_acquisition_skips_a_busy_free_worker() {
 async fn a_busy_worker_of_the_holder_refuses_rather_than_leasing_a_second_one() {
     let fixture = pool("air-macos-1,air-macos-2");
     let lease = leased(&fixture, fixture.worker(0), "agent");
-    let run = busy(&fixture, fixture.worker(0)).await;
+    let start = busy(&fixture, fixture.worker(0)).await;
     let refusal = acquire_workers(&ctx(), &fixture.manager, &request("agent", 1, false))
         .await
         .unwrap_err();
@@ -173,7 +173,7 @@ async fn a_busy_worker_of_the_holder_refuses_rather_than_leasing_a_second_one() 
     assert_eq!((held.len(), held[0].lease.worker.as_str()), (1, fixture.worker(1)));
     release_by_hand(&fixture, &held[0].lease);
 
-    drop(run);
+    drop(start);
     let recovered = acquire_workers(&ctx(), &fixture.manager, &request("agent", 1, false))
         .await
         .unwrap();
@@ -184,7 +184,7 @@ async fn a_busy_worker_of_the_holder_refuses_rather_than_leasing_a_second_one() 
 #[tokio::test]
 async fn a_busy_worker_with_an_unreadable_lease_refuses() {
     let fixture = pool("air-macos-1,air-macos-2");
-    let _run = busy(&fixture, fixture.worker(0)).await;
+    let _start = busy(&fixture, fixture.worker(0)).await;
     std::fs::write(fixture.settings.lease_path(fixture.worker(0)), "{").unwrap();
     let refusal = acquire_workers(&ctx(), &fixture.manager, &request("agent", 1, false))
         .await
@@ -198,7 +198,7 @@ async fn a_busy_worker_with_an_unreadable_lease_refuses() {
 #[tokio::test]
 async fn a_sharded_acquisition_skips_a_busy_worker_and_exact_unwinds() {
     let fixture = pool("air-macos-1,air-macos-2,air-macos-3");
-    let _run = busy(&fixture, fixture.worker(1)).await;
+    let _start = busy(&fixture, fixture.worker(1)).await;
     let held = acquire_workers(&ctx(), &fixture.manager, &request("shardable", 3, false))
         .await
         .unwrap();
@@ -223,7 +223,7 @@ async fn a_sharded_acquisition_skips_a_busy_worker_and_exact_unwinds() {
 async fn a_placement_on_a_busy_worker_answers_busy() {
     let fixture = pool("air-macos-1");
     let worker = fixture.worker(0);
-    let _run = busy(&fixture, worker).await;
+    let _start = busy(&fixture, worker).await;
     let lease = fixture.new_lease(worker, "token", "late");
     assert!(matches!(
         place_lease(&ctx(), &fixture.manager, worker, &lease).await.unwrap(),
@@ -236,6 +236,43 @@ async fn a_placement_on_a_busy_worker_answers_busy() {
 fn release_by_hand(fixture: &Fixture, lease: &Lease) {
     std::fs::remove_file(fixture.settings.lease_path(&lease.worker)).unwrap();
     remove_lease_receipts(&fixture.settings, lease);
+}
+
+/// A run holds the lifecycle lock only at its ends, so the recovery reads the run marker. A live run of another process
+/// on the worker of the holder refuses `worker_busy`, names the run, and places no second lease for the holder.
+#[cfg(unix)]
+#[tokio::test]
+async fn a_recovery_refuses_while_a_run_of_the_holder_is_in_flight() {
+    let fixture = pool("air-macos-1,air-macos-2");
+    let lease = leased(&fixture, fixture.worker(0), "agent");
+    let marker = fixture.write_run_marker(&lease, "suite-user-run-1", fixture.another_process().await);
+    let refusal = acquire_workers(&ctx(), &fixture.manager, &request("agent", 1, false))
+        .await
+        .unwrap_err();
+    assert_eq!((refusal.code.as_ref(), refusal.exit), ("worker_busy", Exit::TEMP_FAIL));
+    assert!(
+        refusal.message.contains(&format!(
+            "its run suite-user-run-1 is in flight (pid {} since 2026-10-13T12:00:00.000Z)",
+            marker.process.pid
+        )),
+        "{refusal}"
+    );
+    assert_eq!(read_lease(&fixture.settings.lease_path(fixture.worker(1))).unwrap(), None);
+    assert!(fixture.settings.run_marker_path(fixture.worker(0)).exists());
+}
+
+/// A stale marker does not stop the recovery: the acquisition removes it and answers the lease of the holder.
+#[cfg(unix)]
+#[tokio::test]
+async fn a_recovery_removes_a_stale_marker_and_recovers() {
+    let fixture = pool("air-macos-1,air-macos-2");
+    let lease = leased(&fixture, fixture.worker(0), "agent");
+    fixture.write_run_marker(&lease, "suite-user-run-1", Fixture::gone_process());
+    let recovered = acquire_workers(&ctx(), &fixture.manager, &request("agent", 1, false))
+        .await
+        .unwrap();
+    assert_eq!((&recovered[0].lease, recovered[0].slot_reason), (&lease, SlotReason::Recovered));
+    assert!(!fixture.settings.run_marker_path(fixture.worker(0)).exists());
 }
 /// receipt its invoker supplied with the workers it leased itself.
 #[test]

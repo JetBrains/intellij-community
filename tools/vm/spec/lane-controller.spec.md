@@ -46,6 +46,7 @@ targets:
   - ../crates/avl-host-sys/src/fs.rs
   - ../crates/avl-base/src/lib.rs
   - ../crates/avl-host-sys/src/lock.rs
+  - ../crates/avl-host-sys/src/proc/identity.rs
   - ../crates/avl-report/src/report.rs
   - ../crates/avl-report/src/aggregate.rs
   - ../crates/avl-report/src/aggregate/persist.rs
@@ -112,6 +113,7 @@ targets:
   - ../crates/avl-vm/src/worker/worker/tests.rs
   - ../crates/avl-vm/src/worker/lease.rs
   - ../crates/avl-vm/src/worker/lease/set.rs
+  - ../crates/avl-vm/src/worker/run_marker.rs
   - ../crates/avl-host-sys/src/interrupt.rs
   - ../crates/avl-vm/src/lane/observe.rs
   - ../crates/avl-vm/src/lane/observe/exec.rs
@@ -864,11 +866,15 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-vm/src/worker/lease/set/tests.rs
   [@test] ../crates/avl-vm/src/worker/lease/tests.rs
 
-- An acquisition skips a busy worker and leases a free one. Another operation holds the lifecycle lock of a busy
-  worker, and a lane run holds that lock for the whole run. A busy worker that may hold a lease of the holder
-  refuses the acquisition as `worker_busy`, so the holder gets no second worker. A lease that the controller cannot
-  read counts as such a lease. A busy worker can stop the placement of the lease, or of the full set of `--exact`.
-  Then the refusal is `worker_busy`. Without a busy worker it is `pool_exhausted`. Both exit 75.
+- An acquisition skips a busy worker and leases a free one. Another operation, such as a start, holds the lifecycle
+  lock of a busy worker. A busy worker that may hold a lease of the holder refuses the acquisition as `worker_busy`,
+  so the holder gets no second worker. A lease that the controller cannot read counts as such a lease. A busy worker
+  can stop the placement of the lease, or of the full set of `--exact`. Then the refusal is `worker_busy`. Without a
+  busy worker it is `pool_exhausted`. Both exit 75.
+  [@test] ../crates/avl-vm/src/worker/lease/set/tests.rs
+
+- A holder recovery refuses `worker_busy` while a live run of the holder is on the worker. A stale marker does not
+  stop the recovery.
   [@test] ../crates/avl-vm/src/worker/lease/set/tests.rs
 
 - A lease acquisition and a start remove the deadline record, so the worker keeps running for its new holder.
@@ -895,6 +901,32 @@ The daemon's half and the IDE's half of supervision are in
 - A release is refused when an iteration is in flight. The refusal gives the name of that run. The lease stays
   in place, and the holder keeps the receipt for it.
   [@test] ../crates/avl-vm/src/worker/lease/tests.rs
+
+- A run takes the lifecycle lock of its worker twice: when it writes its run marker and when it removes it. The
+  marker names the run, the lease and the process.
+  [@test] ../crates/avl-vm/src/worker/lease/tests.rs
+  [@test] ../crates/avl-vm/src/worker/run_marker/tests.rs
+  [@test] ../crates/avl-vm/src/daemon/leased/tests.rs
+
+- A live run of another process blocks the commands that change its worker. `lease release`, `pool start`,
+  `pool stop`, `exec`, `peekaboo` and the `daemon` verbs `start`, `restart` and `stop` then refuse `lease_busy`.
+  The refusal names the run.
+  [@test] ../crates/avl-vm/src/worker/lease/tests.rs
+  [@test] ../crates/avl-vm/src/worker/worker/tests.rs
+  [@test] ../crates/avl-vm/src/daemon/command/tests.rs
+  [@test] ../crates/avl-vm/src/lane/observe/exec/tests.rs
+
+- A marker of a dead process is stale. The next operation under the lock removes it, and a note says so. The guest
+  check of the release still decides about an iteration that the dead process left.
+  [@test] ../crates/avl-vm/src/worker/lease/tests.rs
+  [@test] ../crates/avl-vm/src/worker/run_marker/tests.rs
+
+- `lease show`, `daemon status`, `daemon log`, `ls` and `pull` answer during a run. `lease show` with the receipt
+  names the run.
+  [@test] ../crates/avl-vm/src/worker/lease/tests.rs
+  [@test] ../crates/avl-vm/src/daemon/command/tests.rs
+  [@test] ../crates/avl-vm/src/lane/observe/ls/tests.rs
+  [@test] ../crates/avl-vm/src/lane/observe/pull/tests.rs
 
 - A daemon that does not answer is not a parked daemon. The controller refuses the release for such a daemon.
   The refusal gives the name of the daemon record that the controller compared, and the name of the command
@@ -989,7 +1021,7 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-vm/src/worker/worker/tests.rs
 
 - `pool gc` keeps a busy worker and goes on with the other workers. Another operation holds the lifecycle lock of a
-  busy worker, such as a lane run. The answer names that worker in `kept` as `busy`.
+  busy worker, such as a start. The answer names that worker in `kept` as `busy`.
   [@test] ../crates/avl-vm/src/worker/worker/docker/tests.rs
 
 - `recycle_incomplete` exits 75 when a lease or another lifecycle operation was the only thing in the way. It

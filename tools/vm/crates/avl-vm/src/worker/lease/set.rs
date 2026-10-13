@@ -19,6 +19,7 @@ use super::receipt::{remove_lease_receipts, reusable_lease_receipt, write_lease_
 use super::{ACQUIRE_LOCK_TIMEOUT, AcquireRequest, release_by_receipt, try_atomic_lease};
 use crate::daemon::state::HostState;
 use crate::worker::hypervisor::SlotState;
+use crate::worker::run_marker::RunMarkerState;
 use crate::worker::worker::{Lease, Manager, read_lease, remove_idle_stop_record};
 
 #[cfg(test)]
@@ -162,7 +163,8 @@ pub(crate) async fn acquire_workers(ctx: &Ctx, manager: &Manager, request: &Acqu
 ///
 /// A busy worker is not available, and the survey goes on with the next one. A busy worker that may hold a lease of
 /// the request refuses the acquisition as [`worker_busy`]: the recovery cannot read that lease under the lock, and a
-/// new lease would give the holder a second worker.
+/// new lease would give the holder a second worker. A worker whose lease the request recovers refuses as
+/// [`worker_busy`] too, while a run of a live process is in flight on it ([`require_no_run_of_holder`]).
 async fn acquire_held_set(ctx: &Ctx, manager: &Manager, request: &AcquireRequest) -> Result<Vec<HeldWorker>, Refusal> {
     let settings = manager.settings();
     let shards = shard_holders(request);
@@ -195,6 +197,7 @@ async fn acquire_held_set(ctx: &Ctx, manager: &Manager, request: &AcquireRequest
         if !wanted.remove(existing.holder.as_str()) {
             continue;
         }
+        require_no_run_of_holder(ctx, manager, worker).await?;
         let receipt = reusable_lease_receipt(settings, &existing).ok_or_else(|| {
             Refusal::new(
                 "lease_recovery_receipt_missing",
@@ -370,6 +373,35 @@ fn holder_worker_busy(worker: &str) -> Refusal {
         "{worker} is handling another lifecycle operation, and it may hold a lease of this holder; retry when the \
          operation ends"
     ))
+}
+
+/// Refuses the recovery of the lease on `worker` as [`worker_busy`] while a run of another live process is in flight
+/// on the worker. A recovered receipt would give a second run of the holder the worker of the first one. A stale
+/// marker is removed with a note, and the recovery goes on.
+///
+/// The check runs under the lifecycle lock of the worker. A busy lock refuses as [`holder_worker_busy`].
+async fn require_no_run_of_holder(ctx: &Ctx, manager: &Manager, worker: &str) -> Result<(), Refusal> {
+    let checked = manager
+        .try_with_lifecycle_lock(ctx, worker, "lease-acquire-check", async {
+            Ok(match manager.judge_run_marker(ctx, worker).await? {
+                RunMarkerState::Live(marker) => Some(marker),
+                RunMarkerState::Stale(marker) => {
+                    manager.remove_stale_run_marker(worker, &marker)?;
+                    None
+                }
+                RunMarkerState::None | RunMarkerState::Ours(_) => None,
+            })
+        })
+        .await?;
+    match checked {
+        None => Err(holder_worker_busy(worker)),
+        Some(None) => Ok(()),
+        Some(Some(marker)) => Err(worker_busy(format!(
+            "{worker} holds a lease of this holder, and its run {} is in flight (pid {} since {}); retry when the run \
+             ends",
+            marker.run_id, marker.process.pid, marker.started_at
+        ))),
+    }
 }
 
 /// What one placement did.
