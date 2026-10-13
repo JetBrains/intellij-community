@@ -380,11 +380,12 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
   }
 
   /**
-   * Opens the "Interpreter Settings" edit form via [PyInterpreterEditDialogLauncher]. Enabled only
-   * for target-aware remote SDKs (Docker / SSH / WSL / …), which need the target-specific dialog
-   * to change the target configuration. Local SDKs are edited through the module-scoped Workspace
-   * Structure page instead — the "Associate with module" choice only makes sense in a module
-   * context, and this page is project-scoped.
+   * Opens the "Interpreter Settings" edit form via [PyInterpreterEditDialogLauncher]. Shown only
+   * while a target-aware remote SDK (Docker / SSH / WSL / …) is selected, which needs the
+   * target-specific dialog to change the target configuration. Local SDKs are edited through the
+   * module-scoped Workspace Structure page instead — the "Associate with module" choice only makes
+   * sense in a module context, and this page is project-scoped. Hidden rather than disabled
+   * (PY-93031): nothing on this page can make the button available for a local SDK.
    */
   private inner class EditInterpreterAction : SelectedInterpreterAction(
     PyBundle.messagePointer("configurable.PyAllInterpretersConfigurable.edit.interpreter"),
@@ -392,7 +393,8 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
   ) {
     override fun update(e: AnActionEvent) {
       val interpreter = selectedInterpreter()
-      e.presentation.isEnabled = interpreter != null && interpreter.sdk.sdkAdditionalData is PyTargetAwareAdditionalData
+      e.presentation.isEnabledAndVisible =
+        interpreter != null && interpreter.sdk.sdkAdditionalData is PyTargetAwareAdditionalData
     }
 
     override fun perform(interpreter: PythonInterpreter) {
@@ -597,8 +599,8 @@ internal fun PythonInterpreter.removeFromJdkTable() {
 
 /**
  * Returns the "Interpreter Settings" edit dialog for this interpreter, or `null` when it is a
- * legacy remote SDK that carries no target configuration. Callers use the same `null` to disable
- * the Edit button and to skip the click.
+ * legacy remote SDK that carries no target configuration. The Edit button skips the click on
+ * `null`; whether the button is shown at all depends on the SDK being target-aware.
  *
  * The "All Interpreters" page is project-scoped, so a "current module" is not obvious for a
  * multi-module project. The first module is passed as the association target — the reviewer-approved
