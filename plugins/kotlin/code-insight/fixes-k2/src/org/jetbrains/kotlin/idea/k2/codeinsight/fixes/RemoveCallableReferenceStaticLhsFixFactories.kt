@@ -43,6 +43,7 @@ internal object RemoveCallableReferenceStaticLhsFixFactories {
             psi.questionMarkTokenBeforeCallableReference()?.let {
                 RemoveCallableReferenceStaticLhsFix(it, KotlinBundle.message("text.remove.question"))
             },
+            psi.createRemoveTypeArgumentsFix(),
         )
         val lhs = callableReference.lhs ?: return listOfNotNull(
             callableReference.questionMarkTokenBeforeSelf()?.let {
@@ -56,10 +57,23 @@ internal object RemoveCallableReferenceStaticLhsFixFactories {
             lhs.getLhsNullableType()?.takeIf { it.innerType != null }?.let {
                 RemoveCallableReferenceStaticLhsFix(it, KotlinBundle.message("text.remove.question"))
             },
-            lhs.findDescendantOfType<KtTypeArgumentList>()?.let {
-                RemoveCallableReferenceStaticLhsFix(it, KotlinBundle.message("remove.type.arguments"))
-            },
+            lhs.createRemoveTypeArgumentsFix() ?: psi.createRemoveTypeArgumentsFix(),
         )
+    }
+
+    private fun PsiElement.createRemoveTypeArgumentsFix(): RemoveCallableReferenceStaticLhsFix? {
+        return findTypeArgumentList()?.createRemoveTypeArgumentsFix()
+    }
+
+    private fun KtTypeArgumentList.createRemoveTypeArgumentsFix(): RemoveCallableReferenceStaticLhsFix {
+        return RemoveCallableReferenceStaticLhsFix(this, KotlinBundle.message("remove.type.arguments"))
+    }
+
+    private fun PsiElement.findTypeArgumentList(): KtTypeArgumentList? {
+        return getNonStrictParentOfType<KtTypeArgumentList>()
+            ?: findDescendantOfType()
+            ?: getPrevSiblingIgnoringWhitespaceAndComments() as? KtTypeArgumentList
+            ?: getNextSiblingIgnoringWhitespaceAndComments() as? KtTypeArgumentList
     }
 
     private fun KtCallableReferenceExpression.questionMarkTokenAfterLhs(): PsiElement? {
