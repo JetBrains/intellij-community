@@ -350,6 +350,47 @@ class GradleOutputMessageDispatcherTest {
     )
   }
 
+  @Test
+  fun `test task output is parsed when the output switches to another task`() {
+    val buildId = BuildId()
+    val startBuildEvent = StartBuildEvent.builder("Build", DefaultBuildDescriptor(buildId, "Build", "/", 0L)).build()
+    val startEvent1 = StartEvent.builder(Any(), ":task1").withParentId(buildId).build()
+    val finishEvent1 = FinishEvent.builder(Any(), ":task1", SuccessResultImpl()).withParentId(buildId).build()
+    val startEvent2 = StartEvent.builder(Any(), ":task2").withParentId(buildId).build()
+    val finishEvent2 = FinishEvent.builder(Any(), ":task2", SuccessResultImpl()).withParentId(buildId).build()
+    val finishBuildEvent = FinishBuildEvent.builder(startBuildEvent.id, "Build", SuccessResultImpl()).build()
+
+    val parser = RecordingBuildOutputParser()
+    GradleOutputMessageDispatcher(buildId, BuildProgressListener { _, _ -> }, false, listOf(parser))
+      .use { dispatcher ->
+        dispatcher.onEvent(buildId, startBuildEvent)
+        dispatcher.onEvent(buildId, startEvent1)
+        dispatcher.appendLine("> Task :task1")
+        dispatcher.appendLine("task1 output")
+
+        // the output of the first task is not over yet, so its parser is still reading
+        parser.assertLines()
+
+        dispatcher.onEvent(buildId, finishEvent1)
+        dispatcher.onEvent(buildId, startEvent2)
+        dispatcher.appendLine("> Task :task2")
+
+        // the output has switched to another task, so the reader of the first task is closed and its output is parsed
+        parser.assertLines(
+          TaskNameId(":task1") to listOf("> Task :task1", "task1 output")
+        )
+
+        dispatcher.appendLine("task2 output")
+        dispatcher.onEvent(buildId, finishEvent2)
+        dispatcher.onEvent(buildId, finishBuildEvent)
+      }
+
+    parser.assertLines(
+      TaskNameId(":task1") to listOf("> Task :task1", "task1 output"),
+      TaskNameId(":task2") to listOf("> Task :task2", "task2 output"),
+    )
+  }
+
   @OptIn(InternalCoroutinesApi::class)
   @Timeout(value = 10, unit = TimeUnit.SECONDS)
   @CartesianTest(name = "{0} builds x {1} tasks")
