@@ -151,6 +151,38 @@ impl Manager {
 
     // --- pool gc ---------------------------------------------------------------------------------------------
 
+    /// Runs `gc_one` for each worker of the pool under the lifecycle lock of that worker, and renders the answer of
+    /// `pool gc`. `gc_one` answers `removed`, or the word of a kept worker.
+    ///
+    /// A worker whose lock another operation holds is kept as `busy`, and the gc goes on with the next worker. For a
+    /// gc, a kept busy slot is success.
+    pub(super) async fn gc_each_worker(
+        &self,
+        ctx: &Ctx,
+        gc_one: impl AsyncFn(&str) -> Result<String, Refusal>,
+    ) -> Result<Outcome, Refusal> {
+        let mut removed = Vec::new();
+        let mut kept = BTreeMap::new();
+        for worker in &self.settings.workers {
+            let outcome = self
+                .try_with_lifecycle_lock(ctx, worker, "pool-gc", gc_one(worker))
+                .await?
+                .unwrap_or_else(|| "busy".to_owned());
+            if outcome == "removed" {
+                removed.push(worker.clone());
+            } else {
+                kept.insert(worker.clone(), outcome);
+            }
+        }
+        let text = format!("removed={}", render_list(&removed));
+        Ok(Outcome {
+            data: json!({
+                "backend": self.settings.backend, "action": "gc", "removed": removed, "kept": kept,
+            }),
+            text,
+        })
+    }
+
     /// Empties a worker's host directory, keeping the lifecycle lock file.
     ///
     /// Everything else in there describes the guest that has just been deleted - the pid receipt, the

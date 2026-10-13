@@ -437,43 +437,26 @@ impl Manager {
                 text: "removed=(none)".to_owned(),
             });
         }
-        let mut removed = Vec::new();
-        let mut kept = BTreeMap::new();
-        for worker in &self.settings.workers {
-            let outcome = self
-                .with_lifecycle_lock(ctx, worker, "pool-gc", async {
-                    if read_lease(&self.settings.lease_path(worker))?.is_some() {
-                        return Ok("leased".to_owned());
-                    }
-                    let state = docker.state(ctx, worker).await?;
-                    match &state {
-                        ContainerState::Absent => Ok("absent".to_owned()),
-                        ContainerState::Running => Ok("running".to_owned()),
-                        ContainerState::Created | ContainerState::Exited(_) | ContainerState::Stopped => {
-                            docker.remove_stopped(ctx, worker).await?;
-                            Ok("removed".to_owned())
-                        }
-                        ContainerState::Other(word) if word == "dead" => {
-                            docker.remove_stopped(ctx, worker).await?;
-                            Ok("removed".to_owned())
-                        }
-                        ContainerState::Other(word) => Ok(word.clone()),
-                    }
-                })
-                .await?;
-            if outcome == "removed" {
-                removed.push(worker.clone());
-            } else {
-                kept.insert(worker.clone(), outcome);
+        self.gc_each_worker(ctx, async |worker: &str| {
+            if read_lease(&self.settings.lease_path(worker))?.is_some() {
+                return Ok("leased".to_owned());
             }
-        }
-        let text = format!("removed={}", render_list(&removed));
-        Ok(Outcome {
-            data: json!({
-                "backend": self.settings.backend, "action": "gc", "removed": removed, "kept": kept,
-            }),
-            text,
+            let state = docker.state(ctx, worker).await?;
+            match &state {
+                ContainerState::Absent => Ok("absent".to_owned()),
+                ContainerState::Running => Ok("running".to_owned()),
+                ContainerState::Created | ContainerState::Exited(_) | ContainerState::Stopped => {
+                    docker.remove_stopped(ctx, worker).await?;
+                    Ok("removed".to_owned())
+                }
+                ContainerState::Other(word) if word == "dead" => {
+                    docker.remove_stopped(ctx, worker).await?;
+                    Ok("removed".to_owned())
+                }
+                ContainerState::Other(word) => Ok(word.clone()),
+            }
         })
+        .await
     }
 
     // --- pool recycle ----------------------------------------------------------------------------------------

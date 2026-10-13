@@ -353,8 +353,8 @@ async fn pool_gc_on_docker_removes_stopped_containers_and_keeps_volumes() {
     assert!(!fixture.fake.saw_call_containing("rm "));
 }
 
-/// gc reads the state under the slot's lifecycle lock. A `pool start` that holds the lock makes gc refuse
-/// `lease_busy` for that slot, and a container that runs once gc has the lock is kept. It is never killed.
+/// gc reads the state under the slot's lifecycle lock. A `pool start` that holds the lock makes gc keep that slot as
+/// `busy`, and a container that runs once gc has the lock is kept. It is never killed.
 #[tokio::test]
 async fn pool_gc_on_docker_reads_the_state_under_the_lifecycle_lock() {
     let fixture = Fixture::docker();
@@ -382,8 +382,27 @@ async fn pool_gc_on_docker_reads_the_state_under_the_lifecycle_lock() {
         .acquire(&ctx(), &fixture.manager.lifecycle_lock_path(&worker), "pool-start", "busy")
         .await
         .unwrap();
-    let refusal = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap_err();
-    assert_eq!(refusal.code, "lease_busy", "{refusal:?}");
+    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap();
+    assert_eq!(outcome.data["kept"], serde_json::json!({ worker.as_str(): "busy" }));
+}
+
+/// One busy slot does not stop the gc of the pool. A lane run holds the lifecycle lock of its worker for the whole
+/// run, so the gc keeps that slot as `busy` and removes the stopped container of the other slot.
+#[tokio::test]
+async fn pool_gc_on_docker_keeps_a_busy_slot_and_goes_on() {
+    let fixture = Fixture::docker_builder().env("AIR_VM_WORKERS", "air-docker-1,air-docker-2").build();
+    fixture.manager.prepare_runtime_dirs().unwrap();
+    let _run = fixture
+        .manager
+        .locks()
+        .acquire(&ctx(), &fixture.manager.lifecycle_lock_path("air-docker-1"), "run", "busy")
+        .await
+        .unwrap();
+    fixture.fake.answer(Answer::ContainerState, "exited/0\n");
+    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap();
+    assert_eq!(outcome.data["removed"], serde_json::json!(["air-docker-2"]));
+    assert_eq!(outcome.data["kept"], serde_json::json!({ "air-docker-1": "busy" }));
+    assert!(!fixture.fake.saw_call_containing("rm air-docker-1"));
 }
 
 /// `pool recycle` is the one command that drops a Docker worker's volume, and it starts the worker again.

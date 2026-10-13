@@ -986,6 +986,10 @@ The daemon's half and the IDE's half of supervision are in
   did not reach every target is refused as `recycle_incomplete`, and that answer is the refusal detail.
   [@test] ../crates/avl-vm/src/worker/worker/tests.rs
 
+- `pool gc` keeps a busy worker and goes on with the other workers. Another operation holds the lifecycle lock of a
+  busy worker, such as a lane run. The answer names that worker in `kept` as `busy`.
+  [@test] ../crates/avl-vm/src/worker/worker/docker/tests.rs
+
 - `recycle_incomplete` exits 75 when a lease or another lifecycle operation was the only thing in the way. It
   exits 1 when a worker was broken. A caller must not read a partial recycle as a fresh pool.
   [@test] ../crates/avl-vm/src/worker/worker/tests.rs

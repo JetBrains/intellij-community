@@ -2,7 +2,6 @@
 //! It holds the host's concurrent-VM limit, the boot sequence, and the orphaned run process. It also holds the clone of a slot,
 //! `pool init`, `pool gc`, and the unmaking of a slot that `pool recycle` runs.
 
-use std::collections::BTreeMap;
 use std::fs::OpenOptions;
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::Path;
@@ -19,7 +18,6 @@ use nix::unistd::Pid;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use super::pool::render_list;
 use super::{GUEST_PROBE_TIMEOUT, Lease, Manager, StartState, StopState, probe_timeout, read_lease};
 use crate::worker::secure::write_json_line;
 use crate::worker::tart::{ProcessIdentity, TART_CLONE_TIMEOUT, TART_DELETE_TIMEOUT, TART_SET_TIMEOUT, TART_STOP_TIMEOUT, Tart, VmState};
@@ -860,25 +858,10 @@ impl Manager {
         // Spending a suspended worker's state re-declares its shares, so the host paths must be resolved.
         ensure_host_paths(ctx, &self.runner, &self.settings).await?;
         self.prepare_runtime_dirs()?;
-        let mut removed = Vec::new();
-        let mut kept = BTreeMap::new();
-        for worker in &self.settings.workers {
-            let outcome = self
-                .with_lifecycle_lock(ctx, worker, "pool-gc", self.gc_one_worker(ctx, tart, worker))
-                .await?;
-            if outcome == "removed" {
-                removed.push(worker.clone());
-            } else {
-                kept.insert(worker.clone(), outcome);
-            }
-        }
-        let text = format!("removed={}", render_list(&removed));
-        Ok(Outcome {
-            data: json!({
-                "backend": self.settings.backend, "action": "gc", "removed": removed, "kept": kept,
-            }),
-            text,
+        self.gc_each_worker(ctx, async |worker: &str| {
+            self.gc_one_worker(ctx, tart, worker).await.map(str::to_owned)
         })
+        .await
     }
 
     async fn gc_one_worker(&self, ctx: &Ctx, tart: &Tart, worker: &str) -> Result<&'static str, Refusal> {
