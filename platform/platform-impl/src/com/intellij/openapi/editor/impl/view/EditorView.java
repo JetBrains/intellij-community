@@ -638,6 +638,14 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     }
   }
 
+  /**
+   * Returns an upper bound of {@link #getCodePointWidth} for a printable ASCII character in any font style.
+   * The bound does not apply to a character grid.
+   */
+  float getMaxPrintableAsciiWidth() {
+    return myCharWidthCache.getMaxPrintableAsciiWidth();
+  }
+
   Insets getInsets() {
     return myEditor.getContentComponent().getInsets();
   }

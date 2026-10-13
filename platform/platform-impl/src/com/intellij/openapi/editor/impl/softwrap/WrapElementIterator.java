@@ -121,6 +121,16 @@ public class WrapElementIterator {
   }
 
   /**
+   * Moves the iterator forward to the start of a line. The skipped text must hold no fold region and no custom wrap.
+   */
+  public void advanceTo(int lineStartOffset) {
+    assert myNextCustomWrapIndex >= myCustomWraps.size() || myCustomWraps.get(myNextCustomWrapIndex).getOffset() >= lineStartOffset;
+    myIterationState.advanceTo(lineStartOffset);
+    myLogicalLine = myDocument.getLineNumber(lineStartOffset);
+    setElementOffsets();
+  }
+
+  /**
    * Offset should be the one returned previously from {@link #getElementStartOffset()}, otherwise behaviour is unspecified.
    */
   public void retreat(int offset) {
