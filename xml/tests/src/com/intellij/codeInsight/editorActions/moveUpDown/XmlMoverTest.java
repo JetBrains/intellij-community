@@ -54,21 +54,40 @@ public class XmlMoverTest extends LightPlatformCodeInsightTestCase {
   public void testHtmlStyle() throws Exception { doTest("html"); }
   public void testHtmlUnclosed() throws Exception { doTest("html"); }
 
+  public void testHtmlBlankLineAbove() throws Exception { doTest("html"); }
+  public void testHtmlLastChild() throws Exception { doTest("html"); }
+  public void testHtmlCaretAtStartTag() throws Exception { doTest("html"); }
+  public void testHtmlCaretAtEndTag() throws Exception { doTest("html"); }
+  public void testHtmlSiblingTags() throws Exception { doTest("html"); }
+  public void testHtmlSiblingTagsWithText() throws Exception { doTest("html"); }
+  public void testHtmlText() throws Exception { doTest("html"); }
+  public void testHtmlListItems() throws Exception { doTest("html"); }
+
+  /**
+   * Checks `_afterUp` and `_afterDown` files after one action.
+   * Each `_afterUp2`, `_afterUp3`, ... file checks one more action on the previous result.
+   */
   private void doTest(String ext) throws Exception {
     final String baseName = getBasePath() + '/' + getTestName(true);
     final String fileName = baseName + "."+ext;
 
-    @NonNls String afterFileName = baseName + "_afterUp." + ext;
-    EditorActionHandler handler = new MoveStatementUpAction().getHandler();
-    performAction(fileName, handler, afterFileName);
-
-    afterFileName = baseName + "_afterDown." + ext;
-    handler = new MoveStatementDownAction().getHandler();
-    performAction(fileName, handler, afterFileName);
+    doTest(fileName, baseName + "_afterUp", ext, new MoveStatementUpAction().getHandler());
+    doTest(fileName, baseName + "_afterDown", ext, new MoveStatementDownAction().getHandler());
   }
 
-  private void performAction(final String fileName, final EditorActionHandler handler, final String afterFileName) throws Exception {
+  private void doTest(String fileName, String afterBaseName, String ext, EditorActionHandler handler) throws Exception {
     configureByFile(fileName);
+    @NonNls String afterFileName = afterBaseName + "." + ext;
+    performAction(handler);
+    checkResultByFile(exists(afterFileName) ? afterFileName : fileName);
+
+    for (int step = 2; exists(afterFileName = afterBaseName + step + "." + ext); step++) {
+      performAction(handler);
+      checkResultByFile(afterFileName);
+    }
+  }
+
+  private void performAction(final EditorActionHandler handler) {
     if (handler.isEnabled(getEditor(), null, null)) {
       WriteCommandAction.runWriteCommandAction(null, new Runnable() {
         @Override
@@ -77,7 +96,10 @@ public class XmlMoverTest extends LightPlatformCodeInsightTestCase {
         }
       });
     }
-    checkResultByFile(new File(getTestDataPath(), afterFileName).exists() ? afterFileName : fileName);
+  }
+
+  private boolean exists(String fileName) {
+    return new File(getTestDataPath(), fileName).exists();
   }
 
   protected String getBasePath() {
