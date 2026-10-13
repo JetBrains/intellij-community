@@ -114,7 +114,7 @@ class PluginManagerStateService {
         for (contentModule in plugin.contentModules) {
           val contentModuleExclusionReason = resolvedPluginSet.getExclusionReason(contentModule)
           if (contentModuleExclusionReason is PackagePrefixConflictWithAnotherModule) {
-            registerLoadingError(PluginPackagePrefixConflict(
+            registerLoadingError(pluginPackagePrefixConflict(
               plugin,
               contentModuleExclusionReason.descriptor,
               contentModuleExclusionReason.preferredConflictingModule,
@@ -220,19 +220,19 @@ class PluginManagerStateService {
     fun processRootCause(exclusionReason: DescriptorExclusionReason) {
       when (exclusionReason) {
         is DependencyIsNotResolved -> {
-          registerLoadingError(PluginDependencyIsNotInstalled(plugin, exclusionReason.dependency.getIdString(), shouldNotifyUser))
+          registerLoadingError(pluginDependencyIsNotInstalled(plugin, exclusionReason.dependency.getIdString(), shouldNotifyUser))
         }
         is DependencyIsNotVisible -> {
           // TODO bad mapping
-          registerLoadingError(PluginDependencyIsNotInstalled(plugin, exclusionReason.dependencyModule.pluginId.idString, shouldNotifyUser))
+          registerLoadingError(pluginDependencyIsNotInstalled(plugin, exclusionReason.dependencyModule.pluginId.idString, shouldNotifyUser))
         }
         is ExcludedByEnvironmentConfiguration -> {} // logged during initialization
         is IncompatibleWithAnotherModule -> {
-          registerLoadingError(PluginIsIncompatibleWithAnotherPlugin(plugin, exclusionReason.preferredIncompatibleModule, shouldNotifyUser))
+          registerLoadingError(pluginIsIncompatibleWithAnotherPlugin(plugin, exclusionReason.preferredIncompatibleModule, shouldNotifyUser))
         }
         is OnDemandContentModuleHasNoDependentsLeft -> {} // expected exclusion, not a loading error
         is PackagePrefixConflictWithAnotherModule -> {
-          registerLoadingError(PluginPackagePrefixConflict(plugin, exclusionReason.descriptor, exclusionReason.preferredConflictingModule))
+          registerLoadingError(pluginPackagePrefixConflict(plugin, exclusionReason.descriptor, exclusionReason.preferredConflictingModule))
         }
         is ProductRulesImposedExclusion -> {
           val productReason = exclusionReason.productReason as? IntelliJImposedModuleExclusionReason
@@ -266,10 +266,10 @@ class PluginManagerStateService {
         val rootCauseDescriptor = exclusionChain.last()
         val rootCause = resolvedPluginSet.getExclusionReason(rootCauseDescriptor)!!
         if (rootCause is PluginIsMarkedDisabled && rootCause.descriptor.pluginId == excludedRequiredDescriptor.pluginId) {
-          registerLoadingError(PluginDependencyIsDisabled(plugin, rootCause.descriptor.pluginId, shouldNotifyUser))
+          registerLoadingError(pluginDependencyIsDisabled(plugin, rootCause.descriptor.pluginId, shouldNotifyUser))
         }
         else {
-          registerLoadingError(PluginDependencyCannotBeLoaded(plugin, excludedRequiredDescriptor, shouldNotifyUser))
+          registerLoadingError(pluginDependencyCannotBeLoaded(plugin, excludedRequiredDescriptor, shouldNotifyUser))
         }
       }
       else {

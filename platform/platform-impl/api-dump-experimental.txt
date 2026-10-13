@@ -89,12 +89,12 @@ f:com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager
 - sf:isTrusted(com.intellij.openapi.project.Project):Z
 - sf:isTrustedCheckDisabled():Z
 - sf:setTrusted(com.intellij.openapi.project.Project,Z):V
-*:com.intellij.ide.plugins.PluginLoadingProblem
-- a:getDetailedMessage():java.lang.String
-- getDisabledDependencyId():com.intellij.openapi.extensions.PluginId
-- a:getPlugin():com.intellij.ide.plugins.IdeaPluginDescriptor
-- a:getShortMessage():java.lang.String
-- a:getShouldNotifyUser():Z
+*f:com.intellij.ide.plugins.PluginLoadingProblem
+- f:getDetailedMessage():java.lang.String
+- f:getDisabledDependencyId():com.intellij.openapi.extensions.PluginId
+- f:getPlugin():com.intellij.ide.plugins.IdeaPluginDescriptor
+- f:getShortMessage():java.lang.String
+- f:getShouldNotifyUser():Z
 f:com.intellij.ide.plugins.PluginNode
 - com.intellij.ide.plugins.IdeaPluginDescriptor
 - *:getChannel():java.lang.String

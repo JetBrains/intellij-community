@@ -53,9 +53,7 @@ internal class PluginManagerStateServiceTest {
     val reason = initialState.pluginNonLoadReasons[dependentId]
 
     assertThat(reason!!.disabledDependencyId).isEqualTo(dependencyId)
-    assertThat(reason).isInstanceOf(PluginDependencyIsDisabled::class.java)
-    reason as PluginDependencyIsDisabled
-    assertThat(reason.dependencyId).isEqualTo(dependencyId)
+    assertThat(reason.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyId))
     assertThat(initialState.pluginLoadingProblemsForNotification).containsExactly(reason.detailedMessage)
     assertThat(initialState.pluginsToEnable).containsExactlyEntriesOf(mapOf(dependencyId to "Bar"))
     assertThat(initialState.pluginsToDisable).containsExactlyEntriesOf(mapOf(dependentId to "Foo"))
@@ -95,14 +93,8 @@ internal class PluginManagerStateServiceTest {
 
     assertThat(affectedReason!!.disabledDependencyId).isNull()
     assertThat(intermediateReason!!.disabledDependencyId).isEqualTo(rootId)
-    assertThat(affectedReason).isInstanceOf(PluginDependencyCannotBeLoaded::class.java)
-    affectedReason as PluginDependencyCannotBeLoaded
-    assertThat(affectedReason.dependency.pluginId).isEqualTo(intermediateId)
     assertThat(affectedReason.shortMessage)
       .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.failed.to.load.plugin", "Intermediate"))
-    assertThat(intermediateReason).isInstanceOf(PluginDependencyIsDisabled::class.java)
-    intermediateReason as PluginDependencyIsDisabled
-    assertThat(intermediateReason.dependencyId).isEqualTo(rootId)
     assertThat(intermediateReason.shortMessage)
       .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", rootId))
     assertThat(state.pluginLoadingProblemsForNotification).containsExactlyInAnyOrder(
@@ -141,7 +133,11 @@ internal class PluginManagerStateServiceTest {
     assertThat(visibleState.pluginLoadingProblemsForNotification).isNotEmpty()
     assertThat(hiddenState).isNotSameAs(visibleState)
     assertThat(hiddenState.pluginLoadingProblemsForNotification).isEmpty()
-    assertThat(reasonTypes(hiddenState)).isEqualTo(reasonTypes(visibleState))
+    assertThat(hiddenState.pluginNonLoadReasons.keys).isEqualTo(visibleState.pluginNonLoadReasons.keys)
+    assertThat(hiddenState.pluginNonLoadReasons.mapValues { it.value.disabledDependencyId })
+      .isEqualTo(visibleState.pluginNonLoadReasons.mapValues { it.value.disabledDependencyId })
+    assertThat(hiddenState.pluginNonLoadReasons.mapValues { it.value.shouldNotifyUser })
+      .isEqualTo(visibleState.pluginNonLoadReasons.mapValues { it.value.shouldNotifyUser })
     assertThat(reasonMessages(hiddenState)).isEqualTo(reasonMessages(visibleState))
     assertThat(hiddenState.pluginsToEnable).isEqualTo(visibleState.pluginsToEnable)
     assertThat(hiddenState.pluginsToDisable).isEqualTo(visibleState.pluginsToDisable)
@@ -159,11 +155,8 @@ internal class PluginManagerStateServiceTest {
     val reason = state.pluginNonLoadReasons[pluginId]
 
     assertThat(reason!!.disabledDependencyId).isNull()
-    assertThat(reason).isInstanceOf(PluginDependencyIsNotInstalled::class.java)
-    reason as PluginDependencyIsNotInstalled
-    assertThat(reason.dependencyNameOrId).isEqualTo("missing")
+    assertThat(reason.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin", "missing"))
     assertThat(reason.shouldNotifyUser).isTrue()
-    assertThat(reason.shortMessage).isNotBlank()
     assertThat(state.pluginLoadingProblemsForNotification).containsExactly(reason.detailedMessage)
     assertThat(state.pluginsToEnable).isEmpty()
     assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(pluginId to "Foo"))
@@ -182,8 +175,8 @@ internal class PluginManagerStateServiceTest {
     val pluginId = PluginId.getId("foo")
     val reason = state.pluginNonLoadReasons[pluginId]
 
-    assertThat(reason).isInstanceOf(PluginDependencyIsNotInstalled::class.java)
     assertThat(reason!!.shouldNotifyUser).isFalse()
+    assertThat(reason.shortMessage).isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin", "missing"))
     assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
     assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(pluginId to "Foo"))
   }
@@ -214,9 +207,6 @@ internal class PluginManagerStateServiceTest {
     PluginManagerCore.setPluginSet(pluginSet)
     return checkNotNull(service.getCurrentState(USER_REPORTING_POLICY))
   }
-
-  private fun reasonTypes(state: PluginManagerStateSnapshot): Map<PluginId, Class<out PluginLoadingProblem>> =
-    state.pluginNonLoadReasons.mapValues { it.value.javaClass }
 
   private fun reasonMessages(state: PluginManagerStateSnapshot): Map<PluginId, Pair<String, String>> =
     state.pluginNonLoadReasons.mapValues { it.value.shortMessage to it.value.detailedMessage }
