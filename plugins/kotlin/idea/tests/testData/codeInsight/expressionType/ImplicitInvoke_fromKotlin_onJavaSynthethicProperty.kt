@@ -13,6 +13,7 @@ fun usage(fromJava: JavaClass<Foo>) {
 // K1_TYPE: value -> <html>Type is unknown</html>
 
 // K2_TYPE: value -> <b>Foo!</b>
+// K2_TYPE: fromJava.value() -> <b>String</b>
 
 // FILE: dependency/JavaClass.java
 package dependency;
