@@ -274,6 +274,7 @@ single_version_override(
     patch_strip = 1,
     patches = [
         "//:build/rules_rs-0.0.112-github-crate-tarball.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/rules_rs/pull/247
+        "//:build/rules_rs-0.0.112-bootstrap-toolchain-type.patch",  # TODO: remove that once merged to upstream, with rules_rust-bootstrap-toolchain-type.patch
     ],
 )
 
@@ -289,6 +290,9 @@ rules_rust.patch(
         # their asked statically linked MSVC runtime, implemented as a patch to avoid setting
         # transitions manually everywhere or with a wrapper or child rule
         "//:build/rules_rust-msvc-crt-transition.patch",
+        # A toolchain type selects the bootstrap Rust toolchain, so the process wrapper keeps the configuration of the
+        # cc toolchain and compiler-rt. It needs rules_rs-0.0.112-bootstrap-toolchain-type.patch.
+        "//:build/rules_rust-bootstrap-toolchain-type.patch",  # TODO: remove that once merged to upstream
     ],
     strip = 1,
 )
