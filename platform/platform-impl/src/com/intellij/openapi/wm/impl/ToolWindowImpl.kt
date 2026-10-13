@@ -170,6 +170,7 @@ private val LOG = logger<ToolWindowManagerImpl>()
   /**
    * Puts the stripe button of a [ToolWindowAnchor.LEFT] tool window below every other button of the left toolbar in the New UI.
    * The tool window still docks on the left. Set it in [com.intellij.openapi.wm.ToolWindowFactory.init].
+   * The user cannot drag such a tool window, because the drag has no place for the footer. Move To still moves it.
    */
   internal var isInLeftToolbarFooter: Boolean = false
 

@@ -186,7 +186,9 @@ class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSourcePane: Too
 
   override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean {
     val point = RelativePoint(dragComponent, dragComponentPoint)
-    return getToolWindowAtPoint(point) != null || getComponentFromDragSourcePane(point) is MoreSquareStripeButton
+    // the drag has no place for the footer of the left toolbar, so a footer window stays in place. Move To still moves it
+    val toolWindow = getToolWindowAtPoint(point)
+    return (toolWindow != null && !toolWindow.isInLeftToolbarFooter) || getComponentFromDragSourcePane(point) is MoreSquareStripeButton
   }
 
   override fun processMousePressed(event: MouseEvent) {
