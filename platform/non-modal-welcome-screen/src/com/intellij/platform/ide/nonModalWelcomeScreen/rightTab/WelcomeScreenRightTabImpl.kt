@@ -381,7 +381,7 @@ internal class WelcomeScreenRightTabImpl(
   }
 
   private fun createSingleBanner(parentPanel: JPanel, extraContent: Boolean) {
-    val singleBanner = WelcomeScreenRightTabBannerProvider.createSurveyBanner(project)
+    val singleBanner = WelcomeScreenRightTabBannerProvider.createSingleBanner(project)
     if (singleBanner is Disposable) {
       Disposer.register(this, singleBanner)
     }
