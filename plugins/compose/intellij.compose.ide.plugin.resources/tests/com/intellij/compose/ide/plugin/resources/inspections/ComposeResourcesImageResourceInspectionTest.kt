@@ -113,111 +113,288 @@ internal class ComposeResourcesImageResourceInspectionTest : KotlinLightCodeInsi
     expectedCount = 2,
   )
 
-  fun `test replaces imageResource with painterResource for direct Image argument`() {
-    configureUsageFile(
-      """
-        import androidx.compose.runtime.Composable
-        import androidx.compose.foundation.Image
-        import org.jetbrains.compose.resources.imageResource
-        import demo.shared.generated.resources.Res
-        import demo.shared.generated.resources.vector
+  fun `test replaces imageResource with painterResource for direct Image argument`() = assertImageResourceQuickFix(
+    before = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import org.jetbrains.compose.resources.imageResource
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
 
-        @Composable
-        fun usage() {
-          Image(<caret>imageResource(Res.drawable.vector), null)
-        }
-      """
-    )
+      @Composable
+      fun usage() {
+        Image(<caret>imageResource(Res.drawable.vector), null)
+      }
+    """,
+    after = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
+      import org.jetbrains.compose.resources.painterResource
 
-    myFixture.doHighlighting()
-    myFixture.launchAction(myFixture.findSingleIntention(imageResourceQuickFixName))
+      @Composable
+      fun usage() {
+        Image(painterResource(Res.drawable.vector), null)
+      }
+    """
+  )
 
-    myFixture.checkResult(
-      """
-        import androidx.compose.runtime.Composable
-        import androidx.compose.foundation.Image
-        import demo.shared.generated.resources.Res
-        import demo.shared.generated.resources.vector
-        import org.jetbrains.compose.resources.painterResource
+  fun `test replaces bitmap argument name with painter for named Image argument`() = assertImageResourceQuickFix(
+    before = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import org.jetbrains.compose.resources.imageResource
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
 
-        @Composable
-        fun usage() {
-          Image(painterResource(Res.drawable.vector), null)
-        }
-      """.trimIndent()
-    )
-  }
+      @Composable
+      fun usage() {
+        Image(bitmap = <caret>imageResource(Res.drawable.vector), contentDescription = null)
+      }
+    """,
+    after = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
+      import org.jetbrains.compose.resources.painterResource
 
-  fun `test keeps imageResource import when still used after quick fix`() {
-    configureUsageFile(
-      """
-        import androidx.compose.runtime.Composable
-        import androidx.compose.foundation.Image
-        import org.jetbrains.compose.resources.imageResource
-        import demo.shared.generated.resources.Res
-        import demo.shared.generated.resources.vector
+      @Composable
+      fun usage() {
+        Image(painter = painterResource(Res.drawable.vector), contentDescription = null)
+      }
+    """
+  )
 
-        @Composable
-        fun usage() {
-          Image(<caret>imageResource(Res.drawable.vector), null)
-          val bitmap = imageResource(Res.drawable.raster)
-        }
-      """
-    )
+  fun `test replaces bitmap argument name with painter for named Image argument with full qualifier`() = assertImageResourceQuickFix(
+    before = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
 
-    myFixture.doHighlighting()
-    myFixture.launchAction(myFixture.findSingleIntention(imageResourceQuickFixName))
+      @Composable
+      fun usage() {
+        Image(bitmap = <caret>org.jetbrains.compose.resources.imageResource(Res.drawable.vector), contentDescription = null)
+      }
+    """,
+    after = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
 
-    myFixture.checkResult(
-      """
-        import androidx.compose.runtime.Composable
-        import androidx.compose.foundation.Image
-        import org.jetbrains.compose.resources.imageResource
-        import demo.shared.generated.resources.Res
-        import demo.shared.generated.resources.vector
-        import org.jetbrains.compose.resources.painterResource
+      @Composable
+      fun usage() {
+        Image(painter = org.jetbrains.compose.resources.painterResource(Res.drawable.vector), contentDescription = null)
+      }
+    """
+  )
 
-        @Composable
-        fun usage() {
-          Image(painterResource(Res.drawable.vector), null)
-          val bitmap = imageResource(Res.drawable.raster)
-        }
-      """.trimIndent()
-    )
-  }
+  fun `test removes filterQuality argument for named Image argument`() = assertImageResourceQuickFix(
+    before = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import androidx.compose.ui.graphics.FilterQuality
+      import org.jetbrains.compose.resources.imageResource
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
 
-  fun `test replaces imageResource full qualifier with painterResource for direct Image argument`() {
-    configureUsageFile(
-      """
-        import androidx.compose.runtime.Composable
-        import androidx.compose.foundation.Image
-        import demo.shared.generated.resources.Res
-        import demo.shared.generated.resources.vector
+      @Composable
+      fun usage() {
+        Image(bitmap = <caret>imageResource(Res.drawable.vector), contentDescription = null, filterQuality = FilterQuality.High)
+      }
+    """,
+    after = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
+      import org.jetbrains.compose.resources.painterResource
 
-        @Composable
-        fun usage() {
-          Image(<caret>org.jetbrains.compose.resources.imageResource(Res.drawable.vector), null)
-        }
-      """
-    )
+      @Composable
+      fun usage() {
+        Image(painter = painterResource(Res.drawable.vector), contentDescription = null)
+      }
+    """
+  )
 
-    myFixture.doHighlighting()
-    myFixture.launchAction(myFixture.findSingleIntention(imageResourceQuickFixName))
+  fun `test removes filterQuality argument for positional Image argument`() = assertImageResourceQuickFix(
+    before = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import androidx.compose.ui.graphics.FilterQuality
+      import org.jetbrains.compose.resources.imageResource
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
 
-    myFixture.checkResult(
-      """
-        import androidx.compose.runtime.Composable
-        import androidx.compose.foundation.Image
-        import demo.shared.generated.resources.Res
-        import demo.shared.generated.resources.vector
+      @Composable
+      fun usage() {
+        Image(<caret>imageResource(Res.drawable.vector), null, filterQuality = FilterQuality.High)
+      }
+    """,
+    after = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
+      import org.jetbrains.compose.resources.painterResource
 
-        @Composable
-        fun usage() {
-          Image(org.jetbrains.compose.resources.painterResource(Res.drawable.vector), null)
-        }
-      """.trimIndent()
-    )
-  }
+      @Composable
+      fun usage() {
+        Image(painterResource(Res.drawable.vector), null)
+      }
+    """
+  )
+
+  fun `test removes positional filterQuality argument`() = assertImageResourceQuickFix(
+    before = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import androidx.compose.ui.Alignment
+      import androidx.compose.ui.Modifier
+      import androidx.compose.ui.graphics.FilterQuality
+      import androidx.compose.ui.layout.ContentScale
+      import org.jetbrains.compose.resources.imageResource
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
+
+      @Composable
+      fun usage() {
+        Image(<caret>imageResource(Res.drawable.vector), null, Modifier, Alignment.Center, ContentScale.Fit, 1f, null, FilterQuality.High)
+      }
+    """,
+    after = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import androidx.compose.ui.Alignment
+      import androidx.compose.ui.Modifier
+      import androidx.compose.ui.layout.ContentScale
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
+      import org.jetbrains.compose.resources.painterResource
+
+      @Composable
+      fun usage() {
+        Image(painterResource(Res.drawable.vector), null, Modifier, Alignment.Center, ContentScale.Fit, 1f, null)
+      }
+    """
+  )
+
+  fun `test removes filterQuality argument when Image call has argument type mismatch`() = assertImageResourceQuickFix(
+    before = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import androidx.compose.ui.graphics.FilterQuality
+      import org.jetbrains.compose.resources.imageResource
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
+
+      @Composable
+      fun usage() {
+        Image(bitmap = <caret>imageResource(Res.drawable.vector), contentDescription = 42, filterQuality = FilterQuality.High)
+      }
+    """,
+    after = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
+      import org.jetbrains.compose.resources.painterResource
+
+      @Composable
+      fun usage() {
+        Image(painter = painterResource(Res.drawable.vector), contentDescription = 42)
+      }
+    """
+  )
+
+  fun `test keeps FilterQuality import when still used after quick fix`() = assertImageResourceQuickFix(
+    before = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import androidx.compose.ui.graphics.FilterQuality
+      import org.jetbrains.compose.resources.imageResource
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
+
+      @Composable
+      fun usage() {
+        Image(<caret>imageResource(Res.drawable.vector), null, filterQuality = FilterQuality.High)
+        val quality = FilterQuality.Low
+      }
+    """,
+    after = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import androidx.compose.ui.graphics.FilterQuality
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
+      import org.jetbrains.compose.resources.painterResource
+
+      @Composable
+      fun usage() {
+        Image(painterResource(Res.drawable.vector), null)
+        val quality = FilterQuality.Low
+      }
+    """
+  )
+
+  fun `test keeps imageResource import when still used after quick fix`() = assertImageResourceQuickFix(
+    before = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import org.jetbrains.compose.resources.imageResource
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
+
+      @Composable
+      fun usage() {
+        Image(<caret>imageResource(Res.drawable.vector), null)
+        val bitmap = imageResource(Res.drawable.raster)
+      }
+    """,
+    after = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import org.jetbrains.compose.resources.imageResource
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
+      import org.jetbrains.compose.resources.painterResource
+
+      @Composable
+      fun usage() {
+        Image(painterResource(Res.drawable.vector), null)
+        val bitmap = imageResource(Res.drawable.raster)
+      }
+    """
+  )
+
+  fun `test replaces imageResource full qualifier with painterResource for direct Image argument`() = assertImageResourceQuickFix(
+    before = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
+
+      @Composable
+      fun usage() {
+        Image(<caret>org.jetbrains.compose.resources.imageResource(Res.drawable.vector), null)
+      }
+    """,
+    after = """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.foundation.Image
+      import demo.shared.generated.resources.Res
+      import demo.shared.generated.resources.vector
+
+      @Composable
+      fun usage() {
+        Image(org.jetbrains.compose.resources.painterResource(Res.drawable.vector), null)
+      }
+    """
+  )
 
   fun `test does not offer quick fix when imageResource is not a direct Image argument`() = assertImageResourceQuickFixUnavailable(
     """
@@ -254,7 +431,7 @@ internal class ComposeResourcesImageResourceInspectionTest : KotlinLightCodeInsi
   private fun assertImageResourceProblems(
     @Language("kotlin") code: String,
     expectedCount: Int,
-    expectedHighlightedText: String = "imageResource"
+    expectedHighlightedText: String = "imageResource",
   ) {
     configureUsageFile(code)
 
@@ -267,6 +444,15 @@ internal class ComposeResourcesImageResourceInspectionTest : KotlinLightCodeInsi
       val highlightedText = document.getText(com.intellij.openapi.util.TextRange(it.startOffset, it.endOffset))
       assertEquals(expectedHighlightedText, highlightedText)
     }
+  }
+
+  private fun assertImageResourceQuickFix(@Language("kotlin") before: String, @Language("kotlin") after: String) {
+    configureUsageFile(before)
+
+    myFixture.doHighlighting()
+    myFixture.checkPreviewAndLaunchAction(myFixture.findSingleIntention(imageResourceQuickFixName))
+
+    myFixture.checkResult(after.trimIndent())
   }
 
   private fun assertImageResourceQuickFixUnavailable(@Language("kotlin") code: String) {
@@ -298,13 +484,90 @@ internal class ComposeResourcesImageResourceInspectionTest : KotlinLightCodeInsi
         package androidx.compose.foundation
 
         import androidx.compose.runtime.Composable
+        import androidx.compose.ui.Alignment
+        import androidx.compose.ui.Modifier
+        import androidx.compose.ui.graphics.ColorFilter
+        import androidx.compose.ui.graphics.FilterQuality
         import androidx.compose.ui.graphics.ImageBitmap
         import androidx.compose.ui.graphics.painter.Painter
+        import androidx.compose.ui.layout.ContentScale
 
         @Composable
-        fun Image(bitmap: ImageBitmap, contentDescription: String?) {}
+        fun Image(
+          bitmap: ImageBitmap,
+          contentDescription: String?,
+          modifier: Modifier = Modifier,
+          alignment: Alignment = Alignment.Center,
+          contentScale: ContentScale = ContentScale.Fit,
+          alpha: Float = 1f,
+          colorFilter: ColorFilter? = null,
+          filterQuality: FilterQuality = FilterQuality.Low,
+        ) {}
         @Composable
-        fun Image(painter: Painter, contentDescription: String?) {}
+        fun Image(
+          painter: Painter,
+          contentDescription: String?,
+          modifier: Modifier = Modifier,
+          alignment: Alignment = Alignment.Center,
+          contentScale: ContentScale = ContentScale.Fit,
+          alpha: Float = 1f,
+          colorFilter: ColorFilter? = null,
+        ) {}
+      """.trimIndent()
+    )
+    myFixture.addFileToProject(
+      "androidx/compose/ui/Modifier.kt",
+      """
+        package androidx.compose.ui
+
+        interface Modifier {
+          companion object : Modifier
+        }
+      """.trimIndent()
+    )
+    myFixture.addFileToProject(
+      "androidx/compose/ui/Alignment.kt",
+      """
+        package androidx.compose.ui
+
+        interface Alignment {
+          companion object {
+            val Center: Alignment = object : Alignment {}
+          }
+        }
+      """.trimIndent()
+    )
+    myFixture.addFileToProject(
+      "androidx/compose/ui/layout/ContentScale.kt",
+      """
+        package androidx.compose.ui.layout
+
+        interface ContentScale {
+          companion object {
+            val Fit: ContentScale = object : ContentScale {}
+          }
+        }
+      """.trimIndent()
+    )
+    myFixture.addFileToProject(
+      "androidx/compose/ui/graphics/ColorFilter.kt",
+      """
+        package androidx.compose.ui.graphics
+
+        class ColorFilter
+      """.trimIndent()
+    )
+    myFixture.addFileToProject(
+      "androidx/compose/ui/graphics/FilterQuality.kt",
+      """
+        package androidx.compose.ui.graphics
+
+        class FilterQuality {
+          companion object {
+            val Low: FilterQuality = FilterQuality()
+            val High: FilterQuality = FilterQuality()
+          }
+        }
       """.trimIndent()
     )
     myFixture.addFileToProject(
