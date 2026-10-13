@@ -95,6 +95,8 @@ class GutterIconsConfigurable : BoundSearchableConfigurable(
         for (descriptor in descriptors) {
           list.setItemSelected(descriptor, settings.isEnabled(descriptor))
         }
+        // setItemSelected changes only the renderer check boxes, so the list must repaint to show the new state
+        list.repaint()
         showGutterIcons.component.isSelected = EditorSettingsExternalizable.getInstance().areGutterIconsShown()
       }
       onApply {
