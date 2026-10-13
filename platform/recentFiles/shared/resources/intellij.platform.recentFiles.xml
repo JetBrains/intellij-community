@@ -50,6 +50,11 @@
     <postStartupActivity implementation="com.intellij.platform.recentFiles.shared.RecentFileEventsModelSynchronizer"/>
   </extensions>
 
+  <applicationListeners>
+    <listener class="com.intellij.platform.recentFiles.shared.RecentFilesPluginUnloadListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+  </applicationListeners>
+
   <projectListeners>
     <listener class="com.intellij.platform.recentFiles.shared.RecentFilesDaemonAnalyserListener"
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener" activeInTestMode="false"/>

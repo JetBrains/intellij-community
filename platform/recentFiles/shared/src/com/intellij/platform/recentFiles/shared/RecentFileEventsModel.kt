@@ -2,6 +2,7 @@
 package com.intellij.platform.recentFiles.shared
 
 import com.intellij.codeInsight.daemon.HighlightingPassesCache
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
@@ -26,6 +27,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.findProjectOrNull
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -121,7 +123,7 @@ internal class RecentFileEventsModel(private val project: Project, coroutineScop
     else
       LocalRecentFilesEvent.ItemsUpdated(metadata, false)
 
-    targetFlow.emit(event)
+    targetFlow.emitEvent(event)
   }
 
   suspend fun emitRecentFiles(searchRequest: RecentFilesBackendRequest.FetchFiles) {
@@ -130,11 +132,11 @@ internal class RecentFileEventsModel(private val project: Project, coroutineScop
 
     val targetFlow = chooseTargetFlow(searchRequest.filesKind)
 
-    targetFlow.emit(LocalRecentFilesEvent.AllItemsRemoved())
+    targetFlow.emitEvent(LocalRecentFilesEvent.AllItemsRemoved())
 
     val freshRecentFiles = collectRecentFiles(searchRequest)
     if (freshRecentFiles != null) {
-      targetFlow.emit(freshRecentFiles)
+      targetFlow.emitEvent(freshRecentFiles)
     }
   }
 
@@ -187,14 +189,14 @@ internal class RecentFileEventsModel(private val project: Project, coroutineScop
             event.files.filter { isAllowedInRecentFilesModel(project, fileKind, it) }
           )
           val fileEvent = LocalRecentFilesEvent.ItemsAdded(models)
-          chooseTargetFlow(fileKind).emit(fileEvent)
+          chooseTargetFlow(fileKind).emitEvent(fileEvent)
         }
       }
       FileChangeKind.REMOVED -> {
         val fileEvent = LocalRecentFilesEvent.ItemsRemoved(event.files)
 
         for (fileKind in RecentFileKind.entries) {
-          chooseTargetFlow(fileKind).emit(fileEvent)
+          chooseTargetFlow(fileKind).emitEvent(fileEvent)
         }
       }
       FileChangeKind.UPDATED_AND_PUT_ON_TOP -> {
@@ -222,7 +224,7 @@ internal class RecentFileEventsModel(private val project: Project, coroutineScop
       val eventModels = createRecentFilesViewModels(filesForKind)
 
       val fileEvent = LocalRecentFilesEvent.ItemsUpdated(eventModels, putOnTop)
-      chooseTargetFlow(fileKind).emit(fileEvent)
+      chooseTargetFlow(fileKind).emitEvent(fileEvent)
     }
   }
 
@@ -244,7 +246,7 @@ internal class RecentFileEventsModel(private val project: Project, coroutineScop
       }
     }
     chooseTargetFlow(hideFilesRequest.filesKind)
-      .emit(LocalRecentFilesEvent.ItemsRemoved(hideFilesRequest.filesToHide.mapNotNull { it.virtualFile() }))
+      .emitEvent(LocalRecentFilesEvent.ItemsRemoved(hideFilesRequest.filesToHide.mapNotNull { it.virtualFile() }))
   }
 
   fun scheduleRehighlightUnopenedFiles() {
@@ -278,6 +280,30 @@ internal class RecentFileEventsModel(private val project: Project, coroutineScop
     return LocalRecentFilesEvent.ItemsAdded(collectedFiles)
   }
 
+  /**
+   * Drops the replayed events of all flows, so that they keep no file of an unloaded plugin.
+   * A current subscriber still gets the events that it has not collected yet.
+   * A new subscriber gets only the later events.
+   */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  fun resetReplayedEvents() {
+    for (fileKind in RecentFileKind.entries) {
+      chooseTargetFlow(fileKind).resetReplayCache()
+    }
+  }
+
+  /**
+   * Emits [event], and drops the replayed events when [event] names a file of an unloading plugin.
+   * Such an event can come after [resetReplayedEvents], for example the removal of a file that the unload closed.
+   */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private suspend fun MutableSharedFlow<LocalRecentFilesEvent>.emitEvent(event: LocalRecentFilesEvent) {
+    emit(event)
+    if (event.namesFileOfUnloadingPlugin()) {
+      resetReplayCache()
+    }
+  }
+
   private fun chooseTargetFlow(fileKind: RecentFileKind): MutableSharedFlow<LocalRecentFilesEvent> {
     return when (fileKind) {
       RecentFileKind.RECENTLY_OPENED -> recentlyOpenedFiles
@@ -304,6 +330,20 @@ internal sealed interface LocalRecentFilesEvent {
   class ItemsAdded(val batch: List<LocalRecentFilePresentation>) : LocalRecentFilesEvent
   class ItemsRemoved(val batch: List<VirtualFile>) : LocalRecentFilesEvent
   class AllItemsRemoved : LocalRecentFilesEvent
+}
+
+private fun LocalRecentFilesEvent.namesFileOfUnloadingPlugin(): Boolean {
+  return when (this) {
+    is LocalRecentFilesEvent.ItemsUpdated -> batch.any { isFileOfUnloadingPlugin(it.virtualFile) }
+    is LocalRecentFilesEvent.ItemsAdded -> batch.any { isFileOfUnloadingPlugin(it.virtualFile) }
+    is LocalRecentFilesEvent.ItemsRemoved -> batch.any(::isFileOfUnloadingPlugin)
+    is LocalRecentFilesEvent.AllItemsRemoved -> false
+  }
+}
+
+private fun isFileOfUnloadingPlugin(file: VirtualFile): Boolean {
+  val classLoader = file.javaClass.classLoader as? PluginAwareClassLoader ?: return false
+  return classLoader.state != PluginAwareClassLoader.ACTIVE
 }
 
 internal class LocalRecentFilePresentation(
