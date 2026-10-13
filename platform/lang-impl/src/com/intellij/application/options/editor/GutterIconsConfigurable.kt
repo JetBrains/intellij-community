@@ -12,19 +12,26 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.SeparatorWithText
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
@@ -42,79 +49,76 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
 import javax.swing.SwingConstants
-import javax.swing.SwingUtilities
 
 /**
  * @author Dmitry Avdeev
  */
 @ApiStatus.Internal
-class GutterIconsConfigurable : SearchableConfigurable, Configurable.NoScroll {
-  private val myDescriptors = ArrayList<GutterIconDescriptor>()
-  private val myFirstDescriptors = HashMap<GutterIconDescriptor, PluginDescriptor>()
-  private val list: CheckBoxList<GutterIconDescriptor> = createList(myFirstDescriptors)
-  private val ui = GutterIconsConfigurableUI(list)
+class GutterIconsConfigurable : BoundSearchableConfigurable(
+  IdeBundle.message("configurable.GutterIconsConfigurable.display.name"),
+  "reference.settings.editor.gutter.icons",
+  ID,
+), Configurable.NoScroll {
+  private var list: CheckBoxList<GutterIconDescriptor>? = null
+  private var currentDescriptors: List<GutterIconDescriptor> = emptyList()
 
   @get:TestOnly
   val descriptors: List<GutterIconDescriptor>
-    get() = myDescriptors
+    get() = currentDescriptors
 
-  override fun getDisplayName(): @Nls String = IdeBundle.message("configurable.GutterIconsConfigurable.display.name")
-
-  override fun getHelpTopic(): String = "reference.settings.editor.gutter.icons"
-
-  override fun getId(): String = ID
-
-  override fun createComponent(): JComponent {
+  override fun createPanel(): DialogPanel {
     val pluginDescriptors = HashMap<GutterIconDescriptor, PluginDescriptor>()
-    myDescriptors.addAll(collectDescriptors(pluginDescriptors))
-    myFirstDescriptors.putAll(findFirstDescriptors(myDescriptors, pluginDescriptors))
-    list.setItems(myDescriptors) { it.name }
-    ui.showGutterIconsJBCheckBox.addChangeListener { list.isEnabled = ui.showGutterIconsJBCheckBox.isSelected }
-    SwingUtilities.updateComponentTreeUI(ui.panel) // TODO: create Swing components in this method (see javadoc)
-    return ui.panel
-  }
+    val descriptors = collectDescriptors(pluginDescriptors)
+    val list = createList(findFirstDescriptors(descriptors, pluginDescriptors))
+    list.setItems(descriptors) { it.name }
+    currentDescriptors = descriptors
+    this.list = list
 
-  override fun isModified(): Boolean {
-    val settings = LineMarkerSettings.getSettings()
-    return myDescriptors.any { list.isItemSelected(it) != settings.isEnabled(it) } ||
-           ui.showGutterIconsJBCheckBox.isSelected != EditorSettingsExternalizable.getInstance().areGutterIconsShown()
-  }
+    lateinit var showGutterIcons: Cell<JBCheckBox>
+    return panel {
+      row {
+        showGutterIcons = checkBox(ApplicationBundle.message("checkbox.show.gutter.icons"))
+      }
+      row {
+        scrollCell(list)
+          .align(Align.FILL)
+          .enabledIf(showGutterIcons.selected)
+      }.resizableRow()
 
-  override fun apply() {
-    val editorSettings = EditorSettingsExternalizable.getInstance()
-    val gutterIconsShown = ui.showGutterIconsJBCheckBox.isSelected
-    if (gutterIconsShown != editorSettings.areGutterIconsShown()) {
-      editorSettings.setGutterIconsShown(gutterIconsShown)
-      reinitAllEditors()
-    }
-    val settings = LineMarkerSettings.getSettings()
-    for (descriptor in myDescriptors) {
-      settings.setEnabled(descriptor, list.isItemSelected(descriptor))
-    }
-    for (project in ProjectManager.getInstance().openProjects) {
-      DaemonCodeAnalyzerEx.getInstanceEx(project).restart("GutterIconsConfigurable.apply")
-    }
-    ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.GUTTER_ICONS_CONFIGURABLE_TOPIC)
-      .changesApplied()
-  }
-
-  override fun reset() {
-    val settings = LineMarkerSettings.getSettings()
-    for (descriptor in myDescriptors) {
-      list.setItemSelected(descriptor, settings.isEnabled(descriptor))
-    }
-    val gutterIconsShown = EditorSettingsExternalizable.getInstance().areGutterIconsShown()
-    ui.showGutterIconsJBCheckBox.isSelected = gutterIconsShown
-    list.isEnabled = gutterIconsShown
-  }
-
-  override fun disposeUIResources() {
-    for (listener in ui.showGutterIconsJBCheckBox.changeListeners) {
-      ui.showGutterIconsJBCheckBox.removeChangeListener(listener)
+      onIsModified {
+        val settings = LineMarkerSettings.getSettings()
+        descriptors.any { list.isItemSelected(it) != settings.isEnabled(it) } ||
+        showGutterIcons.component.isSelected != EditorSettingsExternalizable.getInstance().areGutterIconsShown()
+      }
+      onReset {
+        val settings = LineMarkerSettings.getSettings()
+        for (descriptor in descriptors) {
+          list.setItemSelected(descriptor, settings.isEnabled(descriptor))
+        }
+        showGutterIcons.component.isSelected = EditorSettingsExternalizable.getInstance().areGutterIconsShown()
+      }
+      onApply {
+        val editorSettings = EditorSettingsExternalizable.getInstance()
+        val gutterIconsShown = showGutterIcons.component.isSelected
+        if (gutterIconsShown != editorSettings.areGutterIconsShown()) {
+          editorSettings.setGutterIconsShown(gutterIconsShown)
+          reinitAllEditors()
+        }
+        val settings = LineMarkerSettings.getSettings()
+        for (descriptor in descriptors) {
+          settings.setEnabled(descriptor, list.isItemSelected(descriptor))
+        }
+        for (project in ProjectManager.getInstance().openProjects) {
+          DaemonCodeAnalyzerEx.getInstanceEx(project).restart("GutterIconsConfigurable.apply")
+        }
+        ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.GUTTER_ICONS_CONFIGURABLE_TOPIC)
+          .changesApplied()
+      }
     }
   }
 
   override fun enableSearch(option: String?): Runnable = Runnable {
+    val list = list ?: return@Runnable
     if (option == null) return@Runnable
     SpeedSearchSupply.getSupply(list, true)?.findAndSelectElement(option)
   }

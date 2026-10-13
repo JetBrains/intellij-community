@@ -128,10 +128,15 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
 
   public void testConfigurable() {
     GutterIconsConfigurable configurable = new GutterIconsConfigurable();
-    configurable.createComponent();
-    List<GutterIconDescriptor> descriptors = configurable.getDescriptors();
-    Set<String> strings = ContainerUtil.map2Set(descriptors, GutterIconDescriptor::getId);
-    assertEquals(descriptors.size(), strings.size());
+    try {
+      configurable.createComponent();
+      List<GutterIconDescriptor> descriptors = configurable.getDescriptors();
+      Set<String> strings = ContainerUtil.map2Set(descriptors, GutterIconDescriptor::getId);
+      assertEquals(descriptors.size(), strings.size());
+    }
+    finally {
+      configurable.disposeUIResources();
+    }
   }
 
   public void testGeneratedNames() {
