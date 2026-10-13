@@ -107,6 +107,18 @@ single_version_override(
     ],
 )
 
+# The test toolchains of the rules_rs Linux triples and of the gnu and gnullvm Windows triples. Not a dev dependency: the
+# tests of the ultimate root need them too.
+register_toolchains(
+    "//build/native/platforms:linux_aarch64_glibc_test_toolchain",
+    "//build/native/platforms:linux_aarch64_musl_test_toolchain",
+    "//build/native/platforms:linux_x86_64_glibc_test_toolchain",
+    "//build/native/platforms:linux_x86_64_musl_test_toolchain",
+    "//build/native/platforms:windows_aarch64_gnullvm_test_toolchain",
+    "//build/native/platforms:windows_x86_64_gnu_test_toolchain",
+    "//build/native/platforms:windows_x86_64_gnullvm_test_toolchain",
+)
+
 register_toolchains(
     "@llvm//toolchain:all",
     dev_dependency = True,
