@@ -1028,6 +1028,19 @@ The daemon's half and the IDE's half of supervision are in
   exits 1 when a worker was broken. A caller must not read a partial recycle as a fresh pool.
   [@test] ../crates/avl-vm/src/worker/worker/tests.rs
 
+- `pool start all` and `pool stop all` change the workers which they can, and report each worker which they did
+  not. The answer names the state of each changed worker, and gives one refusal code for each other worker. A
+  start or a stop which did not reach every target is refused as `start_incomplete` or `stop_incomplete`, and that
+  answer is the refusal detail. The refusal exits 75 when each refusal of a worker exits 75, as a lease or another
+  lifecycle operation does. In all other cases it exits 1. `pool start <worker>` and `pool stop <worker>` answer
+  the refusal of that worker.
+  [@test] ../crates/avl-vm/src/worker/worker/tests.rs
+  [@test] ../crates/avl-vm/src/worker/worker/docker/tests.rs
+
+- An interrupt ends `pool start all`, `pool stop all` and `pool recycle all` at once. The answer is the refusal of
+  the interrupted worker. The workers after it stay as they are.
+  [@test] ../crates/avl-vm/src/worker/worker/tests.rs
+
 ## User Experience
 
 The output forms, the dashboard and the verdict card are in [Supervision and evidence](#supervision-and-evidence).
