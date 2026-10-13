@@ -16,12 +16,12 @@
 //! - `--content-module=<name>[;loading=<rule>][;required-if-available=<module>]`, repeatable, in order. The rows of
 //!   the one `<content namespace="jetbrains">` block of the module sets.
 //! - `--additional-module=<name>[;private][;loading=<rule>][;required-if-available=<module>]`, repeatable, in order.
-//!   The rows of the additional modules. They are grouped by namespace in first-seen order, and `private` is the
-//!   `<content>` block without a namespace.
+//!   The rows of the additional modules. They are grouped by namespace, the namespaced blocks first in namespace order,
+//!   and `private` is the `<content>` block without a namespace, which comes last.
 //!
 //! [`descriptorxml`]: crate::descriptorxml
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use anyhow::{Result, anyhow, bail};
 
@@ -183,16 +183,14 @@ impl Composition {
                 .push(Node::Element(content_block(Some(JETBRAINS_NAMESPACE), &self.content_modules)));
         }
 
-        // `groupBy` of `appendContentBlock` keeps the first-seen order of the namespaces, and the row order within one.
-        let mut groups: Vec<(bool, Vec<&ModuleRow>)> = Vec::new();
+        // `appendContentBlock` of `ModuleSetXmlRenderer` groups the rows by namespace and keeps the row order within a
+        // group. It writes the namespaced groups first, sorted by namespace, and the group without a namespace last.
+        let mut groups: BTreeMap<(bool, Option<&str>), Vec<&ModuleRow>> = BTreeMap::new();
         for row in &self.additional_modules {
-            match groups.iter_mut().find(|(private, _)| *private == row.private) {
-                Some((_, rows)) => rows.push(row),
-                None => groups.push((row.private, vec![row])),
-            }
+            let namespace = if row.private { None } else { Some(JETBRAINS_NAMESPACE) };
+            groups.entry((namespace.is_none(), namespace)).or_default().push(row);
         }
-        for (private, rows) in groups {
-            let namespace = if private { None } else { Some(JETBRAINS_NAMESPACE) };
+        for ((_, namespace), rows) in groups {
             root.children.push(Node::Element(content_block(namespace, rows)));
         }
         root
