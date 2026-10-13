@@ -27,13 +27,13 @@ fun Driver.tryToKillAllStartedProcesses() {
   }
 }
 
-@Remote("com.intellij.execution.ui.RunContentManager")
+@Remote("com.intellij.execution.ui.RunContentManager", plugin = "com.intellij/intellij.platform.execution")
 interface RunContentManager {
   fun getAllDescriptors(): List<RunContentDescriptorRef>
   fun getSelectedContent(): RunContentDescriptorRef?
 }
 
-@Remote("com.intellij.execution.ui.RunContentDescriptor")
+@Remote("com.intellij.execution.ui.RunContentDescriptor", plugin = "com.intellij/intellij.platform.execution")
 interface RunContentDescriptorRef {
   fun getDisplayName(): String
   fun getProcessHandler(): ProcessHandlerRef?
