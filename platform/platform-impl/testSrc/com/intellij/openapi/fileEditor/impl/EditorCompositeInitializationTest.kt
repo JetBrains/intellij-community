@@ -38,6 +38,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import javax.swing.Icon
 
 @TestApplication
 internal class EditorCompositeInitializationTest {
@@ -144,7 +145,7 @@ internal class EditorCompositeInitializationTest {
     ApplicationManager.getApplication().replaceService(
       CompositeTabIconHolderCreator::class.java,
       object : CompositeTabIconHolderCreator {
-        override fun createTabIconHolder(composite: EditorComposite, owner: TabInfo): TabInfoIconHolder {
+        override fun createTabIconHolder(composite: EditorComposite, owner: TabInfo, startupIcon: Icon?): TabInfoIconHolder {
           failedComposite = composite
           error("tab mount failed")
         }

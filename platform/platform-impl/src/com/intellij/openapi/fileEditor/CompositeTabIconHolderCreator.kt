@@ -6,10 +6,11 @@ import com.intellij.openapi.fileEditor.impl.EditorComposite
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabInfoIconHolder
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.Icon
 
 @ApiStatus.Internal
 interface CompositeTabIconHolderCreator {
-  fun createTabIconHolder(composite: EditorComposite, owner: TabInfo): TabInfoIconHolder
+  fun createTabIconHolder(composite: EditorComposite, owner: TabInfo, startupIcon: Icon? = null): TabInfoIconHolder
   companion object {
     fun getInstance(): CompositeTabIconHolderCreator = service()
   }
