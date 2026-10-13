@@ -862,6 +862,13 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-vm/src/worker/lease/set/tests.rs
   [@test] ../crates/avl-vm/src/worker/lease/tests.rs
 
+- An acquisition skips a busy worker and leases a free one. Another operation holds the lifecycle lock of a busy
+  worker, and a lane run holds that lock for the whole run. A busy worker that may hold a lease of the holder
+  refuses the acquisition as `worker_busy`, so the holder gets no second worker. A lease that the controller cannot
+  read counts as such a lease. A busy worker can stop the placement of the lease, or of the full set of `--exact`.
+  Then the refusal is `worker_busy`. Without a busy worker it is `pool_exhausted`. Both exit 75.
+  [@test] ../crates/avl-vm/src/worker/lease/set/tests.rs
+
 - A lease acquisition and a start remove the deadline record, so the worker keeps running for its new holder.
   [@test] ../crates/avl-vm/src/worker/lease/tests.rs
   [@test] ../crates/avl-vm/src/worker/worker/docker/tests.rs
