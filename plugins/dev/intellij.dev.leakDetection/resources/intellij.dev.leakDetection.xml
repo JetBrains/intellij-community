@@ -39,7 +39,10 @@
     <action id="DetectProjectLeaks"
             class="com.intellij.dev.leakDetection.DetectProjectLeaksAction">
       <add-to-group group-id="HelpDiagnosticTools" anchor="last"/>
-      <add-to-group group-id="Internal" anchor="last"/>
     </action>
+    <group id="DetectProjectLeaks.Internal" internal="true">
+      <reference ref="DetectProjectLeaks"/>
+      <add-to-group group-id="Internal" anchor="last"/>
+    </group>
   </actions>
 </idea-plugin>
