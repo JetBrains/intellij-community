@@ -15,7 +15,7 @@ class BuildOutputLineProcessor(
   suspend fun notifyTextAvailable(text: BuildOutputText) {
     val lines = text.text.split('\n')
     for (line in lines.dropLast(1)) {
-      notifyLineOrPrefixAvailable(text.ids, line.removeSuffix("\r"), isLine = true)
+      notifyLineOrPrefixAvailable(text.ids, line, isLine = true)
     }
     val linePrefix = lines.last()
     if (linePrefix.isNotEmpty()) {
@@ -26,7 +26,18 @@ class BuildOutputLineProcessor(
   private suspend fun notifyLineOrPrefixAvailable(outputIds: List<OutputId>, outputText: String, isLine: Boolean) {
     val buffer = buffer.get() ?: throw ClosedException()
     buffer.outputIds.addAll(outputIds)
-    buffer.outputText.append(outputText)
+    val end = outputText.indexOfLast { it != '\r' } + 1
+    if (end > 0) {
+      val carriageReturnIndex = outputText.lastIndexOf('\r', end - 1)
+      if (carriageReturnIndex >= 0 || buffer.hasPendingCarriageReturn) {
+        buffer.outputText.setLength(0)
+      }
+      buffer.outputText.append(outputText, carriageReturnIndex + 1, end)
+      buffer.hasPendingCarriageReturn = false
+    }
+    if (end < outputText.length) {
+      buffer.hasPendingCarriageReturn = true
+    }
     if (isLine) {
       buffer.flush()
     }
@@ -41,15 +52,17 @@ class BuildOutputLineProcessor(
 
     val outputIds = ArrayList<Any>()
     val outputText = StringBuilder()
+    var hasPendingCarriageReturn = false
 
     suspend fun flush(skipEmptyLine: Boolean = false) {
       if (!skipEmptyLine || outputText.isNotEmpty()) {
         multicaster.notifyLineAvailable(BuildOutputText.createOutputText(
           outputIds.toList(),
-          outputText.toString() + '\n'
+          outputText.append('\n').toString()
         ))
         outputIds.clear()
         outputText.setLength(0)
+        hasPendingCarriageReturn = false
       }
     }
   }
