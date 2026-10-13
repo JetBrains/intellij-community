@@ -25,7 +25,6 @@ jvm_library(
         ["src/main/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -83,7 +82,6 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//plugins/markdown/core/backend:backend_test_lib",
-        "//platform/backend:backend_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/lang-api:lang_test_lib",
     ],
