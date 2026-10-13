@@ -37,7 +37,7 @@ import org.jetbrains.annotations.ApiStatus
  * cases (5) and (6) are T_O_D_O to be fixed
  *
  * A change is computed against the snapshot captured at the start of the operation, but published against the
- * snapshot found at CAS time. The two are reconciled by [DocumentSnapshot.withMetadata]: if the snapshot found
+ * snapshot found at CAS time. The two are reconciled: if the snapshot found
  * at CAS time still has the same text the operation started from, it is taken as a whole and the change is
  * applied on top of it -- that is how a metadata-only update that raced the change, a modification stamp set
  * from another thread say, survives. Otherwise that snapshot's text has already moved on to some other change,

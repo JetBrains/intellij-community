@@ -12,36 +12,35 @@ import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentMutator
 import com.intellij.openapi.editor.ex.DocumentOp
+import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
-import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerStores
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.util.text.ImmutableCharSequence
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.UnaryOperator
 import kotlin.concurrent.Volatile
 
 internal abstract class DocumentMutatorImpl(
   private val settings: DocumentSettings,
   private val dispatcher: DocumentEventDispatcherImpl,
+  val snapshotMarkerStores: SnapshotMarkerStores,
 ) : DocumentMutator {
   @Volatile private var textChangeInProgress: Boolean = false
-  abstract val snapshotMarkerStores: SnapshotMarkerStores
 
   protected abstract fun getSnapshot(): DocumentSnapshot
   protected abstract fun updateAndGet(update: UnaryOperator<DocumentSnapshot>): DocumentSnapshot
 
   override fun setModStamp(newModStamp: Long, incrementModSequence: Boolean) {
     val op = DocumentOp.modStampOp(newModStamp, incrementModSequence)
-    updateAndGet { snapshotMarkerStores.applyOp(it, op) }
+    updateAndGet { applyOp(it, op) }
   }
 
   override fun clearLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray) {
     val op = DocumentOp.unmodifiedLinesOp(startLine, endLine, exceptLines)
-    updateAndGet { snapshotMarkerStores.applyOp(it, op) }
+    updateAndGet { applyOp(it, op) }
   }
 
   override fun insertString(
@@ -306,7 +305,14 @@ internal abstract class DocumentMutatorImpl(
     textChangeInProgress = true
     try {
       snapshotAfterChange = dispatcher.withFiringTextUpdate(changeEvent) {
-        updateAndGet { latest -> mergeAndPatch(snapshotBefore, latest, patch) }
+        updateAndGet { latest ->
+          val merged = if (latest.text() === snapshotBefore.text()) {
+            latest
+          } else {
+            snapshotBefore
+          }
+          applyPatch(merged, patch)
+        }
       }
     } finally {
       textChangeInProgress = false
@@ -314,20 +320,27 @@ internal abstract class DocumentMutatorImpl(
     return snapshotAfterChange
   }
 
-  /**
-   * Returns [patch] applied on top of [latest] if [latest] still has [snapshotBefore]'s text -- e.g. the
-   * stamp changed during before-change listeners -- or on top of [snapshotBefore] otherwise, i.e. once some
-   * other text mutation has already won the race and [latest] no longer applies.
-   *
-   * @see DocumentSnapshot.withMetadata
-   */
-  private fun mergeAndPatch(
-    snapshotBefore: DocumentSnapshot,
-    latest: DocumentSnapshot,
-    patch: DocumentPatch,
-  ): DocumentSnapshot {
-    val merged = snapshotBefore.withMetadata(latest)
-    return snapshotMarkerStores.applyPatch(merged, patch)
+  private fun applyOp(before: DocumentSnapshot, op: DocumentOp): DocumentSnapshot {
+    val after = before.applyOp(op)
+    if (before === after) {
+      return before
+    }
+    return onSnapshotChange(before, after, null)
+  }
+
+  private fun applyPatch(before: DocumentSnapshot, patch: DocumentPatch): DocumentSnapshot {
+    var after = before
+    for (op in patch.ops()) {
+      after = after.applyOp(op)
+    }
+    if (before === after) {
+      return before
+    }
+    return onSnapshotChange(before, after, patch)
+  }
+
+  private fun onSnapshotChange(before: DocumentSnapshot, after: DocumentSnapshot, patch: DocumentPatch?): DocumentSnapshot {
+    return snapshotMarkerStores.applyPatch(before, after, patch)
   }
 
   private fun trimToSize(hostDocument: Document, snapshot: DocumentSnapshot): DocumentSnapshot {
@@ -446,15 +459,5 @@ internal abstract class DocumentMutatorImpl(
 
   companion object {
     private val LOG: Logger = logger<DocumentMutatorImpl>()
-
-    @ApiStatus.Internal
-    fun applyPatch(beforeSnapshot: DocumentSnapshot, patch: DocumentPatch): DocumentSnapshot {
-      var snapshot = beforeSnapshot
-      for (op in patch.ops()) {
-        snapshot = snapshot.applyOp(op)
-      }
-      return snapshot
-    }
-
   }
 }

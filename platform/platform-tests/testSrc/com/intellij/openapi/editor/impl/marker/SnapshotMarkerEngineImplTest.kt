@@ -1303,7 +1303,7 @@ class SnapshotMarkerEngineImplTest {
     private var nextModSequence = initialSnapshot.modState().sequence() + 1
     private var nextModStamp = initialSnapshot.modState().stamp() + 1
 
-    fun applyOp(parent: DocumentSnapshot, op: DocumentOp): DocumentSnapshot = markerStores.applyOp(parent, op)
+    fun applyOp(parent: DocumentSnapshot, op: DocumentOp): DocumentSnapshot = markerStores.applyPatch(parent, parent.applyOp(op), null)
 
     fun mergeMarkerRoots(markerSnapshot: DocumentSnapshot, metadataSnapshot: DocumentSnapshot): DocumentSnapshot =
       markerStores.mergeMarkerRoots(markerSnapshot, metadataSnapshot)
@@ -1331,7 +1331,8 @@ class SnapshotMarkerEngineImplTest {
 
       while (child.modState().sequence() < targetModSequence) {
         newModStamp = nextModStamp++
-        child = markerStores.applyOp(child, DocumentOp.modStampOp(newModStamp, true))
+        val op = DocumentOp.modStampOp(newModStamp, true)
+        child = markerStores.applyPatch(child, child.applyOp(op), null)
       }
 
       check(child.modState().sequence() == targetModSequence) {
