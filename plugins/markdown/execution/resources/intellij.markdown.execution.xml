@@ -26,13 +26,6 @@
                     dynamic="true"/>
   </extensionPoints>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService
-      serviceInterface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.PreviewCommandRunnability"
-      serviceImplementation="org.intellij.plugins.markdown.extensions.jcef.commandRunner.LocalPreviewCommandRunnability"
-      open="true"/>
-  </extensions>
-
   <extensions defaultExtensionNs="org.intellij.markdown">
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension$Provider"/>
   </extensions>
