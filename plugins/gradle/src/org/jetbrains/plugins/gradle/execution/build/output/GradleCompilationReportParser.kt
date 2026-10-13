@@ -30,7 +30,9 @@ class GradleCompilationReportParser : BuildOutputLineParserBridge() {
     val parser by lazy { JavacOutputParser() }
     var parsed = false
     drainCompilationErrors(reader) { subLine, boundedReader ->
-      parsed = parser.parse(subLine, boundedReader, taskId, multicaster, isSingleFlow)
+      if (parser.parse(subLine, boundedReader, taskId, multicaster, isSingleFlow)) {
+        parsed = true
+      }
     }
     return parsed
   }
