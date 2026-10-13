@@ -38,6 +38,7 @@ import tools.jackson.core.ObjectReadContext
 import tools.jackson.core.json.JsonFactory
 import java.io.FilterWriter
 import java.io.IOException
+import java.io.InputStream
 import java.io.OutputStreamWriter
 import java.io.Writer
 import java.net.HttpURLConnection
@@ -345,16 +346,8 @@ object ITNProxy {
       }
 
       for (attachment in event.attachments) {
-        append(builder, "attachment.name", attachment.name)
         attachment.openContentStream().use { input ->
-          builder.append("&attachment.value=")
-          val buffer = ByteArray(8190) // a multiple of 3
-          while (true) {
-            val n = input.readNBytes(buffer, 0, buffer.size)
-            if (n <= 0) break
-            val chunk = if (n == buffer.size) buffer else buffer.copyOf(n)
-            builder.append(URLEncoder.encode(Base64.getEncoder().encodeToString(chunk), StandardCharsets.UTF_8))
-          }
+          appendAttachment(builder, attachment.name, input)
         }
       }
 
@@ -400,6 +393,19 @@ object ITNProxy {
     }
 
     return compressed
+  }
+
+  @Throws(Exception::class)
+  private fun appendAttachment(builder: TrackingStreamWriter, name: String, input: InputStream) {
+    append(builder, "attachment.name", name)
+    builder.append("&attachment.value=")
+    val buffer = ByteArray(8190) // a multiple of 3
+    while (true) {
+      val n = input.readNBytes(buffer, 0, buffer.size)
+      if (n <= 0) break
+      val chunk = if (n == buffer.size) buffer else buffer.copyOf(n)
+      builder.append(URLEncoder.encode(Base64.getEncoder().encodeToString(chunk), StandardCharsets.UTF_8))
+    }
   }
 
   @Throws(Exception::class)
