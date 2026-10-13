@@ -75,6 +75,8 @@ f:git4idea.push.GitPushNotificationCustomizerKt
 *f:git4idea.remote.hosting.GitCodeReviewUtils
 - sf:INSTANCE:git4idea.remote.hosting.GitCodeReviewUtils
 - f:fetch(git4idea.repo.GitRepository,git4idea.repo.GitRemote,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- f:loadPatches(git4idea.repo.GitRepository,java.lang.String,java.lang.String,java.util.Collection,kotlin.coroutines.Continuation):java.lang.Object
+- bs:loadPatches$default(git4idea.remote.hosting.GitCodeReviewUtils,git4idea.repo.GitRepository,java.lang.String,java.lang.String,java.util.Collection,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - f:testIsAncestor(git4idea.repo.GitRepository,java.lang.String,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - f:testRevisionsExist(git4idea.repo.GitRepository,java.util.List,kotlin.coroutines.Continuation):java.lang.Object
 *:git4idea.remote.hosting.HostedGitRepositoryMapping

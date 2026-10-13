@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.platform.util.coroutines.childScope
-import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.createVcsChange
 import git4idea.changes.getDiffComputer
@@ -27,6 +26,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.stateIn
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestParsedChanges
 
 /**
  * A viewmodel for an individual file diff in a merge request
@@ -36,14 +36,18 @@ interface GitLabMergeRequestDiffChangeViewModel : AsyncDiffViewModel {
   val diffData: GitTextFilePatchWithHistory?
 
   companion object {
-    internal val EMPTY_PATCH_KEY: Key<Boolean> = Key.create("GitLab.MergeRequest.Diff.Empty.Patch")
+    /**
+     * The reason the comments are off for the file of the request.
+     * The key is absent when the file is commentable, and when an empty diff is correct.
+     */
+    internal val EMPTY_PATCH_KEY: Key<GitLabMergeRequestParsedChanges.EmptyPatchReason> = Key.create("GitLab.MergeRequest.Diff.Empty.Patch")
   }
 }
 
 internal class GitLabMergeRequestDiffChangeViewModelImpl(
   parentCs: CoroutineScope,
   private val project: Project,
-  private val allChanges: GitBranchComparisonResult,
+  private val allChanges: GitLabMergeRequestParsedChanges,
   override val change: RefComparisonChange,
 ) : GitLabMergeRequestDiffChangeViewModel {
   private val cs = parentCs.childScope(javaClass.name)
@@ -64,7 +68,10 @@ internal class GitLabMergeRequestDiffChangeViewModelImpl(
           putUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER, diffData.getDiffComputer())
         }
         else {
-          putUserData(GitLabMergeRequestDiffChangeViewModel.EMPTY_PATCH_KEY, true)
+          // a file whose empty diff is correct carries no reason, so it shows no warning
+          allChanges.getEmptyPatchReason(change)?.let {
+            putUserData(GitLabMergeRequestDiffChangeViewModel.EMPTY_PATCH_KEY, it)
+          }
         }
       }
     }

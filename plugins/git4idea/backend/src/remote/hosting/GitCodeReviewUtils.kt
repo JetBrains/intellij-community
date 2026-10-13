@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remote.hosting
 
+import com.intellij.openapi.diff.impl.patch.PatchReader
+import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.progress.coroutineToIndicator
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -42,4 +44,35 @@ object GitCodeReviewUtils {
       h.addParameters("--is-ancestor", potentialAncestorRev, rev)
       Git.getInstance().runCommand(h).success()
     }
+
+  /**
+   * Reads the patches between two revisions from the local repository.
+   *
+   * The command detects a rename and uses three context lines, which matches the GitLab and the GitHub defaults.
+   *
+   * @param paths limits the output to these repository-relative paths. An empty collection reads every path.
+   * @return the parsed patches, or an empty list when the command fails.
+   */
+  suspend fun loadPatches(
+    repository: GitRepository,
+    baseRev: String,
+    headRev: String,
+    paths: Collection<String> = emptyList(),
+  ): List<TextFilePatch> {
+    val h = GitLineHandler(repository.project, repository.root, GitCommand.DIFF).apply {
+      setSilent(true)
+      addParameters("--no-ext-diff", "--no-color", "-M", "-U3", baseRev, headRev)
+      endOptions()
+      addParameters(paths.toList())
+    }
+
+    val output = withContext(Dispatchers.IO) {
+      coroutineToIndicator {
+        Git.getInstance().runCommand(h)
+      }.getOutputOrThrow()
+    }
+    if (output.isEmpty()) return emptyList()
+
+    return PatchReader(output + "\n").readTextPatches()
+  }
 }
