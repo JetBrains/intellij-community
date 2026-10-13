@@ -385,8 +385,10 @@ public interface PopupRenderer {
      *   dismissal: [InputMode.Keyboard] when a key did, [InputMode.Touch] when a pointer or a lost window focus did. A
      *   menu needs this to tell the two apart, because it refuses a pointer dismissal while the pointer hovers the item
      *   that opened it.
-     * @param onPreviewKeyEvent Preview key handler; return `true` to consume an event.
-     * @param onKeyEvent Key handler; return `true` to consume an event.
+     * @param onPreviewKeyEvent Preview key handler; return `true` to consume an event. A handler that returns `false`
+     *   must have no side effect. A renderer can pass the same key to the popup content next, which repeats the effect.
+     * @param onKeyEvent Key handler; return `true` to consume an event. A handler that returns `false` must have no
+     *   side effect, for the same reason.
      * @param cornerSize Popup corner size.
      * @param windowShape Native shape factory in AWT logical units, or `null` for the default shape.
      * @param content Popup content.
