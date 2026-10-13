@@ -5,6 +5,9 @@ import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionWrapper
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -95,7 +98,7 @@ class WelcomeScreenLeftPanelActions(val project: Project) {
     // TODO: Do something with the action group. Now it only is present in Rider
     val actions = actionManager.getAction("NonModalWelcomeScreen.LeftTabActions") as? DefaultActionGroup
     if (actions == null) {
-      actionManager.getAction("WelcomeScreen.OpenDirectoryProject")?.let { group.add(it) }
+      createOpenAction(actionManager)?.let { group.add(it) }
       actionManager.getAction("NonModalWelcomeScreen.LeftTabActions.New.Action")?.let { group.add(it) }
       actionManager.getAction("Vcs.VcsClone")?.let { group.add(it) }
       actionManager.getAction("NonModalWelcomeScreen.RemoteDevelopmentActions")?.let { group.add(it) }
@@ -103,6 +106,16 @@ class WelcomeScreenLeftPanelActions(val project: Project) {
     else {
       actions.childActionsOrStubs.forEach(group::add)
     }
+  }
+
+  /**
+   * Wraps `OpenFile`, so the usage statistics report it as the action. The wrapper takes the text and the icon of
+   * `WelcomeScreen.OpenDirectoryProject`.
+   */
+  private fun createOpenAction(actionManager: ActionManager): AnAction? {
+    val openFile = actionManager.getAction("OpenFile") ?: return null
+    val welcomeOpen = actionManager.getAction("WelcomeScreen.OpenDirectoryProject") ?: return null
+    return WelcomeScreenOpenAction(openFile, welcomeOpen)
   }
 
   /**
@@ -130,6 +143,16 @@ class WelcomeScreenLeftPanelActions(val project: Project) {
 }
 
 private const val TOOLBAR_FIRST_FILL_SPAN = "welcome left toolbar first fill"
+
+private class WelcomeScreenOpenAction(openFile: AnAction, private val welcomeOpen: AnAction) : AnActionWrapper(openFile) {
+  init {
+    templatePresentation.copyFrom(welcomeOpen.templatePresentation)
+  }
+
+  override fun update(e: AnActionEvent) {
+    welcomeOpen.update(e)
+  }
+}
 
 /**
  * Holds the toolbar of the left panel and gives its data.
