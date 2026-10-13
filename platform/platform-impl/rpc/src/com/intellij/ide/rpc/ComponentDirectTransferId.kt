@@ -9,6 +9,7 @@ import fleet.openmap.SerializedValue
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Window
 import javax.swing.JComponent
 
 /**
@@ -22,12 +23,16 @@ import javax.swing.JComponent
  * When used in monolith mode, the component returned by [ComponentDirectTransferId.getComponent] is just the original source component,
  * so no bridging of painting and input events is performed.
  *
+ * The `owner` is the backend window that owns the transferred component. Pass the frame of the target project when the component is not
+ * in a component hierarchy yet. Without it, the first visible frame is used, and the frame can belong to a different project. When that
+ * project closes, the frame disposes the transferred component, and the frontend shows an empty panel for the still opened project.
+ *
  * IMPORTANT. The provided `disposable` should be disposed on EDT.
  */
 @ApiStatus.Internal
 @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-fun JComponent.setupTransfer(disposable: Disposable): ComponentDirectTransferId {
-  val localValue = ComponentWithDisposable(this, disposable)
+fun JComponent.setupTransfer(disposable: Disposable, owner: Window? = null): ComponentDirectTransferId {
+  val localValue = ComponentWithDisposable(this, disposable, owner)
   return ComponentDirectTransferId(serializeToRpc(localValue), localValue)
 }
 
@@ -61,4 +66,4 @@ fun ComponentDirectTransferId.getComponent(): JComponent? {
 data class ComponentDirectTransferId(val serializedValue: SerializedValue?, @Transient val localValue: ComponentWithDisposable? = null)
 
 @ApiStatus.Internal
-class ComponentWithDisposable(val component: JComponent, val disposable: Disposable)
+class ComponentWithDisposable(val component: JComponent, val disposable: Disposable, val owner: Window? = null)

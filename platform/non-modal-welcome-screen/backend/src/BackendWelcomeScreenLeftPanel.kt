@@ -18,6 +18,7 @@ import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
@@ -87,7 +88,10 @@ internal class BackendWelcomeScreenLeftPanelService(private val project: Project
         Disposer.dispose(disposable)
       }
     }
-    return BackendWelcomeScreenLeftPanel(project, scope).createComponent().setupTransfer(disposable)
+    // The panel is not in a component hierarchy yet, so Lux would pick the first visible frame as the owner.
+    // That frame can belong to another project, and its close disposes this panel (IJPL-256315).
+    val owner = WindowManager.getInstance().getFrame(project)
+    return BackendWelcomeScreenLeftPanel(project, scope).createComponent().setupTransfer(disposable, owner)
   }
 }
 
