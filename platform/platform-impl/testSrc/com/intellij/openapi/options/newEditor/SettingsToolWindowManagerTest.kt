@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.options.newEditor
 
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
@@ -57,6 +58,16 @@ internal class SettingsToolWindowManagerTest {
     assertThat(manager.canCloseTab()).isFalse()
     assertThat(page.applies).isZero()
     assertThat(page.resets).isZero()
+  }
+
+  @Test
+  fun `the close drops the changes of the Plugins page with no question`(): Unit = withPage(PluginManagerConfigurable.ID) { manager, page ->
+    TestDialogManager.setTestDialog(TestDialog { error("no question is expected for the Plugins page") }, asDisposable())
+    page.modified = true
+
+    assertThat(manager.canCloseTab()).isTrue()
+    // otherwise the next Apply of any page applies the old change of the Plugins page
+    assertThat(page.resets).isEqualTo(1)
   }
 
   @Test

@@ -355,8 +355,10 @@ internal class SettingsToolWindowManager(private val project: Project, private v
     if (!editor.isModified) {
       return true
     }
-    // the Plugins page keeps its changes in its own session, as in the non-modal Settings dialog
+    // as in the non-modal Settings dialog, the close drops the changes of the Plugins page with no question.
+    // A reset keeps the plugin session for the next visit, and a cancel removes it
     if (editor.modifiedConfigurables.all { ConfigurableVisitor.getId(it) == PluginManagerConfigurable.ID }) {
+      editor.reset()
       return true
     }
     val answer = MessageDialogBuilder.yesNoCancel(ApplicationBundle.message("settings.switch.project.unsaved.title"), message)
