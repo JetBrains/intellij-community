@@ -181,6 +181,12 @@ class BraceHighlightingHandler internal constructor(
         removeLineMarkers(editor)
       }
     }
+
+    fun coerceToDocumentRange(r:TextRange, document:Document):TextRange {
+      val coercedStart = TextRangeScalarUtil.coerce(r.startOffset, 0, document.textLength)
+      val coercedEnd = TextRangeScalarUtil.coerce(r.endOffset, 0, document.textLength)
+      return TextRange(coercedStart, max(coercedStart, coercedEnd))
+    }
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
@@ -357,17 +363,10 @@ class BraceHighlightingHandler internal constructor(
     }
   }
 
-  private fun coerce(r:TextRange, limits:TextRange):TextRange {
-    val coercedStart = TextRangeScalarUtil.coerce(r.startOffset, limits.startOffset, limits.endOffset)
-    val coercedEnd = TextRangeScalarUtil.coerce(r.endOffset, limits.startOffset, limits.endOffset)
-    return TextRange(coercedStart, max(coercedStart, coercedEnd))
-  }
-
-
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun highlightBrace(braceRange: TextRange, matched: Boolean) {
     ThreadingAssertions.assertEventDispatchThread()
-    val coerced = coerce(braceRange, TextRange(0, editor.document.textLength))
+    val coerced = coerceToDocumentRange(braceRange, document)
     val attributesKey = if (matched) CodeInsightColors.MATCHED_BRACE_ATTRIBUTES else CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES
     removeExistingBraceHighlightsAround(coerced)
     val braceHighlighter = editor.markupModel
