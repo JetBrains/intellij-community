@@ -459,13 +459,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // weak_keyword | IDENTIFIER | 'as' | 'def' | 'in'
+  // weak_keyword | IDENTIFIER | 'def' | 'in'
   static boolean annotation_key(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "annotation_key")) return false;
     boolean r;
     r = weak_keyword(b, l + 1);
     if (!r) r = consumeToken(b, IDENTIFIER);
-    if (!r) r = consumeToken(b, KW_AS);
     if (!r) r = consumeToken(b, KW_DEF);
     if (!r) r = consumeToken(b, KW_IN);
     return r;
@@ -2110,7 +2109,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'catch' '(' parse_catch_parameter ')' (mb_nl lazy_block)
+  // 'catch' '(' mb_nl parse_catch_parameter mb_nl ')' (mb_nl lazy_block)
   public static boolean catch_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "catch_clause")) return false;
     if (!nextTokenIs(b, KW_CATCH)) return false;
@@ -2118,16 +2117,18 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, CATCH_CLAUSE, null);
     r = consumeTokens(b, 1, KW_CATCH, T_LPAREN);
     p = r; // pin = 1
-    r = r && report_error_(b, parse_catch_parameter(b, l + 1));
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && report_error_(b, parse_catch_parameter(b, l + 1)) && r;
+    r = p && report_error_(b, mb_nl(b, l + 1)) && r;
     r = p && report_error_(b, consumeToken(b, T_RPAREN)) && r;
-    r = p && catch_clause_4(b, l + 1) && r;
+    r = p && catch_clause_6(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
   // mb_nl lazy_block
-  private static boolean catch_clause_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "catch_clause_4")) return false;
+  private static boolean catch_clause_6(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "catch_clause_6")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = mb_nl(b, l + 1);
@@ -2168,8 +2169,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // type_element_followed_by_identifier
-  //                                        | type_element disjunction_type_element
+  // type_element_followed_by_identifier | type_element disjunction_type_element
   static boolean catch_parameter_type_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "catch_parameter_type_element")) return false;
     boolean r;
@@ -3190,39 +3190,52 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // disjunction_type_element_part+
+  // disjunction_type_element_part+ mb_nl
   public static boolean disjunction_type_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "disjunction_type_element")) return false;
-    if (!nextTokenIsFast(b, T_BOR)) return false;
+    if (!nextTokenIsFast(b, NL, T_BOR)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _LEFT_, DISJUNCTION_TYPE_ELEMENT, "<type>");
-    r = disjunction_type_element_part(b, l + 1);
-    while (r) {
-      int c = current_position_(b);
-      if (!disjunction_type_element_part(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "disjunction_type_element", c)) break;
-    }
+    r = disjunction_type_element_0(b, l + 1);
+    r = r && mb_nl(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
+  // disjunction_type_element_part+
+  private static boolean disjunction_type_element_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "disjunction_type_element_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = disjunction_type_element_part(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!disjunction_type_element_part(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "disjunction_type_element_0", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
   /* ********************************************************** */
-  // '|' (type_element | expect_type)
+  // mb_nl '|' mb_nl (type_element | expect_type)
   static boolean disjunction_type_element_part(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "disjunction_type_element_part")) return false;
-    if (!nextTokenIsFast(b, T_BOR)) return false;
+    if (!nextTokenIsFast(b, NL, T_BOR)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
-    r = consumeTokenFast(b, T_BOR);
-    p = r; // pin = 1
-    r = r && disjunction_type_element_part_1(b, l + 1);
+    r = mb_nl(b, l + 1);
+    r = r && consumeToken(b, T_BOR);
+    p = r; // pin = 2
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && disjunction_type_element_part_3(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
   // type_element | expect_type
-  private static boolean disjunction_type_element_part_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "disjunction_type_element_part_1")) return false;
+  private static boolean disjunction_type_element_part_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "disjunction_type_element_part_3")) return false;
     boolean r;
     r = type_element(b, l + 1);
     if (!r) r = expect_type(b, l + 1);
@@ -8134,12 +8147,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // type_element variable_lookahead
+  // type_element mb_nl variable_lookahead
   static boolean type_element_followed_by_identifier(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_element_followed_by_identifier")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = type_element(b, l + 1);
+    r = r && mb_nl(b, l + 1);
     r = r && variable_lookahead(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
