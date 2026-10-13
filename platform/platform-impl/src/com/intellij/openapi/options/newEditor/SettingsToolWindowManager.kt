@@ -60,6 +60,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import java.awt.BorderLayout
@@ -97,6 +98,13 @@ internal class SettingsToolWindowManager(private val project: Project, private v
         return false
       }
       return project.serviceIfCreated<SettingsToolWindowManager>()?.showIfCreated(filter = null) { null } == true
+    }
+
+    /** Returns the manager whose Settings tab shows [file]. */
+    fun findByFile(file: SettingsVirtualFile): SettingsToolWindowManager? {
+      return ProjectManager.getInstance().openProjects.firstNotNullOfOrNull { project ->
+        project.serviceIfCreated<SettingsToolWindowManager>()?.takeIf { it.file == file }
+      }
     }
   }
 
@@ -180,8 +188,9 @@ internal class SettingsToolWindowManager(private val project: Project, private v
   /** The component that gets the focus when the Settings tool window opens. */
   fun getPreferredFocusedSidebarComponent(): JComponent? = editor?.treeView?.tree
 
+  @VisibleForTesting
   @RequiresEdt
-  private fun createEditor(groups: List<ConfigurableGroup>, configurable: Configurable?, filter: String?) {
+  internal fun createEditor(groups: List<ConfigurableGroup>, configurable: Configurable?, filter: String?): SettingsEditor {
     val editor = SettingsEditor(
       this, project, groups, configurable, filter,
       true,  // useLeaveState: reset an unmodified page that changed while the user was away
@@ -207,6 +216,7 @@ internal class SettingsToolWindowManager(private val project: Project, private v
     this.groups = groups
     sidebar.setContent(editor.sidebar)
     content.setContent(editor.content)
+    return editor
   }
 
   /** Opens the Settings tab, and shows the tree unless the page is Plugins: a user edits plugins as a separate job. */
@@ -308,8 +318,17 @@ internal class SettingsToolWindowManager(private val project: Project, private v
     }, this)
   }
 
+  /**
+   * Asks about the changes that wait for Apply before the Settings tab closes, see [SettingsTabPreCloseCheck].
+   * Returns `false` when the tab must stay open.
+   */
+  @RequiresEdt
+  fun canCloseTab(): Boolean {
+    return resolveUnsavedChanges(ApplicationBundle.message("settings.close.tab.unsaved.message", project.name))
+  }
+
   private fun tabClosed() {
-    // the question waits until the tab is closed, because no dialog may show inside the closing of a tab
+    // a close without the pre-close check asks here. No dialog may show inside the closing of a tab, so the question waits
     ApplicationManager.getApplication().invokeLater({
       if (FileEditorManager.getInstance(project).isFileOpen(file)) {
         return@invokeLater
@@ -330,6 +349,12 @@ internal class SettingsToolWindowManager(private val project: Project, private v
   @RequiresEdt
   private fun resolveUnsavedChanges(@NlsContexts.DialogMessage message: String): Boolean {
     val editor = editor ?: return true
+    stopFocusedEditing()
+    // the editor checks a page for changes only after a delay, and a change of the last second must count too
+    editor.checkCurrentModified()
+    if (!editor.isModified) {
+      return true
+    }
     // the Plugins page keeps its changes in its own session, as in the non-modal Settings dialog
     if (editor.modifiedConfigurables.all { ConfigurableVisitor.getId(it) == PluginManagerConfigurable.ID }) {
       return true
@@ -354,13 +379,18 @@ internal class SettingsToolWindowManager(private val project: Project, private v
   @RequiresEdt
   private fun apply(): Boolean {
     val editor = editor ?: return true
-    SwingUtilities.getWindowAncestor(content)?.let { UIUtil.stopFocusedEditing(it) }
+    stopFocusedEditing()
     // a click on a Swing button holds no write-intent lock, and some pages apply in a write action
     val applied = WriteIntentReadAction.compute { editor.apply() }
     if (applied) {
       SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
     }
     return applied
+  }
+
+  /** Gives the value of a table cell that the user still edits to its page. */
+  private fun stopFocusedEditing() {
+    SwingUtilities.getWindowAncestor(content)?.let { UIUtil.stopFocusedEditing(it) }
   }
 
   override fun dispose() {

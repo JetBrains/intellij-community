@@ -17,6 +17,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFilePreCloseCheck
 import com.intellij.openapi.vfs.VirtualFileWithoutContent
 import com.intellij.testFramework.LightVirtualFile
 import java.beans.PropertyChangeListener
@@ -111,4 +112,18 @@ internal class SettingsFileIconProvider : FileIconProvider {
  */
 internal class SettingsTabAutoClosingHandler : EditorAutoClosingHandler {
   override fun isClosingAllowed(composite: EditorComposite): Boolean = composite.file !is SettingsVirtualFile
+}
+
+/**
+ * Asks about the changes that wait for Apply before the Settings tab closes, so that Cancel keeps the tab open.
+ * Other files of the same close still close.
+ */
+internal class SettingsTabPreCloseCheck : VirtualFilePreCloseCheck {
+  override fun canCloseFile(file: VirtualFile): Boolean = canCloseFiles(listOf(file))
+
+  override fun canCloseFiles(files: Collection<VirtualFile>): Boolean = filterFilesToClose(files).size == files.size
+
+  override fun filterFilesToClose(files: Collection<VirtualFile>): Collection<VirtualFile> {
+    return files.filter { it !is SettingsVirtualFile || SettingsToolWindowManager.findByFile(it)?.canCloseTab() != false }
+  }
 }

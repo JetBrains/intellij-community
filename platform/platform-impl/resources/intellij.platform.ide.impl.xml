@@ -1590,6 +1590,7 @@
     <fileEditorProvider implementation="com.intellij.openapi.options.newEditor.SettingsFileEditorProvider"/>
     <fileIconProvider order="first" implementation="com.intellij.openapi.options.newEditor.SettingsFileIconProvider"/>
     <editorAutoClosingHandler implementation="com.intellij.openapi.options.newEditor.SettingsTabAutoClosingHandler"/>
+    <virtualFilePreCloseCheck implementation="com.intellij.openapi.options.newEditor.SettingsTabPreCloseCheck"/>
     <advancedSetting id="ide.ui.simplified.splash.image" default="false" groupKey="group.advanced.settings.ui"
                      service="com.intellij.ide.ui.SimplifiedSplashSettingProvider" property="useSimplifiedSplashImage"/>
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.DependencyFeatureCollector"/>
