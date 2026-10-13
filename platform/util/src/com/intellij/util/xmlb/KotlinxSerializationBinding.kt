@@ -2,7 +2,6 @@
 package com.intellij.util.xmlb
 
 import com.intellij.util.xml.dom.XmlElement
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -14,14 +13,34 @@ import org.jdom.Text
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.Collections
 
+@Volatile
+private var json: Json = createJson()
+
+/**
+ * The [Json] instance of the settings serialization.
+ * Do not keep it in a field: [clearKotlinxSerializationCache] replaces it.
+ */
 @Suppress("ObjectPropertyName")
-@OptIn(ExperimentalSerializationApi::class)
 @SettingsInternalApi
+@get:Internal
+val __json: Json
+  get() = json
+
+/**
+ * Replaces [__json] with a new instance of the same configuration.
+ * The new instance starts with an empty schema cache.
+ */
 @Internal
-val __json: Json = Json {
-  prettyPrint = true
-  prettyPrintIndent = "  "
-  ignoreUnknownKeys = true
+fun clearKotlinxSerializationCache() {
+  json = createJson()
+}
+
+private fun createJson(): Json {
+  return Json {
+    prettyPrint = true
+    prettyPrintIndent = "  "
+    ignoreUnknownKeys = true
+  }
 }
 
 @SettingsInternalApi
