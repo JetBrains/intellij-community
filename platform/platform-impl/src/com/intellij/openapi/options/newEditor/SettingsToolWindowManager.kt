@@ -14,12 +14,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -46,7 +47,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
@@ -55,18 +55,32 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
+import java.awt.AWTEvent
 import java.awt.BorderLayout
+import java.awt.Toolkit
+import java.awt.Window
+import java.awt.event.AWTEventListener
+import java.awt.event.WindowEvent
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Shows the Settings of a project in the Settings tool window and in the Settings editor tab.
@@ -127,6 +141,7 @@ internal class SettingsToolWindowManager(private val project: Project, private v
 
   init {
     subscribeToEvents()
+    trackWindowActivation()
     EventHandler.getShortcuts(IdeActions.ACTION_FIND)?.let { shortcuts ->
       DumbAwareAction.create { focusSearch() }.registerCustomShortcutSet(shortcuts, content, this)
     }
@@ -242,8 +257,6 @@ internal class SettingsToolWindowManager(private val project: Project, private v
 
   private fun getToolWindow(): ToolWindow? = ToolWindowManager.getInstance(project).getToolWindow(SETTINGS_TOOL_WINDOW_ID)
 
-  private fun isTabSelected(): Boolean = FileEditorManager.getInstance(project).selectedFiles.contains(file)
-
   private fun focusSearch() {
     val search = editor?.search ?: return
     getToolWindow()?.activate {
@@ -288,20 +301,6 @@ internal class SettingsToolWindowManager(private val project: Project, private v
         }
       }
     })
-    ApplicationManager.getApplication().messageBus.connect(this)
-      .subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
-        override fun applicationActivated(ideFrame: IdeFrame) {
-          if (isTabSelected()) {
-            editor?.resetUnmodifiedOnWindowFocus()
-          }
-        }
-
-        override fun applicationDeactivated(ideFrame: IdeFrame) {
-          if (isTabSelected()) {
-            editor?.recordWindowLeaveState()
-          }
-        }
-      })
 
     val projectManager = ProjectManager.getInstance()
     val vetoer = VetoableProjectManagerListener { closingProject ->
@@ -316,6 +315,71 @@ internal class SettingsToolWindowManager(private val project: Project, private v
         return resolveUnsavedChanges(ApplicationBundle.message("settings.close.application.unsaved.message", project.name))
       }
     }, this)
+  }
+
+  /**
+   * Keeps the leave state of the page while the Settings tab shows, as [com.intellij.openapi.ui.NonModalWindowWrapper] does
+   * for the Settings dialog. The user leaves the page when another frame or another application becomes active.
+   * A dialog or a popup of the window does not leave the page, because a change there is a part of the work on the page.
+   */
+  @OptIn(FlowPreview::class)
+  private fun trackWindowActivation() {
+    content.launchOnShow("Settings tab window activation") {
+      // the collection must go on while a modal dialog shows, and the default modality stops it.
+      // A page can take the write-intent lock in reset(), and Dispatchers.UI forbids that lock
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        val window = SwingUtilities.getWindowAncestor(content) ?: return@withContext
+        val activeWindow = MutableStateFlow<Window?>(null)
+        // a dialog of the window can move the focus to another application, for example to a browser for OAuth
+        val deactivatedToChild = AtomicBoolean(false)
+        launch {
+          val listener = AWTEventListener { event ->
+            when (event.id) {
+              WindowEvent.WINDOW_ACTIVATED -> {
+                val activated = event.source as Window
+                if (activated !== window && activated.isSameOrOwnedBy(window)) {
+                  deactivatedToChild.set(true)
+                }
+                activeWindow.value = activated
+              }
+              WindowEvent.WINDOW_DEACTIVATED -> activeWindow.value = null
+            }
+          }
+          val toolkit = Toolkit.getDefaultToolkit()
+          toolkit.addAWTEventListener(listener, AWTEvent.WINDOW_EVENT_MASK)
+          try {
+            activeWindow.value = if (window.isActive) window else null
+            awaitCancellation()
+          }
+          finally {
+            toolkit.removeAWTEventListener(listener)
+          }
+        }
+        activeWindow
+          // Wayland gives no opposite window, so only an activation soon after a deactivation shows a switch inside the IDE
+          .debounce { if (it == null) 1.seconds else 0.seconds }
+          .map { active ->
+            if (active != null && active.isSameOrOwnedBy(window)) {
+              if (active === window) {
+                deactivatedToChild.set(false)
+              }
+              true
+            }
+            else {
+              deactivatedToChild.get()
+            }
+          }
+          .distinctUntilChanged()
+          .collect { isWindowActive ->
+            if (isWindowActive) {
+              editor?.resetUnmodifiedOnWindowFocus()
+            }
+            else {
+              editor?.recordWindowLeaveState()
+            }
+          }
+      }
+    }
   }
 
   /**
@@ -424,6 +488,18 @@ internal class SettingsToolWindowManager(private val project: Project, private v
       UIUtil.findComponentOfType(component, JButton::class.java)?.isEnabled = presentation.isEnabled
     }
   }
+}
+
+/** Returns `true` when the owner chain of this window holds [ancestor]. The chain starts with this window. */
+private fun Window.isSameOrOwnedBy(ancestor: Window): Boolean {
+  var window: Window? = this
+  while (window != null) {
+    if (window === ancestor) {
+      return true
+    }
+    window = window.owner
+  }
+  return false
 }
 
 private val spotlightPainterFactory = object : SpotlightPainterFactory {
