@@ -3,6 +3,7 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
 import com.intellij.application.options.colors.highlighting.HighlightData
 import com.intellij.application.options.colors.highlighting.HighlightsExtractor
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.ui.LafReference
@@ -39,6 +40,7 @@ import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelected
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -115,6 +117,9 @@ internal class WelcomeScreenThemeChooserPopup(
     // An empty theme id makes the platform renderer draw a separator above the row. The row opens the
     // Appearance settings and is not a theme, so the previewer never sees it: its index is past the themes.
     val moreItem = LafReference(NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.theme.more.in.appearance"), "")
+    // Read before any preview. The check mark stays on the theme that the user has, not on the one in preview.
+    val activeThemeId = model.currentItem.themeId
+
     // The model lists the themes of plugins last. The renderer draws the Custom title over the first of them.
     var firstCustomThemeId: String? = null
     fun listItems(): List<LafReference> {
@@ -161,7 +166,7 @@ internal class WelcomeScreenThemeChooserPopup(
 
     val builder = PopupChooserBuilder(list)
     // Rows look like the ones in the platform's theme popup: names, a Beta badge, and group separators.
-    builder.setRenderer(createUniformRenderer(list, moreItem) { firstCustomThemeId })
+    builder.setRenderer(createUniformRenderer(list, moreItem, activeThemeId) { firstCustomThemeId })
     builder.setNorthComponent(createHeader(createBrightnessSwitch(initialFilter, listModel, list, ::listItems)))
     previewSample?.let { builder.setEastComponent(createCodePreview(it, popupDisposable)) }
     // The room under the content lives in its own component. The list border is the builder's, and a theme
@@ -249,6 +254,7 @@ internal class WelcomeScreenThemeChooserPopup(
   private fun createUniformRenderer(
     list: JBList<LafReference>,
     moreItem: LafReference,
+    activeThemeId: String,
     firstCustomThemeId: () -> String?,
   ): ListCellRenderer<LafReference> {
     val groups = ThemeListProvider.getInstance().getShownThemes().infos
@@ -266,6 +272,14 @@ internal class WelcomeScreenThemeChooserPopup(
       val fullName = value.name
       val shortName = StringUtil.shortenTextWithEllipsis(fullName, MAX_NAME_CHARS, 0, true)
       toolTipText = if (shortName != fullName) fullName else null
+      // Every row has a leading icon, so the names stay aligned. Only the active theme and the settings row show one.
+      icon(
+        when {
+          value.themeId.isEmpty() -> AllIcons.General.Settings
+          value.themeId == activeThemeId -> AllIcons.General.GreenCheckmark
+          else -> EmptyIcon.ICON_16
+        }
+      )
       text(shortName) { accessibleName = fullName }
       if (value.themeId.isEmpty()) {
         separator { }
