@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.internal.DebugAttachDetector;
 import com.intellij.internal.statistic.collectors.fus.MethodNameRuleValidator;
 import com.intellij.internal.statistic.collectors.fus.ProjectlessData;
+import com.intellij.internal.statistic.collectors.fus.ProjectlessLifecycleCollector;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField;
 import com.intellij.internal.statistic.eventLog.events.ClassEventField;
@@ -206,6 +207,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     ContainerUtil.addIfNotNull(data, ProjectlessData.forProject(project));
     data.add(isWelcomeScreenDummyProjectField.with(WelcomeScreenProjectProvider.isWelcomeScreenProject(project)));
     PROJECT_OPENED.log(project, data);
+    ProjectlessLifecycleCollector.onProjectOpened(project);
     int current = ProjectManager.getInstance().getOpenProjects().length;
     MAX_SIMULTANEOUS_PROJECTS.updateAndGet(prev -> Math.max(prev, current));
   }
@@ -214,6 +216,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     var data = new ArrayList<EventPair<?>>(1);
     ContainerUtil.addIfNotNull(data, projectless);
     PROJECT_CLOSED.log(project, data);
+    ProjectlessLifecycleCollector.onBeforeProjectClosed(project, projectless);
   }
 
   public static void onProjectClosedAndDisposed(
