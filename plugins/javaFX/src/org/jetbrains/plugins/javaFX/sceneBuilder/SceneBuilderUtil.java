@@ -36,33 +36,22 @@ final class SceneBuilderUtil {
     "javafx-media",
     "javafx-web",
   };
-  private static URLClassLoader ourLoader;
 
-  static synchronized SceneBuilder create(URL url, @NotNull Project project, EditorCallback editorCallback) throws Exception {
-    if (ourLoader == null) {
-      ourLoader = createClassLoader(project);
-    }
+  static SceneBuilder create(URL url, @NotNull Project project, EditorCallback editorCallback) throws Exception {
+    URLClassLoader loader = SceneBuilderBackgroundService.getInstance(project).getOrCreateLoader(() -> createClassLoader(project));
     //noinspection unchecked
     Class<SceneBuilder> java11Class =
-      (Class<SceneBuilder>)ourLoader.loadClass("org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderImpl");
+      (Class<SceneBuilder>)loader.loadClass("org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderImpl");
     Constructor<SceneBuilder> constructor = java11Class.getConstructor(URL.class, Project.class, EditorCallback.class, ClassLoader.class);
-    return constructor.newInstance(url, project, editorCallback, ourLoader);
+    return constructor.newInstance(url, project, editorCallback, loader);
   }
 
   private static URLClassLoader createClassLoader(@NotNull Project project) {
     return new URLClassLoader(getLibUrls(project), SceneBuilderUtil.class.getClassLoader());
   }
 
-  public static synchronized void updateLoader(@NotNull Project project) {
-    if (ourLoader != null) {
-      try {
-        ourLoader.close();
-      }
-      catch (IOException e) {
-        LOG.warn(e);
-      }
-    }
-    ourLoader = createClassLoader(project);
+  public static void updateLoader(@NotNull Project project) {
+    SceneBuilderBackgroundService.getInstance(project).resetLoader();
   }
 
   private static URL[] getLibUrls(@NotNull Project project) {

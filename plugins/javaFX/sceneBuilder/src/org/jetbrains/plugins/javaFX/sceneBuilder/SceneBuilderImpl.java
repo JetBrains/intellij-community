@@ -110,7 +110,9 @@ public class SceneBuilderImpl implements SceneBuilder {
     JavaFXPlatformHelper.disableImplicitExit();
 
     myCreateJob = SceneBuilderBackgroundService.getInstance(project).computeInSmartMode(
-      this::collectLibraryData, data -> JavaFXPlatformHelper.javafxInvokeLater(() -> create(data))
+      this::collectLibraryData,
+      data -> JavaFXPlatformHelper.javafxInvokeLater(() -> create(data)),
+      myEditorCallback::handleError
     );
   }
 
@@ -274,7 +276,8 @@ public class SceneBuilderImpl implements SceneBuilder {
         else {
           loadFile();
         }
-      })
+      }),
+      myEditorCallback::handleError
     );
   }
 
