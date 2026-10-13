@@ -2284,6 +2284,11 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
                 runTest("../../idea/tests/testData/editor/enterHandler/SingleLineKDocAtContentStartWithoutSeparator.after.kt");
             }
 
+            @TestMetadata("SingleLineKDocBeforeSingleLineKDoc.after.kt")
+            public void testSingleLineKDocBeforeSingleLineKDoc() throws Exception {
+                runTest("../../idea/tests/testData/editor/enterHandler/SingleLineKDocBeforeSingleLineKDoc.after.kt");
+            }
+
             @TestMetadata("SmartEnterBetweenOpeningAndClosingBrackets.after.kt")
             public void testSmartEnterBetweenOpeningAndClosingBrackets() throws Exception {
                 runTest("../../idea/tests/testData/editor/enterHandler/SmartEnterBetweenOpeningAndClosingBrackets.after.kt");

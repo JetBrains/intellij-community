@@ -40,6 +40,8 @@ class KotlinEnterHandler : EnterHandlerDelegate {
     companion object {
         private val LOG = Logger.getInstance(KotlinEnterHandler::class.java)
         private val FORCE_INDENT_IN_LAMBDA_AFTER = TokenSet.create(KtTokens.ARROW, KtTokens.LBRACE)
+        private const val KDOC_PREFIX = "/**"
+        private const val KDOC_SUFFIX = "*/"
     }
 
     override fun preprocessEnter(
@@ -116,9 +118,6 @@ class KotlinEnterHandler : EnterHandlerDelegate {
         return EnterHandlerDelegate.Result.Continue
     }
 
-    private val kDocPrefix: String = "/**"
-    private val kDocSuffix: String = "*/"
-
     private fun splitInlineKDocAtContentStart(
         editor: Editor,
         caretOffset: Int,
@@ -127,7 +126,7 @@ class KotlinEnterHandler : EnterHandlerDelegate {
         lineIndent: String,
     ) {
         val document = editor.document
-        val contentStartOffset = kDocStartOffset + kDocPrefix.length
+        val contentStartOffset = kDocStartOffset + KDOC_PREFIX.length
         val separatorLength = caretOffset - contentStartOffset
         document.deleteString(contentStartOffset, caretOffset)
         val insertionOffset = deleteSeparatorBeforeKDocEnd(document, contentStartOffset, kDocEndOffset - separatorLength)
@@ -139,7 +138,7 @@ class KotlinEnterHandler : EnterHandlerDelegate {
     }
 
     private fun isAtKDocContentStart(text: CharSequence, kDocStartOffset: Int, caretOffset: Int): Boolean {
-        var offset = kDocStartOffset + kDocPrefix.length
+        var offset = kDocStartOffset + KDOC_PREFIX.length
         if (caretOffset < offset) return false
         while (offset < caretOffset) {
             if (text[offset].let { it != ' ' && it != '\t' }) return false
@@ -159,9 +158,11 @@ class KotlinEnterHandler : EnterHandlerDelegate {
     private fun findKDocStartOffset(file: PsiFile, text: CharSequence, startOffset: Int, endOffset: Int): Int? {
         var offset = endOffset - 1
         while (offset >= startOffset) {
-            if (offset < text.length - 2 &&
-                text.startsWith(kDocPrefix, offset, false) &&
-                file.findElementAt(offset)?.node?.elementType == KDocTokens.START
+            val element = file.findElementAt(offset)
+            if (offset <= text.length - KDOC_PREFIX.length &&
+                text.startsWith(KDOC_PREFIX, offset, false) &&
+                element?.node?.elementType == KDocTokens.START &&
+                element.parent.textRange.contains(endOffset)
             ) {
                 return offset
             }
@@ -173,7 +174,7 @@ class KotlinEnterHandler : EnterHandlerDelegate {
     private fun findKDocEndOffset(file: PsiFile, text: CharSequence, startOffset: Int, endOffset: Int): Int? {
         var offset = startOffset
         while (offset < endOffset - 1) {
-            if (text.startsWith(kDocSuffix, offset, false) && file.findElementAt(offset)?.node?.elementType == KDocTokens.END) {
+            if (text.startsWith(KDOC_SUFFIX, offset, false) && file.findElementAt(offset)?.node?.elementType == KDocTokens.END) {
                 return offset
             }
             offset++
