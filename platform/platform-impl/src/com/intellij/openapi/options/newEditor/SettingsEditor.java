@@ -407,7 +407,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       }
     }
 
-    treeView.select(configurable).onProcessed(it -> this.filter.update(filter));
+    treeView.selectWithoutDelay(configurable).onProcessed(it -> this.filter.update(filter));
 
     Disposer.register(this, treeView);
     installSpotlightRemover();
