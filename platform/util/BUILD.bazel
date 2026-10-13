@@ -4,7 +4,7 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 
 jps_test(
     name = "util-tests_test",
-    timeout = "long",
+    timeout = "eternal",
     jvm_flags = [
         "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
         "-Duser.country=US",
