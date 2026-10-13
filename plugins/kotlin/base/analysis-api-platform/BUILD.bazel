@@ -69,7 +69,6 @@ jvm_library(
         "//java/codeserver/core",
         "//libraries/guava",
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
-        "//plugins/kotlin/base/code-insight",
     ],
 )
 
@@ -111,7 +110,6 @@ jvm_library(
         "//java/codeserver/core:core_test_lib",
         "//libraries/guava:guava_test_lib",
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
-        "//plugins/kotlin/base/code-insight:code-insight_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.analysis.platform` end

@@ -50,6 +50,5 @@
     <orderEntry type="module" module-name="intellij.java.codeserver.core" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.k2" />
-    <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" />
   </component>
 </module>

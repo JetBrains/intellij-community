@@ -3,7 +3,6 @@
   <dependencies>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.analysis"/>
-    <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.facet"/>
     <module name="intellij.kotlin.base.indices"/>
     <module name="intellij.kotlin.base.projectStructure"/>
