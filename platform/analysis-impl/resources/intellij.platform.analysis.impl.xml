@@ -217,8 +217,4 @@
     <projectSettings service="com.intellij.packageDependencies.DependencyValidationManagerImpl"/>
     <projectSettings service="com.intellij.profile.codeInspection.ProjectInspectionProfileManager"/>
   </extensions>
-  <applicationListeners>
-    <listener class="com.intellij.find.ngrams.TrigramIndexRegistryValueListener"
-              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
-  </applicationListeners>
 </idea-plugin>

@@ -167,6 +167,8 @@
 
   <applicationListeners>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+    <listener class="com.intellij.find.ngrams.TrigramIndexRegistryValueListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
   </applicationListeners>
 
   <projectListeners>
