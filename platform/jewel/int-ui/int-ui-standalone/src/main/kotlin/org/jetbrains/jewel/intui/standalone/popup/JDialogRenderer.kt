@@ -5,6 +5,7 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocal
+import androidx.compose.runtime.CompositionLocalContext
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -180,6 +181,24 @@ internal object JDialogRenderer : PopupRenderer {
     }
 }
 
+/**
+ * One open popup, as a key-event target.
+ *
+ * `IdePopupManager` keeps the same kind of stack for the IDE popups. It gives a key to the top of the stack first, in
+ * the listener call itself.
+ */
+private class PopupKeyTarget(
+    val ownsKeyEvent: (AWTKeyEvent) -> Boolean,
+    val claimsDismissRequest: (AWTKeyEvent) -> Boolean,
+    val handleKeyEvent: (AWTKeyEvent) -> Unit,
+)
+
+/** The open popups, in the order they opened. The last one is the nearest to the user. Read and written on the EDT. */
+private val openPopups = mutableListOf<PopupKeyTarget>()
+
+/** Set while a key goes into a popup's own scene, so that no listener acts on the forwarded copy. */
+private var forwardingKeyEvent = false
+
 @Composable
 private fun JPopupImpl(
     window: Window,
@@ -260,7 +279,7 @@ private fun JPopupImpl(
 
                 Layout(
                     content = {
-                        CompositionLocalProvider(compositionLocalContext) {
+                        ProvideValuesFromOtherContext(compositionLocalContext) {
                             CompositionLocalProvider(LocalComponent provides this@apply) { currentContent() }
                         }
                     },
@@ -378,6 +397,26 @@ private fun JPopupImpl(
                 !dialog.isAncestorOf(event.oppositeWindow) &&
                 event.oppositeWindow != window
 
+        // The following conditions should be considered for dismissing the popup when the application is left:
+        // - The current properties allow for the popup to be dismissed on click outside. This applies whether or not
+        //   the popup is focusable. No mouse event is involved in an application switch, so the non-focusable path
+        //   cannot handle it either;
+        // - The event must be a "WINDOW_LOST_FOCUS" event. WINDOW_DEACTIVATED reports the same transition, so
+        //   accepting both would request the dismissal twice;
+        // - There must be no window receiving the focus, meaning it left the application. A null window cannot be
+        //   this dialog, its owner, or one of its submenus, so none of the exceptions above can apply here;
+        // - The window losing the focus must be this dialog or one of its owners. A submenu is composed inside its
+        //   parent popup, so its owner is the parent dialog rather than the window hosting the whole chain.
+        fun shouldDismissOnApplicationSwitch(
+            event: WindowEvent,
+            dialog: Window,
+            currentProperties: PopupProperties,
+        ): Boolean =
+            currentProperties.dismissOnClickOutside &&
+                event.id == WindowEvent.WINDOW_LOST_FOCUS &&
+                event.oppositeWindow == null &&
+                (event.window == dialog || dialog.isOwnedBy(event.window))
+
         // The following conditions should be considered for deferring the dismiss on MOUSE_RELEASED:
         // - The popup is focusable (non-focusable case is handled by shouldDismissPopup(MouseEvent) above);
         // - The current properties allow for the popup to be dismissed on click outside;
@@ -399,6 +438,50 @@ private fun JPopupImpl(
                 !dialog.bounds.contains(event.locationOnScreen) &&
                 SwingUtilities.getWindowAncestor(event.component) == window
 
+        fun ownsKeyEvent(event: AWTKeyEvent): Boolean {
+            val eventWindow = SwingUtilities.getWindowAncestor(event.component) ?: event.component as? Window
+            // Focusable popups do not necessarily own native focus immediately (see the JEWEL-1276 focus-stealing
+            // workaround below). Their key events can arrive at any window that owns them.
+            return dialog.isVisible &&
+                (eventWindow == dialog || (currentProperties.focusable && dialog.isOwnedBy(eventWindow)))
+        }
+
+        // AWT can deliver a key to a window that owns no popup at all. A focusable popup must still close on a
+        // dismiss request, because a dropped Escape leaves it on screen with no way to close it.
+        fun claimsDismissRequest(event: AWTKeyEvent): Boolean =
+            dialog.isVisible && currentProperties.focusable && event.toComposeKeyEvent().isDismissRequest()
+
+        fun handleKeyEvent(event: AWTKeyEvent) {
+            val composeEvent = event.toComposeKeyEvent()
+
+            val consumed =
+                currentOnPreviewKeyEvent?.invoke(composeEvent) == true ||
+                    currentOnKeyEvent?.invoke(composeEvent) == true
+            val dismissRequest = currentOnDismissRequest
+            // Whether Escape dismisses is the popup's declared policy; a null callback just means we have
+            // no way to act on it, so we must not claim the key either.
+            val dismissed =
+                !consumed &&
+                    composeEvent.isDismissRequest() &&
+                    currentProperties.dismissOnBackPress &&
+                    dismissRequest != null
+
+            if (dismissed) {
+                dismissRequest.invoke(InputMode.Keyboard)
+            }
+            // A focusable popup swallows Escape whether or not it dismissed, matching Compose. A
+            // non-focusable one must let a key it did not act on reach whatever owns it.
+            val claimsDismissRequest = composeEvent.isDismissRequest() && currentProperties.focusable
+            if (consumed || dismissed || claimsDismissRequest) {
+                event.consume()
+            } else if (forwardToPopupScene(composePanel, event) { forwardingKeyEvent = it }) {
+                // The popup's own content handled the key, so the owner window must not see it too.
+                event.consume()
+            }
+        }
+
+        val keyTarget = PopupKeyTarget(::ownsKeyEvent, ::claimsDismissRequest, ::handleKeyEvent)
+
         val listener = AWTEventListener { event ->
             when (event) {
                 is MouseEvent -> {
@@ -414,50 +497,41 @@ private fun JPopupImpl(
                     }
                 }
                 is WindowEvent -> {
-                    if (shouldDismissPopup(event, dialog, currentProperties)) {
+                    // Both predicates accept the same event when the popup holds the focus and the user leaves
+                    // the application. The application switch must win. Touch lets a hovered submenu item veto
+                    // the dismissal through the guard in MenuSubmenuItem. That guard settles the hover and click
+                    // race on an item. It must not keep a popup open after the application goes away.
+                    if (shouldDismissOnApplicationSwitch(event, dialog, currentProperties)) {
+                        currentOnDismissRequest?.invoke(InputMode.Keyboard)
+                    } else if (shouldDismissPopup(event, dialog, currentProperties)) {
                         currentOnDismissRequest?.invoke(InputMode.Touch)
                     }
                 }
                 is AWTKeyEvent -> {
-                    val eventWindow = SwingUtilities.getWindowAncestor(event.component) ?: event.component as? Window
-                    // Focusable popups do not necessarily own native focus immediately (see the JEWEL-1276
-                    // focus-stealing workaround below), so their key events can arrive from the owner window.
-                    val ownsEvent = eventWindow == dialog || (currentProperties.focusable && eventWindow == window)
-                    if (event.isConsumed || !dialog.isVisible || !ownsEvent) return@AWTEventListener
+                    if (forwardingKeyEvent || event.isConsumed) return@AWTEventListener
+                    // AWT notifies the toolkit listeners in registration order, so an outer popup always hears a
+                    // key before the popup it opened. The innermost popup that owns the key must answer it. Every
+                    // listener finds the same popup in the stack, and only that one acts.
+                    val target =
+                        openPopups.lastOrNull { it.ownsKeyEvent(event) }
+                            ?: openPopups.lastOrNull { it.claimsDismissRequest(event) }
+                    if (target !== keyTarget) return@AWTEventListener
 
-                    val composeEvent = event.toComposeKeyEvent()
-
-                    val consumed =
-                        currentOnPreviewKeyEvent?.invoke(composeEvent) == true ||
-                            currentOnKeyEvent?.invoke(composeEvent) == true
-                    val dismissRequest = currentOnDismissRequest
-                    // Whether Escape dismisses is the popup's declared policy; a null callback just means we have
-                    // no way to act on it, so we must not claim the key either.
-                    val dismissed =
-                        !consumed &&
-                            composeEvent.isDismissRequest() &&
-                            currentProperties.dismissOnBackPress &&
-                            dismissRequest != null
-
-                    if (dismissed) {
-                        dismissRequest.invoke(InputMode.Keyboard)
-                    }
-                    // A focusable popup swallows Escape whether or not it dismissed, matching Compose. A
-                    // non-focusable one must let a key it did not act on reach whatever owns it.
-                    val claimsDismissRequest = composeEvent.isDismissRequest() && currentProperties.focusable
-                    if (consumed || dismissed || claimsDismissRequest) {
-                        event.consume()
-                    }
+                    handleKeyEvent(event)
                 }
             }
         }
 
+        openPopups.add(keyTarget)
         Toolkit.getDefaultToolkit()
             .addAWTEventListener(
                 listener,
                 AWTEvent.MOUSE_EVENT_MASK or AWTEvent.WINDOW_EVENT_MASK or AWTEvent.KEY_EVENT_MASK,
             )
-        onDispose { Toolkit.getDefaultToolkit().removeAWTEventListener(listener) }
+        onDispose {
+            openPopups.remove(keyTarget)
+            Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
+        }
     }
 
     DisposableEffect(dialog) {
@@ -601,6 +675,63 @@ private fun Point.fromCurrentScreenToGlobal(window: Window): Point {
     return point
 }
 
+/** Returns `true` when [candidate] owns this window, directly or through a chain of owned windows. */
+private fun Window.isOwnedBy(candidate: Window?): Boolean {
+    if (candidate == null) return false
+    var owner = this.owner
+    while (owner != null) {
+        if (owner == candidate) return true
+        owner = owner.owner
+    }
+    return false
+}
+
+/**
+ * Sends [event] to the Compose scene inside [panel]. Returns `true` when that scene consumed the event.
+ *
+ * The popup does not always own native focus, so a key can arrive at an owner window instead. The popup's callbacks run
+ * first. A key that no callback consumed must still reach the content, because a handler on a focused node can use it.
+ *
+ * A popup key callback must therefore have no side effect when it returns `false`. The callback applies the effect, and
+ * then the content applies it again.
+ */
+private fun forwardToPopupScene(panel: Component, event: AWTKeyEvent, setForwarding: (Boolean) -> Unit): Boolean {
+    val target = panel.findKeyEventTarget() ?: return false
+    // AWT calls the toolkit listeners before it gives the event to its own component. When that component is
+    // already this popup's key target, AWT delivers the key itself. A forwarded copy would arrive first and the
+    // original would follow, so the scene would act on the key twice.
+    if (event.component === target) return false
+    val forwarded =
+        AWTKeyEvent(
+            target,
+            event.id,
+            event.getWhen(),
+            event.modifiersEx,
+            event.keyCode,
+            event.keyChar,
+            event.keyLocation,
+        )
+    setForwarding(true)
+    try {
+        target.dispatchEvent(forwarded)
+    } finally {
+        setForwarding(false)
+    }
+    return forwarded.isConsumed
+}
+
+/** Finds the component that carries the Compose scene's key listener, which is a descendant of the panel. */
+private fun Component.findKeyEventTarget(): Component? {
+    if (keyListeners.isNotEmpty()) return this
+    if (this !is Container) return null
+    for (child in components) {
+        child.findKeyEventTarget()?.let {
+            return it
+        }
+    }
+    return null
+}
+
 private fun KeyEvent.isDismissRequest() = type == KeyEventType.KeyDown && key == Key.Escape
 
 private val <T> CompositionLocal<T>.currentOrNull
@@ -645,3 +776,13 @@ private val TRANSPARENT_WITH_WINDOWS_HACK = if (hostOs.isWindows) Color(0, 0, 0,
 
 private val DEFAULT_RENDER_SETTINGS
     get() = if (hostOs.isWindows) RenderSettings.SwingGraphics() else ComposePanel.DefaultRenderSettings
+
+/**
+ * When inheriting from another context, we need to ensure that values already provided in the current context are not
+ * overridden.
+ */
+@Composable
+private fun ProvideValuesFromOtherContext(context: CompositionLocalContext, content: @Composable () -> Unit) {
+    val existingContext = currentCompositionLocalContext
+    CompositionLocalProvider(context) { CompositionLocalProvider(existingContext, content) }
+}
