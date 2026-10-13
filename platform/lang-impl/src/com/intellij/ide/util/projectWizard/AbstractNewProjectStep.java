@@ -69,6 +69,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
 
   private final Customization<T> myCustomization;
   private WizardContext myWizardContext;
+  private Path myBaseDirectory;
 
   protected AbstractNewProjectStep(@NotNull Customization<T> customization) {
     super(ActionsBundle.message("action.WelcomeScreen.CreateNewProject.text"), true);
@@ -124,7 +125,9 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     @ApiStatus.Internal
     protected @NotNull ProjectSpecificAction createProjectSpecificAction(final @NotNull AbstractCallback<T> callback) {
       DirectoryProjectGenerator<T> emptyProjectGenerator = createEmptyProjectGenerator();
-      return new ProjectSpecificAction(emptyProjectGenerator, createProjectSpecificSettingsStep(emptyProjectGenerator, callback));
+      ProjectSettingsStepBase<T> step = createProjectSpecificSettingsStep(emptyProjectGenerator, callback);
+      step.setProjectStep(Objects.requireNonNull(myProjectStep));
+      return new ProjectSpecificAction(emptyProjectGenerator, step);
     }
 
     protected @NotNull AbstractCallback<T> createCallback() {
@@ -309,5 +312,17 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
 
   final @Nullable WizardContext getWizardContext() {
     return myWizardContext;
+  }
+
+  /**
+   * Sets the directory that holds the directory of the new project.
+   * A {@code null} value means the default location of the IDE.
+   */
+  final void setBaseDirectory(@Nullable Path baseDirectory) {
+    myBaseDirectory = baseDirectory;
+  }
+
+  final @Nullable Path getBaseDirectory() {
+    return myBaseDirectory;
   }
 }
