@@ -2,7 +2,6 @@
 package com.intellij.platform.recentFiles.shared
 
 import com.intellij.codeInsight.daemon.HighlightingPassesCache
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
@@ -339,11 +338,6 @@ private fun LocalRecentFilesEvent.namesFileOfUnloadingPlugin(): Boolean {
     is LocalRecentFilesEvent.ItemsRemoved -> batch.any(::isFileOfUnloadingPlugin)
     is LocalRecentFilesEvent.AllItemsRemoved -> false
   }
-}
-
-private fun isFileOfUnloadingPlugin(file: VirtualFile): Boolean {
-  val classLoader = file.javaClass.classLoader as? PluginAwareClassLoader ?: return false
-  return classLoader.state != PluginAwareClassLoader.ACTIVE
 }
 
 internal class LocalRecentFilePresentation(

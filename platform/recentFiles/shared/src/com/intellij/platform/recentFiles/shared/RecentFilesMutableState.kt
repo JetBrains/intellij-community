@@ -64,6 +64,17 @@ open class RecentFilesMutableState<T>(protected val project: Project) {
     }
   }
 
+  /**
+   * Removes the entries that match [predicate] from the states of all kinds.
+   */
+  fun removeFromAllStates(predicate: (T) -> Boolean) {
+    for (fileKind in RecentFileKind.entries) {
+      chooseStateToWriteTo(fileKind).update { oldList ->
+        if (oldList.entries.none(predicate)) oldList else RecentFilesState(oldList.entries.filterNot(predicate))
+      }
+    }
+  }
+
   fun removeAllEvent(
     targetFilesKind: RecentFileKind,
   ) {

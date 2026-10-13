@@ -27,6 +27,7 @@ import com.intellij.platform.recentFiles.shared.RecentFilesEvent
 import com.intellij.platform.recentFiles.shared.RecentFilesState
 import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
 import com.intellij.platform.recentFiles.shared.isAllowedInRecentFilesModel
+import com.intellij.platform.recentFiles.shared.isFileOfUnloadingPlugin
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -131,6 +132,14 @@ class FrontendRecentFilesModel(private val project: Project) {
         }
       }
     }
+  }
+
+  /**
+   * Removes the files of unloading plugins from the lists of all kinds.
+   * A recently opened file stays in the list after its editor closes, so no event removes the file of an unloaded plugin.
+   */
+  fun removeFilesOfUnloadingPlugins() {
+    modelState.removeFromAllStates { fileModel -> fileModel.virtualFile?.let(::isFileOfUnloadingPlugin) == true }
   }
 
   suspend fun fetchInitialData(targetFilesKind: RecentFileKind, project: Project) {

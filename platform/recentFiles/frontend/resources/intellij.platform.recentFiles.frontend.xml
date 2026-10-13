@@ -78,5 +78,7 @@
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener" activeInHeadlessMode="false"/>
     <listener class="com.intellij.platform.recentFiles.frontend.RecentFilesEditorTypingListener" activeInHeadlessMode="false"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener" activeInTestMode="true"/>
+    <listener class="com.intellij.platform.recentFiles.frontend.model.FrontendRecentFilesPluginUnloadListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
   </applicationListeners>
 </idea-plugin>
