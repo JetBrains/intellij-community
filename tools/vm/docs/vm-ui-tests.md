@@ -227,8 +227,9 @@ tag, the display and `AIR_VM_SCREEN`. The arguments name no checkout, so every c
 same container, and a switch to another checkout recreates nothing
 ([the guest reads no checkout](decisions/2026-10-10-the-guest-reads-no-checkout.md)). A warm iteration compares the record too, before it reuses the
 daemon. On a difference it recreates the container under its own lease and starts the daemon cold. A missing record also gives a recreate, and so does an engine
-container id that differs from the recorded id. `pool start` and `pool init` refuse with
-`worker_leased` when the stale container runs and another holder leases it. A stopped stale container
+container id that differs from the recorded id. `pool start <worker>` and `pool init` refuse with
+`worker_leased` when the stale container runs and another holder leases it. `pool start all` and
+`pool stop all` change the other workers and name the refused worker in `refused`. A stopped stale container
 is recreated for any caller.
 
 The guest-local state is the named volume `air-<worker>-data` at `/home/admin/WorkerData`, so a
@@ -793,9 +794,15 @@ result directory is reserved with an atomic create. So a restarted daemon cannot
 authoritative.
 
 `ls` aims `pull`, and both work throughout the daemon's lifetime, because neither wants the
-supervisor's run slot. Both take the worker's operation lock, which `run` holds for the whole lane,
-so both fail `lease_busy` (exit 75) during an iteration. The fix is to wait, not to stop the daemon
-that makes the next iteration fast.
+supervisor's run slot. Both answer during a run too, because a run holds the worker's lifecycle lock
+only at its two ends. The run takes the lock to write its run marker
+`<runtime root>/workers/<key>/run.json`, and again to remove it. The marker names the run in flight,
+and `lease show` with the receipt names it as `run=<id>`. `exec` and `peekaboo` act inside the guest,
+so they refuse `lease_busy` (exit 75) until the run ends. Another operation on the worker, such as a
+`daemon start` or a `lease release`, holds the lock for its whole length. Then `ls` and `pull` refuse
+`lease_busy` until it ends. The fix is to wait, not to stop the daemon that makes the next iteration
+fast. [A run marks its worker and holds the lock at its ends](decisions/2026-10-13-a-run-marks-its-worker-and-holds-the-lock-at-its-ends.md)
+records the decision.
 
 The trace bundles and the heartbeat screenshots of the IDE log directory are the evidence of record
 on Linux and Parallels. On a Tart macOS worker a Robot screenshot is black, and ADR 0113 says why. Read
