@@ -47,9 +47,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.GitLabSettings
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestParsedChanges
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNoteLocation
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffDiscussionViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffDraftNoteViewModel
@@ -63,8 +65,13 @@ import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 class GitLabMergeRequestDiffExtension : DiffExtension() {
-  private val emptyDiffNotificationProvider by lazy {
-    DiffNotifications.createNotificationProvider(GitLabBundle.message("merge.request.diff.empty.patch.warning"))
+  /**
+   * One provider per reason, because [DiffUtil.addNotificationIfAbsent] compares the providers to drop a repeat.
+   */
+  private val diffUnavailableNotificationProviders by lazy {
+    GitLabMergeRequestParsedChanges.EmptyPatchReason.entries.associateWith { reason ->
+      DiffNotifications.createNotificationProvider(diffUnavailableMessage(reason))
+    }
   }
 
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
@@ -75,8 +82,8 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
     val reviewVm = context.getUserData(GitLabMergeRequestDiffViewModel.KEY) ?: return
     val change = request.getUserData(RefComparisonChange.KEY) ?: return
 
-    if (request.getUserData(GitLabMergeRequestDiffChangeViewModel.EMPTY_PATCH_KEY) == true) {
-      DiffUtil.addNotificationIfAbsent(emptyDiffNotificationProvider, request)
+    request.getUserData(GitLabMergeRequestDiffChangeViewModel.EMPTY_PATCH_KEY)?.let { reason ->
+      DiffUtil.addNotificationIfAbsent(diffUnavailableNotificationProviders.getValue(reason), request)
     }
 
     project.service<InlaysController>().installInlays(reviewVm, change, viewer)
@@ -296,6 +303,12 @@ private class DiffEditorModel(
   ) : CodeReviewEditorGutterControlsModel.ControlsState {
     override fun isLineCommentable(lineIdx: Int): Boolean = lineToLocation(lineIdx) != null
   }
+}
+
+private fun diffUnavailableMessage(reason: GitLabMergeRequestParsedChanges.EmptyPatchReason): @Nls String = when (reason) {
+  GitLabMergeRequestParsedChanges.EmptyPatchReason.TOO_LARGE -> GitLabBundle.message("merge.request.diff.too.large.warning")
+  GitLabMergeRequestParsedChanges.EmptyPatchReason.COLLAPSED_NO_LOCAL -> GitLabBundle.message("merge.request.diff.collapsed.warning")
+  GitLabMergeRequestParsedChanges.EmptyPatchReason.UNKNOWN -> GitLabBundle.message("merge.request.diff.empty.patch.warning")
 }
 
 private fun GitLabNoteLocation.toLineRange(locationToLine: (DiffLineLocation) -> Int?): LineRange? {

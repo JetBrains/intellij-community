@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
 import git4idea.branch.GitBranchSyncStatus
-import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.localCommitsSyncStatus
@@ -61,13 +60,13 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestParsedChanges
 import org.jetbrains.plugins.gitlab.mergerequest.ui.createDiffDataFlow
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUtil
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.util.EventListener
-import kotlin.collections.map
 
 private val LOG = logger<GitLabMergeRequestEditorReviewViewModel>()
 
@@ -98,7 +97,7 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
   private val changesRequest = MutableSharedFlow<Unit>(replay = 1)
 
   val actualChangesState: StateFlow<ChangesState> = _actualChangesState.asStateFlow()
-  private val actualChanges: StateFlow<GitBranchComparisonResult?> = actualChangesState.mapNotNull {
+  private val actualChanges: StateFlow<GitLabMergeRequestParsedChanges?> = actualChangesState.mapNotNull {
     (it as? ChangesState.Loaded)?.changes
   }.distinctUntilChangedBy {
     it.baseSha + it.headSha + it.mergeBaseSha
@@ -270,7 +269,9 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
           return@mapScoped FileReviewState.NotInReview
         }
         if (diffData.patch.hunks.isEmpty()) {
-          return@mapScoped FileReviewState.ReviewDisabledEmptyDiff
+          // a file whose empty diff is correct carries no reason, so it shows no warning
+          val reason = parsedChanges.getEmptyPatchReason(change) ?: return@mapScoped FileReviewState.NotInReview
+          return@mapScoped FileReviewState.ReviewDisabled(reason)
         }
 
         val changeSelection = ListSelection.create(parsedChanges.changes, change)
@@ -310,12 +311,12 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
     data object NotLoaded : ChangesState
     data object Loading : ChangesState
     data object Error : ChangesState
-    class Loaded(val changes: GitBranchComparisonResult) : ChangesState
+    class Loaded(val changes: GitLabMergeRequestParsedChanges) : ChangesState
   }
 
   sealed interface FileReviewState {
     data object NotInReview : FileReviewState
-    data object ReviewDisabledEmptyDiff : FileReviewState
+    data class ReviewDisabled(val reason: GitLabMergeRequestParsedChanges.EmptyPatchReason) : FileReviewState
     data class ReviewEnabled(val vm: GitLabMergeRequestEditorReviewFileViewModel) : FileReviewState
   }
 }
