@@ -59,4 +59,4 @@ export function languageForPath(path: string): string | null {
 }
 
 /** Matches relative-path-looking text that may reference a source or doc file. */
-export const SOURCE_PATH_PATTERN = /^[\w./-]+\.(?:md|kt|kts|java|ts|tsx|mjs|js|xml|iml|properties|json|ya?ml|css)(#[\w-]+)?$/
+export const SOURCE_PATH_PATTERN = /^[\w./-]+\.(?:md|kt|kts|java|ts|tsx|mjs|js|xml|iml|properties|json|ya?ml|css|bzl|bazel|rs|cmd)(#[\w-]+)?$/

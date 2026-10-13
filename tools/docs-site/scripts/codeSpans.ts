@@ -1,7 +1,8 @@
 // The code spans of a doc that name a path. The markdown renderer links such a span, and resolves it against the
 // folder of its doc first, because a doc names a file next to it that way. A span that names no file there resolves
-// against the content root, and then against the repository root, such as `build/dev-build.json` in a guide. A span
-// that names no file at all, such as `META-INF/plugin.xml` inside a jar, stays code.
+// against the content root, and then against the repository root, such as `build/dev-build.json` in a guide or the
+// command `./build/jpsModelToBazel.cmd`. A `../` span is doc-relative by its form, so it resolves against the doc
+// folder only. A span that names no file at all, such as `META-INF/plugin.xml` inside a jar, stays code.
 //
 // The browser cannot test a file for existence, so the harvest resolves those spans and writes them to the
 // `CODE_SPAN_PATHS_FILE` of the generated directory of the site. A span that the doc folder resolves has no entry.
@@ -32,8 +33,8 @@ export function docFolder(path: string): string {
 
 /**
  * The path spans of `body` that name no file from the folder of the doc, each with the repository path of the file
- * that it names from the content root or from the repository root, or with null. A span that starts with `./` or
- * `../` is doc-relative by its form, so it is never one.
+ * that it names from the content root or from the repository root, or with null. A span that starts with `../` names
+ * a file from the doc folder only, so it is null when that file does not exist.
  */
 export function unresolvedCodeSpans(contentRoot: string, docPath: string, body: string, root: string): Map<string, string | null> {
   const baseDir = docFolder(docPath)
@@ -43,10 +44,11 @@ export function unresolvedCodeSpans(contentRoot: string, docPath: string, body: 
       continue
     }
     const path = match[1].split('#')[0]
-    if (/^\.\.?\//.test(path) || spans.has(path) || existsSync(join(root, resolveRepoPath(contentRoot, baseDir, path)))) {
+    if (spans.has(path) || existsSync(join(root, resolveRepoPath(contentRoot, baseDir, path)))) {
       continue
     }
-    const named = [resolveRepoPath(contentRoot, '', path), resolveRepoPath('', '', path)].find(candidate => existsSync(join(root, candidate)))
+    const candidates = path.startsWith('../') ? [] : [resolveRepoPath(contentRoot, '', path), resolveRepoPath('', '', path)]
+    const named = candidates.find(candidate => existsSync(join(root, candidate)))
     spans.set(path, named ?? null)
   }
   return spans
