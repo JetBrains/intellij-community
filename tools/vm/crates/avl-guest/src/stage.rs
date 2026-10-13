@@ -1,5 +1,5 @@
 //! Materializes, on the guest's own disk, what a run may not read through the read-only share: the daemon's
-//! runtime, a flat jar list plus an extracted JBR, about 852 MiB of it.
+//! runtime, a flat jar list plus a copy of the JBR of the distribution.
 //!
 //! The runtime changes one part at a time, so the stager hardlinks what a retained generation already holds and
 //! copies only what moved ([`donor`] holds the rule that keeps such a link off stale bytes). Both generations are
@@ -35,10 +35,6 @@ use sha2::{Digest, Sha256};
 
 use crate::reply::{AgentRefusal, AgentRefusalExt, refuse};
 use avl_wire::verb::AgentVerb;
-
-/// The guest's own `tar`, by absolute path: these verbs run under an exec channel that decides the PATH, and the
-/// archive each one unpacks is a host-built artifact.
-pub(crate) const TAR_BINARY: &str = "/usr/bin/tar";
 
 pub(crate) fn require_runtime_root(verb: AgentVerb, value: &str) -> Result<PathBuf, AgentRefusal> {
     let path = Path::new(value);
@@ -104,6 +100,26 @@ pub(crate) fn copy_file_hashed(source: &Path, destination: &Path) -> io::Result<
     io::copy(&mut input, &mut sink)?;
     sink.flush()?;
     Ok(hex::encode(sink.hasher.finalize()))
+}
+
+/// Copies the directory `source` to `destination`, which must not exist: a file by its content and its permission
+/// bits, a directory by recursion, and a symbolic link as the link it is. A link at `source` itself is followed.
+pub(crate) fn copy_tree(source: &Path, destination: &Path) -> io::Result<()> {
+    fs::create_dir(destination)?;
+    for entry in fs::read_dir(source)? {
+        let entry = entry?;
+        let from = entry.path();
+        let to = destination.join(entry.file_name());
+        let metadata = fs::symlink_metadata(&from)?;
+        if metadata.is_dir() {
+            copy_tree(&from, &to)?;
+        } else if metadata.is_symlink() {
+            std::os::unix::fs::symlink(fs::read_link(&from)?, &to)?;
+        } else {
+            fs::copy(&from, &to)?;
+        }
+    }
+    Ok(())
 }
 
 /// The content identity of one file, streamed because the files are jars.

@@ -376,9 +376,21 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-vm/src/daemon/leased/tests.rs (`the_build_comes_before_the_lease`)
   [@test] ../crates/avl-vm/src/daemon/leased/tests.rs (`a_process_start_reads_as_rfc3339_in_utc`)
 
-- The controller tells the daemon how to launch the lane IDE. It names the installed guest agent, the directory of
-  the IDE contexts, and the home of the staged JVM. The IDE runs on that JVM too.
+- The controller tells the daemon how to launch the lane IDE. It names the installed guest agent and the directory of
+  the IDE contexts. It names no JVM, because the IDE runs on the JBR of its distribution.
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs
+
+- The daemon JVM runs on a copy of the JBR of the distribution in its staged generation, and never on the share. The
+  `jbr` section of the runtime descriptor names the directory of the JBR below the distribution home. The guest
+  agent's `stage` copies that directory with its modes and its links. A distribution without it is a refusal that
+  names the path, on the host and on the guest. The tree digest of the JBR is part of the runtime digest, so only a
+  change of the JBR restages it.
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_jbr_of_the_distribution_changes_the_runtime_digest`)
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_distribution_without_its_jbr_refuses_with_the_path`)
+  [@test] ../crates/avl-vm/src/daemon/stage/tests.rs (`a_guest_that_cannot_answer_stage_check_falls_through_to_a_full_stage`)
+  [@test] ../crates/avl-guest/src/stage/tests.rs (`the_stage_copies_the_jbr_of_the_distribution_into_the_generation`)
+  [@test] ../crates/avl-guest/src/stage/tests.rs (`a_distribution_without_its_jbr_is_refused_with_the_path`)
+  [@test] ../crates/avl-wire/src/runtime/tests.rs (`the_jbr_section_keys_are_the_ones_the_reader_reads`)
 
 - The guest reads no checkout. A worker has one share, the Bazel output user root, read-only, on every backend. A
   path of the checkout does not map to a guest path. A set `AIR_VM_REPO_SHARE_NAME` is refused.

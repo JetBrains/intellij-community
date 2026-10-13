@@ -112,8 +112,15 @@ pub(crate) fn guest_daemon_directories(settings: &Config) -> [(&'static str, Str
 /// The timeout of `stage-check`. It reads the marker of one generation and stats each staged jar on the guest's own
 /// disk, so two minutes covers a guest under load.
 const STAGE_CHECK_TIMEOUT: Duration = Duration::from_secs(120);
-/// The timeout of `stage`. A cold stage copies every jar of the classpath and extracts the JBR through the Bazel
-/// share.
+/// The guest path of the JBR of the distribution, which the stage copies into the generation: the JBR directory of
+/// the descriptor below the distribution home, through the guest runfiles root.
+pub(crate) fn guest_jbr_source(prep: &PreparedBuild) -> String {
+    let home = guest_join(&prep.guest_runfiles_root, &prep.descriptor.dev_dist.home.logical_path);
+    guest_join(&home, &prep.descriptor.jbr.directory)
+}
+
+/// The timeout of `stage`. A cold stage copies every jar of the classpath and the JBR of the distribution through the
+/// Bazel share.
 const STAGE_TIMEOUT: Duration = Duration::from_mins(30);
 /// The timeout of `gc`. It removes whole staged generations, and each holds a classpath and a JBR.
 const GC_TIMEOUT: Duration = Duration::from_mins(10);
@@ -230,7 +237,7 @@ impl Host {
                 .iter()
                 .map(|file| guest_join(&prep.guest_runfiles_root, &file.logical_path))
                 .collect(),
-            jbr_archive: guest_join(&prep.guest_runfiles_root, &prep.descriptor.jbr.archive.logical_path),
+            jbr_source: guest_jbr_source(prep),
             java_home_suffix: prep.descriptor.jbr.java_home_suffix.clone(),
         };
         self.reporter.note(

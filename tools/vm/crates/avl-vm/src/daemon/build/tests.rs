@@ -1,4 +1,5 @@
 use std::fs;
+use std::os::unix::fs::PermissionsExt;
 
 use avl_host_testkit::git::FAKE_HEAD;
 use avl_host_testkit::refusal;
@@ -94,7 +95,8 @@ async fn a_runfile_in_the_checkout_is_staged_with_its_digest() {
     assert!(!tree.request.manifest_text.contains(source), "{}", tree.request.manifest_text);
     assert_eq!(
         tree.request.manifest_text.lines().count(),
-        crate::daemon::testing::FIXTURE_RUNFILES.len() - 1
+        // Every file runfile but the staged one, and the line of the distribution home.
+        crate::daemon::testing::FIXTURE_RUNFILES.len()
     );
 }
 
@@ -169,6 +171,60 @@ async fn a_changed_static_flag_changes_the_runtime_digest() {
     // The product did not move, so neither did the mount.
     assert_eq!(before.product_digest, after.product_digest);
     assert_eq!(before.mount_digest, after.mount_digest);
+}
+
+// The daemon JVM runs on a copy of the JBR of the distribution, so a changed byte or mode of that JBR is a new
+// generation. The product identity reads the fingerprint of the distribution, which covers the JBR, and not the JBR.
+#[tokio::test]
+async fn a_changed_jbr_of_the_distribution_changes_the_runtime_digest() {
+    let fixture = Fixture::new().await;
+    let before = fixture.prepared().await;
+    let jbr = runtime::runfiles_root(&fixture.bazel.descriptor_path)
+        .join(crate::daemon::testing::FIXTURE_DIST_HOME)
+        .join(crate::daemon::testing::FIXTURE_JBR_DIRECTORY);
+    let java = jbr.join("a&b/bin/java");
+    fs::write(&java, "another java").unwrap();
+    let rebuilt = fixture.prepared().await;
+    assert_ne!(before.runtime_digest, rebuilt.runtime_digest);
+    assert_ne!(before.launch_digest, rebuilt.launch_digest);
+    assert_eq!(before.product_digest, rebuilt.product_digest);
+
+    fs::set_permissions(&java, fs::Permissions::from_mode(0o755)).unwrap();
+    let executable = fixture.prepared().await;
+    assert_ne!(
+        rebuilt.runtime_digest, executable.runtime_digest,
+        "a changed mode kept the generation"
+    );
+
+    // Another file of the distribution home is not the JBR, so it keeps the generation.
+    fs::write(jbr.parent().unwrap().join("build.txt"), "IU-262.1").unwrap();
+    assert_eq!(executable.runtime_digest, fixture.prepared().await.runtime_digest);
+}
+
+// A distribution without its JBR refuses before anything is staged, and the refusal names the path.
+#[tokio::test]
+async fn a_distribution_without_its_jbr_refuses_with_the_path() {
+    let fixture = Fixture::new().await;
+    let jbr = runtime::runfiles_root(&fixture.bazel.descriptor_path)
+        .join(crate::daemon::testing::FIXTURE_DIST_HOME)
+        .join(crate::daemon::testing::FIXTURE_JBR_DIRECTORY);
+    fs::remove_dir_all(&jbr).unwrap();
+    let scope = BuildScope::worker(&fixture.settings, &fixture.worker).unwrap();
+    let failure = refusal(
+        fixture
+            .host
+            .prepare_build(&Ctx::background(), &scope)
+            .await
+            .map(|prep| prep.runtime_digest),
+    );
+    assert_eq!(failure.code, "daemon_runtime_input_missing");
+    assert!(
+        failure
+            .message
+            .contains(&format!("has no JBR: {} is not a directory", jbr.display())),
+        "the refusal must name the JBR directory, said {:?}",
+        failure.message
+    );
 }
 
 // The IDE flags file is part of the IDE's identity: a restart keeps an IDE only of the same product, so a changed flag

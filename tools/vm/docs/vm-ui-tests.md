@@ -465,8 +465,10 @@ the lane's: one test before a lane build cost 11.6 s of analysis on 2026-10-10. 
 the lane builds no runfile links: the controller reads the MANIFEST of the runtime descriptor on every host.
 
 A lane IDE downloads nothing and stages no JVM. It runs on `jbr/` of its distribution, under the daemon and
-in a standalone lane run. The daemon itself runs on a JVM that the controller stages from the JBR archive of the
-runtime descriptor.
+in a standalone lane run. The daemon runs on the same JBR, but not from the share. The guest agent's `stage` copies
+`jbr/` of the distribution into the generation of the daemon. The `jbr` section of the runtime descriptor names that
+directory below the distribution home. A distribution without it is a refusal that names the path, on the host
+before the build is stamped and on the guest before the copy. No lane target and no descriptor carries a JBR archive.
 
 **Remounting is a correctness requirement, not hygiene.** A VirtioFS guest keeps a dead node for any
 file the host rewrites after the mount. `stat` then still answers from the cache, while `open` fails
