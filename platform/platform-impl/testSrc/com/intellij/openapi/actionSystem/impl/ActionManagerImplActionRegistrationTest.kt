@@ -406,6 +406,65 @@ internal class ActionManagerImplActionRegistrationTest {
     assertTrue(bundleLoads.get() > 0)
   }
 
+  @Test
+  fun keyedSeparatorTextFromBundleIsComputedWhenRead() {
+    val key = "ActionManagerImplActionRegistrationTest.separator"
+    val bundleLoads = AtomicInteger()
+    val bundle = createBundle(key to "Separator from the bundle")
+
+    val separator = createSeparator(bundleSupplier = {
+      bundleLoads.incrementAndGet()
+      bundle
+    }, key = key)
+
+    assertEquals(0, bundleLoads.get())
+    assertEquals("Separator from the bundle", separator.text)
+    assertTrue(bundleLoads.get() > 0)
+  }
+
+  @Test
+  fun keyedSynonymFromBundleIsComputedWhenRead() {
+    val key = "ActionManagerImplActionRegistrationTest.synonym"
+    val bundleLoads = AtomicInteger()
+    val bundle = createBundle(key to "Synonym from the bundle")
+    val action = createAction()
+
+    processSynonymNode(action = action,
+                       element = XmlElement(name = SYNONYM_ELEMENT_NAME, attributes = mapOf(KEY_ATTR_NAME to key)),
+                       module = createPluginDescriptor(),
+                       bundleSupplier = {
+                         bundleLoads.incrementAndGet()
+                         bundle
+                       },
+                       hasBundle = true)
+
+    assertEquals(0, bundleLoads.get())
+    assertEquals(listOf("Synonym from the bundle"), action.synonyms.map { it.get() })
+    assertTrue(bundleLoads.get() > 0)
+  }
+
+  @Test
+  fun keyedSynonymWithoutBundleIsReportedWithoutLoadingBundle() {
+    val bundleLoads = AtomicInteger()
+    val action = createAction()
+
+    val error = LoggedErrorProcessor.executeAndReturnLoggedError {
+      processSynonymNode(action = action,
+                         element = XmlElement(name = SYNONYM_ELEMENT_NAME,
+                                              attributes = mapOf(KEY_ATTR_NAME to "ActionManagerImplActionRegistrationTest.synonym")),
+                         module = createPluginDescriptor(),
+                         bundleSupplier = {
+                           bundleLoads.incrementAndGet()
+                           null
+                         },
+                         hasBundle = false)
+    }
+
+    assertEquals(0, bundleLoads.get())
+    assertTrue(action.synonyms.isEmpty())
+    assertTrue(error.message!!.startsWith("Can't process synonym: neither text nor resource bundle key is specified"), error.message)
+  }
+
   private fun configureGroupDescription(
     presentation: Presentation,
     groupId: String,

@@ -132,11 +132,7 @@ private fun registerPluginActions(
                      ?: if (PluginManagerCore.CORE_ID == module.pluginId) "messages.ActionsBundle" else module.resourceBundleBaseName
     val element = descriptor.element
 
-    val bundleSupplier = {
-      bundleName?.let {
-        DynamicBundle.getResourceBundle(module.classLoader, bundleName)
-      }
-    }
+    val bundleSupplier = ActionBundleSupplier(bundleName = bundleName, classLoader = module.classLoader)
 
     when (descriptor) {
       is ActionDescriptorAction -> {
@@ -206,6 +202,17 @@ private fun registerPluginActions(
     deferred?.flushOverrides(actionRegistrar = actionRegistrar)
   }
   StartUpMeasurer.addPluginCost(module.pluginId.idString, "Actions", System.nanoTime() - startTime)
+}
+
+/**
+ * Loads the resource bundle of an action element each time it is invoked.
+ * [hasBundle] tells whether the element declares a bundle without loading it.
+ */
+private class ActionBundleSupplier(private val bundleName: String?, private val classLoader: ClassLoader) : () -> ResourceBundle? {
+  val hasBundle: Boolean
+    get() = bundleName != null
+
+  override fun invoke(): ResourceBundle? = bundleName?.let { DynamicBundle.getResourceBundle(classLoader, it) }
 }
 
 // an overrides="true" def whose base id is not yet registered stages and replays when the base registers;
@@ -289,7 +296,7 @@ private fun processActionElement(
   element: XmlElement,
   actionRegistrar: ActionRegistrar,
   module: IdeaPluginDescriptorImpl,
-  bundleSupplier: () -> ResourceBundle?,
+  bundleSupplier: ActionBundleSupplier,
   keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>,
   classLoader: ClassLoader,
   deferred: DeferredActionRegistrations?,
@@ -314,18 +321,18 @@ private fun processActionElement(
   val stub = ActionStub(className, id, module, iconPath, ProjectType.create(projectType)) {
     val presentation = Presentation.newTemplatePresentation()
     presentation.setText {
-      computeActionText(bundleSupplier = bundleSupplier,
+      computeActionText(bundle = bundleSupplier(),
                         id = id,
                         elementType = ACTION_ELEMENT_NAME,
                         textValue = textValue,
                         classLoader = classLoader)
     }
-    if (bundleSupplier() == null) {
+    if (!bundleSupplier.hasBundle) {
       presentation.description = descriptionValue
     }
     else {
       presentation.setDescription {
-        computeDescription(bundleSupplier = bundleSupplier,
+        computeDescription(bundle = bundleSupplier(),
                            id = id,
                            elementType = ACTION_ELEMENT_NAME,
                            descriptionValue = descriptionValue,
@@ -358,7 +365,11 @@ private fun processActionElement(
                                                             element = child,
                                                             module = module,
                                                             bundleSupplier = bundleSupplier)
-      SYNONYM_ELEMENT_NAME -> processSynonymNode(action = stub, element = child, module = module, bundleSupplier = bundleSupplier)
+      SYNONYM_ELEMENT_NAME -> processSynonymNode(action = stub,
+                                                 element = child,
+                                                 module = module,
+                                                 bundleSupplier = bundleSupplier,
+                                                 hasBundle = bundleSupplier.hasBundle)
       else -> {
         reportActionManagerError(module, "unexpected name of element \"${child.name}\"")
         return null
@@ -429,7 +440,7 @@ private fun processGroupElement(
   id: String?,
   element: XmlElement,
   module: IdeaPluginDescriptorImpl,
-  bundleSupplier: () -> ResourceBundle?,
+  bundleSupplier: ActionBundleSupplier,
   keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>,
   actionRegistrar: ActionRegistrar,
   classLoader: ClassLoader,
@@ -678,7 +689,7 @@ private fun processReferenceNode(
   state: ActionPluginRegistrarState,
   element: XmlElement,
   module: IdeaPluginDescriptor,
-  bundleSupplier: () -> ResourceBundle?,
+  bundleSupplier: ActionBundleSupplier,
   actionRegistrar: ActionRegistrar,
   deferred: DeferredActionRegistrations?,
 ) {
@@ -701,7 +712,7 @@ private fun processReferenceChildren(
   action: AnAction,
   element: XmlElement,
   module: IdeaPluginDescriptor,
-  bundleSupplier: () -> ResourceBundle?,
+  bundleSupplier: ActionBundleSupplier,
   actionRegistrar: ActionRegistrar,
   deferred: DeferredActionRegistrations?,
   reportUnresolved: Boolean,
@@ -733,7 +744,7 @@ private fun processReferenceChildren(
                             deferred = deferred)
     }
     else if (SYNONYM_ELEMENT_NAME == child.name) {
-      processSynonymNode(action = action, element = child, module = module, bundleSupplier = bundleSupplier)
+      processSynonymNode(action = action, element = child, module = module, bundleSupplier = bundleSupplier, hasBundle = bundleSupplier.hasBundle)
     }
   }
 }
@@ -838,7 +849,7 @@ private fun processSeparatorNode(
   parentGroup: DefaultActionGroup?,
   element: XmlElement,
   module: IdeaPluginDescriptor,
-  bundleSupplier: () -> ResourceBundle?,
+  bundleSupplier: ActionBundleSupplier,
   actionRegistrar: ActionRegistrar,
   deferred: DeferredActionRegistrations?,
 ) {
@@ -1062,7 +1073,7 @@ private class PendingGroupReference(
 private class PendingReferenceNode(
   @JvmField val element: XmlElement,
   @JvmField val module: IdeaPluginDescriptor,
-  @JvmField val bundleSupplier: () -> ResourceBundle?,
+  @JvmField val bundleSupplier: ActionBundleSupplier,
   @JvmField val reportUnresolved: Boolean,
 ) : PendingRegistration
 
@@ -1101,7 +1112,7 @@ private class DeferredActionRegistrations {
     pending.add(PendingGroupReference(group = group, groupId = groupId, stub = stub, module = module, reportUnresolved = reportUnresolved))
   }
 
-  fun deferReferenceNode(element: XmlElement, module: IdeaPluginDescriptor, bundleSupplier: () -> ResourceBundle?, reportUnresolved: Boolean) {
+  fun deferReferenceNode(element: XmlElement, module: IdeaPluginDescriptor, bundleSupplier: ActionBundleSupplier, reportUnresolved: Boolean) {
     pending.add(PendingReferenceNode(element = element, module = module, bundleSupplier = bundleSupplier, reportUnresolved = reportUnresolved))
   }
 
@@ -1262,7 +1273,11 @@ private fun resolveReferenceNode(
   // add-to-group riders were placed as stubs at parse position; only synonyms wait for the resolved action
   for (child in element.children) {
     if (SYNONYM_ELEMENT_NAME == child.name) {
-      processSynonymNode(action = action, element = child, module = pending.module, bundleSupplier = pending.bundleSupplier)
+      processSynonymNode(action = action,
+                         element = child,
+                         module = pending.module,
+                         bundleSupplier = pending.bundleSupplier,
+                         hasBundle = pending.bundleSupplier.hasBundle)
     }
   }
 }

@@ -191,13 +191,13 @@ internal fun loadIcon(module: PluginDescriptor, iconPath: String, requestor: Str
 
 @Suppress("HardCodedStringLiteral")
 internal fun computeDescription(
-  bundleSupplier: () -> ResourceBundle?,
+  bundle: ResourceBundle?,
   id: String,
   elementType: String,
   descriptionValue: String?,
   classLoader: ClassLoader,
 ): @NlsActions.ActionDescription String? {
-  var effectiveBundle = bundleSupplier()
+  var effectiveBundle = bundle
   if (effectiveBundle != null && DefaultBundleService.isDefaultBundle()) {
     effectiveBundle = DynamicBundle.getResourceBundle(classLoader, effectiveBundle.baseBundleName)
   }
@@ -206,13 +206,13 @@ internal fun computeDescription(
 
 @Suppress("HardCodedStringLiteral")
 internal fun computeActionText(
-  bundleSupplier: () -> ResourceBundle?,
+  bundle: ResourceBundle?,
   id: String,
   elementType: String,
   textValue: String?,
   classLoader: ClassLoader,
 ): @NlsActions.ActionText String? {
-  var effectiveBundle = bundleSupplier()
+  var effectiveBundle = bundle
   if (effectiveBundle != null && DefaultBundleService.isDefaultBundle()) {
     effectiveBundle = DynamicBundle.getResourceBundle(classLoader, effectiveBundle.baseBundleName)
   }
@@ -295,12 +295,16 @@ internal fun processOverrideTextNode(
   }
 }
 
+/**
+ * @param hasBundle whether the element declares a resource bundle, so the misconfiguration is reported without loading it
+ */
 @Suppress("HardCodedStringLiteral")
 internal fun processSynonymNode(
   action: AnAction,
   element: XmlElement,
   module: IdeaPluginDescriptor,
   bundleSupplier: () -> ResourceBundle?,
+  hasBundle: Boolean,
 ) {
   val text = element.attributes.get(TEXT_ATTR_NAME)
   if (!text.isNullOrEmpty()) {
@@ -308,8 +312,9 @@ internal fun processSynonymNode(
   }
   else {
     val key = element.attributes.get(KEY_ATTR_NAME)
-    if (key != null && bundleSupplier() != null) {
-      action.addSynonym { BundleBase.message(bundleSupplier()!!, key) }
+    if (key != null && hasBundle) {
+      // the resource bundle is loaded when the synonym is read, not while the actions are registered
+      action.addSynonym { bundleSupplier()?.let { BundleBase.message(it, key) } ?: "" }
     }
     else {
       reportActionManagerError(module, "Can't process synonym: neither text nor resource bundle key is specified")
@@ -317,10 +322,9 @@ internal fun processSynonymNode(
   }
 }
 
+// the resource bundle is loaded when the separator text is read, not while the actions are registered
 internal fun createSeparator(bundleSupplier: () -> ResourceBundle?, key: String): Separator {
-  val bundle = bundleSupplier()
-  val text = if (bundle == null) null else AbstractBundle.messageOrNull(bundle, key)
-  return if (text == null) Separator.getInstance() else Separator(text)
+  return Separator { bundleSupplier()?.let { AbstractBundle.messageOrNull(it, key) } }
 }
 
 internal fun getReferenceActionId(element: XmlElement): String? {
@@ -372,8 +376,8 @@ internal fun configureGroupDescriptionAndIcon(
   className: String?,
 ) {
   // don't override value which was set in API with empty value from xml descriptor
-  presentation.setFallbackPresentationText {
-    computeActionText(bundleSupplier = bundleSupplier,
+  presentation.initFallbackText {
+    computeActionText(bundle = bundleSupplier(),
                       id = id,
                       elementType = GROUP_ELEMENT_NAME,
                       textValue = textValue,
@@ -382,12 +386,13 @@ internal fun configureGroupDescriptionAndIcon(
 
   // the description is computed when it is read: computing it loads the resource bundle of the plugin.
   // An empty value from the XML descriptor does not override the value set in API
-  presentation.setDescriptionWithFallback {
-    if (bundleSupplier() == null) {
+  presentation.initDescriptionWithFallback {
+    val bundle = bundleSupplier()
+    if (bundle == null) {
       description
     }
     else {
-      computeDescription(bundleSupplier = bundleSupplier,
+      computeDescription(bundle = bundle,
                          id = id,
                          elementType = GROUP_ELEMENT_NAME,
                          descriptionValue = description,
