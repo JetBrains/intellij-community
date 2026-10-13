@@ -40,16 +40,14 @@ internal class GHTokenLoginDialog(
 ) : DialogWrapper(project, parent, false, IdeModalityType.IDE) {
 
   private val cs = parentCs.childScope(javaClass.name, Dispatchers.EDT + ModalityState.stateForComponent(window).asContextElement())
-
-  private val loginPanel = GithubTokenLoginPanel(cs, GithubApiRequestExecutor.Factory.getInstance()) { login, server ->
-    model.isAccountUnique(server, login)
-  }
+  private val loginPanel = GithubTokenLoginPanel(
+    GithubApiRequestExecutor.Factory.getInstance(),
+    isAccountUnique = { login, server -> model.isAccountUnique(server, login) },
+  )
 
   init {
     title = GithubBundle.message("login.to.github")
     setLoginButtonText(GitBundle.message("login.dialog.button.login"))
-    loginPanel.setTokenUi()
-
     init()
   }
 
@@ -65,7 +63,7 @@ internal class GHTokenLoginDialog(
 
   override fun createCenterPanel(): JComponent = loginPanel.setPaddingCompensated()
 
-  override fun getPreferredFocusedComponent(): JComponent? = loginPanel.getPreferredFocusableComponent()
+  override fun getPreferredFocusedComponent(): JComponent = loginPanel.getPreferredFocusableComponent()
 
   override fun doValidateAll(): List<ValidationInfo> = loginPanel.doValidateAll()
 

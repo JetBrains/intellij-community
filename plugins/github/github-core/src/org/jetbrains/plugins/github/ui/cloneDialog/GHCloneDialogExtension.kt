@@ -27,6 +27,7 @@ import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
@@ -56,7 +57,7 @@ private class GHCloneDialogExtensionComponent(project: Project, parentCs: Corout
   override fun isAccountHandled(account: GithubAccount): Boolean = account.isGHAccount
 
   override fun createLoginPanel(cs: CoroutineScope, account: GithubAccount?, cancelHandler: () -> Unit): JComponent =
-    GHCloneDialogLoginPanel(cs, account).apply {
+    GHCloneDialogLoginPanel(cs, project, account).apply {
       val chooseLoginUiHandler = { setChooseLoginUi() }
       loginPanel.setCancelHandler(if (getAccounts().isEmpty()) chooseLoginUiHandler else cancelHandler)
     }.also {
@@ -70,10 +71,7 @@ private class GHCloneDialogExtensionComponent(project: Project, parentCs: Corout
     val isExistingAccount = account != null
     return AccountMenuItem.Action(
       message("login.via.github.action"),
-      {
-        switchToLogin(account)
-        getLoginPanel()?.setOAuthLoginUi()
-      },
+      { GHAccountsUtil.loginViaOAuth(account, project, content, GHLoginSource.CLONE) },
       showSeparatorAbove = !isExistingAccount
     )
   }
@@ -92,11 +90,9 @@ private class GHCloneDialogExtensionComponent(project: Project, parentCs: Corout
 
 private class GHCloneDialogLoginPanel(
   cs: CoroutineScope,
-  account: GithubAccount?
-) :
-  JBPanel<GHCloneDialogLoginPanel>(ListLayout.vertical(0)),
-  Disposable {
-
+  private val project: Project,
+  private val account: GithubAccount?,
+) : JBPanel<GHCloneDialogLoginPanel>(ListLayout.vertical(0)), Disposable {
   private val titlePanel =
     simplePanel().apply {
       val title = JBLabel(message("login.to.github"), ComponentStyle.LARGE).apply { font = JBFont.label().biggerOn(5.0f) }
@@ -110,7 +106,11 @@ private class GHCloneDialogLoginPanel(
 
       row {
         cell(HorizontalListPanel().apply {
-          val loginViaGHButton = JButton(message("login.via.github.action")).apply { addActionListener { setOAuthLoginUi() } }
+          val loginViaGHButton = JButton(message("login.via.github.action")).apply {
+            addActionListener {
+              GHAccountsUtil.loginViaOAuth(account, project, this@GHCloneDialogLoginPanel, GHLoginSource.CLONE)
+            }
+          }
           val useTokenLink = ActionLink(CollaborationToolsBundle.message("login.label.use.token")) { setTokenUi() }
 
           add(loginViaGHButton)
@@ -141,14 +141,9 @@ private class GHCloneDialogLoginPanel(
 
   fun setChooseLoginUi() = setContent(chooseLoginUiPanel)
 
-  fun setOAuthLoginUi() {
-    setContent(loginPanel)
-    loginPanel.setOAuthUi()
-  }
-
   fun setTokenUi() {
     setContent(loginPanel)
-    loginPanel.setTokenUi() // after `loginPanel` is set as content to ensure correct focus behavior
+    loginPanel.resetAndFocus() // after `loginPanel` is set as content to ensure correct focus behavior
   }
 
   private fun setContent(content: JComponent) {

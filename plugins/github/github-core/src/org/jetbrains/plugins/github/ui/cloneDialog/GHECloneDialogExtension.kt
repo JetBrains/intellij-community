@@ -74,11 +74,11 @@ private class GHECloneDialogLoginPanel(
       val title = JBLabel(message("login.to.github.enterprise"), ComponentStyle.LARGE).apply { font = JBFont.label().biggerOn(5.0f) }
       addToLeft(title)
     }
-  val loginPanel = CloneDialogLoginPanel(cs, account).apply {
+  val loginPanel = CloneDialogLoginPanel(cs, account, needsWarning = true).apply {
     Disposer.register(this@GHECloneDialogLoginPanel, this)
 
     if (account == null) setServer("", true)
-    setTokenUi(needsWarning = true)
+    resetAndFocus()
   }
 
   init {

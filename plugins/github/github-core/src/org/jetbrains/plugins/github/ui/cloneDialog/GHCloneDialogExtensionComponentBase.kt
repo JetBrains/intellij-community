@@ -76,7 +76,7 @@ import kotlin.properties.Delegates
 private val LOG = logger<GHCloneDialogExtensionComponentBase>()
 
 internal abstract class GHCloneDialogExtensionComponentBase(
-  private val project: Project,
+  protected val project: Project,
   parentCs: CoroutineScope,
   private val accountManager: GHAccountManager
 ) : VcsCloneDialogExtensionComponent() {

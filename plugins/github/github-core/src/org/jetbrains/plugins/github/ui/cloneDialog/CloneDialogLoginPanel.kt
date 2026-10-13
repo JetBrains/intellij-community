@@ -3,8 +3,8 @@ package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -25,14 +25,11 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders.empty
-import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import git4idea.config.GitVcsApplicationSettings
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -52,7 +49,8 @@ import javax.swing.SwingConstants
 
 internal class CloneDialogLoginPanel(
   private val cs: CoroutineScope,
-  private val account: GithubAccount?
+  private val account: GithubAccount?,
+  needsWarning: Boolean = false,
 ) :
   JBPanel<CloneDialogLoginPanel>(ListLayout.vertical(0)),
   Disposable {
@@ -60,14 +58,15 @@ internal class CloneDialogLoginPanel(
   private val accountManager get() = service<GHAccountManager>()
 
   private val errorPanel = VerticalListPanel(10)
-  private val tokenLoginPanel = GithubTokenLoginPanel(cs, GithubApiRequestExecutor.Factory.getInstance()) { name, server ->
-    if (account == null) accountManager.isAccountUnique(server, name) else true
-  }
-  private val inlineCancelPanel = simplePanel()
   private val loginButton = JButton(CollaborationToolsBundle.message("clone.dialog.button.login.mnemonic"))
   private val backLink = LinkLabel<Any?>(IdeBundle.message("button.back"), null).apply {
     verticalAlignment = SwingConstants.CENTER
   }
+  private val tokenLoginPanel = GithubTokenLoginPanel(
+    GithubApiRequestExecutor.Factory.getInstance(),
+    isAccountUnique = { name, server -> if (account == null) accountManager.isAccountUnique(server, name) else true },
+    footer = { buttonPanel(needsWarning) }
+  )
 
   private var errors = emptyList<ValidationInfo>()
   private var loginJob: Job? = null
@@ -99,16 +98,9 @@ internal class CloneDialogLoginPanel(
       null
     )
 
-  fun setTokenUi(needsWarning: Boolean = false) {
-    setupNewUi(false, needsWarning)
-    tokenLoginPanel.setTokenUi()
-  }
-
-  fun setOAuthUi() {
-    setupNewUi(true)
-    tokenLoginPanel.setOAuthUi()
-
-    login()
+  fun resetAndFocus() {
+    clearErrors()
+    tokenLoginPanel.getPreferredFocusableComponent().requestFocus()
   }
 
   fun setServer(path: String, editable: Boolean) = tokenLoginPanel.setServer(path, editable)
@@ -118,22 +110,8 @@ internal class CloneDialogLoginPanel(
   }
 
   private fun buildLayout() {
-    add(HorizontalListPanel().apply {
-      add(tokenLoginPanel)
-      add(inlineCancelPanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { left = scale(6) }) })
-    })
+    add(tokenLoginPanel)
     add(errorPanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { top = 0 }) })
-  }
-
-  private fun setupNewUi(isOAuth: Boolean, needsWarning: Boolean = false) {
-    loginButton.isVisible = !isOAuth
-    backLink.text = if (isOAuth) IdeBundle.message("link.cancel") else IdeBundle.message("button.back")
-
-    tokenLoginPanel.footer = { if (!isOAuth) buttonPanel(needsWarning) } // footer is used to put buttons in 2-nd column - align under text boxes
-    if (isOAuth) inlineCancelPanel.addToCenter(backLink)
-    inlineCancelPanel.isVisible = isOAuth
-
-    clearErrors()
   }
 
   private fun Panel.buttonPanel(needsWarning: Boolean) =
@@ -171,7 +149,7 @@ internal class CloneDialogLoginPanel(
         clearErrors()
       }
       catch (e: Exception) {
-        if (e is CancellationException) throw e
+        rethrowControlFlowException(e)
         clearErrors()
         doValidate()
       }
@@ -181,7 +159,7 @@ internal class CloneDialogLoginPanel(
   private fun logEvent() {
     GHLoginCollector.login(GHLoginData(
       loginSource = GHLoginSource.CLONE,
-      authType = if (tokenLoginPanel.isOAuthUi()) GHAuthType.OAUTH else GHAuthType.TOKEN,
+      authType = GHAuthType.TOKEN,
       serverOffering = GHServerOffering.of(tokenLoginPanel.getServer()),
     ))
   }
