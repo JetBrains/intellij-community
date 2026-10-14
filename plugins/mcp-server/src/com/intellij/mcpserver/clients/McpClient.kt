@@ -189,7 +189,7 @@ abstract class McpClient(
     }
   }
 
-  fun buildScopeHeaders(): Map<String, String>? {
+  open fun buildScopeHeaders(): Map<String, String>? {
     return null
     //val projectPath = (mcpClientInfo.scope as? McpClientInfo.Scope.Project)?.projectPath ?: return null
     //return mapOf(IJ_MCP_SERVER_PROJECT_PATH to projectPath)
