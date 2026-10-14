@@ -21,15 +21,15 @@ class GHAccountManager : AccountManagerBase<GithubAccount, String>(logger<GHAcco
 
   override fun accountsRepository(): AccountsRepository<GithubAccount> = service<GHPersistentAccounts>()
 
-  override fun credentialsRepository() =
+  override fun credentialsRepository(): PasswordSafeCredentialsRepository<GithubAccount, String> =
     PasswordSafeCredentialsRepository<GithubAccount, String>(GithubUtil.SERVICE_DISPLAY_NAME,
                                                              PasswordSafeCredentialsRepository.CredentialsMapper.Simple)
 
   companion object {
-    fun createAccount(name: String, server: GithubServerPath) = GithubAccount(name, server)
+    fun createAccount(name: String, server: GithubServerPath): GithubAccount = GithubAccount(name, server)
   }
 
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   fun isAccountUnique(server: GithubServerPath, accountName: String): Boolean {
     return accountsState.value.none { account: GithubAccount ->
