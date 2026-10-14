@@ -6,7 +6,7 @@ import com.intellij.ide.actions.RecentLocationsAction.getEmptyFileText
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
+import com.intellij.openapi.fileEditor.ex.PlaceInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -22,18 +22,18 @@ import kotlin.math.min
 
 internal class RecentLocationsDataModel(
   private val project: Project,
-  private val placesSupplier: Function<Boolean, List<IdeDocumentHistoryImpl.PlaceInfo>>?,
-  private val placesRemover: ((List<IdeDocumentHistoryImpl.PlaceInfo>) -> Unit)?,
+  private val placesSupplier: Function<Boolean, List<PlaceInfo>>?,
+  private val placesRemover: ((List<PlaceInfo>) -> Unit)?,
 ) {
   private val navigationPlaces: SynchronizedClearableLazy<List<RecentLocationItem>> = calculateItems(project, false)
 
   private val changedPlaces: SynchronizedClearableLazy<List<RecentLocationItem>> = calculateItems(project, true)
 
-  private val navigationPlacesBreadcrumbsMap: Map<IdeDocumentHistoryImpl.PlaceInfo, @Nls String> by lazy {
+  private val navigationPlacesBreadcrumbsMap: Map<PlaceInfo, @Nls String> by lazy {
     collectBreadcrumbs(project, navigationPlaces.value)
   }
 
-  private val changedPlacedBreadcrumbsMap: Map<IdeDocumentHistoryImpl.PlaceInfo, @Nls String> by lazy {
+  private val changedPlacedBreadcrumbsMap: Map<PlaceInfo, @Nls String> by lazy {
     collectBreadcrumbs(project, changedPlaces.value)
   }
 
@@ -41,11 +41,11 @@ internal class RecentLocationsDataModel(
     return if (changed) changedPlaces.value else navigationPlaces.value
   }
 
-  fun getBreadcrumbsMap(changed: Boolean): Map<IdeDocumentHistoryImpl.PlaceInfo, @Nls String> {
+  fun getBreadcrumbsMap(changed: Boolean): Map<PlaceInfo, @Nls String> {
     return if (changed) changedPlacedBreadcrumbsMap else navigationPlacesBreadcrumbsMap
   }
 
-  private fun collectBreadcrumbs(project: Project, items: List<RecentLocationItem>): Map<IdeDocumentHistoryImpl.PlaceInfo, @Nls String> {
+  private fun collectBreadcrumbs(project: Project, items: List<RecentLocationItem>): Map<PlaceInfo, @Nls String> {
     return items
       .asSequence()
       .map(RecentLocationItem::info)
@@ -53,7 +53,7 @@ internal class RecentLocationsDataModel(
   }
 
   @Nls
-  private fun getBreadcrumbs(project: Project, placeInfo: IdeDocumentHistoryImpl.PlaceInfo): String {
+  private fun getBreadcrumbs(project: Project, placeInfo: PlaceInfo): String {
     val rangeMarker = placeInfo.caretPosition
     val fileName = placeInfo.file.name
     if (rangeMarker == null) {
@@ -103,7 +103,7 @@ internal class RecentLocationsDataModel(
     return result
   }
 
-  private fun newLocationItem(place: IdeDocumentHistoryImpl.PlaceInfo): RecentLocationItem? {
+  private fun newLocationItem(place: PlaceInfo): RecentLocationItem? {
     val positionOffset = place.caretPosition
     if (positionOffset == null || !positionOffset.isValid) {
       return null
@@ -205,7 +205,7 @@ internal class RecentLocationsDataModel(
 }
 
 internal data class RecentLocationItem(
-  @JvmField val info: IdeDocumentHistoryImpl.PlaceInfo,
+  @JvmField val info: PlaceInfo,
   @JvmField val text: String,
   @JvmField val linesShift: Int,
   @JvmField val ranges: Array<TextRange>

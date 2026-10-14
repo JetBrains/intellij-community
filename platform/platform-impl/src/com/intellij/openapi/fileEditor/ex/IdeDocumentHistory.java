@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.ex;
 
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -59,22 +58,22 @@ public abstract class IdeDocumentHistory {
   }
 
   @ApiStatus.Internal
-  public abstract List<IdeDocumentHistoryImpl.PlaceInfo> getChangePlaces();
+  public abstract List<PlaceInfo> getChangePlaces();
   @ApiStatus.Internal
-  public abstract List<IdeDocumentHistoryImpl.PlaceInfo> getBackPlaces();
+  public abstract List<PlaceInfo> getBackPlaces();
   @ApiStatus.Internal
-  public abstract List<IdeDocumentHistoryImpl.PlaceInfo> getForwardPlaces();
+  public abstract List<PlaceInfo> getForwardPlaces();
 
   @ApiStatus.Internal
-  public abstract void removeChangePlace(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo);
+  public abstract void removeChangePlace(@NotNull PlaceInfo placeInfo);
   @ApiStatus.Internal
-  public abstract void removeBackPlace(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo);
+  public abstract void removeBackPlace(@NotNull PlaceInfo placeInfo);
 
   @ApiStatus.Internal
-  public abstract void gotoPlaceInfo(@NotNull IdeDocumentHistoryImpl.PlaceInfo info);
+  public abstract void gotoPlaceInfo(@NotNull PlaceInfo info);
 
   @ApiStatus.Internal
-  public abstract void gotoPlaceInfo(@NotNull IdeDocumentHistoryImpl.PlaceInfo info, boolean focusEditor);
+  public abstract void gotoPlaceInfo(@NotNull PlaceInfo info, boolean focusEditor);
 
   @ApiStatus.Internal
   public abstract void onSelectionChanged();
@@ -89,5 +88,5 @@ public abstract class IdeDocumentHistory {
   public abstract void reallyExcludeCurrentCommandAsNavigation();
 
   @ApiStatus.Internal
-  public abstract boolean isSame(@NotNull IdeDocumentHistoryImpl.PlaceInfo first, @NotNull IdeDocumentHistoryImpl.PlaceInfo second);
+  public abstract boolean isSame(@NotNull PlaceInfo first, @NotNull PlaceInfo second);
 }

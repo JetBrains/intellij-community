@@ -36,7 +36,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
+import com.intellij.openapi.fileEditor.ex.PlaceInfo;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -527,7 +527,7 @@ public final class ScratchFileActions {
         toRemove -> removePlaces(project, toRemove));
     }
 
-    private static @NotNull List<IdeDocumentHistoryImpl.PlaceInfo> getPlaces(@NotNull Project project, boolean changed) {
+    private static @NotNull List<PlaceInfo> getPlaces(@NotNull Project project, boolean changed) {
       String path = ScratchFileService.getInstance().getRootPath(ScratchRootType.getInstance());
       VirtualFile rootDir = StandardFileSystems.local().findFileByPath(path);
       if (rootDir == null || !rootDir.exists() || !rootDir.isDirectory()) return Collections.emptyList();
@@ -540,7 +540,7 @@ public final class ScratchFileActions {
           .map(o -> o.getFile()).toSet();
         condition = files::contains;
       }
-      List<IdeDocumentHistoryImpl.PlaceInfo> result = new ArrayList<>();
+      List<PlaceInfo> result = new ArrayList<>();
       VfsUtilCore.visitChildrenRecursively(rootDir, new VirtualFileVisitor<>(VirtualFileVisitor.SKIP_ROOT) {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
@@ -548,7 +548,7 @@ public final class ScratchFileActions {
           Document document = FileDocumentManager.getInstance().getDocument(file);
           if (document == null) return true;
           RangeMarker caret = document.createRangeMarker(0, 0);
-          result.add(new IdeDocumentHistoryImpl.PlaceInfo(file, new TextEditorState(), "text-editor", null, caret));
+          result.add(new PlaceInfo(file, new TextEditorState(), "text-editor", null, caret));
           return result.size() < 1000;
         }
       });
@@ -556,7 +556,7 @@ public final class ScratchFileActions {
       return result;
     }
 
-    private static void removePlaces(@NotNull Project project, @NotNull List<IdeDocumentHistoryImpl.PlaceInfo> toRemove) {
+    private static void removePlaces(@NotNull Project project, @NotNull List<PlaceInfo> toRemove) {
       PsiManager psiManager = PsiManager.getInstance(project);
       List<PsiFile> files = ContainerUtil.mapNotNull(toRemove, o -> psiManager.findFile(o.getFile()));
       DeleteHandler.deletePsiElement(files.toArray(PsiElement.EMPTY_ARRAY), project, false);
