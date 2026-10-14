@@ -31,6 +31,12 @@ import org.jetbrains.annotations.Nullable;
  * @see DumbAware
  */
 public interface FileEditorProvider extends PossiblyDumbAware {
+  /**
+   * @deprecated use {@link com.intellij.openapi.fileEditor.ex.FileEditorProviderManager#getProvider(String)} to locate a specific instance
+   * or {@link com.intellij.openapi.fileEditor.ex.FileEditorProviderManager#getProviderList(Project, VirtualFile)} to get all providers for
+   * a given file
+   */
+  @Deprecated(forRemoval = true)
   ExtensionPointName<FileEditorProvider> EP_FILE_EDITOR_PROVIDER = new ExtensionPointName<>("com.intellij.fileEditorProvider");
   Key<FileEditorProvider> KEY = Key.create("com.intellij.fileEditorProvider");
 
