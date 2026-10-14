@@ -1,0 +1,18 @@
+abstract class Base<T>(t: T)
+
+class Foo(
+    t: String,
+    bool: Boolean,
+) : Base<String>(t) {
+    protected val bool: Boolean = bool
+
+    init {
+        init()
+    }
+
+    fun canInlineThisOnly() = bool
+
+    init {
+        init()
+    }
+}

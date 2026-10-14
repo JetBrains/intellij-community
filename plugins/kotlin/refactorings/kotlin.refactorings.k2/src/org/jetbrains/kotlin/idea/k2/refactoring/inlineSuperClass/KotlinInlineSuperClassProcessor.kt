@@ -124,6 +124,7 @@ internal class KotlinInlineSuperClassProcessor(
         val usages = refUsages.get()
         val (unsupported, conflicts) = myProject.runSynchronouslyWithProgress(KotlinBundle.message("inline.super.class.detecting.conflicts"), true) {
             runReadActionBlocking {
+                markConstructorParameterReferences()
                 val unsupported = unsupportedReason(usages)
                 if (unsupported != null) return@runReadActionBlocking unsupported to null
                 analyze(sourceClass) {
@@ -235,7 +236,6 @@ internal class KotlinInlineSuperClassProcessor(
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
         val marked = ArrayList<KtElement>()
-        markConstructorParameterReferences()
         val sourceThisExpressions = sourceClass.collectDescendantsOfType<KtThisExpression> {
                 it.getLabelName() != null && it.instanceReference.mainReference.resolve() == sourceClass
             }
@@ -338,12 +338,15 @@ internal class KotlinInlineSuperClassProcessor(
         val properties = LinkedHashMap<KtParameter, KtProperty>()
         var needsArgumentStorage = false
 
+        val targetParameters = target.primaryConstructor?.valueParameters.orEmpty()
         for ((superParameter, argument) in retrieveSuperArgumentsFromCall(call, parameters)) {
             val value = substituteConstructorParameters(argument.copy() as KtExpression, arguments) as KtExpression
             val parameterType = substitutor.substitute(superParameter.typeReference!!.type)
-            if (value is KtConstantExpression || value is KtStringTemplateExpression && !value.hasInterpolation()) {
+            val isForwardedParameter = argument is KtSimpleNameExpression &&
+                    argument.resolveSuccessfulSymbol()?.psi in targetParameters
+            if (value is KtConstantExpression || value is KtStringTemplateExpression && !value.hasInterpolation() || isForwardedParameter) {
                 val keepProperty = superParameter.hasValOrVar() && (
-                        superParameter.isMutable || superParameter.modifierList != null ||
+                        isForwardedParameter || superParameter.isMutable || superParameter.modifierList != null ||
                                 ReferencesSearch.search(superParameter).any {
                                     val element = it.element
                                     val parent = element.parent

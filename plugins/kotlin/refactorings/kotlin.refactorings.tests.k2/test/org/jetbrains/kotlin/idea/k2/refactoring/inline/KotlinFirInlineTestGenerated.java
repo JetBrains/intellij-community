@@ -2943,6 +2943,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("testData/inline/superClass/constructorSuperProperty.kt");
         }
 
+        @TestMetadata("constructorSuperclass.kt")
+        public void testConstructorSuperclass() throws Exception {
+            runTest("testData/inline/superClass/constructorSuperclass.kt");
+        }
+
         @TestMetadata("constructorSuperclassArgument.kt")
         public void testConstructorSuperclassArgument() throws Exception {
             runTest("testData/inline/superClass/constructorSuperclassArgument.kt");
