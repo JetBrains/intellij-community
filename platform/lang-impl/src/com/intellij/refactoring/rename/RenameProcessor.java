@@ -393,6 +393,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   protected @Nullable RefactoringEventData getBeforeData() {
     final RefactoringEventData data = new RefactoringEventData();
     data.addElement(myPrimaryElement);
+    data.addRenames(myAllRenames);
     return data;
   }
 

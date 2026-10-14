@@ -396,14 +396,18 @@ f:com.intellij.refactoring.listeners.RefactoringEventData
 - sf:CONFLICTS_KEY:com.intellij.openapi.util.Key
 - sf:PSI_ELEMENT_ARRAY_KEY:com.intellij.openapi.util.Key
 - sf:PSI_ELEMENT_KEY:com.intellij.openapi.util.Key
+- sf:RENAMES_KEY:com.intellij.openapi.util.Key
 - sf:STRING_PROPERTIES:com.intellij.openapi.util.Key
+- sf:TARGET_ELEMENT_KEY:com.intellij.openapi.util.Key
 - sf:USAGE_INFOS_KEY:com.intellij.openapi.util.Key
 - <init>():V
 - addElement(com.intellij.psi.PsiElement):V
 - addElements(java.util.Collection):V
 - addElements(com.intellij.psi.PsiElement[]):V
 - addMembers(java.lang.Object[],com.intellij.util.Function):V
+- addRenames(java.util.Map):V
 - addStringProperties(java.lang.String[]):V
+- addTargetElement(com.intellij.psi.PsiElement):V
 - addUsages(java.util.Collection):V
 com.intellij.refactoring.listeners.RefactoringEventListener
 - sf:REFACTORING_EVENT_TOPIC:com.intellij.util.messages.Topic
