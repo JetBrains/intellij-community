@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
 import com.intellij.idea.TestFor
+import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
@@ -35,6 +36,7 @@ internal class PluginLoadingDependencyProblemTest {
 
     val problem = assertDependencyProblem(pluginSet, "not.installed", "missing")
     assertThat(problem.disabledDependencyId).isNull()
+    assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginId.getId("missing")))
   }
 
   @Test
@@ -44,7 +46,8 @@ internal class PluginLoadingDependencyProblemTest {
       dependencies { plugin("missing") }
     })
 
-    assertDependencyProblem(pluginSet, "not.installed", "missing")
+    val problem = assertDependencyProblem(pluginSet, "not.installed", "missing")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginId.getId("missing")))
   }
 
   @Test
@@ -106,7 +109,8 @@ internal class PluginLoadingDependencyProblemTest {
       },
     )
 
-    assertDependencyProblem(pluginSet, "not.installed", "dependency.alias")
+    val problem = assertDependencyProblem(pluginSet, "not.installed", "dependency.alias")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginId.getId("dependency.alias")))
   }
 
   @Test
@@ -133,7 +137,8 @@ internal class PluginLoadingDependencyProblemTest {
       dependencies { module("missing.module") }
     })
 
-    assertDependencyProblem(pluginSet, "not.installed", "missing.module")
+    val problem = assertDependencyProblem(pluginSet, "not.installed", "missing.module")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.ContentModule(PluginModuleId("missing.module", "jetbrains")))
   }
 
   @Test
@@ -147,7 +152,8 @@ internal class PluginLoadingDependencyProblemTest {
       }
     })
 
-    assertDependencyProblem(pluginSet, "not.installed", "missing.module")
+    val problem = assertDependencyProblem(pluginSet, "not.installed", "missing.module")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.ContentModule(PluginModuleId("missing.module", "jetbrains")))
   }
 
   @Test
@@ -170,7 +176,8 @@ internal class PluginLoadingDependencyProblemTest {
     val affected = pluginSet.allPlugins.single { it.pluginId.idString == "affected" }
     assertThat(pluginSet.resolvedPluginSet.getExclusionReason(affected)).isInstanceOf(DependencyIsNotVisible::class.java)
     assertThat(pluginSet.enabledPlugins.map { it.pluginId }).contains(PluginId.getId("dependency"))
-    assertDependencyProblem(pluginSet, "not.installed", "dependency")
+    val problem = assertDependencyProblem(pluginSet, "not.installed", "dependency")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.ContentModule(PluginModuleId("dependency.private", "jetbrains")))
   }
 
   @Test
@@ -192,7 +199,8 @@ internal class PluginLoadingDependencyProblemTest {
       },
     )
 
-    assertDependencyProblem(pluginSet, "failed.to.load", "IDEA CORE")
+    val problem = assertDependencyProblem(pluginSet, "failed.to.load", "IDEA CORE")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.ContentModule(PluginModuleId("core.bridge", "jetbrains")))
   }
 
   private fun assertDependencyProblem(pluginSet: PluginSet, messageKind: String, dependencyText: String): PluginLoadingProblem {

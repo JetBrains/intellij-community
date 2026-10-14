@@ -180,11 +180,16 @@ internal object PluginLoadingProblemAnalyzer {
     fun processRootCause(exclusionReason: DescriptorExclusionReason) {
       when (exclusionReason) {
         is DependencyIsNotResolved -> {
-          registerLoadingError(pluginDependencyIsNotInstalled(plugin, exclusionReason.dependency.getIdString(), shouldNotifyUser))
+          registerLoadingError(pluginDependencyIsNotInstalled(plugin, exclusionReason.dependency, shouldNotifyUser))
         }
         is DependencyIsNotVisible -> {
           // TODO bad mapping
-          registerLoadingError(pluginDependencyIsNotInstalled(plugin, exclusionReason.dependencyModule.pluginId.idString, shouldNotifyUser))
+          val dependency = when (val module = exclusionReason.dependencyModule) {
+            is PluginMainDescriptor -> DependencyRef.Plugin(module.pluginId)
+            is ContentModuleDescriptor -> DependencyRef.ContentModule(module.moduleId)
+          }
+          registerLoadingError(pluginDependencyIsNotInstalled(plugin, dependency, shouldNotifyUser,
+                                                             exclusionReason.dependencyModule.pluginId.idString))
         }
         is ExcludedByEnvironmentConfiguration -> when (val reason = exclusionReason.reason) {
           is UnsuitableProductModeModuleUnavailabilityReason ->
@@ -247,8 +252,15 @@ internal object PluginLoadingProblemAnalyzer {
           is PluginIsIncompatibleWithProduct,
           is PluginVersionIsSuperseded,
           is PartOfDependencyCycle,
-          is PartOfRuntimeModuleGroupDependencyCycle ->
-            registerLoadingError(pluginDependencyCannotBeLoaded(plugin, excludedRequiredDescriptor, shouldNotifyUser))
+          is PartOfRuntimeModuleGroupDependencyCycle -> {
+            val dependency = if (excludedRequiredDescriptor is ContentModuleDescriptor) {
+              DependencyRef.ContentModule(excludedRequiredDescriptor.moduleId)
+            }
+            else {
+              DependencyRef.Plugin(excludedRequiredDescriptor.pluginId)
+            }
+            registerLoadingError(pluginDependencyCannotBeLoaded(plugin, dependency, shouldNotifyUser, excludedRequiredDescriptor))
+          }
           is ChainedExclusion -> error("expected a root cause: $rootCause")
         }
       }
@@ -259,11 +271,6 @@ internal object PluginLoadingProblemAnalyzer {
     else {
       processRootCause(exclusionReason)
     }
-  }
-
-  private fun DependencyRef.getIdString(): String = when (this) {
-    is DependencyRef.ContentModule -> moduleId.name
-    is DependencyRef.Plugin -> pluginId.idString
   }
 
 }

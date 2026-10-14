@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
+import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
@@ -49,12 +50,14 @@ internal class PluginLoadingProblemTest {
       detailedMessage: String,
       shouldNotifyUser: Boolean = true,
       disabledDependencyId: PluginId? = null,
+      dependency: DependencyRef? = null,
     ): DynamicTest = DynamicTest.dynamicTest(name) {
       assertThat(problem.plugin).isSameAs(affected)
       assertThat(problem.shortMessage).isEqualTo(shortMessage)
       assertThat(problem.detailedMessage).isEqualTo(detailedMessage)
       assertThat(problem.shouldNotifyUser).isEqualTo(shouldNotifyUser)
       assertThat(problem.disabledDependencyId).isEqualTo(disabledDependencyId)
+      assertThat(problem.dependency).isEqualTo(dependency)
       assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
       assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
     }
@@ -62,10 +65,11 @@ internal class PluginLoadingProblemTest {
     return listOf(
       case("disabled dependency", pluginDependencyIsDisabled(affected, dependencyId, true),
            message("short.depends.on.disabled.plugin", dependencyId),
-           message("long.depends.on.disabled.plugin", "Affected", dependencyId), disabledDependencyId = dependencyId),
+           message("long.depends.on.disabled.plugin", "Affected", dependencyId), disabledDependencyId = dependencyId,
+           dependency = DependencyRef.Plugin(dependencyId)),
       case("hidden disabled dependency", pluginDependencyIsDisabled(affected, dependencyId, false),
            message("short.depends.on.disabled.plugin", dependencyId),
-           message("long.depends.on.disabled.plugin", "Affected", dependencyId), false, dependencyId),
+           message("long.depends.on.disabled.plugin", "Affected", dependencyId), false, dependencyId, DependencyRef.Plugin(dependencyId)),
       case("custom loading disabled", nonBundledPluginsAreExplicitlyDisabled(affected),
            message("short.custom.plugin.loading.disabled"),
            message("long.custom.plugin.loading.disabled", "Affected"), false),
@@ -97,12 +101,13 @@ internal class PluginLoadingProblemTest {
       case("incompatible plugin", pluginIsIncompatibleWithAnotherPlugin(affected, dependency, false),
            message("short.ide.contains.conflicting.module", dependencyId),
            message("long.ide.contains.conflicting.module", "Affected", dependencyId), false),
-      case("failed dependency", pluginDependencyCannotBeLoaded(affected, dependency, true),
+      case("failed dependency", pluginDependencyCannotBeLoaded(affected, DependencyRef.Plugin(dependencyId), true, dependency),
            message("short.depends.on.failed.to.load.plugin", "Dependency"),
-           message("long.depends.on.failed.to.load.plugin", "Affected", "Dependency")),
-      case("absent dependency", pluginDependencyIsNotInstalled(affected, "missing", false),
+           message("long.depends.on.failed.to.load.plugin", "Affected", "Dependency"), dependency = DependencyRef.Plugin(dependencyId)),
+      case("absent dependency", pluginDependencyIsNotInstalled(affected, DependencyRef.Plugin(PluginId.getId("missing")), false),
            message("short.depends.on.not.installed.plugin", "missing"),
-           message("long.depends.on.not.installed.plugin", "Affected", "missing"), false),
+           message("long.depends.on.not.installed.plugin", "Affected", "missing"), false,
+           dependency = DependencyRef.Plugin(PluginId.getId("missing"))),
       case("explicit subset", pluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins(affected),
            message("short.not.required.for.explicitly.configured.subset"),
            message("long.not.required.for.explicitly.configured.subset", "Affected"), false),
@@ -127,9 +132,23 @@ internal class PluginLoadingProblemTest {
     assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.EXPECTED)
     assertThat(problem.shouldNotifyUser).isFalse()
     assertThat(problem.disabledDependencyId).isEqualTo(PluginManagerCore.ULTIMATE_PLUGIN_ID)
+    assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginManagerCore.ULTIMATE_PLUGIN_ID))
     descriptor.name = "After"
     assertThat(problem.detailedMessage)
       .isEqualTo(CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", "After", PluginManagerCore.ULTIMATE_PLUGIN_ID))
+  }
+
+  @Test
+  fun `module dependency data retains its namespace`() {
+    val descriptor = PluginNode(PluginId.getId("affected")).apply { name = "Affected" }
+    for (namespace in listOf("first", "second")) {
+      val dependency = DependencyRef.ContentModule(PluginModuleId("module.name", namespace))
+      val problem = pluginDependencyIsNotInstalled(descriptor, dependency, true)
+
+      assertThat(problem.dependency).isEqualTo(dependency)
+      assertThat(problem.shortMessage)
+        .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin", "module.name"))
+    }
   }
 
   @Test

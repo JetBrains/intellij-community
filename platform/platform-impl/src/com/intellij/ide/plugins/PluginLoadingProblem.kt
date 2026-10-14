@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
 import com.intellij.idea.AppMode
+import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsContexts
@@ -24,6 +25,7 @@ class PluginLoadingProblem internal constructor(
   val productMode: ProductMode? = null,
   val unavailableModuleId: PluginModuleId? = null,
   val dependencyPluginId: PluginId? = null,
+  val dependency: DependencyRef? = null,
   private val detailedMessageSupplier: () -> @NlsContexts.DetailedDescription String,
   private val shortMessageSupplier: () -> @NlsContexts.Label String,
 ) {
@@ -95,6 +97,7 @@ internal fun pluginDependencyIsDisabled(
   plugin = plugin,
   shouldNotifyUser = shouldNotifyUser,
   disabledDependencyId = dependencyId,
+  dependency = DependencyRef.Plugin(dependencyId),
   detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", plugin.name, dependencyId) },
   shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyId) },
 )
@@ -105,6 +108,7 @@ internal fun pluginRequiresDisabledUltimate(plugin: IdeaPluginDescriptor): Plugi
   severity = PluginLoadingProblem.Severity.EXPECTED,
   shouldNotifyUser = false,
   disabledDependencyId = PluginManagerCore.ULTIMATE_PLUGIN_ID,
+  dependency = DependencyRef.Plugin(PluginManagerCore.ULTIMATE_PLUGIN_ID),
   detailedMessageSupplier = {
     CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", plugin.name, PluginManagerCore.ULTIMATE_PLUGIN_ID)
   },
@@ -305,14 +309,19 @@ internal fun pluginIsIncompatibleWithAnotherPlugin(
 
 internal fun pluginDependencyCannotBeLoaded(
   plugin: IdeaPluginDescriptor,
-  dependency: IdeaPluginDescriptor,
+  dependency: DependencyRef,
   shouldNotifyUser: Boolean,
+  dependencyDescriptor: IdeaPluginDescriptor? = null,
 ): PluginLoadingProblem {
-  fun dependencyName(): @NlsSafe String = dependency.name ?: dependency.pluginId.idString
+  fun dependencyName(): @NlsSafe String = dependencyDescriptor?.name ?: dependency.idText()
   return PluginLoadingProblem(
     plugin = plugin,
     shouldNotifyUser = shouldNotifyUser,
-    dependencyPluginId = dependency.pluginId,
+    dependencyPluginId = dependencyDescriptor?.pluginId ?: when (dependency) {
+      is DependencyRef.Plugin -> dependency.pluginId
+      is DependencyRef.ContentModule -> null
+    },
+    dependency = dependency,
     detailedMessageSupplier = {
       CoreBundle.message("plugin.loading.error.long.depends.on.failed.to.load.plugin", plugin.name, dependencyName())
     },
@@ -322,14 +331,21 @@ internal fun pluginDependencyCannotBeLoaded(
 
 internal fun pluginDependencyIsNotInstalled(
   plugin: IdeaPluginDescriptor,
-  dependencyNameOrId: @NlsSafe String,
+  dependency: DependencyRef,
   shouldNotifyUser: Boolean,
+  dependencyNameOrId: @NlsSafe String = dependency.idText(),
 ): PluginLoadingProblem = PluginLoadingProblem(
   plugin = plugin,
   shouldNotifyUser = shouldNotifyUser,
+  dependency = dependency,
   detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.depends.on.not.installed.plugin", plugin.name, dependencyNameOrId) },
   shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin", dependencyNameOrId) },
 )
+
+private fun DependencyRef.idText(): @NlsSafe String = when (this) {
+  is DependencyRef.Plugin -> pluginId.idString
+  is DependencyRef.ContentModule -> moduleId.name
+}
 
 internal fun pluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins(
   plugin: IdeaPluginDescriptor,
