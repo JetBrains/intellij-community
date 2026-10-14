@@ -19,7 +19,7 @@ internal object PluginLoadingProblemAnalyzer {
     val resolvedPluginSet = pluginSet.resolvedPluginSet
     val excludedFromCandidateSubset = pluginSet.excludedFromCandidateSubset
     val candidateSubset = resolvedPluginSet.candidateSet
-    val discoveredPluginSet = AmbiguousPluginSet.build(discoveredPlugins.pluginLists.flatMap { it.plugins })
+    val excludedPluginSet = AmbiguousPluginSet.build(excludedFromCandidateSubset.keys.toList())
 
     val incompletePlugins = HashMap<PluginId, PluginMainDescriptor>()
     for (pluginList in discoveredPlugins.pluginLists) {
@@ -70,7 +70,7 @@ internal object PluginLoadingProblemAnalyzer {
           exclusionReason,
           plugin,
           resolvedPluginSet = resolvedPluginSet,
-          discoveredPluginSet = discoveredPluginSet,
+          excludedPluginSet = excludedPluginSet,
           productMode = initContext.productMode,
           registerLoadingError = ::registerLoadingError,
         )
@@ -174,7 +174,7 @@ internal object PluginLoadingProblemAnalyzer {
     exclusionReason: DescriptorExclusionReason,
     plugin: PluginMainDescriptor,
     resolvedPluginSet: ResolvedPluginSet,
-    discoveredPluginSet: AmbiguousPluginSet,
+    excludedPluginSet: AmbiguousPluginSet,
     productMode: ProductMode,
     registerLoadingError: (PluginLoadingProblem) -> Unit,
   ) {
@@ -184,12 +184,13 @@ internal object PluginLoadingProblemAnalyzer {
       when (exclusionReason) {
         is DependencyIsNotResolved -> when (val dependency = exclusionReason.dependency) {
           is DependencyRef.Plugin -> {
-            val descriptors = discoveredPluginSet.resolvePluginId(dependency.pluginId).toList()
-            registerLoadingError(if (descriptors.isEmpty()) {
+            val descriptor = resolvedPluginSet.candidateSet.resolvePluginId(dependency.pluginId)
+                             ?: excludedPluginSet.resolvePluginId(dependency.pluginId).firstOrNull()
+            registerLoadingError(if (descriptor == null) {
               pluginDependencyIsNotInstalled(plugin, dependency, shouldNotifyUser)
             }
             else {
-              pluginDependencyCannotBeLoaded(plugin, dependency, shouldNotifyUser, descriptors.singleOrNull()?.getMainDescriptor())
+              pluginDependencyCannotBeLoaded(plugin, dependency, shouldNotifyUser, descriptor.getMainDescriptor())
             })
           }
           is DependencyRef.ContentModule ->

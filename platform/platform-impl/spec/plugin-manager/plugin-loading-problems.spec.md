@@ -80,9 +80,12 @@ Remote development extends these rules with side aggregation and action routing.
 - For chains without disabled roots or product mode exclusions, the explanation refers to the first required plugin outside the affected plugin.
 
 - For a chain within one plugin, analysis uses the terminal exclusion when it has a supported explanation.
-- An unresolved plugin dependency without a cross-plugin boundary uses the installation message only when discovery contains no descriptor for its ID or alias.
-- A discovered plugin excluded during selection uses the failed dependency message and its available name.
-- An ambiguous discovered alias uses the failed dependency message with the alias as a fallback. It does not select an arbitrary owner name.
+- Without a cross-plugin boundary, an unresolved plugin dependency uses the installation message only when no known provider exists.
+- Known providers include candidates and selection exclusions for the dependency ID or alias.
+- A plugin excluded during selection uses the failed dependency message and its available name.
+- Several excluded providers for one ID or alias use the first excluded provider's name and owner ID.
+- Dependency explanations retain aliases from superseded bundled plugins when their updates omit those aliases.
+- An excluded content module alias uses its plugin owner's name and ID.
 - An unresolved content module without a cross-plugin boundary still uses the installation message with its module name.
 - For an invisible dependency without a cross-plugin boundary, that message uses the dependency module's plugin ID.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingDependencyProblemTest.kt (
@@ -91,7 +94,10 @@ Remote development extends these rules with side aggregation and action routing.
     `an incompatible installed dependency uses its name`;
     `an installed dependency excluded by an ID conflict reports a failed plugin`;
     `an incompatible installed alias reports its failed owner`;
-    `an ambiguous installed alias keeps its ID as a failed dependency`;
+    `an ambiguous installed alias uses its first excluded owner`;
+    `a bundled dependency and its excluded update use the first excluded descriptor`;
+    `an alias removed by an update retains its excluded bundled owner`;
+    `an excluded content module alias retains its plugin owner`;
     `a broken installed dependency uses its name`;
     `a missing module uses the plugin installation message`;
     `a required module keeps its missing dependency explanation`;

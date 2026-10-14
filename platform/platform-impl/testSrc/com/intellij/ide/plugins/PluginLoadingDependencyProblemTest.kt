@@ -117,7 +117,7 @@ internal class PluginLoadingDependencyProblemTest {
   }
 
   @Test
-  fun `an ambiguous installed alias keeps its ID as a failed dependency`() {
+  fun `an ambiguous installed alias uses its first excluded owner`() {
     val pluginSet = buildPluginSet(
       plugin("first") {
         name = "First"
@@ -133,8 +133,94 @@ internal class PluginLoadingDependencyProblemTest {
       },
     )
 
-    val problem = assertDependencyProblem(pluginSet, "failed.to.load", "shared.alias")
+    val problem = assertDependencyProblem(pluginSet, "failed.to.load", "First")
     assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginId.getId("shared.alias")))
+    assertThat(problem.dependencyPluginId).isEqualTo(PluginId.getId("first"))
+  }
+
+  @Test
+  fun `a bundled dependency and its excluded update use the first excluded descriptor`() {
+    val pluginSet = buildPluginSetWithBundledUpdate(
+      plugin("dependency") {
+        name = "Bundled Dependency"
+        version = "1.0"
+        pluginAliases = listOf("shared.alias")
+      },
+      plugin("dependency") {
+        name = "Updated Dependency"
+        version = "2.0"
+        pluginAliases = listOf("shared.alias")
+      },
+      plugin("conflicting") {
+        pluginAliases = listOf("shared.alias")
+      },
+      plugin("affected") {
+        name = "Affected"
+        depends("dependency")
+      },
+    )
+
+    val descriptors = pluginSet.input.discoveryResult.pluginLists.single().plugins.filter { it.pluginId.idString == "dependency" }
+    assertThat(descriptors).hasSize(2)
+    assertThat(descriptors.map { it.isBundled }).containsExactly(true, false)
+    assertThat(pluginSet.excludedFromCandidateSubset.keys).containsAll(descriptors)
+    assertThat(pluginSet.resolvedPluginSet.candidateSet.resolvePluginId(PluginId.getId("dependency"))).isNull()
+    val problem = assertDependencyProblem(pluginSet, "failed.to.load", "Bundled Dependency")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginId.getId("dependency")))
+    assertThat(problem.dependencyPluginId).isEqualTo(PluginId.getId("dependency"))
+  }
+
+  @Test
+  fun `an alias removed by an update retains its excluded bundled owner`() {
+    val pluginSet = buildPluginSetWithBundledUpdate(
+      plugin("dependency") {
+        name = "Bundled Dependency"
+        version = "1.0"
+        pluginAliases = listOf("dependency.alias")
+      },
+      plugin("dependency") {
+        name = "Updated Dependency"
+        version = "2.0"
+      },
+      plugin("affected") {
+        name = "Affected"
+        depends("dependency.alias")
+      },
+    )
+
+    assertThat(pluginSet.enabledPlugins.map { it.name }).contains("Updated Dependency")
+    assertThat(pluginSet.resolvedPluginSet.candidateSet.resolvePluginId(PluginId.getId("dependency.alias"))).isNull()
+    val problem = assertDependencyProblem(pluginSet, "failed.to.load", "Bundled Dependency")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginId.getId("dependency.alias")))
+    assertThat(problem.dependencyPluginId).isEqualTo(PluginId.getId("dependency"))
+  }
+
+  @Test
+  fun `an excluded content module alias retains its plugin owner`() {
+    val pluginSet = buildPluginSet(
+      plugin("dependency") {
+        name = "Dependency"
+        sinceBuild = "264"
+        pluginAliases = listOf("shared.alias")
+        content(namespace = "jetbrains") {
+          module("dependency.module") {
+            pluginAliases = listOf("dependency.alias")
+          }
+        }
+      },
+      plugin("preferred") {
+        pluginAliases = listOf("shared.alias")
+      },
+      plugin("affected") {
+        name = "Affected"
+        depends("dependency.alias")
+      },
+    )
+
+    assertThat(pluginSet.resolvedPluginSet.candidateSet.resolvePluginId(PluginId.getId("dependency.alias"))).isNull()
+    val problem = assertDependencyProblem(pluginSet, "failed.to.load", "Dependency")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginId.getId("dependency.alias")))
+    assertThat(problem.dependencyPluginId).isEqualTo(PluginId.getId("dependency"))
   }
 
   @Test
@@ -253,6 +339,24 @@ internal class PluginLoadingDependencyProblemTest {
     return PluginSetTestBuilder.fromPath(tempDir)
       .withProductBuildNumber(checkNotNull(BuildNumber.fromString("IU-263.1")))
       .apply(configure)
+      .build(configureClassLoaders = false)
+  }
+
+  private fun buildPluginSetWithBundledUpdate(
+    bundledPlugin: PluginSpec,
+    updatedPlugin: PluginSpec,
+    vararg plugins: PluginSpec,
+  ): PluginSet {
+    val bundledPath = bundledPlugin.installAt(tempDir.resolve("bundled"))
+    val updatedPath = updatedPlugin.installAt(tempDir.resolve("updates"))
+    val otherPaths = plugins.map { it.installAt(tempDir) }
+    return PluginSetTestBuilder.fromDescriptors { loadingContext ->
+      listOf(
+        checkNotNull(loadDescriptorFromFileOrDirInTests(bundledPath, loadingContext, isBundled = true)),
+        checkNotNull(loadDescriptorFromFileOrDirInTests(updatedPath, loadingContext, isBundled = false)),
+      ) + otherPaths.map { checkNotNull(loadDescriptorFromFileOrDirInTests(it, loadingContext, isBundled = false)) }
+    }
+      .withProductBuildNumber(checkNotNull(BuildNumber.fromString("IU-263.1")))
       .build(configureClassLoaders = false)
   }
 }
