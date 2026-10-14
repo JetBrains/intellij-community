@@ -12,6 +12,7 @@ import com.intellij.testFramework.MockFontLayoutService
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertNothingLogged
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.intellij.plugins.markdown.MarkdownTestingUtil.paintInlay
 import org.intellij.plugins.markdown.editor.livepreview.enableLivePreview
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
@@ -86,14 +87,17 @@ class MarkdownTableInlayHintsPassTest : BasePlatformTestCase() {
     val reconciler = requireNotNull(MarkdownLivePreviewReconciler.getOrCreate(myFixture.editor))
     reconciler.publishSpecs(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
     val bar = requireNotNull(getInlay())
+    paintInlay(bar)
     val hiddenWidth = bar.widthInPixels
 
     myFixture.editor.caretModel.moveToOffset(content.indexOf("**aa**") + 2)
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    paintInlay(bar)
     assertTrue("the mounted bar must include revealed table-cell markers", bar.widthInPixels > hiddenWidth)
 
     myFixture.editor.caretModel.moveToOffset(content.length)
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    paintInlay(bar)
     assertEquals(hiddenWidth, bar.widthInPixels)
     assertEquals(content, myFixture.editor.document.text)
   }
@@ -125,6 +129,7 @@ class MarkdownTableInlayHintsPassTest : BasePlatformTestCase() {
   private fun getInlayWidth(): Int {
     val bar = requireNotNull(getInlay()) { "the table must have a horizontal bar" }
     assertEquals("HorizontalBarPresentation", bar.renderer.toString())
+    paintInlay(bar)
     return bar.widthInPixels
   }
 
