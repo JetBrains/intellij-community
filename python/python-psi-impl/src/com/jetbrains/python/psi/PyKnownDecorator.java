@@ -202,5 +202,4 @@ public class PyKnownDecorator {
   public boolean isStaticMethod() {
     return myIsStaticMethod;
   }
-
 }

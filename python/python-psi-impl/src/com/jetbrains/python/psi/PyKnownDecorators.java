@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +18,6 @@ import java.util.function.Predicate;
  *
  * @see PyKnownDecoratorUtil#knownDecoratorsOf(PyDecorator, com.jetbrains.python.psi.types.TypeEvalContext)
  */
-@ApiStatus.NonExtendable
 public final class PyKnownDecorators {
   public static final PyKnownDecorators NONE = new PyKnownDecorators(List.of());
 
@@ -54,8 +52,10 @@ public final class PyKnownDecorators {
     return ContainerUtil.exists(myCandidates, trait::test);
   }
 
+  /** Only {@link PyElementKnownDecorators#findLastWithTrait} needs a candidate rather than an answer about one. */
+  @ApiStatus.Internal
   public @Nullable PyKnownDecorator findWithTrait(@NotNull Predicate<PyKnownDecorator> trait) {
-    return ContainerUtil.find(myCandidates, (Condition<PyKnownDecorator>)trait::test);
+    return ContainerUtil.find(myCandidates, trait::test);
   }
 
   @ApiStatus.Internal

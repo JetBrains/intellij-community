@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.codeInsight.decorator.PyDecoratedFunctionTypeProvider;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyElementKnownDecorators;
 import com.jetbrains.python.psi.PyFile;
@@ -17,6 +18,7 @@ import com.jetbrains.python.psi.PyKnownDecorator;
 import com.jetbrains.python.psi.PyKnownDecoratorProvider;
 import com.jetbrains.python.psi.PyKnownDecoratorUtil;
 import com.jetbrains.python.psi.PyKnownDecorators;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +38,7 @@ public class PyKnownDecoratorsTest extends PyTestCase {
 
   // Two decorators with one short name and a shared first component: `from faketyping import fakefinal`
   // matches neither fully qualified name, so the short-name fallback yields both as candidates.
-  private static final PyKnownDecorator FAKE_FINAL_TYPED =
+  private static final PyKnownDecorator FAKE_FINAL_ABSTRACT =
     new PyKnownDecorator.Builder("faketyping.a.fakefinal").setAbstract().build();
   private static final PyKnownDecorator FAKE_FINAL_PLAIN =
     new PyKnownDecorator.Builder("faketyping.b.fakefinal").build();
@@ -44,10 +46,12 @@ public class PyKnownDecoratorsTest extends PyTestCase {
   private static final PyKnownDecorator FAKE_SETTER =
     new PyKnownDecorator.Builder("faketyping.setter").build();
 
+  private static final PyKnownDecorator FAKE_SKIPPED_WRAP = new PyKnownDecorator.Builder("a.skippedwrap").build();
+
   public static final class FakeProvider implements PyKnownDecoratorProvider {
     @Override
     public @NotNull Collection<PyKnownDecorator> getKnownDecorators() {
-      return List.of(FAKE_FINAL_TYPED, FAKE_FINAL_PLAIN, FAKE_SETTER);
+      return List.of(FAKE_FINAL_ABSTRACT, FAKE_FINAL_PLAIN, FAKE_SETTER, FAKE_SKIPPED_WRAP);
     }
   }
 
@@ -88,7 +92,7 @@ public class PyKnownDecoratorsTest extends PyTestCase {
       """);
     PyKnownDecorators candidates = PyKnownDecoratorUtil.knownDecoratorsOf(decorator, stubOnlyContext());
 
-    assertTrue("The resolve is ambiguous, so both candidates are expected", candidates.contains(FAKE_FINAL_TYPED));
+    assertTrue("The resolve is ambiguous, so both candidates are expected", candidates.contains(FAKE_FINAL_ABSTRACT));
     assertTrue(candidates.contains(FAKE_FINAL_PLAIN));
     assertTrue("A trait holds when it holds for any candidate, not for all of them",
                candidates.hasTrait(PyKnownDecorator::isAbstract));
@@ -103,7 +107,6 @@ public class PyKnownDecoratorsTest extends PyTestCase {
 
     assertFalse(candidates.isKnown());
     assertFalse(candidates.hasTrait(PyKnownDecorator::isAbstract));
-    assertNull(candidates.findWithTrait(PyKnownDecorator::isAbstract));
   }
 
   // Resolving a property accessor would recurse back into property resolution, so these are never known.
@@ -137,7 +140,6 @@ public class PyKnownDecoratorsTest extends PyTestCase {
       """);
     PyElementKnownDecorators decorators = PyKnownDecoratorUtil.knownDecoratorsOf(function, stubOnlyContext());
 
-    assertTrue(decorators.isEmpty());
     assertTrue("An element with no decorator has no unknown one", decorators.allKnown());
     assertFalse(PyKnownDecoratorUtil.hasUnknownDecorator(function, stubOnlyContext()));
   }
@@ -152,9 +154,8 @@ public class PyKnownDecoratorsTest extends PyTestCase {
       """);
     PyElementKnownDecorators decorators = PyKnownDecoratorUtil.knownDecoratorsOf(function, stubOnlyContext());
 
-    assertFalse(decorators.isEmpty());
     assertFalse(decorators.allKnown());
-    assertTrue("A known decorator is still found among the others", decorators.contains(FAKE_FINAL_TYPED));
+    assertTrue("A known decorator is still found among the others", decorators.contains(FAKE_FINAL_ABSTRACT));
   }
 
   // The size comparison this replaced collapsed two decorators of one short name into a single group
@@ -187,5 +188,23 @@ public class PyKnownDecoratorsTest extends PyTestCase {
     PyKnownDecorator nearest =
       decorators.findLastWithTrait(it -> it.isClassMethod() || it.isStaticMethod());
     assertEquals(PyKnownDecorator.CLASSMETHOD, nearest);
+  }
+
+  @TestFor(classes = PyDecoratedFunctionTypeProvider.class)
+  public void testKnownDecoratorSkipsTypedCallByDefault() {
+    var file = (PyFile)myFixture.configureByText("a.py", """
+      from typing import Callable
+
+      def skippedwrap(fn) -> Callable[[], int]: ...
+
+      @skippedwrap
+      def g() -> str: ...
+
+      expr = g()
+      """);
+    var expr = file.findTopLevelAttribute("expr");
+    assertNotNull(expr);
+
+    assertType("str", expr, TypeEvalContext.codeAnalysis(myFixture.getProject(), file));
   }
 }

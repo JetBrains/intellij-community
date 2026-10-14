@@ -78,7 +78,7 @@ object PyKnownDecoratorUtil {
 
   @Deprecated(
     "Use knownDecoratorsOf(decorator, context). The returned list holds resolve candidates, not facts: " +
-    "aggregate it with any, never with all.",
+    "aggregate it with any, never with all. The returned list is immutable.",
     ReplaceWith("knownDecoratorsOf(decorator, context)")
   )
   @JvmStatic

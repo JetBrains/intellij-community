@@ -17,7 +17,6 @@ import java.util.function.Predicate;
  *
  * @see PyKnownDecoratorUtil#knownDecoratorsOf(PyDecoratable, com.jetbrains.python.psi.types.TypeEvalContext)
  */
-@ApiStatus.NonExtendable
 public final class PyElementKnownDecorators {
   public static final PyElementKnownDecorators NONE = new PyElementKnownDecorators(List.of());
 
@@ -30,11 +29,6 @@ public final class PyElementKnownDecorators {
   @ApiStatus.Internal
   public static @NotNull PyElementKnownDecorators of(@NotNull List<PyKnownDecorators> decorators) {
     return decorators.isEmpty() ? NONE : new PyElementKnownDecorators(List.copyOf(decorators));
-  }
-
-  /** Whether the element carries no decorator at all. */
-  public boolean isEmpty() {
-    return myDecorators.isEmpty();
   }
 
   /** Whether every decorator of the element resolves to a known decorator. True for an element without decorators. */
