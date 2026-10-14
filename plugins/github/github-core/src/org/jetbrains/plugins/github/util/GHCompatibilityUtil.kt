@@ -11,6 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.GHLoginSource
@@ -20,10 +21,11 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 /**
  * Temporary util methods for maintaining compatibility
  */
+@ApiStatus.Internal
 object GHCompatibilityUtil {
   @JvmStatic
   fun requestNewAccountForServer(serverPath: GithubServerPath, project: Project, loginSource: GHLoginSource): GithubAccount? =
-    GHAccountsUtil.requestNewAccount(serverPath, login = null, project = project, loginSource = loginSource)?.account
+    GHAccountsUtil.logIn(serverPath, login = null, project = project, loginSource = loginSource)
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @JvmStatic
