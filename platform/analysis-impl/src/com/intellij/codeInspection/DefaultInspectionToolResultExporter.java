@@ -224,10 +224,13 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       problemClassElement.setAttribute(INSPECTION_RESULTS_ID_ATTRIBUTE, toolWrapper.getShortName());
       problemClassElement.addContent(sanitizeIllegalXmlChars(toolWrapper.getDisplayName()));
 
-      HighlightSeverity severity = InspectionToolResultExporter.getSeverity(refEntity, psiElement, this);
+      HighlightDisplayKey delegateKey = toolWrapper == myToolWrapper ? null : toolWrapper.getDisplayKey();
+      HighlightSeverity severity = delegateKey == null
+                                   ? InspectionToolResultExporter.getSeverity(refEntity, psiElement, this)
+                                   : myContext.getCurrentProfile().getErrorLevel(delegateKey, psiElement).getSeverity();
 
       SeverityRegistrar severityRegistrar = myContext.getCurrentProfile().getProfileManager().getSeverityRegistrar();
-      HighlightInfoType type = descriptor instanceof ProblemDescriptor problemDescriptor
+      HighlightInfoType type = descriptor instanceof ProblemDescriptor problemDescriptor && delegateKey == null
                                ? ProblemDescriptorUtil.highlightTypeFromDescriptor(problemDescriptor, severity, severityRegistrar)
                                : ProblemDescriptorUtil.getHighlightInfoType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING, severity, severityRegistrar);
       problemClassElement.setAttribute(INSPECTION_RESULTS_SEVERITY_ATTRIBUTE, type.getSeverity(psiElement).getName());
@@ -530,7 +533,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
         VirtualFile file = base.getContainingFile();
         if (file != null) {
           LOG.assertTrue(ensureNotInjectedFile(file).equals(entityFile),
-                         "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate() + 
+                         "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate() +
                          ", entityFile: " + entityFile.getName());
         }
       }
