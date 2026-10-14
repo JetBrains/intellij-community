@@ -3,12 +3,14 @@ package com.jetbrains.python;
 
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyElementKnownDecorators;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyKnownDecorator;
@@ -39,18 +41,21 @@ public class PyKnownDecoratorsTest extends PyTestCase {
     new PyKnownDecorator.Builder("faketyping.a.fakefinal").setDeclaredTypeApplied().build();
   private static final PyKnownDecorator FAKE_FINAL_PLAIN =
     new PyKnownDecorator.Builder("faketyping.b.fakefinal").build();
+  // Matches the short name of a property accessor, so only the accessor guard keeps `@x.setter` from being known.
+  private static final PyKnownDecorator FAKE_SETTER =
+    new PyKnownDecorator.Builder("faketyping.setter").build();
 
   public static final class FakeProvider implements PyKnownDecoratorProvider {
     @Override
     public @NotNull Collection<PyKnownDecorator> getKnownDecorators() {
-      return List.of(FAKE_FINAL_TYPED, FAKE_FINAL_PLAIN);
+      return List.of(FAKE_FINAL_TYPED, FAKE_FINAL_PLAIN, FAKE_SETTER);
     }
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ExtensionPointName<PyKnownDecoratorProvider> ep = ExtensionPointName.create("Pythonid.knownDecoratorProvider");
+    ExtensionPointName<PyKnownDecoratorProvider> ep = PyKnownDecoratorProvider.EP_NAME;
     List<PyKnownDecoratorProvider> providers = ContainerUtil.append(ep.getExtensionList(), new FakeProvider());
     ExtensionTestUtil.maskExtensions(ep, providers, getTestRootDisposable());
   }
@@ -103,6 +108,7 @@ public class PyKnownDecoratorsTest extends PyTestCase {
   }
 
   // Resolving a property accessor would recurse back into property resolution, so these are never known.
+  // FAKE_SETTER makes the short name `setter` known, so only the accessor guard can keep this decorator unknown.
   public void testPropertyAccessorDecoratorIsNotKnown() {
     PyFile file = (PyFile)myFixture.configureByText("a.py", """
       class C:
@@ -112,9 +118,60 @@ public class PyKnownDecoratorsTest extends PyTestCase {
           @x.setter
           def x(self, value): ...
       """);
-    PyFunction setter = file.findTopLevelClass("C").getMethods()[1];
-    PyDecorator accessor = setter.getDecoratorList().getDecorators()[0];
+    Collection<PyDecorator> decorators = PsiTreeUtil.findChildrenOfType(file, PyDecorator.class);
+    PyDecorator setter = ContainerUtil.find(decorators, d -> "x.setter".equals(String.valueOf(d.getQualifiedName())));
+    assertNotNull(setter);
 
-    assertFalse(PyKnownDecoratorUtil.knownDecoratorsOf(accessor, stubOnlyContext()).isKnown());
+    assertFalse(PyKnownDecoratorUtil.knownDecoratorsOf(setter, stubOnlyContext()).isKnown());
+  }
+
+  private @NotNull PyFunction functionOf(@NotNull String functionName, @NotNull String text) {
+    PyFile file = (PyFile)myFixture.configureByText("a.py", text);
+    PyFunction function = file.findTopLevelFunction(functionName);
+    assertNotNull(function);
+    return function;
+  }
+
+  public void testElementWithoutDecoratorsHasAllDecoratorsKnown() {
+    PyFunction function = functionOf("f", """
+      def f(): ...
+      """);
+    PyElementKnownDecorators decorators = PyKnownDecoratorUtil.knownDecoratorsOf(function, stubOnlyContext());
+
+    assertTrue(decorators.isEmpty());
+    assertTrue("An element with no decorator has no unknown one", decorators.allKnown());
+    assertFalse(PyKnownDecoratorUtil.hasUnknownDecorator(function, stubOnlyContext()));
+  }
+
+  public void testUnknownDecoratorMakesNotAllKnown() {
+    PyFunction function = functionOf("f", """
+      from faketyping import fakefinal
+
+      @fakefinal
+      @totally_unknown
+      def f(): ...
+      """);
+    PyElementKnownDecorators decorators = PyKnownDecoratorUtil.knownDecoratorsOf(function, stubOnlyContext());
+
+    assertFalse(decorators.isEmpty());
+    assertFalse(decorators.allKnown());
+    assertTrue("A known decorator is still found among the others", decorators.contains(FAKE_FINAL_TYPED));
+  }
+
+  // The size comparison this replaced collapsed two decorators of one short name into a single group
+  // and wrongly reported an unknown decorator.
+  @TestFor(issues = "PY-93003", classes = PyElementKnownDecorators.class)
+  public void testTwoDecoratorsSharingShortNameAreAllKnown() {
+    PyFunction function = functionOf("f", """
+      from faketyping import fakefinal
+
+      @fakefinal
+      @fakefinal
+      def f(): ...
+      """);
+    PyElementKnownDecorators decorators = PyKnownDecoratorUtil.knownDecoratorsOf(function, stubOnlyContext());
+
+    assertTrue("Both decorators resolve to a known decorator", decorators.allKnown());
+    assertFalse(PyKnownDecoratorUtil.hasUnknownDecorator(function, stubOnlyContext()));
   }
 }
