@@ -574,7 +574,7 @@ open class IdeDocumentHistoryImpl(
   override fun gotoPlaceInfo(info: HistoryPlaceInfo, requestFocus: Boolean) {
     val editorManager = getFileEditorManager()!!
     val openMode = info.getOpenMode()
-    val window = if (openMode != FileEditorManagerImpl.OpenMode.NEW_WINDOW) info.getWindow() else null
+    val window = if (openMode != FileEditorManagerImpl.OpenMode.NEW_WINDOW) info.window else null
     val editorsWithProviders = editorManager.openFile(
       file = info.file,
       window = window,
@@ -696,7 +696,7 @@ open class IdeDocumentHistoryImpl(
     val caretPosition: RangeMarker? get() = place.caretPosition
     val timeStamp: Long get() = place.timeStamp
 
-    fun getWindow(): EditorWindow? = place.getWindow()
+    fun getWindow(): EditorWindow? = place.window
 
     fun getOpenMode(): FileEditorManagerImpl.OpenMode? = place.getOpenMode()
 
@@ -780,14 +780,14 @@ open class IdeDocumentHistoryImpl(
  */
 @Suppress("DEPRECATION")
 internal class LegacyRecentPlacesListenerBridge(private val project: Project) : HistoryPlacesListener {
-  override fun recentPlaceAdded(changePlace: HistoryPlaceInfo, isChanged: Boolean, groupId: Any?) {
+  override fun recentPlaceAdded(place: HistoryPlaceInfo, isChanged: Boolean, groupId: Any?) {
     project.messageBus.syncPublisher(IdeDocumentHistoryImpl.RecentPlacesListener.TOPIC)
-      .recentPlaceAdded(IdeDocumentHistoryImpl.PlaceInfo(changePlace), isChanged, groupId)
+      .recentPlaceAdded(IdeDocumentHistoryImpl.PlaceInfo(place), isChanged, groupId)
   }
 
-  override fun recentPlaceRemoved(changePlace: HistoryPlaceInfo, isChanged: Boolean) {
+  override fun recentPlaceRemoved(place: HistoryPlaceInfo, isChanged: Boolean) {
     project.messageBus.syncPublisher(IdeDocumentHistoryImpl.RecentPlacesListener.TOPIC)
-      .recentPlaceRemoved(IdeDocumentHistoryImpl.PlaceInfo(changePlace), isChanged)
+      .recentPlaceRemoved(IdeDocumentHistoryImpl.PlaceInfo(place), isChanged)
   }
 }
 
