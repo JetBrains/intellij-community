@@ -3,6 +3,7 @@ package com.intellij.terminal.frontend.view.impl
 import com.intellij.execution.impl.EditorTextDecorationApplier
 import com.intellij.execution.impl.createEditorTextDecorationApplier
 import com.intellij.ide.ActivityTracker
+import com.intellij.ide.actions.ToolWindowTabLocationFusUtil
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
@@ -363,6 +364,7 @@ class TerminalViewImpl(
         isCursorVisible = { sessionModel.terminalState.value.isCursorVisible },
         registerKeyEventsListener = this@TerminalViewImpl::addKeyEventsListener,
         coroutineScope = coroutineScope.childScope("TerminalCommandCompletionStatistics"),
+        tabLocationProvider = { ToolWindowTabLocationFusUtil.fromComponentHierarchy(component) },
       )
 
       outputEditor.putUserData(TerminalBlocksModel.KEY, shellIntegration.blocksModel)
