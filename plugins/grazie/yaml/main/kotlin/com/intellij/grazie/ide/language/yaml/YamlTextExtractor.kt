@@ -11,7 +11,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.elementType
-import org.jetbrains.yaml.YAMLSpellcheckerStrategy.JsonSchemaSpellcheckerClientForYaml
+import org.jetbrains.yaml.YAMLSchemaNameMatcher
 import org.jetbrains.yaml.YAMLTokenTypes.COMMENT
 import org.jetbrains.yaml.YAMLTokenTypes.EOL
 import org.jetbrains.yaml.YAMLTokenTypes.INDENT
@@ -32,7 +32,7 @@ internal class YamlTextExtractor : TextExtractor() {
       return TextContent.joinWithWhitespace('\n', siblings.mapNotNull { commentBuilder.build(it, TextDomain.COMMENTS) })
     }
     if (TextDomain.LITERALS in allowedDomains && (root is YAMLScalar || (root.node != null && root.node.elementType == SCALAR_KEY))) {
-      if (JsonSchemaSpellcheckerClientForYaml(root).matchesNameFromSchema()) {
+      if (YAMLSchemaNameMatcher.matchesNameFromSchema(root)) {
         return null
       }
       val content = TextContentBuilder.FromPsi.excluding { isStealth(it) }.build(root, TextDomain.LITERALS) ?: return null

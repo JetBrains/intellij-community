@@ -47,12 +47,6 @@ dev_dist_plugin(
             "@lib//:grazie-core-cloud-jetbrains-sdk-ml-jbai-tree-api",
             "@lib//:grazie-core-cloud-jetbrains-sdk-ml-jbai-ner-api",
         ],
-        "lib/grazie.jar": [
-            "intellij.grazie",
-            "intellij.grazie.json",
-            "intellij.grazie.xml",
-            "intellij.grazie.yaml",
-        ],
         "lib/intellij.libraries.ai.grazie.rule.engine.jar": [
             "intellij.libraries.ai.grazie.rule.engine",
             "@lib//:libraries-ai-grazie-rule-engine-ai-grazie-rule-engine",
@@ -75,20 +69,18 @@ dev_dist_plugin(
             "intellij.libraries.kotlin.logging",
             "@lib//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm",
         ],
+        "lib/grazie.jar": ["intellij.grazie"],
     },
     main_module = "intellij.grazie",
     mode_refused_content_modules = {
         "frontend": [
             "intellij.grazie.java",
-            "intellij.grazie.json",
             "intellij.grazie.markdown",
             "intellij.grazie.properties",
             "intellij.grazie.vcs",
             "intellij.grazie.xml",
-            "intellij.grazie.yaml",
         ],
     },
-    separate_jar = ["intellij.grazie.markdown"],
 )
 ### auto-generated section `dev intellij.grazie` end
 

@@ -21,6 +21,7 @@ dev_dist_plugin_descriptor(
     content_modules = [
         "intellij.yaml",
         "intellij.yaml.backend",
+        "intellij.yaml.spellchecker",
         "intellij.yaml.syntax",
     ],
     descriptor = "//plugins/yaml:resources/META-INF/plugin.xml",
@@ -38,6 +39,7 @@ dev_plugin(
     name = "intellij.yaml_dev_plugin",
     content_module_jars = [
         "//plugins/yaml/backend:backend_content_module_jar",
+        "//plugins/yaml/spellchecker:spellchecker_content_module_jar",
         "//plugins/yaml/syntax:syntax_content_module_jar",
     ],
     descriptor = "//build/dev-dist-descriptors/intellij.yaml:intellij.yaml_dev_descriptor",

@@ -388,10 +388,10 @@ jps/standalone-builder
 json
 json/backend
 json/backend/regexp
-json/backend/spellchecker
 json/backend/tests
 json/networknt.wrapper
 json/networknt.wrapper/tests
+json/spellchecker
 json/structureView
 json/syntax
 jupyter
@@ -1870,6 +1870,7 @@ plugins/xpath
 plugins/xpath/xslt-rt
 plugins/yaml
 plugins/yaml/backend
+plugins/yaml/spellchecker
 plugins/yaml/syntax
 python
 python/IntelliLang-python

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.yaml;
+package com.intellij.yaml.spellchecker;
 
-import com.intellij.json.JsonSchemaSpellcheckerClient;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
@@ -13,13 +12,10 @@ import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.YAMLSchemaNameMatcher;
+import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.YAMLQuotedText;
-import org.jetbrains.yaml.psi.YAMLScalar;
 import org.jetbrains.yaml.psi.impl.YAMLAnchorImpl;
 
 import java.util.regex.Pattern;
@@ -57,7 +53,7 @@ public final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implem
           return EMPTY_TOKENIZER;
         }
 
-        if (new JsonSchemaSpellcheckerClientForYaml(element).matchesNameFromSchema()) {
+        if (YAMLSchemaNameMatcher.matchesNameFromSchema(element)) {
           return EMPTY_TOKENIZER;
         }
 
@@ -70,7 +66,7 @@ public final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implem
           return EMPTY_TOKENIZER;
         }
 
-        if (new JsonSchemaSpellcheckerClientForYaml(element).matchesNameFromSchema()) {
+        if (YAMLSchemaNameMatcher.matchesNameFromSchema(element)) {
           return EMPTY_TOKENIZER;
         }
 
@@ -101,40 +97,5 @@ public final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implem
     IElementType type = element.getNode().getElementType();
     return useTextLevelSpellchecking() &&
            (type == YAMLTokenTypes.SCALAR_DSTRING || type == YAMLTokenTypes.ANCHOR || element instanceof YAMLAnchorImpl);
-  }
-
-  public static class JsonSchemaSpellcheckerClientForYaml extends JsonSchemaSpellcheckerClient {
-    private final @NotNull PsiElement element;
-
-    public JsonSchemaSpellcheckerClientForYaml(@NotNull PsiElement element) {
-      this.element = element;
-    }
-
-    @Override
-    protected @NotNull PsiElement getElement() {
-      return element;
-    }
-
-    @Override
-    protected @Nullable String getValue() {
-      PsiElement parent = element.getParent();
-      if (element.getNode().getElementType() == YAMLTokenTypes.SCALAR_KEY) {
-        return ((YAMLKeyValue)parent).getKeyText();
-      }
-      if (parent instanceof YAMLKeyValue) {
-        return ((YAMLKeyValue)parent).getValueText();
-      }
-      else if (parent instanceof YAMLScalar) {
-        return ((YAMLScalar)parent).getTextValue();
-      }
-      else {
-        return null;
-      }
-    }
-
-    @Override
-    protected boolean isXIntellijInjection(@NotNull JsonSchemaService service, @NotNull JsonSchemaObject rootSchema) {
-      return false;
-    }
   }
 }

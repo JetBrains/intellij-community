@@ -202,6 +202,7 @@
   <extensions defaultExtensionNs="com.intellij.json">
     <jsonLikePsiWalkerFactory implementation="com.intellij.json.json5.Json5PsiWalkerFactory"/>
     <jsonSchemaEnabler implementation="com.jetbrains.jsonSchema.impl.JsonSchemaInJsonFilesEnabler"/>
+    <schemaNameMatcher implementation="com.intellij.json.JsonSchemaNameMatcherImpl"/>
   </extensions>
 
   <extensionPoints>

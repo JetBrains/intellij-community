@@ -62,34 +62,16 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy implements D
 
   @Override
   public @NotNull Tokenizer<?> getTokenizer(PsiElement element) {
-    if (element instanceof JsonStringLiteral) {
+    if (element instanceof JsonStringLiteral literal) {
       if (useTextLevelSpellchecking()) return EMPTY_TOKENIZER;
       if (isInjectedLanguageFragment(element)) {
         return EMPTY_TOKENIZER;
       }
 
-      return new JsonSchemaSpellcheckerClientForJson((JsonStringLiteral)element).matchesNameFromSchema()
+      return JsonSchemaNameMatcher.matchesNameFromSchema(literal)
         ? EMPTY_TOKENIZER
         : ourStringLiteralTokenizer;
     }
     return super.getTokenizer(element);
-  }
-
-  public static final class JsonSchemaSpellcheckerClientForJson extends JsonSchemaSpellcheckerClient {
-    private final @NotNull JsonStringLiteral element;
-
-    public JsonSchemaSpellcheckerClientForJson(@NotNull JsonStringLiteral element) {
-      this.element = element;
-    }
-
-    @Override
-    protected @NotNull JsonStringLiteral getElement() {
-      return element;
-    }
-
-    @Override
-    protected @NotNull String getValue() {
-      return element.getValue();
-    }
   }
 }

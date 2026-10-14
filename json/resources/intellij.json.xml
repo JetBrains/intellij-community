@@ -28,6 +28,9 @@
     <extensionPoint qualifiedName="com.intellij.json.lazyParsingVetoer"
                     interface="com.intellij.json.syntax.JsonLazyParsingVetoer"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.schemaNameMatcher"
+                    interface="com.intellij.json.JsonSchemaNameMatcher"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

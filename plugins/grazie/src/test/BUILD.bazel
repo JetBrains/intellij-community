@@ -33,6 +33,8 @@ jvm_library(
         "//aether-dependency-resolver/plugin",
         "//xml/plugin",
         "//platform/vcs-api:vcs",
+        "//json/spellchecker",
+        "//plugins/yaml/spellchecker",
         "//platform/testRunner/plugin",
     ],
 )
@@ -73,6 +75,8 @@ jvm_library(
         "//platform/vcs/plugin:plugin_test_lib",
         "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//xml/plugin:plugin_test_lib",
+        "//json/spellchecker:spellchecker_test_lib",
+        "//plugins/yaml/spellchecker:spellchecker_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
     ],
