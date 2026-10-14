@@ -5,6 +5,7 @@ import com.intellij.execution.filters.Filter
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
@@ -76,7 +77,7 @@ class PythonInstallPackageFilter(val project: Project, var editor: EditorImpl? =
       val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
 
       val packageName = PyPsiPackageUtil.moduleToPackageName(moduleName)
-      val isCanBeInstalled = !interpreter.isReadOnly && packageManager.isNotInstalledAndCanBeInstalled(packageName)
+      val isCanBeInstalled = !interpreter.isReadOnly && runBlockingCancellable { packageManager.isNotInstalledAndCanBeInstalled(packageName) }
       if (!isCanBeInstalled)
         return null
 

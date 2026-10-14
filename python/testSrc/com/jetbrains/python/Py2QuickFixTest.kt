@@ -49,6 +49,7 @@ import com.jetbrains.python.inspections.PyUnboundLocalVariableInspection
 import com.jetbrains.python.inspections.PyUnnecessaryBackslashInspection
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.packaging.cache.impl.InMemorySearchPage
+import com.jetbrains.python.packaging.management.TestPythonPackageManagerService
 import com.jetbrains.python.packaging.pip.PyPiPackageCache
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.quickFixes.PyRenameElementQuickFixTest
@@ -113,20 +114,7 @@ class Py2QuickFixTest : PyTestCase() {
 
   // PY-42307
   fun testInstallAndImportPackageByNameAlias(): Unit = timeoutRunBlocking {
-    val mock = Mockito.mock(PyPiPackageCache::class.java)
-    Mockito.`when`(mock.reloadCache(anyBoolean())).thenReturn(Result.success(Unit))
-    Mockito.`when`(mock.search(anyString(), anyInt())).thenReturn(
-      InMemorySearchPage.resultFromMatches(listOf("pandas"), 1)
-    )
-    Mockito.`when`(mock.contains(anyString())).thenReturn(true)
-
-    ApplicationManager
-      .getApplication()
-      .replaceService(
-        PyPiPackageCache::class.java,
-        mock,
-        testRootDisposable,
-      )
+    TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(myFixture.project, availablePackageNames = listOf("pandas"))
 
     myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
     myFixture.configureByText(PythonFileType.INSTANCE, "pd<caret>.array()")
@@ -1404,7 +1392,7 @@ class Py2QuickFixTest : PyTestCase() {
   @NonNls
   override fun getTestDataPath(): String = PythonTestUtil.getTestDataPath() + "/inspections/"
 
-  private inline fun <reified TLocalInspectionTool: LocalInspectionTool> doInspectionTest(
+  private inline fun <reified TLocalInspectionTool : LocalInspectionTool> doInspectionTest(
     quickFixName: String,
     applyFix: Boolean,
     available: Boolean,

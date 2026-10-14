@@ -24,7 +24,10 @@ internal class TestPythonRepositoryManager(
   private var packageDetails: PythonPackageDetails? = null
 
   private var packageVersions = mapOf<String, List<String>>()
-  override suspend fun findPackageSpecification(requirement: PyRequirement, repository: PyPackageRepository?): PythonRepositoryPackageSpecification {
+  override suspend fun findPackageSpecification(
+    requirement: PyRequirement,
+    repository: PyPackageRepository?,
+  ): PythonRepositoryPackageSpecification {
     return PythonRepositoryPackageSpecification(repository ?: PyPiPackageRepository, requirement)
   }
 
@@ -69,7 +72,9 @@ internal class TestPythonRepositoryManager(
 }
 
 internal class TestPackageRepository(private val packages: Set<String>) : PyPackageRepository("test repository", null, null) {
-  override fun search(needle: String, pageSize: Int): PythonPackageSearchResult {
+  override suspend fun search(needle: String, pageSize: Int): PythonPackageSearchResult {
     return InMemorySearchPage.resultFromMatches(packages.toList(), pageSize)
   }
+
+  override suspend fun hasPackage(name: String): Boolean = name in packages
 }

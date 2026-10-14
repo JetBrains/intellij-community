@@ -6,6 +6,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.intellij.python.requirements.PyPackageVersion
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.cache.PythonPackageSearchPage
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
@@ -45,7 +46,7 @@ internal class PythonRepositoryManagerFilteringTest {
   }
 
   @Test
-  fun `searchPackages skips disabled repositories`() {
+  fun `searchPackages skips disabled repositories`() = timeoutRunBlocking {
     val enabled = fakeRepo("PyPI", packages = listOf("requests", "requests-mock"), enabled = true)
     val disabled = fakeRepo("Internal", packages = listOf("requests-internal"), enabled = false)
     val manager = FilteringFakeRepositoryManager(listOf(enabled, disabled))
@@ -58,7 +59,7 @@ internal class PythonRepositoryManagerFilteringTest {
   }
 
   @Test
-  fun `hasPackageSnapshot short-circuits over disabled repositories`() {
+  fun `hasPackageSnapshot short-circuits over disabled repositories`() = timeoutRunBlocking {
     val enabled = fakeRepo("PyPI", packages = listOf("flask"), enabled = true)
     val disabled = fakeRepo("Internal", packages = listOf("internal-only"), enabled = false)
     val manager = FilteringFakeRepositoryManager(listOf(enabled, disabled))
@@ -68,7 +69,7 @@ internal class PythonRepositoryManagerFilteringTest {
   }
 
   @Test
-  fun `re-enabling a repository restores its results without rebuilding the manager`() {
+  fun `re-enabling a repository restores its results without rebuilding the manager`() = timeoutRunBlocking {
     val toggle = fakeRepo("Toggle", packages = listOf("secret"), enabled = false)
     val manager = FilteringFakeRepositoryManager(listOf(toggle))
 
@@ -104,13 +105,19 @@ private class FilteringFakeRepositoryManager(
 
   override suspend fun getPackageDetails(packageName: String, repository: PyPackageRepository?): PyResult<PythonPackageDetails> =
     error("not used in this test")
+
   override suspend fun getLatestVersion(packageName: String, repository: PyPackageRepository?): PyPackageVersion? =
     error("not used in this test")
+
   override suspend fun getVersions(packageName: String, repository: PyPackageRepository?): List<String>? =
     error("not used in this test")
+
   override suspend fun refreshCaches() = error("not used in this test")
   override suspend fun initCaches() = error("not used in this test")
-  override suspend fun findPackageSpecification(requirement: PyRequirement, repository: PyPackageRepository?): PythonRepositoryPackageSpecification? =
+  override suspend fun findPackageSpecification(
+    requirement: PyRequirement,
+    repository: PyPackageRepository?,
+  ): PythonRepositoryPackageSpecification? =
     error("not used in this test")
 }
 
@@ -131,7 +138,7 @@ private class ToggleableFakeRepository(
     this.enabled = enabled
   }
 
-  override fun search(needle: String, pageSize: Int): PythonPackageSearchResult {
+  override suspend fun search(needle: String, pageSize: Int): PythonPackageSearchResult {
     val normalized = PyPackageName.normalizePackageName(needle)
     val matches = packages.filter { it.contains(normalized, ignoreCase = true) }
     return PythonPackageSearchResult(
@@ -144,5 +151,5 @@ private class ToggleableFakeRepository(
     )
   }
 
-  override fun hasPackage(name: String): Boolean = packages.contains(name)
+  override suspend fun hasPackage(name: String): Boolean = packages.contains(name)
 }

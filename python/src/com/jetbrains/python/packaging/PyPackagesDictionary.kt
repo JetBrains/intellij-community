@@ -19,7 +19,7 @@ class PyPackagesDictionary : Dictionary {
   override fun getName(): String = message("python.packages.dictionary.name")
 
   override fun lookup(word: String): LookupStatus {
-    if (word in service<PyPiPackageCache>()) return LookupStatus.Present
+    if (service<PyPiPackageCache>().containsBlocking(word)) return LookupStatus.Present
     if (!ALPHABET_REGEX.matches(word.lowercase())) return LookupStatus.Alien
     return LookupStatus.Absent
   }

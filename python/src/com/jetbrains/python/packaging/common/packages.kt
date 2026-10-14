@@ -130,6 +130,7 @@ class PythonOutdatedPackage(name: String, version: String, val latestVersion: St
   }
 }
 
+@ApiStatus.Internal
 interface PythonPackageDetails {
   val name: String
   val availableVersions: List<String>
@@ -138,7 +139,7 @@ interface PythonPackageDetails {
   val description: @NlsSafe String?
   val descriptionContentType: String?
   val documentationUrl: String?
-  fun toPackageSpecification(version: String? = null): PythonRepositoryPackageSpecification? =
+  suspend fun toPackageSpecification(version: String? = null): PythonRepositoryPackageSpecification? =
     repository.findPackageSpecification(pyRequirement(name, version?.let { pyRequirementVersionSpec(it) }))
 }
 

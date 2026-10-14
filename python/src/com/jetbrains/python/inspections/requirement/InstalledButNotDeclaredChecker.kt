@@ -3,6 +3,8 @@ package com.jetbrains.python.inspections.requirement
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil
 import com.jetbrains.python.packaging.PyPackageName
@@ -16,6 +18,7 @@ internal class InstalledButNotDeclaredChecker(
   private val ignoredPackages: Collection<PyPackageName>,
   private val declared: List<PythonPackage>,
 ) {
+  @RequiresBackgroundThread
   fun getUndeclaredPackageName(importedPyModule: String): PyPackageName? {
     val packageName = PyPackageName.from(PyPsiPackageUtil.moduleToPackageName(importedPyModule))
     if (isIgnoredOrStandardPackage(packageName, importedPyModule))
@@ -23,7 +26,7 @@ internal class InstalledButNotDeclaredChecker(
 
     val pyPiCacheService = ApplicationManager.getApplication().service<PyPiPackageCache>()
 
-    if (packageName.name !in pyPiCacheService)
+    if (runBlockingCancellable { !pyPiCacheService.contains (packageName.name) })
       return null
 
     if (declared.toRequirements().any { PyPackageName.from(it.name) == packageName }) {

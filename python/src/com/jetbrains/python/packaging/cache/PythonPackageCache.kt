@@ -1,40 +1,51 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.cache
 
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.CheckReturnValue
 
 /**
  * Cache for Python packages.
- * The interface exposes an API for searching and lookup. The querying API exposes a paginated output, discouraging unnecessary copying. 
+ * The interface exposes an API for searching and lookup. The querying API exposes a paginated output, discouraging unnecessary copying.
  */
 @ApiStatus.Internal
 interface PythonPackageCache {
   /**
    * The total amount of packages tracked by the cache.
    */
-  @get:RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   val size: Int
 
   /**
    * Checks if the specified package name is contained in this cache.
-   * 
+   *
    * @param name the exact name of the package to check.
    * @return true if the package is contained, false otherwise.
    */
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  operator fun contains(name: String): Boolean
+  suspend fun contains(name: String): Boolean
 
   /**
    * Searches the cache for packages that start with a specific prefix.
-   * 
+   *
    * @param prefix the prefix to search the cache against.
    * @param pageSize the size of the page returned.
    * @return the search result.
    */
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  fun search(prefix: String, pageSize: Int = 100): PythonPackageSearchResult
+  suspend fun search(prefix: String, pageSize: Int = 100): PythonPackageSearchResult
+
+  /**
+   * Reloads the cache.
+   * @return reload result.
+   */
+  @CheckReturnValue
+  suspend fun reload(): Result<Unit, PythonPackageCacheIOError>
+
+  /**
+   * Forces the cache to be fully refetched and reloaded. Can be slow.
+   * @return refetch and reload result.
+   */
+  @CheckReturnValue
+  suspend fun fullRefetchAndReload(): Result<Unit, PythonPackageCacheIOError>
 }
 
 /**
@@ -57,7 +68,7 @@ data class PythonPackageSearchResult(
 
 /**
  * Gets the amount of items after a specific page index (i.e., amount of items not yet consumed by pagination).
- * 
+ *
  * @param index the page index.
  * @return the total number of items.
  */
@@ -66,18 +77,8 @@ fun PythonPackageSearchResult.remainingItemsAfterPageIndex(index: Int): Int =
   total - ((index + 1) * maxPageSize)
 
 /**
- * Checks if the page index has more pages proceeding it.
- * 
- * @param index the page index.
- * @return true if the index is not last (has more pages proceeding it), false otherwise.
- */
-@ApiStatus.Internal
-fun PythonPackageSearchResult.hasMorePagesAfterPageIndex(index: Int): Boolean =
-  index < pages.size - 1
-
-/**
  * Gets the first page of the result.
- * 
+ *
  * @return an instance of [Result.Success] containing the first page, or if none exists, an empty list. If the page exists but was
  * invalidated, returns an instance of [Result.Failure] that wraps [PythonPackageSearchPage.DataInvalidatedError].
  */
