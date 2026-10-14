@@ -9662,122 +9662,122 @@ jvm_import(
 )
 
 copy_file(
-    name = "tools.jackson.core/jackson-databind-3.2.2.jar_copy",
-    src = "@tools_jackson_core-jackson-databind-3_2_2_http//file",
-    out = "tools.jackson.core/jackson-databind-3.2.2.jar",
+    name = "tools.jackson.core/jackson-databind-3.2.3.jar_copy",
+    src = "@tools_jackson_core-jackson-databind-3_2_3_http//file",
+    out = "tools.jackson.core/jackson-databind-3.2.3.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson3-databind-jackson3-databind",
-    jar = "@tools_jackson_core-jackson-databind-3_2_2_http//file",
-    source_jar = "@tools_jackson_core-jackson-databind-3_2_2-sources_http//file",
+    jar = "@tools_jackson_core-jackson-databind-3_2_3_http//file",
+    source_jar = "@tools_jackson_core-jackson-databind-3_2_3-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "tools.jackson.dataformat/jackson-dataformat-cbor-3.2.2.jar_copy",
-    src = "@tools_jackson_dataformat-jackson-dataformat-cbor-3_2_2_http//file",
-    out = "tools.jackson.dataformat/jackson-dataformat-cbor-3.2.2.jar",
+    name = "tools.jackson.dataformat/jackson-dataformat-cbor-3.2.3.jar_copy",
+    src = "@tools_jackson_dataformat-jackson-dataformat-cbor-3_2_3_http//file",
+    out = "tools.jackson.dataformat/jackson-dataformat-cbor-3.2.3.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson3-dataformat-cbor-jackson3-dataformat-cbor",
-    jar = "@tools_jackson_dataformat-jackson-dataformat-cbor-3_2_2_http//file",
-    source_jar = "@tools_jackson_dataformat-jackson-dataformat-cbor-3_2_2-sources_http//file",
+    jar = "@tools_jackson_dataformat-jackson-dataformat-cbor-3_2_3_http//file",
+    source_jar = "@tools_jackson_dataformat-jackson-dataformat-cbor-3_2_3-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "tools.jackson.dataformat/jackson-dataformat-toml-3.2.2.jar_copy",
-    src = "@tools_jackson_dataformat-jackson-dataformat-toml-3_2_2_http//file",
-    out = "tools.jackson.dataformat/jackson-dataformat-toml-3.2.2.jar",
+    name = "tools.jackson.dataformat/jackson-dataformat-toml-3.2.3.jar_copy",
+    src = "@tools_jackson_dataformat-jackson-dataformat-toml-3_2_3_http//file",
+    out = "tools.jackson.dataformat/jackson-dataformat-toml-3.2.3.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson3-dataformat-toml-jackson3-dataformat-toml",
-    jar = "@tools_jackson_dataformat-jackson-dataformat-toml-3_2_2_http//file",
-    source_jar = "@tools_jackson_dataformat-jackson-dataformat-toml-3_2_2-sources_http//file",
+    jar = "@tools_jackson_dataformat-jackson-dataformat-toml-3_2_3_http//file",
+    source_jar = "@tools_jackson_dataformat-jackson-dataformat-toml-3_2_3-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "tools.jackson.dataformat/jackson-dataformat-xml-3.2.2.jar_copy",
-    src = "@tools_jackson_dataformat-jackson-dataformat-xml-3_2_2_http//file",
-    out = "tools.jackson.dataformat/jackson-dataformat-xml-3.2.2.jar",
+    name = "tools.jackson.dataformat/jackson-dataformat-xml-3.2.3.jar_copy",
+    src = "@tools_jackson_dataformat-jackson-dataformat-xml-3_2_3_http//file",
+    out = "tools.jackson.dataformat/jackson-dataformat-xml-3.2.3.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson3-dataformat-xml-jackson3-dataformat-xml",
-    jar = "@tools_jackson_dataformat-jackson-dataformat-xml-3_2_2_http//file",
-    source_jar = "@tools_jackson_dataformat-jackson-dataformat-xml-3_2_2-sources_http//file",
+    jar = "@tools_jackson_dataformat-jackson-dataformat-xml-3_2_3_http//file",
+    source_jar = "@tools_jackson_dataformat-jackson-dataformat-xml-3_2_3-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "tools.jackson.dataformat/jackson-dataformat-yaml-3.2.2.jar_copy",
-    src = "@tools_jackson_dataformat-jackson-dataformat-yaml-3_2_2_http//file",
-    out = "tools.jackson.dataformat/jackson-dataformat-yaml-3.2.2.jar",
+    name = "tools.jackson.dataformat/jackson-dataformat-yaml-3.2.3.jar_copy",
+    src = "@tools_jackson_dataformat-jackson-dataformat-yaml-3_2_3_http//file",
+    out = "tools.jackson.dataformat/jackson-dataformat-yaml-3.2.3.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson3-dataformat-yaml-jackson3-dataformat-yaml",
-    jar = "@tools_jackson_dataformat-jackson-dataformat-yaml-3_2_2_http//file",
-    source_jar = "@tools_jackson_dataformat-jackson-dataformat-yaml-3_2_2-sources_http//file",
+    jar = "@tools_jackson_dataformat-jackson-dataformat-yaml-3_2_3_http//file",
+    source_jar = "@tools_jackson_dataformat-jackson-dataformat-yaml-3_2_3-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "tools.jackson.core/jackson-core-3.2.2.jar_copy",
-    src = "@tools_jackson_core-jackson-core-3_2_2_http//file",
-    out = "tools.jackson.core/jackson-core-3.2.2.jar",
+    name = "tools.jackson.core/jackson-core-3.2.3.jar_copy",
+    src = "@tools_jackson_core-jackson-core-3_2_3_http//file",
+    out = "tools.jackson.core/jackson-core-3.2.3.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson3-jackson3",
-    jar = "@tools_jackson_core-jackson-core-3_2_2_http//file",
-    source_jar = "@tools_jackson_core-jackson-core-3_2_2-sources_http//file",
+    jar = "@tools_jackson_core-jackson-core-3_2_3_http//file",
+    source_jar = "@tools_jackson_core-jackson-core-3_2_3-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "tools.jackson.jr/jackson-jr-objects-3.2.2.jar_copy",
-    src = "@tools_jackson_jr-jackson-jr-objects-3_2_2_http//file",
-    out = "tools.jackson.jr/jackson-jr-objects-3.2.2.jar",
+    name = "tools.jackson.jr/jackson-jr-objects-3.2.3.jar_copy",
+    src = "@tools_jackson_jr-jackson-jr-objects-3_2_3_http//file",
+    out = "tools.jackson.jr/jackson-jr-objects-3.2.3.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson3-jr-objects-jackson3-jr-objects",
-    jar = "@tools_jackson_jr-jackson-jr-objects-3_2_2_http//file",
-    source_jar = "@tools_jackson_jr-jackson-jr-objects-3_2_2-sources_http//file",
+    jar = "@tools_jackson_jr-jackson-jr-objects-3_2_3_http//file",
+    source_jar = "@tools_jackson_jr-jackson-jr-objects-3_2_3-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "tools.jackson.module/jackson-module-kotlin-3.2.2.jar_copy",
-    src = "@tools_jackson_module-jackson-module-kotlin-3_2_2_http//file",
-    out = "tools.jackson.module/jackson-module-kotlin-3.2.2.jar",
+    name = "tools.jackson.module/jackson-module-kotlin-3.2.3.jar_copy",
+    src = "@tools_jackson_module-jackson-module-kotlin-3_2_3_http//file",
+    out = "tools.jackson.module/jackson-module-kotlin-3.2.3.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jackson3-module-kotlin-jackson3-module-kotlin",
-    jar = "@tools_jackson_module-jackson-module-kotlin-3_2_2_http//file",
-    source_jar = "@tools_jackson_module-jackson-module-kotlin-3_2_2-sources_http//file",
+    jar = "@tools_jackson_module-jackson-module-kotlin-3_2_3_http//file",
+    source_jar = "@tools_jackson_module-jackson-module-kotlin-3_2_3-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

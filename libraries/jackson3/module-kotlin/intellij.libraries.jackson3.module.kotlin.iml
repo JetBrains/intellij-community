@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jackson3-module-kotlin" type="repository">
-        <properties include-transitive-deps="false" maven-id="tools.jackson.module:jackson-module-kotlin:3.2.2">
+        <properties include-transitive-deps="false" maven-id="tools.jackson.module:jackson-module-kotlin:3.2.3">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/module/jackson-module-kotlin/3.2.2/jackson-module-kotlin-3.2.2.jar">
-              <sha256sum>d497603e016ca0a07fba3a44af5cfa192064b6c851886300e73cb6cd3d7c39cb</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/module/jackson-module-kotlin/3.2.3/jackson-module-kotlin-3.2.3.jar">
+              <sha256sum>ece697d0723b24ad73c3d253bf1bb227c52dfa7c8a619e73d4e71c65517c47e1</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/module/jackson-module-kotlin/3.2.2/jackson-module-kotlin-3.2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/module/jackson-module-kotlin/3.2.3/jackson-module-kotlin-3.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/module/jackson-module-kotlin/3.2.2/jackson-module-kotlin-3.2.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/module/jackson-module-kotlin/3.2.3/jackson-module-kotlin-3.2.3-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

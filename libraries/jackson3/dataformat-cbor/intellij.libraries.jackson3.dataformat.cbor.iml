@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jackson3-dataformat-cbor" type="repository">
-        <properties include-transitive-deps="false" maven-id="tools.jackson.dataformat:jackson-dataformat-cbor:3.2.2">
+        <properties include-transitive-deps="false" maven-id="tools.jackson.dataformat:jackson-dataformat-cbor:3.2.3">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-cbor/3.2.2/jackson-dataformat-cbor-3.2.2.jar">
-              <sha256sum>3edb580e626632186bc2ac304d031201da70daaf981a696f7eb3fba14f36545d</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-cbor/3.2.3/jackson-dataformat-cbor-3.2.3.jar">
+              <sha256sum>b7e4e671e2f2ceab70b75119d59d527b89e039c1a8c21eac6267a1a8ecf637be</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-cbor/3.2.2/jackson-dataformat-cbor-3.2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-cbor/3.2.3/jackson-dataformat-cbor-3.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-cbor/3.2.2/jackson-dataformat-cbor-3.2.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-cbor/3.2.3/jackson-dataformat-cbor-3.2.3-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
