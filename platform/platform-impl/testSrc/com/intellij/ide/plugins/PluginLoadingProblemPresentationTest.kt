@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.newui.MyPluginModel
+import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.productMode.ProductMode
 import com.intellij.testFramework.junit5.TestApplication
@@ -80,6 +81,21 @@ internal class PluginLoadingProblemPresentationTest {
     )
 
     assertThat(MyPluginModel.getErrors(result)).isEmpty()
+    assertThat(Json.decodeFromString<CheckErrorsResult>(Json.encodeToString(result))).isEqualTo(result)
+  }
+
+  @Test
+  fun `the page result retains independent side data through serialization`() {
+    val local = CheckErrorsResult(
+      loadingError = "Missing dependency",
+      isDisabledDependencyError = true,
+      shouldNotifyUser = true,
+      detailedMessage = "A dependency is missing",
+      dependencyPluginId = PluginId.getId("dependency"),
+    )
+    val remote = CheckErrorsResult(pluginPresent = false)
+    val result = CheckErrorsResult(problemsBySide = mapOf(PluginSource.LOCAL to local, PluginSource.REMOTE to remote))
+
     assertThat(Json.decodeFromString<CheckErrorsResult>(Json.encodeToString(result))).isEqualTo(result)
   }
 }

@@ -1026,6 +1026,13 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   private fun getErrors(session: PluginManagerSession, pluginId: PluginId): CheckErrorsResult {
+    val result = checkErrors(session, pluginId)
+    val pluginPresent = PluginManagerCore.findPlugin(pluginId) != null ||
+                        InstalledPluginsState.getInstance().installedPlugins.any { it.pluginId == pluginId }
+    return result.copy(pluginPresent = pluginPresent)
+  }
+
+  private fun checkErrors(session: PluginManagerSession, pluginId: PluginId): CheckErrorsResult {
     if (InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId) ||
         InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginId)) {
       // we'll actually install the plugin when the configurable is closed; at this time we don't know if there's any loadingError
@@ -1079,6 +1086,9 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       productMode = problem.productMode,
       unavailableModuleName = problem.unavailableModuleId?.name,
       unavailableModuleNamespace = problem.unavailableModuleId?.namespace,
+      dependencyPluginId = problem.dependencyPluginId,
+      shouldNotifyUser = problem.shouldNotifyUser,
+      detailedMessage = problem.detailedMessage,
     )
   }
 

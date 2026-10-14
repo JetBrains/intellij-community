@@ -23,6 +23,7 @@ class PluginLoadingProblem internal constructor(
   val severity: Severity = Severity.UNEXPECTED,
   val productMode: ProductMode? = null,
   val unavailableModuleId: PluginModuleId? = null,
+  val dependencyPluginId: PluginId? = null,
   private val detailedMessageSupplier: () -> @NlsContexts.DetailedDescription String,
   private val shortMessageSupplier: () -> @NlsContexts.Label String,
 ) {
@@ -311,6 +312,7 @@ internal fun pluginDependencyCannotBeLoaded(
   return PluginLoadingProblem(
     plugin = plugin,
     shouldNotifyUser = shouldNotifyUser,
+    dependencyPluginId = dependency.pluginId,
     detailedMessageSupplier = {
       CoreBundle.message("plugin.loading.error.long.depends.on.failed.to.load.plugin", plugin.name, dependencyName())
     },

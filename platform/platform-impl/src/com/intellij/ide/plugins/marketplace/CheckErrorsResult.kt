@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.marketplace
 
 import com.intellij.ide.plugins.PluginLoadingProblem
+import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.productMode.ProductMode
@@ -22,4 +23,9 @@ data class CheckErrorsResult(
   val productMode: ProductMode? = null,
   val unavailableModuleName: String? = null,
   val unavailableModuleNamespace: String? = null,
+  val dependencyPluginId: PluginId? = null,
+  val shouldNotifyUser: Boolean = false,
+  @NlsSafe val detailedMessage: String? = null,
+  val pluginPresent: Boolean = true,
+  val problemsBySide: Map<PluginSource, CheckErrorsResult> = emptyMap(),
 )

@@ -172,6 +172,20 @@ internal class PluginLoadingProblemControllerTest {
     assertThat(result.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
   }
 
+  @Test
+  fun `a missing side plugin is distinct from a present plugin without a problem`(): Unit = timeoutRunBlocking {
+    installProductModeDependency(ProductMode.LIGHT_MONOLITH, transitive = false)
+    session.pluginStates[PluginId.getId("affected")] = PluginEnabledState.DISABLED
+
+    val present = DefaultUiPluginManagerController.getErrors(session.sessionId, PluginId.getId("affected"))
+    val absent = DefaultUiPluginManagerController.getErrors(session.sessionId, PluginId.getId("absent"))
+
+    assertThat(present.pluginPresent).isTrue()
+    assertThat(absent.pluginPresent).isFalse()
+    assertThat(present.loadingError).isNull()
+    assertThat(absent.loadingError).isNull()
+  }
+
   private fun installProductModeDependency(productMode: ProductMode, transitive: Boolean) {
     val moduleId = PluginModuleId("mode.module", PluginModuleId.JETBRAINS_NAMESPACE)
     val pluginsDir = tempDir.resolve("${productMode.id}-$transitive")
