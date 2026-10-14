@@ -93,30 +93,19 @@ object GHAccountsUtil {
     group.add(createTokenLoginAction(model, project, parentComponent, loginData))
     group.add(Separator())
 
-    group.add(
-      DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")) {
-        scopedDialog(project) {
-          GHLoginDialog.Token(model, project, this, parentComponent, loginData).apply {
-            title = GithubBundle.message("dialog.title.add.github.account")
-            setServer("", true)
-            setLoginButtonText(GithubBundle.message("accounts.add.button"))
-          }
-        }.showAndGet()
-      }
-    )
+    group.add(createGHETokenLoginAction(project, model, parentComponent, loginData))
     return group
   }
 
-  @ApiStatus.Internal
-  fun createBrowserLoginAction(
-    model: GHLoginModel, project: Project, parentComponent: JComponent, loginData: GHLoginData
+  //region Login actions
+  private fun createBrowserLoginAction(
+    model: GHLoginModel, project: Project, parentComponent: JComponent, loginData: GHLoginData,
   ): AnAction = DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")) {
     loginViaBrowser(model, project, parentComponent, loginData)
   }
 
-  @ApiStatus.Internal
-  fun loginViaBrowser(
-    model: GHLoginModel, project: Project, parentComponent: JComponent?, loginData: GHLoginData
+  private fun loginViaBrowser(
+    model: GHLoginModel, project: Project, parentComponent: JComponent?, loginData: GHLoginData,
   ) {
     scopedDialog(project) {
       GHLoginDialog.OAuth(model, project, this, parentComponent, loginData).apply {
@@ -125,16 +114,14 @@ object GHAccountsUtil {
     }.showAndGet()
   }
 
-  @ApiStatus.Internal
-  fun createTokenLoginAction(
+  private fun createTokenLoginAction(
     model: GHLoginModel, project: Project, parentComponent: JComponent, loginData: GHLoginData,
   ): AnAction = DumbAwareAction.create(CollaborationToolsBundle.message("accounts.action.add.account.with.token")) {
     loginViaToken(model, project, parentComponent, loginData)
   }
 
-  @ApiStatus.Internal
-  fun loginViaToken(
-    model: GHLoginModel, project: Project, parentComponent: JComponent?, loginData: GHLoginData
+  private fun loginViaToken(
+    model: GHLoginModel, project: Project, parentComponent: JComponent?, loginData: GHLoginData,
   ) {
     scopedDialog(project) {
       GHLoginDialog.Token(model, project, this, parentComponent, loginData).apply {
@@ -144,6 +131,31 @@ object GHAccountsUtil {
       }
     }.showAndGet()
   }
+
+  private fun createGHETokenLoginAction(
+    project: Project,
+    model: GHLoginModel,
+    parentComponent: JComponent,
+    loginData: GHLoginData,
+  ): DumbAwareAction = DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")) {
+    loginToGHEViaToken(project, model, parentComponent, loginData)
+  }
+
+  private fun loginToGHEViaToken(
+    project: Project,
+    model: GHLoginModel,
+    parentComponent: JComponent,
+    loginData: GHLoginData,
+  ) {
+    scopedDialog(project) {
+      GHLoginDialog.Token(model, project, this, parentComponent, loginData).apply {
+        title = GithubBundle.message("dialog.title.add.github.account")
+        setLoginButtonText(GithubBundle.message("accounts.add.button"))
+        setServer("", true)
+      }
+    }.showAndGet()
+  }
+  //endregion
 
   @JvmStatic
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
