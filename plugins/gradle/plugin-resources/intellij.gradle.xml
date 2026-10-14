@@ -308,7 +308,7 @@
                  description="Use dependency completion service for dependency completion in gradle scripts"/>
     <registryKey key="gradle.use.resilient.model.fetch" defaultValue="true"
                  description="Use gradle stable resilient model fetch API to resolve gradle models"/>
-    <registryKey key="gradle.build.toolwindow.single.console" defaultValue="false"
+    <registryKey key="gradle.build.toolwindow.single.console" defaultValue="true"
                  description="Use single console output for all execution nodes in Build tool window for Gradle execution"/>
 
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
