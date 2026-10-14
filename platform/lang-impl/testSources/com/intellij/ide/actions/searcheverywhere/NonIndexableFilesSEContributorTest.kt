@@ -323,6 +323,22 @@ open class NonIndexableFilesSEContributorTest {
   }
 
   @Test
+  fun `project relative path pattern resolves a file that no search lists`(): Unit = timeoutRunBlocking {
+    baseDir.newVirtualDirectory("root").let { root ->
+      workspaceModel.update { storage ->
+        storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
+      }
+    }
+    // outside the walked roots and not in VFS, as a git-ignored file that a file search skips
+    Files.writeString(Files.createDirectories(baseDir.root.toPath().resolve(".ignored")).resolve("plan.md"), "")
+
+    val found = fetchDescriptors(".ignored/plan.md")
+
+    assertThat(found.map { (it.item as PsiFileSystemItem).virtualFile.path }).containsExactly("${project.basePath}/.ignored/plan.md")
+    assertThat(found.single().weight).isEqualTo(DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE)
+  }
+
+  @Test
   fun `consumer rejection of the path match stops the search`(): Unit = timeoutRunBlocking {
     val root = baseDir.newVirtualDirectory("root")
     val file = baseDir.newVirtualFile("root/file.txt")
