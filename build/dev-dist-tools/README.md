@@ -8,8 +8,8 @@ serves the edit-test loop and rust-analyzer.
 The ultimate tools `dev-dist` and `content-report` are a second workspace, `build/dev-dist-tools` in the ultimate root.
 They use the crates of this workspace through path dependencies.
 
-The contracts are in the specs under `build/spec/` of the ultimate root. The guide
-[`dev-build-architecture.md`](../../../build/docs/guides/dev-build-architecture.md) names each tool by its Bazel label.
+The contracts are in the specs under `build/spec/` of the ultimate root. The explainer
+[`from-an-iml-to-a-dist.md`](../../../build/docs/explainers/from-an-iml-to-a-dist.md#where-the-code-goes) names each tool by its Bazel label.
 [ADR 0020](../../../build/docs/decisions/0020-the-dev-dist-tools-are-rust.md) records why the tools are Rust.
 [ADR 0043](../../../build/docs/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md) records the crate rule
 and the closure test.
