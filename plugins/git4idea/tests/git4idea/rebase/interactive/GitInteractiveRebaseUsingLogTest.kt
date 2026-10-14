@@ -265,7 +265,7 @@ internal class GitInteractiveRebaseUsingLogTest {
     refresh()
     updateChangeListManager()
 
-    val params = GitRebaseParams.editCommits(repo.vcs.version, commit.parents.first().asString(), editorHandler, false)
+    val params = GitRebaseParams.editCommits(repo.vcs.version, getRebaseUpstreamFor(commit), editorHandler, preserveMerges = false)
     runUnderProgress { indicator ->
       GitRebaseUtils.rebase(repo.project, listOf(repo), params, indicator)
     }

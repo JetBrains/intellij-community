@@ -24,13 +24,6 @@ class GitRebaseParams internal constructor(
 
     fun editCommits(
       version: GitVersion,
-      base: String,
-      editorHandler: GitRebaseEditorHandler?,
-      preserveMerges: Boolean,
-    ): GitRebaseParams = editCommits(version, RebaseUpstream.Reference(base), editorHandler, preserveMerges)
-
-    fun editCommits(
-      version: GitVersion,
       base: RebaseUpstream,
       editorHandler: GitRebaseEditorHandler?,
       preserveMerges: Boolean,
