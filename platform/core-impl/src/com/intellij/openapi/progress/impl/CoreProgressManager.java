@@ -939,6 +939,12 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     return Cancellation.isInNonCancelableSection();
   }
 
+  /**
+   * When true, {@link #computePrioritized} makes the threads that are not prioritized sleep in {@link #checkCanceled()}.
+   * It is off by default, because {@code UiThreadPriority} raises the EDT priority in the OS scheduler. See IJPL-258607.
+   */
+  private static final boolean SLEEP_TO_GIVE_PRIORITY_ENABLED =
+    SystemProperties.getBooleanProperty("intellij.progress.sleep.to.give.priority", true);
   private static final long MAX_PRIORITIZATION_NANOS = TimeUnit.SECONDS.toNanos(12); // maximum duration of process to run under low priority
   private static final long MIN_PRIORITIZATION_NANOS = TimeUnit.MILLISECONDS.toNanos(5); // minimum duration of process to consider prioritizing it down
   private final Set<Thread> myPrioritizedThreads = ConcurrentHashMap.newKeySet();
@@ -970,6 +976,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   private <T> T changePrioritizing(@NotNull Computable<? extends T> runnable) {
+    if (!SLEEP_TO_GIVE_PRIORITY_ENABLED) {
+      return runnable.compute();
+    }
     boolean prevIsEmpty = myDeprioritizations.get() > 0 || myPrioritizedThreads.isEmpty();
     T result = runnable.compute();
     boolean currentIsEmpty = myDeprioritizations.get() > 0 || myPrioritizedThreads.isEmpty();
@@ -1011,7 +1020,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   protected boolean sleepIfNeededToGivePriorityToAnotherThread() {
-    if (isDeprioritizationEnabled() && !isCurrentThreadEffectivelyPrioritized() && isLowPriorityReallyApplicable()) {
+    if (SLEEP_TO_GIVE_PRIORITY_ENABLED &&
+        isDeprioritizationEnabled() && !isCurrentThreadEffectivelyPrioritized() && isLowPriorityReallyApplicable()) {
       LockSupport.parkNanos(1_000_000);
       avoidBlockingPrioritizingThread();
       return true;
