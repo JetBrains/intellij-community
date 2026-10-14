@@ -89,7 +89,9 @@ Remote development extends these rules with side aggregation and action routing.
 - An excluded content module alias uses its plugin owner's name and ID.
 - An unresolved content module uses an unavailable module explanation, not a plugin installation message.
 - The explanation retains the module ID and namespace. It offers no Enable target.
-- An invisible dependency without a cross-plugin boundary still uses a plugin installation message with its owner's ID.
+- An invisible dependency without a cross-plugin boundary reports the inaccessible module and its owner's name.
+- The problem retains the module ID, namespace, and owner ID. It offers no Enable target or installation message.
+- Visibility failures across a plugin boundary retain the failed intermediate plugin explanation.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingDependencyProblemTest.kt (
     `an absent plugin uses the installation message`;
     `an absent modern plugin dependency uses the installation message`;
@@ -104,7 +106,10 @@ Remote development extends these rules with side aggregation and action routing.
     `a missing module has an unavailable module explanation`;
     `a missing module retains its explicit namespace`;
     `a required module keeps its missing dependency explanation`;
-    `an invisible module uses its owner in the installation message`;
+    `an invisible module reports an access restriction`;
+    `a required module reports an internal dependency from another namespace`;
+    `an internal dependency from the same namespace does not produce a problem`;
+    `a transitive visibility failure keeps the failed intermediate plugin`;
     `a failed core module reports its missing module`;
     `a missing module remains the explanation through intermediate plugins`;
     `a required module retains a missing module across a plugin boundary`;

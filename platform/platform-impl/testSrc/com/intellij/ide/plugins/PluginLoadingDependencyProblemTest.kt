@@ -281,7 +281,7 @@ internal class PluginLoadingDependencyProblemTest {
   }
 
   @Test
-  fun `an invisible module uses its owner in the installation message`() {
+  fun `an invisible module reports an access restriction`() {
     val pluginSet = buildPluginSet(
       plugin("dependency") {
         name = "Dependency"
@@ -300,8 +300,90 @@ internal class PluginLoadingDependencyProblemTest {
     val affected = pluginSet.allPlugins.single { it.pluginId.idString == "affected" }
     assertThat(pluginSet.resolvedPluginSet.getExclusionReason(affected)).isInstanceOf(DependencyIsNotVisible::class.java)
     assertThat(pluginSet.enabledPlugins.map { it.pluginId }).contains(PluginId.getId("dependency"))
-    val problem = assertDependencyProblem(pluginSet, "not.installed", "dependency")
+    val problem = assertDependencyProblem(pluginSet, "inaccessible", "dependency.private", "Dependency", dependencyType = "module")
     assertThat(problem.dependency).isEqualTo(DependencyRef.ContentModule(PluginModuleId("dependency.private", "jetbrains")))
+    assertThat(problem.dependencyPluginId).isEqualTo(PluginId.getId("dependency"))
+  }
+
+  @Test
+  fun `a required module reports an internal dependency from another namespace`() {
+    val pluginSet = buildPluginSet(
+      plugin("dependency") {
+        name = "Dependency"
+        content(namespace = "vendor") {
+          module("dependency.internal") {
+            moduleVisibility = ModuleVisibilityValue.INTERNAL
+          }
+        }
+      },
+      plugin("affected") {
+        name = "Affected"
+        content(namespace = "other") {
+          module("affected.required", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+            dependencies { module("dependency.internal", namespace = "vendor") }
+          }
+        }
+      },
+    )
+
+    assertThat(pluginSet.enabledPlugins.map { it.pluginId }).contains(PluginId.getId("dependency"))
+    val problem = assertDependencyProblem(pluginSet, "inaccessible", "dependency.internal", "Dependency", dependencyType = "module")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.ContentModule(PluginModuleId("dependency.internal", "vendor")))
+    assertThat(problem.dependencyPluginId).isEqualTo(PluginId.getId("dependency"))
+  }
+
+  @Test
+  fun `an internal dependency from the same namespace does not produce a problem`() {
+    val pluginSet = buildPluginSet(
+      plugin("dependency") {
+        content(namespace = "vendor") {
+          module("dependency.internal") {
+            moduleVisibility = ModuleVisibilityValue.INTERNAL
+          }
+        }
+      },
+      plugin("affected") {
+        content(namespace = "vendor") {
+          module("affected.required", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+            dependencies { module("dependency.internal", namespace = "vendor") }
+          }
+        }
+      },
+    )
+
+    assertThat(pluginSet.enabledPlugins.map { it.pluginId }).contains(PluginId.getId("affected"), PluginId.getId("dependency"))
+    val state = PluginManagerStateService().calculateState(
+      pluginSet, PluginLoadingErrorReportingPolicy(PluginLoadingErrorLogLevel.INFO, reportToUser = true),
+    )
+    assertThat(state.pluginNonLoadReasons).isEmpty()
+    assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).isEmpty()
+  }
+
+  @Test
+  fun `a transitive visibility failure keeps the failed intermediate plugin`() {
+    val pluginSet = buildPluginSet(
+      plugin("owner") {
+        name = "Owner"
+        content(namespace = "jetbrains") {
+          module("owner.private") {}
+        }
+      },
+      plugin("dependency") {
+        name = "Dependency"
+        dependencies { module("owner.private") }
+      },
+      plugin("affected") {
+        name = "Affected"
+        depends("dependency")
+      },
+    )
+
+    assertThat(pluginSet.enabledPlugins.map { it.pluginId }).contains(PluginId.getId("owner"))
+    val problem = assertDependencyProblem(pluginSet, "failed.to.load", "Dependency")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginId.getId("dependency")))
+    assertThat(problem.dependencyPluginId).isEqualTo(PluginId.getId("dependency"))
   }
 
   @Test
@@ -440,7 +522,7 @@ internal class PluginLoadingDependencyProblemTest {
   private fun assertDependencyProblem(
     pluginSet: PluginSet,
     messageKind: String,
-    dependencyText: String,
+    vararg dependencyText: String,
     dependencyType: String = "plugin",
   ): PluginLoadingProblem {
     val state = PluginManagerStateService().calculateState(
@@ -448,9 +530,9 @@ internal class PluginLoadingDependencyProblemTest {
     )
     val problem = checkNotNull(state.pluginNonLoadReasons[PluginId.getId("affected")])
     assertThat(problem.shortMessage)
-      .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.$messageKind.$dependencyType", dependencyText))
+      .isEqualTo(CoreBundle.message("plugin.loading.error.short.depends.on.$messageKind.$dependencyType", *dependencyText))
     assertThat(problem.detailedMessage)
-      .isEqualTo(CoreBundle.message("plugin.loading.error.long.depends.on.$messageKind.$dependencyType", "Affected", dependencyText))
+      .isEqualTo(CoreBundle.message("plugin.loading.error.long.depends.on.$messageKind.$dependencyType", "Affected", *dependencyText))
     assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
     assertThat(problem.shouldNotifyUser).isTrue()
     assertThat(state.pluginLoadingProblemsForNotification).contains(problem.detailedMessage)

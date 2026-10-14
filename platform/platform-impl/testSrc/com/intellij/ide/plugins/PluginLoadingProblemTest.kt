@@ -6,7 +6,9 @@ import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
+import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.installAt
+import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.system.CpuArch
@@ -34,6 +36,9 @@ internal class PluginLoadingProblemTest {
     plugin("dependency") {
       name = "Dependency"
       packagePrefix = "dependency.prefix"
+      content(namespace = "vendor") {
+        module("dependency.private") {}
+      }
     }.installAt(tempDir)
     val descriptors = PluginSetTestBuilder.fromPath(tempDir).discoverPlugins().second.pluginLists.single().plugins
     val affected = descriptors.single { it.pluginId.idString == "affected" }
@@ -97,7 +102,7 @@ internal class PluginLoadingProblemTest {
       case("package prefix conflict", pluginPackagePrefixConflict(affected, affected, dependency),
            message("short.package.prefix.conflict", "Affected", "Dependency"),
            message("long.package.prefix.conflict", "Affected", "Dependency", "affected", "<none>",
-                   "dependency", "<none>", "affected.prefix")),
+                   "dependency", "vendor", "affected.prefix")),
       case("incompatible plugin", pluginIsIncompatibleWithAnotherPlugin(affected, dependency, false),
            message("short.ide.contains.conflicting.module", dependencyId),
            message("long.ide.contains.conflicting.module", "Affected", dependencyId), false),
@@ -112,6 +117,10 @@ internal class PluginLoadingProblemTest {
            message("short.depends.on.unavailable.module", "missing.module"),
            message("long.depends.on.unavailable.module", "Affected", "missing.module"), false,
            dependency = DependencyRef.ContentModule(PluginModuleId("missing.module", "vendor"))),
+      case("inaccessible module", pluginDependencyIsNotVisible(affected, dependency.contentModules.single(), false),
+           message("short.depends.on.inaccessible.module", "dependency.private", "Dependency"),
+           message("long.depends.on.inaccessible.module", "Affected", "dependency.private", "Dependency"), false,
+           dependency = DependencyRef.ContentModule(PluginModuleId("dependency.private", "vendor"))),
       case("explicit subset", pluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins(affected),
            message("short.not.required.for.explicitly.configured.subset"),
            message("long.not.required.for.explicitly.configured.subset", "Affected"), false),

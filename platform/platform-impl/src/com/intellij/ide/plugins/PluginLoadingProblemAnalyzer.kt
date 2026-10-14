@@ -206,15 +206,8 @@ internal object PluginLoadingProblemAnalyzer {
           is DependencyRef.ContentModule ->
             registerLoadingError(pluginRequiresUnavailableModule(plugin, dependency.moduleId, shouldNotifyUser))
         }
-        is DependencyIsNotVisible -> {
-          // TODO bad mapping
-          val dependency = when (val module = exclusionReason.dependencyModule) {
-            is PluginMainDescriptor -> DependencyRef.Plugin(module.pluginId)
-            is ContentModuleDescriptor -> DependencyRef.ContentModule(module.moduleId)
-          }
-          registerLoadingError(pluginDependencyIsNotInstalled(plugin, dependency, shouldNotifyUser,
-                                                             exclusionReason.dependencyModule.pluginId.idString))
-        }
+        is DependencyIsNotVisible ->
+          registerLoadingError(pluginDependencyIsNotVisible(plugin, exclusionReason.dependencyModule, shouldNotifyUser))
         is ExcludedByEnvironmentConfiguration -> when (val reason = exclusionReason.reason) {
           is UnsuitableProductModeModuleUnavailabilityReason ->
             registerLoadingError(pluginRequiresUnavailableProductModeModule(plugin, reason.moduleId, productMode))

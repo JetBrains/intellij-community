@@ -356,6 +356,30 @@ internal fun pluginRequiresUnavailableModule(
   shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.depends.on.unavailable.module", moduleId.name) },
 )
 
+internal fun pluginDependencyIsNotVisible(
+  plugin: IdeaPluginDescriptor,
+  dependencyModule: PluginModuleDescriptor,
+  shouldNotifyUser: Boolean,
+): PluginLoadingProblem {
+  val dependency = when (dependencyModule) {
+    is PluginMainDescriptor -> DependencyRef.Plugin(dependencyModule.pluginId)
+    is ContentModuleDescriptor -> DependencyRef.ContentModule(dependencyModule.moduleId)
+  }
+  val owner = dependencyModule.getMainDescriptor()
+  return PluginLoadingProblem(
+    plugin = plugin,
+    shouldNotifyUser = shouldNotifyUser,
+    dependencyPluginId = owner.pluginId,
+    dependency = dependency,
+    detailedMessageSupplier = {
+      CoreBundle.message("plugin.loading.error.long.depends.on.inaccessible.module", plugin.name, dependency.idText(), owner.name)
+    },
+    shortMessageSupplier = {
+      CoreBundle.message("plugin.loading.error.short.depends.on.inaccessible.module", dependency.idText(), owner.name)
+    },
+  )
+}
+
 private fun DependencyRef.idText(): @NlsSafe String = when (this) {
   is DependencyRef.Plugin -> pluginId.idString
   is DependencyRef.ContentModule -> moduleId.name
