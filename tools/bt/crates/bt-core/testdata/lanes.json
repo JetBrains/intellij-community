@@ -92,6 +92,7 @@
     "intellij.air.integrationTests.bridge.plugin": [],
     "intellij.air.integrationTests.bridge.resident": [],
     "intellij.air.integrationTests.bridge.resident.plugin": [],
+    "intellij.air.integrationTests.bridge.acpControl": [],
     "intellij.air.integrationTests.testSupport": [],
     "intellij.air.integrationTests.ui": ["ui"],
     "intellij.air.integrationTests.uiReal": ["ui-real"],
