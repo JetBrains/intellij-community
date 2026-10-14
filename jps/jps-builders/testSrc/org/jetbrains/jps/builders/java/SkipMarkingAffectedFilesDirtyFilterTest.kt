@@ -1,10 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java
 
+import org.junit.jupiter.api.Test
+
 class SkipMarkingAffectedFilesDirtyFilterTest : IncrementalBuildTestCase() {
   override val testDataDirectoryName: String
     get() = "markingAffectedFilesDirtyFilter"
 
+  @Test
   fun testDoNotMarkDirty() {
     doTest(checkMappingAfterRebuild = false) {
       createFile("src/A.java", "class A { void foo() {} }")

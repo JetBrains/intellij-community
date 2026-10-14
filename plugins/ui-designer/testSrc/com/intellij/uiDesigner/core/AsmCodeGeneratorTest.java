@@ -42,11 +42,14 @@ import com.sun.tools.javac.Main;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import kotlin.reflect.KDeclarationContainer;
-import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.builders.JpsBuildTestBase;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.AbstractButton;
 import javax.swing.JButton;
@@ -87,8 +90,15 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class AsmCodeGeneratorTest extends JpsBuildTestCase {
+public class AsmCodeGeneratorTest extends JpsBuildTestBase {
   private MyNestedFormLoader myNestedFormLoader;
   private MyClassFinder myClassFinder;
   /**
@@ -97,9 +107,8 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
    */
   private Path myCompileDir;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() throws Exception {
     myNestedFormLoader = new MyNestedFormLoader();
 
     URL url;
@@ -152,25 +161,17 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     container.add(new File(path).toURI().toURL());
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      myNestedFormLoader = null;
-      MyClassFinder classFinder = myClassFinder;
-      if (classFinder != null) {
-        classFinder.releaseResources();
-        myClassFinder = null;
-      }
-      if (myCompileDir != null) {
-        FileUtilRt.deleteRecursively(myCompileDir);
-        myCompileDir = null;
-      }
+  @AfterEach
+  void tearDown() throws Exception {
+    myNestedFormLoader = null;
+    MyClassFinder classFinder = myClassFinder;
+    if (classFinder != null) {
+      classFinder.releaseResources();
+      myClassFinder = null;
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
+    if (myCompileDir != null) {
+      FileUtilRt.deleteRecursively(myCompileDir);
+      myCompileDir = null;
     }
   }
 
@@ -249,7 +250,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     FormErrorInfo[] errors = codeGenerator.getErrors();
     FormErrorInfo[] warnings = codeGenerator.getWarnings();
     if (errors.length == 0 && warnings.length == 0) {
-      assertNotNull("Class patching failed but no errors or warnings were returned", patchedData);
+      assertNotNull(patchedData, "Class patching failed but no errors or warnings were returned");
     }
     else if (errors.length > 0) {
       fail(errors[0].getErrorMessage());
@@ -273,6 +274,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     return (JComponent)rootComponentField.get(instance);
   }
 
+  @Test
   public void testSimple() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestSimple.form", "BindingTest");
     assertNotNull(rootComponent);
@@ -284,6 +286,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
    * enum class - deriving the type from the value would produce {@code Alignment$1.RIGHT : Alignment$1}, which
    * does not exist.
    */
+  @Test
   public void testEnumPropertyWithConstantBody() throws Exception {
     JComponent rootComponent =
       getInstrumentedRootComponent("enumProperty/TestEnumPropertyCodeGen.form", "EnumPropertyBindingTest",
@@ -302,32 +305,38 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertEquals(1, ((Integer)enumClass.getMethod("weight").invoke(alignment)).intValue());
   }
 
+  @Test
   public void testNoSuchField() throws Exception {
     AsmCodeGenerator generator = initCodeGenerator("TestNoSuchField.form", "BindingTest");
     assertEquals("Cannot bind: field does not exist: BindingTest.myNoSuchField", generator.getErrors()[0].getErrorMessage());
   }
 
+  @Test
   public void testStaticField() throws Exception {
     AsmCodeGenerator generator = initCodeGenerator("TestStaticField.form", "BindingTest");
     assertEquals("Cannot bind: field is static: BindingTest.myStaticField", generator.getErrors()[0].getErrorMessage());
   }
 
+  @Test
   public void testFinalField() throws Exception {
     AsmCodeGenerator generator = initCodeGenerator("TestFinalField.form", "BindingTest");
     assertEquals("Cannot bind: field is final: BindingTest.myFinalField", generator.getErrors()[0].getErrorMessage());
   }
 
+  @Test
   public void testPrimitiveField() throws Exception {
     AsmCodeGenerator generator = initCodeGenerator("TestPrimitiveField.form", "BindingTest");
     assertEquals("Cannot bind: field is of primitive type: BindingTest.myIntField", generator.getErrors()[0].getErrorMessage());
   }
 
+  @Test
   public void testIncompatibleTypeField() throws Exception {
     AsmCodeGenerator generator = initCodeGenerator("TestIncompatibleTypeField.form", "BindingTest");
     assertEquals("Cannot bind: Incompatible types. Cannot assign javax.swing.JPanel to field BindingTest.myStringField",
                  generator.getErrors()[0].getErrorMessage());
   }
 
+  @Test
   public void testGridLayout() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest");
     LayoutManager layout = rootComponent.getLayout();
@@ -362,6 +371,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     return parent == null ? null : findMethod(parent, methodName, params);
   }
 
+  @Test
   public void testCardLayout() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestCardLayout.form", "BindingTest");
     assertTrue(rootComponent.getLayout() instanceof CardLayout);
@@ -370,6 +380,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertEquals(20, cardLayout.getVgap());
   }
 
+  @Test
   public void testCardLayoutShow() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestCardLayoutShow.form", "BindingTest");
     assertTrue(rootComponent.getLayout() instanceof CardLayout);
@@ -378,6 +389,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertTrue(rootComponent.getComponent(1).isVisible());
   }
 
+  @Test
   public void testGridConstraints() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest");
     assertEquals(1, rootComponent.getComponentCount());
@@ -391,6 +403,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertEquals(1, invokeMethod(constraints, "getRowSpan"));
   }
 
+  @Test
   public void testIntProperty() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestIntProperty.form", "BindingTest");
     assertEquals(1, rootComponent.getComponentCount());
@@ -399,23 +412,27 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertFalse(textField.isEnabled());
   }
 
+  @Test
   public void testDoubleProperty() throws Exception {
     JSplitPane splitPane = (JSplitPane)getInstrumentedRootComponent("TestDoubleProperty.form", "BindingTest");
     assertEquals(0.1f, splitPane.getResizeWeight(), 0.001f);
   }
 
+  @Test
   public void testStringProperty() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest");
     JButton btn = (JButton)rootComponent.getComponent(0);
     assertEquals("MyTestButton", btn.getText());
   }
 
+  @Test
   public void testSplitPane() throws Exception {
     JSplitPane splitPane = (JSplitPane)getInstrumentedRootComponent("TestSplitPane.form", "BindingTest");
     assertTrue(splitPane.getLeftComponent() instanceof JLabel);
     assertTrue(splitPane.getRightComponent() instanceof JCheckBox);
   }
 
+  @Test
   public void testTabbedPane() throws Exception {
     JTabbedPane tabbedPane = (JTabbedPane)getInstrumentedRootComponent("TestTabbedPane.form", "BindingTest");
     assertEquals(2, tabbedPane.getTabCount());
@@ -425,29 +442,33 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertTrue(tabbedPane.getComponentAt(1) instanceof JButton);
   }
 
+  @Test
   public void testScrollPane() throws Exception {
     JScrollPane scrollPane = (JScrollPane)getInstrumentedRootComponent("TestScrollPane.form", "BindingTest");
     assertTrue(scrollPane.getViewport().getView() instanceof JList);
   }
 
+  @Test
   public void testBorder() throws Exception {
     JPanel panel = (JPanel)getInstrumentedRootComponent("TestBorder.form", "BindingTest");
     assertTrue(panel.getBorder() instanceof TitledBorder);
     TitledBorder border = (TitledBorder)panel.getBorder();
     assertEquals("BorderTitle", border.getTitle());
-    assertTrue(border.getBorder().toString(), border.getBorder() instanceof EtchedBorder);
+    assertTrue(border.getBorder() instanceof EtchedBorder, border.getBorder().toString());
   }
 
+  @Test
   public void testTitledBorder() throws Exception {
     JPanel panel = (JPanel)getInstrumentedRootComponent("TestTitledBorder.form", "BindingTest");
     assertTrue(panel.getBorder() instanceof TitledBorder);
     TitledBorder border = (TitledBorder)panel.getBorder();
     assertEquals("Test Value", border.getTitle());
     assertEquals("Test Value", ((JLabel)panel.getComponent(0)).getText());
-    assertTrue(border.getBorder().toString(), border.getBorder() instanceof EtchedBorder);
+    assertTrue(border.getBorder() instanceof EtchedBorder, border.getBorder().toString());
     assertEquals("javax.swing.border.TitledBorder", border.getClass().getName());
   }
 
+  @Test
   public void testTitledBorderInternal() throws Exception {
     PlatformTestUtil.withSystemProperty(ApplicationManagerEx.IS_INTERNAL_PROPERTY, "true", () -> {
       JPanel panel = (JPanel)getInstrumentedRootComponent("TestTitledBorder.form", "BindingTest");
@@ -460,17 +481,20 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     });
   }
 
+  @Test
   public void testTitledSeparator() throws Exception {
     JPanel panel = (JPanel)getInstrumentedRootComponent("TestTitledSeparator.form", "BindingTest");
     assertEquals("Test Value", ((JLabel)((JPanel)panel.getComponent(2)).getComponent(0)).getText());
     assertEquals("Test Value", ((JPanel)panel.getComponent(2)).getToolTipText());
   }
 
+  @Test
   public void testGotItPanel() throws Exception {
     JPanel panel = (JPanel)getInstrumentedRootComponent("GotItPanel.form", "GotItPanel");
-    assertInstanceOf(panel.getComponent(2), JEditorPane.class);
+    assertInstanceOf(JEditorPane.class, panel.getComponent(2));
   }
 
+  @Test
   public void testMnemonic() throws Exception {
     JPanel panel = (JPanel)getInstrumentedRootComponent("TestMnemonics.form", "BindingTest");
     JLabel label = (JLabel)panel.getComponent(0);
@@ -479,6 +503,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertEquals(3, label.getDisplayedMnemonicIndex());
   }
 
+  @Test
   public void testMnemonicFromProperty() throws Exception {
     JPanel panel = (JPanel)getInstrumentedRootComponent("TestMnemonicsProperty.form", "BindingTest");
     JLabel label = (JLabel)panel.getComponent(0);
@@ -487,6 +512,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertEquals(3, label.getDisplayedMnemonicIndex());
   }
 
+  @Test
   public void testGridBagLayout() throws Exception {
     JPanel panel = (JPanel)getInstrumentedRootComponent("TestGridBag.form", "BindingTest");
     assertTrue(panel.getLayout() instanceof GridBagLayout);
@@ -502,6 +528,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertEquals(GridBagConstraints.NORTHWEST, gbc.anchor);
   }
 
+  @Test
   public void testGridBagSpacer() throws Exception {
     JPanel panel = (JPanel)getInstrumentedRootComponent("TestGridBagSpacer.form", "BindingTest");
     assertTrue(panel.getLayout() instanceof GridBagLayout);
@@ -517,6 +544,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertEquals(1.0, gbc.weighty, 0.01);
   }
 
+  @Test
   public void testLabelFor() throws Exception {
     JPanel panel = (JPanel)getInstrumentedRootComponent("TestLabelFor.form", "BindingTest");
     JTextField textField = (JTextField)panel.getComponent(0);
@@ -524,12 +552,14 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertEquals(textField, label.getLabelFor());
   }
 
+  @Test
   public void testFieldReference() throws Exception {
     Class<?> cls = loadAndPatchClass("TestFieldReference.form", "FieldReferenceTest");
     JPanel instance = (JPanel)cls.getConstructor().newInstance();
     assertEquals(1, instance.getComponentCount());
   }
 
+  @Test
   public void testChainedConstructor() throws Exception {
     Class<?> cls = loadAndPatchClass("TestChainedConstructor.form", "ChainedConstructorTest");
     Field scrollPaneField = cls.getField("myScrollPane");
@@ -538,11 +568,13 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertNotNull(scrollPane.getViewport().getView());
   }
 
+  @Test
   public void testConditionalMethodCall() throws Exception {
     JPanel panel = (JPanel)getInstrumentedRootComponent("TestConditionalMethodCall.form", "ConditionalMethodCallTest");
     assertNotNull(panel);
   }
 
+  @Test
   public void testMethodCallInSuper() throws Exception {
     // todo[yole] make this test work in headless
     if (!GraphicsEnvironment.isHeadless()) {
@@ -552,6 +584,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     }
   }
 
+  @Test
   public void testClientProp() throws Exception {  // IDEA-46372
     JComponent rootComponent = getInstrumentedRootComponent("TestClientProp.form", "BindingTest");
     assertEquals(1, rootComponent.getComponentCount());
@@ -559,6 +592,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertSame(Boolean.TRUE, table.getClientProperty("terminateEditOnFocusLost"));
   }
 
+  @Test
   public void testIdeadev14081() throws Exception {
     // NOTE: That doesn't really reproduce the bug as it's dependent on a particular instrumentation sequence used during form preview
     // (the nested form is instrumented with a new AsmCodeGenerator instance directly in the middle of instrumentation of the current form)
@@ -582,6 +616,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
    * because the compilation classloader cannot resolve such types. The ASM-based provider
    * discovers properties by reading bytecode without loading those types.
    */
+  @Test
   public void testCustomComponentWithNonBaseModuleType() throws Exception {
     String testDataPath = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/nonBaseModuleType/";
     String tmpPath = System.getProperty("java.io.tmpdir");

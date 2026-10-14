@@ -19,7 +19,10 @@ import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -30,25 +33,19 @@ import static org.jetbrains.jps.backwardRefs.index.JavaCompilerIndices.BACK_USAG
 public class SensitiveFsReferenceIndexTest extends ReferenceIndexTestBase {
   private String myPreviousFsProperty;
 
-  @Override
-  public void setUp() {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
     myPreviousFsProperty = System.getProperty(JavaBackwardReferenceIndexWriter.FS_KEY);
     System.setProperty(JavaBackwardReferenceIndexWriter.FS_KEY, "true");
   }
 
-  @Override
-  public void tearDown() {
-    try {
-      if (myPreviousFsProperty == null) {
-        System.clearProperty(JavaBackwardReferenceIndexWriter.FS_KEY);
-      }
-      else {
-        System.setProperty(JavaBackwardReferenceIndexWriter.FS_KEY, myPreviousFsProperty);
-      }
+  @AfterEach
+  void tearDown() {
+    if (myPreviousFsProperty == null) {
+      System.clearProperty(JavaBackwardReferenceIndexWriter.FS_KEY);
     }
-    finally {
-      super.tearDown();
+    else {
+      System.setProperty(JavaBackwardReferenceIndexWriter.FS_KEY, myPreviousFsProperty);
     }
   }
 
@@ -58,6 +55,7 @@ public class SensitiveFsReferenceIndexTest extends ReferenceIndexTestBase {
                                     '/');
   }
 
+  @Test
   public void testCaseSensitivity() throws StorageException {
     assertIndexOnRebuild("pack/Foo.java", "pack/Bar.java");
 

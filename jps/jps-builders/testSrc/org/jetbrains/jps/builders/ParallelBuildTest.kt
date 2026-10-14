@@ -3,25 +3,22 @@ package org.jetbrains.jps.builders
 
 import com.intellij.util.PathUtil
 import org.jetbrains.jps.api.GlobalOptions
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class ParallelBuildTest: JpsBuildTestCase() {
-  override fun setUp() {
-    super.setUp()
+class ParallelBuildTest: JpsBuildTestBase() {
+  @BeforeEach
+  fun setUp() {
     System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, true.toString())
   }
 
-  override fun tearDown() {
-    try {
-      System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, false.toString())
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() {
+    System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, false.toString())
   }
 
+  @Test
   fun testBuildDependentModules() {
     createFile("m1/Class0.java", "public class Class0 {}")
     for (i in 1..10) {

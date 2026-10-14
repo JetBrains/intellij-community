@@ -15,75 +15,94 @@
  */
 package org.jetbrains.ether;
 
+import org.junit.jupiter.api.Test;
+
 public class FieldModifierTest extends IncrementalTestCase {
   public FieldModifierTest() {
     super("fieldModifiers");
   }
 
+  @Test
   public void testSetFinal() {
     doTest();
   }
 
+  @Test
   public void testSetPrivate() {
     doTest();
   }
 
+  @Test
   public void testSetPrivateToConstantField() {
     doTest();
   }
 
+  @Test
   public void testSetProtected() {
     doTest();
   }
 
+  @Test
   public void testSetPackagePrivate() {
     doTest();
   }
 
+  @Test
   public void testSetStatic() {
     doTest();
   }
 
+  @Test
   public void testUnsetStatic() {
     doTest();
   }
 
+  @Test
   public void testUnsetStaticFinal() {
     doTest();
   }
 
+  @Test
   public void testHidePackagePrivateWithPackagePrivate() {
     doTest();
   }
 
+  @Test
   public void testHidePackagePrivateWithProtected() {
     doTest();
   }
 
+  @Test
   public void testHidePackagePrivateWithPublic() {
     doTest();
   }
 
+  @Test
   public void testHideProtectedWithPackagePrivate() {
     doTest();
   }
 
+  @Test
   public void testHideProtectedWithProtected() {
     doTest();
   }
 
+  @Test
   public void testHideProtectedWithPublic() {
     doTest();
   }
 
+  @Test
   public void testHidePublicWithPackagePrivate() {
     doTest();
   }
 
+  @Test
   public void testHidePublicWithProtected() {
     doTest();
   }
 
+  @Test
   public void testHidePublicWithPublic() {
     doTest();
   }

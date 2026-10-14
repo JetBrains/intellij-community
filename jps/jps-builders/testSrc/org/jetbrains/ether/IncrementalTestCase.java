@@ -8,7 +8,7 @@ import com.intellij.platform.bazel.runfiles.BazelLabel;
 import com.intellij.testFramework.common.BazelTestUtil;
 import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
-import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.builders.JpsBuildTestBase;
 import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerBase;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -25,6 +25,8 @@ import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +36,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class IncrementalTestCase extends JpsBuildTestCase {
+import static com.intellij.testFramework.PlatformTestUtil.assertSameLinesWithFile;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+public abstract class IncrementalTestCase extends JpsBuildTestBase {
 
   private static final String MODULE_DIR_PREFIX = "module";
   private final String groupName;
@@ -42,18 +47,14 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   private File workDir;
   private JpsSdk<JpsDummyElement> myJdk;
 
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected IncrementalTestCase(final String name) {
-    setName(name);
     groupName = name;
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
+  @BeforeEach
+  void setUpIncrementalTestCase() throws Exception {
     baseDir = getTestDataDirectory();
-    workDir = FileUtil.createTempDirectory("jps-build", null);
+    workDir = createTempDirectory("jps-build");
 
     FileUtil.copyDir(baseDir, workDir, file -> {
       String name = file.getName();
@@ -82,18 +83,9 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     return FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/" + pathRelativeToProjectRoot;
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      GraphElementInterner.clear();
-      FileUtil.delete(workDir);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDownIncrementalTestCase() {
+    GraphElementInterner.clear();
   }
 
   protected void modify(int stage) {

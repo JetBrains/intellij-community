@@ -17,12 +17,15 @@ package org.jetbrains.references
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
+import org.junit.jupiter.api.Test
 
 class Java8ReferenceIndexTest : ReferenceIndexTestBase() {
+  @Test
   fun testLambda() {
     assertIndexOnRebuild("Lambda.java")
   }
 
+  @Test
   fun testMethodReference() {
     assertIndexOnRebuild("MethodReference.java")
   }

@@ -15,90 +15,108 @@
  */
 package org.jetbrains.ether;
 
+import org.junit.jupiter.api.Test;
+
 public class ImportTest extends IncrementalTestCase {
   public ImportTest() {
     super("imports");
   }
 
+  @Test
   public void testUnusedClassImport() {
     setupInitialProject();
     doTestBuild(1).assertFailed();
   }
 
+  @Test
   public void testUnusedStaticWildcardImport() {
     setupInitialProject();
     doTestBuild(1).assertFailed();
   }
 
+  @Test
   public void testUnusedStaticImportClassDeleted() {
     setupInitialProject();
     doTestBuild(1).assertFailed();
   }
 
+  @Test
   public void testUnusedStaticImportFieldDeleted() {
     setupInitialProject();
     setupModules();
     doTestBuild(1).assertFailed();
   }
 
+  @Test
   public void testStaticImportConstantFieldChanged() {
     setupInitialProject();
     doTestBuild(1).assertSuccessful();
   }
 
+  @Test
   public void testUnusedStaticImportFieldBecameNonstatic() {
     setupInitialProject();
     setupModules();
     doTestBuild(1).assertFailed();
   }
 
+  @Test
   public void testUnusedStaticImportMethodDeleted() {
     setupInitialProject();
     setupModules();
     doTestBuild(1).assertFailed();
   }
 
+  @Test
   public void testUnusedStaticImportMethodBecameNonstatic() {
     setupInitialProject();
     setupModules();
     doTestBuild(1).assertFailed();
   }
 
+  @Test
   public void testUnusedStaticImportInheritedFieldDeleted() {
     setupInitialProject();
     doTestBuild(1).assertFailed();
   }
 
+  @Test
   public void testUnusedStaticImportInheritedFieldBecameNonstatic() {
     setupInitialProject();
     doTestBuild(1).assertFailed();
   }
 
+  @Test
   public void testUnusedStaticImportInheritedMethodDeleted() {
     setupInitialProject();
     doTestBuild(1).assertFailed();
   }
 
+  @Test
   public void testUnusedStaticImportInheritedMethodBecameNonstatic() {
     setupInitialProject();
     doTestBuild(1).assertFailed();
   }
 
+  @Test
   public void testWildcardStaticImportFieldAdded() {
     setupInitialProject();
     doTestBuild(1).assertFailed();
   }
 
+  @Test
   public void testWildcardStaticImportMethodAdded() {
     setupInitialProject();
     doTestBuild(1).assertFailed();
   }
 
+  @Test
   public void testWildcardStaticImportFieldBecameStatic() {
     setupInitialProject();
     doTestBuild(1).assertFailed();
   }
 
+  @Test
   public void testWildcardStaticImportMethodBecameStatic() {
     setupInitialProject();
     doTestBuild(1).assertFailed();

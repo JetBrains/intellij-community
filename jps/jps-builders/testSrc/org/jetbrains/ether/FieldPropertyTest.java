@@ -7,6 +7,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
@@ -25,22 +26,27 @@ public class FieldPropertyTest extends IncrementalTestCase {
     return !GRAPH_ONLY_TESTS.contains(getTestName(true));
   }
 
+  @Test
   public void testConstantChain() {
     doTest();
   }
 
+  @Test
   public void testConstantChain1() {
     doTest();
   }
 
+  @Test
   public void testConstantChain2() {
     doTest();
   }
 
+  @Test
   public void testConstantChain3() {
     doTest();
   }
 
+  @Test
   public void testConstantChainMultiModule() {
     JpsModule moduleA = addModule("moduleA", "moduleA/src");
     JpsModule moduleB = addModule("moduleB", "moduleB/src");
@@ -50,46 +56,57 @@ public class FieldPropertyTest extends IncrementalTestCase {
     doTestBuild(1).assertSuccessful();
   }
 
+  @Test
   public void testConstantRemove() {
     doTest();
   }
 
+  @Test
   public void testConstantRemove1() {
     doTest();
   }
 
+  @Test
   public void testDoubleConstantChange() {
     doTest();
   }
 
+  @Test
   public void testFloatConstantChange() {
     doTest();
   }
 
+  @Test
   public void testInnerConstantChange() {
     doTest();
   }
 
+  @Test
   public void testIntConstantChange() {
     doTest();
   }
 
+  @Test
   public void testIntNonStaticConstantChange() {
     doTest();
   }
 
+  @Test
   public void testLongConstantChange() {
     doTest();
   }
 
+  @Test
   public void testNonCompileTimeConstant() {
     doTest();
   }
 
+  @Test
   public void testStringConstantChange() {
     doTest();
   }
 
+  @Test
   public void testStringConstantChangeWithECJ() {
     setupInitialProject();
     final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(myProject);
@@ -98,38 +115,47 @@ public class FieldPropertyTest extends IncrementalTestCase {
     doTestBuild(1);
   }
 
+  @Test
   public void testStringConstantLessAccessible() {
     doTest();
   }
 
+  @Test
   public void testTypeChange() {
     doTest();
   }
 
+  @Test
   public void testTypeChange1() {
     doTest();
   }
 
+  @Test
   public void testTypeChange2() {
     doTest();
   }
 
+  @Test
   public void testNonIncremental1() {
     doTest();
   }
 
+  @Test
   public void testNonIncremental2() {
     doTest();
   }
 
+  @Test
   public void testNonIncremental3() {
     doTest();
   }
 
+  @Test
   public void testNonIncremental4() {
     doTest();
   }
 
+  @Test
   public void testMutualConstants() {
     doTest();
   }

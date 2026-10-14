@@ -21,25 +21,33 @@ import com.intellij.platform.bazel.runfiles.BazelLabel;
 import com.intellij.testFramework.common.BazelTestUtil;
 import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
-import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.builders.JpsBuildTestBase;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
-public class JpsMavenJavaBuildingTest extends JpsBuildTestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class JpsMavenJavaBuildingTest extends JpsBuildTestBase {
+  @Test
   public void testCompileJava() throws IOException {
     var testDataRoot = BazelTestUtil.isUnderBazelTest()
                        ? BazelTestUtil.getFileFromBazelRuntime(BazelLabel.Companion.fromString("@community//plugins/maven/jps:testData"))
                        : PathManagerEx.findFileUnderCommunityHome("plugins/maven/jps/testData").toPath();
     File srcDir = testDataRoot.resolve("compiler/classpathTest").toFile();
-    File workDir = FileUtil.createTempDirectory("mavenJavaBuild", null);
+    File workDir = createTempDirectory("mavenJavaBuild");
     FileUtil.copyDir(srcDir, workDir);
     addJdk("1.6");
     loadProject(workDir.getAbsolutePath());
     BuildResult result = doBuild(CompileScopeTestBuilder.rebuild().allModules());
     result.assertFailed();
-    BuildMessage message = assertOneElement(result.getMessages(BuildMessage.Kind.ERROR));
-    assertTrue(message.toString(), message.getMessageText().contains("Maven project configuration") && message.getMessageText().contains("isn't available."));
+    List<BuildMessage> errors = result.getMessages(BuildMessage.Kind.ERROR);
+    assertEquals(1, errors.size(), errors.toString());
+    BuildMessage message = errors.getFirst();
+    assertTrue(message.getMessageText().contains("Maven project configuration") && message.getMessageText().contains("isn't available."), message.toString());
   }
 }

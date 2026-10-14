@@ -1,11 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.common.ThreadLeakTracker;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.DirectoryContentSpec;
 import com.intellij.util.io.DirectoryContentSpecKt;
@@ -58,17 +61,42 @@ import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.jetbrains.jps.builders.CompileScopeTestBuilder.make;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-public abstract class JpsBuildTestCase extends UsefulTestCase {
+/**
+ * The JUnit 5 replacement of {@code org.jetbrains.jps.builders.JpsBuildTestCase}.
+ * <p>
+ * A subclass gets a new JPS model, a new data storage directory and a new build log for each test.
+ * The test creates the project files in a temporary directory, and JUnit deletes the directory after the test.
+ * Call the methods from the test thread. The JPS build needs no application and no EDT.
+ */
+public abstract class JpsBuildTestBase {
+  private static Disposable ourFreezeDetectorDisposable;
+
+  @TempDir
+  private Path myTempDir;
+  private String myTestName;
   private File myProjectDir;
   @NotNull protected JpsProject myProject;
   protected JpsModel myModel;
@@ -81,7 +109,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   protected static void rename(String path, String newName) {
     try {
       File file = new File(FileUtil.toSystemDependentName(path));
-      assertTrue("File " + file.getAbsolutePath() + " doesn't exist", file.exists());
+      assertTrue(file.exists(), "File " + file.getAbsolutePath() + " doesn't exist");
       final File tempFile = new File(file.getParentFile(), "__" + newName);
       FileUtil.rename(file, tempFile);
       File newFile = new File(file.getParentFile(), newName);
@@ -94,14 +122,48 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     }
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeAll
+  static void allowFreezeDetectorThread() {
+    // The thread of a stopped FreezeDetector ends after its 5 s sleep, so the thread leak check must not wait for it
+    ourFreezeDetectorDisposable = Disposer.newDisposable();
+    ThreadLeakTracker.longRunningThreadCreated(ourFreezeDetectorDisposable, "FreezeDetector Thread");
+  }
+
+  @AfterAll
+  static void disallowFreezeDetectorThread() {
+    Disposer.dispose(ourFreezeDetectorDisposable);
+  }
+
+  @BeforeEach
+  void setUpJpsBuildTest(TestInfo testInfo) throws IOException {
+    myTestName = testInfo.getTestMethod().orElseThrow().getName();
+    assumeTrue(shouldRunTest());
     myModel = JpsElementFactory.getInstance().createModel();
     myProject = myModel.getProject();
-    myDataStorageRoot = FileUtil.createTempDirectory("compile-server-" + getProjectName(), null);
+    myDataStorageRoot = createTempDirectory("compile-server-" + getProjectName());
     myLogger = new TestProjectBuilderLogger();
     myBuildParams = new HashMap<>();
+  }
+
+  /**
+   * Returns {@code false} to skip the current test. The check runs before the setup of the test.
+   */
+  protected boolean shouldRunTest() {
+    return true;
+  }
+
+  /**
+   * Returns the name of the current test method without the {@code test} prefix.
+   */
+  protected @NotNull String getTestName(boolean lowercaseFirstLetter) {
+    return PlatformTestUtil.getTestName(myTestName, lowercaseFirstLetter);
+  }
+
+  /**
+   * Creates a new directory in the temporary directory of the test. JUnit deletes it after the test.
+   */
+  protected @NotNull File createTempDirectory(@NotNull String prefix) throws IOException {
+    return Files.createTempDirectory(myTempDir, prefix).toRealPath().toFile();
   }
 
   protected static void assertOutput(final String outputPath, TestFileSystemBuilder expected) {
@@ -131,7 +193,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   protected static void change(String filePath, final @Nullable String newContent) {
     try {
       File file = new File(FileUtil.toSystemDependentName(filePath));
-      assertTrue("File " + file.getAbsolutePath() + " doesn't exist", file.exists());
+      assertTrue(file.exists(), "File " + file.getAbsolutePath() + " doesn't exist");
       if (newContent != null) {
         FileUtil.writeToFile(file, newContent);
       }
@@ -145,7 +207,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
           //Mac OS and some versions of Linux truncates timestamp to nearest second
           setLastModified(file, time + 1000);
           newTimeStamp = FSOperations.lastModified(file);
-          assertTrue("Failed to change timestamp for " + file.getAbsolutePath(), newTimeStamp > oldTimestamp);
+          assertTrue(newTimeStamp > oldTimestamp, "Failed to change timestamp for " + file.getAbsolutePath());
         }
         sleepUntil(newTimeStamp);
       }
@@ -165,14 +227,22 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
 
   private static void setLastModified(File file, long time) {
     boolean updated = file.setLastModified(time);
-    assertTrue("Cannot modify timestamp for " + file.getAbsolutePath(), updated);
+    assertTrue(updated, "Cannot modify timestamp for " + file.getAbsolutePath());
   }
 
   protected static void delete(String filePath) {
     File file = new File(FileUtil.toSystemDependentName(filePath));
-    assertTrue("File " + file.getAbsolutePath() + " doesn't exist", file.exists());
+    assertTrue(file.exists(), "File " + file.getAbsolutePath() + " doesn't exist");
     final boolean deleted = FileUtil.delete(file);
-    assertTrue("Cannot delete file " + file.getAbsolutePath(), deleted);
+    assertTrue(deleted, "Cannot delete file " + file.getAbsolutePath());
+  }
+
+  protected static void assertExists(File file) {
+    assertTrue(file.exists(), "File should exist " + file);
+  }
+
+  protected static void assertDoesntExist(File file) {
+    assertFalse(file.exists(), "File should not exist " + file);
   }
 
   protected JpsSdk<JpsDummyElement> addJdk(final String name) {
@@ -197,7 +267,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected String getProjectName() {
-    return StringUtil.decapitalize(StringUtil.trimStart(getName(), "test"));
+    return StringUtil.decapitalize(StringUtil.trimStart(myTestName, "test"));
   }
 
   protected ProjectDescriptor createProjectDescriptor(final BuildLoggingManager buildLoggingManager) {
@@ -340,12 +410,18 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     myLogger.clearLog();
   }
 
+  /**
+   * Checks that the last build compiled exactly the given paths with the given builder.
+   */
   public void assertCompiled(String builderName, String... paths) {
     myLogger.assertCompiled(builderName, new File[]{myProjectDir, myDataStorageRoot}, paths);
   }
 
+  /**
+   * Compares the full build log of the test with the expected log file.
+   */
   public void checkFullLog(File expectedLogFile) {
-    assertSameLinesWithFile(expectedLogFile.getAbsolutePath(), myLogger.getFullLog(myProjectDir, myDataStorageRoot));
+    PlatformTestUtil.assertSameLinesWithFile(expectedLogFile.getAbsolutePath(), myLogger.getFullLog(myProjectDir, myDataStorageRoot));
   }
 
   protected void assertDeleted(String... paths) {
@@ -402,6 +478,9 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     return FileUtil.toSystemIndependentName(dir.getAbsolutePath());
   }
 
+  /**
+   * Writes a file with the given text under the project directory, and returns its system-independent path.
+   */
   public String createFile(String relativePath, final String text) {
     try {
       File file = new File(getOrCreateProjectDir(), relativePath);
@@ -427,9 +506,14 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected File findFindUnderProjectHome(String relativeSourcePath) {
-    return PathManagerEx.findFileUnderProjectHome(relativeSourcePath, getClass());
+    File file = new File(PathManagerEx.getHomePath(getClass()), relativeSourcePath);
+    assertTrue(file.exists(), "Cannot find " + file.getAbsolutePath());
+    return file;
   }
 
+  /**
+   * Returns the project directory of the test. The first call creates it.
+   */
   public File getOrCreateProjectDir() {
     if (myProjectDir == null) {
       try {
@@ -443,17 +527,26 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected File doGetProjectDir() throws IOException {
-    return FileUtil.createTempDirectory("prj", null);
+    return createTempDirectory("prj");
   }
 
+  /**
+   * Returns the system-independent absolute path of a path under the project directory.
+   */
   public String getAbsolutePath(final String pathRelativeToProjectRoot) {
     return FileUtil.toSystemIndependentName(new File(getOrCreateProjectDir(), pathRelativeToProjectRoot).getAbsolutePath());
   }
 
+  /**
+   * Returns the URL of a path under the project directory.
+   */
   public @NotNull String getUrl(@NotNull String pathRelativeToProjectRoot) {
     return JpsPathUtil.pathToUrl(getAbsolutePath(pathRelativeToProjectRoot));
   }
 
+  /**
+   * Adds a Java module with the given source roots, the default output directory and the default JDK.
+   */
   public JpsModule addModule(String moduleName, String... srcPaths) {
     return addModule(moduleName, srcPaths, getAbsolutePath(getModuleOutputRelativePath(moduleName)), null, getJdk());
   }

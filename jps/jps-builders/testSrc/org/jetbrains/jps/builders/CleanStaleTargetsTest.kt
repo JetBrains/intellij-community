@@ -6,9 +6,11 @@ import com.intellij.util.io.directoryContent
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
+import org.junit.jupiter.api.Test
 import kotlin.io.path.pathString
 
-class CleanStaleTargetsTest : JpsBuildTestCase() {
+class CleanStaleTargetsTest : JpsBuildTestBase() {
+  @Test
   fun `test delete old output when module is deleted`() {
     //todo currently references to classes from deleted module aren't removed ClassToSubclasses, ClassToClassDependency, SourceFileToClasses mappings
     doTestDeleteOldOutput(false) {
@@ -16,6 +18,7 @@ class CleanStaleTargetsTest : JpsBuildTestCase() {
     }
   }
 
+  @Test
   fun `test delete old output when module is renamed`() {
     doTestDeleteOldOutput {
       val oldSourceRoot = it.sourceRoots.single().path.pathString
@@ -24,6 +27,7 @@ class CleanStaleTargetsTest : JpsBuildTestCase() {
     }
   }
 
+  @Test
   fun `test delete old output when module output is changed`() {
     doTestDeleteOldOutput {
       val moduleExtension = JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(it)

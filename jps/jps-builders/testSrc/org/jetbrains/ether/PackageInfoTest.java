@@ -15,19 +15,24 @@
  */
 package org.jetbrains.ether;
 
+import org.junit.jupiter.api.Test;
+
 public class PackageInfoTest extends IncrementalTestCase {
   public PackageInfoTest() {
     super("packageInfo");
   }
 
+  @Test
   public void testPackageInfoNoRecompile() {
     doTest();
   }
 
+  @Test
   public void testPackageInfoNoRecompile2() {
     doTest();
   }
 
+  @Test
   public void testPackageInfoRecompileOnConstantChange() {
     doTest();
   }

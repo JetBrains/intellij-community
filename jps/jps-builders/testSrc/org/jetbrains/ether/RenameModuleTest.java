@@ -4,6 +4,8 @@ package org.jetbrains.ether;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 import java.util.function.Function;
@@ -30,10 +32,9 @@ public class RenameModuleTest extends IncrementalTestCase {
     return !GRAPH_ONLY_TESTS.contains(getTestName(true));
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     myModuleToRemove = null;
-    super.tearDown();
   }
 
   @Override
@@ -55,12 +56,14 @@ public class RenameModuleTest extends IncrementalTestCase {
     return false;
   }
 
+  @Test
   public void testDeleteClassSameModule() {
     myAddModuleAction = name -> addModule(name, "moduleA/src"); 
     myModuleToRemove = myAddModuleAction.apply("moduleA");
     doTestBuild(1).assertSuccessful();
   }
 
+  @Test
   public void testDeleteClassDependentModule() {
     JpsModule moduleA = addModule("moduleA", "moduleA/src");
     myAddModuleAction = name -> {

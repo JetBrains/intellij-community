@@ -13,19 +13,24 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class MarkDirtyTest extends IncrementalTestCase {
   public MarkDirtyTest() {
     super("markDirty");
   }
 
+  @Test
   public void testRecompileDependent() {
     doTest();
   }
 
+  @Test
   public void testRecompileDependentTests() {
     JpsModule module = addModule();
     addTestRoot(module, "testSrc");
@@ -64,12 +69,14 @@ public class MarkDirtyTest extends IncrementalTestCase {
     return super.createCompileScope(stage);
   }
 
+  @Test
   public void testCleanTimestampsWithOutputOnModuleRebuild() {
     setupInitialProject();
     setupModules();
     doTestBuild(2).assertSuccessful();
   }
 
+  @Test
   public void testRecompileTargetOnExportedLibraryChange() {
     setupInitialProject();
     final Map<String, JpsModule> modules = setupModules();
@@ -82,6 +89,7 @@ public class MarkDirtyTest extends IncrementalTestCase {
     doTestBuild(1).assertSuccessful();
   }
 
+  @Test
   public void testTransitiveRecompile() {
     JpsModule module = addModule();
     addTestRoot(module, "testSrc");
@@ -94,10 +102,12 @@ public class MarkDirtyTest extends IncrementalTestCase {
     PlatformTestUtil.withSystemProperty(BuildDataManager.PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, String.valueOf(true), () -> doTestBuild(1).assertSuccessful());
   }
 
+  @Test
   public void testRecompileTwinDependencies() {
     doTest().assertSuccessful();
   }
 
+  @Test
   public void testDoNotMarkDirtyCompiledChunks() {
     //'b.Client' from production sources of 'b' cannot depend on 'a.ShortName' from module 'a' so it shouldn't be marked as dirty.
     //Otherwise we can get 'dirty' sources after full make if production of 'b' was compiled before 'a'

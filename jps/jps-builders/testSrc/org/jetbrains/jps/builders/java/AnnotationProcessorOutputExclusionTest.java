@@ -2,17 +2,20 @@
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.util.PathUtil;
-import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.builders.JpsBuildTestBase;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class AnnotationProcessorOutputExclusionTest extends JpsBuildTestCase {
+public class AnnotationProcessorOutputExclusionTest extends JpsBuildTestBase {
 
+  @Test
   public void testApGeneratedSourcesUnderSourceRoot_areExcluded() {
     String file = createFile("src/A.java", "public class A {}");
     createFile("src/generated/Gen.java", "public class Gen {}");
@@ -34,6 +37,7 @@ public class AnnotationProcessorOutputExclusionTest extends JpsBuildTestCase {
     assertOutput(m, fs().file("A.class"));
   }
 
+  @Test
   public void testApGeneratedTestSourcesUnderTestRoot_areExcluded() {
     String testFile = createFile("testSrc/ATest.java", "public class ATest {}");
     createFile("testSrc/generated_tests/GenTest.java", "public class GenTest {}");

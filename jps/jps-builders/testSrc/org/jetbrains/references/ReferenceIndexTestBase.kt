@@ -2,6 +2,7 @@
 package org.jetbrains.references
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.indexing.IndexId
 import com.intellij.util.indexing.forEachValueOf
@@ -16,30 +17,25 @@ import org.jetbrains.jps.backwardRefs.NameEnumerator
 import org.jetbrains.jps.backwardRefs.SignatureData
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData
 import org.jetbrains.jps.backwardRefs.index.JavaCompilerIndices
-import org.jetbrains.jps.builders.JpsBuildTestCase
+import org.jetbrains.jps.builders.JpsBuildTestBase
 import org.jetbrains.jps.builders.TestProjectBuilderLogger
 import org.jetbrains.jps.builders.logging.BuildLoggingManager
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 
-abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
-  public override fun setUp() {
-    super.setUp()
+abstract class ReferenceIndexTestBase : JpsBuildTestBase() {
+  @BeforeEach
+  fun setUpReferenceIndexTestBase() {
     System.setProperty(JavaBackwardReferenceIndexWriter.PROP_KEY, true.toString())
   }
 
-  public override fun tearDown() {
-    try {
-      System.clearProperty(JavaBackwardReferenceIndexWriter.PROP_KEY)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDownReferenceIndexTestBase() {
+    System.clearProperty(JavaBackwardReferenceIndexWriter.PROP_KEY)
   }
 
   protected fun assertIndexOnRebuild(vararg files: String) {
@@ -69,7 +65,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
 
 
   protected fun assertIndexEquals(expectedIndexDumpFile: String) {
-    assertSameLinesWithFile(testDataRootPath + "/" + getTestName(true) + "/" + expectedIndexDumpFile, indexAsText())
+    PlatformTestUtil.assertSameLinesWithFile(testDataRootPath + "/" + getTestName(true) + "/" + expectedIndexDumpFile, indexAsText())
   }
 
   protected fun indexAsText(): String {

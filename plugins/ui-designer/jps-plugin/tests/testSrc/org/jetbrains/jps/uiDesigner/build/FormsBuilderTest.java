@@ -20,7 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.bazel.runfiles.BazelLabel;
 import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.uiDesigner.core.AbstractLayout;
-import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.builders.JpsBuildTestBase;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -31,11 +31,15 @@ import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 
-public class FormsBuilderTest extends JpsBuildTestCase {
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class FormsBuilderTest extends JpsBuildTestBase {
   private static final String SIMPLE_FORM_PATH = "build/simple";
 
   @Override
@@ -47,6 +51,7 @@ public class FormsBuilderTest extends JpsBuildTestCase {
     return super.findFindUnderProjectHome("plugins/ui-designer/jps-plugin/tests/testData/" + relativeSourcePath);
   }
 
+  @Test
   public void testSimple() {
     JpsModule m = addModule("m", copyToProject(SIMPLE_FORM_PATH, "src"));
     buildAllModules().assertSuccessful();
@@ -55,6 +60,7 @@ public class FormsBuilderTest extends JpsBuildTestCase {
     buildAllModules().assertUpToDate();
   }
 
+  @Test
   public void testEnableInstrumenting() {
     JpsModule m = addModule("m", copyToProject(SIMPLE_FORM_PATH, "src"));
     JpsUiDesignerExtensionService.getInstance().getOrCreateUiDesignerConfiguration(myProject).setInstrumentClasses(false);
@@ -68,6 +74,7 @@ public class FormsBuilderTest extends JpsBuildTestCase {
     buildAllModules().assertUpToDate();
   }
 
+  @Test
   public void testDisableInstrumenting() {
     JpsModule m = addModule("m", copyToProject(SIMPLE_FORM_PATH, "src"));
     buildAllModules().assertSuccessful();
@@ -78,6 +85,7 @@ public class FormsBuilderTest extends JpsBuildTestCase {
     assertNotInstrumented(m, "xxx/MyForm.class");
   }
 
+  @Test
   public void testRecompileFormForChangedClass() {
     JpsModule m = addModule("m", copyToProject(SIMPLE_FORM_PATH, "src"));
     buildAllModules().assertSuccessful();
@@ -91,6 +99,7 @@ public class FormsBuilderTest extends JpsBuildTestCase {
     buildAllModules().assertUpToDate();
   }
 
+  @Test
   public void testRecompileFormForChangedClassOnSecondCompilationRound() {
     JpsModule m = addModule("m", copyToProject(SIMPLE_FORM_PATH, "src"));
     buildAllModules().assertSuccessful();
@@ -109,6 +118,7 @@ public class FormsBuilderTest extends JpsBuildTestCase {
     buildAllModules().assertUpToDate();
   }
 
+  @Test
   public void testDoNotCopyRuntimeClassesIfOnlyAlienFormFilesExist() {
     JpsModule module = addModule("m", copyToProject("build/alienFormFile", "src"));
     buildAllModules().assertSuccessful();
@@ -130,7 +140,7 @@ public class FormsBuilderTest extends JpsBuildTestCase {
 
   private static boolean isInstrumented(JpsModule m, final String classPath) {
     File file = new File(JpsJavaExtensionService.getInstance().getOutputDirectory(m, false), classPath);
-    assertTrue(file.getAbsolutePath() + " not found", file.exists());
+    assertTrue(file.exists(), file.getAbsolutePath() + " not found");
 
     final Ref<Boolean> instrumented = Ref.create(false);
     ClassVisitor visitor = new ClassVisitor(Opcodes.API_VERSION) {

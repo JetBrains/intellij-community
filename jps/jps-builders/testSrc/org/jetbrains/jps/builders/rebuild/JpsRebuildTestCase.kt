@@ -6,18 +6,19 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.io.DirectoryContentSpec
 import org.jetbrains.jps.builders.CompileScopeTestBuilder
-import org.jetbrains.jps.builders.JpsBuildTestCase
+import org.jetbrains.jps.builders.JpsBuildTestBase
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.util.JpsPathUtil
+import org.junit.jupiter.api.BeforeEach
 import java.io.File
 
-abstract class JpsRebuildTestCase: JpsBuildTestCase() {
+abstract class JpsRebuildTestCase: JpsBuildTestBase() {
   protected val myOutputDirectory: File by lazy {
-    FileUtil.createTempDirectory("jps-build-output", "")
+    createTempDirectory("jps-build-output")
   }
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUpJpsRebuildTestCase() {
     addJdk("1.6")
   }
 
