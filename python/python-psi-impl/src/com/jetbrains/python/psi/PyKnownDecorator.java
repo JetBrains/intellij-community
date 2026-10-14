@@ -15,7 +15,6 @@ public class PyKnownDecorator {
   private final boolean myIsAbstract;
   private final boolean myIsClassMethod;
   private final boolean myIsStaticMethod;
-  private final boolean myIsDeclaredTypeApplied;
 
   public PyKnownDecorator(@NotNull String qualifiedName) {
     myQualifiedName = QualifiedName.fromDottedString(qualifiedName);
@@ -25,7 +24,6 @@ public class PyKnownDecorator {
     myIsAbstract = false;
     myIsClassMethod = false;
     myIsStaticMethod = false;
-    myIsDeclaredTypeApplied = false;
   }
 
   private PyKnownDecorator(@NotNull String qualifiedName,
@@ -34,8 +32,7 @@ public class PyKnownDecorator {
                            boolean isGeneratorBasedCoroutine,
                            boolean isAbstract,
                            boolean isClassMethod,
-                           boolean isStaticMethod,
-                           boolean isDeclaredTypeApplied) {
+                           boolean isStaticMethod) {
     myQualifiedName = QualifiedName.fromDottedString(qualifiedName);
     myIsProperty = isProperty;
     myIsMutableProperty = isMutableProperty;
@@ -43,7 +40,6 @@ public class PyKnownDecorator {
     myIsAbstract = isAbstract;
     myIsClassMethod = isClassMethod;
     myIsStaticMethod = isStaticMethod;
-    myIsDeclaredTypeApplied = isDeclaredTypeApplied;
   }
 
   public static class Builder {
@@ -53,7 +49,6 @@ public class PyKnownDecorator {
     private boolean isAbstract = false;
     private boolean isClassMethod = false;
     private boolean isStaticMethod = false;
-    private boolean isDeclaredTypeApplied = false;
     private final String qualifiedName;
 
     public Builder(String name) {
@@ -90,17 +85,9 @@ public class PyKnownDecorator {
       return this;
     }
 
-    /**
-     * @see PyKnownDecorator#isDeclaredTypeApplied()
-     */
-    public @NotNull Builder setDeclaredTypeApplied() {
-      isDeclaredTypeApplied = true;
-      return this;
-    }
-
     public @NotNull PyKnownDecorator build() {
       return new PyKnownDecorator(qualifiedName, isProperty, isMutableProperty, isGeneratorBasedCoroutine, isAbstract, isClassMethod,
-                                  isStaticMethod, isDeclaredTypeApplied);
+                                  isStaticMethod);
     }
   }
 
@@ -216,12 +203,4 @@ public class PyKnownDecorator {
     return myIsStaticMethod;
   }
 
-  /**
-   * Type inference ignores a known decorator by default and keeps the type of the decorated element.
-   * Returns true when type inference applies the declared type of the decorator instead.
-   * The other properties of the known decorator still apply, for example {@link #isClassMethod()}.
-   */
-  public boolean isDeclaredTypeApplied() {
-    return myIsDeclaredTypeApplied;
-  }
 }
