@@ -187,6 +187,8 @@ jvm_library(
         "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
         "//platform/testFramework/teamCity",
         "//platform/testFramework/teamCity:teamCity_test_lib",
+        "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
+        "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
         "//tools/intellij.tools.ide.starter/testSrc:tools-ide-starter-tests",
         "//tools/intellij.tools.ide.starter/testSrc:tools-ide-starter-tests_test_lib",
     ],

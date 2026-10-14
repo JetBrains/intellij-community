@@ -239,6 +239,26 @@ object TeamCityReporter {
   }
 
   /**
+   * Prints a `##teamcity[notification notifier='slack' …]`
+   * [Slack message](https://www.jetbrains.com/help/teamcity/service-messages.html#Sending+Custom+Slack+Messages) to stdout.
+   *
+   * TeamCity sends [message] through the Slack connection [connectionId], so the caller holds no Slack secret.
+   * Slack reads the message as Markdown, so `<url|text>` gives a link. The escaping turns a line break into `|n`.
+   *
+   * @param message      the text of the Slack message
+   * @param sendTo       one channel name, channel ID, or member ID that receives the message
+   * @param connectionId the ID of a Slack connection that the project of the build can use
+   */
+  fun reportSlackNotification(message: String, sendTo: String, connectionId: String) {
+    println(serviceMessage("notification", mapOf(
+      "notifier" to "slack",
+      "message" to message,
+      "sendTo" to sendTo,
+      "connectionId" to connectionId,
+    )))
+  }
+
+  /**
    * Prints a `##teamcity[publishArtifacts …]`
    * [artifact publishing](https://www.jetbrains.com/help/teamcity/service-messages.html#Publishing+Artifacts+While+Build+is+in+Progress) message to stdout.
    *
