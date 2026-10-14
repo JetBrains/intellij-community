@@ -26,6 +26,7 @@ object PyKnownDecoratorUtil {
    * @param context type evaluation context. If it doesn't allow switch to AST, the imports of the file give the qualified name of a decorator.
    * @return list of known decorators in declaration order with duplicates (with any)
    */
+  @Suppress("DEPRECATION")
   @JvmStatic
   fun getKnownDecorators(element: PyDecoratable, context: TypeEvalContext): List<PyKnownDecorator> {
     val decoratorList = element.decoratorList
@@ -37,22 +38,24 @@ object PyKnownDecoratorUtil {
       .flatMap { asKnownDecorators(it, context) }
   }
 
+  /**
+   * Returns the known decorators that [decorator] can resolve to.
+   *
+   * @param context type evaluation context. If it doesn't allow switch to AST, the imports of the file give the qualified name of a decorator.
+   */
   @JvmStatic
-  fun asKnownDecorators(decorator: PyDecorator, context: TypeEvalContext): List<PyKnownDecorator> {
-    val qualifiedName = decorator.qualifiedName
-    if (qualifiedName == null) {
-      return emptyList()
-    }
+  fun knownDecoratorsOf(decorator: PyDecorator, context: TypeEvalContext): PyKnownDecorators {
+    val qualifiedName = decorator.qualifiedName ?: return PyKnownDecorators.NONE
     // Avoid resolving property accessor decorators to prevent an infinite recursion
     val lastComponent = qualifiedName.lastComponent
     if (PyNames.GETTER == lastComponent || PyNames.SETTER == lastComponent || PyNames.DELETER == lastComponent) {
-      return emptyList()
+      return PyKnownDecorators.NONE
     }
     val containingFile = decorator.containingFile
     if (!context.maySwitchToAST(decorator)) {
       // Without the AST, the imports of the file give the qualified name of the decorator. This reads stubs only.
-      if (containingFile !is PyFile) return emptyList()
-      return asKnownDecoratorsInFile(qualifiedName, containingFile)
+      if (containingFile !is PyFile) return PyKnownDecorators.NONE
+      return PyKnownDecorators.of(asKnownDecoratorsInFile(qualifiedName, containingFile))
     }
     val resolved = if (containingFile is PyiFile) {
       // In .pyi files it's safe to resolve decorators such as "@overload" flow-insensitively.
@@ -61,12 +64,23 @@ object PyKnownDecoratorUtil {
     else {
       PyUtil.multiResolveTopPriority(decorator.callee!!, PyResolveContext.defaultContext(context))
     }
-    return resolved
+    val candidates = resolved
       .filterIsInstance<PyQualifiedNameOwner>()
       .mapNotNull { it.qualifiedName }
       .map(PyNames.FQN::unqualifyBuiltinName)
       .map { QualifiedName.fromDottedString(it!!) }
       .mapNotNull { findByQualifiedName(it) }
+    return PyKnownDecorators.of(candidates)
+  }
+
+  @Deprecated(
+    "Use knownDecoratorsOf(decorator, context). The returned list holds resolve candidates, not facts: " +
+    "aggregate it with any, never with all.",
+    ReplaceWith("knownDecoratorsOf(decorator, context)")
+  )
+  @JvmStatic
+  fun asKnownDecorators(decorator: PyDecorator, context: TypeEvalContext): List<PyKnownDecorator> {
+    return knownDecoratorsOf(decorator, context).asList()
   }
 
   /**
