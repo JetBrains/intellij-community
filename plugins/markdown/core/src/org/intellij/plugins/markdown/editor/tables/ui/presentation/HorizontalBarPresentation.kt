@@ -59,9 +59,7 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
   private var lastSelectedIndex: Int? = null
   private var boundsState: BoundsState? = null
 
-  private fun obtainBounds(): BoundsState {
-    return boundsState ?: calculateCurrentBoundsState().also { boundsState = it }
-  }
+  private fun obtainBounds(): BoundsState = boundsState ?: calculateCurrentBoundsState().also { boundsState = it }
 
   private val barsModel
     get() = boundsState?.barsModel ?: emptyList()
@@ -111,7 +109,7 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
   }
 
   private fun calculateCurrentBoundsState(): BoundsState {
-    if (isInvalid || table.isSoftWrapping(editor)) {
+    if (isInvalid || editor.inlayModel.isInBatchMode || table.isSoftWrapping(editor)) {
       return emptyBoundsState
     }
     val header = table.headerRow ?: return emptyBoundsState

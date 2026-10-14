@@ -47,8 +47,12 @@ class MarkdownHorizontalBarPresentationWidthTest : LightPlatformCodeInsightTestC
     )
     val expected = renderedWidth(header.textRange.startOffset, header.textRange.endOffset)
 
-    val presentation = HorizontalBarPresentation(editor, table)
-    assertEquals(expected, presentation.width)
+    assertEquals(expected, HorizontalBarPresentation(editor, table).width)
+    val batchPresentation = HorizontalBarPresentation(editor, table)
+    editor.inlayModel.execute(true) {
+      assertEquals(0, batchPresentation.width)
+    }
+    assertEquals(expected, batchPresentation.width)
   }
 
   private fun renderedWidth(startOffset: Int, endOffset: Int): Int {
