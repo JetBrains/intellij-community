@@ -7,7 +7,7 @@ import com.intellij.ide.bookmark.BookmarksListener
 import com.intellij.ide.bookmark.FileBookmarksListener
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper
-import com.intellij.ide.scratch.RootType
+import com.intellij.ide.scratch.ScratchTreeStructureProvider
 import com.intellij.ide.ui.VirtualFileAppearanceListener
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.application.ApplicationManager
@@ -118,7 +118,7 @@ private class UpdateSession(
         emitStructural(virtualFile)
       })
 
-      RootType.ROOT_EP.addChangeListener(scope) {
+      ScratchTreeStructureProvider.registerUpdaters(project, disposable) {
         emitFromRoot()
       }
 
