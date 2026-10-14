@@ -12,6 +12,7 @@ import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenc
 import com.jetbrains.python.junit5.framework.annotations.InspectionTest
 import com.jetbrains.python.junit5.framework.annotations.PyCodeInsightTestApplication
 import com.jetbrains.python.packaging.cache.impl.InMemorySearchPage
+import com.jetbrains.python.packaging.management.TestPythonPackageManagerService
 import com.jetbrains.python.packaging.pip.PyPiPackageCache
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyBoolean
@@ -26,14 +27,7 @@ internal class InstallAndImportPackageQuickFixTest {
   // PY-42307
   @Test
   fun testInstallAndImportPackageByNameAlias(fixture: CodeInsightTestFixture, @TestDisposable disposable: Disposable) {
-    val mock = Mockito.mock(PyPiPackageCache::class.java)
-    timeoutRunBlocking {
-      Mockito.`when`(mock.reloadCache(anyBoolean())).thenReturn(Result.success(Unit))
-    }
-    Mockito.`when`(mock.search(anyString(), anyInt()))
-      .thenReturn(InMemorySearchPage.resultFromMatches(listOf("pandas"), 1))
-    Mockito.`when`(mock.contains(anyString())).thenReturn(true)
-    ApplicationManager.getApplication().replaceService(PyPiPackageCache::class.java, mock, disposable)
+    TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(fixture.project, availablePackageNames = listOf("pandas"))
 
     fixture.configureByText("foo.py", "pd<caret>.array()")
 

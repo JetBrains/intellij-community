@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.util.system.windowsPathString
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -27,26 +28,34 @@ internal class PipRepositoryManager(override val project: Project) : PythonRepos
   override val allRepositories: List<PyPackageRepository>
     get() = listOf(PyPiPackageRepository) + service<PythonSimpleRepositoryCacheService>().repositories
 
-  private val packageDetailsCache = Caffeine.newBuilder()
-    .maximumSize(200)
-    .expireAfterWrite(Duration.ofHours(1))
-    .build<Pair<String, PyPackageRepository>, PyResult<PythonPackageDetails>> { (packageName, repository) ->
-      (repository).buildPackageDetails(packageName)
-    }
+  private val packageDetailsCache =
+    Caffeine.newBuilder()
+      .maximumSize(200)
+      .expireAfterWrite(Duration.ofHours(1))
+      .build<Pair<String, PyPackageRepository>, PyResult<PythonPackageDetails>>()
 
   init {
     if (!shouldBeInitInstantly())
       initializationJob.start()
   }
 
+  override suspend fun getPackageDetails(packageName: String, repository: PyPackageRepository?): PyResult<PythonPackageDetails> {
+    val repository = repository ?: PyPiPackageRepository
+    val cached = packageDetailsCache.getIfPresent(packageName to repository)
 
-  override suspend fun getPackageDetails(packageName: String, repository: PyPackageRepository?) = withContext(Dispatchers.IO) {
-    packageDetailsCache.get(packageName to (repository ?: PyPiPackageRepository))
+    if (cached != null) {
+      return cached
+    }
+
+    return repository.buildPackageDetails(packageName)
+      .also {
+        packageDetailsCache.put(packageName to repository, it)
+      }
   }
 
   override suspend fun initCaches(): Result<Unit, PythonRepositoryIOError> {
     service<PyPiPackageCache>()
-      .reloadCache()
+      .reload()
       .mapError { PythonRepositoryIOError(it.message) }
       .getOr {
         return it
@@ -72,7 +81,7 @@ internal class PipRepositoryManager(override val project: Project) : PythonRepos
 
   override suspend fun refreshCaches(): Result<Unit, PythonRepositoryIOError> {
     service<PyPiPackageCache>()
-      .reloadCache(force = true)
+      .reload()
       .mapError { PythonRepositoryIOError(it.message) }
       .getOr { return it }
 

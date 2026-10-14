@@ -31,15 +31,14 @@ internal fun showChangeVersionPopup(
     items = versions,
     iconFor = { v -> if (v == currentVersion) AllIcons.Actions.Checked else emptyCheck },
   ) { selectedValue ->
-    val specification = details.toPackageSpecification(selectedValue)
-    if (specification == null) {
-      val trace = TraceContext(message("python.packaging.change.version.dialog.title"), null)
-      PyPackageCoroutine.launch(project, Dispatchers.IO) {
-        ProcessOutputTopic.sendOpenToolWindowByTraceUuidEvent(trace.uuid)
-      }
-      return@buildVersionChooserPopup
-    }
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
+      val specification = details.toPackageSpecification(selectedValue)
+      if (specification == null) {
+        val trace = TraceContext(message("python.packaging.change.version.dialog.title"), null)
+        ProcessOutputTopic.sendOpenToolWindowByTraceUuidEvent(trace.uuid)
+        return@launch
+      }
+
       PyPackagingToolWindowService.getInstance(project)
         .installPackage(specification.toInstallRequest(), workspaceMember = scope.workspaceMember, dependencyGroup = scope.dependencyGroup)
     }

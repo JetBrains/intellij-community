@@ -23,6 +23,8 @@ import com.jetbrains.python.packaging.common.ProjectUrl
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.apache.http.client.utils.URIBuilder
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -45,7 +47,8 @@ internal fun PyPackageRepository.buildPackageDetailsBySimpleDetailsProtocol(pack
     GSON.fromJson(rawInfo, PyPIPackageUtil.PackageDetails::class.java)
   }.getOrElse { throwable ->
     when (throwable) {
-      is JsonSyntaxException, is PyPIPackageUtil.NotSimpleRepositoryApiUrlException, is IOException -> return PyResult.localizedError(throwable.localizedMessage)
+      is JsonSyntaxException, is PyPIPackageUtil.NotSimpleRepositoryApiUrlException, is IOException -> return PyResult.localizedError(
+        throwable.localizedMessage)
       else -> throw throwable
     }
   }
@@ -105,45 +108,40 @@ open class PyPackageRepository() {
   fun clearCredentials() = cachedPassword.set(null)
 
   @ApiStatus.Internal
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  fun findPackageSpecificationWithSpec(pyRequirement: PyRequirement): PythonRepositoryPackageSpecification? =
+  suspend fun findPackageSpecificationWithSpec(pyRequirement: PyRequirement): PythonRepositoryPackageSpecification? =
     if (hasPackage(pyRequirement))
       PythonRepositoryPackageSpecification(this, pyRequirement)
     else
       null
 
   @ApiStatus.Internal
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  fun findPackageSpecification(
+  suspend fun findPackageSpecification(
     pyRequirement: PyRequirement,
   ): PythonRepositoryPackageSpecification? {
     return findPackageSpecificationWithSpec(pyRequirement)
   }
 
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  open fun search(needle: String, pageSize: Int = 100): PythonPackageSearchResult {
+  open suspend fun search(needle: String, pageSize: Int = 100): PythonPackageSearchResult {
     val cache = service<PythonSimpleRepositoryCacheService>()[this] ?: return PythonPackageSearchResult(0, emptyList(), pageSize)
     return cache.search(needle, pageSize)
   }
 
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  open fun hasPackage(name: String): Boolean {
+  open suspend fun hasPackage(name: String): Boolean {
     val cache = service<PythonSimpleRepositoryCacheService>()[this] ?: return false
-    return name in cache
+    return cache.contains(name)
   }
 
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   open fun getSize(): Int {
     val cache = service<PythonSimpleRepositoryCacheService>()[this] ?: return 0
     return cache.size
   }
 
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  open fun hasPackage(pyPackage: PyRequirement): Boolean = hasPackage(pyPackage.name)
+  open suspend fun hasPackage(pyPackage: PyRequirement): Boolean = hasPackage(pyPackage.name)
 
-  open fun buildPackageDetails(packageName: String): PyResult<PythonPackageDetails> {
-    return buildPackageDetailsBySimpleDetailsProtocol(packageName)
-  }
+  open suspend fun buildPackageDetails(packageName: String): PyResult<PythonPackageDetails> =
+    withContext(Dispatchers.IO) {
+      buildPackageDetailsBySimpleDetailsProtocol(packageName)
+    }
 
   /**
    * Generic project url link for [packageName]. Returns `null` when the repository has no

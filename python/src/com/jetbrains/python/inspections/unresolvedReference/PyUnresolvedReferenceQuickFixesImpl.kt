@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.registry.Registry
@@ -21,6 +22,7 @@ import com.intellij.python.pyproject.model.api.isPyProjectTomlBased
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiPackageUtil
@@ -90,7 +92,7 @@ object PyUnresolvedReferenceQuickFixesImpl : PyUnresolvedReferenceQuickFixes {
 
     val packageManager = PythonPackageManager.forPythonInterpreter(node.project, interpreter)
 
-    val shouldBeSuggest = !interpreter.isReadOnly && packageManager.isNotInstalledAndCanBeInstalled(packageName)
+    val shouldBeSuggest = !interpreter.isReadOnly && runBlockingCancellable { packageManager.isNotInstalledAndCanBeInstalled(packageName) }
     if (!shouldBeSuggest)
       return emptyList()
     return listOfNotNull(InstallPackageQuickFix(packageName))
@@ -247,7 +249,9 @@ object PyUnresolvedReferenceQuickFixesImpl : PyUnresolvedReferenceQuickFixes {
   private fun createInstallAndImportQuickFix(project: Project, interpreter: PythonInterpreter, importedModuleName: String, asName: String?): LocalQuickFix? {
     val packageName = PyPsiPackageUtil.moduleToPackageName(importedModuleName)
     val canBeInstalled = !interpreter.isReadOnly &&
-                         PythonPackageManager.forPythonInterpreter(project, interpreter).isNotInstalledAndCanBeInstalled(packageName)
+                         runBlockingCancellable {
+                           PythonPackageManager.forPythonInterpreter(project, interpreter).isNotInstalledAndCanBeInstalled(packageName)
+                         }
     return if (canBeInstalled)
         InstallAndImportPackageQuickFix(importedModuleName, asName)
     else

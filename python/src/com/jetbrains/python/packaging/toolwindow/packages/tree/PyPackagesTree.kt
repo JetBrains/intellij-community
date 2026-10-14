@@ -336,7 +336,9 @@ internal class PyPackagesTree(
       is RequirementPackage -> controller.packageSelected(pkg)
       is WorkspaceMember -> controller.packageSelected(pkg)
       is LoadingNode, is DependencyGroupNode, is UndeclaredPackagesGroup,
-      is ModuleDependencyDisplayablePackage -> {}
+      is ModuleDependencyDisplayablePackage,
+        -> {
+      }
     }
   }
 
@@ -477,17 +479,18 @@ internal class PyPackagesTree(
     else PyBundle.message("python.packaging.installing.package", pkg.name)
 
   private fun installPackage(pkg: InstallablePackage) {
-    val spec = pkg.repository.findPackageSpecification(pyRequirement(pkg.name, null)) ?: return
-    val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(spec))
-    val interpreter = packagingService.currentInterpreter ?: return
-    // Reject a repeated click while this package is already installing on this interpreter — otherwise every
-    // click fires another heavy install coroutine (PY-91529). The renderer greys the link in parallel.
-    val key = PyPackagingToolWindowService.packageKey(pkg.name)
-    // Own the trace rather than letting the service open a nested one: the uuid stored next to the key
-    // has to be the one the spawned pip / uv process reports, or clicking the spinner finds nothing.
-    val trace = TraceContext(PyBundle.message("python.packaging.installing.package", pkg.name), null)
-    if (!packagingService.markInstalling(interpreter, key, trace.uuid.toString())) return
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
+      val spec = pkg.repository.findPackageSpecification(pyRequirement(pkg.name, null)) ?: return@launch
+      val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(spec))
+      val interpreter = packagingService.currentInterpreter ?: return@launch
+      // Reject a repeated click while this package is already installing on this interpreter — otherwise every
+      // click fires another heavy install coroutine (PY-91529). The renderer greys the link in parallel.
+      val key = PyPackagingToolWindowService.packageKey(pkg.name)
+      // Own the trace rather than letting the service open a nested one: the uuid stored next to the key
+      // has to be the one the spawned pip / uv process reports, or clicking the spinner finds nothing.
+      val trace = TraceContext(PyBundle.message("python.packaging.installing.package", pkg.name), null)
+      if (!packagingService.markInstalling(interpreter, key, trace.uuid.toString())) return@launch
+
       try {
         packagingService.installPackage(installRequest, trace = trace)
       }
@@ -593,7 +596,8 @@ internal class PyPackagesTree(
 
   private fun getTextForCopy(): String? = when (val pkg = selectedItem()) {
     is InstalledPackage, is InstallablePackage, is RequirementPackage, is WorkspaceMember,
-    is ModuleDependencyDisplayablePackage -> pkg.name
+    is ModuleDependencyDisplayablePackage,
+      -> pkg.name
     is LoadingNode, is DependencyGroupNode, is UndeclaredPackagesGroup, null -> null
   }
 }

@@ -2,6 +2,9 @@
 package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.components.service
+import com.intellij.python.requirements.PyPackageVersionComparator
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -9,6 +12,7 @@ import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.common.ProjectUrl
 import com.jetbrains.python.packaging.common.PythonPackageDetails
+import com.jetbrains.python.packaging.repository.PyPackageRepositories
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.buildPackageDetailsBySimpleDetailsProtocol
@@ -17,10 +21,12 @@ import java.nio.charset.StandardCharsets
 
 object CondaPackageRepository : PyPackageRepository("Conda", null, null) {
   override var enabled: Boolean
-    get() = service<com.jetbrains.python.packaging.repository.PyPackageRepositories>().isDefaultRepoEnabled(name)
-    set(value) { service<com.jetbrains.python.packaging.repository.PyPackageRepositories>().setDefaultRepoEnabled(name, value) }
+    get() = service<PyPackageRepositories>().isDefaultRepoEnabled(name)
+    set(value) {
+      service<PyPackageRepositories>().setDefaultRepoEnabled(name, value)
+    }
 
-  override fun search(needle: String, pageSize: Int): PythonPackageSearchResult =
+  override suspend fun search(needle: String, pageSize: Int): PythonPackageSearchResult =
     service<CondaPackageCache>().search(needle, pageSize)
 
   override fun getSize(): Int =
@@ -31,9 +37,14 @@ object CondaPackageRepository : PyPackageRepository("Conda", null, null) {
     return ProjectUrl("Anaconda", "https://anaconda.org/anaconda/$encoded")
   }
 
-  override fun buildPackageDetails(packageName: String): PyResult<PythonPackageDetails> {
-    val versions = getVersionForPackage(packageName)
-                   ?: return PyResult.failure(MessageError("No conda package versions in cache"))
+  override suspend fun buildPackageDetails(packageName: String): PyResult<PythonPackageDetails> {
+    val versions = getVersionsForPackage(packageName)
+
+    if (versions.isEmpty()) {
+      return PyResult.failure(
+        MessageError(PyBundle.message("python.packaging.cache.conda.no.versions.found", packageName))
+      )
+    }
 
     val pypiSimpleDetails = PyPiPackageRepository.buildPackageDetailsBySimpleDetailsProtocol(packageName).getOrNull()
     val condaDetails = pypiSimpleDetails.toCondaPackageDetails(packageName, versions)
@@ -41,18 +52,26 @@ object CondaPackageRepository : PyPackageRepository("Conda", null, null) {
     return PyResult.success(condaDetails)
   }
 
-  override fun hasPackage(name: String): Boolean = name in service<CondaPackageCache>()
-  
-  override fun hasPackage(pyPackage: PyRequirement): Boolean {
-    val availableVersions = getVersionForPackage(pyPackage.name) ?: return false
+  override suspend fun hasPackage(name: String): Boolean =
+    service<CondaPackageCache>().contains(name)
 
-    if (pyPackage.versionSpecs.isEmpty())
+  override suspend fun hasPackage(pyPackage: PyRequirement): Boolean {
+    val availableVersions = getVersionsForPackage(pyPackage.name)
+
+    if (pyPackage.versionSpecs.isEmpty()) {
       return true
+    }
 
     return availableVersions.any { version ->
       pyPackage.versionSpecs.all { it.matches(version) }
     }
   }
 
-  private fun getVersionForPackage(packageName: String) = service<CondaPackageCache>()[packageName]
+  suspend fun getVersionsForPackage(packageName: String): List<String> =
+    service<CondaPackageCache>()
+      .getVersionsOfPackage(packageName)
+      ?.asSequence()
+      ?.sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed())
+      ?.toList()
+    ?: emptyList()
 }

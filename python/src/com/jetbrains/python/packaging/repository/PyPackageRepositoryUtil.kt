@@ -48,28 +48,29 @@ internal fun PyPackageRepository.checkValid(): Boolean {
 object PyPiPackageRepository : PyPackageRepository("PyPI", PyPIPackageUtil.PYPI_LIST_URL, null) {
   override var enabled: Boolean
     get() = service<PyPackageRepositories>().isDefaultRepoEnabled(name)
-    set(value) { service<PyPackageRepositories>().setDefaultRepoEnabled(name, value) }
+    set(value) {
+      service<PyPackageRepositories>().setDefaultRepoEnabled(name, value)
+    }
 
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  override fun search(needle: String, pageSize: Int): PythonPackageSearchResult =
+  override suspend fun search(needle: String, pageSize: Int): PythonPackageSearchResult =
     service<PyPiPackageCache>().search(needle, pageSize)
 
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  override fun hasPackage(name: String): Boolean =
-    name in service<PyPiPackageCache>()
+  override suspend fun hasPackage(name: String): Boolean =
+    service<PyPiPackageCache>().contains(name)
 
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun getSize(): Int =
     service<PyPiPackageCache>().size
-  
-  override fun getProjectUrl(packageName: String): ProjectUrl = ProjectUrl(name, PyPIPackageUtil.buildProjectUrl(packageName))
 
-  override fun buildPackageDetails(packageName: String): PyResult<PythonPackageDetails> {
+  override fun getProjectUrl(packageName: String): ProjectUrl =
+    ProjectUrl(name, PyPIPackageUtil.buildProjectUrl(packageName))
+
+  override suspend fun buildPackageDetails(packageName: String): PyResult<PythonPackageDetails> {
     super.buildPackageDetails(packageName).getOrNull()?.let {
       return PyResult.success(it)
     }
 
-    val repositoryUrl = repositoryUrl.ifEmpty { return PyResult.localizedError(PyBundle.message("python.packaging.error.no.repository.url", name)) }
+    val repositoryUrl =
+      repositoryUrl.ifEmpty { return PyResult.localizedError(PyBundle.message("python.packaging.error.no.repository.url", name)) }
 
     val versions = runCatching {
       PyPIPackageUtil.parsePackageVersionsFromRepository(repositoryUrl, packageName)

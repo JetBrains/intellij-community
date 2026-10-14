@@ -18,10 +18,12 @@ import com.jetbrains.python.parser.icons.PythonParserIcons
 fun completePackageNames(project: Project, interpreter: PythonInterpreter, result: CompletionResultSet) {
   val repositoryManager = PythonPackageManager.forPythonInterpreter(project, interpreter).repositoryManager
   val packages =
-    repositoryManager
-      .searchPackages(result.prefixMatcher.prefix)
-      .values
-      .flatMap { it.firstPageOrEmpty().successOrNull ?: emptyList() }
+    runBlockingCancellable {
+      repositoryManager
+        .searchPackages(result.prefixMatcher.prefix)
+        .values
+        .flatMap { it.firstPageOrEmpty().successOrNull ?: emptyList() }
+    }
   result.restartCompletionOnAnyPrefixChange()
   val maxPriority = packages.size
   packages.asSequence().map {

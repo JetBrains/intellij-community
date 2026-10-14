@@ -1371,7 +1371,7 @@ class Py2QuickFixTest : PyTestCase() {
   @NonNls
   override fun getTestDataPath(): String = PythonTestUtil.getTestDataPath() + "/inspections/"
 
-  private inline fun <reified TLocalInspectionTool: LocalInspectionTool> doInspectionTest(
+  private inline fun <reified TLocalInspectionTool : LocalInspectionTool> doInspectionTest(
     quickFixName: String,
     applyFix: Boolean,
     available: Boolean,
