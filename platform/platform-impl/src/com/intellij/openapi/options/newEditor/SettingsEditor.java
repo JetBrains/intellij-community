@@ -52,6 +52,7 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector;
+import com.intellij.internal.statistic.collectors.fus.ui.SettingsOpeningTracker;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -132,6 +133,11 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   };
 
 
+  /**
+   * The opening that created this editor, for the FUS event of the first page, or null when it is logged or not tracked.
+   */
+  private @Nullable SettingsOpeningTracker.Opening myOpening;
+
   private final AbstractAction myResetAllAction = new AbstractAction(UIBundle.message("settings.reset.all.action.name")) {
     @Override
     public void actionPerformed(ActionEvent event) {
@@ -151,6 +157,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
                  @Nullable AnAction extraHeaderAction) {
     super(parent);
     myProject = project;
+    myOpening = SettingsOpeningTracker.takeOpening(project);
     myUseLeaveState = useLeaveState;
     myExtraHeaderAction = extraHeaderAction;
     properties = PropertiesComponent.getInstance(project);
@@ -238,12 +245,18 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
           }
         }
         SettingsDialogPerformanceTracker.startPageLoading();
+        // only the first selection ends the opening, a later one is a user navigation
+        SettingsOpeningTracker.Opening opening = myOpening;
+        myOpening = null;
         Promise<? super Object> result = editor.select(configurable);
         result.onSuccess(it -> {
           updateController(configurable);
           //requestFocusToEditor(); // TODO
           loadingDecorator.stopLoading();
           SettingsDialogPerformanceTracker.finishPageReady();
+          if (opening != null) {
+            SettingsOpeningTracker.logOpened(myProject, opening, configurable);
+          }
         });
         return result;
       }

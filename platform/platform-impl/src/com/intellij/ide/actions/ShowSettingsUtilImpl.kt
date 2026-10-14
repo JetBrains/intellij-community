@@ -6,6 +6,8 @@ import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
+import com.intellij.internal.statistic.collectors.fus.ui.SettingsOpeningTracker
+import com.intellij.internal.statistic.collectors.fus.ui.SettingsOpeningTracker.OpeningEntry
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
@@ -127,7 +129,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
 
     @JvmStatic
     fun showSettingsDialog(project: Project?, idToSelect: String?, filter: String?) {
-      (getInstance() as ShowSettingsUtilImpl).showSettingsDialogLazily(project, filter) { groups ->
+      (getInstance() as ShowSettingsUtilImpl).showSettingsDialogLazily(project, filter, OpeningEntry.BY_ID) { groups ->
         if (idToSelect == null) null else ConfigurableVisitor.findById(idToSelect, groups)
       }
     }
@@ -151,10 +153,13 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   fun showSettingsDialogLazily(
     project: Project?,
     filter: String?,
+    entry: OpeningEntry,
     toSelect: (List<ConfigurableGroup>) -> Configurable?,
   ) {
     SettingsDialogPerformanceTracker.markOpeningStarted()
-    doShow(project, { buildConfigurableGroups(project) }, toSelect, filter)
+    SettingsOpeningTracker.trackOpening(project, entry) {
+      doShow(project, { buildConfigurableGroups(project) }, toSelect, filter)
+    }
   }
 
   private fun buildConfigurableGroups(project: Project?): List<ConfigurableGroup> {
@@ -189,11 +194,14 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   ) {
     val isModal = isModalRequired(project)
 
-    if (!isModal) {
-      SettingsNonModalDialogFactory.getInstance().show(project!!, { filterEmptyGroups(groups()) }, toSelect, filter)
-    } else {
-      val filteredGroups = filterEmptyGroups(groups())
-      createDialogWrapper(project, filteredGroups, toSelect(filteredGroups), filter).show()
+    // a caller that knows its entry tracks the opening before this call, so here the entry is only a fallback
+    SettingsOpeningTracker.trackOpening(project, OpeningEntry.OTHER) {
+      if (!isModal) {
+        SettingsNonModalDialogFactory.getInstance().show(project!!, { filterEmptyGroups(groups()) }, toSelect, filter)
+      } else {
+        val filteredGroups = filterEmptyGroups(groups())
+        createDialogWrapper(project, filteredGroups, toSelect(filteredGroups), filter).show()
+      }
     }
   }
 
@@ -210,12 +218,15 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     ThreadingAssertions.assertBackgroundThread()/**/
     SettingsDialogPerformanceTracker.markOpeningStarted()
 
-    // an open window of the same project already holds a tree, so no tree is built for this call
-    if (withContext(Dispatchers.EDT) { SettingsNonModalDialog.navigateOpenDialog(project, null) { null } }) {
-      return
-    }
+    // only the Settings action and the macOS application menu call this method, after the wait for the project startup
+    SettingsOpeningTracker.trackOpening(project, OpeningEntry.ACTION) {
+      // an open window of the same project already holds a tree, so no tree is built for this call
+      if (withContext(Dispatchers.EDT) { SettingsNonModalDialog.navigateOpenDialog(project, null) { null } }) {
+        return
+      }
 
-    showSettingsDialog(project, buildConfigurableGroups(project))
+      showSettingsDialog(project, buildConfigurableGroups(project))
+    }
   }
 
   @ApiStatus.Internal
@@ -225,14 +236,16 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     ThreadingAssertions.assertBackgroundThread()
  
     val isModal = project.isDefault || !NonModalSettingsPolicy.isNonModalSettingsEnabledByAllPolicies()
-    // the filter reads `configurables` of every group, so it stays on the background thread
-    val filteredGroups = filterEmptyGroups(groups)
-    withContext(Dispatchers.EDT) {
-      if (!isModal) {
-        SettingsNonModalDialogFactory.getInstance().show(project, { filteredGroups }, { null }, null)
-      } else {
-        val settingsDialogFactory = serviceAsync<SettingsDialogFactory>()
-        settingsDialogFactory.create(project, filteredGroups, null, null).show()
+    SettingsOpeningTracker.trackOpening(project, OpeningEntry.OTHER) {
+      // the filter reads `configurables` of every group, so it stays on the background thread
+      val filteredGroups = filterEmptyGroups(groups)
+      withContext(Dispatchers.EDT) {
+        if (!isModal) {
+          SettingsNonModalDialogFactory.getInstance().show(project, { filteredGroups }, { null }, null)
+        } else {
+          val settingsDialogFactory = serviceAsync<SettingsDialogFactory>()
+          settingsDialogFactory.create(project, filteredGroups, null, null).show()
+        }
       }
     }
   }
@@ -248,7 +261,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   ) {
     assert(Configurable::class.java.isAssignableFrom(configurableClass)) { "Not a configurable: " + configurableClass.name }
     // the search must go through `findByType`, because that one answers from the declaration and constructs no page
-    showSettingsDialogLazily(project, filter = null) { groups ->
+    showSettingsDialogLazily(project, filter = null, OpeningEntry.BY_CLASS) { groups ->
       val configurable = ConfigurableVisitor.findByType(configurableClass, groups)
                          ?: error("Cannot find configurable: " + configurableClass.name)
       if (additionalConfiguration != null) {
@@ -265,7 +278,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     predicate: Predicate<in Configurable>,
     additionalConfiguration: Consumer<in Configurable>?,
   ) {
-    showSettingsDialogLazily(project, filter = null) { groups ->
+    showSettingsDialogLazily(project, filter = null, OpeningEntry.OTHER) { groups ->
       val config = ConfigurableVisitor.find(predicate, groups) ?: error("Cannot find configurable for specified predicate")
       additionalConfiguration?.accept(config)
       config
@@ -273,7 +286,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   }
 
   override fun showSettingsDialog(project: Project?, nameToSelect: String) {
-    showSettingsDialogLazily(project, filter = null) { groups -> findPreselectedByDisplayName(nameToSelect, groups) }
+    showSettingsDialogLazily(project, filter = null, OpeningEntry.OTHER) { groups -> findPreselectedByDisplayName(nameToSelect, groups) }
   }
 
   override fun showSettingsDialog(project: Project, toSelect: Configurable?) {
@@ -284,7 +297,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
       showSettings(project, groups, toSelect)
       return
     }
-    showSettingsDialogLazily(project, filter = null) { groups -> ConfigurableVisitor.findById(id, groups) ?: toSelect }
+    showSettingsDialogLazily(project, filter = null, OpeningEntry.BY_ID) { groups -> ConfigurableVisitor.findById(id, groups) ?: toSelect }
   }
 
   override fun editConfigurable(project: Project?, configurable: Configurable): Boolean {

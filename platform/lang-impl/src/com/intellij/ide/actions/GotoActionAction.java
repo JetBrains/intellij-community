@@ -7,6 +7,7 @@ import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatistic
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
+import com.intellij.internal.statistic.collectors.fus.ui.SettingsOpeningTracker;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUiKind;
@@ -59,7 +60,10 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
           optionDescription.invokeInternalEditor();
         }
         else {
-          ShowSettingsUtilImpl.showSettingsDialog(project, optionDescription.getConfigurableId(), enteredText);
+          // the outer opening sets the entry, so the open by id inside it reports Search Everywhere
+          SettingsOpeningTracker.runTrackedOpening(project, SettingsOpeningTracker.OpeningEntry.SEARCH_EVERYWHERE, () -> {
+            ShowSettingsUtilImpl.showSettingsDialog(project, optionDescription.getConfigurableId(), enteredText);
+          });
         }
       }
       else {
