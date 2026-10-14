@@ -52,7 +52,7 @@ Remote development extends these rules with side aggregation and action routing.
 
 ## Problem Selection
 
-- Each plugin ID exposes at most one loading problem.
+- Each local side exposes at most one loading problem per plugin ID.
 - A plugin problem supplies a short page explanation, a detailed notification explanation, and notification eligibility.
 - Messages use localized templates and the descriptor data available when the consumer reads the message.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemTest.kt (

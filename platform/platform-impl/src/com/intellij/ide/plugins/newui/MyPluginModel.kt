@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
+import com.intellij.core.CoreBundle
 import com.intellij.externalDependencies.DependencyOnPlugin
 import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.IdeBundle
@@ -1367,6 +1368,46 @@ open class MyPluginModel @JvmOverloads constructor(
     }
 
     fun getErrors(checkErrorsResult: CheckErrorsResult): List<HtmlChunk> {
+      return presentedLoadingProblems(checkErrorsResult).flatMap { (side, problem) ->
+        val errors = getSingleProblemErrors(problem)
+        if (side == null || errors.isEmpty()) errors
+        else listOf(HtmlChunk.span().addText(loadingProblemSidePrefix(side)).children(errors.first())) + errors.drop(1)
+      }
+    }
+
+    fun getExpectedExplanations(results: Map<PluginId, CheckErrorsResult>): Map<PluginId, List<@Nls String>> =
+      results.mapValues { (_, result) -> getExpectedExplanations(result) }
+
+    fun getExpectedExplanations(result: CheckErrorsResult): List<@Nls String> =
+      presentedLoadingProblems(result).mapNotNull { (side, problem) ->
+        val message = when (problem.severity) {
+          PluginLoadingProblem.Severity.UNEXPECTED -> null
+          PluginLoadingProblem.Severity.EXPECTED -> when (problem.kind) {
+            PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH -> problem.loadingError
+            PluginLoadingProblem.Kind.OTHER, PluginLoadingProblem.Kind.ULTIMATE_DISABLED -> null
+          }
+        }
+        message?.let { if (side == null) it else loadingProblemSidePrefix(side) + it }
+      }
+
+    private fun presentedLoadingProblems(result: CheckErrorsResult): List<Pair<PluginSource?, CheckErrorsResult>> {
+      if (result.problemsBySide.isEmpty()) return listOf(null to result)
+      val local = result.problemsBySide[PluginSource.LOCAL]
+      val remote = result.problemsBySide[PluginSource.REMOTE]
+      if (local != null && local == remote) return listOf(null to local)
+      val bothPresent = local?.pluginPresent == true && remote?.pluginPresent == true
+      return listOf(PluginSource.LOCAL, PluginSource.REMOTE).mapNotNull { side ->
+        result.problemsBySide[side]?.let { (if (bothPresent) side else null) to it }
+      }
+    }
+
+    private fun loadingProblemSidePrefix(side: PluginSource): @Nls String = when (side) {
+      PluginSource.LOCAL -> CoreBundle.message("plugin.loading.problem.side.client") + " "
+      PluginSource.REMOTE -> CoreBundle.message("plugin.loading.problem.side.host") + " "
+      PluginSource.BOTH -> error("A shared explanation needs no side prefix")
+    }
+
+    private fun getSingleProblemErrors(checkErrorsResult: CheckErrorsResult): List<HtmlChunk> {
       when (checkErrorsResult.severity) {
         PluginLoadingProblem.Severity.EXPECTED -> return emptyList()
         PluginLoadingProblem.Severity.UNEXPECTED -> {}
