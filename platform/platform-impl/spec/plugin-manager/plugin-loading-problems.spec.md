@@ -128,8 +128,8 @@ Untested: Focused tests do not cover every direct exclusion and its transitive d
     `an expected product mode problem stays outside the generic error area`
   )
 - Product mode problems show a neutral info icon immediately left of the row's enable/disable control.
-- The details header shows the same explanation beside its enable/disable actions.
-- The tooltip retains each side's explanation. The row and controls expose the explanation to screen readers without hover.
+- The details pane does not show product mode hints.
+- The row tooltip retains each side's explanation. The row and its control expose the explanation to screen readers without hover.
 - These problems do not change the user's enabled setting or enter error sorting.
 - An expected explanation must not hide an unexpected error from the other side.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
@@ -137,8 +137,8 @@ Untested: Focused tests do not cover every direct exclusion and its transitive d
     `a product mode hint keeps an ordinary side error visible`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemUiTest.kt (
-    `a mode change clears row and details hints without reopening`;
-    `selected details refresh hints from reused rows`
+    `product mode hints stay in rows and clear after a mode change`;
+    `selected details omit hints from reused rows`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginLocalDataProviderTest.kt (
     `local hints stay separate from errors and clear with replacement data`;
@@ -320,14 +320,13 @@ Untested: No focused test covers the complete Ultimate restriction in details or
 
 - Page dependency suggestions use the current plugin session, as specified under Plugins Page.
 - Reused rows must update or remove obsolete product mode hints and their accessible descriptions.
-- Clearing the selection must remove the previous hint from details.
-- Rows and details must remove the hints after a mode change makes the required module available.
+- Rows must remove the hints after a mode change makes the required module available.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
     `product mode hints sit before the toggle and refresh on reused rows`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemUiTest.kt (
-    `a mode change clears row and details hints without reopening`;
-    `selected details refresh hints from reused rows`
+    `product mode hints stay in rows and clear after a mode change`;
+    `selected details omit hints from reused rows`
   )
 
 - The local notification handler retains the state captured on its first access for notification data and recovery targets.

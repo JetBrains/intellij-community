@@ -82,7 +82,7 @@ internal class PluginLoadingProblemUiTest {
   }
 
   @Test
-  fun `a mode change clears row and details hints without reopening`(): Unit = timeoutRunBlocking {
+  fun `product mode hints stay in rows and clear after a mode change`(): Unit = timeoutRunBlocking {
     val moduleId = PluginModuleId("mode.module", PluginModuleId.JETBRAINS_NAMESPACE)
     val id = PluginId.getId("mode.ui.plugin")
     plugin(id.idString) {
@@ -118,14 +118,16 @@ internal class PluginLoadingProblemUiTest {
       waitUntilAssertSucceeds {
         withContext(Dispatchers.EDT) {
           assertThat(hints(row.component).filter { it.isVisible }).hasSize(1)
-          assertThat(hints(details).filter { it.isVisible }).hasSize(1)
+          assertThat(hints(details)).isEmpty()
           val rowHint = hints(row.component).single { it.isVisible }
-          val detailsHint = hints(details).single { it.isVisible }
           assertThat(rowHint.toolTipText).contains(explanations.single())
-          assertThat(detailsHint.toolTipText).contains(explanations.single())
           assertThat(UIUtil.uiTraverser(row.component).filter(OnOffButton::class.java).toList().single().isSelected).isTrue()
+          assertThat(UIUtil.uiTraverser(details).filter(JEditorPane::class.java).map { it.text }.toList())
+            .anyMatch { it.contains(checkNotNull(model.name)) }
           assertThat(UIUtil.uiTraverser(details).filter(JEditorPane::class.java).toList())
             .noneMatch { it.text.contains(explanations.single()) }
+          assertThat(UIUtil.uiTraverser(details).filter(JButton::class.java).toList())
+            .noneMatch { it.accessibleContext.accessibleDescription?.contains(explanations.single()) == true }
         }
       }
 
@@ -140,9 +142,8 @@ internal class PluginLoadingProblemUiTest {
       waitUntilAssertSucceeds {
         withContext(Dispatchers.EDT) {
           assertThat(hints(row.component)).noneMatch { it.isVisible }
-          assertThat(hints(details)).noneMatch { it.isVisible }
+          assertThat(hints(details)).isEmpty()
           assertThat(hints(row.component).single().toolTipText).isNull()
-          assertThat(hints(details).single().toolTipText).isNull()
           assertThat(UIUtil.uiTraverser(row.component).filter(OnOffButton::class.java).toList().single().isSelected).isTrue()
         }
       }
@@ -154,7 +155,7 @@ internal class PluginLoadingProblemUiTest {
   }
 
   @Test
-  fun `selected details refresh hints from reused rows`(): Unit = timeoutRunBlocking {
+  fun `selected details omit hints from reused rows`(): Unit = timeoutRunBlocking {
     val scope = this
     val host = withContext(Dispatchers.EDT) { LegacyPluginUiHost(parentScope = scope, operationScope = scope) }
     try {
@@ -185,24 +186,14 @@ internal class PluginLoadingProblemUiTest {
           val details =
             UIUtil.uiTraverser(presenter.component).filter(PluginDetailsPageComponent::class.java).toList().single { it.isVisible }
           val explanations = listOf("Client: Light mode is not supported.", "Host: Backend mode is not supported.")
-          val originalHint = hints(details).single()
           for (next in listOf(explanations, emptyList(), explanations)) {
             row.renderInput(input.copy(expectedExplanations = next))
             presenter.render(PluginDetailsMode.LOCAL, listOf(PluginDetailsSelection(section.occurrenceId(id), row)))
 
-            val hint = hints(details).single()
-            assertThat(hint).isSameAs(originalHint)
-            assertThat(hint.isVisible).isEqualTo(next.isNotEmpty())
-            if (next.isEmpty()) {
-              assertThat(hint.toolTipText).isNull()
-              assertThat(UIUtil.uiTraverser(details).filter(JButton::class.java).toList())
-                .noneMatch { it.accessibleContext.accessibleDescription?.contains("mode is not supported") == true }
-            }
-            else {
-              assertThat(hint.toolTipText).contains(explanations[0], explanations[1])
-              assertThat(UIUtil.uiTraverser(details).filter(JButton::class.java).toList())
-                .anyMatch { it.accessibleContext.accessibleDescription?.contains(explanations[0]) == true }
-            }
+            assertThat(hints(row.component).single().isVisible).isEqualTo(next.isNotEmpty())
+            assertThat(hints(details)).isEmpty()
+            assertThat(UIUtil.uiTraverser(details).filter(JButton::class.java).toList())
+              .noneMatch { it.accessibleContext.accessibleDescription?.contains("mode is not supported") == true }
           }
           presenter.render(PluginDetailsMode.LOCAL, emptyList())
         }
@@ -210,8 +201,7 @@ internal class PluginLoadingProblemUiTest {
           withContext(Dispatchers.EDT) {
             val details =
               UIUtil.uiTraverser(presenter.component).filter(PluginDetailsPageComponent::class.java).toList().single { it.isVisible }
-            assertThat(hints(details).single().isVisible).isFalse()
-            assertThat(hints(details).single().toolTipText).isNull()
+            assertThat(hints(details)).isEmpty()
           }
         }
       }
