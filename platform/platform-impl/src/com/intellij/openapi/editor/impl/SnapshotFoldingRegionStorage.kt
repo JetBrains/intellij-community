@@ -121,13 +121,37 @@ internal class SnapshotFoldingRegionStorage(
     }
   }
 
+  /**
+   * Processes overlapping regions from one captured snapshot root.
+   *
+   * Orders regions by start offset, length, region kind, and marker ID.
+   * Regular regions precede custom regions with the same range.
+   *
+   * Buffers one group with the same start offset at a time. Sorts only groups with multiple regions.
+   * Stops when [processor] returns `false`, without resolving regions in later groups.
+   * The iterator can read one entry from the next group to find the current group's boundary.
+   */
   override fun processRegionsOverlappingWith(
     startOffset: Int,
     endOffset: Int,
     processor: Processor<in FoldRegionMarker>,
   ): Boolean {
-    for (region in collectRegions(startOffset, endOffset)) {
-      if (!processor.process(region)) return false
+    val root = rootStore.root(currentSnapshot()) ?: return true
+    val iterator = root.overlappingIterator(startOffset, endOffset, 0)
+    var entry: PMarkerRoot.MarkerEntry? = if (iterator.hasNext()) iterator.next() else return true
+    val regions = ArrayList<SnapshotFoldRegion>()
+    while (entry != null) {
+      val regionStart = entry.nodeStart
+      while (entry != null && entry.nodeStart == regionStart) {
+        val region = entry.markerReference?.get() as? SnapshotFoldRegion
+        if (region != null) regions.add(region)
+        entry = if (iterator.hasNext()) iterator.next() else null
+      }
+      if (regions.size > 1) regions.sortWith(REGION_COMPARATOR)
+      for (region in regions) {
+        if (!processor.process(region)) return false
+      }
+      regions.clear()
     }
     return true
   }

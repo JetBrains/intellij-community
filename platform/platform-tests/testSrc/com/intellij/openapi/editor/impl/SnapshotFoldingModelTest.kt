@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -70,6 +71,82 @@ class SnapshotFoldingModelTest {
     assertThat(state.foundRegion).isNotNull()
     assertThat(state.changedOutsideRegion).isFalse()
     assertThat(state.documentRegionChanged).isTrue()
+  }
+
+  @Test
+  fun `regions with equal starts remain ordered after a shift`(): Unit = timeoutRunBlocking {
+    val state = withEditor("012345678901234567890123456789") { editor ->
+      editor.foldingModel.runBatchFoldingOperation {
+        editor.foldingModel.addFoldRegion(21, 25, "...")!!
+        editor.foldingModel.addFoldRegion(12, 19, "...")!!
+        editor.foldingModel.addFoldRegion(12, 17, "...")!!.isExpanded = false
+        editor.foldingModel.addFoldRegion(0, 10, "...")!!
+        editor.foldingModel.addFoldRegion(0, 5, "...")!!.isExpanded = false
+      }
+
+      editor.document.insertString(0, "ab")
+
+      RegionOrderState(
+        allRegions = editor.foldingModel.allFoldRegions.map { it.textRange },
+        visibleRegions = editor.foldingModel.fetchVisible()!!.map { it.textRange },
+      )
+    }
+
+    assertThat(state.allRegions).containsExactly(
+      TextRange(2, 7), TextRange(2, 12), TextRange(14, 19), TextRange(14, 21), TextRange(23, 27),
+    )
+    assertThat(state.visibleRegions).containsExactly(
+      TextRange(23, 27), TextRange(14, 21), TextRange(14, 19), TextRange(2, 12), TextRange(2, 7),
+    )
+  }
+
+  @Test
+  fun `regular region precedes a custom region with the same range`(): Unit = timeoutRunBlocking {
+    val (customRegions, foundRegularRegion) = withEditor("a\nb\nc") { editor ->
+      lateinit var regularRegion: FoldRegion
+      editor.foldingModel.runBatchFoldingOperation {
+        editor.foldingModel.addCustomLinesFolding(0, 1, customRenderer)!!
+        regularRegion = editor.foldingModel.addFoldRegion(0, 3, "...")!!
+      }
+
+      editor.foldingModel.allFoldRegions.map { it is CustomFoldRegion } to
+        (editor.foldingModel.getFoldRegion(0, 3) === regularRegion)
+    }
+
+    assertThat(customRegions).containsExactly(false, true)
+    assertThat(foundRegularRegion).isTrue()
+  }
+
+  @Test
+  fun `region lookup stops before resolving later regions`(): Unit = timeoutRunBlocking {
+    val (foundRegion, referenceReads) = withEditor("0123456789") { editor ->
+      val firstRegion = addFoldRegion(editor, 0, 10)
+      val laterRegion = addFoldRegion(editor, 3, 5) as SnapshotRangeMarkerImpl
+      val rootStore = editor.foldingModel.rootStore()
+      val snapshot = (editor.document as DocumentImpl).core.snapshot()
+      var referenceReads = 0
+      rootStore.updateRoot(snapshot) { root ->
+        val entry = root.overlappingIterator(3, 5, 0).asSequence().single { it.markerReference?.get() === laterRegion }
+        root.remove(entry.markerId).insert(
+          entry.markerId,
+          entry.nodeStart,
+          entry.nodeEnd,
+          entry.spec,
+          entry.flavorFlags,
+          object : SnapshotMarkerReference {
+            override fun get(): SnapshotRangeMarkerImpl {
+              referenceReads++
+              return laterRegion
+            }
+          },
+        )
+      }
+
+      (editor.foldingModel.getFoldRegion(0, 10) === firstRegion) to referenceReads
+    }
+
+    assertThat(foundRegion).isTrue()
+    assertThat(referenceReads).isZero()
   }
 
   @Test
@@ -200,6 +277,11 @@ class SnapshotFoldingModelTest {
     val foundRegion: FoldRegion?,
     val changedOutsideRegion: Boolean,
     val documentRegionChanged: Boolean,
+  )
+
+  private data class RegionOrderState(
+    val allRegions: List<TextRange>,
+    val visibleRegions: List<TextRange>,
   )
 
   private data class DuplicateState(
