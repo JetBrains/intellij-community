@@ -5,11 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl
-import com.intellij.python.community.services.systemPython.impl.EelDescriptorFilter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -17,6 +16,7 @@ import com.intellij.testFramework.registerExtension
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.job
 import org.assertj.core.api.Assertions.assertThat
@@ -25,6 +25,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 import kotlin.io.path.readLines
@@ -58,26 +59,58 @@ internal class SystemPythonStartCountTest {
   }
 
   /**
-   * The service cannot see the end of an ephemeral environment, such as a Docker container.
-   * A record of the interpreter info would outlive that environment, so the search keeps no record.
-   * See IJPL-258353.
+   * [EelUnavailableException.Conclusive] means that the environment is dead, so the search keeps no record of it.
+   * A record would outlive the environment, and each background update would fail on it.
    */
   @Test
-  fun testEphemeralPythonIsNotRemembered(@TempDir dir: Path, @TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(5.minutes) {
-    val starts = dir.resolve("starts.txt")
-    val python = fakePython(dir, starts)
-    val application = ApplicationManager.getApplication()
-    application.registerExtension(SystemPythonProvider.EP, FixedPythonProvider(python), disposable)
-    application.registerExtension(EelDescriptorFilter.EP, EphemeralEelDescriptorFilter, disposable)
+  fun testDeadEelIsForgotten(@TempDir dir: Path, @TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(5.minutes) {
+    val python = fakePython(dir, dir.resolve("starts.txt"))
+    val dead = EelUnavailableException.IntendedExit("The test environment is dead", null)
+    ApplicationManager.getApplication().registerExtension(SystemPythonProvider.EP, UnavailableOnceProvider(python, dead), disposable)
     val sut = SystemPythonServiceImpl(this)
+    sut.state.userProvidedPythons.add(python.pathString)
 
-    sut.findSystemPythons(localEel)
-    assertThat(starts.startCount()).describedAs("The first search must read the info of $python").isEqualTo(1)
+    assertThat(sut.findSystemPythons(localEel)).describedAs("The environment is dead, so it has no pythons").isEmpty()
+    assertThat(sut.state.userProvidedPythons).describedAs("The settings must not keep a python of a dead environment").doesNotContain(python.pathString)
 
-    sut.findSystemPythons(localEel)
-    assertThat(starts.startCount())
-      .describedAs("The environment is ephemeral, so the second search must start $python again")
-      .isEqualTo(2)
+    coroutineContext.job.cancelChildren() // The service updates its cache on the scope of this test
+  }
+
+  /**
+   * Eel can wrap its error into a [CancellationException].
+   * The search must see the error inside, else the background update stops silently.
+   */
+  @Test
+  fun testDeadEelInCancellationIsForgotten(@TempDir dir: Path, @TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(5.minutes) {
+    val python = fakePython(dir, dir.resolve("starts.txt"))
+    val dead = CancellationException("The test environment is cancelled", EelUnavailableException.IntendedExit("The test environment is dead", null))
+    ApplicationManager.getApplication().registerExtension(SystemPythonProvider.EP, UnavailableOnceProvider(python, dead), disposable)
+    val sut = SystemPythonServiceImpl(this)
+    sut.state.userProvidedPythons.add(python.pathString)
+
+    assertThat(sut.findSystemPythons(localEel)).describedAs("The environment is dead, so it has no pythons").isEmpty()
+    assertThat(sut.state.userProvidedPythons).describedAs("The settings must not keep a python of a dead environment").doesNotContain(python.pathString)
+
+    coroutineContext.job.cancelChildren() // The service updates its cache on the scope of this test
+  }
+
+  /**
+   * After [EelUnavailableException.CommunicationFailure] a new attempt can succeed.
+   * So the search keeps the settings, and the next search tries the environment again.
+   */
+  @Test
+  fun testUnreachableEelIsSearchedAgain(@TempDir dir: Path, @TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(5.minutes) {
+    val python = fakePython(dir, dir.resolve("starts.txt"))
+    val unreachable = EelUnavailableException.CommunicationFailure("The test environment is unreachable")
+    ApplicationManager.getApplication().registerExtension(SystemPythonProvider.EP, UnavailableOnceProvider(python, unreachable), disposable)
+    val sut = SystemPythonServiceImpl(this)
+    sut.state.userProvidedPythons.add(python.pathString)
+
+    assertThat(sut.findSystemPythons(localEel)).describedAs("The environment is unreachable, so it has no pythons").isEmpty()
+    assertThat(sut.state.userProvidedPythons).describedAs("A new attempt can succeed, so the settings must keep $python").contains(python.pathString)
+    assertThat(sut.findSystemPythons(localEel).map { it.pythonBinary })
+      .describedAs("The cache must not keep the failed search, so the second search must find $python")
+      .contains(python)
 
     coroutineContext.job.cancelChildren() // The service updates its cache on the scope of this test
   }
@@ -108,8 +141,18 @@ internal class SystemPythonStartCountTest {
     override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> = Result.success(setOf(python))
   }
 
-  /** Reports every environment as ephemeral, so the test does not need a real container. */
-  private object EphemeralEelDescriptorFilter : EelDescriptorFilter {
-    override fun isEphemeral(eelDescriptor: EelDescriptor): Boolean = true
+  /** Throws [error] on the first search, so the test does not need a real container. */
+  private class UnavailableOnceProvider(
+    private val python: PythonBinary,
+    private val error: Exception,
+  ) : SystemPythonProvider {
+    private val unavailable = AtomicBoolean(true)
+
+    override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> {
+      if (unavailable.getAndSet(false)) {
+        throw error
+      }
+      return Result.success(setOf(python))
+    }
   }
 }
