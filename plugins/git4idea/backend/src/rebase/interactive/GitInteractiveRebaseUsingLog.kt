@@ -103,7 +103,7 @@ private suspend fun performInteractiveRebase(
 ) {
   coroutineToIndicator { indicator ->
     val base = getRebaseUpstreamFor(commit)
-    val params = GitRebaseParams.editCommits(repository.vcs.version, base, editorHandler, false)
+    val params = GitRebaseParams.editCommits(repository.vcs.version, base, editorHandler, preserveMerges = false)
 
     val rebaseActivity = GitOperationsCollector.startInteractiveRebase(repository.project)
     try {

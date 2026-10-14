@@ -17,6 +17,7 @@ import git4idea.rebase.log.GitCommitEditingOperationResult.Complete.UndoResult
 import git4idea.test.GitSingleRepoContext
 import git4idea.test.assertCommitted
 import git4idea.test.assertLastMessage
+import git4idea.test.assertLatestHistory
 import git4idea.test.assertMessage
 import git4idea.test.file
 import git4idea.test.git
@@ -118,6 +119,23 @@ internal class GitSquashOperationTest private constructor(private val testType: 
     repo.assertCommitted(3) {
       added("before")
     }
+  }
+
+  @Test
+  fun `test squash preserves fixup commits when autosquash is enabled`(): Unit = with(context) {
+    git("config rebase.autoSquash true")
+    val commitA = file("a").create().addCommit("Commit a").details()
+    val commitB = file("b").create().addCommit("Commit b").details()
+    file("c").create().addCommit("Commit c")
+    file("fixup").create().addCommit("fixup! Commit c")
+
+    refresh()
+    updateChangeListManager()
+
+    val result = operation.execute(context, listOf(commitB, commitA), "Squashed commit")
+
+    assertThat(result).isInstanceOf(Complete::class.java)
+    repo.assertLatestHistory("fixup! Commit c", "Commit c", "Squashed commit")
   }
 
   @Test

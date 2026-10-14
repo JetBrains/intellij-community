@@ -485,7 +485,7 @@ internal class GitRebaseDialog(private val project: Project,
   private fun createPopupBuilder() = GitOptionsPopupBuilder(
     project,
     GitBundle.message("rebase.options.modify.dialog.title"),
-    { GitRebaseOption.entries },
+    { GitRebaseOption.entries - GitRebaseOption.NO_AUTOSQUASH },
     ::getOptionInfo, ::isOptionSelected, ::isOptionEnabled, ::optionChosen, ::hasSeparatorAbove
   )
 
