@@ -79,6 +79,7 @@ object ProductModeCapabilities {
       productMode.isLight -> {
         val rpc = PluginModuleId("intellij.platform.rpc", PluginModuleId.JETBRAINS_NAMESPACE)
         val debugger = PluginModuleId("intellij.platform.debugger", PluginModuleId.JETBRAINS_NAMESPACE)
+        val execution = PluginModuleId("intellij.platform.execution", PluginModuleId.JETBRAINS_NAMESPACE)
         val platformSplitConnection = PluginModuleId("intellij.platform.split.connection", PluginModuleId.JETBRAINS_NAMESPACE)
         val rdClient = PluginModuleId("intellij.rd.client", PluginModuleId.JETBRAINS_NAMESPACE)
         val cwmPluginCommon = PluginModuleId("intellij.cwm.plugin.common", PluginModuleId.JETBRAINS_NAMESPACE)
@@ -88,6 +89,10 @@ object ProductModeCapabilities {
         }
         val enableDebugger = SystemProperties.getBooleanProperty("intellij.platform.light.mode.enable.debugger", false)
         setModuleAvailability(debugger, enableDebugger)
+
+        val enableExecution = SystemProperties.getBooleanProperty("intellij.platform.light.mode.enable.execution", true)
+        //execution is enabled in LIGHT_WITH_RD_CONNECTION, because `intellij.platform.frontend.split.connection` depends on it via `intellij.remoteDev.frontendProcessLauncher`
+        setModuleAvailability(execution, enableExecution || productMode == ProductMode.LIGHT_WITH_RD_CONNECTION)
 
         for (moduleId in listOf(platformSplitConnection)) {
           setModuleAvailability(moduleId, productMode == ProductMode.LIGHT_WITH_RD_CONNECTION)
