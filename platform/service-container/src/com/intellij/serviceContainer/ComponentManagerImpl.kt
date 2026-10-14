@@ -1651,11 +1651,6 @@ val servicePreloadingAllowListForNonCorePlugin: Set<String> = java.util.Set.of(
   // Remote Development
   "com.intellij.cwm.plugin.driver.RemoteDriverHostService",
   "com.intellij.cwm.plugin.driver.RobotHostServiceImpl",
-  "com.intellij.cwm.plugin.following.FollowMeManagerService",
-  "com.intellij.cwm.plugin.following.GuestFollowMeManager",
-  "com.intellij.cwm.plugin.ui.BackendModalityHost",
-  "com.intellij.cwm.plugin.ports.CwmPortForwardingToolWindowManager",
-  "com.intellij.cwm.plugin.users.BackendUserManager",
   "com.intellij.platform.vcs.backend.split.BackendLocalChangesHost",
   "com.jetbrains.rdserver.BackendFileStructureHost",
   "com.jetbrains.rdserver.build.BuildHost",
