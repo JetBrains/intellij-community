@@ -199,7 +199,7 @@ private fun createAndCacheBuilders(
   skipNonOpenedFiles: Boolean,
   scope: GlobalSearchScope,
 ) {
-  val useIndex = !skipNonOpenedFiles && !LightEdit.owns(project)
+  val useIndex = !skipNonOpenedFiles && !LightEdit.owns(project) && FileBasedIndex.getInstanceIfDefined() != null
   val openFiles = FileEditorManager.getInstance(project).openFiles
   val recentFiles = editorHistoryManager.fileList
 
