@@ -40,7 +40,7 @@
 
     <postStartupActivity implementation="com.intellij.python.pyrefly.PyreflyTypeEngineRegistryListener"/>
 
-    <registryKey key="use.bundled.pyrefly" defaultValue="false"
+    <registryKey key="use.bundled.pyrefly" defaultValue="true"
                  description="Use the bundled Pyrefly as the type engine"
                  restartRequired="true"/>
 
