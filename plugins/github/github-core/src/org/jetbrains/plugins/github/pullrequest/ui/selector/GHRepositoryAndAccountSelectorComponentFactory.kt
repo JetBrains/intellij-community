@@ -123,17 +123,17 @@ class GHRepositoryAndAccountSelectorComponentFactory(
   private fun loginToGithub(forceNew: Boolean, authType: AuthorizationType): Boolean {
     val account = vm.accountSelectionState.value
     if (account == null || forceNew) {
-      return GHAccountsUtil.requestNewAccount(GithubServerPath.DEFAULT_SERVER,
+      return GHAccountsUtil.logIn(GithubServerPath.DEFAULT_SERVER,
                                               null,
                                               project,
                                               authType = authType,
                                               loginSource = loginSource
-      )?.account?.also {
+      )?.also {
         vm.accountSelectionState.value = it
       } != null
     }
     else if (vm.missingCredentialsState.value == true) {
-      return GHAccountsUtil.requestReLogin(account, project, authType = authType, loginSource = loginSource) != null
+      return GHAccountsUtil.reLogIn(account, project, authType = authType, loginSource = loginSource)
     }
     return false
   }
@@ -142,12 +142,12 @@ class GHRepositoryAndAccountSelectorComponentFactory(
     val server = repo.repository.serverPath
     val account = vm.accountSelectionState.value
     if (account == null || forceNew) {
-      return GHAccountsUtil.requestNewAccount(server, login = null, project = project, loginSource = loginSource)?.also {
-        vm.accountSelectionState.value = it.account
+      return GHAccountsUtil.logIn(server, login = null, project = project, loginSource = loginSource)?.also {
+        vm.accountSelectionState.value = it
       } != null
     }
     else if (vm.missingCredentialsState.value == true) {
-      return GHAccountsUtil.requestReLogin(account, project, authType = AuthorizationType.TOKEN, loginSource = loginSource) != null
+      return GHAccountsUtil.reLogIn(account, project, authType = AuthorizationType.TOKEN, loginSource = loginSource)
     }
     return false
   }

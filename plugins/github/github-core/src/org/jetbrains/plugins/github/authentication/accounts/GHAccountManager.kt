@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.util.GithubUtil
 
@@ -15,7 +16,10 @@ internal val GithubAccount.isGHAccount: Boolean get() = server.isGithubDotCom
 
 /**
  * Handles application-level Github accounts
+ *
+ * Not intended for public use. See [org.jetbrains.plugins.github.authentication.GHAccountsUtil]
  */
+@ApiStatus.Internal
 @Service
 class GHAccountManager : AccountManagerBase<GithubAccount, String>(logger<GHAccountManager>()), Disposable {
 

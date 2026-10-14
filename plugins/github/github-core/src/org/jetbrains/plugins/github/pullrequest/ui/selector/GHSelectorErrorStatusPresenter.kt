@@ -6,7 +6,6 @@ import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModel
-import org.jetbrains.plugins.github.authentication.AuthorizationType
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -49,8 +48,13 @@ class GHSelectorErrorStatusPresenter(
   ) : AbstractAction(CollaborationToolsBundle.message("login.again.action.text")) {
     override fun actionPerformed(event: ActionEvent) {
       val parentComponent = event.source as? JComponent ?: return
-      val authData = GHAccountsUtil.requestReLogin(account, project, parentComponent, authType = AuthorizationType.UNDEFINED, loginSource = loginSource)
-      if (authData != null) {
+      val loggedIn = GHAccountsUtil.reLogIn(
+        account,
+        project,
+        parentComponent,
+        loginSource = loginSource
+      )
+      if (loggedIn) {
         resetAction()
       }
     }
