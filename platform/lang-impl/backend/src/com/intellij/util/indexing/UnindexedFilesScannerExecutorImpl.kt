@@ -54,7 +54,6 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.Future
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicLong
@@ -250,8 +249,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
 
   private fun scanningWaitsForNonDumbMode(override: Boolean?): Boolean = override ?: Registry.`is`("scanning.waits.for.non.dumb.mode", true)
 
-  @VisibleForTesting
-  fun scanningWaitsForNonDumbMode(): Boolean = scanningWaitsForNonDumbMode(scanningWaitsForNonDumbModeOverride.value)
+  override fun scanningWaitsForNonDumbMode(): Boolean = scanningWaitsForNonDumbMode(scanningWaitsForNonDumbModeOverride.value)
 
   private fun nextTaskExecutionAllowed(): Flow<Boolean> {
     data class ExecutorState(val enabled: Boolean, val isRunning: Boolean, val hasTask: Boolean, val isDumb: Boolean, val shouldWaitForNonDumb: Boolean)
@@ -278,7 +276,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
   }
 
   @TestOnly
-  fun overrideScanningWaitsForNonDumbMode(newValue: Boolean?) {
+  override fun overrideScanningWaitsForNonDumbMode(newValue: Boolean?) {
     scanningWaitsForNonDumbModeOverride.value = newValue
   }
 
@@ -468,6 +466,16 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
   fun setTaskFilterInTest(disposable: Disposable, filter: Predicate<UnindexedFilesScanner>) {
     Disposer.register(disposable) { taskFilter = null }
     taskFilter = filter
+  }
+
+  @TestOnly
+  override fun setIndexingReasonFilterInTest(disposable: Disposable, filter: Predicate<String?>) {
+    setTaskFilterInTest(disposable) { filter.test(it.getIndexingReasonBlocking()) }
+  }
+
+  @TestOnly
+  override fun queueFullScanningInTest(indexingReason: String): Future<*> {
+    return UnindexedFilesScanner(project, indexingReason).queue()
   }
 
   companion object {

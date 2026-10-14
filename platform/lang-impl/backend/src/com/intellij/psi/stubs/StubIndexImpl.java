@@ -128,6 +128,7 @@ public final class StubIndexImpl extends StubIndexEx {
     return state;
   }
 
+  @Override
   @ApiStatus.Internal
   @TestOnly
   public void waitUntilStubIndexedInitialized() {

@@ -55,6 +55,7 @@ import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
@@ -67,6 +68,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
 
@@ -96,6 +98,31 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
    * It doesn't work as a recursion guard and computePreventingRecursion is not called recursively.
    */
   private static final RecursionGuard<Object> ourIgnoranceGuard = RecursionManager.createGuard("ignoreDumbMode");
+
+  /**
+   * Brings the index up to date with the pending VFS events and clears the state that the next test must not see.
+   */
+  @ApiStatus.Internal
+  @TestOnly
+  public void cleanupForNextTest() {
+  }
+
+  /**
+   * Waits until the index processes the pending VFS events.
+   *
+   * @param dispatchAllInvocationEvents runs the pending EDT events while the caller waits on the EDT
+   */
+  @ApiStatus.Internal
+  @TestOnly
+  public void waitForVfsEventsExecuted(long timeout, @NotNull TimeUnit unit, @NotNull Runnable dispatchAllInvocationEvents) {
+  }
+
+  /**
+   * Writes the in-memory index data to the index storages.
+   */
+  @ApiStatus.Internal
+  public void flushIndexes() {
+  }
 
   @ApiStatus.Internal
   public static boolean doTraceIndexUpdates() {

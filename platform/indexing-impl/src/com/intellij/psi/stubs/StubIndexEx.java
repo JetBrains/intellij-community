@@ -83,6 +83,14 @@ public abstract class StubIndexEx extends StubIndex {
 
   private final StubProcessingHelper myStubProcessingHelper = new StubProcessingHelper();
 
+  /**
+   * Waits until the stub index finishes its asynchronous initialization.
+   */
+  @ApiStatus.Internal
+  @TestOnly
+  public void waitUntilStubIndexedInitialized() {
+  }
+
   @ApiStatus.Internal
   public abstract void initializeStubIndexes(boolean isInitialStubUpdatingIndexBuild);
 

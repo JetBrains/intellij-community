@@ -147,6 +147,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -1072,6 +1073,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
 
+  @Override
   @TestOnly
   public void cleanupForNextTest() {
     getChangedFilesCollector().ensureUpToDate();
@@ -1081,6 +1083,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       UpdatableIndex<?, ?, FileContent, ?> index = getIndex(indexId);
       index.cleanupForNextTest();
     }
+  }
+
+  @Override
+  @TestOnly
+  public void waitForVfsEventsExecuted(long timeout, @NotNull TimeUnit unit, @NotNull Runnable dispatchAllInvocationEvents) {
+    getChangedFilesCollector().waitForVfsEventsExecuted(timeout, unit, () -> {
+      dispatchAllInvocationEvents.run();
+      return Unit.INSTANCE;
+    });
   }
 
   @Internal
@@ -2387,6 +2398,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return projectIndexableFiles(ObjectUtils.chooseNotNull(project, scope.getProject()));
   }
 
+  @Override
   @Internal
   public void flushIndexes() {
     for (ID<?, ?> id : getRegisteredIndexes().getState().getIndexIDs()) {

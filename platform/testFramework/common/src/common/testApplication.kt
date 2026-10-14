@@ -60,7 +60,7 @@ import com.intellij.psi.impl.DocumentCommitProcessor
 import com.intellij.psi.impl.DocumentCommitThread
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.stubs.StubIndex
-import com.intellij.psi.stubs.StubIndexImpl
+import com.intellij.psi.stubs.StubIndexEx
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.UITestUtil
 import com.intellij.testFramework.dispatchAllEventsInIdeEventQueue
@@ -72,7 +72,7 @@ import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.indexing.FileBasedIndex
-import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.ref.IgnoredTraverseEntry
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
@@ -379,7 +379,7 @@ fun Application.cleanupApplicationCaches() {
       PsiManagerEx.getInstanceEx(defaultProject).cleanupForNextTest()
     }
   }
-  (serviceIfCreated<FileBasedIndex>() as? FileBasedIndexImpl)?.cleanupForNextTest()
+  (serviceIfCreated<FileBasedIndex>() as? FileBasedIndexEx)?.cleanupForNextTest()
   if (serviceIfCreated<VirtualFileManager>() != null) {
     val localFileSystem = LocalFileSystem.getInstance()
     runInEdtAndWait {
@@ -415,14 +415,14 @@ fun assertNonDefaultProjectsAreNotLeaked(ignoredTraverseEntries : List<IgnoredTr
 fun waitForAppLeakingThreads(application: Application, timeout: Long, timeUnit: TimeUnit) {
   require(!application.isDisposed)
   ThreadingAssertions.assertEventDispatchThread()
-  val index = application.serviceIfCreated<FileBasedIndex>() as? FileBasedIndexImpl
-  index?.changedFilesCollector?.waitForVfsEventsExecuted(timeout, timeUnit) {
+  val index = application.serviceIfCreated<FileBasedIndex>() as? FileBasedIndexEx
+  index?.waitForVfsEventsExecuted(timeout, timeUnit) {
     dispatchAllEventsInIdeEventQueue()
   }
 
   waitForAllDocumentsCommitted(timeout, timeUnit)
 
-  val stubIndex = application.serviceIfCreated<StubIndex>() as? StubIndexImpl
+  val stubIndex = application.serviceIfCreated<StubIndex>() as? StubIndexEx
   stubIndex?.waitUntilStubIndexedInitialized()
 
   while (RefreshQueue.getInstance() != null && (RefreshQueueImpl.isRefreshInProgress || RefreshQueueImpl.isEventProcessingInProgress)) {

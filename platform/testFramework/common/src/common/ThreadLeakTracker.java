@@ -14,7 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.psi.stubs.StubIndex;
-import com.intellij.psi.stubs.StubIndexImpl;
+import com.intellij.psi.stubs.StubIndexEx;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -268,12 +268,12 @@ public final class ThreadLeakTracker {
       return;
     }
     FileBasedIndex fileBasedIndex = app.getServiceIfCreated(FileBasedIndex.class);
-    if (fileBasedIndex instanceof FileBasedIndexEx) {
-      ((FileBasedIndexEx)fileBasedIndex).waitUntilIndicesAreInitialized();
+    if (fileBasedIndex instanceof FileBasedIndexEx fileBasedIndexEx) {
+      fileBasedIndexEx.waitUntilIndicesAreInitialized();
     }
     StubIndex stubIndex = app.getServiceIfCreated(StubIndex.class);
-    if (stubIndex instanceof StubIndexImpl) {
-      ((StubIndexImpl)stubIndex).waitUntilStubIndexedInitialized();
+    if (stubIndex instanceof StubIndexEx stubIndexEx) {
+      stubIndexEx.waitUntilStubIndexedInitialized();
     }
   }
 

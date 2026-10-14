@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
@@ -135,7 +134,7 @@ private class IndexWaiter(private val project: Project) {
 
     dumbService.ensureInitialDumbTaskRequiredForSmartModeSubmitted() // TODO IJPL-578: don't submit
 
-    val scannerExecutor = UnindexedFilesScannerExecutorImpl.getInstance(project)
+    val scannerExecutor = UnindexedFilesScannerExecutor.getInstance(project)
 
     // Scheduled tasks will become running tasks soon. To avoid a race, we check scheduled tasks first
     if (scannerExecutor.hasQueuedTasks) {

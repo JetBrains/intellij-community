@@ -4,14 +4,13 @@ package com.intellij.testFramework;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.testFramework.DumbModeTestUtils.EternalTaskShutdownToken;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.UnindexedFilesScanner;
-import com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl;
 import junit.framework.Protectable;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -58,7 +57,7 @@ public interface TestIndexingModeSupporter {
         onlyAllowOwnTasks(project, testRootDisposable);
         RecursionManager.disableMissedCacheAssertions(testRootDisposable);
         // we don't want "waiting-for-non-dumb-mode" to pause tasks submitted from ensureIndexingStatus
-        UnindexedFilesScannerExecutorImpl.getInstance(project).overrideScanningWaitsForNonDumbMode(false);
+        UnindexedFilesScannerExecutor.getInstance(project).overrideScanningWaitsForNonDumbMode(false);
         return new ShutdownToken(dumbTask);
       }
 
@@ -66,7 +65,7 @@ public interface TestIndexingModeSupporter {
       public void ensureIndexingStatus(@NotNull Project project) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           // if not invoked from EDT scanning will be queued asynchronously
-          new UnindexedFilesScanner(project, INDEXING_REASON).queue();
+          UnindexedFilesScannerExecutor.getInstance(project).queueFullScanningInTest(INDEXING_REASON);
         });
         IndexingTestUtil.waitUntilIndexesAreReady(project);
       }
@@ -77,7 +76,7 @@ public interface TestIndexingModeSupporter {
         onlyAllowOwnTasks(project, testRootDisposable);
         RecursionManager.disableMissedCacheAssertions(testRootDisposable);
         // we don't want "waiting-for-non-dumb-mode" to pause tasks submitted from ensureIndexingStatus
-        UnindexedFilesScannerExecutorImpl.getInstance(project).overrideScanningWaitsForNonDumbMode(false);
+        UnindexedFilesScannerExecutor.getInstance(project).overrideScanningWaitsForNonDumbMode(false);
         return new ShutdownToken(dumbTask);
       }
     }, DUMB_EMPTY_INDEX {
@@ -98,10 +97,10 @@ public interface TestIndexingModeSupporter {
     private static final String INDEXING_REASON = "TestIndexingModeSupporter";
 
     private static void onlyAllowOwnTasks(@NotNull Project project, @NotNull Disposable testRootDisposable) {
-      UnindexedFilesScannerExecutorImpl.getInstance(project)
-        .setTaskFilterInTest(testRootDisposable, task -> Strings.areSameInstance(task.getIndexingReasonBlocking(), INDEXING_REASON));
+      UnindexedFilesScannerExecutor.getInstance(project)
+        .setIndexingReasonFilterInTest(testRootDisposable, reason -> Strings.areSameInstance(reason, INDEXING_REASON));
       ApplicationManager.getApplication().invokeAndWait(() -> {
-        UnindexedFilesScannerExecutorImpl.getInstance(project).cancelAllTasksAndWait();
+        UnindexedFilesScannerExecutor.getInstance(project).cancelAllTasksAndWait();
       });
     }
 
@@ -130,7 +129,7 @@ public interface TestIndexingModeSupporter {
       if (token.dumbTask != null) {
         DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode(project, token.dumbTask);
         if (project != null) {
-          UnindexedFilesScannerExecutorImpl.getInstance(project).overrideScanningWaitsForNonDumbMode(null /* reset to default */);
+          UnindexedFilesScannerExecutor.getInstance(project).overrideScanningWaitsForNonDumbMode(null /* reset to default */);
         }
       }
     }
@@ -143,7 +142,7 @@ public interface TestIndexingModeSupporter {
     }
 
     private static EternalTaskShutdownToken indexEverythingAndBecomeDumb(@NotNull Project project) {
-      new UnindexedFilesScanner(project, INDEXING_REASON).queue();
+      UnindexedFilesScannerExecutor.getInstance(project).queueFullScanningInTest(INDEXING_REASON);
       IndexingTestUtil.waitUntilIndexesAreReady(project);
       return becomeDumb(project);
     }

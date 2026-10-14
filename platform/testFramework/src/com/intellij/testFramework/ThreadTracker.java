@@ -4,7 +4,7 @@ package com.intellij.testFramework;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.psi.stubs.StubIndex;
-import com.intellij.psi.stubs.StubIndexImpl;
+import com.intellij.psi.stubs.StubIndexEx;
 import com.intellij.testFramework.common.ThreadLeakTracker;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,7 +32,7 @@ public final class ThreadTracker {
   public void checkLeak() throws AssertionError {
     ThreadingAssertions.assertEventDispatchThread();
     ((FileBasedIndexEx)FileBasedIndex.getInstance()).waitUntilIndicesAreInitialized();
-    ((StubIndexImpl)StubIndex.getInstance()).waitUntilStubIndexedInitialized();
+    ((StubIndexEx)StubIndex.getInstance()).waitUntilStubIndexedInitialized();
     ThreadLeakTracker.awaitQuiescence();
     try {
       ProjectManagerEx projectManager = ProjectManagerEx.getInstanceExIfCreated();

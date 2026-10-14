@@ -20,7 +20,7 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.FileContentUtilCore
 import com.intellij.util.indexing.FileBasedIndex
-import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.ref.GCUtil
 import org.junit.Assert.fail
 
@@ -88,7 +88,7 @@ object PsiIndexConsistencyTester {
 
     object FlushIndexes: SimpleAction() {
       override fun performAction(model: Model) {
-        (FileBasedIndex.getInstance() as FileBasedIndexImpl).flushIndexes()
+        (FileBasedIndex.getInstance() as FileBasedIndexEx).flushIndexes()
       }
     }
 
