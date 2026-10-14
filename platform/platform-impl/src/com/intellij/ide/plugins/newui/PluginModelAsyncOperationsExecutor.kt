@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
+import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.EDT
@@ -172,12 +173,15 @@ internal object PluginModelAsyncOperationsExecutor {
   @JvmOverloads
   @ApiStatus.Internal
   fun updateErrors(cs: CoroutineScope = service<FrontendRpcCoroutineContext>().coroutineScope, sessionId: String, pluginId: PluginId, callback: (List<HtmlChunk>) -> Unit) {
+    updateLoadingProblems(cs, sessionId, pluginId) { callback(MyPluginModel.getErrors(it)) }
+  }
+
+  fun updateLoadingProblems(cs: CoroutineScope, sessionId: String, pluginId: PluginId, callback: (CheckErrorsResult) -> Unit) {
     cs.launch(Dispatchers.IO) {
       try {
         val errors = UiPluginManager.getInstance().getErrors(sessionId, pluginId)
-        val htmlChunks = MyPluginModel.getErrors(errors)
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          callback(htmlChunks)
+          callback(errors)
         }
       }
       catch (_: RpcClientDisconnectedException) {

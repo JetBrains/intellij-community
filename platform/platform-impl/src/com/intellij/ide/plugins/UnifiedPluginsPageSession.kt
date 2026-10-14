@@ -734,7 +734,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
       host.updateCustomRepositoryPlugins(state.settledRepositoryPlugins)
     }
     val data = state.listModelData
-    listModel.replaceAll(data.installedModels, data.errors, data.installationStates, data.updateSources)
+    listModel.replaceAll(data.installedModels, data.errors, data.installationStates, data.updateSources, data.expectedExplanations)
     controller.replaceSourceState(
       query = state.query,
       updatedSections = state.sections,

@@ -175,6 +175,7 @@ class InstalledPluginsTabSearchResultPanel(
         pluginIds
       )
     result.getPreloadedModel().setErrors(MyPluginModel.getErrors(errors))
+    result.getPreloadedModel().setExpectedExplanations(MyPluginModel.getExpectedExplanations(errors))
     result.getPreloadedModel().setPluginInstallationStates(getInstance().getInstallationStatesSync())
     result.getPreloadedModel().setPluginUpdateSources(myPluginModelFacade.getPendingPluginUpdateSourcesSync(pluginIds))
     performInstalledTabSearch(

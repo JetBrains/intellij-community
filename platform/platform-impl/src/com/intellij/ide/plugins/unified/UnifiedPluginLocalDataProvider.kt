@@ -14,6 +14,7 @@ import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.util.text.HtmlChunk
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import org.jetbrains.annotations.Nls
 
 internal interface UnifiedPluginLocalDataProvider {
   suspend fun loadInventory(): UnifiedPluginInventory
@@ -54,6 +55,7 @@ internal data class PluginListModelData(
   val errors: Map<PluginId, List<HtmlChunk>>,
   val installationStates: Map<PluginId, PluginInstallationState>,
   val updateSources: Map<PluginId, PluginUpdateSource> = emptyMap(),
+  val expectedExplanations: Map<PluginId, List<@Nls String>> = emptyMap(),
 ) {
   companion object {
     val EMPTY: PluginListModelData = PluginListModelData(emptyMap(), emptyMap(), emptyMap(), emptyMap())
@@ -81,7 +83,7 @@ internal class DefaultUnifiedPluginLocalDataProvider(
       val models = plugins.map(UnifiedPluginInventoryItem::model)
       val pluginIds = models.map(PluginUiModel::pluginId)
       val enabledStates = async { host.getPluginEnabledStates(models) }
-      val errors = async { MyPluginModel.getErrors(pluginManager.loadErrors(host.sessionId)) }
+      val problems = async { pluginManager.loadErrors(host.sessionId) }
       val installationStates = async { pluginManager.getInstallationStates() }
       val updateSources = async { pluginManager.getPendingPluginUpdateSourcesSync(host.sessionId, pluginIds) }
       val restrictions = async {
@@ -93,7 +95,8 @@ internal class DefaultUnifiedPluginLocalDataProvider(
         updates = updates,
         contentRevision = contentRevision,
         enabledStates = enabledStates.await(),
-        errors = errors.await(),
+        errors = MyPluginModel.getErrors(problems.await()),
+        expectedExplanations = MyPluginModel.getExpectedExplanations(problems.await()),
         installationStates = installationStates.await(),
         updateSources = updateSources.await(),
         restrictions = resolvedRestrictions,
@@ -134,6 +137,7 @@ internal fun buildLocalSnapshot(
   updateSources: Map<PluginId, PluginUpdateSource> = emptyMap(),
   restrictions: Map<PluginId, Boolean>,
   tags: Map<PluginId, List<String>> = emptyMap(),
+  expectedExplanations: Map<PluginId, List<@Nls String>> = emptyMap(),
 ): UnifiedPluginLocalSnapshot {
   val allPlugins = inventory.installedPlugins + inventory.bundledPlugins
   val updatesById = updates?.all.orEmpty().associateBy(PluginUiModel::pluginId)
@@ -150,6 +154,7 @@ internal fun buildLocalSnapshot(
       installedPlugin = model,
       installationState = effectiveStates.getValue(pluginId),
       errors = errors[pluginId].orEmpty().toList(),
+      expectedExplanations = expectedExplanations[pluginId].orEmpty().toList(),
       updateDescriptor = updatesById[pluginId],
       enabled = checkNotNull(enabledStates[pluginId]) { "Missing enabled state for $pluginId" },
       restrictedByProduct = restrictions[pluginId] == true,
@@ -178,6 +183,7 @@ internal fun buildLocalSnapshot(
     listModelData = PluginListModelData(
       installedModels = installedModels,
       errors = errors.filterKeys(installedModels::containsKey),
+      expectedExplanations = expectedExplanations.filterKeys(installedModels::containsKey),
       installationStates = effectiveStates,
       updateSources = updateSources.filterKeys(installedModels::containsKey),
     ),
