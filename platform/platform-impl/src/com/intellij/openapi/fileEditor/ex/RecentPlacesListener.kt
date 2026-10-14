@@ -12,7 +12,9 @@ interface RecentPlacesListener {
     val TOPIC: Topic<RecentPlacesListener> = Topic(RecentPlacesListener::class.java, Topic.BroadcastDirection.NONE)
   }
 
-  fun recentPlaceAdded(changePlace: PlaceInfo, isChanged: Boolean, groupId: Any?)
+  fun recentPlaceAdded(place: PlaceInfo, isChanged: Boolean, groupId: Any?) {
+  }
 
-  fun recentPlaceRemoved(changePlace: PlaceInfo, isChanged: Boolean)
+  fun recentPlaceRemoved(place: PlaceInfo, isChanged: Boolean) {
+  }
 }

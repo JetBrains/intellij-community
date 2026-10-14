@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 
 @ApiStatus.Internal
-class PlaceInfo(
+class PlaceInfo @ApiStatus.Internal constructor(
   val file: VirtualFile,
   val navigationState: FileEditorState,
   val editorTypeId: String,
@@ -22,6 +22,7 @@ class PlaceInfo(
 ) {
   private val windowRef = WeakReference(window)
 
+  @ApiStatus.Internal
   constructor(
     file: VirtualFile,
     navigationState: FileEditorState,
@@ -38,7 +39,8 @@ class PlaceInfo(
     timeStamp = -1,
   )
 
-  fun getWindow(): EditorWindow? = windowRef.get()
+  val window: EditorWindow?
+    get() = windowRef.get()
 
   @ApiStatus.Internal
   fun getOpenMode(): FileEditorManagerImpl.OpenMode? {
