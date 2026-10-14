@@ -35,6 +35,7 @@ jvm_library(
         "//platform/vcs-api:vcs",
         "//json/spellchecker",
         "//plugins/yaml/spellchecker",
+        "//spellchecker/xml/backend",
         "//platform/testRunner/plugin",
     ],
 )
@@ -77,6 +78,7 @@ jvm_library(
         "//xml/plugin:plugin_test_lib",
         "//json/spellchecker:spellchecker_test_lib",
         "//plugins/yaml/spellchecker:spellchecker_test_lib",
+        "//spellchecker/xml/backend:backend_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
     ],

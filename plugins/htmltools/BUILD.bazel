@@ -131,6 +131,7 @@ jvm_library(
         # do not sort,
         "//plugins/htmltools:html-tools",
         "//xml/impl",
+        "//spellchecker/xml/backend",
         "//platform/core-ui",
     ],
 )
@@ -151,6 +152,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":html-tools-tests",
+        "//spellchecker/xml/backend:backend_test_lib",
         "//platform/ide-core:ide-core_test_lib",
     ],
     deps = [

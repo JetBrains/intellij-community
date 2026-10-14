@@ -36,5 +36,7 @@
     <module name="intellij.xml.analysis.impl"/>
     <module name="intellij.xml.langInjection"/>
     <module name="intellij.xml.vcs"/>
+    <module name="intellij.spellchecker.xml"/>
+    <module name="intellij.spellchecker.xml.backend"/>
   </content>
 </idea-plugin>

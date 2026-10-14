@@ -537,7 +537,6 @@
     <module name="intellij.platform.warmup"/>
     <module name="intellij.platform.inspect"/>
     <module name="intellij.spellchecker.vcs"/>
-    <module name="intellij.spellchecker.xml"/>
     <module name="intellij.platform.buildView"/>
     <module name="intellij.platform.buildView.backend"/>
     <module name="intellij.platform.buildView.frontend"/>

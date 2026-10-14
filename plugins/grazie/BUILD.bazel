@@ -78,7 +78,6 @@ dev_dist_plugin(
             "intellij.grazie.markdown",
             "intellij.grazie.properties",
             "intellij.grazie.vcs",
-            "intellij.grazie.xml",
         ],
     },
 )

@@ -2006,6 +2006,7 @@ python/tools
 spellchecker
 spellchecker/vcs
 spellchecker/xml
+spellchecker/xml/backend
 tools/apiDump
 tools/apiDump/testData
 tools/intellij.ide.starter.allure.annotations.scanner

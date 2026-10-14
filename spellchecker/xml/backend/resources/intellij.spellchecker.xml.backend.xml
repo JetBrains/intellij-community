@@ -1,0 +1,16 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.spellchecker"/>
+    <module name="intellij.spellchecker.xml"/>
+    <module name="intellij.xml.dom"/>
+    <module name="intellij.xml.impl"/>
+    <module name="intellij.xml.psi"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <spellchecker.xmlSpellcheckingHelper implementation="com.intellij.spellchecker.xml.backend.XmlSpellcheckingHelperImpl"/>
+  </extensions>
+</idea-plugin>

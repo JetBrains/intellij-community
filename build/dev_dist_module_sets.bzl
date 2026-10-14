@@ -837,7 +837,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.warmup",
             "intellij.platform.inspect",
             "intellij.spellchecker.vcs",
-            "intellij.spellchecker.xml",
             "intellij.platform.buildView",
             "intellij.platform.buildView.backend",
             "intellij.platform.buildView.frontend",
@@ -897,7 +896,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.warmup": "//platform/warmup:warmup_content_module_jar",
             "intellij.regexp": "//RegExpSupport:regexp_content_module_jar",
             "intellij.spellchecker.vcs": "//spellchecker/vcs:vcs_content_module_jar",
-            "intellij.spellchecker.xml": "//spellchecker/xml:xml_content_module_jar",
         },
         module_system_loaded = [
             "intellij.emojipicker",
@@ -927,7 +925,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.warmup",
             "intellij.regexp",
             "intellij.spellchecker.vcs",
-            "intellij.spellchecker.xml",
         ],
         mode_refused = {
             "frontend": [
@@ -944,7 +941,6 @@ DEV_DIST_MODULE_SETS = {
                 "intellij.platform.versionDownloadManager",
                 "intellij.platform.warmup",
                 "intellij.spellchecker.vcs",
-                "intellij.spellchecker.xml",
             ],
         },
     ),

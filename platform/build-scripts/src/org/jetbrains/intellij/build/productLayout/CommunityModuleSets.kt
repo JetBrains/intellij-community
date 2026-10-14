@@ -377,7 +377,8 @@ object CommunityModuleSets {
 
   /**
    * The spellchecker core module and its Lucene dictionary index.
-   * The VCS and XML spellchecker strategies stay in [ideCommon], because lean products bundle the core without them.
+   * The VCS spellchecker strategy stays in [ideCommon], because lean products bundle the core without it.
+   * The XML spellchecker strategies are content of the bundled plugin `intellij.xml.plugin`.
    */
   fun spellchecker(): ModuleSet = moduleSet("spellchecker") {
     module("intellij.spellchecker")
@@ -460,7 +461,6 @@ object CommunityModuleSets {
     module("intellij.platform.warmup")
     module("intellij.platform.inspect")
     module("intellij.spellchecker.vcs")
-    module("intellij.spellchecker.xml")
     module("intellij.platform.buildView")
     module("intellij.platform.buildView.backend")
     module("intellij.platform.buildView.frontend")
