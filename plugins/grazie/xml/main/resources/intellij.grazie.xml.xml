@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.grazie.ide.language.xml">
+<idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>

@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.grazie.ide.language.markdown">
+<idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.grazie.core"/>

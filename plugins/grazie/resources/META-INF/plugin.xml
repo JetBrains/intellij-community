@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.grazie" allow-bundled-update="true">
+<idea-plugin allow-bundled-update="true">
   <id>tanvd.grazi</id>
   <name>Natural Languages</name>
   <vendor>JetBrains</vendor>
