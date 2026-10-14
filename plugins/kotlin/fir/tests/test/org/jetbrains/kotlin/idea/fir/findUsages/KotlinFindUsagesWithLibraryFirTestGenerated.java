@@ -541,6 +541,11 @@ public abstract class KotlinFindUsagesWithLibraryFirTestGenerated extends Abstra
             runTest("../../idea/tests/testData/findUsages/libraryUsages/kotlinLibrary/LibraryPrimaryConstructorUsages.0.kt");
         }
 
+        @TestMetadata("LibraryPrimaryParameterUsage.0.kt")
+        public void testLibraryPrimaryParameterUsage() throws Exception {
+            runTest("../../idea/tests/testData/findUsages/libraryUsages/kotlinLibrary/LibraryPrimaryParameterUsage.0.kt");
+        }
+
         @TestMetadata("LibrarySecondaryConstructorUsages.0.kt")
         public void testLibrarySecondaryConstructorUsages() throws Exception {
             runTest("../../idea/tests/testData/findUsages/libraryUsages/kotlinLibrary/LibrarySecondaryConstructorUsages.0.kt");

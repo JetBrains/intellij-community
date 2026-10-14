@@ -106,3 +106,5 @@ enum class EnumWithEnumEntries {
     }
     open fun fooEnum(n: Int): Int = n
 }
+
+class WithConstructorProperty(val constrProp: String)

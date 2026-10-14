@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtTypeParameterList
 import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.findPropertyByName
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
@@ -206,6 +207,14 @@ open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclara
         when (declaration) {
             is KtParameter -> {
                 val owner = declaration.getOwningCallable() ?: return null
+                if (owner is KtPrimaryConstructor && declaration.hasValOrVar()) {
+                    val classOrObject = owner.containingClassOrObject ?: return null
+                    val correspondingClassOrObject = getCorrespondingClassLikeDeclaration(classOrObject, scope, module) as? KtClassOrObject
+                    val propertyByName = correspondingClassOrObject?.findPropertyByName(declarationName)
+                    if (propertyByName != null) {
+                        return propertyByName
+                    }
+                }
                 val correspondingOwner = getCorrespondingCallableDeclaration(owner, scope, module) as? KtCallableDeclaration ?: return null
                 return correspondingOwner.valueParameters.firstOrNull { it.name == declarationName }
             }
