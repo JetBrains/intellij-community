@@ -290,6 +290,18 @@ public abstract class ActionPlaces {
     return ourPopupPlaces.contains(place) || place.startsWith(POPUP_PREFIX);
   }
 
+  /**
+   * Returns {@code true} if the place is a popup menu of a tool window.
+   * The check includes {@link #TOOLWINDOW_POPUP} and the popup menus in the tool window header:
+   * {@link #TOOLWINDOW_OPTIONS_POPUP}, {@link #TOOLWINDOW_TAB_POPUP} and {@link #TOOLWINDOW_HEADER_EMPTY_SPACE_POPUP}.
+   */
+  public static boolean isToolWindowPopupPlace(@Nullable String place) {
+    return TOOLWINDOW_POPUP.equals(place) ||
+           TOOLWINDOW_OPTIONS_POPUP.equals(place) ||
+           TOOLWINDOW_TAB_POPUP.equals(place) ||
+           TOOLWINDOW_HEADER_EMPTY_SPACE_POPUP.equals(place);
+  }
+
   public static boolean isCommonPlace(@NotNull String place) {
     return ourPopupPlaces.contains(place) || ourCommonPlaces.contains(place) ||
            place.startsWith(POPUP_PREFIX) && isCommonPlace(place.substring(POPUP_PREFIX.length()));

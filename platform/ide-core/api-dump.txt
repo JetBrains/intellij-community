@@ -353,6 +353,7 @@ a:com.intellij.openapi.actionSystem.ActionPlaces
 - s:isMainMenuOrActionSearch(java.lang.String):Z
 - s:isPopupPlace(java.lang.String):Z
 - s:isShortcutPlace(java.lang.String):Z
+- s:isToolWindowPopupPlace(java.lang.String):Z
 com.intellij.openapi.actionSystem.ActionWithDelegate
 - a:getDelegate():java.lang.Object
 - getPresentableName():java.lang.String
