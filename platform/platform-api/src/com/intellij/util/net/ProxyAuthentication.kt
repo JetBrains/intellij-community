@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.util.WaitForProgressToShow
-import com.intellij.util.net.internal.asDisabledProxyAuthPromptsManager
+import com.intellij.util.net.internal.getPlatformDisabledProxyAuthPromptsManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -73,8 +73,7 @@ interface DisabledProxyAuthPromptsManager {
     @JvmStatic
     fun getInstance(): DisabledProxyAuthPromptsManager = defaultPlatformDisabledPromptsManager
 
-    @Suppress("DEPRECATION", "removal")
-    private val defaultPlatformDisabledPromptsManager = (HttpConfigurable::getInstance).asDisabledProxyAuthPromptsManager()
+    private val defaultPlatformDisabledPromptsManager = getPlatformDisabledProxyAuthPromptsManager()
   }
 
   /**

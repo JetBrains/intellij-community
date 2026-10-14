@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.net.internal.ProxyMigrationService;
-import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.proxy.PropertiesEncryptionSupport;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -46,10 +45,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
@@ -66,7 +63,7 @@ import static com.intellij.openapi.util.Pair.pair;
   storages = @Storage(value = "proxy.settings.xml", roamingType = RoamingType.DISABLED),
   reportStatistic = false
 )
-@SuppressWarnings({"unused", "DeprecatedIsStillUsed", "removal"})
+@SuppressWarnings({"unused", "DeprecatedIsStillUsed", "removal", "UnnecessaryFullyQualifiedName"})
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable {
   private static final Logger LOG = Logger.getInstance(HttpConfigurable.class);
   private static final Path PROXY_CREDENTIALS_FILE = PathManager.getOptionsDir().resolve("proxy.settings.pwd");
@@ -108,9 +105,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   /// from [ProxySettings#getProxyConfiguration()]
   @Deprecated(forRemoval = true) public transient volatile boolean AUTHENTICATION_CANCELLED;
 
-  private final Map<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new HashMap<>();
-  private final Set<CommonProxy.HostInfo> myGenericCancelled = new HashSet<>();
-  private final transient Object myLock = new Object();
+  private final Set<HostInfo> myGenericCancelled = new HashSet<>();
 
   // -> drop, unify auth methods, use base64 encoding like it is done for generic auth
   private final transient PropertiesEncryptionSupport myEncryptionSupport = new PropertiesEncryptionSupport(new SecretKeySpec(new byte[] {
@@ -145,12 +140,11 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   @Override
   public @NotNull HttpConfigurable getState() {
-    CommonProxy.isInstalledAssertion();
+    com.intellij.util.proxy.CommonProxy.isInstalledAssertion();
 
     HttpConfigurable state = new HttpConfigurable();
     XmlSerializerUtil.copyBean(this, state);
     if (!KEEP_PROXY_PASSWORD) removeSecure();
-    correctPasswords(state);
     return state;
   }
 
@@ -170,79 +164,67 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   @Override
   public void dispose() { }
 
-  // -> drop, transient auth will be stored separately from persisted auth
-  private void correctPasswords(@NotNull HttpConfigurable to) {
-    synchronized (myLock) {
-      to.myGenericPasswords.values().removeIf(it -> !it.isStore());
-    }
-  }
-
   @Override
   public void loadState(@NotNull HttpConfigurable state) {
     XmlSerializerUtil.copyBean(state, this);
     if (!KEEP_PROXY_PASSWORD) removeSecure();
-    correctPasswords(this);
   }
 
   /// @deprecated use [ProxyAuthentication#isPromptedAuthenticationCancelled(String, int)]
   @Deprecated
   public boolean isGenericPasswordCanceled(@NotNull String host, int port) {
-    synchronized (myLock) {
-      return myGenericCancelled.contains(new CommonProxy.HostInfo(null, host, port));
+    synchronized (myGenericCancelled) {
+      return myGenericCancelled.contains(new HostInfo(host, port));
     }
   }
 
   @ApiStatus.Internal
   public void removeGenericPasswordCancellation(@NotNull String host, int port) {
-    synchronized (myLock) {
-      myGenericCancelled.remove(new CommonProxy.HostInfo(null, host, port));
+    synchronized (myGenericCancelled) {
+      myGenericCancelled.remove(new HostInfo(host, port));
     }
   }
 
   @ApiStatus.Internal
   public void clearGenericCancellations() {
-    synchronized (myLock) {
+    synchronized (myGenericCancelled) {
       myGenericCancelled.clear();
     }
   }
 
   @ApiStatus.Internal
-  public void setGenericPasswordCanceled(final String host, final int port) { // IdeProxyService auth
-    synchronized (myLock) {
-      myGenericCancelled.add(new CommonProxy.HostInfo(null, host, port));
+  public void setGenericPasswordCanceled(String host, int port) { // IdeProxyService auth
+    synchronized (myGenericCancelled) {
+      myGenericCancelled.add(new HostInfo(host, port));
     }
   }
 
   /// @deprecated use [ProxyCredentialStore#getCredentials(String, int)]
   @Deprecated(forRemoval = true)
   public PasswordAuthentication getGenericPassword(@NotNull String host, int port) {
-    ProxyInfo proxyInfo;
-    synchronized (myLock) {
-      if (myGenericPasswords.isEmpty()) {
-        return null;
-      }
-      proxyInfo = myGenericPasswords.get(new CommonProxy.HostInfo(null, host, port));
+    LOG.error("deprecated; use `ProxyCredentialStore#getCredentials` instead");
+    var credentials = ProxyCredentialStore.getInstance().getCredentials(host, port);
+    if (credentials != null) {
+      var password = credentials.getPassword();
+      return new PasswordAuthentication(credentials.getUserName(), password != null ? password.toCharArray() : new char[0]);
     }
-    if (proxyInfo == null) {
-      return null;
-    }
-    return new PasswordAuthentication(proxyInfo.getUsername(), decode(String.valueOf(proxyInfo.getPasswordCrypt())).toCharArray());
+    return null;
   }
 
   /// @deprecated use [ProxyCredentialStore#setCredentials(String, int, Credentials, boolean)]
   @Deprecated(forRemoval = true)
   @SuppressWarnings("WeakerAccess")
-  public void putGenericPassword(final String host, final int port, @NotNull PasswordAuthentication authentication, boolean remember) {
-    PasswordAuthentication coded = new PasswordAuthentication(authentication.getUserName(), encode(String.valueOf(authentication.getPassword())).toCharArray());
-    synchronized (myLock) {
-      myGenericPasswords.put(new CommonProxy.HostInfo(null, host, port), new ProxyInfo(remember, coded.getUserName(), String.valueOf(coded.getPassword())));
-    }
+  public void putGenericPassword(String host, int port, @NotNull PasswordAuthentication authentication, boolean remember) {
+    LOG.error("deprecated; use `ProxyCredentialStore#setCredentials` instead");
+    var credentials = authentication.getUserName().isBlank() ? null : new Credentials(authentication.getUserName(), authentication.getPassword());
+    ProxyCredentialStore.getInstance().setCredentials(host, port, credentials, remember);
   }
 
   /// @deprecated use [ProxyCredentialStore#getCredentials] instead
   @Deprecated(forRemoval = true)
   @Transient
   public @Nullable String getProxyLogin() {
+    LOG.error("deprecated; use `ProxyCredentialStore#getCredentials` instead");
     var credentials = readCredentials();
     return credentials != null ? credentials.getUserName() : null;
   }
@@ -251,6 +233,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   @Deprecated(forRemoval = true)
   @Transient
   public @Nullable String getPlainProxyPassword() {
+    LOG.error("deprecated; use `ProxyCredentialStore#getCredentials` instead");
     var credentials = readCredentials();
     return credentials != null ? credentials.getPasswordAsString() : null;
   }
@@ -407,7 +390,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       }
     }
     else if (withAutodetection && uri != null) {
-      List<Proxy> proxies = CommonProxy.getInstance().select(uri);
+      List<Proxy> proxies = com.intellij.util.proxy.CommonProxy.getInstance().select(uri);
       // we will just take the first returned proxy, but we have an option to test connection through each of them,
       // for instance, by calling prepareUrl()
       if (!proxies.isEmpty()) {
@@ -453,70 +436,10 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return ProxyUtils.isRealProxy(proxy);
   }
 
-  @ApiStatus.Internal
-  public void clearGenericPasswords() {
-    synchronized (myLock) {
-      myGenericPasswords.clear();
-      myGenericCancelled.clear();
-    }
-  }
-
   /// @deprecated use [ProxyCredentialStore#setCredentials(String, int, Credentials, boolean)]
   @Deprecated(forRemoval = true)
-  public void removeGeneric(@NotNull CommonProxy.HostInfo info) { // IdeAuthenticatorService
-    synchronized (myLock) {
-      myGenericPasswords.remove(info);
-    }
-  }
-
-  @ApiStatus.Internal
-  public boolean isGenericPasswordRemembered(@NotNull String host, int port) {
-    synchronized (myLock) {
-      if (myGenericPasswords.isEmpty()) return false;
-      var proxyInfo = myGenericPasswords.get(new CommonProxy.HostInfo(null, host, port));
-      if (proxyInfo == null) return false;
-      return proxyInfo.myStore;
-    }
-  }
-
-  private static class ProxyInfo {
-    public boolean myStore;
-    public String myUsername;
-    public String myPasswordCrypt;
-
-    @SuppressWarnings("UnusedDeclaration")
-    ProxyInfo() { }
-
-    ProxyInfo(boolean store, String username, String passwordCrypt) {
-      myStore = store;
-      myUsername = username;
-      myPasswordCrypt = passwordCrypt;
-    }
-
-    public boolean isStore() {
-      return myStore;
-    }
-
-    public void setStore(boolean store) {
-      myStore = store;
-    }
-
-    public String getUsername() {
-      return myUsername;
-    }
-
-    public void setUsername(String username) {
-      myUsername = username;
-    }
-
-    public String getPasswordCrypt() {
-      return myPasswordCrypt;
-    }
-
-    @SuppressWarnings("UnusedDeclaration")
-    public void setPasswordCrypt(String passwordCrypt) {
-      myPasswordCrypt = passwordCrypt;
-    }
+  public void removeGeneric(@NotNull com.intellij.util.proxy.CommonProxy.HostInfo info) { // IdeAuthenticatorService
+    ProxyCredentialStore.getInstance().setCredentials(info.getHost(), info.getPort(), null, false);
   }
 
   private void removeSecure() {
@@ -539,4 +462,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       USE_PROXY_PAC = true;
     }
   }
+
+  private record HostInfo(String host, int port) { }
 }
