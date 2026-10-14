@@ -5,7 +5,8 @@
 //! reach of the suite, the expectations, the fixture names. What it holds the document to is the vocabulary: every id
 //! that an instruction names has an entry of its kind, a `host` id is a word of [`HostAction`] or [`HostAssertion`],
 //! an `ide` id is not, and every argument fits the schema of its id. A value that an id takes has an answer earlier in
-//! its scenario, or the runner answers it before the first instruction.
+//! its scenario, or the runner answers it before the first instruction. A part of an authored program states the values
+//! it takes and answers on its instruction, and the same rule holds for them.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -129,12 +130,16 @@ pub struct ParamSpec {
     pub optional: bool,
 }
 
-/// One scenario: its setups, then its flow steps.
+/// One scenario: its setups, then its flow steps, then its authored program.
 #[derive(Clone, Debug, Deserialize)]
 pub struct ScenarioProgram {
     pub name: String,
     pub setups: Vec<OperationProgram>,
     pub steps: Vec<StepProgram>,
+    /// The program of an authored scenario: one instruction for each part or host id. Empty for a story scenario, which
+    /// has setups and steps instead.
+    #[serde(default)]
+    pub program: Vec<Instruction>,
 }
 
 /// One flow step of a scenario.
@@ -161,6 +166,17 @@ pub struct Instruction {
     pub assertion: Option<String>,
     #[serde(default)]
     pub args: BTreeMap<String, Value>,
+    /// The values that one use takes and answers, for an id whose values change per use, such as `authored-step`.
+    #[serde(default)]
+    pub uses: Option<InstructionUses>,
+}
+
+/// The values that one use of an id takes and answers, stated on the instruction.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct InstructionUses {
+    pub takes: Vec<String>,
+    pub answers: Vec<String>,
 }
 
 /// The kind of an id. An action and an assertion may share an id, so a kind and an id together name one entry.
@@ -202,16 +218,25 @@ impl SuiteProgram {
             let operations = scenario
                 .setups
                 .iter()
-                .chain(scenario.steps.iter().flat_map(|step| &step.operations));
-            for operation in operations {
-                for instruction in &operation.instructions {
-                    let place = format!("scenario '{}' operation '{}'", scenario.name, operation.operation);
+                .chain(scenario.steps.iter().flat_map(|step| &step.operations))
+                .map(|operation| {
+                    (
+                        format!("scenario '{}' operation '{}'", scenario.name, operation.operation),
+                        &operation.instructions,
+                    )
+                });
+            let program = std::iter::once((format!("scenario '{}' program", scenario.name), &scenario.program));
+            for (place, instructions) in operations.chain(program) {
+                for instruction in instructions {
                     refusals.extend(self.check_instruction(instruction, &place, &mut used).err());
                     let Some(spec) = self.spec_of(instruction) else { continue };
-                    for name in spec.takes.iter().filter(|name| !answered.contains(name.as_str())) {
+                    let uses = instruction.uses.as_ref();
+                    let takes = spec.takes.iter().chain(uses.into_iter().flat_map(|uses| &uses.takes));
+                    for name in takes.filter(|name| !answered.contains(name.as_str())) {
                         refusals.push(format!("{place} takes the value '{name}', which no earlier instruction answers"));
                     }
-                    answered.extend(spec.answers.iter().chain(&spec.may_answer).map(String::as_str));
+                    let answers = uses.into_iter().flat_map(|uses| &uses.answers);
+                    answered.extend(spec.answers.iter().chain(&spec.may_answer).chain(answers).map(String::as_str));
                 }
             }
         }

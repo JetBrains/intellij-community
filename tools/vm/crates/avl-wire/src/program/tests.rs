@@ -154,3 +154,44 @@ fn a_value_that_an_earlier_instruction_may_answer_is_answered() {
         vec!["scenario 'scenario' operation 'submit' takes the value 'draft', which no earlier instruction answers".to_owned()]
     );
 }
+
+/// A one-scenario authored suite whose program is `instructions`, with the one id `authored-step`.
+fn authored(instructions: &Value) -> SuiteProgram {
+    let key = |values: &[&str]| json!({"type": "enum", "values": values, "optional": false});
+    let params = json!({"part": key(&["seed", "use"]), "scenario": key(&["scenario"]), "suite": key(&["authored"]),
+        "timeoutMs": {"type": "int", "optional": false}});
+    let document = json!({
+        "suite": "authored", "lane": "UI", "testClassName": "AgentAuthoredUiTest", "restartsIde": false, "authored": true,
+        "labels": [{"name": "testClass", "value": "com.example.AgentAuthoredUiTest"}],
+        "modules": [], "implementationFlows": [],
+        "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": spec("ide", &params)}, "assertions": {}},
+        "profiles": [{"name": "scenario", "fixture": "authored-authored", "flags": {}, "followsLastUsedPreset": false,
+            "requiresPromptProbe": false, "setups": [], "steps": [], "program": instructions}],
+    });
+    parse_suite_program(document.to_string().as_bytes()).unwrap()
+}
+
+fn part(name: &str, takes: &[&str], answers: &[&str]) -> Value {
+    json!({"action": "authored-step", "args": {"part": name, "scenario": "scenario", "suite": "authored", "timeoutMs": 1000},
+        "uses": {"takes": takes, "answers": answers}})
+}
+
+#[test]
+fn a_part_takes_a_value_that_an_earlier_part_answers() {
+    let fits = json!([part("seed", &[], &["session"]), part("use", &["session"], &[])]);
+    assert_eq!(authored(&fits).refusals(), Vec::<String>::new());
+    let early = json!([part("use", &["session"], &[]), part("seed", &[], &["session"])]);
+    assert_eq!(
+        authored(&early).refusals(),
+        vec!["scenario 'scenario' program takes the value 'session', which no earlier instruction answers".to_owned()]
+    );
+}
+
+#[test]
+fn a_part_that_names_no_part_of_its_suite_is_refused() {
+    let program = json!([part("other", &[], &[])]);
+    assert_eq!(
+        authored(&program).refusals(),
+        vec!["scenario 'scenario' program: the action 'authored-step' parameter 'part' does not accept \"other\"".to_owned()]
+    );
+}
