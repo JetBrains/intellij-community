@@ -4,8 +4,6 @@ package com.intellij.collaboration.ui.codereview
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.ColorUtil
-import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.annotations.Nls
 
 object CodeReviewTitleUIUtil {
@@ -13,7 +11,6 @@ object CodeReviewTitleUIUtil {
     val reviewNumberLink = HtmlChunk
       .link(url, reviewNumber)
       .attr("title", tooltip)
-      .wrapWith(HtmlChunk.font(ColorUtil.toHex(NamedColorUtil.getInactiveTextColor())))
 
     return HtmlBuilder()
       .appendRaw(title.unwrap())
