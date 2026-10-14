@@ -1,11 +1,12 @@
 //! `run`, `shard`, `flake` and `daemon`: staging, the hot-jar push, iterations, the verdict, the trace pull, and
 //! the leased-run driver the three share.
 //!
-//! One long-lived guest JVM (`plugins/air/tests/integration/uiDaemon`) holds the warm IDE across host iterations.
+//! One long-lived guest process holds the warm IDE across host iterations: the JVM daemon of
+//! `plugins/air/tests/integration/uiDaemon`, or with `--runner daemon` the `lane-daemon` verb of the guest agent.
 //! Bazel publishes its launch graph as a runtime descriptor; the controller stages the stable classpath and JBR
-//! guest-locally, pushes rebuilt hot jars over HTTP, and streams JUnit back as NDJSON. Share-backed product and data
-//! changes quiesce the daemon around a refresh of the shares, while immutable runtime or boot setting changes restart
-//! it.
+//! guest-locally, pushes rebuilt hot jars and the lane inputs over HTTP, and streams the run back as NDJSON.
+//! Share-backed product and data changes stop the lane IDEs around a refresh of the shares, while immutable runtime or
+//! boot setting changes restart the daemon.
 //!
 //! `run` is self-sufficient: it starts or restarts the daemon whenever the build it just prepared does not match the
 //! one running. The `daemon` subcommands exist to drive that lifecycle deliberately - to pay the boot cost up front,

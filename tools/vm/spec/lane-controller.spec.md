@@ -23,6 +23,11 @@ targets:
   - ../crates/avl-guest/src/ide/reap.rs
   - ../crates/avl-guest/src/lane/identity.rs
   - ../crates/avl-guest/src/lane/context.rs
+  - ../crates/avl-guest/src/lane/channel.rs
+  - ../crates/avl-guest/src/lane/ide.rs
+  - ../crates/avl-guest/src/lane/inputs.rs
+  - ../crates/avl-guest/src/lane/iteration.rs
+  - ../crates/avl-guest/src/lane/readiness.rs
   - ../crates/avl-guest/src/lane/context/options/*.xml
   - ../crates/avl-guest/src/supervisor/thread_dump.rs
   - ../crates/avl-bridge/src/lifecycle.rs
@@ -531,6 +536,19 @@ Before a launch, the lane daemon writes these files into the context:
   an agent that is not controlled.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_document_that_the_daemon_cannot_launch_as_it_states_is_refused`)
 
+The lane daemon reads the other launch inputs from the runtime descriptor at its boot:
+
+- The home of the distribution is `home.path` of the IDE config. The IDE runs on the JBR below that home, and a home
+  without the JBR is refused.
+  [@test] ../crates/avl-guest/src/lane/inputs/tests.rs (`the_distribution_home_and_its_jbr_come_from_the_ide_config`)
+
+- A flag `-Dair.test.<name>.runtime` names the manifest of one CLI runtime. Its identity hashes the manifest, the
+  interpreter and the lock.
+  [@test] ../crates/avl-guest/src/lane/inputs/tests.rs (`a_runtime_flag_names_the_manifest_of_one_cli_runtime`)
+
+- A runtime whose entry point is missing, or cannot run, is refused by name.
+  [@test] ../crates/avl-guest/src/lane/inputs/tests.rs (`a_runtime_whose_entry_cannot_run_is_refused`)
+
 ### Supervision and evidence
 
 The daemon's half and the IDE's half of supervision are in
@@ -986,6 +1004,10 @@ The daemon's half and the IDE's half of supervision are in
   outcome.
   [@test] ../crates/avl-host-sys/src/guest/supervisor/tests.rs
 
+- A record of a failed test or container can carry the kind, the message and the detail of the failure. The JVM daemon
+  sends the error text instead. A record of either kind keeps its bytes when the controller publishes it again.
+  [@test] ../crates/avl-wire/src/daemon/tests.rs (`a_failure_record_carries_the_typed_failure_or_the_error_text`)
+
 ### The worker lease and the warm daemon
 
 - A release of a worker lease keeps the warm daemon of that worker. The daemon holds the run slot of the
@@ -1134,9 +1156,13 @@ The daemon's half and the IDE's half of supervision are in
 - A daemon start whose stop of the lane IDEs fails refuses. It remounts nothing and stages nothing.
   [@test] ../crates/avl-vm/src/daemon/start/tests.rs
 
-- A remount fails closed while a lane IDE runs. After the quiesce, a run that is not finished refuses
-  `daemon_mount_quiesce_failed`.
-  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
+- A remount stops every lane IDE first. The daemon quits its IDE through `/ide/stop`, and `ide-gc --stop-all` cancels
+  every other IDE run of the worker. No route of the daemon quiesces the shares.
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`a_mount_digest_mismatch_stops_the_ides_and_remounts`)
+
+- A remount fails closed while a lane IDE runs. After the stop, a run that is not finished refuses
+  `daemon_remount_ide_running`.
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`a_remount_refuses_while_a_lane_ide_still_runs`)
 
 - A run without a receipt gives its lease back when its daemon start fails the health poll.
   [@test] ../crates/avl-vm/src/daemon/command/tests.rs
@@ -1194,6 +1220,95 @@ The daemon's half and the IDE's half of supervision are in
 - An interrupt ends `pool start all`, `pool stop all` and `pool recycle all` at once. The answer is the refusal of
   the interrupted worker. The workers after it stay as they are.
   [@test] ../crates/avl-vm/src/worker/worker/tests.rs
+
+#### The lane-daemon verb
+
+The global option `--runner` names the process of the run slot. `jvm` is the JVM daemon and the default. `daemon` is
+the `lane-daemon` verb of the installed guest agent. The option is for the move of the lanes to the verb, and it goes
+after that move.
+
+- `--runner` takes `jvm` or `daemon` on either side of the command. Another word is a usage refusal.
+  [@test] ../crates/avl-vm/src/cli/tests.rs (`the_runner_is_a_global_option_with_two_words`)
+
+- With `daemon`, the run slot holds the verb. It gets the state directory, the port, the launch digest, the runtime
+  descriptor, the runfiles root, the IDE root and the home of the generation.
+  [@test] ../crates/avl-vm/src/daemon/start/tests.rs (`the_daemon_runner_starts_the_lane_daemon_verb_of_the_installed_agent`)
+
+- The runner is a boot setting, so a change of the runner restarts the daemon. The JVM runner keeps its launch digest.
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`the_runner_enters_the_launch_digest`)
+
+- The verb speaks protocol 6, and the JVM daemon speaks protocol 5. The controller refuses a daemon that does not
+  speak the protocol of its runner, and it names both versions.
+  [@test] ../crates/avl-wire/src/daemon/tests.rs (`each_runner_reports_its_own_protocol_version`)
+  [@test] ../crates/avl-vm/src/daemon/http/tests.rs (`daemon_status_answers_only_the_daemon_this_controller_launched`)
+
+- Protocol 6 has no route that quiesces the shares, and its status has no quiesce field and no metaspace field. The
+  status of the JVM daemon still decodes.
+  [@test] ../crates/avl-wire/src/daemon/tests.rs (`routes_are_matched_the_way_the_daemon_routes_them`)
+  [@test] ../crates/avl-wire/src/daemon/tests.rs (`a_status_of_either_runner_decodes`)
+
+- The run request of the verb names the lane and the digests of the three lane inputs. A selection of no lane is
+  refused before the request goes out. The JVM daemon gets neither field.
+  [@test] ../crates/avl-wire/src/daemon/tests.rs (`the_run_request_names_the_lane_inputs_for_the_lane_daemon_only`)
+  [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`the_lane_daemon_gets_the_lane_and_the_digests_of_the_lane_inputs`)
+
+- At its boot the verb empties its jar store and removes the state file of the previous daemon. It then publishes a
+  state file with the mode 0600, which names the protocol, the port and the token.
+  [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`the_state_file_names_the_channel_and_the_status_answers_protocol_6`)
+
+- A request with another token gets 401. The verb stores a pushed file only under the digest of its bytes.
+  [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`the_state_file_names_the_channel_and_the_status_answers_protocol_6`)
+  [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`the_jar_push_stores_a_file_under_the_digest_of_its_bytes`)
+
+- The verb runs one iteration at a time, and it refuses a run of another launch digest as `stale-daemon`. After
+  `/shutdown` it refuses each run as `shutting-down`.
+  [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`one_run_at_a_time_and_an_ide_stop_without_an_ide`)
+  [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`a_run_streams_its_records_and_a_stale_one_is_refused`)
+  [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`a_shutdown_wakes_the_verb_and_refuses_later_runs`)
+
+- `/run` streams one record per chunk, from `runStarted` to `summary`. A run that names no lane is a failed
+  iteration.
+  [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`a_run_streams_its_records_and_a_stale_one_is_refused`)
+  [@test] ../crates/avl-guest/src/lane/services/http/tests.rs (`a_streamed_answer_sends_one_chunk_per_write_and_skips_an_empty_one`)
+
+- An iteration runs the suite documents of its lane. A selector narrows them by the test class, with or without a
+  package and a scenario.
+  [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`a_selection_is_the_documents_of_the_lane_narrowed_by_the_selectors`)
+
+- The program runner is a later slice. Until then, each selected document ends as a container failure of the type
+  `not_implemented`, which names the suite.
+  [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`a_selected_document_fails_as_not_implemented`)
+
+The verb owns the lane services of one config key. They bind once for the key and live until `/shutdown`. A run of
+another key stops them and binds the services of the new key. Each iteration then decides about the IDE of the key:
+
+| the IDE of the key | the decision |
+| --- | --- |
+| none, or the launch record names another product | `fresh`: every IDE run under the IDE root stops, and the context is made again |
+| its run is live, its bridge answers, and it holds the wanted context plugins | `reuse` |
+| its run ended, or its bridge does not answer | `relaunch` on the same context |
+| it holds other context plugins | `relaunch` on the same context |
+
+A daemon that boots again keeps the IDE of a key when the launch record names the same product and the run is live.
+The proof of the decisions is a lane run on a worker, because each one needs a real IDE process.
+
+- The verb installs the context plugins with a manifest that names each file and its digest. A set without the bridge
+  or its resident part is refused, and so is a plugin that the distribution also carries.
+  [@test] ../crates/avl-guest/src/lane/ide/tests.rs (`an_install_replaces_the_plugin_directories_and_writes_the_manifest_last`)
+  [@test] ../crates/avl-guest/src/lane/ide/tests.rs (`an_install_refuses_a_missing_bridge_and_a_doubled_plugin`)
+
+- An IDE is ready when the lifecycle says `READY`, the robot is the input-events robot, and the ping echoes its
+  nonce. The Junie offer of the IDE start then gets `Skip`.
+  [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`a_ready_ide_passes_the_gate_and_the_junie_offer_gets_skip`)
+  [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`another_robot_is_refused`)
+
+- A bridge that serves another flow vocabulary than the lane document is refused as `lane_vocabulary_skew`, which
+  names both digests. A bridge that names no digest gets a note.
+  [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`a_vocabulary_of_another_build_is_a_skew_and_a_missing_one_a_note`)
+
+- A quit asks the IDE through its bridge and waits one minute for the run to end. Then a kill with a thread dump
+  follows. A process that survives both is a refusal, and no launch lands beside it.
+  [@test] ../crates/avl-guest/src/lane/readiness/tests.rs (`a_quit_is_one_request`)
 
 ## User Experience
 

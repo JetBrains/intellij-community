@@ -57,6 +57,13 @@ pub(crate) const CONTROL_FILE: &str = "control.json";
 pub(crate) const LANE_SERVICES_FILE: &str = "lane-services.json";
 
 /// The held load of a restart, which the runtime in the IDE writes before a quit and consumes at the next start.
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "the writer never writes or deletes this file, and only a test names it to prove that"
+    )
+)]
 pub(crate) const NEXT_START_CONTROL_FILE: &str = "control-next-start.json";
 
 /// The copy of the fake agent jar below the home of the context.
@@ -115,7 +122,7 @@ pub(crate) fn codex_identity() -> String {
 }
 
 /// One declared CLI runtime: the launcher name, the command that runs it, and the identity of its declared inputs.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct CliRuntime {
     pub name: String,
     /// The interpreter, when the runtime has one, then the entry point. Each one is an absolute guest path.

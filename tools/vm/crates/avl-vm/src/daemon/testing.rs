@@ -72,17 +72,12 @@ pub(crate) fn df_with_free_kib(kibibytes: &str) -> String {
 
 /// What the fake daemon answers, and what it was sent. Every field is the suite's to set.
 #[derive(Debug)]
-#[expect(
-    clippy::struct_excessive_bools,
-    reason = "a fake's script: each bool is one independent answer a suite sets"
-)]
 pub(crate) struct DaemonScript {
     /// `METHOD /path` of every request, in order.
     pub(crate) requests: Vec<String>,
     pub(crate) protocol_version: u32,
     pub(crate) boot_stamp: String,
     pub(crate) launch_digest: String,
-    pub(crate) mount_quiesced: bool,
     pub(crate) ide_running: bool,
     pub(crate) busy: bool,
     pub(crate) iteration_count: u32,
@@ -153,10 +148,9 @@ impl FakeDaemon {
         let token = "fixture-token".to_owned();
         let script = Arc::new(Mutex::new(DaemonScript {
             requests: Vec::new(),
-            protocol_version: wire::PROTOCOL_VERSION,
+            protocol_version: wire::JVM_PROTOCOL_VERSION,
             boot_stamp: "boot-1".to_owned(),
             launch_digest: String::new(),
-            mount_quiesced: false,
             ide_running: false,
             busy: false,
             iteration_count: 0,
@@ -253,7 +247,7 @@ impl FakeDaemon {
     /// What the guest daemon publishes for the boot poll to read, aimed at this double.
     pub(crate) fn state_file_json(&self) -> String {
         json!({
-            "protocolVersion": wire::PROTOCOL_VERSION,
+            "protocolVersion": wire::JVM_PROTOCOL_VERSION,
             "port": self.port(),
             "token": self.token,
             "pid": 7,
@@ -288,11 +282,12 @@ async fn serve(State(served): State<Served>, request: Request) -> Response {
             if let Some(code) = script.status_code {
                 return status(code).into_response();
             }
+            // The two fields of the JVM daemon that protocol 6 dropped, which the controller ignores.
             json!({
                 "protocolVersion": script.protocol_version,
                 "daemonBootStamp": script.boot_stamp,
                 "controllerLaunchDigest": script.launch_digest,
-                "mountQuiesced": script.mount_quiesced,
+                "mountQuiesced": false,
                 "productStamp": "stamp",
                 "ideRunning": script.ide_running,
                 "busy": script.busy,
@@ -319,7 +314,7 @@ async fn serve(State(served): State<Served>, request: Request) -> Response {
             xml.into_response()
         }
         // 200 with no body, which is all the client reads of them.
-        Some(Route::MountQuiesce | Route::MountResume | Route::IdeStop | Route::Shutdown) => StatusCode::OK.into_response(),
+        Some(Route::IdeStop | Route::Shutdown) => StatusCode::OK.into_response(),
         None => StatusCode::NOT_FOUND.into_response(),
     }
 }

@@ -34,6 +34,7 @@ fn every_verb_keeps_its_wire_spelling() {
             "ide-prepare",
             "ide-gc",
             "ide-launch",
+            "lane-daemon",
         ]
     );
     for verb in AgentVerb::ALL {

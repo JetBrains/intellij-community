@@ -14,8 +14,7 @@ use crate::daemon::testing::{ndjson_line, run_started_record, summary_record};
 
 // --- the decisions of a run stream ----------------------------------------------------------------------------
 
-// A 409 answers by its reason: a stale daemon names both generations, quiesced shares are not busy, and any other
-// reason is busy.
+// A 409 answers by its reason: a stale daemon names both generations, and any other reason is busy.
 #[test]
 fn a_conflict_answers_by_its_reason() {
     let conflict = |reason: &str, launch_digest: Option<&str>| wire::Conflict {
@@ -29,8 +28,8 @@ fn a_conflict_answers_by_its_reason() {
         "{}",
         stale.message
     );
-    let quiesced = conflict_refusal(&conflict(conflict::MOUNT_QUIESCED, None), "launch-1");
-    assert_eq!(quiesced.code, "daemon_mount_quiesced");
+    let stopping = conflict_refusal(&conflict(conflict::SHUTTING_DOWN, None), "launch-1");
+    assert_eq!(stopping.code, "daemon_busy");
     let busy = conflict_refusal(&conflict("busy", None), "launch-1");
     assert_eq!(
         (busy.code.as_ref(), busy.message.as_str()),
@@ -157,6 +156,7 @@ async fn the_run_request_body_carries_every_key_and_empty_lists() {
         selectors: vec!["com.example.MyTest#method".to_owned()],
         junit5_filters: Vec::new(),
         description: "selector".to_owned(),
+        lane: None,
     };
     let execution = execute(&fixture, &prep, &state, &selection).await.unwrap();
     assert!(execution.protocol_failure.is_none());
@@ -178,10 +178,10 @@ async fn the_run_request_body_carries_every_key_and_empty_lists() {
     assert!(execution.summary.is_some(), "the stream's facts are captured");
 }
 
-// A 409 is triaged into the three refusals a caller answers differently, all at 75: a stale daemon names both
-// generations and the recovery, a quiesced mount names its own, and everything else is busy.
+// A 409 is triaged into the two refusals a caller answers differently, both at 75: a stale daemon names both
+// generations and the recovery, and everything else is busy.
 #[tokio::test]
-async fn a_409_is_triaged_into_stale_quiesced_and_busy_at_75() {
+async fn a_409_is_triaged_into_stale_and_busy_at_75() {
     let (fixture, prep, state) = executing().await;
     for (name, conflict, code, fragment) in [
         (
@@ -195,12 +195,6 @@ async fn a_409_is_triaged_into_stale_quiesced_and_busy_at_75() {
             json!({"reason": "stale-daemon"}),
             "daemon_stale",
             "an unnamed generation",
-        ),
-        (
-            "a quiesced mount",
-            json!({"reason": "mount-quiesced"}),
-            "daemon_mount_quiesced",
-            "recover with: daemon restart",
         ),
         (
             "anything else",
@@ -939,19 +933,56 @@ fn a_selector_becomes_either_a_selection_or_a_class_name_filter() {
         assert_eq!(selectors, want_selectors, "{filter}");
         assert_eq!(junit5_filters, want_filters, "{filter}");
         // Never null on the wire: the far end is Kotlin with non-nullable fields.
-        let encoded = serde_json::to_value(RunRequestBody {
-            selectors: &selectors,
-            junit5_filters: &junit5_filters,
-            product_stamp: "",
-            launch_digest: "",
+        let encoded = serde_json::to_value(RunRequest {
+            selectors: selectors.clone(),
+            junit5_filters: junit5_filters.clone(),
+            product_stamp: String::new(),
+            launch_digest: String::new(),
             hot_jars: Vec::new(),
             active_execution_timeout_sec: 0,
             progress_gap_timeout_sec: 0,
             ide_plugins: Vec::new(),
+            lane: None,
+            lane_inputs: None,
         })
         .unwrap();
         assert!(encoded["selectors"].is_array(), "{filter}: {encoded}");
         assert!(encoded["idePlugins"].is_array(), "{filter}: {encoded}");
         assert!(encoded["junit5Filters"].is_array(), "{filter}: {encoded}");
     }
+}
+
+// The lane daemon gets the lane of the selection and the digests of the three lane inputs, and a selection of no lane
+// is refused before the request goes out. The JVM daemon gets neither field, because it refuses an unknown one.
+#[tokio::test]
+async fn the_lane_daemon_gets_the_lane_and_the_digests_of_the_lane_inputs() {
+    let (fixture, prep, _) = executing().await;
+    let policy = fixture.host.watchdog_policy(None, None);
+    let selection = RunSelection {
+        lane: Some("ui".to_owned()),
+        ..RunSelection::default()
+    };
+    let jvm = run_request(&prep, &selection, policy, Runner::Jvm).unwrap();
+    assert_eq!((jvm.lane, jvm.lane_inputs), (None, None));
+    let verb = run_request(&prep, &selection, policy, Runner::Daemon).unwrap();
+    assert_eq!(verb.lane.as_deref(), Some("ui"));
+    let digest = |field: &str| {
+        prep.lane_inputs
+            .iter()
+            .find(|input| input.field == field)
+            .unwrap()
+            .host
+            .sha256
+            .clone()
+    };
+    assert_eq!(
+        verb.lane_inputs,
+        Some(LaneInputs {
+            fake_agent_jar: digest("fakeAgentJar"),
+            lane_documents: digest("laneDocuments"),
+            suite_documents: digest("suiteDocuments"),
+        })
+    );
+    let refused = run_request(&prep, &RunSelection::default(), policy, Runner::Daemon).unwrap_err();
+    assert_eq!((refused.code.as_ref(), refused.exit), ("lane_daemon_lane_unknown", Exit::USAGE));
 }

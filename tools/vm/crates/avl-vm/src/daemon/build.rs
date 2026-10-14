@@ -12,7 +12,7 @@ use avl_base::{Config, Exit, OrRefuse, PhaseRun, Refusal};
 use avl_host_sys::Ctx;
 use avl_host_sys::runfiles::{GuestRunfilesTree, GuestTreeInputs, HostRunfiles};
 use avl_report::digest::{self, FileDigestCache, PathDigest, ProductIdentityInput};
-use avl_wire::daemon::{LABEL, LINUX_GUEST_LABEL};
+use avl_wire::daemon::{LABEL, LINUX_GUEST_LABEL, Runner};
 use avl_wire::progress::{Event, Phase};
 use avl_wire::report::Tree;
 use avl_wire::runtime::{self, RuntimeDescriptor, RuntimeFile};
@@ -180,6 +180,9 @@ pub(crate) struct ControllerBoot<'a> {
     pub(crate) vm_node: &'a str,
     pub(crate) vm_tmp: &'a str,
     pub(crate) vm_user: &'a str,
+    /// The `lane-daemon` verb, or absent for the JVM daemon, so the digest of a JVM daemon stays what it was.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) runner: Option<&'a str>,
 }
 
 fn literal_digest(literal: &impl Serialize) -> String {
@@ -204,6 +207,7 @@ pub(crate) fn controller_boot_digest(settings: &Config, guest_runfiles_root: &st
         vm_node: &settings.vm_node,
         vm_tmp: &settings.vm_tmp,
         vm_user: &settings.vm_user,
+        runner: (settings.daemon.runner != Runner::Jvm).then(|| settings.daemon.runner.as_str()),
     })
 }
 

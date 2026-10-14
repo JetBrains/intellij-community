@@ -6,7 +6,9 @@
 use std::path::Path;
 
 use avl_base::{Environment, Selection};
-use avl_wire::daemon::{ContainerFailed, ExecutionIdentity, PlanStarted, Skipped, TestFinished, TestStarted, WatchdogExpired};
+use avl_wire::daemon::{
+    ContainerFailed, ExecutionIdentity, PlanStarted, Skipped, TestFinished, TestStarted, TypedFailure, WatchdogExpired,
+};
 use avl_wire::report::{Retrieval, TraceBundle, decode_run_report};
 use bt_junit::IntegrityStatus;
 use pretty_assertions::assert_eq;
@@ -125,6 +127,7 @@ fn finished(id: &str, display_name: &str, status: &str, class_name: Option<&str>
         status: status.to_owned(),
         duration_ms: 1,
         error: error.map(str::to_owned),
+        failure: TypedFailure::default(),
     }))
 }
 
@@ -149,6 +152,7 @@ fn container_failed(id: &str) -> RunEvent {
         timestamp: "t".to_owned(),
         execution: identity(id, id, None),
         error: None,
+        failure: TypedFailure::default(),
     }))
 }
 

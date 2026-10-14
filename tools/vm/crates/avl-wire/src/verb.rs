@@ -58,5 +58,8 @@ vocabulary! {
         /// the argument file and starts the supervisor run `run-ide-<launchName>` in the closed environment of the
         /// context. It answers [`crate::ide::IdeLaunched`].
         IdeLaunch = "ide-launch",
+        /// Serves the control channel of the lane daemon in the run slot: `lane-daemon --state-dir <dir> --port <port>
+        /// ...`. It owns the lane services and the lane IDE until its `/shutdown`. See [`crate::daemon`].
+        LaneDaemon = "lane-daemon",
     }
 }

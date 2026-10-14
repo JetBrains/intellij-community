@@ -27,7 +27,7 @@ use crate::daemon::host::{Host, WatchdogPolicy};
 use crate::daemon::run::{RunExecution, RunSelection, push_jars};
 use crate::daemon::state::{HostState, guest_state_dir};
 use crate::daemon::traces::TraceSync;
-use crate::lane::ide::{IdeRetention, running_guest_ides};
+use crate::lane::ide::{IdeRetention, gc_guest_ides, gc_note, running_guest_ides};
 use crate::lane::secrets::{RunSecrets, remove_run_secrets, scan_artifacts, stage_run_secrets, withhold};
 use avl_base::RefusalExt;
 use avl_base::journal;
@@ -35,6 +35,9 @@ use avl_base::journal;
 #[cfg(test)]
 #[cfg(unix)]
 mod tests;
+
+/// The refusal of a remount while a lane IDE of the worker still runs, or while its runs cannot be read.
+pub(crate) const REMOUNT_IDE_RUNNING: &str = "daemon_remount_ide_running";
 
 /// Bounds the diagnostic a report carries from the stream: a run that failed with a megabyte of stack trace still
 /// has a one-screen explanation.
@@ -52,8 +55,8 @@ pub(crate) enum IdeAction {
     /// The daemon restarted, and the IDE of this product outlived it: the new daemon attaches to it.
     #[serde(rename = "keep")]
     Keep,
-    /// The shares were refreshed around a quiesced daemon: a remount on Tart and Parallels, a settle on Docker. The
-    /// label is `remount` on every backend.
+    /// The shares were refreshed while no lane IDE ran: a remount on Tart and Parallels, a settle on Docker. The label is
+    /// `remount` on every backend.
     #[serde(rename = "remount")]
     Remount,
     #[serde(rename = "relaunch")]
@@ -637,15 +640,17 @@ impl Host {
         Ok((document, path))
     }
 
-    /// Quiesces the daemon around a refresh of the shares, and resumes it: a share-backed change never restarts
-    /// the daemon.
+    /// Stops every lane IDE around a refresh of the shares: a share-backed change never restarts the daemon.
     ///
     /// The refresh is [`Manager::refresh_shares`]: the VirtioFS remount sweep on Tart and Parallels, a settle for
     /// the bind mounts on Docker. The decision and the timing line say `remount` on every backend, because both are
     /// a contract with the docs and the suites; the note of the refresh says what it did.
     ///
-    /// The quiesce quits the lane IDE through the daemon, and the guest agent owns its process. So the refresh starts
+    /// `/ide/stop` makes the daemon quit and forget its IDE, and `ide-gc --stop-all` cancels every other IDE run of the
+    /// worker, such as one that outlived an earlier daemon. The guest agent owns each IDE process. So the refresh starts
     /// only when the supervisor reports every IDE run finished: an IDE that runs from a share makes its unmount busy.
+    /// The controller holds the lease, so no run starts in between, and the next run launches the IDE again. Both
+    /// runners serve `/ide/stop`, so the remount needs no route of its own.
     ///
     /// [`Manager::refresh_shares`]: crate::worker::worker::Manager::refresh_shares
     async fn remount_around(&self, ctx: &Ctx, worker: &str, scope: &Scope, state: &HostState, prep: &PreparedBuild) -> Result<(), Refusal> {
@@ -655,24 +660,23 @@ impl Host {
             "the product inputs changed"
         };
         self.decide(Subject::Shares, "remount", reason, scope);
-        let (quiesced, _) = self.daemon.http(ctx, state, &wire::MOUNT_QUIESCE, None).await?;
-        if !quiesced.is_success() {
+        let (stopped, _) = self.daemon.http(ctx, state, &wire::IDE_STOP, None).await?;
+        if !stopped.is_success() {
             return Err(Refusal::new(
-                "daemon_mount_quiesce_failed",
+                "daemon_ide_stop_failed",
                 Exit::SOFTWARE,
-                format!("/mount/quiesce returned {}", quiesced.as_u16()),
+                format!("/ide/stop returned {} before the remount", stopped.as_u16()),
             ));
+        }
+        {
+            let channel = self.channel(worker);
+            let ides = gc_guest_ides(&self.guest(ctx, channel.as_ref()), IdeRetention::StopAll).await?;
+            if let Some(note) = gc_note(&ides) {
+                self.reporter.note(format!("{note} on {worker} before the remount"), Some(scope));
+            }
         }
         self.require_no_running_ide(ctx, worker).await?;
         self.manager.refresh_shares(ctx, worker).await?;
-        let (resumed, _) = self.daemon.http(ctx, state, &wire::MOUNT_RESUME, None).await?;
-        if !resumed.is_success() {
-            return Err(Refusal::new(
-                "daemon_mount_resume_failed",
-                Exit::SOFTWARE,
-                format!("/mount/resume returned {}", resumed.as_u16()),
-            ));
-        }
         if self.daemon.status(ctx, state).await?.is_none() {
             return Err(Refusal::new(
                 "daemon_unhealthy_after_remount",
@@ -683,17 +687,16 @@ impl Host {
         Ok(())
     }
 
-    /// Refuses `daemon_mount_quiesce_failed` while a lane IDE run of the worker is not finished, and when the
-    /// supervisor cannot say. It fails closed, because a refresh under a live IDE unmounts the share that the IDE runs
-    /// from.
+    /// Refuses [`REMOUNT_IDE_RUNNING`] while a lane IDE run of the worker is not finished, and when the supervisor cannot
+    /// say. It fails closed, because a refresh under a live IDE unmounts the share that the IDE runs from.
     async fn require_no_running_ide(&self, ctx: &Ctx, worker: &str) -> Result<(), Refusal> {
         let channel = self.channel(worker);
         let running = running_guest_ides(&self.guest(ctx, channel.as_ref())).await.map_err(|refusal| {
             Refusal::new(
-                "daemon_mount_quiesce_failed",
+                REMOUNT_IDE_RUNNING,
                 Exit::SOFTWARE,
                 format!(
-                    "the daemon quiesced, but the lane IDE runs of {worker} cannot be read ({}: {})",
+                    "the lane IDEs of {worker} were stopped, but their runs cannot be read ({}: {})",
                     refusal.code, refusal.message
                 ),
             )
@@ -706,10 +709,10 @@ impl Host {
             .map(|(root, state)| format!("{} in {root} ({})", state.run_id, state.phase))
             .collect();
         Err(Refusal::new(
-            "daemon_mount_quiesce_failed",
+            REMOUNT_IDE_RUNNING,
             Exit::SOFTWARE,
             format!(
-                "the daemon quiesced, but a lane IDE still runs on {worker}: {}; the share refresh would unmount the \
+                "the lane IDEs of {worker} were stopped, but one still runs: {}; the share refresh would unmount the \
                  share it runs from",
                 runs.join(", ")
             ),

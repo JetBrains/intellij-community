@@ -5,11 +5,11 @@ use std::path::Path;
 use std::time::Duration;
 
 use avl_base::format::{clip, words};
-use avl_base::{Backend, Exit, OrRefuse, Refusal, Scope};
+use avl_base::{Backend, Config, Exit, OrRefuse, Refusal, Scope};
 use avl_host_sys::guest::{AgentAccount, GUEST_COMMAND_TIMEOUT, Guest, ShareMount, SupervisorOptions, guest_join, user_argv};
 use avl_host_sys::{Backoff, Channel, Ctx, Poll, SpawnOptions};
 use avl_report::digest;
-use avl_wire::daemon::{self as wire, StateFile};
+use avl_wire::daemon::{self as wire, Runner, StateFile};
 use avl_wire::progress::Phase;
 use avl_wire::runtime::{self, LaunchOptions};
 use avl_wire::stage::{self as stage_wire, ArgFileRequest, LaunchPrep, LaunchPrepResult};
@@ -407,8 +407,8 @@ impl Host {
             &prep.guest_runfiles_root,
             &location,
         ));
-        arguments.push(staged.java_binary.clone());
-        arguments.push(format!("@{}", launch.arg_file.destination));
+        let jvm = [staged.java_binary.clone(), format!("@{}", launch.arg_file.destination)];
+        arguments.extend(daemon_command(settings, prep, &state_dir, &location, jvm));
         let started = {
             let (step, _phase) = ctx.begin("supervisor-start");
             self.guest(&step, channel)
@@ -478,7 +478,7 @@ impl Host {
         };
         // Before the first request, and before this controller has read a single event: the state file is the
         // earliest the two protocol versions can be compared.
-        require_supported_protocol(published.protocol_version)?;
+        require_supported_protocol(published.protocol_version, self.settings.daemon.runner)?;
 
         let state = HostState {
             run_id: run_id.to_owned(),
@@ -779,6 +779,45 @@ impl Host {
     }
 }
 
+/// The command of the daemon in the run slot, after the environment: the JVM daemon with `jvm`, its JVM and its @-file,
+/// or the `lane-daemon` verb of the installed guest agent.
+///
+/// The verb reads the runtime descriptor at `location` itself, and the lane IDE inputs from it. Its arguments name what
+/// the JVM daemon gets as properties of its @-file: the state directory, the port, the launch digest, the IDE root and
+/// the home of the generation, which the IDE gets as `idea.dev.project.root`. The launch-prep runs for both runners: it
+/// makes those directories and removes the state file of the previous daemon.
+pub(crate) fn daemon_command(settings: &Config, prep: &PreparedBuild, state_dir: &str, location: &str, jvm: [String; 2]) -> Vec<String> {
+    match settings.daemon.runner {
+        Runner::Jvm => jvm.into(),
+        Runner::Daemon => {
+            let mut command = words([
+                &settings.vm_agent,
+                AgentVerb::LaneDaemon.as_str(),
+                "--state-dir",
+                state_dir,
+                "--port",
+                &settings.daemon.port.to_string(),
+                "--launch-digest",
+                &prep.launch_digest,
+                "--descriptor",
+                location,
+                "--runfiles-root",
+                &prep.guest_runfiles_root,
+                "--ide-root",
+                &guest_ide_root(settings),
+                "--home",
+                &guest_home(settings, &prep.runtime_digest),
+            ]);
+            if settings.backend == Backend::ContainerLinux {
+                // The reason of the JVM daemon's `-Dair.ui.daemon.bind`: a published port forwards to the address of the
+                // container, not to its loopback.
+                command.extend(words(["--bind", "0.0.0.0"]));
+            }
+            command
+        }
+    }
+}
+
 /// The refusal of a daemon the health poll never reached, naming what the last probe saw. Only a relay that never
 /// opened blames the path to the daemon: once the state file exists the daemon's listener is bound, so anything else
 /// is a starved guest or a daemon that is not this start's.
@@ -795,7 +834,7 @@ fn never_healthy(state: &HostState, budget: Duration, probes: u32, last: &Status
         StatusProbe::NotAStatus(_) => {
             format!("{address} answered /status with {detail} ({probes} probes in {seconds} s); read `daemon log`")
         }
-        StatusProbe::OtherDaemon(_) | StatusProbe::Quiesced => {
+        StatusProbe::OtherDaemon(_) => {
             format!("{address} answered for another daemon ({detail}); read `daemon log`")
         }
         // No reply, a broken exchange, and the two a failed poll cannot end on.

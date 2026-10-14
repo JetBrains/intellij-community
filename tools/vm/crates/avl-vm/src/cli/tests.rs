@@ -356,6 +356,27 @@ fn a_global_option_after_the_command_is_the_same_option() {
     );
 }
 
+// `--runner` is a global option: a known word names the runner on either side of the command, and an unknown word is a
+// usage refusal before any command runs.
+#[test]
+fn the_runner_is_a_global_option_with_two_words() {
+    let pipe = TerminalFacts::default();
+    assert_eq!(invocation(&["status"], &pipe).runner, None);
+    assert_eq!(
+        invocation(&["--runner", "daemon", "daemon", "status"], &pipe).runner,
+        Some(Runner::Daemon)
+    );
+    assert_eq!(
+        invocation(&["daemon", "status", "--runner", "jvm"], &pipe).runner,
+        Some(Runner::Jvm)
+    );
+    let Parsed::Refused { command, refusal, .. } = parse_argv(&["--runner", "kotlin", "status"], &pipe) else {
+        panic!("an unknown runner was accepted");
+    };
+    assert_eq!((command, refusal.exit), (None, Exit::USAGE));
+    assert!(refusal.message.contains("the runners are jvm, daemon"), "{}", refusal.message);
+}
+
 // An acquisition that names no holder takes the invoking user's, in the shape a self-leased run uses, so a caller
 // needs no uuid of its own; a named holder is kept as it is.
 #[test]

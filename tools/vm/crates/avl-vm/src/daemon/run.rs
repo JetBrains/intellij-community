@@ -11,7 +11,9 @@ use avl_base::{Exit, OrRefuse, Refusal, Scope};
 use avl_host_sys::Ctx;
 use avl_host_sys::guest::ensure_host_paths;
 use avl_report::digest::PathDigest;
-use avl_wire::daemon::{self as wire, RunEvent, RunEventKind, RunFailed, Summary, WatchdogExpired, conflict};
+use avl_wire::daemon::{
+    self as wire, IdePlugin, LaneInputs, RunEvent, RunEventKind, RunFailed, RunRequest, Runner, Summary, WatchdogExpired, conflict,
+};
 use avl_wire::progress::Event;
 use bt_junit::simple_class_name_pattern;
 use futures::StreamExt as _;
@@ -210,6 +212,9 @@ pub(crate) struct RunSelection {
     pub selectors: Vec<String>,
     pub junit5_filters: Vec<String>,
     pub description: String,
+    /// The catalog lane that the selection runs in, such as `ui`, or `None` when the selection names no lane. The lane
+    /// daemon launches the IDE of this lane.
+    pub lane: Option<String>,
 }
 
 /// One controller-side selector in the daemon's `/run` shape: the selectors, then the JUnit5 filters.
@@ -376,6 +381,7 @@ impl Host {
                                 format!("{asked} -> lane {}: {}", affected.lane, affected.classes.join(", ")),
                                 extra,
                             ),
+                            lane: Some(affected.lane.clone()),
                         },
                         lane: Some(affected.lane),
                         classes: affected.classes,
@@ -403,6 +409,7 @@ impl Host {
                 selectors: Vec::new(),
                 junit5_filters,
                 description: describe_selection(format!("lane {lane}"), extra),
+                lane: Some(lane.to_owned()),
             }));
         }
 
@@ -424,6 +431,7 @@ impl Host {
             selectors,
             junit5_filters,
             description,
+            lane: avl_affected::ui_lane_of_label(&resolved.label).map(|lane| lane.name.to_owned()),
         }))
     }
 }
@@ -597,28 +605,63 @@ pub(crate) struct RunExecution {
     pub protocol_failure: Option<Refusal>,
 }
 
-/// The `/run` request. Kotlin's fields are non-nullable, so an empty selection is `[]` and never `null`.
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct RunRequestBody<'a> {
-    pub(crate) selectors: &'a [String],
-    pub(crate) junit5_filters: &'a [String],
-    pub(crate) product_stamp: &'a str,
-    /// How the daemon rejects work prepared for a different immutable launch generation.
-    pub(crate) launch_digest: &'a str,
-    pub(crate) hot_jars: Vec<&'a str>,
-    pub(crate) active_execution_timeout_sec: u64,
-    pub(crate) progress_gap_timeout_sec: u64,
-    /// The context plugin files, which the daemon installs into the plugin directory of the IDE context.
-    pub(crate) ide_plugins: Vec<IdePlugin<'a>>,
-}
-
-/// One context plugin file of the `/run` request: its destination below the plugin directory of the IDE context, and
-/// the digest that the push stored it under.
-#[derive(Serialize)]
-pub(crate) struct IdePlugin<'a> {
-    pub(crate) destination: &'a str,
-    pub(crate) sha256: &'a str,
+/// The `/run` request of `selection` for the build `prep` and the daemon of `runner`.
+///
+/// The lane daemon also gets the lane and the digests of the lane inputs. It refuses a run of no lane here, before the
+/// request goes out, because it cannot choose a lane IDE for it.
+pub(crate) fn run_request(
+    prep: &PreparedBuild,
+    selection: &RunSelection,
+    policy: WatchdogPolicy,
+    runner: Runner,
+) -> Result<RunRequest, Refusal> {
+    let (lane, lane_inputs) = match runner {
+        Runner::Jvm => (None, None),
+        Runner::Daemon => {
+            let Some(lane) = &selection.lane else {
+                return Err(Refusal::new(
+                    "lane_daemon_lane_unknown",
+                    Exit::USAGE,
+                    format!(
+                        "the lane daemon runs one lane at a time, and the selection {} names none; pass --lane",
+                        selection.description
+                    ),
+                ));
+            };
+            let digest = |field: &str| {
+                prep.lane_inputs
+                    .iter()
+                    .find(|input| input.field == field)
+                    .map(|input| input.host.sha256.clone())
+                    .ok_or_else(|| Refusal::internal(format!("the descriptor names no lane input {field}")))
+            };
+            let inputs = LaneInputs {
+                fake_agent_jar: digest("fakeAgentJar")?,
+                lane_documents: digest("laneDocuments")?,
+                suite_documents: digest("suiteDocuments")?,
+            };
+            (Some(lane.clone()), Some(inputs))
+        }
+    };
+    Ok(RunRequest {
+        selectors: selection.selectors.clone(),
+        junit5_filters: selection.junit5_filters.clone(),
+        product_stamp: prep.product_digest.clone(),
+        launch_digest: prep.launch_digest.clone(),
+        hot_jars: prep.hot_jars.iter().map(|jar| jar.sha256.clone()).collect(),
+        active_execution_timeout_sec: policy.active_execution.as_secs(),
+        progress_gap_timeout_sec: policy.progress_gap.as_secs(),
+        ide_plugins: prep
+            .plugin_files
+            .iter()
+            .map(|file| IdePlugin {
+                destination: file.destination.clone(),
+                sha256: file.host.sha256.clone(),
+            })
+            .collect(),
+        lane,
+        lane_inputs,
+    })
 }
 
 impl Host {
@@ -639,23 +682,7 @@ impl Host {
         policy: WatchdogPolicy,
         observe: &mut (dyn FnMut(&RunEvent) + Send),
     ) -> Result<RunExecution, Refusal> {
-        let body = encode(&RunRequestBody {
-            selectors: &selection.selectors,
-            junit5_filters: &selection.junit5_filters,
-            product_stamp: &prep.product_digest,
-            launch_digest: &prep.launch_digest,
-            hot_jars: prep.hot_jars.iter().map(|jar| jar.sha256.as_str()).collect(),
-            active_execution_timeout_sec: policy.active_execution.as_secs(),
-            progress_gap_timeout_sec: policy.progress_gap.as_secs(),
-            ide_plugins: prep
-                .plugin_files
-                .iter()
-                .map(|file| IdePlugin {
-                    destination: &file.destination,
-                    sha256: &file.host.sha256,
-                })
-                .collect(),
-        })?;
+        let body = encode(&run_request(prep, selection, policy, self.daemon.runner())?)?;
         let mut watchdog = TransportWatchdog::armed(policy.progress_gap + TRANSPORT_MARGIN);
         let run_failed = |message: String| Refusal::new("daemon_run_failed", Exit::SOFTWARE, message);
         let run = wire::RUN;
@@ -766,12 +793,6 @@ pub(crate) fn conflict_refusal(refused: &wire::Conflict, wanted_launch: &str) ->
                  this run wants {wanted_launch}); the host state file is out of date — recover with: daemon restart",
                 refused.launch_digest.as_deref().unwrap_or("an unnamed generation"),
             ),
-        ),
-        // Distinct from busy: the shares are unmounted, so the next move is to resume them rather than wait.
-        conflict::MOUNT_QUIESCED => Refusal::new(
-            "daemon_mount_quiesced",
-            Exit::TEMP_FAIL,
-            "the daemon has its shares quiesced and cannot start a run; recover with: daemon restart",
         ),
         reason => Refusal::new("daemon_busy", Exit::TEMP_FAIL, format!("the daemon rejected the run: {reason}")),
     }

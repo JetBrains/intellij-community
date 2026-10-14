@@ -28,6 +28,7 @@ use std::str::FromStr;
 use std::sync::OnceLock;
 use std::time::Duration;
 
+use avl_wire::daemon::Runner;
 use serde::{Deserialize, Serialize};
 
 use crate::refusal::RefusalExt;
@@ -1249,6 +1250,10 @@ pub struct DaemonBudgets {
     pub active_execution: Duration,
     /// The between-execution watchdog budget (`AIR_VM_DAEMON_PROGRESS_TIMEOUT`).
     pub progress_gap: Duration,
+    /// Which process serves the run slot: the JVM daemon, or the `lane-daemon` verb of the guest agent. The global
+    /// option `--runner` sets it, and [`Runner::Jvm`] is the default. The runner is a boot setting, so a change of it
+    /// restarts the daemon.
+    pub runner: Runner,
 }
 
 impl DaemonBudgets {
@@ -1260,6 +1265,7 @@ impl DaemonBudgets {
             health: reader.seconds("AIR_VM_DAEMON_HEALTH_TIMEOUT", 180),
             active_execution: reader.seconds("AIR_VM_DAEMON_EXECUTION_TIMEOUT", 1_800),
             progress_gap: reader.seconds("AIR_VM_DAEMON_PROGRESS_TIMEOUT", 300),
+            runner: Runner::Jvm,
         }
     }
 }

@@ -465,8 +465,8 @@ Linux worker on 2026-08-13.
 `umount` answers "target is busy" while anything in the guest still holds the mount open. The IDE
 holds it, because the IDE runs from the share, and so does any in-flight run that reads share-backed
 data. The daemon does not, and the next section states how that is asserted. Each lane IDE is a run of
-the guest agent's supervisor, so after a quiesce the controller asks the supervisor about every IDE
-context. A run that is not finished refuses the remount as `daemon_mount_quiesce_failed`.
+the guest agent's supervisor, so after the IDE stop the controller asks the supervisor about every IDE
+context. A run that is not finished refuses the remount as `daemon_remount_ide_running`.
 
 ### Guest-local writable state
 
@@ -535,7 +535,7 @@ No other variable reaches the IDE, and the run spec records this policy and no v
 The bridge token is a private file of the config directory, `config/air-ui-test/token`, which the daemon
 writes. No launch document, argument file or argv holds it.
 
-The IDE has no run budget. It ends only when something stops it: `--fresh-ide`, a quiesce, the watchdog, the
+The IDE has no run budget. It ends only when something stops it: `--fresh-ide`, a remount, the watchdog, the
 controller, or its own crash. An IDE that ended on its own, or whose bridge stopped answering, is found by the
 host's probe at the next suite boundary and relaunched on its context, so the lane pays a launch and no timeout.
 
@@ -567,7 +567,7 @@ iteration's timing line reports the one it took.
 | change | detection | cost |
 | --- | --- | --- |
 | test code, meaning the Air test-only modules | hot-jar digest diff | a push plus a fresh classloader. The IDE is reused, and there is **no remount** |
-| product inputs, meaning anything inside the prepared distribution | product stamp diff | quiesce, remount, resume, then launch the IDE again. The daemon JVM survives, and nothing is assembled |
+| product inputs, meaning anything inside the prepared distribution | product stamp diff | stop every lane IDE, remount, then launch the IDE again. The daemon survives, and nothing is assembled |
 | the context plugins, meaning the in-IDE test bridge, which no lane distribution carries | plugins digest diff | a push of the changed plugin files and an IDE relaunch on the same context. The timing line reports `ide relaunch`, and there is **no remount** and no distribution compose |
 | the daemon's parent tier, meaning platform and framework jars | stable digest diff | an automatic daemon restart. The IDE of the same product survives it, and the timing line reports `ide keep` |
 | the container's declaration, meaning the image tag, the share or the display | create-record diff | a recreate plus a cold daemon start; Docker only |
@@ -587,9 +587,10 @@ asserts that rather than arranging it: it refuses to serve unless `user.dir`, ev
 entry and `java.home` are under the guest-local runtime root. So the daemon can outlive a remount,
 and there are two remount windows:
 
-- **With the daemon alive**, for a product change. `POST /mount/quiesce` refuses new runs and stops
-  the IDE, and it answers `409 busy` if a run is in flight. The controller remounts, and
-  `POST  /mount/resume` hands the run endpoint back. The timing line reports `ide remount`. On
+- **With the daemon alive**, for a product change. `POST /ide/stop` makes the daemon quit its IDE, and it
+  answers `409 busy` if a run is in flight. `ide-gc --stop-all` then cancels every other IDE run of the
+  worker, and the controller remounts. The controller holds the lease, so no run starts in between. Both
+  runners serve `/ide/stop`, so the remount needs no route of its own. The timing line reports `ide remount`. On
   Docker, the controller refreshes the shares with the 2 s settle instead of a remount. The timing
   line still reads `ide remount`.
 - **Between daemons**, for a stable-tier change. `start_daemon` in `crates/avl-vm/src/daemon/start.rs`

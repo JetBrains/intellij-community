@@ -178,7 +178,7 @@ all — how many IDEs one VM can actually drive before they contend — does not
    fails with `ENOENT`. The remount is the only cure there too, and it carries the same constraint, since
    `umount` answers "target is busy" while anything in the guest still holds the mount. The controller
    brackets it either way: `startDaemon` remounts between two daemons, and a product-input change
-   quiesces the live daemon and stops its IDE first.
+   stops every lane IDE of the live daemon first.
 
 Two things a reader of the screenshot should not misread. "Native file watcher executable is not found"
 was not a Linux gap: no dev distribution shipped `fsnotifier` at the time, the macOS one included, so

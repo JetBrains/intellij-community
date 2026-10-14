@@ -219,6 +219,7 @@ pub(crate) async fn run(
         stream,
         selection,
         lease_file,
+        runner,
         command,
     } = invocation;
     let variables = environment;
@@ -246,7 +247,10 @@ pub(crate) async fn run(
             macos: MacosHost::read(),
             memory_mib: avl_host_sys::host::memory_mib(),
         };
-        let settings = Config::load(facts, selection, &variables, &root.join(WORKSPACE_DIR))?;
+        let mut settings = Config::load(facts, selection, &variables, &root.join(WORKSPACE_DIR))?;
+        if let Some(runner) = runner {
+            settings.daemon.runner = runner;
+        }
         let ctx = interrupts.context();
         let controller = Controller::new(settings, variables.clone(), reporter.clone(), interrupts.clone());
         if form.output == Output::Text && command.is_run() {

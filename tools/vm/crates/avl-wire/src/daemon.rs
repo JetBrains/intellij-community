@@ -1,8 +1,10 @@
-//! The daemon control channel's wire: the state file, the HTTP routes, and the NDJSON run stream.
+//! The daemon control channel's wire: the state file, the HTTP routes, the run request, and the NDJSON run stream.
 //!
-//! The far end is Kotlin (`plugins/air/tests/integration/uiDaemon/testSrc/AirUiDaemonProtocol.kt`); this is the
-//! controller's half. Two guards make it worth its own module: the version refuses a daemon this controller
-//! does not understand, and the decoder refuses a record it cannot read rather than yielding a silent zero.
+//! Two far ends serve it. The guest agent's `lane-daemon` verb speaks [`PROTOCOL_VERSION`], and the JVM daemon of
+//! `plugins/air/tests/integration/uiDaemon/testSrc/AirUiDaemonProtocol.kt` speaks [`JVM_PROTOCOL_VERSION`]. The
+//! [`Runner`] of the controller names the one it starts. Two guards make it worth its own module: the version refuses
+//! a daemon this controller does not understand, and the decoder refuses a record it cannot read rather than yielding a
+//! silent zero.
 //!
 //! Two rules run through the whole file, and they are opposites on purpose:
 //!
@@ -24,8 +26,35 @@ use serde_json::{Map, Value};
 #[cfg(test)]
 mod tests;
 
-/// Must match `AIR_UI_DAEMON_PROTOCOL_VERSION` on the Kotlin side. Bump both together, or a boot fails by name.
-pub const PROTOCOL_VERSION: u32 = 5;
+/// The protocol of the guest agent's `lane-daemon` verb. The agent is built from the same tree as the controller, so
+/// the two halves move together.
+pub const PROTOCOL_VERSION: u32 = 6;
+
+/// The protocol of the JVM daemon, `AIR_UI_DAEMON_PROTOCOL_VERSION` on the Kotlin side. It has the two quiesce routes
+/// and the two status fields that protocol 6 dropped. The controller never calls the routes and ignores the fields.
+/// It goes with [`Runner::Jvm`].
+pub const JVM_PROTOCOL_VERSION: u32 = 5;
+
+vocabulary! {
+    /// Which process serves the control channel in the run slot of a worker. A transition argument: the JVM daemon
+    /// stays the default until each lane runs through the verb, and then the JVM daemon and this choice go.
+    pub enum Runner {
+        /// The JVM daemon of `plugins/air/tests/integration/uiDaemon`, launched from the staged JBR with its @-file.
+        Jvm = "jvm",
+        /// The `lane-daemon` verb of the installed guest agent.
+        Daemon = "daemon",
+    }
+}
+
+impl Runner {
+    /// The protocol version that a daemon of this runner reports.
+    pub const fn protocol_version(self) -> u32 {
+        match self {
+            Self::Jvm => JVM_PROTOCOL_VERSION,
+            Self::Daemon => PROTOCOL_VERSION,
+        }
+    }
+}
 
 /// The Bazel target the runtime descriptor of a macOS guest comes from.
 pub const LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon";
@@ -58,8 +87,6 @@ vocabulary! {
         Status = "status",
         MissingJars = "missingJars",
         Run = "run",
-        MountQuiesce = "mountQuiesce",
-        MountResume = "mountResume",
         IdeStop = "ideStop",
         Shutdown = "shutdown",
         UploadJar = "uploadJar",
@@ -96,18 +123,16 @@ const fn fixed(route: Route, method: Method, path: &'static str, timeout: Option
     }
 }
 
-// The budgets were bare literals at each call, which is why `/mount/quiesce` (a full IDE stop) and `/status`
-// (one field read) had once been given the same one.
+// The budgets were bare literals at each call, which is why a full IDE stop and `/status` (one field read) had once
+// been given the same one.
 pub const STATUS: Endpoint = fixed(Route::Status, Method::Get, "/status", Some(Duration::from_secs(5)));
 pub const MISSING_JARS: Endpoint = fixed(Route::MissingJars, Method::Post, "/jars", Some(Duration::from_secs(15)));
 pub const RUN: Endpoint = fixed(Route::Run, Method::Post, "/run", None);
-pub const MOUNT_QUIESCE: Endpoint = fixed(Route::MountQuiesce, Method::Post, "/mount/quiesce", Some(Duration::from_secs(180)));
-pub const MOUNT_RESUME: Endpoint = fixed(Route::MountResume, Method::Post, "/mount/resume", Some(Duration::from_secs(30)));
 pub const IDE_STOP: Endpoint = fixed(Route::IdeStop, Method::Post, "/ide/stop", Some(Duration::from_secs(180)));
 pub const SHUTDOWN: Endpoint = fixed(Route::Shutdown, Method::Post, "/shutdown", Some(Duration::from_secs(10)));
 
 /// Every fixed route, in declared order. A list rather than a map, so the first match is a fact.
-pub const FIXED_ENDPOINTS: [Endpoint; 7] = [STATUS, MISSING_JARS, RUN, MOUNT_QUIESCE, MOUNT_RESUME, IDE_STOP, SHUTDOWN];
+pub const FIXED_ENDPOINTS: [Endpoint; 5] = [STATUS, MISSING_JARS, RUN, IDE_STOP, SHUTDOWN];
 
 pub const UPLOAD_JAR_TIMEOUT: Duration = Duration::from_secs(120);
 pub const RESULTS_TIMEOUT: Duration = Duration::from_secs(10);
@@ -163,22 +188,19 @@ pub fn match_route(method: &str, path: &str) -> Option<Route> {
 
 /// `GET /status`.
 ///
-/// All ten fields always cross: Kotlin declares every one non-nullable and encodes defaults. Four of them
-/// (`product_stamp`, `busy`, `metaspace_used_bytes`, `pid`) are read by no decision here, and are declared
-/// anyway - a field the daemon sends and this file omits is a field a fake is free to drop.
+/// All eight fields always cross. Three of them (`product_stamp`, `busy`, `pid`) are read by no decision here, and are
+/// declared anyway - a field the daemon sends and this file omits is a field a fake is free to drop. The JVM daemon also
+/// sends `mountQuiesced` and `metaspaceUsedBytes`, which this reader ignores.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Status {
     pub protocol_version: u32,
     pub daemon_boot_stamp: String,
     pub controller_launch_digest: String,
-    pub mount_quiesced: bool,
     pub product_stamp: String,
     pub ide_running: bool,
     pub busy: bool,
     pub iteration_count: u32,
-    /// Bytes on a long-lived JVM; passes a billion routinely, so nothing a float would round.
-    pub metaspace_used_bytes: i64,
     pub pid: i64,
 }
 
@@ -201,11 +223,75 @@ pub struct Conflict {
     pub launch_digest: Option<String>,
 }
 
-/// The refusals the daemon names today, each of which the controller answers differently.
+/// The refusals the daemon names today. The controller answers `stale-daemon` with a restart and every other reason
+/// as busy.
 pub mod conflict {
     pub const BUSY: &str = "busy";
-    pub const MOUNT_QUIESCED: &str = "mount-quiesced";
     pub const STALE_DAEMON: &str = "stale-daemon";
+    /// The daemon has its `/shutdown`, and it takes no run more.
+    pub const SHUTTING_DOWN: &str = "shutting-down";
+}
+
+/// `POST /run`: what one iteration runs, and the inputs it runs with.
+///
+/// The JVM daemon reads the fields up to `ide_plugins` and refuses an unknown one, so the lane-daemon fields are absent
+/// for [`Runner::Jvm`]. An empty selection is `[]` and never `null`.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RunRequest {
+    pub selectors: Vec<String>,
+    pub junit5_filters: Vec<String>,
+    /// The identity of the product under test. The lane daemon folds it into the config key of the lane IDE.
+    pub product_stamp: String,
+    /// The launch generation that the controller prepared the run for. A daemon of another generation refuses it.
+    pub launch_digest: String,
+    pub hot_jars: Vec<String>,
+    pub active_execution_timeout_sec: u64,
+    pub progress_gap_timeout_sec: u64,
+    /// The context plugin files, which the daemon installs into the plugin directory of the IDE context.
+    pub ide_plugins: Vec<IdePlugin>,
+    /// The catalog lane of the run, such as `ui`: the lane document `lanes/<lane>.json`. The lane daemon only.
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub lane: Option<String>,
+    /// The digests that the push stored the lane inputs under. The lane daemon only.
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub lane_inputs: Option<LaneInputs>,
+}
+
+/// One context plugin file of a run: its destination below the plugin directory of the IDE context, and the digest
+/// that the push stored it under.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct IdePlugin {
+    pub destination: String,
+    pub sha256: String,
+}
+
+/// The digests of the three lane inputs of the runtime descriptor, as the push stored them.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LaneInputs {
+    pub fake_agent_jar: String,
+    pub lane_documents: String,
+    pub suite_documents: String,
+}
+
+/// Why a test or a container failed, as the lane daemon types it: the kind, the first account and the rest of it. The
+/// JVM daemon sends the `error` text of [`TestFinished`] and [`ContainerFailed`] instead.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TypedFailure {
+    /// The kind of the failure, such as `not_implemented` or the class name of an exception in the IDE.
+    #[serde(
+        rename = "type",
+        default,
+        deserialize_with = "crate::json::non_null",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub kind: Option<String>,
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+    /// The cause chain or the stack, after the message.
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
 }
 
 /// What the daemon publishes for the controller to read over the hypervisor exec channel. The token never
@@ -305,7 +391,8 @@ pub struct RunStarted {
 }
 
 /// A plan that discovered nothing and a record that carried no count are different facts: the first is a lane
-/// whose selection matched nothing, the second a decoder that was bypassed. So the count is required.
+/// whose selection matched nothing, the second a decoder that was bypassed. So the count is required. From the lane
+/// daemon, `class_names` is the `testClassName` of each selected suite document.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanStarted {
@@ -331,6 +418,8 @@ pub struct TestFinished {
     pub duration_ms: i64,
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
+    #[serde(flatten)]
+    pub failure: TypedFailure,
 }
 
 /// A skipped test, or a skipped container: the same record under two names.
@@ -349,6 +438,8 @@ pub struct ContainerFailed {
     pub execution: ExecutionIdentity,
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
+    #[serde(flatten)]
+    pub failure: TypedFailure,
 }
 
 /// The daemon's watchdog, as it last published itself.

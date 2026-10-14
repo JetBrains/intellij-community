@@ -29,12 +29,13 @@ fn routes_are_matched_the_way_the_daemon_routes_them() {
         ("GET", "/status", Some(Route::Status)),
         ("POST", "/jars", Some(Route::MissingJars)),
         ("POST", "/run", Some(Route::Run)),
-        ("POST", "/mount/quiesce", Some(Route::MountQuiesce)),
-        ("POST", "/mount/resume", Some(Route::MountResume)),
         ("POST", "/ide/stop", Some(Route::IdeStop)),
         ("POST", "/shutdown", Some(Route::Shutdown)),
         ("PUT", &format!("/jars/{digest}"), Some(Route::UploadJar)),
         ("GET", "/results/iter-1/test.xml", Some(Route::Results)),
+        // Protocol 6 has no quiesce of the shares.
+        ("POST", "/mount/quiesce", None),
+        ("POST", "/mount/resume", None),
         // A route matched by path alone would answer the wrong handler for the wrong verb.
         ("GET", "/run", None),
         ("POST", "/status", None),
@@ -213,15 +214,89 @@ fn an_unknown_conflict_reason_is_data() {
     );
 }
 
-// The metaspace figure passes a billion routinely, so it must not be carried by anything a float would round.
+// The lane daemon sends the eight fields of protocol 6. The JVM daemon also sends the two fields that protocol 6
+// dropped, and the reader ignores them, so one reader serves both runners.
 #[test]
-fn status_counters_keep_every_digit() {
-    let status = decode_status(
-        br#"{"protocolVersion":2,"daemonBootStamp":"b","controllerLaunchDigest":"d","mountQuiesced":false,"productStamp":"p","ideRunning":true,"busy":false,"iterationCount":7,"metaspaceUsedBytes":9007199254740993,"pid":42}"#,
+fn a_status_of_either_runner_decodes() {
+    let lane_daemon = br#"{"protocolVersion":6,"daemonBootStamp":"b","controllerLaunchDigest":"d","productStamp":"p","ideRunning":true,"busy":false,"iterationCount":7,"pid":42}"#;
+    let status = decode_status(lane_daemon).unwrap();
+    assert_eq!(serde_json::to_vec(&status).unwrap(), lane_daemon);
+    let jvm = decode_status(
+        br#"{"protocolVersion":5,"daemonBootStamp":"b","controllerLaunchDigest":"d","mountQuiesced":false,"productStamp":"p","ideRunning":true,"busy":false,"iterationCount":7,"metaspaceUsedBytes":9007199254740993,"pid":42}"#,
     )
     .unwrap();
-    assert_eq!(status.metaspace_used_bytes, 9_007_199_254_740_993);
+    assert_eq!((jvm.protocol_version, jvm.iteration_count, jvm.pid), (5, 7, 42));
     assert_eq!(decode_missing_jars(br#"{"missing":["a"]}"#).unwrap().missing, ["a"]);
+}
+
+// The run request of the JVM runner has no lane-daemon field, because the JVM daemon refuses an unknown one. The lane
+// daemon gets the lane and the digests of the lane inputs too.
+#[test]
+fn the_run_request_names_the_lane_inputs_for_the_lane_daemon_only() {
+    let mut request = RunRequest {
+        selectors: Vec::new(),
+        junit5_filters: vec!["include-tag=air-integration-ui".to_owned()],
+        product_stamp: "p".to_owned(),
+        launch_digest: "l".to_owned(),
+        hot_jars: vec!["h".to_owned()],
+        active_execution_timeout_sec: 1800,
+        progress_gap_timeout_sec: 300,
+        ide_plugins: vec![IdePlugin {
+            destination: "air-integrationTests-bridge-plugin/lib/a.jar".to_owned(),
+            sha256: "s".to_owned(),
+        }],
+        lane: None,
+        lane_inputs: None,
+    };
+    assert_eq!(
+        serde_json::to_string(&request).unwrap(),
+        r#"{"selectors":[],"junit5Filters":["include-tag=air-integration-ui"],"productStamp":"p","launchDigest":"l","hotJars":["h"],"activeExecutionTimeoutSec":1800,"progressGapTimeoutSec":300,"idePlugins":[{"destination":"air-integrationTests-bridge-plugin/lib/a.jar","sha256":"s"}]}"#
+    );
+    request.lane = Some("ui".to_owned());
+    request.lane_inputs = Some(LaneInputs {
+        fake_agent_jar: "f".to_owned(),
+        lane_documents: "d".to_owned(),
+        suite_documents: "d".to_owned(),
+    });
+    let encoded = serde_json::to_string(&request).unwrap();
+    assert!(
+        encoded.ends_with(r#""lane":"ui","laneInputs":{"fakeAgentJar":"f","laneDocuments":"d","suiteDocuments":"d"}}"#),
+        "{encoded}"
+    );
+    assert_eq!(serde_json::from_str::<RunRequest>(&encoded).unwrap(), request);
+}
+
+// The lane daemon types a failure: its kind, its message and its detail. The JVM daemon sends the `error` text, and
+// a record of either kind keeps its bytes when it is published again.
+#[test]
+fn a_failure_record_carries_the_typed_failure_or_the_error_text() {
+    let typed = r#"{"event":"containerFailed","timestamp":"t","id":"[suite:s]","displayName":"S","className":"S","type":"not_implemented","message":"m","detail":"d"}"#;
+    let RunEventKind::ContainerFailed(failed) = decode(typed).kind else {
+        panic!("not a container failure");
+    };
+    assert_eq!(
+        failed.failure,
+        TypedFailure {
+            kind: Some("not_implemented".to_owned()),
+            message: Some("m".to_owned()),
+            detail: Some("d".to_owned()),
+        }
+    );
+    assert_eq!(failed.error, None);
+    let re_encoded = serde_json::to_value(RunEventKind::ContainerFailed(failed)).unwrap();
+    assert_eq!(re_encoded, serde_json::from_str::<Value>(typed).unwrap());
+    let jvm = r#"{"event":"testFinished","timestamp":"t","id":"i","displayName":"n","status":"FAILED","durationMs":3,"error":"boom"}"#;
+    let RunEventKind::TestFinished(finished) = decode(jvm).kind else {
+        panic!("not a finished test");
+    };
+    assert_eq!(
+        (finished.error.as_deref(), finished.failure),
+        (Some("boom"), TypedFailure::default())
+    );
+    assert_eq!(
+        protocol_code(r#"{"event":"containerFailed","timestamp":"t","id":"i","displayName":"n","type":null}"#),
+        CODE_FIELD_MISSING
+    );
 }
 
 #[test]
@@ -325,9 +400,16 @@ fn the_plan_record_carries_the_discovered_classes() {
 }
 
 #[test]
-fn protocol_version_is_the_one_kotlin_declares() {
-    // A literal, so bumping the constant without the Kotlin side is a deliberate two-file change.
-    assert_eq!(PROTOCOL_VERSION, 5, "`AIR_UI_DAEMON_PROTOCOL_VERSION` must move with it");
+fn each_runner_reports_its_own_protocol_version() {
+    // Literals, so bumping the JVM constant without the Kotlin side is a deliberate two-file change.
+    assert_eq!(JVM_PROTOCOL_VERSION, 5, "`AIR_UI_DAEMON_PROTOCOL_VERSION` must move with it");
+    assert_eq!(PROTOCOL_VERSION, 6);
+    assert_eq!(Runner::Jvm.protocol_version(), JVM_PROTOCOL_VERSION);
+    assert_eq!(Runner::Daemon.protocol_version(), PROTOCOL_VERSION);
+    assert_eq!(
+        Runner::ALL.iter().map(|runner| runner.as_str()).collect::<Vec<_>>(),
+        ["jvm", "daemon"]
+    );
 }
 
 // A dynamic node carries its factory's method and its own display name, so a progress line names both; a plain

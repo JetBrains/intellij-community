@@ -11,7 +11,7 @@ use crate::worker::worker::{ChannelFactory, Manager};
 use avl_base::format::clip;
 use avl_base::{Exit, Refusal};
 use avl_host_sys::Ctx;
-use avl_wire::daemon::{self as wire, Endpoint, ProtocolError, Status};
+use avl_wire::daemon::{self as wire, Endpoint, ProtocolError, Runner, Status};
 use http_body_util::{BodyExt, Full};
 use hyper::body::Bytes;
 use hyper::body::Incoming;
@@ -112,6 +112,8 @@ fn budget_text(budget: Duration) -> String {
 #[derive(Clone)]
 pub(crate) struct DaemonClient {
     client: Client<RelayConnector, Full<Bytes>>,
+    /// The runner whose protocol a daemon must speak.
+    runner: Runner,
 }
 
 impl std::fmt::Debug for DaemonClient {
@@ -121,18 +123,24 @@ impl std::fmt::Debug for DaemonClient {
 }
 
 impl DaemonClient {
-    /// A client that reaches each worker through the channel `channels` names for it.
-    pub(crate) fn new(channels: ChannelFactory) -> Self {
+    /// A client that reaches each worker through the channel `channels` names for it, of a daemon of `runner`.
+    pub(crate) fn new(channels: ChannelFactory, runner: Runner) -> Self {
         let client = Client::builder(TokioExecutor::new())
             .pool_timer(TokioTimer::new())
             .build(RelayConnector::new(channels));
-        Self { client }
+        Self { client, runner }
     }
 
-    /// A client over the worker manager's exec channels.
+    /// A client over the worker manager's exec channels, of the runner of its settings.
     pub(crate) fn over(manager: &Arc<Manager>) -> Self {
+        let runner = manager.settings().daemon.runner;
         let manager = Arc::clone(manager);
-        Self::new(Arc::new(move |worker: &str| manager.channel(worker)))
+        Self::new(Arc::new(move |worker: &str| manager.channel(worker)), runner)
+    }
+
+    /// The runner whose protocol a daemon must speak.
+    pub(crate) const fn runner(&self) -> Runner {
+        self.runner
     }
 
     /// Sends the request for one endpoint, authenticated, and answers the response head. `/run` reads its body as a
@@ -196,7 +204,7 @@ impl DaemonClient {
     /// One request on the control channel, whole body in and whole body out.
     ///
     /// The endpoint carries its own method and budget, so no call site can give `/status` a full-IDE-stop timeout
-    /// or `/mount/quiesce` a five-second one. The one route with no budget - `/run` - is streamed and never comes
+    /// or `/ide/stop` a five-second one. The one route with no budget - `/run` - is streamed and never comes
     /// through here; its deadline belongs to the transport watchdog.
     ///
     /// A transport failure is `daemon_http_failed` at 69: the daemon did not answer, which is a fact about the
@@ -241,7 +249,7 @@ impl DaemonClient {
         // An unusable daemon is an answer, but one that answers with a body this controller cannot read is a
         // protocol failure, and folding the two together is what would restart a mismatched daemon forever.
         let decoded = wire::decode_status(&body).map_err(protocol_refusal)?;
-        require_supported_protocol(decoded.protocol_version)?;
+        require_supported_protocol(decoded.protocol_version, self.runner)?;
         // A rebooted daemon has a fresh token, so a matching boot stamp is implied by the 200; still verified.
         if decoded.daemon_boot_stamp != state.daemon_boot_stamp {
             return Ok(StatusProbe::OtherDaemon(format!(
@@ -254,9 +262,6 @@ impl DaemonClient {
                 "launch digest {}, expected {}",
                 decoded.controller_launch_digest, state.launch_digest
             )));
-        }
-        if decoded.mount_quiesced {
-            return Ok(StatusProbe::Quiesced);
         }
         Ok(StatusProbe::Healthy(decoded))
     }
@@ -293,7 +298,7 @@ pub(crate) fn transport_refusal(state: &HostState, endpoint: &Endpoint, failure:
 /// What one `/status` probe saw: the daemon this controller launched, or the reason it is not one it can use.
 #[derive(Debug)]
 pub(crate) enum StatusProbe {
-    /// The daemon this controller launched, unquiesced.
+    /// The daemon this controller launched.
     Healthy(Status),
     /// No relay to the daemon's guest port opened.
     NoConnection(String),
@@ -305,8 +310,6 @@ pub(crate) enum StatusProbe {
     NotAStatus(String),
     /// A daemon answered, and not the one this controller launched: another boot or another launch.
     OtherDaemon(String),
-    /// This controller's daemon, quiesced for a remount.
-    Quiesced,
     /// The operation was interrupted before the probe answered.
     Interrupted,
 }
@@ -329,7 +332,6 @@ impl StatusProbe {
             Self::Broken(_) => "broken",
             Self::NotAStatus(_) => "not_a_status",
             Self::OtherDaemon(_) => "other_daemon",
-            Self::Quiesced => "quiesced",
             Self::Interrupted => "interrupted",
         }
     }
@@ -345,31 +347,33 @@ impl StatusProbe {
             ),
             Self::Broken(detail) => format!("failed after connecting: {detail}"),
             Self::NotAStatus(detail) | Self::OtherDaemon(detail) => detail.clone(),
-            Self::Quiesced => "quiesced for a remount".to_owned(),
             Self::Interrupted => "interrupted".to_owned(),
         }
     }
 }
 
-/// Refuses a daemon this controller cannot read, by name and at boot.
+/// Refuses a daemon this controller cannot read, by name and at boot. Each runner has its own protocol version.
 ///
-/// The daemon jar is stable-tier, so the launch digest already restarts a daemon built from another build. What
-/// this catches is the other skew: this controller lives outside the Bazel graph, so a Kotlin protocol change and a
+/// The launch digest already restarts a daemon built from another build, and a change of the runner. What this
+/// catches is the other skew: this controller lives outside the Bazel graph, so a Kotlin protocol change and a
 /// controller one can be committed apart. Without the check the first symptom is a decode failure mid-run, after a
 /// build and an IDE launch.
-pub(crate) fn require_supported_protocol(reported: u32) -> Result<(), Refusal> {
-    if reported == wire::PROTOCOL_VERSION {
+pub(crate) fn require_supported_protocol(reported: u32, runner: Runner) -> Result<(), Refusal> {
+    let expected = runner.protocol_version();
+    if reported == expected {
         return Ok(());
     }
+    let far_end = match runner {
+        Runner::Jvm => "`plugins/air/tests/integration/uiDaemon/testSrc/AirUiDaemonProtocol.kt`",
+        Runner::Daemon => "the lane-daemon verb of `community/tools/vm/crates/avl-guest`",
+    };
     Err(Refusal::new(
         "daemon_protocol_unsupported",
         Exit::SOFTWARE,
         format!(
-            "the guest daemon speaks run protocol {reported} and this controller speaks {}. One half of \
-             `plugins/air/tests/integration/uiDaemon/testSrc/AirUiDaemonProtocol.kt` and \
-             `community/tools/vm/crates/avl-wire` was updated without the other — or both are \
-             current and this guest still holds a daemon from before the change, which `daemon stop` retires.",
-            wire::PROTOCOL_VERSION
+            "the guest daemon speaks run protocol {reported}, and this controller speaks {expected} for the runner \
+             {runner}. One half of {far_end} and `community/tools/vm/crates/avl-wire` was updated without the other, or \
+             the guest still holds a daemon of another runner or from before the change, which `daemon stop` retires."
         ),
     ))
 }

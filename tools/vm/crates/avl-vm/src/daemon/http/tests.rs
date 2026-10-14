@@ -5,7 +5,7 @@ use pretty_assertions::assert_eq;
 use super::*;
 use crate::daemon::fixture::Fixture;
 
-// The daemon's account is used only when it is the daemon this controller launched, unquiesced; every other answer
+// The daemon's account is used only when it is the daemon this controller launched; every other answer
 // is "start a fresh one" - except a protocol this controller cannot read, which refuses by name.
 #[tokio::test]
 async fn daemon_status_answers_only_the_daemon_this_controller_launched() {
@@ -26,10 +26,6 @@ async fn daemon_status_answers_only_the_daemon_this_controller_launched() {
     let mut forged = state.clone();
     forged.token = "wrong".to_owned();
     assert_eq!(daemon.status(&ctx, &forged).await.unwrap(), None, "a 403");
-
-    fixture.daemon.script().mount_quiesced = true;
-    assert_eq!(daemon.status(&ctx, &state).await.unwrap(), None, "quiesced");
-    fixture.daemon.script().mount_quiesced = false;
 
     fixture.daemon.script().protocol_version = 99;
     let failure = daemon.status(&ctx, &state).await.expect_err("a stale protocol");
@@ -117,10 +113,6 @@ async fn probe_status_names_what_it_saw() {
     let seen = probe(&moved).await;
     assert_eq!(seen.reason(), "other_daemon");
     assert!(seen.detail().contains("launch digest"), "{}", seen.detail());
-
-    fixture.daemon.script().mount_quiesced = true;
-    assert!(matches!(probe(&state).await, StatusProbe::Quiesced));
-    fixture.daemon.script().mount_quiesced = false;
 
     let mut unreachable = state.clone();
     unreachable.port = 1;

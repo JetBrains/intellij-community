@@ -281,3 +281,49 @@ fn the_ide_verbs_check_their_flags() {
         assert_eq!((answered.exit, answered.code()), (64, "usage".to_owned()), "{argv:?}");
     }
 }
+
+/// The arguments that the controller passes to `lane-daemon`, by name, each guest path absolute. The channel binds
+/// loopback unless the controller names another address.
+#[test]
+fn the_lane_daemon_takes_the_arguments_that_the_controller_passes() {
+    let argv = [
+        "lane-daemon",
+        "--state-dir",
+        "/vm/data/daemon",
+        "--port",
+        "27100",
+        "--launch-digest",
+        "launch-1",
+        "--descriptor",
+        "/vm/runfiles/_main/plugins/air/tests/integration/ui/ui_daemon_linux_guest.runtime.json",
+        "--runfiles-root",
+        "/vm/runfiles",
+        "--ide-root",
+        "/vm/data/ide",
+        "--home",
+        "/vm/data/daemon-runtime/generations/g/home",
+    ];
+    let Verb::LaneDaemon(args) = parsed(&argv) else {
+        panic!("lane-daemon parsed as another verb");
+    };
+    assert_eq!(
+        (args.state_dir.as_path(), args.port, args.bind, args.launch_digest.as_str()),
+        (
+            Path::new("/vm/data/daemon"),
+            27_100,
+            std::net::IpAddr::from([127, 0, 0, 1]),
+            "launch-1"
+        )
+    );
+    let mut every_interface = argv.to_vec();
+    every_interface.extend(["--bind", "0.0.0.0"]);
+    let Verb::LaneDaemon(args) = parsed(&every_interface) else {
+        panic!("lane-daemon parsed as another verb");
+    };
+    assert!(args.bind.is_unspecified());
+    let mut relative = argv.to_vec();
+    relative[2] = "state";
+    let argv: Vec<OsString> = std::iter::once("vm-guest-agent").chain(relative).map(OsString::from).collect();
+    let refused = parse(&argv).unwrap_err();
+    assert!(refused.to_string().contains("expected an absolute path"), "{refused}");
+}

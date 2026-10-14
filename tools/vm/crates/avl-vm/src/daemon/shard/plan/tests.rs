@@ -315,6 +315,7 @@ fn a_shards_selection_carries_the_lanes_own_filters_and_names_itself() {
         selectors: Vec::new(),
         junit5_filters: vec!["include-tag=air-flow-ui".to_owned()],
         description: "lane ui".to_owned(),
+        lane: Some("ui".to_owned()),
     };
     let include = shard_selection(
         &base,

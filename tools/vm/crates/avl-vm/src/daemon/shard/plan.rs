@@ -242,5 +242,6 @@ pub(crate) fn shard_selection(base: &RunSelection, assignment: &ShardAssignment,
         selectors: base.selectors.clone(),
         junit5_filters: base.junit5_filters.iter().chain(&assignment.junit5_filters).cloned().collect(),
         description: format!("{} — shard {}/{shard_count} ({detail})", base.description, assignment.shard_index),
+        lane: base.lane.clone(),
     }
 }

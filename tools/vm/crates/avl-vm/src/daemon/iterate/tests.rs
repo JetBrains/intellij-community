@@ -171,6 +171,7 @@ fn lane_ui() -> RunSelection {
         selectors: Vec::new(),
         junit5_filters: Vec::new(),
         description: "lane ui".to_owned(),
+        lane: Some("ui".to_owned()),
     }
 }
 
@@ -248,7 +249,6 @@ async fn a_warm_iteration_reuses_the_daemon() {
     assert_eq!(report.status, Status::Passed);
     let (_, path) = attempt.report.as_ref().unwrap();
     assert!(path.is_file(), "the report is persisted at {}", path.display());
-    assert!(!fixture.daemon.saw_request("POST /mount/quiesce"));
     assert!(!fixture.daemon.saw_request("POST /ide/stop"));
     assert!(
         fixture.channel().calls_containing("vm-guest-agent start").is_empty(),
@@ -265,9 +265,9 @@ fn remounts(fixture: &Fixture) -> usize {
     fixture.channel().calls_containing("/bin/sh /vm/data/state/remount-shares.sh").len()
 }
 
-// On Tart a moved mount digest quiesces the daemon around the remount and resumes it, without a restart.
+// On Tart a moved mount digest stops the lane IDEs around the remount, without a restart of the daemon.
 #[tokio::test]
-async fn a_mount_digest_mismatch_quiesces_remounts_and_resumes() {
+async fn a_mount_digest_mismatch_stops_the_ides_and_remounts() {
     let (fixture, prep, mut state) = iteration_fixture_over(Fixture::tart_macos().await, "it-11").await;
     state.last_mount_digest = "something-else".to_owned();
     state.write(&fixture.settings, &fixture.worker).unwrap();
@@ -275,8 +275,11 @@ async fn a_mount_digest_mismatch_quiesces_remounts_and_resumes() {
     report_of(&attempt);
     assert_eq!(attempt.ide_action, IdeAction::Remount);
     assert!(attempt.timing.contains("  ide remount  "), "{:?}", attempt.timing);
-    assert!(fixture.daemon.saw_request("POST /mount/quiesce"));
-    assert!(fixture.daemon.saw_request("POST /mount/resume"));
+    assert!(fixture.daemon.saw_request("POST /ide/stop"));
+    assert!(
+        !fixture.channel().calls_containing("vm-guest-agent ide-gc").is_empty(),
+        "every IDE run of the worker is stopped"
+    );
     assert!(
         !fixture
             .channel()
@@ -289,12 +292,12 @@ async fn a_mount_digest_mismatch_quiesces_remounts_and_resumes() {
         fixture.channel().calls_containing("vm-guest-agent start").is_empty(),
         "a share-backed change never restarts the daemon"
     );
-    // The persisted state carries the run's mount digest forward, so the next iteration skips the quiesce.
+    // The persisted state carries the run's mount digest forward, so the next iteration skips the remount.
     let recorded = HostState::read(&fixture.settings, &fixture.worker).unwrap();
     assert_eq!(recorded.last_mount_digest, prep.mount_digest);
 }
 
-// On Docker a moved mount digest still quiesces and resumes the daemon and still reports `ide remount`, but the guest
+// On Docker a moved mount digest still stops the lane IDEs and still reports `ide remount`, but the guest
 // sees no remount script: the shares are bind mounts, and the refresh is a settle. The scripted guest is where every
 // guest command lands, and the fake `docker` log shows the backend was Docker and ran no guest command of its own.
 #[tokio::test]
@@ -306,8 +309,7 @@ async fn a_mount_digest_mismatch_on_docker_settles_without_a_remount_script() {
     report_of(&attempt);
     assert_eq!(attempt.ide_action, IdeAction::Remount);
     assert!(attempt.timing.contains("  ide remount  "), "{:?}", attempt.timing);
-    assert!(fixture.daemon.saw_request("POST /mount/quiesce"));
-    assert!(fixture.daemon.saw_request("POST /mount/resume"));
+    assert!(fixture.daemon.saw_request("POST /ide/stop"));
     let scripted = fixture.channel().calls_containing("remount-shares.sh");
     assert!(scripted.is_empty(), "{scripted:#?}");
     let said = fixture.stdout.text() + &fixture.stderr.text();
@@ -438,7 +440,6 @@ async fn a_change_of_the_context_plugins_alone_relaunches_the_ide() {
     assert_eq!(attempt.ide_action, IdeAction::Relaunch);
     assert!(attempt.timing.contains("  ide relaunch  "), "{:?}", attempt.timing);
     assert!(!fixture.daemon.saw_request("POST /ide/stop"));
-    assert!(!fixture.daemon.saw_request("POST /mount/quiesce"));
     assert!(
         fixture.channel().calls_containing("vm-guest-agent start").is_empty(),
         "a relaunch for the plugins keeps the daemon"
@@ -538,8 +539,8 @@ async fn a_restart_keeps_the_ide_of_the_product_on_docker() {
     );
 }
 
-// The quiesce quits the IDE through the daemon, and the guest agent owns the process: the share refresh waits for the
-// supervisor to report every IDE run finished, and the iteration refuses while one still runs.
+// The daemon quits its IDE, the guest agent stops every other one and owns each process: the share refresh waits for
+// the supervisor to report every IDE run finished, and the iteration refuses while one still runs.
 #[tokio::test]
 async fn a_remount_refuses_while_a_lane_ide_still_runs() {
     let (fixture, _prep, mut state) = iteration_fixture("it-17").await;
@@ -555,14 +556,13 @@ async fn a_remount_refuses_while_a_lane_ide_still_runs() {
     );
     let attempt = run_warm_iteration(&fixture, false).await;
     let error = error_of(&attempt);
-    assert_eq!((error.code.as_ref(), error.exit), ("daemon_mount_quiesce_failed", Exit::SOFTWARE));
+    assert_eq!((error.code.as_ref(), error.exit), (REMOUNT_IDE_RUNNING, Exit::SOFTWARE));
     assert!(
         error.message.contains("run-ide-lane in /vm/data/ide/launch-key-1"),
         "{}",
         error.message
     );
-    assert!(fixture.daemon.saw_request("POST /mount/quiesce"));
-    assert!(!fixture.daemon.saw_request("POST /mount/resume"));
+    assert!(fixture.daemon.saw_request("POST /ide/stop"));
     assert_eq!(remounts(&fixture), 0, "nothing is unmounted under a live IDE");
 }
 
