@@ -14,6 +14,14 @@ class MarkdownLineCommenterTest: LightPlatformCodeInsightTestCase() {
 
   fun testCommentLineWithParenthesis() = doTest()
   fun testUncommentLineWithParenthesis() = doTest()
+  fun testUncommentLineWithDoubleQuotedTitle() = doTest(
+    "[//]: # \"1. [IntelliJ platform overview](#intellij-platform-overview)\"",
+    "1. [IntelliJ platform overview](#intellij-platform-overview)",
+  )
+  fun testUncommentLineWithSingleQuotedTitle() = doTest(
+    "[//]: # '1. [IntelliJ platform overview](#intellij-platform-overview)'",
+    "1. [IntelliJ platform overview](#intellij-platform-overview)",
+  )
 
   fun testCommentWithoutEmptyLine() = doTest()
 

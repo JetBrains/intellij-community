@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.util.DocumentUtil
-import com.intellij.util.text.CharArrayUtil
+import com.intellij.util.text.CharArrayUtil.regionMatches
 
 /**
  * Commenting and uncommenting lines in markdown files.
@@ -27,6 +27,8 @@ import com.intellij.util.text.CharArrayUtil
  *     * Commented text: [//]: # (1. [IntelliJ platform overview]&#40;#intellij-platform-overview&#41;)
  */
 class MarkdownCommenter : Commenter, SelfManagingCommenter<CommenterDataHolder> {
+  private data class CommentSyntax(val prefix: String, val suffix: String)
+
   override fun getLineCommentPrefix(): String = commentPrefix
   override fun getCommentPrefix(line: Int, document: Document, data: CommenterDataHolder): String = lineCommentPrefix
 
@@ -40,8 +42,7 @@ class MarkdownCommenter : Commenter, SelfManagingCommenter<CommenterDataHolder> 
   override fun getBlockCommentSuffix(selectionEnd: Int, document: Document, data: CommenterDataHolder): String? = null
 
   override fun isLineCommented(line: Int, offset: Int, document: Document, data: CommenterDataHolder): Boolean {
-    return CharArrayUtil.regionMatches(document.charsSequence, offset, commentPrefix) &&
-           CharArrayUtil.regionMatches(document.charsSequence, document.getLineEndOffset(line) - commentSuffix.length, commentSuffix)
+    return getCommentSyntax(line, offset, document) != null
   }
 
   override fun insertBlockComment(startOffset: Int, endOffset: Int, document: Document, data: CommenterDataHolder): TextRange? = null
@@ -91,19 +92,33 @@ class MarkdownCommenter : Commenter, SelfManagingCommenter<CommenterDataHolder> 
   }
 
   private fun actuallyUncommentLine(line: Int, offset: Int, document: Document, removeEmptyLine: Boolean) {
+    val syntax = getCommentSyntax(line, offset, document) ?: return
     val end = document.getLineEndOffset(line)
-    val range = SelfManagingCommenterUtil.getBlockCommentRange(offset, end, document, commentPrefix, commentSuffix) ?: return
+    val range = SelfManagingCommenterUtil.getBlockCommentRange(offset, end, document, syntax.prefix, syntax.suffix) ?: return
     val marker = when {
       removeEmptyLine -> getRangeMarker(document, document.getLineStartOffset(line - 1), range.endOffset)
       else -> getRangeMarker(document, range.startOffset, range.endOffset)
     }
     val prefix = when {
-      removeEmptyLine -> "\n$commentPrefix"
-      else -> commentPrefix
+      removeEmptyLine -> "\n${syntax.prefix}"
+      else -> syntax.prefix
     }
-    SelfManagingCommenterUtil.uncommentBlockComment(marker.startOffset, marker.endOffset, document, prefix, commentSuffix)
-    unescape(document, marker)
+    SelfManagingCommenterUtil.uncommentBlockComment(marker.startOffset, marker.endOffset, document, prefix, syntax.suffix)
+    if (syntax.prefix == commentPrefix) {
+      unescape(document, marker)
+    }
     marker.dispose()
+  }
+
+  private fun getCommentSyntax(line: Int, offset: Int, document: Document): CommentSyntax? {
+    val text = document.charsSequence
+    val syntax = when {
+      regionMatches(text, offset, commentPrefix) -> CommentSyntax(commentPrefix, commentSuffix)
+      regionMatches(text, offset, doubleQuotedCommentPrefix) -> CommentSyntax(doubleQuotedCommentPrefix, doubleQuote)
+      regionMatches(text, offset, singleQuotedCommentPrefix) -> CommentSyntax(singleQuotedCommentPrefix, singleQuote)
+      else -> return null
+    }
+    return syntax.takeIf { regionMatches(text, document.getLineEndOffset(line) - it.suffix.length, it.suffix) }
   }
 
   private fun getRangeMarker(document: Document, startOffset: Int, endOffset: Int): RangeMarker {
@@ -114,7 +129,7 @@ class MarkdownCommenter : Commenter, SelfManagingCommenter<CommenterDataHolder> 
   }
 
   private fun actuallyReplace(document: Document, offset: Int, from: String, to: String) {
-    if (CharArrayUtil.regionMatches(document.charsSequence, offset, from)) {
+    if (regionMatches(document.charsSequence, offset, from)) {
       document.replaceString(offset, offset + from.length, to)
     }
   }
@@ -141,9 +156,13 @@ class MarkdownCommenter : Commenter, SelfManagingCommenter<CommenterDataHolder> 
   companion object {
     private const val openRoundBracket = "("
     private const val closeRoundBracket = ")"
+    private const val doubleQuote = "\""
+    private const val singleQuote = "'"
     private const val escapedOpenBracket = "&#40;"
     private const val escapedCloseBracket = "&#41;"
     private const val commentPrefix = "[//]: # ("
     private const val commentSuffix = closeRoundBracket
+    private const val doubleQuotedCommentPrefix = "[//]: # $doubleQuote"
+    private const val singleQuotedCommentPrefix = "[//]: # $singleQuote"
   }
 }
