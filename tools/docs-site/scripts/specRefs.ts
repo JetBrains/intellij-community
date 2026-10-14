@@ -47,6 +47,8 @@ export interface SpecRefs {
   specs: CheckedSpec[]
   /** The repository-relative POSIX paths of the prose docs, sorted. */
   proseDocs: string[]
+  /** The repository-relative POSIX paths of the existing files that a markdown link names, sorted. */
+  linkTargets: string[]
 }
 
 /** One sentence of a spec, with the line that its block starts on. */
@@ -392,6 +394,7 @@ export function specRefFindings(config: SpecRefsConfig, root: string = repoRoot)
     findings.push(`${config.docs.guides}: no guide, explainer, decision record or extra doc; the scan is broken`)
   }
 
+  const linkTargets = new Set<string>()
   const markdownLinks = (file: string): void => {
     const source = text(file)
     for (const match of source.matchAll(MARKDOWN_LINK)) {
@@ -404,8 +407,10 @@ export function specRefFindings(config: SpecRefsConfig, root: string = repoRoot)
       const target = link.length === 0 ? file : resolve(dirname(file), link)
       if (!existsSync(target)) {
         findings.push(`${at}: link: '${link}' points to a missing file`)
+        continue
       }
-      else if (anchor.length > 0 && target.endsWith('.md') && !slugsOf(target).has(anchor)) {
+      linkTargets.add(path(target))
+      if (anchor.length > 0 && target.endsWith('.md') && !slugsOf(target).has(anchor)) {
         findings.push(`${at}: anchor: '${link}#${anchor}' names no heading of ${path(target)}`)
       }
     }
@@ -490,16 +495,16 @@ export function specRefFindings(config: SpecRefsConfig, root: string = repoRoot)
     id: relative(specRoot, file).split(sep).join('/').slice(0, -config.specs.suffix.length),
     path: path(file),
   }))
-  return { specs, proseDocs: proseDocs.map(path), findings }
+  return { specs, proseDocs: proseDocs.map(path), linkTargets: [...linkTargets].sort(), findings }
 }
 
 /** Checks the specs and the prose docs of the site. Throws with every finding. Returns what the check read. */
 export function checkSpecRefs(config: SpecRefsConfig, root: string = repoRoot): SpecRefs {
-  const { specs, proseDocs, findings } = specRefFindings(config, root)
+  const { findings, ...refs } = specRefFindings(config, root)
   if (findings.length > 0) {
     throw new Error(`specRefs: ${findings.length} finding(s); update the owning doc in the same change\n${findings.join('\n')}`)
   }
-  return { specs, proseDocs }
+  return refs
 }
 
 // --- CLI: `node specRefs.ts <site.config.ts> [<root>]` ---------------------------------------------

@@ -88,7 +88,11 @@ describe('the spec reference check', () => {
     const root = repo({
       'spec/a.spec.md': spec('[@test] ../src/A.kt\n\nSee [the guide](../docs/guides/guide.md#the-first-part) and [the top](#a-spec).\n', 'targets:\n  - ../src/**/*.kt'),
     })
-    assert.deepEqual(checkSpecRefs(config(), root), { specs: [{ id: 'a', path: 'spec/a.spec.md' }], proseDocs: ['docs/guides/guide.md'] })
+    assert.deepEqual(checkSpecRefs(config(), root), {
+      specs: [{ id: 'a', path: 'spec/a.spec.md' }],
+      proseDocs: ['docs/guides/guide.md'],
+      linkTargets: ['docs/guides/guide.md', 'spec/a.spec.md'],
+    })
   })
 
   it('names the file, the line and the rule of each broken reference', () => {
