@@ -462,6 +462,7 @@ jvm_library(
         "//python/python-sdk/backend",
         "//plugins/restructuredtext",
         "//plugins/markdown/test:tests_test_lib",
+        "//plugins/markdown/jewel/tests:tests_test_lib",
         "//plugins/mermaid",
         "//jps/jps-builders:build-tests_test_lib",
         "//plugins/devkit/jps-plugin:jps-tests_test_lib",
