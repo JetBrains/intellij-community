@@ -21,6 +21,7 @@ targets:
   - ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemControllerTest.kt
   - ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemTest.kt
   - ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt
+  - ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt
 ---
 
 # Plugin Loading Problems
@@ -171,10 +172,31 @@ Untested: No focused test covers action labels, callback aggregation, or action 
   )
 
 - Dependency problems suppress notification text when the affected plugin requires the disabled Ultimate plugin.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
+    `disabled Ultimate keeps the dependency problem but suppresses notification text`;
+    `a transitive disabled Ultimate dependency suppresses notification text`;
+    `a required content module preserves the disabled Ultimate root`;
+    `disabled Ultimate also suppresses an unrelated missing dependency`
+  )
+
+- Hidden Ultimate dependency problems still contribute notification recovery targets.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
+    `mixed notification data retains hidden Ultimate recovery targets`
+  )
+
+- The controller can still supply a generic Enable suggestion for a disabled Ultimate dependency before page restrictions apply.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemControllerTest.kt (
+    `disabled Ultimate still produces a generic controller Enable suggestion`;
+    `transitive disabled Ultimate still produces a generic controller Enable suggestion`
+  )
+
 - The product availability check marks a plugin unavailable when it requires disabled Ultimate features.
 - Product-restricted rows suppress ordinary loading errors. Their details view also skips ordinary loading error updates.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
+    `product restricted rows suppress loading error text`
+  )
 
-Untested: No focused test covers the complete Ultimate restriction across analysis, rows, and details.
+Untested: No focused test covers the complete Ultimate restriction in details or the license recovery flow.
 
 ## State Changes
 

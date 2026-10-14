@@ -73,6 +73,28 @@ internal class PluginLoadingProblemControllerTest {
   @Test
   fun `resolved transitive session dependencies suppress the Enable suggestion`(): Unit = checkResolvedSessionDependencies(transitive = true)
 
+  @Test
+  fun `disabled Ultimate still produces a generic controller Enable suggestion`(): Unit = timeoutRunBlocking {
+    installDisabledDependency(rootId = PluginManagerCore.ULTIMATE_PLUGIN_ID.idString)
+
+    val result = DefaultUiPluginManagerController.getErrors(session.sessionId, PluginId.getId("affected"))
+
+    assertThat(result.suggestToEnableRequiredPlugins).isTrue()
+    assertThat(result.requiredPluginNames).containsExactly("Root")
+    assertThat(result.loadingError).isNull()
+  }
+
+  @Test
+  fun `transitive disabled Ultimate still produces a generic controller Enable suggestion`(): Unit = timeoutRunBlocking {
+    installDisabledDependency(transitive = true, rootId = PluginManagerCore.ULTIMATE_PLUGIN_ID.idString)
+
+    val result = DefaultUiPluginManagerController.getErrors(session.sessionId, PluginId.getId("affected"))
+
+    assertThat(result.suggestToEnableRequiredPlugins).isTrue()
+    assertThat(result.requiredPluginNames).containsExactly("Root")
+    assertThat(result.loadingError).isNull()
+  }
+
   private fun checkDisabledAffectedPlugin(transitive: Boolean): Unit = timeoutRunBlocking {
     installDisabledDependency(transitive)
     session.pluginStates[PluginId.getId("affected")] = PluginEnabledState.DISABLED
@@ -96,24 +118,24 @@ internal class PluginLoadingProblemControllerTest {
     assertThat(result.loadingError).isNull()
   }
 
-  private fun installDisabledDependency(transitive: Boolean = false) {
-    plugin("root") { name = "Root" }.installAt(tempDir)
+  private fun installDisabledDependency(transitive: Boolean = false, rootId: String = "root") {
+    plugin(rootId) { name = "Root" }.installAt(tempDir)
     if (transitive) {
       plugin("intermediate") {
         name = "Intermediate"
-        depends("root")
+        depends(rootId)
       }.installAt(tempDir)
       session.pluginStates[PluginId.getId("intermediate")] = PluginEnabledState.ENABLED
     }
     plugin("affected") {
       name = "Affected"
-      depends(if (transitive) "intermediate" else "root")
+      depends(if (transitive) "intermediate" else rootId)
     }.installAt(tempDir)
     val pluginSet = PluginSetTestBuilder.fromPath(tempDir)
-      .withDisabledPlugins("root")
+      .withDisabledPlugins(rootId)
       .build(configureClassLoaders = false)
     PluginManagerCore.setPluginSet(pluginSet)
-    session.pluginStates[PluginId.getId("root")] = PluginEnabledState.DISABLED
+    session.pluginStates[PluginId.getId(rootId)] = PluginEnabledState.DISABLED
     session.pluginStates[PluginId.getId("affected")] = PluginEnabledState.ENABLED
     DefaultUiPluginManagerController.updatePluginDependenciesSync(session.sessionId)
   }

@@ -35,6 +35,7 @@ import com.intellij.ide.plugins.newui.buttons.OptionButton
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
@@ -56,6 +57,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
@@ -133,6 +135,41 @@ internal class LegacyPluginRowFactoryTest {
     }
     finally {
       host.dispose(closeSession = false)
+    }
+  }
+
+  @Test
+  fun `product restricted rows suppress loading error text`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+      try {
+        val pluginId = PluginId.getId("restricted.plugin")
+        val plugin = PluginNodeModelBuilderFactory.createBuilder(pluginId).setName("Restricted Plugin").build()
+        val factory = LegacyPluginRowFactory(host, ListPluginModel(), { _, _ -> }, onSelectionChanged = {})
+        for (restricted in listOf(false, true)) {
+          val input = PluginRowInput(
+            installedPlugin = plugin,
+            installationState = PluginInstallationState(true),
+            errors = listOf(HtmlChunk.text("Loading problem")),
+            updateDescriptor = null,
+            enabled = true,
+            restrictedByProduct = restricted,
+          )
+          val item = PluginItemState(pluginId, plugin.name, modelHandle = PluginItemModelHandle(plugin), rowInput = input)
+          val section = PluginSectionState(PluginSectionId.Installed, items = listOf(item))
+          val specification = factory.specification(section, item)
+          (factory.createRow(specification.occurrenceId, specification.item, specification.renderKey) as LegacyPluginRow).use { row ->
+            row.renderInput(input)
+
+            assertThat(row.component.isNotFreeInFreeMode()).isEqualTo(restricted)
+            val errors = componentsOfType(row.component, JEditorPane::class.java).filter { it.text.contains("Loading problem") }
+            assertThat(errors).hasSize(if (restricted) 0 else 1)
+          }
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
     }
   }
 
