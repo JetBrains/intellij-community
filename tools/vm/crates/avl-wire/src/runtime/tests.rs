@@ -35,12 +35,12 @@ fn plugin(destination: &str) -> Value {
 /// Bazel rule actually emits.
 fn valid_descriptor() -> Value {
     json!({
-        "schemaVersion": 8,
+        "schemaVersion": 9,
         "kind": "air-ui-daemon-runtime",
         "mainClass": "com.intellij.air.uiDaemon.AirUiDaemonMain",
         "staticJvmFlags": ["-Xmx4g", "-Dsun.io.useCanonCaches=false", "-Dair.ui.runfiles=${RUNFILES_ROOT}/_main"],
         "classpath": {
-            "hot": [file("_main/plugins/air/ui-tests.jar", "//plugins/air/tests/integration/ui:ui_tests")],
+            "hot": [file("_main/plugins/air/ui-tests.jar", "//plugins/air/tests/integration/ui:ui_tests"), documents_jar()],
             "stable": [file("_main/platform/util.jar", "//platform/util"), file("_main/platform/core.jar", "//platform/core")],
         },
         "devDist": {
@@ -54,16 +54,31 @@ fn valid_descriptor() -> Value {
             "platform": "linux-x64",
         },
         "ide": {
+            "fakeAgentJar": file(FAKE_AGENT_JAR, "//plugins/air/integrationTests/test-support:acp_scenario_agent"),
             "flagsFile": file("_main/plugins/air/tests/integration/ui/ide_flags.jvm-flags.txt", "//plugins/air/tests/integration/ui:ide_flags"),
+            // One jar holds both kinds of document, and the daemon JVM reads it from its hot tier.
+            "laneDocuments": documents_jar(),
             "plugins": [
                 plugin("air-integrationTests-bridge-plugin/lib/air-integrationTests-bridge-plugin.jar"),
                 plugin("air-integrationTests-bridge-plugin/lib/modules/intellij.air.integrationTests.bridge.jar"),
             ],
             "projectArchive": file("_main/external/air_integration_test_deps/simpleJavaProject.zip", "@air_integration_test_deps//:simpleJavaProject.zip"),
             "projectRoot": "BookmarksTestProject",
+            "suiteDocuments": documents_jar(),
         },
         "data": [file("_main/plugins/air/testData/project.zip", "//plugins/air:test_data")],
     })
+}
+
+const FAKE_AGENT_JAR: &str = "_main/plugins/air/integrationTests/test-support/acp_scenario_agent_deploy.jar";
+const DOCUMENTS_JAR: &str = "_main/plugins/air/tests/integration/flow-profiles/flow-profiles_test_lib.jar";
+
+/// The flow-profiles resource jar: a jar of the hot tier, and the jar of the suite and the lane documents.
+fn documents_jar() -> Value {
+    file(
+        DOCUMENTS_JAR,
+        "//plugins/air/tests/integration/flow-profiles:flow-profiles_test_lib",
+    )
 }
 
 /// Sets the field at a JSON pointer. A pointer that names nothing panics: a silent no-op would leave the case
@@ -94,9 +109,24 @@ fn parse(descriptor: &Value) -> RuntimeDescriptor {
 #[test]
 fn a_well_formed_descriptor_parses_into_the_launch_contract() {
     let parsed = parse(&valid_descriptor());
-    assert_eq!((parsed.schema_version, parsed.kind.as_str()), (8, DESCRIPTOR_KIND));
+    assert_eq!((parsed.schema_version, parsed.kind.as_str()), (9, DESCRIPTOR_KIND));
     assert_eq!(parsed.main_class, "com.intellij.air.uiDaemon.AirUiDaemonMain");
-    assert_eq!((parsed.classpath.hot.len(), parsed.classpath.stable.len()), (1, 2));
+    assert_eq!((parsed.classpath.hot.len(), parsed.classpath.stable.len()), (2, 2));
+    // The lane inputs in key order, each with its runfile.
+    let inputs: Vec<(&str, &str)> = parsed
+        .ide
+        .lane_inputs()
+        .iter()
+        .map(|(field, input)| (*field, input.logical_path.as_str()))
+        .collect();
+    assert_eq!(
+        inputs,
+        [
+            ("fakeAgentJar", FAKE_AGENT_JAR),
+            ("laneDocuments", DOCUMENTS_JAR),
+            ("suiteDocuments", DOCUMENTS_JAR),
+        ]
+    );
     // The stable tier keeps its order: a classpath is ordered.
     assert_eq!(
         parsed.classpath.stable[0],
@@ -150,14 +180,21 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             "a JSON array has no schema version",
             b"[]".to_vec(),
             code::SCHEMA_VERSION,
-            &["schemaVersion is absent, expected 8"],
+            &["schemaVersion is absent, expected 9"],
         ),
         // The version before the JBR of the distribution: it names a JBR archive, which this controller stages no more.
         (
             "a descriptor of the version that names a JBR archive",
             bytes(set(valid(), "/schemaVersion", json!(7))),
             code::SCHEMA_VERSION,
-            &["schemaVersion is 7, expected 8"],
+            &["schemaVersion is 7, expected 9"],
+        ),
+        // The version before the lane inputs: its fake agent jar is data, so an edit of the agent moves the mount.
+        (
+            "a descriptor of the version without the lane inputs",
+            bytes(set(valid(), "/schemaVersion", json!(8))),
+            code::SCHEMA_VERSION,
+            &["schemaVersion is 8, expected 9"],
         ),
         (
             "an older rule emits no schema version",
@@ -167,9 +204,9 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
         ),
         (
             "a schema version this controller predates",
-            bytes(set(valid(), "/schemaVersion", json!(9))),
+            bytes(set(valid(), "/schemaVersion", json!(10))),
             code::SCHEMA_VERSION,
-            &["schemaVersion is 9, expected 8"],
+            &["schemaVersion is 10, expected 9"],
         ),
         (
             "the schema version arrives as text",
@@ -492,6 +529,38 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             code::DUPLICATE_LOGICAL_PATH,
             &["duplicate logical path _main/platform/util.jar"],
         ),
+        (
+            "no fake agent jar",
+            bytes(drop_field(valid(), "/ide/fakeAgentJar")),
+            code::FIELD_INVALID,
+            &["missing field `fakeAgentJar`"],
+        ),
+        (
+            "no jar of the suite documents",
+            bytes(drop_field(valid(), "/ide/suiteDocuments")),
+            code::FIELD_INVALID,
+            &["missing field `suiteDocuments`"],
+        ),
+        (
+            "a lane input outside the runfiles tree",
+            bytes(set(valid(), "/ide/laneDocuments/logicalPath", json!("../lanes.jar"))),
+            code::PATH_ESCAPES,
+            &["ide.laneDocuments.logicalPath escapes the runfiles root"],
+        ),
+        // The point of a lane input: the rule must take the fake agent jar out of the data list, or an edit of the
+        // agent still moves the mount identity.
+        (
+            "a fake agent jar that is also declared data",
+            bytes(set(valid(), "/data/0/logicalPath", json!(FAKE_AGENT_JAR))),
+            code::LANE_INPUT_STAGED,
+            &["ide.fakeAgentJar _main/plugins/air/integrationTests/test-support/acp_scenario_agent_deploy.jar is also staged"],
+        ),
+        (
+            "a jar of the documents in the stable tier",
+            bytes(set(valid(), "/ide/suiteDocuments/logicalPath", json!("_main/platform/core.jar"))),
+            code::LANE_INPUT_STAGED,
+            &["ide.suiteDocuments _main/platform/core.jar is also staged"],
+        ),
     ]
 }
 
@@ -524,7 +593,13 @@ fn every_way_the_descriptor_can_be_wrong_is_its_own_refusal() {
 #[test]
 fn the_validator_refuses_nothing_it_should_accept() {
     // A float that is the same number in JSON.
-    parse(&set(valid_descriptor(), "/schemaVersion", json!(8.0)));
+    parse(&set(valid_descriptor(), "/schemaVersion", json!(9.0)));
+    // A jar of the documents that is no hot jar: it travels by the push all the same.
+    parse(&set(
+        valid_descriptor(),
+        "/ide/laneDocuments/logicalPath",
+        json!("_main/plugins/air/tests/integration/flow-profiles/lanes.zip"),
+    ));
     // The JBR of a macOS distribution, whose IDE home is `Contents`.
     parse(&set(valid_descriptor(), "/jbr/directory", json!("Contents/jbr")));
     // A build with no context plugin installs nothing.

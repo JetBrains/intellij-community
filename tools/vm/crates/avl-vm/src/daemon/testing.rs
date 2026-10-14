@@ -475,8 +475,9 @@ pub(crate) fn failing_run(iteration_id: &str) -> (Vec<String>, String) {
 // --- the runtime-descriptor fixture ------------------------------------------------------------------------------
 
 /// The runfiles every fixture descriptor declares, with their contents.
-pub(crate) const FIXTURE_RUNFILES: [(&str, &str); 9] = [
+pub(crate) const FIXTURE_RUNFILES: [(&str, &str); 10] = [
     ("_main/hot/a.jar", "hot-a"),
+    (FIXTURE_FAKE_AGENT_JAR, "fake-agent"),
     ("_main/stable/one.jar", "stable-one"),
     ("_main/stable/two.jar", "stable-two"),
     ("_main/data/project.zip", "data-a"),
@@ -486,6 +487,10 @@ pub(crate) const FIXTURE_RUNFILES: [(&str, &str); 9] = [
     ("_main/ide/project.zip", "ide-project"),
     ("_main/plugins/bridge/lib/bridge.jar", "bridge-plugin"),
 ];
+
+/// The fake agent jar of the fixture descriptor, a lane input. The jars of the documents are the hot jar, as the
+/// flow-profiles resource jar is a hot jar of the daemon.
+pub(crate) const FIXTURE_FAKE_AGENT_JAR: &str = "_main/agent/fake-agent.jar";
 
 /// The fixture's runtime descriptor, built for an arm64 Linux guest.
 pub(crate) fn fixture_descriptor() -> Value {
@@ -521,10 +526,13 @@ pub(crate) fn fixture_descriptor_for(jbr_platform: &str) -> Value {
             "platform": jbr_platform,
         },
         "ide": {
+            "fakeAgentJar": file(FIXTURE_FAKE_AGENT_JAR),
             "flagsFile": file("_main/ide/ide.jvm-flags.txt"),
+            "laneDocuments": file("_main/hot/a.jar"),
             "plugins": [{"destination": "bridge/lib/bridge.jar", "file": file("_main/plugins/bridge/lib/bridge.jar")}],
             "projectArchive": file("_main/ide/project.zip"),
             "projectRoot": "Project",
+            "suiteDocuments": file("_main/hot/a.jar"),
         },
         "data": [file("_main/data/project.zip")],
     })
@@ -1207,6 +1215,15 @@ impl Recorded {
             .filter(|record| record.event == kind)
             .filter_map(|record| record.data.as_ref())
             .map(|data| serde_json::from_str(data.get()).unwrap_or_else(|error| panic!("a {kind} record does not decode: {error}")))
+            .collect()
+    }
+
+    /// The message of every record of one kind, such as each note.
+    pub(crate) fn messages_of(&self, kind: Kind) -> Vec<String> {
+        lock(&self.records)
+            .iter()
+            .filter(|record| record.event == kind)
+            .map(|record| record.message.clone())
             .collect()
     }
 

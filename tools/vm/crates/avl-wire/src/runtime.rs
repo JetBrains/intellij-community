@@ -26,7 +26,7 @@ mod tests;
 
 /// The version of the descriptor this controller reads. Unrelated to [`crate::daemon::PROTOCOL_VERSION`]: one
 /// describes a build artifact, the other a running process. Bump it with `_SCHEMA_VERSION` in the `.bzl`.
-pub const SCHEMA_VERSION: u32 = 8;
+pub const SCHEMA_VERSION: u32 = 9;
 
 /// What the descriptor must declare itself to be.
 ///
@@ -75,6 +75,9 @@ pub mod code {
     /// A JBR directory that is absolute or contains `..`. The controller joins it onto the distribution home, so a
     /// directory that escapes stages a JVM from outside the distribution.
     pub const JBR_DIRECTORY_INVALID: &str = "daemon_runtime_jbr_directory_invalid";
+    /// A lane input that a share or the stable tier also carries. A lane input travels by the jar push only. A second
+    /// way in would move the mount or the runtime identity at each change of the input.
+    pub const LANE_INPUT_STAGED: &str = "daemon_runtime_lane_input_staged";
 }
 
 /// The token the descriptor's flags carry where the host runfiles root belongs.
@@ -164,24 +167,54 @@ pub const JBR_SECTION_FIELDS: [&str; 3] = ["directory", "javaHomeSuffix", "platf
 
 /// The keys of the `ide` section, as the descriptor spells them. The descriptor writer test of the Air lanes holds the
 /// Starlark rule to them.
-pub const IDE_SECTION_FIELDS: [&str; 4] = ["flagsFile", "plugins", "projectArchive", "projectRoot"];
+pub const IDE_SECTION_FIELDS: [&str; 7] = [
+    "fakeAgentJar",
+    "flagsFile",
+    "laneDocuments",
+    "plugins",
+    "projectArchive",
+    "projectRoot",
+    "suiteDocuments",
+];
 
-/// What the lane IDE is launched from, beside the distribution: the JVM flags file, the project it opens and the
-/// plugins of its context.
+/// What the lane IDE is launched from, beside the distribution: the JVM flags file, the project it opens, the
+/// plugins of its context and the lane inputs.
 ///
 /// `flags_file` is the Bazel-written file of IDE JVM flags, one flag per line: the default flags of a dev launch,
 /// the `--add-opens` of the platform and the lane's own. `project_archive` is the zip of the project, and
 /// `project_root` is the directory inside the archive that the IDE opens, a relative slash path. `plugins` are the
 /// files that the daemon installs into the plugin directory of the IDE context. They travel by the jar push and not
 /// by a share, so neither the product identity nor the mount identity reads them.
+///
+/// The lane inputs are [`Self::lane_inputs`]: the fake agent jar and the two jars of the documents. They travel by
+/// the jar push only, so no identity of the daemon or of the IDE reads them.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdeSection {
+    /// The deploy jar of the fake ACP agent. The lane runs it with `-jar`, and the fake registry packs it into its
+    /// agent archives.
+    pub fake_agent_jar: RuntimeFile,
     pub flags_file: RuntimeFile,
+    /// The jar that holds the lane documents below `lanes/`.
+    pub lane_documents: RuntimeFile,
     pub plugins: Vec<IdePluginFile>,
     pub project_archive: RuntimeFile,
     #[serde(deserialize_with = "non_empty")]
     pub project_root: String,
+    /// The jar that holds the suite documents below `flow-profiles/`.
+    pub suite_documents: RuntimeFile,
+}
+
+impl IdeSection {
+    /// The lane inputs with the key of each in the `ide` section, in key order. The two jars of the documents can be
+    /// one file, and each can be a jar of the hot tier.
+    pub const fn lane_inputs(&self) -> [(&'static str, &RuntimeFile); 3] {
+        [
+            ("fakeAgentJar", &self.fake_agent_jar),
+            ("laneDocuments", &self.lane_documents),
+            ("suiteDocuments", &self.suite_documents),
+        ]
+    }
 }
 
 /// One file of a plugin of the IDE context: `destination` is its slash path below the plugin directory of the
@@ -450,8 +483,27 @@ pub fn parse_runtime_descriptor(
             &descriptor.ide.project_archive,
         ])
         .chain(descriptor.ide.plugins.iter().map(|plugin| &plugin.file));
-    if let Some(duplicate) = first_duplicate(staged) {
+    if let Some(duplicate) = first_duplicate(staged.clone()) {
         return Err(fail(code::DUPLICATE_LOGICAL_PATH, &format!("duplicate logical path {duplicate}")));
+    }
+    let hot: HashSet<&str> = descriptor.classpath.hot.iter().map(|jar| jar.logical_path.as_str()).collect();
+    let shared: HashSet<&str> = staged
+        .map(|file| file.logical_path.as_str())
+        .filter(|logical_path| !hot.contains(logical_path))
+        .collect();
+    if let Some((field, input)) = descriptor
+        .ide
+        .lane_inputs()
+        .into_iter()
+        .find(|(_, input)| shared.contains(input.logical_path.as_str()))
+    {
+        return Err(fail(
+            code::LANE_INPUT_STAGED,
+            &format!(
+                "ide.{field} {} is also staged, and a lane input travels by the jar push only",
+                input.logical_path
+            ),
+        ));
     }
     Ok(descriptor)
 }
@@ -475,6 +527,13 @@ fn labelled_files(descriptor: &RuntimeDescriptor) -> Vec<(String, &RuntimeFile)>
         ("ide.flagsFile".to_owned(), &descriptor.ide.flags_file),
         ("ide.projectArchive".to_owned(), &descriptor.ide.project_archive),
     ]);
+    labelled.extend(
+        descriptor
+            .ide
+            .lane_inputs()
+            .into_iter()
+            .map(|(field, input)| (format!("ide.{field}"), input)),
+    );
     labelled.extend(
         descriptor
             .ide

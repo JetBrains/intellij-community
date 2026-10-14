@@ -406,6 +406,24 @@ async fn a_daemon_without_a_running_ide_relaunches_it() {
     assert!(!decisions.iter().any(|decision| decision["action"] == "reuse"), "{decisions:?}");
 }
 
+// Each iteration names the digest of each lane input in the journal, after the push that offered them.
+#[tokio::test]
+async fn an_iteration_names_the_digests_of_the_lane_inputs() {
+    let (fixture, prep, _) = iteration_fixture("it-12l").await;
+    let recorded = Recorded::start(&fixture.host.reporter);
+    let attempt = run_warm_iteration(&fixture, false).await;
+    report_of(&attempt);
+    let digest = |index: usize| prep.lane_inputs[index].host.sha256[..12].to_owned();
+    let expected = format!(
+        "lane inputs by digest: fakeAgentJar {}, laneDocuments {}, suiteDocuments {}",
+        digest(0),
+        digest(1),
+        digest(2)
+    );
+    let notes = recorded.messages_of(Kind::Note);
+    assert!(notes.contains(&expected), "{notes:?}");
+}
+
 // A change of the context plugins alone relaunches the IDE on the same context: no remount, no stop and no daemon
 // start. The state records the plugin identity the iteration ran with.
 #[tokio::test]

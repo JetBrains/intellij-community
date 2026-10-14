@@ -59,6 +59,9 @@ pub(crate) struct PreparedBuild {
     /// The files of the context plugins, in descriptor order: pushed with the hot tier, and installed by the daemon into
     /// the plugin directory of the IDE context.
     pub plugin_files: Vec<PluginFile>,
+    /// The lane inputs of the descriptor, in key order: pushed with the hot tier. No identity reads them, so an edit of
+    /// the fake agent or of a document restages nothing and restarts nothing.
+    pub lane_inputs: Vec<LaneInput>,
     pub runtime_digest: String,
     pub launch_digest: String,
     pub product_digest: String,
@@ -84,6 +87,23 @@ pub(crate) struct PreparedBuild {
 pub(crate) struct PluginFile {
     pub destination: String,
     pub host: PathDigest,
+}
+
+/// One lane input of the descriptor: its key in the `ide` section, such as `fakeAgentJar`, and its bytes on the host by
+/// path and content digest, as `/jars` is asked about them.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct LaneInput {
+    pub field: &'static str,
+    pub host: PathDigest,
+}
+
+/// The note that names the digest of each lane input, in key order, as `<key> <first 12 hex digits>`.
+pub(crate) fn lane_inputs_note(inputs: &[LaneInput]) -> String {
+    let named: Vec<String> = inputs
+        .iter()
+        .map(|input| format!("{} {}", input.field, input.host.sha256.get(..12).unwrap_or(&input.host.sha256)))
+        .collect();
+    format!("lane inputs by digest: {}", named.join(", "))
 }
 
 /// The identity of the context plugin files: each destination with its content digest, so a moved file and a changed
@@ -280,6 +300,7 @@ struct Stamped {
     guest_tree: GuestRunfilesTree,
     hot_jars: Vec<PathDigest>,
     plugin_files: Vec<PluginFile>,
+    lane_inputs: Vec<LaneInput>,
     runtime_digest: String,
     product_digest: String,
     mount_digest: String,
@@ -297,7 +318,8 @@ struct StampParts {
 
 /// Hashes every declared input of a descriptor through the digest cache and composes three of the four identities;
 /// the launch digest needs the settings and is composed by the caller. The context plugin files are hashed here too,
-/// and their identity is composed apart from the other four. The guest runfiles tree is planned here too, because the
+/// and their identity is composed apart from the other four. The lane inputs are hashed for the push, and no identity
+/// reads them. The guest runfiles tree is planned here too, because the
 /// plan reads each staged runfile. Blocking: the first sweep reads gigabytes.
 fn stamp(
     descriptor: &RuntimeDescriptor,
@@ -321,6 +343,14 @@ fn stamp(
         let declared = file(&plugin.file)?;
         plugin_files.push(PluginFile {
             destination: plugin.destination.clone(),
+            host: PathDigest::new(declared.host_path.to_string_lossy(), declared.identity.sha256),
+        });
+    }
+    let mut lane_inputs = Vec::with_capacity(3);
+    for (field, input) in descriptor.ide.lane_inputs() {
+        let declared = file(input)?;
+        lane_inputs.push(LaneInput {
+            field,
             host: PathDigest::new(declared.host_path.to_string_lossy(), declared.identity.sha256),
         });
     }
@@ -370,6 +400,7 @@ fn stamp(
         guest_tree,
         hot_jars,
         plugin_files,
+        lane_inputs,
         runtime_digest,
         product_digest,
         mount_digest,
@@ -473,6 +504,7 @@ impl Host {
             hot_jars: stamped.hot_jars,
             plugins_digest: plugins_digest(&stamped.plugin_files),
             plugin_files: stamped.plugin_files,
+            lane_inputs: stamped.lane_inputs,
             runtime_digest: stamped.runtime_digest,
             launch_digest,
             product_digest: stamped.product_digest,

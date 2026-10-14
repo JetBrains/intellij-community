@@ -468,8 +468,8 @@ pub(crate) fn upload_concurrency(bytes: u64) -> usize {
         .clamp(1, MAX_PARALLEL_UPLOADS)
 }
 
-/// Offers the hot tier and the context plugin files by digest, and uploads only what the guest does not already hold,
-/// answering how many files travelled. A digest that two files share is offered once.
+/// Offers the hot tier, the context plugin files and the lane inputs by digest, and uploads only what the guest does not
+/// already hold, answering how many files travelled. A digest that two files share is offered once.
 ///
 /// [`upload_concurrency`] of the bytes to push decides how many uploads run at once. The first upload that fails ends
 /// the push with its refusal, and the uploads still in flight end with it, because their futures are dropped.
@@ -479,6 +479,7 @@ pub(crate) async fn push_jars(ctx: &Ctx, daemon: &DaemonClient, state: &HostStat
         .hot_jars
         .iter()
         .chain(prep.plugin_files.iter().map(|file| &file.host))
+        .chain(prep.lane_inputs.iter().map(|input| &input.host))
         .filter(|jar| offered.insert(jar.sha256.as_str()))
         .collect();
     let digests: Vec<&str> = jars.iter().map(|jar| jar.sha256.as_str()).collect();

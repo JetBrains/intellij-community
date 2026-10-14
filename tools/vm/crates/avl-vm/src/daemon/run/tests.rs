@@ -289,7 +289,8 @@ async fn non_record_lines_are_kept_as_output() {
     );
 }
 
-// The push offers the hot tier and the context plugin files by digest, and uploads only what the guest does not hold.
+// The push offers the hot tier, the context plugin files and the lane inputs by digest, and uploads only what the guest
+// does not hold. The jars of the documents are the hot jar of the fixture, so their digest is offered once.
 #[tokio::test]
 async fn push_jars_uploads_only_missing_digests() {
     let (fixture, prep, state) = executing().await;
@@ -297,6 +298,7 @@ async fn push_jars_uploads_only_missing_digests() {
     assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep).await.unwrap(), 0);
     let sha = prep.hot_jars[0].sha256.clone();
     let plugin = prep.plugin_files[0].host.sha256.clone();
+    let agent = prep.lane_inputs[0].host.sha256.clone();
     fixture.daemon.script().missing = vec![sha.clone()];
     assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep).await.unwrap(), 1);
     {
@@ -304,22 +306,32 @@ async fn push_jars_uploads_only_missing_digests() {
         assert_eq!(script.uploads.len(), 1);
         assert!(script.uploads[0].contains(&sha), "the upload names the digest");
         let body: Value = serde_json::from_slice(&script.jars_body).unwrap();
-        assert_eq!(body, json!({ "jars": [sha, plugin] }));
+        assert_eq!(body, json!({ "jars": [sha, plugin, agent] }));
     }
     fixture.daemon.script().missing = vec![plugin.clone()];
     assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep).await.unwrap(), 1);
-    let script = fixture.daemon.script();
+    {
+        let script = fixture.daemon.script();
+        assert!(
+            script.uploads[1].contains(&plugin),
+            "a changed plugin file travels by the same push"
+        );
+    }
+    fixture.daemon.script().missing = vec![agent.clone()];
+    assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep).await.unwrap(), 1);
     assert!(
-        script.uploads[1].contains(&plugin),
-        "a changed plugin file travels by the same push"
+        fixture.daemon.script().uploads[2].contains(&agent),
+        "a changed fake agent jar travels by the same push"
     );
 }
 
-// A plugin file whose bytes equal a hot jar is offered and uploaded once.
+// A plugin file or a lane input whose bytes equal a hot jar is offered and uploaded once. The jars of the documents of
+// the fixture are its hot jar already.
 #[tokio::test]
 async fn a_digest_that_two_files_share_is_offered_once() {
     let (fixture, mut prep, state) = executing().await;
     prep.plugin_files[0].host = prep.hot_jars[0].clone();
+    prep.lane_inputs[0].host = prep.hot_jars[0].clone();
     let sha = prep.hot_jars[0].sha256.clone();
     fixture.daemon.script().missing = vec![sha.clone()];
     assert_eq!(

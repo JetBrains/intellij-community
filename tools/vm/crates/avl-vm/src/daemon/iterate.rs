@@ -22,7 +22,7 @@ use serde_json::json;
 use tempfile::TempPath;
 use tokio_util::sync::CancellationToken;
 
-use crate::daemon::build::PreparedBuild;
+use crate::daemon::build::{PreparedBuild, lane_inputs_note};
 use crate::daemon::host::{Host, WatchdogPolicy};
 use crate::daemon::run::{RunExecution, RunSelection, push_jars};
 use crate::daemon::state::{HostState, guest_state_dir};
@@ -426,6 +426,7 @@ impl Host {
         if let Some(reason) = jar_push_reason(pushed) {
             self.decide(Subject::Jars, "push", &reason, &scope);
         }
+        self.reporter.note(lane_inputs_note(&prep.lane_inputs), Some(&scope));
         if !secrets.is_empty() {
             // The names and never the files: a path a caller made with `mktemp` says nothing a reader needs.
             self.reporter

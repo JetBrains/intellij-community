@@ -13,7 +13,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde::Deserialize;
 use serde_json::Value;
 
+mod documents;
 pub mod lane;
+
+pub use documents::{LANE_DOCUMENT_DIRECTORY, SUITE_DOCUMENT_DIRECTORY, read_lane_documents, read_suite_documents};
 
 #[cfg(test)]
 mod tests;

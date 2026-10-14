@@ -349,6 +349,22 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-wire/src/runtime/tests.rs
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs
 
+- The runtime descriptor names three lane inputs: the fake agent jar, the jar of the suite documents and the jar of
+  the lane documents. The controller pushes them by digest with the hot jars. No identity reads them, so an edit of
+  the fake agent refreshes no share, keeps the IDE and keeps the daemon. The descriptor refuses a lane input that the
+  data, the stable jars or another staged file also names. A lane input can be a hot jar. Each iteration names the
+  digest of each lane input in the journal.
+  [@test] ../crates/avl-wire/src/runtime/tests.rs (`every_way_the_descriptor_can_be_wrong_is_its_own_refusal`)
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_fake_agent_jar_changes_no_identity_and_only_its_pushed_digest`)
+  [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`push_jars_uploads_only_missing_digests`)
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`an_iteration_names_the_digests_of_the_lane_inputs`)
+
+- One reader reads the suite documents and the lane documents from a directory or from a zip. The zip can be the
+  resource jar that the controller pushes. Both sources give the same names and the same bytes. A source with no
+  document is refused, and so is a source that is neither a directory nor a zip.
+  [@test] ../crates/avl-wire/src/program/documents/tests.rs
+  [@test] ../../../../plugins/air/tests/integration/vm-contract/lane_documents.rs (`the_jar_and_the_directory_give_the_committed_lane_documents`)
+
 - VM preparation installs and probes no agent CLI. An existing image can keep an unused installation.
   [@test] ../crates/avl-vm/src/lane/env/tests.rs
   [@test] ../crates/avl-guest/src/image/provision/tests.rs

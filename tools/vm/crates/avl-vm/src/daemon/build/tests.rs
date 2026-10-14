@@ -273,6 +273,41 @@ async fn a_changed_context_plugin_file_changes_only_the_plugins_digest() {
     assert_eq!(before.launch_digest, after.launch_digest);
 }
 
+// The lane inputs travel by the push: an edit of the fake agent moves no identity, so it refreshes no share, keeps the
+// IDE and keeps the daemon. Only the digest that the push offers moves.
+#[tokio::test]
+async fn a_changed_fake_agent_jar_changes_no_identity_and_only_its_pushed_digest() {
+    let fixture = Fixture::new().await;
+    let before = fixture.prepared().await;
+    let fields: Vec<&str> = before.lane_inputs.iter().map(|input| input.field).collect();
+    assert_eq!(fields, ["fakeAgentJar", "laneDocuments", "suiteDocuments"]);
+    // The jars of the documents are the hot jar of the fixture, so the push offers their digest once.
+    assert_eq!(before.lane_inputs[1].host, before.hot_jars[0]);
+    assert_eq!(before.lane_inputs[2].host, before.hot_jars[0]);
+
+    let agent = runtime::runfiles_root(&fixture.bazel.descriptor_path).join(crate::daemon::testing::FIXTURE_FAKE_AGENT_JAR);
+    fs::write(&agent, "another fake agent").unwrap();
+    let after = fixture.prepared().await;
+    assert_ne!(before.lane_inputs[0].host.sha256, after.lane_inputs[0].host.sha256);
+    assert_eq!(before.mount_digest, after.mount_digest);
+    assert_eq!(before.product_digest, after.product_digest);
+    assert_eq!(before.runtime_digest, after.runtime_digest);
+    assert_eq!(before.launch_digest, after.launch_digest);
+    assert_eq!(before.plugins_digest, after.plugins_digest);
+}
+
+#[test]
+fn the_lane_inputs_note_names_each_key_with_its_digest() {
+    let input = |field, sha256: &str| LaneInput {
+        field,
+        host: PathDigest::new("/host/x.jar", sha256),
+    };
+    assert_eq!(
+        lane_inputs_note(&[input("fakeAgentJar", "0123456789abcdef"), input("laneDocuments", "short")]),
+        "lane inputs by digest: fakeAgentJar 0123456789ab, laneDocuments short"
+    );
+}
+
 // The plugin identity reads the destination too: the same bytes at another place are another plugin directory.
 #[test]
 fn the_plugins_digest_reads_the_destination_and_the_content() {
