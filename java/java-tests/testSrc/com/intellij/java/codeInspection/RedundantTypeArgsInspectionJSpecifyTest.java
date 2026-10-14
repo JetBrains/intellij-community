@@ -108,22 +108,14 @@ public class RedundantTypeArgsInspectionJSpecifyTest extends LightJavaCodeInsigh
              }""");
   }
 
-  public void testNullabilityChangeAtMaxDepth() {
-    doTest(nestedListTest(10, false));
+  public void testNullabilityChangeInDeeplyNestedTypeArgument() {
+    doTest(nestedListTest(20));
   }
 
-  public void testNullabilityChangeBeyondMaxDepth() {
-    // the walk stops at MAX_NULLABILITY_CHECK_DEPTH, so the nullability change is not found
-    doTest(nestedListTest(11, true));
-  }
-
-  private static String nestedListTest(int depth, boolean reported) {
+  private static String nestedListTest(int depth) {
     String open = "List<".repeat(depth);
     String close = ">".repeat(depth);
     String typeArgument = "<" + open + "Object" + close + ">";
-    if (reported) {
-      typeArgument = "<warning descr=\"Explicit type arguments can be inferred\">" + typeArgument + "</warning>";
-    }
     return """
       import org.jspecify.annotations.NullMarked;
       import org.jspecify.annotations.Nullable;
