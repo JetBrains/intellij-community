@@ -56,6 +56,7 @@ internal class PluginLoadingProblemTest {
       assertThat(problem.shouldNotifyUser).isEqualTo(shouldNotifyUser)
       assertThat(problem.disabledDependencyId).isEqualTo(disabledDependencyId)
       assertThat(problem.kind).isEqualTo(PluginLoadingProblem.Kind.OTHER)
+      assertThat(problem.severity).isEqualTo(PluginLoadingProblem.Severity.UNEXPECTED)
     }
 
     return listOf(
@@ -130,6 +131,22 @@ internal class PluginLoadingProblemTest {
     assertThat(problem.shouldNotifyUser).isTrue()
     assertThat(problem.shortMessage).isEqualTo("Short")
     assertThat(problem.detailedMessage).isEqualTo("Detailed")
+  }
+
+  @Test
+  fun `severity does not infer notification eligibility`() {
+    for ((severity, notify) in listOf(PluginLoadingProblem.Severity.EXPECTED to true, PluginLoadingProblem.Severity.UNEXPECTED to false)) {
+      val problem = PluginLoadingProblem(
+        plugin = PluginNode(PluginId.getId("affected")),
+        severity = severity,
+        shouldNotifyUser = notify,
+        shortMessageSupplier = { "Short" },
+        detailedMessageSupplier = { "Detailed" },
+      )
+
+      assertThat(problem.severity).isEqualTo(severity)
+      assertThat(problem.shouldNotifyUser).isEqualTo(notify)
+    }
   }
 
   @Test

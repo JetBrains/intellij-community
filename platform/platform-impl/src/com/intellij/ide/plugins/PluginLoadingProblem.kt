@@ -19,6 +19,7 @@ class PluginLoadingProblem internal constructor(
   val shouldNotifyUser: Boolean,
   val disabledDependencyId: PluginId? = null,
   val kind: Kind = Kind.OTHER,
+  val severity: Severity = Severity.UNEXPECTED,
   private val detailedMessageSupplier: () -> @NlsContexts.DetailedDescription String,
   private val shortMessageSupplier: () -> @NlsContexts.Label String,
 ) {
@@ -29,6 +30,12 @@ class PluginLoadingProblem internal constructor(
   enum class Kind {
     OTHER,
     ULTIMATE_DISABLED,
+  }
+
+  @ApiStatus.Internal
+  enum class Severity {
+    EXPECTED,
+    UNEXPECTED,
   }
 }
 
