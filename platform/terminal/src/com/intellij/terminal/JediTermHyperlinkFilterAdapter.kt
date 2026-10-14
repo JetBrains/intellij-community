@@ -124,7 +124,7 @@ private fun convertResultItem(item: ResultItem, project: Project, widget: JBTerm
   return LinkResultItem(item.highlightStartOffset, item.highlightEndOffset, convertInfo(info, project, widget))
 }
 
-private fun convertInfo(info: HyperlinkInfo, project: Project, widget: JBTerminalWidget): LinkInfo {
+internal fun convertInfo(info: HyperlinkInfo, project: Project, widget: JBTerminalWidget): LinkInfo {
   val builder = LinkInfoEx.Builder().setNavigateCallback(Runnable {
     WriteIntentReadAction.run {
       info.navigate(project)
