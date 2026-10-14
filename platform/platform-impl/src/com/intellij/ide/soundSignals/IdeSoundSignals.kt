@@ -21,42 +21,22 @@ object IdeSoundSignals {
   val FOLDING_GROUP: SoundSignalGroup = SoundSignalGroup(IdeBundle.messagePointer("sound.signal.group.folding"))
 
   @JvmField
-  val PROGRESS_GROUP: SoundSignalGroup = SoundSignalGroup(IdeBundle.messagePointer("sound.signal.group.progress"), collapsed = true)
-
-  @JvmField
   val BUILD_FINISHED: SoundSignal = SoundSignal(
     "build.finished", IdeBundle.messagePointer("sound.signal.build.finished"),
-    IdeSounds.NOTIFICATION_INFO, OWNER, 30, EVENTS_GROUP,
+    IdeSounds.NOTIFICATION_SOUNDS, OWNER, 30, EVENTS_GROUP,
   )
 
   @JvmField
   val TEST_RESULTS: SoundSignal = SoundSignal(
     "test.results", IdeBundle.messagePointer("sound.signal.test.results"),
-    IdeSounds.NOTIFICATION_INFO, OWNER, 40, EVENTS_GROUP,
+    IdeSounds.NOTIFICATION_SOUNDS, OWNER, 40, EVENTS_GROUP,
   )
 
   @JvmField
-  val PROGRESS_INDETERMINATE: SoundSignal = SoundSignal(
-    "progress.indeterminate", IdeBundle.messagePointer("sound.signal.progress.indeterminate"),
-    IdeSounds.PROGRESS_INDETERMINATE, OWNER, 70, PROGRESS_GROUP,
-  )
-
-  @JvmField
-  val PROGRESS_DETERMINATE_STAGE_1: SoundSignal = SoundSignal(
-    "progress.determinate.stage.1", IdeBundle.messagePointer("sound.signal.progress.determinate.stage.1"),
-    IdeSounds.PROGRESS_DETERMINATE_STAGE_1, OWNER, 71, PROGRESS_GROUP,
-  )
-
-  @JvmField
-  val PROGRESS_DETERMINATE_STAGE_2: SoundSignal = SoundSignal(
-    "progress.determinate.stage.2", IdeBundle.messagePointer("sound.signal.progress.determinate.stage.2"),
-    IdeSounds.PROGRESS_DETERMINATE_STAGE_2, OWNER, 72, PROGRESS_GROUP,
-  )
-
-  @JvmField
-  val PROGRESS_DETERMINATE_STAGE_3: SoundSignal = SoundSignal(
-    "progress.determinate.stage.3", IdeBundle.messagePointer("sound.signal.progress.determinate.stage.3"),
-    IdeSounds.PROGRESS_DETERMINATE_STAGE_3, OWNER, 73, PROGRESS_GROUP,
+  val PROGRESS: SoundSignal = SoundSignal(
+    "progress", IdeBundle.messagePointer("sound.signal.progress"),
+    listOf(IdeSounds.PROGRESS_INDETERMINATE, IdeSounds.PROGRESS_DETERMINATE_STAGE_1, IdeSounds.PROGRESS_DETERMINATE_STAGE_2, IdeSounds.PROGRESS_DETERMINATE_STAGE_3),
+    OWNER, 70, preview = listOf(IdeSounds.PROGRESS_INDETERMINATE),
   )
 
   @JvmField
@@ -99,6 +79,6 @@ object IdeSoundSignals {
 @ApiStatus.Internal
 class IdeSoundSignalProvider : SoundSignalProvider {
   override val soundSignals: List<SoundSignal> = with(IdeSoundSignals) {
-    listOf(BUILD_FINISHED, TEST_RESULTS, PROGRESS_INDETERMINATE, PROGRESS_DETERMINATE_STAGE_1, PROGRESS_DETERMINATE_STAGE_2, PROGRESS_DETERMINATE_STAGE_3, ERROR_LINE, ERROR_CARET, WARNING_LINE, WARNING_CARET, FOLDED_LINE, FOLDED_CARET)
+    listOf(BUILD_FINISHED, TEST_RESULTS, PROGRESS, ERROR_LINE, ERROR_CARET, WARNING_LINE, WARNING_CARET, FOLDED_LINE, FOLDED_CARET)
   }
 }

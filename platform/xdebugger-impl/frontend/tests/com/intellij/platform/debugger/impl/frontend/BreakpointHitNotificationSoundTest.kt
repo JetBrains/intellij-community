@@ -17,6 +17,7 @@ class BreakpointHitNotificationSoundTest {
     val sound = checkNotNull(ep.sound)
     val stream = checkNotNull(loader.getResourceAsStream(sound)) { sound }
     assertNotEquals(-1, stream.use { it.read() })
+    assertEquals(DebuggerSoundSignals.BREAKPOINT_HIT.sounds, listOf(sound))
   }
 
   @Test

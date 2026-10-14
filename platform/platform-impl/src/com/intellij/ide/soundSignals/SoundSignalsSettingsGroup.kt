@@ -28,8 +28,7 @@ internal fun Panel.soundSignalsGroup(screenReaderSupportCheckbox: JCheckBox) {
       val topGap = if (index == 0) SIGNAL_ROW_GAP else SIGNAL_ROW_GAP + SIGNAL_SECTION_GAP
       val group = signal.group
       when {
-        group == null -> signalCheckBox(signal.title, listOf(signal), pending, topGap)
-        group.collapsed -> signalCheckBox(group.title, signals.filter { it.group === group }, pending, topGap)
+        group == null -> signalCheckBox(signal, pending, topGap)
         else -> groupCheckBoxes(group, signals.filter { it.group === group }, pending, topGap)
       }
     }
@@ -63,7 +62,7 @@ private fun Panel.groupCheckBoxes(group: SoundSignalGroup, signals: List<SoundSi
   }.customize(UnscaledGapsY(top = topGap))
   indent {
     children = signals.map { signal ->
-      signalCheckBox(signal.title, listOf(signal), pending, accessibleGroup = group)
+      signalCheckBox(signal, pending, accessibleGroup = group)
     }
   }
   fun updateGroupState() {
@@ -79,37 +78,34 @@ private fun Panel.groupCheckBoxes(group: SoundSignalGroup, signals: List<SoundSi
   }
 }
 
-/** Previews only the first of [signals]. */
 private fun Panel.signalCheckBox(
-  title: @Nls String,
-  signals: List<SoundSignal>,
+  signal: SoundSignal,
   pending: PendingSoundSignals,
   topGap: Int = SIGNAL_ROW_GAP,
   accessibleGroup: SoundSignalGroup? = null,
 ): JBCheckBox {
   val player = SoundSignalPlayer.getInstance()
-  val previewSignal = signals.first()
   lateinit var checkBox: JBCheckBox
   row {
-    checkBox = checkBox(title)
+    checkBox = checkBox(signal.title)
       .apply {
         accessibleGroup?.let { accessibleDescription(IdeBundle.message("sound.signals.group.member.accessible.description", it.title)) }
       }
       .actionListener { _, component ->
-        pending.choose(signals.associate { it.id to component.isSelected })
-        player.preview(previewSignal)
+        pending.choose(mapOf(signal.id to component.isSelected))
+        player.preview(signal)
       }
       .applyToComponent {
         whenFocusGained { e ->
           when (e.cause) {
-            FocusEvent.Cause.TRAVERSAL_FORWARD, FocusEvent.Cause.TRAVERSAL_BACKWARD -> player.preview(previewSignal)
+            FocusEvent.Cause.TRAVERSAL_FORWARD, FocusEvent.Cause.TRAVERSAL_BACKWARD -> player.preview(signal)
             else -> {}
           }
         }
       }
       .component
   }.customize(UnscaledGapsY(top = topGap))
-  pending.view { policy -> checkBox.isSelected = signals.all { policy.isSignalOn(it.id) } }
+  pending.view { policy -> checkBox.isSelected = policy.isSignalOn(signal.id) }
   return checkBox
 }
 
