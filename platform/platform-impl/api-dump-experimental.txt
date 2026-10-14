@@ -342,6 +342,20 @@ a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - *:requestOpenTextEditor(com.intellij.openapi.fileEditor.OpenFileDescriptor,com.intellij.openapi.fileEditor.FileEditorOpenRequest):java.util.concurrent.CompletableFuture
 a:com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 - *a:reallyExcludeCurrentCommandAsNavigation():V
+*f:com.intellij.openapi.fileEditor.ex.PlaceInfo
+- f:getCaretPosition():com.intellij.openapi.editor.RangeMarker
+- f:getEditorTypeId():java.lang.String
+- f:getFile():com.intellij.openapi.vfs.VirtualFile
+- f:getNavigationState():com.intellij.openapi.fileEditor.FileEditorState
+- f:getTimeStamp():J
+- f:getWindow():com.intellij.openapi.fileEditor.impl.EditorWindow
+- f:isPreviewTab():Z
+*:com.intellij.openapi.fileEditor.ex.RecentPlacesListener
+- *sf:Companion:com.intellij.openapi.fileEditor.ex.RecentPlacesListener$Companion
+- sf:TOPIC:com.intellij.util.messages.Topic
+- recentPlaceAdded(com.intellij.openapi.fileEditor.ex.PlaceInfo,Z,java.lang.Object):V
+- recentPlaceRemoved(com.intellij.openapi.fileEditor.ex.PlaceInfo,Z):V
+*f:com.intellij.openapi.fileEditor.ex.RecentPlacesListener$Companion
 f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.DumbAware
