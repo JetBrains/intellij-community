@@ -55,7 +55,7 @@ public final class PyElementKnownDecorators {
   }
 
   /**
-   * Returns the known decorator with [trait] that is nearest the decorated element, or null when none carries it.
+   * Returns the known decorator with {@code trait} that is nearest the decorated element, or null when none carries it.
    * The decorator nearest the element is applied first and the others wrap it, so it decides.
    */
   public @Nullable PyKnownDecorator findLastWithTrait(@NotNull Predicate<PyKnownDecorator> trait) {

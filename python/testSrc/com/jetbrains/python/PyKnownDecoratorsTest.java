@@ -36,9 +36,8 @@ public class PyKnownDecoratorsTest extends PyTestCase {
 
   // Two decorators with one short name and a shared first component: `from faketyping import fakefinal`
   // matches neither fully qualified name, so the short-name fallback yields both as candidates.
-  // setDeclaredTypeApplied / isDeclaredTypeApplied are renamed to setTypedResult / hasTypedResult in Task 3.
   private static final PyKnownDecorator FAKE_FINAL_TYPED =
-    new PyKnownDecorator.Builder("faketyping.a.fakefinal").setDeclaredTypeApplied().build();
+    new PyKnownDecorator.Builder("faketyping.a.fakefinal").setAbstract().build();
   private static final PyKnownDecorator FAKE_FINAL_PLAIN =
     new PyKnownDecorator.Builder("faketyping.b.fakefinal").build();
   // Matches the short name of a property accessor, so only the accessor guard keeps `@x.setter` from being known.
@@ -92,7 +91,7 @@ public class PyKnownDecoratorsTest extends PyTestCase {
     assertTrue("The resolve is ambiguous, so both candidates are expected", candidates.contains(FAKE_FINAL_TYPED));
     assertTrue(candidates.contains(FAKE_FINAL_PLAIN));
     assertTrue("A trait holds when it holds for any candidate, not for all of them",
-               candidates.hasTrait(PyKnownDecorator::isDeclaredTypeApplied));
+               candidates.hasTrait(PyKnownDecorator::isAbstract));
   }
 
   public void testDecoratorWithoutQualifiedNameIsNotKnown() {
@@ -103,8 +102,8 @@ public class PyKnownDecoratorsTest extends PyTestCase {
     PyKnownDecorators candidates = PyKnownDecoratorUtil.knownDecoratorsOf(decorator, stubOnlyContext());
 
     assertFalse(candidates.isKnown());
-    assertFalse(candidates.hasTrait(PyKnownDecorator::isDeclaredTypeApplied));
-    assertNull(candidates.findWithTrait(PyKnownDecorator::isDeclaredTypeApplied));
+    assertFalse(candidates.hasTrait(PyKnownDecorator::isAbstract));
+    assertNull(candidates.findWithTrait(PyKnownDecorator::isAbstract));
   }
 
   // Resolving a property accessor would recurse back into property resolution, so these are never known.

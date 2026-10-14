@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKnownDecorators;
 import com.jetbrains.python.psi.PyKnownDecoratorUtil;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyTypedElement;
@@ -70,7 +71,7 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
     // are skipped too.
     for (int i = decorators.length - 1; i >= 0; i--) {
       PyDecorator decorator = decorators[i];
-      if (!PyKnownDecoratorUtil.asKnownDecorators(decorator, context).isEmpty()) continue;
+      if (PyKnownDecoratorUtil.knownDecoratorsOf(decorator, context).isKnown()) continue;
 
       List<PyCallableParameter> expectedParams = getExpectedFunctionParameters(decorator, context);
       if (expectedParams == null) continue;
@@ -196,9 +197,10 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
   private static boolean isTransparentDecorator(@NotNull PyDecoratable decorated,
                                                 @NotNull PyDecorator decorator,
                                                 @NotNull TypeEvalContext context) {
-    return !PyKnownDecoratorUtil.asKnownDecorators(decorator, context).isEmpty()
-           || isUntypedDecorator(decorator, context)
-           || decorated instanceof PyClass && PyDataclassTransformResolverKt.isDataclassTransform(decorator, context);
+    PyKnownDecorators knownDecorators = PyKnownDecoratorUtil.knownDecoratorsOf(decorator, context);
+    if (knownDecorators.isKnown()) return true;
+    if (isUntypedDecorator(decorator, context)) return true;
+    return decorated instanceof PyClass && PyDataclassTransformResolverKt.isDataclassTransform(decorator, context);
   }
 
   private static boolean isUntypedDecorator(@NotNull PyDecorator decorator, @NotNull TypeEvalContext context) {
