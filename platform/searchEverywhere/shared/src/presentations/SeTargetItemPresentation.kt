@@ -206,8 +206,8 @@ data class SeTargetItemPresentationImpl(
 
 /** Returns true when Search Everywhere draws the presentable text of this presentation with a strikethrough. */
 @ApiStatus.Internal
-fun TargetPresentation.isPresentableTextStrikethrough(): Boolean =
-  presentableTextAttributes?.let { attrs ->
-    SimpleTextAttributes.fromTextAttributes(attrs).isStrikeout ||
-    attrs.additionalEffects?.contains(EffectType.STRIKEOUT) == true
-  } == true
+fun TargetPresentation.isPresentableTextStrikethrough(): Boolean {
+  val attrs = presentableTextAttributes ?: return false
+  return SimpleTextAttributes.fromTextAttributes(attrs).isStrikeout ||
+         attrs.additionalEffects?.contains(EffectType.STRIKEOUT) == true
+}
