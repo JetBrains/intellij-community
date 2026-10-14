@@ -77,7 +77,8 @@ Remote development extends these rules with side aggregation and action routing.
     `a core content module reports the disabled root instead of IDEA CORE`
   )
 
-- For chains without disabled roots or product mode exclusions, the explanation refers to the first required plugin outside the affected plugin.
+- Missing modules retain their terminal explanation through required plugins and modules, including core modules.
+- Other chains without disabled roots or product mode exclusions refer to the first required plugin outside the affected plugin.
 
 - For a chain within one plugin, analysis uses the terminal exclusion when it has a supported explanation.
 - Without a cross-plugin boundary, an unresolved plugin dependency uses the installation message only when no known provider exists.
@@ -86,7 +87,7 @@ Remote development extends these rules with side aggregation and action routing.
 - Several excluded providers for one ID or alias use the first excluded provider's name and owner ID.
 - Dependency explanations retain aliases from superseded bundled plugins when their updates omit those aliases.
 - An excluded content module alias uses its plugin owner's name and ID.
-- An unresolved content module without a cross-plugin boundary uses an unavailable module explanation, not a plugin installation message.
+- An unresolved content module uses an unavailable module explanation, not a plugin installation message.
 - The explanation retains the module ID and namespace. It offers no Enable target.
 - An invisible dependency without a cross-plugin boundary still uses a plugin installation message with its owner's ID.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingDependencyProblemTest.kt (
@@ -104,7 +105,10 @@ Remote development extends these rules with side aggregation and action routing.
     `a missing module retains its explicit namespace`;
     `a required module keeps its missing dependency explanation`;
     `an invisible module uses its owner in the installation message`;
-    `a failed core module uses IDEA CORE as a failed plugin`
+    `a failed core module reports its missing module`;
+    `a missing module remains the explanation through intermediate plugins`;
+    `a required module retains a missing module across a plugin boundary`;
+    `a missing plugin across a plugin boundary still names the failed dependency`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingProblemTest.kt (
     `module dependency data retains its namespace`
@@ -142,6 +146,9 @@ Untested: Focused analysis tests do not cover all terminal mappings or optional 
   )
 
 - An unavailable optional module alone must not produce a loading problem for its loaded plugin or dependents.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingDependencyProblemTest.kt (
+    `an optional module with a missing dependency does not exclude its owner`
+  )
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
     `an optional product mode module does not produce a loading problem`
   )
@@ -329,6 +336,9 @@ Untested: No focused test covers the complete Ultimate restriction in details or
 
 - A state request after plugin set replacement must use the replacement set.
 - When a dependency and its affected plugin load, the new state must contain neither their obsolete problems nor their recovery targets.
+  [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingDependencyProblemTest.kt (
+    `a missing module problem clears when its provider becomes available`
+  )
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginManagerStateServiceTest.kt (
     `loading error is cleared when disabled dependency and dependent are loaded`;
     `transitive disabled dependency reports the disabled root`;

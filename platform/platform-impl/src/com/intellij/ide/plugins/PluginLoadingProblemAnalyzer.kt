@@ -266,7 +266,10 @@ internal object PluginLoadingProblemAnalyzer {
             )
           }
           is ExcludedByEnvironmentConfiguration -> processRootCause(rootCause)
-          is DependencyIsNotResolved,
+          is DependencyIsNotResolved -> when (rootCause.dependency) {
+            is DependencyRef.ContentModule -> processRootCause(rootCause)
+            is DependencyRef.Plugin -> registerFailedDependency(excludedRequiredDescriptor)
+          }
           is DependencyIsNotVisible,
           is IncompatibleWithAnotherModule,
           is OnDemandContentModuleHasNoDependentsLeft,

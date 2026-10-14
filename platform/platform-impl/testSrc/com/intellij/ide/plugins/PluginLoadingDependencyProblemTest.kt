@@ -306,7 +306,7 @@ internal class PluginLoadingDependencyProblemTest {
 
   @Test
   @TestFor(issues = ["IJPL-246315"])
-  fun `a failed core module uses IDEA CORE as a failed plugin`() {
+  fun `a failed core module reports its missing module`() {
     val pluginSet = buildPluginSet(
       plugin(PluginManagerCore.CORE_PLUGIN_ID) {
         name = "IDEA CORE"
@@ -323,8 +323,118 @@ internal class PluginLoadingDependencyProblemTest {
       },
     )
 
-    val problem = assertDependencyProblem(pluginSet, "failed.to.load", "IDEA CORE")
-    assertThat(problem.dependency).isEqualTo(DependencyRef.ContentModule(PluginModuleId("core.bridge", "jetbrains")))
+    val problem = assertDependencyProblem(pluginSet, "unavailable", "missing.module", dependencyType = "module")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.ContentModule(PluginModuleId("missing.module", "jetbrains")))
+    assertThat(problem.dependencyPluginId).isNull()
+  }
+
+  @Test
+  fun `a missing module remains the explanation through intermediate plugins`() {
+    val pluginSet = buildPluginSet(
+      plugin("root") {
+        name = "Root"
+        dependencies { module("missing.module") }
+      },
+      plugin("intermediate") {
+        name = "Intermediate"
+        depends("root")
+      },
+      plugin("affected") {
+        name = "Affected"
+        depends("intermediate")
+      },
+    )
+
+    val problem = assertDependencyProblem(pluginSet, "unavailable", "missing.module", dependencyType = "module")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.ContentModule(PluginModuleId("missing.module", "jetbrains")))
+    assertThat(problem.dependencyPluginId).isNull()
+  }
+
+  @Test
+  fun `a required module retains a missing module across a plugin boundary`() {
+    val pluginSet = buildPluginSet(
+      plugin("dependency") {
+        name = "Dependency"
+        dependencies { module("missing.module", namespace = "vendor") }
+      },
+      plugin("affected") {
+        name = "Affected"
+        content(namespace = "jetbrains") {
+          module("affected.required", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+            dependencies { plugin("dependency") }
+          }
+        }
+      },
+    )
+
+    val problem = assertDependencyProblem(pluginSet, "unavailable", "missing.module", dependencyType = "module")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.ContentModule(PluginModuleId("missing.module", "vendor")))
+    assertThat(problem.dependencyPluginId).isNull()
+  }
+
+  @Test
+  fun `a missing plugin across a plugin boundary still names the failed dependency`() {
+    val pluginSet = buildPluginSet(
+      plugin("dependency") {
+        name = "Dependency"
+        depends("missing")
+      },
+      plugin("affected") {
+        name = "Affected"
+        depends("dependency")
+      },
+    )
+
+    val problem = assertDependencyProblem(pluginSet, "failed.to.load", "Dependency")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginId.getId("dependency")))
+    assertThat(problem.dependencyPluginId).isEqualTo(PluginId.getId("dependency"))
+  }
+
+  @Test
+  fun `an optional module with a missing dependency does not exclude its owner`() {
+    val pluginSet = buildPluginSet(plugin("affected") {
+      name = "Affected"
+      content(namespace = "jetbrains") {
+        module("affected.optional") {
+          dependencies { module("missing.module") }
+        }
+      }
+    })
+
+    assertThat(pluginSet.enabledPlugins.map { it.pluginId }).contains(PluginId.getId("affected"))
+    val state = PluginManagerStateService().calculateState(
+      pluginSet, PluginLoadingErrorReportingPolicy(PluginLoadingErrorLogLevel.INFO, reportToUser = true),
+    )
+    assertThat(state.pluginNonLoadReasons).isEmpty()
+    assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).isEmpty()
+  }
+
+  @Test
+  fun `a missing module problem clears when its provider becomes available`() {
+    val pluginSet = buildPluginSet(plugin("affected") {
+      name = "Affected"
+      dependencies { module("missing.module") }
+    })
+    assertDependencyProblem(pluginSet, "unavailable", "missing.module", dependencyType = "module")
+
+    plugin("provider") {
+      content(namespace = "jetbrains") {
+        module("missing.module") {
+          moduleVisibility = ModuleVisibilityValue.PUBLIC
+        }
+      }
+    }.installAt(tempDir)
+    val replacement = buildPluginSet()
+    assertThat(replacement.enabledPlugins.map { it.pluginId }).contains(PluginId.getId("affected"), PluginId.getId("provider"))
+    val state = PluginManagerStateService().calculateState(
+      replacement, PluginLoadingErrorReportingPolicy(PluginLoadingErrorLogLevel.INFO, reportToUser = true),
+    )
+    assertThat(state.pluginNonLoadReasons).isEmpty()
+    assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
+    assertThat(state.pluginsToEnable).isEmpty()
+    assertThat(state.pluginsToDisable).isEmpty()
   }
 
   private fun assertDependencyProblem(
