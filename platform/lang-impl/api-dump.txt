@@ -3488,6 +3488,7 @@ a:com.intellij.ide.util.gotoByName.SimpleChooseByNameModel
 a:com.intellij.ide.util.projectWizard.AbstractNewProjectDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>():V
+- <init>(java.nio.file.Path):V
 a:com.intellij.ide.util.projectWizard.AbstractNewProjectStep
 - com.intellij.openapi.actionSystem.DefaultActionGroup
 - com.intellij.openapi.project.DumbAware
@@ -3516,6 +3517,7 @@ c:com.intellij.ide.util.projectWizard.ProjectSettingsStepBase
 - pf:createContentPanelWithAdvancedSettingsPanel():javax.swing.JPanel
 - p:createLocationComponent():com.intellij.openapi.ui.LabeledComponent
 - getActionButton():javax.swing.JButton
+- pf:getBaseDirectory():java.nio.file.Path
 - pf:getIcon():javax.swing.Icon
 - p:getPeer():com.intellij.platform.ProjectGeneratorPeer
 - getProjectGenerator():com.intellij.platform.DirectoryProjectGenerator
