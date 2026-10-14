@@ -18,6 +18,7 @@ internal object CodeFenceLanguageAliases {
   )
 
   private val aliases = setOf(
+    Entry("ASM", "asm", setOf("armasm")),
     Entry("go", "go", setOf("golang")),
     Entry("HCL", "hcl", setOf("hcl")),
     Entry("ApacheConfig", "apacheconf", setOf("aconf", "apache", "apacheconfig")),
