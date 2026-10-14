@@ -39,6 +39,7 @@ internal class GitLabMergeRequestBranchesViewModel(
   private val cs: CoroutineScope = parentCs.childScope(this::class)
 
   override val sourceBranch: StateFlow<String> = mergeRequest.details.mapState(cs, ::getSourceBranchName)
+  override val targetBranch: StateFlow<String> = mergeRequest.details.mapState(cs) { it.targetBranch }
 
   private fun getSourceBranchName(details: GitLabMergeRequestFullDetails): String {
     if (details.sourceProject == null) {

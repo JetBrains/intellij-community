@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface CodeReviewBranchesViewModel {
   val sourceBranch: StateFlow<String>
+  val targetBranch: StateFlow<String>
   val isCheckedOut: SharedFlow<Boolean>
 
   val showBranchesRequests: SharedFlow<CodeReviewBranches>

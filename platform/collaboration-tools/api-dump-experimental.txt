@@ -459,6 +459,7 @@
 - getCanShowInLog():Z
 - a:getShowBranchesRequests():kotlinx.coroutines.flow.SharedFlow
 - a:getSourceBranch():kotlinx.coroutines.flow.StateFlow
+- a:getTargetBranch():kotlinx.coroutines.flow.StateFlow
 - a:isCheckedOut():kotlinx.coroutines.flow.SharedFlow
 - a:showBranches():V
 *f:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeDetails

@@ -24,12 +24,16 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 
 object CodeReviewDetailsBranchComponentFactory {
+  /**
+   * Creates the label with the review target and source branches.
+   */
   fun create(
     scope: CoroutineScope,
     branchesVm: CodeReviewBranchesViewModel,
@@ -39,8 +43,11 @@ object CodeReviewDetailsBranchComponentFactory {
       override fun getMinimumSize(): Dimension = Dimension(0, preferredSize.height)
     }.apply {
       foreground = NamedColorUtil.getInactiveTextColor()
-      bindTextIn(scope, branchesVm.sourceBranch)
-      bindTooltipTextIn(scope, branchesVm.sourceBranch)
+      val branchesText = combine(branchesVm.targetBranch, branchesVm.sourceBranch) { target, source ->
+        CollaborationToolsBundle.message("review.details.branch.checkout.remote.ad.label", target, source)
+      }
+      bindTextIn(scope, branchesText)
+      bindTooltipTextIn(scope, branchesText)
     }
 
   fun createMoreActionsLink(

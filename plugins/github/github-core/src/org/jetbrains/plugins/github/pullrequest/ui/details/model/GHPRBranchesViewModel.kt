@@ -51,7 +51,7 @@ class GHPRBranchesViewModel internal constructor(
 
   private val gitRepository = mapping.remote.repository
 
-  private val targetBranch: StateFlow<String> = detailsState.mapState(cs) {
+  override val targetBranch: StateFlow<String> = detailsState.mapState(cs) {
     it.baseRefName
   }
 
