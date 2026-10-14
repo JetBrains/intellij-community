@@ -130,7 +130,7 @@ The platforms are `darwin-aarch64`, `darwin-x86_64`, `linux-aarch64`, `linux-x86
 - Every entry is stored without compression at the time 0, with no file attributes.
   [@test] ../crates/avl-guest/src/lane/package/tests.rs
 
-- The archive bytes are the bytes of the earlier Java packer for the same jar and the same `java`.
+- The archive bytes are the bytes that the packer of the test process writes for the same jar and the same `java`.
   [@test] ../crates/avl-guest/src/lane/package/tests.rs
 
 - A relative `java` path or an unreadable jar is refused with the code `lane_package_input`.
