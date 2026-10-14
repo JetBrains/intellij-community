@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ThrowableConvertor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -20,9 +21,12 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubConfusingException
 import org.jetbrains.plugins.github.exceptions.GithubJsonException
+import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -214,6 +218,20 @@ sealed class GithubApiRequestExecutor {
   @Service
   class Factory {
 
+    /**
+     * Create an executor which would lazily acquire the [account] access token before every call
+     *
+     * [execute] will throw a [GithubMissingTokenException] if the token is missing at the time of the request
+     * This is not a normal situation and should be handled by the caller
+     * (e.g. by offering to re-login - see [org.jetbrains.plugins.github.authentication.GHAccountsUtil]])
+     */
+    fun create(account: GithubAccount): GithubApiRequestExecutor {
+      return create(true, account.server) {
+        service<GHAccountManager>().findCredentials(account)
+        ?: throw GithubMissingTokenException(account)
+      }
+    }
+
     fun create(serverPath: GithubServerPath, token: String): GithubApiRequestExecutor = create(true, serverPath, token)
 
     internal fun create(tokenSupplier: MutableTokenSupplier): GithubApiRequestExecutor =
@@ -222,15 +240,23 @@ sealed class GithubApiRequestExecutor {
     fun create(useProxy: Boolean = true, serverPath: GithubServerPath, token: String): GithubApiRequestExecutor =
       create(useProxy, serverPath) { token }
 
-    private fun create(useProxy: Boolean = true, serverPath: GithubServerPath, tokenSupplier: () -> String?): GithubApiRequestExecutor {
-      val guardedSupplier = { url: URL ->
+    private fun create(
+      useProxy: Boolean = true,
+      serverPath: GithubServerPath,
+      tokenSupplier: suspend () -> String?,
+    ): GithubApiRequestExecutor {
+      val guardedSupplier = suspend { url: URL ->
         if (isAuthorizedUrl(serverPath, url)) tokenSupplier() else null
       }
       return if (Registry.`is`(JDK11_CLIENT_REGISTRY_KEY)) {
         GithubApiHelperRequestExecutor(useProxy, guardedSupplier)
       }
       else {
-        WithTokenAuth(GithubSettings.getInstance(), guardedSupplier, useProxy)
+        WithTokenAuth(GithubSettings.getInstance(), {
+          runBlockingCancellable {
+            guardedSupplier(it)
+          }
+        }, useProxy)
       }
     }
 
