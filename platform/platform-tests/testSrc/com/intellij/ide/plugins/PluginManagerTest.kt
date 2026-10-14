@@ -187,7 +187,6 @@ class PluginManagerTest {
         "+ intellij.platform.split",
       ),
       ProductMode.LIGHT_REMOTE to listOf(
-        "- intellij.cwm.plugin.common",
         "- intellij.platform.backend",
         "- intellij.platform.backend.split",
         "- intellij.platform.debugger",
@@ -202,7 +201,6 @@ class PluginManagerTest {
         "- intellij.rd.client",
       ),
       ProductMode.LIGHT_MONOLITH to listOf(
-        "- intellij.cwm.plugin.common",
         "- intellij.platform.backend",
         "- intellij.platform.backend.split",
         "- intellij.platform.debugger",
@@ -217,7 +215,6 @@ class PluginManagerTest {
         "- intellij.rd.client",
       ),
       ProductMode.LIGHT_WITH_RD_CONNECTION to listOf(
-        "- intellij.cwm.plugin.common",
         "- intellij.platform.backend",
         "- intellij.platform.backend.split",
         "- intellij.platform.debugger",

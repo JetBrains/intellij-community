@@ -26,7 +26,7 @@ object ProductModeEnvironmentModules {
       this["intellij.platform.frontend.split.baseline"] = mode.isFrontendProcess
       if (mode.isLight) {
         for (moduleName in listOf("intellij.platform.frontend.split", "intellij.platform.split", "intellij.platform.rpc",
-                                  "intellij.rd.client", "intellij.cwm.plugin.common")) {
+                                  "intellij.rd.client")) {
           this[moduleName] = false
         }
         this["intellij.platform.debugger"] = false
