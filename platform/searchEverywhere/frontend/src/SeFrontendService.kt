@@ -310,7 +310,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
           tabLoadingProperty.getValue()
         } ?: run {
           if (loadingTabId == tabId || loadingTabId in MAIN_TABS) {
-            SeLog.warn("Tab $tabId initialization took too long (> ${tabInitializationTimeoutMillis}ms), waiting it's initialization anyway")
+            SeLog.log(LIFE_CYCLE) { "Tab $tabId initialization took too long (> ${tabInitializationTimeoutMillis}ms), waiting it's initialization anyway" }
             // If we have to open this tab right after the popup is there, we wait until it gets initialized
             tabLoadingProperty.getValue()
           }
