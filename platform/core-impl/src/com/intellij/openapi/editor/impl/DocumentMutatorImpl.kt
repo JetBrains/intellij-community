@@ -97,7 +97,6 @@ internal abstract class DocumentMutatorImpl(
       newWholeText,
       newModStamp,
       true,
-      true,
     )
   }
 
@@ -112,7 +111,6 @@ internal abstract class DocumentMutatorImpl(
         0,
         newWholeText,
         DocumentModStamp.next(),
-        true,
         true,
       )
     }
@@ -145,7 +143,6 @@ internal abstract class DocumentMutatorImpl(
       replacement,
       DocumentModStamp.next(),
       false,
-      false,
     )
     replaceString(
       hostDocument,
@@ -155,7 +152,6 @@ internal abstract class DocumentMutatorImpl(
       dstOffset,
       "",
       DocumentModStamp.next(),
-      false,
       false,
     )
   }
@@ -167,7 +163,6 @@ internal abstract class DocumentMutatorImpl(
     moveOffset: Int,
     replaceString: CharSequence,
     newModStamp: Long,
-    wholeTextReplaced: Boolean,
   ) {
     replaceString(
       hostDocument,
@@ -177,7 +172,6 @@ internal abstract class DocumentMutatorImpl(
       moveOffset,
       replaceString,
       newModStamp,
-      wholeTextReplaced,
       false,
     )
   }
@@ -221,8 +215,7 @@ internal abstract class DocumentMutatorImpl(
     moveOffset: Int,
     s: CharSequence,
     newModStamp: Long,
-    wholeText: Boolean,
-    clearLineFlags: Boolean,
+    wholeTextReplaced: Boolean,
   ): DocumentSnapshot {
     assertBounds(snapshot, startOffset, endOffset)
     assertWriteAccess(hostDocument)
@@ -239,9 +232,8 @@ internal abstract class DocumentMutatorImpl(
       endOffset,
       moveOffset,
       s,
-      wholeText,
+      wholeTextReplaced,
       newModStamp,
-      clearLineFlags,
     )
     if (replacement.perform()) {
       return snapshot

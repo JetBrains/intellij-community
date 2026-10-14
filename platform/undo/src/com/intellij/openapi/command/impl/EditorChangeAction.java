@@ -60,7 +60,7 @@ final class EditorChangeAction extends BasicUndoableAction {
     try {
       CharSequence toString = CompressionUtil.uncompressStringRawBytes(to);
       int fromStringLength = toString.length() - toLength + fromLength;
-      document.replaceString(myOffset, myOffset + fromStringLength, myMoveOffset, toString, toTimeStamp, false);
+      document.replaceString(myOffset, myOffset + fromStringLength, myMoveOffset, toString, toTimeStamp);
     }
     finally {
       DocumentUndoProvider.finishDocumentUndo(document);

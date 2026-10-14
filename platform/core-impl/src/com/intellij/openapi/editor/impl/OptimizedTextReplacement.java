@@ -21,7 +21,6 @@ public final class OptimizedTextReplacement { // TODO: refactor me
   private final CharSequence initialNewFragment;
   private final boolean initialWholeTextReplaced;
   private final long newModStamp;
-  private final boolean clearLineFlags;
 
   private DocumentPatch patch;
   private int startOffset;
@@ -38,8 +37,7 @@ public final class OptimizedTextReplacement { // TODO: refactor me
     int initialMoveOffset,
     @NotNull CharSequence initialNewFragment,
     boolean initialWholeTextReplaced,
-    long newModStamp,
-    boolean clearLineFlags
+    long newModStamp
   ) {
     this.wholeText = wholeText;
     this.initialStartOffset = initialStartOffset;
@@ -47,7 +45,6 @@ public final class OptimizedTextReplacement { // TODO: refactor me
     this.initialNewFragment = initialNewFragment;
     this.initialWholeTextReplaced = initialWholeTextReplaced;
     this.newModStamp = newModStamp;
-    this.clearLineFlags = clearLineFlags;
 
     this.startOffset = initialStartOffset;
     this.endOffset = initialEndOffset;
@@ -94,7 +91,7 @@ public final class OptimizedTextReplacement { // TODO: refactor me
     }
     // the whole-text condition mirrors DocumentEventImpl.isWholeTextReplaced:
     // an empty document cannot have its "whole text replaced"
-    boolean patchClearLineFlags = clearLineFlags || (wholeTextReplaced && wholeText.length() != 0);
+    boolean patchClearLineFlags = initialWholeTextReplaced || (wholeTextReplaced && wholeText.length() != 0);
     // For a whole-text replacement reuse the original (untrimmed) sequence as the new text: prefix/suffix
     // trimming above only narrows the change event, it must not shrink the resulting document text.
     // The full-range check guards against a partial-range request abusing the whole-text flag.

@@ -19,7 +19,7 @@ public class OptimizedTextReplacementTest {
 
   @Test
   public void commonAffixIsNarrowedAndOriginRangeIsKept() {
-    OptimizedTextReplacement replacement = replacement("abcOLDxyz", 0, 9, "abcNEWxyz", false, false);
+    OptimizedTextReplacement replacement = replacement("abcOLDxyz", 0, 9, "abcNEWxyz", false);
     assertFalse(replacement.perform());
     DocumentPatch patch = replacement.getPatch();
     assertEquals(3, patch.startOffset());
@@ -35,7 +35,7 @@ public class OptimizedTextReplacementTest {
   @Test
   public void wholeTextReplacementReusesUntrimmedFragmentAsNewText() {
     ImmutableCharSequence fragment = CharArrayUtil.createImmutableCharSequence("abcNEWxyz");
-    OptimizedTextReplacement replacement = replacement("abcOLDxyz", 0, 9, fragment, true, false);
+    OptimizedTextReplacement replacement = replacement("abcOLDxyz", 0, 9, fragment, true);
     assertFalse(replacement.perform());
     DocumentPatch patch = replacement.getPatch();
     assertEquals(0, patch.startOffset());
@@ -54,7 +54,7 @@ public class OptimizedTextReplacementTest {
   public void wholeTextReplacementOpsCarryNoMoveOffset() {
     // The patch keeps the move offset of the narrowed event, but a replace is not half of a move.
     ImmutableCharSequence fragment = CharArrayUtil.createImmutableCharSequence("abcNEWxyz");
-    OptimizedTextReplacement replacement = replacement("abcOLDxyz", 0, 9, fragment, true, false);
+    OptimizedTextReplacement replacement = replacement("abcOLDxyz", 0, 9, fragment, true);
     assertFalse(replacement.perform());
     List<DocumentOp> ops = replacement.getPatch().ops();
     assertEquals(DocumentOp.deleteOp(0, 9), ops.get(0));
@@ -64,7 +64,7 @@ public class OptimizedTextReplacementTest {
   @Test
   public void partialRangeRequestWithWholeTextFlagFallsBackToNarrowedPatch() {
     ImmutableCharSequence fragment = CharArrayUtil.createImmutableCharSequence("NEW");
-    OptimizedTextReplacement replacement = replacement("abcOLDxyz", 3, 6, fragment, true, false);
+    OptimizedTextReplacement replacement = replacement("abcOLDxyz", 3, 6, fragment, true);
     assertFalse(replacement.perform());
     DocumentPatch patch = replacement.getPatch();
     // the fragment is not the whole text here, so it must not be widened to the full range
@@ -77,24 +77,25 @@ public class OptimizedTextReplacementTest {
   }
 
   @Test
-  public void rawClearLineFlagsAreMergedIntoPatch() {
-    OptimizedTextReplacement replacement = replacement("abcdef", 1, 3, "ZZ", false, true);
-    assertFalse(replacement.perform());
-    DocumentPatch patch = replacement.getPatch();
-    assertEquals(1, patch.startOffset());
-    assertEquals(3, patch.endOffset());
-    assertTrue(patch.clearLineFlags());
-  }
-
-  @Test
-  public void wholeTextReplacementOnEmptyDocumentDoesNotClearLineFlags() {
+  public void wholeTextReplacementOnEmptyDocumentClearsLineFlags() {
     ImmutableCharSequence fragment = CharArrayUtil.createImmutableCharSequence("abc");
-    OptimizedTextReplacement replacement = replacement("", 0, 0, fragment, true, false);
+    OptimizedTextReplacement replacement = replacement("", 0, 0, fragment, true);
     assertFalse(replacement.perform());
     DocumentPatch patch = replacement.getPatch();
     assertEquals(0, patch.startOffset());
     assertEquals(0, patch.endOffset());
     assertSame(fragment, patch.newFragment());
+    assertTrue(patch.clearLineFlags());
+  }
+
+  @Test
+  public void insertionIntoEmptyDocumentDoesNotClearLineFlags() {
+    OptimizedTextReplacement replacement = replacement("", 0, 0, "abc", false);
+    assertFalse(replacement.perform());
+    DocumentPatch patch = replacement.getPatch();
+    assertEquals(0, patch.startOffset());
+    assertEquals(0, patch.endOffset());
+    assertEquals("abc", patch.newFragment().toString());
     assertFalse(patch.clearLineFlags());
   }
 
@@ -107,8 +108,7 @@ public class OptimizedTextReplacementTest {
       /* initialMoveOffset = */ 4,
       "cd",
       false,
-      MOD_STAMP,
-      false
+      MOD_STAMP
     );
     assertFalse(replacement.perform());
     DocumentPatch patch = replacement.getPatch();
@@ -121,7 +121,7 @@ public class OptimizedTextReplacementTest {
 
   @Test
   public void replacementWithSameContentIsNoOp() {
-    OptimizedTextReplacement replacement = replacement("abcdef", 2, 4, "cd", false, false);
+    OptimizedTextReplacement replacement = replacement("abcdef", 2, 4, "cd", false);
     assertTrue(replacement.perform());
   }
 
@@ -130,8 +130,7 @@ public class OptimizedTextReplacementTest {
     int startOffset,
     int endOffset,
     CharSequence newFragment,
-    boolean wholeTextReplaced,
-    boolean clearLineFlags
+    boolean wholeTextReplaced
   ) {
     return new OptimizedTextReplacement(
       CharArrayUtil.createImmutableCharSequence(wholeText),
@@ -140,8 +139,7 @@ public class OptimizedTextReplacementTest {
       startOffset,
       newFragment,
       wholeTextReplaced,
-      MOD_STAMP,
-      clearLineFlags
+      MOD_STAMP
     );
   }
 }

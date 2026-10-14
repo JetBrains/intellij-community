@@ -166,7 +166,7 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
 
   @Override
   public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
-    replaceString(startOffset, endOffset, startOffset, s, DocumentModStamp.next(), false);
+    replaceString(startOffset, endOffset, startOffset, s, DocumentModStamp.next());
   }
 
   @Override
@@ -403,9 +403,8 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
                             int endOffset,
                             int moveOffset,
                             @NotNull CharSequence s,
-                            long newModificationStamp,
-                            boolean wholeTextReplaced) {
-    impl.mutator().replaceString(hostDocument(), startOffset, endOffset, moveOffset, s, newModificationStamp, wholeTextReplaced);
+                            long newModificationStamp) {
+    impl.mutator().replaceString(hostDocument(), startOffset, endOffset, moveOffset, s, newModificationStamp);
   }
 
   /**

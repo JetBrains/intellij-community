@@ -363,11 +363,11 @@ class DocBranchMoveTest {
     val stamp = document.modificationStamp + 1
     when (op) {
       is DocumentOp.Insert -> {
-        document.replaceString(start, start, op.moveOffset(), op.fragment(), stamp, false)
+        document.replaceString(start, start, op.moveOffset(), op.fragment(), stamp)
       }
       is DocumentOp.Delete -> {
         val end = start + op.length()
-        document.replaceString(start, end, op.moveOffset(), "", stamp, false)
+        document.replaceString(start, end, op.moveOffset(), "", stamp)
       }
     }
   }
