@@ -82,6 +82,7 @@ import org.jetbrains.kotlin.test.util.multiRootProjectLibrary
 import org.jetbrains.kotlin.test.util.projectLibrary
 import org.junit.Assert
 import java.io.File
+import java.nio.file.Files
 import kotlin.io.path.readBytes
 
 class KotlinProjectStructureTest : AbstractMultiModuleTest() {
@@ -256,13 +257,10 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
 
         // Create the library module and its content scope while the jar directory is still empty.
         val initialLibraryModule = library.toKaModule()
-        assertTrue(initialLibraryModule.binaryRoots.isEmpty())
+        assertTrue(initialLibraryModule.binaryVirtualFiles.isEmpty())
         assertNotNull(initialLibraryModule.contentScope)
 
-        runWriteAction {
-            jarDirectory.createChildData(this, "kotlin-reflect.jar").setBinaryContent(TestKotlinArtifacts.kotlinReflect.readBytes())
-        }
-        IndexingTestUtil.waitUntilIndexesAreReady(project)
+        addJarToJarDirectoryOnDisk(jarDirectory)
 
         val classFile = getFile("KProperties.class", LibraryScope(project, library))
         assertTrue(
@@ -280,6 +278,54 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         assertEquals(libraryName, libraryModuleForFile.libraryName)
 
         assertKotlinClassFoundFromJava(module)
+    }
+
+    fun `test module library with jar removed from jar directory later`() {
+        val jarDirectory = directoryContent {
+            file("kotlin-reflect.jar", TestKotlinArtifacts.kotlinReflect.readBytes())
+        }.generateInVirtualTempDir()
+
+        val module = createModule("a")
+        val library = moduleLibrary(module, libraryName = "jar_directory_library")
+        runWriteAction {
+            with(library.modifiableModel) {
+                addJarDirectory(jarDirectory, /* recursive = */ false, OrderRootType.CLASSES)
+                commit()
+            }
+        }
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+        // Create the library module and its content scope while the jar is still present.
+        val classFile = getFile("KProperties.class", LibraryScope(project, library))
+        val initialLibraryModule = library.toKaModule()
+        assertTrue(classFile.virtualFile in initialLibraryModule.contentScope)
+
+        Files.delete(jarDirectory.toNioPath().resolve("kotlin-reflect.jar"))
+        refreshJarDirectory(jarDirectory)
+
+        assertTrue(
+            "The binary roots of the library module must not contain a jar which has been removed from the jar directory",
+            library.toKaModule().binaryVirtualFiles.isEmpty(),
+        )
+    }
+
+    /**
+     * Copies a jar into [jarDirectory] *on disk* and makes it visible via a VFS refresh, like a jar produced by an external build system.
+     *
+     * The jar must not be created through the VFS API: writing its content would additionally publish a content change event for a `.jar`
+     * file, which makes `FirIdeModuleStateModificationService.LibraryUpdatesListener` invalidate all cached `KaLibraryModule`s on its own,
+     * and the test would pass without covering jar directories at all. A jar which merely *appears* in the directory publishes no content
+     * change event. The cached modules are invalidated by the `rootsChanged` event which `RootsChangeWatcher` fires after the VFS change,
+     * because the platform recomputes the file sets of a jar directory out of band (see `NonExistingWorkspaceRootsRegistry`).
+     */
+    private fun addJarToJarDirectoryOnDisk(jarDirectory: VirtualFile) {
+        Files.copy(TestKotlinArtifacts.kotlinReflect, jarDirectory.toNioPath().resolve("kotlin-reflect.jar"))
+        refreshJarDirectory(jarDirectory)
+    }
+
+    private fun refreshJarDirectory(jarDirectory: VirtualFile) {
+        VfsUtil.markDirtyAndRefresh(/* async = */ false, /* recursive = */ true, /* reloadChildren = */ true, jarDirectory)
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
     }
 
     /**

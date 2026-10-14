@@ -30,6 +30,8 @@ abstract class KaLibraryEntityBasedLibraryModuleBase : KaEntityBasedLibraryModul
     /**
      * Returns the roots of [rootType]. A jar directory root gives the roots of the archives in the directory.
      * This matches [com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor].
+     *
+     * The result is deduplicated, as the same archive may be reachable both as a jar directory entry and as a root of its own.
      */
     internal fun computeRoots(rootType: LibraryRootTypeId): List<VirtualFile> {
         return entity.roots
@@ -42,6 +44,7 @@ abstract class KaLibraryEntityBasedLibraryModuleBase : KaEntityBasedLibraryModul
                     LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY -> collectArchiveRootsRecursively(file)
                 }
             }
+            .distinct()
     }
 }
 
