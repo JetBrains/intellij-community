@@ -166,7 +166,7 @@ internal class LegacyPluginRowFactoryTest {
             assertThat(row.component.isNotFreeInFreeMode()).isEqualTo(restricted)
             val errors = componentsOfType(row.component, JEditorPane::class.java).filter { it.text.contains("Loading problem") }
             assertThat(errors).hasSize(if (restricted) 0 else 1)
-            val hints = componentsOfType(row.component, JLabel::class.java).filter { it.icon == AllIcons.General.Information && it.isVisible }
+            val hints = componentsOfType(row.component, JLabel::class.java).filter { it.icon == AllIcons.General.Note && it.isVisible }
             assertThat(hints).hasSize(if (restricted) 0 else 1)
           }
         }
@@ -341,7 +341,7 @@ internal class LegacyPluginRowFactoryTest {
             factory.rowsRendered(listOf(binding))
             val row = (binding.row as LegacyPluginRow).component
             val toggle = componentsOfType(row, OnOffButton::class.java).single()
-            val hint = componentsOfType(row, JLabel::class.java).single { it.icon == AllIcons.General.Information }
+            val hint = componentsOfType(row, JLabel::class.java).single { it.icon == AllIcons.General.Note }
             assertThat(toggle.isSelected).isTrue()
             assertThat(toggle.isEnabled).isTrue()
             assertThat(hint.isVisible).isTrue()
@@ -399,7 +399,7 @@ internal class LegacyPluginRowFactoryTest {
         val specification = factory.specification(section, item)
         (factory.createRow(specification.occurrenceId, item, specification.renderKey) as LegacyPluginRow).use { row ->
           row.renderInput(input)
-          val hint = componentsOfType(row.component, JLabel::class.java).single { it.icon == AllIcons.General.Information }
+          val hint = componentsOfType(row.component, JLabel::class.java).single { it.icon == AllIcons.General.Note }
           assertThat(hint.isVisible).isTrue()
           assertThat(hint.toolTipText).contains("Client: Light mode is not supported.")
           val error = componentsOfType(row.component, JEditorPane::class.java).single()
@@ -567,7 +567,7 @@ internal class LegacyPluginRowFactoryTest {
             val binding = reconciler.reconcile(listOf(factory.specification(section, item))).single()
             factory.rowsRendered(listOf(binding))
             val row = (binding.row as LegacyPluginRow).component
-            val icon = componentsOfType(row, JLabel::class.java).single { it.icon != null && it.icon != AllIcons.General.Information }
+            val icon = componentsOfType(row, JLabel::class.java).single { it.icon != null && it.icon != AllIcons.General.Note }
             val normalWidth = icon.icon.iconWidth
 
             row.updateErrors(listOf(HtmlChunk.text("Broken plugin")))
@@ -614,7 +614,7 @@ internal class LegacyPluginRowFactoryTest {
           component.doLayout()
           val button = checkNotNull(component.myInstallButton)
           val title = componentsOfType(component, JBLabel::class.java).single { it.text == model.name }
-          val icon = component.components.filterIsInstance<JLabel>().single { it.icon != null && it.icon != AllIcons.General.Information }
+          val icon = component.components.filterIsInstance<JLabel>().single { it.icon != null && it.icon != AllIcons.General.Note }
           val vendor = componentsOfType(component, JLabel::class.java).single { it.text == "JetBrains" }
           val metadataPanel = vendor.parent
 

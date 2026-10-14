@@ -282,7 +282,7 @@ class ListPluginComponent private constructor(
   @JvmField
   var myUpdateButton: JButton? = null
   private var myEnableDisableButton: JToggleButton? = null
-  private val myLoadingProblemHint = JBLabel(AllIcons.General.Information).apply {
+  private val myLoadingProblemHint = JBLabel(AllIcons.General.Note).apply {
     isVisible = false
     isFocusable = false
   }

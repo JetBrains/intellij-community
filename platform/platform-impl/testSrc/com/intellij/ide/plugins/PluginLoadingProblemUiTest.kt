@@ -219,5 +219,5 @@ internal class PluginLoadingProblemUiTest {
   }
 
   private fun hints(component: Component): List<JLabel> =
-    UIUtil.uiTraverser(component).filter(JLabel::class.java).filter { it.icon == AllIcons.General.Information }.toList()
+    UIUtil.uiTraverser(component).filter(JLabel::class.java).filter { it.icon == AllIcons.General.Note }.toList()
 }
