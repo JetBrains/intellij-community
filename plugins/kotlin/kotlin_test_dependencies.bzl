@@ -10,7 +10,7 @@ kotlincRepositoryUrl = "https://cache-redirector.jetbrains.com/packages.jetbrain
 jpsPluginRepositoryUrl = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies"
 
 kotlinCompilerCliVersion = "2.5.20-dev-335"
-kotlincKotlinJpsPluginTestsVersion = "2.4.10"
+kotlincKotlinJpsPluginTestsVersion = "2.4.20"
 
 download_file(
     name = "kotlinx-serialization-core-1.7.1.jar",
@@ -213,7 +213,7 @@ download_file(
 download_file(
     name = "js-ir-runtime-for-ide.klib",
     url = "{0}/org/jetbrains/kotlin/js-ir-runtime-for-ide/{1}/js-ir-runtime-for-ide-{1}.klib".format(jpsPluginRepositoryUrl, kotlincKotlinJpsPluginTestsVersion),
-    sha256 = "4daaad8d158a8323a42b195a62e3ee977b274cd25d80bf1b7617ff0455874ef9",
+    sha256 = "df10bae085ebfd7d976ead07963b3116c899bff68fd805b1c319bbae006071ea",
 )
 
 download_file(
@@ -249,13 +249,13 @@ download_file(
 download_file(
     name = "kotlin-dist-for-ide-increment-compilation.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-dist-for-ide/{1}/kotlin-dist-for-ide-{1}.jar".format(jpsPluginRepositoryUrl, kotlincKotlinJpsPluginTestsVersion),
-    sha256 = "0e80ea565f51f00e20a3135c7e266e1383d02a08fcada4267408f22fb1d9f522",
+    sha256 = "f0fca7b2335ffa60de9653054d364773b0ba5d06def62a056f73e3f91d58be6c",
 )
 
 download_file(
     name = "kotlin-dist-for-ide.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-dist-for-ide/{1}/kotlin-dist-for-ide-{1}.jar".format(jpsPluginRepositoryUrl, kotlincKotlinJpsPluginTestsVersion),
-    sha256 = "0e80ea565f51f00e20a3135c7e266e1383d02a08fcada4267408f22fb1d9f522",
+    sha256 = "f0fca7b2335ffa60de9653054d364773b0ba5d06def62a056f73e3f91d58be6c",
 )
 
 download_file(
@@ -267,13 +267,13 @@ download_file(
 download_file(
     name = "kotlin-jps-plugin-classpath.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/{1}/kotlin-jps-plugin-classpath-{1}.jar".format(jpsPluginRepositoryUrl, kotlincKotlinJpsPluginTestsVersion),
-    sha256 = "cff201bbcf43942a716658192e84e2977cb3cb7efa3b10e7bbcb284e69903615",
+    sha256 = "f88a1baac843c379be6046a2b0cbee01359e7fa33bd3f807d807657d95e36f4a",
 )
 
 download_file(
     name = "kotlin-jps-plugin-testdata-for-ide.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-jps-plugin-testdata-for-ide/{1}/kotlin-jps-plugin-testdata-for-ide-{1}.jar".format(jpsPluginRepositoryUrl, kotlincKotlinJpsPluginTestsVersion),
-    sha256 = "8de8f62ebeab00a922c1fafa31635b7b7cf29f0b5f4e9896a8b94a7d51f44e90",
+    sha256 = "e18112cfd4f9a2b1315a23f08b495e687e79d1fc6050dfe452d55506d9fbf4e0",
 )
 
 download_file(
