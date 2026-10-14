@@ -90,9 +90,10 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
     if (inferenceVariable != null) {
+      boolean hadUpperBound = inferenceVariable.getBounds(InferenceBound.UPPER).contains(myT);
       PsiType bound = adjustBoundNullity(myT, myS);
       InferenceVariable.addBound(myS, bound, InferenceBound.UPPER, session);
-      recordUsageNullability(session);
+      recordUsageNullability(session, hadUpperBound);
       return true;
     }
     inferenceVariable = session.getInferenceVariable(myT);
@@ -228,13 +229,36 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
    * A nullness inherited from the bound of the type parameter is not recorded. It does not hold for every
    * instantiation. The plain {@code T} of a {@code T get()} declared as {@code T extends @Nullable Lib} is the
    * non-null {@code Lib} once {@code T} is instantiated with the non-null {@code Lib}.
+   * <p>
+   * A plain usage of {@code a} next to a {@code @NonNull a} usage lets each instantiation of {@code a} reach {@code T}.
+   * The recorded usage then joins with the unknown nullness, so {@code T} does not become not-null.
+   * A plain usage that comes first leaves only the {@code a <: T} bound, and a later usage finds this bound.
+   * The case (in a {@code @NullMarked} scope):
+   * <pre>{@code
+   * static <A extends @Nullable Object> Pair<@NonNull A, A> pair(A a) { ... }
+   *
+   * static <B extends @Nullable Object> B right(Pair<? extends B, ? extends B> p) { ... }
+   *
+   * void test(@Nullable String s) {
+   *   // A is @Nullable String, and the right element is @Nullable String, so B must be @Nullable String
+   *   right(pair(s));
+   * }}</pre>
+   *
+   * @param hadUpperBound true if {@code a <: T} was a bound before this constraint
    */
-  private void recordUsageNullability(@NotNull InferenceSession session) {
-    if (session.getInferenceVariable(myT) == null) return;
+  private void recordUsageNullability(@NotNull InferenceSession session, boolean hadUpperBound) {
+    InferenceVariable variable = session.getInferenceVariable(myT);
+    if (variable == null) return;
+    boolean recorded = variable.getBounds(InferenceBound.LOWER).contains(myS);
     TypeNullability nullability = myS.getNullability();
-    if (nullability.nullability() != Nullability.UNKNOWN && !(nullability.source() instanceof NullabilitySource.ExtendsBound)) {
-      InferenceVariable.addBound(myT, myS, InferenceBound.LOWER, session);
+    if (nullability.nullability() == Nullability.UNKNOWN || nullability.source() instanceof NullabilitySource.ExtendsBound) {
+      if (recorded) {
+        InferenceVariable.addBound(myT, myS.withNullability(TypeNullability.UNKNOWN), InferenceBound.LOWER, session);
+      }
+      return;
     }
+    PsiType usage = hadUpperBound && !recorded ? myS.withNullability(nullability.join(TypeNullability.UNKNOWN)) : myS;
+    InferenceVariable.addBound(myT, usage, InferenceBound.LOWER, session);
   }
 
   private static @NotNull PsiType adjustBoundNullity(@NotNull PsiType bound, @NotNull PsiType other) {
