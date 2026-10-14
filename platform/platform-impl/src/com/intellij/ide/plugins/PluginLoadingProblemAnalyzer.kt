@@ -19,6 +19,7 @@ internal object PluginLoadingProblemAnalyzer {
     val resolvedPluginSet = pluginSet.resolvedPluginSet
     val excludedFromCandidateSubset = pluginSet.excludedFromCandidateSubset
     val candidateSubset = resolvedPluginSet.candidateSet
+    val discoveredPluginSet = AmbiguousPluginSet.build(discoveredPlugins.pluginLists.flatMap { it.plugins })
 
     val incompletePlugins = HashMap<PluginId, PluginMainDescriptor>()
     for (pluginList in discoveredPlugins.pluginLists) {
@@ -69,6 +70,7 @@ internal object PluginLoadingProblemAnalyzer {
           exclusionReason,
           plugin,
           resolvedPluginSet = resolvedPluginSet,
+          discoveredPluginSet = discoveredPluginSet,
           productMode = initContext.productMode,
           registerLoadingError = ::registerLoadingError,
         )
@@ -172,6 +174,7 @@ internal object PluginLoadingProblemAnalyzer {
     exclusionReason: DescriptorExclusionReason,
     plugin: PluginMainDescriptor,
     resolvedPluginSet: ResolvedPluginSet,
+    discoveredPluginSet: AmbiguousPluginSet,
     productMode: ProductMode,
     registerLoadingError: (PluginLoadingProblem) -> Unit,
   ) {
@@ -179,8 +182,18 @@ internal object PluginLoadingProblemAnalyzer {
 
     fun processRootCause(exclusionReason: DescriptorExclusionReason) {
       when (exclusionReason) {
-        is DependencyIsNotResolved -> {
-          registerLoadingError(pluginDependencyIsNotInstalled(plugin, exclusionReason.dependency, shouldNotifyUser))
+        is DependencyIsNotResolved -> when (val dependency = exclusionReason.dependency) {
+          is DependencyRef.Plugin -> {
+            val descriptors = discoveredPluginSet.resolvePluginId(dependency.pluginId).toList()
+            registerLoadingError(if (descriptors.isEmpty()) {
+              pluginDependencyIsNotInstalled(plugin, dependency, shouldNotifyUser)
+            }
+            else {
+              pluginDependencyCannotBeLoaded(plugin, dependency, shouldNotifyUser, descriptors.singleOrNull()?.getMainDescriptor())
+            })
+          }
+          is DependencyRef.ContentModule ->
+            registerLoadingError(pluginDependencyIsNotInstalled(plugin, dependency, shouldNotifyUser))
         }
         is DependencyIsNotVisible -> {
           // TODO bad mapping

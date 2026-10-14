@@ -68,7 +68,7 @@ internal class PluginLoadingDependencyProblemTest {
 
   @Test
   @TestFor(issues = ["IJPL-252363"])
-  fun `an installed dependency excluded by an ID conflict uses the installation message`() {
+  fun `an installed dependency excluded by an ID conflict reports a failed plugin`() {
     val pluginSet = buildPluginSet(
       plugin("dependency") {
         name = "Dependency"
@@ -88,11 +88,13 @@ internal class PluginLoadingDependencyProblemTest {
     assertThat(pluginSet.input.discoveryResult.pluginLists.single().plugins.map { it.pluginId })
       .contains(PluginId.getId("dependency"))
     assertThat(pluginSet.resolvedPluginSet.candidateSet.resolvePluginId(PluginId.getId("dependency"))).isNull()
-    assertDependencyProblem(pluginSet, "not.installed", "dependency")
+    val problem = assertDependencyProblem(pluginSet, "failed.to.load", "Dependency")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginId.getId("dependency")))
+    assertThat(problem.dependencyPluginId).isEqualTo(PluginId.getId("dependency"))
   }
 
   @Test
-  fun `an incompatible installed alias uses the installation message`() {
+  fun `an incompatible installed alias reports its failed owner`() {
     val pluginSet = buildPluginSet(
       plugin("dependency") {
         name = "Dependency"
@@ -109,8 +111,30 @@ internal class PluginLoadingDependencyProblemTest {
       },
     )
 
-    val problem = assertDependencyProblem(pluginSet, "not.installed", "dependency.alias")
+    val problem = assertDependencyProblem(pluginSet, "failed.to.load", "Dependency")
     assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginId.getId("dependency.alias")))
+    assertThat(problem.dependencyPluginId).isEqualTo(PluginId.getId("dependency"))
+  }
+
+  @Test
+  fun `an ambiguous installed alias keeps its ID as a failed dependency`() {
+    val pluginSet = buildPluginSet(
+      plugin("first") {
+        name = "First"
+        pluginAliases = listOf("shared.alias")
+      },
+      plugin("second") {
+        name = "Second"
+        pluginAliases = listOf("shared.alias")
+      },
+      plugin("affected") {
+        name = "Affected"
+        depends("shared.alias")
+      },
+    )
+
+    val problem = assertDependencyProblem(pluginSet, "failed.to.load", "shared.alias")
+    assertThat(problem.dependency).isEqualTo(DependencyRef.Plugin(PluginId.getId("shared.alias")))
   }
 
   @Test

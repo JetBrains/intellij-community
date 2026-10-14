@@ -80,14 +80,18 @@ Remote development extends these rules with side aggregation and action routing.
 - For chains without disabled roots or product mode exclusions, the explanation refers to the first required plugin outside the affected plugin.
 
 - For a chain within one plugin, analysis uses the terminal exclusion when it has a supported explanation.
-- For an unresolved dependency without a cross-plugin boundary, the installation requirement message uses the plugin ID or content module name.
+- An unresolved plugin dependency without a cross-plugin boundary uses the installation message only when discovery contains no descriptor for its ID or alias.
+- A discovered plugin excluded during selection uses the failed dependency message and its available name.
+- An ambiguous discovered alias uses the failed dependency message with the alias as a fallback. It does not select an arbitrary owner name.
+- An unresolved content module without a cross-plugin boundary still uses the installation message with its module name.
 - For an invisible dependency without a cross-plugin boundary, that message uses the dependency module's plugin ID.
   [@test] ../../testSrc/com/intellij/ide/plugins/PluginLoadingDependencyProblemTest.kt (
     `an absent plugin uses the installation message`;
     `an absent modern plugin dependency uses the installation message`;
     `an incompatible installed dependency uses its name`;
-    `an installed dependency excluded by an ID conflict uses the installation message`;
-    `an incompatible installed alias uses the installation message`;
+    `an installed dependency excluded by an ID conflict reports a failed plugin`;
+    `an incompatible installed alias reports its failed owner`;
+    `an ambiguous installed alias keeps its ID as a failed dependency`;
     `a broken installed dependency uses its name`;
     `a missing module uses the plugin installation message`;
     `a required module keeps its missing dependency explanation`;
