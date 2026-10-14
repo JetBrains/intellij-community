@@ -310,6 +310,7 @@ class KotlinMultiPlatformProjectDescriptor(
     companion object {
         //clients should not unregister KotlinSDK in their tearDown, otherwise it won't be recreated
         val ALL_PLATFORMS = KotlinMultiPlatformProjectDescriptor()
+        val COMMON_ONLY = KotlinMultiPlatformProjectDescriptor(listOf(PlatformDescriptor.COMMON))
     }
 }
 
