@@ -6,13 +6,12 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.platform.eel.getShell
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.where
 import com.intellij.platform.testFramework.junit5.eel.params.api.DockerTest
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelSource
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
 import com.intellij.platform.testFramework.junit5.eel.params.api.WslTest
+import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer
@@ -55,7 +54,7 @@ internal class PyVirtualEnvTerminalCustomizerEelTest {
   fun activationScriptPathIsEelPath(eelHolder: EelHolder): Unit = timeoutRunBlocking(5.minutes) {
     val eel = eelHolder.eel
     // The local eel may have no python. A remote eel must have it: the WSL and Docker images do
-    val python = eel.exec.where("python3")?.asNioPath()
+    val python = SystemPythonService().findSystemPythons(eel).firstOrNull()?.pythonBinary
     if (python == null && eel.descriptor == LocalEelDescriptor) {
       throw TestAbortedException("No local python")
     }
