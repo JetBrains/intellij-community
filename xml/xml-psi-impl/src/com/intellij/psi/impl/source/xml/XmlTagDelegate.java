@@ -464,19 +464,23 @@ public abstract class XmlTagDelegate {
                                                 final @Nullable String version,
                                                 String namespace,
                                                 boolean nsDecl) {
-    final String targetNs = XmlUtil.getTargetSchemaNsFromTag(tag);
+    String targetNs = XmlUtil.getTargetSchemaNsFromTag(tag);
     if (fileLocation.equals(targetNs)) {
       return null;
     }
 
-    final XmlFile file = XmlUtil.getContainingFile(tag);
+    XmlFile file = XmlUtil.getContainingFile(tag);
     if (file == null) return null;
-    final PsiFile psiFile = ExternalResourceManager.getInstance().getResourceLocation(fileLocation, file, version);
-    if (psiFile instanceof XmlFile) {
-      return (XmlFile)psiFile;
+
+    PsiFile psiFile = ExternalResourceManager.getInstance().getResourceLocation(fileLocation, file, version);
+    if (psiFile instanceof XmlFile xmlFile) {
+      return xmlFile;
     }
 
-    return XmlSchemaService.getInstance().guessSchema(namespace, nsDecl ? null : tag.getLocalName(), version, fileLocation, file);
+    XmlSchemaService schemaService = XmlSchemaService.getInstanceIfAvailable();
+    if (schemaService == null) return null;
+
+    return schemaService.guessSchema(namespace, nsDecl ? null : tag.getLocalName(), version, fileLocation, file);
   }
 
   private static @Nullable PsiMetaOwner retrieveOwner(final @Nullable XmlTag tag,

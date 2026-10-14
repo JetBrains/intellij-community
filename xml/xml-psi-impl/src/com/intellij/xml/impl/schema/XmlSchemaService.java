@@ -19,6 +19,10 @@ public interface XmlSchemaService {
     return ApplicationManager.getApplication().getService(XmlSchemaService.class);
   }
 
+  static @Nullable XmlSchemaService getInstanceIfAvailable() {
+    return ApplicationManager.getApplication().getService(XmlSchemaService.class);
+  }
+
   @Nullable XmlFile guessDtd(String dtdUri, @NotNull PsiFile baseFile);
 
   @Nullable XmlFile guessSchema(String namespace,
