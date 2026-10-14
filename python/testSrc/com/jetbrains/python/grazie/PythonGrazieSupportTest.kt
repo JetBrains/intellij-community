@@ -54,4 +54,9 @@ class PythonGrazieSupportTest : GrazieTestBase() {
   fun `test sphinx markup in comments is excluded`() {
     runHighlightTestForFile("SphinxInCommentsExcluded.py")
   }
+
+  @TestFor(issues=["IJPL-257025"])
+  fun `test docstring parameter names are excluded`() {
+    runHighlightTestForFile("DocstringParameterNamesAreExcluded.py")
+  }
 }
