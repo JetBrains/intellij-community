@@ -29,7 +29,7 @@ class GitRebaseCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey())
         if (!active) return
         object : Task.Backgroundable(project, GitBundle.message("rebase.progress.indicator.title")) {
           override fun run(indicator: ProgressIndicator) {
-            val params = GitRebaseParams.editCommits(repository.vcs.version, rebaseFrom, null, false)
+            val params = GitRebaseParams.editCommits(repository.vcs.version, rebaseFrom, null, preserveMerges = false)
             GitRebaseUtils.rebase(project, listOf(repository), params, indicator)
           }
         }.queue()

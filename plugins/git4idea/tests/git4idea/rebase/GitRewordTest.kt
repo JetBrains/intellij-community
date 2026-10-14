@@ -110,6 +110,23 @@ internal class GitRewordTest {
   }
 
   @Test
+  fun `test reword preserves fixup commits when autosquash is enabled`(): Unit = with(context) {
+    git("config rebase.autoSquash true")
+    val commit = file("a").create().addCommit("Wrong message").details()
+    file("b").create().addCommit("Commit b")
+    file("fixup").create().addCommit("fixup! Commit b")
+
+    refresh()
+    updateChangeListManager()
+
+    val newMessage = "Correct message"
+    val result = runUnderProgress { GitRewordOperation(repo, commit, newMessage).execute() }
+
+    assertThat(result).isInstanceOf(Complete::class.java)
+    repo.assertLatestHistory("fixup! Commit b", "Commit b", newMessage)
+  }
+
+  @Test
   fun `test undo reword`(): Unit = with(context) {
     val commit = file("a").create("initial").addCommit("Wrong message").details()
 
